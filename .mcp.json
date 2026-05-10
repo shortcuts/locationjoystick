@@ -6,6 +6,11 @@
         "serve"
       ],
       "type": "stdio"
+    },
+    "jcodemunch": {
+      "command": "uvx",
+      "args": ["jcodemunch-mcp"],
+      "transport": "stdio"
     }
   }
 }

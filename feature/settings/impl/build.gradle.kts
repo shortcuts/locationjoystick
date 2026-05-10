@@ -9,6 +9,8 @@ android {
 dependencies {
     implementation(project(":feature:settings:api"))
     implementation(project(":core:data"))
+    implementation(project(":core:datastore"))
+    implementation(project(":core:model"))
 
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)

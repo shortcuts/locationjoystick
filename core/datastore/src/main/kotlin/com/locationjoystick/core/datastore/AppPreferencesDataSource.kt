@@ -33,6 +33,7 @@ class AppPreferencesDataSource @Inject constructor(
         val ROAMING_DURATION_SECONDS = doublePreferencesKey("roaming_duration_seconds")
         val ROAMING_ROAD_FOLLOWING = booleanPreferencesKey("roaming_road_following")
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
+        val SPEED_UNIT = stringPreferencesKey("speed_unit")
     }
 
     fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -130,6 +131,22 @@ class AppPreferencesDataSource @Inject constructor(
 
     suspend fun setOnboardingComplete(complete: Boolean) {
         dataStore.edit { prefs -> prefs[Keys.ONBOARDING_COMPLETE] = complete }
+    }
+
+    fun getSpeedUnit(): Flow<String> =
+        dataStore.data
+            .catch { e ->
+                if (e is IOException) {
+                    Log.e(TAG, "Error reading speed unit preference", e)
+                    emit(emptyPreferences())
+                } else {
+                    throw e
+                }
+            }
+            .map { prefs -> prefs[Keys.SPEED_UNIT] ?: "KMH" }
+
+    suspend fun setSpeedUnit(unit: String) {
+        dataStore.edit { prefs -> prefs[Keys.SPEED_UNIT] = unit }
     }
 
     fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {

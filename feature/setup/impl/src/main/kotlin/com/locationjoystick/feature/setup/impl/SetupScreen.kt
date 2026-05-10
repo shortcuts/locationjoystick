@@ -157,7 +157,7 @@ internal fun SetupScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Complete the steps below to start spoofing your GPS location.",
+                text = "Complete the steps below to start simulating your GPS location.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -217,7 +217,7 @@ internal fun SetupScreen(
 
             SetupStepCard(
                 title = "Battery optimization",
-                description = "Allows the spoof service to run reliably in the background without being killed.",
+                description = "Allows the location simulation service to run reliably in the background without being killed.",
                 isGranted = uiState.batteryOptimizationIgnored,
                 icon = Icons.Outlined.BatterySaver,
                 actionLabel = "Disable Optimization",

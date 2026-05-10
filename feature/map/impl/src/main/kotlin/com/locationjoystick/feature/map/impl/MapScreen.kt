@@ -210,7 +210,7 @@ private fun MapFab(
     ) {
         Icon(
             imageVector = if (isSpoofing) LjIcons.Stop else LjIcons.PlayArrow,
-            contentDescription = if (isSpoofing) "Stop spoofing" else "Start spoofing",
+            contentDescription = if (isSpoofing) "Stop location simulation" else "Start location simulation",
         )
     }
 }

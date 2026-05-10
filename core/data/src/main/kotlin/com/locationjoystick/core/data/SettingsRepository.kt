@@ -6,6 +6,7 @@ import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.JoystickStyle
 import com.locationjoystick.core.model.SpeedProfile
+import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -66,4 +67,17 @@ class SettingsRepository @Inject constructor(
         durationSeconds: Long,
         roadFollowing: Boolean,
     ) = dataSource.setRoamingConfig(radiusMeters, durationSeconds, roadFollowing)
+
+    suspend fun setSpeedUnit(unit: SpeedUnit) {
+        dataSource.setSpeedUnit(unit.name)
+    }
+
+    fun getSpeedUnit(): Flow<SpeedUnit> =
+        dataSource.getSpeedUnit().map { unitName ->
+            try {
+                SpeedUnit.valueOf(unitName)
+            } catch (e: IllegalArgumentException) {
+                SpeedUnit.KMH
+            }
+        }
 }
