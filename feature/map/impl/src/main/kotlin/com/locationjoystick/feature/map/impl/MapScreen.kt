@@ -73,7 +73,7 @@ internal fun MapScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val mapView = remember { MapView(context) }
+    val mapView = remember { MapLibre.getInstance(context); MapView(context) }
     val mapRef = remember { mutableStateOf<MapLibreMap?>(null) }
     val positionSource = remember { mutableStateOf<GeoJsonSource?>(null) }
 
@@ -110,8 +110,7 @@ internal fun MapScreen(
                 .padding(paddingValues),
         ) {
             AndroidView(
-                factory = { ctx ->
-                    MapLibre.getInstance(ctx)
+                factory = { _ ->
                     mapView.apply {
                         getMapAsync { map ->
                             mapRef.value = map
