@@ -102,12 +102,12 @@ internal fun RoutesScreen(
                 ExtendedFloatingActionButton(
                     onClick = { onNavigateToCreate(RouteType.GUIDED) },
                     icon = { Icon(Icons.Rounded.Map, null) },
-                    text = { Text("+ guided route") }
+                    text = { Text("guided route") }
                 )
                 ExtendedFloatingActionButton(
                     onClick = { onNavigateToCreate(RouteType.STRAIGHT) },
                     icon = { Icon(Icons.Rounded.Add, null) },
-                    text = { Text("+ route") }
+                    text = { Text("route") }
                 )
             }
         },
