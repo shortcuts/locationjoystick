@@ -30,6 +30,7 @@
 9. [Code Style Rules](#code-style-rules)
 10. [Testing Strategy](#testing-strategy)
 11. [Common Patterns](#common-patterns)
+12. [Pre-Commit Validation Policy](#pre-commit-validation-policy)
 
 ---
 
@@ -848,6 +849,41 @@ fun advancePosition(from: LatLon, bearingDeg: Double, distanceMeters: Double): L
     return LatLon(Math.toDegrees(lat2), Math.toDegrees(lon2))
 }
 ```
+
+---
+
+## Pre-Commit Validation Policy
+
+**Work is NOT complete until lint and build both pass.** No exceptions.
+
+### Required checks (run in order)
+
+```bash
+# 1. Lint — must produce zero errors
+./gradlew lint
+
+# 2. Build — debug APK must compile clean
+./gradlew assembleDebug
+```
+
+### Rules
+
+- Fix every lint error before declaring done. Warnings are acceptable; errors are not.
+- Build must succeed with no compilation errors across all modules.
+- If a check fails, fix the root cause. Do NOT suppress warnings/errors with annotations unless the suppression is genuinely correct and pre-existing policy allows it.
+- Run both checks after **every** set of edits, not just at the end of a session.
+- A task that breaks lint or build is incomplete, regardless of feature correctness.
+
+### Lint suppressions
+
+Suppress only when the lint rule is a known false positive for this pattern and you add an inline comment explaining why:
+
+```kotlin
+@Suppress("UnusedParameter") // retained for future callback compatibility — remove when API stabilises
+fun onEvent(event: Event) { }
+```
+
+Never suppress `Errors` category rules. Never batch-suppress with `@file:Suppress`.
 
 ---
 
