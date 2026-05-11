@@ -17,4 +17,6 @@ sealed interface MapAction {
     data object CameraTargetConsumed : MapAction
     data class SetLocationTo(val position: LatLng) : MapAction
     data class WalkStraightTo(val position: LatLng) : MapAction
+    data class ConfirmTeleport(val position: LatLng) : MapAction
+    data object ClearPendingTap : MapAction
 }

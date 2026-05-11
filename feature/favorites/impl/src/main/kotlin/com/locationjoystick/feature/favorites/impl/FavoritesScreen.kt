@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -234,8 +235,13 @@ private fun AddFavoriteSheet(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
+            .imePadding()
     ) {
-        Text("Add Favorite Location", style = MaterialTheme.typography.headlineSmall)
+        Text(
+            "Add Favorite Location",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
 
         OutlinedTextField(
             value = name,
@@ -246,27 +252,29 @@ private fun AddFavoriteSheet(
                 .padding(top = 16.dp)
         )
 
-        OutlinedTextField(
-            value = lat,
-            onValueChange = { lat = it },
-            label = { Text("Latitude") },
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-        )
-
-        OutlinedTextField(
-            value = lon,
-            onValueChange = { lon = it },
-            label = { Text("Longitude") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-        )
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = lat,
+                onValueChange = { lat = it },
+                label = { Text("Latitude") },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
+            OutlinedTextField(
+                value = lon,
+                onValueChange = { lon = it },
+                label = { Text("Longitude") },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
+        }
 
         Row(
             modifier = Modifier

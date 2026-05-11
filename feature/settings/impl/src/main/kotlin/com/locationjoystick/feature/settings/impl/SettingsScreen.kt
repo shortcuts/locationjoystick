@@ -18,6 +18,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -128,21 +129,44 @@ internal fun SettingsScreen(
                     ) {
                         Text("Unit: ", modifier = Modifier.weight(0.3f))
                         Row(modifier = Modifier.weight(0.7f)) {
-                            OutlinedButton(
-                                onClick = { onSetSpeedUnit(SpeedUnit.KMH) },
-                                modifier = Modifier
-                                    .weight(0.5f)
-                                    .padding(end = 4.dp),
-                            ) {
-                                Text("km/h")
+                            val isKmh = uiState.speedUnit == SpeedUnit.KMH
+                            if (isKmh) {
+                                FilledTonalButton(
+                                    onClick = { onSetSpeedUnit(SpeedUnit.KMH) },
+                                    modifier = Modifier
+                                        .weight(0.5f)
+                                        .padding(end = 4.dp),
+                                ) {
+                                    Text("km/h")
+                                }
+                            } else {
+                                OutlinedButton(
+                                    onClick = { onSetSpeedUnit(SpeedUnit.KMH) },
+                                    modifier = Modifier
+                                        .weight(0.5f)
+                                        .padding(end = 4.dp),
+                                ) {
+                                    Text("km/h")
+                                }
                             }
-                            OutlinedButton(
-                                onClick = { onSetSpeedUnit(SpeedUnit.MPH) },
-                                modifier = Modifier
-                                    .weight(0.5f)
-                                    .padding(start = 4.dp),
-                            ) {
-                                Text("mph")
+                            if (!isKmh) {
+                                FilledTonalButton(
+                                    onClick = { onSetSpeedUnit(SpeedUnit.MPH) },
+                                    modifier = Modifier
+                                        .weight(0.5f)
+                                        .padding(start = 4.dp),
+                                ) {
+                                    Text("mph")
+                                }
+                            } else {
+                                OutlinedButton(
+                                    onClick = { onSetSpeedUnit(SpeedUnit.MPH) },
+                                    modifier = Modifier
+                                        .weight(0.5f)
+                                        .padding(start = 4.dp),
+                                ) {
+                                    Text("mph")
+                                }
                             }
                         }
                     }

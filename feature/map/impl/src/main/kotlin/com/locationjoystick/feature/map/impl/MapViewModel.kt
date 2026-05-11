@@ -67,10 +67,26 @@ class MapViewModel @Inject constructor(
 
     fun onAction(action: MapAction) {
         when (action) {
-            is MapAction.TapToTeleport -> teleportTo(action.position)
+            is MapAction.TapToTeleport -> {
+                if (_uiState.value.isSpoofing) {
+                    _uiState.update { it.copy(pendingTapPosition = action.position) }
+                } else {
+                    teleportTo(action.position)
+                }
+            }
+            is MapAction.ConfirmTeleport -> {
+                teleportTo(action.position)
+                _uiState.update { it.copy(pendingTapPosition = null) }
+            }
+            is MapAction.ClearPendingTap -> {
+                _uiState.update { it.copy(pendingTapPosition = null) }
+            }
             is MapAction.LongPressTapToWalk -> walkTo(action.position)
             MapAction.StartSpoofing -> startSpoofing()
-            MapAction.StopSpoofing -> stopSpoofing()
+            MapAction.StopSpoofing -> {
+                stopSpoofing()
+                _uiState.update { it.copy(pendingTapPosition = null) }
+            }
             MapAction.RecenterCamera -> {
                 _uiState.update { it.copy(isUserPanning = false) }
             }

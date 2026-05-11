@@ -16,4 +16,8 @@ dependencies {
     implementation(libs.bundles.lifecycle)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.maplibre.android.sdk)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
 }

@@ -7,9 +7,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +23,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -126,6 +131,7 @@ internal fun MapScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             LjTopBar(title = "locationjoystick", onMenuClick = onOpenDrawer)
@@ -251,6 +257,14 @@ internal fun MapScreen(
             onAction = onAction,
         )
     }
+
+    val pending = uiState.pendingTapPosition
+    if (pending != null) {
+        PendingTapSheet(
+            position = pending,
+            onAction = onAction,
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -275,6 +289,38 @@ private fun FavoritesPickerSheet(
                 onGoToLocation = { onAction(MapAction.WalkStraightTo(target.position)) },
                 onBack = { onAction(MapAction.DeselectFavorite) },
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PendingTapSheet(
+    position: com.locationjoystick.core.model.LatLng,
+    onAction: (MapAction) -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = { onAction(MapAction.ClearPendingTap) },
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Move to this location?", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = { onAction(MapAction.ConfirmTeleport(position)) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Teleport here")
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = {
+                    onAction(MapAction.LongPressTapToWalk(position))
+                    onAction(MapAction.ClearPendingTap)
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Walk here")
+            }
         }
     }
 }
@@ -366,7 +412,7 @@ private fun FavoriteTargetDetail(
                 .fillMaxWidth()
                 .padding(top = 8.dp),
         ) {
-            Text("Go To Location")
+            Text("Walk To Location")
         }
         TextButton(
             onClick = onBack,

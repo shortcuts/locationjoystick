@@ -1,8 +1,13 @@
 package com.locationjoystick.app.navigation
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.LocationOn
@@ -10,6 +15,7 @@ import androidx.compose.material.icons.rounded.Route
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
@@ -33,6 +39,14 @@ fun LjDrawerContent(
     val scope = rememberCoroutineScope()
 
     ModalDrawerSheet {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(onClick = { scope.launch { drawerState.close() } }) {
+                Icon(Icons.Rounded.Close, contentDescription = "Close menu")
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
         NavigationDrawerItem(
             icon = { Icon(Icons.Rounded.LocationOn, "Map") },

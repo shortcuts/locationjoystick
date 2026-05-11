@@ -4,9 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Undo
@@ -20,6 +26,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -121,7 +130,7 @@ internal fun RouteCreatorScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
         TopAppBar(
             title = { Text("Create Route") },
             navigationIcon = {
@@ -228,7 +237,14 @@ internal fun RouteCreatorScreen(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Waypoints: ${state.waypoints.size} | Distance: ${String.format("%.2f", state.totalDistanceMeters / 1000)}km",
+                    text = buildAnnotatedString {
+                        append("Waypoints: ")
+                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                            append("${state.waypoints.size}")
+                        }
+                        append(" | Distance: ${String.format("%.2f", state.totalDistanceMeters / 1000)}km")
+                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.weight(1f)
                 )
@@ -236,9 +252,16 @@ internal fun RouteCreatorScreen(
                     onClick = onUndo,
                     enabled = state.waypoints.isNotEmpty()
                 ) {
-                    Icon(Icons.Default.Undo, contentDescription = "Undo")
+                    Icon(
+                        Icons.Default.Undo,
+                        contentDescription = "Undo",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
                 }
             }
+
+            Spacer(Modifier.height(8.dp))
 
             Button(
                 onClick = { showSaveDialog = true },
