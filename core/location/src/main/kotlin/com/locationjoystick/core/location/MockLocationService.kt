@@ -85,6 +85,46 @@ class MockLocationService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        observeLocationState()
+    }
+
+    private fun observeLocationState() {
+        serviceScope.launch {
+            locationRepository.mockLocationState.collect { state ->
+                when (state) {
+                    MockLocationState.RUNNING -> {
+                        if (updateJob == null) {
+                            setupTestProvider()
+                            startUpdateLoop()
+                            Log.i(TAG, "State changed to RUNNING - started update loop")
+                        }
+                    }
+                    MockLocationState.IDLE, MockLocationState.ERROR -> {
+                        if (updateJob != null) {
+                            updateJob?.cancel()
+                            updateJob = null
+                            removeTestProvider()
+                            Log.i(TAG, "State changed to IDLE/ERROR - stopped update loop")
+                        }
+                    }
+                    MockLocationState.PAUSED -> {
+                        if (updateJob != null) {
+                            updateJob?.cancel()
+                            updateJob = null
+                            Log.i(TAG, "State changed to PAUSED - paused update loop")
+                        }
+                    }
+                }
+            }
+        }
+        serviceScope.launch {
+            locationRepository.currentPosition.collect { position ->
+                if (position != null) {
+                    currentLat = position.latitude
+                    currentLon = position.longitude
+                }
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

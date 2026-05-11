@@ -52,6 +52,9 @@ class LocationRepository @Inject constructor() {
 
     suspend fun startSpoofing() {
         Log.d(TAG, "startSpoofing requested")
+        if (_currentPosition.value == null) {
+            _currentPosition.value = LatLng(latitude = 48.8566, longitude = 2.3522)
+        }
         _mockLocationState.value = MockLocationState.RUNNING
     }
 
