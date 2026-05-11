@@ -1,9 +1,6 @@
 name: Release APK
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 jobs:
