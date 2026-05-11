@@ -399,8 +399,8 @@ Notes:
 Work is NOT complete until lint and build both pass.
 
 ```bash
-./gradlew lint          # must produce zero errors
-./gradlew assembleDebug # must compile clean
+make lint
+make build
 ```
 
 Rules:

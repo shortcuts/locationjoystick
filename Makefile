@@ -1,5 +1,8 @@
-build-release:
+build:
 	./gradlew assembleRelease
+
+lint:
+	./gradlew lintRelease
 
 install-on-phone:
 	adb uninstall com.locationjoystick.app || true && ./gradlew installDebug
