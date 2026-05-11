@@ -1,7 +1,6 @@
 # locationjoystick — Agent Reference
 
-> **Primary reference for all AI coding agents.** Read before touching any file.
-> Every section implementation-aware. Vague answers wrong answers.
+> Primary reference for all AI coding agents. Read before touching any file.
 
 ---
 
@@ -11,18 +10,6 @@
 2. [Architecture](#architecture)
 3. [Module Map](#module-map)
 4. [Feature Specifications](#feature-specifications)
-   - [Mock Location Engine](#mock-location-engine)
-   - [Foreground Service](#foreground-service)
-   - [Floating Joystick](#floating-joystick)
-   - [Map (MapLibre)](#map-maplibre)
-   - [Route System](#route-system)
-   - [Favorite Locations](#favorite-locations)
-   - [Speed Profiles](#speed-profiles)
-   - [Floating Widget](#floating-widget)
-   - [Click-to-Move / Teleport](#click-to-move--teleport)
-   - [Roaming Mode](#roaming-mode)
-   - [Export / Import](#export--import)
-   - [Setup / Onboarding](#setup--onboarding)
 5. [Domain Models Reference](#domain-models-reference)
 6. [Key Services](#key-services)
 7. [Permissions Matrix](#permissions-matrix)
@@ -48,7 +35,7 @@
 | Distribution | APK via GitHub Releases (not Play Store) |
 | Open source | Yes |
 
-**Offline-first.** No backend. No accounts. All data on-device in Room + DataStore.
+Offline-first. No backend. No accounts. All data on-device in Room + DataStore.
 
 ---
 
@@ -56,18 +43,13 @@
 
 Multi-module, NowInAndroid-style. Each feature = Gradle module. Shared code in `:core:*`.
 
-```
-MVVM + Repository pattern
-  ViewModel → Repository → DataSource (Room / DataStore / LocationManager)
-  ViewModel exposes StateFlow / SharedFlow
-  Compose UI collects flows via collectAsStateWithLifecycle()
-```
+MVVM + Repository pattern. ViewModel → Repository → DataSource (Room / DataStore / LocationManager). ViewModels expose `StateFlow`/`SharedFlow`. Compose UI collects via `collectAsStateWithLifecycle()`.
 
-**DI**: Hilt throughout. Every ViewModel `@HiltViewModel`. Every repository `@Singleton`.
+DI: Hilt throughout. Every ViewModel `@HiltViewModel`. Every repository `@Singleton`.
 
-**Reactive streams**: Kotlin Flow everywhere. No RxJava. No LiveData.
+Reactive streams: Kotlin Flow everywhere. No RxJava. No LiveData.
 
-**Coroutines**: `viewModelScope` for UI-bound work. `ServiceScope` (tied to service lifecycle) for background. Never `GlobalScope`.
+Coroutines: `viewModelScope` for UI-bound work. `ServiceScope` (tied to service lifecycle) for background. Never `GlobalScope`.
 
 ---
 
@@ -96,579 +78,198 @@ MVVM + Repository pattern
 
 ### Mock Location Engine
 
-**Behavior**: Injects fake GPS into Android location system. All apps (incl. Pokémon GO) receive spoofed coords as real GPS.
+Injects fake GPS into Android location system. All apps (incl. Pokémon GO) receive spoofed coords as real GPS.
 
-**Technical implementation**:
+Update rate: 1 Hz (every 1000 ms). Matches real GPS cadence. Pokémon GO accepts it.
 
-```kotlin
-// Registering the test provider (API 31+ style)
-locationManager.addTestProvider(
-    LocationManager.GPS_PROVIDER,
-    false, false, false, false, true, true, true,
-    ProviderProperties.POWER_USAGE_HIGH,
-    ProviderProperties.ACCURACY_FINE
-)
-locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
+User must enable "Mock location app" in Developer Options and select locationjoystick. Check at runtime via `AppOpsManager.OPSTR_MOCK_LOCATION`.
 
-// Pushing a location update
-val location = Location(LocationManager.GPS_PROVIDER).apply {
-    latitude = lat
-    longitude = lon
-    altitude = 0.0
-    accuracy = 3.0f          // tight accuracy — games trust it more
-    speed = speedMs          // meters/second
-    bearing = bearing        // degrees, 0–360
-    time = System.currentTimeMillis()
-    elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
-}
-locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, location)
-```
+Cleanup: on service stop call `locationManager.removeTestProvider`. Failure leaves ghost provider breaking real GPS until reboot.
 
-**Update rate**: 1 Hz (every 1000 ms). Matches real GPS cadence. Pokémon GO accepts it.
-
-**Prerequisite**: User must enable "Mock location app" in Developer Options and select locationjoystick. App cannot bypass. Check at runtime:
-
-```kotlin
-val appOps = getSystemService(AppOpsManager::class.java)
-val mode = appOps.checkOpNoThrow(
-    AppOpsManager.OPSTR_MOCK_LOCATION,
-    Process.myUid(),
-    packageName
-)
-val isMockEnabled = mode == AppOpsManager.MODE_ALLOWED
-```
-
-**Cleanup**: On service stop, call `locationManager.removeTestProvider(LocationManager.GPS_PROVIDER)`. Failure leaves ghost provider breaking real GPS until reboot.
-
-**Edge cases**:
+Edge cases:
 - Another app holds mock location slot → `addTestProvider` throws `IllegalArgumentException`. Catch, show clear error.
 - `elapsedRealtimeNanos` must be monotonically increasing. Never set fixed value.
 - `accuracy` below 1.0f can trigger anti-cheat. Keep 2.0–5.0f.
 
-**Key files**: `:service:location/MockLocationService.kt`, `:core:data/LocationRepository.kt`
+Key files: `:service:location/MockLocationService.kt`, `:core:data/LocationRepository.kt`
 
 ---
 
 ### Foreground Service
 
-**Behavior**: Persistent notification while spoofing active. App keeps running when minimized or screen off.
+Persistent notification while spoofing active. App keeps running when minimized or screen off.
 
-Manifest declaration:
-```xml
-<service
-    android:name=".MockLocationService"
-    android:foregroundServiceType="location"
-    android:exported="false" />
-```
+Declared with `foregroundServiceType="location"`. Started via `ServiceCompat.startForeground` with `FOREGROUND_SERVICE_TYPE_LOCATION` (required API 34+). Restart behavior: `START_STICKY`. Notification channel: `IMPORTANCE_LOW`, channel ID `"location_spoof_channel"`. Update loop runs as coroutine with `SupervisorJob()` scope. Cleanup: cancel scope + remove test provider in `onDestroy`.
 
-Starting (API 34+ requires `FOREGROUND_SERVICE_TYPE_LOCATION`):
-```kotlin
-ServiceCompat.startForeground(
-    this,
-    NOTIFICATION_ID,
-    buildNotification(),
-    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-)
-```
-
-Restart behavior: `START_STICKY`. OS kills → restarts automatically.
-
-Notification channel: `IMPORTANCE_LOW` — no sound, no vibration, minimal battery. Channel ID: `"location_spoof_channel"`.
-
-Update loop as coroutine:
-```kotlin
-private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
-private fun startUpdateLoop() {
-    serviceScope.launch {
-        while (isActive) {
-            pushLocationUpdate()
-            delay(1000L)   // 1 Hz — never Thread.sleep()
-        }
-    }
-}
-
-override fun onDestroy() {
-    serviceScope.cancel()
-    locationManager.removeTestProvider(LocationManager.GPS_PROVIDER)
-    super.onDestroy()
-}
-```
-
-**Edge cases**:
-- API 34+, missing `FOREGROUND_SERVICE_LOCATION` permission → crashes at `startForeground`. Declare in manifest.
-- Notification needs tap action (open app) + stop action (stop spoofing).
-- `SupervisorJob()` → one failed child coroutine doesn't cancel whole scope.
-
-**Key files**: `:service:location/MockLocationService.kt`
+Key files: `:service:location/MockLocationService.kt`
 
 ---
 
 ### Floating Joystick
 
-**Behavior**: Circular joystick overlay on all apps. Drag → moves fake location. Release → stops. Draggable to any screen position.
+Circular overlay on all apps. Drag → moves fake location. Release → stops. Draggable anywhere on screen.
 
-Permission required: `SYSTEM_ALERT_WINDOW`. Grant via:
-```kotlin
-startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-    Uri.parse("package:$packageName")))
-```
-Check: `Settings.canDrawOverlays(context)`.
+Requires `SYSTEM_ALERT_WINDOW`. Uses `TYPE_APPLICATION_OVERLAY` with `FLAG_NOT_FOCUSABLE` (mandatory — prevents stealing keyboard focus from game) and `FLAG_NOT_TOUCH_MODAL`. Drag-to-reposition via `View.OnTouchListener` updating `WindowManager.LayoutParams`. Input normalized to direction vector, multiplied by speed (m/s), new lat/lon via Haversine. Pushed to `MockLocationService`.
 
-Adding overlay view:
-```kotlin
-val params = WindowManager.LayoutParams(
-    JOYSTICK_SIZE_PX,
-    JOYSTICK_SIZE_PX,
-    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-    PixelFormat.TRANSLUCENT
-)
-params.gravity = Gravity.BOTTOM or Gravity.START
-params.x = 32
-params.y = 32
-windowManager.addView(joystickView, params)
-```
+Cleanup critical: must call `windowManager.removeView` in `onDestroy` with null/attached check.
 
-`FLAG_NOT_FOCUSABLE` mandatory — without it overlay steals keyboard focus from game.
-
-Drag-to-reposition: `View.OnTouchListener` updates `params.x`/`params.y`, calls `windowManager.updateViewLayout(joystickView, params)` on `ACTION_MOVE`.
-
-Input → direction vector: normalize thumb offset to unit vector, multiply by speed (m/s), compute new lat/lon via Haversine, push to `MockLocationService` via bound service or `SharedFlow`.
-
-**Cleanup** (critical — GPS JoyStick's #1 bug):
-```kotlin
-override fun onDestroy() {
-    if (::joystickView.isInitialized && joystickView.isAttachedToWindow) {
-        windowManager.removeView(joystickView)
-    }
-    super.onDestroy()
-}
-```
-
-**Edge cases**:
-- User revokes `SYSTEM_ALERT_WINDOW` while overlay showing → `removeView` throws. Wrap in try/catch.
+Edge cases:
+- Revoking `SYSTEM_ALERT_WINDOW` while overlay showing → `removeView` throws. Wrap in try/catch.
 - MIUI/ColorOS: overlay permissions reset on reboot. Show reminder on startup.
-- Must not intercept touches outside bounds. Use `FLAG_NOT_TOUCH_MODAL` alongside `FLAG_NOT_FOCUSABLE`.
 
-**Key files**: `:feature:joystick/JoystickOverlayService.kt`, `:feature:joystick/JoystickView.kt`
+Key files: `:feature:joystick/JoystickOverlayService.kt`, `:feature:joystick/JoystickView.kt`
 
 ---
 
 ### Map (MapLibre)
 
-**Behavior**: Main screen shows OpenStreetMap. Spoofed location shown as marker. Map follows marker during active spoofing. Pan/zoom freely.
+Main screen shows OpenStreetMap. Spoofed location as marker. Map follows marker during spoofing.
 
-Library: **MapLibre Android SDK 12.x**. Not osmdroid (archived 2024). Not Google Maps (requires Play Services).
+Library: MapLibre Android SDK 12.x (not osmdroid, not Google Maps). OSM tile source via `RasterSource`. Location marker: `SymbolLayer` backed by GeoJSON — update coords, don't remove/re-add layer. Route polylines: `LineLayer` backed by GeoJSON `FeatureCollection`. Offline tiles via `OfflineManager.downloadRegion()`.
 
-OSM tile source:
-```kotlin
-val osmSource = RasterSource(
-    "osm-source",
-    TileSet("tileset", "https://tile.openstreetmap.org/{z}/{x}/{y}.png").apply {
-        maxZoom = 19f
-    },
-    256
-)
-mapboxMap.style?.addSource(osmSource)
-mapboxMap.style?.addLayer(RasterLayer("osm-layer", "osm-source"))
-```
+Interactions: long-press → bottom sheet "Walk here / Teleport here". Tap route point → select. Tap empty map in edit mode → add waypoint. Camera follow: disable on `REASON_API_GESTURE`, re-enable via re-center FAB.
 
-Location marker: `SymbolLayer` backed by GeoJSON `Feature`. Update coords on each push — don't remove/re-add layer.
+Edge cases: forward all lifecycle events to `MapView`. Never call MapLibre APIs before `onMapReady`.
 
-Route polylines: `LineLayer` backed by GeoJSON `FeatureCollection`. Each segment = `LineString`. Color/width in paint properties.
-
-Route point markers: `SymbolLayer` with custom icon bitmap for waypoints.
-
-Offline tiles: `OfflineManager.downloadRegion()` for current viewport.
-
-**Map interactions**:
-- Long-press → bottom sheet: "Walk here" / "Teleport here".
-- Tap existing route point → select (show delete/move handles).
-- Tap empty map in route-edit mode → add waypoint.
-
-**Camera follow**: Spoofing active + no manual pan → keep camera centered. Detect pan via `OnCameraMoveStartedListener` (`REASON_API_GESTURE` → set "user panning" flag). Reset on "re-center" FAB.
-
-**Edge cases**:
-- OSM tile servers have usage policy. For production, use self-hosted or CDN.
-- `MapView` must forward all lifecycle events: `onStart`, `onResume`, `onPause`, `onStop`, `onSaveInstanceState`, `onLowMemory`, `onDestroy`.
-- Never call MapLibre APIs before `onMapReady` fires.
-
-**Key files**: `:feature:map/MapScreen.kt`, `:feature:map/MapViewModel.kt`
+Key files: `:feature:map/MapScreen.kt`, `:feature:map/MapViewModel.kt`
 
 ---
 
 ### Route System
 
-**Behavior**:
-- **Create**: Tap waypoints on map → polyline connects in order.
-- **Save**: Name route → stored in Room.
-- **Edit**: Tap route → edit mode. Drag waypoints, add, delete individual points.
-- **Delete**: Swipe-to-delete in list, or delete from detail screen.
-- **Replay**: Spoofed location walks along route at selected speed. Progress shown on map.
-- **Loop**: Reach last waypoint → restart from first. Toggle per-route.
+Create waypoints on map → polyline in order. Save named route to Room. Edit (drag/add/delete waypoints). Delete via swipe or detail screen. Replay at current speed with progress indicator. Optional looping.
 
-Domain model:
-```kotlin
-data class Route(
-    val id: Long = 0,
-    val name: String,
-    val waypoints: List<LatLon>,   // ordered list
-    val createdAt: Instant,
-    val isLoop: Boolean = false
-)
+Storage: `RouteEntity` + `WaypointEntity` one-to-many. Waypoints store `routeId`, `lat`, `lon`, `orderIndex`.
 
-data class LatLon(val lat: Double, val lon: Double)
-```
+Replay: interpolate between waypoints at speed (m/s), compute bearing via `atan2`, advance by `speed * deltaTime`, snap within 1 m of waypoint. Loops: interpolate smoothly from last to first waypoint.
 
-Room entity: `RouteEntity` + `WaypointEntity` (one-to-many). Waypoints store `routeId`, `lat`, `lon`, `orderIndex`.
+Recording: collect real location at 1 Hz, simplify via Ramer-Douglas-Peucker (epsilon = 5 m), save on stop.
 
-Route replay engine:
-1. Interpolate between consecutive waypoints at current speed (m/s).
-2. Compute bearing to next waypoint via `atan2`.
-3. Advance position by `speed * deltaTime` meters along bearing.
-4. Within 1 meter of waypoint → snap, advance to next.
-5. Push each position to `MockLocationService`.
+Edge cases: <2 waypoints → disable replay. Resume replay after service restart (persist waypoint index in DataStore).
 
-Route recording:
-1. Tap "Record" → service collects real location at 1 Hz.
-2. Simplify path via Ramer-Douglas-Peucker (epsilon = 5 m).
-3. On "Stop" → dialog: "Save route?" name pre-filled as "Route YYYY-MM-DD HH:mm".
-
-**Edge cases**:
-- <2 waypoints → can't replay. Disable button, show tooltip.
-- Service killed/restarted during replay → resume from last waypoint index (persist in DataStore).
-- Loop routes: last waypoint → interpolate smoothly back to first (no teleport).
-
-**Key files**: `:feature:routes/RouteListScreen.kt`, `:feature:routes/RouteEditorScreen.kt`, `:feature:routes/RouteViewModel.kt`, `:core:database/RouteDao.kt`, `:service:location/RouteReplayEngine.kt`
+Key files: `:feature:routes/RouteListScreen.kt`, `:feature:routes/RouteEditorScreen.kt`, `:feature:routes/RouteViewModel.kt`, `:core:database/RouteDao.kt`, `:service:location/RouteReplayEngine.kt`
 
 ---
 
 ### Favorite Locations
 
-**Behavior**: Save named locations. Tap from list → instantly teleports spoofed position. Can rename and delete.
+Save named locations. Tap from list → instantly teleport spoofed position. Rename and delete supported.
 
-Domain model:
-```kotlin
-data class FavoriteLocation(
-    val id: Long = 0,
-    val name: String,
-    val lat: Double,
-    val lon: Double,
-    val createdAt: Instant
-)
-```
+Storage: `FavoriteEntity` flat table (no relations). Teleport: set position directly, push one update, camera jumps. Sort by `createdAt` desc default; optional alpha sort.
 
-Room entity: `FavoriteEntity`. Flat table, no relations.
-
-Add: long-press on map → "Save as favorite" → name dialog → insert Room.
-
-Teleport: set spoofed position to `(lat, lon)` without interpolation. Push one update. Camera jumps.
-
-**Edge cases**:
-- Duplicate names allowed. No uniqueness enforced.
-- Deleting active teleport destination has no effect — position already set.
-- Sort by `createdAt` desc by default; option to sort alphabetically.
-
-**Key files**: `:feature:favorites/FavoritesScreen.kt`, `:feature:favorites/FavoritesViewModel.kt`, `:core:database/FavoriteDao.kt`
+Key files: `:feature:favorites/FavoritesScreen.kt`, `:feature:favorites/FavoritesViewModel.kt`, `:core:database/FavoriteDao.kt`
 
 ---
 
 ### Speed Profiles
 
-**Behavior**: Three presets — Walk, Run, Bike. Customizable m/s per preset. Applies to joystick, route replay, roaming.
+Three presets: Walk (1.4 m/s), Run (3.0 m/s), Bike (5.5 m/s). All user-editable. Applies to joystick, route replay, roaming.
 
-| Profile | Default speed |
-|---|---|
-| Walk | 1.4 m/s (~5 km/h) |
-| Run | 3.0 m/s (~11 km/h) |
-| Bike | 5.5 m/s (~20 km/h) |
+Stored in DataStore. UI: three chips or segmented button in widget + Settings. Change takes effect immediately on next tick.
 
-DataStore keys:
-```kotlin
-val WALK_SPEED = doublePreferencesKey("walk_speed")
-val RUN_SPEED = doublePreferencesKey("run_speed")
-val BIKE_SPEED = doublePreferencesKey("bike_speed")
-val ACTIVE_PROFILE = stringPreferencesKey("active_profile") // "walk" | "run" | "bike"
-```
+Edge cases: clamp 0.1–15.0 m/s. Warn if >8 m/s (anti-cheat risk).
 
-UI: three chips or segmented button in widget and Settings. Profile change takes effect immediately.
-
-**Edge cases**:
-- Clamp: min 0.1 m/s, max 15.0 m/s.
-- Speed >~8 m/s → warn "High speeds may trigger anti-cheat detection in some games."
-- Applied per-tick. Mid-replay change takes effect on next tick.
-
-**Key files**: `:feature:settings/SpeedSettingsScreen.kt`, `:core:data/SpeedProfileRepository.kt`
+Key files: `:feature:settings/SpeedSettingsScreen.kt`, `:core:data/SpeedProfileRepository.kt`
 
 ---
 
 ### Floating Widget
 
-**Behavior**: Small floating button overlay. Tap → expand panel with configured quick-access controls. Items configured in Settings.
+Small floating button overlay. Tap → expand panel with configured quick-access controls. Items configured in Settings.
 
-Same overlay mechanism as joystick: `TYPE_APPLICATION_OVERLAY`, `SYSTEM_ALERT_WINDOW`. Separate services — each toggled independently.
+Same overlay mechanism as joystick. Separate service, toggled independently. State: collapsed (FAB) / expanded (panel) via `ValueAnimator`. Items stored in DataStore as `stringSetPreferencesKey`. Binds to `MockLocationService` in `onStartCommand`, unbinds in `onDestroy`.
 
-Widget state: collapsed (FAB) / expanded (panel). Animate via `ValueAnimator` on panel height.
+Edge cases: no items configured → show placeholder. Clamp panel to screen bounds. Re-clamp on `onConfigurationChanged`.
 
-Configurable items in DataStore:
-```kotlin
-val WIDGET_ITEMS = stringSetPreferencesKey("widget_items")
-// Possible values: "speed_selector", "start_stop", "active_route", "favorites_shortcut", "roaming_toggle"
-```
-
-Communicates with `MockLocationService` via bound service. Bind in `onStartCommand`, unbind in `onDestroy`.
-
-**Edge cases**:
-- All items removed → show placeholder: "Add items in Settings → Widget."
-- Expanded panel must not exceed screen bounds. Clamp after expansion.
-- On rotation, overlay may go off-screen. Re-clamp in `onConfigurationChanged`.
-
-**Key files**: `:feature:widget/FloatingWidgetService.kt`, `:feature:widget/WidgetPanel.kt`, `:feature:settings/WidgetConfigScreen.kt`
+Key files: `:feature:widget/FloatingWidgetService.kt`, `:feature:widget/WidgetPanel.kt`, `:feature:settings/WidgetConfigScreen.kt`
 
 ---
 
 ### Click-to-Move / Teleport
 
-**Behavior**: Tap map → bottom sheet with two options:
-- **Walk here**: spoofed location moves toward tapped point at current speed, straight line.
-- **Teleport here**: jumps instantly to tapped point.
+Tap map → bottom sheet with "Walk here" or "Teleport here".
 
-Walk-here: compute bearing from current to target:
-```kotlin
-fun bearing(from: LatLon, to: LatLon): Double {
-    val dLon = Math.toRadians(to.lon - from.lon)
-    val lat1 = Math.toRadians(from.lat)
-    val lat2 = Math.toRadians(to.lat)
-    val y = sin(dLon) * cos(lat2)
-    val x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
-    return (Math.toDegrees(atan2(y, x)) + 360) % 360
-}
-```
-Advance at `currentSpeed` m/s per tick until within 1 meter of target, then snap.
+Walk here: bearing computed from current to target, advance at `currentSpeed` m/s per tick, snap within 1 m. Teleport: set position directly, one update push.
 
-Teleport: set position directly, push one update.
+Edge cases: new walk-here cancels previous. Walk-here while route replaying → ask confirmation to stop replay.
 
-**Edge cases**:
-- "Walk here" while already walking to previous target → cancel previous, start new.
-- "Walk here" while route replaying → stop replay first (ask confirmation).
-- No teleport distance limit.
-
-**Key files**: `:feature:map/MapViewModel.kt` (handles tap events, dispatches to `LocationRepository`)
+Key files: `:feature:map/MapViewModel.kt`
 
 ---
 
 ### Roaming Mode
 
-**Behavior**: Set center point, radius (e.g. 2 km), duration (e.g. 30 min). Walks randomly within radius for duration, following real roads when possible.
+Set center, radius, duration. Walks randomly within radius. Two modes: simple (straight-line, no network) and road-following (OSRM routes, opt-in). OSRM failure → fall back to straight-line automatically.
 
-Two modes:
-1. **Simple (default)**: straight-line random walk within radius. No network.
-2. **Road-following (opt-in)**: OSRM fetches walking/cycling route between random waypoints.
+Algorithm (road-following): pick random destination in radius (uniform disk distribution) → fetch OSRM route → walk route → repeat until duration elapsed.
 
-OSRM endpoint:
-```
-https://router.project-osrm.org/route/v1/{profile}/{lon1},{lat1};{lon2},{lat2}?overview=full&geometries=geojson
-```
-Profiles: `foot` (walk/run), `cycling` (bike).
+OSRM endpoint: `https://router.project-osrm.org/route/v1/{profile}/{lon1},{lat1};{lon2},{lat2}?overview=full&geometries=geojson`. Profiles: `foot`, `cycling`.
 
-Roaming algorithm (road-following):
-1. Pick random destination within radius:
-   ```kotlin
-   fun randomPointInRadius(center: LatLon, radiusMeters: Double): LatLon {
-       val r = radiusMeters * sqrt(Random.nextDouble())
-       val theta = Random.nextDouble() * 2 * PI
-       val dLat = r * cos(theta) / 111320.0
-       val dLon = r * sin(theta) / (111320.0 * cos(Math.toRadians(center.lat)))
-       return LatLon(center.lat + dLat, center.lon + dLon)
-   }
-   ```
-2. Fetch OSRM route to destination.
-3. Walk route. Destination reached → pick new point, repeat.
-4. Stop when elapsed time reaches configured duration.
+Edge cases: cache last OSRM route (don't re-fetch while walking it). Radius/duration changes apply on next waypoint pick. Persist start time in DataStore (survives restarts).
 
-OSRM failure → fall back to straight-line. Never block roaming on network.
-
-**Edge cases**:
-- OSRM rate limits → cache last route. Don't re-fetch if still walking it.
-- Radius/duration changed mid-roam → apply on next waypoint pick.
-- Persist start time in DataStore — survives service restarts.
-- Speed profile change mid-roam takes effect immediately.
-
-**Key files**: `:service:roaming/RoamingEngine.kt`, `:core:network/OsrmClient.kt`, `:feature:settings/RoamingConfigScreen.kt`
+Key files: `:service:roaming/RoamingEngine.kt`, `:core:network/OsrmClient.kt`, `:feature:settings/RoamingConfigScreen.kt`
 
 ---
 
 ### Export / Import
 
-**Behavior**: Settings → export all data to JSON, import from previous export. Covers routes, favorites, speed profiles, widget config, roaming defaults.
+Settings → export all data to JSON, import from previous export. Schema version: **1**.
 
-Export schema version: **1** (increment on breaking changes).
+Covers: routes, favorites, speed profiles, widget config, roaming defaults.
 
-JSON structure:
-```json
-{
-  "schemaVersion": 1,
-  "exportedAt": "2025-01-01T00:00:00Z",
-  "speedProfiles": {
-    "walk": 1.4,
-    "run": 3.0,
-    "bike": 5.5,
-    "active": "walk"
-  },
-  "routes": [
-    {
-      "id": 1,
-      "name": "Morning loop",
-      "isLoop": true,
-      "createdAt": "2025-01-01T00:00:00Z",
-      "waypoints": [
-        { "lat": 48.8566, "lon": 2.3522, "orderIndex": 0 }
-      ]
-    }
-  ],
-  "favorites": [
-    {
-      "id": 1,
-      "name": "Home",
-      "lat": 48.8566,
-      "lon": 2.3522,
-      "createdAt": "2025-01-01T00:00:00Z"
-    }
-  ],
-  "widgetItems": ["speed_selector", "start_stop"],
-  "roamingDefaults": {
-    "radiusMeters": 2000,
-    "durationMinutes": 30,
-    "roadFollowing": false
-  }
-}
-```
+Export: serialize via `kotlinx.serialization` → write to `getExternalFilesDir(null)` → share via `FileProvider + Intent.ACTION_SEND`.
 
-Export flow:
-1. Serialize to JSON via `kotlinx.serialization`.
-2. Write to `getExternalFilesDir(null)` as `locationjoystick-export-YYYYMMDD.json`.
-3. Share via `FileProvider` + `Intent.ACTION_SEND`.
+Import: file picker (`OpenDocument`, MIME `application/json`) → parse + validate `schemaVersion == 1` → confirm "replace all data?" → clear Room + DataStore → insert. All I/O on `Dispatchers.IO`.
 
-Import flow:
-1. File picker via `ActivityResultContracts.OpenDocument` MIME `application/json`.
-2. Parse JSON. Validate `schemaVersion == 1`. Reject unknown versions.
-3. Confirmation: "This will replace all existing data. Continue?"
-4. On confirm: clear all Room tables + DataStore keys, insert imported data.
+Edge cases: malformed JSON → show "Invalid file". Missing fields → use `@SerialName` defaults. Skip confirmation on fresh install (empty DB).
 
-**Edge cases**:
-- Malformed JSON → catch `SerializationException`, show "Invalid file".
-- Missing fields → `@SerialName` with defaults for backward compat.
-- Fresh install import → no confirmation if database empty.
-- Large exports → `Dispatchers.IO` only. Never main thread.
-
-**Key files**: `:feature:settings/ExportImportScreen.kt`, `:core:data/ExportRepository.kt`
+Key files: `:feature:settings/ExportImportScreen.kt`, `:core:data/ExportRepository.kt`
 
 ---
 
 ### Setup / Onboarding
 
-**Behavior**: First launch → multi-step onboarding for permissions + mock location setup.
+First launch → multi-step onboarding. Track completion via `ONBOARDING_COMPLETE` DataStore key.
 
-**Steps**:
-1. Welcome — brief app explanation.
-2. Grant `ACCESS_FINE_LOCATION` — needed for map centering.
-3. Grant `SYSTEM_ALERT_WINDOW` — needed for joystick/widget overlays.
-4. Enable mock location — deep link to Developer Options. "Check again" button re-checks `AppOpsManager.OPSTR_MOCK_LOCATION`.
-5. Done → main map screen.
+Steps:
+1. Welcome
+2. Grant `ACCESS_FINE_LOCATION`
+3. Grant `SYSTEM_ALERT_WINDOW`
+4. Enable mock location (deep link to Developer Options, "Check again" button re-checks `AppOpsManager`)
+5. Done → MapScreen
 
-Track completion:
-```kotlin
-val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
-```
+Permission checks: `ContextCompat.checkSelfPermission`, `Settings.canDrawOverlays(context)`, `AppOpsManager.checkOpNoThrow(OPSTR_MOCK_LOCATION)`.
 
-On launch: false → `OnboardingScreen`, true → `MapScreen`.
+Edge cases: allow skipping each permission (show banner for missing). Detect revoked permissions on `onResume`.
 
-Permission checks per step:
-- `ACCESS_FINE_LOCATION`: `ContextCompat.checkSelfPermission`
-- `SYSTEM_ALERT_WINDOW`: `Settings.canDrawOverlays(context)`
-- Mock location: `AppOpsManager.checkOpNoThrow(OPSTR_MOCK_LOCATION, ...)`
-
-**Edge cases**:
-- User skips permission → mark skipped, allow proceed. Show banner for missing perms.
-- Permission revoked post-onboarding → detect on `onResume`, show non-blocking warning.
-- Developer Options hidden until "Build number" tapped 7× — include in onboarding copy.
-
-**Key files**: `:feature:onboarding/OnboardingScreen.kt`, `:feature:onboarding/OnboardingViewModel.kt`
+Key files: `:feature:onboarding/OnboardingScreen.kt`, `:feature:onboarding/OnboardingViewModel.kt`
 
 ---
 
 ## Domain Models Reference
 
-All in `:core:model`. Pure Kotlin — no Android imports, no Room annotations. Room entities in `:core:database` mirror these with `@Entity` and map via extension functions.
+All in `:core:model`. Pure Kotlin — no Android imports, no Room annotations. Room entities in `:core:database` mirror these and map via extension functions.
 
-```kotlin
-// LatLon — used everywhere
-data class LatLon(val lat: Double, val lon: Double)
-
-// Route
-data class Route(
-    val id: Long = 0,
-    val name: String,
-    val waypoints: List<LatLon>,
-    val createdAt: Instant,
-    val isLoop: Boolean = false
-)
-
-// FavoriteLocation
-data class FavoriteLocation(
-    val id: Long = 0,
-    val name: String,
-    val lat: Double,
-    val lon: Double,
-    val createdAt: Instant
-)
-
-// SpeedProfile
-enum class SpeedProfileType { WALK, RUN, BIKE }
-
-data class SpeedProfile(
-    val type: SpeedProfileType,
-    val speedMs: Double   // meters per second
-)
-
-// RoamingConfig
-data class RoamingConfig(
-    val centerLat: Double,
-    val centerLon: Double,
-    val radiusMeters: Double,
-    val durationMinutes: Int,
-    val roadFollowing: Boolean
-)
-
-// ExportBundle — used for export/import
-data class ExportBundle(
-    val schemaVersion: Int = 1,
-    val exportedAt: Instant,
-    val speedProfiles: Map<SpeedProfileType, Double>,
-    val activeProfile: SpeedProfileType,
-    val routes: List<Route>,
-    val favorites: List<FavoriteLocation>,
-    val widgetItems: Set<String>,
-    val roamingDefaults: RoamingConfig
-)
-```
+| Model | Fields |
+|-------|--------|
+| `LatLon` | `lat: Double`, `lon: Double` |
+| `Route` | `id`, `name`, `waypoints: List<LatLon>`, `createdAt: Instant`, `isLoop: Boolean` |
+| `FavoriteLocation` | `id`, `name`, `lat`, `lon`, `createdAt: Instant` |
+| `SpeedProfileType` | enum: `WALK`, `RUN`, `BIKE` |
+| `SpeedProfile` | `type: SpeedProfileType`, `speedMs: Double` |
+| `RoamingConfig` | `centerLat`, `centerLon`, `radiusMeters`, `durationMinutes`, `roadFollowing` |
+| `ExportBundle` | `schemaVersion`, `exportedAt`, `speedProfiles`, `activeProfile`, `routes`, `favorites`, `widgetItems`, `roamingDefaults` |
 
 ---
 
 ## Key Services
 
-### MockLocationService
-`ForegroundService` in `:service:location`. Owns `LocationManager` test provider. Exposes `StateFlow<SpoofState>` (idle/active/paused). Commands via bound interface: `startSpoofing(lat, lon)`, `updatePosition(lat, lon)`, `stopSpoofing()`.
-
-### JoystickOverlayService
-`Service` (not foreground) in `:feature:joystick`. Manages `WindowManager` overlay. Reads joystick input, computes direction vectors, calls `LocationRepository.updatePosition()`.
-
-### FloatingWidgetService
-`Service` in `:feature:widget`. Manages widget overlay. Binds to `MockLocationService` to read state and send commands.
-
-### RoamingEngine
-Not a service — class instantiated by `MockLocationService`. Runs on service coroutine scope. Owns OSRM client and random waypoint picker.
+| Service | Module | Type | Purpose |
+|---------|--------|------|---------|
+| `MockLocationService` | `:service:location` | ForegroundService | Owns `LocationManager` test provider. Exposes `StateFlow<SpoofState>`. Commands: `startSpoofing`, `updatePosition`, `stopSpoofing`. |
+| `JoystickOverlayService` | `:feature:joystick` | Service | Manages `WindowManager` overlay. Reads joystick input → `LocationRepository.updatePosition()`. |
+| `FloatingWidgetService` | `:feature:widget` | Service | Manages widget overlay. Binds to `MockLocationService`. |
+| `RoamingEngine` | `:service:roaming` | Class (not service) | Instantiated by `MockLocationService`. Owns OSRM client + random waypoint picker. Runs on service scope. |
 
 ---
 
@@ -676,31 +277,30 @@ Not a service — class instantiated by `MockLocationService`. Runs on service c
 
 | Permission | Type | When Required | Manifest |
 |---|---|---|---|
-| `ACCESS_FINE_LOCATION` | Dangerous | Map centering and route recording | Yes |
+| `ACCESS_FINE_LOCATION` | Dangerous | Map centering, route recording | Yes |
 | `ACCESS_COARSE_LOCATION` | Dangerous | Fallback if fine denied | Yes |
-| `SYSTEM_ALERT_WINDOW` | Special (AppOps) | Floating joystick and widget overlays | Yes |
-| `FOREGROUND_SERVICE` | Normal | Running `MockLocationService` as foreground | Yes |
+| `SYSTEM_ALERT_WINDOW` | Special (AppOps) | Joystick + widget overlays | Yes |
+| `FOREGROUND_SERVICE` | Normal | Running `MockLocationService` | Yes |
 | `FOREGROUND_SERVICE_LOCATION` | Normal (API 34+) | `foregroundServiceType="location"` | Yes (API 34+) |
-| `ACCESS_MOCK_LOCATION` | Special (Developer Options) | Injecting fake GPS via `addTestProvider` | No (Dev Options only) |
+| `ACCESS_MOCK_LOCATION` | Dev Options only | Injecting fake GPS | No (check via `AppOpsManager`) |
 
 Notes:
-- `ACCESS_MOCK_LOCATION` not manifest permission. Granted in Developer Options → "Select mock location app". Check via `AppOpsManager`.
-- `SYSTEM_ALERT_WINDOW` not granted via `requestPermissions`. Requires `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`.
+- `SYSTEM_ALERT_WINDOW` not granted via `requestPermissions` — requires `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`.
 - API 34+: `FOREGROUND_SERVICE_LOCATION` must be in manifest or `startForeground` crashes.
 
 ---
 
 ## Technical Constraints
 
-- **Min SDK**: API 31 (Android 12). `ProviderProperties.Builder` is API 31+. Don't use deprecated `addTestProvider` overload with raw ints.
-- **No Play Services**: MapLibre, not Google Maps. No Firebase.
-- **Offline-first**: All core features work without internet. OSRM opt-in, degrades gracefully.
-- **No Thread.sleep()**: Use `delay()` in coroutines.
-- **No empty catch blocks**: Every `catch` must log or handle.
-- **No GlobalScope**: Use `viewModelScope`, `lifecycleScope`, or scoped `CoroutineScope`.
-- **No memory leaks**: Every `WindowManager.addView` → matching `removeView` in `onDestroy`. Every scope cancelled in `onDestroy`/`onCleared`.
-- **1 Hz location updates**: Don't push faster or slower.
-- **Battery**: `IMPORTANCE_LOW` channel. No wake locks unless absolutely necessary.
+- Min SDK API 31. Use `ProviderProperties.Builder` (API 31+). Don't use deprecated raw-int overload.
+- No Play Services: MapLibre not Google Maps. No Firebase.
+- Offline-first: core features work without internet. OSRM opt-in, degrades gracefully.
+- No `Thread.sleep()` — use `delay()` in coroutines.
+- No empty catch blocks — every `catch` must log or handle.
+- No `GlobalScope` — use `viewModelScope`, `lifecycleScope`, or scoped `CoroutineScope`.
+- No memory leaks: every `WindowManager.addView` → matching `removeView` in `onDestroy`. Every scope cancelled in `onDestroy`/`onCleared`.
+- 1 Hz location updates exactly.
+- Battery: `IMPORTANCE_LOW` channel. No wake locks unless absolutely necessary.
 
 ---
 
@@ -709,15 +309,15 @@ Notes:
 ### General
 - Kotlin only. No Java.
 - Package declaration in every file matching module structure.
-- No wildcard imports (`import com.foo.*`).
+- No wildcard imports.
 - Max line length: 120 chars.
 
 ### Compose
 - State hoisting: ViewModels hold state, Composables receive as params.
 - `collectAsStateWithLifecycle()` (not `collectAsState()`).
-- No business logic in Composables. Call lambdas, ViewModels handle logic.
+- No business logic in Composables.
 - `@Preview` for every non-trivial Composable.
-- `remember { }` for expensive computations, `rememberSaveable { }` for state surviving recomposition/process death.
+- `remember { }` for expensive computations, `rememberSaveable { }` for state surviving process death.
 
 ### Coroutines
 - `viewModelScope.launch { }` for ViewModel coroutines.
@@ -738,156 +338,71 @@ Notes:
 - `Log.e(TAG, "message", e)` on every caught exception. Never swallow silently.
 
 ### Naming
-- ViewModels: `FeatureViewModel` (e.g. `RouteViewModel`, `MapViewModel`).
-- Screens: `FeatureScreen` (e.g. `RouteListScreen`, `MapScreen`).
-- DAOs: `EntityDao` (e.g. `RouteDao`, `FavoriteDao`).
-- Repositories: `FeatureRepository` (e.g. `RouteRepository`, `LocationRepository`).
-- Services: descriptive + `Service` suffix (e.g. `MockLocationService`, `JoystickOverlayService`).
+- ViewModels: `FeatureViewModel`
+- Screens: `FeatureScreen`
+- DAOs: `EntityDao`
+- Repositories: `FeatureRepository`
+- Services: descriptive + `Service` suffix
 
 ---
 
 ## Testing Strategy
 
 ### Unit Tests (`:core:*`)
-- Repository logic with fake DAO (in-memory Room).
-- Route replay interpolation: waypoints A+B → assert position after N ticks.
-- RDP simplification: known path → assert simplified output.
-- Bearing calculation: known lat/lon pairs → expected bearing.
-- `randomPointInRadius`: output always within specified radius.
-- Export/import serialization: round-trip full `ExportBundle` through JSON.
+- Repository logic with fake DAO (in-memory Room)
+- Route replay interpolation: waypoints A+B → assert position after N ticks
+- RDP simplification: known path → assert simplified output
+- Bearing calculation: known lat/lon pairs → expected bearing
+- `randomPointInRadius`: output always within specified radius
+- Export/import serialization: round-trip full `ExportBundle` through JSON
 
 ### Integration Tests (`:feature:*`)
-- Hilt testing with `@HiltAndroidTest`.
-- Full route save → list → replay with in-memory Room.
-- Favorites: add → list → teleport → delete.
+- Hilt testing with `@HiltAndroidTest`
+- Full route save → list → replay with in-memory Room
+- Favorites: add → list → teleport → delete
 
 ### UI Tests (Compose)
-- `ComposeTestRule` for screen-level tests.
-- Onboarding flow: mock permission states, assert correct screen transitions.
-- Route editor: add waypoints, assert polyline updates.
+- `ComposeTestRule` for screen-level tests
+- Onboarding flow: mock permission states, assert correct screen transitions
+- Route editor: add waypoints, assert polyline updates
 
 ### What NOT to test
-- MapLibre rendering (GPU, not unit-testable).
-- `WindowManager` overlay behavior (requires real device).
-- `LocationManager.addTestProvider` (requires real device with Developer Options).
+- MapLibre rendering (GPU, not unit-testable)
+- `WindowManager` overlay behavior (requires real device)
+- `LocationManager.addTestProvider` (requires real device with Developer Options)
 
 ---
 
 ## Common Patterns
 
-### Bound Service Communication
-
-```kotlin
-// In the service
-inner class LocalBinder : Binder() {
-    fun getService(): MockLocationService = this@MockLocationService
-}
-
-// In the client (ViewModel or other service)
-private val connection = object : ServiceConnection {
-    override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-        locationService = (binder as MockLocationService.LocalBinder).getService()
-    }
-    override fun onServiceDisconnected(name: ComponentName) {
-        locationService = null
-    }
-}
-context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-// Unbind in onDestroy / onCleared
-```
-
-### DataStore Read
-
-```kotlin
-val walkSpeed: Flow<Double> = dataStore.data.map { prefs ->
-    prefs[WALK_SPEED] ?: 1.4
-}
-```
-
-### DataStore Write
-
-```kotlin
-suspend fun setWalkSpeed(speed: Double) {
-    dataStore.edit { prefs -> prefs[WALK_SPEED] = speed }
-}
-```
-
-### Room One-to-Many Query
-
-```kotlin
-@Transaction
-@Query("SELECT * FROM routes WHERE id = :routeId")
-fun getRouteWithWaypoints(routeId: Long): Flow<RouteWithWaypoints>
-```
-
-### Haversine Distance (meters)
-
-```kotlin
-fun haversineMeters(a: LatLon, b: LatLon): Double {
-    val R = 6371000.0
-    val dLat = Math.toRadians(b.lat - a.lat)
-    val dLon = Math.toRadians(b.lon - a.lon)
-    val sinDLat = sin(dLat / 2)
-    val sinDLon = sin(dLon / 2)
-    val h = sinDLat * sinDLat +
-            cos(Math.toRadians(a.lat)) * cos(Math.toRadians(b.lat)) * sinDLon * sinDLon
-    return 2 * R * asin(sqrt(h))
-}
-```
-
-### Advancing Position by Distance
-
-```kotlin
-fun advancePosition(from: LatLon, bearingDeg: Double, distanceMeters: Double): LatLon {
-    val R = 6371000.0
-    val d = distanceMeters / R
-    val brng = Math.toRadians(bearingDeg)
-    val lat1 = Math.toRadians(from.lat)
-    val lon1 = Math.toRadians(from.lon)
-    val lat2 = asin(sin(lat1) * cos(d) + cos(lat1) * sin(d) * cos(brng))
-    val lon2 = lon1 + atan2(sin(brng) * sin(d) * cos(lat1), cos(d) - sin(lat1) * sin(lat2))
-    return LatLon(Math.toDegrees(lat2), Math.toDegrees(lon2))
-}
-```
+- **Bound service**: `LocalBinder` inner class in service, `ServiceConnection` in client. Unbind in `onDestroy`/`onCleared`.
+- **DataStore read**: `dataStore.data.map { prefs -> prefs[KEY] ?: default }`
+- **DataStore write**: `dataStore.edit { prefs -> prefs[KEY] = value }` in suspend fun
+- **Room one-to-many**: `@Transaction @Query` returning `Flow<EntityWithChildren>`
+- **Haversine**: use for distance between two `LatLon` points (R = 6371000.0 m)
+- **Bearing**: `atan2(sin(dLon)*cos(lat2), cos(lat1)*sin(lat2) - sin(lat1)*cos(lat2)*cos(dLon))`
+- **Advance position**: spherical law of cosines from `LatLon` + bearing + distance
 
 ---
 
 ## Pre-Commit Validation Policy
 
-**Work is NOT complete until lint and build both pass.** No exceptions.
-
-### Required checks (run in order)
+Work is NOT complete until lint and build both pass.
 
 ```bash
-# 1. Lint — must produce zero errors
-./gradlew lint
-
-# 2. Build — debug APK must compile clean
-./gradlew assembleDebug
+./gradlew lint          # must produce zero errors
+./gradlew assembleDebug # must compile clean
 ```
 
-### Rules
-
-- Fix every lint error before declaring done. Warnings are acceptable; errors are not.
-- Build must succeed with no compilation errors across all modules.
-- If a check fails, fix the root cause. Do NOT suppress warnings/errors with annotations unless the suppression is genuinely correct and pre-existing policy allows it.
-- Run both checks after **every** set of edits, not just at the end of a session.
-- A task that breaks lint or build is incomplete, regardless of feature correctness.
-
-### Lint suppressions
-
-Suppress only when the lint rule is a known false positive for this pattern and you add an inline comment explaining why:
-
-```kotlin
-@Suppress("UnusedParameter") // retained for future callback compatibility — remove when API stabilises
-fun onEvent(event: Event) { }
-```
-
-Never suppress `Errors` category rules. Never batch-suppress with `@file:Suppress`.
+Rules:
+- Fix every lint error before declaring done. Warnings acceptable; errors not.
+- Run both after every set of edits, not just end of session.
+- If check fails, fix root cause. Don't suppress unless genuine false positive + inline comment explaining why.
+- Never suppress `Errors` category rules. Never batch-suppress with `@file:Suppress`.
 
 ---
 
-*Last updated: May 2026. schemaVersion for export/import: 1.*
+*Last updated: May 2026. Export/import schemaVersion: 1.*
 
 ## Code Exploration Policy
 
