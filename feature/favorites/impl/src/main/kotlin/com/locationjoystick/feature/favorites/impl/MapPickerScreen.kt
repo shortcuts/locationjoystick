@@ -13,6 +13,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -51,7 +52,7 @@ private const val DEFAULT_ZOOM = 15.0
 
 @Composable
 fun MapPickerRoute(
-    onLocationPicked: (lat: Double, lon: Double) -> Unit,
+    onLocationPicked: (name: String, lat: Double, lon: Double) -> Unit,
     onBack: () -> Unit,
 ) {
     MapPickerScreen(
@@ -63,7 +64,7 @@ fun MapPickerRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MapPickerScreen(
-    onLocationPicked: (lat: Double, lon: Double) -> Unit,
+    onLocationPicked: (name: String, lat: Double, lon: Double) -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -73,6 +74,7 @@ internal fun MapPickerScreen(
     val mapRef = remember { mutableStateOf<MapLibreMap?>(null) }
     val markerSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val selectedPosition = remember { mutableStateOf<Pair<Double, Double>?>(null) }
+    val nameState = remember { mutableStateOf("") }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -187,16 +189,25 @@ internal fun MapPickerScreen(
                 Text(
                     "Longitude: ${String.format("%.4f", pos.second)}",
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = 12.dp)
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
+            OutlinedTextField(
+                value = nameState.value,
+                onValueChange = { nameState.value = it },
+                label = { Text("Name") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                singleLine = true,
+            )
             Button(
                 onClick = {
-                    if (pos != null) {
-                        onLocationPicked(pos.first, pos.second)
+                    if (pos != null && nameState.value.isNotBlank()) {
+                        onLocationPicked(nameState.value.trim(), pos.first, pos.second)
                     }
                 },
-                enabled = pos != null,
+                enabled = pos != null && nameState.value.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Select This Location")

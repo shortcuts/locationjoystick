@@ -25,7 +25,7 @@ object DatabaseModule {
         context,
         LjDatabase::class.java,
         LjDatabase.DATABASE_NAME,
-    ).build()
+    ).addMigrations(LjDatabase.MIGRATION_1_2).build()
 
     @Provides
     fun provideRouteDao(database: LjDatabase): RouteDao = database.routeDao()

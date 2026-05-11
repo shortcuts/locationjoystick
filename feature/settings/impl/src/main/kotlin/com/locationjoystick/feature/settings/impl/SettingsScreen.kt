@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -20,7 +19,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -143,6 +141,14 @@ internal fun SettingsScreen(
                         onSpeedChange = { onSetWalkSpeed(it) },
                         unit = if (uiState.speedUnit == SpeedUnit.KMH) "km/h" else "mph",
                     )
+                    if (uiState.walkSpeed > 8.0) {
+                        Text(
+                            text = "Having a speed higher than 8 m/s can alter the gameplay or trigger an anti-cheat warning in some games",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(start = 4.dp, top = 2.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -152,6 +158,14 @@ internal fun SettingsScreen(
                         onSpeedChange = { onSetRunSpeed(it) },
                         unit = if (uiState.speedUnit == SpeedUnit.KMH) "km/h" else "mph",
                     )
+                    if (uiState.runSpeed > 8.0) {
+                        Text(
+                            text = "Having a speed higher than 8 m/s can alter the gameplay or trigger an anti-cheat warning in some games",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(start = 4.dp, top = 2.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -161,22 +175,13 @@ internal fun SettingsScreen(
                         onSpeedChange = { onSetBikeSpeed(it) },
                         unit = if (uiState.speedUnit == SpeedUnit.KMH) "km/h" else "mph",
                     )
-
-                    val hasHighSpeed = uiState.walkSpeed > 8.0 || uiState.runSpeed > 8.0 || uiState.bikeSpeed > 8.0
-
-                    if (hasHighSpeed) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(4.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                        ) {
-                            Text(
-                                "High speeds may affect accuracy in some apps",
-                                modifier = Modifier.padding(8.dp),
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
+                    if (uiState.bikeSpeed > 8.0) {
+                        Text(
+                            text = "Having a speed higher than 8 m/s can alter the gameplay or trigger an anti-cheat warning in some games",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(start = 4.dp, top = 2.dp)
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))

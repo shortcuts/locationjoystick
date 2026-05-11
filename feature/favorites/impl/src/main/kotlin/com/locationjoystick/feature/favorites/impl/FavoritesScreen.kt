@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,10 +21,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +51,7 @@ import com.locationjoystick.core.ui.component.EmptyState
 @Composable
 fun FavoritesRoute(
     viewModel: FavoritesViewModel,
+    onNavigateToMapPicker: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -60,6 +63,7 @@ fun FavoritesRoute(
         onDelete = { viewModel.deleteFavorite(it.id) },
         onAddFavorite = viewModel::addFavorite,
         onUpdateFavorite = viewModel::updateFavorite,
+        onNavigateToMapPicker = onNavigateToMapPicker,
     )
 }
 
@@ -72,6 +76,7 @@ internal fun FavoritesScreen(
     onDelete: (com.locationjoystick.core.model.FavoriteLocation) -> Unit,
     onAddFavorite: (String, Double, Double) -> Unit,
     onUpdateFavorite: (String, String, Double, Double) -> Unit,
+    onNavigateToMapPicker: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var showAddSheet by remember { mutableStateOf(false) }
@@ -81,10 +86,19 @@ internal fun FavoritesScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddSheet = true },
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add favorite")
+                ExtendedFloatingActionButton(
+                    onClick = onNavigateToMapPicker,
+                    icon = { Icon(Icons.Rounded.Map, null) },
+                    text = { Text("+ map") }
+                )
+                ExtendedFloatingActionButton(
+                    onClick = { showAddSheet = true },
+                    icon = { Icon(Icons.Default.Add, null) },
+                    text = { Text("+ coordinates") }
+                )
             }
         }
     ) { scaffoldPadding ->
@@ -245,7 +259,7 @@ private fun AddFavoriteSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 24.dp),
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End
+            horizontalArrangement = Arrangement.End
         ) {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")

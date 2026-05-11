@@ -23,8 +23,8 @@ Also useful for: privacy (mask real location), QA testing (simulate movement at 
 
 - **Map**: OpenStreetMap via MapLibre (GPU-accelerated, offline-capable). Tap to walk or teleport. Spoofed position as live marker.
 - **Joystick**: Floating overlay, stays on top of any app. Move any direction at chosen speed. Draggable. Persists while minimized.
-- **Speeds**: Walk / Run / Bike presets. Each user-editable (m/s). Accessible from floating widget.
-- **Routes**: Create waypoints on map. Save/rename/edit/delete. Replay, loop, or record in real time.
+- **Speeds**: Walk (2 km/h) / Run (10 km/h) / Bike (20 km/h) presets. Each user-editable. Anti-cheat warning shown inline when speed exceeds 8 m/s. Accessible from floating widget.
+- **Routes**: Two modes — **straight** (direct segments, no network) and **guided** (OSRM road-following). Create waypoints on map. Save/rename/edit/delete. Replay, loop, or record in real time.
 - **Roaming**: Set radius + duration. Auto-walks randomly. Optional road-following via OSRM.
 - **Favorites**: Save named map positions. Instantly teleport to any.
 - **Floating Widget**: Configurable quick-access panel floats over other apps. Collapsible.

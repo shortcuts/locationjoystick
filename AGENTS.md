@@ -45,6 +45,8 @@ Multi-module, NowInAndroid-style. Each feature = Gradle module. Shared code in `
 
 MVVM + Repository pattern. ViewModel → Repository → DataSource (Room / DataStore / LocationManager). ViewModels expose `StateFlow`/`SharedFlow`. Compose UI collects via `collectAsStateWithLifecycle()`.
 
+`LjNavHost` uses nested `navigation {}` graphs for back-isolation: `routes_graph` (Routes + RouteCreator + RouteDetail) and `favorites_graph` (Favorites + MapPicker). Drawer navigation uses `popUpTo(MAP_ROUTE) { saveState = true }` + `launchSingleTop + restoreState`. `FavoritesViewModel` is shared across the favorites graph via `hiltViewModel(navController.getBackStackEntry("favorites_graph"))`.
+
 DI: Hilt throughout. Every ViewModel `@HiltViewModel`. Every repository `@Singleton`.
 
 Reactive streams: Kotlin Flow everywhere. No RxJava. No LiveData.
@@ -123,7 +125,7 @@ Key files: `:feature:joystick/JoystickOverlayService.kt`, `:feature:joystick/Joy
 
 ### Map (MapLibre)
 
-Main screen shows OpenStreetMap. Spoofed location as marker. Map follows marker during spoofing.
+Main screen shows OpenStreetMap centered on Paris (48.8566, 2.3522) at zoom 12 on first load. Scroll gestures enabled by default. TopAppBar with hamburger icon opens the nav drawer via `onOpenDrawer: () -> Unit` lambda (drawer owned by `LjApp`, not `LjNavHost`). Spoofed location shown as marker. Map follows marker during spoofing.
 
 Library: MapLibre Android SDK 12.x (not osmdroid, not Google Maps). OSM tile source via `RasterSource`. Location marker: `SymbolLayer` backed by GeoJSON — update coords, don't remove/re-add layer. Route polylines: `LineLayer` backed by GeoJSON `FeatureCollection`. Offline tiles via `OfflineManager.downloadRegion()`.
 
@@ -137,9 +139,13 @@ Key files: `:feature:map/MapScreen.kt`, `:feature:map/MapViewModel.kt`
 
 ### Route System
 
-Create waypoints on map → polyline in order. Save named route to Room. Edit (drag/add/delete waypoints). Delete via swipe or detail screen. Replay at current speed with progress indicator. Optional looping.
+Create waypoints on map → polyline in order. Two route types:
+- **STRAIGHT** (`RouteType.STRAIGHT`): straight-line segments between waypoints, no network required.
+- **GUIDED** (`RouteType.GUIDED`): OSRM road-following segments. On OSRM failure, sets `osrmError = true` in `CreatorState` — no silent fallback to straight line.
 
-Storage: `RouteEntity` + `WaypointEntity` one-to-many. Waypoints store `routeId`, `lat`, `lon`, `orderIndex`.
+Save named route to Room. Edit (drag/add/delete waypoints). Delete via swipe or detail screen. Replay at current speed with progress indicator. Optional looping.
+
+Storage: `RouteEntity` + `WaypointEntity` one-to-many. Waypoints store `routeId`, `lat`, `lon`, `orderIndex`. DB version: **2** (migration 1→2 adds `routeType TEXT NOT NULL DEFAULT 'STRAIGHT'`).
 
 Replay: interpolate between waypoints at speed (m/s), compute bearing via `atan2`, advance by `speed * deltaTime`, snap within 1 m of waypoint. Loops: interpolate smoothly from last to first waypoint.
 
@@ -155,6 +161,8 @@ Key files: `:feature:routes/RouteListScreen.kt`, `:feature:routes/RouteEditorScr
 
 Save named locations. Tap from list → instantly teleport spoofed position. Rename and delete supported.
 
+Two add flows: **+ coordinates** (inline dialog with name/lat/lon fields) and **+ map** (navigates to `MapPickerScreen` where user taps map or uses Nominatim search, enters a name, then confirms). MapPickerScreen calls back with `(name, lat, lon)`.
+
 Storage: `FavoriteEntity` flat table (no relations). Teleport: set position directly, push one update, camera jumps. Sort by `createdAt` desc default; optional alpha sort.
 
 Key files: `:feature:favorites/FavoritesScreen.kt`, `:feature:favorites/FavoritesViewModel.kt`, `:core:database/FavoriteDao.kt`
@@ -163,11 +171,11 @@ Key files: `:feature:favorites/FavoritesScreen.kt`, `:feature:favorites/Favorite
 
 ### Speed Profiles
 
-Three presets: Walk (1.4 m/s), Run (3.0 m/s), Bike (5.5 m/s). All user-editable. Applies to joystick, route replay, roaming.
+Three presets: Walk (0.556 m/s / 2 km/h), Run (2.778 m/s / 10 km/h), Bike (5.556 m/s / 20 km/h). All user-editable. Applies to joystick, route replay, roaming.
 
 Stored in DataStore. UI: three chips or segmented button in widget + Settings. Change takes effect immediately on next tick.
 
-Edge cases: clamp 0.1–15.0 m/s. Warn if >8 m/s (anti-cheat risk).
+Edge cases: clamp 0.1–15.0 m/s. Warn inline below speed input when >8 m/s (anti-cheat risk). Warning uses `MaterialTheme.colorScheme.error`, generic language — no game names.
 
 Key files: `:feature:settings/SpeedSettingsScreen.kt`, `:core:data/SpeedProfileRepository.kt`
 
@@ -253,8 +261,9 @@ All in `:core:model`. Pure Kotlin — no Android imports, no Room annotations. R
 | Model | Fields |
 |-------|--------|
 | `LatLon` | `lat: Double`, `lon: Double` |
-| `Route` | `id`, `name`, `waypoints: List<LatLon>`, `createdAt: Instant`, `isLoop: Boolean` |
+| `Route` | `id`, `name`, `waypoints: List<LatLon>`, `isLooping: Boolean`, `routeType: RouteType`, `createdAt: Long`, `updatedAt: Long` |
 | `FavoriteLocation` | `id`, `name`, `lat`, `lon`, `createdAt: Instant` |
+| `RouteType` | enum: `STRAIGHT`, `GUIDED` |
 | `SpeedProfileType` | enum: `WALK`, `RUN`, `BIKE` |
 | `SpeedProfile` | `type: SpeedProfileType`, `speedMs: Double` |
 | `RoamingConfig` | `centerLat`, `centerLon`, `radiusMeters`, `durationMinutes`, `roadFollowing` |
@@ -282,7 +291,7 @@ All in `:core:model`. Pure Kotlin — no Android imports, no Room annotations. R
 | `SYSTEM_ALERT_WINDOW` | Special (AppOps) | Joystick + widget overlays | Yes |
 | `FOREGROUND_SERVICE` | Normal | Running `MockLocationService` | Yes |
 | `FOREGROUND_SERVICE_LOCATION` | Normal (API 34+) | `foregroundServiceType="location"` | Yes (API 34+) |
-| `ACCESS_MOCK_LOCATION` | Dev Options only | Injecting fake GPS | No (check via `AppOpsManager`) |
+| `ACCESS_MOCK_LOCATION` | Dev Options only | Registering as mock location provider | Yes (with `tools:ignore="MockLocation"` — this IS a mock location app, not a test-only use) |
 
 Notes:
 - `SYSTEM_ALERT_WINDOW` not granted via `requestPermissions` — requires `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`.

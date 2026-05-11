@@ -1,11 +1,13 @@
 package com.locationjoystick.feature.routes.impl
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
+import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.Waypoint
 import com.locationjoystick.core.routing.OsrmClient
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,13 +28,19 @@ data class CreatorState(
     val segments: List<List<LatLng>> = emptyList(),
     val totalDistanceMeters: Double = 0.0,
     val isLoadingSegment: Boolean = false,
+    val osrmError: Boolean = false,
 )
 
 @HiltViewModel
 class RouteCreatorViewModel @Inject constructor(
     private val routeRepository: RouteRepository,
     private val osrmClient: OsrmClient,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+    private val routeType = RouteType.valueOf(
+        savedStateHandle.get<String>("routeType") ?: RouteType.STRAIGHT.name
+    )
 
     private val _state = MutableStateFlow(CreatorState())
     val state: StateFlow<CreatorState> = _state.asStateFlow()
@@ -50,32 +58,46 @@ class RouteCreatorViewModel @Inject constructor(
             return
         }
 
-        _state.value = _state.value.copy(isLoadingSegment = true)
+        val lastWaypoint = currentWaypoints.last()
+
+        if (routeType == RouteType.STRAIGHT) {
+            val segment = listOf(lastWaypoint, latLng)
+            val currentSegments = _state.value.segments + listOf(segment)
+            val distance = currentSegments.sumOf { seg ->
+                seg.zipWithNext().sumOf { (a, b) -> haversineMeters(a, b) }
+            }
+            _state.value = _state.value.copy(
+                waypoints = newWaypoints,
+                segments = currentSegments,
+                totalDistanceMeters = distance,
+            )
+            return
+        }
+
+        _state.value = _state.value.copy(isLoadingSegment = true, osrmError = false)
 
         viewModelScope.launch {
             try {
-                val lastWaypoint = currentWaypoints.last()
                 val segmentResult = osrmClient.getRoute("foot", listOf(lastWaypoint, latLng))
-
                 val segment = segmentResult.getOrElse {
-                    Log.e(TAG, "OSRM failed, using straight line", it)
-                    listOf(lastWaypoint, latLng)
+                    Log.e(TAG, "OSRM failed for guided route", it)
+                    _state.value = _state.value.copy(isLoadingSegment = false, osrmError = true)
+                    return@launch
                 }
-
                 val currentSegments = _state.value.segments + listOf(segment)
                 val distance = currentSegments.sumOf { seg ->
                     seg.zipWithNext().sumOf { (a, b) -> haversineMeters(a, b) }
                 }
-
                 _state.value = _state.value.copy(
                     waypoints = newWaypoints,
                     segments = currentSegments,
                     totalDistanceMeters = distance,
-                    isLoadingSegment = false
+                    isLoadingSegment = false,
+                    osrmError = false,
                 )
             } catch (e: Exception) {
-                Log.e(TAG, "Error adding waypoint", e)
-                _state.value = _state.value.copy(isLoadingSegment = false)
+                Log.e(TAG, "Error fetching OSRM route", e)
+                _state.value = _state.value.copy(isLoadingSegment = false, osrmError = true)
             }
         }
     }
@@ -120,6 +142,7 @@ class RouteCreatorViewModel @Inject constructor(
             name = name,
             waypoints = waypoints,
             isLooping = false,
+            routeType = routeType,
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )

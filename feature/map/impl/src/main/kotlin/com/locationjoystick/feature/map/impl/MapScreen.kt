@@ -3,11 +3,15 @@ package com.locationjoystick.feature.map.impl
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DrawerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -48,26 +52,30 @@ private const val OSM_LAYER_ID = "osm-layer"
 private const val POSITION_SOURCE_ID = "position-source"
 private const val POSITION_LAYER_ID = "position-layer"
 private const val OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-private const val DEFAULT_ZOOM = 15.0
+private const val DEFAULT_ZOOM = 12.0
+private const val DEFAULT_LAT = 48.8566
+private const val DEFAULT_LON = 2.3522
 
-fun NavGraphBuilder.mapScreen(drawerState: DrawerState) {
+fun NavGraphBuilder.mapScreen(onOpenDrawer: () -> Unit) {
     composable(route = MAP_ROUTE) {
-        MapRoute(drawerState = drawerState)
+        MapRoute(onOpenDrawer = onOpenDrawer)
     }
 }
 
 @Composable
 fun MapRoute(
-    drawerState: DrawerState,
+    onOpenDrawer: () -> Unit,
     viewModel: MapViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    MapScreen(uiState = uiState, onAction = viewModel::onAction)
+    MapScreen(uiState = uiState, onOpenDrawer = onOpenDrawer, onAction = viewModel::onAction)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MapScreen(
     uiState: MapUiState,
+    onOpenDrawer: () -> Unit,
     onAction: (MapAction) -> Unit,
 ) {
     val context = LocalContext.current
@@ -96,6 +104,16 @@ internal fun MapScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            TopAppBar(
+                title = {},
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(Icons.Rounded.Menu, contentDescription = "Open menu")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             MapFab(
                 isSpoofing = uiState.isSpoofing,
@@ -116,7 +134,9 @@ internal fun MapScreen(
                             mapRef.value = map
                             map.uiSettings.isAttributionEnabled = false
                             map.uiSettings.isLogoEnabled = false
+                            map.uiSettings.isScrollGesturesEnabled = true
                             map.cameraPosition = CameraPosition.Builder()
+                                .target(MapLatLng(DEFAULT_LAT, DEFAULT_LON))
                                 .zoom(DEFAULT_ZOOM)
                                 .build()
 

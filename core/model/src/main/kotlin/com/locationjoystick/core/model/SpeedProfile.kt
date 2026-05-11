@@ -6,9 +6,9 @@ data class SpeedProfile(
     val speedMetersPerSecond: Double,
 ) {
     companion object {
-        private const val WALK_SPEED_MPS = 1.4
-        private const val RUN_SPEED_MPS = 3.0
-        private const val BIKE_SPEED_MPS = 5.5
+        private const val WALK_SPEED_MPS = 0.556
+        private const val RUN_SPEED_MPS = 2.778
+        private const val BIKE_SPEED_MPS = 5.556
 
         fun defaultProfiles(): List<SpeedProfile> = listOf(
             SpeedProfile(id = "walk", name = "Walk", speedMetersPerSecond = WALK_SPEED_MPS),

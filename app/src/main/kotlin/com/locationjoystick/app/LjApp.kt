@@ -4,15 +4,17 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.compose.rememberNavController
-import androidx.compose.foundation.layout.Box
 import com.locationjoystick.app.navigation.LjDrawerContent
 import com.locationjoystick.app.navigation.LjNavHost
+import kotlinx.coroutines.launch
 
 @Composable
 fun LjApp() {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -25,7 +27,7 @@ fun LjApp() {
     ) {
         LjNavHost(
             navController = navController,
-            drawerState = drawerState
+            onOpenDrawer = { scope.launch { drawerState.open() } }
         )
     }
 }

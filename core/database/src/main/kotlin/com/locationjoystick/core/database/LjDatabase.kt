@@ -2,6 +2,8 @@ package com.locationjoystick.core.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.locationjoystick.core.database.dao.FavoriteDao
 import com.locationjoystick.core.database.dao.RouteDao
 import com.locationjoystick.core.database.dao.WaypointDao
@@ -15,7 +17,7 @@ import com.locationjoystick.core.database.entities.WaypointEntity
         WaypointEntity::class,
         FavoriteEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class LjDatabase : RoomDatabase() {
@@ -28,5 +30,11 @@ abstract class LjDatabase : RoomDatabase() {
 
     companion object {
         const val DATABASE_NAME = "locationjoystick.db"
+
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE routes ADD COLUMN routeType TEXT NOT NULL DEFAULT 'STRAIGHT'")
+            }
+        }
     }
 }

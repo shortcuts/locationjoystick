@@ -39,7 +39,11 @@ fun LjDrawerContent(
             label = { Text("Map") },
             selected = false,
             onClick = {
-                navController.navigate(MAP_ROUTE)
+                navController.navigate(MAP_ROUTE) {
+                    popUpTo(MAP_ROUTE) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
                 scope.launch { drawerState.close() }
             }
         )
@@ -48,7 +52,11 @@ fun LjDrawerContent(
             label = { Text("Routes") },
             selected = false,
             onClick = {
-                navController.navigate(ROUTES_ROUTE)
+                navController.navigate(ROUTES_ROUTE) {
+                    popUpTo(MAP_ROUTE) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
                 scope.launch { drawerState.close() }
             }
         )
@@ -57,7 +65,11 @@ fun LjDrawerContent(
             label = { Text("Favorites") },
             selected = false,
             onClick = {
-                navController.navigate(FAVORITES_ROUTE)
+                navController.navigate(FAVORITES_ROUTE) {
+                    popUpTo(MAP_ROUTE) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
                 scope.launch { drawerState.close() }
             }
         )
@@ -66,7 +78,11 @@ fun LjDrawerContent(
             label = { Text("Roaming") },
             selected = false,
             onClick = {
-                navController.navigate(ROAMING_ROUTE)
+                navController.navigate(ROAMING_ROUTE) {
+                    popUpTo(MAP_ROUTE) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
                 scope.launch { drawerState.close() }
             }
         )
@@ -75,7 +91,11 @@ fun LjDrawerContent(
             label = { Text("Settings") },
             selected = false,
             onClick = {
-                navController.navigate(SETTINGS_ROUTE)
+                navController.navigate(SETTINGS_ROUTE) {
+                    popUpTo(MAP_ROUTE) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
                 scope.launch { drawerState.close() }
             }
         )
