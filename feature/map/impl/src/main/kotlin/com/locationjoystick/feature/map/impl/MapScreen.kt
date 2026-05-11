@@ -1,27 +1,40 @@
 package com.locationjoystick.feature.map.impl
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -31,7 +44,9 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.MockLocationState
+import com.locationjoystick.core.ui.component.LjTopBar
 import com.locationjoystick.feature.map.api.MAP_ROUTE
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
@@ -71,7 +86,6 @@ fun MapRoute(
     MapScreen(uiState = uiState, onOpenDrawer = onOpenDrawer, onAction = viewModel::onAction)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MapScreen(
     uiState: MapUiState,
@@ -102,30 +116,44 @@ internal fun MapScreen(
         }
     }
 
+    LaunchedEffect(uiState.pendingCameraTarget) {
+        val target = uiState.pendingCameraTarget ?: return@LaunchedEffect
+        mapRef.value?.animateCamera(
+            CameraUpdateFactory.newLatLng(MapLatLng(target.latitude, target.longitude)),
+            500,
+        )
+        onAction(MapAction.CameraTargetConsumed)
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = {},
-                navigationIcon = {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Rounded.Menu, contentDescription = "Open menu")
-                    }
-                }
-            )
+            LjTopBar(title = "locationjoystick", onMenuClick = onOpenDrawer)
         },
         floatingActionButton = {
-            MapFab(
-                isSpoofing = uiState.isSpoofing,
-                onStart = { onAction(MapAction.StartSpoofing) },
-                onStop = { onAction(MapAction.StopSpoofing) },
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                FloatingActionButton(
+                    onClick = { onAction(MapAction.OpenFavoritesPicker) },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ) {
+                    Icon(
+                        imageVector = LjIcons.Favorite,
+                        contentDescription = "Open favorites",
+                    )
+                }
+                MapFab(
+                    isSpoofing = uiState.isSpoofing,
+                    onStart = { onAction(MapAction.StartSpoofing) },
+                    onStop = { onAction(MapAction.StopSpoofing) },
+                )
+            }
         },
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(bottom = paddingValues.calculateBottomPadding()),
         ) {
             AndroidView(
                 factory = { _ ->
@@ -214,6 +242,137 @@ internal fun MapScreen(
                 },
                 modifier = Modifier.fillMaxSize(),
             )
+        }
+    }
+
+    if (uiState.showFavoritesSheet) {
+        FavoritesPickerSheet(
+            uiState = uiState,
+            onAction = onAction,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FavoritesPickerSheet(
+    uiState: MapUiState,
+    onAction: (MapAction) -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = { onAction(MapAction.CloseFavoritesPicker) },
+    ) {
+        val target = uiState.favoriteTarget
+        if (target == null) {
+            FavoritesPickerList(
+                favorites = uiState.favorites,
+                onSelect = { onAction(MapAction.SelectFavorite(it)) },
+            )
+        } else {
+            FavoriteTargetDetail(
+                favorite = target,
+                onSetLocation = { onAction(MapAction.SetLocationTo(target.position)) },
+                onGoToLocation = { onAction(MapAction.WalkStraightTo(target.position)) },
+                onBack = { onAction(MapAction.DeselectFavorite) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun FavoritesPickerList(
+    favorites: List<FavoriteLocation>,
+    onSelect: (FavoriteLocation) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+    ) {
+        Text("Favorites", style = MaterialTheme.typography.headlineSmall)
+
+        if (favorites.isEmpty()) {
+            Text(
+                "No saved favorites yet",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 16.dp),
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                contentPadding = PaddingValues(vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(items = favorites, key = { it.id }) { favorite ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                RoundedCornerShape(8.dp),
+                            )
+                            .clickable { onSelect(favorite) }
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(favorite.name, style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "${String.format("%.4f", favorite.position.latitude)}, " +
+                                    "${String.format("%.4f", favorite.position.longitude)}",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FavoriteTargetDetail(
+    favorite: FavoriteLocation,
+    onSetLocation: () -> Unit,
+    onGoToLocation: () -> Unit,
+    onBack: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+    ) {
+        Text(favorite.name, style = MaterialTheme.typography.headlineSmall)
+        Text(
+            "${String.format("%.4f", favorite.position.latitude)}, " +
+                "${String.format("%.4f", favorite.position.longitude)}",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+
+        Button(
+            onClick = onSetLocation,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+        ) {
+            Text("Set Location")
+        }
+        Button(
+            onClick = onGoToLocation,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+        ) {
+            Text("Go To Location")
+        }
+        TextButton(
+            onClick = onBack,
+            modifier = Modifier.padding(top = 8.dp),
+        ) {
+            Text("← Back")
         }
     }
 }

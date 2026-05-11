@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -19,6 +21,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,10 +36,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
+import com.locationjoystick.core.ui.component.LjTopBar
 
 @Composable
 fun SettingsRoute(
     viewModel: SettingsViewModel,
+    onOpenDrawer: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -68,6 +73,7 @@ fun SettingsRoute(
 
     SettingsScreen(
         uiState = uiState,
+        onOpenDrawer = onOpenDrawer,
         onSetWalkSpeed = viewModel::setWalkSpeed,
         onSetRunSpeed = viewModel::setRunSpeed,
         onSetBikeSpeed = viewModel::setBikeSpeed,
@@ -82,6 +88,7 @@ fun SettingsRoute(
 @Composable
 internal fun SettingsScreen(
     uiState: SettingsUiState,
+    onOpenDrawer: () -> Unit = {},
     onSetWalkSpeed: (Double) -> Unit,
     onSetRunSpeed: (Double) -> Unit,
     onSetBikeSpeed: (Double) -> Unit,
@@ -91,8 +98,15 @@ internal fun SettingsScreen(
     onExport: () -> Unit,
     onImport: () -> Unit,
 ) {
+    Scaffold(
+        topBar = {
+            LjTopBar(title = "locationjoystick", onMenuClick = onOpenDrawer)
+        },
+    ) { paddingValues ->
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
     ) {
         when {
             uiState.isLoading -> {
@@ -234,6 +248,7 @@ internal fun SettingsScreen(
             }
         }
     }
+    }
 }
 
 @Composable
@@ -262,6 +277,7 @@ private fun SpeedProfileInput(
                 .weight(0.5f)
                 .padding(horizontal = 8.dp),
             singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         )
         Text(unit, modifier = Modifier.weight(0.3f))
     }

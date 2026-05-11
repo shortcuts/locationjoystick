@@ -9,6 +9,7 @@ android {
 dependencies {
     implementation(project(":feature:map:api"))
     implementation(project(":core:data"))
+    implementation(project(":core:ui"))
 
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)

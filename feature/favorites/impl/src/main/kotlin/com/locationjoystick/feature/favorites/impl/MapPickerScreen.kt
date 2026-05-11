@@ -49,6 +49,8 @@ private const val MARKER_SOURCE_ID = "marker-source"
 private const val MARKER_LAYER_ID = "marker-layer"
 private const val OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 private const val DEFAULT_ZOOM = 15.0
+private const val DEFAULT_LAT = 48.8566
+private const val DEFAULT_LON = 2.3522
 
 @Composable
 fun MapPickerRoute(
@@ -133,6 +135,7 @@ internal fun MapPickerScreen(
                             map.uiSettings.isAttributionEnabled = false
                             map.uiSettings.isLogoEnabled = false
                             map.cameraPosition = CameraPosition.Builder()
+                                .target(MapLatLng(DEFAULT_LAT, DEFAULT_LON))
                                 .zoom(DEFAULT_ZOOM)
                                 .build()
 

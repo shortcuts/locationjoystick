@@ -18,6 +18,7 @@ fun LjApp() {
 
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = false,
         drawerContent = {
             LjDrawerContent(
                 navController = navController,

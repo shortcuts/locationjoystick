@@ -2,6 +2,7 @@ package com.locationjoystick.feature.map.impl
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.model.LatLng
@@ -18,6 +19,7 @@ import javax.inject.Inject
 class MapViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
     private val routeRepository: RouteRepository,
+    private val favoriteRepository: FavoriteRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MapUiState())
@@ -26,6 +28,7 @@ class MapViewModel @Inject constructor(
     init {
         observeLocationState()
         observeRoutes()
+        observeFavorites()
     }
 
     private fun observeLocationState() {
@@ -54,6 +57,14 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    private fun observeFavorites() {
+        viewModelScope.launch {
+            favoriteRepository.getFavorites().collect { favorites ->
+                _uiState.update { current -> current.copy(favorites = favorites) }
+            }
+        }
+    }
+
     fun onAction(action: MapAction) {
         when (action) {
             is MapAction.TapToTeleport -> teleportTo(action.position)
@@ -65,6 +76,43 @@ class MapViewModel @Inject constructor(
             }
             MapAction.UserStartedPanning -> {
                 _uiState.update { it.copy(isUserPanning = true) }
+            }
+            MapAction.OpenFavoritesPicker -> {
+                _uiState.update { it.copy(showFavoritesSheet = true) }
+            }
+            MapAction.CloseFavoritesPicker -> {
+                _uiState.update { it.copy(showFavoritesSheet = false, favoriteTarget = null) }
+            }
+            MapAction.DeselectFavorite -> {
+                _uiState.update { it.copy(favoriteTarget = null) }
+            }
+            MapAction.CameraTargetConsumed -> {
+                _uiState.update { it.copy(pendingCameraTarget = null) }
+            }
+            is MapAction.SelectFavorite -> {
+                if (_uiState.value.isSpoofing) {
+                    _uiState.update {
+                        it.copy(
+                            favoriteTarget = action.favorite,
+                            pendingCameraTarget = action.favorite.position,
+                        )
+                    }
+                } else {
+                    teleportTo(action.favorite.position)
+                    _uiState.update { it.copy(showFavoritesSheet = false) }
+                }
+            }
+            is MapAction.SetLocationTo -> {
+                teleportTo(action.position)
+                _uiState.update {
+                    it.copy(showFavoritesSheet = false, favoriteTarget = null)
+                }
+            }
+            is MapAction.WalkStraightTo -> {
+                walkTo(action.position)
+                _uiState.update {
+                    it.copy(showFavoritesSheet = false, favoriteTarget = null)
+                }
             }
         }
     }

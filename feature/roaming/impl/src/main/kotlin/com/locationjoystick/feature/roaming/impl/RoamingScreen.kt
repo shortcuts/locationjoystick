@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -14,14 +15,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.locationjoystick.core.ui.component.LjTopBar
 
 @Composable
 fun RoamingRoute(
     viewModel: RoamingViewModel,
+    onOpenDrawer: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     RoamingScreen(
         uiState = uiState,
+        onOpenDrawer = onOpenDrawer,
         onUpdateRadius = viewModel::updateRadius,
         onUpdateDuration = viewModel::updateDuration,
         onToggleOsrm = viewModel::toggleOsrmRouting,
@@ -33,14 +37,22 @@ fun RoamingRoute(
 @Composable
 internal fun RoamingScreen(
     uiState: RoamingUiState,
+    onOpenDrawer: () -> Unit = {},
     onUpdateRadius: (Double) -> Unit,
     onUpdateDuration: (Int) -> Unit,
     onToggleOsrm: (Boolean) -> Unit,
     onStartRoaming: () -> Unit,
     onStopRoaming: () -> Unit
 ) {
+    Scaffold(
+        topBar = {
+            LjTopBar(title = "locationjoystick", onMenuClick = onOpenDrawer)
+        },
+    ) { paddingValues ->
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
     ) {
         Column(
             modifier = Modifier
@@ -61,7 +73,7 @@ internal fun RoamingScreen(
                 valueRange = 60f..14400f
             )
 
-            androidx.compose.material3.Switch(
+            Switch(
                 checked = uiState.config.useRoadSnapping,
                 onCheckedChange = onToggleOsrm
             )
@@ -81,5 +93,6 @@ internal fun RoamingScreen(
                 }
             }
         }
+    }
     }
 }

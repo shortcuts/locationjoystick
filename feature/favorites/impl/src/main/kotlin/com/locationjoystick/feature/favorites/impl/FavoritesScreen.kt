@@ -47,11 +47,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.ui.component.EmptyState
+import com.locationjoystick.core.ui.component.LjTopBar
 
 @Composable
 fun FavoritesRoute(
     viewModel: FavoritesViewModel,
     onNavigateToMapPicker: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -64,6 +66,7 @@ fun FavoritesRoute(
         onAddFavorite = viewModel::addFavorite,
         onUpdateFavorite = viewModel::updateFavorite,
         onNavigateToMapPicker = onNavigateToMapPicker,
+        onOpenDrawer = onOpenDrawer,
     )
 }
 
@@ -77,6 +80,7 @@ internal fun FavoritesScreen(
     onAddFavorite: (String, Double, Double) -> Unit,
     onUpdateFavorite: (String, String, Double, Double) -> Unit,
     onNavigateToMapPicker: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var showAddSheet by remember { mutableStateOf(false) }
@@ -84,6 +88,9 @@ internal fun FavoritesScreen(
     var deletingFavorite by remember { mutableStateOf<com.locationjoystick.core.model.FavoriteLocation?>(null) }
 
     Scaffold(
+        topBar = {
+            LjTopBar(title = "locationjoystick", onMenuClick = onOpenDrawer)
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             Column(

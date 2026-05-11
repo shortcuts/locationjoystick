@@ -60,6 +60,7 @@ fun LjNavHost(
                     onNavigateToCreate = { routeType ->
                         navController.navigate("$ROUTE_CREATOR_ROUTE/${routeType.name}")
                     },
+                    onOpenDrawer = onOpenDrawer,
                     viewModel = hiltViewModel()
                 )
             }
@@ -85,7 +86,8 @@ fun LjNavHost(
                 val favoritesViewModel: FavoritesViewModel = hiltViewModel(parentEntry)
                 FavoritesRoute(
                     viewModel = favoritesViewModel,
-                    onNavigateToMapPicker = { navController.navigate(MAP_PICKER_ROUTE) }
+                    onNavigateToMapPicker = { navController.navigate(MAP_PICKER_ROUTE) },
+                    onOpenDrawer = onOpenDrawer,
                 )
             }
 
@@ -106,12 +108,14 @@ fun LjNavHost(
 
         composable(ROAMING_ROUTE) {
             RoamingRoute(
+                onOpenDrawer = onOpenDrawer,
                 viewModel = hiltViewModel()
             )
         }
 
         composable(SETTINGS_ROUTE) {
             SettingsRoute(
+                onOpenDrawer = onOpenDrawer,
                 viewModel = hiltViewModel()
             )
         }

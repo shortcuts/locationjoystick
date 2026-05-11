@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.map.impl
 
+import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 
 sealed interface MapAction {
@@ -9,4 +10,11 @@ sealed interface MapAction {
     data object StopSpoofing : MapAction
     data object RecenterCamera : MapAction
     data object UserStartedPanning : MapAction
+    data object OpenFavoritesPicker : MapAction
+    data object CloseFavoritesPicker : MapAction
+    data class SelectFavorite(val favorite: FavoriteLocation) : MapAction
+    data object DeselectFavorite : MapAction
+    data object CameraTargetConsumed : MapAction
+    data class SetLocationTo(val position: LatLng) : MapAction
+    data class WalkStraightTo(val position: LatLng) : MapAction
 }

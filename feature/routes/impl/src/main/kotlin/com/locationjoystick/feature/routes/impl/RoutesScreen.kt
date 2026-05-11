@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,11 +45,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.ui.component.EmptyState
+import com.locationjoystick.core.ui.component.LjTopBar
 
 @Composable
 fun RoutesRoute(
     onNavigateToDetail: (String) -> Unit,
     onNavigateToCreate: (RouteType) -> Unit,
+    onOpenDrawer: () -> Unit,
     viewModel: RoutesViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -59,6 +62,7 @@ fun RoutesRoute(
         playbackState = playbackState,
         onNavigateToDetail = onNavigateToDetail,
         onNavigateToCreate = onNavigateToCreate,
+        onOpenDrawer = onOpenDrawer,
         onDeleteRoute = viewModel::deleteRoute,
         onRenameRoute = viewModel::renameRoute,
         onExportRoute = { route -> viewModel.exportRouteAsGpx(context, route) },
@@ -75,6 +79,7 @@ internal fun RoutesScreen(
     playbackState: RoutePlaybackState,
     onNavigateToDetail: (String) -> Unit,
     onNavigateToCreate: (RouteType) -> Unit,
+    onOpenDrawer: () -> Unit,
     onDeleteRoute: (String) -> Unit,
     onRenameRoute: (String, String) -> Unit,
     onExportRoute: (com.locationjoystick.core.model.Route) -> Unit,
@@ -86,62 +91,68 @@ internal fun RoutesScreen(
     var editingRoute by remember { mutableStateOf<com.locationjoystick.core.model.Route?>(null) }
     var deletingRoute by remember { mutableStateOf<com.locationjoystick.core.model.Route?>(null) }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        when {
-            uiState.isLoading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-            uiState.routes.isEmpty() -> {
-                EmptyState(
-                    icon = Icons.Rounded.Add,
-                    message = "No routes yet",
-                    modifier = Modifier.align(Alignment.Center)
+    Scaffold(
+        topBar = {
+            LjTopBar(title = "locationjoystick", onMenuClick = onOpenDrawer)
+        },
+        floatingActionButton = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                ExtendedFloatingActionButton(
+                    onClick = { onNavigateToCreate(RouteType.GUIDED) },
+                    icon = { Icon(Icons.Rounded.Map, null) },
+                    text = { Text("+ guided route") }
+                )
+                ExtendedFloatingActionButton(
+                    onClick = { onNavigateToCreate(RouteType.STRAIGHT) },
+                    icon = { Icon(Icons.Rounded.Add, null) },
+                    text = { Text("+ route") }
                 )
             }
-            else -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp)
-                ) {
-                    items(
-                        items = uiState.routes,
-                        key = { it.id }
-                    ) { route ->
-                        RouteCard(
-                            route = route,
-                            playbackState = playbackState,
-                            onTap = { onNavigateToDetail(route.id) },
-                            onEdit = { editingRoute = it },
-                            onDelete = { deletingRoute = it },
-                            onExport = { onExportRoute(it) },
-                            onStartReplay = onStartReplay,
-                            onPauseReplay = onPauseReplay,
-                            onResumeReplay = onResumeReplay,
-                            onStopReplay = onStopReplay,
-                        )
+        },
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            when {
+                uiState.isLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+                uiState.routes.isEmpty() -> {
+                    EmptyState(
+                        icon = Icons.Rounded.Add,
+                        message = "No routes yet",
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp)
+                    ) {
+                        items(
+                            items = uiState.routes,
+                            key = { it.id }
+                        ) { route ->
+                            RouteCard(
+                                route = route,
+                                playbackState = playbackState,
+                                onTap = { onNavigateToDetail(route.id) },
+                                onEdit = { editingRoute = it },
+                                onDelete = { deletingRoute = it },
+                                onExport = { onExportRoute(it) },
+                                onStartReplay = onStartReplay,
+                                onPauseReplay = onPauseReplay,
+                                onResumeReplay = onResumeReplay,
+                                onStopReplay = onStopReplay,
+                            )
+                        }
                     }
                 }
             }
-        }
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ExtendedFloatingActionButton(
-                onClick = { onNavigateToCreate(RouteType.GUIDED) },
-                icon = { Icon(Icons.Rounded.Map, null) },
-                text = { Text("+ guided route") }
-            )
-            ExtendedFloatingActionButton(
-                onClick = { onNavigateToCreate(RouteType.STRAIGHT) },
-                icon = { Icon(Icons.Rounded.Add, null) },
-                text = { Text("+ route") }
-            )
         }
     }
 

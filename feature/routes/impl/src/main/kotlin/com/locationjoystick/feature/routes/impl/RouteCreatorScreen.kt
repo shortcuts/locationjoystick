@@ -62,6 +62,8 @@ private const val WAYPOINTS_SOURCE_ID = "waypoints-source"
 private const val WAYPOINTS_LAYER_ID = "waypoints-layer"
 private const val OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 private const val DEFAULT_ZOOM = 15.0
+private const val DEFAULT_LAT = 48.8566
+private const val DEFAULT_LON = 2.3522
 
 @Composable
 fun RouteCreatorRoute(
@@ -157,6 +159,7 @@ internal fun RouteCreatorScreen(
                             map.uiSettings.isAttributionEnabled = false
                             map.uiSettings.isLogoEnabled = false
                             map.cameraPosition = CameraPosition.Builder()
+                                .target(MapLatLng(DEFAULT_LAT, DEFAULT_LON))
                                 .zoom(DEFAULT_ZOOM)
                                 .build()
 
