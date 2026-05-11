@@ -3,7 +3,6 @@ package com.locationjoystick.feature.setup.impl
 import android.Manifest
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,7 +24,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.BatterySaver
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DeveloperMode
@@ -49,13 +47,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -111,11 +109,6 @@ internal fun SetupScreen(
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
-        onResult = { onCheckPermissions() },
-    )
-
-    val batteryOptLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult(),
         onResult = { onCheckPermissions() },
     )
 
@@ -211,27 +204,6 @@ internal fun SetupScreen(
                     )
                 },
                 onExtraAction = onCheckPermissions,
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            SetupStepCard(
-                title = "Battery optimization",
-                description = "Allows the location simulation service to run reliably in the background without being killed.",
-                isGranted = uiState.batteryOptimizationIgnored,
-                icon = Icons.Outlined.BatterySaver,
-                actionLabel = "Disable Optimization",
-                isOptional = true,
-                onAction = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        batteryOptLauncher.launch(
-                            Intent(
-                                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                                Uri.parse("package:${context.packageName}"),
-                            ),
-                        )
-                    }
-                },
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -370,7 +342,6 @@ private fun SetupScreenPreview() {
                 locationPermissionGranted = true,
                 overlayPermissionGranted = false,
                 mockLocationEnabled = false,
-                batteryOptimizationIgnored = false,
             ),
             onCheckPermissions = {},
             onSetupComplete = {},

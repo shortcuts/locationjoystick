@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -15,11 +16,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -76,7 +80,7 @@ internal fun MapPickerScreen(
     val mapRef = remember { mutableStateOf<MapLibreMap?>(null) }
     val markerSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val selectedPosition = remember { mutableStateOf<Pair<Double, Double>?>(null) }
-    val nameState = remember { mutableStateOf("") }
+    var showNameDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -195,28 +199,66 @@ internal fun MapPickerScreen(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
-            OutlinedTextField(
-                value = nameState.value,
-                onValueChange = { nameState.value = it },
-                label = { Text("Name") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                singleLine = true,
-            )
             Button(
-                onClick = {
-                    if (pos != null && nameState.value.isNotBlank()) {
-                        onLocationPicked(nameState.value.trim(), pos.first, pos.second)
-                    }
-                },
-                enabled = pos != null && nameState.value.isNotBlank(),
+                onClick = { showNameDialog = true },
+                enabled = selectedPosition.value != null,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Select This Location")
+                Text("Save")
             }
         }
     }
+
+    if (showNameDialog) {
+        val pos = selectedPosition.value
+        if (pos != null) {
+            SaveLocationDialog(
+                onDismiss = { showNameDialog = false },
+                onSave = { name ->
+                    onLocationPicked(name, pos.first, pos.second)
+                    showNameDialog = false
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SaveLocationDialog(
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit,
+) {
+    var name by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Save Location") },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Name") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (name.isNotBlank()) {
+                        onSave(name.trim())
+                    }
+                }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
 }
 
 private fun emptyGeoJson(): String =

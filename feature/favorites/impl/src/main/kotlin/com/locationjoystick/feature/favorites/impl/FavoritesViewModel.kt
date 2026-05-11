@@ -9,6 +9,7 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.FavoriteLocation
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -18,7 +19,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FavoritesViewModel @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val favoriteRepository: FavoriteRepository,
     private val locationRepository: LocationRepository,
 ) : ViewModel() {

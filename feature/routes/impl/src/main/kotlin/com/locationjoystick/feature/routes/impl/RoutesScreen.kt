@@ -15,11 +15,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Map
@@ -43,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.locationjoystick.core.model.distanceTo
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.ui.component.EmptyState
 import com.locationjoystick.core.ui.component.LjTopBar
@@ -60,13 +60,12 @@ fun RoutesRoute(
     RoutesScreen(
         uiState = uiState,
         playbackState = playbackState,
-        onNavigateToDetail = onNavigateToDetail,
         onNavigateToCreate = onNavigateToCreate,
         onOpenDrawer = onOpenDrawer,
         onDeleteRoute = viewModel::deleteRoute,
         onRenameRoute = viewModel::renameRoute,
         onExportRoute = { route -> viewModel.exportRouteAsGpx(context, route) },
-        onStartReplay = { route, isBackward -> viewModel.startReplay(route, isBackward) },
+        onStartReplay = { route, fromFirstWaypoint -> viewModel.startReplay(route, fromFirstWaypoint) },
         onPauseReplay = viewModel::pauseReplay,
         onResumeReplay = viewModel::resumeReplay,
         onStopReplay = viewModel::stopReplay,
@@ -77,7 +76,6 @@ fun RoutesRoute(
 internal fun RoutesScreen(
     uiState: RoutesUiState,
     playbackState: RoutePlaybackState,
-    onNavigateToDetail: (String) -> Unit,
     onNavigateToCreate: (RouteType) -> Unit,
     onOpenDrawer: () -> Unit,
     onDeleteRoute: (String) -> Unit,
@@ -88,7 +86,7 @@ internal fun RoutesScreen(
     onResumeReplay: () -> Unit,
     onStopReplay: () -> Unit,
 ) {
-    var editingRoute by remember { mutableStateOf<com.locationjoystick.core.model.Route?>(null) }
+    var renamingRoute by remember { mutableStateOf<com.locationjoystick.core.model.Route?>(null) }
     var deletingRoute by remember { mutableStateOf<com.locationjoystick.core.model.Route?>(null) }
 
     Scaffold(
@@ -140,8 +138,7 @@ internal fun RoutesScreen(
                             RouteCard(
                                 route = route,
                                 playbackState = playbackState,
-                                onTap = { onNavigateToDetail(route.id) },
-                                onEdit = { editingRoute = it },
+                                onTap = { renamingRoute = route },
                                 onDelete = { deletingRoute = it },
                                 onExport = { onExportRoute(it) },
                                 onStartReplay = onStartReplay,
@@ -156,13 +153,13 @@ internal fun RoutesScreen(
         }
     }
 
-    editingRoute?.let { route ->
+    renamingRoute?.let { route ->
         RenameRouteDialog(
             routeName = route.name,
-            onDismiss = { editingRoute = null },
+            onDismiss = { renamingRoute = null },
             onSave = { newName ->
                 onRenameRoute(route.id, newName)
-                editingRoute = null
+                renamingRoute = null
             }
         )
     }
@@ -184,7 +181,6 @@ private fun RouteCard(
     route: com.locationjoystick.core.model.Route,
     playbackState: RoutePlaybackState,
     onTap: () -> Unit,
-    onEdit: (com.locationjoystick.core.model.Route) -> Unit,
     onDelete: (com.locationjoystick.core.model.Route) -> Unit,
     onExport: (com.locationjoystick.core.model.Route) -> Unit,
     onStartReplay: (com.locationjoystick.core.model.Route, Boolean) -> Unit,
@@ -195,29 +191,44 @@ private fun RouteCard(
     val isActiveRoute = playbackState.activeRouteId == route.id
     val isPlaying = isActiveRoute && playbackState.isPlaying
     val isPaused = isActiveRoute && playbackState.isPaused
+    val isActive = isPlaying || isPaused
+
+    val distanceText = remember(route.waypoints) {
+        if (route.waypoints.size < 2) {
+            ""
+        } else {
+            val totalMeters = route.waypoints.zipWithNext { a, b ->
+                a.position.distanceTo(b.position)
+            }.sum()
+            if (totalMeters >= 1000.0) {
+                "%.1f km".format(totalMeters / 1000.0)
+            } else {
+                "%.0f m".format(totalMeters)
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 12.dp)
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
     ) {
+        // Row 1: name + distance (tap to rename)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                 .clickable { onTap() }
-                .padding(12.dp),
+                .padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(route.name, style = MaterialTheme.typography.titleMedium)
+                val label = if (distanceText.isNotEmpty()) "${route.name} — $distanceText" else route.name
+                Text(label, style = MaterialTheme.typography.titleMedium)
                 Text(
                     "${route.waypoints.size} waypoints",
                     style = MaterialTheme.typography.bodySmall
                 )
-            }
-            IconButton(onClick = { onEdit(route) }) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit")
             }
             IconButton(onClick = { onExport(route) }) {
                 Icon(Icons.Default.FileDownload, contentDescription = "Export GPX")
@@ -227,10 +238,11 @@ private fun RouteCard(
             }
         }
 
+        // Row 2: playback controls
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp),
+                .padding(horizontal = 4.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             when {
@@ -251,11 +263,23 @@ private fun RouteCard(
                     }
                 }
                 else -> {
-                    IconButton(onClick = { onStartReplay(route, false) }) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = "Play forward")
+                    IconButton(
+                        onClick = { onStartReplay(route, false) },
+                        enabled = !isActive,
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.DirectionsWalk,
+                            contentDescription = "Start from current location"
+                        )
                     }
-                    IconButton(onClick = { onStartReplay(route, true) }) {
-                        Icon(Icons.Default.Replay, contentDescription = "Play backward")
+                    IconButton(
+                        onClick = { onStartReplay(route, true) },
+                        enabled = !isActive,
+                    ) {
+                        Icon(
+                            Icons.Default.PlayArrow,
+                            contentDescription = "Teleport to route start"
+                        )
                     }
                 }
             }

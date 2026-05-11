@@ -78,7 +78,7 @@ class RouteCreatorViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val segmentResult = osrmClient.getRoute("foot", listOf(lastWaypoint, latLng))
+                val segmentResult = osrmClient.getRoute(OsrmClient.PROFILE_FOOT, listOf(lastWaypoint, latLng))
                 val segment = segmentResult.getOrElse {
                     Log.e(TAG, "OSRM failed for guided route", it)
                     _state.value = _state.value.copy(isLoadingSegment = false, osrmError = true)

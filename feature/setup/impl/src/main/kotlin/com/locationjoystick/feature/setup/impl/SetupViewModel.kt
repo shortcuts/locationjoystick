@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.locationjoystick.core.common.util.isBatteryOptimizationIgnored
 import com.locationjoystick.core.common.util.isMockLocationEnabled
 import com.locationjoystick.core.common.util.isOverlayPermissionGranted
 import com.locationjoystick.core.data.SettingsRepository
@@ -41,7 +40,6 @@ class SetupViewModel @Inject constructor(
                 ) == PackageManager.PERMISSION_GRANTED,
                 overlayPermissionGranted = isOverlayPermissionGranted(context),
                 mockLocationEnabled = isMockLocationEnabled(context),
-                batteryOptimizationIgnored = isBatteryOptimizationIgnored(context),
             )
         }
     }

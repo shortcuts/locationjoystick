@@ -73,11 +73,16 @@ class RoutesViewModel @Inject constructor(
         }
     }
 
-    fun startReplay(route: Route, isBackward: Boolean = false, speedMs: Double = 1.4) {
+    fun startReplay(route: Route, fromFirstWaypoint: Boolean = false, speedMs: Double = 1.4) {
+        if (fromFirstWaypoint && route.waypoints.isNotEmpty()) {
+            viewModelScope.launch {
+                locationRepository.updatePosition(route.waypoints.first().position)
+            }
+        }
         val intent = Intent(context, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_ROUTE_REPLAY_START
             putExtra(MockLocationService.EXTRA_ROUTE_ID, route.id)
-            putExtra(MockLocationService.EXTRA_IS_BACKWARD, isBackward)
+            putExtra(MockLocationService.EXTRA_IS_BACKWARD, false)
             putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
         }
         context.startService(intent)

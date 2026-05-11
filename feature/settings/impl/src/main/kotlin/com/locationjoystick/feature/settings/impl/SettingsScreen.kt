@@ -282,9 +282,13 @@ private fun SpeedProfileInput(
     onSpeedChange: (Double) -> Unit,
     unit: String,
 ) {
-    var textValue by remember(displaySpeed) {
+    var localValue by remember(displaySpeed) {
         mutableStateOf(String.format("%.1f", displaySpeed))
     }
+    var isDirty by remember(displaySpeed) { mutableStateOf(false) }
+
+    val parsedValue = localValue.toDoubleOrNull()
+    val isValid = parsedValue != null && parsedValue in 0.1..15.0
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -292,10 +296,10 @@ private fun SpeedProfileInput(
     ) {
         Text(label, modifier = Modifier.weight(0.2f))
         OutlinedTextField(
-            value = textValue,
+            value = localValue,
             onValueChange = { newValue ->
-                textValue = newValue
-                newValue.toDoubleOrNull()?.let { onSpeedChange(it) }
+                localValue = newValue
+                isDirty = true
             },
             modifier = Modifier
                 .weight(0.5f)
@@ -303,6 +307,18 @@ private fun SpeedProfileInput(
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         )
-        Text(unit, modifier = Modifier.weight(0.3f))
+        Button(
+            onClick = {
+                if (parsedValue != null) {
+                    val clamped = parsedValue.coerceIn(0.1, 15.0)
+                    onSpeedChange(clamped)
+                    isDirty = false
+                }
+            },
+            enabled = isDirty && isValid,
+            modifier = Modifier.weight(0.3f),
+        ) {
+            Text("Save")
+        }
     }
 }

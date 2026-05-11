@@ -54,6 +54,10 @@ data class OsrmCoordinate(
 @Singleton
 class OsrmClient @Inject constructor() {
 
+    companion object {
+        const val PROFILE_FOOT = "foot"
+    }
+
     private val api: OsrmApi = Retrofit.Builder()
         .baseUrl(OSRM_BASE_URL)
         .addConverterFactory(GsonConverterFactory.create())

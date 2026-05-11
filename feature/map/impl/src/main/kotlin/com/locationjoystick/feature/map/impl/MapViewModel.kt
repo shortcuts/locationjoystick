@@ -12,6 +12,7 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -34,7 +35,7 @@ private const val ACTION_UPDATE_POSITION = "com.locationjoystick.ACTION_UPDATE_P
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val locationRepository: LocationRepository,
     private val routeRepository: RouteRepository,
     private val favoriteRepository: FavoriteRepository,
