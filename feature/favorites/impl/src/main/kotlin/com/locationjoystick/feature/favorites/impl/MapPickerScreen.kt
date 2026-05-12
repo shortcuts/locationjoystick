@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
@@ -19,6 +18,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -116,6 +116,16 @@ internal fun MapPickerScreen(
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            TopAppBar(
+                title = { Text("Pick Location") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+            )
+        },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { if (selectedPosition.value != null) showNameDialog = true },
@@ -188,23 +198,7 @@ internal fun MapPickerScreen(
                 modifier = Modifier.fillMaxSize(),
             )
 
-            // Back button — top-start overlay
-            IconButton(
-                onClick = onBack,
-                modifier =
-                    Modifier
-                        .align(Alignment.TopStart)
-                        .statusBarsPadding()
-                        .padding(8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-
-            // Search bar — top overlay, offset from back button
+            // Search bar — top overlay
             NominatimSearchBar(
                 onLocationSelected = { lat, lon, _ ->
                     selectedPosition.value = lat to lon
@@ -219,8 +213,7 @@ internal fun MapPickerScreen(
                 modifier =
                     Modifier
                         .align(Alignment.TopCenter)
-                        .statusBarsPadding()
-                        .padding(start = 56.dp, end = 12.dp, top = 8.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
             )
         }
     }
