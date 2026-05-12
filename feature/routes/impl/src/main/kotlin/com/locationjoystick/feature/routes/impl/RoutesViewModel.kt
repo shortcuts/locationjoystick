@@ -4,14 +4,17 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.location.MockLocationService
+import com.locationjoystick.core.model.LatLon
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.Route
+import com.locationjoystick.core.model.RouteType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +26,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.UUID
 import javax.inject.Inject
 
 private const val TAG = "RoutesViewModel"
@@ -154,5 +158,65 @@ class RoutesViewModel @Inject constructor(
     suspend fun importGpx(uri: Uri) {
         // Stub: GPX import to be implemented
         // TODO: Parse GPX file from uri, extract waypoints, create route
+    }
+
+    fun importRouteFromGpxAsync(uri: Uri, context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val route = importRouteFromGpx(uri)
+                routeRepository.insertRoute(route)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Route imported: ${route.name}", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "GPX import failed", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Import failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private suspend fun importRouteFromGpx(uri: Uri): Route {
+        return withContext(Dispatchers.IO) {
+            val gpxContent = readGpxContent(uri)
+            val name = extractGpxName(gpxContent)
+            val waypoints = parseGpxWaypoints(gpxContent)
+            Route(
+                id = UUID.randomUUID().toString(),
+                name = name,
+                waypoints = waypoints,
+                isLooping = false,
+                routeType = RouteType.STRAIGHT,
+                createdAt = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis()
+            )
+        }
+    }
+
+    private suspend fun readGpxContent(uri: Uri): String {
+        return withContext(Dispatchers.IO) {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                stream.bufferedReader().readText()
+            } ?: throw IllegalArgumentException("Cannot read GPX file")
+        }
+    }
+
+    private fun extractGpxName(gpxContent: String): String {
+        val nameRegex = Regex("<name>([^<]+)</name>")
+        val match = nameRegex.find(gpxContent)
+        return match?.groupValues?.get(1)?.takeIf { it.isNotEmpty() } ?: "Imported Route"
+    }
+
+    private fun parseGpxWaypoints(gpxContent: String): List<LatLon> {
+        val trkptRegex = Regex("""<trkpt\s+lat="([^"]+)"\s+lon="([^"]+)""")
+        return trkptRegex.findAll(gpxContent)
+            .map { match ->
+                val lat = match.groupValues[1].toDoubleOrNull() ?: return@map null
+                val lon = match.groupValues[2].toDoubleOrNull() ?: return@map null
+                LatLon(lat, lon)
+            }
+            .filterNotNull()
+            .toList()
     }
 }
