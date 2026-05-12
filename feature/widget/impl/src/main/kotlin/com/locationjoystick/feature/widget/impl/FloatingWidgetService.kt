@@ -30,7 +30,9 @@ import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.WidgetFeature
+import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.overlay.OverlayService
+import com.locationjoystick.feature.joystick.impl.JoystickOverlayService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -307,12 +309,21 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
             setClassName(packageName, "com.locationjoystick.feature.joystick.impl.JoystickOverlayService")
         }
         try {
-            if (mockLocationService?.isRunning == true) {
-                stopService(intent)
-                Log.d(TAG, "Stopped joystick overlay")
-            } else {
-                startService(intent)
-                Log.d(TAG, "Started joystick overlay")
+            if (mockLocationService != null) {
+                bindService(intent, object : ServiceConnection {
+                    override fun onServiceConnected(name: ComponentName, binder: IBinder) {
+                        try {
+                            val joystickService = (binder as com.locationjoystick.feature.joystick.impl.JoystickOverlayService.LocalBinder).getService()
+                            joystickService.toggleOverlay()
+                            Log.d(TAG, "Toggled joystick overlay visibility")
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to toggle joystick overlay", e)
+                        }
+                        unbindService(this)
+                    }
+
+                    override fun onServiceDisconnected(name: ComponentName) {}
+                }, Context.BIND_AUTO_CREATE)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to toggle joystick", e)
@@ -329,8 +340,8 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
                     override fun onServiceConnected(name: ComponentName, binder: IBinder) {
                         try {
                             val joystickService = (binder as com.locationjoystick.feature.joystick.impl.JoystickOverlayService.LocalBinder).getService()
-                            val currentLocked = joystickService.isLocked
-                            joystickService.setLocked(!currentLocked)
+                            val currentLocked = joystickService.locked
+                            joystickService.setIsLocked(!currentLocked)
                             Log.d(TAG, "Toggled joystick lock to: ${!currentLocked}")
                         } catch (e: Exception) {
                             Log.e(TAG, "Failed to toggle lock", e)
@@ -348,7 +359,7 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
 
     private fun showRoutesPopup(anchor: View) {
         serviceScope.launch {
-            val routes = routeRepository.getAllRoutes().first()
+            val routes = routeRepository.getRoutes().first()
 
             withContext(Dispatchers.Main) {
                 val listLayout = LinearLayout(this@FloatingWidgetService).apply {

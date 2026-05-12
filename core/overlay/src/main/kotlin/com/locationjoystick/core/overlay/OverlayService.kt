@@ -16,7 +16,7 @@ abstract class OverlayService : Service() {
     protected lateinit var windowManager: WindowManager
         private set
 
-    private var overlayView: View? = null
+    protected var overlayView: View? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -70,6 +70,31 @@ abstract class OverlayService : Service() {
             windowManager.updateViewLayout(view, params)
         } catch (e: Exception) {
             Log.e(tag, "Failed to update overlay position", e)
+        }
+    }
+
+    fun showOverlay() {
+        val view = overlayView ?: return
+        try {
+            if (!view.isAttachedToWindow) {
+                val params = getWindowManagerParams()
+                windowManager.addView(view, params)
+                Log.d(tag, "Overlay view shown")
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Failed to show overlay view", e)
+        }
+    }
+
+    fun hideOverlay() {
+        val view = overlayView ?: return
+        try {
+            if (view.isAttachedToWindow) {
+                windowManager.removeView(view)
+                Log.d(tag, "Overlay view hidden")
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Failed to hide overlay view", e)
         }
     }
 

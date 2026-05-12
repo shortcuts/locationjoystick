@@ -45,7 +45,7 @@ class JoystickOverlayService : OverlayService() {
 
     private var mockLocationService: MockLocationService? = null
 
-    private var isLocked = false
+    var locked = false
 
     inner class LocalBinder : Binder() {
         fun getService(): JoystickOverlayService = this@JoystickOverlayService
@@ -86,9 +86,19 @@ class JoystickOverlayService : OverlayService() {
         super.onDestroy()
     }
 
-    fun setLocked(locked: Boolean) {
-        isLocked = locked
-        Log.d(TAG, "Joystick locked: $locked")
+    fun setIsLocked(value: Boolean) {
+        locked = value
+        Log.d(TAG, "Joystick locked: $value")
+    }
+
+    fun toggleOverlay() {
+        // Simple toggle: if view is attached, hide it; otherwise show it
+        val view = overlayView
+        if (view != null && view.isAttachedToWindow) {
+            hideOverlay()
+        } else {
+            showOverlay()
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -103,7 +113,7 @@ class JoystickOverlayService : OverlayService() {
             }
         }
 
-        view.shouldResetOnRelease = { !isLocked }
+        view.shouldResetOnRelease = { !locked }
 
         view.onReleased = {
             Log.d(TAG, "Joystick released — position held")
