@@ -180,8 +180,8 @@ class AppPreferencesDataSource @Inject constructor(
         const val MAX_SPEED_MS = 15.0
 
         val DEFAULT_WIDGET_ITEMS: Set<String> = setOf(
-            WidgetFeature.SPEED_PROFILE.name.lowercase(),
-            WidgetFeature.MOCK_STATE.name.lowercase(),
+            WidgetFeature.JOYSTICK_TOGGLE.name.lowercase(),
+            WidgetFeature.SPEED_CYCLE.name.lowercase(),
         )
 
         const val DEFAULT_ROAMING_RADIUS_METERS = 2000.0

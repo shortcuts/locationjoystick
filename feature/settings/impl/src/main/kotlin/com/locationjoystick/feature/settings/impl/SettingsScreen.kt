@@ -247,31 +247,129 @@ internal fun SettingsScreen(
                     Text("Floating Widget", style = MaterialTheme.typography.headlineSmall)
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    WidgetFeature.entries.forEach { feature ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(
-                                checked = feature in uiState.enabledWidgetFeatures,
-                                onCheckedChange = { isChecked ->
-                                    val updated = uiState.enabledWidgetFeatures.toMutableSet()
-                                    if (isChecked) {
-                                        updated.add(feature)
-                                    } else {
-                                        updated.remove(feature)
-                                    }
-                                    onSetWidgetFeatures(updated)
-                                },
-                            )
-                            Text(
-                                feature.name.replace("_", " ").lowercase()
-                                    .replaceFirstChar { it.uppercaseChar() },
-                                modifier = Modifier.padding(start = 8.dp),
-                            )
-                        }
+                    // Joystick toggle
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(
+                            checked = WidgetFeature.JOYSTICK_TOGGLE in uiState.enabledWidgetFeatures,
+                            onCheckedChange = { isChecked ->
+                                val updated = uiState.enabledWidgetFeatures.toMutableSet()
+                                if (isChecked) {
+                                    updated.add(WidgetFeature.JOYSTICK_TOGGLE)
+                                } else {
+                                    updated.remove(WidgetFeature.JOYSTICK_TOGGLE)
+                                }
+                                onSetWidgetFeatures(updated)
+                            },
+                        )
+                        Text(
+                            "Show/hide joystick",
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+
+                    // Joystick lock
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(
+                            checked = WidgetFeature.JOYSTICK_LOCK in uiState.enabledWidgetFeatures,
+                            onCheckedChange = { isChecked ->
+                                val updated = uiState.enabledWidgetFeatures.toMutableSet()
+                                if (isChecked) {
+                                    updated.add(WidgetFeature.JOYSTICK_LOCK)
+                                } else {
+                                    updated.remove(WidgetFeature.JOYSTICK_LOCK)
+                                }
+                                onSetWidgetFeatures(updated)
+                            },
+                        )
+                        Text(
+                            "Lock joystick position",
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+
+                    // Routes picker
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(
+                            checked = WidgetFeature.ROUTES_PICKER in uiState.enabledWidgetFeatures,
+                            onCheckedChange = { isChecked ->
+                                val updated = uiState.enabledWidgetFeatures.toMutableSet()
+                                if (isChecked) {
+                                    updated.add(WidgetFeature.ROUTES_PICKER)
+                                } else {
+                                    updated.remove(WidgetFeature.ROUTES_PICKER)
+                                }
+                                onSetWidgetFeatures(updated)
+                            },
+                        )
+                        Text(
+                            "Routes picker",
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+
+                    // Favorites picker
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(
+                            checked = WidgetFeature.FAVORITES_PICKER in uiState.enabledWidgetFeatures,
+                            onCheckedChange = { isChecked ->
+                                val updated = uiState.enabledWidgetFeatures.toMutableSet()
+                                if (isChecked) {
+                                    updated.add(WidgetFeature.FAVORITES_PICKER)
+                                } else {
+                                    updated.remove(WidgetFeature.FAVORITES_PICKER)
+                                }
+                                onSetWidgetFeatures(updated)
+                            },
+                        )
+                        Text(
+                            "Favorites picker",
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+
+                    // Speed cycle
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(
+                            checked = WidgetFeature.SPEED_CYCLE in uiState.enabledWidgetFeatures,
+                            onCheckedChange = { isChecked ->
+                                val updated = uiState.enabledWidgetFeatures.toMutableSet()
+                                if (isChecked) {
+                                    updated.add(WidgetFeature.SPEED_CYCLE)
+                                } else {
+                                    updated.remove(WidgetFeature.SPEED_CYCLE)
+                                }
+                                onSetWidgetFeatures(updated)
+                            },
+                        )
+                        Text(
+                            "Speed cycle",
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))

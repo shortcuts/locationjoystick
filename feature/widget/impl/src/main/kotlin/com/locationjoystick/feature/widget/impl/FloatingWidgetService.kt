@@ -14,6 +14,7 @@ import android.widget.TextView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.lifecycleScope
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
@@ -52,6 +53,7 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
     @Inject lateinit var settingsRepository: SettingsRepository
 
     private var panelLayout: LinearLayout? = null
+    private val speedCycleButtons = mutableMapOf<ImageButton, WidgetFeature>()
 
     private var mockLocationService: MockLocationService? = null
     private val serviceConnection = object : ServiceConnection {
@@ -76,6 +78,11 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
             serviceConnection,
             Context.BIND_AUTO_CREATE,
         )
+        lifecycleScope.launch {
+            settingsRepository.getActiveSpeedProfile().collect { profile ->
+                updateSpeedCycleButtonIcon(profile.id)
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -114,6 +121,7 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
 
     private fun rebuildPanel(panel: LinearLayout, features: List<WidgetFeature>) {
         panel.removeAllViews()
+        speedCycleButtons.clear()
         if (features.isEmpty()) {
             val placeholder = TextView(this).apply {
                 text = "No items configured"
@@ -126,13 +134,44 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
                     setOnClickListener { onFeatureButtonClicked(feature) }
                 }
                 panel.addView(button)
+                if (feature == WidgetFeature.SPEED_CYCLE) {
+                    speedCycleButtons[button] = feature
+                }
             }
         }
     }
 
     private fun onFeatureButtonClicked(feature: WidgetFeature) {
-        // Stubs — logic implemented in Tasks 5–9
-        Log.d(TAG, "Feature button clicked: $feature")
+        when (feature) {
+            WidgetFeature.SPEED_CYCLE -> cycleSpeedProfile()
+            else -> Log.d(TAG, "Feature button clicked: $feature")
+        }
+    }
+
+    private fun cycleSpeedProfile() {
+        serviceScope.launch {
+            val profiles = settingsRepository.getSpeedProfiles().collect { profiles ->
+                val activeProfile = settingsRepository.getActiveSpeedProfile().collect { active ->
+                    val currentIndex = profiles.indexOfFirst { it.id == active.id }
+                    val nextIndex = (currentIndex + 1) % profiles.size
+                    val nextProfileId = profiles[nextIndex].id
+                    settingsRepository.setActiveProfileId(nextProfileId)
+                    Log.d(TAG, "Cycled speed profile to: $nextProfileId")
+                }
+            }
+        }
+    }
+
+    private fun updateSpeedCycleButtonIcon(profileId: String) {
+        speedCycleButtons.keys.forEach { button ->
+            val iconRes = when (profileId) {
+                "walk" -> android.R.drawable.ic_menu_compass
+                "run" -> android.R.drawable.ic_menu_directions
+                "bike" -> android.R.drawable.ic_menu_gallery
+                else -> android.R.drawable.ic_menu_compass
+            }
+            button.setImageResource(iconRes)
+        }
     }
 
     private fun WidgetFeature.toContentDescription(): String = when (this) {

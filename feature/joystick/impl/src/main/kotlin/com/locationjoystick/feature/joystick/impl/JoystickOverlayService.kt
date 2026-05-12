@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.os.Binder
 import android.os.IBinder
 import android.util.Log
 import android.view.MotionEvent
@@ -46,6 +47,12 @@ class JoystickOverlayService : OverlayService() {
 
     private var isLocked = false
 
+    inner class LocalBinder : Binder() {
+        fun getService(): JoystickOverlayService = this@JoystickOverlayService
+    }
+
+    private val binder = LocalBinder()
+
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             mockLocationService = (binder as MockLocationService.LocalBinder).getService()
@@ -66,6 +73,8 @@ class JoystickOverlayService : OverlayService() {
             Context.BIND_AUTO_CREATE,
         )
     }
+
+    override fun onBind(intent: Intent): IBinder = binder
 
     override fun onDestroy() {
         serviceScope.cancel()
