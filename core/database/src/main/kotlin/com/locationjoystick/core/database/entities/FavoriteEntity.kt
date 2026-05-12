@@ -15,17 +15,19 @@ data class FavoriteEntity(
     val createdAt: Long,
 )
 
-fun FavoriteEntity.toDomain(): FavoriteLocation = FavoriteLocation(
-    id = id,
-    name = name,
-    position = LatLng(latitude = latitude, longitude = longitude),
-    createdAt = createdAt,
-)
+fun FavoriteEntity.toDomain(): FavoriteLocation =
+    FavoriteLocation(
+        id = id,
+        name = name,
+        position = LatLng(latitude = latitude, longitude = longitude),
+        createdAt = createdAt,
+    )
 
-fun FavoriteLocation.toEntity(): FavoriteEntity = FavoriteEntity(
-    id = id,
-    name = name,
-    latitude = position.latitude,
-    longitude = position.longitude,
-    createdAt = createdAt,
-)
+fun FavoriteLocation.toEntity(): FavoriteEntity =
+    FavoriteEntity(
+        id = id,
+        name = name,
+        latitude = position.latitude,
+        longitude = position.longitude,
+        createdAt = createdAt,
+    )

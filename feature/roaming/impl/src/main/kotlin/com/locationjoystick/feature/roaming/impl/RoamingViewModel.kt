@@ -13,31 +13,32 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
-class RoamingViewModel @Inject constructor(
-    private val roamingEngine: RoamingEngine,
-    private val locationRepository: LocationRepository,
-) : ViewModel() {
+class RoamingViewModel
+    @Inject
+    constructor(
+        private val roamingEngine: RoamingEngine,
+        private val locationRepository: LocationRepository,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow(RoamingUiState())
+        val uiState: StateFlow<RoamingUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(RoamingUiState())
-    val uiState: StateFlow<RoamingUiState> = _uiState.asStateFlow()
+        fun updateRadius(meters: Double) {
+            _uiState.update { it.copy(config = it.config.copy(radiusMeters = meters)) }
+        }
 
-    fun updateRadius(meters: Double) {
-        _uiState.update { it.copy(config = it.config.copy(radiusMeters = meters)) }
+        fun updateDuration(minutes: Int) {
+            _uiState.update { it.copy(config = it.config.copy(durationSeconds = (minutes * 60L))) }
+        }
+
+        fun toggleOsrmRouting(enabled: Boolean) {
+            _uiState.update { it.copy(config = it.config.copy(useRoadSnapping = enabled)) }
+        }
+
+        fun startRoaming() {
+            // TODO: implement roaming start logic
+        }
+
+        fun stopRoaming() {
+            // TODO: implement roaming stop logic
+        }
     }
-
-    fun updateDuration(minutes: Int) {
-        _uiState.update { it.copy(config = it.config.copy(durationSeconds = (minutes * 60L))) }
-    }
-
-    fun toggleOsrmRouting(enabled: Boolean) {
-        _uiState.update { it.copy(config = it.config.copy(useRoadSnapping = enabled)) }
-    }
-
-    fun startRoaming() {
-        // TODO: implement roaming start logic
-    }
-
-    fun stopRoaming() {
-        // TODO: implement roaming stop logic
-    }
-}

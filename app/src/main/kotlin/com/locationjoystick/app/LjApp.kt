@@ -22,13 +22,13 @@ fun LjApp() {
         drawerContent = {
             LjDrawerContent(
                 navController = navController,
-                drawerState = drawerState
+                drawerState = drawerState,
             )
-        }
+        },
     ) {
         LjNavHost(
             navController = navController,
-            onOpenDrawer = { scope.launch { drawerState.open() } }
+            onOpenDrawer = { scope.launch { drawerState.open() } },
         )
     }
 }

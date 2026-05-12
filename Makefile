@@ -1,6 +1,9 @@
 build:
 	./gradlew assembleRelease
 
+format:
+	ktlint --format
+
 lint:
 	./gradlew lintRelease
 

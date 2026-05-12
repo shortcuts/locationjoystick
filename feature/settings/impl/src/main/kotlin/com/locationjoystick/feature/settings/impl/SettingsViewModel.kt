@@ -35,385 +35,407 @@ import java.io.IOException
 import javax.inject.Inject
 
 @HiltViewModel
-class SettingsViewModel @Inject constructor(
-    private val settingsRepository: SettingsRepository,
-    private val favoriteRepository: FavoriteRepository,
-    private val routeRepository: RouteRepository,
-) : ViewModel() {
-    companion object {
-        private const val TAG = "SettingsViewModel"
-    }
+class SettingsViewModel
+    @Inject
+    constructor(
+        private val settingsRepository: SettingsRepository,
+        private val favoriteRepository: FavoriteRepository,
+        private val routeRepository: RouteRepository,
+    ) : ViewModel() {
+        companion object {
+            private const val TAG = "SettingsViewModel"
+        }
 
-    private data class RepoState(
-        val walkSpeed: Double,
-        val runSpeed: Double,
-        val bikeSpeed: Double,
-        val speedUnit: SpeedUnit,
-        val widgetFeatures: Set<WidgetFeature>,
-    )
-
-    private data class DraftState(
-        val walkSpeed: Double? = null,
-        val runSpeed: Double? = null,
-        val bikeSpeed: Double? = null,
-        val speedUnit: SpeedUnit? = null,
-        val widgetFeatures: Set<WidgetFeature>? = null,
-    )
-
-    private val _draftWalkSpeed = MutableStateFlow<Double?>(null)
-    private val _draftRunSpeed = MutableStateFlow<Double?>(null)
-    private val _draftBikeSpeed = MutableStateFlow<Double?>(null)
-    private val _draftSpeedUnit = MutableStateFlow<SpeedUnit?>(null)
-    private val _draftWidgetFeatures = MutableStateFlow<Set<WidgetFeature>?>(null)
-
-    private val _repoState = combine(
-        settingsRepository.getWalkSpeed(),
-        settingsRepository.getRunSpeed(),
-        settingsRepository.getBikeSpeed(),
-        settingsRepository.getSpeedUnit(),
-        settingsRepository.getWidgetFeatures(),
-    ) { walkSpeed, runSpeed, bikeSpeed, speedUnit, features ->
-        RepoState(walkSpeed, runSpeed, bikeSpeed, speedUnit, features.toSet())
-    }
-
-    private val _draftState = combine(
-        _draftWalkSpeed.asStateFlow(),
-        _draftRunSpeed.asStateFlow(),
-        _draftBikeSpeed.asStateFlow(),
-        _draftSpeedUnit.asStateFlow(),
-        _draftWidgetFeatures.asStateFlow(),
-    ) { draftWalk, draftRun, draftBike, draftUnit, draftFeatures ->
-        DraftState(draftWalk, draftRun, draftBike, draftUnit, draftFeatures)
-    }
-
-    val uiState: StateFlow<SettingsUiState> = combine(
-        _repoState,
-        _draftState,
-    ) { repoState, draftState ->
-        val isDirty = draftState.walkSpeed != null || draftState.runSpeed != null ||
-                draftState.bikeSpeed != null || draftState.speedUnit != null ||
-                draftState.widgetFeatures != null
-        SettingsUiState(
-            isLoading = false,
-            walkSpeed = draftState.walkSpeed ?: repoState.walkSpeed,
-            runSpeed = draftState.runSpeed ?: repoState.runSpeed,
-            bikeSpeed = draftState.bikeSpeed ?: repoState.bikeSpeed,
-            speedUnit = draftState.speedUnit ?: repoState.speedUnit,
-            enabledWidgetFeatures = draftState.widgetFeatures ?: repoState.widgetFeatures,
-            isDirty = isDirty,
-        )
-    }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = SettingsUiState(isLoading = true)
+        private data class RepoState(
+            val walkSpeed: Double,
+            val runSpeed: Double,
+            val bikeSpeed: Double,
+            val speedUnit: SpeedUnit,
+            val widgetFeatures: Set<WidgetFeature>,
         )
 
-    fun setWalkSpeed(displaySpeed: Double) {
-        val ms = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)
-        _draftWalkSpeed.value = ms
-    }
+        private data class DraftState(
+            val walkSpeed: Double? = null,
+            val runSpeed: Double? = null,
+            val bikeSpeed: Double? = null,
+            val speedUnit: SpeedUnit? = null,
+            val widgetFeatures: Set<WidgetFeature>? = null,
+        )
 
-    fun setRunSpeed(displaySpeed: Double) {
-        val ms = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)
-        _draftRunSpeed.value = ms
-    }
+        private val _draftWalkSpeed = MutableStateFlow<Double?>(null)
+        private val _draftRunSpeed = MutableStateFlow<Double?>(null)
+        private val _draftBikeSpeed = MutableStateFlow<Double?>(null)
+        private val _draftSpeedUnit = MutableStateFlow<SpeedUnit?>(null)
+        private val _draftWidgetFeatures = MutableStateFlow<Set<WidgetFeature>?>(null)
 
-    fun setBikeSpeed(displaySpeed: Double) {
-        val ms = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)
-        _draftBikeSpeed.value = ms
-    }
-
-    fun setSpeedUnit(unit: SpeedUnit) {
-        _draftSpeedUnit.value = unit
-    }
-
-    fun setWidgetFeatures(features: Set<WidgetFeature>) {
-        _draftWidgetFeatures.value = features
-    }
-
-    fun saveChanges() {
-        viewModelScope.launch {
-            val draftWalk = _draftWalkSpeed.value
-            val draftRun = _draftRunSpeed.value
-            val draftBike = _draftBikeSpeed.value
-            val draftUnit = _draftSpeedUnit.value
-            val draftFeatures = _draftWidgetFeatures.value
-
-            if (draftWalk != null) {
-                settingsRepository.setWalkSpeed(draftWalk)
-                _draftWalkSpeed.value = null
+        private val _repoState =
+            combine(
+                settingsRepository.getWalkSpeed(),
+                settingsRepository.getRunSpeed(),
+                settingsRepository.getBikeSpeed(),
+                settingsRepository.getSpeedUnit(),
+                settingsRepository.getWidgetFeatures(),
+            ) { walkSpeed, runSpeed, bikeSpeed, speedUnit, features ->
+                RepoState(walkSpeed, runSpeed, bikeSpeed, speedUnit, features.toSet())
             }
-            if (draftRun != null) {
-                settingsRepository.setRunSpeed(draftRun)
-                _draftRunSpeed.value = null
-            }
-            if (draftBike != null) {
-                settingsRepository.setBikeSpeed(draftBike)
-                _draftBikeSpeed.value = null
-            }
-            if (draftUnit != null) {
-                settingsRepository.setSpeedUnit(draftUnit)
-                _draftSpeedUnit.value = null
-            }
-            if (draftFeatures != null) {
-                settingsRepository.setWidgetFeatures(draftFeatures.toList())
-                _draftWidgetFeatures.value = null
-            }
-        }
-    }
 
-    fun discardChanges() {
-        _draftWalkSpeed.value = null
-        _draftRunSpeed.value = null
-        _draftBikeSpeed.value = null
-        _draftSpeedUnit.value = null
-        _draftWidgetFeatures.value = null
-    }
+        private val _draftState =
+            combine(
+                _draftWalkSpeed.asStateFlow(),
+                _draftRunSpeed.asStateFlow(),
+                _draftBikeSpeed.asStateFlow(),
+                _draftSpeedUnit.asStateFlow(),
+                _draftWidgetFeatures.asStateFlow(),
+            ) { draftWalk, draftRun, draftBike, draftUnit, draftFeatures ->
+                DraftState(draftWalk, draftRun, draftBike, draftUnit, draftFeatures)
+            }
 
-    fun convertMsToDisplay(ms: Double, unit: SpeedUnit): Double {
-        return when (unit) {
-            SpeedUnit.KMH -> ms * 3.6
-            SpeedUnit.MPH -> ms * 2.237
-        }
-    }
-
-    private fun convertDisplayToMs(displaySpeed: Double, unit: SpeedUnit): Double {
-        return when (unit) {
-            SpeedUnit.KMH -> displaySpeed / 3.6
-            SpeedUnit.MPH -> displaySpeed / 2.237
-        }
-    }
-
-    fun exportSettings(context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val state = uiState.value
-                val speedProfiles = listOf(
-                    SpeedProfile(id = "walk", name = "Walk", speedMetersPerSecond = state.walkSpeed),
-                    SpeedProfile(id = "run", name = "Run", speedMetersPerSecond = state.runSpeed),
-                    SpeedProfile(id = "bike", name = "Bike", speedMetersPerSecond = state.bikeSpeed),
+        val uiState: StateFlow<SettingsUiState> =
+            combine(
+                _repoState,
+                _draftState,
+            ) { repoState, draftState ->
+                val isDirty =
+                    draftState.walkSpeed != null || draftState.runSpeed != null ||
+                        draftState.bikeSpeed != null || draftState.speedUnit != null ||
+                        draftState.widgetFeatures != null
+                SettingsUiState(
+                    isLoading = false,
+                    walkSpeed = draftState.walkSpeed ?: repoState.walkSpeed,
+                    runSpeed = draftState.runSpeed ?: repoState.runSpeed,
+                    bikeSpeed = draftState.bikeSpeed ?: repoState.bikeSpeed,
+                    speedUnit = draftState.speedUnit ?: repoState.speedUnit,
+                    enabledWidgetFeatures = draftState.widgetFeatures ?: repoState.widgetFeatures,
+                    isDirty = isDirty,
                 )
-                val settings = AppSettings(speedUnit = state.speedUnit, enabledWidgetFeatures = state.enabledWidgetFeatures.toList())
-                val routes = routeRepository.getRoutes().first()
-                val favorites = favoriteRepository.getFavorites().first()
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = SettingsUiState(isLoading = true),
+            )
 
-                val exportData = ExportData(
-                    exportedAt = System.currentTimeMillis(),
-                    settings = settings,
-                    speedProfiles = speedProfiles,
-                    routes = routes,
-                    favoriteLocations = favorites,
-                )
+        fun setWalkSpeed(displaySpeed: Double) {
+            val ms = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)
+            _draftWalkSpeed.value = ms
+        }
 
-                val json = serializeExportData(exportData)
-                val dir = context.getExternalFilesDir(null) ?: return@launch
-                val timestamp = System.currentTimeMillis()
-                val file = File(dir, "locationjoystick-export-$timestamp.json")
-                file.writeText(json, Charsets.UTF_8)
+        fun setRunSpeed(displaySpeed: Double) {
+            val ms = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)
+            _draftRunSpeed.value = ms
+        }
 
-                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                    type = "application/json"
-                    putExtra(android.content.Intent.EXTRA_STREAM, uri)
-                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        fun setBikeSpeed(displaySpeed: Double) {
+            val ms = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)
+            _draftBikeSpeed.value = ms
+        }
+
+        fun setSpeedUnit(unit: SpeedUnit) {
+            _draftSpeedUnit.value = unit
+        }
+
+        fun setWidgetFeatures(features: Set<WidgetFeature>) {
+            _draftWidgetFeatures.value = features
+        }
+
+        fun saveChanges() {
+            viewModelScope.launch {
+                val draftWalk = _draftWalkSpeed.value
+                val draftRun = _draftRunSpeed.value
+                val draftBike = _draftBikeSpeed.value
+                val draftUnit = _draftSpeedUnit.value
+                val draftFeatures = _draftWidgetFeatures.value
+
+                if (draftWalk != null) {
+                    settingsRepository.setWalkSpeed(draftWalk)
+                    _draftWalkSpeed.value = null
                 }
-                context.startActivity(android.content.Intent.createChooser(intent, "Export settings"))
-            } catch (e: Exception) {
-                Log.e(TAG, "Export failed", e)
+                if (draftRun != null) {
+                    settingsRepository.setRunSpeed(draftRun)
+                    _draftRunSpeed.value = null
+                }
+                if (draftBike != null) {
+                    settingsRepository.setBikeSpeed(draftBike)
+                    _draftBikeSpeed.value = null
+                }
+                if (draftUnit != null) {
+                    settingsRepository.setSpeedUnit(draftUnit)
+                    _draftSpeedUnit.value = null
+                }
+                if (draftFeatures != null) {
+                    settingsRepository.setWidgetFeatures(draftFeatures.toList())
+                    _draftWidgetFeatures.value = null
+                }
             }
         }
-    }
 
-    fun importSettings(context: Context, uri: Uri) {
-        viewModelScope.launch {
-            try {
-                val json = withContext(Dispatchers.IO) {
-                    context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText() ?: ""
-                }
-                if (json.isEmpty()) {
-                    Log.e(TAG, "Import failed: empty file")
-                    return@launch
-                }
-                val exportData = parseExportData(json)
+        fun discardChanges() {
+            _draftWalkSpeed.value = null
+            _draftRunSpeed.value = null
+            _draftBikeSpeed.value = null
+            _draftSpeedUnit.value = null
+            _draftWidgetFeatures.value = null
+        }
 
-                withContext(Dispatchers.IO) {
-                    exportData.favoriteLocations.forEach { fav ->
-                        favoriteRepository.addFavorite(
-                            id = fav.id,
-                            name = fav.name,
-                            position = fav.position,
-                            createdAt = fav.createdAt
-                        )
-                    }
-                    exportData.routes.forEach { routeRepository.insertRoute(it).getOrNull() }
-                }
-
-                setSpeedUnit(exportData.settings.speedUnit)
-                exportData.speedProfiles.forEach { profile ->
-                    when (profile.id) {
-                        "walk" -> setWalkSpeed(profile.speedMetersPerSecond)
-                        "run" -> setRunSpeed(profile.speedMetersPerSecond)
-                        "bike" -> setBikeSpeed(profile.speedMetersPerSecond)
-                    }
-                }
-                setWidgetFeatures(exportData.settings.enabledWidgetFeatures.toSet())
-            } catch (e: Exception) {
-                Log.e(TAG, "Import failed", e)
+        fun convertMsToDisplay(
+            ms: Double,
+            unit: SpeedUnit,
+        ): Double =
+            when (unit) {
+                SpeedUnit.KMH -> ms * 3.6
+                SpeedUnit.MPH -> ms * 2.237
             }
-        }
-    }
 
-    private fun serializeExportData(data: ExportData): String {
-        val root = JSONObject()
-        root.put("schemaVersion", data.schemaVersion)
-        root.put("exportedAt", data.exportedAt)
-
-        val settingsObj = JSONObject()
-        settingsObj.put("speedUnit", data.settings.speedUnit.name)
-        settingsObj.put("enabledWidgetFeatures", JSONArray(data.settings.enabledWidgetFeatures.map { it.name }))
-        root.put("settings", settingsObj)
-
-        val profilesArray = JSONArray()
-        data.speedProfiles.forEach { profile ->
-            val obj = JSONObject()
-            obj.put("id", profile.id)
-            obj.put("name", profile.name)
-            obj.put("speedMetersPerSecond", profile.speedMetersPerSecond)
-            profilesArray.put(obj)
-        }
-        root.put("speedProfiles", profilesArray)
-
-        val routesArray = JSONArray()
-        data.routes.forEach { route ->
-            val obj = JSONObject()
-            obj.put("id", route.id)
-            obj.put("name", route.name)
-            obj.put("isLooping", route.isLooping)
-            obj.put("createdAt", route.createdAt)
-            val wpArray = JSONArray()
-            route.waypoints.forEach { wp ->
-                val wpObj = JSONObject()
-                wpObj.put("id", wp.id)
-                wpObj.put("lat", wp.position.latitude)
-                wpObj.put("lon", wp.position.longitude)
-                wpObj.put("orderIndex", wp.orderIndex)
-                wpArray.put(wpObj)
+        private fun convertDisplayToMs(
+            displaySpeed: Double,
+            unit: SpeedUnit,
+        ): Double =
+            when (unit) {
+                SpeedUnit.KMH -> displaySpeed / 3.6
+                SpeedUnit.MPH -> displaySpeed / 2.237
             }
-            obj.put("waypoints", wpArray)
-            routesArray.put(obj)
-        }
-        root.put("routes", routesArray)
 
-        val favsArray = JSONArray()
-        data.favoriteLocations.forEach { fav ->
-            val obj = JSONObject()
-            obj.put("id", fav.id)
-            obj.put("name", fav.name)
-            obj.put("lat", fav.position.latitude)
-            obj.put("lon", fav.position.longitude)
-            obj.put("createdAt", fav.createdAt)
-            favsArray.put(obj)
-        }
-        root.put("favoriteLocations", favsArray)
-
-        return root.toString(2)
-    }
-
-    private fun parseExportData(json: String): ExportData {
-        val root = JSONObject(json)
-        val schemaVersion = root.optInt("schemaVersion", 1)
-        if (schemaVersion != 1) throw IllegalArgumentException("Unsupported schema version: $schemaVersion")
-
-        val settingsObj = root.optJSONObject("settings") ?: JSONObject()
-        val speedUnit = try {
-            SpeedUnit.valueOf(settingsObj.optString("speedUnit", "KMH"))
-        } catch (e: IllegalArgumentException) {
-            SpeedUnit.KMH
-        }
-        val enabledFeatures = mutableListOf<WidgetFeature>()
-        settingsObj.optJSONArray("enabledWidgetFeatures")?.let { arr ->
-            for (i in 0 until arr.length()) {
+        fun exportSettings(context: Context) {
+            viewModelScope.launch(Dispatchers.IO) {
                 try {
-                    enabledFeatures.add(WidgetFeature.valueOf(arr.getString(i)))
-                } catch (e: IllegalArgumentException) {
-                    // skip
+                    val state = uiState.value
+                    val speedProfiles =
+                        listOf(
+                            SpeedProfile(id = "walk", name = "Walk", speedMetersPerSecond = state.walkSpeed),
+                            SpeedProfile(id = "run", name = "Run", speedMetersPerSecond = state.runSpeed),
+                            SpeedProfile(id = "bike", name = "Bike", speedMetersPerSecond = state.bikeSpeed),
+                        )
+                    val settings = AppSettings(speedUnit = state.speedUnit, enabledWidgetFeatures = state.enabledWidgetFeatures.toList())
+                    val routes = routeRepository.getRoutes().first()
+                    val favorites = favoriteRepository.getFavorites().first()
+
+                    val exportData =
+                        ExportData(
+                            exportedAt = System.currentTimeMillis(),
+                            settings = settings,
+                            speedProfiles = speedProfiles,
+                            routes = routes,
+                            favoriteLocations = favorites,
+                        )
+
+                    val json = serializeExportData(exportData)
+                    val dir = context.getExternalFilesDir(null) ?: return@launch
+                    val timestamp = System.currentTimeMillis()
+                    val file = File(dir, "locationjoystick-export-$timestamp.json")
+                    file.writeText(json, Charsets.UTF_8)
+
+                    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                    val intent =
+                        android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            type = "application/json"
+                            putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                    context.startActivity(android.content.Intent.createChooser(intent, "Export settings"))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Export failed", e)
                 }
             }
         }
-        val settings = AppSettings(speedUnit = speedUnit, enabledWidgetFeatures = enabledFeatures)
 
-        val speedProfiles = mutableListOf<SpeedProfile>()
-        root.optJSONArray("speedProfiles")?.let { arr ->
-            for (i in 0 until arr.length()) {
-                val obj = arr.getJSONObject(i)
-                speedProfiles.add(
-                    SpeedProfile(
-                        id = obj.getString("id"),
-                        name = obj.getString("name"),
-                        speedMetersPerSecond = obj.getDouble("speedMetersPerSecond"),
-                    )
-                )
+        fun importSettings(
+            context: Context,
+            uri: Uri,
+        ) {
+            viewModelScope.launch {
+                try {
+                    val json =
+                        withContext(Dispatchers.IO) {
+                            context.contentResolver
+                                .openInputStream(uri)
+                                ?.bufferedReader()
+                                ?.readText() ?: ""
+                        }
+                    if (json.isEmpty()) {
+                        Log.e(TAG, "Import failed: empty file")
+                        return@launch
+                    }
+                    val exportData = parseExportData(json)
+
+                    withContext(Dispatchers.IO) {
+                        exportData.favoriteLocations.forEach { fav ->
+                            favoriteRepository.addFavorite(
+                                id = fav.id,
+                                name = fav.name,
+                                position = fav.position,
+                                createdAt = fav.createdAt,
+                            )
+                        }
+                        exportData.routes.forEach { routeRepository.insertRoute(it).getOrNull() }
+                    }
+
+                    setSpeedUnit(exportData.settings.speedUnit)
+                    exportData.speedProfiles.forEach { profile ->
+                        when (profile.id) {
+                            "walk" -> setWalkSpeed(profile.speedMetersPerSecond)
+                            "run" -> setRunSpeed(profile.speedMetersPerSecond)
+                            "bike" -> setBikeSpeed(profile.speedMetersPerSecond)
+                        }
+                    }
+                    setWidgetFeatures(exportData.settings.enabledWidgetFeatures.toSet())
+                } catch (e: Exception) {
+                    Log.e(TAG, "Import failed", e)
+                }
             }
         }
 
-        val routes = mutableListOf<Route>()
-        root.optJSONArray("routes")?.let { arr ->
-            for (i in 0 until arr.length()) {
-                val obj = arr.getJSONObject(i)
-                val waypoints = mutableListOf<com.locationjoystick.core.model.Waypoint>()
-                obj.optJSONArray("waypoints")?.let { wpArr ->
-                    for (j in 0 until wpArr.length()) {
-                        val wpObj = wpArr.getJSONObject(j)
-                        waypoints.add(
-                            com.locationjoystick.core.model.Waypoint(
-                                id = wpObj.getString("id"),
-                                position = com.locationjoystick.core.model.LatLng(
-                                    latitude = wpObj.getDouble("lat"),
-                                    longitude = wpObj.getDouble("lon"),
-                                ),
-                                orderIndex = wpObj.getInt("orderIndex"),
-                            )
-                        )
+        private fun serializeExportData(data: ExportData): String {
+            val root = JSONObject()
+            root.put("schemaVersion", data.schemaVersion)
+            root.put("exportedAt", data.exportedAt)
+
+            val settingsObj = JSONObject()
+            settingsObj.put("speedUnit", data.settings.speedUnit.name)
+            settingsObj.put("enabledWidgetFeatures", JSONArray(data.settings.enabledWidgetFeatures.map { it.name }))
+            root.put("settings", settingsObj)
+
+            val profilesArray = JSONArray()
+            data.speedProfiles.forEach { profile ->
+                val obj = JSONObject()
+                obj.put("id", profile.id)
+                obj.put("name", profile.name)
+                obj.put("speedMetersPerSecond", profile.speedMetersPerSecond)
+                profilesArray.put(obj)
+            }
+            root.put("speedProfiles", profilesArray)
+
+            val routesArray = JSONArray()
+            data.routes.forEach { route ->
+                val obj = JSONObject()
+                obj.put("id", route.id)
+                obj.put("name", route.name)
+                obj.put("isLooping", route.isLooping)
+                obj.put("createdAt", route.createdAt)
+                val wpArray = JSONArray()
+                route.waypoints.forEach { wp ->
+                    val wpObj = JSONObject()
+                    wpObj.put("id", wp.id)
+                    wpObj.put("lat", wp.position.latitude)
+                    wpObj.put("lon", wp.position.longitude)
+                    wpObj.put("orderIndex", wp.orderIndex)
+                    wpArray.put(wpObj)
+                }
+                obj.put("waypoints", wpArray)
+                routesArray.put(obj)
+            }
+            root.put("routes", routesArray)
+
+            val favsArray = JSONArray()
+            data.favoriteLocations.forEach { fav ->
+                val obj = JSONObject()
+                obj.put("id", fav.id)
+                obj.put("name", fav.name)
+                obj.put("lat", fav.position.latitude)
+                obj.put("lon", fav.position.longitude)
+                obj.put("createdAt", fav.createdAt)
+                favsArray.put(obj)
+            }
+            root.put("favoriteLocations", favsArray)
+
+            return root.toString(2)
+        }
+
+        private fun parseExportData(json: String): ExportData {
+            val root = JSONObject(json)
+            val schemaVersion = root.optInt("schemaVersion", 1)
+            if (schemaVersion != 1) throw IllegalArgumentException("Unsupported schema version: $schemaVersion")
+
+            val settingsObj = root.optJSONObject("settings") ?: JSONObject()
+            val speedUnit =
+                try {
+                    SpeedUnit.valueOf(settingsObj.optString("speedUnit", "KMH"))
+                } catch (e: IllegalArgumentException) {
+                    SpeedUnit.KMH
+                }
+            val enabledFeatures = mutableListOf<WidgetFeature>()
+            settingsObj.optJSONArray("enabledWidgetFeatures")?.let { arr ->
+                for (i in 0 until arr.length()) {
+                    try {
+                        enabledFeatures.add(WidgetFeature.valueOf(arr.getString(i)))
+                    } catch (e: IllegalArgumentException) {
+                        // skip
                     }
                 }
-                routes.add(
-                    Route(
-                        id = obj.getString("id"),
-                        name = obj.getString("name"),
-                        waypoints = waypoints,
-                        isLooping = obj.optBoolean("isLooping", false),
-                        createdAt = obj.optLong("createdAt", 0),
-                    )
-                )
             }
-        }
+            val settings = AppSettings(speedUnit = speedUnit, enabledWidgetFeatures = enabledFeatures)
 
-        val favorites = mutableListOf<FavoriteLocation>()
-        root.optJSONArray("favoriteLocations")?.let { arr ->
-            for (i in 0 until arr.length()) {
-                val obj = arr.getJSONObject(i)
-                favorites.add(
-                    FavoriteLocation(
-                        id = obj.getString("id"),
-                        name = obj.getString("name"),
-                        position = com.locationjoystick.core.model.LatLng(
-                            latitude = obj.getDouble("lat"),
-                            longitude = obj.getDouble("lon"),
+            val speedProfiles = mutableListOf<SpeedProfile>()
+            root.optJSONArray("speedProfiles")?.let { arr ->
+                for (i in 0 until arr.length()) {
+                    val obj = arr.getJSONObject(i)
+                    speedProfiles.add(
+                        SpeedProfile(
+                            id = obj.getString("id"),
+                            name = obj.getString("name"),
+                            speedMetersPerSecond = obj.getDouble("speedMetersPerSecond"),
                         ),
-                        createdAt = obj.optLong("createdAt", 0),
                     )
-                )
+                }
             }
-        }
 
-        return ExportData(
-            schemaVersion = schemaVersion,
-            exportedAt = root.optLong("exportedAt", 0),
-            settings = settings,
-            speedProfiles = speedProfiles,
-            routes = routes,
-            favoriteLocations = favorites,
-        )
+            val routes = mutableListOf<Route>()
+            root.optJSONArray("routes")?.let { arr ->
+                for (i in 0 until arr.length()) {
+                    val obj = arr.getJSONObject(i)
+                    val waypoints = mutableListOf<com.locationjoystick.core.model.Waypoint>()
+                    obj.optJSONArray("waypoints")?.let { wpArr ->
+                        for (j in 0 until wpArr.length()) {
+                            val wpObj = wpArr.getJSONObject(j)
+                            waypoints.add(
+                                com.locationjoystick.core.model.Waypoint(
+                                    id = wpObj.getString("id"),
+                                    position =
+                                        com.locationjoystick.core.model.LatLng(
+                                            latitude = wpObj.getDouble("lat"),
+                                            longitude = wpObj.getDouble("lon"),
+                                        ),
+                                    orderIndex = wpObj.getInt("orderIndex"),
+                                ),
+                            )
+                        }
+                    }
+                    routes.add(
+                        Route(
+                            id = obj.getString("id"),
+                            name = obj.getString("name"),
+                            waypoints = waypoints,
+                            isLooping = obj.optBoolean("isLooping", false),
+                            createdAt = obj.optLong("createdAt", 0),
+                        ),
+                    )
+                }
+            }
+
+            val favorites = mutableListOf<FavoriteLocation>()
+            root.optJSONArray("favoriteLocations")?.let { arr ->
+                for (i in 0 until arr.length()) {
+                    val obj = arr.getJSONObject(i)
+                    favorites.add(
+                        FavoriteLocation(
+                            id = obj.getString("id"),
+                            name = obj.getString("name"),
+                            position =
+                                com.locationjoystick.core.model.LatLng(
+                                    latitude = obj.getDouble("lat"),
+                                    longitude = obj.getDouble("lon"),
+                                ),
+                            createdAt = obj.optLong("createdAt", 0),
+                        ),
+                    )
+                }
+            }
+
+            return ExportData(
+                schemaVersion = schemaVersion,
+                exportedAt = root.optLong("exportedAt", 0),
+                settings = settings,
+                speedProfiles = speedProfiles,
+                routes = routes,
+                favoriteLocations = favorites,
+            )
+        }
     }
-}

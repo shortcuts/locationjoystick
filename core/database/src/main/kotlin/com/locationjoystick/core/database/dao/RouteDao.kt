@@ -24,7 +24,6 @@ data class RouteWithWaypoints(
 
 @Dao
 interface RouteDao {
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(route: RouteEntity)
 

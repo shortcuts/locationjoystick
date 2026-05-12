@@ -21,19 +21,18 @@ import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.overlay.OverlayService
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import kotlin.math.cos
+import kotlin.math.sin
 
 @AndroidEntryPoint
 class JoystickOverlayService : OverlayService() {
-
     companion object {
         private const val TAG = "JoystickOverlayService"
         private const val JOYSTICK_SIZE_DP = 160
@@ -58,17 +57,21 @@ class JoystickOverlayService : OverlayService() {
 
     private val binder = LocalBinder()
 
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-            mockLocationService = (binder as MockLocationService.LocalBinder).getService()
-            Log.d(TAG, "Bound to MockLocationService")
-        }
+    private val serviceConnection =
+        object : ServiceConnection {
+            override fun onServiceConnected(
+                name: ComponentName,
+                binder: IBinder,
+            ) {
+                mockLocationService = (binder as MockLocationService.LocalBinder).getService()
+                Log.d(TAG, "Bound to MockLocationService")
+            }
 
-        override fun onServiceDisconnected(name: ComponentName) {
-            mockLocationService = null
-            Log.d(TAG, "Unbound from MockLocationService")
+            override fun onServiceDisconnected(name: ComponentName) {
+                mockLocationService = null
+                Log.d(TAG, "Unbound from MockLocationService")
+            }
         }
-    }
 
     override fun onCreate() {
         super.onCreate()
@@ -130,29 +133,31 @@ class JoystickOverlayService : OverlayService() {
 
     override fun getWindowManagerParams(view: View): WindowManager.LayoutParams {
         val sizePx = (JOYSTICK_SIZE_DP * resources.displayMetrics.density).toInt()
-    
+
         val metrics = windowManager.currentWindowMetrics
         val bounds = metrics.bounds
-    
-        val insets = metrics.windowInsets.getInsetsIgnoringVisibility(
-            WindowInsets.Type.systemBars()
-        )
-    
+
+        val insets =
+            metrics.windowInsets.getInsetsIgnoringVisibility(
+                WindowInsets.Type.systemBars(),
+            )
+
         val usableHeight = bounds.height() - insets.top - insets.bottom
         val centerY = insets.top + ((usableHeight / 2) - (sizePx / 2))
-    
-        return WindowManager.LayoutParams(
-            sizePx,
-            sizePx,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 0
-            y = centerY
-        }
+
+        return WindowManager
+            .LayoutParams(
+                sizePx,
+                sizePx,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                PixelFormat.TRANSLUCENT,
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+                x = 0
+                y = centerY
+            }
     }
 
     private suspend fun applyJoystickInput(input: JoystickInput) {
@@ -164,13 +169,15 @@ class JoystickOverlayService : OverlayService() {
         val distanceMeters = speedMs * MOVE_STEP_SECONDS * input.force
 
         val dLat = distanceMeters * cos(angleRad) / 111320.0
-        val dLon = distanceMeters * sin(angleRad) /
-            (111320.0 * cos(Math.toRadians(currentPos.latitude)))
+        val dLon =
+            distanceMeters * sin(angleRad) /
+                (111320.0 * cos(Math.toRadians(currentPos.latitude)))
 
-        val nextPos = LatLng(
-            latitude = currentPos.latitude + dLat,
-            longitude = currentPos.longitude + dLon,
-        )
+        val nextPos =
+            LatLng(
+                latitude = currentPos.latitude + dLat,
+                longitude = currentPos.longitude + dLon,
+            )
 
         locationRepository.updatePosition(nextPos)
 
@@ -198,13 +205,17 @@ class JoystickOverlayService : OverlayService() {
                     initialTouchY = event.rawY
                     false
                 }
+
                 MotionEvent.ACTION_MOVE -> {
                     val dx = (event.rawX - initialTouchX).toInt()
                     val dy = (event.rawY - initialTouchY).toInt()
                     updateOverlayPosition(initialX + dx, initialY + dy)
                     false
                 }
-                else -> false
+
+                else -> {
+                    false
+                }
             }
         }
     }

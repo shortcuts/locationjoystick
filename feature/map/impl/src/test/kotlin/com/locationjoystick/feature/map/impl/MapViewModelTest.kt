@@ -3,10 +3,10 @@ package com.locationjoystick.feature.map.impl
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
+import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.Route
-import com.locationjoystick.core.model.FavoriteLocation
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -26,7 +26,6 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
-
     private val testDispatcher = UnconfinedTestDispatcher()
 
     private lateinit var locationRepository: LocationRepository
@@ -56,71 +55,76 @@ class MapViewModelTest {
     }
 
     @Test
-    fun `tapToTeleport_whenNotSpoofing_teleportsDirectly`() = runTest {
-        // isSpoofing == false (default IDLE state)
-        val position = LatLng(48.8566, 2.3522)
+    fun `tapToTeleport_whenNotSpoofing_teleportsDirectly`() =
+        runTest {
+            // isSpoofing == false (default IDLE state)
+            val position = LatLng(48.8566, 2.3522)
 
-        viewModel.onAction(MapAction.TapToTeleport(position))
+            viewModel.onAction(MapAction.TapToTeleport(position))
 
-        assertNull(viewModel.uiState.value.pendingTapPosition)
-    }
-
-    @Test
-    fun `tapToTeleport_whenSpoofing_setsPendingPosition`() = runTest {
-        // Set state to RUNNING so isSpoofing == true
-        every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
-        every { locationRepository.observePosition() } returns MutableStateFlow(null)
-        viewModel = MapViewModel(locationRepository, routeRepository, favoriteRepository)
-
-        val position = LatLng(48.8566, 2.3522)
-        viewModel.onAction(MapAction.TapToTeleport(position))
-
-        assertEquals(position, viewModel.uiState.value.pendingTapPosition)
-    }
+            assertNull(viewModel.uiState.value.pendingTapPosition)
+        }
 
     @Test
-    fun `confirmTeleport_teleportsAndClearsPending`() = runTest {
-        // Start spoofing so TapToTeleport sets pending
-        every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
-        every { locationRepository.observePosition() } returns MutableStateFlow(null)
-        viewModel = MapViewModel(locationRepository, routeRepository, favoriteRepository)
+    fun `tapToTeleport_whenSpoofing_setsPendingPosition`() =
+        runTest {
+            // Set state to RUNNING so isSpoofing == true
+            every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.observePosition() } returns MutableStateFlow(null)
+            viewModel = MapViewModel(locationRepository, routeRepository, favoriteRepository)
 
-        val position = LatLng(48.8566, 2.3522)
-        viewModel.onAction(MapAction.TapToTeleport(position))
-        assertEquals(position, viewModel.uiState.value.pendingTapPosition)
+            val position = LatLng(48.8566, 2.3522)
+            viewModel.onAction(MapAction.TapToTeleport(position))
 
-        viewModel.onAction(MapAction.ConfirmTeleport(position))
-
-        assertNull(viewModel.uiState.value.pendingTapPosition)
-    }
+            assertEquals(position, viewModel.uiState.value.pendingTapPosition)
+        }
 
     @Test
-    fun `clearPendingTap_setsPendingToNull`() = runTest {
-        // Set pending position directly via spoofing tap
-        every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
-        every { locationRepository.observePosition() } returns MutableStateFlow(null)
-        viewModel = MapViewModel(locationRepository, routeRepository, favoriteRepository)
+    fun `confirmTeleport_teleportsAndClearsPending`() =
+        runTest {
+            // Start spoofing so TapToTeleport sets pending
+            every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.observePosition() } returns MutableStateFlow(null)
+            viewModel = MapViewModel(locationRepository, routeRepository, favoriteRepository)
 
-        viewModel.onAction(MapAction.TapToTeleport(LatLng(1.0, 2.0)))
-        assertEquals(LatLng(1.0, 2.0), viewModel.uiState.value.pendingTapPosition)
+            val position = LatLng(48.8566, 2.3522)
+            viewModel.onAction(MapAction.TapToTeleport(position))
+            assertEquals(position, viewModel.uiState.value.pendingTapPosition)
 
-        viewModel.onAction(MapAction.ClearPendingTap)
+            viewModel.onAction(MapAction.ConfirmTeleport(position))
 
-        assertNull(viewModel.uiState.value.pendingTapPosition)
-    }
+            assertNull(viewModel.uiState.value.pendingTapPosition)
+        }
 
     @Test
-    fun `stopSpoofing_clearsPendingTapPosition`() = runTest {
-        // Start spoofing and set a pending tap
-        every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
-        every { locationRepository.observePosition() } returns MutableStateFlow(null)
-        viewModel = MapViewModel(locationRepository, routeRepository, favoriteRepository)
+    fun `clearPendingTap_setsPendingToNull`() =
+        runTest {
+            // Set pending position directly via spoofing tap
+            every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.observePosition() } returns MutableStateFlow(null)
+            viewModel = MapViewModel(locationRepository, routeRepository, favoriteRepository)
 
-        viewModel.onAction(MapAction.TapToTeleport(LatLng(3.0, 4.0)))
-        assertEquals(LatLng(3.0, 4.0), viewModel.uiState.value.pendingTapPosition)
+            viewModel.onAction(MapAction.TapToTeleport(LatLng(1.0, 2.0)))
+            assertEquals(LatLng(1.0, 2.0), viewModel.uiState.value.pendingTapPosition)
 
-        viewModel.onAction(MapAction.StopSpoofing)
+            viewModel.onAction(MapAction.ClearPendingTap)
 
-        assertNull(viewModel.uiState.value.pendingTapPosition)
-    }
+            assertNull(viewModel.uiState.value.pendingTapPosition)
+        }
+
+    @Test
+    fun `stopSpoofing_clearsPendingTapPosition`() =
+        runTest {
+            // Start spoofing and set a pending tap
+            every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.observePosition() } returns MutableStateFlow(null)
+            viewModel = MapViewModel(locationRepository, routeRepository, favoriteRepository)
+
+            viewModel.onAction(MapAction.TapToTeleport(LatLng(3.0, 4.0)))
+            assertEquals(LatLng(3.0, 4.0), viewModel.uiState.value.pendingTapPosition)
+
+            viewModel.onAction(MapAction.StopSpoofing)
+
+            assertNull(viewModel.uiState.value.pendingTapPosition)
+        }
 }

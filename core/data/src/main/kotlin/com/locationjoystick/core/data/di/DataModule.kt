@@ -19,7 +19,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DataModule {
-
     @Provides
     @Singleton
     fun provideRouteRepository(
@@ -29,15 +28,11 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideFavoriteRepository(
-        favoriteDao: FavoriteDao,
-    ): FavoriteRepository = FavoriteRepository(favoriteDao)
+    fun provideFavoriteRepository(favoriteDao: FavoriteDao): FavoriteRepository = FavoriteRepository(favoriteDao)
 
     @Provides
     @Singleton
-    fun provideSettingsRepository(
-        dataSource: AppPreferencesDataSource,
-    ): SettingsRepository = SettingsRepository(dataSource)
+    fun provideSettingsRepository(dataSource: AppPreferencesDataSource): SettingsRepository = SettingsRepository(dataSource)
 
     @Provides
     @Singleton

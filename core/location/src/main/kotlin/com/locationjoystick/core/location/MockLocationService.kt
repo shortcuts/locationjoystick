@@ -39,7 +39,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MockLocationService : Service() {
-
     companion object {
         private const val TAG = "MockLocationService"
         private const val NOTIFICATION_ID = 1001
@@ -72,8 +71,11 @@ class MockLocationService : Service() {
     private val binder = LocalBinder()
 
     @Inject lateinit var locationManager: LocationManager
+
     @Inject lateinit var locationRepository: LocationRepository
+
     @Inject lateinit var routeRepository: RouteRepository
+
     @Inject lateinit var routeReplayEngine: RouteReplayEngine
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -83,8 +85,11 @@ class MockLocationService : Service() {
     val state: StateFlow<MockLocationState> = _state.asStateFlow()
 
     @Volatile private var currentLat: Double = 0.0
+
     @Volatile private var currentLon: Double = 0.0
+
     @Volatile private var currentSpeedMs: Float = 0.0f
+
     @Volatile private var currentBearing: Float = 0.0f
 
     private var providerAdded = false
@@ -113,6 +118,7 @@ class MockLocationService : Service() {
                             Log.i(TAG, "SYSTEM_ALERT_WINDOW not granted — skipping overlay start")
                         }
                     }
+
                     MockLocationState.IDLE, MockLocationState.ERROR -> {
                         if (updateJob != null) {
                             updateJob?.cancel()
@@ -124,6 +130,7 @@ class MockLocationService : Service() {
                         stopService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
                         Log.i(TAG, "Overlay services stopped")
                     }
+
                     MockLocationState.PAUSED -> {
                         if (updateJob != null) {
                             updateJob?.cancel()
@@ -145,35 +152,49 @@ class MockLocationService : Service() {
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         when (intent?.action) {
             ACTION_START -> {
                 val lat = intent.getDoubleExtra("lat", 48.8566)
                 val lon = intent.getDoubleExtra("lon", 2.3522)
                 startSpoofing(lat, lon)
             }
+
             ACTION_STOP -> {
                 stopSpoofing()
                 stopSelf()
                 return START_NOT_STICKY
             }
+
             ACTION_UPDATE_POSITION -> {
                 val lat = intent?.getDoubleExtra("lat", currentLat) ?: currentLat
                 val lon = intent?.getDoubleExtra("lon", currentLon) ?: currentLon
                 updatePosition(lat, lon)
             }
+
             ACTION_ROUTE_REPLAY_START -> {
                 val routeId = intent.getStringExtra(EXTRA_ROUTE_ID) ?: return START_STICKY
                 val isBackward = intent.getBooleanExtra(EXTRA_IS_BACKWARD, false)
                 val speedMs = intent.getDoubleExtra(EXTRA_SPEED_MS, 1.4)
                 handleReplayStart(routeId, isBackward, speedMs)
             }
-            ACTION_ROUTE_REPLAY_PAUSE -> handleReplayPause()
+
+            ACTION_ROUTE_REPLAY_PAUSE -> {
+                handleReplayPause()
+            }
+
             ACTION_ROUTE_REPLAY_RESUME -> {
                 val speedMs = intent.getDoubleExtra(EXTRA_SPEED_MS, 1.4)
                 handleReplayResume(speedMs)
             }
-            ACTION_ROUTE_REPLAY_STOP -> serviceScope.launch { handleReplayStop() }
+
+            ACTION_ROUTE_REPLAY_STOP -> {
+                serviceScope.launch { handleReplayStop() }
+            }
         }
 
         ServiceCompat.startForeground(
@@ -194,7 +215,10 @@ class MockLocationService : Service() {
         super.onDestroy()
     }
 
-    fun startSpoofing(lat: Double, lon: Double) {
+    fun startSpoofing(
+        lat: Double,
+        lon: Double,
+    ) {
         if (_state.value == MockLocationState.RUNNING) {
             Log.i(TAG, "Spoofing already running; ignoring duplicate startSpoofing()")
             return
@@ -213,7 +237,10 @@ class MockLocationService : Service() {
         Log.i(TAG, "Spoofing started at ($lat, $lon)")
     }
 
-    fun updatePosition(lat: Double, lon: Double) {
+    fun updatePosition(
+        lat: Double,
+        lon: Double,
+    ) {
         currentLat = lat
         currentLon = lon
         locationRepository.setPositionInternal(LatLng(lat, lon))
@@ -221,7 +248,12 @@ class MockLocationService : Service() {
 
     // Joystick/walk callers: update locationRepository before calling this method (sets speed/bearing only).
     // Route replay uses onPositionUpdate lambda instead — does not call this method.
-    fun updatePositionWithVector(lat: Double, lon: Double, speedMs: Float, bearing: Float) {
+    fun updatePositionWithVector(
+        lat: Double,
+        lon: Double,
+        speedMs: Float,
+        bearing: Float,
+    ) {
         currentLat = lat
         currentLon = lon
         currentSpeedMs = speedMs
@@ -243,7 +275,11 @@ class MockLocationService : Service() {
 
     fun getCurrentPosition(): LatLng = LatLng(currentLat, currentLon)
 
-    private fun handleReplayStart(routeId: String, isBackward: Boolean, speedMs: Double) {
+    private fun handleReplayStart(
+        routeId: String,
+        isBackward: Boolean,
+        speedMs: Double,
+    ) {
         serviceScope.launch {
             val route = routeRepository.getRouteWithWaypoints(routeId).first() ?: return@launch
             if (route.waypoints.size < 2) return@launch
@@ -325,13 +361,15 @@ class MockLocationService : Service() {
     private fun setupTestProvider() {
         if (providerAdded) return
         try {
-            val properties = ProviderProperties.Builder()
-                .setHasAltitudeSupport(false)
-                .setHasSpeedSupport(true)
-                .setHasBearingSupport(true)
-                .setPowerUsage(ProviderProperties.POWER_USAGE_HIGH)
-                .setAccuracy(ProviderProperties.ACCURACY_FINE)
-                .build()
+            val properties =
+                ProviderProperties
+                    .Builder()
+                    .setHasAltitudeSupport(false)
+                    .setHasSpeedSupport(true)
+                    .setHasBearingSupport(true)
+                    .setPowerUsage(ProviderProperties.POWER_USAGE_HIGH)
+                    .setAccuracy(ProviderProperties.ACCURACY_FINE)
+                    .build()
 
             locationManager.addTestProvider(
                 LocationManager.GPS_PROVIDER,
@@ -364,27 +402,29 @@ class MockLocationService : Service() {
 
     private fun startUpdateLoop() {
         updateJob?.cancel()
-        updateJob = serviceScope.launch {
-            while (isActive) {
-                pushLocationUpdate()
-                delay(UPDATE_INTERVAL_MS)
+        updateJob =
+            serviceScope.launch {
+                while (isActive) {
+                    pushLocationUpdate()
+                    delay(UPDATE_INTERVAL_MS)
+                }
             }
-        }
     }
 
     private fun pushLocationUpdate() {
         if (!providerAdded) return
         try {
-            val location = Location(LocationManager.GPS_PROVIDER).apply {
-                latitude = currentLat
-                longitude = currentLon
-                altitude = 0.0
-                accuracy = LOCATION_ACCURACY
-                speed = currentSpeedMs
-                bearing = currentBearing
-                time = System.currentTimeMillis()
-                elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
-            }
+            val location =
+                Location(LocationManager.GPS_PROVIDER).apply {
+                    latitude = currentLat
+                    longitude = currentLon
+                    altitude = 0.0
+                    accuracy = LOCATION_ACCURACY
+                    speed = currentSpeedMs
+                    bearing = currentBearing
+                    time = System.currentTimeMillis()
+                    elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
+                }
             locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, location)
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Failed to push location update", e)
@@ -394,41 +434,46 @@ class MockLocationService : Service() {
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "Location Spoofing",
-            NotificationManager.IMPORTANCE_LOW,
-        ).apply {
-            description = "Active while mock location is running"
-            setShowBadge(false)
-        }
+        val channel =
+            NotificationChannel(
+                CHANNEL_ID,
+                "Location Spoofing",
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = "Active while mock location is running"
+                setShowBadge(false)
+            }
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.createNotificationChannel(channel)
     }
 
     private fun buildNotification(): Notification {
-        val openAppIntent = packageManager
-            .getLaunchIntentForPackage(packageName)
-            ?.let { intent ->
-                PendingIntent.getActivity(
-                    this,
-                    0,
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
+        val openAppIntent =
+            packageManager
+                .getLaunchIntentForPackage(packageName)
+                ?.let { intent ->
+                    PendingIntent.getActivity(
+                        this,
+                        0,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    )
+                }
+
+        val stopIntent =
+            Intent(this, MockLocationService::class.java).apply {
+                action = ACTION_STOP
             }
+        val stopPendingIntent =
+            PendingIntent.getService(
+                this,
+                1,
+                stopIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
 
-        val stopIntent = Intent(this, MockLocationService::class.java).apply {
-            action = ACTION_STOP
-        }
-        val stopPendingIntent = PendingIntent.getService(
-            this,
-            1,
-            stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat
+            .Builder(this, CHANNEL_ID)
             .setContentTitle("Mock location active")
             .setContentText("locationjoystick is spoofing your GPS position")
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
@@ -437,8 +482,7 @@ class MockLocationService : Service() {
                 android.R.drawable.ic_delete,
                 "Stop",
                 stopPendingIntent,
-            )
-            .setOngoing(true)
+            ).setOngoing(true)
             .setSilent(true)
             .build()
     }

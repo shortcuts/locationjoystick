@@ -11,8 +11,10 @@ class LjComposeConventionPlugin : Plugin<Project> {
             pluginManager.apply("com.android.library")
             pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
 
-            val libs = extensions.getByType<org.gradle.api.artifacts.VersionCatalogsExtension>()
-                .named("libs")
+            val libs =
+                extensions
+                    .getByType<org.gradle.api.artifacts.VersionCatalogsExtension>()
+                    .named("libs")
 
             extensions.configure<LibraryExtension> {
                 buildFeatures {

@@ -11,8 +11,10 @@ class LjHiltConventionPlugin : Plugin<Project> {
                 apply("com.google.devtools.ksp")
             }
 
-            val libs = extensions.getByType<org.gradle.api.artifacts.VersionCatalogsExtension>()
-                .named("libs")
+            val libs =
+                extensions
+                    .getByType<org.gradle.api.artifacts.VersionCatalogsExtension>()
+                    .named("libs")
 
             dependencies {
                 add("implementation", libs.findLibrary("hilt-android").get())

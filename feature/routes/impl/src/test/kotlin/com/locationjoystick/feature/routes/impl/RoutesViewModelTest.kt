@@ -14,16 +14,15 @@ import org.junit.Test
  * Tests use the internal parsing methods directly (no ViewModel instantiation needed).
  */
 class RoutesViewModelTest {
-
     private fun parseGpxWaypoints(gpxContent: String): List<LatLng> {
         val trkptRegex = Regex("""<trkpt\s+lat="([^"]+)"\s+lon="([^"]+)""")
-        return trkptRegex.findAll(gpxContent)
+        return trkptRegex
+            .findAll(gpxContent)
             .map { match ->
                 val lat = match.groupValues[1].toDoubleOrNull() ?: return@map null
                 val lon = match.groupValues[2].toDoubleOrNull() ?: return@map null
                 LatLng(lat, lon)
-            }
-            .filterNotNull()
+            }.filterNotNull()
             .toList()
     }
 
@@ -35,7 +34,8 @@ class RoutesViewModelTest {
 
     @Test
     fun testParseGpxWaypoints_validGpx() {
-        val gpxContent = """
+        val gpxContent =
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <gpx version="1.1">
               <trk>
@@ -52,7 +52,7 @@ class RoutesViewModelTest {
                 </trkseg>
               </trk>
             </gpx>
-        """.trimIndent()
+            """.trimIndent()
 
         val waypoints = parseGpxWaypoints(gpxContent)
 
@@ -65,7 +65,8 @@ class RoutesViewModelTest {
 
     @Test
     fun testParseGpxWaypoints_emptyGpx() {
-        val gpxContent = """
+        val gpxContent =
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <gpx version="1.1">
               <trk>
@@ -73,7 +74,7 @@ class RoutesViewModelTest {
                 </trkseg>
               </trk>
             </gpx>
-        """.trimIndent()
+            """.trimIndent()
 
         val waypoints = parseGpxWaypoints(gpxContent)
 
@@ -82,14 +83,15 @@ class RoutesViewModelTest {
 
     @Test
     fun testExtractGpxName_validName() {
-        val gpxContent = """
+        val gpxContent =
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <gpx version="1.1">
               <metadata>
                 <name>Test Route Name</name>
               </metadata>
             </gpx>
-        """.trimIndent()
+            """.trimIndent()
 
         val name = extractGpxName(gpxContent)
 
@@ -98,13 +100,14 @@ class RoutesViewModelTest {
 
     @Test
     fun testExtractGpxName_missingName() {
-        val gpxContent = """
+        val gpxContent =
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <gpx version="1.1">
               <metadata>
               </metadata>
             </gpx>
-        """.trimIndent()
+            """.trimIndent()
 
         val name = extractGpxName(gpxContent)
 
@@ -113,7 +116,8 @@ class RoutesViewModelTest {
 
     @Test
     fun testExtractGpxName_trkNameTag() {
-        val gpxContent = """
+        val gpxContent =
+            """
             <?xml version="1.0" encoding="UTF-8"?>
             <gpx version="1.1">
               <trk>
@@ -122,7 +126,7 @@ class RoutesViewModelTest {
                 </trkseg>
               </trk>
             </gpx>
-        """.trimIndent()
+            """.trimIndent()
 
         val name = extractGpxName(gpxContent)
 
@@ -131,19 +135,21 @@ class RoutesViewModelTest {
 
     @Test
     fun testWaypointCreation_correctOrderIndex() {
-        val latLngs = listOf(
-            LatLng(48.8566, 2.3522),
-            LatLng(48.8580, 2.3535),
-            LatLng(48.8590, 2.3550)
-        )
-
-        val waypoints = latLngs.mapIndexed { index, latLng ->
-            Waypoint(
-                id = "test-$index",
-                position = latLng,
-                orderIndex = index
+        val latLngs =
+            listOf(
+                LatLng(48.8566, 2.3522),
+                LatLng(48.8580, 2.3535),
+                LatLng(48.8590, 2.3550),
             )
-        }
+
+        val waypoints =
+            latLngs.mapIndexed { index, latLng ->
+                Waypoint(
+                    id = "test-$index",
+                    position = latLng,
+                    orderIndex = index,
+                )
+            }
 
         assertEquals(3, waypoints.size)
         assertEquals(0, waypoints[0].orderIndex)
@@ -153,21 +159,23 @@ class RoutesViewModelTest {
 
     @Test
     fun testRouteCreation_fromWaypoints() {
-        val waypoints = listOf(
-            Waypoint("1", LatLng(48.8566, 2.3522), 0),
-            Waypoint("2", LatLng(48.8580, 2.3535), 1),
-            Waypoint("3", LatLng(48.8590, 2.3550), 2)
-        )
+        val waypoints =
+            listOf(
+                Waypoint("1", LatLng(48.8566, 2.3522), 0),
+                Waypoint("2", LatLng(48.8580, 2.3535), 1),
+                Waypoint("3", LatLng(48.8590, 2.3550), 2),
+            )
 
-        val route = Route(
-            id = "route-123",
-            name = "Test Route",
-            waypoints = waypoints,
-            isLooping = false,
-            routeType = RouteType.STRAIGHT,
-            createdAt = 1000L,
-            updatedAt = 1000L
-        )
+        val route =
+            Route(
+                id = "route-123",
+                name = "Test Route",
+                waypoints = waypoints,
+                isLooping = false,
+                routeType = RouteType.STRAIGHT,
+                createdAt = 1000L,
+                updatedAt = 1000L,
+            )
 
         assertEquals(3, route.waypoints.size)
         assertEquals("Test Route", route.name)
@@ -177,19 +185,21 @@ class RoutesViewModelTest {
 
     @Test
     fun testRouteDefaults_importedRoute() {
-        val waypoints = listOf(
-            Waypoint("1", LatLng(48.8566, 2.3522), 0)
-        )
+        val waypoints =
+            listOf(
+                Waypoint("1", LatLng(48.8566, 2.3522), 0),
+            )
 
-        val route = Route(
-            id = "route-123",
-            name = "Imported",
-            waypoints = waypoints,
-            isLooping = false, // Should always be false for new imports
-            routeType = RouteType.STRAIGHT, // Should always be STRAIGHT for GPX
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
-        )
+        val route =
+            Route(
+                id = "route-123",
+                name = "Imported",
+                waypoints = waypoints,
+                isLooping = false, // Should always be false for new imports
+                routeType = RouteType.STRAIGHT, // Should always be STRAIGHT for GPX
+                createdAt = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis(),
+            )
 
         assertEquals(false, route.isLooping)
         assertEquals(RouteType.STRAIGHT, route.routeType)
@@ -198,14 +208,15 @@ class RoutesViewModelTest {
     @Test
     fun testLatLngToWaypoint_mapping() {
         val latLng = LatLng(48.8566, 2.3522)
-        val waypoint = Waypoint(
-            id = "wp-1",
-            position = latLng,
-            orderIndex = 0
-        )
+        val waypoint =
+            Waypoint(
+                id = "wp-1",
+                position = latLng,
+                orderIndex = 0,
+            )
 
         assertEquals(48.8566, waypoint.position.latitude, 0.0001)
-         assertEquals(2.3522, waypoint.position.longitude, 0.0001)
+        assertEquals(2.3522, waypoint.position.longitude, 0.0001)
         assertEquals(0, waypoint.orderIndex)
     }
 }

@@ -21,7 +21,6 @@ import com.locationjoystick.core.database.entities.WaypointEntity
     exportSchema = true,
 )
 abstract class LjDatabase : RoomDatabase() {
-
     abstract fun routeDao(): RouteDao
 
     abstract fun waypointDao(): WaypointDao
@@ -31,10 +30,11 @@ abstract class LjDatabase : RoomDatabase() {
     companion object {
         const val DATABASE_NAME = "locationjoystick.db"
 
-        val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE routes ADD COLUMN routeType TEXT NOT NULL DEFAULT 'STRAIGHT'")
+        val MIGRATION_1_2 =
+            object : Migration(1, 2) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE routes ADD COLUMN routeType TEXT NOT NULL DEFAULT 'STRAIGHT'")
+                }
             }
-        }
     }
 }

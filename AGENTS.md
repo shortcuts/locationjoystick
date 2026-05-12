@@ -399,6 +399,7 @@ Notes:
 Work is NOT complete until lint passes.
 
 ```bash
+make format
 make lint
 ```
 

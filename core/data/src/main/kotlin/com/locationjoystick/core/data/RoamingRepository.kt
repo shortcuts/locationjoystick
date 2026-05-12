@@ -14,36 +14,41 @@ import javax.inject.Singleton
 private const val TAG = "RoamingRepository"
 
 @Singleton
-class RoamingRepository @Inject constructor(
-    private val roamingEngine: RoamingEngine,
-    private val locationRepository: LocationRepository,
-) {
+class RoamingRepository
+    @Inject
+    constructor(
+        private val roamingEngine: RoamingEngine,
+        private val locationRepository: LocationRepository,
+    ) {
+        private val _isRoaming = MutableStateFlow(false)
+        val isRoaming: StateFlow<Boolean> = _isRoaming.asStateFlow()
 
-    private val _isRoaming = MutableStateFlow(false)
-    val isRoaming: StateFlow<Boolean> = _isRoaming.asStateFlow()
+        private var activeJob: Job? = null
 
-    private var activeJob: Job? = null
+        fun startRoaming(
+            config: RoamingConfig,
+            speedMs: Double,
+        ) {
+            activeJob?.cancel()
+            Log.d(TAG, "Starting roaming: radius=${config.radiusMeters}m, duration=${config.durationSeconds}s")
+            _isRoaming.value = true
+            activeJob =
+                roamingEngine.startRoaming(
+                    config = config,
+                    speedMs = speedMs,
+                    onPositionUpdate = { position ->
+                        locationRepository.setPositionInternal(position)
+                    },
+                )
+            activeJob?.invokeOnCompletion {
+                _isRoaming.value = false
+                Log.d(TAG, "Roaming completed or cancelled")
+            }
+        }
 
-    fun startRoaming(config: RoamingConfig, speedMs: Double) {
-        activeJob?.cancel()
-        Log.d(TAG, "Starting roaming: radius=${config.radiusMeters}m, duration=${config.durationSeconds}s")
-        _isRoaming.value = true
-        activeJob = roamingEngine.startRoaming(
-            config = config,
-            speedMs = speedMs,
-            onPositionUpdate = { position ->
-                locationRepository.setPositionInternal(position)
-            },
-        )
-        activeJob?.invokeOnCompletion {
+        suspend fun stopRoaming() {
+            roamingEngine.stopRoaming()
+            activeJob = null
             _isRoaming.value = false
-            Log.d(TAG, "Roaming completed or cancelled")
         }
     }
-
-    suspend fun stopRoaming() {
-        roamingEngine.stopRoaming()
-        activeJob = null
-        _isRoaming.value = false
-    }
-}

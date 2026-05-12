@@ -9,21 +9,21 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LocationRepositoryTest {
-
     private val repository = LocationRepository()
 
     @Test
-    fun `setPositionInternal emits new position via observePosition`() = runTest {
-        val position = LatLng(10.0, 20.0)
+    fun `setPositionInternal emits new position via observePosition`() =
+        runTest {
+            val position = LatLng(10.0, 20.0)
 
-        repository.observePosition().test {
-            // consume initial null emission
-            awaitItem()
+            repository.observePosition().test {
+                // consume initial null emission
+                awaitItem()
 
-            repository.setPositionInternal(position)
+                repository.setPositionInternal(position)
 
-            assertEquals(position, awaitItem())
-            cancelAndIgnoreRemainingEvents()
+                assertEquals(position, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
         }
-    }
 }

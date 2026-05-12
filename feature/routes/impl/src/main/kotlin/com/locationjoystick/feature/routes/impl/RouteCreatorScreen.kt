@@ -44,7 +44,6 @@ import com.locationjoystick.core.ui.component.NominatimSearchBar
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
-import org.maplibre.android.geometry.LatLng as MapLatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
@@ -55,6 +54,7 @@ import org.maplibre.android.style.layers.RasterLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.style.sources.RasterSource
 import org.maplibre.android.style.sources.TileSet
+import org.maplibre.android.geometry.LatLng as MapLatLng
 
 private const val OSM_SOURCE_ID = "osm-source"
 private const val OSM_LAYER_ID = "osm-layer"
@@ -107,15 +107,16 @@ internal fun RouteCreatorScreen(
     var showSaveDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> mapView.onStart()
-                Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-                Lifecycle.Event.ON_STOP -> mapView.onStop()
-                else -> Unit
+        val observer =
+            LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_START -> mapView.onStart()
+                    Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                    Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                    Lifecycle.Event.ON_STOP -> mapView.onStop()
+                    else -> Unit
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -130,19 +131,23 @@ internal fun RouteCreatorScreen(
             Column(horizontalAlignment = Alignment.End) {
                 FloatingActionButton(
                     onClick = onUndo,
-                    containerColor = if (state.waypoints.isNotEmpty())
-                        MaterialTheme.colorScheme.secondaryContainer
-                    else
-                        MaterialTheme.colorScheme.surfaceVariant,
+                    containerColor =
+                        if (state.waypoints.isNotEmpty()) {
+                            MaterialTheme.colorScheme.secondaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
                     modifier = Modifier.padding(bottom = 12.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Undo,
                         contentDescription = "Undo last waypoint",
-                        tint = if (state.waypoints.isNotEmpty())
-                            MaterialTheme.colorScheme.onSecondaryContainer
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint =
+                            if (state.waypoints.isNotEmpty()) {
+                                MaterialTheme.colorScheme.onSecondaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                         modifier = Modifier.size(24.dp),
                     )
                 }
@@ -161,9 +166,10 @@ internal fun RouteCreatorScreen(
         },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = paddingValues.calculateBottomPadding()),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(bottom = paddingValues.calculateBottomPadding()),
         ) {
             AndroidView(
                 factory = { ctx ->
@@ -173,10 +179,12 @@ internal fun RouteCreatorScreen(
                             mapRef.value = map
                             map.uiSettings.isAttributionEnabled = false
                             map.uiSettings.isLogoEnabled = false
-                            map.cameraPosition = CameraPosition.Builder()
-                                .target(MapLatLng(DEFAULT_LAT, DEFAULT_LON))
-                                .zoom(DEFAULT_ZOOM)
-                                .build()
+                            map.cameraPosition =
+                                CameraPosition
+                                    .Builder()
+                                    .target(MapLatLng(DEFAULT_LAT, DEFAULT_LON))
+                                    .zoom(DEFAULT_ZOOM)
+                                    .build()
 
                             map.setStyle(Style.Builder().fromUri("asset://empty.json")) { style ->
                                 style.addSource(
@@ -237,9 +245,10 @@ internal fun RouteCreatorScreen(
             // Back button — top-start overlay
             IconButton(
                 onClick = onBack,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(top = paddingValues.calculateTopPadding() + 8.dp, start = 8.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .padding(top = paddingValues.calculateTopPadding() + 8.dp, start = 8.dp),
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -258,13 +267,14 @@ internal fun RouteCreatorScreen(
                         500,
                     )
                 },
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(
-                        top = paddingValues.calculateTopPadding() + 8.dp,
-                        start = 56.dp,
-                        end = 12.dp,
-                    ),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(
+                            top = paddingValues.calculateTopPadding() + 8.dp,
+                            start = 56.dp,
+                            end = 12.dp,
+                        ),
             )
         }
     }
@@ -305,7 +315,7 @@ private fun SaveRouteDialog(
                     if (name.isNotBlank()) {
                         onSave(name.trim())
                     }
-                }
+                },
             ) {
                 Text("Save")
             }
@@ -318,16 +328,16 @@ private fun SaveRouteDialog(
     )
 }
 
-private fun emptyGeoJson(): String =
-    """{"type":"FeatureCollection","features":[]}"""
+private fun emptyGeoJson(): String = """{"type":"FeatureCollection","features":[]}"""
 
 private fun buildSegmentsGeoJson(segments: List<List<LatLng>>): String {
     if (segments.isEmpty()) return emptyGeoJson()
 
-    val features = segments.map { segment ->
-        val coordinates = segment.map { listOf(it.longitude, it.latitude) }
-        """{"type":"Feature","geometry":{"type":"LineString","coordinates":$coordinates},"properties":{}}"""
-    }
+    val features =
+        segments.map { segment ->
+            val coordinates = segment.map { listOf(it.longitude, it.latitude) }
+            """{"type":"Feature","geometry":{"type":"LineString","coordinates":$coordinates},"properties":{}}"""
+        }
 
     return """{"type":"FeatureCollection","features":[${features.joinToString(",")}]}"""
 }
@@ -335,9 +345,10 @@ private fun buildSegmentsGeoJson(segments: List<List<LatLng>>): String {
 private fun buildWaypointsGeoJson(waypoints: List<LatLng>): String {
     if (waypoints.isEmpty()) return emptyGeoJson()
 
-    val features = waypoints.map { wp ->
-        """{"type":"Feature","geometry":{"type":"Point","coordinates":[${wp.longitude},${wp.latitude}]},"properties":{}}"""
-    }
+    val features =
+        waypoints.map { wp ->
+            """{"type":"Feature","geometry":{"type":"Point","coordinates":[${wp.longitude},${wp.latitude}]},"properties":{}}"""
+        }
 
     return """{"type":"FeatureCollection","features":[${features.joinToString(",")}]}"""
 }

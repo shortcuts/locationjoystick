@@ -60,18 +60,19 @@ fun NominatimSearchBar(
                 try {
                     val responseText = conn.inputStream.bufferedReader().readText()
                     val array = JSONArray(responseText)
-                    val parsed = (0 until minOf(array.length(), 5)).mapNotNull { i ->
-                        try {
-                            val obj = array.getJSONObject(i)
-                            NominatimResult(
-                                lat = obj.getDouble("lat"),
-                                lon = obj.getDouble("lon"),
-                                displayName = obj.getString("display_name"),
-                            )
-                        } catch (e: Exception) {
-                            null
+                    val parsed =
+                        (0 until minOf(array.length(), 5)).mapNotNull { i ->
+                            try {
+                                val obj = array.getJSONObject(i)
+                                NominatimResult(
+                                    lat = obj.getDouble("lat"),
+                                    lon = obj.getDouble("lon"),
+                                    displayName = obj.getString("display_name"),
+                                )
+                            } catch (e: Exception) {
+                                null
+                            }
                         }
-                    }
                     results = parsed
                 } finally {
                     conn.disconnect()
@@ -96,7 +97,7 @@ fun NominatimSearchBar(
     ) {
         if (results.isEmpty() && query.length >= 2 && !isLoading) {
             ListItem(
-                headlineContent = { Text("No results found", maxLines = 1) }
+                headlineContent = { Text("No results found", maxLines = 1) },
             )
         }
         LazyColumn {

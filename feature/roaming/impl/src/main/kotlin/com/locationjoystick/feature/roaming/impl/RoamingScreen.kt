@@ -30,7 +30,7 @@ fun RoamingRoute(
         onUpdateDuration = viewModel::updateDuration,
         onToggleOsrm = viewModel::toggleOsrmRouting,
         onStartRoaming = viewModel::startRoaming,
-        onStopRoaming = viewModel::stopRoaming
+        onStopRoaming = viewModel::stopRoaming,
     )
 }
 
@@ -42,57 +42,59 @@ internal fun RoamingScreen(
     onUpdateDuration: (Int) -> Unit,
     onToggleOsrm: (Boolean) -> Unit,
     onStartRoaming: () -> Unit,
-    onStopRoaming: () -> Unit
+    onStopRoaming: () -> Unit,
 ) {
     Scaffold(
         topBar = {
             LjTopBar(title = "locationjoystick", onMenuClick = onOpenDrawer)
         },
     ) { paddingValues ->
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
         ) {
-            Text("Radius: ${(uiState.config.radiusMeters / 1000).toInt()} km")
-            Slider(
-                value = uiState.config.radiusMeters.toFloat(),
-                onValueChange = { onUpdateRadius(it.toDouble()) },
-                valueRange = 100f..50000f
-            )
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+            ) {
+                Text("Radius: ${(uiState.config.radiusMeters / 1000).toInt()} km")
+                Slider(
+                    value = uiState.config.radiusMeters.toFloat(),
+                    onValueChange = { onUpdateRadius(it.toDouble()) },
+                    valueRange = 100f..50000f,
+                )
 
-            Text("Duration: ${(uiState.config.durationSeconds / 60).toInt()} min")
-            Slider(
-                value = uiState.config.durationSeconds.toFloat(),
-                onValueChange = { onUpdateDuration((it / 60).toInt()) },
-                valueRange = 60f..14400f
-            )
+                Text("Duration: ${(uiState.config.durationSeconds / 60).toInt()} min")
+                Slider(
+                    value = uiState.config.durationSeconds.toFloat(),
+                    onValueChange = { onUpdateDuration((it / 60).toInt()) },
+                    valueRange = 60f..14400f,
+                )
 
-            Switch(
-                checked = uiState.config.useRoadSnapping,
-                onCheckedChange = onToggleOsrm
-            )
-            Text("Follow roads")
+                Switch(
+                    checked = uiState.config.useRoadSnapping,
+                    onCheckedChange = onToggleOsrm,
+                )
+                Text("Follow roads")
 
-            if (uiState.isRoaming) {
-                Text("Roaming: ${(uiState.elapsedSeconds / 60).toInt()} / ${(uiState.config.durationSeconds / 60).toInt()} min")
-                Button(onClick = onStopRoaming) {
-                    Text("Stop")
-                }
-            } else {
-                Button(
-                    onClick = onStartRoaming,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                ) {
-                    Text("Start Roaming")
+                if (uiState.isRoaming) {
+                    Text("Roaming: ${(uiState.elapsedSeconds / 60).toInt()} / ${(uiState.config.durationSeconds / 60).toInt()} min")
+                    Button(onClick = onStopRoaming) {
+                        Text("Stop")
+                    }
+                } else {
+                    Button(
+                        onClick = onStartRoaming,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    ) {
+                        Text("Start Roaming")
+                    }
                 }
             }
         }
-    }
     }
 }

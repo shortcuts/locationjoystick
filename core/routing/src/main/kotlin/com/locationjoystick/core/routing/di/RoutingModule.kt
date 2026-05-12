@@ -13,7 +13,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object RoutingModule {
-
     @Provides
     @Singleton
     fun provideOsrmClient(): OsrmClient = OsrmClient()
@@ -31,6 +30,5 @@ object RoutingModule {
 
     @Provides
     @Singleton
-    fun provideRouteReplayEngine(routeInterpolator: RouteInterpolator): RouteReplayEngine =
-        RouteReplayEngine(routeInterpolator)
+    fun provideRouteReplayEngine(routeInterpolator: RouteInterpolator): RouteReplayEngine = RouteReplayEngine(routeInterpolator)
 }

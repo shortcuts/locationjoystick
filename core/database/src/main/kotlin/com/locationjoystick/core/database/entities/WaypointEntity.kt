@@ -28,16 +28,18 @@ data class WaypointEntity(
     val orderIndex: Int,
 )
 
-fun WaypointEntity.toDomain(): Waypoint = Waypoint(
-    id = id,
-    position = LatLng(latitude = latitude, longitude = longitude),
-    orderIndex = orderIndex,
-)
+fun WaypointEntity.toDomain(): Waypoint =
+    Waypoint(
+        id = id,
+        position = LatLng(latitude = latitude, longitude = longitude),
+        orderIndex = orderIndex,
+    )
 
-fun Waypoint.toEntity(routeId: String): WaypointEntity = WaypointEntity(
-    id = id,
-    routeId = routeId,
-    latitude = position.latitude,
-    longitude = position.longitude,
-    orderIndex = orderIndex,
-)
+fun Waypoint.toEntity(routeId: String): WaypointEntity =
+    WaypointEntity(
+        id = id,
+        routeId = routeId,
+        latitude = position.latitude,
+        longitude = position.longitude,
+        orderIndex = orderIndex,
+    )

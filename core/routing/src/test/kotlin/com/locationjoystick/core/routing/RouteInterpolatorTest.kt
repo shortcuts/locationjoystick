@@ -8,7 +8,6 @@ import org.junit.Before
 import org.junit.Test
 
 class RouteInterpolatorTest {
-
     private lateinit var interpolator: RouteInterpolator
 
     @Before

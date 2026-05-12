@@ -37,7 +37,6 @@ import com.locationjoystick.core.ui.component.NominatimSearchBar
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
-import org.maplibre.android.geometry.LatLng as MapLatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
@@ -47,6 +46,7 @@ import org.maplibre.android.style.layers.RasterLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.style.sources.RasterSource
 import org.maplibre.android.style.sources.TileSet
+import org.maplibre.android.geometry.LatLng as MapLatLng
 
 private const val OSM_SOURCE_ID = "osm-source"
 private const val OSM_LAYER_ID = "osm-layer"
@@ -84,15 +84,16 @@ internal fun MapPickerScreen(
     var showNameDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> mapView.onStart()
-                Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-                Lifecycle.Event.ON_STOP -> mapView.onStop()
-                else -> Unit
+        val observer =
+            LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_START -> mapView.onStart()
+                    Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                    Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                    Lifecycle.Event.ON_STOP -> mapView.onStop()
+                    else -> Unit
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -118,9 +119,10 @@ internal fun MapPickerScreen(
         },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = paddingValues.calculateBottomPadding()),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(bottom = paddingValues.calculateBottomPadding()),
         ) {
             AndroidView(
                 factory = { ctx ->
@@ -130,10 +132,12 @@ internal fun MapPickerScreen(
                             mapRef.value = map
                             map.uiSettings.isAttributionEnabled = false
                             map.uiSettings.isLogoEnabled = false
-                            map.cameraPosition = CameraPosition.Builder()
-                                .target(MapLatLng(DEFAULT_LAT, DEFAULT_LON))
-                                .zoom(DEFAULT_ZOOM)
-                                .build()
+                            map.cameraPosition =
+                                CameraPosition
+                                    .Builder()
+                                    .target(MapLatLng(DEFAULT_LAT, DEFAULT_LON))
+                                    .zoom(DEFAULT_ZOOM)
+                                    .build()
 
                             map.setStyle(Style.Builder().fromUri("asset://empty.json")) { style ->
                                 style.addSource(
@@ -175,10 +179,11 @@ internal fun MapPickerScreen(
             // Back button — top-start overlay
             IconButton(
                 onClick = onBack,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .statusBarsPadding()
-                    .padding(8.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .statusBarsPadding()
+                        .padding(8.dp),
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -199,10 +204,11 @@ internal fun MapPickerScreen(
                     val src = markerSource.value ?: return@NominatimSearchBar
                     src.setGeoJson(buildMarkerGeoJson(lat, lon))
                 },
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .statusBarsPadding()
-                    .padding(start = 56.dp, end = 12.dp, top = 8.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .statusBarsPadding()
+                        .padding(start = 56.dp, end = 12.dp, top = 8.dp),
             )
         }
     }
@@ -246,7 +252,7 @@ private fun SaveLocationDialog(
                     if (name.isNotBlank()) {
                         onSave(name.trim())
                     }
-                }
+                },
             ) {
                 Text("Save")
             }
@@ -259,8 +265,10 @@ private fun SaveLocationDialog(
     )
 }
 
-private fun emptyGeoJson(): String =
-    """{"type":"FeatureCollection","features":[]}"""
+private fun emptyGeoJson(): String = """{"type":"FeatureCollection","features":[]}"""
 
-private fun buildMarkerGeoJson(lat: Double, lon: Double): String =
+private fun buildMarkerGeoJson(
+    lat: Double,
+    lon: Double,
+): String =
     """{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[$lon,$lat]},"properties":{}}]}"""

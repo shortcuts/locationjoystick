@@ -3,8 +3,6 @@ package com.locationjoystick.feature.favorites.impl
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -49,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.ui.component.EmptyState
@@ -105,7 +105,7 @@ internal fun FavoritesScreen(
                     }
                     DropdownMenu(
                         expanded = showAddMenu,
-                        onDismissRequest = { showAddMenu = false }
+                        onDismissRequest = { showAddMenu = false },
                     ) {
                         DropdownMenuItem(
                             text = { Text("Add from map") },
@@ -113,7 +113,7 @@ internal fun FavoritesScreen(
                                 onNavigateToMapPicker()
                                 showAddMenu = false
                             },
-                            leadingIcon = { Icon(Icons.Rounded.Map, null) }
+                            leadingIcon = { Icon(Icons.Rounded.Map, null) },
                         )
                         DropdownMenuItem(
                             text = { Text("Add from Coordinates") },
@@ -121,43 +121,49 @@ internal fun FavoritesScreen(
                                 showAddSheet = true
                                 showAddMenu = false
                             },
-                            leadingIcon = { Icon(Icons.Default.Add, null) }
+                            leadingIcon = { Icon(Icons.Default.Add, null) },
                         )
                     }
-                }
+                },
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { scaffoldPadding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(scaffoldPadding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(scaffoldPadding),
         ) {
             when {
                 uiState.isLoading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
+
                 uiState.favorites.isEmpty() -> {
                     EmptyState(
                         icon = Icons.Rounded.LocationOn,
                         message = "No saved locations yet",
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
                     )
                 }
+
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp)
+                        contentPadding = PaddingValues(16.dp),
                     ) {
                         items(
                             items = uiState.favorites,
-                            key = { it.id }
+                            key = { it.id },
                         ) { favorite ->
                             FavoriteCard(
                                 favorite = favorite,
                                 onRowClick = {
-                                    val coords = "${String.format("%.4f", favorite.position.latitude)}, ${String.format("%.4f", favorite.position.longitude)}"
+                                    val coords = "${String.format(
+                                        "%.4f",
+                                        favorite.position.latitude,
+                                    )}, ${String.format("%.4f", favorite.position.longitude)}"
                                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                     clipboard.setPrimaryClip(ClipData.newPlainText("coordinates", coords))
                                 },
@@ -173,7 +179,7 @@ internal fun FavoritesScreen(
 
     if (showAddSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showAddSheet = false }
+            onDismissRequest = { showAddSheet = false },
         ) {
             AddFavoriteSheet(
                 onDismiss = { showAddSheet = false },
@@ -192,7 +198,7 @@ internal fun FavoritesScreen(
             onSave = { name, lat, lon ->
                 onUpdateFavorite(favorite.id, name, lat, lon)
                 editingFavorite = null
-            }
+            },
         )
     }
 
@@ -203,7 +209,7 @@ internal fun FavoritesScreen(
             onConfirm = {
                 onDelete(favorite)
                 deletingFavorite = null
-            }
+            },
         )
     }
 }
@@ -218,18 +224,19 @@ private fun FavoriteCard(
     var menuExpanded by remember { mutableStateOf(false) }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-            .clickable { onRowClick(favorite) }
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                .clickable { onRowClick(favorite) }
+                .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(favorite.name, style = MaterialTheme.typography.titleMedium)
             Text(
                 "${String.format("%.4f", favorite.position.latitude)}, ${String.format("%.4f", favorite.position.longitude)}",
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
             )
         }
         Box {
@@ -238,7 +245,7 @@ private fun FavoriteCard(
             }
             DropdownMenu(
                 expanded = menuExpanded,
-                onDismissRequest = { menuExpanded = false }
+                onDismissRequest = { menuExpanded = false },
             ) {
                 DropdownMenuItem(
                     text = { Text("Edit") },
@@ -246,7 +253,7 @@ private fun FavoriteCard(
                         onEdit(favorite)
                         menuExpanded = false
                     },
-                    leadingIcon = { Icon(Icons.Default.Edit, null) }
+                    leadingIcon = { Icon(Icons.Default.Edit, null) },
                 )
                 DropdownMenuItem(
                     text = { Text("Delete") },
@@ -254,7 +261,7 @@ private fun FavoriteCard(
                         onDelete(favorite)
                         menuExpanded = false
                     },
-                    leadingIcon = { Icon(Icons.Default.Delete, null) }
+                    leadingIcon = { Icon(Icons.Default.Delete, null) },
                 )
             }
         }
@@ -271,31 +278,34 @@ private fun AddFavoriteSheet(
     var lon by remember { mutableStateOf("") }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .imePadding()
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .imePadding(),
     ) {
         Text(
             "Add Favorite Location",
             style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
             label = { Text("Name") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
         )
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             OutlinedTextField(
                 value = lat,
@@ -303,7 +313,7 @@ private fun AddFavoriteSheet(
                 label = { Text("Latitude") },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             )
             OutlinedTextField(
                 value = lon,
@@ -311,15 +321,16 @@ private fun AddFavoriteSheet(
                 label = { Text("Longitude") },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             )
         }
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 24.dp),
-            horizontalArrangement = Arrangement.End
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+            horizontalArrangement = Arrangement.End,
         ) {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
@@ -331,7 +342,7 @@ private fun AddFavoriteSheet(
                     if (name.isNotEmpty() && latVal != null && lonVal != null) {
                         onAdd(name, latVal, lonVal)
                     }
-                }
+                },
             ) {
                 Text("Save")
             }
@@ -358,23 +369,25 @@ private fun EditFavoriteDialog(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Name") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
                 )
                 OutlinedTextField(
                     value = lat,
                     onValueChange = { lat = it },
                     label = { Text("Latitude") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
                 )
                 OutlinedTextField(
                     value = lon,
                     onValueChange = { lon = it },
                     label = { Text("Longitude") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         },
@@ -386,7 +399,7 @@ private fun EditFavoriteDialog(
                     if (name.isNotEmpty() && latVal != null && lonVal != null) {
                         onSave(name, latVal, lonVal)
                     }
-                }
+                },
             ) {
                 Text("Save")
             }
@@ -395,7 +408,7 @@ private fun EditFavoriteDialog(
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        }
+        },
     )
 }
 
@@ -418,6 +431,6 @@ private fun DeleteConfirmDialog(
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        }
+        },
     )
 }

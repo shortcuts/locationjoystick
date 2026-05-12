@@ -19,34 +19,36 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SetupViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val settingsRepository: SettingsRepository,
-) : ViewModel() {
+class SetupViewModel
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+        private val settingsRepository: SettingsRepository,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow(SetupUiState())
+        val uiState: StateFlow<SetupUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(SetupUiState())
-    val uiState: StateFlow<SetupUiState> = _uiState.asStateFlow()
+        init {
+            checkPermissions()
+        }
 
-    init {
-        checkPermissions()
-    }
+        fun checkPermissions() {
+            _uiState.update { current ->
+                current.copy(
+                    locationPermissionGranted =
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                        ) == PackageManager.PERMISSION_GRANTED,
+                    overlayPermissionGranted = isOverlayPermissionGranted(context),
+                    mockLocationEnabled = isMockLocationEnabled(context),
+                )
+            }
+        }
 
-    fun checkPermissions() {
-        _uiState.update { current ->
-            current.copy(
-                locationPermissionGranted = ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                ) == PackageManager.PERMISSION_GRANTED,
-                overlayPermissionGranted = isOverlayPermissionGranted(context),
-                mockLocationEnabled = isMockLocationEnabled(context),
-            )
+        fun onSetupComplete() {
+            viewModelScope.launch {
+                settingsRepository.setOnboardingComplete(true)
+            }
         }
     }
-
-    fun onSetupComplete() {
-        viewModelScope.launch {
-            settingsRepository.setOnboardingComplete(true)
-        }
-    }
-}

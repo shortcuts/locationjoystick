@@ -52,50 +52,59 @@ data class OsrmCoordinate(
 )
 
 @Singleton
-class OsrmClient @Inject constructor() {
-
-    companion object {
-        const val PROFILE_FOOT = "foot"
-    }
-
-    private val api: OsrmApi = Retrofit.Builder()
-        .baseUrl(OSRM_BASE_URL)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-        .create(OsrmApi::class.java)
-
-    suspend fun getRoute(
-        profile: String,
-        waypoints: List<LatLng>,
-    ): Result<List<LatLng>> = withContext(Dispatchers.IO) {
-        runCatching {
-            require(waypoints.size >= 2) { "At least 2 waypoints required" }
-
-            val coordinates = waypoints.joinToString(";") { "${it.longitude},${it.latitude}" }
-            val response = api.getRoute(profile = profile, coordinates = coordinates)
-
-            if (!response.isSuccessful) {
-                error("OSRM HTTP ${response.code()}: ${response.message()}")
-            }
-
-            val body = response.body()
-                ?: error("OSRM response body is null")
-
-            if (body.code != "Ok") {
-                error("OSRM returned non-Ok code: ${body.code}")
-            }
-
-            val route = body.routes?.firstOrNull()
-                ?: error("OSRM returned no routes")
-
-            route.geometry.coordinates.map { coord ->
-                // GeoJSON coordinates are [longitude, latitude]
-                LatLng(latitude = coord[1], longitude = coord[0])
-            }
-        }.onFailure { e ->
-            Log.e(TAG, "OSRM route request failed — will fall back to straight-line", e)
+class OsrmClient
+    @Inject
+    constructor() {
+        companion object {
+            const val PROFILE_FOOT = "foot"
         }
-    }
 
-    fun straightLineRoute(from: LatLng, to: LatLng): List<LatLng> = listOf(from, to)
-}
+        private val api: OsrmApi =
+            Retrofit
+                .Builder()
+                .baseUrl(OSRM_BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(OsrmApi::class.java)
+
+        suspend fun getRoute(
+            profile: String,
+            waypoints: List<LatLng>,
+        ): Result<List<LatLng>> =
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    require(waypoints.size >= 2) { "At least 2 waypoints required" }
+
+                    val coordinates = waypoints.joinToString(";") { "${it.longitude},${it.latitude}" }
+                    val response = api.getRoute(profile = profile, coordinates = coordinates)
+
+                    if (!response.isSuccessful) {
+                        error("OSRM HTTP ${response.code()}: ${response.message()}")
+                    }
+
+                    val body =
+                        response.body()
+                            ?: error("OSRM response body is null")
+
+                    if (body.code != "Ok") {
+                        error("OSRM returned non-Ok code: ${body.code}")
+                    }
+
+                    val route =
+                        body.routes?.firstOrNull()
+                            ?: error("OSRM returned no routes")
+
+                    route.geometry.coordinates.map { coord ->
+                        // GeoJSON coordinates are [longitude, latitude]
+                        LatLng(latitude = coord[1], longitude = coord[0])
+                    }
+                }.onFailure { e ->
+                    Log.e(TAG, "OSRM route request failed — will fall back to straight-line", e)
+                }
+            }
+
+        fun straightLineRoute(
+            from: LatLng,
+            to: LatLng,
+        ): List<LatLng> = listOf(from, to)
+    }

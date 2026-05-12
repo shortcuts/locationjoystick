@@ -4,7 +4,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class SpeedProfileTest {
-
     @Test
     fun `defaultProfiles returns exactly three profiles`() {
         assertEquals(3, SpeedProfile.defaultProfiles().size)

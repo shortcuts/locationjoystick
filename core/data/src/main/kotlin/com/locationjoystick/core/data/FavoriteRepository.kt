@@ -16,48 +16,52 @@ import javax.inject.Singleton
 private const val TAG = "FavoriteRepository"
 
 @Singleton
-class FavoriteRepository @Inject constructor(
-    private val favoriteDao: FavoriteDao,
-) {
+class FavoriteRepository
+    @Inject
+    constructor(
+        private val favoriteDao: FavoriteDao,
+    ) {
+        fun getFavorites(): Flow<List<FavoriteLocation>> = favoriteDao.getAll().map { list -> list.map { it.toDomain() } }
 
-    fun getFavorites(): Flow<List<FavoriteLocation>> =
-        favoriteDao.getAll().map { list -> list.map { it.toDomain() } }
-
-    suspend fun addFavorite(
-        id: String,
-        name: String,
-        position: LatLng,
-        createdAt: Long = System.currentTimeMillis(),
-    ): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
-            val favorite = FavoriteLocation(
-                id = id,
-                name = name,
-                position = position,
-                createdAt = createdAt,
-            )
-            favoriteDao.insert(favorite.toEntity())
-        }.onFailure { e ->
-            Log.e(TAG, "Failed to add favorite: $name", e)
-        }
-    }
-
-    suspend fun updateFavorite(favorite: FavoriteLocation): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
-            favoriteDao.update(favorite.toEntity())
-        }.onFailure { e ->
-            Log.e(TAG, "Failed to update favorite: ${favorite.id}", e)
-        }
-    }
-
-    suspend fun deleteFavorite(id: String): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
-            val entity = favoriteDao.getById(id)
-            if (entity != null) {
-                favoriteDao.delete(entity)
+        suspend fun addFavorite(
+            id: String,
+            name: String,
+            position: LatLng,
+            createdAt: Long = System.currentTimeMillis(),
+        ): Result<Unit> =
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    val favorite =
+                        FavoriteLocation(
+                            id = id,
+                            name = name,
+                            position = position,
+                            createdAt = createdAt,
+                        )
+                    favoriteDao.insert(favorite.toEntity())
+                }.onFailure { e ->
+                    Log.e(TAG, "Failed to add favorite: $name", e)
+                }
             }
-        }.onFailure { e ->
-            Log.e(TAG, "Failed to delete favorite: $id", e)
-        }
+
+        suspend fun updateFavorite(favorite: FavoriteLocation): Result<Unit> =
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    favoriteDao.update(favorite.toEntity())
+                }.onFailure { e ->
+                    Log.e(TAG, "Failed to update favorite: ${favorite.id}", e)
+                }
+            }
+
+        suspend fun deleteFavorite(id: String): Result<Unit> =
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    val entity = favoriteDao.getById(id)
+                    if (entity != null) {
+                        favoriteDao.delete(entity)
+                    }
+                }.onFailure { e ->
+                    Log.e(TAG, "Failed to delete favorite: $id", e)
+                }
+            }
     }
-}

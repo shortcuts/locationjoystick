@@ -34,14 +34,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun LjDrawerContent(
     navController: NavHostController,
-    drawerState: DrawerState
+    drawerState: DrawerState,
 ) {
     val scope = rememberCoroutineScope()
 
     ModalDrawerSheet {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.End
+            horizontalArrangement = Arrangement.End,
         ) {
             IconButton(onClick = { scope.launch { drawerState.close() } }) {
                 Icon(Icons.Rounded.Close, contentDescription = "Close menu")
@@ -59,7 +59,7 @@ fun LjDrawerContent(
                     restoreState = true
                 }
                 scope.launch { drawerState.close() }
-            }
+            },
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Rounded.Route, "Routes") },
@@ -72,7 +72,7 @@ fun LjDrawerContent(
                     restoreState = true
                 }
                 scope.launch { drawerState.close() }
-            }
+            },
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Rounded.Favorite, "Favorites") },
@@ -85,7 +85,7 @@ fun LjDrawerContent(
                     restoreState = true
                 }
                 scope.launch { drawerState.close() }
-            }
+            },
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Rounded.Explore, "Roaming") },
@@ -98,7 +98,7 @@ fun LjDrawerContent(
                     restoreState = true
                 }
                 scope.launch { drawerState.close() }
-            }
+            },
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Rounded.Settings, "Settings") },
@@ -111,7 +111,7 @@ fun LjDrawerContent(
                     restoreState = true
                 }
                 scope.launch { drawerState.close() }
-            }
+            },
         )
     }
 }

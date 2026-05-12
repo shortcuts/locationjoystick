@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WaypointDao {
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(waypoint: WaypointEntity)
 

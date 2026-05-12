@@ -12,7 +12,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object LocationModule {
-
     @Provides
     @Singleton
     fun provideLocationManager(

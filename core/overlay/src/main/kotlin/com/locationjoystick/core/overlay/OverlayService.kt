@@ -11,7 +11,6 @@ import android.view.WindowInsets
 import android.view.WindowManager
 
 abstract class OverlayService : Service() {
-
     private val tag: String get() = this::class.java.simpleName
 
     protected lateinit var windowManager: WindowManager
@@ -26,7 +25,11 @@ abstract class OverlayService : Service() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         if (overlayView == null) {
             val view = createOverlayView()
 
@@ -61,29 +64,34 @@ abstract class OverlayService : Service() {
         val metrics = windowManager.currentWindowMetrics
         val bounds = metrics.bounds
 
-        val insets = metrics.windowInsets.getInsetsIgnoringVisibility(
-            WindowInsets.Type.systemBars()
-        )
+        val insets =
+            metrics.windowInsets.getInsetsIgnoringVisibility(
+                WindowInsets.Type.systemBars(),
+            )
 
         val usableHeight = bounds.height() - insets.top - insets.bottom
 
         val centerY = insets.top + ((usableHeight / 2) - (view.measuredHeight / 2))
 
-        return WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-            PixelFormat.TRANSLUCENT,
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 0
-            y = centerY
-        }
+        return WindowManager
+            .LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                PixelFormat.TRANSLUCENT,
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+                x = 0
+                y = centerY
+            }
     }
 
-    protected fun updateOverlayPosition(x: Int, y: Int) {
+    protected fun updateOverlayPosition(
+        x: Int,
+        y: Int,
+    ) {
         val view = overlayView ?: return
         val params = currentParams ?: return
 
@@ -140,4 +148,3 @@ abstract class OverlayService : Service() {
         }
     }
 }
-

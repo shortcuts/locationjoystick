@@ -14,10 +14,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.MoreVert
@@ -45,8 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.locationjoystick.core.model.distanceTo
 import com.locationjoystick.core.model.RouteType
+import com.locationjoystick.core.model.distanceTo
 import com.locationjoystick.core.ui.component.EmptyState
 import com.locationjoystick.core.ui.component.LjTopBar
 
@@ -106,7 +106,7 @@ internal fun RoutesScreen(
                     }
                     DropdownMenu(
                         expanded = showAddMenu,
-                        onDismissRequest = { showAddMenu = false }
+                        onDismissRequest = { showAddMenu = false },
                     ) {
                         DropdownMenuItem(
                             text = { Text("Add from map") },
@@ -114,7 +114,7 @@ internal fun RoutesScreen(
                                 onNavigateToCreate(RouteType.STRAIGHT)
                                 showAddMenu = false
                             },
-                            leadingIcon = { Icon(Icons.Rounded.Map, null) }
+                            leadingIcon = { Icon(Icons.Rounded.Map, null) },
                         )
                         DropdownMenuItem(
                             text = { Text("Add from GPX") },
@@ -122,37 +122,40 @@ internal fun RoutesScreen(
                                 onImportGpx()
                                 showAddMenu = false
                             },
-                            leadingIcon = { Icon(Icons.Default.Add, null) }
+                            leadingIcon = { Icon(Icons.Default.Add, null) },
                         )
                     }
-                }
+                },
             )
         },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
         ) {
             when {
                 uiState.isLoading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
+
                 uiState.routes.isEmpty() -> {
                     EmptyState(
                         icon = Icons.Default.PlayArrow,
                         message = "No routes yet",
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
                     )
                 }
+
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp)
+                        contentPadding = PaddingValues(16.dp),
                     ) {
                         items(
                             items = uiState.routes,
-                            key = { it.id }
+                            key = { it.id },
                         ) { route ->
                             RouteCard(
                                 route = route,
@@ -179,7 +182,7 @@ internal fun RoutesScreen(
             onConfirm = {
                 onDeleteRoute(route.id)
                 deletingRoute = null
-            }
+            },
         )
     }
 }
@@ -202,40 +205,45 @@ private fun RouteCard(
     val isActive = isPlaying || isPaused
     var menuExpanded by remember { mutableStateOf(false) }
 
-    val distanceText = remember(route.waypoints) {
-        if (route.waypoints.size < 2) {
-            ""
-        } else {
-            val totalMeters = route.waypoints.zipWithNext { a, b ->
-                a.position.distanceTo(b.position)
-            }.sum()
-            if (totalMeters >= 1000.0) {
-                "%.1f km".format(totalMeters / 1000.0)
+    val distanceText =
+        remember(route.waypoints) {
+            if (route.waypoints.size < 2) {
+                ""
             } else {
-                "%.0f m".format(totalMeters)
+                val totalMeters =
+                    route.waypoints
+                        .zipWithNext { a, b ->
+                            a.position.distanceTo(b.position)
+                        }.sum()
+                if (totalMeters >= 1000.0) {
+                    "%.1f km".format(totalMeters / 1000.0)
+                } else {
+                    "%.0f m".format(totalMeters)
+                }
             }
         }
-    }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 12.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
     ) {
         // Row 1: name + distance + 3-dot menu
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 val label = if (distanceText.isNotEmpty()) "${route.name} — $distanceText" else route.name
                 Text(label, style = MaterialTheme.typography.titleMedium)
                 Text(
                     "${route.waypoints.size} waypoints",
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
             Box {
@@ -244,7 +252,7 @@ private fun RouteCard(
                 }
                 DropdownMenu(
                     expanded = menuExpanded,
-                    onDismissRequest = { menuExpanded = false }
+                    onDismissRequest = { menuExpanded = false },
                 ) {
                     DropdownMenuItem(
                         text = { Text("Edit") },
@@ -252,7 +260,7 @@ private fun RouteCard(
                             menuExpanded = false
                             onNavigateToEdit(route.id)
                         },
-                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }
+                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                     )
                     DropdownMenuItem(
                         text = { Text("Export") },
@@ -260,7 +268,7 @@ private fun RouteCard(
                             menuExpanded = false
                             onExport(route)
                         },
-                        leadingIcon = { Icon(Icons.Default.FileDownload, contentDescription = null) }
+                        leadingIcon = { Icon(Icons.Default.FileDownload, contentDescription = null) },
                     )
                     DropdownMenuItem(
                         text = { Text("Delete") },
@@ -268,7 +276,7 @@ private fun RouteCard(
                             menuExpanded = false
                             onDeleteRoute(route)
                         },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }
+                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
                     )
                 }
             }
@@ -276,9 +284,10 @@ private fun RouteCard(
 
         // Row 2: playback controls
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 4.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             when {
@@ -290,6 +299,7 @@ private fun RouteCard(
                         Icon(Icons.Default.Stop, contentDescription = "Stop")
                     }
                 }
+
                 isPaused -> {
                     IconButton(onClick = onResumeReplay) {
                         Icon(Icons.Default.PlayArrow, contentDescription = "Resume")
@@ -298,6 +308,7 @@ private fun RouteCard(
                         Icon(Icons.Default.Stop, contentDescription = "Stop")
                     }
                 }
+
                 else -> {
                     IconButton(
                         onClick = { onStartReplay(route, false) },
@@ -305,7 +316,7 @@ private fun RouteCard(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.DirectionsWalk,
-                            contentDescription = "Start from current location"
+                            contentDescription = "Start from current location",
                         )
                     }
                     IconButton(
@@ -314,7 +325,7 @@ private fun RouteCard(
                     ) {
                         Icon(
                             Icons.Default.PlayArrow,
-                            contentDescription = "Teleport to route start"
+                            contentDescription = "Teleport to route start",
                         )
                     }
                 }
@@ -322,8 +333,6 @@ private fun RouteCard(
         }
     }
 }
-
-
 
 @Composable
 private fun DeleteConfirmDialog(
@@ -344,6 +353,6 @@ private fun DeleteConfirmDialog(
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        }
+        },
     )
 }

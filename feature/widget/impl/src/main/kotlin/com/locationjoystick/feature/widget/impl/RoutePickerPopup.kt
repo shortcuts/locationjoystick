@@ -48,47 +48,50 @@ class RoutePickerPopup(
 
     fun show() {
         if (popupView != null) return
-        val view = ComposeView(context).apply {
-            setViewTreeLifecycleOwner(lifecycleOwner)
-            setViewTreeSavedStateRegistryOwner(savedStateRegistryOwner)
+        val view =
+            ComposeView(context).apply {
+                setViewTreeLifecycleOwner(lifecycleOwner)
+                setViewTreeSavedStateRegistryOwner(savedStateRegistryOwner)
 
-            setContent {
-                val routes by routeRepository.getRoutes().collectAsStateWithLifecycle(initialValue = emptyList())
-                MaterialTheme {
-                    Surface(
-                        shadowElevation = 8.dp,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        LazyColumn(modifier = Modifier.padding(vertical = 8.dp)) {
-                            if (routes.isEmpty()) {
-                                item {
-                                    Text(
-                                        "No routes saved",
-                                        modifier = Modifier.padding(16.dp),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                    )
-                                }
-                            }
-                            items(routes, key = { it.id }) { route ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { onRouteSelected(route, false) }
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(route.name, style = MaterialTheme.typography.bodyLarge)
+                setContent {
+                    val routes by routeRepository.getRoutes().collectAsStateWithLifecycle(initialValue = emptyList())
+                    MaterialTheme {
+                        Surface(
+                            shadowElevation = 8.dp,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            LazyColumn(modifier = Modifier.padding(vertical = 8.dp)) {
+                                if (routes.isEmpty()) {
+                                    item {
                                         Text(
-                                            "${route.waypoints.size} waypoints",
-                                            style = MaterialTheme.typography.bodySmall,
+                                            "No routes saved",
+                                            modifier = Modifier.padding(16.dp),
+                                            style = MaterialTheme.typography.bodyMedium,
                                         )
                                     }
-                                    IconButton(onClick = { onRouteSelected(route, false) }) {
-                                        Icon(Icons.Default.PlayArrow, contentDescription = "Play forward")
-                                    }
-                                    IconButton(onClick = { onRouteSelected(route, true) }) {
-                                        Icon(Icons.Default.Replay, contentDescription = "Play backward")
+                                }
+                                items(routes, key = { it.id }) { route ->
+                                    Row(
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .clickable { onRouteSelected(route, false) }
+                                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(route.name, style = MaterialTheme.typography.bodyLarge)
+                                            Text(
+                                                "${route.waypoints.size} waypoints",
+                                                style = MaterialTheme.typography.bodySmall,
+                                            )
+                                        }
+                                        IconButton(onClick = { onRouteSelected(route, false) }) {
+                                            Icon(Icons.Default.PlayArrow, contentDescription = "Play forward")
+                                        }
+                                        IconButton(onClick = { onRouteSelected(route, true) }) {
+                                            Icon(Icons.Default.Replay, contentDescription = "Play backward")
+                                        }
                                     }
                                 }
                             }
@@ -96,18 +99,19 @@ class RoutePickerPopup(
                     }
                 }
             }
-        }
 
         val displayHeight = context.resources.displayMetrics.heightPixels
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            (displayHeight * 0.6f).toInt(),
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-            PixelFormat.TRANSLUCENT,
-        ).apply {
-            gravity = Gravity.BOTTOM
-        }
+        val params =
+            WindowManager
+                .LayoutParams(
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    (displayHeight * 0.6f).toInt(),
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                    PixelFormat.TRANSLUCENT,
+                ).apply {
+                    gravity = Gravity.BOTTOM
+                }
 
         try {
             windowManager.addView(view, params)

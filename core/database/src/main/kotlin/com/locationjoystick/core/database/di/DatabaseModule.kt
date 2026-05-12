@@ -16,16 +16,18 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-
     @Provides
     @Singleton
     fun provideLjDatabase(
         @ApplicationContext context: Context,
-    ): LjDatabase = Room.databaseBuilder(
-        context,
-        LjDatabase::class.java,
-        LjDatabase.DATABASE_NAME,
-    ).addMigrations(LjDatabase.MIGRATION_1_2).build()
+    ): LjDatabase =
+        Room
+            .databaseBuilder(
+                context,
+                LjDatabase::class.java,
+                LjDatabase.DATABASE_NAME,
+            ).addMigrations(LjDatabase.MIGRATION_1_2)
+            .build()
 
     @Provides
     fun provideRouteDao(database: LjDatabase): RouteDao = database.routeDao()

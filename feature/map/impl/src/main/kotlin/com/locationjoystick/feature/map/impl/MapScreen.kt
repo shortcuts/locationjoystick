@@ -56,7 +56,6 @@ import com.locationjoystick.feature.map.api.MAP_ROUTE
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
-import org.maplibre.android.geometry.LatLng as MapLatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
@@ -66,6 +65,7 @@ import org.maplibre.android.style.layers.RasterLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.style.sources.RasterSource
 import org.maplibre.android.style.sources.TileSet
+import org.maplibre.android.geometry.LatLng as MapLatLng
 
 private const val OSM_SOURCE_ID = "osm-source"
 private const val OSM_LAYER_ID = "osm-layer"
@@ -100,20 +100,25 @@ internal fun MapScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val mapView = remember { MapLibre.getInstance(context); MapView(context) }
+    val mapView =
+        remember {
+            MapLibre.getInstance(context)
+            MapView(context)
+        }
     val mapRef = remember { mutableStateOf<MapLibreMap?>(null) }
     val positionSource = remember { mutableStateOf<GeoJsonSource?>(null) }
 
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> mapView.onStart()
-                Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-                Lifecycle.Event.ON_STOP -> mapView.onStop()
-                else -> Unit
+        val observer =
+            LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_START -> mapView.onStart()
+                    Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                    Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                    Lifecycle.Event.ON_STOP -> mapView.onStop()
+                    else -> Unit
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -157,9 +162,10 @@ internal fun MapScreen(
         },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = paddingValues.calculateBottomPadding()),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(bottom = paddingValues.calculateBottomPadding()),
         ) {
             AndroidView(
                 factory = { _ ->
@@ -169,10 +175,12 @@ internal fun MapScreen(
                             map.uiSettings.isAttributionEnabled = false
                             map.uiSettings.isLogoEnabled = false
                             map.uiSettings.isScrollGesturesEnabled = true
-                            map.cameraPosition = CameraPosition.Builder()
-                                .target(MapLatLng(DEFAULT_LAT, DEFAULT_LON))
-                                .zoom(DEFAULT_ZOOM)
-                                .build()
+                            map.cameraPosition =
+                                CameraPosition
+                                    .Builder()
+                                    .target(MapLatLng(DEFAULT_LAT, DEFAULT_LON))
+                                    .zoom(DEFAULT_ZOOM)
+                                    .build()
 
                             map.setStyle(Style.Builder().fromUri("asset://empty.json")) { style ->
                                 style.addSource(
@@ -331,9 +339,10 @@ private fun FavoritesPickerList(
     onSelect: (FavoriteLocation) -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
     ) {
         Text("Favorites", style = MaterialTheme.typography.headlineSmall)
 
@@ -345,22 +354,23 @@ private fun FavoritesPickerList(
             )
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
                 contentPadding = PaddingValues(vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(items = favorites, key = { it.id }) { favorite ->
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                RoundedCornerShape(8.dp),
-                            )
-                            .clickable { onSelect(favorite) }
-                            .padding(12.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    RoundedCornerShape(8.dp),
+                                ).clickable { onSelect(favorite) }
+                                .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(modifier = Modifier.fillMaxWidth()) {
@@ -386,9 +396,10 @@ private fun FavoriteTargetDetail(
     onBack: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
     ) {
         Text(favorite.name, style = MaterialTheme.typography.headlineSmall)
         Text(
@@ -400,17 +411,19 @@ private fun FavoriteTargetDetail(
 
         Button(
             onClick = onSetLocation,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
         ) {
             Text("Set Location")
         }
         Button(
             onClick = onGoToLocation,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
         ) {
             Text("Walk To Location")
         }
@@ -441,8 +454,7 @@ private fun MapFab(
     }
 }
 
-private fun emptyGeoJson(): String =
-    """{"type":"FeatureCollection","features":[]}"""
+private fun emptyGeoJson(): String = """{"type":"FeatureCollection","features":[]}"""
 
 private fun buildPositionGeoJson(position: com.locationjoystick.core.model.LatLng?): String =
     if (position != null) {

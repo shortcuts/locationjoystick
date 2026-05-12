@@ -19,7 +19,6 @@ private val Context.appPreferencesDataStore: DataStore<Preferences> by preferenc
 @Module
 @InstallIn(SingletonComponent::class)
 object DataStoreModule {
-
     @Provides
     @Singleton
     fun providePreferencesDataStore(
@@ -28,7 +27,5 @@ object DataStoreModule {
 
     @Provides
     @Singleton
-    fun provideAppPreferencesDataSource(
-        dataStore: DataStore<Preferences>,
-    ): AppPreferencesDataSource = AppPreferencesDataSource(dataStore)
+    fun provideAppPreferencesDataSource(dataStore: DataStore<Preferences>): AppPreferencesDataSource = AppPreferencesDataSource(dataStore)
 }

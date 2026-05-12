@@ -28,9 +28,10 @@ private fun ThemePreview() {
     LjTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text(

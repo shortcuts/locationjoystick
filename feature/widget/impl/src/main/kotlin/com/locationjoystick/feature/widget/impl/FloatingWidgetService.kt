@@ -29,8 +29,8 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
-import com.locationjoystick.core.model.WidgetFeature
 import com.locationjoystick.core.model.Route
+import com.locationjoystick.core.model.WidgetFeature
 import com.locationjoystick.core.overlay.OverlayService
 import com.locationjoystick.feature.joystick.impl.JoystickOverlayService
 import dagger.hilt.android.AndroidEntryPoint
@@ -51,8 +51,10 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 @AndroidEntryPoint
-class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegistryOwner {
-
+class FloatingWidgetService :
+    OverlayService(),
+    LifecycleOwner,
+    SavedStateRegistryOwner {
     companion object {
         private const val TAG = "FloatingWidgetService"
         private const val EARTH_RADIUS_M = 6371000.0
@@ -66,8 +68,11 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
     override val savedStateRegistry: SavedStateRegistry get() = savedStateRegistryController.savedStateRegistry
 
     @Inject lateinit var routeRepository: RouteRepository
+
     @Inject lateinit var locationRepository: LocationRepository
+
     @Inject lateinit var favoriteRepository: FavoriteRepository
+
     @Inject lateinit var settingsRepository: SettingsRepository
 
     private var panelLayout: LinearLayout? = null
@@ -75,17 +80,21 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
     private var walkToJob: Job? = null
 
     private var mockLocationService: MockLocationService? = null
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-            mockLocationService = (binder as MockLocationService.LocalBinder).getService()
-            Log.d(TAG, "Bound to MockLocationService")
-        }
+    private val serviceConnection =
+        object : ServiceConnection {
+            override fun onServiceConnected(
+                name: ComponentName,
+                binder: IBinder,
+            ) {
+                mockLocationService = (binder as MockLocationService.LocalBinder).getService()
+                Log.d(TAG, "Bound to MockLocationService")
+            }
 
-        override fun onServiceDisconnected(name: ComponentName) {
-            mockLocationService = null
-            Log.d(TAG, "Unbound from MockLocationService")
+            override fun onServiceDisconnected(name: ComponentName) {
+                mockLocationService = null
+                Log.d(TAG, "Unbound from MockLocationService")
+            }
         }
-    }
 
     override fun onCreate() {
         savedStateRegistryController.performAttach()
@@ -104,7 +113,11 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         return super.onStartCommand(intent, flags, startId)
     }
@@ -124,10 +137,11 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
     }
 
     override fun createOverlayView(): View {
-        val panel = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
-        }
+        val panel =
+            LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER_HORIZONTAL
+            }
         panelLayout = panel
 
         serviceScope.launch {
@@ -139,20 +153,25 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
         return panel
     }
 
-    private fun rebuildPanel(panel: LinearLayout, features: List<WidgetFeature>) {
+    private fun rebuildPanel(
+        panel: LinearLayout,
+        features: List<WidgetFeature>,
+    ) {
         panel.removeAllViews()
         speedCycleButtons.clear()
         if (features.isEmpty()) {
-            val placeholder = TextView(this).apply {
-                text = "No items configured"
-            }
+            val placeholder =
+                TextView(this).apply {
+                    text = "No items configured"
+                }
             panel.addView(placeholder)
         } else {
             features.forEach { feature ->
-                val button = ImageButton(this).apply {
-                    contentDescription = feature.toContentDescription()
-                    setOnClickListener { v -> onFeatureButtonClicked(feature, v) }
-                }
+                val button =
+                    ImageButton(this).apply {
+                        contentDescription = feature.toContentDescription()
+                        setOnClickListener { v -> onFeatureButtonClicked(feature, v) }
+                    }
                 panel.addView(button)
                 if (feature == WidgetFeature.SPEED_CYCLE) {
                     speedCycleButtons[button] = feature
@@ -161,7 +180,10 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
         }
     }
 
-    private fun onFeatureButtonClicked(feature: WidgetFeature, anchor: View) {
+    private fun onFeatureButtonClicked(
+        feature: WidgetFeature,
+        anchor: View,
+    ) {
         when (feature) {
             WidgetFeature.JOYSTICK_TOGGLE -> toggleJoystick()
             WidgetFeature.JOYSTICK_LOCK -> toggleJoystickLock()
@@ -176,26 +198,30 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
             val favorites = favoriteRepository.getFavorites().first()
 
             withContext(Dispatchers.Main) {
-                val listLayout = LinearLayout(this@FloatingWidgetService).apply {
-                    orientation = LinearLayout.VERTICAL
-                    setPadding(16, 16, 16, 16)
-                }
+                val listLayout =
+                    LinearLayout(this@FloatingWidgetService).apply {
+                        orientation = LinearLayout.VERTICAL
+                        setPadding(16, 16, 16, 16)
+                    }
 
-                val popup = PopupWindow(
-                    ScrollView(this@FloatingWidgetService).apply { addView(listLayout) },
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    true,
-                ).apply {
-                    isOutsideTouchable = true
-                    isFocusable = true
-                }
+                val popup =
+                    PopupWindow(
+                        ScrollView(this@FloatingWidgetService).apply { addView(listLayout) },
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        true,
+                    ).apply {
+                        isOutsideTouchable = true
+                        isFocusable = true
+                    }
 
                 if (favorites.isEmpty()) {
-                    listLayout.addView(TextView(this@FloatingWidgetService).apply {
-                        text = "No favorites saved"
-                        setPadding(8, 8, 8, 8)
-                    })
+                    listLayout.addView(
+                        TextView(this@FloatingWidgetService).apply {
+                            text = "No favorites saved"
+                            setPadding(8, 8, 8, 8)
+                        },
+                    )
                 } else {
                     favorites.forEach { favorite ->
                         listLayout.addView(buildFavoriteRow(favorite) { popup.dismiss() })
@@ -210,33 +236,38 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
     private fun buildFavoriteRow(
         favorite: FavoriteLocation,
         onDismiss: () -> Unit,
-    ): LinearLayout {
-        return LinearLayout(this).apply {
+    ): LinearLayout =
+        LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(8, 4, 8, 4)
 
-            addView(TextView(this@FloatingWidgetService).apply {
-                text = favorite.name
-                setPadding(0, 0, 16, 0)
-            })
+            addView(
+                TextView(this@FloatingWidgetService).apply {
+                    text = favorite.name
+                    setPadding(0, 0, 16, 0)
+                },
+            )
 
-            addView(Button(this@FloatingWidgetService).apply {
-                text = "Teleport"
-                setOnClickListener {
-                    teleportToFavorite(favorite)
-                    onDismiss()
-                }
-            })
+            addView(
+                Button(this@FloatingWidgetService).apply {
+                    text = "Teleport"
+                    setOnClickListener {
+                        teleportToFavorite(favorite)
+                        onDismiss()
+                    }
+                },
+            )
 
-            addView(Button(this@FloatingWidgetService).apply {
-                text = "Walk"
-                setOnClickListener {
-                    startWalkToFavorite(favorite)
-                    onDismiss()
-                }
-            })
+            addView(
+                Button(this@FloatingWidgetService).apply {
+                    text = "Walk"
+                    setOnClickListener {
+                        startWalkToFavorite(favorite)
+                        onDismiss()
+                    }
+                },
+            )
         }
-    }
 
     private fun teleportToFavorite(favorite: FavoriteLocation) {
         val svc = mockLocationService
@@ -253,77 +284,98 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
 
     private fun startWalkToFavorite(favorite: FavoriteLocation) {
         walkToJob?.cancel()
-        walkToJob = serviceScope.launch {
-            try {
-                val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
-                val targetLat = favorite.position.latitude
-                val targetLon = favorite.position.longitude
+        walkToJob =
+            serviceScope.launch {
+                try {
+                    val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+                    val targetLat = favorite.position.latitude
+                    val targetLon = favorite.position.longitude
 
-                while (true) {
-                    val current = locationRepository.currentPosition.value
-                    if (current == null) {
-                        Log.w(TAG, "No current position; stopping walk to ${favorite.name}")
-                        break
-                    }
-
-                    val distanceM = haversineDistance(
-                        current.latitude, current.longitude,
-                        targetLat, targetLon,
-                    )
-                    if (distanceM < 1.0) {
-                        Log.d(TAG, "Reached favorite: ${favorite.name}")
-                        break
-                    }
-
-                    val bearing = calculateBearing(
-                        current.latitude, current.longitude,
-                        targetLat, targetLon,
-                    )
-                    val advanceM = min(speedMs * 1.0, distanceM)
-                    val (newLat, newLon) = advancePosition(
-                        current.latitude, current.longitude,
-                        bearing, advanceM,
-                    )
-
-                    try {
-                        val intent = Intent(this@FloatingWidgetService, MockLocationService::class.java).apply {
-                            action = MockLocationService.ACTION_UPDATE_POSITION
-                            putExtra("lat", newLat)
-                            putExtra("lon", newLon)
+                    while (true) {
+                        val current = locationRepository.currentPosition.value
+                        if (current == null) {
+                            Log.w(TAG, "No current position; stopping walk to ${favorite.name}")
+                            break
                         }
-                        startService(intent)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Walk update failed", e)
-                    }
 
-                    delay(1000L)
+                        val distanceM =
+                            haversineDistance(
+                                current.latitude,
+                                current.longitude,
+                                targetLat,
+                                targetLon,
+                            )
+                        if (distanceM < 1.0) {
+                            Log.d(TAG, "Reached favorite: ${favorite.name}")
+                            break
+                        }
+
+                        val bearing =
+                            calculateBearing(
+                                current.latitude,
+                                current.longitude,
+                                targetLat,
+                                targetLon,
+                            )
+                        val advanceM = min(speedMs * 1.0, distanceM)
+                        val (newLat, newLon) =
+                            advancePosition(
+                                current.latitude,
+                                current.longitude,
+                                bearing,
+                                advanceM,
+                            )
+
+                        try {
+                            val intent =
+                                Intent(this@FloatingWidgetService, MockLocationService::class.java).apply {
+                                    action = MockLocationService.ACTION_UPDATE_POSITION
+                                    putExtra("lat", newLat)
+                                    putExtra("lon", newLon)
+                                }
+                            startService(intent)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Walk update failed", e)
+                        }
+
+                        delay(1000L)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Walk to favorite interrupted", e)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Walk to favorite interrupted", e)
             }
-        }
     }
 
     private fun toggleJoystick() {
-        val intent = Intent().apply {
-            setClassName(packageName, "com.locationjoystick.feature.joystick.impl.JoystickOverlayService")
-        }
+        val intent =
+            Intent().apply {
+                setClassName(packageName, "com.locationjoystick.feature.joystick.impl.JoystickOverlayService")
+            }
         try {
             if (mockLocationService != null) {
-                bindService(intent, object : ServiceConnection {
-                    override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-                        try {
-                            val joystickService = (binder as com.locationjoystick.feature.joystick.impl.JoystickOverlayService.LocalBinder).getService()
-                            joystickService.toggleOverlay()
-                            Log.d(TAG, "Toggled joystick overlay visibility")
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Failed to toggle joystick overlay", e)
+                bindService(
+                    intent,
+                    object : ServiceConnection {
+                        override fun onServiceConnected(
+                            name: ComponentName,
+                            binder: IBinder,
+                        ) {
+                            try {
+                                val joystickService =
+                                    (binder as com.locationjoystick.feature.joystick.impl.JoystickOverlayService.LocalBinder)
+                                        .getService()
+                                joystickService.toggleOverlay()
+                                Log.d(TAG, "Toggled joystick overlay visibility")
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Failed to toggle joystick overlay", e)
+                            }
+                            unbindService(this)
                         }
-                        unbindService(this)
-                    }
 
-                    override fun onServiceDisconnected(name: ComponentName) {}
-                }, Context.BIND_AUTO_CREATE)
+                        override fun onServiceDisconnected(name: ComponentName) {}
+                    },
+                    Context.BIND_AUTO_CREATE,
+                )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to toggle joystick", e)
@@ -331,26 +383,36 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
     }
 
     private fun toggleJoystickLock() {
-        val intent = Intent().apply {
-            setClassName(packageName, "com.locationjoystick.feature.joystick.impl.JoystickOverlayService")
-        }
+        val intent =
+            Intent().apply {
+                setClassName(packageName, "com.locationjoystick.feature.joystick.impl.JoystickOverlayService")
+            }
         try {
             if (mockLocationService != null) {
-                bindService(intent, object : ServiceConnection {
-                    override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-                        try {
-                            val joystickService = (binder as com.locationjoystick.feature.joystick.impl.JoystickOverlayService.LocalBinder).getService()
-                            val currentLocked = joystickService.locked
-                            joystickService.setIsLocked(!currentLocked)
-                            Log.d(TAG, "Toggled joystick lock to: ${!currentLocked}")
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Failed to toggle lock", e)
+                bindService(
+                    intent,
+                    object : ServiceConnection {
+                        override fun onServiceConnected(
+                            name: ComponentName,
+                            binder: IBinder,
+                        ) {
+                            try {
+                                val joystickService =
+                                    (binder as com.locationjoystick.feature.joystick.impl.JoystickOverlayService.LocalBinder)
+                                        .getService()
+                                val currentLocked = joystickService.locked
+                                joystickService.setIsLocked(!currentLocked)
+                                Log.d(TAG, "Toggled joystick lock to: ${!currentLocked}")
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Failed to toggle lock", e)
+                            }
+                            unbindService(this)
                         }
-                        unbindService(this)
-                    }
 
-                    override fun onServiceDisconnected(name: ComponentName) {}
-                }, Context.BIND_AUTO_CREATE)
+                        override fun onServiceDisconnected(name: ComponentName) {}
+                    },
+                    Context.BIND_AUTO_CREATE,
+                )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to access joystick lock", e)
@@ -362,26 +424,30 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
             val routes = routeRepository.getRoutes().first()
 
             withContext(Dispatchers.Main) {
-                val listLayout = LinearLayout(this@FloatingWidgetService).apply {
-                    orientation = LinearLayout.VERTICAL
-                    setPadding(16, 16, 16, 16)
-                }
+                val listLayout =
+                    LinearLayout(this@FloatingWidgetService).apply {
+                        orientation = LinearLayout.VERTICAL
+                        setPadding(16, 16, 16, 16)
+                    }
 
-                val popup = PopupWindow(
-                    ScrollView(this@FloatingWidgetService).apply { addView(listLayout) },
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    true,
-                ).apply {
-                    isOutsideTouchable = true
-                    isFocusable = true
-                }
+                val popup =
+                    PopupWindow(
+                        ScrollView(this@FloatingWidgetService).apply { addView(listLayout) },
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        true,
+                    ).apply {
+                        isOutsideTouchable = true
+                        isFocusable = true
+                    }
 
                 if (routes.isEmpty()) {
-                    listLayout.addView(TextView(this@FloatingWidgetService).apply {
-                        text = "No routes saved"
-                        setPadding(8, 8, 8, 8)
-                    })
+                    listLayout.addView(
+                        TextView(this@FloatingWidgetService).apply {
+                            text = "No routes saved"
+                            setPadding(8, 8, 8, 8)
+                        },
+                    )
                 } else {
                     routes.forEach { route ->
                         listLayout.addView(buildRouteRow(route) { popup.dismiss() })
@@ -396,44 +462,60 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
     private fun buildRouteRow(
         route: com.locationjoystick.core.model.Route,
         onDismiss: () -> Unit,
-    ): LinearLayout {
-        return LinearLayout(this).apply {
+    ): LinearLayout =
+        LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(8, 4, 8, 4)
 
-            addView(TextView(this@FloatingWidgetService).apply {
-                text = route.name
-                setPadding(0, 0, 16, 0)
-            })
+            addView(
+                TextView(this@FloatingWidgetService).apply {
+                    text = route.name
+                    setPadding(0, 0, 16, 0)
+                },
+            )
 
-            addView(Button(this@FloatingWidgetService).apply {
-                text = "Play"
-                setOnClickListener {
-                    startRouteReplay(route.id, false)
-                    onDismiss()
-                }
-            })
+            addView(
+                Button(this@FloatingWidgetService).apply {
+                    text = "Play"
+                    setOnClickListener {
+                        startRouteReplay(route.id, false)
+                        onDismiss()
+                    }
+                },
+            )
 
-            addView(Button(this@FloatingWidgetService).apply {
-                text = "Reverse"
-                setOnClickListener {
-                    startRouteReplay(route.id, true)
-                    onDismiss()
-                }
-            })
+            addView(
+                Button(this@FloatingWidgetService).apply {
+                    text = "Reverse"
+                    setOnClickListener {
+                        startRouteReplay(route.id, true)
+                        onDismiss()
+                    }
+                },
+            )
         }
-    }
 
-    private fun haversineDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    private fun haversineDistance(
+        lat1: Double,
+        lon1: Double,
+        lat2: Double,
+        lon2: Double,
+    ): Double {
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
-        val a = sin(dLat / 2) * sin(dLat / 2) +
-            cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-            sin(dLon / 2) * sin(dLon / 2)
+        val a =
+            sin(dLat / 2) * sin(dLat / 2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2)
         return EARTH_RADIUS_M * 2 * atan2(sqrt(a), sqrt(1 - a))
     }
 
-    private fun calculateBearing(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    private fun calculateBearing(
+        lat1: Double,
+        lon1: Double,
+        lat2: Double,
+        lon2: Double,
+    ): Double {
         val dLon = Math.toRadians(lon2 - lon1)
         val lat1Rad = Math.toRadians(lat1)
         val lat2Rad = Math.toRadians(lat2)
@@ -452,14 +534,17 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
         val latRad = Math.toRadians(lat)
         val lonRad = Math.toRadians(lon)
         val angularDist = distanceM / EARTH_RADIUS_M
-        val newLatRad = Math.asin(
-            sin(latRad) * cos(angularDist) +
-                cos(latRad) * sin(angularDist) * cos(bearing),
-        )
-        val newLonRad = lonRad + atan2(
-            sin(bearing) * sin(angularDist) * cos(latRad),
-            cos(angularDist) - sin(latRad) * sin(newLatRad),
-        )
+        val newLatRad =
+            Math.asin(
+                sin(latRad) * cos(angularDist) +
+                    cos(latRad) * sin(angularDist) * cos(bearing),
+            )
+        val newLonRad =
+            lonRad +
+                atan2(
+                    sin(bearing) * sin(angularDist) * cos(latRad),
+                    cos(angularDist) - sin(latRad) * sin(newLatRad),
+                )
         return Pair(Math.toDegrees(newLatRad), Math.toDegrees(newLonRad))
     }
 
@@ -476,31 +561,37 @@ class FloatingWidgetService : OverlayService(), LifecycleOwner, SavedStateRegist
 
     private fun updateSpeedCycleButtonIcon(profileId: String) {
         speedCycleButtons.keys.forEach { button ->
-            val iconRes = when (profileId) {
-                "walk" -> android.R.drawable.ic_menu_compass
-                "run" -> android.R.drawable.ic_menu_directions
-                "bike" -> android.R.drawable.ic_menu_gallery
-                else -> android.R.drawable.ic_menu_compass
-            }
+            val iconRes =
+                when (profileId) {
+                    "walk" -> android.R.drawable.ic_menu_compass
+                    "run" -> android.R.drawable.ic_menu_directions
+                    "bike" -> android.R.drawable.ic_menu_gallery
+                    else -> android.R.drawable.ic_menu_compass
+                }
             button.setImageResource(iconRes)
         }
     }
 
-    private fun WidgetFeature.toContentDescription(): String = when (this) {
-        WidgetFeature.JOYSTICK_TOGGLE -> "Show/hide joystick"
-        WidgetFeature.JOYSTICK_LOCK -> "Lock joystick position"
-        WidgetFeature.ROUTES_PICKER -> "Routes picker"
-        WidgetFeature.FAVORITES_PICKER -> "Favorites picker"
-        WidgetFeature.SPEED_CYCLE -> "Speed cycle"
-    }
-
-    private fun startRouteReplay(routeId: String, isBackward: Boolean) {
-        val intent = Intent(this, MockLocationService::class.java).apply {
-            action = MockLocationService.ACTION_ROUTE_REPLAY_START
-            putExtra(MockLocationService.EXTRA_ROUTE_ID, routeId)
-            putExtra(MockLocationService.EXTRA_IS_BACKWARD, isBackward)
-            putExtra(MockLocationService.EXTRA_SPEED_MS, 1.4)
+    private fun WidgetFeature.toContentDescription(): String =
+        when (this) {
+            WidgetFeature.JOYSTICK_TOGGLE -> "Show/hide joystick"
+            WidgetFeature.JOYSTICK_LOCK -> "Lock joystick position"
+            WidgetFeature.ROUTES_PICKER -> "Routes picker"
+            WidgetFeature.FAVORITES_PICKER -> "Favorites picker"
+            WidgetFeature.SPEED_CYCLE -> "Speed cycle"
         }
+
+    private fun startRouteReplay(
+        routeId: String,
+        isBackward: Boolean,
+    ) {
+        val intent =
+            Intent(this, MockLocationService::class.java).apply {
+                action = MockLocationService.ACTION_ROUTE_REPLAY_START
+                putExtra(MockLocationService.EXTRA_ROUTE_ID, routeId)
+                putExtra(MockLocationService.EXTRA_IS_BACKWARD, isBackward)
+                putExtra(MockLocationService.EXTRA_SPEED_MS, 1.4)
+            }
         startService(intent)
     }
 }
