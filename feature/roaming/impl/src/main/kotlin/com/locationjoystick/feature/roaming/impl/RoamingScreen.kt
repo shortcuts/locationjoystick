@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -29,6 +30,7 @@ fun RoamingRoute(
         onUpdateRadius = viewModel::updateRadius,
         onUpdateDuration = viewModel::updateDuration,
         onToggleOsrm = viewModel::toggleOsrmRouting,
+        onUpdateTransportMode = viewModel::updateTransportMode,
         onStartRoaming = viewModel::startRoaming,
         onStopRoaming = viewModel::stopRoaming,
     )
@@ -41,12 +43,13 @@ internal fun RoamingScreen(
     onUpdateRadius: (Double) -> Unit,
     onUpdateDuration: (Int) -> Unit,
     onToggleOsrm: (Boolean) -> Unit,
+    onUpdateTransportMode: (String) -> Unit,
     onStartRoaming: () -> Unit,
     onStopRoaming: () -> Unit,
 ) {
     Scaffold(
         topBar = {
-            LjTopBar(title = "lj", onMenuClick = onOpenDrawer)
+            LjTopBar(title = "Lj", onMenuClick = onOpenDrawer)
         },
     ) { paddingValues ->
         Box(
@@ -74,6 +77,28 @@ internal fun RoamingScreen(
                     onValueChange = { onUpdateDuration((it / 60).toInt()) },
                     valueRange = 60f..14400f,
                 )
+
+                Text("Transport Mode")
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                ) {
+                    FilterChip(
+                        selected = uiState.transportMode == "walk",
+                        onClick = { onUpdateTransportMode("walk") },
+                        label = { Text("Walk") },
+                    )
+                    FilterChip(
+                        selected = uiState.transportMode == "run",
+                        onClick = { onUpdateTransportMode("run") },
+                        label = { Text("Run") },
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                    )
+                    FilterChip(
+                        selected = uiState.transportMode == "bike",
+                        onClick = { onUpdateTransportMode("bike") },
+                        label = { Text("Bike") },
+                    )
+                }
 
                 Switch(
                     checked = uiState.config.useRoadSnapping,

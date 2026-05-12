@@ -13,6 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -22,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -119,6 +122,7 @@ fun RouteDetailScreen(
 
     var editedName by remember { mutableStateOf("") }
     var showMenu by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     if (route != null && editedName.isEmpty()) {
         editedName = route!!.name
@@ -134,6 +138,32 @@ fun RouteDetailScreen(
         } else {
             onNavigateBack()
         }
+    }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Delete Route?") },
+            text = { Text("Are you sure you want to delete this route? This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteConfirmation = false
+                        coroutineScope.launch {
+                            viewModel.deleteRoute()
+                            onNavigateBack()
+                        }
+                    },
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancel")
+                }
+            },
+        )
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -152,10 +182,7 @@ fun RouteDetailScreen(
                         text = { Text("Delete route") },
                         onClick = {
                             showMenu = false
-                            coroutineScope.launch {
-                                viewModel.deleteRoute()
-                                onNavigateBack()
-                            }
+                            showDeleteConfirmation = true
                         },
                     )
                 }

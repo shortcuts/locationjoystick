@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
@@ -140,7 +141,7 @@ internal fun MapScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             LjTopBar(
-                title = "lj",
+                title = "Lj",
                 onMenuClick = onOpenDrawer,
                 actions = {
                     IconButton(onClick = { showSearch.value = !showSearch.value }) {
@@ -209,8 +210,8 @@ internal fun MapScreen(
                                     CircleLayer(POSITION_LAYER_ID, POSITION_SOURCE_ID)
                                         .withProperties(
                                             PropertyFactory.circleRadius(10f),
-                                            PropertyFactory.circleColor("#1E88E5"),
-                                            PropertyFactory.circleStrokeColor("#FFFFFF"),
+                                            PropertyFactory.circleColor(Color(0xFF1E88E5).toArgb()),
+                                            PropertyFactory.circleStrokeColor(Color(0xFFFFFFFF).toArgb()),
                                             PropertyFactory.circleStrokeWidth(2f),
                                         ),
                                 )

@@ -14,4 +14,5 @@ data class RoamingUiState(
     val isRoaming: Boolean = false,
     val elapsedSeconds: Long = 0L,
     val currentPosition: LatLng? = null,
+    val transportMode: String = "walk",
 )

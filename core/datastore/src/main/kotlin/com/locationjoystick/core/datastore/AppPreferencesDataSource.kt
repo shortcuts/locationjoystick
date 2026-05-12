@@ -33,6 +33,7 @@ class AppPreferencesDataSource
             val ROAMING_RADIUS_METERS = doublePreferencesKey("roaming_radius_meters")
             val ROAMING_DURATION_SECONDS = doublePreferencesKey("roaming_duration_seconds")
             val ROAMING_ROAD_FOLLOWING = booleanPreferencesKey("roaming_road_following")
+            val ROAMING_TRANSPORT_MODE = stringPreferencesKey("roaming_transport_mode")
             val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
             val SPEED_UNIT = stringPreferencesKey("speed_unit")
         }
@@ -100,6 +101,7 @@ class AppPreferencesDataSource
                         radiusMeters = prefs[Keys.ROAMING_RADIUS_METERS] ?: DEFAULT_ROAMING_RADIUS_METERS,
                         durationSeconds = (prefs[Keys.ROAMING_DURATION_SECONDS] ?: DEFAULT_ROAMING_DURATION_SECONDS).toLong(),
                         roadFollowing = prefs[Keys.ROAMING_ROAD_FOLLOWING] ?: false,
+                        transportMode = prefs[Keys.ROAMING_TRANSPORT_MODE] ?: DEFAULT_ROAMING_TRANSPORT_MODE,
                     )
                 }
 
@@ -107,11 +109,13 @@ class AppPreferencesDataSource
             radiusMeters: Double,
             durationSeconds: Long,
             roadFollowing: Boolean,
+            transportMode: String,
         ) {
             dataStore.edit { prefs ->
                 prefs[Keys.ROAMING_RADIUS_METERS] = radiusMeters
                 prefs[Keys.ROAMING_DURATION_SECONDS] = durationSeconds.toDouble()
                 prefs[Keys.ROAMING_ROAD_FOLLOWING] = roadFollowing
+                prefs[Keys.ROAMING_TRANSPORT_MODE] = transportMode
             }
         }
 
@@ -183,6 +187,7 @@ class AppPreferencesDataSource
 
             const val DEFAULT_ROAMING_RADIUS_METERS = 2000.0
             const val DEFAULT_ROAMING_DURATION_SECONDS = 1800.0
+            const val DEFAULT_ROAMING_TRANSPORT_MODE = "walk"
         }
     }
 
@@ -199,4 +204,5 @@ data class RoamingPreferences(
     val radiusMeters: Double,
     val durationSeconds: Long,
     val roadFollowing: Boolean,
+    val transportMode: String,
 )

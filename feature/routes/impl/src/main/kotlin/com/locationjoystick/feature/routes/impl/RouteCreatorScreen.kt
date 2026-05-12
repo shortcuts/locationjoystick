@@ -35,6 +35,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -231,7 +233,9 @@ internal fun RouteCreatorScreen(
                                 style.addLayer(
                                     LineLayer(SEGMENTS_LAYER_ID, SEGMENTS_SOURCE_ID)
                                         .withProperties(
-                                            PropertyFactory.lineColor("#2196F3"),
+                                            PropertyFactory.lineColor(
+                                                Color(0xFF2196F3).toArgb(),
+                                            ),
                                             PropertyFactory.lineWidth(3f),
                                         ),
                                 )
@@ -243,8 +247,12 @@ internal fun RouteCreatorScreen(
                                     CircleLayer(WAYPOINTS_LAYER_ID, WAYPOINTS_SOURCE_ID)
                                         .withProperties(
                                             PropertyFactory.circleRadius(8f),
-                                            PropertyFactory.circleColor("#4CAF50"),
-                                            PropertyFactory.circleStrokeColor("#FFFFFF"),
+                                            PropertyFactory.circleColor(
+                                                Color(0xFF4CAF50).toArgb(),
+                                            ),
+                                            PropertyFactory.circleStrokeColor(
+                                                Color(0xFFFFFFFF).toArgb(),
+                                            ),
                                             PropertyFactory.circleStrokeWidth(2f),
                                         ),
                                 )

@@ -112,7 +112,7 @@ internal fun SettingsScreen(
 ) {
     Scaffold(
         topBar = {
-            LjTopBar(title = "lj", onMenuClick = onOpenDrawer)
+            LjTopBar(title = "Lj", onMenuClick = onOpenDrawer)
         },
         floatingActionButton = {
             if (uiState.isDirty) {

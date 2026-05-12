@@ -70,7 +70,8 @@ class SettingsRepository
             radiusMeters: Double,
             durationSeconds: Long,
             roadFollowing: Boolean,
-        ) = dataSource.setRoamingConfig(radiusMeters, durationSeconds, roadFollowing)
+            transportMode: String,
+        ) = dataSource.setRoamingConfig(radiusMeters, durationSeconds, roadFollowing, transportMode)
 
         suspend fun setSpeedUnit(unit: SpeedUnit) {
             dataSource.setSpeedUnit(unit.name)

@@ -50,6 +50,7 @@ class RoamingEngine
         fun startRoaming(
             config: RoamingConfig,
             speedMs: Double,
+            transportMode: String,
             onPositionUpdate: (LatLng) -> Unit,
         ): Job {
             activeJob?.cancel()
@@ -64,7 +65,7 @@ class RoamingEngine
                     while (isActive && (System.currentTimeMillis() - startTime) < durationMs) {
                         if (currentRoute.isEmpty() || waypointIndex >= currentRoute.size) {
                             val destination = randomPointInRadius(config.centerPosition, config.radiusMeters)
-                            currentRoute = fetchRoute(config, currentPosition, destination)
+                            currentRoute = fetchRoute(config, currentPosition, destination, transportMode)
                             waypointIndex = 0
                         }
 
@@ -101,12 +102,17 @@ class RoamingEngine
             config: RoamingConfig,
             from: LatLng,
             to: LatLng,
+            transportMode: String,
         ): List<LatLng> {
             if (!config.useRoadSnapping) {
                 return osrmClient.straightLineRoute(from, to)
             }
 
-            val profile = if (config.radiusMeters > 1000) OSRM_PROFILE_CYCLING else OSRM_PROFILE_FOOT
+            val profile =
+                when (transportMode) {
+                    "bike" -> OSRM_PROFILE_CYCLING
+                    else -> OSRM_PROFILE_FOOT // "walk", "run", or unknown default to foot
+                }
             return osrmClient
                 .getRoute(profile, listOf(from, to))
                 .getOrElse { e ->

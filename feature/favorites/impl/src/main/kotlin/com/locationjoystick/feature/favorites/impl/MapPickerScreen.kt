@@ -30,6 +30,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -184,8 +186,8 @@ internal fun MapPickerScreen(
                                     CircleLayer(MARKER_LAYER_ID, MARKER_SOURCE_ID)
                                         .withProperties(
                                             PropertyFactory.circleRadius(10f),
-                                            PropertyFactory.circleColor("#FF5722"),
-                                            PropertyFactory.circleStrokeColor("#FFFFFF"),
+                                            PropertyFactory.circleColor(Color(0xFFFF5722).toArgb()),
+                                            PropertyFactory.circleStrokeColor(Color(0xFFFFFFFF).toArgb()),
                                             PropertyFactory.circleStrokeWidth(2f),
                                         ),
                                 )

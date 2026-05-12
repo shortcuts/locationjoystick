@@ -28,14 +28,16 @@ class RoamingRepository
         fun startRoaming(
             config: RoamingConfig,
             speedMs: Double,
+            transportMode: String,
         ) {
             activeJob?.cancel()
-            Log.d(TAG, "Starting roaming: radius=${config.radiusMeters}m, duration=${config.durationSeconds}s")
+            Log.d(TAG, "Starting roaming: radius=${config.radiusMeters}m, duration=${config.durationSeconds}s, transport=$transportMode")
             _isRoaming.value = true
             activeJob =
                 roamingEngine.startRoaming(
                     config = config,
                     speedMs = speedMs,
+                    transportMode = transportMode,
                     onPositionUpdate = { position ->
                         locationRepository.setPositionInternal(position)
                     },

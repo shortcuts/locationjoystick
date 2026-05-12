@@ -98,7 +98,7 @@ internal fun RoutesScreen(
     Scaffold(
         topBar = {
             LjTopBar(
-                title = "lj",
+                title = "Lj",
                 onMenuClick = onOpenDrawer,
                 actions = {
                     IconButton(onClick = { showAddMenu = !showAddMenu }) {
