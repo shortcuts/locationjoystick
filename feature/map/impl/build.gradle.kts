@@ -4,6 +4,9 @@ plugins {
 
 android {
     namespace = "com.locationjoystick.feature.map.impl"
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
