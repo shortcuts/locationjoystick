@@ -12,7 +12,6 @@ import android.os.IBinder
 import android.util.Log
 import android.view.Gravity
 import android.view.View
-import android.view.WindowInsets
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
 import com.locationjoystick.core.data.LocationRepository
@@ -118,6 +117,9 @@ class JoystickOverlayService : OverlayService() {
         super.onDestroy()
     }
 
+    val isOverlayVisible: Boolean
+        get() = overlayView?.isAttachedToWindow == true
+
     fun setIsLocked(value: Boolean) {
         locked = value
         Log.d(TAG, "Joystick locked: $value")
@@ -175,17 +177,6 @@ class JoystickOverlayService : OverlayService() {
     override fun getWindowManagerParams(view: View): WindowManager.LayoutParams {
         val sizePx = (JOYSTICK_SIZE_DP * resources.displayMetrics.density).toInt()
 
-        val metrics = windowManager.currentWindowMetrics
-        val bounds = metrics.bounds
-
-        val insets =
-            metrics.windowInsets.getInsetsIgnoringVisibility(
-                WindowInsets.Type.systemBars(),
-            )
-
-        val usableHeight = bounds.height() - insets.top - insets.bottom
-        val centerY = insets.top + ((usableHeight / 2) - (sizePx / 2))
-
         return WindowManager
             .LayoutParams(
                 sizePx,
@@ -195,9 +186,9 @@ class JoystickOverlayService : OverlayService() {
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT,
             ).apply {
-                gravity = Gravity.TOP or Gravity.START
+                gravity = Gravity.CENTER_VERTICAL or Gravity.END
                 x = 0
-                y = centerY
+                y = 0
             }
     }
 

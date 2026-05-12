@@ -8,23 +8,42 @@ import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.util.Log
-import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.DirectionsBike
+import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
+import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
+import androidx.compose.material.icons.rounded.Explore
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.LockOpen
+import androidx.compose.material.icons.rounded.Route
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
@@ -32,7 +51,6 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
-import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.WidgetFeature
 import com.locationjoystick.core.overlay.OverlayService
 import com.locationjoystick.feature.joystick.impl.JoystickOverlayService
@@ -43,6 +61,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -78,11 +97,41 @@ class FloatingWidgetService :
 
     @Inject lateinit var settingsRepository: SettingsRepository
 
-    private var panelLayout: LinearLayout? = null
-    private val speedCycleButtons = mutableMapOf<ImageButton, WidgetFeature>()
+    private var composeView: ComposeView? = null
     private var walkToJob: Job? = null
+    private var joystickPollJob: Job? = null
+
+    // Joystick state exposed to Compose
+    private val _joystickVisible = MutableStateFlow(false)
+    private val _joystickLocked = MutableStateFlow(false)
+    private val _activeProfileId = MutableStateFlow("walk")
 
     private var mockLocationService: MockLocationService? = null
+
+    // Persistent binding to JoystickOverlayService for state tracking
+    private var joystickService: JoystickOverlayService? = null
+    private val joystickConnection =
+        object : ServiceConnection {
+            override fun onServiceConnected(
+                name: ComponentName,
+                binder: IBinder,
+            ) {
+                joystickService = (binder as JoystickOverlayService.LocalBinder).getService()
+                syncJoystickState()
+                startJoystickPolling()
+                Log.d(TAG, "Bound to JoystickOverlayService")
+            }
+
+            override fun onServiceDisconnected(name: ComponentName) {
+                joystickPollJob?.cancel()
+                joystickService = null
+                _joystickVisible.value = false
+                _joystickLocked.value = false
+                Log.d(TAG, "Unbound from JoystickOverlayService")
+            }
+        }
+    private var joystickBound = false
+
     private val overlayVisibilityReceiver =
         object : BroadcastReceiver() {
             override fun onReceive(
@@ -127,9 +176,14 @@ class FloatingWidgetService :
             serviceConnection,
             Context.BIND_AUTO_CREATE,
         )
+        val joystickIntent =
+            Intent().apply {
+                setClassName(packageName, "com.locationjoystick.feature.joystick.impl.JoystickOverlayService")
+            }
+        joystickBound = bindService(joystickIntent, joystickConnection, Context.BIND_AUTO_CREATE)
         lifecycleScope.launch {
             settingsRepository.getActiveSpeedProfile().collect { profile ->
-                updateSpeedCycleButtonIcon(profile.id)
+                _activeProfileId.value = profile.id
             }
         }
     }
@@ -146,9 +200,10 @@ class FloatingWidgetService :
     override fun onDestroy() {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         walkToJob?.cancel()
+        joystickPollJob?.cancel()
         serviceScope.cancel()
-        panelLayout?.visibility = View.GONE
-        panelLayout = null
+        composeView?.visibility = View.GONE
+        composeView = null
         try {
             unregisterReceiver(overlayVisibilityReceiver)
         } catch (e: IllegalArgumentException) {
@@ -159,51 +214,125 @@ class FloatingWidgetService :
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Service was not bound when attempting to unbind", e)
         }
+        if (joystickBound) {
+            try {
+                unbindService(joystickConnection)
+            } catch (e: IllegalArgumentException) {
+                Log.e(TAG, "Joystick service was not bound when attempting to unbind", e)
+            }
+        }
         super.onDestroy()
     }
 
     override fun createOverlayView(): View {
-        val panel =
-            LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER_HORIZONTAL
+        val view =
+            ComposeView(this).apply {
+                setViewTreeLifecycleOwner(this@FloatingWidgetService)
+                setViewTreeSavedStateRegistryOwner(this@FloatingWidgetService)
             }
-        panelLayout = panel
+        composeView = view
 
-        serviceScope.launch {
-            settingsRepository.getWidgetFeatures().collect { features ->
-                rebuildPanel(panel, features)
+        view.setContent {
+            val features by settingsRepository.getWidgetFeatures().collectAsState(initial = emptyList())
+            val joystickVisible by _joystickVisible.collectAsState()
+            val joystickLocked by _joystickLocked.collectAsState()
+            val activeProfileId by _activeProfileId.collectAsState()
+
+            MaterialTheme {
+                WidgetPanel(
+                    features = features,
+                    joystickVisible = joystickVisible,
+                    joystickLocked = joystickLocked,
+                    activeProfileId = activeProfileId,
+                    onFeatureClicked = { feature -> onFeatureButtonClicked(feature, view) },
+                )
             }
         }
 
-        return panel
+        return view
     }
 
-    private fun rebuildPanel(
-        panel: LinearLayout,
+    @Composable
+    private fun WidgetPanel(
         features: List<WidgetFeature>,
+        joystickVisible: Boolean,
+        joystickLocked: Boolean,
+        activeProfileId: String,
+        onFeatureClicked: (WidgetFeature) -> Unit,
     ) {
-        panel.removeAllViews()
-        speedCycleButtons.clear()
         if (features.isEmpty()) {
-            val placeholder =
-                TextView(this).apply {
-                    text = "No items configured"
-                }
-            panel.addView(placeholder)
-        } else {
+            // No-op: placeholder not rendered as overlay is collapsed when empty
+            return
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
             features.forEach { feature ->
-                val button =
-                    ImageButton(this).apply {
-                        contentDescription = feature.toContentDescription()
-                        setOnClickListener { v -> onFeatureButtonClicked(feature, v) }
-                    }
-                panel.addView(button)
-                if (feature == WidgetFeature.SPEED_CYCLE) {
-                    speedCycleButtons[button] = feature
+                val (icon, active) = featureIconAndState(feature, joystickVisible, joystickLocked, activeProfileId)
+                val activeColor = MaterialTheme.colorScheme.onSurface
+                val inactiveColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                IconButton(onClick = { onFeatureClicked(feature) }) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = feature.toContentDescription(),
+                        tint = if (active) activeColor else inactiveColor,
+                    )
                 }
             }
         }
+    }
+
+    private fun featureIconAndState(
+        feature: WidgetFeature,
+        joystickVisible: Boolean,
+        joystickLocked: Boolean,
+        activeProfileId: String,
+    ): Pair<ImageVector, Boolean> =
+        when (feature) {
+            WidgetFeature.JOYSTICK_TOGGLE -> {
+                Pair(Icons.Rounded.Explore, joystickVisible)
+            }
+
+            WidgetFeature.JOYSTICK_LOCK -> {
+                Pair(
+                    if (joystickLocked) Icons.Rounded.Lock else Icons.Rounded.LockOpen,
+                    joystickLocked,
+                )
+            }
+
+            WidgetFeature.ROUTES_PICKER -> {
+                Pair(Icons.Rounded.Route, true)
+            }
+
+            WidgetFeature.FAVORITES_PICKER -> {
+                Pair(Icons.Rounded.Favorite, true)
+            }
+
+            WidgetFeature.SPEED_CYCLE -> {
+                Pair(
+                    when (activeProfileId) {
+                        "run" -> Icons.AutoMirrored.Rounded.DirectionsRun
+                        "bike" -> Icons.AutoMirrored.Rounded.DirectionsBike
+                        else -> Icons.AutoMirrored.Rounded.DirectionsWalk
+                    },
+                    true,
+                )
+            }
+        }
+
+    private fun syncJoystickState() {
+        val svc = joystickService ?: return
+        _joystickVisible.value = svc.isOverlayVisible
+        _joystickLocked.value = svc.locked
+    }
+
+    private fun startJoystickPolling() {
+        joystickPollJob?.cancel()
+        joystickPollJob =
+            serviceScope.launch {
+                while (true) {
+                    delay(1000L)
+                    syncJoystickState()
+                }
+            }
     }
 
     private fun onFeatureButtonClicked(
@@ -373,75 +502,37 @@ class FloatingWidgetService :
     }
 
     private fun toggleJoystick() {
-        val intent =
-            Intent().apply {
-                setClassName(packageName, "com.locationjoystick.feature.joystick.impl.JoystickOverlayService")
+        val svc = joystickService
+        if (svc != null) {
+            try {
+                svc.toggleOverlay()
+                // Sync state after toggle (small delay for view attach/detach to propagate)
+                serviceScope.launch {
+                    delay(100L)
+                    syncJoystickState()
+                }
+                Log.d(TAG, "Toggled joystick overlay visibility")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to toggle joystick overlay", e)
             }
-        try {
-            if (mockLocationService != null) {
-                bindService(
-                    intent,
-                    object : ServiceConnection {
-                        override fun onServiceConnected(
-                            name: ComponentName,
-                            binder: IBinder,
-                        ) {
-                            try {
-                                val joystickService =
-                                    (binder as com.locationjoystick.feature.joystick.impl.JoystickOverlayService.LocalBinder)
-                                        .getService()
-                                joystickService.toggleOverlay()
-                                Log.d(TAG, "Toggled joystick overlay visibility")
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Failed to toggle joystick overlay", e)
-                            }
-                            unbindService(this)
-                        }
-
-                        override fun onServiceDisconnected(name: ComponentName) {}
-                    },
-                    Context.BIND_AUTO_CREATE,
-                )
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to toggle joystick", e)
+        } else {
+            Log.w(TAG, "Cannot toggle joystick: service not bound")
         }
     }
 
     private fun toggleJoystickLock() {
-        val intent =
-            Intent().apply {
-                setClassName(packageName, "com.locationjoystick.feature.joystick.impl.JoystickOverlayService")
+        val svc = joystickService
+        if (svc != null) {
+            try {
+                val newLocked = !svc.locked
+                svc.setIsLocked(newLocked)
+                _joystickLocked.value = newLocked
+                Log.d(TAG, "Toggled joystick lock to: $newLocked")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to toggle lock", e)
             }
-        try {
-            if (mockLocationService != null) {
-                bindService(
-                    intent,
-                    object : ServiceConnection {
-                        override fun onServiceConnected(
-                            name: ComponentName,
-                            binder: IBinder,
-                        ) {
-                            try {
-                                val joystickService =
-                                    (binder as com.locationjoystick.feature.joystick.impl.JoystickOverlayService.LocalBinder)
-                                        .getService()
-                                val currentLocked = joystickService.locked
-                                joystickService.setIsLocked(!currentLocked)
-                                Log.d(TAG, "Toggled joystick lock to: ${!currentLocked}")
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Failed to toggle lock", e)
-                            }
-                            unbindService(this)
-                        }
-
-                        override fun onServiceDisconnected(name: ComponentName) {}
-                    },
-                    Context.BIND_AUTO_CREATE,
-                )
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to access joystick lock", e)
+        } else {
+            Log.w(TAG, "Cannot toggle joystick lock: service not bound")
         }
     }
 
@@ -582,19 +673,6 @@ class FloatingWidgetService :
             val nextIndex = (currentIndex + 1) % profiles.size
             settingsRepository.setActiveProfileId(profiles[nextIndex].id)
             Log.d(TAG, "Cycled speed profile to: ${profiles[nextIndex].id}")
-        }
-    }
-
-    private fun updateSpeedCycleButtonIcon(profileId: String) {
-        speedCycleButtons.keys.forEach { button ->
-            val iconRes =
-                when (profileId) {
-                    "walk" -> android.R.drawable.ic_menu_compass
-                    "run" -> android.R.drawable.ic_menu_directions
-                    "bike" -> android.R.drawable.ic_menu_gallery
-                    else -> android.R.drawable.ic_menu_compass
-                }
-            button.setImageResource(iconRes)
         }
     }
 
