@@ -14,4 +14,8 @@ dependencies {
     implementation(project(":core:routing"))
 
     implementation(libs.kotlinx.coroutines.android)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
 }
