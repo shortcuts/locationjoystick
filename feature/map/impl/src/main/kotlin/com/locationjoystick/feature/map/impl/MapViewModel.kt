@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.data.FavoriteRepository
@@ -283,11 +284,13 @@ class MapViewModel @Inject constructor(
     }
 
     private fun startSpoofing() {
-        viewModelScope.launch {
-            val startPos = locationRepository.currentPosition.value ?: LatLng(48.8566, 2.3522)
-            locationRepository.setPositionInternal(startPos)  // seed service volatile fields via observer
-            locationRepository.startSpoofing()
+        val startPos = locationRepository.currentPosition.value ?: LatLng(48.8566, 2.3522)
+        val intent = Intent(MockLocationService.ACTION_START).apply {
+            setClassName(context, "com.locationjoystick.core.location.MockLocationService")
+            putExtra("lat", startPos.latitude)
+            putExtra("lon", startPos.longitude)
         }
+        ContextCompat.startForegroundService(context, intent)
     }
 
     private fun stopSpoofing() {

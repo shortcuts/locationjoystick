@@ -108,7 +108,7 @@ internal fun FavoritesScreen(
                         onDismissRequest = { showAddMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Add via Map") },
+                            text = { Text("Add from map") },
                             onClick = {
                                 onNavigateToMapPicker()
                                 showAddMenu = false
@@ -116,7 +116,7 @@ internal fun FavoritesScreen(
                             leadingIcon = { Icon(Icons.Rounded.Map, null) }
                         )
                         DropdownMenuItem(
-                            text = { Text("Add Coordinates") },
+                            text = { Text("Add from Coordinates") },
                             onClick = {
                                 showAddSheet = true
                                 showAddMenu = false

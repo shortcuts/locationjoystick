@@ -52,6 +52,7 @@ class MockLocationService : Service() {
         private const val WIDGET_SERVICE_CLASS =
             "com.locationjoystick.feature.widget.impl.FloatingWidgetService"
 
+        const val ACTION_START = "com.locationjoystick.core.location.ACTION_START"
         const val ACTION_STOP = "com.locationjoystick.core.location.ACTION_STOP"
         const val ACTION_UPDATE_POSITION = "com.locationjoystick.core.location.ACTION_UPDATE_POSITION"
         const val ACTION_ROUTE_REPLAY_START = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_START"
@@ -146,6 +147,11 @@ class MockLocationService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
+            ACTION_START -> {
+                val lat = intent.getDoubleExtra("lat", 48.8566)
+                val lon = intent.getDoubleExtra("lon", 2.3522)
+                startSpoofing(lat, lon)
+            }
             ACTION_STOP -> {
                 stopSpoofing()
                 stopSelf()

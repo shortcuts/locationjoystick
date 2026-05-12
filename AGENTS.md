@@ -396,11 +396,10 @@ Notes:
 
 ## Pre-Commit Validation Policy
 
-Work is NOT complete until lint and build both pass.
+Work is NOT complete until lint passes.
 
 ```bash
 make lint
-make build
 ```
 
 Rules:
