@@ -50,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.locationjoystick.core.common.constants.MapConstants
+import androidx.compose.material.icons.Icons
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.model.FavoriteLocation
@@ -145,10 +146,7 @@ internal fun MapScreen(
                 onMenuClick = onOpenDrawer,
                 actions = {
                     IconButton(onClick = { showSearch.value = !showSearch.value }) {
-                        Icon(
-                            imageVector = LjIcons.Explore,
-                            contentDescription = "Search location",
-                        )
+                        Icon(Icons.Default.Search, contentDescription = "Search location")
                     }
                 },
             )
