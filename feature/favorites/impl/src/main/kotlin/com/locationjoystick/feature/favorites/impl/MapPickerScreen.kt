@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -127,6 +126,11 @@ internal fun MapPickerScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
+                actions = {
+                    IconButton(onClick = { showSearchBar = !showSearchBar }) {
+                        Icon(Icons.Default.Search, contentDescription = "Search location")
+                    }
+                },
             )
         },
         floatingActionButton = {
@@ -220,28 +224,9 @@ internal fun MapPickerScreen(
                             .align(Alignment.TopCenter)
                             .padding(
                                 top = paddingValues.calculateTopPadding() + 8.dp,
-                                start = 56.dp,
+                                start = 12.dp,
                                 end = 12.dp,
                             ),
-                )
-            }
-
-            FloatingActionButton(
-                onClick = { showSearchBar = !showSearchBar },
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(start = 16.dp, bottom = 16.dp),
-                containerColor =
-                    if (showSearchBar) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surface
-                    },
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search location",
                 )
             }
         }
