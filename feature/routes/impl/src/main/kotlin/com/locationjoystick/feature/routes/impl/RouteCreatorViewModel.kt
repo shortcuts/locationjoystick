@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
@@ -37,6 +38,7 @@ class RouteCreatorViewModel
     constructor(
         private val routeRepository: RouteRepository,
         private val osrmClient: OsrmClient,
+        private val locationRepository: LocationRepository,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val routeType =
@@ -46,6 +48,9 @@ class RouteCreatorViewModel
 
         private val _state = MutableStateFlow(CreatorState())
         val state: StateFlow<CreatorState> = _state.asStateFlow()
+
+        val currentSpoofPosition: LatLng?
+            get() = locationRepository.currentPosition.value
 
         fun addWaypoint(latLng: LatLng) {
             val currentWaypoints = _state.value.waypoints

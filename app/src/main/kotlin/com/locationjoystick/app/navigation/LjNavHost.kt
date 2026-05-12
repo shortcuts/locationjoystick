@@ -125,6 +125,7 @@ fun LjNavHost(
                     }
                 val favoritesViewModel: FavoritesViewModel = hiltViewModel(parentEntry)
                 MapPickerRoute(
+                    initialPosition = favoritesViewModel.currentSpoofPosition,
                     onLocationPicked = { name, lat, lon ->
                         favoritesViewModel.addFavorite(name, lat, lon)
                         navController.navigateUp()

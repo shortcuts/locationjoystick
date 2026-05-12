@@ -51,6 +51,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.locationjoystick.core.common.constants.MapConstants
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.model.FavoriteLocation
@@ -100,6 +101,8 @@ internal fun MapScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val initialPosition = remember { uiState.currentPosition }
 
     val mapView =
         remember {
@@ -188,7 +191,12 @@ internal fun MapScreen(
                             map.cameraPosition =
                                 CameraPosition
                                     .Builder()
-                                    .target(MapLatLng(MapConstants.DEFAULT_LAT, MapConstants.DEFAULT_LON))
+                                    .target(
+                                        if (initialPosition != null)
+                                            MapLatLng(initialPosition.latitude, initialPosition.longitude)
+                                        else
+                                            MapLatLng(MapConstants.DEFAULT_LAT, MapConstants.DEFAULT_LON)
+                                    )
                                     .zoom(MapConstants.DEFAULT_ZOOM)
                                     .build()
 

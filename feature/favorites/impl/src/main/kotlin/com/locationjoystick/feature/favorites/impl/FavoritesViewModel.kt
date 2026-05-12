@@ -30,7 +30,8 @@ class FavoritesViewModel
         private val _pendingDeleteId = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
 
         val uiState: StateFlow<FavoritesUiState> =
-            kotlinx.coroutines.flow
+            kotlinx.coroutines
+                .flow
                 .combine(
                     favoriteRepository.getFavorites(),
                     _pendingDeleteId,
@@ -45,6 +46,9 @@ class FavoritesViewModel
                     started = SharingStarted.WhileSubscribed(5_000),
                     initialValue = FavoritesUiState(isLoading = true),
                 )
+
+        val currentSpoofPosition: com.locationjoystick.core.model.LatLng?
+            get() = locationRepository.currentPosition.value
 
         fun teleportTo(favorite: FavoriteLocation) {
             val intent =

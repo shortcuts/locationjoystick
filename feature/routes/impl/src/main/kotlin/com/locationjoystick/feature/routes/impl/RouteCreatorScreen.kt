@@ -81,6 +81,7 @@ fun RouteCreatorRoute(
 
     RouteCreatorScreen(
         state = state,
+        initialPosition = viewModel.currentSpoofPosition,
         onAddWaypoint = viewModel::addWaypoint,
         onUndo = viewModel::undoLastWaypoint,
         onSaveRoute = { name ->
@@ -95,6 +96,7 @@ fun RouteCreatorRoute(
 @Composable
 internal fun RouteCreatorScreen(
     state: CreatorState,
+    initialPosition: LatLng? = null,
     onAddWaypoint: (LatLng) -> Unit,
     onUndo: () -> Unit,
     onSaveRoute: (String) -> Unit,
@@ -214,7 +216,12 @@ internal fun RouteCreatorScreen(
                             map.cameraPosition =
                                 CameraPosition
                                     .Builder()
-                                    .target(MapLatLng(MapConstants.DEFAULT_LAT, MapConstants.DEFAULT_LON))
+                                    .target(
+                                        if (initialPosition != null)
+                                            MapLatLng(initialPosition.latitude, initialPosition.longitude)
+                                        else
+                                            MapLatLng(MapConstants.DEFAULT_LAT, MapConstants.DEFAULT_LON)
+                                    )
                                     .zoom(MapConstants.DEFAULT_ZOOM)
                                     .build()
 

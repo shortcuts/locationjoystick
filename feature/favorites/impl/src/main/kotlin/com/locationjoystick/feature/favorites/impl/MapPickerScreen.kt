@@ -62,10 +62,12 @@ private const val MARKER_LAYER_ID = "marker-layer"
 
 @Composable
 fun MapPickerRoute(
+    initialPosition: com.locationjoystick.core.model.LatLng? = null,
     onLocationPicked: (name: String, lat: Double, lon: Double) -> Unit,
     onBack: () -> Unit,
 ) {
     MapPickerScreen(
+        initialPosition = initialPosition,
         onLocationPicked = onLocationPicked,
         onBack = onBack,
     )
@@ -74,6 +76,7 @@ fun MapPickerRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MapPickerScreen(
+    initialPosition: com.locationjoystick.core.model.LatLng? = null,
     onLocationPicked: (name: String, lat: Double, lon: Double) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -166,7 +169,12 @@ internal fun MapPickerScreen(
                             map.cameraPosition =
                                 CameraPosition
                                     .Builder()
-                                    .target(MapLatLng(MapConstants.DEFAULT_LAT, MapConstants.DEFAULT_LON))
+                                    .target(
+                                        if (initialPosition != null)
+                                            MapLatLng(initialPosition.latitude, initialPosition.longitude)
+                                        else
+                                            MapLatLng(MapConstants.DEFAULT_LAT, MapConstants.DEFAULT_LON)
+                                    )
                                     .zoom(MapConstants.DEFAULT_ZOOM)
                                     .build()
 
