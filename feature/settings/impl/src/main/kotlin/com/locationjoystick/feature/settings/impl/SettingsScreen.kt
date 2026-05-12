@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -19,6 +20,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -30,6 +33,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -83,6 +89,8 @@ fun SettingsRoute(
         convertMsToDisplay = viewModel::convertMsToDisplay,
         onExport = { viewModel.exportSettings(context) },
         onImport = { importLauncher.launch(arrayOf("application/json")) },
+        onSaveChanges = viewModel::saveChanges,
+        onDiscardChanges = viewModel::discardChanges,
     )
 }
 
@@ -98,10 +106,22 @@ internal fun SettingsScreen(
     convertMsToDisplay: (Double, SpeedUnit) -> Double,
     onExport: () -> Unit,
     onImport: () -> Unit,
+    onSaveChanges: () -> Unit = {},
+    onDiscardChanges: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
             LjTopBar(title = "locationjoystick", onMenuClick = onOpenDrawer)
+        },
+        floatingActionButton = {
+            if (uiState.isDirty) {
+                FloatingActionButton(
+                    onClick = onSaveChanges,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                ) {
+                    Icon(Icons.Filled.Check, contentDescription = "Save changes")
+                }
+            }
         },
     ) { paddingValues ->
     Box(
@@ -181,8 +201,8 @@ internal fun SettingsScreen(
                     )
                     if (uiState.walkSpeed > 8.0) {
                         Text(
-                            text = "Having a speed higher than 8 m/s can alter the gameplay or trigger an anti-cheat warning in some games",
-                            color = MaterialTheme.colorScheme.error,
+                            text = "Speed exceeds 8 m/s — may trigger anti-cheat in some games",
+                            color = MaterialTheme.colorScheme.errorContainer,
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(start = 4.dp, top = 2.dp)
                         )
@@ -198,8 +218,8 @@ internal fun SettingsScreen(
                     )
                     if (uiState.runSpeed > 8.0) {
                         Text(
-                            text = "Having a speed higher than 8 m/s can alter the gameplay or trigger an anti-cheat warning in some games",
-                            color = MaterialTheme.colorScheme.error,
+                            text = "Speed exceeds 8 m/s — may trigger anti-cheat in some games",
+                            color = MaterialTheme.colorScheme.errorContainer,
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(start = 4.dp, top = 2.dp)
                         )
@@ -215,8 +235,8 @@ internal fun SettingsScreen(
                     )
                     if (uiState.bikeSpeed > 8.0) {
                         Text(
-                            text = "Having a speed higher than 8 m/s can alter the gameplay or trigger an anti-cheat warning in some games",
-                            color = MaterialTheme.colorScheme.error,
+                            text = "Speed exceeds 8 m/s — may trigger anti-cheat in some games",
+                            color = MaterialTheme.colorScheme.errorContainer,
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(start = 4.dp, top = 2.dp)
                         )
@@ -268,6 +288,17 @@ internal fun SettingsScreen(
                     Button(onClick = onImport, modifier = Modifier.fillMaxWidth()) {
                         Text("Import Settings")
                     }
+
+                    if (uiState.isDirty) {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        OutlinedButton(
+                            onClick = onDiscardChanges,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(Icons.Filled.Close, contentDescription = "Discard", modifier = Modifier.padding(end = 8.dp))
+                            Text("Discard Changes")
+                        }
+                    }
                 }
             }
         }
@@ -295,18 +326,25 @@ private fun SpeedProfileInput(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, modifier = Modifier.weight(0.2f))
-        OutlinedTextField(
-            value = localValue,
-            onValueChange = { newValue ->
-                localValue = newValue
-                isDirty = true
-            },
+        Row(
             modifier = Modifier
                 .weight(0.5f)
                 .padding(horizontal = 8.dp),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        )
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedTextField(
+                value = localValue,
+                onValueChange = { newValue ->
+                    localValue = newValue
+                    isDirty = true
+                },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(unit, modifier = Modifier.width(40.dp))
+        }
         Button(
             onClick = {
                 if (parsedValue != null) {
