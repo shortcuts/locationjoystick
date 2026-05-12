@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -108,6 +110,7 @@ internal fun RouteCreatorScreen(
     val waypointsSource = remember { mutableStateOf<GeoJsonSource?>(null) }
 
     var showSaveDialog by remember { mutableStateOf(false) }
+    var showSearch by remember { mutableStateOf(false) }
 
     LaunchedEffect(showSaveDialog) {
         context.sendBroadcast(
@@ -142,6 +145,21 @@ internal fun RouteCreatorScreen(
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            TopAppBar(
+                title = { Text("Create Route") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showSearch = !showSearch }) {
+                        Icon(Icons.Default.Search, contentDescription = "Search location")
+                    }
+                },
+            )
+        },
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
                 FloatingActionButton(
@@ -272,25 +290,28 @@ internal fun RouteCreatorScreen(
                 )
             }
 
-            // Search bar — top overlay, offset from back button
-            NominatimSearchBar(
-                onLocationSelected = { lat, lon, _ ->
-                    onAddWaypoint(LatLng(lat, lon))
-                    val map = mapRef.value ?: return@NominatimSearchBar
-                    map.animateCamera(
-                        CameraUpdateFactory.newLatLng(MapLatLng(lat, lon)),
-                        500,
-                    )
-                },
-                modifier =
-                    Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(
-                            top = paddingValues.calculateTopPadding() + 8.dp,
-                            start = 56.dp,
-                            end = 12.dp,
-                        ),
-            )
+            // Search bar — top overlay, offset from back button, shown when toggled
+            if (showSearch) {
+                NominatimSearchBar(
+                    onLocationSelected = { lat, lon, _ ->
+                        onAddWaypoint(LatLng(lat, lon))
+                        showSearch = false
+                        val map = mapRef.value ?: return@NominatimSearchBar
+                        map.animateCamera(
+                            CameraUpdateFactory.newLatLng(MapLatLng(lat, lon)),
+                            500,
+                        )
+                    },
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(
+                                top = paddingValues.calculateTopPadding() + 8.dp,
+                                start = 56.dp,
+                                end = 12.dp,
+                            ),
+                )
+            }
         }
     }
 

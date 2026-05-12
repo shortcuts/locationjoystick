@@ -1,15 +1,13 @@
 package com.locationjoystick.core.ui.component
 
 import android.util.Log
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.SearchBar
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,16 +29,15 @@ private const val TAG = "NominatimSearchBar"
 private const val NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search"
 private const val SEARCH_DEBOUNCE_MS = 300L
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NominatimSearchBar(
     onLocationSelected: (lat: Double, lon: Double, displayName: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
-    var active by remember { mutableStateOf(false) }
     var results by remember { mutableStateOf<List<NominatimResult>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
+    val showDropdown = results.isNotEmpty() || (query.length >= 2 && !isLoading)
 
     LaunchedEffect(query) {
         if (query.length < 2) {
@@ -85,39 +82,40 @@ fun NominatimSearchBar(
         }
     }
 
-    SearchBar(
-        query = query,
-        onQueryChange = { query = it },
-        onSearch = { /* no-op */ },
-        active = active,
-        onActiveChange = { active = it },
-        modifier = modifier,
+    OutlinedTextField(
+        value = query,
+        onValueChange = { query = it },
+        modifier = modifier.fillMaxWidth(),
         placeholder = { Text("Search location...") },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+        singleLine = true,
+    )
+    DropdownMenu(
+        expanded = showDropdown,
+        onDismissRequest = { results = emptyList() },
     ) {
         if (results.isEmpty() && query.length >= 2 && !isLoading) {
-            ListItem(
-                headlineContent = { Text("No results found", maxLines = 1) },
+            DropdownMenuItem(
+                text = { Text("No results found", maxLines = 1) },
+                onClick = {},
+                enabled = false,
             )
         }
-        LazyColumn {
-            items(results) { result ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            result.displayName,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    onClick = {
-                        onLocationSelected(result.lat, result.lon, result.displayName)
-                        query = ""
-                        active = false
-                        results = emptyList()
-                    },
-                )
-            }
+        results.forEach { result ->
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        result.displayName,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                onClick = {
+                    onLocationSelected(result.lat, result.lon, result.displayName)
+                    query = ""
+                    results = emptyList()
+                },
+            )
         }
     }
 }

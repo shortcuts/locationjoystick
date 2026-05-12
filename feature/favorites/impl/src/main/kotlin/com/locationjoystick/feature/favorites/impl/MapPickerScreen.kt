@@ -212,9 +212,10 @@ internal fun MapPickerScreen(
             )
 
             Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = 16.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 16.dp, bottom = 16.dp),
                 horizontalAlignment = Alignment.Start,
             ) {
                 AnimatedVisibility(
@@ -234,18 +235,20 @@ internal fun MapPickerScreen(
                             val src = markerSource.value ?: return@NominatimSearchBar
                             src.setGeoJson(buildMarkerGeoJson(lat, lon))
                         },
-                        modifier = Modifier
-                            .widthIn(max = 300.dp)
-                            .padding(bottom = 8.dp),
+                        modifier =
+                            Modifier
+                                .widthIn(max = 300.dp)
+                                .padding(bottom = 8.dp),
                     )
                 }
                 FloatingActionButton(
                     onClick = { showSearchBar = !showSearchBar },
-                    containerColor = if (showSearchBar) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surface
-                    },
+                    containerColor =
+                        if (showSearchBar) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surface
+                        },
                 ) {
                     Icon(
                         imageVector = Icons.Default.Search,
