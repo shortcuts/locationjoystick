@@ -22,8 +22,10 @@ import com.locationjoystick.core.overlay.OverlayService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -36,6 +38,7 @@ class JoystickOverlayService : OverlayService() {
         private const val TAG = "JoystickOverlayService"
         private const val JOYSTICK_SIZE_DP = 90
         private const val MOVE_STEP_SECONDS = 0.1
+        private const val MOVE_STEP_MS = (MOVE_STEP_SECONDS * 1000).toLong()
     }
 
     @Inject
@@ -49,6 +52,12 @@ class JoystickOverlayService : OverlayService() {
     private var mockLocationService: MockLocationService? = null
 
     var locked = false
+
+    /** Last joystick input received; used to keep moving when locked and finger is lifted. */
+    private var lastInput: JoystickInput? = null
+
+    /** Running only when locked and finger is off screen — drives continuous movement. */
+    private var lockedMovementJob: Job? = null
 
     inner class LocalBinder : Binder() {
         fun getService(): JoystickOverlayService = this@JoystickOverlayService
@@ -103,6 +112,7 @@ class JoystickOverlayService : OverlayService() {
     override fun onBind(intent: Intent?): IBinder? = binder
 
     override fun onDestroy() {
+        stopLockedMovement()
         serviceScope.cancel()
         try {
             unregisterReceiver(overlayVisibilityReceiver)
@@ -123,6 +133,9 @@ class JoystickOverlayService : OverlayService() {
     fun setIsLocked(value: Boolean) {
         locked = value
         (overlayView as? JoystickView)?.isLocked = value
+        if (!value) {
+            stopLockedMovement()
+        }
         Log.d(TAG, "Joystick locked: $value")
     }
 
@@ -142,6 +155,10 @@ class JoystickOverlayService : OverlayService() {
         view.isLocked = locked
 
         view.onInputChanged = { input ->
+            lastInput = input
+            // While finger is on screen, apply each input directly.
+            // Also stop any running locked-movement loop (finger took back control).
+            stopLockedMovement()
             if (input.force > 0f) {
                 serviceScope.launch {
                     applyJoystickInput(input)
@@ -152,7 +169,17 @@ class JoystickOverlayService : OverlayService() {
         view.shouldResetOnRelease = { !view.isLocked }
 
         view.onReleased = {
-            Log.d(TAG, "Joystick released — position held")
+            if (view.isLocked) {
+                val input = lastInput
+                if (input != null && input.force > 0f) {
+                    startLockedMovement(input)
+                    Log.d(TAG, "Joystick released (locked) — continuing movement at angle=${input.angleDegrees}, force=${input.force}")
+                } else {
+                    Log.d(TAG, "Joystick released (locked) — no active input, holding position")
+                }
+            } else {
+                Log.d(TAG, "Joystick released — position held")
+            }
         }
 
         var dragInitialX = 0
@@ -193,6 +220,21 @@ class JoystickOverlayService : OverlayService() {
                 x = 0
                 y = 0
             }
+    }
+
+    private fun startLockedMovement(input: JoystickInput) {
+        stopLockedMovement()
+        lockedMovementJob = serviceScope.launch {
+            while (true) {
+                delay(MOVE_STEP_MS)
+                applyJoystickInput(input)
+            }
+        }
+    }
+
+    private fun stopLockedMovement() {
+        lockedMovementJob?.cancel()
+        lockedMovementJob = null
     }
 
     private suspend fun applyJoystickInput(input: JoystickInput) {
