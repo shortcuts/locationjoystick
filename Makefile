@@ -15,3 +15,6 @@ start-on-phone:
 
 tail-log-on-phone:
 	adb logcat --pid=$(adb shell pidof com.locationjoystick.app)
+
+test:
+	echo "nice"

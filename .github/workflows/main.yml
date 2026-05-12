@@ -51,13 +51,13 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-       - name: Lint
-         run: make lint
+      - name: Lint
+        run: make lint
 
-       - name: Run Unit Tests
-         run: make test
+      - name: Run Unit Tests
+        run: make test
 
-       - name: Decode keystore
+      - name: Decode keystore
         if: ${{ needs.release-please.outputs.release_created == 'true' }}
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
 
