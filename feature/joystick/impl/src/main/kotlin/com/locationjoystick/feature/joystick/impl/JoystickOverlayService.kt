@@ -74,7 +74,7 @@ class JoystickOverlayService : OverlayService() {
         )
     }
 
-    override fun onBind(intent: Intent): IBinder = binder
+    override fun onBind(intent: Intent?): IBinder? = binder
 
     override fun onDestroy() {
         serviceScope.cancel()
