@@ -289,7 +289,7 @@ internal fun RouteCreatorScreen(
                             .align(Alignment.TopCenter)
                             .padding(
                                 top = paddingValues.calculateTopPadding() + 8.dp,
-                                start = 56.dp,
+                                start = 12.dp,
                                 end = 12.dp,
                             ),
                 )
