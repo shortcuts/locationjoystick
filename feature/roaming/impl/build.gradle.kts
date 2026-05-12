@@ -9,6 +9,7 @@ android {
 dependencies {
     implementation(project(":feature:roaming:api"))
     implementation(project(":core:data"))
+    implementation(project(":core:datastore"))
     implementation(project(":core:routing"))
     implementation(project(":core:ui"))
 

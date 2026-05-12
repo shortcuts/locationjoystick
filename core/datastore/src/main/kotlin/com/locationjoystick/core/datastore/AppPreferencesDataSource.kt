@@ -105,6 +105,12 @@ class AppPreferencesDataSource
                     )
                 }
 
+        suspend fun setRoamingTransportMode(mode: String) {
+            dataStore.edit { prefs ->
+                prefs[Keys.ROAMING_TRANSPORT_MODE] = mode
+            }
+        }
+
         suspend fun setRoamingConfig(
             radiusMeters: Double,
             durationSeconds: Long,

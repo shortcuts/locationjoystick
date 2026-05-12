@@ -62,7 +62,7 @@ class RoamingViewModel
 
                     val config =
                         _uiState.value.config.copy(
-                            centerPosition = roamingPrefs.centerPosition,
+                            centerPosition = _uiState.value.config.centerPosition,
                             radiusMeters = roamingPrefs.radiusMeters,
                             durationSeconds = roamingPrefs.durationSeconds,
                             useRoadSnapping = roamingPrefs.roadFollowing,
