@@ -1,35 +1,28 @@
 package com.locationjoystick.feature.routes.impl
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -90,7 +83,7 @@ fun RouteCreatorRoute(
             viewModel.saveRoute(name)
             onRouteSaved()
         },
-        onBack = onBack
+        onBack = onBack,
     )
 }
 
@@ -130,34 +123,47 @@ internal fun RouteCreatorScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-        TopAppBar(
-            title = { Text("Create Route") },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
+        containerColor = MaterialTheme.colorScheme.background,
+        floatingActionButton = {
+            Column(horizontalAlignment = Alignment.End) {
+                FloatingActionButton(
+                    onClick = onUndo,
+                    containerColor = if (state.waypoints.isNotEmpty())
+                        MaterialTheme.colorScheme.secondaryContainer
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Undo,
+                        contentDescription = "Undo last waypoint",
+                        tint = if (state.waypoints.isNotEmpty())
+                            MaterialTheme.colorScheme.onSecondaryContainer
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp),
+                    )
                 }
-            }
-        )
-
-        NominatimSearchBar(
-            onLocationSelected = { lat, lon, _ ->
-                onAddWaypoint(LatLng(lat, lon))
-                val map = mapRef.value ?: return@NominatimSearchBar
-                map.animateCamera(
-                    CameraUpdateFactory.newLatLng(MapLatLng(lat, lon)),
-                    500
+                ExtendedFloatingActionButton(
+                    onClick = { if (state.waypoints.size >= 2) showSaveDialog = true },
+                    expanded = state.waypoints.size >= 2,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Save,
+                            contentDescription = null,
+                        )
+                    },
+                    text = { Text("Save Route") },
                 )
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
-        )
-
+            }
+        },
+    ) { paddingValues ->
         Box(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
+                .fillMaxSize()
+                .padding(bottom = paddingValues.calculateBottomPadding()),
         ) {
             AndroidView(
                 factory = { ctx ->
@@ -227,49 +233,39 @@ internal fun RouteCreatorScreen(
             if (state.isLoadingSegment) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
-        }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(16.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = buildAnnotatedString {
-                        append("Waypoints: ")
-                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                            append("${state.waypoints.size}")
-                        }
-                        append(" | Distance: ${String.format("%.2f", state.totalDistanceMeters / 1000)}km")
-                    },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(
-                    onClick = onUndo,
-                    enabled = state.waypoints.isNotEmpty()
-                ) {
-                    Icon(
-                        Icons.Default.Undo,
-                        contentDescription = "Undo",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            Button(
-                onClick = { showSaveDialog = true },
-                enabled = state.waypoints.size >= 2,
-                modifier = Modifier.fillMaxWidth()
+            // Back button — top-start overlay
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = paddingValues.calculateTopPadding() + 8.dp, start = 8.dp),
             ) {
-                Text("Save Route")
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                )
             }
+
+            // Search bar — top overlay, offset from back button
+            NominatimSearchBar(
+                onLocationSelected = { lat, lon, _ ->
+                    onAddWaypoint(LatLng(lat, lon))
+                    val map = mapRef.value ?: return@NominatimSearchBar
+                    map.animateCamera(
+                        CameraUpdateFactory.newLatLng(MapLatLng(lat, lon)),
+                        500,
+                    )
+                },
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(
+                        top = paddingValues.calculateTopPadding() + 8.dp,
+                        start = 56.dp,
+                        end = 12.dp,
+                    ),
+            )
         }
     }
 
@@ -279,7 +275,7 @@ internal fun RouteCreatorScreen(
             onSave = { name ->
                 onSaveRoute(name)
                 showSaveDialog = false
-            }
+            },
         )
     }
 }
@@ -299,15 +295,15 @@ private fun SaveRouteDialog(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Route name") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                modifier = Modifier,
+                singleLine = true,
             )
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (name.isNotEmpty()) {
-                        onSave(name)
+                    if (name.isNotBlank()) {
+                        onSave(name.trim())
                     }
                 }
             ) {
@@ -318,7 +314,7 @@ private fun SaveRouteDialog(
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        }
+        },
     )
 }
 

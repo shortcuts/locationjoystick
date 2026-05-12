@@ -1,24 +1,24 @@
 package com.locationjoystick.feature.favorites.impl
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -100,40 +100,27 @@ internal fun MapPickerScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .animateContentSize()
-    ) {
-        TopAppBar(
-            title = { Text("Pick Location") },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                }
-            }
-        )
-
-        NominatimSearchBar(
-            onLocationSelected = { lat, lon, _ ->
-                selectedPosition.value = lat to lon
-                val map = mapRef.value ?: return@NominatimSearchBar
-                map.animateCamera(
-                    CameraUpdateFactory.newLatLng(MapLatLng(lat, lon)),
-                    500
-                )
-                val src = markerSource.value ?: return@NominatimSearchBar
-                src.setGeoJson(buildMarkerGeoJson(lat, lon))
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
-        )
-
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
+        containerColor = MaterialTheme.colorScheme.background,
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { if (selectedPosition.value != null) showNameDialog = true },
+                expanded = selectedPosition.value != null,
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Save,
+                        contentDescription = null,
+                    )
+                },
+                text = { Text("Save Location") },
+            )
+        },
+    ) { paddingValues ->
         Box(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
+                .fillMaxSize()
+                .padding(bottom = paddingValues.calculateBottomPadding()),
         ) {
             AndroidView(
                 factory = { ctx ->
@@ -184,35 +171,39 @@ internal fun MapPickerScreen(
                 update = { },
                 modifier = Modifier.fillMaxSize(),
             )
-        }
 
-        if (selectedPosition.value != null) {
-            Column(
+            // Back button — top-start overlay
+            IconButton(
+                onClick = onBack,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(16.dp)
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(8.dp),
             ) {
-                val pos = selectedPosition.value
-                if (pos != null) {
-                    Text(
-                        "Latitude: ${String.format("%.4f", pos.first)}",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    Text(
-                        "Longitude: ${String.format("%.4f", pos.second)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
-                Button(
-                    onClick = { showNameDialog = true },
-                    enabled = selectedPosition.value != null,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Save")
-                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                )
             }
+
+            // Search bar — top overlay, offset from back button
+            NominatimSearchBar(
+                onLocationSelected = { lat, lon, _ ->
+                    selectedPosition.value = lat to lon
+                    val map = mapRef.value ?: return@NominatimSearchBar
+                    map.animateCamera(
+                        CameraUpdateFactory.newLatLng(MapLatLng(lat, lon)),
+                        500,
+                    )
+                    val src = markerSource.value ?: return@NominatimSearchBar
+                    src.setGeoJson(buildMarkerGeoJson(lat, lon))
+                },
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .statusBarsPadding()
+                    .padding(start = 56.dp, end = 12.dp, top = 8.dp),
+            )
         }
     }
 
@@ -245,7 +236,7 @@ private fun SaveLocationDialog(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Name") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier,
                 singleLine = true,
             )
         },
