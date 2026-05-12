@@ -100,6 +100,7 @@ fun LjNavHost(
                 RouteDetailScreen(
                     routeId = routeId,
                     onNavigateBack = { navController.navigateUp() },
+                    onOpenDrawer = onOpenDrawer,
                 )
             }
         }

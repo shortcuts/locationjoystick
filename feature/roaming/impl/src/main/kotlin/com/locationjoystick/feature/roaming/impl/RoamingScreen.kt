@@ -5,7 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -82,22 +83,39 @@ internal fun RoamingScreen(
                 androidx.compose.foundation.layout.Row(
                     modifier = Modifier.padding(vertical = 8.dp),
                 ) {
-                    FilterChip(
-                        selected = uiState.transportMode == "walk",
-                        onClick = { onUpdateTransportMode("walk") },
-                        label = { Text("Walk") },
-                    )
-                    FilterChip(
-                        selected = uiState.transportMode == "run",
-                        onClick = { onUpdateTransportMode("run") },
-                        label = { Text("Run") },
-                        modifier = Modifier.padding(horizontal = 4.dp),
-                    )
-                    FilterChip(
-                        selected = uiState.transportMode == "bike",
-                        onClick = { onUpdateTransportMode("bike") },
-                        label = { Text("Bike") },
-                    )
+                    if (uiState.transportMode == "walk") {
+                        OutlinedButton(
+                            onClick = { onUpdateTransportMode("walk") },
+                            modifier = Modifier.padding(end = 4.dp),
+                        ) { Text("Walk") }
+                    } else {
+                        FilledTonalButton(
+                            onClick = { onUpdateTransportMode("walk") },
+                            modifier = Modifier.padding(end = 4.dp),
+                        ) { Text("Walk") }
+                    }
+                    if (uiState.transportMode == "run") {
+                        OutlinedButton(
+                            onClick = { onUpdateTransportMode("run") },
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        ) { Text("Run") }
+                    } else {
+                        FilledTonalButton(
+                            onClick = { onUpdateTransportMode("run") },
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        ) { Text("Run") }
+                    }
+                    if (uiState.transportMode == "bike") {
+                        OutlinedButton(
+                            onClick = { onUpdateTransportMode("bike") },
+                            modifier = Modifier.padding(start = 4.dp),
+                        ) { Text("Bike") }
+                    } else {
+                        FilledTonalButton(
+                            onClick = { onUpdateTransportMode("bike") },
+                            modifier = Modifier.padding(start = 4.dp),
+                        ) { Text("Bike") }
+                    }
                 }
 
                 Switch(

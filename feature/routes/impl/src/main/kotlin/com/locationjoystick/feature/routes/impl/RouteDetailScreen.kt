@@ -12,12 +12,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,7 +40,6 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.ui.component.LjTopBar
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -114,6 +110,7 @@ class RouteDetailViewModel
 fun RouteDetailScreen(
     routeId: String,
     onNavigateBack: () -> Unit,
+    onOpenDrawer: () -> Unit = {},
     viewModel: RouteDetailViewModel = hiltViewModel(),
 ) {
     val route by viewModel.route.collectAsStateWithLifecycle()
@@ -121,7 +118,6 @@ fun RouteDetailScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var editedName by remember { mutableStateOf("") }
-    var showMenu by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     if (route != null && editedName.isEmpty()) {
@@ -169,22 +165,10 @@ fun RouteDetailScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         LjTopBar(
             title = "Route Details",
-            onMenuClick = { showMenu = true },
+            onMenuClick = onOpenDrawer,
             actions = {
-                IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                }
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false },
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Delete route") },
-                        onClick = {
-                            showMenu = false
-                            showDeleteConfirmation = true
-                        },
-                    )
+                IconButton(onClick = { showDeleteConfirmation = true }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete route")
                 }
             },
         )
