@@ -110,13 +110,14 @@ internal fun MapScreen(
     val mapView =
         remember {
             MapLibre.getInstance(context)
-            MapView(context).also { it.onCreate(null) }
+            MapView(context)
         }
     val mapRef = remember { mutableStateOf<MapLibreMap?>(null) }
     val positionSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val showSearch = remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
+        mapView.onCreate(null)
         val observer =
             LifecycleEventObserver { _, event ->
                 when (event) {
