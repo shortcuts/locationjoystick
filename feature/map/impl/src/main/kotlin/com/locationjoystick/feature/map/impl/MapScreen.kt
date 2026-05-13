@@ -110,7 +110,7 @@ internal fun MapScreen(
     val mapView =
         remember {
             MapLibre.getInstance(context)
-            MapView(context)
+            MapView(context).also { it.onCreate(null) }
         }
     val mapRef = remember { mutableStateOf<MapLibreMap?>(null) }
     val positionSource = remember { mutableStateOf<GeoJsonSource?>(null) }
