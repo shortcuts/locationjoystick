@@ -37,4 +37,11 @@ Favorite specifics:
 Route specifics:
 - route is running/being replayed/ongoing:
     - on the right of the route floating icon (if not enough space, open on the left):
-        - 
+        - pause (the location doens't change anymore, can be resume)
+        - stop (the route is stopped, can't be resumed, location stays here)
+- route is not running
+    - opens the window and list every routes
+    - add buttons to
+        - start a route
+        - start in reverse a route
+        - create route from map (same as in the Route screen)

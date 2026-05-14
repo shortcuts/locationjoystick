@@ -95,7 +95,11 @@ class SettingsRepository
 
         suspend fun setLastLocation(location: LatLng) = dataSource.setLastLocation(location)
 
-        fun getGpsJitterEnabled(): Flow<Boolean> = dataSource.getGpsJitter()
+        fun getJitterIdleRadius(): Flow<Double> = dataSource.getJitterIdleRadius()
 
-        suspend fun setGpsJitterEnabled(enabled: Boolean) = dataSource.setGpsJitter(enabled)
+        fun getJitterMovingRadius(): Flow<Double> = dataSource.getJitterMovingRadius()
+
+        suspend fun setJitterIdleRadius(meters: Double) = dataSource.setJitterIdleRadius(meters)
+
+        suspend fun setJitterMovingRadius(meters: Double) = dataSource.setJitterMovingRadius(meters)
     }

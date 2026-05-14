@@ -95,7 +95,8 @@ fun SettingsRoute(
         onSetSpeedUnit = viewModel::setSpeedUnit,
         onSetWidgetFeatures = viewModel::setWidgetFeatures,
         onSetRememberLastLocation = viewModel::setRememberLastLocation,
-        onSetGpsJitterEnabled = viewModel::setGpsJitterEnabled,
+        onSetJitterIdleRadius = viewModel::setJitterIdleRadius,
+        onSetJitterMovingRadius = viewModel::setJitterMovingRadius,
         convertMsToDisplay = viewModel::convertMsToDisplay,
         onExport = { exportLauncher.launch("locationjoystick-export-${System.currentTimeMillis()}.json") },
         onImport = { importLauncher.launch(arrayOf("application/json")) },
@@ -114,7 +115,8 @@ internal fun SettingsScreen(
     onSetSpeedUnit: (SpeedUnit) -> Unit,
     onSetWidgetFeatures: (Set<WidgetFeature>) -> Unit,
     onSetRememberLastLocation: (Boolean) -> Unit,
-    onSetGpsJitterEnabled: (Boolean) -> Unit,
+    onSetJitterIdleRadius: (Double) -> Unit,
+    onSetJitterMovingRadius: (Double) -> Unit,
     convertMsToDisplay: (Double, SpeedUnit) -> Double,
     onExport: () -> Unit,
     onImport: () -> Unit,
@@ -289,28 +291,31 @@ internal fun SettingsScreen(
                             )
                         }
 
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(
-                                checked = uiState.gpsJitterEnabled,
-                                onCheckedChange = { onSetGpsJitterEnabled(it) },
-                            )
-                            Column(
-                                modifier = Modifier.padding(start = 8.dp),
-                            ) {
-                                Text("GPS position jitter")
-                                Text(
-                                    "Adds subtle noise to each location update to reduce detection as mock location",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
+                        Text("GPS Jitter", style = MaterialTheme.typography.titleMedium)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Adds noise to each location update. Set 0 to disable.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = uiState.jitterIdleRadiusMeters.toInt().toString(),
+                            onValueChange = { v -> v.toDoubleOrNull()?.let { onSetJitterIdleRadius(it) } },
+                            label = { Text("Idle radius (m)") },
+                            supportingText = { Text("When stationary. 0 = no jitter.") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = uiState.jitterMovingRadiusMeters.toInt().toString(),
+                            onValueChange = { v -> v.toDoubleOrNull()?.let { onSetJitterMovingRadius(it) } },
+                            label = { Text("Moving radius (m)") },
+                            supportingText = { Text("Applied while moving.") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
 
                         Spacer(modifier = Modifier.height(24.dp))
 

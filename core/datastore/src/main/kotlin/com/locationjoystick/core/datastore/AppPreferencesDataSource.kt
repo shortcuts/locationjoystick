@@ -43,7 +43,8 @@ class AppPreferencesDataSource
             val REMEMBER_LAST_LOCATION = booleanPreferencesKey("remember_last_location")
             val LAST_LATITUDE = doublePreferencesKey("last_latitude")
             val LAST_LONGITUDE = doublePreferencesKey("last_longitude")
-            val GPS_JITTER_ENABLED = booleanPreferencesKey("gps_jitter_enabled")
+            val JITTER_IDLE_RADIUS_METERS = doublePreferencesKey("jitter_idle_radius_meters")
+            val JITTER_MOVING_RADIUS_METERS = doublePreferencesKey("jitter_moving_radius_meters")
         }
 
         fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -200,19 +201,34 @@ class AppPreferencesDataSource
             }
         }
 
-        fun getGpsJitter(): Flow<Boolean> =
+        fun getJitterIdleRadius(): Flow<Double> =
             dataStore.data
                 .catch { e ->
                     if (e is IOException) {
-                        Log.e(TAG, "Error reading GPS jitter preference", e)
+                        Log.e(TAG, "Error reading jitter idle radius preference", e)
                         emit(emptyPreferences())
                     } else {
                         throw e
                     }
-                }.map { prefs -> prefs[Keys.GPS_JITTER_ENABLED] ?: true }
+                }.map { prefs -> prefs[Keys.JITTER_IDLE_RADIUS_METERS] ?: DEFAULT_JITTER_IDLE_RADIUS_METERS }
 
-        suspend fun setGpsJitter(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.GPS_JITTER_ENABLED] = enabled }
+        fun getJitterMovingRadius(): Flow<Double> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading jitter moving radius preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.JITTER_MOVING_RADIUS_METERS] ?: DEFAULT_JITTER_MOVING_RADIUS_METERS }
+
+        suspend fun setJitterIdleRadius(meters: Double) {
+            dataStore.edit { prefs -> prefs[Keys.JITTER_IDLE_RADIUS_METERS] = meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS) }
+        }
+
+        suspend fun setJitterMovingRadius(meters: Double) {
+            dataStore.edit { prefs -> prefs[Keys.JITTER_MOVING_RADIUS_METERS] = meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS) }
         }
 
         fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -258,6 +274,10 @@ class AppPreferencesDataSource
             const val DEFAULT_ROAMING_RADIUS_METERS = 2000.0
             const val DEFAULT_ROAMING_DURATION_SECONDS = 1800.0
             const val DEFAULT_ROAMING_TRANSPORT_MODE = "walk"
+
+            const val DEFAULT_JITTER_IDLE_RADIUS_METERS = 0.0
+            const val DEFAULT_JITTER_MOVING_RADIUS_METERS = 10.0
+            const val MAX_JITTER_RADIUS_METERS = 50.0
         }
     }
 

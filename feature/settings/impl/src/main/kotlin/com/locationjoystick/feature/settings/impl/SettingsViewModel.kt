@@ -51,7 +51,8 @@ class SettingsViewModel
             val speedUnit: SpeedUnit,
             val widgetFeatures: Set<WidgetFeature>,
             val rememberLastLocation: Boolean,
-            val gpsJitterEnabled: Boolean,
+            val jitterIdleRadius: Double,
+            val jitterMovingRadius: Double,
         )
 
         private data class DraftState(
@@ -61,7 +62,8 @@ class SettingsViewModel
             val speedUnit: SpeedUnit? = null,
             val widgetFeatures: Set<WidgetFeature>? = null,
             val rememberLastLocation: Boolean? = null,
-            val gpsJitterEnabled: Boolean? = null,
+            val jitterIdleRadius: Double? = null,
+            val jitterMovingRadius: Double? = null,
         )
 
         private val _draftWalkSpeed = MutableStateFlow<Double?>(null)
@@ -70,7 +72,8 @@ class SettingsViewModel
         private val _draftSpeedUnit = MutableStateFlow<SpeedUnit?>(null)
         private val _draftWidgetFeatures = MutableStateFlow<Set<WidgetFeature>?>(null)
         private val _draftRememberLastLocation = MutableStateFlow<Boolean?>(null)
-        private val _draftGpsJitterEnabled = MutableStateFlow<Boolean?>(null)
+        private val _draftJitterIdleRadius = MutableStateFlow<Double?>(null)
+        private val _draftJitterMovingRadius = MutableStateFlow<Double?>(null)
 
         private val _repoState =
             combine(
@@ -88,8 +91,11 @@ class SettingsViewModel
                 ) { speedUnit, features, rememberLastLocation ->
                     Triple(speedUnit, features, rememberLastLocation)
                 },
-                settingsRepository.getGpsJitterEnabled(),
-            ) { speeds, settings, gpsJitter ->
+                combine(
+                    settingsRepository.getJitterIdleRadius(),
+                    settingsRepository.getJitterMovingRadius(),
+                ) { idle, moving -> idle to moving },
+            ) { speeds, settings, jitter ->
                 RepoState(
                     walkSpeed = speeds.first,
                     runSpeed = speeds.second,
@@ -97,7 +103,8 @@ class SettingsViewModel
                     speedUnit = settings.first,
                     widgetFeatures = settings.second.toSet(),
                     rememberLastLocation = settings.third,
-                    gpsJitterEnabled = gpsJitter,
+                    jitterIdleRadius = jitter.first,
+                    jitterMovingRadius = jitter.second,
                 )
             }
 
@@ -117,8 +124,11 @@ class SettingsViewModel
                 ) { unit, features, remember ->
                     Triple(unit, features, remember)
                 },
-                _draftGpsJitterEnabled.asStateFlow(),
-            ) { speeds, settings, gpsJitter ->
+                combine(
+                    _draftJitterIdleRadius.asStateFlow(),
+                    _draftJitterMovingRadius.asStateFlow(),
+                ) { idle, moving -> idle to moving },
+            ) { speeds, settings, jitter ->
                 DraftState(
                     walkSpeed = speeds.first,
                     runSpeed = speeds.second,
@@ -126,7 +136,8 @@ class SettingsViewModel
                     speedUnit = settings.first,
                     widgetFeatures = settings.second,
                     rememberLastLocation = settings.third,
-                    gpsJitterEnabled = gpsJitter,
+                    jitterIdleRadius = jitter.first,
+                    jitterMovingRadius = jitter.second,
                 )
             }
 
@@ -139,7 +150,7 @@ class SettingsViewModel
                     draftState.walkSpeed != null || draftState.runSpeed != null ||
                         draftState.bikeSpeed != null || draftState.speedUnit != null ||
                         draftState.widgetFeatures != null || draftState.rememberLastLocation != null ||
-                        draftState.gpsJitterEnabled != null
+                        draftState.jitterIdleRadius != null || draftState.jitterMovingRadius != null
                 SettingsUiState(
                     isLoading = false,
                     walkSpeed = draftState.walkSpeed ?: repoState.walkSpeed,
@@ -148,7 +159,8 @@ class SettingsViewModel
                     speedUnit = draftState.speedUnit ?: repoState.speedUnit,
                     enabledWidgetFeatures = draftState.widgetFeatures ?: repoState.widgetFeatures,
                     rememberLastLocation = draftState.rememberLastLocation ?: repoState.rememberLastLocation,
-                    gpsJitterEnabled = draftState.gpsJitterEnabled ?: repoState.gpsJitterEnabled,
+                    jitterIdleRadiusMeters = draftState.jitterIdleRadius ?: repoState.jitterIdleRadius,
+                    jitterMovingRadiusMeters = draftState.jitterMovingRadius ?: repoState.jitterMovingRadius,
                     isDirty = isDirty,
                 )
             }.stateIn(
@@ -184,8 +196,12 @@ class SettingsViewModel
             _draftRememberLastLocation.value = enabled
         }
 
-        fun setGpsJitterEnabled(enabled: Boolean) {
-            _draftGpsJitterEnabled.value = enabled
+        fun setJitterIdleRadius(meters: Double) {
+            _draftJitterIdleRadius.value = meters
+        }
+
+        fun setJitterMovingRadius(meters: Double) {
+            _draftJitterMovingRadius.value = meters
         }
 
         fun saveChanges() {
@@ -221,10 +237,15 @@ class SettingsViewModel
                     settingsRepository.setRememberLastLocation(draftRememberLastLocation)
                     _draftRememberLastLocation.value = null
                 }
-                val draftGpsJitter = _draftGpsJitterEnabled.value
-                if (draftGpsJitter != null) {
-                    settingsRepository.setGpsJitterEnabled(draftGpsJitter)
-                    _draftGpsJitterEnabled.value = null
+                val draftJitterIdle = _draftJitterIdleRadius.value
+                if (draftJitterIdle != null) {
+                    settingsRepository.setJitterIdleRadius(draftJitterIdle)
+                    _draftJitterIdleRadius.value = null
+                }
+                val draftJitterMoving = _draftJitterMovingRadius.value
+                if (draftJitterMoving != null) {
+                    settingsRepository.setJitterMovingRadius(draftJitterMoving)
+                    _draftJitterMovingRadius.value = null
                 }
             }
         }
@@ -236,7 +257,8 @@ class SettingsViewModel
             _draftSpeedUnit.value = null
             _draftWidgetFeatures.value = null
             _draftRememberLastLocation.value = null
-            _draftGpsJitterEnabled.value = null
+            _draftJitterIdleRadius.value = null
+            _draftJitterMovingRadius.value = null
         }
 
         fun convertMsToDisplay(
