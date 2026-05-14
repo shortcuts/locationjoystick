@@ -66,6 +66,8 @@ import org.maplibre.android.geometry.LatLng as MapLatLng
 
 private const val OSM_SOURCE_ID = "osm-source"
 private const val OSM_LAYER_ID = "osm-layer"
+private const val CURRENT_POS_SOURCE_ID = "current-pos-source"
+private const val CURRENT_POS_LAYER_ID = "current-pos-layer"
 private const val SEGMENTS_SOURCE_ID = "segments-source"
 private const val SEGMENTS_LAYER_ID = "segments-layer"
 private const val WAYPOINTS_SOURCE_ID = "waypoints-source"
@@ -234,6 +236,23 @@ internal fun RouteCreatorScreen(
                                     ),
                                 )
                                 style.addLayer(RasterLayer(OSM_LAYER_ID, OSM_SOURCE_ID))
+
+                                if (initialPosition != null) {
+                                    val currentPosSrc = GeoJsonSource(
+                                        CURRENT_POS_SOURCE_ID,
+                                        """{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[${initialPosition.longitude},${initialPosition.latitude}]},"properties":{}}]}""",
+                                    )
+                                    style.addSource(currentPosSrc)
+                                    style.addLayer(
+                                        CircleLayer(CURRENT_POS_LAYER_ID, CURRENT_POS_SOURCE_ID)
+                                            .withProperties(
+                                                PropertyFactory.circleRadius(9f),
+                                                PropertyFactory.circleColor(Color(0xFF1976D2).toArgb()),
+                                                PropertyFactory.circleStrokeColor(Color(0xFFFFFFFF).toArgb()),
+                                                PropertyFactory.circleStrokeWidth(2f),
+                                            ),
+                                    )
+                                }
 
                                 val segSrc = GeoJsonSource(SEGMENTS_SOURCE_ID, emptyGeoJson())
                                 style.addSource(segSrc)

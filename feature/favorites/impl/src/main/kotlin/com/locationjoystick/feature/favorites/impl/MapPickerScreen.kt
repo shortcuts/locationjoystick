@@ -57,6 +57,8 @@ import org.maplibre.android.geometry.LatLng as MapLatLng
 
 private const val OSM_SOURCE_ID = "osm-source"
 private const val OSM_LAYER_ID = "osm-layer"
+private const val CURRENT_POS_SOURCE_ID = "current-pos-source"
+private const val CURRENT_POS_LAYER_ID = "current-pos-layer"
 private const val MARKER_SOURCE_ID = "marker-source"
 private const val MARKER_LAYER_ID = "marker-layer"
 
@@ -187,6 +189,23 @@ internal fun MapPickerScreen(
                                     ),
                                 )
                                 style.addLayer(RasterLayer(OSM_LAYER_ID, OSM_SOURCE_ID))
+
+                                if (initialPosition != null) {
+                                    val currentPosSrc = GeoJsonSource(
+                                        CURRENT_POS_SOURCE_ID,
+                                        buildMarkerGeoJson(initialPosition.latitude, initialPosition.longitude),
+                                    )
+                                    style.addSource(currentPosSrc)
+                                    style.addLayer(
+                                        CircleLayer(CURRENT_POS_LAYER_ID, CURRENT_POS_SOURCE_ID)
+                                            .withProperties(
+                                                PropertyFactory.circleRadius(9f),
+                                                PropertyFactory.circleColor(Color(0xFF1976D2).toArgb()),
+                                                PropertyFactory.circleStrokeColor(Color(0xFFFFFFFF).toArgb()),
+                                                PropertyFactory.circleStrokeWidth(2f),
+                                            ),
+                                    )
+                                }
 
                                 val src = GeoJsonSource(MARKER_SOURCE_ID, emptyGeoJson())
                                 style.addSource(src)
