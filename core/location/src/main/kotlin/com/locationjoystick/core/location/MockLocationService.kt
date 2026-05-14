@@ -337,7 +337,6 @@ class MockLocationService : Service() {
             currentBearing = 0.0f
 
             setupTestProvider()
-            startUpdateLoop()
             _state.value = MockLocationState.RUNNING
             locationRepository.startSpoofing()
             locationRepository.setActiveRouteId(routeId)
@@ -350,6 +349,7 @@ class MockLocationService : Service() {
                     currentLat = pos.latitude
                     currentLon = pos.longitude
                     locationRepository.setPositionInternal(pos)
+                    pushLocationUpdate()
                 },
                 onComplete = {
                     _state.value = MockLocationState.IDLE
@@ -357,8 +357,6 @@ class MockLocationService : Service() {
                         locationRepository.stopSpoofing()
                         locationRepository.setActiveRouteId(null)
                     }
-                    updateJob?.cancel()
-                    updateJob = null
                 },
             )
         }
@@ -374,7 +372,6 @@ class MockLocationService : Service() {
     }
 
     private fun handleReplayResume(speedMs: Double) {
-        startUpdateLoop()
         _state.value = MockLocationState.RUNNING
         serviceScope.launch { locationRepository.startSpoofing() }
         routeReplayEngine.resume(
@@ -382,6 +379,7 @@ class MockLocationService : Service() {
                 currentLat = pos.latitude
                 currentLon = pos.longitude
                 locationRepository.setPositionInternal(pos)
+                pushLocationUpdate()
             },
             onComplete = {
                 _state.value = MockLocationState.IDLE
@@ -389,8 +387,6 @@ class MockLocationService : Service() {
                     locationRepository.stopSpoofing()
                     locationRepository.setActiveRouteId(null)
                 }
-                updateJob?.cancel()
-                updateJob = null
             },
         )
         Log.i(TAG, "Replay resumed at ${speedMs}m/s")

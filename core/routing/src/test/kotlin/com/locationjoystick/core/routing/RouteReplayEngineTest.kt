@@ -7,7 +7,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RouteReplayEngineTest {
-
     private val engine = RouteReplayEngine(RouteInterpolator())
 
     @Test

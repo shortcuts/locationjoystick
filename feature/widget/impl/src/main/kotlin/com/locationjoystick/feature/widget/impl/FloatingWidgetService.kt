@@ -240,18 +240,19 @@ class FloatingWidgetService :
     }
 
     override fun getWindowManagerParams(view: View): AndroidWindowManager.LayoutParams =
-        AndroidWindowManager.LayoutParams(
-            AndroidWindowManager.LayoutParams.WRAP_CONTENT,
-            AndroidWindowManager.LayoutParams.WRAP_CONTENT,
-            AndroidWindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            AndroidWindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                AndroidWindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-            android.graphics.PixelFormat.TRANSLUCENT,
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 0
-            y = 100
-        }
+        AndroidWindowManager
+            .LayoutParams(
+                AndroidWindowManager.LayoutParams.WRAP_CONTENT,
+                AndroidWindowManager.LayoutParams.WRAP_CONTENT,
+                AndroidWindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                AndroidWindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    AndroidWindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                android.graphics.PixelFormat.TRANSLUCENT,
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+                x = 0
+                y = 100
+            }
 
     override fun createOverlayView(): View {
         val view =

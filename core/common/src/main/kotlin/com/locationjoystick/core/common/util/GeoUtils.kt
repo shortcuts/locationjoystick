@@ -160,7 +160,10 @@ fun metersToLngDegrees(
  * Simplifies a path using the Ramer-Douglas-Peucker algorithm.
  * Points whose perpendicular distance from the simplified line is less than [epsilon] meters are dropped.
  */
-fun rdpSimplify(points: List<LatLng>, epsilon: Double): List<LatLng> {
+fun rdpSimplify(
+    points: List<LatLng>,
+    epsilon: Double,
+): List<LatLng> {
     if (points.size <= 2) return points.toList()
     val start = points.first()
     val end = points.last()
@@ -182,7 +185,11 @@ fun rdpSimplify(points: List<LatLng>, epsilon: Double): List<LatLng> {
     }
 }
 
-private fun perpendicularDistanceMeters(point: LatLng, lineStart: LatLng, lineEnd: LatLng): Double {
+private fun perpendicularDistanceMeters(
+    point: LatLng,
+    lineStart: LatLng,
+    lineEnd: LatLng,
+): Double {
     val lat0 = Math.toRadians(lineStart.latitude)
     val x2 = Math.toRadians(lineEnd.longitude - lineStart.longitude) * cos(lat0) * EARTH_RADIUS_METERS
     val y2 = Math.toRadians(lineEnd.latitude - lineStart.latitude) * EARTH_RADIUS_METERS

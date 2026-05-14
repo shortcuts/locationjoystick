@@ -7,7 +7,6 @@ import org.junit.Test
 import kotlin.math.abs
 
 class RoamingEngineTest {
-
     private val engine = RoamingEngine(OsrmClient(), RouteInterpolator())
 
     @Test

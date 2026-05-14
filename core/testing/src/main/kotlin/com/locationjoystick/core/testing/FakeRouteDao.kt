@@ -8,7 +8,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
-class FakeRouteDao(private val waypointDao: FakeWaypointDao = FakeWaypointDao()) : RouteDao {
+class FakeRouteDao(
+    private val waypointDao: FakeWaypointDao = FakeWaypointDao(),
+) : RouteDao {
     private val routeState = MutableStateFlow<List<RouteEntity>>(emptyList())
 
     override suspend fun insert(route: RouteEntity) {
@@ -25,8 +27,7 @@ class FakeRouteDao(private val waypointDao: FakeWaypointDao = FakeWaypointDao())
 
     override suspend fun getById(id: String): RouteEntity? = routeState.value.find { it.id == id }
 
-    override fun getAll(): Flow<List<RouteEntity>> =
-        routeState.map { list -> list.sortedByDescending { it.createdAt } }
+    override fun getAll(): Flow<List<RouteEntity>> = routeState.map { list -> list.sortedByDescending { it.createdAt } }
 
     override fun getWithWaypoints(routeId: String): Flow<RouteWithWaypoints?> =
         routeState.map { routes ->

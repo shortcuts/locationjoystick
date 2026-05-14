@@ -7,6 +7,9 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.locationjoystick.core.common.util.advancePosition
+import com.locationjoystick.core.common.util.calculateBearing
+import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
@@ -25,9 +28,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.locationjoystick.core.common.util.advancePosition
-import com.locationjoystick.core.common.util.calculateBearing
-import com.locationjoystick.core.common.util.haversineDistance
 import javax.inject.Inject
 
 private const val TAG = "MapViewModel"

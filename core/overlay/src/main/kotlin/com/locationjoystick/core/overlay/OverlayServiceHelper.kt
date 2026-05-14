@@ -18,8 +18,9 @@ import android.util.Log
  * [cleanupOverlayBindings] in `onDestroy`, passing the same [OverlayService] instance as
  * [context].
  */
-class OverlayServiceHelper(private val tag: String) {
-
+class OverlayServiceHelper(
+    private val tag: String,
+) {
     private var visibilityReceiver: BroadcastReceiver? = null
     private val boundConnections = mutableListOf<Pair<Context, ServiceConnection>>()
 
@@ -33,7 +34,10 @@ class OverlayServiceHelper(private val tag: String) {
     ) {
         val receiver =
             object : BroadcastReceiver() {
-                override fun onReceive(ctx: Context, intent: Intent) {
+                override fun onReceive(
+                    ctx: Context,
+                    intent: Intent,
+                ) {
                     when (intent.action) {
                         OverlayService.ACTION_OVERLAY_HIDE -> overlayService.hideOverlay()
                         OverlayService.ACTION_OVERLAY_SHOW -> overlayService.showOverlay()

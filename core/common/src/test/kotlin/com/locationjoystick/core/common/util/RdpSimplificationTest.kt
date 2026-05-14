@@ -5,7 +5,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RdpSimplificationTest {
-
     @Test
     fun `single point returns single point`() {
         val points = listOf(LatLng(0.0, 0.0))
@@ -21,11 +20,12 @@ class RdpSimplificationTest {
     @Test
     fun `collinear points with small epsilon returns only endpoints`() {
         // Straight line south → north, middle point on the line
-        val points = listOf(
-            LatLng(0.0, 0.0),
-            LatLng(0.5, 0.0),
-            LatLng(1.0, 0.0),
-        )
+        val points =
+            listOf(
+                LatLng(0.0, 0.0),
+                LatLng(0.5, 0.0),
+                LatLng(1.0, 0.0),
+            )
         val result = rdpSimplify(points, 1.0)
         assertEquals(2, result.size)
         assertEquals(LatLng(0.0, 0.0), result.first())
