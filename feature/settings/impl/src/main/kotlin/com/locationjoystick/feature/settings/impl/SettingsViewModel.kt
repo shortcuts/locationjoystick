@@ -3,7 +3,6 @@ package com.locationjoystick.feature.settings.impl
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.data.FavoriteRepository
@@ -30,7 +29,6 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 
@@ -240,7 +238,10 @@ class SettingsViewModel
                 SpeedUnit.MPH -> displaySpeed / 2.237
             }
 
-        fun exportSettings(context: Context) {
+        fun writeExportToUri(
+            context: Context,
+            uri: Uri,
+        ) {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
                     val state = uiState.value
@@ -264,19 +265,9 @@ class SettingsViewModel
                         )
 
                     val json = serializeExportData(exportData)
-                    val dir = context.getExternalFilesDir(null) ?: return@launch
-                    val timestamp = System.currentTimeMillis()
-                    val file = File(dir, "locationjoystick-export-$timestamp.json")
-                    file.writeText(json, Charsets.UTF_8)
-
-                    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                    val intent =
-                        android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                            type = "application/json"
-                            putExtra(android.content.Intent.EXTRA_STREAM, uri)
-                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        }
-                    context.startActivity(android.content.Intent.createChooser(intent, "Export settings"))
+                    context.contentResolver.openOutputStream(uri)?.use { stream ->
+                        stream.write(json.toByteArray(Charsets.UTF_8))
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Export failed", e)
                 }

@@ -31,18 +31,22 @@ class RouteReplayEngine
         private var savedWaypoints: List<LatLng> = emptyList()
         private var savedSpeedMs: Double = 0.0
 
+        @Volatile private var isLooping: Boolean = false
+
         fun start(
             waypoints: List<LatLng>,
             speedMs: Double,
+            isLooping: Boolean = false,
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
         ) {
             savedWaypoints = waypoints
             savedSpeedMs = speedMs
+            this.isLooping = isLooping
             resumePosition = waypoints.firstOrNull()
             resumeWaypointIndex = 1
             launchReplay(onPositionUpdate, onComplete)
-            Log.i(TAG, "Replay started: ${waypoints.size} waypoints at ${speedMs}m/s")
+            Log.i(TAG, "Replay started: ${waypoints.size} waypoints at ${speedMs}m/s looping=$isLooping")
         }
 
         fun resume(
@@ -97,8 +101,15 @@ class RouteReplayEngine
                         resumeWaypointIndex = index
                         onPositionUpdate(position)
                         if (result.reachedEnd) {
-                            onComplete()
-                            break
+                            if (isLooping) {
+                                position = savedWaypoints.first()
+                                index = 1
+                                resumePosition = position
+                                resumeWaypointIndex = index
+                            } else {
+                                onComplete()
+                                break
+                            }
                         }
                         delay(TICK_INTERVAL_MS)
                     }

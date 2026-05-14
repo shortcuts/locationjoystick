@@ -54,6 +54,13 @@ fun SettingsRoute(
     val context = LocalContext.current
     var pendingImportUri by remember { mutableStateOf<android.net.Uri?>(null) }
 
+    val exportLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.CreateDocument("application/json"),
+        ) { uri ->
+            if (uri != null) viewModel.writeExportToUri(context, uri)
+        }
+
     val importLauncher =
         rememberLauncherForActivityResult(
             ActivityResultContracts.OpenDocument(),
@@ -89,7 +96,7 @@ fun SettingsRoute(
         onSetWidgetFeatures = viewModel::setWidgetFeatures,
         onSetRememberLastLocation = viewModel::setRememberLastLocation,
         convertMsToDisplay = viewModel::convertMsToDisplay,
-        onExport = { viewModel.exportSettings(context) },
+        onExport = { exportLauncher.launch("locationjoystick-export-${System.currentTimeMillis()}.json") },
         onImport = { importLauncher.launch(arrayOf("application/json")) },
         onSaveChanges = viewModel::saveChanges,
         onDiscardChanges = viewModel::discardChanges,

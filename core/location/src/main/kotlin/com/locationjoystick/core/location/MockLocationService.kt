@@ -345,19 +345,14 @@ class MockLocationService : Service() {
             routeReplayEngine.start(
                 waypoints = latLngs,
                 speedMs = speedMs,
+                isLooping = route.isLooping,
                 onPositionUpdate = { pos ->
                     currentLat = pos.latitude
                     currentLon = pos.longitude
                     locationRepository.setPositionInternal(pos)
                     pushLocationUpdate()
                 },
-                onComplete = {
-                    _state.value = MockLocationState.IDLE
-                    serviceScope.launch {
-                        locationRepository.stopSpoofing()
-                        locationRepository.setActiveRouteId(null)
-                    }
-                },
+                onComplete = { stopSpoofing() },
             )
         }
     }
@@ -381,13 +376,7 @@ class MockLocationService : Service() {
                 locationRepository.setPositionInternal(pos)
                 pushLocationUpdate()
             },
-            onComplete = {
-                _state.value = MockLocationState.IDLE
-                serviceScope.launch {
-                    locationRepository.stopSpoofing()
-                    locationRepository.setActiveRouteId(null)
-                }
-            },
+            onComplete = { stopSpoofing() },
         )
         Log.i(TAG, "Replay resumed at ${speedMs}m/s")
     }
