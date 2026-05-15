@@ -17,6 +17,7 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.overlay.OverlayService
 import com.locationjoystick.core.overlay.OverlayServiceHelper
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -44,7 +45,10 @@ class JoystickOverlayService : OverlayService() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e(TAG, "JoystickOverlayService coroutine crashed", throwable)
+    }
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + exceptionHandler)
     private val overlayHelper = OverlayServiceHelper(TAG)
 
     private var mockLocationService: MockLocationService? = null

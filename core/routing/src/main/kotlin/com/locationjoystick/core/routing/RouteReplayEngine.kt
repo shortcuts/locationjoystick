@@ -2,6 +2,7 @@ package com.locationjoystick.core.routing
 
 import android.util.Log
 import com.locationjoystick.core.model.LatLng
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,7 +23,10 @@ class RouteReplayEngine
     constructor(
         private val routeInterpolator: RouteInterpolator,
     ) {
-        private val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+            Log.e(TAG, "Replay coroutine crashed", throwable)
+        }
+        private val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + exceptionHandler)
         private var activeJob: Job? = null
 
         @Volatile private var resumePosition: LatLng? = null
@@ -99,7 +103,7 @@ class RouteReplayEngine
                         index = result.nextWaypointIndex
                         resumePosition = position
                         resumeWaypointIndex = index
-                        onPositionUpdate(position)
+                        try { onPositionUpdate(position) } catch (e: Exception) { Log.e(TAG, "onPositionUpdate failed", e) }
                         if (result.reachedEnd) {
                             if (isLooping) {
                                 position = savedWaypoints.first()
@@ -107,7 +111,7 @@ class RouteReplayEngine
                                 resumePosition = position
                                 resumeWaypointIndex = index
                             } else {
-                                onComplete()
+                                try { onComplete() } catch (e: Exception) { Log.e(TAG, "onComplete failed", e) }
                                 break
                             }
                         }

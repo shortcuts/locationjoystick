@@ -27,6 +27,7 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.routing.RouteReplayEngine
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -36,6 +37,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -86,7 +88,11 @@ class MockLocationService : Service() {
 
     @Inject lateinit var routeReplayEngine: RouteReplayEngine
 
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e(TAG, "MockLocationService coroutine crashed", throwable)
+        _state.value = MockLocationState.ERROR
+    }
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + exceptionHandler)
     private var updateJob: Job? = null
 
     private val _state = MutableStateFlow(MockLocationState.IDLE)
@@ -155,18 +161,24 @@ class MockLocationService : Service() {
             }
         }
         serviceScope.launch {
-            locationRepository.currentPosition.collect { position ->
-                if (position != null) {
-                    currentLat = position.latitude
-                    currentLon = position.longitude
+            locationRepository.currentPosition
+                .catch { e -> Log.e(TAG, "currentPosition flow error", e) }
+                .collect { position ->
+                    if (position != null) {
+                        currentLat = position.latitude
+                        currentLon = position.longitude
+                    }
                 }
-            }
         }
         serviceScope.launch {
-            settingsRepository.getJitterIdleRadius().collect { jitterIdleRadiusMeters = it }
+            settingsRepository.getJitterIdleRadius()
+                .catch { e -> Log.e(TAG, "jitterIdleRadius flow error", e) }
+                .collect { jitterIdleRadiusMeters = it }
         }
         serviceScope.launch {
-            settingsRepository.getJitterMovingRadius().collect { jitterMovingRadiusMeters = it }
+            settingsRepository.getJitterMovingRadius()
+                .catch { e -> Log.e(TAG, "jitterMovingRadius flow error", e) }
+                .collect { jitterMovingRadiusMeters = it }
         }
     }
 
@@ -359,8 +371,12 @@ class MockLocationService : Service() {
                 onPositionUpdate = { pos ->
                     currentLat = pos.latitude
                     currentLon = pos.longitude
-                    locationRepository.setPositionInternal(pos)
-                    pushLocationUpdate()
+                    try {
+                        locationRepository.setPositionInternal(pos)
+                        pushLocationUpdate()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Position update failed during route replay", e)
+                    }
                 },
                 onComplete = { stopSpoofing() },
             )
@@ -383,8 +399,12 @@ class MockLocationService : Service() {
             onPositionUpdate = { pos ->
                 currentLat = pos.latitude
                 currentLon = pos.longitude
-                locationRepository.setPositionInternal(pos)
-                pushLocationUpdate()
+                try {
+                    locationRepository.setPositionInternal(pos)
+                    pushLocationUpdate()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Position update failed during route resume", e)
+                }
             },
             onComplete = { stopSpoofing() },
         )
