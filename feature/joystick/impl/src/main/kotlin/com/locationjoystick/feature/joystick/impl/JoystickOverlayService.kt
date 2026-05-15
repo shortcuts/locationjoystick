@@ -14,6 +14,7 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.overlay.OverlayService
 import com.locationjoystick.core.overlay.OverlayServiceHelper
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,21 +25,40 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.cos
 import kotlin.math.sin
 
+private const val TAG = "JoystickOverlayService"
+private const val JOYSTICK_SIZE_DP = 90
+private const val MOVE_STEP_SECONDS = 0.1
+private const val MOVE_STEP_MS = 100L
+
+/**
+ * Pure position-advance function for one joystick tick.
+ * Uses flat-earth approximation (accurate to within ~0.1% for distances < 1 km).
+ */
+internal fun computeJoystickStep(
+    currentPos: LatLng,
+    angleDegrees: Float,
+    force: Float,
+    speedMs: Double,
+    stepSeconds: Double,
+): LatLng {
+    val angleRad = Math.toRadians(angleDegrees.toDouble())
+    // Convert screen angle (0=east, CCW) to geographic bearing (0=north, CW).
+    val bearingRad = Math.atan2(cos(angleRad), -sin(angleRad))
+    val distanceMeters = speedMs * stepSeconds * force
+    val dLat = distanceMeters * cos(bearingRad) / 111320.0
+    val dLon = distanceMeters * sin(bearingRad) / (111320.0 * cos(Math.toRadians(currentPos.latitude)))
+    return LatLng(latitude = currentPos.latitude + dLat, longitude = currentPos.longitude + dLon)
+}
+
 @AndroidEntryPoint
 class JoystickOverlayService : OverlayService() {
-    companion object {
-        private const val TAG = "JoystickOverlayService"
-        private const val JOYSTICK_SIZE_DP = 90
-        private const val MOVE_STEP_SECONDS = 0.1
-        private const val MOVE_STEP_MS = (MOVE_STEP_SECONDS * 1000).toLong()
-    }
-
     @Inject
     lateinit var locationRepository: LocationRepository
 
@@ -56,11 +76,14 @@ class JoystickOverlayService : OverlayService() {
 
     var locked = false
 
-    /** Last joystick input received; used to keep moving when locked and finger is lifted. */
+    /** Latest joystick direction+force from touch; read by the movement tick loop. */
     private var lastInput: JoystickInput? = null
 
-    /** Running only when locked and finger is off screen — drives continuous movement. */
-    private var lockedMovementJob: Job? = null
+    /** Cached active speed profile; updated reactively so ticks never hit DataStore. */
+    private val _cachedProfile = MutableStateFlow<SpeedProfile?>(null)
+
+    /** Single movement job used for both touch-active and locked-release motion. */
+    private var movementJob: Job? = null
 
     inner class LocalBinder : Binder() {
         fun getService(): JoystickOverlayService = this@JoystickOverlayService
@@ -88,12 +111,18 @@ class JoystickOverlayService : OverlayService() {
         super.onCreate()
         overlayHelper.registerOverlayVisibilityReceiver(this, this)
         overlayHelper.bindTrackedService(this, Intent(this, MockLocationService::class.java), serviceConnection)
+        serviceScope.launch {
+            settingsRepository.getActiveSpeedProfile().collect { profile ->
+                _cachedProfile.value = profile
+            }
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = binder
 
     override fun onDestroy() {
-        stopLockedMovement()
+        movementJob?.cancel()
+        movementJob = null
         serviceScope.cancel()
         overlayHelper.cleanupOverlayBindings(this)
         super.onDestroy()
@@ -106,13 +135,13 @@ class JoystickOverlayService : OverlayService() {
         locked = value
         (overlayView as? JoystickView)?.isLocked = value
         if (!value) {
-            stopLockedMovement()
+            movementJob?.cancel()
+            movementJob = null
         }
         Log.d(TAG, "Joystick locked: $value")
     }
 
     fun toggleOverlay() {
-        // Simple toggle: if view is attached, hide it; otherwise show it
         val view = overlayView
         if (view != null && view.isAttachedToWindow) {
             hideOverlay()
@@ -128,13 +157,8 @@ class JoystickOverlayService : OverlayService() {
 
         view.onInputChanged = { input ->
             lastInput = input
-            // While finger is on screen, apply each input directly.
-            // Also stop any running locked-movement loop (finger took back control).
-            stopLockedMovement()
-            if (input.force > 0f) {
-                serviceScope.launch {
-                    applyJoystickInput(input)
-                }
+            if (input.force > 0f && (movementJob == null || !movementJob!!.isActive)) {
+                startMovement()
             }
         }
 
@@ -142,15 +166,13 @@ class JoystickOverlayService : OverlayService() {
 
         view.onReleased = {
             if (view.isLocked) {
-                val input = lastInput
-                if (input != null && input.force > 0f) {
-                    startLockedMovement(input)
-                    Log.d(TAG, "Joystick released (locked) — continuing movement at angle=${input.angleDegrees}, force=${input.force}")
-                } else {
-                    Log.d(TAG, "Joystick released (locked) — no active input, holding position")
-                }
+                // Locked mode: job keeps running with lastInput direction (no zero-force emitted
+                // by JoystickView when shouldResetOnRelease returns false).
+                Log.d(TAG, "Joystick released (locked) — continuing movement")
             } else {
-                Log.d(TAG, "Joystick released — position held")
+                movementJob?.cancel()
+                movementJob = null
+                Log.d(TAG, "Joystick released — movement stopped")
             }
         }
 
@@ -194,44 +216,29 @@ class JoystickOverlayService : OverlayService() {
             }
     }
 
-    private fun startLockedMovement(input: JoystickInput) {
-        stopLockedMovement()
-        lockedMovementJob =
+    private fun startMovement() {
+        movementJob?.cancel()
+        movementJob =
             serviceScope.launch {
-                while (true) {
+                while (isActive) {
                     delay(MOVE_STEP_MS)
-                    applyJoystickInput(input)
+                    val input = lastInput ?: continue
+                    if (input.force > 0f) {
+                        applyJoystickInput(input)
+                    }
                 }
             }
     }
 
-    private fun stopLockedMovement() {
-        lockedMovementJob?.cancel()
-        lockedMovementJob = null
-    }
-
     private suspend fun applyJoystickInput(input: JoystickInput) {
         val currentPos = locationRepository.currentPosition.value ?: return
-        val speedProfile = settingsRepository.getActiveSpeedProfile().first()
-        val speedMs = speedProfile.speedMetersPerSecond
+        val speedMs = _cachedProfile.value?.speedMetersPerSecond ?: return
 
-        // Convert screen math angle (0=east, CCW, screen-Y inverted) to geographic bearing (0=north, CW).
-        // Derivation: bearing = atan2(cos(α), -sin(α)) where α is the screen math angle.
         val angleRad = Math.toRadians(input.angleDegrees.toDouble())
         val bearingRad = Math.atan2(cos(angleRad), -sin(angleRad))
         val bearingDeg = ((Math.toDegrees(bearingRad) + 360.0) % 360.0)
-        val distanceMeters = speedMs * MOVE_STEP_SECONDS * input.force
 
-        val dLat = distanceMeters * cos(bearingRad) / 111320.0
-        val dLon =
-            distanceMeters * sin(bearingRad) /
-                (111320.0 * cos(Math.toRadians(currentPos.latitude)))
-
-        val nextPos =
-            LatLng(
-                latitude = currentPos.latitude + dLat,
-                longitude = currentPos.longitude + dLon,
-            )
+        val nextPos = computeJoystickStep(currentPos, input.angleDegrees, input.force, speedMs, MOVE_STEP_SECONDS)
 
         locationRepository.updatePosition(nextPos)
 

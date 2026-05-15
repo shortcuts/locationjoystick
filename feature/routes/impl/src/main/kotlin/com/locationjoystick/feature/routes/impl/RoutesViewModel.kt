@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
+import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
@@ -22,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -38,6 +40,7 @@ class RoutesViewModel
     constructor(
         private val routeRepository: RouteRepository,
         private val locationRepository: LocationRepository,
+        private val settingsRepository: SettingsRepository,
         @ApplicationContext private val context: Context,
     ) : ViewModel() {
         val uiState: StateFlow<RoutesUiState> =
@@ -86,24 +89,29 @@ class RoutesViewModel
             }
         }
 
+        /**
+         * Starts route replay at the active speed profile's speed.
+         * Speed is snapshotted from the profile at the moment replay begins — live speed changes
+         * during replay do not affect the current session.
+         */
         fun startReplay(
             route: Route,
             fromFirstWaypoint: Boolean = false,
-            speedMs: Double = 1.4,
         ) {
-            if (fromFirstWaypoint && route.waypoints.isNotEmpty()) {
-                viewModelScope.launch {
+            viewModelScope.launch {
+                val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+                if (fromFirstWaypoint && route.waypoints.isNotEmpty()) {
                     locationRepository.updatePosition(route.waypoints.first().position)
                 }
+                val intent =
+                    Intent(context, MockLocationService::class.java).apply {
+                        action = MockLocationService.ACTION_ROUTE_REPLAY_START
+                        putExtra(MockLocationService.EXTRA_ROUTE_ID, route.id)
+                        putExtra(MockLocationService.EXTRA_IS_BACKWARD, false)
+                        putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
+                    }
+                context.startService(intent)
             }
-            val intent =
-                Intent(context, MockLocationService::class.java).apply {
-                    action = MockLocationService.ACTION_ROUTE_REPLAY_START
-                    putExtra(MockLocationService.EXTRA_ROUTE_ID, route.id)
-                    putExtra(MockLocationService.EXTRA_IS_BACKWARD, false)
-                    putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
-                }
-            context.startService(intent)
         }
 
         fun pauseReplay() {
@@ -114,13 +122,16 @@ class RoutesViewModel
             context.startService(intent)
         }
 
-        fun resumeReplay(speedMs: Double = 1.4) {
-            val intent =
-                Intent(context, MockLocationService::class.java).apply {
-                    action = MockLocationService.ACTION_ROUTE_REPLAY_RESUME
-                    putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
-                }
-            context.startService(intent)
+        fun resumeReplay() {
+            viewModelScope.launch {
+                val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+                val intent =
+                    Intent(context, MockLocationService::class.java).apply {
+                        action = MockLocationService.ACTION_ROUTE_REPLAY_RESUME
+                        putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
+                    }
+                context.startService(intent)
+            }
         }
 
         fun stopReplay() {

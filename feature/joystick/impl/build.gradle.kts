@@ -14,4 +14,6 @@ dependencies {
 
     implementation(libs.hilt.navigation.compose)
     implementation(libs.bundles.lifecycle)
+
+    testImplementation("junit:junit:4.13.2")
 }
