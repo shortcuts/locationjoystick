@@ -59,6 +59,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.designsystem.component.AppIcon
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.feature.setup.api.SETUP_ROUTE
 
@@ -126,21 +127,7 @@ internal fun SetupScreen(
         ) {
             Spacer(modifier = Modifier.height(40.dp))
 
-            Box(
-                modifier =
-                    Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = LjIcons.MyLocation,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(44.dp),
-                )
-            }
+            AppIcon()
 
             Spacer(modifier = Modifier.height(24.dp))
 

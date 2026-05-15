@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.component.AppIcon
 
 internal const val IDLE_ROUTE = "idle"
 
@@ -52,21 +53,7 @@ internal fun IdleScreen(
         ) {
             Spacer(modifier = Modifier.height(40.dp))
 
-            Box(
-                modifier =
-                    Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = LjIcons.MyLocation,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(44.dp),
-                )
-            }
+            AppIcon()
 
             Spacer(modifier = Modifier.height(24.dp))
 

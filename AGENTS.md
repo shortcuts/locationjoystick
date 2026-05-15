@@ -443,11 +443,12 @@ Shared test utilities in `:core:testing`.
 
 ## Pre-Commit Validation Policy
 
-Work is NOT complete until lint passes.
+Work is NOT complete until lint and test passes.
 
 ```bash
 make format
 make lint
+make test
 ```
 
 Rules:
