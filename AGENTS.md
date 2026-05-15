@@ -388,6 +388,20 @@ Notes:
 
 ## Testing Strategy
 
+### Coverage
+
+Coverage tracked via [kotlinx-kover](https://github.com/Kotlin/kotlinx-kover) (v0.8.3). Applied in every module via convention plugins. Root project aggregates all modules into a single merged report.
+
+```bash
+make coverage        # generate HTML + XML reports
+make coverage-open   # open HTML report in browser
+```
+
+HTML report: `build/reports/kover/html/index.html`
+XML report (CI): `build/reports/kover/report.xml`
+
+Per-module report: `./gradlew :<module>:koverHtmlReport`
+
 ### Unit Tests (`:core:*`)
 - Repository logic with fake DAO (in-memory Room)
 - Route replay interpolation: waypoints A+B → assert position after N ticks

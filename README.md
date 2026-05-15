@@ -70,6 +70,24 @@ Open locationjoystick → tap map to teleport or use joystick → open target ap
 
 ---
 
+## Test Coverage
+
+Coverage tracked via [kotlinx-kover](https://github.com/Kotlin/kotlinx-kover). Aggregates all modules into a single report.
+
+```bash
+./gradlew koverHtmlReport   # HTML report → build/reports/kover/html/index.html
+./gradlew koverXmlReport    # XML report for CI → build/reports/kover/report.xml
+```
+
+Or via Make:
+
+```bash
+make coverage        # generate both reports
+make coverage-open   # open HTML in browser
+```
+
+---
+
 ## Building
 
 ### Prerequisites

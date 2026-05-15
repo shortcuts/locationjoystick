@@ -162,14 +162,16 @@ class MockLocationService : Service() {
             }
         }
         serviceScope.launch {
-            locationRepository.currentPosition
-                .catch { e -> Log.e(TAG, "currentPosition flow error", e) }
-                .collect { position ->
+            try {
+                locationRepository.currentPosition.collect { position ->
                     if (position != null) {
                         currentLat = position.latitude
                         currentLon = position.longitude
                     }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "currentPosition flow error", e)
+            }
         }
         serviceScope.launch {
             settingsRepository

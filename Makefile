@@ -18,3 +18,9 @@ tail-log-on-phone:
 
 test:
 	./gradlew testRelease
+
+coverage:
+	./gradlew koverHtmlReport koverXmlReport
+
+coverage-open:
+	open build/reports/kover/html/index.html

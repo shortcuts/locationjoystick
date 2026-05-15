@@ -8,6 +8,7 @@ class LjJvmLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             pluginManager.apply("org.jetbrains.kotlin.jvm")
+            pluginManager.apply("org.jetbrains.kotlinx.kover")
 
             extensions.configure<JavaPluginExtension> {
                 sourceCompatibility = org.gradle.api.JavaVersion.VERSION_17
