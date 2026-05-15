@@ -10,22 +10,22 @@ import androidx.navigation.compose.rememberNavController
 import com.locationjoystick.app.navigation.LjDrawerContent
 import com.locationjoystick.app.navigation.LjNavHost
 import com.locationjoystick.feature.map.api.MAP_ROUTE
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 
 @Composable
-fun LjApp(onSetNavigateToMapCallback: (callback: () -> Unit) -> Unit = {}) {
+fun LjApp(navigateToMapFlow: Flow<Unit> = emptyFlow()) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(navController) {
-        onSetNavigateToMapCallback {
-            scope.launch {
-                drawerState.close()
-                navController.navigate(MAP_ROUTE) {
-                    popUpTo(MAP_ROUTE) { inclusive = false }
-                    launchSingleTop = true
-                }
+        navigateToMapFlow.collect {
+            drawerState.close()
+            navController.navigate(MAP_ROUTE) {
+                popUpTo(MAP_ROUTE) { inclusive = false }
+                launchSingleTop = true
             }
         }
     }

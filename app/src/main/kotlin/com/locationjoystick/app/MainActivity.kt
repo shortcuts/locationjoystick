@@ -9,6 +9,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.app.ActivityCompat
 import com.locationjoystick.core.designsystem.LjTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -17,11 +19,8 @@ class MainActivity : ComponentActivity() {
         const val ACTION_MOVE_TO_BACK = "com.locationjoystick.app.ACTION_MOVE_TO_BACK"
     }
 
-    private var navigateToMapCallback: (() -> Unit)? = null
-
-    fun setNavigateToMapCallback(callback: () -> Unit) {
-        navigateToMapCallback = callback
-    }
+    private val _navigateToMapFlow = MutableSharedFlow<Unit>(replay = 1)
+    internal val navigateToMapFlow = _navigateToMapFlow.asSharedFlow()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,9 +37,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LjTheme {
-                LjApp(
-                    onSetNavigateToMapCallback = { cb -> navigateToMapCallback = cb },
-                )
+                LjApp(navigateToMapFlow = navigateToMapFlow)
             }
         }
 
@@ -53,9 +50,9 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
-    private fun handleIntent(intent: Intent?) {
+    internal fun handleIntent(intent: Intent?) {
         if (intent?.getBooleanExtra(EXTRA_NAVIGATE_TO_MAP, false) == true) {
-            navigateToMapCallback?.invoke()
+            _navigateToMapFlow.tryEmit(Unit)
         }
         if (intent?.action == ACTION_MOVE_TO_BACK) {
             moveTaskToBack(true)
