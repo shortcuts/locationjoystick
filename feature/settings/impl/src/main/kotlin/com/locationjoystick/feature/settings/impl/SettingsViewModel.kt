@@ -322,6 +322,9 @@ class SettingsViewModel
                             speedProfiles = speedProfiles,
                             routes = routes,
                             favoriteLocations = favorites,
+                            jitterIdleRadius = state.jitterIdleRadiusMeters,
+                            jitterMovingRadius = state.jitterMovingRadiusMeters,
+                            jitterIntervalSeconds = state.jitterIntervalSeconds,
                         )
 
                     val json = serializeExportData(exportData)
@@ -374,6 +377,9 @@ class SettingsViewModel
                         }
                     }
                     setWidgetFeatures(exportData.settings.enabledWidgetFeatures.toSet())
+                    setJitterIdleRadius(exportData.jitterIdleRadius)
+                    setJitterMovingRadius(exportData.jitterMovingRadius)
+                    setJitterIntervalSeconds(exportData.jitterIntervalSeconds)
                 } catch (e: Exception) {
                     Log.e(TAG, "Import failed", e)
                 }
@@ -432,6 +438,10 @@ class SettingsViewModel
                 favsArray.put(obj)
             }
             root.put("favoriteLocations", favsArray)
+
+            root.put("jitterIdleRadius", data.jitterIdleRadius)
+            root.put("jitterMovingRadius", data.jitterMovingRadius)
+            root.put("jitterIntervalSeconds", data.jitterIntervalSeconds)
 
             return root.toString(2)
         }
@@ -533,6 +543,9 @@ class SettingsViewModel
                 speedProfiles = speedProfiles,
                 routes = routes,
                 favoriteLocations = favorites,
+                jitterIdleRadius = root.optDouble("jitterIdleRadius", 0.0),
+                jitterMovingRadius = root.optDouble("jitterMovingRadius", 10.0),
+                jitterIntervalSeconds = root.optInt("jitterIntervalSeconds", 5),
             )
         }
     }
