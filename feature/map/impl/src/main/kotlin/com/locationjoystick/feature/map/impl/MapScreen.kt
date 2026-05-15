@@ -118,19 +118,20 @@ internal fun MapScreen(
 
     DisposableEffect(lifecycleOwner) {
         mapView.onCreate(null)
+        mapView.onStart()
         val observer =
             LifecycleEventObserver { _, event ->
                 when (event) {
-                    Lifecycle.Event.ON_START -> mapView.onStart()
                     Lifecycle.Event.ON_RESUME -> mapView.onResume()
                     Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-                    Lifecycle.Event.ON_STOP -> mapView.onStop()
                     else -> Unit
                 }
             }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            mapView.onPause()
+            mapView.onStop()
             mapView.onDestroy()
         }
     }
