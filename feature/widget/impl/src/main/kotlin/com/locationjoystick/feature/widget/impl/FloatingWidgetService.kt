@@ -4,29 +4,36 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.graphics.drawable.ColorDrawable
 import android.os.IBinder
 import android.util.Log
 import android.view.Gravity
 import android.view.View
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.PopupWindow
-import android.widget.ScrollView
-import android.widget.TextView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DirectionsBike
 import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
 import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Lock
@@ -36,11 +43,18 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Route
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,6 +62,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -65,6 +80,8 @@ import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.designsystem.LjBg
+import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.FavoriteLocation
@@ -81,13 +98,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.math.min
-import android.graphics.Color as AndroidColor
 import android.view.WindowManager as AndroidWindowManager
 
 @AndroidEntryPoint
@@ -108,33 +123,34 @@ class FloatingWidgetService :
     override val savedStateRegistry: SavedStateRegistry get() = savedStateRegistryController.savedStateRegistry
 
     @Inject lateinit var routeRepository: RouteRepository
-
     @Inject lateinit var locationRepository: LocationRepository
-
     @Inject lateinit var favoriteRepository: FavoriteRepository
-
     @Inject lateinit var settingsRepository: SettingsRepository
 
     private var composeView: ComposeView? = null
+    private var panelComposeView: ComposeView? = null
     private var walkToJob: Job? = null
     private var joystickPollJob: Job? = null
 
-    // Joystick state exposed to Compose
+    // Joystick state
     private val _joystickVisible = MutableStateFlow(false)
     private val _joystickLocked = MutableStateFlow(false)
     private val _activeProfileId = MutableStateFlow("walk")
 
-    // Route/walk-to active state exposed to Compose
+    // Route/walk-to active state
     private val _isRouteActive = MutableStateFlow(false)
     private val _isRoutePaused = MutableStateFlow(false)
     private val _routeExpanded = MutableStateFlow(false)
 
-    // Master panel expand/collapse — folded by default
+    // Master panel expand/collapse
     private val _isPanelExpanded = MutableStateFlow(false)
+
+    // Floating panel data
+    private val _favoritesData = MutableStateFlow<List<FavoriteLocation>>(emptyList())
+    private val _routesData = MutableStateFlow<List<com.locationjoystick.core.model.Route>>(emptyList())
 
     private var mockLocationService: MockLocationService? = null
 
-    // Persistent binding to JoystickOverlayService for state tracking
     private var joystickService: JoystickOverlayService? = null
     private val joystickConnection =
         object : ServiceConnection {
@@ -226,6 +242,7 @@ class FloatingWidgetService :
         walkToJob?.cancel()
         joystickPollJob?.cancel()
         serviceScope.cancel()
+        hidePanelView()
         composeView?.visibility = View.GONE
         composeView = null
         overlayHelper.cleanupOverlayBindings(this)
@@ -262,7 +279,6 @@ class FloatingWidgetService :
             }
         composeView = view
 
-        // Accumulate drag delta in overlay coordinate space
         var dragOffsetX = 0f
         var dragOffsetY = 0f
 
@@ -287,8 +303,8 @@ class FloatingWidgetService :
                     routeExpanded = routeExpanded,
                     isPanelExpanded = isPanelExpanded,
                     onToggleMaster = { _isPanelExpanded.value = !_isPanelExpanded.value },
-                    onFeatureClicked = { feature -> onFeatureButtonClicked(feature, view) },
-                    onRouteClicked = { onRouteIconClicked(view) },
+                    onFeatureClicked = { feature -> onFeatureButtonClicked(feature) },
+                    onRouteClicked = { onRouteIconClicked() },
                     onRoutePauseResume = { onRoutePauseResumeClicked() },
                     onRouteStop = { onRouteStopClicked() },
                     onDrag = { dx, dy ->
@@ -363,29 +379,9 @@ class FloatingWidgetService :
             if (isPanelExpanded) {
                 features.forEach { feature ->
                     if (feature == WidgetFeature.ROUTES_PICKER) {
-                        // Route icon — green when active
                         val routeIconTint = if (isRouteActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier =
-                                Modifier
-                                    .padding(4.dp)
-                                    .size(48.dp)
-                                    .background(Color.Black, CircleShape)
-                                    .clickable { onRouteClicked() },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Route,
-                                contentDescription = "Routes picker",
-                                tint = routeIconTint,
-                                modifier = Modifier.size(25.dp),
-                            )
-                        }
-                        // Subicons shown only when route active and expanded
-                        if (isRouteActive && routeExpanded) {
-                            // PAUSE or RESUME button
-                            val pauseResumeIcon = if (isRoutePaused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause
-                            val pauseResumeTint = if (isRoutePaused) Color(0xFF4CAF50) else Color(0xFF757575)
+                        // Route icon + active controls in a horizontal row
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier =
@@ -393,31 +389,51 @@ class FloatingWidgetService :
                                         .padding(4.dp)
                                         .size(48.dp)
                                         .background(Color.Black, CircleShape)
-                                        .clickable { onRoutePauseResume() },
+                                        .clickable { onRouteClicked() },
                             ) {
                                 Icon(
-                                    imageVector = pauseResumeIcon,
-                                    contentDescription = if (isRoutePaused) "Resume route" else "Pause route",
-                                    tint = pauseResumeTint,
+                                    imageVector = Icons.Rounded.Route,
+                                    contentDescription = "Routes picker",
+                                    tint = routeIconTint,
                                     modifier = Modifier.size(25.dp),
                                 )
                             }
-                            // STOP button — red
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier =
-                                    Modifier
-                                        .padding(4.dp)
-                                        .size(48.dp)
-                                        .background(Color.Black, CircleShape)
-                                        .clickable { onRouteStop() },
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Stop,
-                                    contentDescription = "Stop route",
-                                    tint = Color(0xFFF44336),
-                                    modifier = Modifier.size(25.dp),
-                                )
+                            // Pause/stop shown to the right when route active and expanded
+                            if (isRouteActive && routeExpanded) {
+                                val pauseResumeIcon = if (isRoutePaused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause
+                                val pauseResumeTint = if (isRoutePaused) Color(0xFF4CAF50) else Color(0xFF757575)
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier =
+                                        Modifier
+                                            .padding(4.dp)
+                                            .size(48.dp)
+                                            .background(Color.Black, CircleShape)
+                                            .clickable { onRoutePauseResume() },
+                                ) {
+                                    Icon(
+                                        imageVector = pauseResumeIcon,
+                                        contentDescription = if (isRoutePaused) "Resume route" else "Pause route",
+                                        tint = pauseResumeTint,
+                                        modifier = Modifier.size(25.dp),
+                                    )
+                                }
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier =
+                                        Modifier
+                                            .padding(4.dp)
+                                            .size(48.dp)
+                                            .background(Color.Black, CircleShape)
+                                            .clickable { onRouteStop() },
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Stop,
+                                        contentDescription = "Stop route",
+                                        tint = Color(0xFFF44336),
+                                        modifier = Modifier.size(25.dp),
+                                    )
+                                }
                             }
                         }
                     } else {
@@ -441,6 +457,327 @@ class FloatingWidgetService :
                         }
                     }
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun FavoritesPanel(
+        favorites: List<FavoriteLocation>,
+        onDismiss: () -> Unit,
+        onTeleport: (FavoriteLocation) -> Unit,
+        onWalk: (FavoriteLocation) -> Unit,
+        onAddFromHere: (name: String) -> Unit,
+    ) {
+        var showAddForm by remember { mutableStateOf(false) }
+        var newFavName by remember { mutableStateOf("") }
+
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.7f))
+                    .clickable { onDismiss() },
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .background(LjBg, RoundedCornerShape(16.dp))
+                        .clickable { /* consume touches inside panel */ },
+            ) {
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                ) {
+                    Text(
+                        text = "Favorites",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = LjText,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (favorites.isEmpty()) {
+                            Text(
+                                text = "No favorites saved",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = LjText.copy(alpha = 0.6f),
+                            )
+                        } else {
+                            LazyColumn {
+                                items(favorites, key = { it.id }) { fav ->
+                                    Row(
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 6.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(
+                                            text = fav.name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = LjText,
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        Button(onClick = { onTeleport(fav); onDismiss() }) {
+                                            Text("Teleport")
+                                        }
+                                        Spacer(Modifier.width(8.dp))
+                                        Button(onClick = { onWalk(fav); onDismiss() }) {
+                                            Text("Walk")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    if (showAddForm) {
+                        OutlinedTextField(
+                            value = newFavName,
+                            onValueChange = { newFavName = it },
+                            label = { Text("Name", color = LjText) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions =
+                                KeyboardActions(
+                                    onDone = {
+                                        if (newFavName.isNotBlank()) {
+                                            onAddFromHere(newFavName.trim())
+                                            newFavName = ""
+                                            showAddForm = false
+                                        }
+                                    },
+                                ),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            TextButton(onClick = { showAddForm = false; newFavName = "" }) {
+                                Text("Cancel", color = LjText)
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            Button(
+                                onClick = {
+                                    if (newFavName.isNotBlank()) {
+                                        onAddFromHere(newFavName.trim())
+                                        newFavName = ""
+                                        showAddForm = false
+                                    }
+                                },
+                            ) {
+                                Text("Save")
+                            }
+                        }
+                    } else {
+                        Button(
+                            onClick = { showAddForm = true },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(Icons.Rounded.Add, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Add from current location")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun RoutesPanel(
+        routes: List<com.locationjoystick.core.model.Route>,
+        onDismiss: () -> Unit,
+        onStart: (routeId: String) -> Unit,
+        onStartReverse: (routeId: String) -> Unit,
+        onCreateFromMap: () -> Unit,
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.7f))
+                    .clickable { onDismiss() },
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .background(LjBg, RoundedCornerShape(16.dp))
+                        .clickable { /* consume touches inside panel */ },
+            ) {
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                ) {
+                    Text(
+                        text = "Routes",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = LjText,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (routes.isEmpty()) {
+                            Text(
+                                text = "No routes saved",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = LjText.copy(alpha = 0.6f),
+                            )
+                        } else {
+                            LazyColumn {
+                                items(routes, key = { it.id }) { route ->
+                                    Row(
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 6.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(
+                                            text = route.name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = LjText,
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        Button(onClick = { onStart(route.id); onDismiss() }) {
+                                            Text("Play")
+                                        }
+                                        Spacer(Modifier.width(8.dp))
+                                        Button(onClick = { onStartReverse(route.id); onDismiss() }) {
+                                            Text("Reverse")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    Button(
+                        onClick = { onCreateFromMap(); onDismiss() },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Create route from map")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun panelLayoutParams() =
+        AndroidWindowManager.LayoutParams(
+            AndroidWindowManager.LayoutParams.MATCH_PARENT,
+            AndroidWindowManager.LayoutParams.MATCH_PARENT,
+            AndroidWindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            0,
+            android.graphics.PixelFormat.TRANSLUCENT,
+        )
+
+    private fun hidePanelView() {
+        panelComposeView?.let { view ->
+            try {
+                if (view.isAttachedToWindow) windowManager.removeViewImmediate(view)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to remove panel view", e)
+            }
+        }
+        panelComposeView = null
+    }
+
+    private fun showFavoritesPanel() {
+        serviceScope.launch {
+            _favoritesData.value = favoriteRepository.getFavorites().first()
+            val panel =
+                ComposeView(this@FloatingWidgetService).apply {
+                    setViewTreeLifecycleOwner(this@FloatingWidgetService)
+                    setViewTreeSavedStateRegistryOwner(this@FloatingWidgetService)
+                }
+            panel.setContent {
+                val favs by _favoritesData.collectAsState()
+                LjTheme {
+                    FavoritesPanel(
+                        favorites = favs,
+                        onDismiss = { hidePanelView() },
+                        onTeleport = { fav ->
+                            teleportToFavorite(fav)
+                            moveAppToBack()
+                        },
+                        onWalk = { fav ->
+                            startWalkToFavorite(fav)
+                            moveAppToBack()
+                        },
+                        onAddFromHere = { name ->
+                            serviceScope.launch {
+                                val pos = locationRepository.currentPosition.value
+                                if (pos != null) {
+                                    favoriteRepository.addFavorite(
+                                        id = UUID.randomUUID().toString(),
+                                        name = name,
+                                        position = pos,
+                                    )
+                                    _favoritesData.value = favoriteRepository.getFavorites().first()
+                                } else {
+                                    Log.w(TAG, "Cannot add favorite: no current position")
+                                }
+                            }
+                        },
+                    )
+                }
+            }
+            hidePanelView()
+            try {
+                windowManager.addView(panel, panelLayoutParams())
+                panelComposeView = panel
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to show favorites panel", e)
+            }
+        }
+    }
+
+    private fun showRoutesPanel() {
+        serviceScope.launch {
+            _routesData.value = routeRepository.getRoutes().first()
+            val panel =
+                ComposeView(this@FloatingWidgetService).apply {
+                    setViewTreeLifecycleOwner(this@FloatingWidgetService)
+                    setViewTreeSavedStateRegistryOwner(this@FloatingWidgetService)
+                }
+            panel.setContent {
+                val routes by _routesData.collectAsState()
+                LjTheme {
+                    RoutesPanel(
+                        routes = routes,
+                        onDismiss = { hidePanelView() },
+                        onStart = { routeId ->
+                            startRouteReplay(routeId, false)
+                            moveAppToBack()
+                        },
+                        onStartReverse = { routeId ->
+                            startRouteReplay(routeId, true)
+                            moveAppToBack()
+                        },
+                        onCreateFromMap = { openRouteCreator() },
+                    )
+                }
+            }
+            hidePanelView()
+            try {
+                windowManager.addView(panel, panelLayoutParams())
+                panelComposeView = panel
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to show routes panel", e)
             }
         }
     }
@@ -504,39 +841,31 @@ class FloatingWidgetService :
             }
     }
 
-    private fun onFeatureButtonClicked(
-        feature: WidgetFeature,
-        anchor: View,
-    ) {
+    private fun onFeatureButtonClicked(feature: WidgetFeature) {
         when (feature) {
             WidgetFeature.JOYSTICK_TOGGLE -> toggleJoystick()
             WidgetFeature.JOYSTICK_LOCK -> toggleJoystickLock()
-            WidgetFeature.ROUTES_PICKER -> showRoutesPopup(anchor)
-            WidgetFeature.FAVORITES_PICKER -> showFavoritesPopup(anchor)
+            WidgetFeature.ROUTES_PICKER -> showRoutesPanel()
+            WidgetFeature.FAVORITES_PICKER -> showFavoritesPanel()
             WidgetFeature.SPEED_CYCLE -> cycleSpeedProfile()
             WidgetFeature.MAP -> openMap()
         }
     }
 
-    private fun onRouteIconClicked(anchor: View) {
+    private fun onRouteIconClicked() {
         if (_isRouteActive.value) {
-            // Toggle expanded subicons
             _routeExpanded.value = !_routeExpanded.value
         } else {
-            // No active route: open route list popup as normal
-            showRoutesPopup(anchor)
+            showRoutesPanel()
         }
     }
 
     private fun onRoutePauseResumeClicked() {
         if (_isRoutePaused.value) {
-            // Resume
             if (locationRepository.walkTarget.value != null) {
-                // Walk-to resume: unpause the walk job
                 locationRepository.setWalkPaused(false)
                 resumeWalkToJob()
             } else {
-                // Route replay resume
                 val intent =
                     Intent(this, MockLocationService::class.java).apply {
                         action = MockLocationService.ACTION_ROUTE_REPLAY_RESUME
@@ -545,13 +874,10 @@ class FloatingWidgetService :
                 startService(intent)
             }
         } else {
-            // Pause
             if (locationRepository.walkTarget.value != null) {
-                // Walk-to pause: suspend the walk job
                 pauseWalkToJob()
                 locationRepository.setWalkPaused(true)
             } else {
-                // Route replay pause
                 val intent =
                     Intent(this, MockLocationService::class.java).apply {
                         action = MockLocationService.ACTION_ROUTE_REPLAY_PAUSE
@@ -564,12 +890,10 @@ class FloatingWidgetService :
     private fun onRouteStopClicked() {
         _routeExpanded.value = false
         if (locationRepository.walkTarget.value != null) {
-            // Stop walk-to
             walkToJob?.cancel()
             walkToJob = null
             locationRepository.setWalkTarget(null)
         } else {
-            // Stop route replay
             val intent =
                 Intent(this, MockLocationService::class.java).apply {
                     action = MockLocationService.ACTION_ROUTE_REPLAY_STOP
@@ -654,88 +978,6 @@ class FloatingWidgetService :
             }
     }
 
-    private fun showFavoritesPopup(anchor: View) {
-        serviceScope.launch {
-            val favorites = favoriteRepository.getFavorites().first()
-
-            withContext(Dispatchers.Main) {
-                val listLayout =
-                    LinearLayout(this@FloatingWidgetService).apply {
-                        orientation = LinearLayout.VERTICAL
-                        setPadding(16, 16, 16, 16)
-                    }
-
-                val (popupWidth, popupHeight) = getPopupDimensions()
-
-                val popup =
-                    PopupWindow(
-                        ScrollView(this@FloatingWidgetService).apply { addView(listLayout) },
-                        popupWidth,
-                        popupHeight,
-                        true,
-                    ).apply {
-                        isOutsideTouchable = true
-                        isFocusable = true
-                        setBackgroundDrawable(ColorDrawable(AndroidColor.DKGRAY))
-                        elevation = 16f
-                    }
-
-                if (favorites.isEmpty()) {
-                    listLayout.addView(
-                        TextView(this@FloatingWidgetService).apply {
-                            text = "No favorites saved"
-                            setPadding(8, 8, 8, 8)
-                        },
-                    )
-                } else {
-                    favorites.forEach { favorite ->
-                        listLayout.addView(buildFavoriteRow(favorite) { popup.dismiss() })
-                    }
-                }
-
-                showPopupCentered(popup, anchor)
-            }
-        }
-    }
-
-    private fun buildFavoriteRow(
-        favorite: FavoriteLocation,
-        onDismiss: () -> Unit,
-    ): LinearLayout =
-        LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(8, 4, 8, 4)
-
-            addView(
-                TextView(this@FloatingWidgetService).apply {
-                    text = favorite.name
-                    setPadding(0, 0, 16, 0)
-                },
-            )
-
-            addView(
-                Button(this@FloatingWidgetService).apply {
-                    text = "Teleport"
-                    setOnClickListener {
-                        teleportToFavorite(favorite)
-                        onDismiss()
-                        moveAppToBack()
-                    }
-                },
-            )
-
-            addView(
-                Button(this@FloatingWidgetService).apply {
-                    text = "Walk"
-                    setOnClickListener {
-                        startWalkToFavorite(favorite)
-                        onDismiss()
-                        moveAppToBack()
-                    }
-                },
-            )
-        }
-
     private fun teleportToFavorite(favorite: FavoriteLocation) {
         val svc = mockLocationService
         if (svc != null) {
@@ -759,7 +1001,6 @@ class FloatingWidgetService :
         if (svc != null) {
             try {
                 svc.toggleOverlay()
-                // Sync state after toggle (small delay for view attach/detach to propagate)
                 serviceScope.launch {
                     delay(100L)
                     syncJoystickState()
@@ -789,109 +1030,6 @@ class FloatingWidgetService :
         }
     }
 
-    private fun showRoutesPopup(anchor: View) {
-        serviceScope.launch {
-            val routes = routeRepository.getRoutes().first()
-
-            withContext(Dispatchers.Main) {
-                val listLayout =
-                    LinearLayout(this@FloatingWidgetService).apply {
-                        orientation = LinearLayout.VERTICAL
-                        setPadding(16, 16, 16, 16)
-                    }
-
-                val (popupWidth, popupHeight) = getPopupDimensions()
-
-                val popup =
-                    PopupWindow(
-                        ScrollView(this@FloatingWidgetService).apply { addView(listLayout) },
-                        popupWidth,
-                        popupHeight,
-                        true,
-                    ).apply {
-                        isOutsideTouchable = true
-                        isFocusable = true
-                        setBackgroundDrawable(ColorDrawable(AndroidColor.DKGRAY))
-                        elevation = 16f
-                    }
-
-                if (routes.isEmpty()) {
-                    listLayout.addView(
-                        TextView(this@FloatingWidgetService).apply {
-                            text = "No routes saved"
-                            setPadding(8, 8, 8, 8)
-                        },
-                    )
-                } else {
-                    routes.forEach { route ->
-                        listLayout.addView(buildRouteRow(route) { popup.dismiss() })
-                    }
-                }
-
-                showPopupCentered(popup, anchor)
-            }
-        }
-    }
-
-    private fun buildRouteRow(
-        route: com.locationjoystick.core.model.Route,
-        onDismiss: () -> Unit,
-    ): LinearLayout =
-        LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(8, 4, 8, 4)
-
-            addView(
-                TextView(this@FloatingWidgetService).apply {
-                    text = route.name
-                    setPadding(0, 0, 16, 0)
-                },
-            )
-
-            addView(
-                Button(this@FloatingWidgetService).apply {
-                    text = "Play"
-                    setOnClickListener {
-                        startRouteReplay(route.id, false)
-                        onDismiss()
-                        moveAppToBack()
-                    }
-                },
-            )
-
-            addView(
-                Button(this@FloatingWidgetService).apply {
-                    text = "Reverse"
-                    setOnClickListener {
-                        startRouteReplay(route.id, true)
-                        onDismiss()
-                        moveAppToBack()
-                    }
-                },
-            )
-        }
-
-    private fun getPopupDimensions(): Pair<Int, Int> {
-        val wm = getSystemService(WINDOW_SERVICE) as AndroidWindowManager
-        val bounds = wm.currentWindowMetrics.bounds
-        val screenWidth = bounds.width()
-        val screenHeight = bounds.height()
-        return Pair((screenWidth * 0.8).toInt(), (screenHeight * 0.8).toInt())
-    }
-
-    private fun showPopupCentered(
-        popup: PopupWindow,
-        anchor: View,
-    ) {
-        val wm = getSystemService(WINDOW_SERVICE) as AndroidWindowManager
-        val bounds = wm.currentWindowMetrics.bounds
-        val screenWidth = bounds.width()
-        val screenHeight = bounds.height()
-        val xOffset = (screenWidth - popup.width) / 2
-        val yOffset = (screenHeight - popup.height) / 2
-        popup.showAtLocation(anchor, Gravity.NO_GRAVITY, xOffset, yOffset)
-    }
-
     private fun cycleSpeedProfile() {
         serviceScope.launch {
             val profiles = settingsRepository.getSpeedProfiles().first()
@@ -914,6 +1052,20 @@ class FloatingWidgetService :
             Log.d(TAG, "Opened map screen")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to open map screen", e)
+        }
+    }
+
+    private fun openRouteCreator() {
+        try {
+            val intent =
+                Intent(this, Class.forName("com.locationjoystick.app.MainActivity")).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    putExtra("navigate_to_route_creator", true)
+                }
+            startActivity(intent)
+            Log.d(TAG, "Opened route creator")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open route creator", e)
         }
     }
 
