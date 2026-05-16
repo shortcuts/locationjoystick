@@ -381,4 +381,167 @@ class GeoUtilsTest {
         val result = rdpSimplify(points, 0.001)
         assertEquals(3, result.size)
     }
+
+    // interpolatePosition
+
+    @Test
+    fun `interpolatePosition fraction 0 returns start`() {
+        val from = LatLng(0.0, 0.0)
+        val to = LatLng(1.0, 1.0)
+        val result = interpolatePosition(from, to, 0.0)
+        assertEquals(from, result)
+    }
+
+    @Test
+    fun `interpolatePosition fraction 1 returns end`() {
+        val from = LatLng(0.0, 0.0)
+        val to = LatLng(1.0, 1.0)
+        val result = interpolatePosition(from, to, 1.0)
+        assertEquals(to, result)
+    }
+
+    @Test
+    fun `interpolatePosition fraction half returns midpoint`() {
+        val from = LatLng(0.0, 0.0)
+        val to = LatLng(2.0, 2.0)
+        val result = interpolatePosition(from, to, 0.5)
+        assertEquals(1.0, result.latitude, 0.0001)
+        assertEquals(1.0, result.longitude, 0.0001)
+    }
+
+    @Test
+    fun `interpolatePosition negative fraction extrapolates`() {
+        val from = LatLng(0.0, 0.0)
+        val to = LatLng(1.0, 0.0)
+        val result = interpolatePosition(from, to, -0.5)
+        assertTrue(result.latitude < 0.0)
+    }
+
+    @Test
+    fun `interpolatePosition fraction greater than 1 extrapolates`() {
+        val from = LatLng(0.0, 0.0)
+        val to = LatLng(1.0, 0.0)
+        val result = interpolatePosition(from, to, 1.5)
+        assertTrue(result.latitude > 1.0)
+    }
+
+    // snapBearingToCardinal
+
+    @Test
+    fun `snapBearingToCardinal with snap false returns unchanged`() {
+        assertEquals(37f, snapBearingToCardinal(37f, false), 0.01f)
+    }
+
+    @Test
+    fun `snapBearingToCardinal snaps 0 to 0`() {
+        assertEquals(0f, snapBearingToCardinal(0f, true), 0.01f)
+    }
+
+    @Test
+    fun `snapBearingToCardinal snaps 90 to 90`() {
+        assertEquals(90f, snapBearingToCardinal(90f, true), 0.01f)
+    }
+
+    @Test
+    fun `snapBearingToCardinal snaps 45 to 45`() {
+        assertEquals(45f, snapBearingToCardinal(45f, true), 0.01f)
+    }
+
+    @Test
+    fun `snapBearingToCardinal snaps 10 to 0`() {
+        assertEquals(0f, snapBearingToCardinal(10f, true), 0.01f)
+    }
+
+    @Test
+    fun `snapBearingToCardinal snaps 80 to 90`() {
+        assertEquals(90f, snapBearingToCardinal(80f, true), 0.01f)
+    }
+
+    @Test
+    fun `snapBearingToCardinal snaps 270 to 270`() {
+        assertEquals(270f, snapBearingToCardinal(270f, true), 0.01f)
+    }
+
+    @Test
+    fun `snapBearingToCardinal snaps 355 to 0`() {
+        val result = snapBearingToCardinal(355f, true)
+        assertTrue(result == 0f || result == 360f)
+    }
+
+    // addGpsJitter
+
+    @Test
+    fun `addGpsJitter returns position near original`() {
+        val pos = LatLng(0.0, 0.0)
+        val jittered = addGpsJitter(pos, 1.0)
+        val dist = haversineDistance(pos, jittered)
+        assertTrue("jittered position should be within 1m", dist <= 1.5)
+    }
+
+    @Test
+    fun `addGpsJitter with zero maxJitter returns same position`() {
+        val pos = LatLng(0.0, 0.0)
+        val jittered = addGpsJitter(pos, 0.0)
+        assertEquals(pos, jittered)
+    }
+
+    // metersToLatDegrees
+
+    @Test
+    fun `metersToLatDegrees 111km is approx 1 degree`() {
+        val degrees = metersToLatDegrees(111_195.0)
+        assertEquals(1.0, degrees, 0.1)
+    }
+
+    @Test
+    fun `metersToLatDegrees zero is zero`() {
+        assertEquals(0.0, metersToLatDegrees(0.0), 0.0001)
+    }
+
+    @Test
+    fun `metersToLatDegrees negative meters gives negative degrees`() {
+        assertTrue(metersToLatDegrees(-1000.0) < 0.0)
+    }
+
+    // metersToLngDegrees
+
+    @Test
+    fun `metersToLngDegrees at equator 111km is approx 1 degree`() {
+        val degrees = metersToLngDegrees(111_195.0, 0.0)
+        assertEquals(1.0, degrees, 0.1)
+    }
+
+    @Test
+    fun `metersToLngDegrees at higher latitude gives larger degrees`() {
+        val atEquator = metersToLngDegrees(1000.0, 0.0)
+        val atHighLat = metersToLngDegrees(1000.0, 60.0)
+        assertTrue("degrees at 60° lat should be larger", atHighLat > atEquator)
+    }
+
+    @Test
+    fun `metersToLngDegrees zero is zero`() {
+        assertEquals(0.0, metersToLngDegrees(0.0, 0.0), 0.0001)
+    }
+
+    // haversineDistance raw overload
+
+    @Test
+    fun `haversineDistance raw coords matches LatLng overload`() {
+        val a = LatLng(48.8566, 2.3522)
+        val b = LatLng(51.5074, -0.1278)
+        val viaLatLng = haversineDistance(a, b)
+        val viaRaw = haversineDistance(a.latitude, a.longitude, b.latitude, b.longitude)
+        assertEquals(viaLatLng, viaRaw, 0.001)
+    }
+
+    // calculateBearing raw overload
+
+    @Test
+    fun `calculateBearing raw coords matches LatLng overload`() {
+        val a = LatLng(48.8566, 2.3522)
+        val b = LatLng(51.5074, -0.1278)
+        val viaLatLng = bearingBetweenCoords(a, b)
+        val viaRaw = calculateBearing(a.latitude, a.longitude, b.latitude, b.longitude)
+        assertEquals(viaLatLng.toDouble(), viaRaw, 0.1)
+    }
 }
