@@ -1,6 +1,7 @@
 package com.locationjoystick.core.routing
 
 import android.util.Log
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -15,7 +16,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "RouteReplayEngine"
-private const val TICK_INTERVAL_MS = 1000L
 
 @Singleton
 class RouteReplayEngine
@@ -103,7 +103,7 @@ class RouteReplayEngine
                                 currentPosition = position,
                                 currentWaypointIndex = index,
                                 speedMs = savedSpeedMs,
-                                deltaTimeMs = TICK_INTERVAL_MS,
+                                deltaTimeMs = AppConstants.LocationConstants.UPDATE_INTERVAL_MS,
                             )
                         position = result.position
                         index = result.nextWaypointIndex
@@ -131,7 +131,7 @@ class RouteReplayEngine
                                 break
                             }
                         }
-                        delay(TICK_INTERVAL_MS)
+                        delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
                     }
                 }
         }

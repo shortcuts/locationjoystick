@@ -8,6 +8,7 @@ android {
 
 dependencies {
     implementation(project(":feature:favorites:api"))
+    implementation(project(":core:common"))
     implementation(project(":core:data"))
     implementation(project(":core:location"))
     implementation(project(":core:overlay"))

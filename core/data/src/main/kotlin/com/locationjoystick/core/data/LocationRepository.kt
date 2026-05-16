@@ -1,6 +1,7 @@
 package com.locationjoystick.core.data
 
 import android.util.Log
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -73,7 +74,8 @@ class LocationRepository
         suspend fun startSpoofing() {
             Log.d(TAG, "startSpoofing requested")
             if (_currentPosition.value == null) {
-                _currentPosition.value = LatLng(latitude = 48.8566, longitude = 2.3522)
+                _currentPosition.value =
+                    LatLng(latitude = AppConstants.MapConstants.DEFAULT_LAT, longitude = AppConstants.MapConstants.DEFAULT_LON)
             }
             _mockLocationState.value = MockLocationState.RUNNING
         }

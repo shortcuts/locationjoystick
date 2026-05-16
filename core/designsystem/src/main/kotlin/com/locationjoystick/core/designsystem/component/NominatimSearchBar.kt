@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.common.constants.AppConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -34,8 +35,6 @@ import java.net.URL
 import java.net.URLEncoder
 
 private const val TAG = "NominatimSearchBar"
-private const val NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search"
-private const val SEARCH_DEBOUNCE_MS = 300L
 
 @Composable
 fun NominatimSearchBar(
@@ -51,12 +50,12 @@ fun NominatimSearchBar(
             results = emptyList()
             return@LaunchedEffect
         }
-        delay(SEARCH_DEBOUNCE_MS)
+        delay(AppConstants.NominatimConstants.SEARCH_DEBOUNCE_MS)
         isLoading = true
         withContext(Dispatchers.IO) {
             try {
                 val encoded = URLEncoder.encode(query, "UTF-8")
-                val url = URL("$NOMINATIM_SEARCH_URL?q=$encoded&format=json&limit=5")
+                val url = URL("${AppConstants.NominatimConstants.SEARCH_URL}?q=$encoded&format=json&limit=5")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.setRequestProperty("User-Agent", "locationjoystick/1.0")
                 conn.connectTimeout = 5000

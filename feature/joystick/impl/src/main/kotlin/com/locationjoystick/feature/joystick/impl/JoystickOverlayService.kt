@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.MockLocationService
@@ -36,9 +37,6 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 private const val TAG = "JoystickOverlayService"
-private const val JOYSTICK_SIZE_DP = 90
-private const val MOVE_STEP_SECONDS = 0.1
-private const val MOVE_STEP_MS = 100L
 
 /**
  * Pure position-advance function for one joystick tick.
@@ -55,8 +53,10 @@ internal fun computeJoystickStep(
     // Convert screen angle (0=east, CCW) to geographic bearing (0=north, CW).
     val bearingRad = Math.atan2(cos(angleRad), -sin(angleRad))
     val distanceMeters = speedMs * stepSeconds * force
-    val dLat = distanceMeters * cos(bearingRad) / 111320.0
-    val dLon = distanceMeters * sin(bearingRad) / (111320.0 * cos(Math.toRadians(currentPos.latitude)))
+    val dLat = distanceMeters * cos(bearingRad) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
+    val dLon =
+        distanceMeters * sin(bearingRad) /
+            (AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE * cos(Math.toRadians(currentPos.latitude)))
     return LatLng(latitude = currentPos.latitude + dLat, longitude = currentPos.longitude + dLon)
 }
 
@@ -204,7 +204,7 @@ class JoystickOverlayService : OverlayService() {
     }
 
     override fun getWindowManagerParams(view: View): WindowManager.LayoutParams {
-        val sizePx = (JOYSTICK_SIZE_DP * resources.displayMetrics.density).toInt()
+        val sizePx = (AppConstants.JoystickConstants.SIZE_DP * resources.displayMetrics.density).toInt()
 
         return WindowManager
             .LayoutParams(
@@ -226,7 +226,7 @@ class JoystickOverlayService : OverlayService() {
         movementJob =
             serviceScope.launch {
                 while (isActive) {
-                    delay(MOVE_STEP_MS)
+                    delay(AppConstants.JoystickConstants.STEP_MS)
                     val input = lastInput ?: continue
                     if (input.force > 0f) {
                         applyJoystickInput(input)
@@ -244,7 +244,7 @@ class JoystickOverlayService : OverlayService() {
         val bearingRad = Math.atan2(cos(angleRad), -sin(angleRad))
         val bearingDeg = ((Math.toDegrees(bearingRad) + 360.0) % 360.0)
 
-        val nextPos = computeJoystickStep(currentPos, input.angleDegrees, input.force, speedMs, MOVE_STEP_SECONDS)
+        val nextPos = computeJoystickStep(currentPos, input.angleDegrees, input.force, speedMs, AppConstants.JoystickConstants.STEP_SECONDS)
 
         locationRepository.updatePosition(nextPos)
 

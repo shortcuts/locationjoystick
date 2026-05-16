@@ -1,5 +1,6 @@
 package com.locationjoystick.core.routing
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.bearingTo
 import com.locationjoystick.core.model.distanceTo
@@ -10,9 +11,6 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
-private const val EARTH_RADIUS_METERS = 6_371_000.0
-private const val WAYPOINT_SNAP_THRESHOLD_METERS = 1.0
-
 @Singleton
 class RouteInterpolator
     @Inject
@@ -22,7 +20,7 @@ class RouteInterpolator
             bearingDeg: Double,
             distanceMeters: Double,
         ): LatLng {
-            val d = distanceMeters / EARTH_RADIUS_METERS
+            val d = distanceMeters / AppConstants.LocationConstants.EARTH_RADIUS_METERS
             val brng = Math.toRadians(bearingDeg)
             val lat1 = Math.toRadians(from.latitude)
             val lon1 = Math.toRadians(from.longitude)
@@ -46,7 +44,9 @@ class RouteInterpolator
             val distanceToTarget = currentPosition.distanceTo(target)
             val distanceToAdvance = speedMs * (deltaTimeMs / 1000.0)
 
-            return if (distanceToTarget <= WAYPOINT_SNAP_THRESHOLD_METERS || distanceToAdvance >= distanceToTarget) {
+            return if (distanceToTarget <= AppConstants.RouteConstants.WAYPOINT_SNAP_THRESHOLD_METERS ||
+                distanceToAdvance >= distanceToTarget
+            ) {
                 val nextIndex = currentWaypointIndex + 1
                 if (nextIndex >= waypoints.size) {
                     InterpolationResult(target, currentWaypointIndex, reachedEnd = true)

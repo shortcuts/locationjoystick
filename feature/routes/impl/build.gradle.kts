@@ -8,6 +8,7 @@ android {
 
 dependencies {
     implementation(project(":feature:routes:api"))
+    implementation(project(":core:common"))
     implementation(project(":core:data"))
     implementation(project(":core:routing"))
     implementation(project(":core:location"))

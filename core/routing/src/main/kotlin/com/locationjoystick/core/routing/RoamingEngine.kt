@@ -1,6 +1,7 @@
 package com.locationjoystick.core.routing
 
 import android.util.Log
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RoamingConfig
 import kotlinx.coroutines.CoroutineScope
@@ -19,9 +20,6 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 private const val TAG = "RoamingEngine"
-private const val TICK_INTERVAL_MS = 1000L
-private const val OSRM_PROFILE_FOOT = "foot"
-private const val OSRM_PROFILE_CYCLING = "cycling"
 
 @Singleton
 class RoamingEngine
@@ -39,8 +37,8 @@ class RoamingEngine
         ): LatLng {
             val r = radiusMeters * sqrt(Math.random())
             val theta = Math.random() * 2 * PI
-            val dLat = r * cos(theta) / 111_320.0
-            val dLon = r * sin(theta) / (111_320.0 * cos(Math.toRadians(center.latitude)))
+            val dLat = r * cos(theta) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
+            val dLon = r * sin(theta) / (AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE * cos(Math.toRadians(center.latitude)))
             return LatLng(center.latitude + dLat, center.longitude + dLon)
         }
 
@@ -71,7 +69,7 @@ class RoamingEngine
                                 currentPosition = currentPosition,
                                 currentWaypointIndex = waypointIndex,
                                 speedMs = speedMs,
-                                deltaTimeMs = TICK_INTERVAL_MS,
+                                deltaTimeMs = AppConstants.LocationConstants.UPDATE_INTERVAL_MS,
                             )
 
                         currentPosition = result.position
@@ -83,7 +81,7 @@ class RoamingEngine
                         }
 
                         onPositionUpdate(currentPosition)
-                        delay(TICK_INTERVAL_MS)
+                        delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
                     }
 
                     if (config.returnToInitialLocation && isActive) {
@@ -96,13 +94,13 @@ class RoamingEngine
                                     currentPosition = currentPosition,
                                     currentWaypointIndex = returnIndex,
                                     speedMs = speedMs,
-                                    deltaTimeMs = TICK_INTERVAL_MS,
+                                    deltaTimeMs = AppConstants.LocationConstants.UPDATE_INTERVAL_MS,
                                 )
                             currentPosition = result.position
                             returnIndex = result.nextWaypointIndex
                             onPositionUpdate(currentPosition)
                             if (result.reachedEnd) break
-                            delay(TICK_INTERVAL_MS)
+                            delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
                         }
                     }
                 }
@@ -125,8 +123,8 @@ class RoamingEngine
             }
             val profile =
                 when (config.speedProfileId) {
-                    "bike" -> OSRM_PROFILE_CYCLING
-                    else -> OSRM_PROFILE_FOOT
+                    "bike" -> AppConstants.RoamingConstants.OSRM_PROFILE_CYCLING
+                    else -> AppConstants.RoamingConstants.OSRM_PROFILE_FOOT
                 }
             return osrmClient
                 .getRoute(profile, listOf(from, to))

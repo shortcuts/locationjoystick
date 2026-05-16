@@ -8,6 +8,7 @@ android {
 
 dependencies {
     implementation(project(":feature:joystick:api"))
+    implementation(project(":core:common"))
     implementation(project(":core:data"))
     implementation(project(":core:overlay"))
     implementation(project(":core:location"))

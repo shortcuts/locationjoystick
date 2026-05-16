@@ -1,0 +1,133 @@
+package com.locationjoystick.core.common.constants
+
+object AppConstants {
+    object LocationConstants {
+        const val EARTH_RADIUS_METERS = 6_371_000.0
+        const val METERS_PER_LATITUDE_DEGREE = 111_320.0
+        const val UPDATE_INTERVAL_MS = 1000L
+        const val LOCATION_ACCURACY_FINE = 3.0f
+        const val WALK_ARRIVAL_THRESHOLD_METERS = 1.0
+        const val DEFAULT_REPLAY_SPEED_MS = 1.4
+        const val RDP_SIMPLIFICATION_EPSILON_METERS = 5.0
+        const val DEGREES_IN_CIRCLE = 360.0
+        const val CARDINAL_SNAP_STEP_DEGREES = 45.0
+    }
+
+    object ProfileConstants {
+        const val PROFILE_ID_WALK = "walk"
+        const val PROFILE_ID_RUN = "run"
+        const val PROFILE_ID_BIKE = "bike"
+        const val WALK_SPEED_MPS = 0.5556
+        const val RUN_SPEED_MPS = 2.2222
+        const val BIKE_SPEED_MPS = 4.1667
+        const val DEFAULT_ACTIVE_PROFILE_ID = PROFILE_ID_WALK
+        const val MIN_SPEED_MS = 0.1
+        const val MAX_SPEED_MS = 15.0
+        const val ANTI_CHEAT_WARNING_THRESHOLD_MS = 8.0
+        const val DEFAULT_SPEED_UNIT = "KMH"
+    }
+
+    object JitterConstants {
+        const val DEFAULT_IDLE_RADIUS_METERS = 0.0
+        const val DEFAULT_MOVING_RADIUS_METERS = 1.0
+        const val MAX_RADIUS_METERS = 50.0
+        const val DEFAULT_INTERVAL_SECONDS = 3
+        const val MIN_INTERVAL_SECONDS = 1
+        const val MAX_INTERVAL_SECONDS = 30
+        const val ACCURACY_MIN = 2.0f
+        const val ACCURACY_MAX = 5.0f
+        const val ACCURACY_PERTURBATION_RANGE = 3.0
+    }
+
+    object RoamingConstants {
+        const val DEFAULT_RADIUS_METERS = 2000.0
+        const val DEFAULT_DURATION_SECONDS = 1800L
+        const val OSRM_PROFILE_FOOT = "foot"
+        const val OSRM_PROFILE_CYCLING = "cycling"
+        const val DEFAULT_TRANSPORT_MODE = ProfileConstants.PROFILE_ID_WALK
+        const val WAYPOINT_ARRIVAL_THRESHOLD_METERS = 5.0
+    }
+
+    object OsrmConstants {
+        const val BASE_URL = "https://router.project-osrm.org/"
+        const val OVERVIEW = "full"
+        const val GEOMETRIES = "geojson"
+    }
+
+    object MapConstants {
+        const val DEFAULT_LAT = 48.8566
+        const val DEFAULT_LON = 2.3522
+        const val DEFAULT_ZOOM = 15.0
+        const val OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        const val EMPTY_MAP_STYLE_URI = "asset://empty.json"
+        const val OSM_SOURCE_ID = "osm-source"
+        const val OSM_LAYER_ID = "osm-layer"
+    }
+
+    object NominatimConstants {
+        const val SEARCH_URL = "https://nominatim.openstreetmap.org/search"
+        const val SEARCH_DEBOUNCE_MS = 300L
+    }
+
+    object ExportConstants {
+        const val SCHEMA_VERSION = 1
+        const val FILENAME_PREFIX = "locationjoystick-export"
+        const val MIME_TYPE = "application/json"
+        const val GPX_VERSION = "1.1"
+        const val GPX_CREATOR = "locationjoystick"
+    }
+
+    object NotificationConstants {
+        const val ID_ACTIVE = 1001
+        const val ID_PERMISSION_ERROR = 1002
+        const val CHANNEL_ID_ACTIVE = "location_spoof_channel"
+        const val CHANNEL_ID_PERMISSION_ERROR = "location_perm_error_channel"
+        const val CHANNEL_NAME_ACTIVE = "Location Spoofing"
+        const val CHANNEL_DESC_ACTIVE = "Active while mock location is running"
+        const val CHANNEL_NAME_PERMISSION_ERROR = "Permission Errors"
+        const val CHANNEL_DESC_PERMISSION_ERROR = "Shown when required permissions are missing"
+        const val TITLE_PERMISSION_ERROR = "Permissions missing"
+        const val TEXT_PERMISSION_ERROR = "Open the app and complete setup to start spoofing."
+        const val TITLE_ACTIVE = "Mock location active"
+        const val TEXT_ACTIVE = "locationjoystick is spoofing your GPS position"
+        const val ACTION_STOP = "Stop"
+    }
+
+    object ServiceConstants {
+        const val JOYSTICK_SERVICE_CLASS = "com.locationjoystick.feature.joystick.impl.JoystickOverlayService"
+        const val WIDGET_SERVICE_CLASS = "com.locationjoystick.feature.widget.impl.FloatingWidgetService"
+        const val ACTION_START = "com.locationjoystick.core.location.ACTION_START"
+        const val ACTION_STOP = "com.locationjoystick.core.location.ACTION_STOP"
+        const val ACTION_UPDATE_POSITION = "com.locationjoystick.core.location.ACTION_UPDATE_POSITION"
+        const val ACTION_ROUTE_REPLAY_START = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_START"
+        const val ACTION_ROUTE_REPLAY_PAUSE = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_PAUSE"
+        const val ACTION_ROUTE_REPLAY_RESUME = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_RESUME"
+        const val ACTION_ROUTE_REPLAY_STOP = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_STOP"
+        const val ACTION_ROUTE_REPLAY_CANCEL = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_CANCEL"
+        const val ACTION_ROUTE_APPEND_WAYPOINT = "com.locationjoystick.core.location.ACTION_ROUTE_APPEND_WAYPOINT"
+        const val EXTRA_ROUTE_ID = "extra_route_id"
+        const val EXTRA_IS_BACKWARD = "extra_is_backward"
+        const val EXTRA_SPEED_MS = "extra_speed_ms"
+        const val EXTRA_WAYPOINT_LAT = "extra_waypoint_lat"
+        const val EXTRA_WAYPOINT_LON = "extra_waypoint_lon"
+    }
+
+    object DataStoreConstants {
+        const val FILE_NAME = "app_preferences"
+        const val DEFAULT_REMEMBER_LAST_LOCATION = true
+    }
+
+    object JoystickConstants {
+        const val SIZE_DP = 90
+        const val STEP_SECONDS = 0.1
+        const val STEP_MS = 100L
+    }
+
+    object WidgetConstants {
+        const val PANEL_ANIMATION_DURATION_MS = 200L
+    }
+
+    object RouteConstants {
+        const val WAYPOINT_SNAP_THRESHOLD_METERS = 1.0
+    }
+}

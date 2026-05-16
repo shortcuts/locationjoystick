@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.model.LatLng
@@ -174,7 +175,7 @@ class RouteCreatorViewModel
             a: LatLng,
             b: LatLng,
         ): Double {
-            val earthRadius = 6371000.0
+            val earthRadius = AppConstants.LocationConstants.EARTH_RADIUS_METERS
             val dLat = Math.toRadians(b.latitude - a.latitude)
             val dLon = Math.toRadians(b.longitude - a.longitude)
             val sinDLat = sin(dLat / 2)

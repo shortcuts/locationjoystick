@@ -19,6 +19,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.common.util.haversineDistance
@@ -51,33 +52,30 @@ import javax.inject.Inject
 class MockLocationService : Service() {
     companion object {
         private const val TAG = "MockLocationService"
-        private const val NOTIFICATION_ID = 1001
-        private const val NOTIFICATION_ID_PERM_ERROR = 1002
-        private const val CHANNEL_ID = "location_spoof_channel"
-        private const val CHANNEL_ID_PERM_ERROR = "location_perm_error_channel"
-        private const val UPDATE_INTERVAL_MS = 1000L
-        private const val LOCATION_ACCURACY = 3.0f
+        private const val NOTIFICATION_ID = AppConstants.NotificationConstants.ID_ACTIVE
+        private const val NOTIFICATION_ID_PERM_ERROR = AppConstants.NotificationConstants.ID_PERMISSION_ERROR
+        private const val CHANNEL_ID = AppConstants.NotificationConstants.CHANNEL_ID_ACTIVE
+        private const val CHANNEL_ID_PERM_ERROR = AppConstants.NotificationConstants.CHANNEL_ID_PERMISSION_ERROR
+        private const val LOCATION_ACCURACY = AppConstants.LocationConstants.LOCATION_ACCURACY_FINE
 
-        private const val JOYSTICK_SERVICE_CLASS =
-            "com.locationjoystick.feature.joystick.impl.JoystickOverlayService"
-        private const val WIDGET_SERVICE_CLASS =
-            "com.locationjoystick.feature.widget.impl.FloatingWidgetService"
+        private const val JOYSTICK_SERVICE_CLASS = AppConstants.ServiceConstants.JOYSTICK_SERVICE_CLASS
+        private const val WIDGET_SERVICE_CLASS = AppConstants.ServiceConstants.WIDGET_SERVICE_CLASS
 
-        const val ACTION_START = "com.locationjoystick.core.location.ACTION_START"
-        const val ACTION_STOP = "com.locationjoystick.core.location.ACTION_STOP"
-        const val ACTION_UPDATE_POSITION = "com.locationjoystick.core.location.ACTION_UPDATE_POSITION"
-        const val ACTION_ROUTE_REPLAY_START = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_START"
-        const val ACTION_ROUTE_REPLAY_PAUSE = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_PAUSE"
-        const val ACTION_ROUTE_REPLAY_RESUME = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_RESUME"
-        const val ACTION_ROUTE_REPLAY_STOP = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_STOP"
-        const val ACTION_ROUTE_REPLAY_CANCEL = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_CANCEL"
-        const val ACTION_ROUTE_APPEND_WAYPOINT = "com.locationjoystick.core.location.ACTION_ROUTE_APPEND_WAYPOINT"
+        const val ACTION_START = AppConstants.ServiceConstants.ACTION_START
+        const val ACTION_STOP = AppConstants.ServiceConstants.ACTION_STOP
+        const val ACTION_UPDATE_POSITION = AppConstants.ServiceConstants.ACTION_UPDATE_POSITION
+        const val ACTION_ROUTE_REPLAY_START = AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_START
+        const val ACTION_ROUTE_REPLAY_PAUSE = AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_PAUSE
+        const val ACTION_ROUTE_REPLAY_RESUME = AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_RESUME
+        const val ACTION_ROUTE_REPLAY_STOP = AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_STOP
+        const val ACTION_ROUTE_REPLAY_CANCEL = AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_CANCEL
+        const val ACTION_ROUTE_APPEND_WAYPOINT = AppConstants.ServiceConstants.ACTION_ROUTE_APPEND_WAYPOINT
 
-        const val EXTRA_ROUTE_ID = "extra_route_id"
-        const val EXTRA_IS_BACKWARD = "extra_is_backward"
-        const val EXTRA_SPEED_MS = "extra_speed_ms"
-        const val EXTRA_WAYPOINT_LAT = "extra_waypoint_lat"
-        const val EXTRA_WAYPOINT_LON = "extra_waypoint_lon"
+        const val EXTRA_ROUTE_ID = AppConstants.ServiceConstants.EXTRA_ROUTE_ID
+        const val EXTRA_IS_BACKWARD = AppConstants.ServiceConstants.EXTRA_IS_BACKWARD
+        const val EXTRA_SPEED_MS = AppConstants.ServiceConstants.EXTRA_SPEED_MS
+        const val EXTRA_WAYPOINT_LAT = AppConstants.ServiceConstants.EXTRA_WAYPOINT_LAT
+        const val EXTRA_WAYPOINT_LON = AppConstants.ServiceConstants.EXTRA_WAYPOINT_LON
     }
 
     inner class LocalBinder : Binder() {
@@ -249,8 +247,8 @@ class MockLocationService : Service() {
 
         when (intent?.action) {
             ACTION_START -> {
-                val lat = intent.getDoubleExtra("lat", 48.8566)
-                val lon = intent.getDoubleExtra("lon", 2.3522)
+                val lat = intent.getDoubleExtra("lat", AppConstants.MapConstants.DEFAULT_LAT)
+                val lon = intent.getDoubleExtra("lon", AppConstants.MapConstants.DEFAULT_LON)
                 startSpoofing(lat, lon)
             }
 
@@ -269,7 +267,7 @@ class MockLocationService : Service() {
             ACTION_ROUTE_REPLAY_START -> {
                 val routeId = intent.getStringExtra(EXTRA_ROUTE_ID) ?: return START_STICKY
                 val isBackward = intent.getBooleanExtra(EXTRA_IS_BACKWARD, false)
-                val speedMs = intent.getDoubleExtra(EXTRA_SPEED_MS, 1.4)
+                val speedMs = intent.getDoubleExtra(EXTRA_SPEED_MS, AppConstants.LocationConstants.DEFAULT_REPLAY_SPEED_MS)
                 handleReplayStart(routeId, isBackward, speedMs)
             }
 
@@ -278,7 +276,7 @@ class MockLocationService : Service() {
             }
 
             ACTION_ROUTE_REPLAY_RESUME -> {
-                val speedMs = intent.getDoubleExtra(EXTRA_SPEED_MS, 1.4)
+                val speedMs = intent.getDoubleExtra(EXTRA_SPEED_MS, AppConstants.LocationConstants.DEFAULT_REPLAY_SPEED_MS)
                 handleReplayResume(speedMs)
             }
 
@@ -454,7 +452,7 @@ class MockLocationService : Service() {
     ) {
         while (true) {
             val dist = haversineDistance(currentLat, currentLon, target.latitude, target.longitude)
-            if (dist < 1.0) break
+            if (dist < AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS) break
             val bearing = calculateBearing(currentLat, currentLon, target.latitude, target.longitude)
             val step = minOf(speedMs, dist)
             val (newLat, newLon) = advancePosition(currentLat, currentLon, bearing, step)
@@ -462,7 +460,7 @@ class MockLocationService : Service() {
             currentLon = newLon
             locationRepository.setPositionInternal(LatLng(newLat, newLon))
             pushLocationUpdate()
-            delay(1000L)
+            delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
         }
     }
 
@@ -541,7 +539,7 @@ class MockLocationService : Service() {
             serviceScope.launch {
                 while (isActive) {
                     pushLocationUpdate()
-                    delay(UPDATE_INTERVAL_MS)
+                    delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
                 }
             }
     }
@@ -596,9 +594,18 @@ class MockLocationService : Service() {
         val u2 = Math.random()
         val mag = sigmaMeters * kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1))
         val angle = 2.0 * Math.PI * u2
-        val dlat = mag * kotlin.math.cos(angle) / 111_111.0
-        val dlon = mag * kotlin.math.sin(angle) / (111_111.0 * kotlin.math.cos(Math.toRadians(lat)))
-        val accuracy = (LOCATION_ACCURACY + (Math.random() * 3.0 - 1.5).toFloat()).coerceIn(2.0f, 5.0f)
+        val dlat = mag * kotlin.math.cos(angle) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
+        val dlon =
+            mag * kotlin.math.sin(angle) /
+                (AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE * kotlin.math.cos(Math.toRadians(lat)))
+        val accuracy =
+            (
+                LOCATION_ACCURACY +
+                    (
+                        Math.random() * AppConstants.JitterConstants.ACCURACY_PERTURBATION_RANGE -
+                            AppConstants.JitterConstants.ACCURACY_PERTURBATION_RANGE / 2
+                    ).toFloat()
+            ).coerceIn(AppConstants.JitterConstants.ACCURACY_MIN, AppConstants.JitterConstants.ACCURACY_MAX)
         return Triple(lat + dlat, lon + dlon, accuracy)
     }
 
@@ -606,19 +613,19 @@ class MockLocationService : Service() {
         val channel =
             NotificationChannel(
                 CHANNEL_ID,
-                "Location Spoofing",
+                AppConstants.NotificationConstants.CHANNEL_NAME_ACTIVE,
                 NotificationManager.IMPORTANCE_LOW,
             ).apply {
-                description = "Active while mock location is running"
+                description = AppConstants.NotificationConstants.CHANNEL_DESC_ACTIVE
                 setShowBadge(false)
             }
         val errorChannel =
             NotificationChannel(
                 CHANNEL_ID_PERM_ERROR,
-                "Permission Errors",
+                AppConstants.NotificationConstants.CHANNEL_NAME_PERMISSION_ERROR,
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
-                description = "Shown when required permissions are missing"
+                description = AppConstants.NotificationConstants.CHANNEL_DESC_PERMISSION_ERROR
             }
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.createNotificationChannel(channel)
@@ -638,8 +645,8 @@ class MockLocationService : Service() {
         val notification =
             NotificationCompat
                 .Builder(this, CHANNEL_ID_PERM_ERROR)
-                .setContentTitle("Permissions missing")
-                .setContentText("Open the app and complete setup to start spoofing.")
+                .setContentTitle(AppConstants.NotificationConstants.TITLE_PERMISSION_ERROR)
+                .setContentText(AppConstants.NotificationConstants.TEXT_PERMISSION_ERROR)
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
                 .setContentIntent(openAppIntent)
                 .setAutoCancel(true)
@@ -675,13 +682,13 @@ class MockLocationService : Service() {
 
         return NotificationCompat
             .Builder(this, CHANNEL_ID)
-            .setContentTitle("Mock location active")
-            .setContentText("locationjoystick is spoofing your GPS position")
+            .setContentTitle(AppConstants.NotificationConstants.TITLE_ACTIVE)
+            .setContentText(AppConstants.NotificationConstants.TEXT_ACTIVE)
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
             .setContentIntent(openAppIntent)
             .addAction(
                 android.R.drawable.ic_delete,
-                "Stop",
+                AppConstants.NotificationConstants.ACTION_STOP,
                 stopPendingIntent,
             ).setOngoing(true)
             .setSilent(true)

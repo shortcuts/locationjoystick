@@ -1,6 +1,7 @@
 package com.locationjoystick.core.routing
 
 import android.util.Log
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,15 +15,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "OsrmClient"
-private const val OSRM_BASE_URL = "https://router.project-osrm.org/"
 
 internal interface OsrmApi {
     @GET("route/v1/{profile}/{coordinates}")
     suspend fun getRoute(
         @Path("profile") profile: String,
         @Path("coordinates") coordinates: String,
-        @Query("overview") overview: String = "full",
-        @Query("geometries") geometries: String = "geojson",
+        @Query("overview") overview: String = AppConstants.OsrmConstants.OVERVIEW,
+        @Query("geometries") geometries: String = AppConstants.OsrmConstants.GEOMETRIES,
     ): Response<OsrmRouteResponse>
 }
 
@@ -56,13 +56,13 @@ class OsrmClient
     @Inject
     constructor() {
         companion object {
-            const val PROFILE_FOOT = "foot"
+            const val PROFILE_FOOT = AppConstants.RoamingConstants.OSRM_PROFILE_FOOT
         }
 
         private val api: OsrmApi =
             Retrofit
                 .Builder()
-                .baseUrl(OSRM_BASE_URL)
+                .baseUrl(AppConstants.OsrmConstants.BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(OsrmApi::class.java)

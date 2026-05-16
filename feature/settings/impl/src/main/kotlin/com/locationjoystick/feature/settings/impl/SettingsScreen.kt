@@ -44,6 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.component.LjTopBar
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
@@ -61,7 +62,7 @@ fun SettingsRoute(
 
     val exportLauncher =
         rememberLauncherForActivityResult(
-            ActivityResultContracts.CreateDocument("application/json"),
+            ActivityResultContracts.CreateDocument(AppConstants.ExportConstants.MIME_TYPE),
         ) { uri ->
             if (uri != null) viewModel.writeExportToUri(context, uri)
         }
@@ -106,8 +107,8 @@ fun SettingsRoute(
         onSetJitterIntervalSeconds = viewModel::setJitterIntervalSeconds,
         convertMsToDisplay = viewModel::convertMsToDisplay,
         onUpdateRoamingDefaults = viewModel::updateRoamingDefaults,
-        onExport = { exportLauncher.launch("locationjoystick-export-${System.currentTimeMillis()}.json") },
-        onImport = { importLauncher.launch(arrayOf("application/json")) },
+        onExport = { exportLauncher.launch("${AppConstants.ExportConstants.FILENAME_PREFIX}-${System.currentTimeMillis()}.json") },
+        onImport = { importLauncher.launch(arrayOf(AppConstants.ExportConstants.MIME_TYPE)) },
         onSaveChanges = viewModel::saveChanges,
         onDiscardChanges = viewModel::discardChanges,
     )

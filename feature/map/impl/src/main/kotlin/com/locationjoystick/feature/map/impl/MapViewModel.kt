@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.common.util.haversineDistance
@@ -501,7 +502,9 @@ class MapViewModel
         }
 
         private fun startSpoofing() {
-            val startPos = locationRepository.currentPosition.value ?: LatLng(48.8566, 2.3522)
+            val startPos =
+                locationRepository.currentPosition.value
+                    ?: LatLng(AppConstants.MapConstants.DEFAULT_LAT, AppConstants.MapConstants.DEFAULT_LON)
             val intent =
                 Intent(MockLocationService.ACTION_START).apply {
                     setClassName(context, "com.locationjoystick.core.location.MockLocationService")

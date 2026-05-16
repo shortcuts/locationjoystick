@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -176,7 +177,9 @@ class RoutesViewModel
         private fun buildGpxString(route: Route): String =
             buildString {
                 appendLine("""<?xml version="1.0" encoding="UTF-8"?>""")
-                appendLine("""<gpx version="1.1" creator="locationjoystick">""")
+                appendLine(
+                    """<gpx version="${AppConstants.ExportConstants.GPX_VERSION}" creator="${AppConstants.ExportConstants.GPX_CREATOR}">""",
+                )
                 appendLine("  <trk><name>${route.name}</name><trkseg>")
                 route.waypoints.forEach { wp ->
                     appendLine("""    <trkpt lat="${wp.position.latitude}" lon="${wp.position.longitude}"/>""")
@@ -184,11 +187,6 @@ class RoutesViewModel
                 appendLine("  </trkseg></trk>")
                 append("</gpx>")
             }
-
-        suspend fun importGpx(uri: Uri) {
-            // Stub: GPX import to be implemented
-            // TODO: Parse GPX file from uri, extract waypoints, create route
-        }
 
         fun importRouteFromGpxAsync(
             uri: Uri,

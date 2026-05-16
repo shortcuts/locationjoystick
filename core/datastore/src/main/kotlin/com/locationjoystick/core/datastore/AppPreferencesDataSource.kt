@@ -10,12 +10,10 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
-import com.locationjoystick.core.model.SpeedProfile.Companion.BIKE_SPEED_MPS
-import com.locationjoystick.core.model.SpeedProfile.Companion.RUN_SPEED_MPS
-import com.locationjoystick.core.model.SpeedProfile.Companion.WALK_SPEED_MPS
 import com.locationjoystick.core.model.WidgetFeature
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -154,7 +152,7 @@ class AppPreferencesDataSource
                     } else {
                         throw e
                     }
-                }.map { prefs -> prefs[Keys.SPEED_UNIT] ?: "KMH" }
+                }.map { prefs -> prefs[Keys.SPEED_UNIT] ?: AppConstants.ProfileConstants.DEFAULT_SPEED_UNIT }
 
         suspend fun setSpeedUnit(unit: String) {
             dataStore.edit { prefs -> prefs[Keys.SPEED_UNIT] = unit }
@@ -169,7 +167,7 @@ class AppPreferencesDataSource
                     } else {
                         throw e
                     }
-                }.map { prefs -> prefs[Keys.REMEMBER_LAST_LOCATION] ?: true }
+                }.map { prefs -> prefs[Keys.REMEMBER_LAST_LOCATION] ?: AppConstants.DataStoreConstants.DEFAULT_REMEMBER_LAST_LOCATION }
 
         suspend fun setRememberLastLocation(enabled: Boolean) {
             dataStore.edit { prefs -> prefs[Keys.REMEMBER_LAST_LOCATION] = enabled }
@@ -264,15 +262,15 @@ class AppPreferencesDataSource
         fun String.toWidgetFeature(): WidgetFeature? = WidgetFeature.entries.firstOrNull { it.name.lowercase() == this }
 
         companion object {
-            const val DATASTORE_FILE_NAME = "app_preferences"
+            const val DATASTORE_FILE_NAME = AppConstants.DataStoreConstants.FILE_NAME
 
-            const val DEFAULT_WALK_SPEED_MS = WALK_SPEED_MPS
-            const val DEFAULT_RUN_SPEED_MS = RUN_SPEED_MPS
-            const val DEFAULT_BIKE_SPEED_MS = BIKE_SPEED_MPS
-            const val DEFAULT_ACTIVE_PROFILE_ID = "walk"
+            const val DEFAULT_WALK_SPEED_MS = AppConstants.ProfileConstants.WALK_SPEED_MPS
+            const val DEFAULT_RUN_SPEED_MS = AppConstants.ProfileConstants.RUN_SPEED_MPS
+            const val DEFAULT_BIKE_SPEED_MS = AppConstants.ProfileConstants.BIKE_SPEED_MPS
+            const val DEFAULT_ACTIVE_PROFILE_ID = AppConstants.ProfileConstants.DEFAULT_ACTIVE_PROFILE_ID
 
-            const val MIN_SPEED_MS = 0.1
-            const val MAX_SPEED_MS = 15.0
+            const val MIN_SPEED_MS = AppConstants.ProfileConstants.MIN_SPEED_MS
+            const val MAX_SPEED_MS = AppConstants.ProfileConstants.MAX_SPEED_MS
 
             val DEFAULT_WIDGET_ITEMS: Set<String> =
                 setOf(
@@ -284,18 +282,18 @@ class AppPreferencesDataSource
                     WidgetFeature.SPEED_CYCLE.name.lowercase(),
                 )
 
-            const val DEFAULT_ROAMING_RADIUS_METERS = 5_000.0
+            const val DEFAULT_ROAMING_RADIUS_METERS = AppConstants.RoamingConstants.DEFAULT_RADIUS_METERS
             const val DEFAULT_ROAMING_DISTANCE_METERS = 1_000.0
-            const val DEFAULT_ROAMING_SPEED_PROFILE_ID = "walk"
+            const val DEFAULT_ROAMING_SPEED_PROFILE_ID = AppConstants.ProfileConstants.DEFAULT_ACTIVE_PROFILE_ID
             const val DEFAULT_ROAMING_FOLLOW_ROADS = true
             const val DEFAULT_ROAMING_RETURN_TO_START = true
 
-            const val DEFAULT_JITTER_IDLE_RADIUS_METERS = 0.0
-            const val DEFAULT_JITTER_MOVING_RADIUS_METERS = 1.0
-            const val MAX_JITTER_RADIUS_METERS = 50.0
-            const val DEFAULT_JITTER_INTERVAL_SECONDS = 3
-            const val MIN_JITTER_INTERVAL_SECONDS = 1
-            const val MAX_JITTER_INTERVAL_SECONDS = 30
+            const val DEFAULT_JITTER_IDLE_RADIUS_METERS = AppConstants.JitterConstants.DEFAULT_IDLE_RADIUS_METERS
+            const val DEFAULT_JITTER_MOVING_RADIUS_METERS = AppConstants.JitterConstants.DEFAULT_MOVING_RADIUS_METERS
+            const val MAX_JITTER_RADIUS_METERS = AppConstants.JitterConstants.MAX_RADIUS_METERS
+            const val DEFAULT_JITTER_INTERVAL_SECONDS = AppConstants.JitterConstants.DEFAULT_INTERVAL_SECONDS
+            const val MIN_JITTER_INTERVAL_SECONDS = AppConstants.JitterConstants.MIN_INTERVAL_SECONDS
+            const val MAX_JITTER_INTERVAL_SECONDS = AppConstants.JitterConstants.MAX_INTERVAL_SECONDS
         }
     }
 

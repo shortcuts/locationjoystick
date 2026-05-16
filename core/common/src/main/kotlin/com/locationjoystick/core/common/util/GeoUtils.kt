@@ -1,5 +1,6 @@
 package com.locationjoystick.core.common.util
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import kotlin.math.PI
 import kotlin.math.asin
@@ -7,8 +8,6 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
-
-private const val EARTH_RADIUS_METERS = 6371000.0
 
 /**
  * Calculates the great-circle distance between two points using the Haversine formula.
@@ -26,7 +25,7 @@ fun haversineDistance(
     val a =
         sin(dLat / 2) * sin(dLat / 2) +
             cos(lat1) * cos(lat2) * sin(dLon / 2) * sin(dLon / 2)
-    return 2 * EARTH_RADIUS_METERS * asin(sqrt(a))
+    return 2 * AppConstants.LocationConstants.EARTH_RADIUS_METERS * asin(sqrt(a))
 }
 
 /**
@@ -55,7 +54,7 @@ fun bearingBetweenCoords(
     val y = sin(dLon) * cos(lat2)
     val x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
     val bearing = Math.toDegrees(atan2(y, x))
-    return ((bearing + 360.0) % 360.0).toFloat()
+    return ((bearing + AppConstants.LocationConstants.DEGREES_IN_CIRCLE) % AppConstants.LocationConstants.DEGREES_IN_CIRCLE).toFloat()
 }
 
 /**
@@ -73,7 +72,8 @@ fun calculateBearing(
     val lat2Rad = Math.toRadians(lat2)
     val y = sin(dLon) * cos(lat2Rad)
     val x = cos(lat1Rad) * sin(lat2Rad) - sin(lat1Rad) * cos(lat2Rad) * cos(dLon)
-    return (Math.toDegrees(atan2(y, x)) + 360.0) % 360.0
+    return (Math.toDegrees(atan2(y, x)) + AppConstants.LocationConstants.DEGREES_IN_CIRCLE) %
+        AppConstants.LocationConstants.DEGREES_IN_CIRCLE
 }
 
 /**
@@ -89,7 +89,7 @@ fun advancePosition(
     val latRad = Math.toRadians(lat)
     val lonRad = Math.toRadians(lon)
     val bearing = Math.toRadians(bearingDeg)
-    val angularDist = distanceM / EARTH_RADIUS_METERS
+    val angularDist = distanceM / AppConstants.LocationConstants.EARTH_RADIUS_METERS
     val newLatRad =
         asin(
             sin(latRad) * cos(angularDist) +
@@ -135,7 +135,7 @@ fun randomPointInRadius(
 /**
  * Converts a distance in meters to degrees of latitude.
  */
-fun metersToLatDegrees(meters: Double): Double = meters / EARTH_RADIUS_METERS * (180.0 / PI)
+fun metersToLatDegrees(meters: Double): Double = meters / AppConstants.LocationConstants.EARTH_RADIUS_METERS * (180.0 / PI)
 
 /**
  * Converts a distance in meters to degrees of longitude at a given latitude.
@@ -145,7 +145,7 @@ fun metersToLngDegrees(
     latitude: Double,
 ): Double {
     val latRad = Math.toRadians(latitude)
-    return meters / (EARTH_RADIUS_METERS * cos(latRad)) * (180.0 / PI)
+    return meters / (AppConstants.LocationConstants.EARTH_RADIUS_METERS * cos(latRad)) * (180.0 / PI)
 }
 
 /**
@@ -183,10 +183,10 @@ private fun perpendicularDistanceMeters(
     lineEnd: LatLng,
 ): Double {
     val lat0 = Math.toRadians(lineStart.latitude)
-    val x2 = Math.toRadians(lineEnd.longitude - lineStart.longitude) * cos(lat0) * EARTH_RADIUS_METERS
-    val y2 = Math.toRadians(lineEnd.latitude - lineStart.latitude) * EARTH_RADIUS_METERS
-    val px = Math.toRadians(point.longitude - lineStart.longitude) * cos(lat0) * EARTH_RADIUS_METERS
-    val py = Math.toRadians(point.latitude - lineStart.latitude) * EARTH_RADIUS_METERS
+    val x2 = Math.toRadians(lineEnd.longitude - lineStart.longitude) * cos(lat0) * AppConstants.LocationConstants.EARTH_RADIUS_METERS
+    val y2 = Math.toRadians(lineEnd.latitude - lineStart.latitude) * AppConstants.LocationConstants.EARTH_RADIUS_METERS
+    val px = Math.toRadians(point.longitude - lineStart.longitude) * cos(lat0) * AppConstants.LocationConstants.EARTH_RADIUS_METERS
+    val py = Math.toRadians(point.latitude - lineStart.latitude) * AppConstants.LocationConstants.EARTH_RADIUS_METERS
     val lineLen2 = x2 * x2 + y2 * y2
     if (lineLen2 == 0.0) return haversineDistance(point, lineStart)
     val t = ((px * x2) + (py * y2)) / lineLen2
@@ -214,6 +214,6 @@ fun snapBearingToCardinal(
     snap: Boolean,
 ): Float {
     if (!snap) return bearing
-    val step = 45f
-    return (kotlin.math.round(bearing / step) * step % 360f)
+    val step = AppConstants.LocationConstants.CARDINAL_SNAP_STEP_DEGREES.toFloat()
+    return (kotlin.math.round(bearing / step) * step % AppConstants.LocationConstants.DEGREES_IN_CIRCLE.toFloat())
 }

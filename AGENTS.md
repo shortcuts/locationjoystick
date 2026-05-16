@@ -27,6 +27,17 @@ Constraints:
 
 ---
 
+## Constants
+
+All app-wide constants live in a single source of truth: `:core:common/constants/AppConstants.kt`.
+Nested objects: `LocationConstants`, `ProfileConstants`, `JitterConstants`, `RoamingConstants`, `OsrmConstants`, `MapConstants`, `NominatimConstants`, `ExportConstants`, `NotificationConstants`, `ServiceConstants`, `DataStoreConstants`, `JoystickConstants`, `WidgetConstants`, `RouteConstants`.
+
+Rules:
+- Never define a new top-level or companion-object constant that belongs in `AppConstants`. Add it there instead.
+- Modules that need constants must declare `implementation(project(":core:common"))` in their `build.gradle.kts`.
+- Exception: `:core:model` is a pure JVM library and cannot depend on `core:common`. Constants used only within `core:model` stay in that module.
+---
+
 ## Pre-Commit Validation Policy
 
 Work is NOT complete until lint and test passes.
@@ -143,14 +154,14 @@ Coroutines: `viewModelScope` for UI-bound work. `ServiceScope` (tied to service 
 
 Injects fake GPS into Android location system. All apps receive spoofed coords as real GPS.
 
-Update rate: 1 Hz (every 1000 ms). Matches real GPS cadence.
+Update rate: `AppConstants.LocationConstants.UPDATE_INTERVAL_MS`. Matches real GPS cadence.
 
 Cleanup: on service stop call `locationManager.removeTestProvider`. Failure leaves ghost provider breaking real GPS until reboot.
 
 Edge cases:
 - Another app holds mock location slot → `addTestProvider` throws `IllegalArgumentException`. Catch, show clear error.
 - `elapsedRealtimeNanos` must be monotonically increasing. Never set fixed value.
-- `accuracy` below 1.0f can trigger anti-cheat. Keep 2.0–5.0f.
+- `accuracy` below 1.0f can trigger anti-cheat. Keep within `AppConstants.JitterConstants.ACCURACY_MIN`–`AppConstants.JitterConstants.ACCURACY_MAX`.
 
 Key files: `:core:location/MockLocationService.kt`, `:core:data/LocationRepository.kt`
 
@@ -160,7 +171,7 @@ Key files: `:core:location/MockLocationService.kt`, `:core:data/LocationReposito
 
 Persistent notification while spoofing active. App keeps running when minimized or screen off.
 
-Declared with `foregroundServiceType="location"`. Started via `ServiceCompat.startForeground` with `FOREGROUND_SERVICE_TYPE_LOCATION` (required API 34+). Restart behavior: `START_STICKY`. Notification channel: `IMPORTANCE_LOW`, channel ID `"location_spoof_channel"`. Update loop runs as coroutine with `SupervisorJob()` scope. Cleanup: cancel scope + remove test provider in `onDestroy`.
+Declared with `foregroundServiceType="location"`. Started via `ServiceCompat.startForeground` with `FOREGROUND_SERVICE_TYPE_LOCATION` (required API 34+). Restart behavior: `START_STICKY`. Notification channel: `IMPORTANCE_LOW`, channel ID `AppConstants.NotificationConstants.CHANNEL_ID_ACTIVE`. Update loop runs as coroutine with `SupervisorJob()` scope. Cleanup: cancel scope + remove test provider in `onDestroy`.
 
 Key files: `:core:location/MockLocationService.kt`
 
@@ -184,7 +195,7 @@ Key files: `:feature:joystick:impl/JoystickOverlayService.kt`, `:feature:joystic
 
 ### Map (MapLibre)
 
-Main screen shows OpenStreetMap centered on Paris (48.8566, 2.3522) on first load. Scroll gestures enabled by default. TopAppBar with hamburger icon opens nav drawer via `onOpenDrawer: () -> Unit` lambda (drawer owned by `LjApp`, not `LjNavHost`). Spoofed location shown as marker. Map follows marker during spoofing.
+Main screen shows OpenStreetMap centered on `AppConstants.MapConstants.DEFAULT_LAT`, `AppConstants.MapConstants.DEFAULT_LON` on first load. Scroll gestures enabled by default. TopAppBar with hamburger icon opens nav drawer via `onOpenDrawer: () -> Unit` lambda (drawer owned by `LjApp`, not `LjNavHost`). Spoofed location shown as marker. Map follows marker during spoofing.
 
 Library: MapLibre Android SDK 12.x (not osmdroid, not Google Maps). OSM tile source via `RasterSource`. Location marker: `SymbolLayer` backed by GeoJSON — update coords, don't remove/re-add layer. Route polylines: `LineLayer` backed by GeoJSON `FeatureCollection`. Offline tiles via `OfflineManager.downloadRegion()`.
 
@@ -206,9 +217,9 @@ Save named route to Room. Edit (drag/add/delete waypoints). Delete via swipe or 
 
 Storage: `RouteEntity` + `WaypointEntity` one-to-many. Waypoints store `routeId`, `lat`, `lon`, `orderIndex`.
 
-Replay: interpolate between waypoints at speed (m/s), compute bearing via `atan2`, advance by `speed * deltaTime`, snap within 1 m of waypoint. Loops: interpolate smoothly from last to first waypoint.
+Replay: interpolate between waypoints at speed (m/s), compute bearing via `atan2`, advance by `speed * deltaTime`, snap within `AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS` m of waypoint. Loops: interpolate smoothly from last to first waypoint.
 
-Recording: collect real location at 1 Hz, simplify via Ramer-Douglas-Peucker (epsilon = 5 m), save on stop.
+Recording: collect real location at `AppConstants.LocationConstants.UPDATE_INTERVAL_MS` ms, simplify via Ramer-Douglas-Peucker (epsilon = `AppConstants.LocationConstants.RDP_SIMPLIFICATION_EPSILON_METERS` m), save on stop.
 
 Edge cases: <2 waypoints → disable replay. Resume replay after service restart (persist waypoint index in DataStore).
 
@@ -230,11 +241,11 @@ Key files: `:feature:favorites:impl/FavoritesScreen.kt`, `:feature:favorites:imp
 
 ### Speed Profiles
 
-Three presets: Walk (2 km/h), Run (8 km/h), Bike (15 km/h). All user-editable. Applies to joystick, route replay, roaming.
+Three presets: Walk (`AppConstants.ProfileConstants.WALK_SPEED_MPS` m/s), Run (`AppConstants.ProfileConstants.RUN_SPEED_MPS` m/s), Bike (`AppConstants.ProfileConstants.BIKE_SPEED_MPS` m/s). All user-editable. Applies to joystick, route replay, roaming.
 
 Stored in DataStore. UI: three chips or segmented button in widget + Settings. Change takes effect immediately on next tick.
 
-Edge cases: clamp 0.1–15.0 m/s. Warn inline below speed input when >8 m/s (anti-cheat risk). Warns in generic language — no game names.
+Edge cases: clamp `AppConstants.ProfileConstants.MIN_SPEED_MS`–`AppConstants.ProfileConstants.MAX_SPEED_MS` m/s. Warn inline below speed input when >`AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS` m/s (anti-cheat risk). Warns in generic language — no game names.
 
 Key files: `:feature:settings:impl/SettingsScreen.kt`, `:core:data/SettingsRepository.kt`
 
@@ -270,7 +281,7 @@ Set center, radius, duration. Walks randomly within radius. Two modes: simple (s
 
 Algorithm (road-following): pick random destination in radius (uniform disk distribution) → fetch OSRM route → walk route → repeat until duration elapsed.
 
-OSRM endpoint: `https://router.project-osrm.org/route/v1/{profile}/{lon1},{lat1};{lon2},{lat2}?overview=full&geometries=geojson`. Profiles: `foot`, `cycling`.
+OSRM endpoint: base URL, overview, geometries, and profile constants in `AppConstants.OsrmConstants` and `AppConstants.RoamingConstants`.
 
 Edge cases: cache last OSRM route (don't re-fetch while walking it). Radius/duration changes apply on next waypoint pick. Persist start time in DataStore (survives restarts).
 
@@ -280,13 +291,13 @@ Key files: `:core:routing/RoamingEngine.kt`, `:core:routing/OsrmClient.kt`, `:fe
 
 ### Export / Import
 
-Settings → export all data to JSON, import from previous export. Schema version: **1**.
+Settings → export all data to JSON, import from previous export. Schema version: `AppConstants.ExportConstants.SCHEMA_VERSION`.
 
 Covers: routes, favorites, speed profiles, widget config, roaming defaults.
 
 Export: serialize via `kotlinx.serialization` → write to `getExternalFilesDir(null)` → share via `FileProvider + Intent.ACTION_SEND`.
 
-Import: file picker (`OpenDocument`, MIME `application/json`) → parse + validate `schemaVersion == 1` → confirm "replace all data?" → clear Room + DataStore → insert. All I/O on `Dispatchers.IO`.
+Import: file picker (`OpenDocument`, MIME `AppConstants.ExportConstants.MIME_TYPE`) → parse + validate `schemaVersion == AppConstants.ExportConstants.SCHEMA_VERSION` → confirm "replace all data?" → clear Room + DataStore → insert. All I/O on `Dispatchers.IO`.
 
 Edge cases: malformed JSON → show "Invalid file". Missing fields → use `@SerialName` defaults. Skip confirmation on fresh install (empty DB).
 
@@ -482,7 +493,7 @@ Shared test utilities in `:core:testing`.
 - **DataStore read**: `dataStore.data.map { prefs -> prefs[KEY] ?: default }`
 - **DataStore write**: `dataStore.edit { prefs -> prefs[KEY] = value }` in suspend fun
 - **Room one-to-many**: `@Transaction @Query` returning `Flow<EntityWithChildren>`
-- **Haversine**: use for distance between two `LatLon` points (R = 6371000.0 m)
+- **Haversine**: use for distance between two `LatLon` points (R = `AppConstants.LocationConstants.EARTH_RADIUS_METERS`)
 - **Bearing**: `atan2(sin(dLon)*cos(lat2), cos(lat1)*sin(lat2) - sin(lat1)*cos(lat2)*cos(dLon))`
 - **Advance position**: spherical law of cosines from `LatLon` + bearing + distance
 

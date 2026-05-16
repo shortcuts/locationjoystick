@@ -38,7 +38,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.locationjoystick.core.common.constants.MapConstants
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.overlay.OverlayService
 import org.maplibre.android.MapLibre
@@ -55,8 +55,8 @@ import org.maplibre.android.style.sources.RasterSource
 import org.maplibre.android.style.sources.TileSet
 import org.maplibre.android.geometry.LatLng as MapLatLng
 
-private const val OSM_SOURCE_ID = "osm-source"
-private const val OSM_LAYER_ID = "osm-layer"
+private val OSM_SOURCE_ID = AppConstants.MapConstants.OSM_SOURCE_ID
+private val OSM_LAYER_ID = AppConstants.MapConstants.OSM_LAYER_ID
 private const val CURRENT_POS_SOURCE_ID = "current-pos-source"
 private const val CURRENT_POS_LAYER_ID = "current-pos-layer"
 private const val MARKER_SOURCE_ID = "marker-source"
@@ -175,16 +175,16 @@ internal fun MapPickerScreen(
                                         if (initialPosition != null) {
                                             MapLatLng(initialPosition.latitude, initialPosition.longitude)
                                         } else {
-                                            MapLatLng(MapConstants.DEFAULT_LAT, MapConstants.DEFAULT_LON)
+                                            MapLatLng(AppConstants.MapConstants.DEFAULT_LAT, AppConstants.MapConstants.DEFAULT_LON)
                                         },
-                                    ).zoom(MapConstants.DEFAULT_ZOOM)
+                                    ).zoom(AppConstants.MapConstants.DEFAULT_ZOOM)
                                     .build()
 
                             map.setStyle(Style.Builder().fromUri("asset://empty.json")) { style ->
                                 style.addSource(
                                     RasterSource(
                                         OSM_SOURCE_ID,
-                                        TileSet("2.2.0", MapConstants.OSM_TILE_URL).apply { maxZoom = 19f },
+                                        TileSet("2.2.0", AppConstants.MapConstants.OSM_TILE_URL).apply { maxZoom = 19f },
                                         256,
                                     ),
                                 )
