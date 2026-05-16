@@ -20,6 +20,7 @@ import androidx.compose.material.icons.rounded.Loop
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.MyLocation
+import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Route
 import androidx.compose.material.icons.rounded.Settings
@@ -47,6 +48,7 @@ object LjIcons {
     val Map = Icons.Rounded.Map
     val Menu = Icons.Rounded.Menu
     val MyLocation = Icons.Rounded.MyLocation
+    val Pause = Icons.Rounded.Pause
     val PlayArrow = Icons.Rounded.PlayArrow
     val Route = Icons.Rounded.Route
     val Settings = Icons.Rounded.Settings

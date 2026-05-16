@@ -59,13 +59,15 @@ class MapViewModel
                 combine(
                     locationRepository.observePosition(),
                     locationRepository.observeState(),
-                ) { position, state ->
-                    position to state
-                }.collect { (position, state) ->
+                    locationRepository.isWalkPaused,
+                ) { position, state, walkPaused ->
+                    Triple(position, state, walkPaused)
+                }.collect { (position, state, walkPaused) ->
                     _uiState.update { current ->
                         current.copy(
                             currentPosition = position,
                             mockLocationState = state,
+                            isWalkPaused = walkPaused,
                         )
                     }
                 }
@@ -179,6 +181,22 @@ class MapViewModel
                     }
                 }
 
+                MapAction.PauseWalk -> {
+                    locationRepository.setWalkPaused(true)
+                }
+
+                MapAction.ResumeWalk -> {
+                    locationRepository.setWalkPaused(false)
+                }
+
+                MapAction.StopWalk -> {
+                    walkToJob?.cancel()
+                    locationRepository.setWalkTarget(null)
+                    _uiState.update {
+                        it.copy(walkTarget = null, walkStart = null, isWalkPaused = false)
+                    }
+                }
+
                 is MapAction.SaveCurrentLocation -> {
                     val position = _uiState.value.currentPosition ?: return
                     viewModelScope.launch {
@@ -240,6 +258,11 @@ class MapViewModel
                         val speedMs = 1.39
 
                         while (true) {
+                            if (locationRepository.walkTarget.value == null) break
+                            if (locationRepository.isWalkPaused.value) {
+                                delay(200)
+                                continue
+                            }
                             val current = _uiState.value.currentPosition
                             if (current == null) {
                                 Log.w(TAG, "No current position; stopping walk")

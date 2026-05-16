@@ -140,6 +140,7 @@ class FloatingWidgetService :
     private var composeView: ComposeView? = null
     private var panelComposeView: ComposeView? = null
     private var walkToJob: Job? = null
+    private var walkWasServiceInitiated = false
     private var joystickPollJob: Job? = null
 
     // Joystick state
@@ -405,7 +406,7 @@ class FloatingWidgetService :
                                     imageVector = Icons.Rounded.Route,
                                     contentDescription = "Routes picker",
                                     tint = routeIconTint,
-                                    modifier = Modifier.size(25.dp),
+                                    modifier = Modifier.size(20.dp),
                                 )
                             }
                             // Pause/stop shown to the right when route active and expanded
@@ -425,7 +426,7 @@ class FloatingWidgetService :
                                         imageVector = pauseResumeIcon,
                                         contentDescription = if (isRoutePaused) "Resume route" else "Pause route",
                                         tint = pauseResumeTint,
-                                        modifier = Modifier.size(25.dp),
+                                        modifier = Modifier.size(20.dp),
                                     )
                                 }
                                 Box(
@@ -441,7 +442,7 @@ class FloatingWidgetService :
                                         imageVector = Icons.Rounded.Stop,
                                         contentDescription = "Stop route",
                                         tint = Color(0xFFF44336),
-                                        modifier = Modifier.size(25.dp),
+                                        modifier = Modifier.size(20.dp),
                                     )
                                 }
                             }
@@ -462,7 +463,7 @@ class FloatingWidgetService :
                                 imageVector = icon,
                                 contentDescription = feature.toContentDescription(),
                                 tint = iconTint,
-                                modifier = Modifier.size(25.dp),
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
@@ -949,11 +950,13 @@ class FloatingWidgetService :
     }
 
     private fun pauseWalkToJob() {
+        walkWasServiceInitiated = walkToJob != null
         walkToJob?.cancel()
         walkToJob = null
     }
 
     private fun resumeWalkToJob() {
+        if (!walkWasServiceInitiated) return
         val target = locationRepository.walkTarget.value ?: return
         startWalkToPosition(target)
     }

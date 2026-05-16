@@ -12,11 +12,13 @@ import com.locationjoystick.core.model.Route
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -37,6 +39,9 @@ class MapViewModelTest {
     private lateinit var settingsRepository: SettingsRepository
     private lateinit var viewModel: MapViewModel
 
+    private val walkTargetFlow = MutableStateFlow<LatLng?>(null)
+    private val isWalkPausedFlow = MutableStateFlow(false)
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -49,6 +54,8 @@ class MapViewModelTest {
 
         every { locationRepository.observePosition() } returns MutableStateFlow(null)
         every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.IDLE)
+        every { locationRepository.isWalkPaused } returns isWalkPausedFlow
+        every { locationRepository.walkTarget } returns walkTargetFlow
         every { routeRepository.getRoutes() } returns flowOf(emptyList<Route>())
         every { favoriteRepository.getFavorites() } returns flowOf(emptyList<FavoriteLocation>())
 
@@ -199,5 +206,87 @@ class MapViewModelTest {
 
             viewModel.onAction(MapAction.ClearPendingTap)
             assertNull(viewModel.uiState.value.pendingTapPosition)
+        }
+
+    // Walk lifecycle tests
+
+    @Test
+    fun `pauseWalk_setsWalkPausedTrue`() =
+        runTest {
+            viewModel.onAction(MapAction.PauseWalk)
+            verify { locationRepository.setWalkPaused(true) }
+        }
+
+    @Test
+    fun `resumeWalk_setsWalkPausedFalse`() =
+        runTest {
+            viewModel.onAction(MapAction.ResumeWalk)
+            verify { locationRepository.setWalkPaused(false) }
+        }
+
+    @Test
+    fun `stopWalk_callsSetWalkTargetNullAndClearsUiState`() =
+        runTest {
+            // Seed some walk state into UI
+            every { locationRepository.setWalkTarget(any()) } answers {
+                walkTargetFlow.value = firstArg<LatLng?>()
+            }
+            val target = LatLng(1.0, 2.0)
+            viewModel.onAction(MapAction.LongPressTapToWalk(target))
+
+            viewModel.onAction(MapAction.StopWalk)
+
+            verify { locationRepository.setWalkTarget(null) }
+            assertNull(viewModel.uiState.value.walkTarget)
+            assertNull(viewModel.uiState.value.walkStart)
+        }
+
+    @Test
+    fun `walkLoop_breaksWhenWalkTargetClearedExternally`() =
+        runTest {
+            val target = LatLng(48.0, 2.0)
+            val startPos = LatLng(47.0, 1.0)
+            val positionFlow = MutableStateFlow<LatLng?>(startPos)
+
+            every { locationRepository.observePosition() } returns positionFlow
+            every { locationRepository.setWalkTarget(any()) } answers {
+                walkTargetFlow.value = firstArg<LatLng?>()
+            }
+            viewModel = MapViewModel(context, locationRepository, routeRepository, favoriteRepository, settingsRepository)
+
+            viewModel.onAction(MapAction.LongPressTapToWalk(target))
+            assertEquals(target, viewModel.uiState.value.walkTarget)
+
+            // Simulate external stop (widget calls setWalkTarget(null))
+            walkTargetFlow.value = null
+            advanceTimeBy(1100) // past the 1 000 ms delay in the walk loop
+
+            // finally block in walkTo() clears UI state
+            assertNull(viewModel.uiState.value.walkTarget)
+            assertNull(viewModel.uiState.value.walkStart)
+        }
+
+    @Test
+    fun `walkLoop_remainsActiveWhilePausedExternally`() =
+        runTest {
+            val target = LatLng(48.0, 2.0)
+            val startPos = LatLng(47.0, 1.0)
+            val positionFlow = MutableStateFlow<LatLng?>(startPos)
+
+            every { locationRepository.observePosition() } returns positionFlow
+            every { locationRepository.setWalkTarget(any()) } answers {
+                walkTargetFlow.value = firstArg<LatLng?>()
+            }
+            viewModel = MapViewModel(context, locationRepository, routeRepository, favoriteRepository, settingsRepository)
+
+            viewModel.onAction(MapAction.LongPressTapToWalk(target))
+            assertEquals(target, viewModel.uiState.value.walkTarget)
+
+            // Pause externally (widget)
+            isWalkPausedFlow.value = true
+            advanceTimeBy(5000) // several ticks pass
+
+            // Walk must still be active — not terminated
+            assertEquals(target, viewModel.uiState.value.walkTarget)
         }
 }

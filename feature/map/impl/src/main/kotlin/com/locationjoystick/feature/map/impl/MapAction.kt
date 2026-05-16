@@ -49,4 +49,10 @@ sealed interface MapAction {
     data class SaveCurrentLocation(
         val name: String,
     ) : MapAction
+
+    data object PauseWalk : MapAction
+
+    data object ResumeWalk : MapAction
+
+    data object StopWalk : MapAction
 }

@@ -18,6 +18,7 @@ data class MapUiState(
     val routeTrace: List<LatLng>? = null,
     val walkTarget: LatLng? = null,
     val walkStart: LatLng? = null,
+    val isWalkPaused: Boolean = false,
 )
 
 val MapUiState.isSpoofing: Boolean

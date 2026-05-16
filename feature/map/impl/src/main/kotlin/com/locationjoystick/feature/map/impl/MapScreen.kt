@@ -208,6 +208,31 @@ internal fun MapScreen(
                         )
                     }
                 }
+                if (uiState.walkTarget != null) {
+                    FloatingActionButton(
+                        onClick = { onAction(MapAction.StopWalk) },
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ) {
+                        Icon(LjIcons.Stop, contentDescription = "Stop walk")
+                    }
+                    FloatingActionButton(
+                        onClick = {
+                            if (uiState.isWalkPaused) {
+                                onAction(MapAction.ResumeWalk)
+                            } else {
+                                onAction(MapAction.PauseWalk)
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ) {
+                        Icon(
+                            imageVector = if (uiState.isWalkPaused) LjIcons.PlayArrow else LjIcons.Pause,
+                            contentDescription = if (uiState.isWalkPaused) "Resume walk" else "Pause walk",
+                        )
+                    }
+                }
                 FloatingActionButton(
                     onClick = { onAction(MapAction.OpenFavoritesPicker) },
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
