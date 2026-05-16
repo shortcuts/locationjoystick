@@ -19,6 +19,9 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import com.locationjoystick.core.common.util.advancePosition
+import com.locationjoystick.core.common.util.calculateBearing
+import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -371,8 +374,6 @@ class MockLocationService : Service() {
             val latLngs = ordered.map { it.position }
             val startPos = latLngs.first()
 
-            currentLat = startPos.latitude
-            currentLon = startPos.longitude
             currentSpeedMs = speedMs.toFloat()
             currentBearing = 0.0f
 
@@ -382,6 +383,8 @@ class MockLocationService : Service() {
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
             locationRepository.setActiveRouteId(routeId)
             locationRepository.setIsReplayBackward(isBackward)
+
+            walkToPosition(startPos, speedMs)
 
             routeReplayEngine.start(
                 waypoints = latLngs,
@@ -428,6 +431,24 @@ class MockLocationService : Service() {
             onComplete = { stopSpoofing() },
         )
         Log.i(TAG, "Replay resumed at ${speedMs}m/s")
+    }
+
+    private suspend fun walkToPosition(
+        target: LatLng,
+        speedMs: Double,
+    ) {
+        while (true) {
+            val dist = haversineDistance(currentLat, currentLon, target.latitude, target.longitude)
+            if (dist < 1.0) break
+            val bearing = calculateBearing(currentLat, currentLon, target.latitude, target.longitude)
+            val step = minOf(speedMs, dist)
+            val (newLat, newLon) = advancePosition(currentLat, currentLon, bearing, step)
+            currentLat = newLat
+            currentLon = newLon
+            locationRepository.setPositionInternal(LatLng(newLat, newLon))
+            pushLocationUpdate()
+            delay(1000L)
+        }
     }
 
     private suspend fun handleReplayStop() {

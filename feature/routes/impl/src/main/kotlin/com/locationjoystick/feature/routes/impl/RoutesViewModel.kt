@@ -100,9 +100,6 @@ class RoutesViewModel
         ) {
             viewModelScope.launch {
                 val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
-                if (fromFirstWaypoint && route.waypoints.isNotEmpty()) {
-                    locationRepository.updatePosition(route.waypoints.first().position)
-                }
                 val intent =
                     Intent(context, MockLocationService::class.java).apply {
                         action = MockLocationService.ACTION_ROUTE_REPLAY_START
