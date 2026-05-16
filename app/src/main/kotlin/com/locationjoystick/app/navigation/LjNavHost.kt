@@ -108,6 +108,7 @@ fun LjNavHost(
             popExitTransition = { fadeOutScale() },
         ) {
             IdleScreen(
+                onOpenDrawer = onOpenDrawer,
                 onNavigateToMap = {
                     navController.navigate(MAP_ROUTE) { launchSingleTop = true }
                 },

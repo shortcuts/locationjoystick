@@ -18,7 +18,7 @@ fun LjTopBar(
     title: String,
     modifier: Modifier = Modifier,
     onNavigationClick: (() -> Unit)? = null,
-    navigationIcon: ImageVector = LjIcons.Map,
+    navigationIcon: ImageVector = LjIcons.Menu,
     actions: @Composable () -> Unit = {},
 ) {
     TopAppBar(

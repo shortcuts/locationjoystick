@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Loop
 import androidx.compose.material.icons.rounded.Map
+import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Route
@@ -27,28 +28,29 @@ import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material.icons.rounded.Stop
 
 object LjIcons {
-    val Joystick = Icons.Rounded.SportsEsports
-    val Map = Icons.Rounded.Map
-    val Route = Icons.Rounded.Route
+    val Add = Icons.Rounded.Add
+    val Check = Icons.Rounded.Check
+    val Close = Icons.Rounded.Close
+    val Delete = Icons.Outlined.DeleteOutline
+    val Directions = Icons.Rounded.Directions
+    val Edit = Icons.Outlined.EditNote
+    val Explore = Icons.Rounded.Explore
     val Favorite = Icons.Rounded.Favorite
     val FavoriteBorder = Icons.Outlined.FavoriteBorder
-    val PlayArrow = Icons.Rounded.PlayArrow
-    val Stop = Icons.Rounded.Stop
-    val Loop = Icons.Rounded.Loop
-    val Explore = Icons.Rounded.Explore
-    val Settings = Icons.Rounded.Settings
     val FileDownload = Icons.Outlined.FileDownload
     val FileUpload = Icons.Outlined.FileUpload
-    val MyLocation = Icons.Rounded.MyLocation
-    val Directions = Icons.Rounded.Directions
-    val Add = Icons.Rounded.Add
-    val Delete = Icons.Outlined.DeleteOutline
-    val Edit = Icons.Outlined.EditNote
-    val Close = Icons.Rounded.Close
-    val Check = Icons.Rounded.Check
-    val LocationOn = Icons.Outlined.LocationOn
-    val LocationOff = Icons.Outlined.LocationOff
-    val Speed = Icons.Rounded.Speed
-    val Timer = Icons.Outlined.Timer
+    val Joystick = Icons.Rounded.SportsEsports
     val Layers = Icons.Outlined.Layers
+    val LocationOff = Icons.Outlined.LocationOff
+    val LocationOn = Icons.Outlined.LocationOn
+    val Loop = Icons.Rounded.Loop
+    val Map = Icons.Rounded.Map
+    val Menu = Icons.Rounded.Menu
+    val MyLocation = Icons.Rounded.MyLocation
+    val PlayArrow = Icons.Rounded.PlayArrow
+    val Route = Icons.Rounded.Route
+    val Settings = Icons.Rounded.Settings
+    val Speed = Icons.Rounded.Speed
+    val Stop = Icons.Rounded.Stop
+    val Timer = Icons.Outlined.Timer
 }

@@ -30,18 +30,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.AppIcon
+import com.locationjoystick.core.designsystem.component.LjTopBar
 
 internal const val IDLE_ROUTE = "idle"
 
 @Composable
 internal fun IdleScreen(
+    onOpenDrawer: () -> Unit,
     onNavigateToMap: () -> Unit,
     onNavigateToRoutes: () -> Unit,
     onNavigateToFavorites: () -> Unit,
     onNavigateToRoaming: () -> Unit,
     onNavigateToSettings: () -> Unit,
 ) {
-    Scaffold(containerColor = MaterialTheme.colorScheme.background) { paddingValues ->
+    Scaffold(
+        topBar = {
+            LjTopBar(title = "Lj", onNavigationClick = onOpenDrawer)
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { paddingValues ->
         Column(
             modifier =
                 Modifier
