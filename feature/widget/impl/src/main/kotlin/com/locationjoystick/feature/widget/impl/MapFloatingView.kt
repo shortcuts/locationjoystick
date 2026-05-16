@@ -523,7 +523,8 @@ private fun buildFloatingRouteTraceGeoJson(
 private fun buildFloatingLineGeoJson(points: List<LatLng>): String {
     if (points.size < 2) return """{"type":"FeatureCollection","features":[]}"""
     val coords = points.joinToString(",") { "[${it.longitude},${it.latitude}]" }
-    return """{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"LineString","coordinates":[$coords]},"properties":{}}]}"""
+    val geometry = """{"type":"LineString","coordinates":[$coords]}"""
+    return """{"type":"FeatureCollection","features":[{"type":"Feature","geometry":$geometry,"properties":{}}]}"""
 }
 
 private fun buildFloatingPointsGeoJson(points: List<LatLng>): String {
