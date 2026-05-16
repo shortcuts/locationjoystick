@@ -17,7 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.locationjoystick.core.ui.component.LjTopBar
+import com.locationjoystick.core.designsystem.component.LjTopBar
 
 @Composable
 fun RoamingRoute(
@@ -50,7 +50,7 @@ internal fun RoamingScreen(
 ) {
     Scaffold(
         topBar = {
-            LjTopBar(title = "Lj", onMenuClick = onOpenDrawer)
+            LjTopBar(title = "Lj", onNavigationClick = onOpenDrawer)
         },
     ) { paddingValues ->
         Box(

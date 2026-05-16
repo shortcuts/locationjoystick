@@ -3,8 +3,8 @@ package com.locationjoystick.core.model
 enum class WidgetFeature {
     JOYSTICK_TOGGLE,
     JOYSTICK_LOCK,
-    ROUTES_PICKER,
-    FAVORITES_PICKER,
+    ROUTES_FLOATING,
+    FAVORITES_FLOATING,
     SPEED_CYCLE,
-    MAP,
+    MAP_FLOATING,
 }

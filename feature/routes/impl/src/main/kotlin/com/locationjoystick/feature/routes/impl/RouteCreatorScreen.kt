@@ -46,9 +46,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.MapConstants
+import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.overlay.OverlayService
-import com.locationjoystick.core.ui.component.NominatimSearchBar
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -83,7 +83,7 @@ fun RouteCreatorRoute(
 
     RouteCreatorScreen(
         state = state,
-        initialPosition = viewModel.currentSpoofPosition,
+        initialPosition = viewModel.currentPosition,
         onAddWaypoint = viewModel::addWaypoint,
         onUndo = viewModel::undoLastWaypoint,
         onSaveRoute = { name ->

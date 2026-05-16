@@ -14,8 +14,8 @@ import androidx.navigation.compose.rememberNavController
 import com.locationjoystick.app.navigation.LjDrawerContent
 import com.locationjoystick.app.navigation.LjNavHost
 import com.locationjoystick.feature.map.api.MAP_ROUTE
+import com.locationjoystick.feature.onboarding.api.ONBOARDING_ROUTE
 import com.locationjoystick.feature.settings.api.SETTINGS_ROUTE
-import com.locationjoystick.feature.setup.api.SETUP_ROUTE
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
@@ -43,7 +43,7 @@ fun LjApp(navigateToMapFlow: Flow<Unit> = emptyFlow()) {
                 if (event == Lifecycle.Event.ON_STOP) {
                     val current = navController.currentDestination?.route
                     // Skip redirect for screens that may launch sub-activities (file pickers, etc.)
-                    val skipRedirect = current == IDLE_ROUTE || current == SETUP_ROUTE || current == SETTINGS_ROUTE
+                    val skipRedirect = current == IDLE_ROUTE || current == ONBOARDING_ROUTE || current == SETTINGS_ROUTE
                     if (!skipRedirect) {
                         navController.navigate(IDLE_ROUTE) {
                             popUpTo(IDLE_ROUTE) { inclusive = false }

@@ -45,10 +45,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.LjTopBar
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.distanceTo
-import com.locationjoystick.core.ui.component.EmptyState
-import com.locationjoystick.core.ui.component.LjTopBar
 
 @Composable
 fun RoutesRoute(
@@ -99,7 +99,7 @@ internal fun RoutesScreen(
         topBar = {
             LjTopBar(
                 title = "Lj",
-                onMenuClick = onOpenDrawer,
+                onNavigationClick = onOpenDrawer,
                 actions = {
                     IconButton(onClick = { showAddMenu = !showAddMenu }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "Add options")

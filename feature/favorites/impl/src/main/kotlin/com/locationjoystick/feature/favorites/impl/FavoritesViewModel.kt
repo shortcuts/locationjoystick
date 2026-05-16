@@ -47,7 +47,7 @@ class FavoritesViewModel
                     initialValue = FavoritesUiState(isLoading = true),
                 )
 
-        val currentSpoofPosition: com.locationjoystick.core.model.LatLng?
+        val currentPosition: com.locationjoystick.core.model.LatLng?
             get() = locationRepository.currentPosition.value
 
         fun teleportTo(favorite: FavoriteLocation) {

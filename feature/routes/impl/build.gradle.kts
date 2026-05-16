@@ -12,7 +12,7 @@ dependencies {
     implementation(project(":core:routing"))
     implementation(project(":core:location"))
     implementation(project(":core:overlay"))
-    implementation(project(":core:ui"))
+    implementation(project(":core:designsystem"))
 
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)

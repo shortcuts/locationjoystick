@@ -65,10 +65,10 @@ import com.locationjoystick.core.common.constants.MapConstants
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.designsystem.component.LjTopBar
+import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.MockLocationState
-import com.locationjoystick.core.ui.component.LjTopBar
-import com.locationjoystick.core.ui.component.NominatimSearchBar
 import com.locationjoystick.feature.map.api.MAP_ROUTE
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
@@ -191,7 +191,7 @@ internal fun MapScreen(
         topBar = {
             LjTopBar(
                 title = "Lj",
-                onMenuClick = onOpenDrawer,
+                onNavigationClick = onOpenDrawer,
                 actions = {
                     IconButton(onClick = { showSearch.value = !showSearch.value }) {
                         Icon(Icons.Default.Search, contentDescription = "Search location")

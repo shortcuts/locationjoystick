@@ -282,11 +282,11 @@ class AppPreferencesDataSource
 
             val DEFAULT_WIDGET_ITEMS: Set<String> =
                 setOf(
-                    WidgetFeature.MAP.name.lowercase(),
+                    WidgetFeature.MAP_FLOATING.name.lowercase(),
                     WidgetFeature.JOYSTICK_TOGGLE.name.lowercase(),
                     WidgetFeature.JOYSTICK_LOCK.name.lowercase(),
-                    WidgetFeature.ROUTES_PICKER.name.lowercase(),
-                    WidgetFeature.FAVORITES_PICKER.name.lowercase(),
+                    WidgetFeature.ROUTES_FLOATING.name.lowercase(),
+                    WidgetFeature.FAVORITES_FLOATING.name.lowercase(),
                     WidgetFeature.SPEED_CYCLE.name.lowercase(),
                 )
 

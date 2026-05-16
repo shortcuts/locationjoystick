@@ -24,10 +24,9 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:overlay"))
     implementation(project(":core:routing"))
-    implementation(project(":core:ui"))
 
-    implementation(project(":feature:setup:api"))
-    implementation(project(":feature:setup:impl"))
+    implementation(project(":feature:onboarding:api"))
+    implementation(project(":feature:onboarding:impl"))
     implementation(project(":feature:map:api"))
     implementation(project(":feature:map:impl"))
     implementation(project(":feature:joystick:api"))

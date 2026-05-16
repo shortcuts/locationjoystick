@@ -22,7 +22,6 @@ dependencies {
     kover(project(":core:overlay"))
     kover(project(":core:routing"))
     kover(project(":core:testing"))
-    kover(project(":core:ui"))
     kover(project(":feature:favorites:api"))
     kover(project(":feature:favorites:impl"))
     kover(project(":feature:joystick:api"))
@@ -35,8 +34,8 @@ dependencies {
     kover(project(":feature:routes:impl"))
     kover(project(":feature:settings:api"))
     kover(project(":feature:settings:impl"))
-    kover(project(":feature:setup:api"))
-    kover(project(":feature:setup:impl"))
+    kover(project(":feature:onboarding:api"))
+    kover(project(":feature:onboarding:impl"))
     kover(project(":feature:widget:api"))
     kover(project(":feature:widget:impl"))
 }

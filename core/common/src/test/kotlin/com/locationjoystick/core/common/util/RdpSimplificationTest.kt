@@ -1,5 +1,6 @@
 package com.locationjoystick.core.common.util
 
+import com.locationjoystick.core.model.LatLng
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

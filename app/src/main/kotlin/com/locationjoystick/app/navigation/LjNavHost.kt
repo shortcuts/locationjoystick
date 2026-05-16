@@ -30,6 +30,8 @@ import com.locationjoystick.feature.favorites.impl.FavoritesViewModel
 import com.locationjoystick.feature.favorites.impl.MapPickerRoute
 import com.locationjoystick.feature.map.api.MAP_ROUTE
 import com.locationjoystick.feature.map.impl.mapScreen
+import com.locationjoystick.feature.onboarding.api.ONBOARDING_ROUTE
+import com.locationjoystick.feature.onboarding.impl.OnboardingRoute
 import com.locationjoystick.feature.roaming.api.ROAMING_ROUTE
 import com.locationjoystick.feature.roaming.impl.RoamingRoute
 import com.locationjoystick.feature.routes.api.ROUTES_ROUTE
@@ -40,8 +42,6 @@ import com.locationjoystick.feature.routes.impl.RouteDetailScreen
 import com.locationjoystick.feature.routes.impl.RoutesRoute
 import com.locationjoystick.feature.settings.api.SETTINGS_ROUTE
 import com.locationjoystick.feature.settings.impl.SettingsRoute
-import com.locationjoystick.feature.setup.api.SETUP_ROUTE
-import com.locationjoystick.feature.setup.impl.SetupRoute
 
 private const val ROUTES_GRAPH = "routes_graph"
 private const val FAVORITES_GRAPH = "favorites_graph"
@@ -77,7 +77,7 @@ fun LjNavHost(
     val context = LocalContext.current
     val startDestination =
         remember {
-            if (allPermissionsGranted(context)) IDLE_ROUTE else SETUP_ROUTE
+            if (allPermissionsGranted(context)) IDLE_ROUTE else ONBOARDING_ROUTE
         }
 
     NavHost(
@@ -85,16 +85,16 @@ fun LjNavHost(
         startDestination = startDestination,
     ) {
         composable(
-            route = SETUP_ROUTE,
+            route = ONBOARDING_ROUTE,
             enterTransition = { fadeInScale() },
             exitTransition = { fadeOutScale() },
             popEnterTransition = { fadeInScale() },
             popExitTransition = { fadeOutScale() },
         ) {
-            SetupRoute(
+            OnboardingRoute(
                 onSetupComplete = {
                     navController.navigate(IDLE_ROUTE) {
-                        popUpTo(SETUP_ROUTE) { inclusive = true }
+                        popUpTo(ONBOARDING_ROUTE) { inclusive = true }
                     }
                 },
             )
@@ -211,7 +211,7 @@ fun LjNavHost(
                     }
                 val favoritesViewModel: FavoritesViewModel = hiltViewModel(parentEntry)
                 MapPickerRoute(
-                    initialPosition = favoritesViewModel.currentSpoofPosition,
+                    initialPosition = favoritesViewModel.currentPosition,
                     onLocationPicked = { name, lat, lon ->
                         favoritesViewModel.addFavorite(name, lat, lon)
                         navController.navigateUp()

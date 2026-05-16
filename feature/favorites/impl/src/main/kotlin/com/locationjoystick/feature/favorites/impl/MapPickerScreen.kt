@@ -39,8 +39,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.common.constants.MapConstants
+import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.overlay.OverlayService
-import com.locationjoystick.core.ui.component.NominatimSearchBar
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory

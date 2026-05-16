@@ -1,5 +1,6 @@
 package com.locationjoystick.core.common.util
 
+import com.locationjoystick.core.model.LatLng
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -34,41 +35,41 @@ class GeoUtilsTest {
         assertEquals(100.0, haversineDistance(a, b), 2.0)
     }
 
-    // bearingBetween
+    // bearingBetweenCoords
 
     @Test
-    fun `bearingBetween due north returns 0`() {
+    fun `bearingBetweenCoords due north returns 0`() {
         val a = LatLng(0.0, 0.0)
         val b = LatLng(1.0, 0.0)
-        assertEquals(0f, bearingBetween(a, b), 0.1f)
+        assertEquals(0f, bearingBetweenCoords(a, b), 0.1f)
     }
 
     @Test
-    fun `bearingBetween due east returns 90`() {
+    fun `bearingBetweenCoords due east returns 90`() {
         val a = LatLng(0.0, 0.0)
         val b = LatLng(0.0, 1.0)
-        assertEquals(90f, bearingBetween(a, b), 0.1f)
+        assertEquals(90f, bearingBetweenCoords(a, b), 0.1f)
     }
 
     @Test
-    fun `bearingBetween due south returns 180`() {
+    fun `bearingBetweenCoords due south returns 180`() {
         val a = LatLng(1.0, 0.0)
         val b = LatLng(0.0, 0.0)
-        assertEquals(180f, bearingBetween(a, b), 0.1f)
+        assertEquals(180f, bearingBetweenCoords(a, b), 0.1f)
     }
 
     @Test
-    fun `bearingBetween due west returns 270`() {
+    fun `bearingBetweenCoords due west returns 270`() {
         val a = LatLng(0.0, 1.0)
         val b = LatLng(0.0, 0.0)
-        assertEquals(270f, bearingBetween(a, b), 0.1f)
+        assertEquals(270f, bearingBetweenCoords(a, b), 0.1f)
     }
 
     @Test
-    fun `bearingBetween result is in range 0 to 360`() {
+    fun `bearingBetweenCoords result is in range 0 to 360`() {
         val a = LatLng(51.5, 0.0)
         val b = LatLng(40.7, -74.0)
-        val bearing = bearingBetween(a, b)
+        val bearing = bearingBetweenCoords(a, b)
         assertTrue("bearing $bearing out of range [0,360)", bearing >= 0f && bearing < 360f)
     }
 

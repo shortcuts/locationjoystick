@@ -49,7 +49,7 @@ class RouteCreatorViewModel
         private val _state = MutableStateFlow(CreatorState())
         val state: StateFlow<CreatorState> = _state.asStateFlow()
 
-        val currentSpoofPosition: LatLng?
+        val currentPosition: LatLng?
             get() = locationRepository.currentPosition.value
 
         fun addWaypoint(latLng: LatLng) {

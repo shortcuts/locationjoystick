@@ -13,7 +13,7 @@ dependencies {
     implementation(project(":feature:map:api"))
     implementation(project(":core:data"))
     implementation(project(":core:location"))
-    implementation(project(":core:ui"))
+    implementation(project(":core:designsystem"))
 
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)

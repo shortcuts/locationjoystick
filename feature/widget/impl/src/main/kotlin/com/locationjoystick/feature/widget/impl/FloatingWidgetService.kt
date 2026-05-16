@@ -353,7 +353,7 @@ class FloatingWidgetService :
                 modifier =
                     Modifier
                         .padding(4.dp)
-                        .size(48.dp)
+                        .size(36.dp)
                         .background(MaterialTheme.colorScheme.primary, CircleShape)
                         .pointerInput(Unit) {
                             var isDragging = false
@@ -388,7 +388,7 @@ class FloatingWidgetService :
             // Feature icons — only shown when panel expanded
             if (isPanelExpanded) {
                 features.forEach { feature ->
-                    if (feature == WidgetFeature.ROUTES_PICKER) {
+                    if (feature == WidgetFeature.ROUTES_FLOATING) {
                         val routeIconTint = if (isRouteActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
                         // Route icon + active controls in a horizontal row
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -397,7 +397,7 @@ class FloatingWidgetService :
                                 modifier =
                                     Modifier
                                         .padding(4.dp)
-                                        .size(48.dp)
+                                        .size(36.dp)
                                         .background(Color.Black, CircleShape)
                                         .clickable { onRouteClicked() },
                             ) {
@@ -417,7 +417,7 @@ class FloatingWidgetService :
                                     modifier =
                                         Modifier
                                             .padding(4.dp)
-                                            .size(48.dp)
+                                            .size(36.dp)
                                             .background(Color.Black, CircleShape)
                                             .clickable { onRoutePauseResume() },
                                 ) {
@@ -433,7 +433,7 @@ class FloatingWidgetService :
                                     modifier =
                                         Modifier
                                             .padding(4.dp)
-                                            .size(48.dp)
+                                            .size(36.dp)
                                             .background(Color.Black, CircleShape)
                                             .clickable { onRouteStop() },
                                 ) {
@@ -454,7 +454,7 @@ class FloatingWidgetService :
                             modifier =
                                 Modifier
                                     .padding(4.dp)
-                                    .size(48.dp)
+                                    .size(36.dp)
                                     .background(Color.Black, CircleShape)
                                     .clickable { onFeatureClicked(feature) },
                         ) {
@@ -472,7 +472,7 @@ class FloatingWidgetService :
     }
 
     @Composable
-    private fun FavoritesPanel(
+    private fun FavoritesFloatingView(
         favorites: List<FavoriteLocation>,
         onDismiss: () -> Unit,
         onTeleport: (FavoriteLocation) -> Unit,
@@ -620,7 +620,7 @@ class FloatingWidgetService :
     }
 
     @Composable
-    private fun RoutesPanel(
+    private fun RoutesFloatingView(
         routes: List<com.locationjoystick.core.model.Route>,
         onDismiss: () -> Unit,
         onStart: (routeId: String) -> Unit,
@@ -742,7 +742,7 @@ class FloatingWidgetService :
         panelComposeView = null
     }
 
-    private fun showFavoritesPanel() {
+    private fun showFavoritesFloatingView() {
         serviceScope.launch {
             favoritesDataFlow.value = favoriteRepository.getFavorites().first()
             val panel =
@@ -753,7 +753,7 @@ class FloatingWidgetService :
             panel.setContent {
                 val favs by favoritesDataFlow.collectAsState()
                 LjTheme {
-                    FavoritesPanel(
+                    FavoritesFloatingView(
                         favorites = favs,
                         onDismiss = { hidePanelView() },
                         onTeleport = { fav ->
@@ -792,7 +792,7 @@ class FloatingWidgetService :
         }
     }
 
-    private fun showRoutesPanel() {
+    private fun showRoutesFloatingView() {
         serviceScope.launch {
             routesDataFlow.value = routeRepository.getRoutes().first()
             val panel =
@@ -803,7 +803,7 @@ class FloatingWidgetService :
             panel.setContent {
                 val routes by routesDataFlow.collectAsState()
                 LjTheme {
-                    RoutesPanel(
+                    RoutesFloatingView(
                         routes = routes,
                         onDismiss = { hidePanelView() },
                         onStart = { routeId ->
@@ -846,11 +846,11 @@ class FloatingWidgetService :
                 )
             }
 
-            WidgetFeature.ROUTES_PICKER -> {
+            WidgetFeature.ROUTES_FLOATING -> {
                 Pair(Icons.Rounded.Route, true)
             }
 
-            WidgetFeature.FAVORITES_PICKER -> {
+            WidgetFeature.FAVORITES_FLOATING -> {
                 Pair(Icons.Rounded.Favorite, true)
             }
 
@@ -865,7 +865,7 @@ class FloatingWidgetService :
                 )
             }
 
-            WidgetFeature.MAP -> {
+            WidgetFeature.MAP_FLOATING -> {
                 Pair(Icons.Rounded.LocationOn, true)
             }
         }
@@ -891,10 +891,10 @@ class FloatingWidgetService :
         when (feature) {
             WidgetFeature.JOYSTICK_TOGGLE -> toggleJoystick()
             WidgetFeature.JOYSTICK_LOCK -> toggleJoystickLock()
-            WidgetFeature.ROUTES_PICKER -> showRoutesPanel()
-            WidgetFeature.FAVORITES_PICKER -> showFavoritesPanel()
+            WidgetFeature.ROUTES_FLOATING -> showRoutesFloatingView()
+            WidgetFeature.FAVORITES_FLOATING -> showFavoritesFloatingView()
             WidgetFeature.SPEED_CYCLE -> cycleSpeedProfile()
-            WidgetFeature.MAP -> showMapPanel()
+            WidgetFeature.MAP_FLOATING -> showMapFloatingView()
         }
     }
 
@@ -902,7 +902,7 @@ class FloatingWidgetService :
         if (isRouteActiveFlow.value) {
             routeExpandedFlow.value = !routeExpandedFlow.value
         } else {
-            showRoutesPanel()
+            showRoutesFloatingView()
         }
     }
 
@@ -1087,7 +1087,7 @@ class FloatingWidgetService :
         }
     }
 
-    private fun showMapPanel() {
+    private fun showMapFloatingView() {
         val panel =
             ComposeView(this@FloatingWidgetService).apply {
                 setViewTreeLifecycleOwner(this@FloatingWidgetService)
@@ -1095,7 +1095,7 @@ class FloatingWidgetService :
             }
         panel.setContent {
             LjTheme {
-                MapPanel(
+                MapFloatingView(
                     locationRepository = locationRepository,
                     favoriteRepository = favoriteRepository,
                     onTeleport = { pos ->
@@ -1170,10 +1170,10 @@ class FloatingWidgetService :
         when (this) {
             WidgetFeature.JOYSTICK_TOGGLE -> "Show/hide joystick"
             WidgetFeature.JOYSTICK_LOCK -> "Lock joystick position"
-            WidgetFeature.ROUTES_PICKER -> "Routes picker"
-            WidgetFeature.FAVORITES_PICKER -> "Favorites picker"
+            WidgetFeature.ROUTES_FLOATING -> "Routes picker"
+            WidgetFeature.FAVORITES_FLOATING -> "Favorites picker"
             WidgetFeature.SPEED_CYCLE -> "Speed cycle"
-            WidgetFeature.MAP -> "Open map"
+            WidgetFeature.MAP_FLOATING -> "Open map"
         }
 
     private fun startRouteReplay(

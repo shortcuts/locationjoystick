@@ -310,7 +310,7 @@ On service start: if `REMEMBER_LAST_LOCATION` is true and valid coordinates exis
 
 ### Setup / Onboarding
 
-First launch → multi-step onboarding. Track completion via `ONBOARDING_COMPLETE` DataStore key. Module: `:feature:setup` (not `:feature:onboarding`).
+First launch → multi-step onboarding. Track completion via `ONBOARDING_COMPLETE` DataStore key. Module: `:feature:onboarding`.
 
 Steps:
 1. Welcome
@@ -323,7 +323,7 @@ Permission checks: `ContextCompat.checkSelfPermission`, `Settings.canDrawOverlay
 
 Edge cases: allow skipping each permission (show banner for missing). Detect revoked permissions on `onResume`.
 
-Key files: `:feature:setup:impl/SetupScreen.kt`, `:feature:setup:impl/SetupViewModel.kt`
+Key files: `:feature:onboarding:impl/OnboardingScreen.kt`, `:feature:onboarding:impl/OnboardingViewModel.kt`
 
 ---
 
@@ -344,7 +344,7 @@ All in `:core:model`. Pure Kotlin — no Android imports, no Room annotations. R
 | `ExportData` | `schemaVersion: Int`, `exportedAt: Long`, `settings: AppSettings`, `speedProfiles: List<SpeedProfile>`, `routes: List<Route>`, `favoriteLocations: List<FavoriteLocation>` |
 | `MockMode` | enum: `JOYSTICK`, `ROUTE_REPLAY`, `ROAMING`, `TELEPORT` |
 | `MockLocationState` | enum: `IDLE`, `RUNNING`, `PAUSED`, `ERROR` |
-| `WidgetFeature` | enum: `JOYSTICK_TOGGLE`, `JOYSTICK_LOCK`, `ROUTES_PICKER`, `FAVORITES_PICKER`, `SPEED_CYCLE`, `MAP` |
+| `WidgetFeature` | enum: `JOYSTICK_TOGGLE`, `JOYSTICK_LOCK`, `ROUTES_FLOATING`, `FAVORITES_FLOATING`, `SPEED_CYCLE`, `MAP_FLOATING` |
 | `JoystickStyle` | enum: `FLOATING`, `FIXED` |
 | `SpeedUnit` | enum: `KMH`, `MPH` |
 

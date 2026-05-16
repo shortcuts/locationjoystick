@@ -42,9 +42,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.locationjoystick.core.designsystem.component.LjTopBar
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
-import com.locationjoystick.core.ui.component.LjTopBar
 
 @Composable
 fun SettingsRoute(
@@ -128,7 +128,7 @@ internal fun SettingsScreen(
 ) {
     Scaffold(
         topBar = {
-            LjTopBar(title = "Lj", onMenuClick = onOpenDrawer)
+            LjTopBar(title = "Lj", onNavigationClick = onOpenDrawer)
         },
         floatingActionButton = {
             if (uiState.isDirty) {
@@ -334,13 +334,13 @@ internal fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Checkbox(
-                                checked = WidgetFeature.MAP in uiState.enabledWidgetFeatures,
+                                checked = WidgetFeature.MAP_FLOATING in uiState.enabledWidgetFeatures,
                                 onCheckedChange = { isChecked ->
                                     val updated = uiState.enabledWidgetFeatures.toMutableSet()
                                     if (isChecked) {
-                                        updated.add(WidgetFeature.MAP)
+                                        updated.add(WidgetFeature.MAP_FLOATING)
                                     } else {
-                                        updated.remove(WidgetFeature.MAP)
+                                        updated.remove(WidgetFeature.MAP_FLOATING)
                                     }
                                     onSetWidgetFeatures(updated)
                                 },
@@ -412,13 +412,13 @@ internal fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Checkbox(
-                                checked = WidgetFeature.ROUTES_PICKER in uiState.enabledWidgetFeatures,
+                                checked = WidgetFeature.ROUTES_FLOATING in uiState.enabledWidgetFeatures,
                                 onCheckedChange = { isChecked ->
                                     val updated = uiState.enabledWidgetFeatures.toMutableSet()
                                     if (isChecked) {
-                                        updated.add(WidgetFeature.ROUTES_PICKER)
+                                        updated.add(WidgetFeature.ROUTES_FLOATING)
                                     } else {
-                                        updated.remove(WidgetFeature.ROUTES_PICKER)
+                                        updated.remove(WidgetFeature.ROUTES_FLOATING)
                                     }
                                     onSetWidgetFeatures(updated)
                                 },
@@ -438,13 +438,13 @@ internal fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Checkbox(
-                                checked = WidgetFeature.FAVORITES_PICKER in uiState.enabledWidgetFeatures,
+                                checked = WidgetFeature.FAVORITES_FLOATING in uiState.enabledWidgetFeatures,
                                 onCheckedChange = { isChecked ->
                                     val updated = uiState.enabledWidgetFeatures.toMutableSet()
                                     if (isChecked) {
-                                        updated.add(WidgetFeature.FAVORITES_PICKER)
+                                        updated.add(WidgetFeature.FAVORITES_FLOATING)
                                     } else {
-                                        updated.remove(WidgetFeature.FAVORITES_PICKER)
+                                        updated.remove(WidgetFeature.FAVORITES_FLOATING)
                                     }
                                     onSetWidgetFeatures(updated)
                                 },

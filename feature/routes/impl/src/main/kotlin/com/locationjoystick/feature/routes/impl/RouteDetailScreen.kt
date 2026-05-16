@@ -37,8 +37,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.data.RouteRepository
+import com.locationjoystick.core.designsystem.component.LjTopBar
 import com.locationjoystick.core.model.Route
-import com.locationjoystick.core.ui.component.LjTopBar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -165,7 +165,7 @@ fun RouteDetailScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         LjTopBar(
             title = "Route Details",
-            onMenuClick = onOpenDrawer,
+            onNavigationClick = onOpenDrawer,
             actions = {
                 IconButton(onClick = { showDeleteConfirmation = true }) {
                     Icon(Icons.Default.Delete, contentDescription = "Delete route")

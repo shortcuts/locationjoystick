@@ -156,14 +156,13 @@ Each feature split into `:api` (public contract) + `:impl` (implementation).
 | `:core:overlay` | Shared WindowManager overlay utilities |
 | `:core:routing` | OSRM client + route interpolation |
 | `:core:testing` | Shared test utilities, fakes |
-| `:core:ui` | Shared Compose components |
 | `:feature:favorites:api` / `:impl` | Favorites list, MapPicker, teleport |
 | `:feature:joystick:api` / `:impl` | Floating joystick overlay service |
 | `:feature:map:api` / `:impl` | MapLibre screen, map interactions |
+| `:feature:onboarding:api` / `:impl` | Multi-step onboarding flow |
 | `:feature:roaming:api` / `:impl` | Roaming config, RoamingEngine |
 | `:feature:routes:api` / `:impl` | Route list, editor, replay |
 | `:feature:settings:api` / `:impl` | Speed profiles, widget config, export/import |
-| `:feature:setup:api` / `:impl` | Multi-step onboarding flow |
 | `:feature:widget:api` / `:impl` | Floating widget overlay service |
 
 ---

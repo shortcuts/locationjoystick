@@ -1,20 +1,12 @@
 package com.locationjoystick.core.common.util
 
+import com.locationjoystick.core.model.LatLng
 import kotlin.math.PI
 import kotlin.math.asin
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
-
-/**
- * Data class representing a geographic coordinate.
- * Pure Kotlin — no android.location imports.
- */
-data class LatLng(
-    val latitude: Double,
-    val longitude: Double,
-)
 
 private const val EARTH_RADIUS_METERS = 6371000.0
 
@@ -52,7 +44,7 @@ fun haversineDistance(
  * Calculates the initial compass bearing from [from] to [to].
  * @return bearing in degrees [0, 360)
  */
-fun bearingBetween(
+fun bearingBetweenCoords(
     from: LatLng,
     to: LatLng,
 ): Float {

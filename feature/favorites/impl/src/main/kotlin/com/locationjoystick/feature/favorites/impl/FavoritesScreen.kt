@@ -51,8 +51,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.locationjoystick.core.ui.component.EmptyState
-import com.locationjoystick.core.ui.component.LjTopBar
+import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.LjTopBar
 
 @Composable
 fun FavoritesRoute(
@@ -73,7 +73,7 @@ fun FavoritesRoute(
         onUpdateFavorite = viewModel::updateFavorite,
         onNavigateToMapPicker = onNavigateToMapPicker,
         onOpenDrawer = onOpenDrawer,
-        getCurrentPosition = { viewModel.currentSpoofPosition },
+        getCurrentPosition = { viewModel.currentPosition },
     )
 }
 
@@ -103,7 +103,7 @@ internal fun FavoritesScreen(
         topBar = {
             LjTopBar(
                 title = "Lj",
-                onMenuClick = onOpenDrawer,
+                onNavigationClick = onOpenDrawer,
                 actions = {
                     IconButton(onClick = { showAddMenu = !showAddMenu }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "Add options")

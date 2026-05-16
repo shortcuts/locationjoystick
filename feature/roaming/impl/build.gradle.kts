@@ -11,7 +11,7 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:datastore"))
     implementation(project(":core:routing"))
-    implementation(project(":core:ui"))
+    implementation(project(":core:designsystem"))
 
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)
