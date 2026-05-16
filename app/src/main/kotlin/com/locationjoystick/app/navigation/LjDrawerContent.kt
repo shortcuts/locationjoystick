@@ -39,9 +39,9 @@ fun LjDrawerContent(
 ) {
     val scope = rememberCoroutineScope()
 
-    ModalDrawerSheet {
+    ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.5f)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.End,
         ) {
             IconButton(onClick = { scope.launch { drawerState.close() } }) {

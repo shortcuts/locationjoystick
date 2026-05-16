@@ -8,6 +8,6 @@ This document references known issues for agents to pick them and iterate on
 
 - Bug: starting a route shouldn't teleport to the first GPX position of the route, we should walk to the first position instead, similar must be done when starting in reverse, we must walk to the last GPX position of the route.
 
-- Feature: when a route is ongoing, clicking on the map (either the main map screen or floating map view) should I
+- Feature: when a route is ongoing, clicking on the map (either the main map screen or floating map view) 
 
 - Bug:
