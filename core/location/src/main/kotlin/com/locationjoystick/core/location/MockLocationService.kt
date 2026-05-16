@@ -70,10 +70,14 @@ class MockLocationService : Service() {
         const val ACTION_ROUTE_REPLAY_PAUSE = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_PAUSE"
         const val ACTION_ROUTE_REPLAY_RESUME = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_RESUME"
         const val ACTION_ROUTE_REPLAY_STOP = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_STOP"
+        const val ACTION_ROUTE_REPLAY_CANCEL = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_CANCEL"
+        const val ACTION_ROUTE_APPEND_WAYPOINT = "com.locationjoystick.core.location.ACTION_ROUTE_APPEND_WAYPOINT"
 
         const val EXTRA_ROUTE_ID = "extra_route_id"
         const val EXTRA_IS_BACKWARD = "extra_is_backward"
         const val EXTRA_SPEED_MS = "extra_speed_ms"
+        const val EXTRA_WAYPOINT_LAT = "extra_waypoint_lat"
+        const val EXTRA_WAYPOINT_LON = "extra_waypoint_lon"
     }
 
     inner class LocalBinder : Binder() {
@@ -281,6 +285,16 @@ class MockLocationService : Service() {
             ACTION_ROUTE_REPLAY_STOP -> {
                 serviceScope.launch { handleReplayStop() }
             }
+
+            ACTION_ROUTE_REPLAY_CANCEL -> {
+                serviceScope.launch { handleReplayCancel() }
+            }
+
+            ACTION_ROUTE_APPEND_WAYPOINT -> {
+                val lat = intent.getDoubleExtra(EXTRA_WAYPOINT_LAT, 0.0)
+                val lon = intent.getDoubleExtra(EXTRA_WAYPOINT_LON, 0.0)
+                routeReplayEngine.appendWaypoint(LatLng(lat, lon))
+            }
         }
 
         return START_STICKY
@@ -454,6 +468,14 @@ class MockLocationService : Service() {
     private suspend fun handleReplayStop() {
         routeReplayEngine.stop()
         stopSpoofing()
+    }
+
+    private suspend fun handleReplayCancel() {
+        routeReplayEngine.stop()
+        locationRepository.setMockMode(MockMode.TELEPORT)
+        locationRepository.setActiveRouteId(null)
+        startUpdateLoop()
+        Log.i(TAG, "Replay cancelled; service remains active in TELEPORT mode")
     }
 
     private fun setupTestProvider() {

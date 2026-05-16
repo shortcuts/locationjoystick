@@ -84,11 +84,16 @@ internal fun MapFloatingView(
     favoriteRepository: FavoriteRepository,
     onTeleport: (LatLng) -> Unit,
     onWalkTo: (LatLng) -> Unit,
+    onStopRouteAndTeleport: (LatLng) -> Unit,
+    onStopRouteAndWalkTo: (LatLng) -> Unit,
+    onFinishRouteAndWalkTo: (LatLng) -> Unit,
     onDismiss: () -> Unit,
     context: Context,
 ) {
     val currentPosition by locationRepository.currentPosition.collectAsState()
     val walkTarget by locationRepository.walkTarget.collectAsState()
+    val mockMode by locationRepository.currentMode.collectAsState()
+    val isRouteReplay = mockMode == com.locationjoystick.core.model.MockMode.ROUTE_REPLAY
     val favoritesFlow = remember { favoriteRepository.getFavorites() }
     val favorites by favoritesFlow.collectAsState(initial = emptyList())
 
@@ -340,23 +345,51 @@ internal fun MapFloatingView(
                         .clickable { }
                         .padding(16.dp),
             ) {
-                Text("Move to this location?", style = MaterialTheme.typography.titleMedium, color = LjText)
-                Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = {
-                        onTeleport(tap)
-                        pendingTap = null
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Teleport here") }
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = {
-                        onWalkTo(tap)
-                        pendingTap = null
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Walk here") }
+                if (isRouteReplay) {
+                    Text("Route in progress", style = MaterialTheme.typography.titleMedium, color = LjText)
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            onStopRouteAndTeleport(tap)
+                            pendingTap = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Stop route and teleport") }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = {
+                            onStopRouteAndWalkTo(tap)
+                            pendingTap = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Stop route and walk here") }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = {
+                            onFinishRouteAndWalkTo(tap)
+                            pendingTap = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Finish route and walk here") }
+                } else {
+                    Text("Move to this location?", style = MaterialTheme.typography.titleMedium, color = LjText)
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            onTeleport(tap)
+                            pendingTap = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Teleport here") }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = {
+                            onWalkTo(tap)
+                            pendingTap = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Walk here") }
+                }
                 Spacer(Modifier.height(4.dp))
                 TextButton(
                     onClick = { pendingTap = null },

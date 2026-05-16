@@ -16,6 +16,7 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MockMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +51,7 @@ class MapViewModel
 
         init {
             observeLocationState()
+            observeMockMode()
             observeRoutes()
             observeFavorites()
         }
@@ -70,6 +72,14 @@ class MapViewModel
                             isWalkPaused = walkPaused,
                         )
                     }
+                }
+            }
+        }
+
+        private fun observeMockMode() {
+            viewModelScope.launch {
+                locationRepository.currentMode.collect { mode ->
+                    _uiState.update { it.copy(isRouteReplay = mode == MockMode.ROUTE_REPLAY) }
                 }
             }
         }
@@ -195,6 +205,23 @@ class MapViewModel
                     _uiState.update {
                         it.copy(walkTarget = null, walkStart = null, isWalkPaused = false)
                     }
+                }
+
+                is MapAction.StopRouteAndTeleport -> {
+                    stopRouteOnly()
+                    teleportTo(action.position)
+                    _uiState.update { it.copy(pendingTapPosition = null) }
+                }
+
+                is MapAction.StopRouteAndWalkTo -> {
+                    stopRouteOnly()
+                    walkTo(action.position)
+                    _uiState.update { it.copy(pendingTapPosition = null) }
+                }
+
+                is MapAction.FinishRouteAndWalkTo -> {
+                    appendWaypointToRoute(action.position)
+                    _uiState.update { it.copy(pendingTapPosition = null) }
                 }
 
                 is MapAction.SaveCurrentLocation -> {
@@ -324,6 +351,24 @@ class MapViewModel
                         _uiState.update { it.copy(walkTarget = null, walkStart = null) }
                     }
                 }
+        }
+
+        private fun stopRouteOnly() {
+            val intent =
+                Intent(MockLocationService.ACTION_ROUTE_REPLAY_CANCEL).apply {
+                    component = ComponentName(context, MockLocationService::class.java)
+                }
+            context.startService(intent)
+        }
+
+        private fun appendWaypointToRoute(position: LatLng) {
+            val intent =
+                Intent(MockLocationService.ACTION_ROUTE_APPEND_WAYPOINT).apply {
+                    component = ComponentName(context, MockLocationService::class.java)
+                    putExtra(MockLocationService.EXTRA_WAYPOINT_LAT, position.latitude)
+                    putExtra(MockLocationService.EXTRA_WAYPOINT_LON, position.longitude)
+                }
+            context.startService(intent)
         }
 
         private fun startSpoofing() {

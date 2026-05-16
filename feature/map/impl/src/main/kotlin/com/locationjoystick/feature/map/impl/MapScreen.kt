@@ -443,6 +443,7 @@ internal fun MapScreen(
     if (pending != null) {
         PendingTapSheet(
             position = pending,
+            isRouteReplay = uiState.isRouteReplay,
             onAction = onAction,
         )
     }
@@ -492,29 +493,55 @@ private fun FavoritesPickerSheet(
 @Composable
 private fun PendingTapSheet(
     position: com.locationjoystick.core.model.LatLng,
+    isRouteReplay: Boolean,
     onAction: (MapAction) -> Unit,
 ) {
     ModalBottomSheet(
         onDismissRequest = { onAction(MapAction.ClearPendingTap) },
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Move to this location?", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = { onAction(MapAction.ConfirmTeleport(position)) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Teleport here")
-            }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = {
-                    onAction(MapAction.LongPressTapToWalk(position))
-                    onAction(MapAction.ClearPendingTap)
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Walk here")
+            if (isRouteReplay) {
+                Text("Route in progress", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(16.dp))
+                Button(
+                    onClick = { onAction(MapAction.StopRouteAndTeleport(position)) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Stop route and teleport")
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { onAction(MapAction.StopRouteAndWalkTo(position)) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Stop route and walk here")
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { onAction(MapAction.FinishRouteAndWalkTo(position)) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Finish route and walk here")
+                }
+            } else {
+                Text("Move to this location?", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(16.dp))
+                Button(
+                    onClick = { onAction(MapAction.ConfirmTeleport(position)) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Teleport here")
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = {
+                        onAction(MapAction.LongPressTapToWalk(position))
+                        onAction(MapAction.ClearPendingTap)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Walk here")
+                }
             }
             Spacer(Modifier.height(4.dp))
             TextButton(

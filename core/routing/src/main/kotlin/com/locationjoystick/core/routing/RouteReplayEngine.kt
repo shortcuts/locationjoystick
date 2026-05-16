@@ -77,6 +77,11 @@ class RouteReplayEngine
             Log.i(TAG, "Replay stopped")
         }
 
+        fun appendWaypoint(pos: LatLng) {
+            savedWaypoints = savedWaypoints + pos
+            Log.i(TAG, "Waypoint appended; total=${savedWaypoints.size}")
+        }
+
         private fun launchReplay(
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,

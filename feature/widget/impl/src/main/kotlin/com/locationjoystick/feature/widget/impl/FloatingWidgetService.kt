@@ -1115,6 +1115,26 @@ class FloatingWidgetService :
                         startWalkToPosition(pos)
                         moveAppToBack()
                     },
+                    onStopRouteAndTeleport = { pos ->
+                        sendReplayCancel()
+                        val svc = mockLocationService
+                        if (svc != null) {
+                            svc.updatePosition(pos.latitude, pos.longitude)
+                        } else {
+                            serviceScope.launch { locationRepository.updatePosition(pos) }
+                        }
+                        moveAppToBack()
+                    },
+                    onStopRouteAndWalkTo = { pos ->
+                        sendReplayCancel()
+                        locationRepository.setWalkTarget(pos)
+                        startWalkToPosition(pos)
+                        moveAppToBack()
+                    },
+                    onFinishRouteAndWalkTo = { pos ->
+                        sendAppendWaypoint(pos)
+                        moveAppToBack()
+                    },
                     onDismiss = { hidePanelView() },
                     context = this@FloatingWidgetService,
                 )
@@ -1127,6 +1147,48 @@ class FloatingWidgetService :
             Log.d(TAG, "Opened map panel")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show map panel", e)
+        }
+    }
+
+    private fun sendReplayCancel() {
+        try {
+            val intent =
+                Intent(
+                    com.locationjoystick.core.location.MockLocationService.ACTION_ROUTE_REPLAY_CANCEL,
+                ).apply {
+                    setClassName(
+                        packageName,
+                        "com.locationjoystick.core.location.MockLocationService",
+                    )
+                }
+            startService(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send replay cancel", e)
+        }
+    }
+
+    private fun sendAppendWaypoint(pos: com.locationjoystick.core.model.LatLng) {
+        try {
+            val intent =
+                Intent(
+                    com.locationjoystick.core.location.MockLocationService.ACTION_ROUTE_APPEND_WAYPOINT,
+                ).apply {
+                    setClassName(
+                        packageName,
+                        "com.locationjoystick.core.location.MockLocationService",
+                    )
+                    putExtra(
+                        com.locationjoystick.core.location.MockLocationService.EXTRA_WAYPOINT_LAT,
+                        pos.latitude,
+                    )
+                    putExtra(
+                        com.locationjoystick.core.location.MockLocationService.EXTRA_WAYPOINT_LON,
+                        pos.longitude,
+                    )
+                }
+            startService(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send append waypoint", e)
         }
     }
 

@@ -55,4 +55,16 @@ sealed interface MapAction {
     data object ResumeWalk : MapAction
 
     data object StopWalk : MapAction
+
+    data class StopRouteAndTeleport(
+        val position: LatLng,
+    ) : MapAction
+
+    data class StopRouteAndWalkTo(
+        val position: LatLng,
+    ) : MapAction
+
+    data class FinishRouteAndWalkTo(
+        val position: LatLng,
+    ) : MapAction
 }
