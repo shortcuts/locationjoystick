@@ -346,7 +346,7 @@ class FloatingWidgetService :
         onRouteStop: () -> Unit,
         onDrag: (dx: Float, dy: Float) -> Unit,
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(horizontalAlignment = Alignment.Start) {
             // Master toggle icon — always visible; drag to reposition, tap to toggle panel
             Box(
                 contentAlignment = Alignment.Center,

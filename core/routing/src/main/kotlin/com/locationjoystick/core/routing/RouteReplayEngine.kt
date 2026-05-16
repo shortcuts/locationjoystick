@@ -116,10 +116,12 @@ class RouteReplayEngine
                                 resumePosition = position
                                 resumeWaypointIndex = index
                             } else {
-                                try {
-                                    onComplete()
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "onComplete failed", e)
+                                if (isActive) {
+                                    try {
+                                        onComplete()
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "onComplete failed", e)
+                                    }
                                 }
                                 break
                             }
