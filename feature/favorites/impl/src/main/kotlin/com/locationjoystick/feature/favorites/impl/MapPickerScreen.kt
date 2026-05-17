@@ -20,7 +20,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -33,12 +32,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.designsystem.component.LjTopBar
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.overlay.OverlayService
 import org.maplibre.android.MapLibre
@@ -72,6 +73,16 @@ fun MapPickerRoute(
         initialPosition = initialPosition,
         onLocationPicked = onLocationPicked,
         onBack = onBack,
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MapPickerScreenPreview() {
+    MapPickerScreen(
+        initialPosition = null,
+        onLocationPicked = { _, _, _ -> },
+        onBack = {},
     )
 }
 
@@ -126,13 +137,10 @@ internal fun MapPickerScreen(
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text("Pick Location") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+            LjTopBar(
+                title = "Pick Location",
+                onNavigationClick = onBack,
+                navigationIcon = Icons.AutoMirrored.Filled.ArrowBack,
                 actions = {
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
                         Icon(Icons.Default.Search, contentDescription = "Search location")

@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.settings.impl
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.Route
@@ -10,7 +11,7 @@ import java.util.UUID
 import java.util.zip.GZIPOutputStream
 
 internal object QrChunker {
-    private const val CHUNK_SIZE_LIMIT = 2400 // bytes after gzip
+    private val CHUNK_SIZE_LIMIT = AppConstants.ExportConstants.QR_CHUNK_SIZE_LIMIT
 
     data class ChunkResult(
         val chunks: List<ChunkEnvelope>,

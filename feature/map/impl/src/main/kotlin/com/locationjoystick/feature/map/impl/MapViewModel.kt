@@ -39,7 +39,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 private const val TAG = "MapViewModel"
-private const val ACTION_UPDATE_POSITION = "com.locationjoystick.core.location.ACTION_UPDATE_POSITION"
 
 @HiltViewModel
 class MapViewModel
@@ -381,7 +380,7 @@ class MapViewModel
             viewModelScope.launch {
                 try {
                     val intent =
-                        Intent(ACTION_UPDATE_POSITION).apply {
+                        Intent(AppConstants.ServiceConstants.ACTION_UPDATE_POSITION).apply {
                             component =
                                 ComponentName(
                                     context,
@@ -458,7 +457,7 @@ class MapViewModel
                             withContext(Dispatchers.Main) {
                                 try {
                                     val intent =
-                                        Intent(ACTION_UPDATE_POSITION).apply {
+                                        Intent(AppConstants.ServiceConstants.ACTION_UPDATE_POSITION).apply {
                                             component =
                                                 ComponentName(
                                                     context,

@@ -30,6 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
@@ -104,6 +105,15 @@ class RouteDetailViewModel
             }
         }
     }
+
+@Preview(showBackground = true)
+@Composable
+private fun RouteDetailScreenPreview() {
+    RouteDetailScreen(
+        routeId = "preview",
+        onNavigateBack = {},
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

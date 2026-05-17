@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
@@ -141,6 +142,29 @@ fun SettingsRoute(
         onQrScan = { showQrScanner = true },
         onSaveChanges = viewModel::saveChanges,
         onDiscardChanges = viewModel::discardChanges,
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SettingsScreenPreview() {
+    SettingsScreen(
+        uiState = SettingsUiState(),
+        onOpenDrawer = {},
+        onSetWalkSpeed = {},
+        onSetRunSpeed = {},
+        onSetBikeSpeed = {},
+        onSetSpeedUnit = {},
+        onSetWidgetFeatures = {},
+        onSetRememberLastLocation = {},
+        onSetJitterIdleRadius = {},
+        onSetJitterMovingRadius = {},
+        onSetJitterIntervalSeconds = {},
+        convertMsToDisplay = { v, _ -> v },
+        onExport = {},
+        onImport = {},
+        onQrShare = {},
+        onQrScan = {},
     )
 }
 

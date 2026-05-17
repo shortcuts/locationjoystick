@@ -46,6 +46,9 @@ object AppConstants {
         const val OSRM_PROFILE_CYCLING = "cycling"
         const val DEFAULT_TRANSPORT_MODE = ProfileConstants.PROFILE_ID_WALK
         const val WAYPOINT_ARRIVAL_THRESHOLD_METERS = 5.0
+        const val DEFAULT_DISTANCE_METERS = 1_000.0
+        const val DEFAULT_FOLLOW_ROADS = true
+        const val DEFAULT_RETURN_TO_START = true
     }
 
     object OsrmConstants {
@@ -67,6 +70,8 @@ object AppConstants {
     object NominatimConstants {
         const val SEARCH_URL = "https://nominatim.openstreetmap.org/search"
         const val SEARCH_DEBOUNCE_MS = 300L
+        const val CONNECT_TIMEOUT_MS = 5000
+        const val READ_TIMEOUT_MS = 5000
     }
 
     object ExportConstants {
@@ -75,6 +80,7 @@ object AppConstants {
         const val MIME_TYPE = "application/json"
         const val GPX_VERSION = "1.1"
         const val GPX_CREATOR = "locationjoystick"
+        const val QR_CHUNK_SIZE_LIMIT = 2400
     }
 
     object NotificationConstants {
@@ -110,6 +116,8 @@ object AppConstants {
         const val EXTRA_SPEED_MS = "extra_speed_ms"
         const val EXTRA_WAYPOINT_LAT = "extra_waypoint_lat"
         const val EXTRA_WAYPOINT_LON = "extra_waypoint_lon"
+        const val ACTION_OVERLAY_SHOW = "com.locationjoystick.action.OVERLAY_SHOW"
+        const val ACTION_OVERLAY_HIDE = "com.locationjoystick.action.OVERLAY_HIDE"
     }
 
     object DataStoreConstants {
@@ -129,5 +137,14 @@ object AppConstants {
 
     object RouteConstants {
         const val WAYPOINT_SNAP_THRESHOLD_METERS = 1.0
+    }
+
+    object DatabaseConstants {
+        const val DATABASE_NAME = "locationjoystick.db"
+    }
+
+    object AppInfo {
+        const val GITHUB_URL = "https://github.com/shortcuts/locationjoystick"
+        const val GITHUB_ISSUES_URL = "https://github.com/shortcuts/locationjoystick/issues"
     }
 }

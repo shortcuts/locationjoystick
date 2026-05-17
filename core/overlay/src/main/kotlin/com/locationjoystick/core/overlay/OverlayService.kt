@@ -8,13 +8,14 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import com.locationjoystick.core.common.constants.AppConstants
 
 abstract class OverlayService : Service() {
     private val tag: String get() = this::class.java.simpleName
 
     companion object {
-        const val ACTION_OVERLAY_HIDE = "com.locationjoystick.overlay.ACTION_HIDE"
-        const val ACTION_OVERLAY_SHOW = "com.locationjoystick.overlay.ACTION_SHOW"
+        val ACTION_OVERLAY_HIDE = AppConstants.ServiceConstants.ACTION_OVERLAY_HIDE
+        val ACTION_OVERLAY_SHOW = AppConstants.ServiceConstants.ACTION_OVERLAY_SHOW
     }
 
     protected lateinit var windowManager: WindowManager

@@ -58,8 +58,8 @@ fun NominatimSearchBar(
                 val url = URL("${AppConstants.NominatimConstants.SEARCH_URL}?q=$encoded&format=json&limit=5")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.setRequestProperty("User-Agent", "locationjoystick/1.0")
-                conn.connectTimeout = 5000
-                conn.readTimeout = 5000
+                conn.connectTimeout = AppConstants.NominatimConstants.CONNECT_TIMEOUT_MS
+                conn.readTimeout = AppConstants.NominatimConstants.READ_TIMEOUT_MS
                 try {
                     val responseText = conn.inputStream.bufferedReader().readText()
                     val array = JSONArray(responseText)

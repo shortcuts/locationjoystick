@@ -331,10 +331,10 @@ class AppPreferencesDataSource
                 )
 
             const val DEFAULT_ROAMING_RADIUS_METERS = AppConstants.RoamingConstants.DEFAULT_RADIUS_METERS
-            const val DEFAULT_ROAMING_DISTANCE_METERS = 1_000.0
+            const val DEFAULT_ROAMING_DISTANCE_METERS = AppConstants.RoamingConstants.DEFAULT_DISTANCE_METERS
             const val DEFAULT_ROAMING_SPEED_PROFILE_ID = AppConstants.ProfileConstants.DEFAULT_ACTIVE_PROFILE_ID
-            const val DEFAULT_ROAMING_FOLLOW_ROADS = true
-            const val DEFAULT_ROAMING_RETURN_TO_START = true
+            const val DEFAULT_ROAMING_FOLLOW_ROADS = AppConstants.RoamingConstants.DEFAULT_FOLLOW_ROADS
+            const val DEFAULT_ROAMING_RETURN_TO_START = AppConstants.RoamingConstants.DEFAULT_RETURN_TO_START
 
             const val DEFAULT_JITTER_IDLE_RADIUS_METERS = AppConstants.JitterConstants.DEFAULT_IDLE_RADIUS_METERS
             const val DEFAULT_JITTER_MOVING_RADIUS_METERS = AppConstants.JitterConstants.DEFAULT_MOVING_RADIUS_METERS

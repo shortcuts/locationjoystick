@@ -13,6 +13,8 @@ data class LatLng(
     val longitude: Double,
 ) {
     companion object {
+        // Cannot use AppConstants — core:model is a pure JVM module with no core:common dependency.
+        // Keep in sync with AppConstants.LocationConstants.EARTH_RADIUS_METERS.
         private const val EARTH_RADIUS_METERS = 6_371_000.0
     }
 }

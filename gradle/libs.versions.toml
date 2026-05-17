@@ -122,7 +122,6 @@ virtual-joystick-android = { group = "io.github.controlwear", name = "virtual-jo
 # Networking
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
-okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 
 # QR Code & Camera
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }

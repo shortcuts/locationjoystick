@@ -11,11 +11,13 @@ import androidx.compose.material.icons.outlined.LocationOff
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Directions
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Loop
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Menu
@@ -30,6 +32,7 @@ import androidx.compose.material.icons.rounded.Stop
 
 object LjIcons {
     val Add = Icons.Rounded.Add
+    val ArrowBack = Icons.Rounded.ArrowBack
     val Check = Icons.Rounded.Check
     val Close = Icons.Rounded.Close
     val Delete = Icons.Outlined.DeleteOutline
@@ -39,6 +42,7 @@ object LjIcons {
     val Favorite = Icons.Rounded.Favorite
     val FavoriteBorder = Icons.Outlined.FavoriteBorder
     val FileDownload = Icons.Outlined.FileDownload
+    val Info = Icons.Rounded.Info
     val FileUpload = Icons.Outlined.FileUpload
     val Joystick = Icons.Rounded.SportsEsports
     val Layers = Icons.Outlined.Layers

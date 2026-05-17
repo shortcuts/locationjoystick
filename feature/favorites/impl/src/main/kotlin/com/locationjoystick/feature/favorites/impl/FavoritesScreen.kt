@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.component.EmptyState
@@ -74,6 +75,20 @@ fun FavoritesRoute(
         onNavigateToMapPicker = onNavigateToMapPicker,
         onOpenDrawer = onOpenDrawer,
         getCurrentPosition = { viewModel.currentPosition },
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FavoritesScreenPreview() {
+    FavoritesScreen(
+        uiState = FavoritesUiState(),
+        snackbarHostState = SnackbarHostState(),
+        onTeleport = {},
+        onSetPendingDeleteId = {},
+        onConfirmDelete = {},
+        onAddFavorite = { _, _, _ -> },
+        onUpdateFavorite = { _, _, _, _ -> },
     )
 }
 

@@ -26,6 +26,7 @@ No-root mock location app for Android. Spoof GPS anywhere using floating joystic
 | **Import/Export** | All data to/from JSON (routes, favorites, speed profiles, widget config, roaming defaults, jitter settings). |
 | **Background Service** | Spoofs while minimized or screen off via foreground service. Low-priority notification. |
 | **Onboarding** | Multi-step first-run flow: location permission, overlay permission, mock location enablement. |
+| **About** | App version, GitHub, privacy policy, and open-source credits. Accessible from home screen and navigation drawer. |
 
 ---
 
@@ -33,7 +34,7 @@ No-root mock location app for Android. Spoof GPS anywhere using floating joystic
 
 GPS spoofing app built on Android's official mock location API. No root, no Xposed, no system mods. Enable Developer Options, pick locationjoystick as mock location provider → device believes it's wherever you say.
 
-Primary use case: location-based games like Pokémon GO. Walk saved routes, roam a neighborhood automatically, or nudge position with floating joystick while game runs in foreground. App keeps spoofing in background.
+Primary use case: location-based games. Walk saved routes, roam a neighborhood automatically, or nudge position with floating joystick while a game runs in foreground.
 
 Also useful for: privacy (mask real location), QA testing (simulate movement at desk), development (test geofences, location triggers, map features).
 

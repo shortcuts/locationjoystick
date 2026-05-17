@@ -30,7 +30,7 @@ Constraints:
 ## Constants
 
 All app-wide constants live in a single source of truth: `:core:common/constants/AppConstants.kt`.
-Nested objects: `LocationConstants`, `ProfileConstants`, `JitterConstants`, `RoamingConstants`, `OsrmConstants`, `MapConstants`, `NominatimConstants`, `ExportConstants`, `NotificationConstants`, `ServiceConstants`, `DataStoreConstants`, `JoystickConstants`, `WidgetConstants`, `RouteConstants`.
+Nested objects: `LocationConstants`, `ProfileConstants`, `JitterConstants`, `RoamingConstants`, `OsrmConstants`, `MapConstants`, `NominatimConstants`, `ExportConstants`, `NotificationConstants`, `ServiceConstants`, `DataStoreConstants`, `JoystickConstants`, `WidgetConstants`, `RouteConstants`, `DatabaseConstants`, `AppInfo`.
 
 Rules:
 - Never define a new top-level or companion-object constant that belongs in `AppConstants`. Add it there instead.
@@ -350,6 +350,16 @@ Permission checks: `ContextCompat.checkSelfPermission`, `Settings.canDrawOverlay
 Edge cases: allow skipping each permission (show banner for missing). Detect revoked permissions on `onResume`.
 
 Key files: `:feature:onboarding:impl/OnboardingScreen.kt`, `:feature:onboarding:impl/OnboardingViewModel.kt`
+
+---
+
+### Info / About Page
+
+Module: `:app` (no feature submodules). Composable: `InfoScreen.kt` (no ViewModel, static content).
+
+Shows app version, GitHub link, issue tracker, privacy note, credits (MapLibre, OSM, OSRM, ZXing), MIT license. Accessible from: `IdleScreen` card ("About") and drawer bottom item. Route: `info` in `LjNavHost`.
+
+Key files: `app/src/main/kotlin/com/locationjoystick/app/InfoScreen.kt`
 
 ---
 

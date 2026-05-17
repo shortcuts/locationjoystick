@@ -40,6 +40,17 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import java.util.concurrent.Executors
+import androidx.compose.ui.tooling.preview.Preview as ComposePreview
+
+@ComposePreview(showBackground = true)
+@Composable
+private fun QrScannerScreenPreview() {
+    QrScannerScreen(
+        onChunkScanned = {},
+        onPermissionDenied = {},
+        onNavigateBack = {},
+    )
+}
 
 @Composable
 fun QrScannerScreen(

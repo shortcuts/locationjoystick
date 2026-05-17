@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,6 +47,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.designsystem.component.LjTopBar
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.overlay.OverlayService
@@ -91,6 +93,19 @@ fun RouteCreatorRoute(
             onRouteSaved()
         },
         onBack = onBack,
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RouteCreatorScreenPreview() {
+    RouteCreatorScreen(
+        state = CreatorState(),
+        initialPosition = null,
+        onAddWaypoint = {},
+        onUndo = {},
+        onSaveRoute = {},
+        onBack = {},
     )
 }
 
@@ -149,13 +164,10 @@ internal fun RouteCreatorScreen(
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text("Create Route") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+            LjTopBar(
+                title = "Create Route",
+                onNavigationClick = onBack,
+                navigationIcon = Icons.AutoMirrored.Filled.ArrowBack,
                 actions = {
                     IconButton(onClick = { showSearch = !showSearch }) {
                         Icon(Icons.Default.Search, contentDescription = "Search location")

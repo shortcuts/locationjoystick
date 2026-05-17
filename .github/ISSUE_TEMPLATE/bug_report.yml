@@ -1,0 +1,70 @@
+name: Bug report
+description: Report a bug or crash
+title: "[bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      placeholder: Describe what went wrong
+    validations:
+      required: true
+  - type: dropdown
+    id: android_version
+    attributes:
+      label: Android version
+      options:
+        - Android 12
+        - Android 13
+        - Android 14
+        - Android 15+
+    validations:
+      required: true
+  - type: input
+    id: app_version
+    attributes:
+      label: App version
+      placeholder: e.g., 1.0.0 or commit SHA
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      placeholder: e.g., Pixel 7 Pro, Samsung Galaxy S24
+    validations:
+      required: false
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the app
+        2. Navigate to...
+        3. Perform action...
+    validations:
+      required: true
+  - type: textarea
+    id: expected_vs_actual
+    attributes:
+      label: Expected vs actual behavior
+      placeholder: |
+        Expected:
+        Actual:
+    validations:
+      required: true
+  - type: textarea
+    id: logcat_output
+    attributes:
+      label: Logcat output
+      placeholder: Paste relevant logcat output (optional)
+      render: shell
+    validations:
+      required: false
+  - type: checkboxes
+    id: willing_to_fix
+    attributes:
+      label: Are you willing to fix this bug yourself?
+      options:
+        - label: "I'd be willing to fix this bug myself"

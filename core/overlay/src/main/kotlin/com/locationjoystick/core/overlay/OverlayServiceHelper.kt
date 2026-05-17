@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
-import android.os.Build
 import android.util.Log
 
 /**
@@ -49,11 +48,7 @@ class OverlayServiceHelper(
                 addAction(OverlayService.ACTION_OVERLAY_HIDE)
                 addAction(OverlayService.ACTION_OVERLAY_SHOW)
             }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            context.registerReceiver(receiver, filter)
-        }
+        context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
         visibilityReceiver = receiver
     }
 
