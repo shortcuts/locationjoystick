@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.model.SpeedUnit
 import kotlin.math.roundToInt
 
 private val SPEED_PROFILES = listOf("walk", "run", "bike")
@@ -41,9 +42,11 @@ private const val DISTANCE_MAX = 50_000f
 fun RoamingSheet(
     draft: RoamingDraft,
     hasCurrentPosition: Boolean,
+    speedUnit: SpeedUnit = SpeedUnit.KMH,
     onAction: (MapAction) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val isMph = speedUnit == SpeedUnit.MPH
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier =
@@ -56,16 +59,22 @@ fun RoamingSheet(
 
             Spacer(Modifier.height(16.dp))
 
-            var radiusText by remember { mutableStateOf(draft.radiusMeters.roundToInt().toString()) }
+            var radiusText by remember(isMph) {
+                mutableStateOf(
+                    if (isMph) String.format("%.2f", draft.radiusMeters / 1609.344)
+                    else draft.radiusMeters.roundToInt().toString(),
+                )
+            }
             OutlinedTextField(
                 value = radiusText,
                 onValueChange = { text ->
                     radiusText = text
                     text.toDoubleOrNull()?.let { v ->
-                        onAction(MapAction.UpdateRoamingRadius(v.coerceIn(RADIUS_MIN.toDouble(), RADIUS_MAX.toDouble())))
+                        val meters = if (isMph) v * 1609.344 else v
+                        onAction(MapAction.UpdateRoamingRadius(meters.coerceIn(RADIUS_MIN.toDouble(), RADIUS_MAX.toDouble())))
                     }
                 },
-                label = { Text("Radius (m)") },
+                label = { Text(if (isMph) "Radius (mi)" else "Radius (m)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -73,16 +82,22 @@ fun RoamingSheet(
 
             Spacer(Modifier.height(8.dp))
 
-            var distanceText by remember { mutableStateOf(draft.distanceMeters.roundToInt().toString()) }
+            var distanceText by remember(isMph) {
+                mutableStateOf(
+                    if (isMph) String.format("%.2f", draft.distanceMeters / 1609.344)
+                    else draft.distanceMeters.roundToInt().toString(),
+                )
+            }
             OutlinedTextField(
                 value = distanceText,
                 onValueChange = { text ->
                     distanceText = text
                     text.toDoubleOrNull()?.let { v ->
-                        onAction(MapAction.UpdateRoamingDistance(v.coerceIn(DISTANCE_MIN.toDouble(), DISTANCE_MAX.toDouble())))
+                        val meters = if (isMph) v * 1609.344 else v
+                        onAction(MapAction.UpdateRoamingDistance(meters.coerceIn(DISTANCE_MIN.toDouble(), DISTANCE_MAX.toDouble())))
                     }
                 },
-                label = { Text("Route distance (m)") },
+                label = { Text(if (isMph) "Route distance (mi)" else "Route distance (m)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),

@@ -499,6 +499,7 @@ internal fun MapScreen(
         RoamingSheet(
             draft = roamingDraft,
             hasCurrentPosition = uiState.currentPosition != null,
+            speedUnit = uiState.speedUnit,
             onAction = onAction,
             onDismiss = { onAction(MapAction.DismissRoamingSheet) },
         )

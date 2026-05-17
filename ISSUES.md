@@ -18,6 +18,14 @@ the order should follow the one of the SettingsScreen, currently the map is plac
 
 should leverage the AppConstants.kt AppInfo URL for linking to github and reporting a bug. The AGENTS.md "Info / About Page" section properly describes it.
 
-## create route from map
+### create route from map
 
 the map overlay should display the same "map screen" features such as "pick from favorite", in order to quickly jump to a favorite location to start a route, and the "center on location" icon.
+
+### roaming settings
+
+in SettingsScreen and RoamingSheet, the selected speed profile for roaming should be outlined, the other two shouldn't be outlined. The exact same UI component must be used as for the "km/h" "mph" selector of speed profiles in the SettingsScreen.
+
+### transfer from QR
+
+nothing happens when I scan the QR, also the topappbar should still visible if possible to make it easier to go back. can we draw a square on the screen to know where the place the QR code?

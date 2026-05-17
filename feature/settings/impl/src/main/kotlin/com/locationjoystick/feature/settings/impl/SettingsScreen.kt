@@ -49,6 +49,7 @@ import com.locationjoystick.core.designsystem.component.LjTopBar
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
+import kotlin.math.roundToInt
 
 @Composable
 fun SettingsRoute(
@@ -338,6 +339,8 @@ internal fun SettingsScreen(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
+                        val isMph = uiState.speedUnit == SpeedUnit.MPH
+
                         Text("GPS Jitter", style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
@@ -347,15 +350,15 @@ internal fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         JitterInput(
-                            value = uiState.jitterIdleRadiusMeters.toInt(),
-                            onValueChange = { onSetJitterIdleRadius(it.toDouble()) },
-                            label = "Idle radius (m)",
+                            value = if (isMph) (uiState.jitterIdleRadiusMeters * 3.28084).roundToInt() else uiState.jitterIdleRadiusMeters.toInt(),
+                            onValueChange = { onSetJitterIdleRadius(if (isMph) it / 3.28084 else it.toDouble()) },
+                            label = if (isMph) "Idle radius (ft)" else "Idle radius (m)",
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         JitterInput(
-                            value = uiState.jitterMovingRadiusMeters.toInt(),
-                            onValueChange = { onSetJitterMovingRadius(it.toDouble()) },
-                            label = "Moving radius (m)",
+                            value = if (isMph) (uiState.jitterMovingRadiusMeters * 3.28084).roundToInt() else uiState.jitterMovingRadiusMeters.toInt(),
+                            onValueChange = { onSetJitterMovingRadius(if (isMph) it / 3.28084 else it.toDouble()) },
+                            label = if (isMph) "Moving radius (ft)" else "Moving radius (m)",
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         JitterInput(
@@ -550,34 +553,46 @@ internal fun SettingsScreen(
                         Text("Default Roaming", style = MaterialTheme.typography.headlineSmall)
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        var radiusText by remember { mutableStateOf(roamingDefaults.radiusMeters.toInt().toString()) }
+                        var radiusText by remember(isMph) {
+                            mutableStateOf(
+                                if (isMph) String.format("%.2f", roamingDefaults.radiusMeters / 1609.344)
+                                else roamingDefaults.radiusMeters.toInt().toString(),
+                            )
+                        }
                         OutlinedTextField(
                             value = radiusText,
                             onValueChange = { text ->
                                 radiusText = text
                                 text.toDoubleOrNull()?.let { v ->
-                                    onUpdateRoamingDefaults(roamingDefaults.copy(radiusMeters = v.coerceIn(1_000.0, 100_000.0)))
+                                    val meters = if (isMph) v * 1609.344 else v
+                                    onUpdateRoamingDefaults(roamingDefaults.copy(radiusMeters = meters.coerceIn(1_000.0, 100_000.0)))
                                 }
                             },
-                            label = { Text("Radius (m)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            label = { Text(if (isMph) "Radius (mi)" else "Radius (m)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = if (isMph) KeyboardType.Decimal else KeyboardType.Number),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        var distanceText by remember { mutableStateOf(roamingDefaults.distanceMeters.toInt().toString()) }
+                        var distanceText by remember(isMph) {
+                            mutableStateOf(
+                                if (isMph) String.format("%.2f", roamingDefaults.distanceMeters / 1609.344)
+                                else roamingDefaults.distanceMeters.toInt().toString(),
+                            )
+                        }
                         OutlinedTextField(
                             value = distanceText,
                             onValueChange = { text ->
                                 distanceText = text
                                 text.toDoubleOrNull()?.let { v ->
-                                    onUpdateRoamingDefaults(roamingDefaults.copy(distanceMeters = v.coerceIn(50.0, 50_000.0)))
+                                    val meters = if (isMph) v * 1609.344 else v
+                                    onUpdateRoamingDefaults(roamingDefaults.copy(distanceMeters = meters.coerceIn(50.0, 50_000.0)))
                                 }
                             },
-                            label = { Text("Route distance (m)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            label = { Text(if (isMph) "Route distance (mi)" else "Route distance (m)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = if (isMph) KeyboardType.Decimal else KeyboardType.Number),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )

@@ -4,6 +4,7 @@ import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.Route
+import com.locationjoystick.core.model.SpeedUnit
 
 data class RoamingDraft(
     val radiusMeters: Double,
@@ -31,6 +32,7 @@ data class MapUiState(
     val showRoamingSheet: Boolean = false,
     val roamingDraft: RoamingDraft? = null,
     val isRoaming: Boolean = false,
+    val speedUnit: SpeedUnit = SpeedUnit.KMH,
 )
 
 val MapUiState.isSpoofing: Boolean
