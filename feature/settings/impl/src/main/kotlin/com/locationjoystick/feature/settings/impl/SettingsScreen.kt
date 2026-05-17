@@ -22,7 +22,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -603,12 +602,17 @@ internal fun SettingsScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(modifier = Modifier.fillMaxWidth()) {
                             listOf("walk" to "Walk", "run" to "Run", "bike" to "Bike").forEach { (id, label) ->
-                                FilterChip(
-                                    selected = roamingDefaults.speedProfileId == id,
-                                    onClick = { onUpdateRoamingDefaults(roamingDefaults.copy(speedProfileId = id)) },
-                                    label = { Text(label) },
-                                    modifier = Modifier.padding(end = 8.dp),
-                                )
+                                if (roamingDefaults.speedProfileId == id) {
+                                    OutlinedButton(
+                                        onClick = { onUpdateRoamingDefaults(roamingDefaults.copy(speedProfileId = id)) },
+                                        modifier = Modifier.padding(end = 4.dp),
+                                    ) { Text(label) }
+                                } else {
+                                    FilledTonalButton(
+                                        onClick = { onUpdateRoamingDefaults(roamingDefaults.copy(speedProfileId = id)) },
+                                        modifier = Modifier.padding(end = 4.dp),
+                                    ) { Text(label) }
+                                }
                             }
                         }
 

@@ -10,9 +10,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -109,12 +110,17 @@ fun RoamingSheet(
             Spacer(Modifier.height(4.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
                 SPEED_PROFILES.forEach { id ->
-                    FilterChip(
-                        selected = draft.speedProfileId == id,
-                        onClick = { onAction(MapAction.SelectRoamingSpeedProfile(id)) },
-                        label = { Text(SPEED_PROFILE_LABELS[id] ?: id) },
-                        modifier = Modifier.padding(end = 8.dp),
-                    )
+                    if (draft.speedProfileId == id) {
+                        OutlinedButton(
+                            onClick = { onAction(MapAction.SelectRoamingSpeedProfile(id)) },
+                            modifier = Modifier.padding(end = 4.dp),
+                        ) { Text(SPEED_PROFILE_LABELS[id] ?: id) }
+                    } else {
+                        FilledTonalButton(
+                            onClick = { onAction(MapAction.SelectRoamingSpeedProfile(id)) },
+                            modifier = Modifier.padding(end = 4.dp),
+                        ) { Text(SPEED_PROFILE_LABELS[id] ?: id) }
+                    }
                 }
             }
 
