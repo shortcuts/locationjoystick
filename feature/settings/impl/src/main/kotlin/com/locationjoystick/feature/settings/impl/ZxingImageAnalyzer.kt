@@ -9,8 +9,8 @@ import com.google.zxing.BinaryBitmap
 import com.google.zxing.DecodeHintType
 import com.google.zxing.MultiFormatReader
 import com.google.zxing.NotFoundException
-import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.PlanarYUVLuminanceSource
+import com.google.zxing.common.HybridBinarizer
 import org.json.JSONObject
 
 class ZxingImageAnalyzer(
@@ -18,7 +18,12 @@ class ZxingImageAnalyzer(
 ) : ImageAnalysis.Analyzer {
     private val multiFormatReader =
         MultiFormatReader().apply {
-            setHints(mapOf(DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.QR_CODE)))
+            setHints(
+                mapOf(
+                    DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.QR_CODE),
+                    DecodeHintType.TRY_HARDER to true,
+                ),
+            )
         }
     private var lastScanTime = 0L
     private var lastScannedData = ""
@@ -31,14 +36,22 @@ class ZxingImageAnalyzer(
             val yBytes = ByteArray(yBuffer.remaining())
             yBuffer.get(yBytes)
 
-            val source = PlanarYUVLuminanceSource(
-                yBytes, image.width, image.height,
-                0, 0, image.width, image.height, false,
-            )
+            val source =
+                PlanarYUVLuminanceSource(
+                    yBytes,
+                    image.width,
+                    image.height,
+                    0,
+                    0,
+                    image.width,
+                    image.height,
+                    false,
+                )
             val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
 
             val rawResult = multiFormatReader.decodeWithState(binaryBitmap)
             val json = rawResult.text
+            Log.d(TAG, "QR decoded: ${json.take(80)}")
 
             // Debounce: skip duplicate scans within 1 second
             val now = System.currentTimeMillis()
@@ -49,6 +62,7 @@ class ZxingImageAnalyzer(
             val envelope = parseEnvelope(json)
             lastScannedData = json
             lastScanTime = now
+            Log.d(TAG, "chunk ${envelope.chunk}/${envelope.total} session=${envelope.session}")
             onQrScanned(envelope)
         } catch (e: NotFoundException) {
             // No QR found — silent, keep scanning

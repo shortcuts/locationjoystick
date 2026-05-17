@@ -18,7 +18,9 @@ import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,6 +53,9 @@ class SettingsViewModel
         )
 
         private val chunkSessions = mutableMapOf<String, ChunkSession>()
+
+        private val _qrImportReady = MutableSharedFlow<ExportData>(extraBufferCapacity = 1)
+        val qrImportReady: SharedFlow<ExportData> = _qrImportReady
 
         private data class RepoState(
             val walkSpeed: Double,
@@ -455,7 +460,7 @@ class SettingsViewModel
             if (session.chunks.size == session.total) {
                 chunkSessions.remove(envelope.session)
                 val merged = mergeChunks(session.chunks.values.flatten())
-                importSettings(merged)
+                _qrImportReady.tryEmit(merged)
             }
         }
 

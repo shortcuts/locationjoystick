@@ -59,9 +59,17 @@ fun SettingsRoute(
     val roamingDefaults by viewModel.roamingDefaults.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var pendingImportUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var pendingQrImportData by remember { mutableStateOf<com.locationjoystick.core.model.ExportData?>(null) }
     var showQrShare by remember { mutableStateOf(false) }
     var qrChunkResult by remember { mutableStateOf<QrChunker.ChunkResult?>(null) }
     var showQrScanner by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.qrImportReady.collect { exportData ->
+            showQrScanner = false
+            pendingQrImportData = exportData
+        }
+    }
 
     val exportLauncher =
         rememberLauncherForActivityResult(
@@ -91,6 +99,24 @@ fun SettingsRoute(
             },
             dismissButton = {
                 TextButton(onClick = { pendingImportUri = null }) { Text("Cancel") }
+            },
+        )
+    }
+
+    if (pendingQrImportData != null) {
+        val exportData = pendingQrImportData!!
+        AlertDialog(
+            onDismissRequest = { pendingQrImportData = null },
+            title = { Text("Import settings") },
+            text = { Text("This will replace all existing data. Continue?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.importSettings(exportData)
+                    pendingQrImportData = null
+                }) { Text("Import") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingQrImportData = null }) { Text("Cancel") }
             },
         )
     }
