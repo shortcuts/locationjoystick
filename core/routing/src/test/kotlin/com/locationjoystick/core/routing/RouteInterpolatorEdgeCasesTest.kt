@@ -180,8 +180,8 @@ class RouteInterpolatorEdgeCasesTest {
     fun `advancePosition half-earth distance wraps correctly`() {
         val from = LatLng(0.0, 0.0)
         val result = interpolator.advancePosition(from, 0.0, 20_000_000.0) // half circumference
-        // After going half way around earth north, should be near south pole
-        assertTrue("should be near opposite side", kotlin.math.abs(kotlin.math.abs(result.latitude) - 90.0) < 10.0)
+        // After going half way around earth north, should be near equator on opposite side
+        assertTrue("should be near equator after half-earth distance", kotlin.math.abs(result.latitude) < 5.0)
     }
 
     // InterpolationResult data class

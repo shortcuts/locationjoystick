@@ -2,6 +2,7 @@ package com.locationjoystick.core.data
 
 import app.cash.turbine.test
 import com.locationjoystick.core.datastore.AppPreferencesDataSource
+import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RoamingDefaults
@@ -468,7 +469,7 @@ class SettingsRepositoryTest {
             val result = repository.getJitterIdleRadius()
             result.test {
                 val value = awaitItem()
-                assertTrue(value > 0.0)
+                assertEquals(AppPreferencesDataSource.DEFAULT_JITTER_IDLE_RADIUS_METERS, value, 0.001)
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -537,7 +538,7 @@ class SettingsRepositoryTest {
         }
 }
 
-class FakeAppPreferencesDataSource {
+class FakeAppPreferencesDataSource : PreferencesDataSource {
     val speedProfilesFlow =
         MutableStateFlow(
             SpeedProfilePreferences(
@@ -575,104 +576,85 @@ class FakeAppPreferencesDataSource {
 
     val jitterIntervalSecondsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_JITTER_INTERVAL_SECONDS)
 
-    fun getSpeedProfiles(): Flow<SpeedProfilePreferences> = speedProfilesFlow
+    override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> = speedProfilesFlow
 
-    suspend fun setWalkSpeed(ms: Double) {
+    override suspend fun setWalkSpeed(ms: Double) {
         speedProfilesFlow.value =
             speedProfilesFlow.value.copy(
                 walkSpeedMs = ms.coerceIn(AppPreferencesDataSource.MIN_SPEED_MS, AppPreferencesDataSource.MAX_SPEED_MS),
             )
     }
 
-    suspend fun setRunSpeed(ms: Double) {
+    override suspend fun setRunSpeed(ms: Double) {
         speedProfilesFlow.value =
             speedProfilesFlow.value.copy(
                 runSpeedMs = ms.coerceIn(AppPreferencesDataSource.MIN_SPEED_MS, AppPreferencesDataSource.MAX_SPEED_MS),
             )
     }
 
-    suspend fun setBikeSpeed(ms: Double) {
+    override suspend fun setBikeSpeed(ms: Double) {
         speedProfilesFlow.value =
             speedProfilesFlow.value.copy(
                 bikeSpeedMs = ms.coerceIn(AppPreferencesDataSource.MIN_SPEED_MS, AppPreferencesDataSource.MAX_SPEED_MS),
             )
     }
 
-    suspend fun setActiveProfileId(profileId: String) {
+    override suspend fun setActiveProfileId(profileId: String) {
         speedProfilesFlow.value = speedProfilesFlow.value.copy(activeProfileId = profileId)
     }
 
-    fun getWidgetItems(): Flow<Set<String>> = widgetItemsFlow
+    override fun getWidgetItems(): Flow<Set<String>> = widgetItemsFlow
 
-    suspend fun setWidgetItems(items: Set<String>) {
+    override suspend fun setWidgetItems(items: Set<String>) {
         widgetItemsFlow.value = items
     }
 
-    fun getRoamingDefaults(): Flow<RoamingDefaults> = roamingDefaultsFlow
+    override fun getRoamingDefaults(): Flow<RoamingDefaults> = roamingDefaultsFlow
 
-    suspend fun updateRoamingDefaults(defaults: RoamingDefaults) {
+    override suspend fun updateRoamingDefaults(defaults: RoamingDefaults) {
         roamingDefaultsFlow.value = defaults
     }
 
-    fun getOnboardingComplete(): Flow<Boolean> = onboardingCompleteFlow
+    override fun getOnboardingComplete(): Flow<Boolean> = onboardingCompleteFlow
 
-    suspend fun setOnboardingComplete(complete: Boolean) {
+    override suspend fun setOnboardingComplete(complete: Boolean) {
         onboardingCompleteFlow.value = complete
     }
 
-    fun getSpeedUnit(): Flow<String> = speedUnitFlow
+    override fun getSpeedUnit(): Flow<String> = speedUnitFlow
 
-    suspend fun setSpeedUnit(unit: String) {
+    override suspend fun setSpeedUnit(unit: String) {
         speedUnitFlow.value = unit
     }
 
-    fun getRememberLastLocation(): Flow<Boolean> = rememberLastLocationFlow
+    override fun getRememberLastLocation(): Flow<Boolean> = rememberLastLocationFlow
 
-    suspend fun setRememberLastLocation(enabled: Boolean) {
+    override suspend fun setRememberLastLocation(enabled: Boolean) {
         rememberLastLocationFlow.value = enabled
     }
 
-    fun getLastLocation(): Flow<LatLng?> = lastLocationFlow
+    override fun getLastLocation(): Flow<LatLng?> = lastLocationFlow
 
-    suspend fun setLastLocation(location: LatLng) {
+    override suspend fun setLastLocation(location: LatLng) {
         lastLocationFlow.value = location
     }
 
-    fun getJitterIdleRadius(): Flow<Double> = jitterIdleRadiusFlow
+    override fun getJitterIdleRadius(): Flow<Double> = jitterIdleRadiusFlow
 
-    fun getJitterMovingRadius(): Flow<Double> = jitterMovingRadiusFlow
+    override fun getJitterMovingRadius(): Flow<Double> = jitterMovingRadiusFlow
 
-    fun getJitterIntervalSeconds(): Flow<Int> = jitterIntervalSecondsFlow
+    override fun getJitterIntervalSeconds(): Flow<Int> = jitterIntervalSecondsFlow
 
-    suspend fun setJitterIdleRadius(meters: Double) {
+    override suspend fun setJitterIdleRadius(meters: Double) {
         jitterIdleRadiusFlow.value = meters.coerceIn(0.0, AppPreferencesDataSource.MAX_JITTER_RADIUS_METERS)
     }
 
-    suspend fun setJitterMovingRadius(meters: Double) {
+    override suspend fun setJitterMovingRadius(meters: Double) {
         jitterMovingRadiusFlow.value = meters.coerceIn(0.0, AppPreferencesDataSource.MAX_JITTER_RADIUS_METERS)
     }
 
-    suspend fun setJitterIntervalSeconds(seconds: Int) {
+    override suspend fun setJitterIntervalSeconds(seconds: Int) {
         jitterIntervalSecondsFlow.value =
             seconds.coerceIn(AppPreferencesDataSource.MIN_JITTER_INTERVAL_SECONDS, AppPreferencesDataSource.MAX_JITTER_INTERVAL_SECONDS)
     }
-
-    fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
-        val speedMs =
-            when (activeProfileId) {
-                "walk" -> walkSpeedMs
-                "run" -> runSpeedMs
-                "bike" -> bikeSpeedMs
-                else -> walkSpeedMs
-            }
-        return SpeedProfile(
-            id = activeProfileId,
-            name = activeProfileId.replaceFirstChar { it.uppercaseChar() },
-            speedMetersPerSecond = speedMs,
-        )
-    }
-
-    fun WidgetFeature.toKey(): String = name.lowercase()
-
-    fun String.toWidgetFeature(): WidgetFeature? = WidgetFeature.entries.firstOrNull { it.name.lowercase() == this }
 }

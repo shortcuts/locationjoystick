@@ -22,12 +22,57 @@ import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
+interface PreferencesDataSource {
+    fun getSpeedProfiles(): Flow<SpeedProfilePreferences>
+    suspend fun setWalkSpeed(ms: Double)
+    suspend fun setRunSpeed(ms: Double)
+    suspend fun setBikeSpeed(ms: Double)
+    suspend fun setActiveProfileId(profileId: String)
+    fun getWidgetItems(): Flow<Set<String>>
+    suspend fun setWidgetItems(items: Set<String>)
+    fun getRoamingDefaults(): Flow<RoamingDefaults>
+    suspend fun updateRoamingDefaults(defaults: RoamingDefaults)
+    fun getOnboardingComplete(): Flow<Boolean>
+    suspend fun setOnboardingComplete(complete: Boolean)
+    fun getSpeedUnit(): Flow<String>
+    suspend fun setSpeedUnit(unit: String)
+    fun getRememberLastLocation(): Flow<Boolean>
+    suspend fun setRememberLastLocation(enabled: Boolean)
+    fun getLastLocation(): Flow<LatLng?>
+    suspend fun setLastLocation(location: LatLng)
+    fun getJitterIdleRadius(): Flow<Double>
+    fun getJitterMovingRadius(): Flow<Double>
+    fun getJitterIntervalSeconds(): Flow<Int>
+    suspend fun setJitterIdleRadius(meters: Double)
+    suspend fun setJitterMovingRadius(meters: Double)
+    suspend fun setJitterIntervalSeconds(seconds: Int)
+}
+
+fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
+    val speedMs =
+        when (activeProfileId) {
+            "walk" -> walkSpeedMs
+            "run" -> runSpeedMs
+            "bike" -> bikeSpeedMs
+            else -> walkSpeedMs
+        }
+    return SpeedProfile(
+        id = activeProfileId,
+        name = activeProfileId.replaceFirstChar { it.uppercaseChar() },
+        speedMetersPerSecond = speedMs,
+    )
+}
+
+fun WidgetFeature.toKey(): String = name.lowercase()
+
+fun String.toWidgetFeature(): WidgetFeature? = WidgetFeature.entries.firstOrNull { it.name.lowercase() == this }
+
 @Singleton
 class AppPreferencesDataSource
     @Inject
     constructor(
         private val dataStore: DataStore<Preferences>,
-    ) {
+    ) : PreferencesDataSource {
         private object Keys {
             val WALK_SPEED_MS = doublePreferencesKey("walk_speed_ms")
             val RUN_SPEED_MS = doublePreferencesKey("run_speed_ms")
@@ -50,7 +95,7 @@ class AppPreferencesDataSource
             val JITTER_INTERVAL_SECONDS = intPreferencesKey("jitter_interval_seconds")
         }
 
-        fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
+        override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
             dataStore.data
                 .catch { e ->
                     if (e is IOException) {
@@ -68,23 +113,23 @@ class AppPreferencesDataSource
                     )
                 }
 
-        suspend fun setWalkSpeed(ms: Double) {
+        override suspend fun setWalkSpeed(ms: Double) {
             dataStore.edit { prefs -> prefs[Keys.WALK_SPEED_MS] = ms.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS) }
         }
 
-        suspend fun setRunSpeed(ms: Double) {
+        override suspend fun setRunSpeed(ms: Double) {
             dataStore.edit { prefs -> prefs[Keys.RUN_SPEED_MS] = ms.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS) }
         }
 
-        suspend fun setBikeSpeed(ms: Double) {
+        override suspend fun setBikeSpeed(ms: Double) {
             dataStore.edit { prefs -> prefs[Keys.BIKE_SPEED_MS] = ms.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS) }
         }
 
-        suspend fun setActiveProfileId(profileId: String) {
+        override suspend fun setActiveProfileId(profileId: String) {
             dataStore.edit { prefs -> prefs[Keys.ACTIVE_PROFILE_ID] = profileId }
         }
 
-        fun getWidgetItems(): Flow<Set<String>> =
+        override fun getWidgetItems(): Flow<Set<String>> =
             dataStore.data
                 .catch { e ->
                     if (e is IOException) {
@@ -95,11 +140,11 @@ class AppPreferencesDataSource
                     }
                 }.map { prefs -> prefs[Keys.WIDGET_ITEMS] ?: DEFAULT_WIDGET_ITEMS }
 
-        suspend fun setWidgetItems(items: Set<String>) {
+        override suspend fun setWidgetItems(items: Set<String>) {
             dataStore.edit { prefs -> prefs[Keys.WIDGET_ITEMS] = items }
         }
 
-        fun getRoamingDefaults(): Flow<RoamingDefaults> =
+        override fun getRoamingDefaults(): Flow<RoamingDefaults> =
             dataStore.data
                 .catch { e ->
                     if (e is IOException) {
@@ -118,7 +163,7 @@ class AppPreferencesDataSource
                     )
                 }
 
-        suspend fun updateRoamingDefaults(defaults: RoamingDefaults) {
+        override suspend fun updateRoamingDefaults(defaults: RoamingDefaults) {
             dataStore.edit { prefs ->
                 prefs[Keys.ROAMING_RADIUS_METERS] = defaults.radiusMeters
                 prefs[Keys.ROAMING_DISTANCE_METERS] = defaults.distanceMeters
@@ -128,7 +173,7 @@ class AppPreferencesDataSource
             }
         }
 
-        fun getOnboardingComplete(): Flow<Boolean> =
+        override fun getOnboardingComplete(): Flow<Boolean> =
             dataStore.data
                 .catch { e ->
                     if (e is IOException) {
@@ -139,11 +184,11 @@ class AppPreferencesDataSource
                     }
                 }.map { prefs -> prefs[Keys.ONBOARDING_COMPLETE] ?: false }
 
-        suspend fun setOnboardingComplete(complete: Boolean) {
+        override suspend fun setOnboardingComplete(complete: Boolean) {
             dataStore.edit { prefs -> prefs[Keys.ONBOARDING_COMPLETE] = complete }
         }
 
-        fun getSpeedUnit(): Flow<String> =
+        override fun getSpeedUnit(): Flow<String> =
             dataStore.data
                 .catch { e ->
                     if (e is IOException) {
@@ -154,11 +199,11 @@ class AppPreferencesDataSource
                     }
                 }.map { prefs -> prefs[Keys.SPEED_UNIT] ?: AppConstants.ProfileConstants.DEFAULT_SPEED_UNIT }
 
-        suspend fun setSpeedUnit(unit: String) {
+        override suspend fun setSpeedUnit(unit: String) {
             dataStore.edit { prefs -> prefs[Keys.SPEED_UNIT] = unit }
         }
 
-        fun getRememberLastLocation(): Flow<Boolean> =
+        override fun getRememberLastLocation(): Flow<Boolean> =
             dataStore.data
                 .catch { e ->
                     if (e is IOException) {
@@ -169,11 +214,11 @@ class AppPreferencesDataSource
                     }
                 }.map { prefs -> prefs[Keys.REMEMBER_LAST_LOCATION] ?: AppConstants.DataStoreConstants.DEFAULT_REMEMBER_LAST_LOCATION }
 
-        suspend fun setRememberLastLocation(enabled: Boolean) {
+        override suspend fun setRememberLastLocation(enabled: Boolean) {
             dataStore.edit { prefs -> prefs[Keys.REMEMBER_LAST_LOCATION] = enabled }
         }
 
-        fun getLastLocation(): Flow<LatLng?> =
+        override fun getLastLocation(): Flow<LatLng?> =
             dataStore.data
                 .catch { e ->
                     if (e is IOException) {
@@ -188,14 +233,14 @@ class AppPreferencesDataSource
                     if (lat != null && lon != null) LatLng(lat, lon) else null
                 }
 
-        suspend fun setLastLocation(location: LatLng) {
+        override suspend fun setLastLocation(location: LatLng) {
             dataStore.edit { prefs ->
                 prefs[Keys.LAST_LATITUDE] = location.latitude
                 prefs[Keys.LAST_LONGITUDE] = location.longitude
             }
         }
 
-        fun getJitterIdleRadius(): Flow<Double> =
+        override fun getJitterIdleRadius(): Flow<Double> =
             dataStore.data
                 .catch { e ->
                     if (e is IOException) {
@@ -206,7 +251,7 @@ class AppPreferencesDataSource
                     }
                 }.map { prefs -> prefs[Keys.JITTER_IDLE_RADIUS_METERS] ?: DEFAULT_JITTER_IDLE_RADIUS_METERS }
 
-        fun getJitterMovingRadius(): Flow<Double> =
+        override fun getJitterMovingRadius(): Flow<Double> =
             dataStore.data
                 .catch { e ->
                     if (e is IOException) {
@@ -217,15 +262,15 @@ class AppPreferencesDataSource
                     }
                 }.map { prefs -> prefs[Keys.JITTER_MOVING_RADIUS_METERS] ?: DEFAULT_JITTER_MOVING_RADIUS_METERS }
 
-        suspend fun setJitterIdleRadius(meters: Double) {
+        override suspend fun setJitterIdleRadius(meters: Double) {
             dataStore.edit { prefs -> prefs[Keys.JITTER_IDLE_RADIUS_METERS] = meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS) }
         }
 
-        suspend fun setJitterMovingRadius(meters: Double) {
+        override suspend fun setJitterMovingRadius(meters: Double) {
             dataStore.edit { prefs -> prefs[Keys.JITTER_MOVING_RADIUS_METERS] = meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS) }
         }
 
-        fun getJitterIntervalSeconds(): Flow<Int> =
+        override fun getJitterIntervalSeconds(): Flow<Int> =
             dataStore.data
                 .catch { e ->
                     if (e is IOException) {
@@ -236,30 +281,11 @@ class AppPreferencesDataSource
                     }
                 }.map { prefs -> prefs[Keys.JITTER_INTERVAL_SECONDS] ?: DEFAULT_JITTER_INTERVAL_SECONDS }
 
-        suspend fun setJitterIntervalSeconds(seconds: Int) {
+        override suspend fun setJitterIntervalSeconds(seconds: Int) {
             dataStore.edit { prefs ->
                 prefs[Keys.JITTER_INTERVAL_SECONDS] = seconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS)
             }
         }
-
-        fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
-            val speedMs =
-                when (activeProfileId) {
-                    "walk" -> walkSpeedMs
-                    "run" -> runSpeedMs
-                    "bike" -> bikeSpeedMs
-                    else -> walkSpeedMs
-                }
-            return SpeedProfile(
-                id = activeProfileId,
-                name = activeProfileId.replaceFirstChar { it.uppercaseChar() },
-                speedMetersPerSecond = speedMs,
-            )
-        }
-
-        fun WidgetFeature.toKey(): String = name.lowercase()
-
-        fun String.toWidgetFeature(): WidgetFeature? = WidgetFeature.entries.firstOrNull { it.name.lowercase() == this }
 
         companion object {
             const val DATASTORE_FILE_NAME = AppConstants.DataStoreConstants.FILE_NAME

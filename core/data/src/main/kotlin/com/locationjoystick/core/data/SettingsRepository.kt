@@ -1,14 +1,16 @@
 package com.locationjoystick.core.data
 
-import com.locationjoystick.core.datastore.AppPreferencesDataSource
+import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
+import com.locationjoystick.core.datastore.toActiveSpeedProfile
+import com.locationjoystick.core.datastore.toKey
+import com.locationjoystick.core.datastore.toWidgetFeature
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,7 +19,7 @@ import javax.inject.Singleton
 class SettingsRepository
     @Inject
     constructor(
-        private val dataSource: AppPreferencesDataSource,
+        private val dataSource: PreferencesDataSource,
     ) {
         fun getSpeedProfiles(): Flow<List<SpeedProfile>> =
             dataSource.getSpeedProfiles().map { prefs ->
@@ -36,13 +38,13 @@ class SettingsRepository
 
         fun getActiveSpeedProfile(): Flow<SpeedProfile> =
             dataSource.getSpeedProfiles().map { prefs ->
-                with(dataSource) { prefs.toActiveSpeedProfile() }
+                prefs.toActiveSpeedProfile()
             }
 
         fun getWidgetFeatures(): Flow<List<WidgetFeature>> =
             dataSource.getWidgetItems().map { keys ->
                 keys.mapNotNull { key ->
-                    with(dataSource) { key.toWidgetFeature() }
+                    key.toWidgetFeature()
                 }
             }
 
@@ -61,7 +63,7 @@ class SettingsRepository
         suspend fun setActiveProfileId(profileId: String) = dataSource.setActiveProfileId(profileId)
 
         suspend fun setWidgetFeatures(features: List<WidgetFeature>) {
-            val keys = features.map { with(dataSource) { it.toKey() } }.toSet()
+            val keys = features.map { it.toKey() }.toSet()
             dataSource.setWidgetItems(keys)
         }
 

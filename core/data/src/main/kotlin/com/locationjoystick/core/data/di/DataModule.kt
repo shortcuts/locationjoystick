@@ -8,7 +8,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.database.dao.FavoriteDao
 import com.locationjoystick.core.database.dao.RouteDao
 import com.locationjoystick.core.database.dao.WaypointDao
-import com.locationjoystick.core.datastore.AppPreferencesDataSource
+import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.routing.RoamingEngine
 import dagger.Module
 import dagger.Provides
@@ -32,7 +32,7 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideSettingsRepository(dataSource: AppPreferencesDataSource): SettingsRepository = SettingsRepository(dataSource)
+    fun provideSettingsRepository(dataSource: PreferencesDataSource): SettingsRepository = SettingsRepository(dataSource)
 
     @Provides
     @Singleton

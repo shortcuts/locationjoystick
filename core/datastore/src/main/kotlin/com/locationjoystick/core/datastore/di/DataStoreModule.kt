@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.locationjoystick.core.datastore.AppPreferencesDataSource
+import com.locationjoystick.core.datastore.PreferencesDataSource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,5 +28,5 @@ object DataStoreModule {
 
     @Provides
     @Singleton
-    fun provideAppPreferencesDataSource(dataStore: DataStore<Preferences>): AppPreferencesDataSource = AppPreferencesDataSource(dataStore)
+    fun provideAppPreferencesDataSource(dataStore: DataStore<Preferences>): PreferencesDataSource = AppPreferencesDataSource(dataStore)
 }

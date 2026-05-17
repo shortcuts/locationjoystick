@@ -17,6 +17,7 @@ import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.datastore.AppPreferencesDataSource
+import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.LatLng
@@ -50,7 +51,7 @@ class MapViewModel
         private val favoriteRepository: FavoriteRepository,
         private val settingsRepository: SettingsRepository,
         private val roamingRepository: RoamingRepository,
-        private val preferencesDataSource: AppPreferencesDataSource,
+        private val preferencesDataSource: PreferencesDataSource,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MapUiState())
         val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
