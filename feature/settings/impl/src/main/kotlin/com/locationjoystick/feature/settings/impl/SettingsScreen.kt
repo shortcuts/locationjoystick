@@ -71,6 +71,13 @@ fun SettingsRoute(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.qrChunksReady.collect { result ->
+            qrChunkResult = result
+            showQrShare = true
+        }
+    }
+
     val exportLauncher =
         rememberLauncherForActivityResult(
             ActivityResultContracts.CreateDocument(AppConstants.ExportConstants.MIME_TYPE),
@@ -159,11 +166,7 @@ fun SettingsRoute(
         onUpdateRoamingDefaults = viewModel::updateRoamingDefaults,
         onExport = { exportLauncher.launch("${AppConstants.ExportConstants.FILENAME_PREFIX}-${System.currentTimeMillis()}.json") },
         onImport = { importLauncher.launch(arrayOf(AppConstants.ExportConstants.MIME_TYPE)) },
-        onQrShare = {
-            val chunkResult = viewModel.buildQrChunks()
-            qrChunkResult = chunkResult
-            showQrShare = true
-        },
+        onQrShare = { viewModel.prepareQrChunks() },
         onQrScan = { showQrScanner = true },
         onSaveChanges = viewModel::saveChanges,
         onDiscardChanges = viewModel::discardChanges,

@@ -57,6 +57,9 @@ class SettingsViewModel
         private val _qrImportReady = MutableSharedFlow<ExportData>(extraBufferCapacity = 1)
         val qrImportReady: SharedFlow<ExportData> = _qrImportReady
 
+        private val _qrChunksReady = MutableSharedFlow<QrChunker.ChunkResult>(extraBufferCapacity = 1)
+        val qrChunksReady: SharedFlow<QrChunker.ChunkResult> = _qrChunksReady
+
         private data class RepoState(
             val walkSpeed: Double,
             val runSpeed: Double,
@@ -418,29 +421,42 @@ class SettingsViewModel
             }
         }
 
-        internal fun buildQrChunks(): QrChunker.ChunkResult {
-            val state = uiState.value
-            val speedProfiles =
-                listOf(
-                    SpeedProfile(id = "walk", name = "Walk", speedMetersPerSecond = state.walkSpeed),
-                    SpeedProfile(id = "run", name = "Run", speedMetersPerSecond = state.runSpeed),
-                    SpeedProfile(id = "bike", name = "Bike", speedMetersPerSecond = state.bikeSpeed),
-                )
-            val settings =
-                AppSettings(
-                    speedUnit = state.speedUnit,
-                    enabledWidgetFeatures = state.enabledWidgetFeatures.toList(),
-                )
-            return QrChunker.chunk(
-                ExportData(
-                    schemaVersion = AppConstants.ExportConstants.SCHEMA_VERSION,
-                    exportedAt = System.currentTimeMillis(),
-                    settings = settings,
-                    speedProfiles = speedProfiles,
-                    routes = emptyList(),
-                    favoriteLocations = emptyList(),
-                ),
-            )
+        fun prepareQrChunks() {
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    val state = uiState.value
+                    val speedProfiles =
+                        listOf(
+                            SpeedProfile(id = "walk", name = "Walk", speedMetersPerSecond = state.walkSpeed),
+                            SpeedProfile(id = "run", name = "Run", speedMetersPerSecond = state.runSpeed),
+                            SpeedProfile(id = "bike", name = "Bike", speedMetersPerSecond = state.bikeSpeed),
+                        )
+                    val settings =
+                        AppSettings(
+                            speedUnit = state.speedUnit,
+                            enabledWidgetFeatures = state.enabledWidgetFeatures.toList(),
+                        )
+                    val routes = routeRepository.getRoutes().first()
+                    val favorites = favoriteRepository.getFavorites().first()
+                    val result =
+                        QrChunker.chunk(
+                            ExportData(
+                                schemaVersion = AppConstants.ExportConstants.SCHEMA_VERSION,
+                                exportedAt = System.currentTimeMillis(),
+                                settings = settings,
+                                speedProfiles = speedProfiles,
+                                routes = routes,
+                                favoriteLocations = favorites,
+                                jitterIdleRadius = state.jitterIdleRadiusMeters,
+                                jitterMovingRadius = state.jitterMovingRadiusMeters,
+                                jitterIntervalSeconds = state.jitterIntervalSeconds,
+                            ),
+                        )
+                    _qrChunksReady.emit(result)
+                } catch (e: Exception) {
+                    Log.e(TAG, "QR chunk preparation failed", e)
+                }
+            }
         }
 
         fun onChunkScanned(envelope: ChunkEnvelope) {
