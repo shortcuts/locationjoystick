@@ -17,9 +17,10 @@ import org.json.JSONObject
 class ZxingImageAnalyzer(
     private val onQrScanned: (ChunkEnvelope) -> Unit,
 ) : ImageAnalysis.Analyzer {
-    private val multiFormatReader = MultiFormatReader().apply {
-        setHints(mapOf(DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.QR_CODE)))
-    }
+    private val multiFormatReader =
+        MultiFormatReader().apply {
+            setHints(mapOf(DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.QR_CODE)))
+        }
     private var lastScanTime = 0L
     private var lastScannedData = ""
 

@@ -44,10 +44,14 @@ class RoamingRepository
                     onPositionUpdate = { position ->
                         locationRepository.setPositionInternal(position)
                     },
+                    onRouteUpdate = { waypoints ->
+                        locationRepository.setRouteWaypoints(waypoints.ifEmpty { null })
+                    },
                 )
             activeJob?.invokeOnCompletion {
                 _isRoaming.value = false
                 locationRepository.setMockMode(MockMode.TELEPORT)
+                locationRepository.setRouteWaypoints(null)
                 Log.d(TAG, "Roaming completed or cancelled")
             }
         }
@@ -57,5 +61,6 @@ class RoamingRepository
             activeJob = null
             _isRoaming.value = false
             locationRepository.setMockMode(MockMode.TELEPORT)
+            locationRepository.setRouteWaypoints(null)
         }
     }

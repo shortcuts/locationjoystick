@@ -28,6 +28,7 @@ internal const val INFO_ROUTE = "info"
 @Composable
 internal fun InfoScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
+
     fun openUrl(url: String) {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     }

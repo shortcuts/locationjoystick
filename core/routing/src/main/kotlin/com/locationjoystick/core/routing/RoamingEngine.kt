@@ -46,6 +46,7 @@ class RoamingEngine
             config: RoamingConfig,
             speedMs: Double,
             onPositionUpdate: (LatLng) -> Unit,
+            onRouteUpdate: (List<LatLng>) -> Unit = {},
         ): Job {
             activeJob?.cancel()
             val job =
@@ -60,6 +61,7 @@ class RoamingEngine
                         if (currentRoute.isEmpty() || waypointIndex >= currentRoute.size) {
                             val destination = randomPointInRadius(config.centerPosition, config.radiusMeters)
                             currentRoute = fetchRoute(config, currentPosition, destination)
+                            onRouteUpdate(currentRoute)
                             waypointIndex = 0
                         }
 
@@ -78,6 +80,7 @@ class RoamingEngine
 
                         if (result.reachedEnd) {
                             currentRoute = emptyList()
+                            onRouteUpdate(emptyList())
                         }
 
                         onPositionUpdate(currentPosition)
@@ -86,6 +89,7 @@ class RoamingEngine
 
                     if (config.returnToInitialLocation && isActive) {
                         val returnRoute = fetchRoute(config, currentPosition, initialLocation)
+                        onRouteUpdate(returnRoute)
                         var returnIndex = 0
                         while (isActive && !returnRoute.isEmpty()) {
                             val result =
