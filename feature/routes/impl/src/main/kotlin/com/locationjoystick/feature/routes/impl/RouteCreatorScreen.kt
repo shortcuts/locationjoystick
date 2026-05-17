@@ -1,13 +1,22 @@
 package com.locationjoystick.feature.routes.impl
 
 import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Undo
@@ -21,6 +30,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -47,8 +57,10 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.LjTopBar
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
+import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.overlay.OverlayService
 import org.maplibre.android.MapLibre
@@ -82,10 +94,14 @@ fun RouteCreatorRoute(
 ) {
     val viewModel: RouteCreatorViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val favorites by viewModel.favorites.collectAsStateWithLifecycle()
+    val livePosition by viewModel.livePosition.collectAsStateWithLifecycle()
 
     RouteCreatorScreen(
         state = state,
         initialPosition = viewModel.currentPosition,
+        favorites = favorites,
+        currentPosition = livePosition,
         onAddWaypoint = viewModel::addWaypoint,
         onUndo = viewModel::undoLastWaypoint,
         onSaveRoute = { name ->
@@ -114,6 +130,8 @@ private fun RouteCreatorScreenPreview() {
 internal fun RouteCreatorScreen(
     state: CreatorState,
     initialPosition: LatLng? = null,
+    favorites: List<FavoriteLocation> = emptyList(),
+    currentPosition: LatLng? = null,
     onAddWaypoint: (LatLng) -> Unit,
     onUndo: () -> Unit,
     onSaveRoute: (String) -> Unit,
@@ -129,6 +147,7 @@ internal fun RouteCreatorScreen(
 
     var showSaveDialog by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
+    var showFavoritesSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(showSaveDialog) {
         context.sendBroadcast(
@@ -176,7 +195,30 @@ internal fun RouteCreatorScreen(
             )
         },
         floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End) {
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (currentPosition != null) {
+                    FloatingActionButton(
+                        onClick = {
+                            mapRef.value?.animateCamera(
+                                CameraUpdateFactory.newLatLng(
+                                    MapLatLng(currentPosition.latitude, currentPosition.longitude),
+                                ),
+                                500,
+                            )
+                        },
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    ) {
+                        Icon(LjIcons.MyLocation, contentDescription = "Center on location")
+                    }
+                }
+                FloatingActionButton(
+                    onClick = { showFavoritesSheet = true },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ) {
+                    Icon(LjIcons.Favorite, contentDescription = "Pick from favorites")
+                }
                 FloatingActionButton(
                     onClick = onUndo,
                     containerColor =
@@ -185,7 +227,6 @@ internal fun RouteCreatorScreen(
                         } else {
                             MaterialTheme.colorScheme.surfaceVariant
                         },
-                    modifier = Modifier.padding(bottom = 12.dp),
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Undo,
@@ -352,6 +393,78 @@ internal fun RouteCreatorScreen(
                 showSaveDialog = false
             },
         )
+    }
+
+    if (showFavoritesSheet) {
+        CreatorFavoritesSheet(
+            favorites = favorites,
+            onSelect = { position ->
+                showFavoritesSheet = false
+                mapRef.value?.animateCamera(
+                    CameraUpdateFactory.newLatLng(MapLatLng(position.latitude, position.longitude)),
+                    500,
+                )
+            },
+            onDismiss = { showFavoritesSheet = false },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CreatorFavoritesSheet(
+    favorites: List<FavoriteLocation>,
+    onSelect: (LatLng) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+        ) {
+            Text("Jump to Favorite", style = MaterialTheme.typography.headlineSmall)
+            if (favorites.isEmpty()) {
+                Text(
+                    "No saved favorites yet",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            } else {
+                LazyColumn(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                    contentPadding = PaddingValues(vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(items = favorites, key = { it.id }) { favorite ->
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                        RoundedCornerShape(8.dp),
+                                    ).clickable { onSelect(favorite.position) }
+                                    .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(favorite.name, style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    "${String.format("%.4f", favorite.position.latitude)}, " +
+                                        "${String.format("%.4f", favorite.position.longitude)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

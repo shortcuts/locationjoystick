@@ -5,8 +5,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
+import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
@@ -14,8 +16,10 @@ import com.locationjoystick.core.model.Waypoint
 import com.locationjoystick.core.routing.OsrmClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -40,6 +44,7 @@ class RouteCreatorViewModel
         private val routeRepository: RouteRepository,
         private val osrmClient: OsrmClient,
         private val locationRepository: LocationRepository,
+        private val favoriteRepository: FavoriteRepository,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val routeType =
@@ -52,6 +57,13 @@ class RouteCreatorViewModel
 
         val currentPosition: LatLng?
             get() = locationRepository.currentPosition.value
+
+        val livePosition: StateFlow<LatLng?> = locationRepository.currentPosition
+
+        val favorites: StateFlow<List<FavoriteLocation>> =
+            favoriteRepository
+                .getFavorites()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
         fun addWaypoint(latLng: LatLng) {
             val currentWaypoints = _state.value.waypoints
