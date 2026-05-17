@@ -5,7 +5,9 @@ import android.graphics.ImageFormat
 import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import com.google.zxing.BarcodeFormat
 import com.google.zxing.BinaryBitmap
+import com.google.zxing.DecodeHintType
 import com.google.zxing.MultiFormatReader
 import com.google.zxing.NotFoundException
 import com.google.zxing.RGBLuminanceSource
@@ -15,7 +17,9 @@ import org.json.JSONObject
 class ZxingImageAnalyzer(
     private val onQrScanned: (ChunkEnvelope) -> Unit,
 ) : ImageAnalysis.Analyzer {
-    private val multiFormatReader = MultiFormatReader()
+    private val multiFormatReader = MultiFormatReader().apply {
+        setHints(mapOf(DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.QR_CODE)))
+    }
     private var lastScanTime = 0L
     private var lastScannedData = ""
 
@@ -80,8 +84,9 @@ class ZxingImageAnalyzer(
 
         val uvPixelStride = planes[1].pixelStride
         if (uvPixelStride == 1) {
-            planes[1].buffer.get(nv21, ySize, planes[1].buffer.remaining())
-            planes[2].buffer.get(nv21, ySize + planes[1].buffer.remaining(), planes[2].buffer.remaining())
+            val uSize = planes[1].buffer.remaining()
+            planes[1].buffer.get(nv21, ySize, uSize)
+            planes[2].buffer.get(nv21, ySize + uSize, planes[2].buffer.remaining())
         } else {
             val uvBuffer = ByteArray(uvSize)
             planes[1].buffer.get(uvBuffer, 0, planes[1].buffer.remaining())
