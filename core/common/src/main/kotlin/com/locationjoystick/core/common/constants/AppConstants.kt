@@ -7,7 +7,7 @@ object AppConstants {
         const val UPDATE_INTERVAL_MS = 1000L
         const val LOCATION_ACCURACY_FINE = 3.0f
         const val WALK_ARRIVAL_THRESHOLD_METERS = 1.0
-        const val DEFAULT_REPLAY_SPEED_MS = 1.4
+        const val DEFAULT_REPLAY_SPEED_MS = ProfileConstants.WALK_SPEED_MPS
         const val RDP_SIMPLIFICATION_EPSILON_METERS = 5.0
         const val DEGREES_IN_CIRCLE = 360.0
         const val CARDINAL_SNAP_STEP_DEGREES = 45.0

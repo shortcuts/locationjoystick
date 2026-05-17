@@ -913,12 +913,15 @@ class FloatingWidgetService :
                 locationRepository.setWalkPaused(false)
                 resumeWalkToJob()
             } else {
-                val intent =
-                    Intent(this, MockLocationService::class.java).apply {
-                        action = MockLocationService.ACTION_ROUTE_REPLAY_RESUME
-                        putExtra(MockLocationService.EXTRA_SPEED_MS, 1.4)
-                    }
-                startService(intent)
+                serviceScope.launch {
+                    val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+                    val intent =
+                        Intent(this@FloatingWidgetService, MockLocationService::class.java).apply {
+                            action = MockLocationService.ACTION_ROUTE_REPLAY_RESUME
+                            putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
+                        }
+                    startService(intent)
+                }
             }
         } else {
             if (locationRepository.walkTarget.value != null) {
@@ -1245,13 +1248,16 @@ class FloatingWidgetService :
         routeId: String,
         isBackward: Boolean,
     ) {
-        val intent =
-            Intent(this, MockLocationService::class.java).apply {
-                action = MockLocationService.ACTION_ROUTE_REPLAY_START
-                putExtra(MockLocationService.EXTRA_ROUTE_ID, routeId)
-                putExtra(MockLocationService.EXTRA_IS_BACKWARD, isBackward)
-                putExtra(MockLocationService.EXTRA_SPEED_MS, 1.4)
-            }
-        startService(intent)
+        serviceScope.launch {
+            val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+            val intent =
+                Intent(this@FloatingWidgetService, MockLocationService::class.java).apply {
+                    action = MockLocationService.ACTION_ROUTE_REPLAY_START
+                    putExtra(MockLocationService.EXTRA_ROUTE_ID, routeId)
+                    putExtra(MockLocationService.EXTRA_IS_BACKWARD, isBackward)
+                    putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
+                }
+            startService(intent)
+        }
     }
 }
