@@ -13,15 +13,20 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.compose.rememberNavController
 import com.locationjoystick.app.navigation.LjDrawerContent
 import com.locationjoystick.app.navigation.LjNavHost
+import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.feature.map.api.MAP_ROUTE
 import com.locationjoystick.feature.onboarding.api.ONBOARDING_ROUTE
+import com.locationjoystick.feature.routes.api.ROUTE_CREATOR_ROUTE
 import com.locationjoystick.feature.settings.api.SETTINGS_ROUTE
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 
 @Composable
-fun LjApp(navigateToMapFlow: Flow<Unit> = emptyFlow()) {
+fun LjApp(
+    navigateToMapFlow: Flow<Unit> = emptyFlow(),
+    navigateToRouteCreatorFlow: Flow<Unit> = emptyFlow(),
+) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -32,6 +37,15 @@ fun LjApp(navigateToMapFlow: Flow<Unit> = emptyFlow()) {
             drawerState.close()
             navController.navigate(MAP_ROUTE) {
                 popUpTo(MAP_ROUTE) { inclusive = false }
+                launchSingleTop = true
+            }
+        }
+    }
+
+    LaunchedEffect(navController) {
+        navigateToRouteCreatorFlow.collect {
+            drawerState.close()
+            navController.navigate("$ROUTE_CREATOR_ROUTE/${RouteType.STRAIGHT.name}") {
                 launchSingleTop = true
             }
         }

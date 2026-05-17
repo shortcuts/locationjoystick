@@ -277,9 +277,9 @@ class FloatingWidgetService :
                     AndroidWindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 android.graphics.PixelFormat.TRANSLUCENT,
             ).apply {
-                gravity = Gravity.TOP or Gravity.START
+                gravity = Gravity.START or Gravity.CENTER_VERTICAL
                 x = 0
-                y = 100
+                y = 50
             }
 
     override fun createOverlayView(): View {

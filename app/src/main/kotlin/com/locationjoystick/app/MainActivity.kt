@@ -16,11 +16,14 @@ import kotlinx.coroutines.flow.asSharedFlow
 class MainActivity : ComponentActivity() {
     companion object {
         const val EXTRA_NAVIGATE_TO_MAP = "navigate_to_map"
+        const val EXTRA_NAVIGATE_TO_ROUTE_CREATOR = "navigate_to_route_creator"
         const val ACTION_MOVE_TO_BACK = "com.locationjoystick.app.ACTION_MOVE_TO_BACK"
     }
 
     private val navigateToMapMutableFlow = MutableSharedFlow<Unit>(replay = 1)
     internal val navigateToMapFlow = navigateToMapMutableFlow.asSharedFlow()
+    private val navigateToRouteCreatorMutableFlow = MutableSharedFlow<Unit>(replay = 1)
+    internal val navigateToRouteCreatorFlow = navigateToRouteCreatorMutableFlow.asSharedFlow()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +40,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             LjTheme {
-                LjApp(navigateToMapFlow = navigateToMapFlow)
+                LjApp(
+                    navigateToMapFlow = navigateToMapFlow,
+                    navigateToRouteCreatorFlow = navigateToRouteCreatorFlow,
+                )
             }
         }
 
@@ -53,6 +59,9 @@ class MainActivity : ComponentActivity() {
     internal fun handleIntent(intent: Intent?) {
         if (intent?.getBooleanExtra(EXTRA_NAVIGATE_TO_MAP, false) == true) {
             navigateToMapMutableFlow.tryEmit(Unit)
+        }
+        if (intent?.getBooleanExtra(EXTRA_NAVIGATE_TO_ROUTE_CREATOR, false) == true) {
+            navigateToRouteCreatorMutableFlow.tryEmit(Unit)
         }
         if (intent?.action == ACTION_MOVE_TO_BACK) {
             moveTaskToBack(true)

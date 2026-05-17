@@ -15,6 +15,16 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private val widgetDisplayOrder =
+    listOf(
+        WidgetFeature.MAP_FLOATING,
+        WidgetFeature.JOYSTICK_TOGGLE,
+        WidgetFeature.JOYSTICK_LOCK,
+        WidgetFeature.ROUTES_FLOATING,
+        WidgetFeature.FAVORITES_FLOATING,
+        WidgetFeature.SPEED_CYCLE,
+    )
+
 @Singleton
 class SettingsRepository
     @Inject
@@ -43,9 +53,9 @@ class SettingsRepository
 
         fun getWidgetFeatures(): Flow<List<WidgetFeature>> =
             dataSource.getWidgetItems().map { keys ->
-                keys.mapNotNull { key ->
-                    key.toWidgetFeature()
-                }
+                keys
+                    .mapNotNull { key -> key.toWidgetFeature() }
+                    .sortedBy { widgetDisplayOrder.indexOf(it) }
             }
 
         fun getOnboardingComplete(): Flow<Boolean> = dataSource.getOnboardingComplete()
