@@ -419,7 +419,8 @@ class MockLocationService : Service() {
                 },
                 onComplete = {
                     locationRepository.setRouteWaypoints(null)
-                    stopSpoofing()
+                    locationRepository.setActiveRouteId(null)
+                    locationRepository.setMockMode(MockMode.TELEPORT)
                 },
             )
         }

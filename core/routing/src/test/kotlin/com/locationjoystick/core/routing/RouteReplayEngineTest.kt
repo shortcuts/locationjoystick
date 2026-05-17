@@ -5,6 +5,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 class RouteReplayEngineTest {
@@ -195,6 +197,25 @@ class RouteReplayEngineTest {
         )
         val newWaypoint = LatLng(2.0, 0.0)
         engine.appendWaypoint(newWaypoint)
+        kotlinx.coroutines.runBlocking { engine.stop() }
+    }
+
+    @Test
+    fun `non-looping route calls onComplete exactly once`() {
+        val latch = CountDownLatch(1)
+        val completeCount = AtomicInteger(0)
+        engine.start(
+            waypoints = listOf(LatLng(0.0, 0.0), LatLng(0.0000001, 0.0)), // < 1 cm — snaps in first tick
+            speedMs = 999.0,
+            isLooping = false,
+            onPositionUpdate = {},
+            onComplete = {
+                completeCount.incrementAndGet()
+                latch.countDown()
+            },
+        )
+        assertTrue("onComplete should fire within 5 s", latch.await(5, TimeUnit.SECONDS))
+        assertEquals("onComplete must fire exactly once", 1, completeCount.get())
         kotlinx.coroutines.runBlocking { engine.stop() }
     }
 

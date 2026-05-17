@@ -349,13 +349,25 @@ internal fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         JitterInput(
-                            value = if (isMph) (uiState.jitterIdleRadiusMeters * 3.28084).roundToInt() else uiState.jitterIdleRadiusMeters.toInt(),
+                            value =
+                                if (isMph) {
+                                    (uiState.jitterIdleRadiusMeters * 3.28084).roundToInt()
+                                } else {
+                                    uiState.jitterIdleRadiusMeters
+                                        .toInt()
+                                },
                             onValueChange = { onSetJitterIdleRadius(if (isMph) it / 3.28084 else it.toDouble()) },
                             label = if (isMph) "Idle radius (ft)" else "Idle radius (m)",
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         JitterInput(
-                            value = if (isMph) (uiState.jitterMovingRadiusMeters * 3.28084).roundToInt() else uiState.jitterMovingRadiusMeters.toInt(),
+                            value =
+                                if (isMph) {
+                                    (uiState.jitterMovingRadiusMeters * 3.28084).roundToInt()
+                                } else {
+                                    uiState.jitterMovingRadiusMeters
+                                        .toInt()
+                                },
                             onValueChange = { onSetJitterMovingRadius(if (isMph) it / 3.28084 else it.toDouble()) },
                             label = if (isMph) "Moving radius (ft)" else "Moving radius (m)",
                         )
@@ -554,8 +566,11 @@ internal fun SettingsScreen(
 
                         var radiusText by remember(isMph) {
                             mutableStateOf(
-                                if (isMph) String.format("%.2f", roamingDefaults.radiusMeters / 1609.344)
-                                else roamingDefaults.radiusMeters.toInt().toString(),
+                                if (isMph) {
+                                    String.format("%.2f", roamingDefaults.radiusMeters / 1609.344)
+                                } else {
+                                    roamingDefaults.radiusMeters.toInt().toString()
+                                },
                             )
                         }
                         OutlinedTextField(
@@ -577,8 +592,11 @@ internal fun SettingsScreen(
 
                         var distanceText by remember(isMph) {
                             mutableStateOf(
-                                if (isMph) String.format("%.2f", roamingDefaults.distanceMeters / 1609.344)
-                                else roamingDefaults.distanceMeters.toInt().toString(),
+                                if (isMph) {
+                                    String.format("%.2f", roamingDefaults.distanceMeters / 1609.344)
+                                } else {
+                                    roamingDefaults.distanceMeters.toInt().toString()
+                                },
                             )
                         }
                         OutlinedTextField(
@@ -681,7 +699,6 @@ internal fun SettingsScreen(
         }
     }
 }
-
 
 @Composable
 private fun SpeedProfileInput(

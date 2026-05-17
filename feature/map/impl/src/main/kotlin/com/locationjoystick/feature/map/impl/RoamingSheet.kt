@@ -62,8 +62,11 @@ fun RoamingSheet(
 
             var radiusText by remember(isMph) {
                 mutableStateOf(
-                    if (isMph) String.format("%.2f", draft.radiusMeters / 1609.344)
-                    else draft.radiusMeters.roundToInt().toString(),
+                    if (isMph) {
+                        String.format("%.2f", draft.radiusMeters / 1609.344)
+                    } else {
+                        draft.radiusMeters.roundToInt().toString()
+                    },
                 )
             }
             OutlinedTextField(
@@ -85,8 +88,11 @@ fun RoamingSheet(
 
             var distanceText by remember(isMph) {
                 mutableStateOf(
-                    if (isMph) String.format("%.2f", draft.distanceMeters / 1609.344)
-                    else draft.distanceMeters.roundToInt().toString(),
+                    if (isMph) {
+                        String.format("%.2f", draft.distanceMeters / 1609.344)
+                    } else {
+                        draft.distanceMeters.roundToInt().toString()
+                    },
                 )
             }
             OutlinedTextField(
@@ -169,7 +175,6 @@ fun RoamingSheet(
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
