@@ -80,7 +80,7 @@ class LocationRepository
             _mockLocationState.value = MockLocationState.RUNNING
         }
 
-        suspend fun stopSpoofing() {
+        fun stopSpoofing() {
             Log.d(TAG, "stopSpoofing requested")
             _mockLocationState.value = MockLocationState.IDLE
         }

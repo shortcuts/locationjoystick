@@ -301,7 +301,13 @@ class MockLocationService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onDestroy() {
-        stopSpoofing()
+        // Don't call stopSpoofing() here — it calls stopSelf() which re-triggers onDestroy,
+        // and the serviceScope.launch inside raced with the cancel below. Do cleanup directly.
+        updateJob?.cancel()
+        updateJob = null
+        removeTestProvider()
+        locationRepository.stopSpoofing()
+        locationRepository.setActiveRouteId(null)
         serviceScope.cancel()
         super.onDestroy()
     }
@@ -363,10 +369,8 @@ class MockLocationService : Service() {
         removeTestProvider()
         _state.value = MockLocationState.IDLE
         locationRepository.setMockMode(MockMode.TELEPORT)
-        serviceScope.launch {
-            locationRepository.stopSpoofing()
-            locationRepository.setActiveRouteId(null)
-        }
+        locationRepository.stopSpoofing()
+        locationRepository.setActiveRouteId(null)
         stopSelf()
         Log.i(TAG, "Spoofing stopped")
     }

@@ -188,6 +188,28 @@ class LocationRepositoryTest {
             }
         }
 
+    @Test
+    fun `stopSpoofing is idempotent when called multiple times`() =
+        runTest {
+            repository.startSpoofing()
+
+            // Double-call mirrors the onDestroy + onComplete race fixed in MockLocationService.
+            repository.stopSpoofing()
+            repository.stopSpoofing()
+
+            assertEquals(MockLocationState.IDLE, repository.mockLocationState.value)
+        }
+
+    @Test
+    fun `stopSpoofing can be called without a coroutine scope`() {
+        // Regression guard: stopSpoofing must NOT be suspend. If re-added as suspend,
+        // the serviceScope.cancel race in MockLocationService.onDestroy() leaves
+        // mockLocationState stuck at RUNNING after service destruction.
+        val repo = LocationRepository()
+        repo.stopSpoofing() // direct synchronous call — would not compile if suspend
+        assertEquals(MockLocationState.IDLE, repo.mockLocationState.value)
+    }
+
     // pauseSpoofing
 
     @Test

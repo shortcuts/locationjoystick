@@ -191,6 +191,28 @@ class MapViewModelTest {
         }
 
     @Test
+    fun `StopSpoofing action sends stop intent to service`() =
+        runTest {
+            viewModel.onAction(MapAction.StopSpoofing)
+
+            // Service must be stopped via intent so MockLocationService.stopSpoofing() runs
+            // inside the service scope — avoids the stuck-start regression where the service
+            // keeps running with _state=RUNNING and ignores the next ACTION_START.
+            verify { context.startService(any()) }
+        }
+
+    @Test
+    fun `StopSpoofing action does not call locationRepository stopSpoofing directly`() =
+        runTest {
+            viewModel.onAction(MapAction.StopSpoofing)
+
+            // Repository state is managed by MockLocationService, not by the ViewModel.
+            // Direct calls here raced with serviceScope.cancel in onDestroy and left
+            // mockLocationState stuck at RUNNING.
+            verify(exactly = 0) { locationRepository.stopSpoofing() }
+        }
+
+    @Test
     fun `stopSpoofing_clearsPendingTapPosition`() =
         runTest {
             // Start spoofing and set a pending tap

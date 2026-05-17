@@ -516,8 +516,10 @@ class MapViewModel
         }
 
         private fun stopSpoofing() {
-            viewModelScope.launch {
-                locationRepository.stopSpoofing()
-            }
+            val intent =
+                Intent(MockLocationService.ACTION_STOP).apply {
+                    setClassName(context, "com.locationjoystick.core.location.MockLocationService")
+                }
+            ContextCompat.startForegroundService(context, intent)
         }
     }
