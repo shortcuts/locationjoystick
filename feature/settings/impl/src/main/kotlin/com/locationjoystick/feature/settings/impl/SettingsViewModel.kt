@@ -82,6 +82,7 @@ class SettingsViewModel
             val jitterIdleRadius: Double? = null,
             val jitterMovingRadius: Double? = null,
             val jitterIntervalSeconds: Int? = null,
+            val roamingDefaults: RoamingDefaults? = null,
         )
 
         private val draftWalkSpeedFlow = MutableStateFlow<Double?>(null)
@@ -93,6 +94,7 @@ class SettingsViewModel
         private val draftJitterIdleRadiusFlow = MutableStateFlow<Double?>(null)
         private val draftJitterMovingRadiusFlow = MutableStateFlow<Double?>(null)
         private val draftJitterIntervalSecondsFlow = MutableStateFlow<Int?>(null)
+        private val draftRoamingDefaultsFlow = MutableStateFlow<RoamingDefaults?>(null)
 
         private val repoStateFlow =
             combine(
@@ -150,7 +152,8 @@ class SettingsViewModel
                     draftJitterMovingRadiusFlow.asStateFlow(),
                     draftJitterIntervalSecondsFlow.asStateFlow(),
                 ) { idle, moving, interval -> Triple(idle, moving, interval) },
-            ) { speeds, settings, jitter ->
+                draftRoamingDefaultsFlow.asStateFlow(),
+            ) { speeds, settings, jitter, roaming ->
                 DraftState(
                     walkSpeed = speeds.first,
                     runSpeed = speeds.second,
@@ -161,12 +164,15 @@ class SettingsViewModel
                     jitterIdleRadius = jitter.first,
                     jitterMovingRadius = jitter.second,
                     jitterIntervalSeconds = jitter.third,
+                    roamingDefaults = roaming,
                 )
             }
 
         val roamingDefaults: StateFlow<RoamingDefaults> =
-            settingsRepository
-                .getRoamingDefaults()
+            combine(
+                settingsRepository.getRoamingDefaults(),
+                draftRoamingDefaultsFlow,
+            ) { repo, draft -> draft ?: repo }
                 .stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(5_000),
@@ -183,7 +189,7 @@ class SettingsViewModel
                         draftState.bikeSpeed != null || draftState.speedUnit != null ||
                         draftState.widgetFeatures != null || draftState.rememberLastLocation != null ||
                         draftState.jitterIdleRadius != null || draftState.jitterMovingRadius != null ||
-                        draftState.jitterIntervalSeconds != null
+                        draftState.jitterIntervalSeconds != null || draftState.roamingDefaults != null
                 SettingsUiState(
                     isLoading = false,
                     walkSpeed = draftState.walkSpeed ?: repoState.walkSpeed,
@@ -243,13 +249,7 @@ class SettingsViewModel
         }
 
         fun updateRoamingDefaults(defaults: RoamingDefaults) {
-            viewModelScope.launch {
-                try {
-                    settingsRepository.updateRoamingDefaults(defaults)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to update roaming defaults", e)
-                }
-            }
+            draftRoamingDefaultsFlow.value = defaults
         }
 
         fun saveChanges() {
@@ -300,6 +300,11 @@ class SettingsViewModel
                     settingsRepository.setJitterIntervalSeconds(draftJitterInterval)
                     draftJitterIntervalSecondsFlow.value = null
                 }
+                val draftRoaming = draftRoamingDefaultsFlow.value
+                if (draftRoaming != null) {
+                    settingsRepository.updateRoamingDefaults(draftRoaming)
+                    draftRoamingDefaultsFlow.value = null
+                }
             }
         }
 
@@ -313,6 +318,7 @@ class SettingsViewModel
             draftJitterIdleRadiusFlow.value = null
             draftJitterMovingRadiusFlow.value = null
             draftJitterIntervalSecondsFlow.value = null
+            draftRoamingDefaultsFlow.value = null
         }
 
         fun convertMsToDisplay(
@@ -503,6 +509,7 @@ class SettingsViewModel
                     }
                     settingsRepository.setSpeedUnit(exportData.settings.speedUnit)
                     settingsRepository.setWidgetFeatures(exportData.settings.enabledWidgetFeatures)
+                    settingsRepository.updateRoamingDefaults(exportData.settings.roamingDefaults)
                 } catch (e: Exception) {
                     Log.e(TAG, "Import from ExportData failed", e)
                 }
