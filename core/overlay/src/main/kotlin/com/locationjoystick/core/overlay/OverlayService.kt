@@ -39,10 +39,14 @@ abstract class OverlayService : Service() {
             val view = createOverlayView()
             try {
                 val params = getWindowManagerParams(view)
-                windowManager.addView(view, params)
                 overlayView = view
                 currentParams = params
-                Log.d(tag, "Overlay view added to WindowManager")
+                if (showOverlayOnStart()) {
+                    windowManager.addView(view, params)
+                    Log.d(tag, "Overlay view added to WindowManager")
+                } else {
+                    Log.d(tag, "Overlay view created but not shown (showOverlayOnStart=false)")
+                }
             } catch (e: Exception) {
                 Log.e(tag, "Failed to add overlay view to WindowManager", e)
             }
@@ -50,6 +54,12 @@ abstract class OverlayService : Service() {
 
         return START_STICKY
     }
+
+    /**
+     * Override to return false if the overlay should start hidden.
+     * Callers can later use [showOverlay] / [toggleOverlay] to show it.
+     */
+    protected open fun showOverlayOnStart(): Boolean = true
 
     override fun onDestroy() {
         removeOverlayView()

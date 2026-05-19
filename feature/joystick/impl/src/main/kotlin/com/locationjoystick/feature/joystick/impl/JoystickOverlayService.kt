@@ -122,6 +122,9 @@ class JoystickOverlayService : OverlayService() {
         }
     }
 
+    /** Joystick starts hidden; user enables it via the floating widget. */
+    override fun showOverlayOnStart(): Boolean = false
+
     override fun onBind(intent: Intent?): IBinder? = binder
 
     override fun onDestroy() {
