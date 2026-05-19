@@ -14,6 +14,7 @@ import com.locationjoystick.core.overlay.OverlayView
 import kotlin.math.atan2
 import kotlin.math.hypot
 import kotlin.math.min
+import kotlin.math.toDegrees
 
 data class JoystickInput(
     val angleDegrees: Float,
@@ -265,7 +266,7 @@ class JoystickView
                     ((clampedDistance - deadzoneRadius) / (outerRadius - deadzoneRadius)).coerceIn(0f, 1f)
                 }
 
-            val angleDegrees = ((Math.toDegrees(angle.toDouble()) + 360.0) % 360.0).toFloat()
+            val angleDegrees = ((angle.toDouble().toDegrees() + 360.0) % 360.0).toFloat()
             onInputChanged?.invoke(JoystickInput(angleDegrees = angleDegrees, force = force))
             invalidate()
             return true

@@ -117,6 +117,8 @@ object AppConstants {
         const val EXTRA_SPEED_MS = "extra_speed_ms"
         const val EXTRA_WAYPOINT_LAT = "extra_waypoint_lat"
         const val EXTRA_WAYPOINT_LON = "extra_waypoint_lon"
+        const val EXTRA_LAT = "lat"
+        const val EXTRA_LON = "lon"
         const val ACTION_OVERLAY_SHOW = "com.locationjoystick.action.OVERLAY_SHOW"
         const val ACTION_OVERLAY_HIDE = "com.locationjoystick.action.OVERLAY_HIDE"
     }

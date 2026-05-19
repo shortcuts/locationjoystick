@@ -75,6 +75,8 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.common.util.haversineDistance
@@ -880,8 +882,8 @@ class FloatingWidgetService :
             WidgetFeature.SPEED_CYCLE -> {
                 Pair(
                     when (activeProfileId) {
-                        "run" -> Icons.AutoMirrored.Rounded.DirectionsRun
-                        "bike" -> Icons.AutoMirrored.Rounded.DirectionsBike
+                        AppConstants.ProfileConstants.PROFILE_ID_RUN -> Icons.AutoMirrored.Rounded.DirectionsRun
+                        AppConstants.ProfileConstants.PROFILE_ID_BIKE -> Icons.AutoMirrored.Rounded.DirectionsBike
                         else -> Icons.AutoMirrored.Rounded.DirectionsWalk
                     },
                     true,
@@ -904,7 +906,7 @@ class FloatingWidgetService :
         joystickPollJob =
             serviceScope.launch {
                 while (true) {
-                    delay(1000L)
+                    delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
                     syncJoystickState()
                 }
             }
@@ -1029,7 +1031,7 @@ class FloatingWidgetService :
                                 targetLat,
                                 targetLon,
                             )
-                        if (distanceM < 1.0) {
+                        if (distanceM < AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS) {
                             Log.d(TAG, "Reached walk target")
                             break
                         }
@@ -1051,18 +1053,23 @@ class FloatingWidgetService :
                             )
 
                         try {
-                            val intent =
-                                Intent(this@FloatingWidgetService, MockLocationService::class.java).apply {
-                                    action = MockLocationService.ACTION_UPDATE_POSITION
-                                    putExtra("lat", newLat)
-                                    putExtra("lon", newLon)
-                                }
-                            startService(intent)
+                            val svc = mockLocationService
+                            if (svc != null) {
+                                svc.updatePosition(newLat, newLon)
+                            } else {
+                                val intent =
+                                    Intent(this@FloatingWidgetService, MockLocationService::class.java).apply {
+                                        action = MockLocationService.ACTION_UPDATE_POSITION
+                                        putExtra(ServiceConstants.EXTRA_LAT, newLat)
+                                        putExtra(ServiceConstants.EXTRA_LON, newLon)
+                                    }
+                                startService(intent)
+                            }
                         } catch (e: Exception) {
                             Log.e(TAG, "Walk update failed", e)
                         }
 
-                        delay(1000L)
+                        delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Walk to position interrupted", e)
@@ -1078,10 +1085,8 @@ class FloatingWidgetService :
             svc.updatePosition(favorite.position.latitude, favorite.position.longitude)
             Log.d(TAG, "Teleported to favorite: ${favorite.name}")
         } else {
-            serviceScope.launch {
-                locationRepository.updatePosition(favorite.position)
-                Log.d(TAG, "Teleported to favorite via repository: ${favorite.name}")
-            }
+            locationRepository.updatePosition(favorite.position)
+            Log.d(TAG, "Teleported to favorite via repository: ${favorite.name}")
         }
     }
 
@@ -1151,7 +1156,7 @@ class FloatingWidgetService :
                         if (svc != null) {
                             svc.updatePosition(pos.latitude, pos.longitude)
                         } else {
-                            serviceScope.launch { locationRepository.updatePosition(pos) }
+                            locationRepository.updatePosition(pos)
                         }
                         moveAppToBack()
                     },
@@ -1166,7 +1171,7 @@ class FloatingWidgetService :
                         if (svc != null) {
                             svc.updatePosition(pos.latitude, pos.longitude)
                         } else {
-                            serviceScope.launch { locationRepository.updatePosition(pos) }
+                            locationRepository.updatePosition(pos)
                         }
                         moveAppToBack()
                     },

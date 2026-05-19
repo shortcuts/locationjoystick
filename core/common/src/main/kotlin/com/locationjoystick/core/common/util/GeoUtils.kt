@@ -8,6 +8,9 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.math.toDegrees
+import kotlin.math.toRadians
+import kotlin.random.Random
 
 /**
  * Calculates the great-circle distance between two points using the Haversine formula.
@@ -17,10 +20,10 @@ fun haversineDistance(
     from: LatLng,
     to: LatLng,
 ): Double {
-    val dLat = Math.toRadians(to.latitude - from.latitude)
-    val dLon = Math.toRadians(to.longitude - from.longitude)
-    val lat1 = Math.toRadians(from.latitude)
-    val lat2 = Math.toRadians(to.latitude)
+    val dLat = (to.latitude - from.latitude).toRadians()
+    val dLon = (to.longitude - from.longitude).toRadians()
+    val lat1 = from.latitude.toRadians()
+    val lat2 = to.latitude.toRadians()
 
     val a =
         sin(dLat / 2) * sin(dLat / 2) +
@@ -40,24 +43,6 @@ fun haversineDistance(
 ): Double = haversineDistance(LatLng(lat1, lon1), LatLng(lat2, lon2))
 
 /**
- * Calculates the initial compass bearing from [from] to [to].
- * @return bearing in degrees [0, 360)
- */
-fun bearingBetweenCoords(
-    from: LatLng,
-    to: LatLng,
-): Float {
-    val lat1 = Math.toRadians(from.latitude)
-    val lat2 = Math.toRadians(to.latitude)
-    val dLon = Math.toRadians(to.longitude - from.longitude)
-
-    val y = sin(dLon) * cos(lat2)
-    val x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
-    val bearing = Math.toDegrees(atan2(y, x))
-    return ((bearing + AppConstants.LocationConstants.DEGREES_IN_CIRCLE) % AppConstants.LocationConstants.DEGREES_IN_CIRCLE).toFloat()
-}
-
-/**
  * Calculates the initial compass bearing between two points given as raw coordinates.
  * @return bearing in degrees [0, 360)
  */
@@ -67,12 +52,12 @@ fun calculateBearing(
     lat2: Double,
     lon2: Double,
 ): Double {
-    val dLon = Math.toRadians(lon2 - lon1)
-    val lat1Rad = Math.toRadians(lat1)
-    val lat2Rad = Math.toRadians(lat2)
+    val dLon = (lon2 - lon1).toRadians()
+    val lat1Rad = lat1.toRadians()
+    val lat2Rad = lat2.toRadians()
     val y = sin(dLon) * cos(lat2Rad)
     val x = cos(lat1Rad) * sin(lat2Rad) - sin(lat1Rad) * cos(lat2Rad) * cos(dLon)
-    return (Math.toDegrees(atan2(y, x)) + AppConstants.LocationConstants.DEGREES_IN_CIRCLE) %
+    return (atan2(y, x).toDegrees() + AppConstants.LocationConstants.DEGREES_IN_CIRCLE) %
         AppConstants.LocationConstants.DEGREES_IN_CIRCLE
 }
 
@@ -86,9 +71,9 @@ fun advancePosition(
     bearingDeg: Double,
     distanceM: Double,
 ): Pair<Double, Double> {
-    val latRad = Math.toRadians(lat)
-    val lonRad = Math.toRadians(lon)
-    val bearing = Math.toRadians(bearingDeg)
+    val latRad = lat.toRadians()
+    val lonRad = lon.toRadians()
+    val bearing = bearingDeg.toRadians()
     val angularDist = distanceM / AppConstants.LocationConstants.EARTH_RADIUS_METERS
     val newLatRad =
         asin(
@@ -101,7 +86,7 @@ fun advancePosition(
                 sin(bearing) * sin(angularDist) * cos(latRad),
                 cos(angularDist) - sin(latRad) * sin(newLatRad),
             )
-    return Math.toDegrees(newLatRad) to Math.toDegrees(newLonRad)
+    return newLatRad.toDegrees() to newLonRad.toDegrees()
 }
 
 /**
@@ -125,8 +110,8 @@ fun randomPointInRadius(
     center: LatLng,
     radiusMeters: Double,
 ): LatLng {
-    val r = radiusMeters * sqrt(Math.random())
-    val theta = Math.random() * 2 * PI
+    val r = radiusMeters * sqrt(Random.nextDouble())
+    val theta = Random.nextDouble() * 2 * PI
     val dLat = metersToLatDegrees(r * cos(theta))
     val dLng = metersToLngDegrees(r * sin(theta), center.latitude)
     return LatLng(center.latitude + dLat, center.longitude + dLng)
@@ -144,7 +129,7 @@ fun metersToLngDegrees(
     meters: Double,
     latitude: Double,
 ): Double {
-    val latRad = Math.toRadians(latitude)
+    val latRad = latitude.toRadians()
     return meters / (AppConstants.LocationConstants.EARTH_RADIUS_METERS * cos(latRad)) * (180.0 / PI)
 }
 
@@ -182,11 +167,11 @@ private fun perpendicularDistanceMeters(
     lineStart: LatLng,
     lineEnd: LatLng,
 ): Double {
-    val lat0 = Math.toRadians(lineStart.latitude)
-    val x2 = Math.toRadians(lineEnd.longitude - lineStart.longitude) * cos(lat0) * AppConstants.LocationConstants.EARTH_RADIUS_METERS
-    val y2 = Math.toRadians(lineEnd.latitude - lineStart.latitude) * AppConstants.LocationConstants.EARTH_RADIUS_METERS
-    val px = Math.toRadians(point.longitude - lineStart.longitude) * cos(lat0) * AppConstants.LocationConstants.EARTH_RADIUS_METERS
-    val py = Math.toRadians(point.latitude - lineStart.latitude) * AppConstants.LocationConstants.EARTH_RADIUS_METERS
+    val lat0 = lineStart.latitude.toRadians()
+    val x2 = (lineEnd.longitude - lineStart.longitude).toRadians() * cos(lat0) * AppConstants.LocationConstants.EARTH_RADIUS_METERS
+    val y2 = (lineEnd.latitude - lineStart.latitude).toRadians() * AppConstants.LocationConstants.EARTH_RADIUS_METERS
+    val px = (point.longitude - lineStart.longitude).toRadians() * cos(lat0) * AppConstants.LocationConstants.EARTH_RADIUS_METERS
+    val py = (point.latitude - lineStart.latitude).toRadians() * AppConstants.LocationConstants.EARTH_RADIUS_METERS
     val lineLen2 = x2 * x2 + y2 * y2
     if (lineLen2 == 0.0) return haversineDistance(point, lineStart)
     val t = ((px * x2) + (py * y2)) / lineLen2

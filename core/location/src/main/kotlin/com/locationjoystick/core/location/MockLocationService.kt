@@ -20,6 +20,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.common.util.haversineDistance
@@ -48,6 +49,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.ln
+import kotlin.math.sqrt
+import kotlin.math.toRadians
+import kotlin.random.Random
 
 @AndroidEntryPoint
 class MockLocationService : Service() {
@@ -250,8 +257,8 @@ class MockLocationService : Service() {
 
         when (intent?.action) {
             ACTION_START -> {
-                val lat = intent.getDoubleExtra("lat", AppConstants.MapConstants.DEFAULT_LAT)
-                val lon = intent.getDoubleExtra("lon", AppConstants.MapConstants.DEFAULT_LON)
+                val lat = intent.getDoubleExtra(ServiceConstants.EXTRA_LAT, AppConstants.MapConstants.DEFAULT_LAT)
+                val lon = intent.getDoubleExtra(ServiceConstants.EXTRA_LON, AppConstants.MapConstants.DEFAULT_LON)
                 startSpoofing(lat, lon)
             }
 
@@ -614,19 +621,19 @@ class MockLocationService : Service() {
         lon: Double,
         sigmaMeters: Double,
     ): Triple<Double, Double, Float> {
-        val u1 = Math.random().coerceAtLeast(Double.MIN_VALUE)
-        val u2 = Math.random()
-        val mag = sigmaMeters * kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1))
-        val angle = 2.0 * Math.PI * u2
-        val dlat = mag * kotlin.math.cos(angle) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
+        val u1 = Random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
+        val u2 = Random.nextDouble()
+        val mag = sigmaMeters * sqrt(-2.0 * ln(u1))
+        val angle = 2.0 * PI * u2
+        val dlat = mag * cos(angle) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
         val dlon =
             mag * kotlin.math.sin(angle) /
-                (AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE * kotlin.math.cos(Math.toRadians(lat)))
+                (AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE * cos(lat.toRadians()))
         val accuracy =
             (
                 LOCATION_ACCURACY +
                     (
-                        Math.random() * AppConstants.JitterConstants.ACCURACY_PERTURBATION_RANGE -
+                        Random.nextDouble() * AppConstants.JitterConstants.ACCURACY_PERTURBATION_RANGE -
                             AppConstants.JitterConstants.ACCURACY_PERTURBATION_RANGE / 2
                     ).toFloat()
             ).coerceIn(AppConstants.JitterConstants.ACCURACY_MIN, AppConstants.JitterConstants.ACCURACY_MAX)

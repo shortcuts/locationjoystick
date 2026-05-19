@@ -43,7 +43,6 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
-    implementation("com.google.android.material:material:1.11.0")
     implementation(libs.androidx.navigation.compose)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

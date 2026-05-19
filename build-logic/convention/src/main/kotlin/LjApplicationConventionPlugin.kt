@@ -2,6 +2,7 @@ import com.android.build.api.dsl.ApplicationExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.File
 
 class LjApplicationConventionPlugin : Plugin<Project> {
@@ -14,7 +15,7 @@ class LjApplicationConventionPlugin : Plugin<Project> {
             }
 
             extensions.configure<ApplicationExtension> {
-                compileSdk = 34
+                compileSdk = 35
 
                 val releaseKeystorePath = System.getenv("KEYSTORE_PATH")
 
@@ -31,7 +32,7 @@ class LjApplicationConventionPlugin : Plugin<Project> {
 
                 defaultConfig {
                     minSdk = 31
-                    targetSdk = 34
+                    targetSdk = 35
                     buildConfigField("String", "VERSION_NAME", "\"1.0.0\"")
                 }
 
@@ -58,20 +59,18 @@ class LjApplicationConventionPlugin : Plugin<Project> {
                     targetCompatibility = org.gradle.api.JavaVersion.VERSION_17
                 }
 
-                kotlinOptions {
-                    jvmTarget = "17"
-                }
-
                 packaging {
                     resources {
                         excludes += "/META-INF/{AL2.0,LGPL2.1}"
                     }
                 }
             }
+
+            extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension> {
+                compilerOptions {
+                    jvmTarget.set(JvmTarget.JVM_17)
+                }
+            }
         }
     }
-}
-
-private fun ApplicationExtension.kotlinOptions(block: org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions.() -> Unit) {
-    (this as org.gradle.api.plugins.ExtensionAware).extensions.configure("kotlinOptions", block)
 }

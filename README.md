@@ -166,7 +166,6 @@ Each feature split into `:api` (public contract) + `:impl` (implementation).
 | `:feature:joystick:api` / `:impl` | Floating joystick overlay service |
 | `:feature:map:api` / `:impl` | MapLibre screen, map interactions, roaming bottom sheet |
 | `:feature:onboarding:api` / `:impl` | Multi-step onboarding flow |
-| `:feature:roaming:api` / `:impl` | Roaming config UI (scaffolding — not yet wired into build) |
 | `:feature:routes:api` / `:impl` | Route list, creator, detail, replay |
 | `:feature:settings:api` / `:impl` | Speed profiles, widget config, export/import, QR transfer |
 | `:feature:widget:api` / `:impl` | Floating widget overlay service, map floating view |

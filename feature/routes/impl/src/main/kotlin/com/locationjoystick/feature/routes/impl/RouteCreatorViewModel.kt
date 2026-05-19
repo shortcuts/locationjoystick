@@ -26,6 +26,7 @@ import javax.inject.Inject
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.toRadians
 
 private const val TAG = "RouteCreatorViewModel"
 
@@ -188,11 +189,11 @@ class RouteCreatorViewModel
             b: LatLng,
         ): Double {
             val earthRadius = AppConstants.LocationConstants.EARTH_RADIUS_METERS
-            val dLat = Math.toRadians(b.latitude - a.latitude)
-            val dLon = Math.toRadians(b.longitude - a.longitude)
+            val dLat = (b.latitude - a.latitude).toRadians()
+            val dLon = (b.longitude - a.longitude).toRadians()
             val sinDLat = sin(dLat / 2)
             val sinDLon = sin(dLon / 2)
-            val h = sinDLat * sinDLat + cos(Math.toRadians(a.latitude)) * cos(Math.toRadians(b.latitude)) * sinDLon * sinDLon
+            val h = sinDLat * sinDLat + cos(a.latitude.toRadians()) * cos(b.latitude.toRadians()) * sinDLon * sinDLon
             return 2 * earthRadius * kotlin.math.asin(kotlin.math.sqrt(h))
         }
     }

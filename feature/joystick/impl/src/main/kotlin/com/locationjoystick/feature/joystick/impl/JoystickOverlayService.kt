@@ -35,6 +35,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.toDegrees
+import kotlin.math.toRadians
 
 private const val TAG = "JoystickOverlayService"
 
@@ -49,14 +51,14 @@ internal fun computeJoystickStep(
     speedMs: Double,
     stepSeconds: Double,
 ): LatLng {
-    val angleRad = Math.toRadians(angleDegrees.toDouble())
+    val angleRad = angleDegrees.toDouble().toRadians()
     // Convert screen angle (0=east, CCW) to geographic bearing (0=north, CW).
-    val bearingRad = Math.atan2(cos(angleRad), -sin(angleRad))
+    val bearingRad = kotlin.math.atan2(cos(angleRad), -sin(angleRad))
     val distanceMeters = speedMs * stepSeconds * force
     val dLat = distanceMeters * cos(bearingRad) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
     val dLon =
         distanceMeters * sin(bearingRad) /
-            (AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE * cos(Math.toRadians(currentPos.latitude)))
+            (AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE * cos(currentPos.latitude.toRadians()))
     return LatLng(latitude = currentPos.latitude + dLat, longitude = currentPos.longitude + dLon)
 }
 
@@ -243,9 +245,9 @@ class JoystickOverlayService : OverlayService() {
         val speedMs = _cachedProfile.value?.speedMetersPerSecond ?: return
         locationRepository.setMockMode(MockMode.JOYSTICK)
 
-        val angleRad = Math.toRadians(input.angleDegrees.toDouble())
-        val bearingRad = Math.atan2(cos(angleRad), -sin(angleRad))
-        val bearingDeg = ((Math.toDegrees(bearingRad) + 360.0) % 360.0)
+        val angleRad = input.angleDegrees.toDouble().toRadians()
+        val bearingRad = kotlin.math.atan2(cos(angleRad), -sin(angleRad))
+        val bearingDeg = ((bearingRad.toDegrees() + 360.0) % 360.0)
 
         val nextPos = computeJoystickStep(currentPos, input.angleDegrees, input.force, speedMs, AppConstants.JoystickConstants.STEP_SECONDS)
 

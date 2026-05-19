@@ -79,18 +79,14 @@ class LocationRepository
                 mode == MockMode.ROUTE_REPLAY || mode == MockMode.WALK_TO
             }
 
-        fun observePosition(): Flow<LatLng?> = _currentPosition.asStateFlow()
-
-        fun observeState(): Flow<MockLocationState> = _mockLocationState.asStateFlow()
-
-        suspend fun updatePosition(
+        fun updatePosition(
             lat: Double,
             lon: Double,
         ) {
             _currentPosition.value = LatLng(latitude = lat, longitude = lon)
         }
 
-        suspend fun updatePosition(position: LatLng) {
+        fun updatePosition(position: LatLng) {
             _currentPosition.value = position
         }
 

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.location.MockLocationService
@@ -54,8 +55,8 @@ class FavoritesViewModel
             val intent =
                 Intent(context, MockLocationService::class.java).apply {
                     action = MockLocationService.ACTION_UPDATE_POSITION
-                    putExtra("lat", favorite.position.latitude)
-                    putExtra("lon", favorite.position.longitude)
+                    putExtra(ServiceConstants.EXTRA_LAT, favorite.position.latitude)
+                    putExtra(ServiceConstants.EXTRA_LON, favorite.position.longitude)
                 }
             context.startService(intent)
         }

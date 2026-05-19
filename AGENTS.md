@@ -267,7 +267,7 @@ Key files: `:feature:widget:impl/FloatingWidgetService.kt`, `:feature:settings:i
 
 Tap map → bottom sheet with "Walk here" or "Teleport here".
 
-Walk here: bearing computed from current to target, advance at `currentSpeed` m/s per tick, snap within 1 m. Teleport: set position directly, one update push.
+Walk here: bearing computed from current to target, advance at `currentSpeed` m/s per tick, snap within `AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS` m. Teleport: set position directly, one update push.
 
 Edge cases: new walk-here cancels previous. Walk-here while route replaying → ask confirmation to stop replay.
 

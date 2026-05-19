@@ -1,8 +1,8 @@
 package com.locationjoystick.core.routing
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.model.LatLng
-import com.locationjoystick.core.model.bearingTo
 import com.locationjoystick.core.model.distanceTo
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -10,6 +10,8 @@ import kotlin.math.asin
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.toDegrees
+import kotlin.math.toRadians
 
 /**
  * Handles position interpolation along routes for replay and roaming.
@@ -40,12 +42,12 @@ class RouteInterpolator
             distanceMeters: Double,
         ): LatLng {
             val d = distanceMeters / AppConstants.LocationConstants.EARTH_RADIUS_METERS
-            val brng = Math.toRadians(bearingDeg)
-            val lat1 = Math.toRadians(from.latitude)
-            val lon1 = Math.toRadians(from.longitude)
+            val brng = bearingDeg.toRadians()
+            val lat1 = from.latitude.toRadians()
+            val lon1 = from.longitude.toRadians()
             val lat2 = asin(sin(lat1) * cos(d) + cos(lat1) * sin(d) * cos(brng))
             val lon2 = lon1 + atan2(sin(brng) * sin(d) * cos(lat1), cos(d) - sin(lat1) * sin(lat2))
-            return LatLng(Math.toDegrees(lat2), Math.toDegrees(lon2))
+            return LatLng(lat2.toDegrees(), lon2.toDegrees())
         }
 
         /**
@@ -83,7 +85,7 @@ class RouteInterpolator
                     InterpolationResult(target, nextIndex, reachedEnd = false)
                 }
             } else {
-                val bearing = currentPosition.bearingTo(target)
+                val bearing = calculateBearing(currentPosition.latitude, currentPosition.longitude, target.latitude, target.longitude)
                 val newPosition = advancePosition(currentPosition, bearing, distanceToAdvance)
                 InterpolationResult(newPosition, currentWaypointIndex, reachedEnd = false)
             }

@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -18,6 +19,8 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.math.toRadians
+import kotlin.random.Random
 
 private const val TAG = "RoamingEngine"
 
@@ -45,7 +48,7 @@ class RoamingEngine
     constructor(
         private val osrmClient: OsrmClient,
         private val routeInterpolator: RouteInterpolator,
-    ) {
+    ) : AutoCloseable {
         /** Coroutine scope for all roaming coroutines. Uses SupervisorJob so one failure doesn't cancel others. */
         private val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -64,10 +67,10 @@ class RoamingEngine
             center: LatLng,
             radiusMeters: Double,
         ): LatLng {
-            val r = radiusMeters * sqrt(Math.random())
-            val theta = Math.random() * 2 * PI
+            val r = radiusMeters * sqrt(Random.nextDouble())
+            val theta = Random.nextDouble() * 2 * PI
             val dLat = r * cos(theta) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
-            val dLon = r * sin(theta) / (AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE * cos(Math.toRadians(center.latitude)))
+            val dLon = r * sin(theta) / (AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE * cos(center.latitude.toRadians()))
             return LatLng(center.latitude + dLat, center.longitude + dLon)
         }
 
@@ -129,7 +132,7 @@ class RoamingEngine
                         val returnRoute = fetchRoute(config, currentPosition, initialLocation)
                         onRouteUpdate(returnRoute)
                         var returnIndex = 0
-                        while (isActive && !returnRoute.isEmpty()) {
+                        while (isActive && returnRoute.isNotEmpty()) {
                             val result =
                                 routeInterpolator.interpolateAlongRoute(
                                     waypoints = returnRoute,
@@ -157,6 +160,22 @@ class RoamingEngine
         suspend fun stopRoaming() {
             activeJob?.cancelAndJoin()
             activeJob = null
+        }
+
+        /**
+         * Stops the engine and cleans up resources.
+         * Cancels all active jobs and the engine scope.
+         */
+        fun stop() {
+            activeJob?.cancel()
+            engineScope.cancel()
+        }
+
+        /**
+         * Implements [AutoCloseable] to allow resource cleanup in try-with-resources.
+         */
+        override fun close() {
+            stop()
         }
 
         /**

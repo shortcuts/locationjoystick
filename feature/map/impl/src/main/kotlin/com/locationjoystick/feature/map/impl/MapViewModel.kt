@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.common.util.haversineDistance
@@ -100,8 +101,8 @@ class MapViewModel
         private fun observeLocationState() {
             viewModelScope.launch {
                 combine(
-                    locationRepository.observePosition(),
-                    locationRepository.observeState(),
+                    locationRepository.currentPosition,
+                    locationRepository.mockLocationState,
                     locationRepository.isWalkPaused,
                 ) { position, state, walkPaused ->
                     Triple(position, state, walkPaused)
@@ -415,8 +416,8 @@ class MapViewModel
                                     context,
                                     MockLocationService::class.java,
                                 )
-                            putExtra("lat", position.latitude)
-                            putExtra("lon", position.longitude)
+                            putExtra(ServiceConstants.EXTRA_LAT, position.latitude)
+                            putExtra(ServiceConstants.EXTRA_LON, position.longitude)
                         }
                     context.startService(intent)
                     Log.d(TAG, "Teleport to ${position.latitude}, ${position.longitude}")
@@ -462,7 +463,7 @@ class MapViewModel
                                     targetLat,
                                     targetLon,
                                 )
-                            if (distanceM < 1.0) {
+                            if (distanceM < AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS) {
                                 Log.d(TAG, "Reached target; stopping walk")
                                 break
                             }
@@ -492,8 +493,8 @@ class MapViewModel
                                                     context,
                                                     MockLocationService::class.java,
                                                 )
-                                            putExtra("lat", newPos.first)
-                                            putExtra("lon", newPos.second)
+                                            putExtra(ServiceConstants.EXTRA_LAT, newPos.first)
+                                            putExtra(ServiceConstants.EXTRA_LON, newPos.second)
                                         }
                                     context.startService(intent)
                                 } catch (e: Exception) {
@@ -501,7 +502,7 @@ class MapViewModel
                                 }
                             }
 
-                            delay(1000)
+                            delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Walk interrupted", e)
@@ -537,8 +538,8 @@ class MapViewModel
             val intent =
                 Intent(MockLocationService.ACTION_START).apply {
                     setClassName(context, "com.locationjoystick.core.location.MockLocationService")
-                    putExtra("lat", startPos.latitude)
-                    putExtra("lon", startPos.longitude)
+                    putExtra(ServiceConstants.EXTRA_LAT, startPos.latitude)
+                    putExtra(ServiceConstants.EXTRA_LON, startPos.longitude)
                 }
             ContextCompat.startForegroundService(context, intent)
         }
