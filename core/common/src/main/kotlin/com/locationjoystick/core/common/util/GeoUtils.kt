@@ -8,9 +8,10 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
-import kotlin.math.toDegrees
-import kotlin.math.toRadians
 import kotlin.random.Random
+
+private fun Double.toRadians(): Double = Math.toRadians(this)
+private fun Double.toDegrees(): Double = Math.toDegrees(this)
 
 /**
  * Calculates the great-circle distance between two points using the Haversine formula.
