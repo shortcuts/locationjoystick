@@ -58,7 +58,7 @@ class SettingsViewModel
         val qrImportReady: SharedFlow<ExportData> = _qrImportReady
 
         private val _qrChunksReady = MutableSharedFlow<QrChunker.ChunkResult>(extraBufferCapacity = 1)
-        val qrChunksReady: SharedFlow<QrChunker.ChunkResult> = _qrChunksReady
+        internal val qrChunksReady: SharedFlow<QrChunker.ChunkResult> = _qrChunksReady
 
         private data class RepoState(
             val walkSpeed: Double,
