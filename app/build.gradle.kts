@@ -8,6 +8,16 @@ android {
     namespace = "com.locationjoystick.app"
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+    defaultConfig {
+        manifestPlaceholders["admobAppId"] =
+            System.getenv("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
+        buildConfigField(
+            "String",
+            "ADMOB_BANNER_ID",
+            "\"${System.getenv("ADMOB_BANNER_ID") ?: "ca-app-pub-3940256099942544/6300978111"}\"",
+        )
     }
 }
 
@@ -47,6 +57,8 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    implementation(libs.play.services.ads)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

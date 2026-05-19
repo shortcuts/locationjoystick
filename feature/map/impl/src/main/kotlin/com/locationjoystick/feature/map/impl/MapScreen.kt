@@ -36,7 +36,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -65,7 +64,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
-import com.locationjoystick.core.designsystem.component.LjTopBar
+import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.MockLocationState
@@ -110,7 +109,10 @@ private fun fadeOutScale(): ExitTransition =
             animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f),
         )
 
-fun NavGraphBuilder.mapScreen(onOpenDrawer: () -> Unit) {
+fun NavGraphBuilder.mapScreen(
+    onOpenDrawer: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
+) {
     composable(
         route = MAP_ROUTE,
         enterTransition = { fadeInScale() },
@@ -118,17 +120,18 @@ fun NavGraphBuilder.mapScreen(onOpenDrawer: () -> Unit) {
         popEnterTransition = { fadeInScale() },
         popExitTransition = { fadeOutScale() },
     ) {
-        MapRoute(onOpenDrawer = onOpenDrawer)
+        MapRoute(onOpenDrawer = onOpenDrawer, bottomBar = bottomBar)
     }
 }
 
 @Composable
 fun MapRoute(
     onOpenDrawer: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
     viewModel: MapViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    MapScreen(uiState = uiState, onOpenDrawer = onOpenDrawer, onAction = viewModel::onAction)
+    MapScreen(uiState = uiState, onOpenDrawer = onOpenDrawer, onAction = viewModel::onAction, bottomBar = bottomBar)
 }
 
 @Composable
@@ -136,6 +139,7 @@ internal fun MapScreen(
     uiState: MapUiState,
     onOpenDrawer: () -> Unit,
     onAction: (MapAction) -> Unit,
+    bottomBar: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -188,15 +192,12 @@ internal fun MapScreen(
         onAction(MapAction.CameraTargetConsumed)
     }
 
-    Scaffold(
+    LjScaffold(
+        title = "Lj",
+        onNavigationClick = onOpenDrawer,
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            LjTopBar(
-                title = "Lj",
-                onNavigationClick = onOpenDrawer,
-            )
-        },
+        bottomBar = bottomBar,
         floatingActionButton = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!isFollowingCamera.value) {

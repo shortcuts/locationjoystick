@@ -11,6 +11,7 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 private fun Double.toRadians(): Double = Math.toRadians(this)
+
 private fun Double.toDegrees(): Double = Math.toDegrees(this)
 
 /**

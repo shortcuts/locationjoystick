@@ -17,7 +17,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -39,7 +38,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.common.constants.AppConstants
-import com.locationjoystick.core.designsystem.component.LjTopBar
+import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.overlay.OverlayService
 import org.maplibre.android.MapLibre
@@ -68,11 +68,13 @@ fun MapPickerRoute(
     initialPosition: com.locationjoystick.core.model.LatLng? = null,
     onLocationPicked: (name: String, lat: Double, lon: Double) -> Unit,
     onBack: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
 ) {
     MapPickerScreen(
         initialPosition = initialPosition,
         onLocationPicked = onLocationPicked,
         onBack = onBack,
+        bottomBar = bottomBar,
     )
 }
 
@@ -92,6 +94,7 @@ internal fun MapPickerScreen(
     initialPosition: com.locationjoystick.core.model.LatLng? = null,
     onLocationPicked: (name: String, lat: Double, lon: Double) -> Unit,
     onBack: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -133,20 +136,17 @@ internal fun MapPickerScreen(
         }
     }
 
-    Scaffold(
+    LjScaffold(
+        title = "Pick Location",
+        onNavigationClick = onBack,
+        navigationIcon = LjIcons.ArrowBack,
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            LjTopBar(
-                title = "Pick Location",
-                onNavigationClick = onBack,
-                navigationIcon = Icons.AutoMirrored.Filled.ArrowBack,
-                actions = {
-                    IconButton(onClick = { showSearchBar = !showSearchBar }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search location")
-                    }
-                },
-            )
+        bottomBar = bottomBar,
+        actions = {
+            IconButton(onClick = { showSearchBar = !showSearchBar }) {
+                Icon(Icons.Default.Search, contentDescription = "Search location")
+            }
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(

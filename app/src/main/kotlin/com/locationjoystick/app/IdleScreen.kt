@@ -19,7 +19,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,7 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.AppIcon
-import com.locationjoystick.core.designsystem.component.LjTopBar
+import com.locationjoystick.core.designsystem.component.LjScaffold
 
 internal const val IDLE_ROUTE = "idle"
 
@@ -42,11 +41,12 @@ internal fun IdleScreen(
     onNavigateToFavorites: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToInfo: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
 ) {
-    Scaffold(
-        topBar = {
-            LjTopBar(title = "Lj", onNavigationClick = onOpenDrawer)
-        },
+    LjScaffold(
+        title = "Lj",
+        onNavigationClick = onOpenDrawer,
+        bottomBar = bottomBar,
         containerColor = MaterialTheme.colorScheme.background,
     ) { paddingValues ->
         Column(

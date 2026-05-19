@@ -32,7 +32,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -58,7 +57,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.component.LjTopBar
+import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
@@ -91,6 +90,7 @@ private const val WAYPOINTS_LAYER_ID = "waypoints-layer"
 fun RouteCreatorRoute(
     onRouteSaved: () -> Unit,
     onBack: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
 ) {
     val viewModel: RouteCreatorViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -109,6 +109,7 @@ fun RouteCreatorRoute(
             onRouteSaved()
         },
         onBack = onBack,
+        bottomBar = bottomBar,
     )
 }
 
@@ -136,6 +137,7 @@ internal fun RouteCreatorScreen(
     onUndo: () -> Unit,
     onSaveRoute: (String) -> Unit,
     onBack: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -179,20 +181,17 @@ internal fun RouteCreatorScreen(
         }
     }
 
-    Scaffold(
+    LjScaffold(
+        title = "Create Route",
+        onNavigationClick = onBack,
+        navigationIcon = LjIcons.ArrowBack,
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            LjTopBar(
-                title = "Create Route",
-                onNavigationClick = onBack,
-                navigationIcon = Icons.AutoMirrored.Filled.ArrowBack,
-                actions = {
-                    IconButton(onClick = { showSearch = !showSearch }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search location")
-                    }
-                },
-            )
+        bottomBar = bottomBar,
+        actions = {
+            IconButton(onClick = { showSearch = !showSearch }) {
+                Icon(Icons.Default.Search, contentDescription = "Search location")
+            }
         },
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {

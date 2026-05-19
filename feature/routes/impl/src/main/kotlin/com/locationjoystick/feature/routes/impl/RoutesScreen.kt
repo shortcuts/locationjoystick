@@ -32,7 +32,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,7 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.component.EmptyState
-import com.locationjoystick.core.designsystem.component.LjTopBar
+import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.distanceTo
 
@@ -58,6 +57,7 @@ fun RoutesRoute(
     onImportGpx: () -> Unit,
     onOpenDrawer: () -> Unit,
     viewModel: RoutesViewModel,
+    bottomBar: @Composable () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val playbackState by viewModel.playbackState.collectAsStateWithLifecycle()
@@ -75,6 +75,7 @@ fun RoutesRoute(
         onPauseReplay = viewModel::pauseReplay,
         onResumeReplay = viewModel::resumeReplay,
         onStopReplay = viewModel::stopReplay,
+        bottomBar = bottomBar,
     )
 }
 
@@ -111,42 +112,40 @@ internal fun RoutesScreen(
     onPauseReplay: () -> Unit,
     onResumeReplay: () -> Unit,
     onStopReplay: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
 ) {
     var deletingRoute by remember { mutableStateOf<com.locationjoystick.core.model.Route?>(null) }
     var showAddMenu by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            LjTopBar(
-                title = "Lj",
-                onNavigationClick = onOpenDrawer,
-                actions = {
-                    IconButton(onClick = { showAddMenu = !showAddMenu }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Add options")
-                    }
-                    DropdownMenu(
-                        expanded = showAddMenu,
-                        onDismissRequest = { showAddMenu = false },
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("from map") },
-                            onClick = {
-                                onNavigateToCreate(RouteType.STRAIGHT)
-                                showAddMenu = false
-                            },
-                            leadingIcon = { Icon(Icons.Rounded.Map, null) },
-                        )
-                        DropdownMenuItem(
-                            text = { Text("from GPX file") },
-                            onClick = {
-                                onImportGpx()
-                                showAddMenu = false
-                            },
-                            leadingIcon = { Icon(Icons.Default.Add, null) },
-                        )
-                    }
-                },
-            )
+    LjScaffold(
+        title = "Lj",
+        onNavigationClick = onOpenDrawer,
+        bottomBar = bottomBar,
+        actions = {
+            IconButton(onClick = { showAddMenu = !showAddMenu }) {
+                Icon(Icons.Default.MoreVert, contentDescription = "Add options")
+            }
+            DropdownMenu(
+                expanded = showAddMenu,
+                onDismissRequest = { showAddMenu = false },
+            ) {
+                DropdownMenuItem(
+                    text = { Text("from map") },
+                    onClick = {
+                        onNavigateToCreate(RouteType.STRAIGHT)
+                        showAddMenu = false
+                    },
+                    leadingIcon = { Icon(Icons.Rounded.Map, null) },
+                )
+                DropdownMenuItem(
+                    text = { Text("from GPX file") },
+                    onClick = {
+                        onImportGpx()
+                        showAddMenu = false
+                    },
+                    leadingIcon = { Icon(Icons.Default.Add, null) },
+                )
+            }
         },
     ) { paddingValues ->
         Box(

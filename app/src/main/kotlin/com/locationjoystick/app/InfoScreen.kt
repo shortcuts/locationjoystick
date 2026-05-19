@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,23 +20,28 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.AppIcon
-import com.locationjoystick.core.designsystem.component.LjTopBar
+import com.locationjoystick.core.designsystem.component.LjScaffold
 
 internal const val INFO_ROUTE = "info"
 
 @Composable
-internal fun InfoScreen(onNavigateBack: () -> Unit) {
+internal fun InfoScreen(
+    onNavigateBack: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
+) {
     val context = LocalContext.current
 
     fun openUrl(url: String) {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     }
 
-    Scaffold(
-        topBar = {
-            LjTopBar(title = "Lj", onNavigationClick = onNavigateBack)
-        },
+    LjScaffold(
+        title = "Lj",
+        onNavigationClick = onNavigateBack,
+        navigationIcon = LjIcons.ArrowBack,
+        bottomBar = bottomBar,
         containerColor = MaterialTheme.colorScheme.background,
     ) { paddingValues ->
         Column(

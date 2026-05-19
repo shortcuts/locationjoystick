@@ -35,7 +35,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -53,13 +52,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.component.EmptyState
-import com.locationjoystick.core.designsystem.component.LjTopBar
+import com.locationjoystick.core.designsystem.component.LjScaffold
 
 @Composable
 fun FavoritesRoute(
     viewModel: FavoritesViewModel,
     onNavigateToMapPicker: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -75,6 +75,7 @@ fun FavoritesRoute(
         onNavigateToMapPicker = onNavigateToMapPicker,
         onOpenDrawer = onOpenDrawer,
         getCurrentPosition = { viewModel.currentPosition },
+        bottomBar = bottomBar,
     )
 }
 
@@ -105,6 +106,7 @@ internal fun FavoritesScreen(
     onNavigateToMapPicker: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
     getCurrentPosition: () -> com.locationjoystick.core.model.LatLng? = { null },
+    bottomBar: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
     var showAddSheet by remember { mutableStateOf(false) }
@@ -114,53 +116,50 @@ internal fun FavoritesScreen(
 
     var showAddMenu by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            LjTopBar(
-                title = "Lj",
-                onNavigationClick = onOpenDrawer,
-                actions = {
-                    IconButton(onClick = { showAddMenu = !showAddMenu }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Add options")
-                    }
-                    DropdownMenu(
-                        expanded = showAddMenu,
-                        onDismissRequest = { showAddMenu = false },
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("from map") },
-                            onClick = {
-                                onNavigateToMapPicker()
-                                showAddMenu = false
-                            },
-                            leadingIcon = { Icon(Icons.Rounded.Map, null) },
-                        )
-                        DropdownMenuItem(
-                            text = { Text("from coordinates") },
-                            onClick = {
-                                prefillLat = ""
-                                prefillLon = ""
-                                showAddSheet = true
-                                showAddMenu = false
-                            },
-                            leadingIcon = { Icon(Icons.Default.Add, null) },
-                        )
-                        DropdownMenuItem(
-                            text = { Text("from current location") },
-                            onClick = {
-                                val pos = getCurrentPosition()
-                                prefillLat = pos?.latitude?.toString() ?: ""
-                                prefillLon = pos?.longitude?.toString() ?: ""
-                                showAddSheet = true
-                                showAddMenu = false
-                            },
-                            leadingIcon = { Icon(Icons.Rounded.LocationOn, null) },
-                        )
-                    }
-                },
-            )
-        },
+    LjScaffold(
+        title = "Lj",
+        onNavigationClick = onOpenDrawer,
+        bottomBar = bottomBar,
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        actions = {
+            IconButton(onClick = { showAddMenu = !showAddMenu }) {
+                Icon(Icons.Default.MoreVert, contentDescription = "Add options")
+            }
+            DropdownMenu(
+                expanded = showAddMenu,
+                onDismissRequest = { showAddMenu = false },
+            ) {
+                DropdownMenuItem(
+                    text = { Text("from map") },
+                    onClick = {
+                        onNavigateToMapPicker()
+                        showAddMenu = false
+                    },
+                    leadingIcon = { Icon(Icons.Rounded.Map, null) },
+                )
+                DropdownMenuItem(
+                    text = { Text("from coordinates") },
+                    onClick = {
+                        prefillLat = ""
+                        prefillLon = ""
+                        showAddSheet = true
+                        showAddMenu = false
+                    },
+                    leadingIcon = { Icon(Icons.Default.Add, null) },
+                )
+                DropdownMenuItem(
+                    text = { Text("from current location") },
+                    onClick = {
+                        val pos = getCurrentPosition()
+                        prefillLat = pos?.latitude?.toString() ?: ""
+                        prefillLon = pos?.longitude?.toString() ?: ""
+                        showAddSheet = true
+                        showAddMenu = false
+                    },
+                    leadingIcon = { Icon(Icons.Rounded.LocationOn, null) },
+                )
+            }
+        },
     ) { scaffoldPadding ->
         Box(
             modifier =

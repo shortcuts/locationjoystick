@@ -34,7 +34,6 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -61,6 +60,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.component.AppIcon
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
+import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.feature.onboarding.api.ONBOARDING_ROUTE
 
 private val AmberPending = Color(0xFFF59E0B)
@@ -75,6 +75,7 @@ fun NavGraphBuilder.onboardingScreen(onSetupComplete: () -> Unit) {
 @Composable
 fun OnboardingRoute(
     onSetupComplete: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
     viewModel: OnboardingViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -98,6 +99,7 @@ fun OnboardingRoute(
             viewModel.onSetupComplete()
             onSetupComplete()
         },
+        bottomBar = bottomBar,
     )
 }
 
@@ -106,6 +108,7 @@ internal fun OnboardingScreen(
     uiState: OnboardingUiState,
     onCheckPermissions: () -> Unit,
     onSetupComplete: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
 
@@ -115,7 +118,12 @@ internal fun OnboardingScreen(
             onResult = { onCheckPermissions() },
         )
 
-    Scaffold(containerColor = MaterialTheme.colorScheme.background) { paddingValues ->
+    LjScaffold(
+        title = "",
+        onNavigationClick = null,
+        bottomBar = bottomBar,
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { paddingValues ->
         Column(
             modifier =
                 Modifier

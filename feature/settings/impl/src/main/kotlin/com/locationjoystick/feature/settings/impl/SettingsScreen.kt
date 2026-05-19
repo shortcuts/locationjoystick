@@ -27,7 +27,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,7 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
-import com.locationjoystick.core.designsystem.component.LjTopBar
+import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
@@ -54,6 +53,7 @@ import kotlin.math.roundToInt
 fun SettingsRoute(
     viewModel: SettingsViewModel,
     onOpenDrawer: () -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val roamingDefaults by viewModel.roamingDefaults.collectAsStateWithLifecycle()
@@ -170,6 +170,7 @@ fun SettingsRoute(
         onQrScan = { showQrScanner = true },
         onSaveChanges = viewModel::saveChanges,
         onDiscardChanges = viewModel::discardChanges,
+        bottomBar = bottomBar,
     )
 }
 
@@ -218,11 +219,12 @@ internal fun SettingsScreen(
     onQrScan: () -> Unit,
     onSaveChanges: () -> Unit = {},
     onDiscardChanges: () -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
 ) {
-    Scaffold(
-        topBar = {
-            LjTopBar(title = "Lj", onNavigationClick = onOpenDrawer)
-        },
+    LjScaffold(
+        title = "Lj",
+        onNavigationClick = onOpenDrawer,
+        bottomBar = bottomBar,
         floatingActionButton = {
             if (uiState.isDirty) {
                 FloatingActionButton(

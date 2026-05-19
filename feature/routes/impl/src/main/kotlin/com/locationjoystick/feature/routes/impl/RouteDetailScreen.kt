@@ -38,7 +38,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.data.RouteRepository
-import com.locationjoystick.core.designsystem.component.LjTopBar
+import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.model.Route
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -121,6 +122,7 @@ fun RouteDetailScreen(
     routeId: String,
     onNavigateBack: () -> Unit,
     onOpenDrawer: () -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
     viewModel: RouteDetailViewModel = hiltViewModel(),
 ) {
     val route by viewModel.route.collectAsStateWithLifecycle()
@@ -172,18 +174,17 @@ fun RouteDetailScreen(
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        LjTopBar(
-            title = "Route Details",
-            onNavigationClick = onOpenDrawer,
-            actions = {
-                IconButton(onClick = { showDeleteConfirmation = true }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete route")
-                }
-            },
-        )
-
-        Box(modifier = Modifier.fillMaxSize()) {
+    LjScaffold(
+        title = "Route Details",
+        onNavigationClick = onOpenDrawer,
+        bottomBar = bottomBar,
+        actions = {
+            IconButton(onClick = { showDeleteConfirmation = true }) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete route")
+            }
+        },
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (route == null) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else {
