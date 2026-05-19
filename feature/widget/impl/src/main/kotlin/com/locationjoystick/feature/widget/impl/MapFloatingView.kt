@@ -101,6 +101,7 @@ internal fun MapFloatingView(
     val routeWaypoints by locationRepository.routeWaypoints.collectAsState()
     val mockMode by locationRepository.currentMode.collectAsState()
     val isRoaming = mockMode == com.locationjoystick.core.model.MockMode.ROAMING
+    val isRouteReplay = mockMode == com.locationjoystick.core.model.MockMode.ROUTE_REPLAY
     val isActivityActive by locationRepository.isActivityActive.collectAsState(initial = false)
     val favoritesFlow = remember { favoriteRepository.getFavorites() }
     val favorites by favoritesFlow.collectAsState(initial = emptyList())
