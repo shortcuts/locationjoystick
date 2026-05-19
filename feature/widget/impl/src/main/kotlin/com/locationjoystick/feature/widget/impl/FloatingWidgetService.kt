@@ -88,6 +88,7 @@ import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.model.WidgetFeature
 import com.locationjoystick.core.overlay.OverlayService
 import com.locationjoystick.core.overlay.OverlayServiceHelper
@@ -136,6 +137,8 @@ class FloatingWidgetService :
     @Inject lateinit var favoriteRepository: FavoriteRepository
 
     @Inject lateinit var settingsRepository: SettingsRepository
+
+    @Inject lateinit var roamingRepository: com.locationjoystick.core.data.RoamingRepository
 
     private var composeView: ComposeView? = null
     private var panelComposeView: ComposeView? = null
@@ -1104,6 +1107,7 @@ class FloatingWidgetService :
                 MapFloatingView(
                     locationRepository = locationRepository,
                     favoriteRepository = favoriteRepository,
+                    roamingRepository = roamingRepository,
                     onTeleport = { pos ->
                         val svc = mockLocationService
                         if (svc != null) {
@@ -1138,6 +1142,12 @@ class FloatingWidgetService :
                         sendAppendWaypoint(pos)
                         moveAppToBack()
                     },
+                    onStartRoaming = { startRoamingWithDefaults() },
+                    onStopRoaming = {
+                        serviceScope.launch {
+                            roamingRepository.stopRoaming()
+                        }
+                    },
                     onDismiss = { hidePanelView() },
                     context = this@FloatingWidgetService,
                 )
@@ -1150,6 +1160,33 @@ class FloatingWidgetService :
             Log.d(TAG, "Opened map panel")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show map panel", e)
+        }
+    }
+
+    private fun startRoamingWithDefaults() {
+        serviceScope.launch {
+            try {
+                val pos = locationRepository.currentPosition.value
+                if (pos == null) {
+                    Log.w(TAG, "Cannot start roaming: no current position")
+                    return@launch
+                }
+                val defaults = settingsRepository.getRoamingDefaults().first()
+                val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+                val config =
+                    RoamingConfig(
+                        centerPosition = pos,
+                        radiusMeters = defaults.radiusMeters,
+                        distanceMeters = defaults.distanceMeters,
+                        speedProfileId = defaults.speedProfileId,
+                        useRoadSnapping = defaults.followRoads,
+                        returnToInitialLocation = defaults.returnToInitialLocation,
+                    )
+                roamingRepository.startRoaming(config, speedMs)
+                Log.d(TAG, "Started roaming with defaults")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start roaming", e)
+            }
         }
     }
 

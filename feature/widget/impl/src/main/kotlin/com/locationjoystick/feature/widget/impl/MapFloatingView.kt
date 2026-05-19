@@ -51,7 +51,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.designsystem.LjBg
+import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.model.LatLng
@@ -85,11 +87,14 @@ private const val MAP_FLOATING_VIEW_ENDPOINTS_LAYER = "panel-endpoints-layer"
 internal fun MapFloatingView(
     locationRepository: LocationRepository,
     favoriteRepository: FavoriteRepository,
+    roamingRepository: RoamingRepository,
     onTeleport: (LatLng) -> Unit,
     onWalkTo: (LatLng) -> Unit,
     onStopRouteAndTeleport: (LatLng) -> Unit,
     onStopRouteAndWalkTo: (LatLng) -> Unit,
     onFinishRouteAndWalkTo: (LatLng) -> Unit,
+    onStartRoaming: () -> Unit,
+    onStopRoaming: () -> Unit,
     onDismiss: () -> Unit,
     context: Context,
 ) {
@@ -98,6 +103,7 @@ internal fun MapFloatingView(
     val routeWaypoints by locationRepository.routeWaypoints.collectAsState()
     val mockMode by locationRepository.currentMode.collectAsState()
     val isRouteReplay = mockMode == com.locationjoystick.core.model.MockMode.ROUTE_REPLAY
+    val isRoaming by roamingRepository.isRoaming.collectAsState()
     val favoritesFlow = remember { favoriteRepository.getFavorites() }
     val favorites by favoritesFlow.collectAsState(initial = emptyList())
 
@@ -352,6 +358,32 @@ internal fun MapFloatingView(
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             ) {
                 Icon(Icons.Rounded.Favorite, contentDescription = "Open favorites")
+            }
+            FloatingActionButton(
+                onClick = {
+                    if (isRoaming) {
+                        onStopRoaming()
+                    } else {
+                        onStartRoaming()
+                    }
+                },
+                containerColor =
+                    if (isRoaming) {
+                        MaterialTheme.colorScheme.errorContainer
+                    } else {
+                        MaterialTheme.colorScheme.tertiaryContainer
+                    },
+                contentColor =
+                    if (isRoaming) {
+                        MaterialTheme.colorScheme.onErrorContainer
+                    } else {
+                        MaterialTheme.colorScheme.onTertiaryContainer
+                    },
+            ) {
+                Icon(
+                    imageVector = if (isRoaming) LjIcons.Stop else LjIcons.Explore,
+                    contentDescription = if (isRoaming) "Stop roaming" else "Start roaming",
+                )
             }
             FloatingActionButton(
                 onClick = { showSearch = !showSearch },
