@@ -43,4 +43,16 @@ class FakeRouteDao(
                 .sortedByDescending { it.createdAt }
                 .map { route -> RouteWithWaypoints(route, allWaypoints.filter { it.routeId == route.id }) }
         }
+
+    override suspend fun deleteWaypointsByRouteId(routeId: String) {
+        waypointDao.deleteByRouteId(routeId)
+    }
+
+    override suspend fun insertWaypoints(waypoints: List<WaypointEntity>) {
+        waypointDao.insertAll(waypoints)
+    }
+
+    override suspend fun deleteWaypointById(waypointId: String) {
+        waypointDao.delete(waypointId)
+    }
 }
