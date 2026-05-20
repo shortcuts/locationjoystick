@@ -1,12 +1,10 @@
-package com.locationjoystick.core.routing
+package com.locationjoystick.core.data
 
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.common.util.haversineDistance
-import com.locationjoystick.core.data.LocationRepository
-import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.LatLng
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

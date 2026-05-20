@@ -92,7 +92,7 @@ import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.model.WidgetFeature
 import com.locationjoystick.core.overlay.OverlayService
 import com.locationjoystick.core.overlay.OverlayServiceHelper
-import com.locationjoystick.core.routing.WalkCoordinator
+import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.feature.joystick.impl.JoystickOverlayService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -962,7 +962,9 @@ class FloatingWidgetService :
             if (mode == com.locationjoystick.core.model.MockMode.WALK_TO) {
                 locationRepository.setWalkPaused(false)
                 val target = locationRepository.walkTarget.value ?: return
-                walkCoordinator.startWalk(target, serviceScope)
+                walkCoordinator.startWalk(target, serviceScope) { newPos ->
+                    startService(MockLocationIntentBuilder.updatePosition(this@FloatingWidgetService, newPos.latitude, newPos.longitude))
+                }
             } else {
                 serviceScope.launch {
                     val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
@@ -1008,7 +1010,9 @@ class FloatingWidgetService :
     }
 
     private fun startWalkToFavorite(favorite: FavoriteLocation) {
-        walkCoordinator.startWalk(favorite.position, serviceScope)
+        walkCoordinator.startWalk(favorite.position, serviceScope) { newPos ->
+            startService(MockLocationIntentBuilder.updatePosition(this@FloatingWidgetService, newPos.latitude, newPos.longitude))
+        }
     }
 
     private fun toggleJoystick() {
@@ -1084,7 +1088,9 @@ class FloatingWidgetService :
                         moveAppToBack()
                     },
                     onWalkTo = { pos ->
-                        walkCoordinator.startWalk(pos, serviceScope)
+                        walkCoordinator.startWalk(pos, serviceScope) { newPos ->
+                            startService(MockLocationIntentBuilder.updatePosition(this@FloatingWidgetService, newPos.latitude, newPos.longitude))
+                        }
                         moveAppToBack()
                     },
                     onStopRouteAndTeleport = { pos ->
@@ -1099,7 +1105,9 @@ class FloatingWidgetService :
                     },
                     onStopRouteAndWalkTo = { pos ->
                         sendReplayCancel()
-                        walkCoordinator.startWalk(pos, serviceScope)
+                        walkCoordinator.startWalk(pos, serviceScope) { newPos ->
+                            startService(MockLocationIntentBuilder.updatePosition(this@FloatingWidgetService, newPos.latitude, newPos.longitude))
+                        }
                         moveAppToBack()
                     },
                     onFinishRouteAndWalkTo = { pos ->

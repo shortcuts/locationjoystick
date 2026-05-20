@@ -18,7 +18,7 @@ import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.routing.WalkCoordinator
+import com.locationjoystick.core.data.WalkCoordinator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -403,7 +403,11 @@ class MapViewModel
                     routeTrace = null,
                 )
             }
-            walkCoordinator.startWalk(position, viewModelScope)
+            walkCoordinator.startWalk(position, viewModelScope) { newPos ->
+                context.startService(
+                    MockLocationIntentBuilder.updatePosition(context, newPos.latitude, newPos.longitude),
+                )
+            }
         }
 
         private fun stopRouteOnly() {

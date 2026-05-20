@@ -1,11 +1,7 @@
-package com.locationjoystick.core.routing
+package com.locationjoystick.core.data
 
-import android.content.Context
 import android.util.Log
-import com.locationjoystick.core.data.LocationRepository
-import com.locationjoystick.core.location.MockLocationIntentBuilder
 import com.locationjoystick.core.model.LatLng
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import javax.inject.Inject
@@ -18,15 +14,18 @@ private const val TAG = "WalkCoordinator"
  *
  * Handles:
  * - Cancelling any in-flight walk before starting a new one.
- * - Forwarding position ticks to [MockLocationService] via [MockLocationIntentBuilder].
+ * - Forwarding position ticks to [LocationRepository].
  * - Clearing [LocationRepository.walkTarget] on arrival / cancellation.
+ * - Invoking an optional [onPositionUpdate] callback (e.g. to send a service intent).
  *
  * The caller provides a [CoroutineScope] (typically `viewModelScope` or a
  * service scope) and never manages the [Job] directly.
  *
  * Usage:
  * ```kotlin
- * walkCoordinator.startWalk(target, viewModelScope)
+ * walkCoordinator.startWalk(target, viewModelScope) { newPos ->
+ *     context.startService(MockLocationIntentBuilder.updatePosition(context, newPos.latitude, newPos.longitude))
+ * }
  * walkCoordinator.cancel()
  * ```
  */
@@ -34,7 +33,6 @@ private const val TAG = "WalkCoordinator"
 class WalkCoordinator
     @Inject
     constructor(
-        @ApplicationContext private val context: Context,
         private val locationRepository: LocationRepository,
         private val walkToEngine: WalkToEngine,
     ) {
@@ -44,10 +42,14 @@ class WalkCoordinator
          * Starts a walk toward [target] on the given [scope].
          *
          * Any previously active walk is cancelled first.
+         *
+         * @param onPositionUpdate Optional extra callback invoked on each position tick.
+         *   Use this to forward updates to a background service (e.g. via Intent).
          */
         fun startWalk(
             target: LatLng,
             scope: CoroutineScope,
+            onPositionUpdate: (suspend (LatLng) -> Unit)? = null,
         ) {
             activeWalkJob?.cancel()
             locationRepository.setWalkTarget(target)
@@ -58,13 +60,7 @@ class WalkCoordinator
                         target = target,
                         onPositionUpdate = { newPos ->
                             locationRepository.updatePosition(newPos)
-                            context.startService(
-                                MockLocationIntentBuilder.updatePosition(
-                                    context,
-                                    newPos.latitude,
-                                    newPos.longitude,
-                                ),
-                            )
+                            onPositionUpdate?.invoke(newPos)
                         },
                         onArrival = {
                             Log.d(TAG, "Arrived at $target")
