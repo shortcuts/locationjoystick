@@ -99,12 +99,18 @@ class RoamingEngine
                     var currentRoute: List<LatLng> = emptyList()
                     var waypointIndex = 0
 
+                    val distancePerTick = speedMs * (AppConstants.LocationConstants.UPDATE_INTERVAL_MS / 1000.0)
                     while (isActive && remainingMeters > 0) {
                         if (currentRoute.isEmpty() || waypointIndex >= currentRoute.size) {
                             val destination = randomPointInRadius(config.centerPosition, config.radiusMeters)
                             currentRoute = fetchRoute(config, currentPosition, destination)
                             onRouteUpdate(currentRoute)
                             waypointIndex = 0
+                            // Guard against empty route to avoid a tight busy-spin
+                            if (currentRoute.size < 2) {
+                                delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
+                                continue
+                            }
                         }
 
                         val result =
@@ -118,7 +124,7 @@ class RoamingEngine
 
                         currentPosition = result.position
                         waypointIndex = result.nextWaypointIndex
-                        remainingMeters -= speedMs
+                        remainingMeters -= distancePerTick
 
                         if (result.reachedEnd) {
                             currentRoute = emptyList()
@@ -164,19 +170,21 @@ class RoamingEngine
         }
 
         /**
-         * Stops the engine and cleans up resources.
-         * Cancels all active jobs and the engine scope.
+         * Stops the current roaming session without tearing down the engine scope.
+         * The engine can be restarted via [startRoaming] after this call.
          */
         fun stop() {
             activeJob?.cancel()
-            engineScope.cancel()
+            activeJob = null
         }
 
         /**
-         * Implements [AutoCloseable] to allow resource cleanup in try-with-resources.
+         * Implements [AutoCloseable] to fully release the engine scope.
+         * Call only when the engine will never be reused (e.g. process teardown).
          */
         override fun close() {
-            stop()
+            activeJob?.cancel()
+            engineScope.cancel()
         }
 
         /**

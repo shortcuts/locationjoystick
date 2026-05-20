@@ -200,6 +200,7 @@ class FloatingWidgetService :
             override fun onServiceDisconnected(name: ComponentName) {
                 joystickPollJob?.cancel()
                 joystickService = null
+                joystickBound = false
                 joystickVisibleFlow.value = false
                 joystickLockedFlow.value = false
                 Log.d(TAG, "Unbound from JoystickOverlayService")
@@ -749,7 +750,11 @@ class FloatingWidgetService :
             AndroidWindowManager.LayoutParams.MATCH_PARENT,
             AndroidWindowManager.LayoutParams.MATCH_PARENT,
             AndroidWindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            0,
+            // FLAG_NOT_FOCUSABLE is mandatory: prevents stealing keyboard focus from games/apps
+            // running behind the overlay panel. FLAG_NOT_TOUCH_MODAL limits touch interception
+            // to the panel bounds only.
+            AndroidWindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                AndroidWindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             android.graphics.PixelFormat.TRANSLUCENT,
         )
 
@@ -805,6 +810,12 @@ class FloatingWidgetService :
                 }
             }
             hidePanelView()
+            // Guard: if lifecycle was destroyed while the coroutine was suspended
+            // (e.g. loading favorites), do not add a view that would never be cleaned up.
+            if (lifecycle.currentState == Lifecycle.State.DESTROYED) {
+                Log.w(TAG, "Service destroyed before favorites panel could be shown")
+                return@launch
+            }
             try {
                 windowManager.addView(panel, panelLayoutParams())
                 panelComposeView = panel
@@ -841,6 +852,12 @@ class FloatingWidgetService :
                 }
             }
             hidePanelView()
+            // Guard: if lifecycle was destroyed while the coroutine was suspended
+            // (e.g. loading routes), do not add a view that would never be cleaned up.
+            if (lifecycle.currentState == Lifecycle.State.DESTROYED) {
+                Log.w(TAG, "Service destroyed before routes panel could be shown")
+                return@launch
+            }
             try {
                 windowManager.addView(panel, panelLayoutParams())
                 panelComposeView = panel
@@ -1031,8 +1048,15 @@ class FloatingWidgetService :
     private fun cycleSpeedProfile() {
         serviceScope.launch {
             val profiles = settingsRepository.getSpeedProfiles().first()
+            if (profiles.isEmpty()) {
+                Log.w(TAG, "cycleSpeedProfile: no profiles available, skipping")
+                return@launch
+            }
             val active = settingsRepository.getActiveSpeedProfile().first()
             val currentIndex = profiles.indexOfFirst { it.id == active.id }
+            if (currentIndex == -1) {
+                Log.w(TAG, "cycleSpeedProfile: active profile not found in list, resetting to first")
+            }
             val nextIndex = (currentIndex + 1) % profiles.size
             settingsRepository.setActiveProfileId(profiles[nextIndex].id)
             Log.d(TAG, "Cycled speed profile to: ${profiles[nextIndex].id}")

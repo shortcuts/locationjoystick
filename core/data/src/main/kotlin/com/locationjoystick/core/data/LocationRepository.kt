@@ -94,7 +94,7 @@ class LocationRepository
             _currentPosition.value = position
         }
 
-        suspend fun startSpoofing() {
+        fun startSpoofing() {
             Log.d(TAG, "startSpoofing requested")
             if (_currentPosition.value == null) {
                 _currentPosition.value =
@@ -108,7 +108,7 @@ class LocationRepository
             _mockLocationState.value = MockLocationState.IDLE
         }
 
-        suspend fun pauseSpoofing() {
+        fun pauseSpoofing() {
             Log.d(TAG, "pauseSpoofing requested")
             _mockLocationState.value = MockLocationState.PAUSED
         }

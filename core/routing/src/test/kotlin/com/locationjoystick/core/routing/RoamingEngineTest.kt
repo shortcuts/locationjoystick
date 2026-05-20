@@ -1,9 +1,12 @@
 package com.locationjoystick.core.routing
 
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.model.distanceTo
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 class RoamingEngineTest {
@@ -74,5 +77,28 @@ class RoamingEngineTest {
             val dist = center.distanceTo(point)
             assertTrue("distance $dist must not exceed radius $radius", dist <= radius)
         }
+    }
+
+    @Test
+    fun `stop does not permanently break startRoaming`() {
+        // Regression for: stop() used to cancel engineScope permanently making startRoaming a no-op.
+        val config =
+            RoamingConfig(
+                centerPosition = LatLng(0.0, 0.0),
+                radiusMeters = 100.0,
+                distanceMeters = 50.0,
+                useRoadSnapping = false,
+                speedProfileId = "walk",
+                returnToInitialLocation = false,
+            )
+        // stop() should not kill the engine scope
+        engine.stop()
+
+        val latch = CountDownLatch(1)
+        engine.startRoaming(config, 1.4) { latch.countDown() }
+        val received = latch.await(5, TimeUnit.SECONDS)
+        kotlinx.coroutines.runBlocking { engine.stopRoaming() }
+
+        assertTrue("startRoaming should emit after stop()", received)
     }
 }

@@ -146,9 +146,18 @@ class MockLocationService : Service() {
                 when (state) {
                     MockLocationState.RUNNING -> {
                         if (updateJob == null) {
-                            setupTestProvider()
-                            startUpdateLoop()
-                            Log.i(TAG, "State changed to RUNNING - started update loop")
+                            // Route replay drives its own position updates via the onPositionUpdate
+                            // callback — starting a background loop here would cause duplicate pushes.
+                            // Skip the loop when replay mode is already active.
+                            val mode = locationRepository.currentMode.value
+                            if (mode != MockMode.ROUTE_REPLAY) {
+                                setupTestProvider()
+                                startUpdateLoop()
+                                Log.i(TAG, "State changed to RUNNING - started update loop")
+                            } else {
+                                setupTestProvider()
+                                Log.i(TAG, "State changed to RUNNING (route replay) - skipped update loop")
+                            }
                         }
                         if (Settings.canDrawOverlays(this@MockLocationService)) {
                             startService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))
@@ -319,6 +328,7 @@ class MockLocationService : Service() {
         removeTestProvider()
         locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
+        routeReplayEngine.close()
         serviceScope.cancel()
         super.onDestroy()
     }
@@ -344,10 +354,11 @@ class MockLocationService : Service() {
         locationRepository.setPositionInternal(LatLng(lat, lon))
         locationRepository.setMockMode(MockMode.TELEPORT)
 
-        setupTestProvider()
-        startUpdateLoop()
+        // Setting state to RUNNING triggers observeLocationState(), which calls
+        // setupTestProvider() + startUpdateLoop(). Do NOT call them here to avoid
+        // a double-invocation race.
         _state.value = MockLocationState.RUNNING
-        serviceScope.launch { locationRepository.startSpoofing() }
+        locationRepository.startSpoofing()
         Log.i(TAG, "Spoofing started at ($lat, $lon)")
     }
 
@@ -408,13 +419,15 @@ class MockLocationService : Service() {
             currentSpeedMs = speedMs.toFloat()
             currentBearing = 0.0f
 
-            setupTestProvider()
-            _state.value = MockLocationState.RUNNING
-            locationRepository.startSpoofing()
+            // Set mode BEFORE state so the state observer sees ROUTE_REPLAY and
+            // correctly skips starting the background update loop.
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
             locationRepository.setActiveRouteId(routeId)
             locationRepository.setIsReplayBackward(isBackward)
             locationRepository.setRouteWaypoints(latLngs)
+            // Trigger RUNNING after mode is set.
+            _state.value = MockLocationState.RUNNING
+            locationRepository.startSpoofing()
 
             walkToPosition(startPos, speedMs)
 
@@ -452,13 +465,13 @@ class MockLocationService : Service() {
         updateJob?.cancel()
         updateJob = null
         _state.value = MockLocationState.PAUSED
-        serviceScope.launch { locationRepository.pauseSpoofing() }
+        locationRepository.pauseSpoofing()
         Log.i(TAG, "Replay paused")
     }
 
     private fun handleReplayResume(speedMs: Double) {
         _state.value = MockLocationState.RUNNING
-        serviceScope.launch { locationRepository.startSpoofing() }
+        locationRepository.startSpoofing()
         routeReplayEngine.resume(
             onPositionUpdate = { pos ->
                 currentLat = pos.latitude
@@ -482,11 +495,12 @@ class MockLocationService : Service() {
         target: LatLng,
         speedMs: Double,
     ) {
+        val distancePerTick = speedMs * (AppConstants.LocationConstants.UPDATE_INTERVAL_MS / 1000.0)
         while (true) {
             val dist = haversineDistance(currentLat, currentLon, target.latitude, target.longitude)
             if (dist < AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS) break
             val bearing = calculateBearing(currentLat, currentLon, target.latitude, target.longitude)
-            val step = minOf(speedMs, dist)
+            val step = minOf(distancePerTick, dist)
             val (newLat, newLon) = advancePosition(currentLat, currentLon, bearing, step)
             currentLat = newLat
             currentLon = newLon
@@ -507,7 +521,11 @@ class MockLocationService : Service() {
         routeReplayEngine.stop()
         locationRepository.setMockMode(MockMode.TELEPORT)
         locationRepository.setActiveRouteId(null)
-        startUpdateLoop()
+        // Only restart the idle update loop if spoofing is still active.
+        // If spoofing was stopped concurrently, do not start a new loop.
+        if (_state.value == MockLocationState.RUNNING) {
+            startUpdateLoop()
+        }
         Log.i(TAG, "Replay cancelled; service remains active in TELEPORT mode")
     }
 

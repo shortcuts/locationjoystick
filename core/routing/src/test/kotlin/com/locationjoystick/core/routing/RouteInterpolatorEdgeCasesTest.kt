@@ -236,4 +236,52 @@ class RouteInterpolatorEdgeCasesTest {
         assertFalse(result.reachedEnd)
         assertTrue(result.position.latitude > start.latitude)
     }
+
+    // interpolateAlongRoute — overshoot carry-forward
+
+    @Test
+    fun `interpolateAlongRoute carries leftover distance past waypoint into next segment`() {
+        // Waypoints spaced ~111m apart (1 degree lat ≈ 111km, so 0.001 deg ≈ 111m)
+        val wp0 = LatLng(0.0, 0.0)
+        val wp1 = LatLng(0.001, 0.0) // ~111m north
+        val wp2 = LatLng(0.002, 0.0) // another ~111m north
+        val waypoints = listOf(wp0, wp1, wp2)
+
+        // Speed high enough to overshoot wp1 in one tick: 200m/s for 1s = 200m > ~111m
+        val result =
+            interpolator.interpolateAlongRoute(
+                waypoints = waypoints,
+                currentPosition = wp0,
+                currentWaypointIndex = 1,
+                speedMs = 200.0,
+                deltaTimeMs = 1000L,
+            )
+
+        // Should advance index to 1 (targeting wp2) and position should be past wp1
+        assertEquals(1, result.nextWaypointIndex)
+        assertFalse(result.reachedEnd)
+        // With carry-forward, position should be further than just wp1
+        assertTrue(
+            "Position should be beyond wp1 latitude due to carry-forward",
+            result.position.latitude > wp1.latitude,
+        )
+    }
+
+    @Test
+    fun `interpolateAlongRoute overshoot on last segment reports reachedEnd`() {
+        val wp0 = LatLng(0.0, 0.0)
+        val wp1 = LatLng(0.001, 0.0)
+        val waypoints = listOf(wp0, wp1)
+
+        // Overshoot the last waypoint
+        val result =
+            interpolator.interpolateAlongRoute(
+                waypoints = waypoints,
+                currentPosition = wp0,
+                currentWaypointIndex = 1,
+                speedMs = 500.0,
+                deltaTimeMs = 1000L,
+            )
+        assertTrue(result.reachedEnd)
+    }
 }

@@ -84,7 +84,26 @@ class RouteInterpolator
                 if (nextIndex >= waypoints.size) {
                     InterpolationResult(target, currentWaypointIndex, reachedEnd = true)
                 } else {
-                    InterpolationResult(target, nextIndex, reachedEnd = false)
+                    // Carry leftover distance forward into the next segment rather than
+                    // pausing at the waypoint for a full tick (prevents stuttering at
+                    // high speed / bike profile).
+                    val leftover = (distanceToAdvance - distanceToTarget).coerceAtLeast(0.0)
+                    if (leftover > 0.0 && nextIndex + 1 < waypoints.size) {
+                        val nextTarget = waypoints[nextIndex]
+                        val bearingToNext =
+                            calculateBearing(
+                                target.latitude,
+                                target.longitude,
+                                nextTarget.latitude,
+                                nextTarget.longitude,
+                            )
+                        val distToNextTarget = target.distanceTo(nextTarget)
+                        val carry = minOf(leftover, distToNextTarget)
+                        val carried = advancePosition(target, bearingToNext, carry)
+                        InterpolationResult(carried, nextIndex, reachedEnd = false)
+                    } else {
+                        InterpolationResult(target, nextIndex, reachedEnd = false)
+                    }
                 }
             } else {
                 val bearing = calculateBearing(currentPosition.latitude, currentPosition.longitude, target.latitude, target.longitude)

@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -45,7 +46,7 @@ class RouteReplayEngine
     @Inject
     constructor(
         private val routeInterpolator: RouteInterpolator,
-    ) {
+    ) : AutoCloseable {
         private val exceptionHandler =
             CoroutineExceptionHandler { _, throwable ->
                 Log.e(TAG, "Replay coroutine crashed", throwable)
@@ -63,8 +64,8 @@ class RouteReplayEngine
         /** Waypoint index to resume from after pause. */
         @Volatile private var resumeWaypointIndex: Int = 1
 
-        /** Saved waypoints for resume. */
-        private var savedWaypoints: List<LatLng> = emptyList()
+        /** Saved waypoints for resume. Volatile so appendWaypoint writes from the main thread are visible to the coroutine. */
+        @Volatile private var savedWaypoints: List<LatLng> = emptyList()
 
         /** Saved speed for resume. */
         private var savedSpeedMs: Double = 0.0
@@ -117,8 +118,10 @@ class RouteReplayEngine
          * State is saved internally for resume.
          */
         fun pause() {
+            // Cancel but do NOT null activeJob here — launchReplay() calls activeJob?.cancel()
+            // before launching the new coroutine, which is safe on an already-cancelled job.
+            // Nulling immediately would allow a concurrent resume() to skip the cancel guard.
             activeJob?.cancel()
-            activeJob = null
             Log.i(TAG, "Replay paused at index $resumeWaypointIndex")
         }
 
@@ -142,6 +145,15 @@ class RouteReplayEngine
         fun appendWaypoint(pos: LatLng) {
             savedWaypoints = savedWaypoints + pos
             Log.i(TAG, "Waypoint appended; total=${savedWaypoints.size}")
+        }
+
+        /**
+         * Releases the engine scope. Call only when the engine will never be reused
+         * (e.g. service onDestroy). Implements [AutoCloseable].
+         */
+        override fun close() {
+            activeJob?.cancel()
+            engineScope.cancel()
         }
 
         private fun launchReplay(
