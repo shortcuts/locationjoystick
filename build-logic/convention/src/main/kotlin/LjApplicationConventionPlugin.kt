@@ -54,6 +54,32 @@ class LjApplicationConventionPlugin : Plugin<Project> {
                     }
                 }
 
+                // Produce per-ABI APKs for GitHub Releases: arm64-v8a (~90 % of devices) and
+                // armeabi-v7a (older 32-bit devices). Drops x86/x86_64 emulator-only slices that
+                // inflate APK size significantly due to MapLibre native libraries.
+                splits {
+                    abi {
+                        isEnable = true
+                        reset()
+                        include("arm64-v8a", "armeabi-v7a")
+                        isUniversalApk = true // also keep a universal fallback APK
+                    }
+                }
+
+                // AAB bundle config: let Play Store deliver only the language + density
+                // resources each device actually needs (reduces on-device install size).
+                bundle {
+                    language {
+                        enableSplit = true
+                    }
+                    density {
+                        enableSplit = true
+                    }
+                    abi {
+                        enableSplit = true
+                    }
+                }
+
                 compileOptions {
                     sourceCompatibility = org.gradle.api.JavaVersion.VERSION_17
                     targetCompatibility = org.gradle.api.JavaVersion.VERSION_17

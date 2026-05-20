@@ -22,7 +22,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.bundles.lifecycle)
     implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.maplibre.android.sdk)
+    // maplibre-android-sdk is available transitively via :feature:map:api → :core:map (api dependency)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

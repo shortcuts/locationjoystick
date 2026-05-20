@@ -182,6 +182,24 @@
 -dontwarn androidx.compose.**
 
 # -----------------------------------------------------------------------------
+# Gson + Retrofit/Gson converter (OSRM response deserialization)
+# Gson uses reflection to map JSON fields to data class properties.
+# Without these rules R8 strips field names and deserialization silently returns nulls.
+# -----------------------------------------------------------------------------
+-keep class com.google.gson.** { *; }
+-keep interface com.google.gson.** { *; }
+-dontwarn com.google.gson.**
+# Keep OSRM response models (Gson-mapped via retrofit-converter-gson)
+-keep class com.locationjoystick.core.routing.OsrmRouteResponse { *; }
+-keep class com.locationjoystick.core.routing.OsrmRoute { *; }
+-keep class com.locationjoystick.core.routing.OsrmGeometry { *; }
+-keep class com.locationjoystick.core.routing.OsrmCoordinate { *; }
+# Generic Gson model safety: keep any class whose fields are accessed by Gson
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# -----------------------------------------------------------------------------
 # Suppress noisy warnings from transitive dependencies
 # -----------------------------------------------------------------------------
 -dontwarn java.lang.invoke.**
