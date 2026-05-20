@@ -54,6 +54,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.component.FavoritesList
@@ -483,6 +484,7 @@ internal fun MapScreen(
         PendingTapSheet(
             position = pending,
             isRouteReplay = uiState.isRouteReplay,
+            cooldownState = uiState.cooldownState,
             onAction = onAction,
         )
     }
@@ -549,6 +551,7 @@ private fun FavoritesPickerSheet(
 private fun PendingTapSheet(
     position: com.locationjoystick.core.model.LatLng,
     isRouteReplay: Boolean,
+    cooldownState: CooldownState,
     onAction: (MapAction) -> Unit,
 ) {
     ModalBottomSheet(
@@ -580,6 +583,32 @@ private fun PendingTapSheet(
                 }
             } else {
                 Text("Move to this location?", style = MaterialTheme.typography.titleMedium)
+                if (cooldownState is CooldownState.Cooling) {
+                    Spacer(Modifier.height(12.dp))
+                    val distKm = cooldownState.distanceMeters / 1000.0
+                    val distLabel = if (distKm >= 1.0) "%.1f km".format(distKm) else "%.0f m".format(cooldownState.distanceMeters)
+                    val remaining = cooldownState.remainingSeconds
+                    val hours = remaining / 3600
+                    val minutes = (remaining % 3600) / 60
+                    val seconds = remaining % 60
+                    val timeLabel =
+                        when {
+                            hours > 0 -> "%dh %dm".format(hours, minutes)
+                            minutes > 0 -> "%dm %ds".format(minutes, seconds)
+                            else -> "%ds".format(seconds)
+                        }
+                    androidx.compose.material3.Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = "Suggested wait: $timeLabel · $distLabel teleport",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        )
+                    }
+                }
                 Spacer(Modifier.height(16.dp))
                 Button(
                     onClick = { onAction(MapAction.ConfirmTeleport(position)) },

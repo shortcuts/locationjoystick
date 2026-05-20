@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.locationjoystick.core.common.constants.AppConstants
@@ -99,6 +100,12 @@ interface PreferencesDataSource {
 
     /** Sets the GPS jitter update interval. */
     suspend fun setJitterIntervalSeconds(seconds: Int)
+
+    /** Gets the timestamp (epoch ms) of the last teleport action. */
+    fun getLastTeleportTime(): Flow<Long>
+
+    /** Sets the timestamp (epoch ms) of the last teleport action. */
+    suspend fun setLastTeleportTime(ms: Long)
 }
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -146,6 +153,7 @@ class AppPreferencesDataSource
             val JITTER_IDLE_RADIUS_METERS = doublePreferencesKey("jitter_idle_radius_meters")
             val JITTER_MOVING_RADIUS_METERS = doublePreferencesKey("jitter_moving_radius_meters")
             val JITTER_INTERVAL_SECONDS = intPreferencesKey("jitter_interval_seconds")
+            val LAST_TELEPORT_TIME_MS = longPreferencesKey("last_teleport_time_ms")
         }
 
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -338,6 +346,21 @@ class AppPreferencesDataSource
             dataStore.edit { prefs ->
                 prefs[Keys.JITTER_INTERVAL_SECONDS] = seconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS)
             }
+        }
+
+        override fun getLastTeleportTime(): Flow<Long> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading last teleport time preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.LAST_TELEPORT_TIME_MS] ?: AppConstants.DataStoreConstants.DEFAULT_LAST_TELEPORT_TIME_MS }
+
+        override suspend fun setLastTeleportTime(ms: Long) {
+            dataStore.edit { prefs -> prefs[Keys.LAST_TELEPORT_TIME_MS] = ms }
         }
 
         companion object {

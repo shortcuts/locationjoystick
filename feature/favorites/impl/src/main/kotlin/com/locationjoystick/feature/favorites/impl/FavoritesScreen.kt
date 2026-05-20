@@ -51,6 +51,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjScaffold
 
@@ -62,10 +63,12 @@ fun FavoritesRoute(
     bottomBar: @Composable () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val cooldownStates by viewModel.cooldownStates.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     FavoritesScreen(
         uiState = uiState,
+        cooldownStates = cooldownStates,
         snackbarHostState = snackbarHostState,
         onTeleport = viewModel::teleportTo,
         onSetPendingDeleteId = viewModel::setPendingDeleteId,
@@ -103,6 +106,7 @@ internal fun FavoritesScreen(
     onConfirmDelete: () -> Unit,
     onAddFavorite: (String, Double, Double) -> Unit,
     onUpdateFavorite: (String, String, Double, Double) -> Unit,
+    cooldownStates: Map<String, CooldownState> = emptyMap(),
     onNavigateToMapPicker: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
     getCurrentPosition: () -> com.locationjoystick.core.model.LatLng? = { null },
@@ -191,6 +195,7 @@ internal fun FavoritesScreen(
                         ) { favorite ->
                             FavoriteCard(
                                 favorite = favorite,
+                                cooldownState = cooldownStates[favorite.id] ?: CooldownState.Ready,
                                 onRowClick = {
                                     val coords = "${String.format(
                                         "%.4f",
@@ -254,6 +259,7 @@ internal fun FavoritesScreen(
 @Composable
 private fun FavoriteCard(
     favorite: com.locationjoystick.core.model.FavoriteLocation,
+    cooldownState: CooldownState,
     onRowClick: (com.locationjoystick.core.model.FavoriteLocation) -> Unit,
     onEdit: (com.locationjoystick.core.model.FavoriteLocation) -> Unit,
     onDelete: (com.locationjoystick.core.model.FavoriteLocation) -> Unit,
@@ -275,6 +281,17 @@ private fun FavoriteCard(
                 "${String.format("%.4f", favorite.position.latitude)}, ${String.format("%.4f", favorite.position.longitude)}",
                 style = MaterialTheme.typography.bodySmall,
             )
+            if (cooldownState is CooldownState.Cooling) {
+                val remaining = cooldownState.remainingSeconds
+                val hours = remaining / 3600
+                val minutes = (remaining % 3600) / 60
+                val timeLabel = if (hours > 0) "%dh %dm".format(hours, minutes) else "%dm".format(minutes + 1)
+                Text(
+                    text = "Cool down: $timeLabel",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         Box {
             IconButton(onClick = { menuExpanded = true }) {

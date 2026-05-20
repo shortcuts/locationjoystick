@@ -1,21 +1,21 @@
 package com.locationjoystick.feature.favorites.impl
 
-import android.content.Context
-import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
+import com.locationjoystick.core.data.CooldownEngine
+import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
-import com.locationjoystick.core.location.MockLocationService
+import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.model.FavoriteLocation
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -24,41 +24,52 @@ import javax.inject.Inject
 class FavoritesViewModel
     @Inject
     constructor(
-        @ApplicationContext private val context: Context,
         private val favoriteRepository: FavoriteRepository,
         private val locationRepository: LocationRepository,
+        private val settingsRepository: SettingsRepository,
+        private val teleportUseCase: TeleportUseCase,
     ) : ViewModel() {
-        private val pendingDeleteIdFlow = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+        private val pendingDeleteIdFlow = MutableStateFlow<String?>(null)
 
         val uiState: StateFlow<FavoritesUiState> =
-            kotlinx.coroutines
-                .flow
-                .combine(
-                    favoriteRepository.getFavorites(),
-                    pendingDeleteIdFlow,
-                ) { favorites, pendingDeleteId ->
-                    FavoritesUiState(
-                        favorites = favorites,
-                        isLoading = false,
-                        pendingDeleteId = pendingDeleteId,
-                    )
-                }.stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(5_000),
-                    initialValue = FavoritesUiState(isLoading = true),
+            combine(
+                favoriteRepository.getFavorites(),
+                pendingDeleteIdFlow,
+            ) { favorites, pendingDeleteId ->
+                FavoritesUiState(
+                    favorites = favorites,
+                    isLoading = false,
+                    pendingDeleteId = pendingDeleteId,
                 )
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = FavoritesUiState(isLoading = true),
+            )
 
         val currentPosition: com.locationjoystick.core.model.LatLng?
             get() = locationRepository.currentPosition.value
 
-        fun teleportTo(favorite: FavoriteLocation) {
-            val intent =
-                Intent(context, MockLocationService::class.java).apply {
-                    action = MockLocationService.ACTION_UPDATE_POSITION
-                    putExtra(ServiceConstants.EXTRA_LAT, favorite.position.latitude)
-                    putExtra(ServiceConstants.EXTRA_LON, favorite.position.longitude)
+        /** Cooldown states keyed by favorite ID, refreshed every 30 seconds. */
+        val cooldownStates: StateFlow<Map<String, CooldownState>> =
+            combine(
+                settingsRepository.getLastTeleportTime(),
+                settingsRepository.getLastLocation(),
+                tickerFlow(30_000L),
+            ) { teleportTime, lastLoc, _ ->
+                uiState.value.favorites.associate { fav ->
+                    fav.id to CooldownEngine.computeState(teleportTime, lastLoc, fav.position)
                 }
-            context.startService(intent)
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyMap(),
+            )
+
+        fun teleportTo(favorite: FavoriteLocation) {
+            viewModelScope.launch {
+                teleportUseCase.execute(favorite.position)
+            }
         }
 
         fun deleteFavorite(favoriteId: String) {
@@ -125,5 +136,14 @@ class FavoritesViewModel
             val idToDelete = pendingDeleteIdFlow.value ?: return
             pendingDeleteIdFlow.value = null
             deleteFavorite(idToDelete)
+        }
+    }
+
+/** Emits [Unit] immediately and then every [intervalMs] milliseconds. Cancelled with its scope. */
+private fun tickerFlow(intervalMs: Long) =
+    flow {
+        while (true) {
+            emit(Unit)
+            delay(intervalMs)
         }
     }

@@ -11,6 +11,7 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.location.MockLocationIntentBuilder
@@ -26,6 +27,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -63,6 +66,7 @@ class MapViewModel
         private val roamingRepository: RoamingRepository,
         private val preferencesDataSource: PreferencesDataSource,
         private val walkCoordinator: WalkCoordinator,
+        private val teleportUseCase: TeleportUseCase,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MapUiState())
         val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
@@ -78,6 +82,7 @@ class MapViewModel
             observeRoaming()
             observeRoamingDefaults()
             observeSpeedUnit()
+            observeCooldownForPendingTap()
         }
 
         private fun observeLocationState() {
@@ -153,6 +158,24 @@ class MapViewModel
                 settingsRepository.getSpeedUnit().collect { unit ->
                     _uiState.update { it.copy(speedUnit = unit) }
                 }
+            }
+        }
+
+        private fun observeCooldownForPendingTap() {
+            viewModelScope.launch {
+                _uiState
+                    .flatMapLatest { state ->
+                        val target = state.pendingTapPosition
+                        if (target !=
+                            null
+                        ) {
+                            teleportUseCase.cooldownFor(target)
+                        } else {
+                            flowOf(com.locationjoystick.core.data.CooldownState.Ready)
+                        }
+                    }.collect { cooldown ->
+                        _uiState.update { it.copy(cooldownState = cooldown) }
+                    }
             }
         }
 
@@ -384,14 +407,7 @@ class MapViewModel
 
         private fun teleportTo(position: LatLng) {
             viewModelScope.launch {
-                try {
-                    context.startService(
-                        MockLocationIntentBuilder.updatePosition(context, position.latitude, position.longitude),
-                    )
-                    Log.d(TAG, "Teleport to ${position.latitude}, ${position.longitude}")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Teleport failed", e)
-                }
+                teleportUseCase.execute(position)
             }
         }
 

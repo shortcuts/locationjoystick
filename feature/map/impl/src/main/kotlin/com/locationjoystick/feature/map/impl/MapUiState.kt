@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.map.impl
 
+import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
@@ -33,6 +34,7 @@ data class MapUiState(
     val roamingDraft: RoamingDraft? = null,
     val isRoaming: Boolean = false,
     val speedUnit: SpeedUnit = SpeedUnit.KMH,
+    val cooldownState: CooldownState = CooldownState.Ready,
 )
 
 val MapUiState.isSpoofing: Boolean

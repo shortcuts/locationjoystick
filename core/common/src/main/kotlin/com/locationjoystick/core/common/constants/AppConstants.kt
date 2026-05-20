@@ -104,6 +104,7 @@ object AppConstants {
     }
 
     object ServiceConstants {
+        const val MOCK_LOCATION_SERVICE_CLASS = "com.locationjoystick.core.location.MockLocationService"
         const val JOYSTICK_SERVICE_CLASS = "com.locationjoystick.feature.joystick.impl.JoystickOverlayService"
         const val WIDGET_SERVICE_CLASS = "com.locationjoystick.feature.widget.impl.FloatingWidgetService"
         const val ACTION_START = "com.locationjoystick.core.location.ACTION_START"
@@ -129,6 +130,51 @@ object AppConstants {
     object DataStoreConstants {
         const val FILE_NAME = "app_preferences"
         const val DEFAULT_REMEMBER_LAST_LOCATION = true
+        const val DEFAULT_LAST_TELEPORT_TIME_MS = 0L
+    }
+
+    object CooldownConstants {
+        /** Lower-bound distance in meters for each cooldown tier (16 tiers, index-matched with [COOLDOWN_SECONDS]). */
+        val DISTANCE_THRESHOLDS_METERS: List<Double> =
+            listOf(
+                0.0,
+                10.0,
+                100.0,
+                500.0,
+                1_000.0,
+                5_000.0,
+                10_000.0,
+                25_000.0,
+                30_000.0,
+                65_000.0,
+                81_000.0,
+                100_000.0,
+                250_000.0,
+                500_000.0,
+                750_000.0,
+                1_000_000.0,
+            )
+
+        /** Cooldown in seconds matching each distance tier in [DISTANCE_THRESHOLDS_METERS]. */
+        val COOLDOWN_SECONDS: List<Long> =
+            listOf(
+                0L,
+                3L,
+                15L,
+                30L,
+                120L,
+                360L,
+                660L,
+                840L,
+                1320L,
+                1500L,
+                2100L,
+                2700L,
+                3600L,
+                4500L,
+                5400L,
+                7200L,
+            )
     }
 
     object JoystickConstants {

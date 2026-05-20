@@ -129,4 +129,8 @@ class SettingsRepository
         suspend fun setJitterMovingRadius(meters: Double) = dataSource.setJitterMovingRadius(meters)
 
         suspend fun setJitterIntervalSeconds(seconds: Int) = dataSource.setJitterIntervalSeconds(seconds)
+
+        fun getLastTeleportTime(): Flow<Long> = dataSource.getLastTeleportTime()
+
+        suspend fun setLastTeleportTime(ms: Long) = dataSource.setLastTeleportTime(ms)
     }

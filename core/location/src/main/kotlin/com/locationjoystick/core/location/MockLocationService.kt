@@ -285,6 +285,21 @@ class MockLocationService : Service() {
                 startSpoofing(lat, lon)
             }
 
+            null -> {
+                // Service restarted by OS (START_STICKY). Attempt to resume spoofing from the last
+                // remembered position if the feature is enabled.
+                serviceScope.launch {
+                    val remember = settingsRepository.getRememberLastLocation().first()
+                    val lastLoc = if (remember) settingsRepository.getLastLocation().first() else null
+                    if (lastLoc != null) {
+                        Log.i(TAG, "OS restart: resuming spoofing at remembered location ${lastLoc.latitude}, ${lastLoc.longitude}")
+                        startSpoofing(lastLoc.latitude, lastLoc.longitude)
+                    } else {
+                        Log.i(TAG, "OS restart: no remembered location — staying idle")
+                    }
+                }
+            }
+
             ACTION_STOP -> {
                 stopSpoofing()
                 stopSelf()
