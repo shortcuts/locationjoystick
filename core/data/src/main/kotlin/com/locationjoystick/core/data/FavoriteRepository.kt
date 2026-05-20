@@ -64,4 +64,13 @@ class FavoriteRepository
                     Log.e(TAG, "Failed to delete favorite: $id", e)
                 }
             }
+
+        suspend fun deleteAllFavorites(): Result<Unit> =
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    favoriteDao.deleteAll()
+                }.onFailure { e ->
+                    Log.e(TAG, "Failed to delete all favorites", e)
+                }
+            }
     }

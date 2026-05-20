@@ -58,7 +58,7 @@ class SettingsViewModel
         val qrImportReady: SharedFlow<ExportData> = _qrImportReady
 
         private val _qrChunksReady = MutableSharedFlow<QrChunker.ChunkResult>(extraBufferCapacity = 1)
-        internal val qrChunksReady: SharedFlow<QrChunker.ChunkResult> = _qrChunksReady
+        val qrChunksReady: SharedFlow<QrChunker.ChunkResult> = _qrChunksReady
 
         private data class RepoState(
             val walkSpeed: Double,
@@ -381,6 +381,7 @@ class SettingsViewModel
         fun importSettings(
             context: Context,
             uri: Uri,
+            replace: Boolean = true,
         ) {
             viewModelScope.launch {
                 try {
@@ -398,6 +399,10 @@ class SettingsViewModel
                     val exportData = parseExportData(json)
 
                     withContext(Dispatchers.IO) {
+                        if (replace) {
+                            favoriteRepository.deleteAllFavorites()
+                            routeRepository.deleteAllRoutes()
+                        }
                         exportData.favoriteLocations.forEach { fav ->
                             favoriteRepository.addFavorite(
                                 id = fav.id,
@@ -486,10 +491,17 @@ class SettingsViewModel
             }
         }
 
-        fun importSettings(exportData: ExportData) {
+        fun importSettings(
+            exportData: ExportData,
+            replace: Boolean = true,
+        ) {
             viewModelScope.launch {
                 try {
                     withContext(Dispatchers.IO) {
+                        if (replace) {
+                            favoriteRepository.deleteAllFavorites()
+                            routeRepository.deleteAllRoutes()
+                        }
                         exportData.favoriteLocations.forEach { fav ->
                             favoriteRepository.addFavorite(
                                 id = fav.id,
@@ -512,6 +524,94 @@ class SettingsViewModel
                     settingsRepository.updateRoamingDefaults(exportData.settings.roamingDefaults)
                 } catch (e: Exception) {
                     Log.e(TAG, "Import from ExportData failed", e)
+                }
+            }
+        }
+
+        fun importFromGpsJoystick(
+            context: Context,
+            uri: Uri,
+            replace: Boolean,
+        ) {
+            viewModelScope.launch {
+                try {
+                    val bytes =
+                        withContext(Dispatchers.IO) {
+                            context.contentResolver.openInputStream(uri)?.readBytes() ?: ByteArray(0)
+                        }
+                    if (bytes.isEmpty()) {
+                        Log.e(TAG, "GPS Joystick import failed: empty file")
+                        return@launch
+                    }
+                    val result = GpsJoystickMigrator.parse(bytes)
+                    if (result.isFailure) {
+                        Log.e(TAG, "GPS Joystick import failed: ${result.exceptionOrNull()?.message}")
+                        return@launch
+                    }
+                    val migration = result.getOrNull() ?: return@launch
+                    withContext(Dispatchers.IO) {
+                        if (replace) {
+                            favoriteRepository.deleteAllFavorites()
+                            routeRepository.deleteAllRoutes()
+                        }
+                        migration.favorites.forEach { fav ->
+                            favoriteRepository.addFavorite(
+                                id = fav.id,
+                                name = fav.name,
+                                position = fav.position,
+                                createdAt = fav.createdAt,
+                            )
+                        }
+                        migration.routes.forEach { routeRepository.insertRoute(it).getOrNull() }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "GPS Joystick import failed", e)
+                }
+            }
+        }
+
+        fun importFromYamla(
+            context: Context,
+            uri: Uri,
+            replace: Boolean,
+        ) {
+            viewModelScope.launch {
+                try {
+                    val json =
+                        withContext(Dispatchers.IO) {
+                            context.contentResolver
+                                .openInputStream(uri)
+                                ?.bufferedReader()
+                                ?.readText() ?: ""
+                        }
+                    if (json.isBlank()) {
+                        Log.e(TAG, "YAMLA import failed: empty file")
+                        return@launch
+                    }
+                    val result = YamlaMigrator.parse(json)
+                    if (result.isFailure) {
+                        Log.e(TAG, "YAMLA import failed: ${result.exceptionOrNull()?.message}")
+                        return@launch
+                    }
+                    val migration = result.getOrNull() ?: return@launch
+                    withContext(Dispatchers.IO) {
+                        if (replace) {
+                            favoriteRepository.deleteAllFavorites()
+                        }
+                        migration.favorites.forEach { fav ->
+                            favoriteRepository.addFavorite(
+                                id = fav.id,
+                                name = fav.name,
+                                position = fav.position,
+                                createdAt = fav.createdAt,
+                            )
+                        }
+                    }
+                    migration.walkSpeed?.let { settingsRepository.setWalkSpeed(it) }
+                    migration.runSpeed?.let { settingsRepository.setRunSpeed(it) }
+                    migration.bikeSpeed?.let { settingsRepository.setBikeSpeed(it) }
+                } catch (e: Exception) {
+                    Log.e(TAG, "YAMLA import failed", e)
                 }
             }
         }

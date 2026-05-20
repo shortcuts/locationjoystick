@@ -25,4 +25,7 @@ interface FavoriteDao {
 
     @Query("SELECT * FROM favorites ORDER BY createdAt DESC")
     fun getAll(): Flow<List<FavoriteEntity>>
+
+    @Query("DELETE FROM favorites")
+    suspend fun deleteAll()
 }

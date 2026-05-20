@@ -87,4 +87,14 @@ class RouteRepository
                     Log.e(TAG, "Failed to rename route: $routeId", e)
                 }
             }
+
+        suspend fun deleteAllRoutes(): Result<Unit> =
+            withContext(ioDispatcher) {
+                runCatching {
+                    routeDao.deleteAllWaypoints()
+                    routeDao.deleteAll()
+                }.onFailure { e ->
+                    Log.e(TAG, "Failed to delete all routes", e)
+                }
+            }
     }

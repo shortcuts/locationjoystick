@@ -15,15 +15,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -60,6 +64,8 @@ fun SettingsRoute(
     val context = LocalContext.current
     var pendingImportUri by remember { mutableStateOf<android.net.Uri?>(null) }
     var pendingQrImportData by remember { mutableStateOf<com.locationjoystick.core.model.ExportData?>(null) }
+    var pendingGpsJoystickUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var pendingYamlaUri by remember { mutableStateOf<android.net.Uri?>(null) }
     var showQrShare by remember { mutableStateOf(false) }
     var qrChunkResult by remember { mutableStateOf<QrChunker.ChunkResult?>(null) }
     var showQrScanner by remember { mutableStateOf(false) }
@@ -92,39 +98,77 @@ fun SettingsRoute(
             if (uri != null) pendingImportUri = uri
         }
 
+    val importGpsJoystickLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocument(),
+        ) { uri ->
+            if (uri != null) pendingGpsJoystickUri = uri
+        }
+
+    val importYamlaLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocument(),
+        ) { uri ->
+            if (uri != null) pendingYamlaUri = uri
+        }
+
     if (pendingImportUri != null) {
         val uri = pendingImportUri!!
-        AlertDialog(
-            onDismissRequest = { pendingImportUri = null },
-            title = { Text("Import settings") },
-            text = { Text("This will replace all existing data. Continue?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.importSettings(context, uri)
-                    pendingImportUri = null
-                }) { Text("Import") }
+        ImportConfirmDialog(
+            onReplace = {
+                viewModel.importSettings(context, uri, replace = true)
+                pendingImportUri = null
             },
-            dismissButton = {
-                TextButton(onClick = { pendingImportUri = null }) { Text("Cancel") }
+            onAdd = {
+                viewModel.importSettings(context, uri, replace = false)
+                pendingImportUri = null
             },
+            onDismiss = { pendingImportUri = null },
         )
     }
 
     if (pendingQrImportData != null) {
         val exportData = pendingQrImportData!!
-        AlertDialog(
-            onDismissRequest = { pendingQrImportData = null },
-            title = { Text("Import settings") },
-            text = { Text("This will replace all existing data. Continue?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.importSettings(exportData)
-                    pendingQrImportData = null
-                }) { Text("Import") }
+        ImportConfirmDialog(
+            onReplace = {
+                viewModel.importSettings(exportData, replace = true)
+                pendingQrImportData = null
             },
-            dismissButton = {
-                TextButton(onClick = { pendingQrImportData = null }) { Text("Cancel") }
+            onAdd = {
+                viewModel.importSettings(exportData, replace = false)
+                pendingQrImportData = null
             },
+            onDismiss = { pendingQrImportData = null },
+        )
+    }
+
+    if (pendingGpsJoystickUri != null) {
+        val uri = pendingGpsJoystickUri!!
+        ImportConfirmDialog(
+            onReplace = {
+                viewModel.importFromGpsJoystick(context, uri, replace = true)
+                pendingGpsJoystickUri = null
+            },
+            onAdd = {
+                viewModel.importFromGpsJoystick(context, uri, replace = false)
+                pendingGpsJoystickUri = null
+            },
+            onDismiss = { pendingGpsJoystickUri = null },
+        )
+    }
+
+    if (pendingYamlaUri != null) {
+        val uri = pendingYamlaUri!!
+        ImportConfirmDialog(
+            onReplace = {
+                viewModel.importFromYamla(context, uri, replace = true)
+                pendingYamlaUri = null
+            },
+            onAdd = {
+                viewModel.importFromYamla(context, uri, replace = false)
+                pendingYamlaUri = null
+            },
+            onDismiss = { pendingYamlaUri = null },
         )
     }
 
@@ -166,6 +210,8 @@ fun SettingsRoute(
         onUpdateRoamingDefaults = viewModel::updateRoamingDefaults,
         onExport = { exportLauncher.launch("${AppConstants.ExportConstants.FILENAME_PREFIX}-${System.currentTimeMillis()}.json") },
         onImport = { importLauncher.launch(arrayOf(AppConstants.ExportConstants.MIME_TYPE)) },
+        onImportGpsJoystick = { importGpsJoystickLauncher.launch(arrayOf("*/*")) },
+        onImportYamla = { importYamlaLauncher.launch(arrayOf("application/json")) },
         onQrShare = { viewModel.prepareQrChunks() },
         onQrScan = { showQrScanner = true },
         onSaveChanges = viewModel::saveChanges,
@@ -192,6 +238,8 @@ private fun SettingsScreenPreview() {
         convertMsToDisplay = { v, _ -> v },
         onExport = {},
         onImport = {},
+        onImportGpsJoystick = {},
+        onImportYamla = {},
         onQrShare = {},
         onQrScan = {},
     )
@@ -215,6 +263,8 @@ internal fun SettingsScreen(
     onUpdateRoamingDefaults: (RoamingDefaults) -> Unit = {},
     onExport: () -> Unit,
     onImport: () -> Unit,
+    onImportGpsJoystick: () -> Unit,
+    onImportYamla: () -> Unit,
     onQrShare: () -> Unit,
     onQrScan: () -> Unit,
     onSaveChanges: () -> Unit = {},
@@ -700,8 +750,42 @@ internal fun SettingsScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Button(onClick = onImport, modifier = Modifier.fillMaxWidth()) {
-                            Text("Import Settings")
+                        var showImportMenu by remember { mutableStateOf(false) }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Button(
+                                onClick = onImport,
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text("Import Settings")
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Box {
+                                IconButton(onClick = { showImportMenu = true }) {
+                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "More import options")
+                                }
+                                DropdownMenu(
+                                    expanded = showImportMenu,
+                                    onDismissRequest = { showImportMenu = false },
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("From GPS Joystick") },
+                                        onClick = {
+                                            showImportMenu = false
+                                            onImportGpsJoystick()
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("From YAMLA") },
+                                        onClick = {
+                                            showImportMenu = false
+                                            onImportYamla()
+                                        },
+                                    )
+                                }
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -827,5 +911,27 @@ private fun JitterInput(
         label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun ImportConfirmDialog(
+    onReplace: () -> Unit,
+    onAdd: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Import data") },
+        text = { Text("How would you like to handle existing data?") },
+        confirmButton = {
+            TextButton(onClick = onReplace) { Text("Replace all") }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onAdd) { Text("Add to existing") }
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+            }
+        },
     )
 }
