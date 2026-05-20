@@ -2,7 +2,6 @@ package com.locationjoystick.core.data
 
 import android.util.Log
 import com.locationjoystick.core.database.dao.RouteDao
-import com.locationjoystick.core.database.dao.WaypointDao
 import com.locationjoystick.core.database.entities.toDomain
 import com.locationjoystick.core.database.entities.toEntity
 import com.locationjoystick.core.model.Route
@@ -21,7 +20,6 @@ class RouteRepository
     @Inject
     constructor(
         private val routeDao: RouteDao,
-        private val waypointDao: WaypointDao,
         private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     ) {
         fun getRoutes(): Flow<List<Route>> =
@@ -34,10 +32,9 @@ class RouteRepository
         suspend fun insertRoute(route: Route): Result<Unit> =
             withContext(ioDispatcher) {
                 runCatching {
-                    routeDao.insert(route.toEntity())
-                    waypointDao.deleteByRouteId(route.id)
                     val waypointEntities = route.waypoints.map { it.toEntity(route.id) }
-                    waypointDao.insertAll(waypointEntities)
+                    routeDao.insert(route.toEntity())
+                    routeDao.replaceWaypoints(route.id, waypointEntities)
                 }.onFailure { e ->
                     Log.e(TAG, "Failed to insert route: ${route.id}", e)
                 }
@@ -46,10 +43,9 @@ class RouteRepository
         suspend fun updateRoute(route: Route): Result<Unit> =
             withContext(ioDispatcher) {
                 runCatching {
-                    routeDao.update(route.toEntity())
-                    waypointDao.deleteByRouteId(route.id)
                     val waypointEntities = route.waypoints.map { it.toEntity(route.id) }
-                    waypointDao.insertAll(waypointEntities)
+                    routeDao.update(route.toEntity())
+                    routeDao.replaceWaypoints(route.id, waypointEntities)
                 }.onFailure { e ->
                     Log.e(TAG, "Failed to update route: ${route.id}", e)
                 }
@@ -70,7 +66,7 @@ class RouteRepository
         suspend fun removeWaypoint(waypointId: String): Result<Unit> =
             withContext(ioDispatcher) {
                 runCatching {
-                    waypointDao.delete(waypointId)
+                    routeDao.deleteWaypointById(waypointId)
                 }.onFailure { e ->
                     Log.e(TAG, "Failed to remove waypoint: $waypointId", e)
                 }

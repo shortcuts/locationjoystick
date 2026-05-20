@@ -81,7 +81,7 @@ class JoystickOverlayService : OverlayService() {
 
     private var mockLocationService: MockLocationService? = null
 
-    var locked = false
+    @Volatile var locked = false
 
     /** Latest joystick direction+force from touch; read by the movement tick loop. */
     private var lastInput: JoystickInput? = null

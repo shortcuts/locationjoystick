@@ -113,9 +113,9 @@ class OsrmClient
                         body.routes?.firstOrNull()
                             ?: error("OSRM returned no routes")
 
-                    route.geometry.coordinates.map { coord ->
-                        // GeoJSON coordinates are [longitude, latitude]
-                        LatLng(latitude = coord[1], longitude = coord[0])
+                    route.geometry.coordinates.mapNotNull { coord ->
+                        // GeoJSON coordinates are [longitude, latitude]; guard against malformed entries.
+                        if (coord.size < 2) null else LatLng(latitude = coord[1], longitude = coord[0])
                     }
                 }.onFailure { e ->
                     Log.e(TAG, "OSRM route request failed — will fall back to straight-line", e)

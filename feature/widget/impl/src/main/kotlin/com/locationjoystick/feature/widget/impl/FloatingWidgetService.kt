@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.SavedStateRegistry
@@ -303,23 +304,23 @@ class FloatingWidgetService :
         var dragOffsetY = resources.displayMetrics.heightPixels / 2f
 
         view.setContent {
-            val features by settingsRepository.getWidgetFeatures().collectAsState(initial = emptyList())
-            val joystickVisible by joystickVisibleFlow.collectAsState()
-            val joystickLocked by joystickLockedFlow.collectAsState()
-            val activeProfileId by activeProfileIdFlow.collectAsState()
-            val isActivityActive by locationRepository.isActivityActive.collectAsState(initial = false)
-            val isActivityPausable by locationRepository.isActivityPausable.collectAsState(initial = false)
-            val mockMode by locationRepository.currentMode.collectAsState()
-            val mockLocationState by locationRepository.mockLocationState.collectAsState()
-            val isWalkPaused by locationRepository.isWalkPaused.collectAsState()
+            val features by settingsRepository.getWidgetFeatures().collectAsStateWithLifecycle(initialValue = emptyList())
+            val joystickVisible by joystickVisibleFlow.collectAsStateWithLifecycle()
+            val joystickLocked by joystickLockedFlow.collectAsStateWithLifecycle()
+            val activeProfileId by activeProfileIdFlow.collectAsStateWithLifecycle()
+            val isActivityActive by locationRepository.isActivityActive.collectAsStateWithLifecycle(initialValue = false)
+            val isActivityPausable by locationRepository.isActivityPausable.collectAsStateWithLifecycle(initialValue = false)
+            val mockMode by locationRepository.currentMode.collectAsStateWithLifecycle()
+            val mockLocationState by locationRepository.mockLocationState.collectAsStateWithLifecycle()
+            val isWalkPaused by locationRepository.isWalkPaused.collectAsStateWithLifecycle()
             val isActivityPaused =
                 isWalkPaused ||
                     (
                         mockMode == com.locationjoystick.core.model.MockMode.ROUTE_REPLAY &&
                             mockLocationState == com.locationjoystick.core.model.MockLocationState.PAUSED
                     )
-            val routeExpanded by routeExpandedFlow.collectAsState()
-            val isPanelExpanded by isPanelExpandedFlow.collectAsState()
+            val routeExpanded by routeExpandedFlow.collectAsStateWithLifecycle()
+            val isPanelExpanded by isPanelExpandedFlow.collectAsStateWithLifecycle()
 
             LjTheme {
                 WidgetPanel(
@@ -778,7 +779,7 @@ class FloatingWidgetService :
                     setViewTreeSavedStateRegistryOwner(this@FloatingWidgetService)
                 }
             panel.setContent {
-                val favs by favoritesDataFlow.collectAsState()
+                val favs by favoritesDataFlow.collectAsStateWithLifecycle()
                 LjTheme {
                     FavoritesFloatingView(
                         favorites = favs,
@@ -810,9 +811,10 @@ class FloatingWidgetService :
                 }
             }
             hidePanelView()
-            // Guard: if lifecycle was destroyed while the coroutine was suspended
-            // (e.g. loading favorites), do not add a view that would never be cleaned up.
-            if (lifecycle.currentState == Lifecycle.State.DESTROYED) {
+            // Use isActive instead of a lifecycle-state snapshot to avoid a TOCTOU race:
+            // isActive reflects scope cancellation atomically, while checking lifecycle.currentState
+            // has a window between the check and addView where the service can be destroyed.
+            if (!isActive) {
                 Log.w(TAG, "Service destroyed before favorites panel could be shown")
                 return@launch
             }
@@ -834,7 +836,7 @@ class FloatingWidgetService :
                     setViewTreeSavedStateRegistryOwner(this@FloatingWidgetService)
                 }
             panel.setContent {
-                val routes by routesDataFlow.collectAsState()
+                val routes by routesDataFlow.collectAsStateWithLifecycle()
                 LjTheme {
                     RoutesFloatingView(
                         routes = routes,
@@ -852,9 +854,7 @@ class FloatingWidgetService :
                 }
             }
             hidePanelView()
-            // Guard: if lifecycle was destroyed while the coroutine was suspended
-            // (e.g. loading routes), do not add a view that would never be cleaned up.
-            if (lifecycle.currentState == Lifecycle.State.DESTROYED) {
+            if (!isActive) {
                 Log.w(TAG, "Service destroyed before routes panel could be shown")
                 return@launch
             }
@@ -919,7 +919,7 @@ class FloatingWidgetService :
         joystickPollJob?.cancel()
         joystickPollJob =
             serviceScope.launch {
-                while (true) {
+                while (isActive) {
                     delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
                     syncJoystickState()
                 }

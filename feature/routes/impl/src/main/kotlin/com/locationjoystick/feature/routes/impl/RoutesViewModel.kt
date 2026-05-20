@@ -105,7 +105,7 @@ class RoutesViewModel
                     Intent(context, MockLocationService::class.java).apply {
                         action = MockLocationService.ACTION_ROUTE_REPLAY_START
                         putExtra(MockLocationService.EXTRA_ROUTE_ID, route.id)
-                        putExtra(MockLocationService.EXTRA_IS_BACKWARD, false)
+                        putExtra(MockLocationService.EXTRA_IS_BACKWARD, !fromFirstWaypoint)
                         putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
                     }
                 context.startService(intent)
@@ -234,6 +234,14 @@ class RoutesViewModel
 
         internal suspend fun readGpxContent(uri: Uri): String =
             withContext(Dispatchers.IO) {
+                val descriptor = context.contentResolver.openAssetFileDescriptor(uri, "r")
+                val fileSize = descriptor?.use { it.length }
+                if (fileSize != null && fileSize > AppConstants.ExportConstants.MAX_GPX_IMPORT_SIZE_BYTES) {
+                    throw IllegalArgumentException(
+                        "GPX file is too large (${fileSize / 1024 / 1024} MB). Maximum allowed is " +
+                            "${AppConstants.ExportConstants.MAX_GPX_IMPORT_SIZE_BYTES / 1024 / 1024} MB.",
+                    )
+                }
                 context.contentResolver.openInputStream(uri)?.use { stream ->
                     stream.bufferedReader().readText()
                 } ?: throw IllegalArgumentException("Cannot read GPX file")

@@ -63,4 +63,12 @@ class RoamingRepository
             locationRepository.setMockMode(MockMode.TELEPORT)
             locationRepository.setRouteWaypoints(null)
         }
+
+        /**
+         * Releases the roaming engine's coroutine scope.
+         * Call only when the engine will never be reused (e.g. process teardown / service onDestroy).
+         */
+        fun close() {
+            roamingEngine.close()
+        }
     }

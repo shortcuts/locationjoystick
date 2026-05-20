@@ -30,6 +30,20 @@ interface RouteDao {
     @Update
     suspend fun update(route: RouteEntity)
 
+    /**
+     * Atomically replaces all waypoints for a route.
+     * Deletes existing waypoints then inserts new ones in a single transaction,
+     * preventing a partial-write state where the route exists with no waypoints.
+     */
+    @Transaction
+    suspend fun replaceWaypoints(
+        routeId: String,
+        waypoints: List<WaypointEntity>,
+    ) {
+        deleteWaypointsByRouteId(routeId)
+        insertWaypoints(waypoints)
+    }
+
     @Delete
     suspend fun delete(route: RouteEntity)
 
@@ -46,4 +60,13 @@ interface RouteDao {
     @Transaction
     @Query("SELECT * FROM routes ORDER BY createdAt DESC")
     fun getAllWithWaypoints(): Flow<List<RouteWithWaypoints>>
+
+    @Query("DELETE FROM waypoints WHERE routeId = :routeId")
+    suspend fun deleteWaypointsByRouteId(routeId: String)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertWaypoints(waypoints: List<WaypointEntity>)
+
+    @Query("DELETE FROM waypoints WHERE id = :waypointId")
+    suspend fun deleteWaypointById(waypointId: String)
 }

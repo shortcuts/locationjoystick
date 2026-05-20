@@ -13,6 +13,8 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.PI
@@ -53,8 +55,11 @@ class RoamingEngine
         /** Coroutine scope for all roaming coroutines. Uses SupervisorJob so one failure doesn't cancel others. */
         private val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-        /** Current active roaming job. Null when not roaming. */
-        private var activeJob: Job? = null
+        /** Serializes cancel+launch so concurrent startRoaming/stopRoaming calls can't leave a stale job. */
+        private val jobMutex = Mutex()
+
+        /** Current active roaming job. Null when not roaming. Only mutated under [jobMutex]. */
+        @Volatile private var activeJob: Job? = null
 
         /**
          * Generates a uniformly random point within a circle of given radius.
@@ -90,9 +95,13 @@ class RoamingEngine
             onPositionUpdate: (LatLng) -> Unit,
             onRouteUpdate: (List<LatLng>) -> Unit = {},
         ): Job {
-            activeJob?.cancel()
+            // Cancel any existing job then launch the new one under the mutex to prevent
+            // a race where concurrent calls leave a stale cancelled job in activeJob.
             val job =
                 engineScope.launch {
+                    jobMutex.withLock {
+                        activeJob?.cancelAndJoin()
+                    }
                     val initialLocation = config.centerPosition
                     var currentPosition = config.centerPosition
                     var remainingMeters = config.distanceMeters
@@ -165,8 +174,10 @@ class RoamingEngine
          * Waits for the active coroutine to finish before returning.
          */
         suspend fun stopRoaming() {
-            activeJob?.cancelAndJoin()
-            activeJob = null
+            jobMutex.withLock {
+                activeJob?.cancelAndJoin()
+                activeJob = null
+            }
         }
 
         /**
@@ -174,8 +185,9 @@ class RoamingEngine
          * The engine can be restarted via [startRoaming] after this call.
          */
         fun stop() {
-            activeJob?.cancel()
+            val job = activeJob
             activeJob = null
+            job?.cancel()
         }
 
         /**

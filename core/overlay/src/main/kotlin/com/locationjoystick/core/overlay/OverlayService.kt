@@ -2,6 +2,7 @@ package com.locationjoystick.core.overlay
 
 import android.app.Service
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.os.IBinder
 import android.util.Log
@@ -81,6 +82,26 @@ abstract class OverlayService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    /**
+     * Re-clamp the overlay position when the screen configuration changes (e.g. rotation).
+     * Without this, the stored [currentParams] retains stale coordinates based on the previous
+     * screen dimensions and the overlay can appear off-screen after orientation change.
+     * Subclasses should call super and then re-apply their own drag-offset clamping if needed.
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val view = overlayView ?: return
+        val params = currentParams ?: return
+        if (!view.isAttachedToWindow) return
+        try {
+            // Re-apply the existing params so WindowManager recalculates bounds with the new metrics.
+            windowManager.updateViewLayout(view, params)
+            Log.d(tag, "Overlay params refreshed after configuration change")
+        } catch (e: Exception) {
+            Log.e(tag, "Failed to update overlay layout after configuration change", e)
+        }
+    }
 
     abstract fun createOverlayView(): View
 

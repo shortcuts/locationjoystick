@@ -13,6 +13,9 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -55,8 +58,11 @@ class RouteReplayEngine
         /** Scope for replay coroutines. Uses SupervisorJob so failures don't propagate. */
         private val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + exceptionHandler)
 
-        /** Current replay job. Null when not replaying. */
-        private var activeJob: Job? = null
+        /** Serializes cancel+launch to prevent stale-job races on concurrent start/pause/resume calls. */
+        private val jobMutex = Mutex()
+
+        /** Current replay job. Only mutated under [jobMutex]. */
+        @Volatile private var activeJob: Job? = null
 
         /** Position to resume from after pause. Set by [pause]. */
         @Volatile private var resumePosition: LatLng? = null
@@ -64,8 +70,12 @@ class RouteReplayEngine
         /** Waypoint index to resume from after pause. */
         @Volatile private var resumeWaypointIndex: Int = 1
 
-        /** Saved waypoints for resume. Volatile so appendWaypoint writes from the main thread are visible to the coroutine. */
-        @Volatile private var savedWaypoints: List<LatLng> = emptyList()
+        /**
+         * Saved waypoints for resume. AtomicReference ensures that appendWaypoint's
+         * read-modify-write is atomic — @Volatile alone would not prevent a torn update
+         * when the main thread and the replay coroutine access this concurrently.
+         */
+        private val savedWaypointsRef = AtomicReference<List<LatLng>>(emptyList())
 
         /** Saved speed for resume. */
         private var savedSpeedMs: Double = 0.0
@@ -89,7 +99,7 @@ class RouteReplayEngine
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
         ) {
-            savedWaypoints = waypoints
+            savedWaypointsRef.set(waypoints)
             savedSpeedMs = speedMs
             this.isLooping = isLooping
             resumePosition = waypoints.firstOrNull()
@@ -130,9 +140,11 @@ class RouteReplayEngine
          * Use this to fully reset after pause or to cancel a running replay.
          */
         suspend fun stop() {
-            activeJob?.cancelAndJoin()
-            activeJob = null
-            savedWaypoints = emptyList()
+            jobMutex.withLock {
+                activeJob?.cancelAndJoin()
+                activeJob = null
+            }
+            savedWaypointsRef.set(emptyList())
             resumePosition = null
             resumeWaypointIndex = 1
             Log.i(TAG, "Replay stopped")
@@ -143,8 +155,8 @@ class RouteReplayEngine
          * @param pos Position to append
          */
         fun appendWaypoint(pos: LatLng) {
-            savedWaypoints = savedWaypoints + pos
-            Log.i(TAG, "Waypoint appended; total=${savedWaypoints.size}")
+            savedWaypointsRef.getAndUpdate { it + pos }
+            Log.i(TAG, "Waypoint appended; total=${savedWaypointsRef.get().size}")
         }
 
         /**
@@ -160,22 +172,26 @@ class RouteReplayEngine
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
         ) {
-            activeJob?.cancel()
-            if (savedWaypoints.size < 2) {
+            val snapshot = savedWaypointsRef.get()
+            val previousJob = activeJob
+            previousJob?.cancel()
+            if (snapshot.size < 2) {
                 onComplete()
                 return
             }
-            var position = resumePosition ?: savedWaypoints.first()
+            var position = resumePosition ?: snapshot.first()
             var index = resumeWaypointIndex
 
             activeJob =
                 engineScope.launch {
+                    previousJob?.join()
                     while (isActive) {
+                        val waypoints = savedWaypointsRef.get()
                         val result =
                             routeInterpolator.interpolateAlongRoute(
-                                waypoints = savedWaypoints,
+                                waypoints = waypoints,
                                 currentPosition = position,
-                                currentWaypointIndex = index,
+                                currentWaypointIndex = index.coerceAtMost(waypoints.size - 1),
                                 speedMs = savedSpeedMs,
                                 deltaTimeMs = AppConstants.LocationConstants.UPDATE_INTERVAL_MS,
                             )
@@ -190,7 +206,7 @@ class RouteReplayEngine
                         }
                         if (result.reachedEnd) {
                             if (isLooping) {
-                                position = savedWaypoints.first()
+                                position = savedWaypointsRef.get().first()
                                 index = 1
                                 resumePosition = position
                                 resumeWaypointIndex = index

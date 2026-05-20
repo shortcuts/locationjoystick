@@ -48,6 +48,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import kotlin.math.PI
 import kotlin.math.cos
@@ -111,7 +113,11 @@ class MockLocationService : Service() {
             _state.value = MockLocationState.ERROR
         }
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + exceptionHandler)
-    private var updateJob: Job? = null
+
+    /** Guards concurrent access to updateJob to prevent double-start from rapid state emissions. */
+    private val updateJobMutex = Mutex()
+
+    @Volatile private var updateJob: Job? = null
 
     private val _state = MutableStateFlow(MockLocationState.IDLE)
     val state: StateFlow<MockLocationState> = _state.asStateFlow()
@@ -130,9 +136,9 @@ class MockLocationService : Service() {
 
     @Volatile private var jitterIntervalSeconds: Int = 3
 
-    private var lastJitterTimestampMs: Long = 0L
+    @Volatile private var lastJitterTimestampMs: Long = 0L
 
-    private var providerAdded = false
+    @Volatile private var providerAdded = false
 
     override fun onCreate() {
         super.onCreate()
@@ -145,18 +151,20 @@ class MockLocationService : Service() {
             _state.collect { state ->
                 when (state) {
                     MockLocationState.RUNNING -> {
-                        if (updateJob == null) {
-                            // Route replay drives its own position updates via the onPositionUpdate
-                            // callback — starting a background loop here would cause duplicate pushes.
-                            // Skip the loop when replay mode is already active.
-                            val mode = locationRepository.currentMode.value
-                            if (mode != MockMode.ROUTE_REPLAY) {
-                                setupTestProvider()
-                                startUpdateLoop()
-                                Log.i(TAG, "State changed to RUNNING - started update loop")
-                            } else {
-                                setupTestProvider()
-                                Log.i(TAG, "State changed to RUNNING (route replay) - skipped update loop")
+                        updateJobMutex.withLock {
+                            if (updateJob == null) {
+                                // Route replay drives its own position updates via the onPositionUpdate
+                                // callback — starting a background loop here would cause duplicate pushes.
+                                // Skip the loop when replay mode is already active.
+                                val mode = locationRepository.currentMode.value
+                                if (mode != MockMode.ROUTE_REPLAY) {
+                                    setupTestProvider()
+                                    startUpdateLoop()
+                                    Log.i(TAG, "State changed to RUNNING - started update loop")
+                                } else {
+                                    setupTestProvider()
+                                    Log.i(TAG, "State changed to RUNNING (route replay) - skipped update loop")
+                                }
                             }
                         }
                         if (Settings.canDrawOverlays(this@MockLocationService)) {
@@ -169,11 +177,13 @@ class MockLocationService : Service() {
                     }
 
                     MockLocationState.IDLE, MockLocationState.ERROR -> {
-                        if (updateJob != null) {
-                            updateJob?.cancel()
-                            updateJob = null
-                            removeTestProvider()
-                            Log.i(TAG, "State changed to IDLE/ERROR - stopped update loop")
+                        updateJobMutex.withLock {
+                            if (updateJob != null) {
+                                updateJob?.cancel()
+                                updateJob = null
+                                removeTestProvider()
+                                Log.i(TAG, "State changed to IDLE/ERROR - stopped update loop")
+                            }
                         }
                         stopService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))
                         stopService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
@@ -181,10 +191,12 @@ class MockLocationService : Service() {
                     }
 
                     MockLocationState.PAUSED -> {
-                        if (updateJob != null) {
-                            updateJob?.cancel()
-                            updateJob = null
-                            Log.i(TAG, "State changed to PAUSED - paused update loop")
+                        updateJobMutex.withLock {
+                            if (updateJob != null) {
+                                updateJob?.cancel()
+                                updateJob = null
+                                Log.i(TAG, "State changed to PAUSED - paused update loop")
+                            }
                         }
                         // Overlays remain visible during pause
                     }
@@ -279,8 +291,8 @@ class MockLocationService : Service() {
             }
 
             ACTION_UPDATE_POSITION -> {
-                val lat = intent?.getDoubleExtra("lat", currentLat) ?: currentLat
-                val lon = intent?.getDoubleExtra("lon", currentLon) ?: currentLon
+                val lat = intent?.getDoubleExtra(ServiceConstants.EXTRA_LAT, currentLat) ?: currentLat
+                val lon = intent?.getDoubleExtra(ServiceConstants.EXTRA_LON, currentLon) ?: currentLon
                 updatePosition(lat, lon)
             }
 
@@ -329,6 +341,7 @@ class MockLocationService : Service() {
         locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
         routeReplayEngine.close()
+        roamingRepository.close()
         serviceScope.cancel()
         super.onDestroy()
     }
@@ -496,7 +509,7 @@ class MockLocationService : Service() {
         speedMs: Double,
     ) {
         val distancePerTick = speedMs * (AppConstants.LocationConstants.UPDATE_INTERVAL_MS / 1000.0)
-        while (true) {
+        while (isActive) {
             val dist = haversineDistance(currentLat, currentLon, target.latitude, target.longitude)
             if (dist < AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS) break
             val bearing = calculateBearing(currentLat, currentLon, target.latitude, target.longitude)
