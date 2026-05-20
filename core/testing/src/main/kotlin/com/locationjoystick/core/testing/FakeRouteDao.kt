@@ -55,4 +55,12 @@ class FakeRouteDao(
     override suspend fun deleteWaypointById(waypointId: String) {
         waypointDao.delete(waypointId)
     }
+
+    override suspend fun deleteAll() {
+        routeState.value = emptyList()
+    }
+
+    override suspend fun deleteAllWaypoints() {
+        waypointDao.deleteAll()
+    }
 }

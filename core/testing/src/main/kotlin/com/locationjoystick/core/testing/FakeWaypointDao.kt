@@ -30,4 +30,8 @@ class FakeWaypointDao : WaypointDao {
         state.map { list -> list.filter { it.routeId == routeId }.sortedBy { it.orderIndex } }
 
     fun snapshot(): List<WaypointEntity> = state.value
+
+    fun deleteAll() {
+        state.value = emptyList()
+    }
 }
