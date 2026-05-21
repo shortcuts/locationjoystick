@@ -12,4 +12,9 @@ data class AppSettings(
     val useRoadSnappingByDefault: Boolean = false,
     val speedUnit: SpeedUnit = SpeedUnit.KMH,
     val roamingDefaults: RoamingDefaults = RoamingDefaults(),
+    val bearingHoldOnIdle: Boolean = true,
+    val altitudeEnabled: Boolean = true,
+    val warmupEnabled: Boolean = false,
+    val satelliteExtrasEnabled: Boolean = true,
+    val suspendedMockingEnabled: Boolean = false,
 )

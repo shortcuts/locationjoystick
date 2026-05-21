@@ -23,6 +23,7 @@ No-root mock location app for Android. Spoof GPS anywhere using floating joystic
 | **Floating Widget** | Configurable quick-access panel floats over other apps. Collapsible FAB → expanded panel with user-selected controls. |
 | **Click-to-Move** | Long-press map → "Walk here" or "Teleport here". Walk advances at current speed; teleport jumps instantly. |
 | **QR Transfer** | Share or import config between devices via QR codes. Export splits into scannable chunks; import scans and reassembles. |
+| **GPS Realism** | Makes spoofed GPS indistinguishable from a real chip. Toggle per-feature: bearing hold when stationary, realistic altitude drift, warm-up accuracy envelope (converges over 30 s), satellite count in fix (7–14), and natural signal dropouts. All off by default; enable selectively in Settings. |
 | **Import/Export** | All data to/from JSON (routes, favorites, speed profiles, widget config, roaming defaults, jitter settings). |
 | **Background Service** | Spoofs while minimized or screen off via foreground service. Low-priority notification. |
 | **Onboarding** | Multi-step first-run flow: location permission, overlay permission, mock location enablement. |

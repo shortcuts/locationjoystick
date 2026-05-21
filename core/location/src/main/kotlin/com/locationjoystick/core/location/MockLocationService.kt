@@ -52,13 +52,226 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.ln
-import kotlin.math.sqrt
 import kotlin.random.Random
 
-private fun Double.toRadians(): Double = Math.toRadians(this)
+/**
+ * Immutable snapshot of all @Volatile service state, captured once at the start of each tick by
+ * [captureSnapshot] to avoid TOCTOU races between reading individual fields in [buildLocation].
+ *
+ * @property latitude Current spoofed latitude.
+ * @property longitude Current spoofed longitude.
+ * @property speedMs Current speed in m/s; 0 when stationary.
+ * @property bearing Current heading in degrees; only meaningful when [speedMs] > 0.
+ * @property lastNonZeroBearing The most recent bearing from a tick where [speedMs] was non-zero.
+ *   Used to hold the displayed heading when the device stops moving.
+ * @property mode Active [MockMode] at snapshot time.
+ * @property jitterIdleRadiusMeters Gaussian noise radius applied while stationary (TELEPORT mode).
+ * @property jitterMovingRadiusMeters Gaussian noise radius applied while moving.
+ * @property shouldApplyMovingJitter Pre-computed gate: true when the jitter interval has elapsed.
+ *   [buildLocation] uses this directly without any clock arithmetic.
+ * @property altitudeMeters Seed altitude for the Gaussian random walk this tick; written back from
+ *   [LocationFix.altitudeMeters] after each successful tick.
+ * @property warmupStartMs Wall-clock ms ([SystemClock.elapsedRealtime]) when [startSpoofing] was
+ *   called. Intentionally NOT reset on pause/resume so the warmup curve is continuous.
+ * @property spoofingStartMs Same instant as [warmupStartMs]; both set together in [startSpoofing]
+ *   and kept separate for semantic clarity.
+ * @property warmupEnabled Whether the accuracy warm-up envelope feature is active.
+ * @property bearingHoldEnabled Whether to hold the last non-zero bearing when stationary.
+ * @property altitudeEnabled Whether to simulate altitude with a Gaussian random walk.
+ * @property satelliteExtrasEnabled Whether to attach satellite count extras to each fix.
+ * @property suspendedMockingEnabled Whether the push/pause cycle feature is active.
+ * @property suspendedPhaseStartMs Timestamp of the last phase transition in the push/pause cycle.
+ * @property isSuspendedPhase True when currently in the pause window of the push/pause cycle;
+ *   [buildLocation] returns null for the entire duration of this phase.
+ * @property cachedSatelliteCount Slow-churn total satellite count, refreshed every
+ *   [AppConstants.RealismConstants.SATELLITE_UPDATE_INTERVAL_MS] ms by [captureSnapshot].
+ * @property cachedUsedInFixCount Slow-churn in-fix satellite count, updated alongside
+ *   [cachedSatelliteCount].
+ */
+internal data class LocationSnapshot(
+    val latitude: Double,
+    val longitude: Double,
+    val speedMs: Float,
+    val bearing: Float,
+    val lastNonZeroBearing: Float,
+    val mode: MockMode,
+    val jitterIdleRadiusMeters: Double,
+    val jitterMovingRadiusMeters: Double,
+    val shouldApplyMovingJitter: Boolean,
+    val altitudeMeters: Double,
+    val warmupStartMs: Long,
+    val spoofingStartMs: Long,
+    val warmupEnabled: Boolean,
+    val bearingHoldEnabled: Boolean,
+    val altitudeEnabled: Boolean,
+    val satelliteExtrasEnabled: Boolean,
+    val suspendedMockingEnabled: Boolean,
+    val suspendedPhaseStartMs: Long,
+    val isSuspendedPhase: Boolean,
+    val cachedSatelliteCount: Int,
+    val cachedUsedInFixCount: Int,
+)
+
+/**
+ * Pure output of [buildLocation]: a GPS fix expressed in domain types, with no Android imports.
+ * Translated into an [android.location.Location] only inside [applyToProvider].
+ *
+ * @property latitude Spoofed latitude, possibly perturbed by jitter.
+ * @property longitude Spoofed longitude, possibly perturbed by jitter.
+ * @property altitudeMeters Result of the Gaussian altitude random walk for this tick.
+ * @property speedMs Speed in m/s to report to the provider.
+ * @property bearing Heading in degrees after bearing-hold logic is applied.
+ * @property accuracyMeters Horizontal accuracy, either from the warm-up envelope or perturbed fine accuracy.
+ * @property verticalAccuracyMeters Fixed vertical accuracy constant.
+ * @property bearingAccuracyDegrees Fixed bearing accuracy constant.
+ * @property speedAccuracyMps Fixed speed accuracy constant.
+ * @property satelliteCount Total visible satellite count, or null when satellite extras are disabled.
+ * @property usedInFixCount Satellites contributing to this fix, or null when satellite extras are disabled.
+ */
+internal data class LocationFix(
+    val latitude: Double,
+    val longitude: Double,
+    val altitudeMeters: Double,
+    val speedMs: Float,
+    val bearing: Float,
+    val accuracyMeters: Float,
+    val verticalAccuracyMeters: Float,
+    val bearingAccuracyDegrees: Float,
+    val speedAccuracyMps: Float,
+    val satelliteCount: Int?,
+    val usedInFixCount: Int?,
+)
+
+/** Adds bounded Gaussian noise to [base] accuracy, clamped to [[ACCURACY_MIN], [ACCURACY_MAX]]. */
+internal fun perturbAccuracy(
+    base: Float,
+    random: Random,
+): Float =
+    (
+        base +
+            (
+                random.nextDouble() * AppConstants.JitterConstants.ACCURACY_PERTURBATION_RANGE -
+                    AppConstants.JitterConstants.ACCURACY_PERTURBATION_RANGE / 2
+            ).toFloat()
+    ).coerceIn(AppConstants.JitterConstants.ACCURACY_MIN, AppConstants.JitterConstants.ACCURACY_MAX)
+
+/**
+ * Pure, side-effect-free GPS fix builder. No Android imports; [random] is injectable for testing.
+ *
+ * Execution order: suspended-phase check → altitude Gaussian walk → bearing hold → position jitter
+ * → warm-up accuracy envelope → accuracy perturbation → satellite extras.
+ *
+ * @param state Immutable snapshot of all service state for this tick.
+ * @param nowMs [SystemClock.elapsedRealtime] at the start of the tick, used for the warm-up curve.
+ * @param random Source of randomness; pass [Random.Default] in production.
+ * @return A completed [LocationFix], or null when [state.isSuspendedPhase] is true (skip this tick).
+ */
+internal fun buildLocation(
+    state: LocationSnapshot,
+    nowMs: Long,
+    random: Random,
+): LocationFix? {
+    // Suspended early-return
+    if (state.isSuspendedPhase) return null
+
+    // Altitude with Gaussian random walk
+    val newAltitude =
+        if (state.altitudeEnabled) {
+            val u1 = random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
+            val u2 = random.nextDouble()
+            val mag =
+                AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS *
+                    kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1)) * kotlin.math.cos(2.0 * kotlin.math.PI * u2)
+            (state.altitudeMeters + mag + AppConstants.RealismConstants.ALTITUDE_DRIFT_PER_SECOND_METERS)
+                .coerceIn(
+                    AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS -
+                        AppConstants.RealismConstants.ALTITUDE_CLAMP_RADIUS_METERS,
+                    AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS +
+                        AppConstants.RealismConstants.ALTITUDE_CLAMP_RADIUS_METERS,
+                )
+        } else {
+            AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
+        }
+
+    // Bearing hold
+    val outBearing =
+        when {
+            state.speedMs == 0f && state.bearingHoldEnabled -> state.lastNonZeroBearing
+            state.speedMs == 0f -> 0f
+            else -> state.bearing
+        }
+
+    // Jitter (position)
+    val (outLat, outLon) =
+        when {
+            state.mode == MockMode.TELEPORT && state.jitterIdleRadiusMeters > 0.0 -> {
+                val u1 = random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
+                val u2 = random.nextDouble()
+                val mag = state.jitterIdleRadiusMeters * kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1))
+                val angle = 2.0 * kotlin.math.PI * u2
+                val dlat = mag * kotlin.math.cos(angle) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
+                val dlon =
+                    mag * kotlin.math.sin(angle) /
+                        (
+                            AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE *
+                                kotlin.math.cos(Math.toRadians(state.latitude))
+                        )
+                Pair(state.latitude + dlat, state.longitude + dlon)
+            }
+
+            state.mode != MockMode.TELEPORT && state.shouldApplyMovingJitter &&
+                state.jitterMovingRadiusMeters > 0.0 -> {
+                val u1 = random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
+                val u2 = random.nextDouble()
+                val mag = state.jitterMovingRadiusMeters * kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1))
+                val angle = 2.0 * kotlin.math.PI * u2
+                val dlat = mag * kotlin.math.cos(angle) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
+                val dlon =
+                    mag * kotlin.math.sin(angle) /
+                        (
+                            AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE *
+                                kotlin.math.cos(Math.toRadians(state.latitude))
+                        )
+                Pair(state.latitude + dlat, state.longitude + dlon)
+            }
+
+            else -> {
+                Pair(state.latitude, state.longitude)
+            }
+        }
+
+    // Accuracy with warm-up envelope
+    val outAccuracy =
+        if (state.warmupEnabled) {
+            val elapsedSec = (nowMs - state.warmupStartMs) / 1000.0
+            if (elapsedSec <= AppConstants.RealismConstants.WARMUP_DURATION_SECONDS) {
+                val t = (elapsedSec / AppConstants.RealismConstants.WARMUP_DURATION_SECONDS).toFloat().coerceIn(0f, 1f)
+                AppConstants.RealismConstants.WARMUP_INITIAL_ACCURACY_METERS +
+                    t * (
+                        AppConstants.LocationConstants.LOCATION_ACCURACY_FINE -
+                            AppConstants.RealismConstants.WARMUP_INITIAL_ACCURACY_METERS
+                    )
+            } else {
+                perturbAccuracy(AppConstants.LocationConstants.LOCATION_ACCURACY_FINE, random)
+            }
+        } else {
+            perturbAccuracy(AppConstants.LocationConstants.LOCATION_ACCURACY_FINE, random)
+        }
+
+    return LocationFix(
+        latitude = outLat,
+        longitude = outLon,
+        altitudeMeters = newAltitude,
+        speedMs = state.speedMs,
+        bearing = outBearing,
+        accuracyMeters = outAccuracy,
+        verticalAccuracyMeters = AppConstants.RealismConstants.VERTICAL_ACCURACY_METERS,
+        bearingAccuracyDegrees = AppConstants.RealismConstants.BEARING_ACCURACY_DEGREES,
+        speedAccuracyMps = AppConstants.RealismConstants.SPEED_ACCURACY_MPS,
+        satelliteCount = if (state.satelliteExtrasEnabled) state.cachedSatelliteCount else null,
+        usedInFixCount = if (state.satelliteExtrasEnabled) state.cachedUsedInFixCount else null,
+    )
+}
 
 @AndroidEntryPoint
 class MockLocationService : Service() {
@@ -68,7 +281,6 @@ class MockLocationService : Service() {
         private const val NOTIFICATION_ID_PERM_ERROR = AppConstants.NotificationConstants.ID_PERMISSION_ERROR
         private const val CHANNEL_ID = AppConstants.NotificationConstants.CHANNEL_ID_ACTIVE
         private const val CHANNEL_ID_PERM_ERROR = AppConstants.NotificationConstants.CHANNEL_ID_PERMISSION_ERROR
-        private const val LOCATION_ACCURACY = AppConstants.LocationConstants.LOCATION_ACCURACY_FINE
 
         private const val JOYSTICK_SERVICE_CLASS = AppConstants.ServiceConstants.JOYSTICK_SERVICE_CLASS
         private const val WIDGET_SERVICE_CLASS = AppConstants.ServiceConstants.WIDGET_SERVICE_CLASS
@@ -140,6 +352,51 @@ class MockLocationService : Service() {
     @Volatile private var lastJitterTimestampMs: Long = 0L
 
     @Volatile private var providerAdded = false
+
+    // Realism setting flags (observed from SettingsRepository flows)
+    @Volatile private var bearingHoldEnabled: Boolean =
+        AppConstants.RealismConstants.BEARING_HOLD_ON_IDLE_DEFAULT
+
+    @Volatile private var altitudeEnabled: Boolean =
+        AppConstants.RealismConstants.ALTITUDE_ENABLED_DEFAULT
+
+    @Volatile private var warmupEnabled: Boolean =
+        AppConstants.RealismConstants.WARMUP_ENABLED_DEFAULT
+
+    @Volatile private var satelliteExtrasEnabled: Boolean =
+        AppConstants.RealismConstants.SATELLITE_EXTRAS_ENABLED_DEFAULT
+
+    @Volatile private var suspendedMockingEnabled: Boolean =
+        AppConstants.RealismConstants.SUSPENDED_MOCKING_ENABLED_DEFAULT
+
+    // Per-tick realism state
+    /** Bearing from the last tick where speedMs > 0; held when the device is stationary. */
+    @Volatile private var lastNonZeroBearing: Float = 0f
+
+    /** Seed altitude for the next tick's Gaussian walk; written back from LocationFix.altitudeMeters after each successful tick. */
+    @Volatile private var currentAltitudeMeters: Double =
+        AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
+
+    /** Wall-clock ms when startSpoofing() was called; NOT reset on pause/resume. */
+    @Volatile private var spoofingStartMs: Long = 0L
+
+    /** Same instant as spoofingStartMs; kept separate for semantic clarity. NOT reset on pause/resume. */
+    @Volatile private var warmupStartMs: Long = 0L
+
+    /** Timestamp of the most recent push/pause phase transition. */
+    @Volatile private var suspendedPhaseStartMs: Long = 0L
+
+    /** True while in the pause window of the push/pause cycle; buildLocation returns null during this phase. */
+    @Volatile private var isSuspendedPhase: Boolean = false
+
+    /** Timestamp of the last satellite count refresh; controls the slow-churn update cadence. */
+    @Volatile private var lastSatelliteUpdateMs: Long = 0L
+
+    /** Cached total visible satellite count; updated every SATELLITE_UPDATE_INTERVAL_MS. */
+    @Volatile private var cachedSatelliteCount: Int = 0
+
+    /** Cached satellites-used-in-fix count; updated alongside cachedSatelliteCount. */
+    @Volatile private var cachedUsedInFixCount: Int = 0
 
     override fun onCreate() {
         super.onCreate()
@@ -234,6 +491,37 @@ class MockLocationService : Service() {
                 .catch { e -> Log.e(TAG, "jitterIntervalSeconds flow error", e) }
                 .collect { jitterIntervalSeconds = it }
         }
+        // Realism toggle flows — each updates a @Volatile field consumed by captureSnapshot() → buildLocation().
+        serviceScope.launch {
+            settingsRepository
+                .getRealismBearingHoldIdle()
+                .catch { e -> Log.e(TAG, "bearingHoldEnabled flow error", e) }
+                .collect { bearingHoldEnabled = it }
+        }
+        serviceScope.launch {
+            settingsRepository
+                .getRealismAltitudeEnabled()
+                .catch { e -> Log.e(TAG, "altitudeEnabled flow error", e) }
+                .collect { altitudeEnabled = it }
+        }
+        serviceScope.launch {
+            settingsRepository
+                .getRealismWarmupEnabled()
+                .catch { e -> Log.e(TAG, "warmupEnabled flow error", e) }
+                .collect { warmupEnabled = it }
+        }
+        serviceScope.launch {
+            settingsRepository
+                .getRealismSatelliteExtrasEnabled()
+                .catch { e -> Log.e(TAG, "satelliteExtrasEnabled flow error", e) }
+                .collect { satelliteExtrasEnabled = it }
+        }
+        serviceScope.launch {
+            settingsRepository
+                .getRealismSuspendedMockingEnabled()
+                .catch { e -> Log.e(TAG, "suspendedMockingEnabled flow error", e) }
+                .collect { suspendedMockingEnabled = it }
+        }
     }
 
     private fun hasLocationPermission(): Boolean =
@@ -309,7 +597,13 @@ class MockLocationService : Service() {
             ACTION_UPDATE_POSITION -> {
                 val lat = intent?.getDoubleExtra(ServiceConstants.EXTRA_LAT, currentLat) ?: currentLat
                 val lon = intent?.getDoubleExtra(ServiceConstants.EXTRA_LON, currentLon) ?: currentLon
-                updatePosition(lat, lon)
+                val speedMs = intent?.getFloatExtra(ServiceConstants.EXTRA_SPEED_MS, 0f) ?: 0f
+                val bearing = intent?.getFloatExtra(ServiceConstants.EXTRA_BEARING, 0f) ?: 0f
+                if (speedMs > 0f) {
+                    updatePositionWithVector(lat, lon, speedMs, bearing)
+                } else {
+                    updatePosition(lat, lon)
+                }
             }
 
             ACTION_ROUTE_REPLAY_START -> {
@@ -380,6 +674,12 @@ class MockLocationService : Service() {
         currentLon = lon
         currentSpeedMs = 0.0f
         currentBearing = 0.0f
+        val now = SystemClock.elapsedRealtime()
+        currentAltitudeMeters = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
+        spoofingStartMs = now
+        warmupStartMs = now
+        isSuspendedPhase = false
+        suspendedPhaseStartMs = now
         locationRepository.setPositionInternal(LatLng(lat, lon))
         locationRepository.setMockMode(MockMode.TELEPORT)
 
@@ -576,7 +876,7 @@ class MockLocationService : Service() {
             val properties =
                 ProviderProperties
                     .Builder()
-                    .setHasAltitudeSupport(false)
+                    .setHasAltitudeSupport(true)
                     .setHasSpeedSupport(true)
                     .setHasBearingSupport(true)
                     .setPowerUsage(ProviderProperties.POWER_USAGE_HIGH)
@@ -623,69 +923,136 @@ class MockLocationService : Service() {
             }
     }
 
+    /**
+     * Advances the push/pause phase state machine before each tick.
+     *
+     * Mutates [isSuspendedPhase] and [suspendedPhaseStartMs] (@Volatile fields). Must be called
+     * before [captureSnapshot] so the snapshot reflects the current phase for [buildLocation].
+     * No-ops when suspended mocking is disabled or when route replay / walk-to is active (those
+     * modes must not drop ticks).
+     */
+    private fun updateSuspendedPhase() {
+        val now = SystemClock.elapsedRealtime()
+        val mode = locationRepository.currentMode.value
+        if (!suspendedMockingEnabled || mode == MockMode.ROUTE_REPLAY || mode == MockMode.WALK_TO) {
+            isSuspendedPhase = false
+            return
+        }
+        val elapsed = now - suspendedPhaseStartMs
+        if (!isSuspendedPhase && elapsed >= AppConstants.RealismConstants.SUSPENDED_PUSH_DURATION_MS) {
+            isSuspendedPhase = true
+            suspendedPhaseStartMs = now
+            Log.i(TAG, "Realism: suspended phase=PAUSED dur=${elapsed}ms")
+        } else if (isSuspendedPhase) {
+            val pauseDur =
+                AppConstants.RealismConstants.SUSPENDED_PAUSE_DURATION_MS +
+                    Random.nextLong(0, AppConstants.RealismConstants.SUSPENDED_PAUSE_JITTER_MS)
+            if (elapsed >= pauseDur) {
+                isSuspendedPhase = false
+                suspendedPhaseStartMs = now
+                Log.i(TAG, "Realism: suspended phase=PUSHING dur=${elapsed}ms")
+            }
+        }
+    }
+
+    /**
+     * Freezes all @Volatile fields into an immutable [LocationSnapshot] to eliminate TOCTOU races
+     * in the tick loop. Also computes [LocationSnapshot.shouldApplyMovingJitter] and refreshes the
+     * slow-churn satellite counts when their interval has elapsed.
+     */
+    private fun captureSnapshot(nowMs: Long): LocationSnapshot {
+        val mode = locationRepository.currentMode.value
+        val jitterIntervalMs = jitterIntervalSeconds * 1000L
+        val shouldApplyMovingJitter = (nowMs - lastJitterTimestampMs) >= jitterIntervalMs
+
+        // Slow satellite churn
+        if (satelliteExtrasEnabled &&
+            (nowMs - lastSatelliteUpdateMs) >= AppConstants.RealismConstants.SATELLITE_UPDATE_INTERVAL_MS
+        ) {
+            cachedSatelliteCount =
+                Random.nextInt(
+                    AppConstants.RealismConstants.SATELLITES_MIN,
+                    AppConstants.RealismConstants.SATELLITES_MAX + 1,
+                )
+            cachedUsedInFixCount =
+                Random.nextInt(
+                    AppConstants.RealismConstants.USED_IN_FIX_MIN,
+                    minOf(AppConstants.RealismConstants.USED_IN_FIX_MAX + 1, cachedSatelliteCount + 1),
+                )
+            lastSatelliteUpdateMs = nowMs
+        }
+
+        return LocationSnapshot(
+            latitude = currentLat,
+            longitude = currentLon,
+            speedMs = currentSpeedMs,
+            bearing = currentBearing,
+            lastNonZeroBearing = lastNonZeroBearing,
+            mode = mode,
+            jitterIdleRadiusMeters = jitterIdleRadiusMeters,
+            jitterMovingRadiusMeters = jitterMovingRadiusMeters,
+            shouldApplyMovingJitter = shouldApplyMovingJitter,
+            altitudeMeters = currentAltitudeMeters,
+            warmupStartMs = warmupStartMs,
+            spoofingStartMs = spoofingStartMs,
+            warmupEnabled = warmupEnabled,
+            bearingHoldEnabled = bearingHoldEnabled,
+            altitudeEnabled = altitudeEnabled,
+            satelliteExtrasEnabled = satelliteExtrasEnabled,
+            suspendedMockingEnabled = suspendedMockingEnabled,
+            suspendedPhaseStartMs = suspendedPhaseStartMs,
+            isSuspendedPhase = isSuspendedPhase,
+            cachedSatelliteCount = cachedSatelliteCount,
+            cachedUsedInFixCount = cachedUsedInFixCount,
+        )
+    }
+
+    /**
+     * Android adapter — the only place that touches [android.location.Location] APIs. Translates
+     * the pure [LocationFix] into a test provider location update.
+     */
+    private fun applyToProvider(fix: LocationFix) {
+        val loc =
+            Location(LocationManager.GPS_PROVIDER).apply {
+                latitude = fix.latitude
+                longitude = fix.longitude
+                altitude = fix.altitudeMeters
+                accuracy = fix.accuracyMeters
+                speed = fix.speedMs
+                bearing = fix.bearing
+                time = System.currentTimeMillis()
+                elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
+                verticalAccuracyMeters = fix.verticalAccuracyMeters
+                bearingAccuracyDegrees = fix.bearingAccuracyDegrees
+                speedAccuracyMetersPerSecond = fix.speedAccuracyMps
+                if (fix.satelliteCount != null && fix.usedInFixCount != null) {
+                    val extras = android.os.Bundle()
+                    extras.putInt("satellites", fix.satelliteCount)
+                    extras.putInt("usedInFix", fix.usedInFixCount)
+                    this.extras = extras
+                }
+            }
+        locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, loc)
+    }
+
     private fun pushLocationUpdate() {
         if (!providerAdded) return
         try {
-            val nowMs = SystemClock.elapsedRealtimeNanos() / 1_000_000L
-            val timeSinceLastJitter = nowMs - lastJitterTimestampMs
-            val jitterIntervalMs = jitterIntervalSeconds * 1000L
-            val shouldApplyJitter = timeSinceLastJitter >= jitterIntervalMs
-
-            val mode = locationRepository.currentMode.value
-            val jitterRadius =
-                when (mode) {
-                    MockMode.TELEPORT -> 0.0
-                    MockMode.JOYSTICK, MockMode.ROUTE_REPLAY, MockMode.ROAMING, MockMode.WALK_TO -> jitterMovingRadiusMeters
-                }
-
-            val (outLat, outLon, outAccuracy) =
-                if (jitterRadius > 0.0 && shouldApplyJitter) {
-                    lastJitterTimestampMs = nowMs
-                    applyJitter(currentLat, currentLon, jitterRadius)
-                } else {
-                    Triple(currentLat, currentLon, LOCATION_ACCURACY)
-                }
-            val location =
-                Location(LocationManager.GPS_PROVIDER).apply {
-                    latitude = outLat
-                    longitude = outLon
-                    altitude = 0.0
-                    accuracy = outAccuracy
-                    speed = currentSpeedMs
-                    bearing = currentBearing
-                    time = System.currentTimeMillis()
-                    elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
-                }
-            locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, location)
+            updateSuspendedPhase()
+            val nowMs = SystemClock.elapsedRealtime()
+            val snapshot = captureSnapshot(nowMs)
+            val fix = buildLocation(snapshot, nowMs, Random.Default) ?: return
+            currentAltitudeMeters = fix.altitudeMeters
+            if (snapshot.speedMs > 0f) lastNonZeroBearing = snapshot.bearing
+            if (snapshot.shouldApplyMovingJitter && snapshot.mode != MockMode.TELEPORT) {
+                lastJitterTimestampMs = nowMs
+            }
+            applyToProvider(fix)
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Failed to push location update", e)
         } catch (e: Exception) {
             Log.e(TAG, "Unexpected error pushing location update", e)
         }
-    }
-
-    private fun applyJitter(
-        lat: Double,
-        lon: Double,
-        sigmaMeters: Double,
-    ): Triple<Double, Double, Float> {
-        val u1 = Random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
-        val u2 = Random.nextDouble()
-        val mag = sigmaMeters * sqrt(-2.0 * ln(u1))
-        val angle = 2.0 * PI * u2
-        val dlat = mag * cos(angle) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
-        val dlon =
-            mag * kotlin.math.sin(angle) /
-                (AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE * cos(lat.toRadians()))
-        val accuracy =
-            (
-                LOCATION_ACCURACY +
-                    (
-                        Random.nextDouble() * AppConstants.JitterConstants.ACCURACY_PERTURBATION_RANGE -
-                            AppConstants.JitterConstants.ACCURACY_PERTURBATION_RANGE / 2
-                    ).toFloat()
-            ).coerceIn(AppConstants.JitterConstants.ACCURACY_MIN, AppConstants.JitterConstants.ACCURACY_MAX)
-        return Triple(lat + dlat, lon + dlon, accuracy)
     }
 
     private fun createNotificationChannel() {

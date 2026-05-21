@@ -421,9 +421,9 @@ class MapViewModel
                     routeTrace = null,
                 )
             }
-            walkCoordinator.startWalk(position, viewModelScope) { newPos ->
+            walkCoordinator.startWalk(position, viewModelScope) { newPos, speedMs, bearing ->
                 context.startService(
-                    MockLocationIntentBuilder.updatePosition(context, newPos.latitude, newPos.longitude),
+                    MockLocationIntentBuilder.updatePosition(context, newPos.latitude, newPos.longitude, speedMs, bearing),
                 )
             }
         }

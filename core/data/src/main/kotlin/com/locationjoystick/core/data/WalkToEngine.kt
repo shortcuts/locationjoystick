@@ -43,7 +43,7 @@ class WalkToEngine
          */
         fun CoroutineScope.launchWalkTo(
             target: LatLng,
-            onPositionUpdate: suspend (LatLng) -> Unit,
+            onPositionUpdate: suspend (LatLng, Float, Float) -> Unit,
             onArrival: suspend () -> Unit,
         ): Job =
             launch {
@@ -81,6 +81,7 @@ class WalkToEngine
                                 speedMs * (AppConstants.LocationConstants.UPDATE_INTERVAL_MS / 1000.0),
                                 distanceM,
                             )
+                        val actualSpeedMs = (advanceDistance / (AppConstants.LocationConstants.UPDATE_INTERVAL_MS / 1000.0)).toFloat()
                         val (newLat, newLon) =
                             advancePosition(
                                 current.latitude,
@@ -88,7 +89,7 @@ class WalkToEngine
                                 bearing,
                                 advanceDistance,
                             )
-                        onPositionUpdate(LatLng(newLat, newLon))
+                        onPositionUpdate(LatLng(newLat, newLon), actualSpeedMs, bearing.toFloat())
 
                         delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
                     }

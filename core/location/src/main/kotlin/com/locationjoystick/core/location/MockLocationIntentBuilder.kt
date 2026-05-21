@@ -19,11 +19,15 @@ object MockLocationIntentBuilder {
         context: Context,
         lat: Double,
         lon: Double,
+        speedMs: Float = 0f,
+        bearing: Float = 0f,
     ): Intent =
         Intent(context, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_UPDATE_POSITION
             putExtra(ServiceConstants.EXTRA_LAT, lat)
             putExtra(ServiceConstants.EXTRA_LON, lon)
+            putExtra(ServiceConstants.EXTRA_SPEED_MS, speedMs)
+            putExtra(ServiceConstants.EXTRA_BEARING, bearing)
         }
 
     fun startSpoofing(

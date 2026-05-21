@@ -207,6 +207,11 @@ fun SettingsRoute(
         onSetJitterIdleRadius = viewModel::setJitterIdleRadius,
         onSetJitterMovingRadius = viewModel::setJitterMovingRadius,
         onSetJitterIntervalSeconds = viewModel::setJitterIntervalSeconds,
+        onSetRealismBearingHoldIdle = viewModel::setRealismBearingHoldIdle,
+        onSetRealismAltitudeEnabled = viewModel::setRealismAltitudeEnabled,
+        onSetRealismWarmupEnabled = viewModel::setRealismWarmupEnabled,
+        onSetRealismSatelliteExtrasEnabled = viewModel::setRealismSatelliteExtrasEnabled,
+        onSetRealismSuspendedMockingEnabled = viewModel::setRealismSuspendedMockingEnabled,
         convertMsToDisplay = viewModel::convertMsToDisplay,
         onUpdateRoamingDefaults = viewModel::updateRoamingDefaults,
         onExport = { exportLauncher.launch("${AppConstants.ExportConstants.FILENAME_PREFIX}-${System.currentTimeMillis()}.json") },
@@ -237,6 +242,11 @@ private fun SettingsScreenPreview() {
         onSetJitterIdleRadius = {},
         onSetJitterMovingRadius = {},
         onSetJitterIntervalSeconds = {},
+        onSetRealismBearingHoldIdle = {},
+        onSetRealismAltitudeEnabled = {},
+        onSetRealismWarmupEnabled = {},
+        onSetRealismSatelliteExtrasEnabled = {},
+        onSetRealismSuspendedMockingEnabled = {},
         convertMsToDisplay = { v, _ -> v },
         onExport = {},
         onImport = {},
@@ -262,6 +272,11 @@ internal fun SettingsScreen(
     onSetJitterIdleRadius: (Double) -> Unit,
     onSetJitterMovingRadius: (Double) -> Unit,
     onSetJitterIntervalSeconds: (Int) -> Unit,
+    onSetRealismBearingHoldIdle: (Boolean) -> Unit,
+    onSetRealismAltitudeEnabled: (Boolean) -> Unit,
+    onSetRealismWarmupEnabled: (Boolean) -> Unit,
+    onSetRealismSatelliteExtrasEnabled: (Boolean) -> Unit,
+    onSetRealismSuspendedMockingEnabled: (Boolean) -> Unit,
     convertMsToDisplay: (Double, SpeedUnit) -> Double,
     onUpdateRoamingDefaults: (RoamingDefaults) -> Unit = {},
     onExport: () -> Unit,
@@ -463,6 +478,128 @@ internal fun SettingsScreen(
                             onValueChange = { onSetJitterIntervalSeconds(it) },
                             label = "Update interval (s)",
                         )
+                        Text(
+                            "Recommended idle radius: ${AppConstants.RealismConstants.RECOMMENDED_IDLE_RADIUS_METERS} m for realistic stationary drift",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Text("GPS Realism", style = MaterialTheme.typography.titleMedium)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Fine-tune how the spoofed location behaves to mimic a real GPS chip.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = uiState.realismBearingHoldIdle,
+                                onCheckedChange = { onSetRealismBearingHoldIdle(it) },
+                            )
+                            Column(modifier = Modifier.padding(start = 8.dp)) {
+                                Text("Hold bearing when stationary")
+                                Text(
+                                    "Keeps the last bearing instead of resetting to north when you stop.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = uiState.realismAltitudeEnabled,
+                                onCheckedChange = { onSetRealismAltitudeEnabled(it) },
+                            )
+                            Column(modifier = Modifier.padding(start = 8.dp)) {
+                                Text("Vary altitude")
+                                Text(
+                                    "Reports a plausible altitude with small drift instead of 0m.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = uiState.realismWarmupEnabled,
+                                onCheckedChange = { onSetRealismWarmupEnabled(it) },
+                            )
+                            Column(modifier = Modifier.padding(start = 8.dp)) {
+                                Text("GPS warm-up simulation")
+                                Text(
+                                    "Starts each session with degraded accuracy that converges over 30s.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = uiState.realismSatelliteExtrasEnabled,
+                                onCheckedChange = { onSetRealismSatelliteExtrasEnabled(it) },
+                            )
+                            Column(modifier = Modifier.padding(start = 8.dp)) {
+                                Text("Realistic satellite count")
+                                Text(
+                                    "Reports 7–14 satellites in fix instead of zero.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = uiState.realismSuspendedMockingEnabled,
+                                onCheckedChange = { onSetRealismSuspendedMockingEnabled(it) },
+                            )
+                            Column(modifier = Modifier.padding(start = 8.dp)) {
+                                Text("Suspended mocking")
+                                Text(
+                                    "Briefly pauses location updates (~2s every ~10s) to mimic real GPS dropouts. Skipped during route replay.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(24.dp))
 

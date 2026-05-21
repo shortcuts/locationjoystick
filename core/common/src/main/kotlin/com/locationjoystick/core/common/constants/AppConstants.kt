@@ -39,6 +39,32 @@ object AppConstants {
         const val ACCURACY_PERTURBATION_RANGE = 3.0
     }
 
+    object RealismConstants {
+        const val DEFAULT_ALTITUDE_METERS = 35.0
+        const val ALTITUDE_SIGMA_METERS = 1.5
+        const val ALTITUDE_DRIFT_PER_SECOND_METERS = 0.05
+        const val ALTITUDE_CLAMP_RADIUS_METERS = 25.0
+        const val VERTICAL_ACCURACY_METERS = 4.0f
+        const val BEARING_ACCURACY_DEGREES = 3.0f
+        const val SPEED_ACCURACY_MPS = 0.3f
+        const val SATELLITES_MIN = 7
+        const val SATELLITES_MAX = 14
+        const val USED_IN_FIX_MIN = 6
+        const val USED_IN_FIX_MAX = 12
+        const val SATELLITE_UPDATE_INTERVAL_MS = 5_000L
+        const val WARMUP_DURATION_SECONDS = 30
+        const val WARMUP_INITIAL_ACCURACY_METERS = 50.0f
+        const val WARMUP_ENABLED_DEFAULT = false
+        const val SUSPENDED_MOCKING_ENABLED_DEFAULT = false
+        const val SUSPENDED_PUSH_DURATION_MS = 8_000L
+        const val SUSPENDED_PAUSE_DURATION_MS = 2_000L
+        const val SUSPENDED_PAUSE_JITTER_MS = 800L
+        const val BEARING_HOLD_ON_IDLE_DEFAULT = true
+        const val ALTITUDE_ENABLED_DEFAULT = true
+        const val SATELLITE_EXTRAS_ENABLED_DEFAULT = true
+        const val RECOMMENDED_IDLE_RADIUS_METERS = 0.8
+    }
+
     object RoamingConstants {
         const val DEFAULT_RADIUS_METERS = 2000.0
         const val DEFAULT_DURATION_SECONDS = 1800L
@@ -119,6 +145,7 @@ object AppConstants {
         const val EXTRA_ROUTE_ID = "extra_route_id"
         const val EXTRA_IS_BACKWARD = "extra_is_backward"
         const val EXTRA_SPEED_MS = "extra_speed_ms"
+        const val EXTRA_BEARING = "extra_bearing"
         const val EXTRA_WAYPOINT_LAT = "extra_waypoint_lat"
         const val EXTRA_WAYPOINT_LON = "extra_waypoint_lon"
         const val EXTRA_LAT = "lat"

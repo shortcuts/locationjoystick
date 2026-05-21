@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.settings.impl
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.FavoriteLocation
@@ -54,6 +55,11 @@ internal object SettingsExportCodec {
         val settingsObj = JSONObject()
         settingsObj.put("speedUnit", data.settings.speedUnit.name)
         settingsObj.put("enabledWidgetFeatures", JSONArray(data.settings.enabledWidgetFeatures.map { it.name }))
+        settingsObj.put("realismBearingHoldIdle", data.settings.bearingHoldOnIdle)
+        settingsObj.put("realismAltitudeEnabled", data.settings.altitudeEnabled)
+        settingsObj.put("realismWarmupEnabled", data.settings.warmupEnabled)
+        settingsObj.put("realismSatelliteExtrasEnabled", data.settings.satelliteExtrasEnabled)
+        settingsObj.put("realismSuspendedMockingEnabled", data.settings.suspendedMockingEnabled)
         root.put("settings", settingsObj)
 
         val profilesArray = JSONArray()
@@ -129,7 +135,29 @@ internal object SettingsExportCodec {
                 }
             }
         }
-        val settings = AppSettings(speedUnit = speedUnit, enabledWidgetFeatures = enabledFeatures)
+        val bearingHoldOnIdle = settingsObj.optBoolean("realismBearingHoldIdle", AppConstants.RealismConstants.BEARING_HOLD_ON_IDLE_DEFAULT)
+        val altitudeEnabled = settingsObj.optBoolean("realismAltitudeEnabled", AppConstants.RealismConstants.ALTITUDE_ENABLED_DEFAULT)
+        val warmupEnabled = settingsObj.optBoolean("realismWarmupEnabled", AppConstants.RealismConstants.WARMUP_ENABLED_DEFAULT)
+        val satelliteExtrasEnabled =
+            settingsObj.optBoolean(
+                "realismSatelliteExtrasEnabled",
+                AppConstants.RealismConstants.SATELLITE_EXTRAS_ENABLED_DEFAULT,
+            )
+        val suspendedMockingEnabled =
+            settingsObj.optBoolean(
+                "realismSuspendedMockingEnabled",
+                AppConstants.RealismConstants.SUSPENDED_MOCKING_ENABLED_DEFAULT,
+            )
+        val settings =
+            AppSettings(
+                speedUnit = speedUnit,
+                enabledWidgetFeatures = enabledFeatures,
+                bearingHoldOnIdle = bearingHoldOnIdle,
+                altitudeEnabled = altitudeEnabled,
+                warmupEnabled = warmupEnabled,
+                satelliteExtrasEnabled = satelliteExtrasEnabled,
+                suspendedMockingEnabled = suspendedMockingEnabled,
+            )
 
         val speedProfiles = mutableListOf<SpeedProfile>()
         root.optJSONArray("speedProfiles")?.let { arr ->

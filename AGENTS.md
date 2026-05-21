@@ -172,6 +172,26 @@ Edge cases:
 
 Key files: `:core:location/MockLocationService.kt`, `:core:data/LocationRepository.kt`
 
+#### GPS Realism
+
+Five independent toggles stored in `AppSettings` (persisted via DataStore). Each defaults to off except `bearingHoldOnIdle` and `satelliteExtrasEnabled` which default to `true`.
+
+| Setting | `AppSettings` field | Behaviour |
+|---|---|---|
+| Bearing hold | `bearingHoldOnIdle` | When `speedMs == 0`, reports `lastNonZeroBearing` instead of 0° (avoids resetting compass to north). |
+| Altitude drift | `altitudeEnabled` | Gaussian random walk (σ = `RealismConstants.ALTITUDE_SIGMA_METERS`, drift = `ALTITUDE_DRIFT_PER_SECOND_METERS`) clamped within `±ALTITUDE_CLAMP_RADIUS_METERS` of `DEFAULT_ALTITUDE_METERS`. |
+| Warm-up envelope | `warmupEnabled` | Accuracy degrades at session start and converges to nominal over `RealismConstants.WARMUP_DURATION_MS` (≈ 30 s). `warmupStartMs` is set once in `startSpoofing` and never reset on pause/resume. |
+| Satellite extras | `satelliteExtrasEnabled` | Attaches `Bundle` extras with slow-churning total + in-fix satellite counts. Counts are refreshed every `RealismConstants.SATELLITE_UPDATE_INTERVAL_MS`. |
+| Suspended mocking | `suspendedMockingEnabled` | Push/pause cycle: pushes updates for `RealismConstants.SUSPENDED_PUSH_DURATION_MS`, then skips ticks for `RealismConstants.SUSPENDED_PAUSE_DURATION_MS`. Automatically disabled during `ROUTE_REPLAY` mode. |
+
+**Internal architecture:**
+
+Each tick, `captureSnapshot()` reads all `@Volatile` service fields into an immutable `LocationSnapshot` — eliminating TOCTOU races between fields read in `buildLocation`. The pure function `buildLocation(state, nowMs, random)` takes that snapshot and returns a `LocationFix` (or `null` during suspended-phase). No Android imports in `buildLocation`; `Random` is injected for deterministic unit testing. `applyToProvider()` translates `LocationFix` → `android.location.Location` and pushes it to `LocationManager`.
+
+Execution order inside `buildLocation`: suspended-phase check → altitude walk → bearing hold → position jitter → warm-up accuracy envelope → accuracy perturbation → satellite extras.
+
+All realism tuning values live in `AppConstants.RealismConstants`.
+
 ---
 
 ### Foreground Service
@@ -384,7 +404,7 @@ All in `:core:model`. Pure Kotlin — no Android imports, no Room annotations. R
 | `SpeedProfile` | `id: String`, `name: String`, `speedMetersPerSecond: Double` |
 | `RoamingConfig` | `centerPosition: LatLng`, `radiusMeters: Double`, `durationSeconds: Long`, `useRoadSnapping: Boolean` |
 | `RoamingDefaults` | `radiusMeters: Double`, `distanceMeters: Double`, `speedProfileId: String`, `followRoads: Boolean`, `returnToInitialLocation: Boolean` |
-| `AppSettings` | `activeSpeedProfileId: String`, `joystickStyle: JoystickStyle`, `enabledWidgetFeatures: List<WidgetFeature>`, `mapFollowsLocation: Boolean`, `useRoadSnappingByDefault: Boolean`, `speedUnit: SpeedUnit`, `roamingDefaults: RoamingDefaults` |
+| `AppSettings` | `activeSpeedProfileId: String`, `joystickStyle: JoystickStyle`, `enabledWidgetFeatures: List<WidgetFeature>`, `mapFollowsLocation: Boolean`, `useRoadSnappingByDefault: Boolean`, `speedUnit: SpeedUnit`, `roamingDefaults: RoamingDefaults`, `bearingHoldOnIdle: Boolean`, `altitudeEnabled: Boolean`, `warmupEnabled: Boolean`, `satelliteExtrasEnabled: Boolean`, `suspendedMockingEnabled: Boolean` |
 | `ExportData` | `schemaVersion: Int`, `exportedAt: Long`, `settings: AppSettings`, `speedProfiles: List<SpeedProfile>`, `routes: List<Route>`, `favoriteLocations: List<FavoriteLocation>`, `jitterIdleRadius: Double`, `jitterMovingRadius: Double`, `jitterIntervalSeconds: Int` |
 | `MockMode` | enum: `JOYSTICK`, `ROUTE_REPLAY`, `ROAMING`, `TELEPORT` |
 | `MockLocationState` | enum: `IDLE`, `RUNNING`, `PAUSED`, `ERROR` |

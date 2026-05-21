@@ -112,6 +112,26 @@ interface PreferencesDataSource {
 
     /** Sets whether the map camera should follow the spoofed location marker. */
     suspend fun setMapFollowsLocation(enabled: Boolean)
+
+    fun getRealismBearingHoldIdle(): Flow<Boolean>
+
+    fun getRealismAltitudeEnabled(): Flow<Boolean>
+
+    fun getRealismWarmupEnabled(): Flow<Boolean>
+
+    fun getRealismSatelliteExtrasEnabled(): Flow<Boolean>
+
+    fun getRealismSuspendedMockingEnabled(): Flow<Boolean>
+
+    suspend fun setRealismBearingHoldIdle(enabled: Boolean)
+
+    suspend fun setRealismAltitudeEnabled(enabled: Boolean)
+
+    suspend fun setRealismWarmupEnabled(enabled: Boolean)
+
+    suspend fun setRealismSatelliteExtrasEnabled(enabled: Boolean)
+
+    suspend fun setRealismSuspendedMockingEnabled(enabled: Boolean)
 }
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -161,6 +181,11 @@ class AppPreferencesDataSource
             val JITTER_INTERVAL_SECONDS = intPreferencesKey("jitter_interval_seconds")
             val LAST_TELEPORT_TIME_MS = longPreferencesKey("last_teleport_time_ms")
             val MAP_FOLLOWS_LOCATION = booleanPreferencesKey("map_follows_location")
+            val REALISM_BEARING_HOLD_IDLE = booleanPreferencesKey("realism_bearing_hold_idle")
+            val REALISM_ALTITUDE_ENABLED = booleanPreferencesKey("realism_altitude_enabled")
+            val REALISM_WARMUP_ENABLED = booleanPreferencesKey("realism_warmup_enabled")
+            val REALISM_SATELLITE_EXTRAS_ENABLED = booleanPreferencesKey("realism_satellite_extras_enabled")
+            val REALISM_SUSPENDED_MOCKING_ENABLED = booleanPreferencesKey("realism_suspended_mocking_enabled")
         }
 
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -383,6 +408,81 @@ class AppPreferencesDataSource
 
         override suspend fun setMapFollowsLocation(enabled: Boolean) {
             dataStore.edit { prefs -> prefs[Keys.MAP_FOLLOWS_LOCATION] = enabled }
+        }
+
+        override fun getRealismBearingHoldIdle(): Flow<Boolean> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading realism bearing hold preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.REALISM_BEARING_HOLD_IDLE] ?: true }
+
+        override fun getRealismAltitudeEnabled(): Flow<Boolean> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading realism altitude preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.REALISM_ALTITUDE_ENABLED] ?: true }
+
+        override fun getRealismWarmupEnabled(): Flow<Boolean> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading realism warmup preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.REALISM_WARMUP_ENABLED] ?: false }
+
+        override fun getRealismSatelliteExtrasEnabled(): Flow<Boolean> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading realism satellite preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.REALISM_SATELLITE_EXTRAS_ENABLED] ?: true }
+
+        override fun getRealismSuspendedMockingEnabled(): Flow<Boolean> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading realism suspended mocking preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.REALISM_SUSPENDED_MOCKING_ENABLED] ?: false }
+
+        override suspend fun setRealismBearingHoldIdle(enabled: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.REALISM_BEARING_HOLD_IDLE] = enabled }
+        }
+
+        override suspend fun setRealismAltitudeEnabled(enabled: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.REALISM_ALTITUDE_ENABLED] = enabled }
+        }
+
+        override suspend fun setRealismWarmupEnabled(enabled: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.REALISM_WARMUP_ENABLED] = enabled }
+        }
+
+        override suspend fun setRealismSatelliteExtrasEnabled(enabled: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.REALISM_SATELLITE_EXTRAS_ENABLED] = enabled }
+        }
+
+        override suspend fun setRealismSuspendedMockingEnabled(enabled: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.REALISM_SUSPENDED_MOCKING_ENABLED] = enabled }
         }
 
         companion object {

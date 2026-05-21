@@ -137,4 +137,24 @@ class SettingsRepository
         fun getMapFollowsLocation(): Flow<Boolean> = dataSource.getMapFollowsLocation()
 
         suspend fun setMapFollowsLocation(enabled: Boolean) = dataSource.setMapFollowsLocation(enabled)
+
+        fun getRealismBearingHoldIdle(): Flow<Boolean> = dataSource.getRealismBearingHoldIdle()
+
+        fun getRealismAltitudeEnabled(): Flow<Boolean> = dataSource.getRealismAltitudeEnabled()
+
+        fun getRealismWarmupEnabled(): Flow<Boolean> = dataSource.getRealismWarmupEnabled()
+
+        fun getRealismSatelliteExtrasEnabled(): Flow<Boolean> = dataSource.getRealismSatelliteExtrasEnabled()
+
+        fun getRealismSuspendedMockingEnabled(): Flow<Boolean> = dataSource.getRealismSuspendedMockingEnabled()
+
+        suspend fun setRealismBearingHoldIdle(enabled: Boolean) = dataSource.setRealismBearingHoldIdle(enabled)
+
+        suspend fun setRealismAltitudeEnabled(enabled: Boolean) = dataSource.setRealismAltitudeEnabled(enabled)
+
+        suspend fun setRealismWarmupEnabled(enabled: Boolean) = dataSource.setRealismWarmupEnabled(enabled)
+
+        suspend fun setRealismSatelliteExtrasEnabled(enabled: Boolean) = dataSource.setRealismSatelliteExtrasEnabled(enabled)
+
+        suspend fun setRealismSuspendedMockingEnabled(enabled: Boolean) = dataSource.setRealismSuspendedMockingEnabled(enabled)
     }

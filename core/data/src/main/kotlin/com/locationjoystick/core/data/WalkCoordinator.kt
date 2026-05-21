@@ -2,6 +2,7 @@ package com.locationjoystick.core.data
 
 import android.util.Log
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MockMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import javax.inject.Inject
@@ -49,21 +50,23 @@ class WalkCoordinator
         fun startWalk(
             target: LatLng,
             scope: CoroutineScope,
-            onPositionUpdate: (suspend (LatLng) -> Unit)? = null,
+            onPositionUpdate: (suspend (LatLng, Float, Float) -> Unit)? = null,
         ) {
             activeWalkJob?.cancel()
             locationRepository.setWalkTarget(target)
+            locationRepository.setMockMode(MockMode.WALK_TO)
 
             with(walkToEngine) {
                 activeWalkJob =
                     scope.launchWalkTo(
                         target = target,
-                        onPositionUpdate = { newPos ->
+                        onPositionUpdate = { newPos, speedMs, bearing ->
                             locationRepository.updatePosition(newPos)
-                            onPositionUpdate?.invoke(newPos)
+                            onPositionUpdate?.invoke(newPos, speedMs, bearing)
                         },
                         onArrival = {
                             Log.d(TAG, "Arrived at $target")
+                            locationRepository.setMockMode(MockMode.TELEPORT)
                             locationRepository.setWalkTarget(null)
                         },
                     )
