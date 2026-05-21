@@ -215,13 +215,7 @@ Each feature split into `:api` (public contract) + `:impl` (implementation).
 
 ## Contributing
 
-PRs welcome. Before opening one:
-
-1. Read [AGENTS.md](AGENTS.md) — code standards, module conventions, architecture rules
-2. One feature or fix per PR
-3. `make format && make lint && make test` must pass before submitting
-
-Adding new feature → open issue first.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for PR rules, required checks, and reference docs.
 
 ---
 
