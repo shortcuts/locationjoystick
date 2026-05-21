@@ -38,10 +38,7 @@ class NavigateToMapFlowTest {
 
             handleIntent(intent, flow)
 
-            flow.test {
-                awaitItem()
-                cancelAndIgnoreRemainingEvents()
-            }
+            assertEquals(1, flow.replayCache.size)
         }
 
     @Test
