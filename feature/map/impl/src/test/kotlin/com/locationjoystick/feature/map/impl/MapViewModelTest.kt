@@ -6,6 +6,8 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.data.TeleportUseCase
+import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.model.FavoriteLocation
@@ -44,6 +46,8 @@ class MapViewModelTest {
     private lateinit var settingsRepository: SettingsRepository
     private lateinit var roamingRepository: RoamingRepository
     private lateinit var preferencesDataSource: PreferencesDataSource
+    private lateinit var walkCoordinator: WalkCoordinator
+    private lateinit var teleportUseCase: TeleportUseCase
     private lateinit var viewModel: MapViewModel
 
     private val walkTargetFlow = MutableStateFlow<LatLng?>(null)
@@ -60,9 +64,11 @@ class MapViewModelTest {
         settingsRepository = mockk(relaxed = true)
         roamingRepository = mockk(relaxed = true)
         preferencesDataSource = mockk(relaxed = true)
+        walkCoordinator = mockk(relaxed = true)
+        teleportUseCase = mockk(relaxed = true)
 
-        every { locationRepository.observePosition() } returns MutableStateFlow(null)
-        every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.IDLE)
+        every { locationRepository.currentPosition } returns MutableStateFlow(null)
+        every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.IDLE)
         every { locationRepository.isWalkPaused } returns isWalkPausedFlow
         every { locationRepository.walkTarget } returns walkTargetFlow
         every { locationRepository.currentMode } returns MutableStateFlow(MockMode.JOYSTICK)
@@ -94,6 +100,8 @@ class MapViewModelTest {
                 settingsRepository,
                 roamingRepository,
                 preferencesDataSource,
+                walkCoordinator,
+                teleportUseCase,
             )
     }
 
@@ -117,8 +125,8 @@ class MapViewModelTest {
     fun `tapToTeleport_whenSpoofing_setsPendingPosition`() =
         runTest {
             // Set state to RUNNING so isSpoofing == true
-            every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
-            every { locationRepository.observePosition() } returns MutableStateFlow(null)
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.currentPosition } returns MutableStateFlow(null)
             viewModel =
                 MapViewModel(
                     context,
@@ -128,6 +136,8 @@ class MapViewModelTest {
                     settingsRepository,
                     roamingRepository,
                     preferencesDataSource,
+                    walkCoordinator,
+                    teleportUseCase,
                 )
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -141,8 +151,8 @@ class MapViewModelTest {
     fun `confirmTeleport_teleportsAndClearsPending`() =
         runTest {
             // Start spoofing so TapToTeleport sets pending
-            every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
-            every { locationRepository.observePosition() } returns MutableStateFlow(null)
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.currentPosition } returns MutableStateFlow(null)
             viewModel =
                 MapViewModel(
                     context,
@@ -152,6 +162,8 @@ class MapViewModelTest {
                     settingsRepository,
                     roamingRepository,
                     preferencesDataSource,
+                    walkCoordinator,
+                    teleportUseCase,
                 )
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -168,8 +180,8 @@ class MapViewModelTest {
     fun `clearPendingTap_setsPendingToNull`() =
         runTest {
             // Set pending position directly via spoofing tap
-            every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
-            every { locationRepository.observePosition() } returns MutableStateFlow(null)
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.currentPosition } returns MutableStateFlow(null)
             viewModel =
                 MapViewModel(
                     context,
@@ -179,6 +191,8 @@ class MapViewModelTest {
                     settingsRepository,
                     roamingRepository,
                     preferencesDataSource,
+                    walkCoordinator,
+                    teleportUseCase,
                 )
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -216,8 +230,8 @@ class MapViewModelTest {
     fun `stopSpoofing_clearsPendingTapPosition`() =
         runTest {
             // Start spoofing and set a pending tap
-            every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
-            every { locationRepository.observePosition() } returns MutableStateFlow(null)
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.currentPosition } returns MutableStateFlow(null)
             viewModel =
                 MapViewModel(
                     context,
@@ -227,6 +241,8 @@ class MapViewModelTest {
                     settingsRepository,
                     roamingRepository,
                     preferencesDataSource,
+                    walkCoordinator,
+                    teleportUseCase,
                 )
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -241,8 +257,8 @@ class MapViewModelTest {
     @Test
     fun `tapToTeleport_preservesExactCoordinates`() =
         runTest {
-            every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
-            every { locationRepository.observePosition() } returns MutableStateFlow(null)
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.currentPosition } returns MutableStateFlow(null)
             viewModel =
                 MapViewModel(
                     context,
@@ -252,6 +268,8 @@ class MapViewModelTest {
                     settingsRepository,
                     roamingRepository,
                     preferencesDataSource,
+                    walkCoordinator,
+                    teleportUseCase,
                 )
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -267,8 +285,8 @@ class MapViewModelTest {
     @Test
     fun `confirmTeleport_preservesExactCoordinates`() =
         runTest {
-            every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
-            every { locationRepository.observePosition() } returns MutableStateFlow(null)
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.currentPosition } returns MutableStateFlow(null)
             viewModel =
                 MapViewModel(
                     context,
@@ -278,6 +296,8 @@ class MapViewModelTest {
                     settingsRepository,
                     roamingRepository,
                     preferencesDataSource,
+                    walkCoordinator,
+                    teleportUseCase,
                 )
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -292,8 +312,8 @@ class MapViewModelTest {
     @Test
     fun `multiple taps update pending position sequentially`() =
         runTest {
-            every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
-            every { locationRepository.observePosition() } returns MutableStateFlow(null)
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.currentPosition } returns MutableStateFlow(null)
             viewModel =
                 MapViewModel(
                     context,
@@ -303,6 +323,8 @@ class MapViewModelTest {
                     settingsRepository,
                     roamingRepository,
                     preferencesDataSource,
+                    walkCoordinator,
+                    teleportUseCase,
                 )
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -323,8 +345,8 @@ class MapViewModelTest {
     @Test
     fun `clearPendingTap_actuallyClears`() =
         runTest {
-            every { locationRepository.observeState() } returns MutableStateFlow(MockLocationState.RUNNING)
-            every { locationRepository.observePosition() } returns MutableStateFlow(null)
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            every { locationRepository.currentPosition } returns MutableStateFlow(null)
             viewModel =
                 MapViewModel(
                     context,
@@ -334,6 +356,8 @@ class MapViewModelTest {
                     settingsRepository,
                     roamingRepository,
                     preferencesDataSource,
+                    walkCoordinator,
+                    teleportUseCase,
                 )
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -364,16 +388,12 @@ class MapViewModelTest {
     @Test
     fun `stopWalk_callsSetWalkTargetNullAndClearsUiState`() =
         runTest {
-            // Seed some walk state into UI
-            every { locationRepository.setWalkTarget(any()) } answers {
-                walkTargetFlow.value = firstArg<LatLng?>()
-            }
             val target = LatLng(1.0, 2.0)
             viewModel.onAction(MapAction.LongPressTapToWalk(target))
 
             viewModel.onAction(MapAction.StopWalk)
 
-            verify { locationRepository.setWalkTarget(null) }
+            verify { walkCoordinator.cancel() }
             assertNull(viewModel.uiState.value.walkTarget)
             assertNull(viewModel.uiState.value.walkStart)
         }
@@ -382,33 +402,14 @@ class MapViewModelTest {
     fun `walkLoop_breaksWhenWalkTargetClearedExternally`() =
         runTest {
             val target = LatLng(48.0, 2.0)
-            val startPos = LatLng(47.0, 1.0)
-            val positionFlow = MutableStateFlow<LatLng?>(startPos)
-
-            every { locationRepository.observePosition() } returns positionFlow
-            every { locationRepository.setWalkTarget(any()) } answers {
-                walkTargetFlow.value = firstArg<LatLng?>()
-            }
-            viewModel =
-                MapViewModel(
-                    context,
-                    locationRepository,
-                    routeRepository,
-                    favoriteRepository,
-                    settingsRepository,
-                    roamingRepository,
-                    preferencesDataSource,
-                )
-            testDispatcher.scheduler.advanceUntilIdle()
 
             viewModel.onAction(MapAction.LongPressTapToWalk(target))
             assertEquals(target, viewModel.uiState.value.walkTarget)
 
-            // Simulate external stop (widget calls setWalkTarget(null))
-            walkTargetFlow.value = null
-            testDispatcher.scheduler.advanceTimeBy(1001)
+            // StopWalk (e.g. triggered by widget) cancels coordinator and clears UI state
+            viewModel.onAction(MapAction.StopWalk)
 
-            // finally block in walkTo() clears UI state
+            verify { walkCoordinator.cancel() }
             assertNull(viewModel.uiState.value.walkTarget)
             assertNull(viewModel.uiState.value.walkStart)
         }
@@ -417,24 +418,6 @@ class MapViewModelTest {
     fun `walkLoop_remainsActiveWhilePausedExternally`() =
         runTest {
             val target = LatLng(48.0, 2.0)
-            val startPos = LatLng(47.0, 1.0)
-            val positionFlow = MutableStateFlow<LatLng?>(startPos)
-
-            every { locationRepository.observePosition() } returns positionFlow
-            every { locationRepository.setWalkTarget(any()) } answers {
-                walkTargetFlow.value = firstArg<LatLng?>()
-            }
-            viewModel =
-                MapViewModel(
-                    context,
-                    locationRepository,
-                    routeRepository,
-                    favoriteRepository,
-                    settingsRepository,
-                    roamingRepository,
-                    preferencesDataSource,
-                )
-            testDispatcher.scheduler.advanceUntilIdle()
 
             viewModel.onAction(MapAction.LongPressTapToWalk(target))
             assertEquals(target, viewModel.uiState.value.walkTarget)
