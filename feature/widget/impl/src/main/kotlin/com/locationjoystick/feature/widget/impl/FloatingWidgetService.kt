@@ -183,6 +183,10 @@ class FloatingWidgetService :
     // Master panel expand/collapse
     private val isPanelExpandedFlow = MutableStateFlow(false)
 
+    // Drag position — class-level so onConfigurationChanged can re-clamp them after rotation.
+    private var dragOffsetX = 0f
+    private var dragOffsetY = 0f
+
     // Floating panel data
     private val favoritesDataFlow = MutableStateFlow<List<FavoriteLocation>>(emptyList())
     private val routesDataFlow = MutableStateFlow<List<com.locationjoystick.core.model.Route>>(emptyList())
@@ -281,8 +285,9 @@ class FloatingWidgetService :
         super.onDestroy()
     }
 
-    override fun getWindowManagerParams(view: View): AndroidWindowManager.LayoutParams =
-        AndroidWindowManager
+    override fun getWindowManagerParams(view: View): AndroidWindowManager.LayoutParams {
+        dragOffsetY = resources.displayMetrics.heightPixels / 2f
+        return AndroidWindowManager
             .LayoutParams(
                 AndroidWindowManager.LayoutParams.WRAP_CONTENT,
                 AndroidWindowManager.LayoutParams.WRAP_CONTENT,
@@ -293,8 +298,16 @@ class FloatingWidgetService :
             ).apply {
                 gravity = Gravity.START or Gravity.TOP
                 x = 0
-                y = resources.displayMetrics.heightPixels / 2
+                y = dragOffsetY.toInt()
             }
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val params = currentParams ?: return
+        dragOffsetX = params.x.toFloat()
+        dragOffsetY = params.y.toFloat()
+    }
 
     override fun createOverlayView(): View {
         val view =
@@ -303,9 +316,6 @@ class FloatingWidgetService :
                 setViewTreeSavedStateRegistryOwner(this@FloatingWidgetService)
             }
         composeView = view
-
-        var dragOffsetX = 0f
-        var dragOffsetY = resources.displayMetrics.heightPixels / 2f
 
         view.setContent {
             val features by settingsRepository.getWidgetFeatures().collectAsStateWithLifecycle(initialValue = emptyList())

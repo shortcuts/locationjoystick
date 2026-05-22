@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Favorite
@@ -39,7 +40,7 @@ fun LjDrawerContent(
 ) {
     val scope = rememberCoroutineScope()
 
-    ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.5f)) {
+    ModalDrawerSheet(modifier = Modifier.widthIn(max = 320.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.End,

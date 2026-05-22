@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -588,7 +590,7 @@ private fun PendingTapSheet(
     ModalBottomSheet(
         onDismissRequest = { onAction(MapAction.ClearPendingTap) },
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
             if (isRouteReplay) {
                 Text("Route in progress", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(16.dp))
