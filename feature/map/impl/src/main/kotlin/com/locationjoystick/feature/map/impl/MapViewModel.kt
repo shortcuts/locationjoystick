@@ -453,13 +453,16 @@ class MapViewModel
         }
 
         private fun startSpoofing() {
-            val startPos =
-                locationRepository.currentPosition.value
-                    ?: LatLng(AppConstants.MapConstants.DEFAULT_LAT, AppConstants.MapConstants.DEFAULT_LON)
-            ContextCompat.startForegroundService(
-                context,
-                MockLocationIntentBuilder.startSpoofing(context, startPos.latitude, startPos.longitude),
-            )
+            viewModelScope.launch {
+                val startPos =
+                    locationRepository.currentPosition.value
+                        ?: settingsRepository.getLastLocation().first()
+                        ?: LatLng(AppConstants.MapConstants.DEFAULT_LAT, AppConstants.MapConstants.DEFAULT_LON)
+                ContextCompat.startForegroundService(
+                    context,
+                    MockLocationIntentBuilder.startSpoofing(context, startPos.latitude, startPos.longitude),
+                )
+            }
         }
 
         private fun stopSpoofing() {
