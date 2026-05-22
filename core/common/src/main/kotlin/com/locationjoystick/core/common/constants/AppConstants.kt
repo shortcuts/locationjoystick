@@ -28,7 +28,7 @@ object AppConstants {
     }
 
     object JitterConstants {
-        const val DEFAULT_IDLE_RADIUS_METERS = 0.0
+        const val DEFAULT_IDLE_RADIUS_METERS = 0.8
         const val DEFAULT_MOVING_RADIUS_METERS = 1.0
         const val MAX_RADIUS_METERS = 50.0
         const val DEFAULT_INTERVAL_SECONDS = 3

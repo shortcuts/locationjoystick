@@ -7,7 +7,7 @@ data class ExportData(
     val speedProfiles: List<SpeedProfile> = SpeedProfile.defaultProfiles(),
     val routes: List<Route> = emptyList(),
     val favoriteLocations: List<FavoriteLocation> = emptyList(),
-    val jitterIdleRadius: Double = 0.0,
+    val jitterIdleRadius: Double = 0.8,
     val jitterMovingRadius: Double = 1.0,
     val jitterIntervalSeconds: Int = 3,
 )

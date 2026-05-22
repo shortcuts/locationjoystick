@@ -14,7 +14,7 @@ data class SettingsUiState(
     val enabledWidgetFeatures: Set<WidgetFeature> = WidgetFeature.entries.toSet(),
     val rememberLastLocation: Boolean = true,
     val mapFollowsLocation: Boolean = true,
-    val jitterIdleRadiusMeters: Double = 0.0,
+    val jitterIdleRadiusMeters: Double = AppConstants.JitterConstants.DEFAULT_IDLE_RADIUS_METERS,
     val jitterMovingRadiusMeters: Double = 1.0,
     val jitterIntervalSeconds: Int = 3,
     val realismBearingHoldIdle: Boolean = AppConstants.RealismConstants.BEARING_HOLD_ON_IDLE_DEFAULT,

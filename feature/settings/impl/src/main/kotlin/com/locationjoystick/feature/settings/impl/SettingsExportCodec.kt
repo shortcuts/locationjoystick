@@ -239,7 +239,7 @@ internal object SettingsExportCodec {
             speedProfiles = speedProfiles,
             routes = routes,
             favoriteLocations = favorites,
-            jitterIdleRadius = root.optDouble("jitterIdleRadius", 0.0),
+            jitterIdleRadius = root.optDouble("jitterIdleRadius", AppConstants.JitterConstants.DEFAULT_IDLE_RADIUS_METERS),
             jitterMovingRadius = root.optDouble("jitterMovingRadius", 1.0),
             jitterIntervalSeconds = root.optInt("jitterIntervalSeconds", 3),
         )

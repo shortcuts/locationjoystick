@@ -37,3 +37,6 @@ coverage:
 
 coverage-open:
 	open build/reports/kover/html/index.html
+
+screenshot:
+	./scripts/screenshot-gallery.sh

@@ -478,19 +478,12 @@ internal fun SettingsScreen(
                             onValueChange = { onSetJitterIntervalSeconds(it) },
                             label = "Update interval (s)",
                         )
-                        Text(
-                            "Recommended idle radius: ${AppConstants.RealismConstants.RECOMMENDED_IDLE_RADIUS_METERS} m for realistic stationary drift",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Text("GPS Realism", style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Fine-tune how the spoofed location behaves to mimic a real GPS chip.",
+                            "Controls how the spoofed GPS signal behaves. These options add metadata and variation that real GPS chips produce — some apps and games inspect these signals to detect mock providers.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -510,7 +503,7 @@ internal fun SettingsScreen(
                             Column(modifier = Modifier.padding(start = 8.dp)) {
                                 Text("Hold bearing when stationary")
                                 Text(
-                                    "Keeps the last bearing instead of resetting to north when you stop.",
+                                    "Keeps the last known direction when you stop moving instead of snapping to 0° (north). Real GPS chips do the same — a sudden reset to north is a common mock-location tell.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -531,7 +524,7 @@ internal fun SettingsScreen(
                             Column(modifier = Modifier.padding(start = 8.dp)) {
                                 Text("Vary altitude")
                                 Text(
-                                    "Reports a plausible altitude with small drift instead of 0m.",
+                                    "Simulates a plausible altitude with small random drift instead of always reporting 0 m. A flat zero altitude is an obvious signal that the location is synthetic.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -552,7 +545,7 @@ internal fun SettingsScreen(
                             Column(modifier = Modifier.padding(start = 8.dp)) {
                                 Text("GPS warm-up simulation")
                                 Text(
-                                    "Starts each session with degraded accuracy that converges over 30s.",
+                                    "Starts each session with degraded accuracy (like a cold GPS fix) that converges to normal over ~30 s. Off by default because it temporarily reduces location precision at session start.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -573,7 +566,7 @@ internal fun SettingsScreen(
                             Column(modifier = Modifier.padding(start = 8.dp)) {
                                 Text("Realistic satellite count")
                                 Text(
-                                    "Reports 7–14 satellites in fix instead of zero.",
+                                    "Attaches satellite metadata to each update (7–14 satellites visible, 4–9 in fix) instead of zero. Some apps check for zero satellites as a spoofing signal.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -594,7 +587,7 @@ internal fun SettingsScreen(
                             Column(modifier = Modifier.padding(start = 8.dp)) {
                                 Text("Suspended mocking")
                                 Text(
-                                    "Briefly pauses location updates (~2s every ~10s) to mimic real GPS dropouts. Skipped during route replay.",
+                                    "Briefly pauses location updates (~2 s every ~10 s) to mimic real GPS dropouts. Off by default because the pauses cause visible position freezes in many apps. Automatically skipped during route replay.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -604,6 +597,12 @@ internal fun SettingsScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Text("Map", style = MaterialTheme.typography.headlineSmall)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Controls how the map behaves while spoofing is active.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Row(
@@ -617,10 +616,14 @@ internal fun SettingsScreen(
                                 checked = uiState.rememberLastLocation,
                                 onCheckedChange = { onSetRememberLastLocation(it) },
                             )
-                            Text(
-                                "Remember last location",
-                                modifier = Modifier.padding(start = 8.dp),
-                            )
+                            Column(modifier = Modifier.padding(start = 8.dp)) {
+                                Text("Remember last location")
+                                Text(
+                                    "Restores the last spoofed position when the app restarts, so you don't have to re-enter it.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
 
                         Row(
@@ -634,10 +637,14 @@ internal fun SettingsScreen(
                                 checked = uiState.mapFollowsLocation,
                                 onCheckedChange = { onSetMapFollowsLocation(it) },
                             )
-                            Text(
-                                "Follow location on map",
-                                modifier = Modifier.padding(start = 8.dp),
-                            )
+                            Column(modifier = Modifier.padding(start = 8.dp)) {
+                                Text("Follow location on map")
+                                Text(
+                                    "Keeps the map camera centered on the spoofed position as it moves.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
 
                         Text("Floating Widget", style = MaterialTheme.typography.headlineSmall)
@@ -801,7 +808,13 @@ internal fun SettingsScreen(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        Text("Default Roaming", style = MaterialTheme.typography.headlineSmall)
+                        Text("Roaming", style = MaterialTheme.typography.headlineSmall)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Default settings used when starting a roaming session from the map.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
 
                         var radiusText by remember(isMph) {
@@ -1082,13 +1095,12 @@ private fun ImportConfirmDialog(
         title = { Text("Import data") },
         text = { Text("How would you like to handle existing data?") },
         confirmButton = {
-            TextButton(onClick = onReplace) { Text("Replace all") }
-        },
-        dismissButton = {
             Row {
-                TextButton(onClick = onAdd) { Text("Add to existing") }
                 TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(onClick = onAdd) { Text("Add") }
+                TextButton(onClick = onReplace) { Text("Replace") }
             }
         },
+        dismissButton = {},
     )
 }
