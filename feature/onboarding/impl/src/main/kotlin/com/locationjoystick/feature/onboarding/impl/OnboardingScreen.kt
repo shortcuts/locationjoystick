@@ -133,8 +133,6 @@ internal fun OnboardingScreen(
                     .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(modifier = Modifier.height(40.dp))
-
             AppIcon()
 
             Spacer(modifier = Modifier.height(24.dp))
