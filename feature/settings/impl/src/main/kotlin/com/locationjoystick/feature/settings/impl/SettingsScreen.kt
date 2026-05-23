@@ -1039,7 +1039,6 @@ private fun SpeedProfileInput(
     }
 }
 
-@Composable
 private fun formatJitterDouble(d: Double): String {
     val rounded = (d * 100).roundToInt() / 100.0
     return if (rounded % 1.0 == 0.0) rounded.toInt().toString() else rounded.toString()
