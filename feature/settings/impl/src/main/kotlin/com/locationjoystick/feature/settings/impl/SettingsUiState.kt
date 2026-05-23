@@ -17,6 +17,7 @@ data class SettingsUiState(
     val jitterIdleRadiusMeters: Double = AppConstants.JitterConstants.DEFAULT_IDLE_RADIUS_METERS,
     val jitterMovingRadiusMeters: Double = 1.0,
     val jitterIntervalSeconds: Int = 3,
+    val jitterIdleIntervalSeconds: Int = AppConstants.JitterConstants.DEFAULT_IDLE_INTERVAL_SECONDS,
     val realismBearingHoldIdle: Boolean = AppConstants.RealismConstants.BEARING_HOLD_ON_IDLE_DEFAULT,
     val realismAltitudeEnabled: Boolean = AppConstants.RealismConstants.ALTITUDE_ENABLED_DEFAULT,
     val realismWarmupEnabled: Boolean = AppConstants.RealismConstants.WARMUP_ENABLED_DEFAULT,

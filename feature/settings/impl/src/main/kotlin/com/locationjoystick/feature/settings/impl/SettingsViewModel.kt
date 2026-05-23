@@ -85,6 +85,7 @@ class SettingsViewModel
             val jitterIdleRadius: Double,
             val jitterMovingRadius: Double,
             val jitterIntervalSeconds: Int,
+            val jitterIdleIntervalSeconds: Int,
             val realismBearingHoldIdle: Boolean,
             val realismAltitudeEnabled: Boolean,
             val realismWarmupEnabled: Boolean,
@@ -103,6 +104,7 @@ class SettingsViewModel
             val jitterIdleRadius: Double? = null,
             val jitterMovingRadius: Double? = null,
             val jitterIntervalSeconds: Int? = null,
+            val jitterIdleIntervalSeconds: Int? = null,
             val roamingDefaults: RoamingDefaults? = null,
             val realismBearingHoldIdle: Boolean? = null,
             val realismAltitudeEnabled: Boolean? = null,
@@ -121,6 +123,7 @@ class SettingsViewModel
         private val draftJitterIdleRadiusFlow = MutableStateFlow<Double?>(null)
         private val draftJitterMovingRadiusFlow = MutableStateFlow<Double?>(null)
         private val draftJitterIntervalSecondsFlow = MutableStateFlow<Int?>(null)
+        private val draftJitterIdleIntervalSecondsFlow = MutableStateFlow<Int?>(null)
         private val draftRoamingDefaultsFlow = MutableStateFlow<RoamingDefaults?>(null)
         private val draftRealismBearingHoldIdleFlow = MutableStateFlow<Boolean?>(null)
         private val draftRealismAltitudeEnabledFlow = MutableStateFlow<Boolean?>(null)
@@ -145,10 +148,13 @@ class SettingsViewModel
                     Triple(speedUnit, features, rememberLastLocation)
                 },
                 combine(
-                    settingsRepository.getJitterIdleRadius(),
-                    settingsRepository.getJitterMovingRadius(),
-                    settingsRepository.getJitterIntervalSeconds(),
-                ) { idle, moving, interval -> Triple(idle, moving, interval) },
+                    combine(
+                        settingsRepository.getJitterIdleRadius(),
+                        settingsRepository.getJitterMovingRadius(),
+                        settingsRepository.getJitterIntervalSeconds(),
+                    ) { idle, moving, interval -> Triple(idle, moving, interval) },
+                    settingsRepository.getJitterIdleIntervalSeconds(),
+                ) { triple, idleInterval -> Pair(triple, idleInterval) },
                 combine(
                     settingsRepository.getMapFollowsLocation(),
                     combine(
@@ -179,9 +185,10 @@ class SettingsViewModel
                     widgetFeatures = settings.second.toSet(),
                     rememberLastLocation = settings.third,
                     mapFollowsLocation = chunk.mapFollowsLocation,
-                    jitterIdleRadius = jitter.first,
-                    jitterMovingRadius = jitter.second,
-                    jitterIntervalSeconds = jitter.third,
+                    jitterIdleRadius = jitter.first.first,
+                    jitterMovingRadius = jitter.first.second,
+                    jitterIntervalSeconds = jitter.first.third,
+                    jitterIdleIntervalSeconds = jitter.second,
                     realismBearingHoldIdle = chunk.bearingHoldIdle,
                     realismAltitudeEnabled = chunk.altitudeEnabled,
                     realismWarmupEnabled = chunk.warmupEnabled,
@@ -207,10 +214,13 @@ class SettingsViewModel
                     Triple(unit, features, remember)
                 },
                 combine(
-                    draftJitterIdleRadiusFlow.asStateFlow(),
-                    draftJitterMovingRadiusFlow.asStateFlow(),
-                    draftJitterIntervalSecondsFlow.asStateFlow(),
-                ) { idle, moving, interval -> Triple(idle, moving, interval) },
+                    combine(
+                        draftJitterIdleRadiusFlow.asStateFlow(),
+                        draftJitterMovingRadiusFlow.asStateFlow(),
+                        draftJitterIntervalSecondsFlow.asStateFlow(),
+                    ) { idle, moving, interval -> Triple(idle, moving, interval) },
+                    draftJitterIdleIntervalSecondsFlow.asStateFlow(),
+                ) { triple, idleInterval -> Pair(triple, idleInterval) },
                 combine(
                     draftRoamingDefaultsFlow.asStateFlow(),
                     draftMapFollowsLocationFlow.asStateFlow(),
@@ -243,9 +253,10 @@ class SettingsViewModel
                     widgetFeatures = settings.second,
                     rememberLastLocation = settings.third,
                     mapFollowsLocation = chunk.mapFollowsLocation,
-                    jitterIdleRadius = jitter.first,
-                    jitterMovingRadius = jitter.second,
-                    jitterIntervalSeconds = jitter.third,
+                    jitterIdleRadius = jitter.first.first,
+                    jitterMovingRadius = jitter.first.second,
+                    jitterIntervalSeconds = jitter.first.third,
+                    jitterIdleIntervalSeconds = jitter.second,
                     roamingDefaults = chunk.roamingDefaults,
                     realismBearingHoldIdle = chunk.bearingHoldIdle,
                     realismAltitudeEnabled = chunk.altitudeEnabled,
@@ -277,7 +288,8 @@ class SettingsViewModel
                         draftState.widgetFeatures != null || draftState.rememberLastLocation != null ||
                         draftState.mapFollowsLocation != null ||
                         draftState.jitterIdleRadius != null || draftState.jitterMovingRadius != null ||
-                        draftState.jitterIntervalSeconds != null || draftState.roamingDefaults != null ||
+                        draftState.jitterIntervalSeconds != null || draftState.jitterIdleIntervalSeconds != null ||
+                        draftState.roamingDefaults != null ||
                         draftState.realismBearingHoldIdle != null || draftState.realismAltitudeEnabled != null ||
                         draftState.realismWarmupEnabled != null || draftState.realismSatelliteExtrasEnabled != null ||
                         draftState.realismSuspendedMockingEnabled != null
@@ -293,6 +305,7 @@ class SettingsViewModel
                     jitterIdleRadiusMeters = draftState.jitterIdleRadius ?: repoState.jitterIdleRadius,
                     jitterMovingRadiusMeters = draftState.jitterMovingRadius ?: repoState.jitterMovingRadius,
                     jitterIntervalSeconds = draftState.jitterIntervalSeconds ?: repoState.jitterIntervalSeconds,
+                    jitterIdleIntervalSeconds = draftState.jitterIdleIntervalSeconds ?: repoState.jitterIdleIntervalSeconds,
                     realismBearingHoldIdle = draftState.realismBearingHoldIdle ?: repoState.realismBearingHoldIdle,
                     realismAltitudeEnabled = draftState.realismAltitudeEnabled ?: repoState.realismAltitudeEnabled,
                     realismWarmupEnabled = draftState.realismWarmupEnabled ?: repoState.realismWarmupEnabled,
@@ -347,6 +360,10 @@ class SettingsViewModel
 
         fun setJitterIntervalSeconds(seconds: Int) {
             draftJitterIntervalSecondsFlow.value = seconds
+        }
+
+        fun setJitterIdleIntervalSeconds(seconds: Int) {
+            draftJitterIdleIntervalSecondsFlow.value = seconds
         }
 
         fun updateRoamingDefaults(defaults: RoamingDefaults) {
@@ -426,6 +443,11 @@ class SettingsViewModel
                     settingsRepository.setJitterIntervalSeconds(draftJitterInterval)
                     draftJitterIntervalSecondsFlow.value = null
                 }
+                val draftJitterIdleInterval = draftJitterIdleIntervalSecondsFlow.value
+                if (draftJitterIdleInterval != null) {
+                    settingsRepository.setJitterIdleIntervalSeconds(draftJitterIdleInterval)
+                    draftJitterIdleIntervalSecondsFlow.value = null
+                }
                 val draftRoaming = draftRoamingDefaultsFlow.value
                 if (draftRoaming != null) {
                     settingsRepository.updateRoamingDefaults(draftRoaming)
@@ -470,6 +492,7 @@ class SettingsViewModel
             draftJitterIdleRadiusFlow.value = null
             draftJitterMovingRadiusFlow.value = null
             draftJitterIntervalSecondsFlow.value = null
+            draftJitterIdleIntervalSecondsFlow.value = null
             draftRoamingDefaultsFlow.value = null
             draftRealismBearingHoldIdleFlow.value = null
             draftRealismAltitudeEnabledFlow.value = null
@@ -533,6 +556,7 @@ class SettingsViewModel
                             jitterIdleRadius = state.jitterIdleRadiusMeters,
                             jitterMovingRadius = state.jitterMovingRadiusMeters,
                             jitterIntervalSeconds = state.jitterIntervalSeconds,
+                            jitterIdleIntervalSeconds = state.jitterIdleIntervalSeconds,
                         )
 
                     val json = serializeExportData(exportData)
@@ -593,6 +617,7 @@ class SettingsViewModel
                     setJitterIdleRadius(exportData.jitterIdleRadius)
                     setJitterMovingRadius(exportData.jitterMovingRadius)
                     setJitterIntervalSeconds(exportData.jitterIntervalSeconds)
+                    setJitterIdleIntervalSeconds(exportData.jitterIdleIntervalSeconds)
                 } catch (e: Exception) {
                     Log.e(TAG, "Import failed", e)
                 }
@@ -633,6 +658,7 @@ class SettingsViewModel
                                 jitterIdleRadius = state.jitterIdleRadiusMeters,
                                 jitterMovingRadius = state.jitterMovingRadiusMeters,
                                 jitterIntervalSeconds = state.jitterIntervalSeconds,
+                                jitterIdleIntervalSeconds = state.jitterIdleIntervalSeconds,
                             ),
                         )
                     _qrChunksReady.emit(result)

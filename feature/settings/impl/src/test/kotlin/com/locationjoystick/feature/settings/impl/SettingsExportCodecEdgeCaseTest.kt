@@ -204,8 +204,8 @@ class SettingsExportCodecEdgeCaseTest {
         val parsed = SettingsExportCodec.parseExportData(json)
 
         assertEquals(
-            "Missing jitterIntervalSeconds must default to AppConstants.JitterConstants.DEFAULT_INTERVAL_SECONDS",
-            AppConstants.JitterConstants.DEFAULT_INTERVAL_SECONDS,
+            "Missing jitterIntervalSeconds must default to AppConstants.JitterConstants.DEFAULT_MOVING_INTERVAL_SECONDS",
+            AppConstants.JitterConstants.DEFAULT_MOVING_INTERVAL_SECONDS,
             parsed.jitterIntervalSeconds,
         )
     }

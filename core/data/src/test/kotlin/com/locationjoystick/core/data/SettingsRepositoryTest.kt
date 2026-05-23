@@ -578,6 +578,8 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     val jitterIntervalSecondsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_JITTER_INTERVAL_SECONDS)
 
+    val jitterIdleIntervalSecondsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_JITTER_IDLE_INTERVAL_SECONDS)
+
     val lastTeleportTimeFlow = MutableStateFlow(0L)
 
     val mapFollowsLocationFlow = MutableStateFlow(true)
@@ -650,6 +652,13 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
     override fun getJitterMovingRadius(): Flow<Double> = jitterMovingRadiusFlow
 
     override fun getJitterIntervalSeconds(): Flow<Int> = jitterIntervalSecondsFlow
+
+    override fun getJitterIdleIntervalSeconds(): Flow<Int> = jitterIdleIntervalSecondsFlow
+
+    override suspend fun setJitterIdleIntervalSeconds(seconds: Int) {
+        jitterIdleIntervalSecondsFlow.value =
+            seconds.coerceIn(AppPreferencesDataSource.MIN_JITTER_INTERVAL_SECONDS, AppPreferencesDataSource.MAX_JITTER_INTERVAL_SECONDS)
+    }
 
     override suspend fun setJitterIdleRadius(meters: Double) {
         jitterIdleRadiusFlow.value = meters.coerceIn(0.0, AppPreferencesDataSource.MAX_JITTER_RADIUS_METERS)

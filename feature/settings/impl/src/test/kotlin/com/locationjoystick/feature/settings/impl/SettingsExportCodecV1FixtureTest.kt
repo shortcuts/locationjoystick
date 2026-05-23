@@ -64,10 +64,10 @@ class SettingsExportCodecV1FixtureTest {
     }
 
     @Test
-    fun `version 2 throws`() {
-        val v2Json = v1Fixture.replace(""""schemaVersion": 1""", """"schemaVersion": 2""")
+    fun `version 3 throws`() {
+        val v3Json = v1Fixture.replace(""""schemaVersion": 1""", """"schemaVersion": 3""")
         try {
-            SettingsExportCodec.parseExportData(v2Json)
+            SettingsExportCodec.parseExportData(v3Json)
             assertTrue("Should have thrown", false)
         } catch (e: IllegalArgumentException) {
             assertTrue(e.message?.contains("Unsupported") == true)

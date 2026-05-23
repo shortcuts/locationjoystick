@@ -31,7 +31,8 @@ object AppConstants {
         const val DEFAULT_IDLE_RADIUS_METERS = 0.8
         const val DEFAULT_MOVING_RADIUS_METERS = 1.0
         const val MAX_RADIUS_METERS = 50.0
-        const val DEFAULT_INTERVAL_SECONDS = 3
+        const val DEFAULT_MOVING_INTERVAL_SECONDS = 3
+        const val DEFAULT_IDLE_INTERVAL_SECONDS = 30
         const val MIN_INTERVAL_SECONDS = 1
         const val MAX_INTERVAL_SECONDS = 30
         const val ACCURACY_MIN = 2.0f
@@ -41,8 +42,8 @@ object AppConstants {
 
     object RealismConstants {
         const val DEFAULT_ALTITUDE_METERS = 35.0
-        const val ALTITUDE_SIGMA_METERS = 1.5
-        const val ALTITUDE_DRIFT_PER_SECOND_METERS = 0.05
+        const val ALTITUDE_SIGMA_METERS = 0.25
+        const val ALTITUDE_DRIFT_PER_SECOND_METERS = 0.0
         const val ALTITUDE_CLAMP_RADIUS_METERS = 25.0
         const val VERTICAL_ACCURACY_METERS = 4.0f
         const val BEARING_ACCURACY_DEGREES = 3.0f
@@ -114,7 +115,7 @@ object AppConstants {
     }
 
     object ExportConstants {
-        const val SCHEMA_VERSION = 1
+        const val SCHEMA_VERSION = 2
         const val FILENAME_PREFIX = "locationjoystick-export"
         const val MIME_TYPE = "application/json"
         const val GPX_MIME_TYPE = "application/gpx+xml"

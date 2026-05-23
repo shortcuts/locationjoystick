@@ -207,6 +207,7 @@ fun SettingsRoute(
         onSetJitterIdleRadius = viewModel::setJitterIdleRadius,
         onSetJitterMovingRadius = viewModel::setJitterMovingRadius,
         onSetJitterIntervalSeconds = viewModel::setJitterIntervalSeconds,
+        onSetJitterIdleIntervalSeconds = viewModel::setJitterIdleIntervalSeconds,
         onSetRealismBearingHoldIdle = viewModel::setRealismBearingHoldIdle,
         onSetRealismAltitudeEnabled = viewModel::setRealismAltitudeEnabled,
         onSetRealismWarmupEnabled = viewModel::setRealismWarmupEnabled,
@@ -242,6 +243,7 @@ private fun SettingsScreenPreview() {
         onSetJitterIdleRadius = {},
         onSetJitterMovingRadius = {},
         onSetJitterIntervalSeconds = {},
+        onSetJitterIdleIntervalSeconds = {},
         onSetRealismBearingHoldIdle = {},
         onSetRealismAltitudeEnabled = {},
         onSetRealismWarmupEnabled = {},
@@ -272,6 +274,7 @@ internal fun SettingsScreen(
     onSetJitterIdleRadius: (Double) -> Unit,
     onSetJitterMovingRadius: (Double) -> Unit,
     onSetJitterIntervalSeconds: (Int) -> Unit,
+    onSetJitterIdleIntervalSeconds: (Int) -> Unit,
     onSetRealismBearingHoldIdle: (Boolean) -> Unit,
     onSetRealismAltitudeEnabled: (Boolean) -> Unit,
     onSetRealismWarmupEnabled: (Boolean) -> Unit,
@@ -454,6 +457,12 @@ internal fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         JitterInput(
+                            value = uiState.jitterIdleIntervalSeconds,
+                            onValueChange = { onSetJitterIdleIntervalSeconds(it) },
+                            label = "Idle interval (s)",
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        JitterInput(
                             value = if (isMph) uiState.jitterMovingRadiusMeters * 3.28084 else uiState.jitterMovingRadiusMeters,
                             onValueChange = { onSetJitterMovingRadius(if (isMph) it / 3.28084 else it) },
                             label = if (isMph) "Moving radius (ft)" else "Moving radius (m)",
@@ -462,7 +471,7 @@ internal fun SettingsScreen(
                         JitterInput(
                             value = uiState.jitterIntervalSeconds,
                             onValueChange = { onSetJitterIntervalSeconds(it) },
-                            label = "Update interval (s)",
+                            label = "Moving interval (s)",
                         )
                         Spacer(modifier = Modifier.height(24.dp))
 
@@ -552,7 +561,7 @@ internal fun SettingsScreen(
                             Column(modifier = Modifier.padding(start = 8.dp)) {
                                 Text("Realistic satellite count")
                                 Text(
-                                    "Attaches satellite metadata to each update (7–14 satellites visible, 4–9 in fix) instead of zero. Some apps check for zero satellites as a spoofing signal.",
+                                    "Attaches satellite metadata to each update (7–14 satellites visible, 6–12 in fix) instead of zero. Some apps check for zero satellites as a spoofing signal.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )

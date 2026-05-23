@@ -25,7 +25,7 @@ import org.json.JSONObject
  * Schema:
  * ```
  * {
- *   "schemaVersion": 1,
+ *   "schemaVersion": 2,
  *   "exportedAt": 1699999999999,
  *   "settings": { ... },
  *   "speedProfiles": [ ... ],
@@ -33,7 +33,8 @@ import org.json.JSONObject
  *   "favoriteLocations": [ ... ],
  *   "jitterIdleRadius": 0.5,
  *   "jitterMovingRadius": 1.5,
- *   "jitterIntervalSeconds": 3
+ *   "jitterIntervalSeconds": 3,
+ *   "jitterIdleIntervalSeconds": 30
  * }
  * ```
  *
@@ -109,6 +110,7 @@ internal object SettingsExportCodec {
         root.put("jitterIdleRadius", data.jitterIdleRadius)
         root.put("jitterMovingRadius", data.jitterMovingRadius)
         root.put("jitterIntervalSeconds", data.jitterIntervalSeconds)
+        root.put("jitterIdleIntervalSeconds", data.jitterIdleIntervalSeconds)
 
         return root.toString()
     }
@@ -116,9 +118,7 @@ internal object SettingsExportCodec {
     fun parseExportData(json: String): ExportData {
         val root = JSONObject(json)
         val schemaVersion = root.optInt("schemaVersion", AppConstants.ExportConstants.SCHEMA_VERSION)
-        if (schemaVersion !=
-            AppConstants.ExportConstants.SCHEMA_VERSION
-        ) {
+        if (schemaVersion < 1 || schemaVersion > AppConstants.ExportConstants.SCHEMA_VERSION) {
             throw IllegalArgumentException("Unsupported schema version: $schemaVersion")
         }
 
@@ -245,7 +245,12 @@ internal object SettingsExportCodec {
             favoriteLocations = favorites,
             jitterIdleRadius = root.optDouble("jitterIdleRadius", AppConstants.JitterConstants.DEFAULT_IDLE_RADIUS_METERS),
             jitterMovingRadius = root.optDouble("jitterMovingRadius", AppConstants.JitterConstants.DEFAULT_MOVING_RADIUS_METERS),
-            jitterIntervalSeconds = root.optInt("jitterIntervalSeconds", AppConstants.JitterConstants.DEFAULT_INTERVAL_SECONDS),
+            jitterIntervalSeconds = root.optInt("jitterIntervalSeconds", AppConstants.JitterConstants.DEFAULT_MOVING_INTERVAL_SECONDS),
+            jitterIdleIntervalSeconds =
+                root.optInt(
+                    "jitterIdleIntervalSeconds",
+                    AppConstants.JitterConstants.DEFAULT_IDLE_INTERVAL_SECONDS,
+                ),
         )
     }
 }

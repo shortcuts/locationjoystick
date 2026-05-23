@@ -104,6 +104,12 @@ interface PreferencesDataSource {
     /** Sets the GPS jitter update interval. */
     suspend fun setJitterIntervalSeconds(seconds: Int)
 
+    /** Gets the GPS jitter update interval when idle (seconds). */
+    fun getJitterIdleIntervalSeconds(): Flow<Int>
+
+    /** Sets the GPS jitter update interval when idle. */
+    suspend fun setJitterIdleIntervalSeconds(seconds: Int)
+
     /** Gets the timestamp (epoch ms) of the last teleport action. */
     fun getLastTeleportTime(): Flow<Long>
 
@@ -192,6 +198,7 @@ class AppPreferencesDataSource
             val JITTER_IDLE_RADIUS_METERS = doublePreferencesKey("jitter_idle_radius_meters")
             val JITTER_MOVING_RADIUS_METERS = doublePreferencesKey("jitter_moving_radius_meters")
             val JITTER_INTERVAL_SECONDS = intPreferencesKey("jitter_interval_seconds")
+            val JITTER_IDLE_INTERVAL_SECONDS = intPreferencesKey("jitter_idle_interval_seconds")
             val LAST_TELEPORT_TIME_MS = longPreferencesKey("last_teleport_time_ms")
             val MAP_FOLLOWS_LOCATION = booleanPreferencesKey("map_follows_location")
             val REALISM_BEARING_HOLD_IDLE = booleanPreferencesKey("realism_bearing_hold_idle")
@@ -394,6 +401,23 @@ class AppPreferencesDataSource
             }
         }
 
+        override fun getJitterIdleIntervalSeconds(): Flow<Int> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading jitter idle interval preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.JITTER_IDLE_INTERVAL_SECONDS] ?: DEFAULT_JITTER_IDLE_INTERVAL_SECONDS }
+
+        override suspend fun setJitterIdleIntervalSeconds(seconds: Int) {
+            dataStore.edit { prefs ->
+                prefs[Keys.JITTER_IDLE_INTERVAL_SECONDS] = seconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS)
+            }
+        }
+
         override fun getLastTeleportTime(): Flow<Long> =
             dataStore.data
                 .catch { e ->
@@ -558,7 +582,8 @@ class AppPreferencesDataSource
             const val DEFAULT_JITTER_IDLE_RADIUS_METERS = AppConstants.JitterConstants.DEFAULT_IDLE_RADIUS_METERS
             const val DEFAULT_JITTER_MOVING_RADIUS_METERS = AppConstants.JitterConstants.DEFAULT_MOVING_RADIUS_METERS
             const val MAX_JITTER_RADIUS_METERS = AppConstants.JitterConstants.MAX_RADIUS_METERS
-            const val DEFAULT_JITTER_INTERVAL_SECONDS = AppConstants.JitterConstants.DEFAULT_INTERVAL_SECONDS
+            const val DEFAULT_JITTER_INTERVAL_SECONDS = AppConstants.JitterConstants.DEFAULT_MOVING_INTERVAL_SECONDS
+            const val DEFAULT_JITTER_IDLE_INTERVAL_SECONDS = AppConstants.JitterConstants.DEFAULT_IDLE_INTERVAL_SECONDS
             const val MIN_JITTER_INTERVAL_SECONDS = AppConstants.JitterConstants.MIN_INTERVAL_SECONDS
             const val MAX_JITTER_INTERVAL_SECONDS = AppConstants.JitterConstants.MAX_INTERVAL_SECONDS
         }

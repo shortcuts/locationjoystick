@@ -71,6 +71,8 @@ import kotlin.random.Random
  * @property jitterMovingRadiusMeters Gaussian noise radius applied while moving.
  * @property shouldApplyMovingJitter Pre-computed gate: true when the jitter interval has elapsed.
  *   [buildLocation] uses this directly without any clock arithmetic.
+ * @property shouldApplyIdleJitter Pre-computed gate: true when the idle jitter interval has elapsed.
+ *   [buildLocation] uses this to gate TELEPORT mode jitter.
  * @property altitudeMeters Seed altitude for the Gaussian random walk this tick; written back from
  *   [LocationFix.altitudeMeters] after each successful tick.
  * @property warmupStartMs Wall-clock ms ([SystemClock.elapsedRealtime]) when [startSpoofing] was
@@ -100,6 +102,7 @@ internal data class LocationSnapshot(
     val jitterIdleRadiusMeters: Double,
     val jitterMovingRadiusMeters: Double,
     val shouldApplyMovingJitter: Boolean,
+    val shouldApplyIdleJitter: Boolean,
     val altitudeMeters: Double,
     val warmupStartMs: Long,
     val spoofingStartMs: Long,
@@ -247,7 +250,8 @@ internal fun buildLocation(
     // Jitter (position)
     val (outLat, outLon) =
         when {
-            state.mode == MockMode.TELEPORT && state.jitterIdleRadiusMeters > 0.0 -> {
+            state.mode == MockMode.TELEPORT && state.shouldApplyIdleJitter &&
+                state.jitterIdleRadiusMeters > 0.0 -> {
                 val u1 = random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
                 val u2 = random.nextDouble()
                 val mag = state.jitterIdleRadiusMeters * kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1))
@@ -394,6 +398,10 @@ class MockLocationService : Service() {
     @Volatile private var jitterIntervalSeconds: Int = 3
 
     @Volatile private var lastJitterTimestampMs: Long = 0L
+
+    @Volatile private var jitterIdleIntervalSeconds: Int = AppConstants.JitterConstants.DEFAULT_IDLE_INTERVAL_SECONDS
+
+    @Volatile private var lastIdleJitterTimestampMs: Long = 0L
 
     @Volatile private var providerAdded = false
 
@@ -544,6 +552,15 @@ class MockLocationService : Service() {
                     delay(1_000L)
                     true
                 }.collect { jitterIntervalSeconds = it }
+        }
+        serviceScope.launch {
+            settingsRepository
+                .getJitterIdleIntervalSeconds()
+                .retryWhen { cause, attempt ->
+                    Log.e(TAG, "jitterIdleIntervalSeconds flow error (attempt $attempt)", cause)
+                    delay(1_000L)
+                    true
+                }.collect { jitterIdleIntervalSeconds = it }
         }
         // Realism toggle flows — each updates a @Volatile field consumed by captureSnapshot() → buildLocation().
         serviceScope.launch {
@@ -763,6 +780,19 @@ class MockLocationService : Service() {
         spoofingStartMs = now
         warmupStartMs = now
         suspendedPhase.set(SuspendedPhaseState(isActive = false, startMs = now))
+        cachedSatelliteCount =
+            Random.nextInt(
+                AppConstants.RealismConstants.SATELLITES_MIN,
+                AppConstants.RealismConstants.SATELLITES_MAX + 1,
+            )
+        cachedUsedInFixCount =
+            Random.nextInt(
+                AppConstants.RealismConstants.USED_IN_FIX_MIN,
+                minOf(AppConstants.RealismConstants.USED_IN_FIX_MAX + 1, cachedSatelliteCount + 1),
+            )
+        lastSatelliteUpdateMs = now
+        lastJitterTimestampMs = now
+        lastIdleJitterTimestampMs = now
         locationRepository.setPositionInternal(LatLng(lat, lon))
         locationRepository.setMockMode(MockMode.TELEPORT)
 
@@ -1072,6 +1102,8 @@ class MockLocationService : Service() {
         val mode = locationRepository.currentMode.value
         val jitterIntervalMs = jitterIntervalSeconds * 1000L
         val shouldApplyMovingJitter = (nowMs - lastJitterTimestampMs) >= jitterIntervalMs
+        val idleJitterIntervalMs = jitterIdleIntervalSeconds * 1000L
+        val shouldApplyIdleJitter = (nowMs - lastIdleJitterTimestampMs) >= idleJitterIntervalMs
         val suspendedPhaseSnapshot = suspendedPhase.get()
 
         // Slow satellite churn
@@ -1101,6 +1133,7 @@ class MockLocationService : Service() {
             jitterIdleRadiusMeters = jitterIdleRadiusMeters,
             jitterMovingRadiusMeters = jitterMovingRadiusMeters,
             shouldApplyMovingJitter = shouldApplyMovingJitter,
+            shouldApplyIdleJitter = shouldApplyIdleJitter,
             altitudeMeters = currentAltitudeMeters,
             warmupStartMs = warmupStartMs,
             spoofingStartMs = spoofingStartMs,
@@ -1159,6 +1192,9 @@ class MockLocationService : Service() {
             if (snapshot.speedMs > 0f) lastNonZeroBearing = snapshot.bearing
             if (snapshot.shouldApplyMovingJitter && snapshot.mode != MockMode.TELEPORT) {
                 lastJitterTimestampMs = nowMs
+            }
+            if (snapshot.shouldApplyIdleJitter && snapshot.mode == MockMode.TELEPORT) {
+                lastIdleJitterTimestampMs = nowMs
             }
             applyToProvider(fix, nowNanos)
         } catch (e: IllegalArgumentException) {

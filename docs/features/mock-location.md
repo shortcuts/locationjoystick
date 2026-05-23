@@ -38,13 +38,13 @@ Execution order inside `buildLocation`:
 
 Five independent toggles in `AppSettings` (persisted via DataStore).
 
-Defaults: `bearingHoldOnIdle = true`, `satelliteExtrasEnabled = true`. Others default `false`.
+Defaults: `bearingHoldOnIdle = true`, `altitudeEnabled = true`, `satelliteExtrasEnabled = true`. Others default `false`.
 
 | Setting | `AppSettings` field | Behaviour |
 |---|---|---|
 | Bearing hold | `bearingHoldOnIdle` | `speedMs == 0` → reports `lastNonZeroBearing` not 0° — no compass reset to north. |
 | Altitude drift | `altitudeEnabled` | Gaussian random walk (σ = `RealismConstants.ALTITUDE_SIGMA_METERS`, drift = `ALTITUDE_DRIFT_PER_SECOND_METERS`) clamped within `±ALTITUDE_CLAMP_RADIUS_METERS` of `DEFAULT_ALTITUDE_METERS`. |
-| Warm-up envelope | `warmupEnabled` | Accuracy degrades at start, converges over `RealismConstants.WARMUP_DURATION_MS` (≈ 30 s). `warmupStartMs` set once in `startSpoofing`, never reset on pause/resume. |
+| Warm-up envelope | `warmupEnabled` | Accuracy degrades at start, converges over `RealismConstants.WARMUP_DURATION_SECONDS` (≈ 30 s). `warmupStartMs` set once in `startSpoofing`, never reset on pause/resume. |
 | Satellite extras | `satelliteExtrasEnabled` | Attaches `Bundle` extras with slow-churning total + in-fix satellite counts. Refreshed every `RealismConstants.SATELLITE_UPDATE_INTERVAL_MS`. |
 | Suspended mocking | `suspendedMockingEnabled` | Push/pause cycle: pushes for `RealismConstants.SUSPENDED_PUSH_DURATION_MS`, skips for `RealismConstants.SUSPENDED_PAUSE_DURATION_MS` + random jitter up to `SUSPENDED_PAUSE_JITTER_MS`. Auto-disabled in `ROUTE_REPLAY` and `WALK_TO` modes. |
 

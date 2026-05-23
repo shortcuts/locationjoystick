@@ -131,6 +131,10 @@ class SettingsRepository
 
         suspend fun setJitterIntervalSeconds(seconds: Int) = dataSource.setJitterIntervalSeconds(seconds)
 
+        fun getJitterIdleIntervalSeconds(): Flow<Int> = dataSource.getJitterIdleIntervalSeconds()
+
+        suspend fun setJitterIdleIntervalSeconds(seconds: Int) = dataSource.setJitterIdleIntervalSeconds(seconds)
+
         fun getLastTeleportTime(): Flow<Long> = dataSource.getLastTeleportTime()
 
         suspend fun setLastTeleportTime(ms: Long) = dataSource.setLastTeleportTime(ms)
