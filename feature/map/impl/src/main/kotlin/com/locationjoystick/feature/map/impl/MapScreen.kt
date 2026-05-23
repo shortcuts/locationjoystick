@@ -90,17 +90,37 @@ import org.maplibre.android.style.sources.TileSet
 import org.maplibre.android.geometry.LatLng as MapLatLng
 
 private fun fadeInScale(): EnterTransition =
-    fadeIn(animationSpec = spring(dampingRatio = AppConstants.AnimationConstants.SPRING_DAMPING_RATIO, stiffness = AppConstants.AnimationConstants.SPRING_STIFFNESS)) +
+    fadeIn(
+        animationSpec =
+            spring(
+                dampingRatio = AppConstants.AnimationConstants.SPRING_DAMPING_RATIO,
+                stiffness = AppConstants.AnimationConstants.SPRING_STIFFNESS,
+            ),
+    ) +
         scaleIn(
             initialScale = 0.95f,
-            animationSpec = spring(dampingRatio = AppConstants.AnimationConstants.SPRING_DAMPING_RATIO, stiffness = AppConstants.AnimationConstants.SPRING_STIFFNESS),
+            animationSpec =
+                spring(
+                    dampingRatio = AppConstants.AnimationConstants.SPRING_DAMPING_RATIO,
+                    stiffness = AppConstants.AnimationConstants.SPRING_STIFFNESS,
+                ),
         )
 
 private fun fadeOutScale(): ExitTransition =
-    fadeOut(animationSpec = spring(dampingRatio = AppConstants.AnimationConstants.SPRING_DAMPING_RATIO, stiffness = AppConstants.AnimationConstants.SPRING_STIFFNESS)) +
+    fadeOut(
+        animationSpec =
+            spring(
+                dampingRatio = AppConstants.AnimationConstants.SPRING_DAMPING_RATIO,
+                stiffness = AppConstants.AnimationConstants.SPRING_STIFFNESS,
+            ),
+    ) +
         scaleOut(
             targetScale = 0.95f,
-            animationSpec = spring(dampingRatio = AppConstants.AnimationConstants.SPRING_DAMPING_RATIO, stiffness = AppConstants.AnimationConstants.SPRING_STIFFNESS),
+            animationSpec =
+                spring(
+                    dampingRatio = AppConstants.AnimationConstants.SPRING_DAMPING_RATIO,
+                    stiffness = AppConstants.AnimationConstants.SPRING_STIFFNESS,
+                ),
         )
 
 fun NavGraphBuilder.mapScreen(
@@ -327,7 +347,10 @@ internal fun MapScreen(
                                 style.addSource(
                                     RasterSource(
                                         MapLibreSourceIds.OSM,
-                                        TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply { maxZoom = AppConstants.MapConstants.OSM_MAX_ZOOM },
+                                        TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
+                                            maxZoom =
+                                                AppConstants.MapConstants.OSM_MAX_ZOOM
+                                        },
                                         256,
                                     ),
                                 )
@@ -339,8 +362,12 @@ internal fun MapScreen(
                                     CircleLayer(MapLibreLayerIds.POSITION, MapLibreSourceIds.POSITION)
                                         .withProperties(
                                             PropertyFactory.circleRadius(10f),
-                                            PropertyFactory.circleColor(Color(AppConstants.MapColorConstants.ENDPOINT_CIRCLE_COLOR).toArgb()),
-                                            PropertyFactory.circleStrokeColor(Color(AppConstants.MapColorConstants.ENDPOINT_STROKE_COLOR).toArgb()),
+                                            PropertyFactory.circleColor(
+                                                Color(AppConstants.MapColorConstants.ENDPOINT_CIRCLE_COLOR).toArgb(),
+                                            ),
+                                            PropertyFactory.circleStrokeColor(
+                                                Color(AppConstants.MapColorConstants.ENDPOINT_STROKE_COLOR).toArgb(),
+                                            ),
                                             PropertyFactory.circleStrokeWidth(2f),
                                         ),
                                 )
@@ -375,8 +402,12 @@ internal fun MapScreen(
                                     CircleLayer(MapLibreLayerIds.ENDPOINTS, MapLibreSourceIds.ENDPOINTS)
                                         .withProperties(
                                             PropertyFactory.circleRadius(8f),
-                                            PropertyFactory.circleColor(Color(AppConstants.MapColorConstants.ENDPOINT_CIRCLE_COLOR).toArgb()),
-                                            PropertyFactory.circleStrokeColor(Color(AppConstants.MapColorConstants.ENDPOINT_STROKE_COLOR).toArgb()),
+                                            PropertyFactory.circleColor(
+                                                Color(AppConstants.MapColorConstants.ENDPOINT_CIRCLE_COLOR).toArgb(),
+                                            ),
+                                            PropertyFactory.circleStrokeColor(
+                                                Color(AppConstants.MapColorConstants.ENDPOINT_STROKE_COLOR).toArgb(),
+                                            ),
                                             PropertyFactory.circleStrokeWidth(2f),
                                         ),
                                 )

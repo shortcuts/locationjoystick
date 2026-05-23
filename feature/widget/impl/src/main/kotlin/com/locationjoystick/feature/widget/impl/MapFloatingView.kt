@@ -195,7 +195,10 @@ internal fun MapFloatingView(
                             style.addSource(
                                 RasterSource(
                                     MAP_FLOATING_VIEW_OSM_SOURCE,
-                                    TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply { maxZoom = AppConstants.MapConstants.OSM_MAX_ZOOM },
+                                    TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
+                                        maxZoom =
+                                            AppConstants.MapConstants.OSM_MAX_ZOOM
+                                    },
                                     256,
                                 ),
                             )

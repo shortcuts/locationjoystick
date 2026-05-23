@@ -33,16 +33,18 @@ import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.model.SpeedUnit
 import kotlin.math.roundToInt
 
-private val SPEED_PROFILES = listOf(
-    AppConstants.ProfileConstants.PROFILE_ID_WALK,
-    AppConstants.ProfileConstants.PROFILE_ID_RUN,
-    AppConstants.ProfileConstants.PROFILE_ID_BIKE,
-)
-private val SPEED_PROFILE_LABELS = mapOf(
-    AppConstants.ProfileConstants.PROFILE_ID_WALK to "Walk",
-    AppConstants.ProfileConstants.PROFILE_ID_RUN to "Run",
-    AppConstants.ProfileConstants.PROFILE_ID_BIKE to "Bike",
-)
+private val SPEED_PROFILES =
+    listOf(
+        AppConstants.ProfileConstants.PROFILE_ID_WALK,
+        AppConstants.ProfileConstants.PROFILE_ID_RUN,
+        AppConstants.ProfileConstants.PROFILE_ID_BIKE,
+    )
+private val SPEED_PROFILE_LABELS =
+    mapOf(
+        AppConstants.ProfileConstants.PROFILE_ID_WALK to "Walk",
+        AppConstants.ProfileConstants.PROFILE_ID_RUN to "Run",
+        AppConstants.ProfileConstants.PROFILE_ID_BIKE to "Bike",
+    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

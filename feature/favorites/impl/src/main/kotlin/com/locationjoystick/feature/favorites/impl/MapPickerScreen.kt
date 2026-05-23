@@ -199,7 +199,10 @@ internal fun MapPickerScreen(
                                 style.addSource(
                                     RasterSource(
                                         OSM_SOURCE_ID,
-                                        TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply { maxZoom = AppConstants.MapConstants.OSM_MAX_ZOOM },
+                                        TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
+                                            maxZoom =
+                                                AppConstants.MapConstants.OSM_MAX_ZOOM
+                                        },
                                         256,
                                     ),
                                 )

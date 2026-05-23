@@ -46,8 +46,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -511,8 +511,7 @@ class MockLocationService : Service() {
                     Log.e(TAG, "currentPosition flow error (attempt $attempt)", cause)
                     delay(1_000L)
                     true
-                }
-                .collect { position ->
+                }.collect { position ->
                     if (position != null) {
                         currentLat = position.latitude
                         currentLon = position.longitude
@@ -526,8 +525,7 @@ class MockLocationService : Service() {
                     Log.e(TAG, "jitterIdleRadius flow error (attempt $attempt)", cause)
                     delay(1_000L)
                     true
-                }
-                .collect { jitterIdleRadiusMeters = it }
+                }.collect { jitterIdleRadiusMeters = it }
         }
         serviceScope.launch {
             settingsRepository
@@ -536,8 +534,7 @@ class MockLocationService : Service() {
                     Log.e(TAG, "jitterMovingRadius flow error (attempt $attempt)", cause)
                     delay(1_000L)
                     true
-                }
-                .collect { jitterMovingRadiusMeters = it }
+                }.collect { jitterMovingRadiusMeters = it }
         }
         serviceScope.launch {
             settingsRepository
@@ -546,8 +543,7 @@ class MockLocationService : Service() {
                     Log.e(TAG, "jitterIntervalSeconds flow error (attempt $attempt)", cause)
                     delay(1_000L)
                     true
-                }
-                .collect { jitterIntervalSeconds = it }
+                }.collect { jitterIntervalSeconds = it }
         }
         // Realism toggle flows — each updates a @Volatile field consumed by captureSnapshot() → buildLocation().
         serviceScope.launch {
@@ -557,8 +553,7 @@ class MockLocationService : Service() {
                     Log.e(TAG, "bearingHoldEnabled flow error (attempt $attempt)", cause)
                     delay(1_000L)
                     true
-                }
-                .collect { bearingHoldEnabled = it }
+                }.collect { bearingHoldEnabled = it }
         }
         serviceScope.launch {
             settingsRepository
@@ -567,8 +562,7 @@ class MockLocationService : Service() {
                     Log.e(TAG, "altitudeEnabled flow error (attempt $attempt)", cause)
                     delay(1_000L)
                     true
-                }
-                .collect { altitudeEnabled = it }
+                }.collect { altitudeEnabled = it }
         }
         serviceScope.launch {
             settingsRepository
@@ -577,8 +571,7 @@ class MockLocationService : Service() {
                     Log.e(TAG, "warmupEnabled flow error (attempt $attempt)", cause)
                     delay(1_000L)
                     true
-                }
-                .collect { warmupEnabled = it }
+                }.collect { warmupEnabled = it }
         }
         serviceScope.launch {
             settingsRepository
@@ -587,8 +580,7 @@ class MockLocationService : Service() {
                     Log.e(TAG, "satelliteExtrasEnabled flow error (attempt $attempt)", cause)
                     delay(1_000L)
                     true
-                }
-                .collect { satelliteExtrasEnabled = it }
+                }.collect { satelliteExtrasEnabled = it }
         }
         serviceScope.launch {
             settingsRepository
@@ -597,8 +589,7 @@ class MockLocationService : Service() {
                     Log.e(TAG, "suspendedMockingEnabled flow error (attempt $attempt)", cause)
                     delay(1_000L)
                     true
-                }
-                .collect { suspendedMockingEnabled = it }
+                }.collect { suspendedMockingEnabled = it }
         }
     }
 
