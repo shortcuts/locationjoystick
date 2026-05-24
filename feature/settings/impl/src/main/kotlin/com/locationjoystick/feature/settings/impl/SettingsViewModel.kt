@@ -54,7 +54,7 @@ class SettingsViewModel
         val qrImportReady: SharedFlow<ExportData> = _qrImportReady
 
         private val _qrChunksReady = MutableSharedFlow<QrChunker.ChunkResult>(extraBufferCapacity = 1)
-        internal val qrChunksReady: SharedFlow<QrChunker.ChunkResult> = _qrChunksReady
+        val qrChunksReady: SharedFlow<QrChunker.ChunkResult> = _qrChunksReady
 
         private data class RepoRealismChunk(
             val mapFollowsLocation: Boolean,
@@ -104,7 +104,7 @@ class SettingsViewModel
             val realismSuspendedMockingEnabled: Boolean? = null,
         )
 
-        private val _draft = MutableStateFlow(DraftState())
+        private val mutableDraft = MutableStateFlow(DraftState())
 
         private val repoStateFlow =
             combine(
@@ -172,12 +172,12 @@ class SettingsViewModel
                 )
             }
 
-        private val draftStateFlow = _draft.asStateFlow()
+        private val draftStateFlow = mutableDraft.asStateFlow()
 
         val roamingDefaults: StateFlow<RoamingDefaults> =
             combine(
                 settingsRepository.getRoamingDefaults(),
-                _draft,
+                mutableDraft,
             ) { repo, draft -> draft.roamingDefaults ?: repo }
                 .stateIn(
                     scope = viewModelScope,
@@ -218,76 +218,76 @@ class SettingsViewModel
             )
 
         fun setWalkSpeed(displaySpeed: Double) {
-            _draft.update { it.copy(walkSpeed = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)) }
+            mutableDraft.update { it.copy(walkSpeed = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)) }
         }
 
         fun setRunSpeed(displaySpeed: Double) {
-            _draft.update { it.copy(runSpeed = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)) }
+            mutableDraft.update { it.copy(runSpeed = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)) }
         }
 
         fun setBikeSpeed(displaySpeed: Double) {
-            _draft.update { it.copy(bikeSpeed = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)) }
+            mutableDraft.update { it.copy(bikeSpeed = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)) }
         }
 
         fun setSpeedUnit(unit: SpeedUnit) {
-            _draft.update { it.copy(speedUnit = unit) }
+            mutableDraft.update { it.copy(speedUnit = unit) }
         }
 
         fun setWidgetFeatures(features: Set<WidgetFeature>) {
-            _draft.update { it.copy(widgetFeatures = features) }
+            mutableDraft.update { it.copy(widgetFeatures = features) }
         }
 
         fun setRememberLastLocation(enabled: Boolean) {
-            _draft.update { it.copy(rememberLastLocation = enabled) }
+            mutableDraft.update { it.copy(rememberLastLocation = enabled) }
         }
 
         fun setMapFollowsLocation(enabled: Boolean) {
-            _draft.update { it.copy(mapFollowsLocation = enabled) }
+            mutableDraft.update { it.copy(mapFollowsLocation = enabled) }
         }
 
         fun setJitterIdleRadius(meters: Double) {
-            _draft.update { it.copy(jitterIdleRadius = meters) }
+            mutableDraft.update { it.copy(jitterIdleRadius = meters) }
         }
 
         fun setJitterMovingRadius(meters: Double) {
-            _draft.update { it.copy(jitterMovingRadius = meters) }
+            mutableDraft.update { it.copy(jitterMovingRadius = meters) }
         }
 
         fun setJitterIntervalSeconds(seconds: Int) {
-            _draft.update { it.copy(jitterIntervalSeconds = seconds) }
+            mutableDraft.update { it.copy(jitterIntervalSeconds = seconds) }
         }
 
         fun setJitterIdleIntervalSeconds(seconds: Int) {
-            _draft.update { it.copy(jitterIdleIntervalSeconds = seconds) }
+            mutableDraft.update { it.copy(jitterIdleIntervalSeconds = seconds) }
         }
 
         fun updateRoamingDefaults(defaults: RoamingDefaults) {
-            _draft.update { it.copy(roamingDefaults = defaults) }
+            mutableDraft.update { it.copy(roamingDefaults = defaults) }
         }
 
         fun setRealismBearingHoldIdle(v: Boolean) {
-            _draft.update { it.copy(realismBearingHoldIdle = v) }
+            mutableDraft.update { it.copy(realismBearingHoldIdle = v) }
         }
 
         fun setRealismAltitudeEnabled(v: Boolean) {
-            _draft.update { it.copy(realismAltitudeEnabled = v) }
+            mutableDraft.update { it.copy(realismAltitudeEnabled = v) }
         }
 
         fun setRealismWarmupEnabled(v: Boolean) {
-            _draft.update { it.copy(realismWarmupEnabled = v) }
+            mutableDraft.update { it.copy(realismWarmupEnabled = v) }
         }
 
         fun setRealismSatelliteExtrasEnabled(v: Boolean) {
-            _draft.update { it.copy(realismSatelliteExtrasEnabled = v) }
+            mutableDraft.update { it.copy(realismSatelliteExtrasEnabled = v) }
         }
 
         fun setRealismSuspendedMockingEnabled(v: Boolean) {
-            _draft.update { it.copy(realismSuspendedMockingEnabled = v) }
+            mutableDraft.update { it.copy(realismSuspendedMockingEnabled = v) }
         }
 
         fun saveChanges() {
             viewModelScope.launch {
-                val d = _draft.value
+                val d = mutableDraft.value
                 if (d.walkSpeed != null) settingsRepository.setWalkSpeed(d.walkSpeed)
                 if (d.runSpeed != null) settingsRepository.setRunSpeed(d.runSpeed)
                 if (d.bikeSpeed != null) settingsRepository.setBikeSpeed(d.bikeSpeed)
@@ -313,12 +313,12 @@ class SettingsViewModel
                 ) {
                     settingsRepository.setRealismSuspendedMockingEnabled(d.realismSuspendedMockingEnabled)
                 }
-                _draft.value = DraftState()
+                mutableDraft.value = DraftState()
             }
         }
 
         fun discardChanges() {
-            _draft.value = DraftState()
+            mutableDraft.value = DraftState()
         }
 
         fun convertMsToDisplay(
