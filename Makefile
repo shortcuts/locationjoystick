@@ -40,3 +40,6 @@ coverage-open:
 
 screenshot:
 	./scripts/screenshot-gallery.sh
+
+smoke-test:
+	./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.package=com.locationjoystick.app.smoke

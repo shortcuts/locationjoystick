@@ -34,7 +34,7 @@ fun LjTopBar(
                 IconButton(onClick = onNavigationClick) {
                     Icon(
                         imageVector = navigationIcon,
-                        contentDescription = null,
+                        contentDescription = "Open navigation menu",
                     )
                 }
             }

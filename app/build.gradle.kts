@@ -11,6 +11,7 @@ android {
         buildConfig = true
     }
     defaultConfig {
+        testInstrumentationRunner = "com.locationjoystick.app.HiltTestRunner"
         manifestPlaceholders["admobAppId"] =
             System.getenv("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
         buildConfigField(
@@ -67,4 +68,13 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.mockk)
+
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.android.compiler)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.room.runtime)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

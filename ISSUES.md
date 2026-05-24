@@ -8,4 +8,4 @@ No outstanding documentation issues.
 
 ## Backlog
 
-No outstanding items.
+No outstanding backlog items.
