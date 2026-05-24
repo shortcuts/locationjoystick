@@ -388,41 +388,27 @@ internal fun MapFloatingView(
                     Icon(Icons.Rounded.MyLocation, contentDescription = "Re-center on location")
                 }
             }
+            val isSpoofing = spoofState == com.locationjoystick.core.model.MockLocationState.RUNNING
             FloatingActionButton(
                 onClick = {
-                    val isSpoofing = spoofState == com.locationjoystick.core.model.MockLocationState.RUNNING
                     if (isSpoofing) locationRepository.stopSpoofing() else locationRepository.startSpoofing()
                 },
                 containerColor =
-                    if (spoofState == com.locationjoystick.core.model.MockLocationState.RUNNING) {
-                        MaterialTheme.colorScheme.errorContainer
+                    if (isSpoofing) {
+                        MaterialTheme.colorScheme.error
                     } else {
-                        MaterialTheme.colorScheme.primaryContainer
+                        Color(AppConstants.MapColorConstants.ACTIVE_BUTTON_COLOR)
                     },
                 contentColor =
-                    if (spoofState == com.locationjoystick.core.model.MockLocationState.RUNNING) {
-                        MaterialTheme.colorScheme.onErrorContainer
+                    if (isSpoofing) {
+                        MaterialTheme.colorScheme.onError
                     } else {
-                        MaterialTheme.colorScheme.onPrimaryContainer
+                        Color.White
                     },
             ) {
                 Icon(
-                    imageVector =
-                        if (spoofState ==
-                            com.locationjoystick.core.model.MockLocationState.RUNNING
-                        ) {
-                            LjIcons.Stop
-                        } else {
-                            LjIcons.PlayArrow
-                        },
-                    contentDescription =
-                        if (spoofState ==
-                            com.locationjoystick.core.model.MockLocationState.RUNNING
-                        ) {
-                            "Stop spoofing"
-                        } else {
-                            "Start spoofing"
-                        },
+                    imageVector = if (isSpoofing) LjIcons.Stop else LjIcons.PlayArrow,
+                    contentDescription = if (isSpoofing) "Stop spoofing" else "Start spoofing",
                 )
             }
             FloatingActionButton(
