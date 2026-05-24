@@ -58,4 +58,21 @@ class FavoritesSmokeTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Pick Location").assertIsDisplayed()
     }
+
+    @Test
+    fun add_dropdown_shows_all_three_options() {
+        composeRule.onNodeWithContentDescription("Add options").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("from map").assertIsDisplayed()
+        composeRule.onNodeWithText("from coordinates").assertIsDisplayed()
+        composeRule.onNodeWithText("from current location").assertIsDisplayed()
+    }
+
+    @Test
+    fun favorite_item_menu_shows_edit_and_delete() {
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Edit").assertIsDisplayed()
+        composeRule.onNodeWithText("Delete").assertIsDisplayed()
+    }
 }

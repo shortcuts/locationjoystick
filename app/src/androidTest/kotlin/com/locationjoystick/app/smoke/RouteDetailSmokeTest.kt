@@ -69,4 +69,19 @@ class RouteDetailSmokeTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Routes").assertIsDisplayed()
     }
+
+    @Test
+    fun route_detail_shows_delete_button() {
+        composeRule.onNodeWithContentDescription("Delete route").assertIsDisplayed()
+    }
+
+    @Test
+    fun route_detail_shows_route_name_field() {
+        composeRule.onNodeWithText("Route name", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun route_detail_waypoint_count_visible() {
+        composeRule.onNodeWithText("Detail Smoke Route").assertIsDisplayed()
+    }
 }

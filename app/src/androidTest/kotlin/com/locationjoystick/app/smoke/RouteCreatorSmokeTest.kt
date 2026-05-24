@@ -40,4 +40,19 @@ class RouteCreatorSmokeTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Routes").assertIsDisplayed()
     }
+
+    @Test
+    fun route_creator_shows_search_button() {
+        composeRule.onNodeWithContentDescription("Search location").assertIsDisplayed()
+    }
+
+    @Test
+    fun route_creator_shows_undo_button() {
+        composeRule.onNodeWithContentDescription("Undo last waypoint").assertIsDisplayed()
+    }
+
+    @Test
+    fun route_creator_shows_save_route_button() {
+        composeRule.onNodeWithText("Save Route").assertIsDisplayed()
+    }
 }

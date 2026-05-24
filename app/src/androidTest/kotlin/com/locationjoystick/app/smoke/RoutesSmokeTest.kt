@@ -71,4 +71,13 @@ class RoutesSmokeTest {
         composeRule.onNodeWithText("Loop").assertIsDisplayed()
         composeRule.onNodeWithText("Loop in reverse").assertIsDisplayed()
     }
+
+    @Test
+    fun route_overflow_menu_shows_edit_export_delete() {
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Edit").assertIsDisplayed()
+        composeRule.onNodeWithText("Export").assertIsDisplayed()
+        composeRule.onNodeWithText("Delete").assertIsDisplayed()
+    }
 }
