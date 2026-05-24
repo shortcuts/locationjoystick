@@ -89,6 +89,8 @@ Coverage tracked via [kotlinx-kover](https://github.com/Kotlin/kotlinx-kover). A
 Or via Make:
 
 ```bash
+make test            # unit tests (JVM)
+make smoke-test      # end-to-end navigation suite (requires connected device/emulator)
 make coverage        # generate both reports
 make coverage-open   # open HTML in browser
 ```

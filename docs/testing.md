@@ -19,6 +19,29 @@ Reports:
 - HTML: `build/reports/kover/html/index.html`
 - XML (CI): `build/reports/kover/report.xml`
 
+## Smoke Tests (`:app` androidTest)
+
+End-to-end navigation suite. Requires a connected device or emulator. Runs against the debug build via Hilt test module (in-memory Room, real DataStore).
+
+```bash
+make smoke-test
+```
+
+Covers every nav path in `LjNavHost`:
+
+| File | What it asserts |
+|------|----------------|
+| `IdleSmokeTest` | Idle loads; drawer open/close; all 5 cards navigate; Map + Settings + Routes + Favorites + About via drawer |
+| `MapSmokeTest` | Map loads; hamburger opens drawer |
+| `FavoritesSmokeTest` | Favorites loads; seeded item visible; "Add options → from map" reaches `MapPickerScreen` |
+| `RoutesSmokeTest` | Routes loads; seeded route visible |
+| `RouteCreatorSmokeTest` | Creator loads via FAB; back returns to Routes |
+| `RouteDetailSmokeTest` | Detail loads via overflow Edit; back returns to Routes |
+| `SettingsSmokeTest` | Settings loads; speed unit toggle; export button |
+| `AboutSmokeTest` | About loads; back returns to Idle |
+
+Helpers in `SmokeTestHelpers.kt`: `skipOnboarding()`, `openDrawer()`, `navigateViaDrawer()`, `navigateFromIdle()`.
+
 ## Unit Tests (`:core:*`)
 
 - Repo logic w/ fake DAO (in-memory Room)
