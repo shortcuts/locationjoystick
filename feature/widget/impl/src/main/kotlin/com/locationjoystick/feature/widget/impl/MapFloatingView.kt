@@ -119,9 +119,15 @@ internal fun MapFloatingView(
     var showSearch by remember { mutableStateOf(false) }
     var showFavoritesPicker by remember { mutableStateOf(false) }
     val isFollowingCamera = remember { mutableStateOf(true) }
+    // Holds locally-computed waypoints during the walk→replay transition so the line doesn't flash.
+    var ephemeralHint by remember { mutableStateOf<List<LatLng>?>(null) }
 
     LaunchedEffect(walkTarget) {
         walkStart = if (walkTarget != null) currentPosition else null
+    }
+
+    LaunchedEffect(routeWaypoints) {
+        if (routeWaypoints != null) ephemeralHint = null
     }
 
     val mapView =
@@ -289,11 +295,17 @@ internal fun MapFloatingView(
                 val waypoints = routeWaypoints
                 val walkStartSnap = walkStart
                 val target = walkTarget
+                val hint = ephemeralHint
                 if (waypoints != null && position != null) {
                     val (tracedGeoJson, remainingGeoJson) = buildRouteTraceGeoJson(waypoints, position)
                     tracedSrc.setGeoJson(tracedGeoJson)
                     remainingSrc.setGeoJson(remainingGeoJson)
                     endpointsSrc.setGeoJson(buildPointsGeoJson(waypoints))
+                } else if (hint != null && position != null) {
+                    val (tracedGeoJson, remainingGeoJson) = buildRouteTraceGeoJson(hint, position)
+                    tracedSrc.setGeoJson(tracedGeoJson)
+                    remainingSrc.setGeoJson(remainingGeoJson)
+                    endpointsSrc.setGeoJson(buildPointsGeoJson(hint))
                 } else if (walkStartSnap != null && target != null && position != null) {
                     val walkPoints = listOf(walkStartSnap, target)
                     val (tracedGeoJson, remainingGeoJson) = buildRouteTraceGeoJson(walkPoints, position)
@@ -307,10 +319,6 @@ internal fun MapFloatingView(
                     endpointsSrc.setGeoJson(empty)
                 }
 
-                // Ephemeral route preview polyline (shown when isWalkActive and ephemeral points are chained)
-                // We don't track ephemeralWaypoints locally in the widget — the ephemeral preview
-                // is inherently driven by routeWaypoints once the engine starts, so just clear
-                // ephemeral sources here (they're unused in the widget for now).
                 ephemeralRouteSrc.setGeoJson(emptyGeoJson())
                 ephemeralEndpointsSrc.setGeoJson(emptyGeoJson())
 
@@ -523,6 +531,15 @@ internal fun MapFloatingView(
                         Spacer(Modifier.height(8.dp))
                         OutlinedButton(
                             onClick = {
+                                val wStart = walkStart
+                                val wTarget = walkTarget
+                                val existingWaypoints = routeWaypoints
+                                ephemeralHint =
+                                    when {
+                                        existingWaypoints != null -> existingWaypoints + tap
+                                        wStart != null && wTarget != null -> listOf(wStart, wTarget, tap)
+                                        else -> null
+                                    }
                                 onAddEphemeralWaypoint(tap)
                                 pendingTap = null
                             },
