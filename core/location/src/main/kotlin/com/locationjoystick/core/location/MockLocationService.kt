@@ -77,8 +77,6 @@ import kotlin.random.Random
  *   [LocationFix.altitudeMeters] after each successful tick.
  * @property warmupStartMs Wall-clock ms ([SystemClock.elapsedRealtime]) when [startSpoofing] was
  *   called. Intentionally NOT reset on pause/resume so the warmup curve is continuous.
- * @property spoofingStartMs Same instant as [warmupStartMs]; both set together in [startSpoofing]
- *   and kept separate for semantic clarity.
  * @property warmupEnabled Whether the accuracy warm-up envelope feature is active.
  * @property bearingHoldEnabled Whether to hold the last non-zero bearing when stationary.
  * @property altitudeEnabled Whether to simulate altitude with a Gaussian random walk.
@@ -105,7 +103,6 @@ internal data class LocationSnapshot(
     val shouldApplyIdleJitter: Boolean,
     val altitudeMeters: Double,
     val warmupStartMs: Long,
-    val spoofingStartMs: Long,
     val warmupEnabled: Boolean,
     val bearingHoldEnabled: Boolean,
     val altitudeEnabled: Boolean,
@@ -431,9 +428,6 @@ class MockLocationService : Service() {
         AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
 
     /** Wall-clock ms when startSpoofing() was called; NOT reset on pause/resume. */
-    @Volatile private var spoofingStartMs: Long = 0L
-
-    /** Same instant as spoofingStartMs; kept separate for semantic clarity. NOT reset on pause/resume. */
     @Volatile private var warmupStartMs: Long = 0L
 
     /** Atomically-updated push/pause phase state; avoids torn reads between isActive and startMs. */
@@ -777,7 +771,6 @@ class MockLocationService : Service() {
         currentBearing = 0.0f
         val now = SystemClock.elapsedRealtime()
         currentAltitudeMeters = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
-        spoofingStartMs = now
         warmupStartMs = now
         suspendedPhase.set(SuspendedPhaseState(isActive = false, startMs = now))
         cachedSatelliteCount =
@@ -1136,7 +1129,6 @@ class MockLocationService : Service() {
             shouldApplyIdleJitter = shouldApplyIdleJitter,
             altitudeMeters = currentAltitudeMeters,
             warmupStartMs = warmupStartMs,
-            spoofingStartMs = spoofingStartMs,
             warmupEnabled = warmupEnabled,
             bearingHoldEnabled = bearingHoldEnabled,
             altitudeEnabled = altitudeEnabled,
