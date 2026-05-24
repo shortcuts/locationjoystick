@@ -185,6 +185,23 @@ internal fun advanceSuspendedPhase(
     }
 }
 
+/** Applies a 2-D Gaussian displacement of [radiusMeters] to ([lat], [lon]) using Box-Muller. */
+internal fun gaussianLatLonOffset(
+    lat: Double,
+    lon: Double,
+    radiusMeters: Double,
+    random: Random,
+): Pair<Double, Double> {
+    val u1 = random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
+    val u2 = random.nextDouble()
+    val mag = radiusMeters * kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1))
+    val angle = 2.0 * kotlin.math.PI * u2
+    val metersPerDeg = AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
+    val dlat = mag * kotlin.math.cos(angle) / metersPerDeg
+    val dlon = mag * kotlin.math.sin(angle) / (metersPerDeg * kotlin.math.cos(Math.toRadians(lat)))
+    return Pair(lat + dlat, lon + dlon)
+}
+
 /** Adds bounded Gaussian noise to [base] accuracy, clamped to [[ACCURACY_MIN], [ACCURACY_MAX]]. */
 internal fun perturbAccuracy(
     base: Float,
@@ -248,40 +265,14 @@ internal fun buildLocation(
     val (outLat, outLon) =
         when {
             state.mode == MockMode.TELEPORT && state.shouldApplyIdleJitter &&
-                state.jitterIdleRadiusMeters > 0.0 -> {
-                val u1 = random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
-                val u2 = random.nextDouble()
-                val mag = state.jitterIdleRadiusMeters * kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1))
-                val angle = 2.0 * kotlin.math.PI * u2
-                val dlat = mag * kotlin.math.cos(angle) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
-                val dlon =
-                    mag * kotlin.math.sin(angle) /
-                        (
-                            AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE *
-                                kotlin.math.cos(Math.toRadians(state.latitude))
-                        )
-                Pair(state.latitude + dlat, state.longitude + dlon)
-            }
+                state.jitterIdleRadiusMeters > 0.0 ->
+                gaussianLatLonOffset(state.latitude, state.longitude, state.jitterIdleRadiusMeters, random)
 
             state.mode != MockMode.TELEPORT && state.shouldApplyMovingJitter &&
-                state.jitterMovingRadiusMeters > 0.0 -> {
-                val u1 = random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
-                val u2 = random.nextDouble()
-                val mag = state.jitterMovingRadiusMeters * kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1))
-                val angle = 2.0 * kotlin.math.PI * u2
-                val dlat = mag * kotlin.math.cos(angle) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
-                val dlon =
-                    mag * kotlin.math.sin(angle) /
-                        (
-                            AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE *
-                                kotlin.math.cos(Math.toRadians(state.latitude))
-                        )
-                Pair(state.latitude + dlat, state.longitude + dlon)
-            }
+                state.jitterMovingRadiusMeters > 0.0 ->
+                gaussianLatLonOffset(state.latitude, state.longitude, state.jitterMovingRadiusMeters, random)
 
-            else -> {
-                Pair(state.latitude, state.longitude)
-            }
+            else -> Pair(state.latitude, state.longitude)
         }
 
     // Accuracy with warm-up envelope
