@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -62,16 +63,6 @@ class SettingsViewModel
             val warmupEnabled: Boolean,
             val satelliteExtrasEnabled: Boolean,
             val suspendedMockingEnabled: Boolean,
-        )
-
-        private data class DraftRealismChunk(
-            val mapFollowsLocation: Boolean?,
-            val roamingDefaults: RoamingDefaults?,
-            val bearingHoldIdle: Boolean?,
-            val altitudeEnabled: Boolean?,
-            val warmupEnabled: Boolean?,
-            val satelliteExtrasEnabled: Boolean?,
-            val suspendedMockingEnabled: Boolean?,
         )
 
         private data class RepoState(
@@ -113,23 +104,7 @@ class SettingsViewModel
             val realismSuspendedMockingEnabled: Boolean? = null,
         )
 
-        private val draftWalkSpeedFlow = MutableStateFlow<Double?>(null)
-        private val draftRunSpeedFlow = MutableStateFlow<Double?>(null)
-        private val draftBikeSpeedFlow = MutableStateFlow<Double?>(null)
-        private val draftSpeedUnitFlow = MutableStateFlow<SpeedUnit?>(null)
-        private val draftWidgetFeaturesFlow = MutableStateFlow<Set<WidgetFeature>?>(null)
-        private val draftRememberLastLocationFlow = MutableStateFlow<Boolean?>(null)
-        private val draftMapFollowsLocationFlow = MutableStateFlow<Boolean?>(null)
-        private val draftJitterIdleRadiusFlow = MutableStateFlow<Double?>(null)
-        private val draftJitterMovingRadiusFlow = MutableStateFlow<Double?>(null)
-        private val draftJitterIntervalSecondsFlow = MutableStateFlow<Int?>(null)
-        private val draftJitterIdleIntervalSecondsFlow = MutableStateFlow<Int?>(null)
-        private val draftRoamingDefaultsFlow = MutableStateFlow<RoamingDefaults?>(null)
-        private val draftRealismBearingHoldIdleFlow = MutableStateFlow<Boolean?>(null)
-        private val draftRealismAltitudeEnabledFlow = MutableStateFlow<Boolean?>(null)
-        private val draftRealismWarmupEnabledFlow = MutableStateFlow<Boolean?>(null)
-        private val draftRealismSatelliteExtrasEnabledFlow = MutableStateFlow<Boolean?>(null)
-        private val draftRealismSuspendedMockingEnabledFlow = MutableStateFlow<Boolean?>(null)
+        private val _draft = MutableStateFlow(DraftState())
 
         private val repoStateFlow =
             combine(
@@ -197,80 +172,13 @@ class SettingsViewModel
                 )
             }
 
-        private val draftStateFlow =
-            combine(
-                combine(
-                    draftWalkSpeedFlow.asStateFlow(),
-                    draftRunSpeedFlow.asStateFlow(),
-                    draftBikeSpeedFlow.asStateFlow(),
-                ) { walk, run, bike ->
-                    Triple(walk, run, bike)
-                },
-                combine(
-                    draftSpeedUnitFlow.asStateFlow(),
-                    draftWidgetFeaturesFlow.asStateFlow(),
-                    draftRememberLastLocationFlow.asStateFlow(),
-                ) { unit, features, remember ->
-                    Triple(unit, features, remember)
-                },
-                combine(
-                    combine(
-                        draftJitterIdleRadiusFlow.asStateFlow(),
-                        draftJitterMovingRadiusFlow.asStateFlow(),
-                        draftJitterIntervalSecondsFlow.asStateFlow(),
-                    ) { idle, moving, interval -> Triple(idle, moving, interval) },
-                    draftJitterIdleIntervalSecondsFlow.asStateFlow(),
-                ) { triple, idleInterval -> Pair(triple, idleInterval) },
-                combine(
-                    draftRoamingDefaultsFlow.asStateFlow(),
-                    draftMapFollowsLocationFlow.asStateFlow(),
-                    combine(
-                        draftRealismBearingHoldIdleFlow.asStateFlow(),
-                        draftRealismAltitudeEnabledFlow.asStateFlow(),
-                        draftRealismWarmupEnabledFlow.asStateFlow(),
-                    ) { bearing, altitude, warmup -> Triple(bearing, altitude, warmup) },
-                    combine(
-                        draftRealismSatelliteExtrasEnabledFlow.asStateFlow(),
-                        draftRealismSuspendedMockingEnabledFlow.asStateFlow(),
-                    ) { satellites, suspended -> Pair(satellites, suspended) },
-                ) { roaming, mapFollows, realism1, realism2 ->
-                    DraftRealismChunk(
-                        mapFollowsLocation = mapFollows,
-                        roamingDefaults = roaming,
-                        bearingHoldIdle = realism1.first,
-                        altitudeEnabled = realism1.second,
-                        warmupEnabled = realism1.third,
-                        satelliteExtrasEnabled = realism2.first,
-                        suspendedMockingEnabled = realism2.second,
-                    )
-                },
-            ) { speeds, settings, jitter, chunk ->
-                DraftState(
-                    walkSpeed = speeds.first,
-                    runSpeed = speeds.second,
-                    bikeSpeed = speeds.third,
-                    speedUnit = settings.first,
-                    widgetFeatures = settings.second,
-                    rememberLastLocation = settings.third,
-                    mapFollowsLocation = chunk.mapFollowsLocation,
-                    jitterIdleRadius = jitter.first.first,
-                    jitterMovingRadius = jitter.first.second,
-                    jitterIntervalSeconds = jitter.first.third,
-                    jitterIdleIntervalSeconds = jitter.second,
-                    roamingDefaults = chunk.roamingDefaults,
-                    realismBearingHoldIdle = chunk.bearingHoldIdle,
-                    realismAltitudeEnabled = chunk.altitudeEnabled,
-                    realismWarmupEnabled = chunk.warmupEnabled,
-                    realismSatelliteExtrasEnabled = chunk.satelliteExtrasEnabled,
-                    realismSuspendedMockingEnabled = chunk.suspendedMockingEnabled,
-                )
-            }
+        private val draftStateFlow = _draft.asStateFlow()
 
         val roamingDefaults: StateFlow<RoamingDefaults> =
             combine(
                 settingsRepository.getRoamingDefaults(),
-                draftRoamingDefaultsFlow,
-            ) { repo, draft -> draft ?: repo }
+                _draft,
+            ) { repo, draft -> draft.roamingDefaults ?: repo }
                 .stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(5_000),
@@ -282,17 +190,7 @@ class SettingsViewModel
                 repoStateFlow,
                 draftStateFlow,
             ) { repoState, draftState ->
-                val isDirty =
-                    draftState.walkSpeed != null || draftState.runSpeed != null ||
-                        draftState.bikeSpeed != null || draftState.speedUnit != null ||
-                        draftState.widgetFeatures != null || draftState.rememberLastLocation != null ||
-                        draftState.mapFollowsLocation != null ||
-                        draftState.jitterIdleRadius != null || draftState.jitterMovingRadius != null ||
-                        draftState.jitterIntervalSeconds != null || draftState.jitterIdleIntervalSeconds != null ||
-                        draftState.roamingDefaults != null ||
-                        draftState.realismBearingHoldIdle != null || draftState.realismAltitudeEnabled != null ||
-                        draftState.realismWarmupEnabled != null || draftState.realismSatelliteExtrasEnabled != null ||
-                        draftState.realismSuspendedMockingEnabled != null
+                val isDirty = draftState != DraftState()
                 SettingsUiState(
                     isLoading = false,
                     walkSpeed = draftState.walkSpeed ?: repoState.walkSpeed,
@@ -320,185 +218,71 @@ class SettingsViewModel
             )
 
         fun setWalkSpeed(displaySpeed: Double) {
-            val ms = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)
-            draftWalkSpeedFlow.value = ms
+            _draft.update { it.copy(walkSpeed = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)) }
         }
 
         fun setRunSpeed(displaySpeed: Double) {
-            val ms = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)
-            draftRunSpeedFlow.value = ms
+            _draft.update { it.copy(runSpeed = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)) }
         }
 
         fun setBikeSpeed(displaySpeed: Double) {
-            val ms = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)
-            draftBikeSpeedFlow.value = ms
+            _draft.update { it.copy(bikeSpeed = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)) }
         }
 
-        fun setSpeedUnit(unit: SpeedUnit) {
-            draftSpeedUnitFlow.value = unit
-        }
+        fun setSpeedUnit(unit: SpeedUnit) { _draft.update { it.copy(speedUnit = unit) } }
 
-        fun setWidgetFeatures(features: Set<WidgetFeature>) {
-            draftWidgetFeaturesFlow.value = features
-        }
+        fun setWidgetFeatures(features: Set<WidgetFeature>) { _draft.update { it.copy(widgetFeatures = features) } }
 
-        fun setRememberLastLocation(enabled: Boolean) {
-            draftRememberLastLocationFlow.value = enabled
-        }
+        fun setRememberLastLocation(enabled: Boolean) { _draft.update { it.copy(rememberLastLocation = enabled) } }
 
-        fun setMapFollowsLocation(enabled: Boolean) {
-            draftMapFollowsLocationFlow.value = enabled
-        }
+        fun setMapFollowsLocation(enabled: Boolean) { _draft.update { it.copy(mapFollowsLocation = enabled) } }
 
-        fun setJitterIdleRadius(meters: Double) {
-            draftJitterIdleRadiusFlow.value = meters
-        }
+        fun setJitterIdleRadius(meters: Double) { _draft.update { it.copy(jitterIdleRadius = meters) } }
 
-        fun setJitterMovingRadius(meters: Double) {
-            draftJitterMovingRadiusFlow.value = meters
-        }
+        fun setJitterMovingRadius(meters: Double) { _draft.update { it.copy(jitterMovingRadius = meters) } }
 
-        fun setJitterIntervalSeconds(seconds: Int) {
-            draftJitterIntervalSecondsFlow.value = seconds
-        }
+        fun setJitterIntervalSeconds(seconds: Int) { _draft.update { it.copy(jitterIntervalSeconds = seconds) } }
 
-        fun setJitterIdleIntervalSeconds(seconds: Int) {
-            draftJitterIdleIntervalSecondsFlow.value = seconds
-        }
+        fun setJitterIdleIntervalSeconds(seconds: Int) { _draft.update { it.copy(jitterIdleIntervalSeconds = seconds) } }
 
-        fun updateRoamingDefaults(defaults: RoamingDefaults) {
-            draftRoamingDefaultsFlow.value = defaults
-        }
+        fun updateRoamingDefaults(defaults: RoamingDefaults) { _draft.update { it.copy(roamingDefaults = defaults) } }
 
-        fun setRealismBearingHoldIdle(v: Boolean) {
-            draftRealismBearingHoldIdleFlow.value = v
-        }
+        fun setRealismBearingHoldIdle(v: Boolean) { _draft.update { it.copy(realismBearingHoldIdle = v) } }
 
-        fun setRealismAltitudeEnabled(v: Boolean) {
-            draftRealismAltitudeEnabledFlow.value = v
-        }
+        fun setRealismAltitudeEnabled(v: Boolean) { _draft.update { it.copy(realismAltitudeEnabled = v) } }
 
-        fun setRealismWarmupEnabled(v: Boolean) {
-            draftRealismWarmupEnabledFlow.value = v
-        }
+        fun setRealismWarmupEnabled(v: Boolean) { _draft.update { it.copy(realismWarmupEnabled = v) } }
 
-        fun setRealismSatelliteExtrasEnabled(v: Boolean) {
-            draftRealismSatelliteExtrasEnabledFlow.value = v
-        }
+        fun setRealismSatelliteExtrasEnabled(v: Boolean) { _draft.update { it.copy(realismSatelliteExtrasEnabled = v) } }
 
-        fun setRealismSuspendedMockingEnabled(v: Boolean) {
-            draftRealismSuspendedMockingEnabledFlow.value = v
-        }
+        fun setRealismSuspendedMockingEnabled(v: Boolean) { _draft.update { it.copy(realismSuspendedMockingEnabled = v) } }
 
         fun saveChanges() {
             viewModelScope.launch {
-                val draftWalk = draftWalkSpeedFlow.value
-                val draftRun = draftRunSpeedFlow.value
-                val draftBike = draftBikeSpeedFlow.value
-                val draftUnit = draftSpeedUnitFlow.value
-                val draftFeatures = draftWidgetFeaturesFlow.value
-                val draftRememberLastLocation = draftRememberLastLocationFlow.value
-
-                if (draftWalk != null) {
-                    settingsRepository.setWalkSpeed(draftWalk)
-                    draftWalkSpeedFlow.value = null
-                }
-                if (draftRun != null) {
-                    settingsRepository.setRunSpeed(draftRun)
-                    draftRunSpeedFlow.value = null
-                }
-                if (draftBike != null) {
-                    settingsRepository.setBikeSpeed(draftBike)
-                    draftBikeSpeedFlow.value = null
-                }
-                if (draftUnit != null) {
-                    settingsRepository.setSpeedUnit(draftUnit)
-                    draftSpeedUnitFlow.value = null
-                }
-                if (draftFeatures != null) {
-                    settingsRepository.setWidgetFeatures(draftFeatures.toList())
-                    draftWidgetFeaturesFlow.value = null
-                }
-                if (draftRememberLastLocation != null) {
-                    settingsRepository.setRememberLastLocation(draftRememberLastLocation)
-                    draftRememberLastLocationFlow.value = null
-                }
-                val draftMapFollows = draftMapFollowsLocationFlow.value
-                if (draftMapFollows != null) {
-                    settingsRepository.setMapFollowsLocation(draftMapFollows)
-                    draftMapFollowsLocationFlow.value = null
-                }
-                val draftJitterIdle = draftJitterIdleRadiusFlow.value
-                if (draftJitterIdle != null) {
-                    settingsRepository.setJitterIdleRadius(draftJitterIdle)
-                    draftJitterIdleRadiusFlow.value = null
-                }
-                val draftJitterMoving = draftJitterMovingRadiusFlow.value
-                if (draftJitterMoving != null) {
-                    settingsRepository.setJitterMovingRadius(draftJitterMoving)
-                    draftJitterMovingRadiusFlow.value = null
-                }
-                val draftJitterInterval = draftJitterIntervalSecondsFlow.value
-                if (draftJitterInterval != null) {
-                    settingsRepository.setJitterIntervalSeconds(draftJitterInterval)
-                    draftJitterIntervalSecondsFlow.value = null
-                }
-                val draftJitterIdleInterval = draftJitterIdleIntervalSecondsFlow.value
-                if (draftJitterIdleInterval != null) {
-                    settingsRepository.setJitterIdleIntervalSeconds(draftJitterIdleInterval)
-                    draftJitterIdleIntervalSecondsFlow.value = null
-                }
-                val draftRoaming = draftRoamingDefaultsFlow.value
-                if (draftRoaming != null) {
-                    settingsRepository.updateRoamingDefaults(draftRoaming)
-                    draftRoamingDefaultsFlow.value = null
-                }
-                val draftBearingHoldIdle = draftRealismBearingHoldIdleFlow.value
-                if (draftBearingHoldIdle != null) {
-                    settingsRepository.setRealismBearingHoldIdle(draftBearingHoldIdle)
-                    draftRealismBearingHoldIdleFlow.value = null
-                }
-                val draftAltitudeEnabled = draftRealismAltitudeEnabledFlow.value
-                if (draftAltitudeEnabled != null) {
-                    settingsRepository.setRealismAltitudeEnabled(draftAltitudeEnabled)
-                    draftRealismAltitudeEnabledFlow.value = null
-                }
-                val draftWarmupEnabled = draftRealismWarmupEnabledFlow.value
-                if (draftWarmupEnabled != null) {
-                    settingsRepository.setRealismWarmupEnabled(draftWarmupEnabled)
-                    draftRealismWarmupEnabledFlow.value = null
-                }
-                val draftSatelliteExtrasEnabled = draftRealismSatelliteExtrasEnabledFlow.value
-                if (draftSatelliteExtrasEnabled != null) {
-                    settingsRepository.setRealismSatelliteExtrasEnabled(draftSatelliteExtrasEnabled)
-                    draftRealismSatelliteExtrasEnabledFlow.value = null
-                }
-                val draftSuspendedMockingEnabled = draftRealismSuspendedMockingEnabledFlow.value
-                if (draftSuspendedMockingEnabled != null) {
-                    settingsRepository.setRealismSuspendedMockingEnabled(draftSuspendedMockingEnabled)
-                    draftRealismSuspendedMockingEnabledFlow.value = null
-                }
+                val d = _draft.value
+                if (d.walkSpeed != null) settingsRepository.setWalkSpeed(d.walkSpeed)
+                if (d.runSpeed != null) settingsRepository.setRunSpeed(d.runSpeed)
+                if (d.bikeSpeed != null) settingsRepository.setBikeSpeed(d.bikeSpeed)
+                if (d.speedUnit != null) settingsRepository.setSpeedUnit(d.speedUnit)
+                if (d.widgetFeatures != null) settingsRepository.setWidgetFeatures(d.widgetFeatures.toList())
+                if (d.rememberLastLocation != null) settingsRepository.setRememberLastLocation(d.rememberLastLocation)
+                if (d.mapFollowsLocation != null) settingsRepository.setMapFollowsLocation(d.mapFollowsLocation)
+                if (d.jitterIdleRadius != null) settingsRepository.setJitterIdleRadius(d.jitterIdleRadius)
+                if (d.jitterMovingRadius != null) settingsRepository.setJitterMovingRadius(d.jitterMovingRadius)
+                if (d.jitterIntervalSeconds != null) settingsRepository.setJitterIntervalSeconds(d.jitterIntervalSeconds)
+                if (d.jitterIdleIntervalSeconds != null) settingsRepository.setJitterIdleIntervalSeconds(d.jitterIdleIntervalSeconds)
+                if (d.roamingDefaults != null) settingsRepository.updateRoamingDefaults(d.roamingDefaults)
+                if (d.realismBearingHoldIdle != null) settingsRepository.setRealismBearingHoldIdle(d.realismBearingHoldIdle)
+                if (d.realismAltitudeEnabled != null) settingsRepository.setRealismAltitudeEnabled(d.realismAltitudeEnabled)
+                if (d.realismWarmupEnabled != null) settingsRepository.setRealismWarmupEnabled(d.realismWarmupEnabled)
+                if (d.realismSatelliteExtrasEnabled != null) settingsRepository.setRealismSatelliteExtrasEnabled(d.realismSatelliteExtrasEnabled)
+                if (d.realismSuspendedMockingEnabled != null) settingsRepository.setRealismSuspendedMockingEnabled(d.realismSuspendedMockingEnabled)
+                _draft.value = DraftState()
             }
         }
 
         fun discardChanges() {
-            draftWalkSpeedFlow.value = null
-            draftRunSpeedFlow.value = null
-            draftBikeSpeedFlow.value = null
-            draftSpeedUnitFlow.value = null
-            draftWidgetFeaturesFlow.value = null
-            draftRememberLastLocationFlow.value = null
-            draftMapFollowsLocationFlow.value = null
-            draftJitterIdleRadiusFlow.value = null
-            draftJitterMovingRadiusFlow.value = null
-            draftJitterIntervalSecondsFlow.value = null
-            draftJitterIdleIntervalSecondsFlow.value = null
-            draftRoamingDefaultsFlow.value = null
-            draftRealismBearingHoldIdleFlow.value = null
-            draftRealismAltitudeEnabledFlow.value = null
-            draftRealismWarmupEnabledFlow.value = null
-            draftRealismSatelliteExtrasEnabledFlow.value = null
-            draftRealismSuspendedMockingEnabledFlow.value = null
+            _draft.value = DraftState()
         }
 
         fun convertMsToDisplay(
