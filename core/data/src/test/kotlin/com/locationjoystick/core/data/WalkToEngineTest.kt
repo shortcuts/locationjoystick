@@ -160,6 +160,54 @@ class WalkToEngineTest {
         }
 
     @Test
+    fun `launchWalkAlongRoute advances toward first waypoint before reaching it`() =
+        runTest {
+            val start = LatLng(48.8566, 2.3522)
+            val mid = LatLng(48.9000, 2.3522) // ~4800m north — won't snap in one tick
+            val end = LatLng(48.9434, 2.3522)
+            locationRepository.setPositionInternal(start)
+            locationRepository.setWalkTarget(end)
+
+            val positions = mutableListOf<LatLng>()
+
+            with(engine) {
+                backgroundScope.launchWalkAlongRoute(
+                    waypoints = listOf(start, mid, end),
+                    onPositionUpdate = { pos, _, _ ->
+                        positions.add(pos)
+                        locationRepository.updatePosition(pos)
+                    },
+                    onArrival = {},
+                )
+            }
+
+            advanceTimeBy(AppConstants.LocationConstants.UPDATE_INTERVAL_MS + 1)
+
+            assertTrue("should produce position updates", positions.isNotEmpty())
+            val lat = positions.last().latitude
+            assertTrue("should advance north past start", lat > start.latitude)
+            assertTrue("should not reach mid in one tick at walk speed", lat < mid.latitude)
+        }
+
+    @Test
+    fun `launchWalkAlongRoute empty waypoints throws`() =
+        runTest {
+            var threw = false
+            try {
+                with(engine) {
+                    backgroundScope.launchWalkAlongRoute(
+                        waypoints = emptyList(),
+                        onPositionUpdate = { _, _, _ -> },
+                        onArrival = {},
+                    )
+                }
+            } catch (e: IllegalArgumentException) {
+                threw = true
+            }
+            assertTrue("empty waypoints should throw IllegalArgumentException", threw)
+        }
+
+    @Test
     fun `arrives when within threshold`() =
         runTest {
             // Place target within WALK_ARRIVAL_THRESHOLD_METERS of current position

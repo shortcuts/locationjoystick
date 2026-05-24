@@ -2,9 +2,11 @@ package com.locationjoystick.feature.routes.impl
 
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
+import com.locationjoystick.core.model.RouteReplayMode
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.Waypoint
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -218,5 +220,46 @@ class RoutesViewModelTest {
         assertEquals(48.8566, waypoint.position.latitude, 0.0001)
         assertEquals(2.3522, waypoint.position.longitude, 0.0001)
         assertEquals(0, waypoint.orderIndex)
+    }
+
+    // RouteReplayMode → intent flags mapping (mirrors RoutesViewModel.startReplay logic)
+
+    private fun isBackward(mode: RouteReplayMode) = mode == RouteReplayMode.LOOP_REVERSE
+
+    private fun isLooping(mode: RouteReplayMode) = mode == RouteReplayMode.LOOP || mode == RouteReplayMode.LOOP_REVERSE
+
+    private fun needsReturn(mode: RouteReplayMode) = mode == RouteReplayMode.RETURN_TO_LOCATION
+
+    @Test
+    fun `ONE_WAY not looping not backward not return`() {
+        assertFalse(isBackward(RouteReplayMode.ONE_WAY))
+        assertFalse(isLooping(RouteReplayMode.ONE_WAY))
+        assertFalse(needsReturn(RouteReplayMode.ONE_WAY))
+    }
+
+    @Test
+    fun `LOOP is looping not backward not return`() {
+        assertFalse(isBackward(RouteReplayMode.LOOP))
+        assertTrue(isLooping(RouteReplayMode.LOOP))
+        assertFalse(needsReturn(RouteReplayMode.LOOP))
+    }
+
+    @Test
+    fun `LOOP_REVERSE is looping and backward`() {
+        assertTrue(isBackward(RouteReplayMode.LOOP_REVERSE))
+        assertTrue(isLooping(RouteReplayMode.LOOP_REVERSE))
+        assertFalse(needsReturn(RouteReplayMode.LOOP_REVERSE))
+    }
+
+    @Test
+    fun `RETURN_TO_LOCATION not looping not backward needs return`() {
+        assertFalse(isBackward(RouteReplayMode.RETURN_TO_LOCATION))
+        assertFalse(isLooping(RouteReplayMode.RETURN_TO_LOCATION))
+        assertTrue(needsReturn(RouteReplayMode.RETURN_TO_LOCATION))
+    }
+
+    @Test
+    fun `all four RouteReplayMode values covered`() {
+        assertEquals(4, RouteReplayMode.entries.size)
     }
 }

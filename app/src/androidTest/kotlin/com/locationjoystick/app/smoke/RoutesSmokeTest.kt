@@ -2,7 +2,9 @@ package com.locationjoystick.app.smoke
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import com.locationjoystick.app.MainActivity
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.model.LatLng
@@ -59,5 +61,14 @@ class RoutesSmokeTest {
     @Test
     fun seeded_route_is_visible() {
         composeRule.onNodeWithText("Smoke Test Route").assertIsDisplayed()
+    }
+
+    @Test
+    fun replay_mode_dropdown_shows_all_options() {
+        composeRule.onNodeWithContentDescription("Start route").performClick()
+        composeRule.onNodeWithText("Walk route").assertIsDisplayed()
+        composeRule.onNodeWithText("Return to location").assertIsDisplayed()
+        composeRule.onNodeWithText("Loop").assertIsDisplayed()
+        composeRule.onNodeWithText("Loop in reverse").assertIsDisplayed()
     }
 }

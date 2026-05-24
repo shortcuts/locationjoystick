@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -121,6 +122,44 @@ class WalkCoordinatorTest {
                 "Walk target should be null after arrival",
                 locationRepository.walkTarget.value,
             )
+        }
+
+    @Test
+    fun `startWalkAlongRoute sets final waypoint as walk target`() =
+        runTest {
+            val wp1 = LatLng(48.8566, 2.3522)
+            val wp2 = LatLng(48.9000, 2.3522)
+            locationRepository.setPositionInternal(wp1)
+
+            walkCoordinator.startWalkAlongRoute(listOf(wp1, wp2), backgroundScope)
+
+            assertEquals(wp2, locationRepository.walkTarget.value)
+        }
+
+    @Test
+    fun `startWalkAlongRoute empty list throws`() =
+        runTest {
+            var threw = false
+            try {
+                walkCoordinator.startWalkAlongRoute(emptyList(), backgroundScope)
+            } catch (e: IllegalArgumentException) {
+                threw = true
+            }
+            assertTrue("startWalkAlongRoute with empty list should throw", threw)
+        }
+
+    @Test
+    fun `startWalkAlongRoute cancels previous walk and sets new final target`() =
+        runTest {
+            val current = LatLng(48.8566, 2.3522)
+            locationRepository.setPositionInternal(current)
+
+            walkCoordinator.startWalkAlongRoute(listOf(LatLng(48.9000, 2.3522)), backgroundScope)
+            assertEquals(LatLng(48.9000, 2.3522), locationRepository.walkTarget.value)
+
+            val newFinal = LatLng(48.8800, 2.3522)
+            walkCoordinator.startWalkAlongRoute(listOf(LatLng(48.8700, 2.3522), newFinal), backgroundScope)
+            assertEquals(newFinal, locationRepository.walkTarget.value)
         }
 
     @Test
