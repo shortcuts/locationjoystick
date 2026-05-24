@@ -335,53 +335,19 @@ internal fun SettingsScreen(
                         ) {
                             Text("Unit: ", modifier = Modifier.weight(0.3f))
                             Row(modifier = Modifier.weight(0.7f)) {
-                                val isKmh = uiState.speedUnit == SpeedUnit.KMH
-
-                                Row(
-                                    modifier = Modifier.weight(0.7f),
-                                ) {
-                                    if (isKmh) {
+                                val units = listOf(SpeedUnit.KMH to "km/h", SpeedUnit.MPH to "mph")
+                                units.forEachIndexed { index, (unit, label) ->
+                                    val padding = if (index == 0) Modifier.padding(end = 4.dp) else Modifier.padding(start = 4.dp)
+                                    if (uiState.speedUnit == unit) {
                                         OutlinedButton(
-                                            onClick = { onSetSpeedUnit(SpeedUnit.KMH) },
-                                            modifier =
-                                                Modifier
-                                                    .weight(0.5f)
-                                                    .padding(end = 4.dp),
-                                        ) {
-                                            Text("km/h")
-                                        }
+                                            onClick = { onSetSpeedUnit(unit) },
+                                            modifier = Modifier.weight(0.5f).then(padding),
+                                        ) { Text(label) }
                                     } else {
                                         FilledTonalButton(
-                                            onClick = { onSetSpeedUnit(SpeedUnit.KMH) },
-                                            modifier =
-                                                Modifier
-                                                    .weight(0.5f)
-                                                    .padding(end = 4.dp),
-                                        ) {
-                                            Text("km/h")
-                                        }
-                                    }
-
-                                    if (!isKmh) {
-                                        OutlinedButton(
-                                            onClick = { onSetSpeedUnit(SpeedUnit.MPH) },
-                                            modifier =
-                                                Modifier
-                                                    .weight(0.5f)
-                                                    .padding(start = 4.dp),
-                                        ) {
-                                            Text("mph")
-                                        }
-                                    } else {
-                                        FilledTonalButton(
-                                            onClick = { onSetSpeedUnit(SpeedUnit.MPH) },
-                                            modifier =
-                                                Modifier
-                                                    .weight(0.5f)
-                                                    .padding(start = 4.dp),
-                                        ) {
-                                            Text("mph")
-                                        }
+                                            onClick = { onSetSpeedUnit(unit) },
+                                            modifier = Modifier.weight(0.5f).then(padding),
+                                        ) { Text(label) }
                                     }
                                 }
                             }
