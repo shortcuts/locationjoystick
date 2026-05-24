@@ -19,6 +19,15 @@ data class LatLng(
     }
 }
 
+fun LatLng.bearingTo(other: LatLng): Double {
+    val lat1 = Math.toRadians(latitude)
+    val lat2 = Math.toRadians(other.latitude)
+    val dLon = Math.toRadians(other.longitude - longitude)
+    val y = sin(dLon) * cos(lat2)
+    val x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
+    return (Math.toDegrees(atan2(y, x)) + 360.0) % 360.0
+}
+
 /**
  * Haversine distance in meters between two coordinates.
  */
