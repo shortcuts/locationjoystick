@@ -588,6 +588,7 @@ private fun FavoritesPickerSheet(
                 favorite = target,
                 onSetLocation = { onAction(MapAction.SetLocationTo(target.position)) },
                 onGoToLocation = { onAction(MapAction.WalkStraightTo(target.position)) },
+                onGoToLocationViaRoads = { onAction(MapAction.WalkViaRoadsTo(target.position)) },
                 onDismiss = { onAction(MapAction.CloseFavoritesPicker) },
             )
         }
@@ -721,6 +722,7 @@ private fun FavoriteTargetDetail(
     favorite: FavoriteLocation,
     onSetLocation: () -> Unit,
     onGoToLocation: () -> Unit,
+    onGoToLocationViaRoads: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     Column(
@@ -754,6 +756,15 @@ private fun FavoriteTargetDetail(
                     .padding(top = 8.dp),
         ) {
             Text("Walk To Location")
+        }
+        OutlinedButton(
+            onClick = onGoToLocationViaRoads,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+        ) {
+            Text("Walk via roads")
         }
         TextButton(
             onClick = onDismiss,

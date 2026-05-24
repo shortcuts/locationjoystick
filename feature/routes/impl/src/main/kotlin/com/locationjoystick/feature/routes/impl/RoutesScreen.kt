@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material3.AlertDialog
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.model.RouteReplayMode
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.distanceTo
 
@@ -71,7 +73,7 @@ fun RoutesRoute(
         onOpenDrawer = onOpenDrawer,
         onDeleteRoute = viewModel::deleteRoute,
         onExportRoute = { route -> viewModel.exportRouteAsGpx(context, route) },
-        onStartReplay = { route, fromFirstWaypoint -> viewModel.startReplay(route, fromFirstWaypoint) },
+        onStartReplay = { route, mode -> viewModel.startReplay(route, mode) },
         onPauseReplay = viewModel::pauseReplay,
         onResumeReplay = viewModel::resumeReplay,
         onStopReplay = viewModel::stopReplay,
@@ -108,7 +110,7 @@ internal fun RoutesScreen(
     onOpenDrawer: () -> Unit,
     onDeleteRoute: (String) -> Unit,
     onExportRoute: (com.locationjoystick.core.model.Route) -> Unit,
-    onStartReplay: (com.locationjoystick.core.model.Route, Boolean) -> Unit,
+    onStartReplay: (com.locationjoystick.core.model.Route, RouteReplayMode) -> Unit,
     onPauseReplay: () -> Unit,
     onResumeReplay: () -> Unit,
     onStopReplay: () -> Unit,
@@ -213,7 +215,7 @@ private fun RouteCard(
     onNavigateToEdit: (String) -> Unit,
     onDeleteRoute: (com.locationjoystick.core.model.Route) -> Unit,
     onExport: (com.locationjoystick.core.model.Route) -> Unit,
-    onStartReplay: (com.locationjoystick.core.model.Route, Boolean) -> Unit,
+    onStartReplay: (com.locationjoystick.core.model.Route, RouteReplayMode) -> Unit,
     onPauseReplay: () -> Unit,
     onResumeReplay: () -> Unit,
     onStopReplay: () -> Unit,
@@ -329,23 +331,51 @@ private fun RouteCard(
                 }
 
                 else -> {
-                    IconButton(
-                        onClick = { onStartReplay(route, false) },
-                        enabled = !isActive,
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.DirectionsWalk,
-                            contentDescription = "Start from current location",
-                        )
-                    }
-                    IconButton(
-                        onClick = { onStartReplay(route, true) },
-                        enabled = !isActive,
-                    ) {
-                        Icon(
-                            Icons.Default.PlayArrow,
-                            contentDescription = "Teleport to route start",
-                        )
+                    var replayMenuExpanded by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(
+                            onClick = { replayMenuExpanded = true },
+                            enabled = !isActive,
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = "Start route")
+                        }
+                        DropdownMenu(
+                            expanded = replayMenuExpanded,
+                            onDismissRequest = { replayMenuExpanded = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Walk route") },
+                                onClick = {
+                                    onStartReplay(route, RouteReplayMode.ONE_WAY)
+                                    replayMenuExpanded = false
+                                },
+                                leadingIcon = { Icon(Icons.AutoMirrored.Filled.DirectionsWalk, null) },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Return to location") },
+                                onClick = {
+                                    onStartReplay(route, RouteReplayMode.RETURN_TO_LOCATION)
+                                    replayMenuExpanded = false
+                                },
+                                leadingIcon = { Icon(Icons.AutoMirrored.Filled.DirectionsWalk, null) },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Loop") },
+                                onClick = {
+                                    onStartReplay(route, RouteReplayMode.LOOP)
+                                    replayMenuExpanded = false
+                                },
+                                leadingIcon = { Icon(Icons.Default.Repeat, null) },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Loop in reverse") },
+                                onClick = {
+                                    onStartReplay(route, RouteReplayMode.LOOP_REVERSE)
+                                    replayMenuExpanded = false
+                                },
+                                leadingIcon = { Icon(Icons.Default.Repeat, null) },
+                            )
+                        }
                     }
                 }
             }

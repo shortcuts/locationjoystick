@@ -85,6 +85,9 @@ class MockLocationService : Service() {
         const val EXTRA_WAYPOINT_LAT = AppConstants.ServiceConstants.EXTRA_WAYPOINT_LAT
         const val EXTRA_WAYPOINT_LON = AppConstants.ServiceConstants.EXTRA_WAYPOINT_LON
         const val EXTRA_IS_EPHEMERAL = AppConstants.ServiceConstants.EXTRA_IS_EPHEMERAL
+        const val EXTRA_IS_LOOPING = AppConstants.ServiceConstants.EXTRA_IS_LOOPING
+        const val EXTRA_RETURN_LAT = AppConstants.ServiceConstants.EXTRA_RETURN_LAT
+        const val EXTRA_RETURN_LON = AppConstants.ServiceConstants.EXTRA_RETURN_LON
     }
 
     inner class LocalBinder : Binder() {
@@ -391,7 +394,13 @@ class MockLocationService : Service() {
                 } else {
                     val routeId = intent.getStringExtra(EXTRA_ROUTE_ID) ?: return START_STICKY
                     val isBackward = intent.getBooleanExtra(EXTRA_IS_BACKWARD, false)
-                    handleReplayStart(routeId, isBackward, speedMs)
+                    val isLoopingOverride =
+                        if (intent.hasExtra(EXTRA_IS_LOOPING)) intent.getBooleanExtra(EXTRA_IS_LOOPING, false) else null
+                    val returnLat = intent.getDoubleExtra(EXTRA_RETURN_LAT, Double.NaN)
+                    val returnLon = intent.getDoubleExtra(EXTRA_RETURN_LON, Double.NaN)
+                    val returnPosition =
+                        if (!returnLat.isNaN() && !returnLon.isNaN()) LatLng(returnLat, returnLon) else null
+                    handleReplayStart(routeId, isBackward, speedMs, isLoopingOverride, returnPosition)
                 }
             }
 
@@ -585,16 +594,19 @@ class MockLocationService : Service() {
         routeId: String,
         isBackward: Boolean,
         speedMs: Double,
+        isLoopingOverride: Boolean? = null,
+        returnPosition: LatLng? = null,
     ) {
         serviceScope.launch {
             val route = routeRepository.getRouteWithWaypoints(routeId).first() ?: return@launch
             if (route.waypoints.size < 2) return@launch
             val latLngs = (if (isBackward) route.waypoints.reversed() else route.waypoints).map { it.position }
+            val isLooping = isLoopingOverride ?: route.isLooping
 
             startReplayWithWaypoints(
                 waypoints = latLngs,
                 speedMs = speedMs,
-                isLooping = route.isLooping,
+                isLooping = isLooping,
                 persistMetadata = {
                     locationRepository.setActiveRouteId(routeId)
                     locationRepository.setIsReplayBackward(isBackward)
@@ -603,6 +615,9 @@ class MockLocationService : Service() {
                 onComplete = {
                     locationRepository.setRouteWaypoints(null)
                     locationRepository.setActiveRouteId(null)
+                    if (returnPosition != null) {
+                        walkToPosition(returnPosition, speedMs)
+                    }
                     locationRepository.setMockMode(MockMode.TELEPORT)
                 },
             )

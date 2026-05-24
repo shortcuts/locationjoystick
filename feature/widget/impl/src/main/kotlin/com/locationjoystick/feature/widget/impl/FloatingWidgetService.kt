@@ -113,6 +113,8 @@ class FloatingWidgetService :
 
     @Inject lateinit var ephemeralReplayController: EphemeralReplayController
 
+    @Inject lateinit var osrmClient: com.locationjoystick.core.routing.OsrmClient
+
     private var composeView: ComposeView? = null
     private var panelComposeView: ComposeView? = null
     private var joystickPollJob: Job? = null
@@ -364,6 +366,10 @@ class FloatingWidgetService :
                             startWalkToFavorite(fav)
                             moveAppToBack()
                         },
+                        onWalkViaRoads = { fav ->
+                            startWalkViaRoadsToFavorite(fav)
+                            moveAppToBack()
+                        },
                         onAddFromHere = { name ->
                             serviceScope.launch {
                                 val pos = locationRepository.currentPosition.value
@@ -414,12 +420,8 @@ class FloatingWidgetService :
                     RoutesFloatingView(
                         routes = routes,
                         onDismiss = { hidePanelView() },
-                        onStart = { routeId ->
-                            startRouteReplay(routeId, false)
-                            moveAppToBack()
-                        },
-                        onStartReverse = { routeId ->
-                            startRouteReplay(routeId, true)
+                        onStartWithMode = { routeId, mode ->
+                            startRouteReplayWithMode(routeId, mode)
                             moveAppToBack()
                         },
                         onCreateFromMap = { openRouteCreator() },
@@ -541,6 +543,59 @@ class FloatingWidgetService :
             startService(
                 MockLocationIntentBuilder.updatePosition(this@FloatingWidgetService, newPos.latitude, newPos.longitude, speedMs, bearing),
             )
+        }
+    }
+
+    private fun startWalkViaRoadsToFavorite(favorite: FavoriteLocation) {
+        serviceScope.launch {
+            val current = locationRepository.currentPosition.value
+            if (current == null) {
+                startWalkToFavorite(favorite)
+                return@launch
+            }
+            val waypoints =
+                osrmClient
+                    .getRoute(com.locationjoystick.core.routing.OsrmClient.PROFILE_FOOT, listOf(current, favorite.position))
+                    .getOrNull()
+            if (waypoints.isNullOrEmpty()) {
+                Log.w(TAG, "OSRM failed for favorite walk; falling back to straight line")
+                startWalkToFavorite(favorite)
+                return@launch
+            }
+            walkCoordinator.startWalkAlongRoute(waypoints, serviceScope) { newPos, speedMs, bearing ->
+                startService(
+                    MockLocationIntentBuilder.updatePosition(this@FloatingWidgetService, newPos.latitude, newPos.longitude, speedMs, bearing),
+                )
+            }
+        }
+    }
+
+    private fun startRouteReplayWithMode(
+        routeId: String,
+        mode: com.locationjoystick.core.model.RouteReplayMode,
+    ) {
+        serviceScope.launch {
+            val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+            val isBackward = mode == com.locationjoystick.core.model.RouteReplayMode.LOOP_REVERSE
+            val isLooping =
+                mode == com.locationjoystick.core.model.RouteReplayMode.LOOP ||
+                    mode == com.locationjoystick.core.model.RouteReplayMode.LOOP_REVERSE
+            val returnPosition =
+                if (mode == com.locationjoystick.core.model.RouteReplayMode.RETURN_TO_LOCATION) {
+                    locationRepository.currentPosition.value
+                } else {
+                    null
+                }
+            val intent =
+                MockLocationIntentBuilder.startRouteReplay(this@FloatingWidgetService, routeId, speedMs, isBackward)
+                    .apply {
+                        putExtra(MockLocationService.EXTRA_IS_LOOPING, isLooping)
+                        if (returnPosition != null) {
+                            putExtra(MockLocationService.EXTRA_RETURN_LAT, returnPosition.latitude)
+                            putExtra(MockLocationService.EXTRA_RETURN_LON, returnPosition.longitude)
+                        }
+                    }
+            startService(intent)
         }
     }
 

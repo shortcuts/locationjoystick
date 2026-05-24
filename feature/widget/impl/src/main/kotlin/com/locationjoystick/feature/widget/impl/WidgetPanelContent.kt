@@ -37,6 +37,8 @@ import androidx.compose.material.icons.rounded.Route
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +62,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.model.RouteReplayMode
 import com.locationjoystick.core.model.WidgetFeature
 
 @Composable
@@ -213,6 +216,7 @@ internal fun FavoritesFloatingView(
     onDismiss: () -> Unit,
     onTeleport: (FavoriteLocation) -> Unit,
     onWalk: (FavoriteLocation) -> Unit,
+    onWalkViaRoads: (FavoriteLocation) -> Unit,
     onAddFromHere: (name: String) -> Unit,
 ) {
     var showAddForm by remember { mutableStateOf(false) }
@@ -291,6 +295,13 @@ internal fun FavoritesFloatingView(
                                     }) {
                                         Text("Walk")
                                     }
+                                    Spacer(Modifier.width(8.dp))
+                                    Button(onClick = {
+                                        onWalkViaRoads(fav)
+                                        onDismiss()
+                                    }) {
+                                        Text("Via roads")
+                                    }
                                 }
                             }
                         }
@@ -359,8 +370,7 @@ internal fun FavoritesFloatingView(
 internal fun RoutesFloatingView(
     routes: List<com.locationjoystick.core.model.Route>,
     onDismiss: () -> Unit,
-    onStart: (routeId: String) -> Unit,
-    onStartReverse: (routeId: String) -> Unit,
+    onStartWithMode: (routeId: String, RouteReplayMode) -> Unit,
     onCreateFromMap: () -> Unit,
 ) {
     Box(
@@ -423,18 +433,48 @@ internal fun RoutesFloatingView(
                                         color = LjText,
                                         modifier = Modifier.weight(1f),
                                     )
-                                    Button(onClick = {
-                                        onStart(route.id)
-                                        onDismiss()
-                                    }) {
-                                        Text("Play")
-                                    }
-                                    Spacer(Modifier.width(8.dp))
-                                    Button(onClick = {
-                                        onStartReverse(route.id)
-                                        onDismiss()
-                                    }) {
-                                        Text("Reverse")
+                                    var routeMenuExpanded by remember { mutableStateOf(false) }
+                                    Box {
+                                        Button(onClick = { routeMenuExpanded = true }) {
+                                            Icon(Icons.Rounded.PlayArrow, contentDescription = null)
+                                        }
+                                        DropdownMenu(
+                                            expanded = routeMenuExpanded,
+                                            onDismissRequest = { routeMenuExpanded = false },
+                                        ) {
+                                            DropdownMenuItem(
+                                                text = { Text("Walk route") },
+                                                onClick = {
+                                                    onStartWithMode(route.id, RouteReplayMode.ONE_WAY)
+                                                    routeMenuExpanded = false
+                                                    onDismiss()
+                                                },
+                                            )
+                                            DropdownMenuItem(
+                                                text = { Text("Return to location") },
+                                                onClick = {
+                                                    onStartWithMode(route.id, RouteReplayMode.RETURN_TO_LOCATION)
+                                                    routeMenuExpanded = false
+                                                    onDismiss()
+                                                },
+                                            )
+                                            DropdownMenuItem(
+                                                text = { Text("Loop") },
+                                                onClick = {
+                                                    onStartWithMode(route.id, RouteReplayMode.LOOP)
+                                                    routeMenuExpanded = false
+                                                    onDismiss()
+                                                },
+                                            )
+                                            DropdownMenuItem(
+                                                text = { Text("Loop in reverse") },
+                                                onClick = {
+                                                    onStartWithMode(route.id, RouteReplayMode.LOOP_REVERSE)
+                                                    routeMenuExpanded = false
+                                                    onDismiss()
+                                                },
+                                            )
+                                        }
                                     }
                                 }
                             }
