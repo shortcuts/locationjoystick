@@ -163,6 +163,14 @@ class SettingsRepository
 
         suspend fun setRealismSuspendedMockingEnabled(enabled: Boolean) = dataSource.setRealismSuspendedMockingEnabled(enabled)
 
+        fun getRoutesSortNewestFirst(): Flow<Boolean> = dataSource.getRoutesSortNewestFirst()
+
+        suspend fun setRoutesSortNewestFirst(newestFirst: Boolean) = dataSource.setRoutesSortNewestFirst(newestFirst)
+
+        fun getFavoritesSortNewestFirst(): Flow<Boolean> = dataSource.getFavoritesSortNewestFirst()
+
+        suspend fun setFavoritesSortNewestFirst(newestFirst: Boolean) = dataSource.setFavoritesSortNewestFirst(newestFirst)
+
         fun getRecentSearches(): Flow<List<RecentSearch>> = dataSource.getRecentSearches()
 
         suspend fun addRecentSearch(

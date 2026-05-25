@@ -22,13 +22,11 @@ import com.locationjoystick.core.model.Waypoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -46,12 +44,10 @@ class RoutesViewModel
         private val settingsRepository: SettingsRepository,
         @ApplicationContext private val context: Context,
     ) : ViewModel() {
-        private val _sortNewestFirst = MutableStateFlow(true)
-
         val uiState: StateFlow<RoutesUiState> =
             combine(
                 routeRepository.getRoutes(),
-                _sortNewestFirst,
+                settingsRepository.getRoutesSortNewestFirst(),
             ) { routes, sortNewestFirst ->
                 val sorted =
                     if (sortNewestFirst) {
@@ -85,7 +81,9 @@ class RoutesViewModel
             )
 
         fun toggleSort() {
-            _sortNewestFirst.update { !it }
+            viewModelScope.launch {
+                settingsRepository.setRoutesSortNewestFirst(!uiState.value.sortNewestFirst)
+            }
         }
 
         fun deleteRoute(routeId: String) {

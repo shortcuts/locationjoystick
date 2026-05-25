@@ -151,6 +151,14 @@ interface PreferencesDataSource {
         lat: Double,
         lon: Double,
     )
+
+    fun getRoutesSortNewestFirst(): Flow<Boolean>
+
+    suspend fun setRoutesSortNewestFirst(newestFirst: Boolean)
+
+    fun getFavoritesSortNewestFirst(): Flow<Boolean>
+
+    suspend fun setFavoritesSortNewestFirst(newestFirst: Boolean)
 }
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -207,6 +215,8 @@ class AppPreferencesDataSource
             val REALISM_SATELLITE_EXTRAS_ENABLED = booleanPreferencesKey("realism_satellite_extras_enabled")
             val REALISM_SUSPENDED_MOCKING_ENABLED = booleanPreferencesKey("realism_suspended_mocking_enabled")
             val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
+            val ROUTES_SORT_NEWEST_FIRST = booleanPreferencesKey("routes_sort_newest_first")
+            val FAVORITES_SORT_NEWEST_FIRST = booleanPreferencesKey("favorites_sort_newest_first")
         }
 
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -550,6 +560,36 @@ class AppPreferencesDataSource
                         .take(AppConstants.NominatimConstants.RECENT_SEARCHES_MAX_COUNT)
                 prefs[Keys.RECENT_SEARCHES] = serializeRecentSearches(updated)
             }
+        }
+
+        override fun getRoutesSortNewestFirst(): Flow<Boolean> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading routes sort preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.ROUTES_SORT_NEWEST_FIRST] ?: true }
+
+        override suspend fun setRoutesSortNewestFirst(newestFirst: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.ROUTES_SORT_NEWEST_FIRST] = newestFirst }
+        }
+
+        override fun getFavoritesSortNewestFirst(): Flow<Boolean> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading favorites sort preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.FAVORITES_SORT_NEWEST_FIRST] ?: true }
+
+        override suspend fun setFavoritesSortNewestFirst(newestFirst: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.FAVORITES_SORT_NEWEST_FIRST] = newestFirst }
         }
 
         companion object {
