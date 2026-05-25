@@ -667,6 +667,7 @@ class FloatingWidgetService :
                     MapFloatingView(
                         locationRepository = locationRepository,
                         favoriteRepository = favoriteRepository,
+                        settingsRepository = settingsRepository,
                         onTeleport = { pos ->
                             val svc = mockLocationService
                             if (svc != null) {
@@ -723,7 +724,7 @@ class FloatingWidgetService :
                             sendAddEphemeralWaypoint(pos)
                             moveAppToBack()
                         },
-                        onStartRoaming = { startRoamingWithDefaults() },
+                        onStartRoaming = { defaults -> startRoamingWith(defaults) },
                         onStopRoaming = {
                             serviceScope.launch {
                                 roamingRepository.stopRoaming()
@@ -775,6 +776,32 @@ class FloatingWidgetService :
                     )
                 roamingRepository.startRoaming(config, speedMs)
                 Log.d(TAG, "Started roaming with defaults")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start roaming", e)
+            }
+        }
+    }
+
+    private fun startRoamingWith(defaults: com.locationjoystick.core.model.RoamingDefaults) {
+        serviceScope.launch {
+            try {
+                val pos = locationRepository.currentPosition.value
+                if (pos == null) {
+                    Log.w(TAG, "Cannot start roaming: no current position")
+                    return@launch
+                }
+                val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+                val config =
+                    RoamingConfig(
+                        centerPosition = pos,
+                        radiusMeters = defaults.radiusMeters,
+                        distanceMeters = defaults.distanceMeters,
+                        speedProfileId = defaults.speedProfileId,
+                        useRoadSnapping = defaults.followRoads,
+                        returnToInitialLocation = defaults.returnToInitialLocation,
+                    )
+                roamingRepository.startRoaming(config, speedMs)
+                Log.d(TAG, "Started roaming with custom defaults")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start roaming", e)
             }

@@ -22,12 +22,20 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -37,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +60,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.core.model.SpeedUnit
+import kotlin.math.roundToInt
 import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjText
@@ -83,17 +96,19 @@ import org.maplibre.android.geometry.LatLng as MapLatLng
 private val MAP_FLOATING_VIEW_OSM_SOURCE = AppConstants.MapConstants.PANEL_OSM_SOURCE_ID
 private val MAP_FLOATING_VIEW_OSM_LAYER = AppConstants.MapConstants.PANEL_OSM_LAYER_ID
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MapFloatingView(
     locationRepository: LocationRepository,
     favoriteRepository: FavoriteRepository,
+    settingsRepository: SettingsRepository,
     onTeleport: (LatLng) -> Unit,
     onWalkTo: (LatLng) -> Unit,
     onStopRouteAndTeleport: (LatLng) -> Unit,
     onStopRouteAndWalkTo: (LatLng) -> Unit,
     onFinishRouteAndWalkTo: (LatLng) -> Unit,
     onAddEphemeralWaypoint: (LatLng) -> Unit,
-    onStartRoaming: () -> Unit,
+    onStartRoaming: (RoamingDefaults) -> Unit,
     onStopRoaming: () -> Unit,
     onDismiss: () -> Unit,
     context: Context,
@@ -107,13 +122,15 @@ internal fun MapFloatingView(
     val isRoaming = mockMode == com.locationjoystick.core.model.MockMode.ROAMING
     val isRouteReplay = mockMode == com.locationjoystick.core.model.MockMode.ROUTE_REPLAY
     val isWalkActive = walkTarget != null || isRouteReplay
-    val isActivityActive by locationRepository.isActivityActive.collectAsStateWithLifecycle(initialValue = false)
     val favoritesFlow = remember { favoriteRepository.getFavorites() }
     val favorites by favoritesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     val spoofState by locationRepository.mockLocationState.collectAsStateWithLifecycle()
 
     val initialPosition = remember { locationRepository.currentPosition.value }
 
+    val roamingDefaults by remember { settingsRepository.getRoamingDefaults() }.collectAsStateWithLifecycle(initialValue = RoamingDefaults(radiusMeters = 1000.0, distanceMeters = 200.0, speedProfileId = "walk", followRoads = false, returnToInitialLocation = false))
+    val speedUnit by remember { settingsRepository.getSpeedUnit() }.collectAsStateWithLifecycle(initialValue = SpeedUnit.KMH)
+    var showRoamingSheet by remember { mutableStateOf(false) }
     var walkStart by remember { mutableStateOf<LatLng?>(null) }
     var pendingTap by remember { mutableStateOf<LatLng?>(null) }
     var showSearch by remember { mutableStateOf(false) }
@@ -401,26 +418,12 @@ internal fun MapFloatingView(
                 onClick = {
                     if (isRoaming) {
                         onStopRoaming()
-                    } else if (!isActivityActive) {
-                        onStartRoaming()
+                    } else {
+                        showRoamingSheet = true
                     }
                 },
-                containerColor =
-                    if (isRoaming) {
-                        MaterialTheme.colorScheme.errorContainer
-                    } else if (isActivityActive) {
-                        MaterialTheme.colorScheme.surfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.tertiaryContainer
-                    },
-                contentColor =
-                    if (isRoaming) {
-                        MaterialTheme.colorScheme.onErrorContainer
-                    } else if (isActivityActive) {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                    } else {
-                        MaterialTheme.colorScheme.onTertiaryContainer
-                    },
+                containerColor = if (isRoaming) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = if (isRoaming) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onTertiaryContainer,
             ) {
                 Icon(
                     imageVector = if (isRoaming) LjIcons.Stop else LjIcons.Explore,
@@ -456,6 +459,108 @@ internal fun MapFloatingView(
                     imageVector = if (isSpoofing) LjIcons.Stop else LjIcons.PlayArrow,
                     contentDescription = if (isSpoofing) "Stop spoofing" else "Start spoofing",
                 )
+            }
+        }
+
+        if (showRoamingSheet) {
+            val isMph = speedUnit == SpeedUnit.MPH
+            val isSpoofing = spoofState == com.locationjoystick.core.model.MockLocationState.RUNNING
+            var draft by remember(roamingDefaults) {
+                mutableStateOf(roamingDefaults)
+            }
+            ModalBottomSheet(onDismissRequest = { showRoamingSheet = false }) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 24.dp),
+                ) {
+                    Text("Roaming", style = MaterialTheme.typography.headlineSmall)
+                    Spacer(Modifier.height(16.dp))
+                    var radiusText by remember(isMph) {
+                        mutableStateOf(
+                            if (isMph) String.format("%.2f", draft.radiusMeters / 1609.344)
+                            else draft.radiusMeters.roundToInt().toString()
+                        )
+                    }
+                    OutlinedTextField(
+                        value = radiusText,
+                        onValueChange = { text ->
+                            radiusText = text
+                            text.toDoubleOrNull()?.let { v ->
+                                val meters = if (isMph) v * 1609.344 else v
+                                draft = draft.copy(radiusMeters = meters.coerceIn(AppConstants.RoamingConstants.RADIUS_MIN_METERS, AppConstants.RoamingConstants.RADIUS_MAX_METERS))
+                            }
+                        },
+                        label = { Text(if (isMph) "Radius (mi)" else "Radius (m)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    var distanceText by remember(isMph) {
+                        mutableStateOf(
+                            if (isMph) String.format("%.2f", draft.distanceMeters / 1609.344)
+                            else draft.distanceMeters.roundToInt().toString()
+                        )
+                    }
+                    OutlinedTextField(
+                        value = distanceText,
+                        onValueChange = { text ->
+                            distanceText = text
+                            text.toDoubleOrNull()?.let { v ->
+                                val meters = if (isMph) v * 1609.344 else v
+                                draft = draft.copy(distanceMeters = meters.coerceIn(AppConstants.RoamingConstants.DISTANCE_MIN_METERS, AppConstants.RoamingConstants.DISTANCE_MAX_METERS))
+                            }
+                        },
+                        label = { Text(if (isMph) "Route distance (mi)" else "Route distance (m)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text("Speed profile", style = MaterialTheme.typography.labelLarge)
+                    Spacer(Modifier.height(4.dp))
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        listOf(AppConstants.ProfileConstants.PROFILE_ID_WALK, AppConstants.ProfileConstants.PROFILE_ID_RUN, AppConstants.ProfileConstants.PROFILE_ID_BIKE).forEach { id ->
+                            val label = mapOf("walk" to "Walk", "run" to "Run", "bike" to "Bike")[id] ?: id
+                            if (draft.speedProfileId == id) {
+                                OutlinedButton(onClick = { draft = draft.copy(speedProfileId = id) }, modifier = Modifier.padding(end = 4.dp)) { Text(label) }
+                            } else {
+                                FilledTonalButton(onClick = { draft = draft.copy(speedProfileId = id) }, modifier = Modifier.padding(end = 4.dp)) { Text(label) }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Checkbox(checked = draft.followRoads, onCheckedChange = { draft = draft.copy(followRoads = it) })
+                        Text("Follow roads", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Checkbox(checked = draft.returnToInitialLocation, onCheckedChange = { draft = draft.copy(returnToInitialLocation = it) })
+                        Text("Return to start", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            onStartRoaming(draft)
+                            showRoamingSheet = false
+                        },
+                        enabled = isSpoofing,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Start")
+                    }
+                    if (!isSpoofing) {
+                        Text(
+                            "Start location spoofing first to enable roaming",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                }
             }
         }
 

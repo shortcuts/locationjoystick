@@ -11,13 +11,13 @@ import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.location.EphemeralReplayController
-import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.SpeedProfile
+import com.locationjoystick.core.routing.OsrmClient
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk

@@ -51,6 +51,7 @@ private val SPEED_PROFILE_LABELS =
 fun RoamingSheet(
     draft: RoamingDraft,
     hasCurrentPosition: Boolean,
+    isSpoofingActive: Boolean = true,
     speedUnit: SpeedUnit = SpeedUnit.KMH,
     onAction: (MapAction) -> Unit,
     onDismiss: () -> Unit,
@@ -181,13 +182,13 @@ fun RoamingSheet(
 
             Button(
                 onClick = { onAction(MapAction.StartRoaming) },
-                enabled = hasCurrentPosition,
+                enabled = hasCurrentPosition && isSpoofingActive,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Start")
             }
 
-            if (!hasCurrentPosition) {
+            if (!hasCurrentPosition || !isSpoofingActive) {
                 Text(
                     "Start location spoofing first to enable roaming",
                     style = MaterialTheme.typography.bodySmall,
@@ -213,6 +214,7 @@ private fun RoamingSheetPreview() {
                     returnToInitialLocation = true,
                 ),
             hasCurrentPosition = true,
+            isSpoofingActive = true,
             onAction = {},
             onDismiss = {},
         )
