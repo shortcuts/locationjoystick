@@ -30,6 +30,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -69,6 +71,13 @@ fun SettingsRoute(
     var showQrShare by remember { mutableStateOf(false) }
     var qrChunkResult by remember { mutableStateOf<QrChunker.ChunkResult?>(null) }
     var showQrScanner by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.importResult.collect { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.qrImportReady.collect { exportData ->
@@ -219,6 +228,7 @@ fun SettingsRoute(
         onImport = { importLauncher.launch(arrayOf(AppConstants.ExportConstants.MIME_TYPE)) },
         onImportGpsJoystick = { importGpsJoystickLauncher.launch(arrayOf("*/*")) },
         onImportYamla = { importYamlaLauncher.launch(arrayOf("application/json")) },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         onQrShare = { viewModel.prepareQrChunks() },
         onQrScan = { showQrScanner = true },
         onSaveChanges = viewModel::saveChanges,
@@ -291,11 +301,13 @@ internal fun SettingsScreen(
     onSaveChanges: () -> Unit = {},
     onDiscardChanges: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
+    snackbarHost: @Composable () -> Unit = {},
 ) {
     LjScaffold(
         title = "Lj",
         onNavigationClick = onOpenDrawer,
         bottomBar = bottomBar,
+        snackbarHost = snackbarHost,
         actions = {
             if (uiState.isDirty) {
                 TextButton(

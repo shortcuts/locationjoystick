@@ -55,6 +55,8 @@ class SettingsViewModel
 
         internal val qrChunksReady = MutableSharedFlow<QrChunker.ChunkResult>(extraBufferCapacity = 1)
 
+        val importResult = MutableSharedFlow<String>(extraBufferCapacity = 1)
+
         private data class RepoRealismChunk(
             val mapFollowsLocation: Boolean,
             val bearingHoldIdle: Boolean,
@@ -586,6 +588,8 @@ class SettingsViewModel
                         }
                         migration.routes.forEach { routeRepository.insertRoute(it).getOrNull() }
                     }
+                    Log.i(TAG, "GPS Joystick import complete: ${migration.favorites.size} favorites, ${migration.routes.size} routes")
+                    importResult.emit("Imported ${migration.favorites.size} favorites, ${migration.routes.size} routes from GPS Joystick")
                 } catch (e: Exception) {
                     Log.e(TAG, "GPS Joystick import failed", e)
                 }
@@ -632,6 +636,9 @@ class SettingsViewModel
                     migration.walkSpeed?.let { settingsRepository.setWalkSpeed(it) }
                     migration.runSpeed?.let { settingsRepository.setRunSpeed(it) }
                     migration.bikeSpeed?.let { settingsRepository.setBikeSpeed(it) }
+                    val speedsMsg = if (migration.walkSpeed != null) ", speeds updated" else ""
+                    Log.i(TAG, "YAMLA import complete: ${migration.favorites.size} favorites$speedsMsg")
+                    importResult.emit("Imported ${migration.favorites.size} favorites from YAMLA$speedsMsg")
                 } catch (e: Exception) {
                     Log.e(TAG, "YAMLA import failed", e)
                 }

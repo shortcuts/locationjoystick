@@ -13,40 +13,68 @@ import java.util.UUID
 /**
  * Parses a GPS Joystick Realm/TightDB binary export (.db) without a Realm SDK dependency.
  *
- * The binary format is scanned for known structural markers to extract:
- * - Favorites (class_PlaceLocationData): names + lat/lon double columns
- * - Routes (class_RouteData + class_CoordinateData): route names + waypoint columns
+ * Extracts favorites (class_PlaceLocationData) and routes (class_RouteData +
+ * class_CoordinateData). Speed profiles are not present in GPS Joystick exports.
  *
- * Speed profiles are not present in GPS Joystick exports.
+ * ## Binary format notes
+ *
+ * - `T-DB` magic at byte offset 16.
+ * - Double arrays: 8-byte header `41 41 41 41 0C xx xx <count>` followed by `count` little-endian
+ *   doubles.  Count is stored in byte 7 (the 8th byte) of the header.
+ * - String arrays: 8-byte header `41 41 41 41 0D xx xx <count>` followed by `count`
+ *   null-terminated UTF-8 strings, each entry padded to a 16-byte boundary.
+ *
+ * ## Parsing strategy
+ *
+ * 1. Scan for string arrays (0x0D type).  Filter out schema arrays (column-name tables).
+ * 2. Scan for double arrays (0x0C type).  Find consecutive same-count pairs whose values are
+ *    all plausible geographic coordinates (abs ≤ 180, non-zero).
+ * 3. Assign coord pairs: if two pairs exist the larger is routes, the smaller is favorites.
+ *    If only one pair exists and a matching-count string array is present → favorites only;
+ *    otherwise → routes only.
+ * 4. Match string arrays to favorites/routes by count.
+ * 5. Fall back to `Favorite N` / `Route N` default names when named arrays are absent.
  */
 internal object GpsJoystickMigrator {
     private const val TAG = "GpsJoystickMigrator"
 
-    // Realm/TightDB header magic bytes
     private val REALM_HEADER = "T-DB".toByteArray(Charsets.US_ASCII)
+    private const val REALM_HEADER_OFFSET = 16
+    private const val ARRAY_HEADER_SIZE = 8
 
-    // Marker that precedes each columnar double array: "AAAA\x0c\x00\x00\x04"
-    private val DOUBLE_ARRAY_MARKER =
-        byteArrayOf(
-            0x41,
-            0x41,
-            0x41,
-            0x41,
-            0x0c,
-            0x00,
-            0x00,
-            0x04,
+    // 5-byte prefixes that identify Realm array headers.
+    private val DOUBLE_ARRAY_PREFIX = byteArrayOf(0x41, 0x41, 0x41, 0x41, 0x0c.toByte())
+    private val STRING_ARRAY_PREFIX = byteArrayOf(0x41, 0x41, 0x41, 0x41, 0x0d.toByte())
+
+    /** Column names present in Realm schema tables — used to skip metadata arrays. */
+    private val SCHEMA_NAMES =
+        setOf(
+            "id",
+            "name",
+            "latitude",
+            "longitude",
+            "altitude",
+            "coordinates",
+            "typeId",
+            "address",
+            "sortOrder",
+            "pk_table",
+            "pk_property",
+            "parentFolderId",
+            "type",
+            "folderId",
         )
 
     fun parse(bytes: ByteArray): Result<MigrationResult> =
         runCatching {
-            if (!startsWithHeader(bytes)) {
-                return Result.failure(IllegalArgumentException("Not a valid Realm database file (missing T-DB header)"))
+            if (!hasRealmHeader(bytes)) {
+                return Result.failure(
+                    IllegalArgumentException("Not a valid Realm database file (missing T-DB header)"),
+                )
             }
-
-            val favorites = parseFavorites(bytes)
-            val routes = parseRoutes(bytes)
-
+            val dataStringArrays = findDataStringArrays(bytes)
+            val coordPairs = findCoordPairs(bytes)
+            val (favorites, routes) = extractFavoritesAndRoutes(bytes, dataStringArrays, coordPairs)
             MigrationResult(
                 favorites = favorites,
                 routes = routes,
@@ -58,166 +86,142 @@ internal object GpsJoystickMigrator {
             Log.e(TAG, "Failed to parse GPS Joystick database", e)
         }
 
-    private fun startsWithHeader(bytes: ByteArray): Boolean {
-        if (bytes.size < REALM_HEADER.size) return false
-        return REALM_HEADER.indices.all { i -> bytes[i] == REALM_HEADER[i] }
+    // -------------------------------------------------------------------------
+    // Top-level extraction
+    // -------------------------------------------------------------------------
+
+    private data class CoordPair(
+        val lats: List<Double>,
+        val lons: List<Double>,
+    ) {
+        val count: Int get() = lats.size
+    }
+
+    private fun extractFavoritesAndRoutes(
+        bytes: ByteArray,
+        dataArrays: List<List<String>>,
+        coordPairs: List<CoordPair>,
+    ): Pair<List<FavoriteLocation>, List<Route>> {
+        if (coordPairs.isEmpty()) return emptyList<FavoriteLocation>() to emptyList()
+
+        val favPair: CoordPair?
+        val routePair: CoordPair?
+
+        if (coordPairs.size >= 2) {
+            val sorted = coordPairs.sortedBy { it.count }
+            favPair = sorted.first()
+            routePair = sorted.last()
+        } else {
+            val pair = coordPairs.first()
+            val hasMatchingNameArray = dataArrays.any { it.size == pair.count }
+            if (hasMatchingNameArray) {
+                favPair = pair
+                routePair = null
+            } else {
+                favPair = null
+                routePair = pair
+            }
+        }
+
+        val favCount = favPair?.count ?: 0
+        val routeTotal = routePair?.count ?: 0
+
+        // Find the name array that matches fav count
+        val favNameArray = dataArrays.firstOrNull { it.size == favCount && favCount > 0 }
+
+        // Find route name array: a data array whose count ≠ favCount
+        val routeNameArray =
+            if (routePair != null) {
+                val candidates = dataArrays.filter { it.size != favCount }
+                // Prefer a candidate whose count evenly divides route total
+                candidates.firstOrNull { routeTotal % it.size == 0 } ?: candidates.lastOrNull()
+            } else {
+                null
+            }
+
+        val favorites = buildFavorites(favPair, favNameArray)
+        val routes = buildRoutes(routePair, routeNameArray)
+        return favorites to routes
     }
 
     // -------------------------------------------------------------------------
-    // Favorites parsing
+    // Favorites
     // -------------------------------------------------------------------------
 
-    private fun parseFavorites(bytes: ByteArray): List<FavoriteLocation> {
-        val names = parseFavoriteNames(bytes)
-        if (names.isEmpty()) return emptyList()
-
-        val doubleBlocks = findAllDoubleArrayBlocks(bytes, names.size)
-        if (doubleBlocks.size < 2) {
-            Log.e(TAG, "Could not find lat/lon columns for favorites (found ${doubleBlocks.size} blocks)")
-            return emptyList()
-        }
-
-        val lats = doubleBlocks[0]
-        val lons = doubleBlocks[1]
-        val count = minOf(names.size, lats.size, lons.size)
-
-        return (0 until count).map { i ->
+    private fun buildFavorites(
+        pair: CoordPair?,
+        nameArray: List<String>?,
+    ): List<FavoriteLocation> {
+        if (pair == null || pair.count == 0) return emptyList()
+        return (0 until pair.count).map { i ->
             FavoriteLocation(
                 id = UUID.randomUUID().toString(),
-                name = names[i],
-                position = LatLng(latitude = lats[i], longitude = lons[i]),
+                name = nameArray?.getOrNull(i) ?: "Favorite ${i + 1}",
+                position = LatLng(latitude = pair.lats[i], longitude = pair.lons[i]),
                 createdAt = System.currentTimeMillis(),
             )
         }
     }
 
-    /**
-     * Favorite names are stored as a null-separated string list in the binary.
-     * We scan for a block of 4 UUIDs (each UUID is 36 chars + null terminator)
-     * and then read the null-separated names that follow.
-     */
-    private fun parseFavoriteNames(bytes: ByteArray): List<String> {
-        val uuidPattern = Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
-        val text = bytes.toString(Charsets.ISO_8859_1)
-
-        // Find consecutive UUIDs as null-terminated strings
-        val uuidMatches = uuidPattern.findAll(text).toList()
-        if (uuidMatches.size < 4) return emptyList()
-
-        // After the last UUID block, scan for null-separated non-empty strings
-        val lastUuidEnd = uuidMatches.last().range.last + 1
-        return extractNullSeparatedStrings(text, lastUuidEnd, maxCount = uuidMatches.size)
-    }
-
     // -------------------------------------------------------------------------
-    // Routes parsing
+    // Routes
     // -------------------------------------------------------------------------
 
-    private fun parseRoutes(bytes: ByteArray): List<Route> {
-        val names = parseRouteNames(bytes)
-        if (names.isEmpty()) return emptyList()
+    private fun buildRoutes(
+        pair: CoordPair?,
+        nameArray: List<String>?,
+    ): List<Route> {
+        if (pair == null || pair.count < 1) return emptyList()
+        val totalWaypoints = pair.count
+        // Fall back to a single unnamed route when the waypoint count is less than the
+        // number of named routes (can happen with partial/corrupt exports).
+        val routeCount = if (nameArray != null && totalWaypoints >= nameArray.size) nameArray.size else 1
+        val base = totalWaypoints / routeCount
 
-        // Find all double-array blocks. The first two belong to favorites (lat, lon, altitude).
-        // Route coordinate blocks appear after the favorite blocks.
-        val allBlocks = findAllDoubleArrayBlocks(bytes, minSize = 2)
-
-        // Skip first 3 blocks (favorites lat, lon, altitude). Then pair remaining as lat/lon per route.
-        // Route waypoint columns are interleaved: lat0, lon0, lat1, lon1, ...
-        val routeBlocks = if (allBlocks.size > 3) allBlocks.drop(3) else emptyList()
-
-        val routes = mutableListOf<Route>()
-        var blockIndex = 0
-        for (name in names) {
-            if (blockIndex + 1 >= routeBlocks.size) break
-            val latCol = routeBlocks[blockIndex]
-            val lonCol = routeBlocks[blockIndex + 1]
-            blockIndex += 2
-
-            val waypointCount = minOf(latCol.size, lonCol.size)
-            if (waypointCount < 2) continue
-
+        return (0 until routeCount).map { ri ->
+            val start = ri * base
+            val end = if (ri == routeCount - 1) totalWaypoints else start + base
             val waypoints =
-                (0 until waypointCount).map { wi ->
+                (start until end).mapIndexed { wi, idx ->
                     Waypoint(
                         id = UUID.randomUUID().toString(),
-                        position = LatLng(latitude = latCol[wi], longitude = lonCol[wi]),
+                        position = LatLng(latitude = pair.lats[idx], longitude = pair.lons[idx]),
                         orderIndex = wi,
                     )
                 }
-
-            routes.add(
-                Route(
-                    id = UUID.randomUUID().toString(),
-                    name = name,
-                    waypoints = waypoints,
-                    isLooping = false,
-                    routeType = RouteType.STRAIGHT,
-                    createdAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis(),
-                ),
+            Route(
+                id = UUID.randomUUID().toString(),
+                name = nameArray?.getOrNull(ri) ?: "Route ${ri + 1}",
+                waypoints = waypoints,
+                isLooping = false,
+                routeType = RouteType.STRAIGHT,
+                createdAt = System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis(),
             )
-
-            if (routes.size >= names.size) break
         }
-
-        return routes
-    }
-
-    /**
-     * Route names follow the same UUID-then-names pattern as favorites, but for 8 routes.
-     * We look for the second large UUID block in the file (after the favorites block).
-     */
-    private fun parseRouteNames(bytes: ByteArray): List<String> {
-        val uuidPattern = Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
-        val text = bytes.toString(Charsets.ISO_8859_1)
-
-        val uuidMatches = uuidPattern.findAll(text).toList()
-        // First N UUIDs belong to favorites. Routes use the next block (8 UUIDs).
-        // We skip the first 4 (favorites) and look for the next cluster of 8.
-        if (uuidMatches.size < 5) return emptyList()
-
-        // Find clusters: group UUIDs that are close together in position
-        val clusters = mutableListOf<List<MatchResult>>()
-        var currentCluster = mutableListOf(uuidMatches[0])
-        for (i in 1 until uuidMatches.size) {
-            val prev = uuidMatches[i - 1]
-            val curr = uuidMatches[i]
-            if (curr.range.first - prev.range.last < 50) {
-                currentCluster.add(curr)
-            } else {
-                if (currentCluster.size >= 2) clusters.add(currentCluster.toList())
-                currentCluster = mutableListOf(curr)
-            }
-        }
-        if (currentCluster.size >= 2) clusters.add(currentCluster.toList())
-
-        // Routes cluster should have 8 UUIDs (second cluster)
-        val routeCluster = clusters.getOrNull(1) ?: return emptyList()
-        val lastUuidEnd = routeCluster.last().range.last + 1
-        return extractNullSeparatedStrings(text, lastUuidEnd, maxCount = routeCluster.size)
     }
 
     // -------------------------------------------------------------------------
-    // Shared utilities
+    // String array scanning
     // -------------------------------------------------------------------------
 
     /**
-     * Scans [bytes] for all DOUBLE_ARRAY_MARKER occurrences and reads the [minSize] doubles that follow each one.
+     * Scans the file for Realm string arrays (0x0D type) and returns only those that
+     * are not schema/column-name tables.
      */
-    private fun findAllDoubleArrayBlocks(
-        bytes: ByteArray,
-        minSize: Int,
-    ): List<List<Double>> {
-        val result = mutableListOf<List<Double>>()
+    private fun findDataStringArrays(bytes: ByteArray): List<List<String>> {
+        val result = mutableListOf<List<String>>()
         var pos = 0
-        while (pos <= bytes.size - DOUBLE_ARRAY_MARKER.size) {
-            if (markerAt(bytes, pos)) {
-                val dataStart = pos + DOUBLE_ARRAY_MARKER.size
-                val doubles = readDoubleArray(bytes, dataStart, minSize)
-                if (doubles.isNotEmpty()) {
-                    result.add(doubles)
+        while (pos <= bytes.size - ARRAY_HEADER_SIZE) {
+            if (prefixAt(bytes, pos, STRING_ARRAY_PREFIX)) {
+                val count = bytes[pos + 7].toInt() and 0xff
+                if (count > 0) {
+                    val strings = readStringArray(bytes, pos + ARRAY_HEADER_SIZE, count)
+                    if (strings.size == count && strings.none { it in SCHEMA_NAMES }) {
+                        result.add(strings)
+                    }
                 }
-                pos += DOUBLE_ARRAY_MARKER.size
+                pos += ARRAY_HEADER_SIZE
             } else {
                 pos++
             }
@@ -225,78 +229,109 @@ internal object GpsJoystickMigrator {
         return result
     }
 
-    private fun markerAt(
-        bytes: ByteArray,
-        offset: Int,
-    ): Boolean {
-        if (offset + DOUBLE_ARRAY_MARKER.size > bytes.size) return false
-        return DOUBLE_ARRAY_MARKER.indices.all { i -> bytes[offset + i] == DOUBLE_ARRAY_MARKER[i] }
-    }
-
     /**
-     * Reads little-endian doubles from [bytes] starting at [offset].
-     * Reads up to as many doubles as possible that pass the validity check,
-     * requiring at least [minCount] valid doubles.
+     * Reads [count] null-terminated UTF-8 strings starting at [dataStart].
+     * Each string occupies a 16-byte-aligned slot within the array body.
      */
-    private fun readDoubleArray(
+    private fun readStringArray(
         bytes: ByteArray,
-        offset: Int,
-        minCount: Int,
-    ): List<Double> {
-        val doubles = mutableListOf<Double>()
-        var pos = offset
-        while (pos + 8 <= bytes.size) {
-            val buf = ByteBuffer.wrap(bytes, pos, 8).order(ByteOrder.LITTLE_ENDIAN)
-            val d = buf.double
-            if (!d.isFinite() || d == 0.0) break
-            doubles.add(d)
-            pos += 8
-        }
-        return if (doubles.size >= minCount) doubles else emptyList()
-    }
-
-    /**
-     * Extracts null-separated non-empty printable strings starting at [startIdx] in [text],
-     * up to [maxCount] strings.
-     */
-    private fun extractNullSeparatedStrings(
-        text: String,
-        startIdx: Int,
-        maxCount: Int,
+        dataStart: Int,
+        count: Int,
     ): List<String> {
-        val names = mutableListOf<String>()
-        val sb = StringBuilder()
-        var i = startIdx
-        while (i < text.length && names.size < maxCount) {
-            val c = text[i]
-            when {
-                c == '\u0000' -> {
-                    val s = sb.toString().trim()
-                    if (s.isNotEmpty() && s.all { it.code in 32..126 }) {
-                        names.add(s)
-                    }
-                    sb.clear()
-                    // Stop if we have enough names and have passed the block
-                    if (names.size >= maxCount) break
-                }
+        val strings = mutableListOf<String>()
+        var pos = dataStart
+        repeat(count) {
+            val nullPos = bytes.indexOf(0.toByte(), pos)
+            if (nullPos == -1 || nullPos >= bytes.size) return strings
+            val s = bytes.copyOfRange(pos, nullPos).toString(Charsets.UTF_8)
+            strings.add(s)
+            val consumed = nullPos - dataStart + 1 // bytes consumed since array start
+            val rem = consumed % 16
+            pos = dataStart + consumed + if (rem == 0) 0 else 16 - rem
+        }
+        return strings
+    }
 
-                c.code in 32..126 -> {
-                    sb.append(c)
-                }
+    private fun ByteArray.indexOf(
+        value: Byte,
+        fromIndex: Int,
+    ): Int {
+        for (i in fromIndex until size) if (this[i] == value) return i
+        return -1
+    }
 
-                else -> {
-                    // Non-printable, non-null byte: if we haven't found names yet, skip. Otherwise stop.
-                    if (names.isNotEmpty()) break
-                    sb.clear()
-                }
+    // -------------------------------------------------------------------------
+    // Double array scanning
+    // -------------------------------------------------------------------------
+
+    /**
+     * Scans for consecutive same-count double array pairs whose values are all plausible
+     * geographic coordinates (|v| ≤ 180, non-zero, finite).
+     */
+    private fun findCoordPairs(bytes: ByteArray): List<CoordPair> {
+        val coordBlocks =
+            findDoubleArrayBlocks(bytes)
+                .filter { block -> block.isNotEmpty() && block.all { v -> v.isFinite() && v != 0.0 && Math.abs(v) <= 180.0 } }
+
+        val pairs = mutableListOf<CoordPair>()
+        var i = 0
+        while (i < coordBlocks.size - 1) {
+            val a = coordBlocks[i]
+            val b = coordBlocks[i + 1]
+            if (a.size == b.size) {
+                pairs.add(CoordPair(lats = a, lons = b))
+                i += 2
+            } else {
+                i++
             }
-            i++
         }
-        // Flush remaining
-        val s = sb.toString().trim()
-        if (s.isNotEmpty() && s.all { it.code in 32..126 } && names.size < maxCount) {
-            names.add(s)
+        return pairs
+    }
+
+    private fun findDoubleArrayBlocks(bytes: ByteArray): List<List<Double>> {
+        val result = mutableListOf<List<Double>>()
+        var pos = 0
+        while (pos <= bytes.size - ARRAY_HEADER_SIZE) {
+            if (prefixAt(bytes, pos, DOUBLE_ARRAY_PREFIX)) {
+                val count = bytes[pos + 7].toInt() and 0xff
+                if (count > 0) {
+                    val doubles = readDoubles(bytes, pos + ARRAY_HEADER_SIZE, count)
+                    if (doubles.size == count) result.add(doubles)
+                }
+                pos += ARRAY_HEADER_SIZE
+            } else {
+                pos++
+            }
         }
-        return names
+        return result
+    }
+
+    private fun readDoubles(
+        bytes: ByteArray,
+        dataStart: Int,
+        count: Int,
+    ): List<Double> {
+        val end = dataStart + count * 8
+        if (end > bytes.size) return emptyList()
+        val buf = ByteBuffer.wrap(bytes, dataStart, count * 8).order(ByteOrder.LITTLE_ENDIAN)
+        return (0 until count).map { buf.double }
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private fun hasRealmHeader(bytes: ByteArray): Boolean {
+        if (bytes.size < REALM_HEADER_OFFSET + REALM_HEADER.size) return false
+        return REALM_HEADER.indices.all { i -> bytes[REALM_HEADER_OFFSET + i] == REALM_HEADER[i] }
+    }
+
+    private fun prefixAt(
+        bytes: ByteArray,
+        offset: Int,
+        prefix: ByteArray,
+    ): Boolean {
+        if (offset + prefix.size > bytes.size) return false
+        return prefix.indices.all { i -> bytes[offset + i] == prefix[i] }
     }
 }
