@@ -16,7 +16,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -309,6 +310,64 @@ internal fun SettingsScreen(
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
         actions = {
+            var showDownloadMenu by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { showDownloadMenu = true }) {
+                    Icon(Icons.Default.FileDownload, contentDescription = "Export")
+                }
+                DropdownMenu(expanded = showDownloadMenu, onDismissRequest = { showDownloadMenu = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Export via QR code") },
+                        onClick = {
+                            showDownloadMenu = false
+                            onQrShare()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Export settings") },
+                        onClick = {
+                            showDownloadMenu = false
+                            onExport()
+                        },
+                    )
+                }
+            }
+            var showUploadMenu by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { showUploadMenu = true }) {
+                    Icon(Icons.Default.Upload, contentDescription = "Import")
+                }
+                DropdownMenu(expanded = showUploadMenu, onDismissRequest = { showUploadMenu = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Import from QR code") },
+                        onClick = {
+                            showUploadMenu = false
+                            onQrScan()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Import from file") },
+                        onClick = {
+                            showUploadMenu = false
+                            onImport()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Import from GPS Joystick") },
+                        onClick = {
+                            showUploadMenu = false
+                            onImportGpsJoystick()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Import from YAMLA") },
+                        onClick = {
+                            showUploadMenu = false
+                            onImportYamla()
+                        },
+                    )
+                }
+            }
             if (uiState.isDirty) {
                 TextButton(
                     onClick = onDiscardChanges,
@@ -365,17 +424,6 @@ internal fun SettingsScreen(
                         FloatingWidgetSection(uiState, onSetWidgetFeatures)
                         Spacer(modifier = Modifier.height(24.dp))
                         RoamingSection(roamingDefaults, isMph, onUpdateRoamingDefaults)
-                        Spacer(modifier = Modifier.height(24.dp))
-                        DataManagementSection(
-                            uiState,
-                            onExport,
-                            onImport,
-                            onImportGpsJoystick,
-                            onImportYamla,
-                            onQrShare,
-                            onQrScan,
-                            onDiscardChanges,
-                        )
                     }
                 }
             }
@@ -986,76 +1034,6 @@ private fun RoamingSection(
     }
 }
 
-@Composable
-private fun DataManagementSection(
-    uiState: SettingsUiState,
-    onExport: () -> Unit,
-    onImport: () -> Unit,
-    onImportGpsJoystick: () -> Unit,
-    onImportYamla: () -> Unit,
-    onQrShare: () -> Unit,
-    onQrScan: () -> Unit,
-    onDiscardChanges: () -> Unit,
-) {
-    Text("Data Management", style = MaterialTheme.typography.headlineSmall)
-    Spacer(modifier = Modifier.height(8.dp))
-
-    Button(onClick = onExport, modifier = Modifier.fillMaxWidth()) {
-        Text("Export Settings")
-    }
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    var showImportMenu by remember { mutableStateOf(false) }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Button(
-            onClick = onImport,
-            modifier = Modifier.weight(1f),
-        ) {
-            Text("Import Settings")
-        }
-        Spacer(modifier = Modifier.width(4.dp))
-        Box {
-            IconButton(onClick = { showImportMenu = true }) {
-                Icon(Icons.Filled.ArrowDropDown, contentDescription = "More import options")
-            }
-            DropdownMenu(
-                expanded = showImportMenu,
-                onDismissRequest = { showImportMenu = false },
-            ) {
-                DropdownMenuItem(
-                    text = { Text("From GPS Joystick") },
-                    onClick = {
-                        showImportMenu = false
-                        onImportGpsJoystick()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text("From YAMLA") },
-                    onClick = {
-                        showImportMenu = false
-                        onImportYamla()
-                    },
-                )
-            }
-        }
-    }
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    Button(onClick = onQrShare, modifier = Modifier.fillMaxWidth()) {
-        Text("Transfer via QR")
-    }
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    Button(onClick = onQrScan, modifier = Modifier.fillMaxWidth()) {
-        Text("Import from QR")
-    }
-}
 
 @Composable
 private fun ImportConfirmDialog(
