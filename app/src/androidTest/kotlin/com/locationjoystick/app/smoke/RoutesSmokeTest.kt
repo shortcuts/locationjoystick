@@ -1,37 +1,25 @@
 package com.locationjoystick.app.smoke
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.locationjoystick.app.MainActivity
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.Waypoint
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import javax.inject.Inject
 
-@HiltAndroidTest
-class RoutesSmokeTest {
-    @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
-
-    @get:Rule(order = 1)
-    val composeRule = createAndroidComposeRule<MainActivity>()
-
+class RoutesSmokeTest : BaseSmokeTest() {
     @Inject lateinit var routeRepository: RouteRepository
 
     @Before
-    fun setup() {
-        hiltRule.inject()
+    override fun setup() {
+        super.setup()
         runBlocking {
             routeRepository.insertRoute(
                 Route(
@@ -49,7 +37,7 @@ class RoutesSmokeTest {
                 ),
             )
         }
-        composeRule.skipOnboarding()
+        composeRule.waitForIdleScreen()
         composeRule.navigateFromIdle("Routes")
     }
 

@@ -1,29 +1,18 @@
 package com.locationjoystick.app.smoke
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.locationjoystick.app.MainActivity
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
+import androidx.test.espresso.Espresso
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 
-@HiltAndroidTest
-class RouteCreatorSmokeTest {
-    @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
-
-    @get:Rule(order = 1)
-    val composeRule = createAndroidComposeRule<MainActivity>()
-
+class RouteCreatorSmokeTest : BaseSmokeTest() {
     @Before
-    fun setup() {
-        hiltRule.inject()
-        composeRule.skipOnboarding()
+    override fun setup() {
+        super.setup()
+        composeRule.waitForIdleScreen()
         composeRule.navigateFromIdle("Routes")
         composeRule.onNodeWithContentDescription("New route").performClick()
         composeRule.waitForIdle()
@@ -36,7 +25,7 @@ class RouteCreatorSmokeTest {
 
     @Test
     fun navigate_back_from_creator() {
-        composeRule.onNodeWithContentDescription("Open navigation menu").performClick()
+        Espresso.pressBack()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Routes").assertIsDisplayed()
     }
@@ -54,5 +43,10 @@ class RouteCreatorSmokeTest {
     @Test
     fun route_creator_shows_save_route_button() {
         composeRule.onNodeWithText("Save Route").assertIsDisplayed()
+    }
+
+    @Test
+    fun route_creator_shows_route_type() {
+        composeRule.onNodeWithText("Straight", substring = true).assertIsDisplayed()
     }
 }

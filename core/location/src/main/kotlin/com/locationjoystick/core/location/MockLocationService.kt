@@ -46,9 +46,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -195,75 +193,68 @@ class MockLocationService : Service() {
 
     private fun observeLocationState() {
         serviceScope.launch {
-            _state
-                .catch { e -> Log.e(TAG, "state observer error — service control flow dead", e) }
-                .collect { state ->
-                    when (state) {
-                        MockLocationState.RUNNING -> {
-                            updateJobMutex.withLock {
-                                if (updateJob == null) {
-                                    // Route replay drives its own position updates via the onPositionUpdate
-                                    // callback — starting a background loop here would cause duplicate pushes.
-                                    // Skip the loop when replay mode is already active.
-                                    val mode = locationRepository.currentMode.value
-                                    if (mode != MockMode.ROUTE_REPLAY) {
-                                        setupTestProvider()
-                                        startUpdateLoop()
-                                        Log.i(TAG, "State changed to RUNNING - started update loop")
-                                    } else {
-                                        setupTestProvider()
-                                        Log.i(TAG, "State changed to RUNNING (route replay) - skipped update loop")
-                                    }
+            _state.collect { state ->
+                when (state) {
+                    MockLocationState.RUNNING -> {
+                        updateJobMutex.withLock {
+                            if (updateJob == null) {
+                                // Route replay drives its own position updates via the onPositionUpdate
+                                // callback — starting a background loop here would cause duplicate pushes.
+                                // Skip the loop when replay mode is already active.
+                                val mode = locationRepository.currentMode.value
+                                if (mode != MockMode.ROUTE_REPLAY) {
+                                    setupTestProvider()
+                                    startUpdateLoop()
+                                    Log.i(TAG, "State changed to RUNNING - started update loop")
+                                } else {
+                                    setupTestProvider()
+                                    Log.i(TAG, "State changed to RUNNING (route replay) - skipped update loop")
                                 }
-                            }
-                            if (Settings.canDrawOverlays(this@MockLocationService)) {
-                                startService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))
-                                startService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
-                                Log.i(TAG, "Overlay services started")
-                            } else {
-                                Log.i(TAG, "SYSTEM_ALERT_WINDOW not granted — skipping overlay start")
                             }
                         }
-
-                        MockLocationState.IDLE, MockLocationState.ERROR -> {
-                            updateJobMutex.withLock {
-                                if (updateJob != null) {
-                                    updateJob?.cancel()
-                                    updateJob = null
-                                    removeTestProvider()
-                                    Log.i(TAG, "State changed to IDLE/ERROR - stopped update loop")
-                                }
-                            }
-                            stopService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))
-                            stopService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
-                            Log.i(TAG, "Overlay services stopped")
-                        }
-
-                        MockLocationState.PAUSED -> {
-                            updateJobMutex.withLock {
-                                if (updateJob != null) {
-                                    updateJob?.cancel()
-                                    updateJob = null
-                                    Log.i(TAG, "State changed to PAUSED - paused update loop")
-                                }
-                            }
-                            // Overlays remain visible during pause
+                        if (Settings.canDrawOverlays(this@MockLocationService)) {
+                            startService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))
+                            startService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
+                            Log.i(TAG, "Overlay services started")
+                        } else {
+                            Log.i(TAG, "SYSTEM_ALERT_WINDOW not granted — skipping overlay start")
                         }
                     }
+
+                    MockLocationState.IDLE, MockLocationState.ERROR -> {
+                        updateJobMutex.withLock {
+                            if (updateJob != null) {
+                                updateJob?.cancel()
+                                updateJob = null
+                                removeTestProvider()
+                                Log.i(TAG, "State changed to IDLE/ERROR - stopped update loop")
+                            }
+                        }
+                        stopService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))
+                        stopService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
+                        Log.i(TAG, "Overlay services stopped")
+                    }
+
+                    MockLocationState.PAUSED -> {
+                        updateJobMutex.withLock {
+                            if (updateJob != null) {
+                                updateJob?.cancel()
+                                updateJob = null
+                                Log.i(TAG, "State changed to PAUSED - paused update loop")
+                            }
+                        }
+                        // Overlays remain visible during pause
+                    }
                 }
+            }
         }
         serviceScope.launch {
-            locationRepository.currentPosition
-                .retryWhen { cause, attempt ->
-                    Log.e(TAG, "currentPosition flow error (attempt $attempt)", cause)
-                    delay(1_000L)
-                    true
-                }.collect { position ->
-                    if (position != null) {
-                        currentLat = position.latitude
-                        currentLon = position.longitude
-                    }
+            locationRepository.currentPosition.collect { position ->
+                if (position != null) {
+                    currentLat = position.latitude
+                    currentLon = position.longitude
                 }
+            }
         }
         // Jitter and realism settings — each updates a @Volatile field consumed by captureSnapshot().
         observeSetting("jitterIdleRadius", settingsRepository.getJitterIdleRadius()) { jitterIdleRadiusMeters = it }
@@ -284,12 +275,7 @@ class MockLocationService : Service() {
         assign: (T) -> Unit,
     ) {
         serviceScope.launch {
-            flow
-                .retryWhen { cause, attempt ->
-                    Log.e(TAG, "$tag flow error (attempt $attempt)", cause)
-                    delay(1_000L)
-                    true
-                }.collect(assign)
+            flow.collect(assign)
         }
     }
 

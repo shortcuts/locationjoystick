@@ -1,37 +1,26 @@
 package com.locationjoystick.app.smoke
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.locationjoystick.app.MainActivity
+import androidx.test.espresso.Espresso
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.Waypoint
-import dagger.hilt.android.testing.HiltAndroidRule
-import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import javax.inject.Inject
 
-@HiltAndroidTest
-class RouteDetailSmokeTest {
-    @get:Rule(order = 0)
-    val hiltRule = HiltAndroidRule(this)
-
-    @get:Rule(order = 1)
-    val composeRule = createAndroidComposeRule<MainActivity>()
-
+class RouteDetailSmokeTest : BaseSmokeTest() {
     @Inject lateinit var routeRepository: RouteRepository
 
     @Before
-    fun setup() {
-        hiltRule.inject()
+    override fun setup() {
+        super.setup()
         runBlocking {
             routeRepository.insertRoute(
                 Route(
@@ -49,7 +38,7 @@ class RouteDetailSmokeTest {
                 ),
             )
         }
-        composeRule.skipOnboarding()
+        composeRule.waitForIdleScreen()
         composeRule.navigateFromIdle("Routes")
         composeRule.onNodeWithText("Detail Smoke Route").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("More options").performClick()
@@ -65,7 +54,7 @@ class RouteDetailSmokeTest {
 
     @Test
     fun navigate_back_from_detail() {
-        composeRule.onNodeWithContentDescription("Open navigation menu").performClick()
+        Espresso.pressBack()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Routes").assertIsDisplayed()
     }
@@ -81,7 +70,7 @@ class RouteDetailSmokeTest {
     }
 
     @Test
-    fun route_detail_waypoint_count_visible() {
-        composeRule.onNodeWithText("Detail Smoke Route").assertIsDisplayed()
+    fun route_detail_shows_waypoint_list() {
+        composeRule.onNodeWithText("Waypoints", substring = true).assertIsDisplayed()
     }
 }

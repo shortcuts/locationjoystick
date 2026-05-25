@@ -53,8 +53,7 @@ class SettingsViewModel
         private val _qrImportReady = MutableSharedFlow<ExportData>(extraBufferCapacity = 1)
         val qrImportReady: SharedFlow<ExportData> = _qrImportReady
 
-        private val _qrChunksReady = MutableSharedFlow<QrChunker.ChunkResult>(extraBufferCapacity = 1)
-        val qrChunksReady: SharedFlow<QrChunker.ChunkResult> = _qrChunksReady
+        internal val qrChunksReady = MutableSharedFlow<QrChunker.ChunkResult>(extraBufferCapacity = 1)
 
         private data class RepoRealismChunk(
             val mapFollowsLocation: Boolean,
@@ -481,7 +480,7 @@ class SettingsViewModel
                                 jitterIdleIntervalSeconds = state.jitterIdleIntervalSeconds,
                             ),
                         )
-                    _qrChunksReady.emit(result)
+                    qrChunksReady.emit(result)
                 } catch (e: Exception) {
                     Log.e(TAG, "QR chunk preparation failed", e)
                 }
