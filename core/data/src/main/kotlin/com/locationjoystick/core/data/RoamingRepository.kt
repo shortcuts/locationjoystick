@@ -25,7 +25,20 @@ class RoamingRepository
         private val _isRoaming = MutableStateFlow(false)
         val isRoaming: StateFlow<Boolean> = _isRoaming.asStateFlow()
 
+        private val _isRoamingPaused = MutableStateFlow(false)
+        val isRoamingPaused: StateFlow<Boolean> = _isRoamingPaused.asStateFlow()
+
         private var activeJob: Job? = null
+
+        fun pauseRoaming() {
+            roamingEngine.pauseRoaming()
+            _isRoamingPaused.value = true
+        }
+
+        fun resumeRoaming() {
+            roamingEngine.resumeRoaming()
+            _isRoamingPaused.value = false
+        }
 
         fun startRoaming(
             config: RoamingConfig,
@@ -51,6 +64,7 @@ class RoamingRepository
                 )
             activeJob?.invokeOnCompletion {
                 _isRoaming.value = false
+                _isRoamingPaused.value = false
                 locationRepository.setMockMode(MockMode.TELEPORT)
                 locationRepository.setRouteWaypoints(null)
                 Log.d(TAG, "Roaming completed or cancelled")
@@ -78,6 +92,7 @@ class RoamingRepository
             roamingEngine.stopRoaming()
             activeJob = null
             _isRoaming.value = false
+            _isRoamingPaused.value = false
             locationRepository.setMockMode(MockMode.TELEPORT)
             locationRepository.setRouteWaypoints(null)
         }
@@ -87,9 +102,11 @@ class RoamingRepository
          * Safe to call from service onDestroy — the engine remains reusable after service restart.
          */
         fun resetOnServiceDestroy() {
+            roamingEngine.resumeRoaming()
             activeJob?.cancel()
             activeJob = null
             _isRoaming.value = false
+            _isRoamingPaused.value = false
             locationRepository.setMockMode(MockMode.TELEPORT)
             locationRepository.setRouteWaypoints(null)
         }

@@ -62,6 +62,12 @@ class RoamingEngine
         /** Current active roaming job. Null when not roaming. Only mutated under [jobMutex]. */
         @Volatile private var activeJob: Job? = null
 
+        /** When true, the roaming loop suspends position updates until resumed. */
+        @Volatile private var isPaused = false
+
+        fun pauseRoaming() { isPaused = true }
+        fun resumeRoaming() { isPaused = false }
+
         /**
          * Generates a uniformly random point within a circle of given radius.
          * Uses polar coordinate transformation with square-root for uniform distribution.
@@ -103,6 +109,7 @@ class RoamingEngine
                     jobMutex.withLock {
                         activeJob?.cancelAndJoin()
                     }
+                    isPaused = false
                     val initialLocation = config.centerPosition
                     var currentPosition = config.centerPosition
                     var remainingMeters = config.distanceMeters
@@ -111,6 +118,10 @@ class RoamingEngine
 
                     val distancePerTick = speedMs * (AppConstants.LocationConstants.UPDATE_INTERVAL_MS / 1000.0)
                     while (isActive && remainingMeters > 0) {
+                        while (isPaused && isActive) {
+                            delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
+                        }
+                        if (!isActive) break
                         if (currentRoute.isEmpty() || waypointIndex >= currentRoute.size) {
                             val destination = randomPointInRadius(config.centerPosition, config.radiusMeters)
                             currentRoute = fetchRoute(config, currentPosition, destination)
@@ -150,6 +161,10 @@ class RoamingEngine
                         onRouteUpdate(returnRoute)
                         var returnIndex = 0
                         while (isActive && returnRoute.isNotEmpty()) {
+                            while (isPaused && isActive) {
+                                delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
+                            }
+                            if (!isActive) break
                             val result =
                                 routeInterpolator.interpolateAlongRoute(
                                     waypoints = returnRoute,
@@ -175,6 +190,7 @@ class RoamingEngine
          * Waits for the active coroutine to finish before returning.
          */
         suspend fun stopRoaming() {
+            isPaused = false
             jobMutex.withLock {
                 activeJob?.cancelAndJoin()
                 activeJob = null

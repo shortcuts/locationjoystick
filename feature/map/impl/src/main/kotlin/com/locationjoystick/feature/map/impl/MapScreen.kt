@@ -275,30 +275,43 @@ internal fun MapScreen(
                         contentDescription = "Open favorites",
                     )
                 }
+                if (uiState.isRoaming) {
+                    FloatingActionButton(
+                        onClick = { onAction(MapAction.StopRoaming) },
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ) {
+                        Icon(LjIcons.Stop, contentDescription = "Stop roaming")
+                    }
+                    FloatingActionButton(
+                        onClick = {
+                            if (uiState.isRoamingPaused) {
+                                onAction(MapAction.ResumeRoaming)
+                            } else {
+                                onAction(MapAction.PauseRoaming)
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ) {
+                        Icon(
+                            imageVector = if (uiState.isRoamingPaused) LjIcons.PlayArrow else LjIcons.Pause,
+                            contentDescription = if (uiState.isRoamingPaused) "Resume roaming" else "Pause roaming",
+                        )
+                    }
+                }
                 FloatingActionButton(
                     onClick = {
-                        if (uiState.isRoaming) {
-                            onAction(MapAction.StopRoaming)
-                        } else {
+                        if (!uiState.isRoaming) {
                             onAction(MapAction.OpenRoamingSheet)
                         }
                     },
-                    containerColor =
-                        if (uiState.isRoaming) {
-                            MaterialTheme.colorScheme.errorContainer
-                        } else {
-                            MaterialTheme.colorScheme.tertiaryContainer
-                        },
-                    contentColor =
-                        if (uiState.isRoaming) {
-                            MaterialTheme.colorScheme.onErrorContainer
-                        } else {
-                            MaterialTheme.colorScheme.onTertiaryContainer
-                        },
+                    containerColor = if (uiState.isRoaming) Color(0xFF388E3C) else MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = if (uiState.isRoaming) Color.White else MaterialTheme.colorScheme.onTertiaryContainer,
                 ) {
                     Icon(
-                        imageVector = if (uiState.isRoaming) LjIcons.Stop else LjIcons.Explore,
-                        contentDescription = if (uiState.isRoaming) "Stop roaming" else "Start roaming",
+                        imageVector = LjIcons.Explore,
+                        contentDescription = if (uiState.isRoaming) "Roaming active" else "Start roaming",
                     )
                 }
                 FloatingActionButton(

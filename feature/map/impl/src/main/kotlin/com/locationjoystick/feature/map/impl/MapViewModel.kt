@@ -157,6 +157,11 @@ class MapViewModel
                     _uiState.update { it.copy(isRoaming = roaming) }
                 }
             }
+            viewModelScope.launch {
+                roamingRepository.isRoamingPaused.collect { paused ->
+                    _uiState.update { it.copy(isRoamingPaused = paused) }
+                }
+            }
         }
 
         private fun observeRoamingDefaults() {
@@ -437,6 +442,10 @@ class MapViewModel
                         roamingRepository.stopRoaming()
                     }
                 }
+
+                MapAction.PauseRoaming -> roamingRepository.pauseRoaming()
+
+                MapAction.ResumeRoaming -> roamingRepository.resumeRoaming()
 
                 is MapAction.AddEphemeralWaypoint -> {
                     val state = _uiState.value

@@ -96,6 +96,10 @@ sealed interface MapAction {
 
     data object StopRoaming : MapAction
 
+    data object PauseRoaming : MapAction
+
+    data object ResumeRoaming : MapAction
+
     data object GenerateRoamingPreview : MapAction
 
     data class AddEphemeralWaypoint(

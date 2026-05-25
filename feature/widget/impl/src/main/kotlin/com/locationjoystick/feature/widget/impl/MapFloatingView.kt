@@ -123,6 +123,7 @@ internal fun MapFloatingView(
     val routeWaypoints by locationRepository.routeWaypoints.collectAsStateWithLifecycle()
     val mockMode by locationRepository.currentMode.collectAsStateWithLifecycle()
     val isRoaming = mockMode == com.locationjoystick.core.model.MockMode.ROAMING
+    val isRoamingPaused by roamingRepository.isRoamingPaused.collectAsStateWithLifecycle(initialValue = false)
     val isRouteReplay = mockMode == com.locationjoystick.core.model.MockMode.ROUTE_REPLAY
     val isWalkActive = walkTarget != null || isRouteReplay
     val favoritesFlow = remember { favoriteRepository.getFavorites() }
@@ -432,20 +433,41 @@ internal fun MapFloatingView(
             ) {
                 Icon(Icons.Rounded.Favorite, contentDescription = "Open favorites")
             }
+            if (isRoaming) {
+                FloatingActionButton(
+                    onClick = { onStopRoaming() },
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                ) {
+                    Icon(LjIcons.Stop, contentDescription = "Stop roaming")
+                }
+                FloatingActionButton(
+                    onClick = {
+                        if (isRoamingPaused) {
+                            roamingRepository.resumeRoaming()
+                        } else {
+                            roamingRepository.pauseRoaming()
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ) {
+                    Icon(
+                        imageVector = if (isRoamingPaused) LjIcons.PlayArrow else LjIcons.Pause,
+                        contentDescription = if (isRoamingPaused) "Resume roaming" else "Pause roaming",
+                    )
+                }
+            }
             FloatingActionButton(
                 onClick = {
-                    if (isRoaming) {
-                        onStopRoaming()
-                    } else {
-                        showRoamingSheet = true
-                    }
+                    if (!isRoaming) showRoamingSheet = true
                 },
-                containerColor = if (isRoaming) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = if (isRoaming) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                containerColor = if (isRoaming) Color(0xFF388E3C) else MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = if (isRoaming) Color.White else MaterialTheme.colorScheme.onTertiaryContainer,
             ) {
                 Icon(
-                    imageVector = if (isRoaming) LjIcons.Stop else LjIcons.Explore,
-                    contentDescription = if (isRoaming) "Stop roaming" else "Start roaming",
+                    imageVector = LjIcons.Explore,
+                    contentDescription = if (isRoaming) "Roaming active" else "Start roaming",
                 )
             }
             FloatingActionButton(
