@@ -65,10 +65,14 @@ class RoamingRepository
         }
 
         /**
-         * Releases the roaming engine's coroutine scope.
-         * Call only when the engine will never be reused (e.g. process teardown / service onDestroy).
+         * Cancels any active roaming job and resets state without destroying the engine scope.
+         * Safe to call from service onDestroy — the engine remains reusable after service restart.
          */
-        fun close() {
-            roamingEngine.close()
+        fun resetOnServiceDestroy() {
+            activeJob?.cancel()
+            activeJob = null
+            _isRoaming.value = false
+            locationRepository.setMockMode(MockMode.TELEPORT)
+            locationRepository.setRouteWaypoints(null)
         }
     }

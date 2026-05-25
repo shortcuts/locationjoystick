@@ -427,7 +427,7 @@ class MockLocationService : Service() {
         locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
         routeReplayEngine.close()
-        roamingRepository.close()
+        roamingRepository.resetOnServiceDestroy()
         serviceScope.cancel()
         super.onDestroy()
     }
@@ -506,6 +506,9 @@ class MockLocationService : Service() {
         // RUNNING observer can't start a new loop between our cancel and the null write.
         updateJob?.cancel()
         serviceScope.launch { updateJobMutex.withLock { updateJob = null } }
+        if (roamingRepository.isRoaming.value) {
+            serviceScope.launch { roamingRepository.stopRoaming() }
+        }
         if (rememberLastLocation) {
             val pos = LatLng(currentLat, currentLon)
             serviceScope.launch { settingsRepository.setLastLocation(pos) }
