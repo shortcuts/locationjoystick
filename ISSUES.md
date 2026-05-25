@@ -8,6 +8,7 @@ No outstanding documentation issues.
 
 ## Backlog
 
-### Searched location
+### Import from QR code
 
-When selecting a searched location, the point isn't set on the map, it should be. and if a current spoof is ongoing, it should open the bottom drawer confirmation sheet
+The transfer properly spawns a QR code but scanning (import) one does nothing, no confirmation modal is opened.
+

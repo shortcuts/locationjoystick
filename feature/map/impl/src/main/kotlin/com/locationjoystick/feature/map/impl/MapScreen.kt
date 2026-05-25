@@ -63,6 +63,7 @@ import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.map.geojson.buildLineGeoJson
+import com.locationjoystick.core.map.geojson.buildMarkerGeoJson
 import com.locationjoystick.core.map.geojson.buildPointsGeoJson
 import com.locationjoystick.core.map.geojson.buildPositionGeoJson
 import com.locationjoystick.core.map.geojson.buildRouteTraceGeoJson
@@ -182,6 +183,7 @@ internal fun MapScreen(
     val endpointsSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val ephemeralRouteSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val ephemeralEndpointsSource = remember { mutableStateOf<GeoJsonSource?>(null) }
+    val searchMarkerSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val showSearch = remember { mutableStateOf(false) }
     val isFollowingCamera = remember { mutableStateOf(true) }
 
@@ -416,6 +418,19 @@ internal fun MapScreen(
                                 val ephemeralSrcs = style.addEphemeralRouteLayers()
                                 ephemeralRouteSource.value = ephemeralSrcs.routeSource
                                 ephemeralEndpointsSource.value = ephemeralSrcs.endpointsSource
+
+                                val searchMarkerSrc = GeoJsonSource(MapLibreSourceIds.SEARCH_MARKER, emptyGeoJson())
+                                style.addSource(searchMarkerSrc)
+                                style.addLayer(
+                                    CircleLayer(MapLibreLayerIds.SEARCH_MARKER, MapLibreSourceIds.SEARCH_MARKER)
+                                        .withProperties(
+                                            PropertyFactory.circleRadius(10f),
+                                            PropertyFactory.circleColor(Color(0xFFFF9800).toArgb()),
+                                            PropertyFactory.circleStrokeColor(Color(0xFFFFFFFF).toArgb()),
+                                            PropertyFactory.circleStrokeWidth(2f),
+                                        ),
+                                )
+                                searchMarkerSource.value = searchMarkerSrc
                             }
 
                             map.addOnMapClickListener { latLng ->
@@ -508,11 +523,17 @@ internal fun MapScreen(
             if (showSearch.value) {
                 NominatimSearchBar(
                     onLocationSelected = { lat, lon, _ ->
+                        val position =
+                            com.locationjoystick.core.model
+                                .LatLng(latitude = lat, longitude = lon)
                         mapRef.value?.animateCamera(
                             CameraUpdateFactory.newLatLng(MapLatLng(lat, lon)),
                             500,
                         )
+                        val src = searchMarkerSource.value ?: return@NominatimSearchBar
+                        src.setGeoJson(buildMarkerGeoJson(lat, lon))
                         showSearch.value = false
+                        onAction(MapAction.TapToTeleport(position))
                     },
                     recentSearches = recentSearches,
                     onSearchCommitted = onSearchCommitted,

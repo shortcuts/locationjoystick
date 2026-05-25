@@ -335,11 +335,13 @@ internal fun MapFloatingView(
         if (showSearch) {
             NominatimSearchBar(
                 onLocationSelected = { lat, lon, _ ->
+                    val position = LatLng(latitude = lat, longitude = lon)
                     mapRef.value?.animateCamera(
                         CameraUpdateFactory.newLatLng(MapLatLng(lat, lon)),
                         500,
                     )
                     showSearch = false
+                    onTeleport(position)
                 },
                 recentSearches = recentSearches,
                 onSearchCommitted = onSearchCommitted,
