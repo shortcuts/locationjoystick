@@ -159,6 +159,18 @@ interface PreferencesDataSource {
     fun getFavoritesSortNewestFirst(): Flow<Boolean>
 
     suspend fun setFavoritesSortNewestFirst(newestFirst: Boolean)
+
+    /** Gets the GPS jitter idle speed variation percentage (0 = off). */
+    fun getJitterSpeedIdleVariationPct(): Flow<Int>
+
+    /** Gets the GPS jitter moving speed variation percentage (0 = off). */
+    fun getJitterSpeedMovingVariationPct(): Flow<Int>
+
+    /** Sets the GPS jitter idle speed variation percentage. */
+    suspend fun setJitterSpeedIdleVariationPct(pct: Int)
+
+    /** Sets the GPS jitter moving speed variation percentage. */
+    suspend fun setJitterSpeedMovingVariationPct(pct: Int)
 }
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -217,6 +229,8 @@ class AppPreferencesDataSource
             val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
             val ROUTES_SORT_NEWEST_FIRST = booleanPreferencesKey("routes_sort_newest_first")
             val FAVORITES_SORT_NEWEST_FIRST = booleanPreferencesKey("favorites_sort_newest_first")
+            val JITTER_SPEED_IDLE_VARIATION_PCT = intPreferencesKey("jitter_speed_idle_variation_pct")
+            val JITTER_SPEED_MOVING_VARIATION_PCT = intPreferencesKey("jitter_speed_moving_variation_pct")
         }
 
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -592,6 +606,48 @@ class AppPreferencesDataSource
             dataStore.edit { prefs -> prefs[Keys.FAVORITES_SORT_NEWEST_FIRST] = newestFirst }
         }
 
+        override fun getJitterSpeedIdleVariationPct(): Flow<Int> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading jitter idle speed variation preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] ?: DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT }
+
+        override fun getJitterSpeedMovingVariationPct(): Flow<Int> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading jitter moving speed variation preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.JITTER_SPEED_MOVING_VARIATION_PCT] ?: DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT }
+
+        override suspend fun setJitterSpeedIdleVariationPct(pct: Int) {
+            dataStore.edit { prefs ->
+                prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] =
+                    pct.coerceIn(
+                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
+                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
+                    )
+            }
+        }
+
+        override suspend fun setJitterSpeedMovingVariationPct(pct: Int) {
+            dataStore.edit { prefs ->
+                prefs[Keys.JITTER_SPEED_MOVING_VARIATION_PCT] =
+                    pct.coerceIn(
+                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
+                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
+                    )
+            }
+        }
+
         companion object {
             const val DATASTORE_FILE_NAME = AppConstants.DataStoreConstants.FILE_NAME
 
@@ -626,6 +682,9 @@ class AppPreferencesDataSource
             const val DEFAULT_JITTER_IDLE_INTERVAL_SECONDS = AppConstants.JitterConstants.DEFAULT_IDLE_INTERVAL_SECONDS
             const val MIN_JITTER_INTERVAL_SECONDS = AppConstants.JitterConstants.MIN_INTERVAL_SECONDS
             const val MAX_JITTER_INTERVAL_SECONDS = AppConstants.JitterConstants.MAX_INTERVAL_SECONDS
+
+            const val DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT = AppConstants.JitterConstants.SPEED_IDLE_VARIATION_PCT_DEFAULT
+            const val DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT = AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT
         }
     }
 

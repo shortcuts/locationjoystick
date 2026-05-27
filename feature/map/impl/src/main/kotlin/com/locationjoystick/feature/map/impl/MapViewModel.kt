@@ -20,8 +20,8 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
-import com.locationjoystick.core.model.toConfig
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.toConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -357,7 +357,13 @@ class MapViewModel
                 }
 
                 MapAction.OpenRoamingSheet -> {
-                    _uiState.update { it.copy(showRoamingSheet = true, roamingDraft = latestRoamingDefaults, roamingPreviewWaypoints = null) }
+                    _uiState.update {
+                        it.copy(
+                            showRoamingSheet = true,
+                            roamingDraft = latestRoamingDefaults,
+                            roamingPreviewWaypoints = null,
+                        )
+                    }
                 }
 
                 MapAction.DismissRoamingSheet -> {

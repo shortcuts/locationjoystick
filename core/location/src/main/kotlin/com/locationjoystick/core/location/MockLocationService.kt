@@ -153,6 +153,12 @@ class MockLocationService : Service() {
     @Volatile private var suspendedMockingEnabled: Boolean =
         AppConstants.RealismConstants.SUSPENDED_MOCKING_ENABLED_DEFAULT
 
+    @Volatile private var speedIdleVariationPct: Int = AppConstants.JitterConstants.SPEED_IDLE_VARIATION_PCT_DEFAULT
+
+    @Volatile private var speedMovingVariationPct: Int = AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT
+
+    @Volatile private var activeProfileSpeedMs: Double = AppConstants.ProfileConstants.WALK_SPEED_MPS
+
     @Volatile private var rememberLastLocation: Boolean = false
 
     // Per-tick realism state
@@ -277,6 +283,9 @@ class MockLocationService : Service() {
         observeSetting("satelliteExtrasEnabled", settingsRepository.getRealismSatelliteExtrasEnabled()) { satelliteExtrasEnabled = it }
         observeSetting("suspendedMockingEnabled", settingsRepository.getRealismSuspendedMockingEnabled()) { suspendedMockingEnabled = it }
         observeSetting("rememberLastLocation", settingsRepository.getRememberLastLocation()) { rememberLastLocation = it }
+        observeSetting("speedIdleVariationPct", settingsRepository.getJitterSpeedIdleVariationPct()) { speedIdleVariationPct = it }
+        observeSetting("speedMovingVariationPct", settingsRepository.getJitterSpeedMovingVariationPct()) { speedMovingVariationPct = it }
+        observeSetting("activeProfileSpeed", settingsRepository.getActiveSpeedProfile()) { activeProfileSpeedMs = it.speedMetersPerSecond }
     }
 
     private fun <T> observeSetting(
@@ -686,7 +695,9 @@ class MockLocationService : Service() {
             bearingHoldEnabled = bearingHoldEnabled,
             altitudeEnabled = altitudeEnabled,
             satelliteExtrasEnabled = satelliteExtrasEnabled,
-            suspendedMockingEnabled = suspendedMockingEnabled,
+            speedIdleVariationPct = speedIdleVariationPct,
+            speedMovingVariationPct = speedMovingVariationPct,
+            activeProfileSpeedMs = activeProfileSpeedMs,
             suspendedPhaseStartMs = suspendedPhaseSnapshot.startMs,
             isSuspendedPhase = suspendedPhaseSnapshot.isActive,
             cachedSatelliteCount = cachedSatelliteCount,

@@ -178,4 +178,12 @@ class SettingsRepository
             lat: Double,
             lon: Double,
         ) = dataSource.addRecentSearch(displayName, lat, lon)
+
+        fun getJitterSpeedIdleVariationPct(): Flow<Int> = dataSource.getJitterSpeedIdleVariationPct()
+
+        fun getJitterSpeedMovingVariationPct(): Flow<Int> = dataSource.getJitterSpeedMovingVariationPct()
+
+        suspend fun setJitterSpeedIdleVariationPct(pct: Int) = dataSource.setJitterSpeedIdleVariationPct(pct)
+
+        suspend fun setJitterSpeedMovingVariationPct(pct: Int) = dataSource.setJitterSpeedMovingVariationPct(pct)
     }

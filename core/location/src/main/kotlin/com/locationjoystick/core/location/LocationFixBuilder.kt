@@ -29,7 +29,9 @@ import kotlin.random.Random
  * @property bearingHoldEnabled Whether to hold the last non-zero bearing when stationary.
  * @property altitudeEnabled Whether to simulate altitude with a Gaussian random walk.
  * @property satelliteExtrasEnabled Whether to attach satellite count extras to each fix.
- * @property suspendedMockingEnabled Whether the push/pause cycle feature is active.
+ * @property speedIdleVariationPct Percentage of active profile speed to use as range for idle speed variation (0 = off).
+ * @property speedMovingVariationPct Percentage of current speed to use as symmetric noise for moving speed variation (0 = off).
+ * @property activeProfileSpeedMs Active speed profile speed in m/s, used as the scale for idle variation.
  * @property suspendedPhaseStartMs Timestamp of the last phase transition in the push/pause cycle.
  * @property isSuspendedPhase True when currently in the pause window of the push/pause cycle;
  *   [buildLocation] returns null for the entire duration of this phase.
@@ -55,7 +57,9 @@ internal data class LocationSnapshot(
     val bearingHoldEnabled: Boolean,
     val altitudeEnabled: Boolean,
     val satelliteExtrasEnabled: Boolean,
-    val suspendedMockingEnabled: Boolean,
+    val speedIdleVariationPct: Int,
+    val speedMovingVariationPct: Int,
+    val activeProfileSpeedMs: Double,
     val suspendedPhaseStartMs: Long,
     val isSuspendedPhase: Boolean,
     val cachedSatelliteCount: Int,
@@ -168,8 +172,8 @@ internal fun perturbAccuracy(
 /**
  * Pure, side-effect-free GPS fix builder. No Android imports; [random] is injectable for testing.
  *
- * Execution order: suspended-phase check → altitude Gaussian walk → bearing hold → position jitter
- * → warm-up accuracy envelope → accuracy perturbation → satellite extras.
+ * Execution order: suspended-phase check → altitude Gaussian walk → bearing hold → speed perturbation
+ * → position jitter → warm-up accuracy envelope → accuracy perturbation → satellite extras.
  *
  * @param state Immutable snapshot of all service state for this tick.
  * @param nowMs Elapsed realtime ms at the start of the tick, used for the warm-up curve.
@@ -208,6 +212,24 @@ internal fun buildLocation(
             state.speedMs == 0f && state.bearingHoldEnabled -> state.lastNonZeroBearing
             state.speedMs == 0f -> 0f
             else -> state.bearing
+        }
+
+    // Speed perturbation
+    val outSpeed =
+        when {
+            state.speedMs == 0f && state.speedIdleVariationPct > 0 -> {
+                val sigma = state.activeProfileSpeedMs * state.speedIdleVariationPct / 100.0
+                (random.nextDouble() * sigma).toFloat().coerceAtLeast(0.01f)
+            }
+
+            state.speedMs > 0f && state.speedMovingVariationPct > 0 -> {
+                val range = state.speedMs * state.speedMovingVariationPct / 100.0f
+                (state.speedMs + (random.nextFloat() - 0.5f) * 2f * range).coerceAtLeast(0f)
+            }
+
+            else -> {
+                state.speedMs
+            }
         }
 
     // Jitter (position)
@@ -250,7 +272,7 @@ internal fun buildLocation(
         latitude = outLat,
         longitude = outLon,
         altitudeMeters = newAltitude,
-        speedMs = state.speedMs,
+        speedMs = outSpeed,
         bearing = outBearing,
         accuracyMeters = outAccuracy,
         verticalAccuracyMeters = AppConstants.RealismConstants.VERTICAL_ACCURACY_METERS,

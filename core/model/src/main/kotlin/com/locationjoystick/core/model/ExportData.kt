@@ -11,4 +11,6 @@ data class ExportData(
     val jitterMovingRadius: Double = 1.0,
     val jitterIntervalSeconds: Int = 3,
     val jitterIdleIntervalSeconds: Int = 30,
+    val jitterSpeedIdleVariationPct: Int = 5,
+    val jitterSpeedMovingVariationPct: Int = 8,
 )

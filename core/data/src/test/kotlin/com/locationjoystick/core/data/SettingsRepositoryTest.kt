@@ -538,6 +538,44 @@ class SettingsRepositoryTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+    @Test
+    fun `getJitterSpeedIdleVariationPct returns default`() =
+        runTest {
+            repository.getJitterSpeedIdleVariationPct().test {
+                assertEquals(AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setJitterSpeedIdleVariationPct persists value`() =
+        runTest {
+            repository.setJitterSpeedIdleVariationPct(20)
+            repository.getJitterSpeedIdleVariationPct().test {
+                assertEquals(20, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getJitterSpeedMovingVariationPct returns default`() =
+        runTest {
+            repository.getJitterSpeedMovingVariationPct().test {
+                assertEquals(AppPreferencesDataSource.DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setJitterSpeedMovingVariationPct persists value`() =
+        runTest {
+            repository.setJitterSpeedMovingVariationPct(30)
+            repository.getJitterSpeedMovingVariationPct().test {
+                assertEquals(30, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
 }
 
 class FakeAppPreferencesDataSource : PreferencesDataSource {
@@ -734,6 +772,29 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setFavoritesSortNewestFirst(newestFirst: Boolean) {
         favoritesSortNewestFirstFlow.value = newestFirst
+    }
+
+    private val jitterSpeedIdleVariationPctFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT)
+    private val jitterSpeedMovingVariationPctFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT)
+
+    override fun getJitterSpeedIdleVariationPct(): Flow<Int> = jitterSpeedIdleVariationPctFlow
+
+    override fun getJitterSpeedMovingVariationPct(): Flow<Int> = jitterSpeedMovingVariationPctFlow
+
+    override suspend fun setJitterSpeedIdleVariationPct(pct: Int) {
+        jitterSpeedIdleVariationPctFlow.value =
+            pct.coerceIn(
+                AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
+                AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
+            )
+    }
+
+    override suspend fun setJitterSpeedMovingVariationPct(pct: Int) {
+        jitterSpeedMovingVariationPctFlow.value =
+            pct.coerceIn(
+                AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
+                AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
+            )
     }
 
     val recentSearchesFlow = MutableStateFlow<List<RecentSearch>>(emptyList())

@@ -243,6 +243,8 @@ fun SettingsRoute(
         onSetRealismWarmupEnabled = viewModel::setRealismWarmupEnabled,
         onSetRealismSatelliteExtrasEnabled = viewModel::setRealismSatelliteExtrasEnabled,
         onSetRealismSuspendedMockingEnabled = viewModel::setRealismSuspendedMockingEnabled,
+        onSetJitterSpeedIdleVariationPct = viewModel::setJitterSpeedIdleVariationPct,
+        onSetJitterSpeedMovingVariationPct = viewModel::setJitterSpeedMovingVariationPct,
         convertMsToDisplay = viewModel::convertMsToDisplay,
         onUpdateRoamingDefaults = viewModel::updateRoamingDefaults,
         onExport = { exportLauncher.launch("${AppConstants.ExportConstants.FILENAME_PREFIX}-${System.currentTimeMillis()}.json") },
@@ -280,6 +282,8 @@ private fun SettingsScreenPreview() {
         onSetRealismWarmupEnabled = {},
         onSetRealismSatelliteExtrasEnabled = {},
         onSetRealismSuspendedMockingEnabled = {},
+        onSetJitterSpeedIdleVariationPct = {},
+        onSetJitterSpeedMovingVariationPct = {},
         convertMsToDisplay = { v, _ -> v },
         onExport = {},
         onImport = {},
@@ -311,6 +315,8 @@ internal fun SettingsScreen(
     onSetRealismWarmupEnabled: (Boolean) -> Unit,
     onSetRealismSatelliteExtrasEnabled: (Boolean) -> Unit,
     onSetRealismSuspendedMockingEnabled: (Boolean) -> Unit,
+    onSetJitterSpeedIdleVariationPct: (Int) -> Unit,
+    onSetJitterSpeedMovingVariationPct: (Int) -> Unit,
     convertMsToDisplay: (Double, SpeedUnit) -> Double,
     onUpdateRoamingDefaults: (RoamingDefaults) -> Unit = {},
     onExport: () -> Unit,
@@ -429,6 +435,8 @@ internal fun SettingsScreen(
                             onSetJitterMovingRadius,
                             onSetJitterIntervalSeconds,
                             onSetJitterIdleIntervalSeconds,
+                            onSetJitterSpeedIdleVariationPct,
+                            onSetJitterSpeedMovingVariationPct,
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         GpsRealismSection(
@@ -682,6 +690,8 @@ private fun GpsJitterSection(
     onSetJitterMovingRadius: (Double) -> Unit,
     onSetJitterIntervalSeconds: (Int) -> Unit,
     onSetJitterIdleIntervalSeconds: (Int) -> Unit,
+    onSetJitterSpeedIdleVariationPct: (Int) -> Unit,
+    onSetJitterSpeedMovingVariationPct: (Int) -> Unit,
 ) {
     Text("GPS Jitter", style = MaterialTheme.typography.titleMedium)
     Spacer(modifier = Modifier.height(4.dp))
@@ -717,6 +727,21 @@ private fun GpsJitterSection(
             value = uiState.jitterIntervalSeconds,
             onValueChange = { onSetJitterIntervalSeconds(it) },
             label = "Moving interval (s)",
+            modifier = Modifier.weight(1f),
+        )
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        JitterInput(
+            value = uiState.jitterSpeedIdleVariationPct.toDouble(),
+            onValueChange = { onSetJitterSpeedIdleVariationPct(it.toInt()) },
+            label = "Idle speed variation (%)",
+            modifier = Modifier.weight(1f),
+        )
+        JitterInput(
+            value = uiState.jitterSpeedMovingVariationPct.toDouble(),
+            onValueChange = { onSetJitterSpeedMovingVariationPct(it.toInt()) },
+            label = "Moving speed variation (%)",
             modifier = Modifier.weight(1f),
         )
     }

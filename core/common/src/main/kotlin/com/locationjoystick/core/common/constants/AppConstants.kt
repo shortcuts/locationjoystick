@@ -31,13 +31,17 @@ object AppConstants {
         const val DEFAULT_IDLE_RADIUS_METERS = 0.8
         const val DEFAULT_MOVING_RADIUS_METERS = 1.0
         const val MAX_RADIUS_METERS = 50.0
-        const val DEFAULT_MOVING_INTERVAL_SECONDS = 3
+        const val DEFAULT_MOVING_INTERVAL_SECONDS = 5
         const val DEFAULT_IDLE_INTERVAL_SECONDS = 30
         const val MIN_INTERVAL_SECONDS = 1
         const val MAX_INTERVAL_SECONDS = 30
         const val ACCURACY_MIN = 2.0f
         const val ACCURACY_MAX = 5.0f
         const val ACCURACY_PERTURBATION_RANGE = 3.0
+        const val SPEED_IDLE_VARIATION_PCT_DEFAULT = 5
+        const val SPEED_MOVING_VARIATION_PCT_DEFAULT = 8
+        const val SPEED_VARIATION_PCT_MIN = 0
+        const val SPEED_VARIATION_PCT_MAX = 50
     }
 
     object RealismConstants {

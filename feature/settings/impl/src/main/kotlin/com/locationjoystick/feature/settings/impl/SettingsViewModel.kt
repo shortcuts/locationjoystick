@@ -88,6 +88,8 @@ class SettingsViewModel
             val realismWarmupEnabled: Boolean,
             val realismSatelliteExtrasEnabled: Boolean,
             val realismSuspendedMockingEnabled: Boolean,
+            val jitterSpeedIdleVariationPct: Int,
+            val jitterSpeedMovingVariationPct: Int,
         )
 
         private data class DraftState(
@@ -108,6 +110,8 @@ class SettingsViewModel
             val realismWarmupEnabled: Boolean? = null,
             val realismSatelliteExtrasEnabled: Boolean? = null,
             val realismSuspendedMockingEnabled: Boolean? = null,
+            val jitterSpeedIdleVariationPct: Int? = null,
+            val jitterSpeedMovingVariationPct: Int? = null,
         )
 
         private val mutableDraft = MutableStateFlow(DraftState())
@@ -135,7 +139,18 @@ class SettingsViewModel
                         settingsRepository.getJitterIntervalSeconds(),
                     ) { idle, moving, interval -> Triple(idle, moving, interval) },
                     settingsRepository.getJitterIdleIntervalSeconds(),
-                ) { triple, idleInterval -> Pair(triple, idleInterval) },
+                    settingsRepository.getJitterSpeedIdleVariationPct(),
+                    settingsRepository.getJitterSpeedMovingVariationPct(),
+                ) { triple, idleInterval, idleVarPct, movingVarPct ->
+                    object {
+                        val idleRadius = triple.first
+                        val movingRadius = triple.second
+                        val intervalSeconds = triple.third
+                        val idleIntervalSeconds = idleInterval
+                        val speedIdleVariationPct = idleVarPct
+                        val speedMovingVariationPct = movingVarPct
+                    }
+                },
                 combine(
                     settingsRepository.getMapFollowsLocation(),
                     combine(
@@ -166,15 +181,17 @@ class SettingsViewModel
                     widgetFeatures = settings.second.toSet(),
                     rememberLastLocation = settings.third,
                     mapFollowsLocation = chunk.mapFollowsLocation,
-                    jitterIdleRadius = jitter.first.first,
-                    jitterMovingRadius = jitter.first.second,
-                    jitterIntervalSeconds = jitter.first.third,
-                    jitterIdleIntervalSeconds = jitter.second,
+                    jitterIdleRadius = jitter.idleRadius,
+                    jitterMovingRadius = jitter.movingRadius,
+                    jitterIntervalSeconds = jitter.intervalSeconds,
+                    jitterIdleIntervalSeconds = jitter.idleIntervalSeconds,
                     realismBearingHoldIdle = chunk.bearingHoldIdle,
                     realismAltitudeEnabled = chunk.altitudeEnabled,
                     realismWarmupEnabled = chunk.warmupEnabled,
                     realismSatelliteExtrasEnabled = chunk.satelliteExtrasEnabled,
                     realismSuspendedMockingEnabled = chunk.suspendedMockingEnabled,
+                    jitterSpeedIdleVariationPct = jitter.speedIdleVariationPct,
+                    jitterSpeedMovingVariationPct = jitter.speedMovingVariationPct,
                 )
             }
 
@@ -215,6 +232,8 @@ class SettingsViewModel
                     realismWarmupEnabled = draftState.realismWarmupEnabled ?: repoState.realismWarmupEnabled,
                     realismSatelliteExtrasEnabled = draftState.realismSatelliteExtrasEnabled ?: repoState.realismSatelliteExtrasEnabled,
                     realismSuspendedMockingEnabled = draftState.realismSuspendedMockingEnabled ?: repoState.realismSuspendedMockingEnabled,
+                    jitterSpeedIdleVariationPct = draftState.jitterSpeedIdleVariationPct ?: repoState.jitterSpeedIdleVariationPct,
+                    jitterSpeedMovingVariationPct = draftState.jitterSpeedMovingVariationPct ?: repoState.jitterSpeedMovingVariationPct,
                     isDirty = isDirty,
                 )
             }.stateIn(
@@ -291,6 +310,14 @@ class SettingsViewModel
             mutableDraft.update { it.copy(realismSuspendedMockingEnabled = v) }
         }
 
+        fun setJitterSpeedIdleVariationPct(pct: Int) {
+            mutableDraft.update { it.copy(jitterSpeedIdleVariationPct = pct) }
+        }
+
+        fun setJitterSpeedMovingVariationPct(pct: Int) {
+            mutableDraft.update { it.copy(jitterSpeedMovingVariationPct = pct) }
+        }
+
         fun saveChanges() {
             viewModelScope.launch {
                 try {
@@ -319,6 +346,16 @@ class SettingsViewModel
                         null
                     ) {
                         settingsRepository.setRealismSuspendedMockingEnabled(d.realismSuspendedMockingEnabled)
+                    }
+                    if (d.jitterSpeedIdleVariationPct !=
+                        null
+                    ) {
+                        settingsRepository.setJitterSpeedIdleVariationPct(d.jitterSpeedIdleVariationPct)
+                    }
+                    if (d.jitterSpeedMovingVariationPct !=
+                        null
+                    ) {
+                        settingsRepository.setJitterSpeedMovingVariationPct(d.jitterSpeedMovingVariationPct)
                     }
                     mutableDraft.value = DraftState()
                     userFeedback.emit(UserFeedback("Settings saved"))
@@ -389,6 +426,8 @@ class SettingsViewModel
                             jitterMovingRadius = state.jitterMovingRadiusMeters,
                             jitterIntervalSeconds = state.jitterIntervalSeconds,
                             jitterIdleIntervalSeconds = state.jitterIdleIntervalSeconds,
+                            jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
+                            jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
                         )
 
                     val json = serializeExportData(exportData)
@@ -453,6 +492,8 @@ class SettingsViewModel
                     setJitterMovingRadius(exportData.jitterMovingRadius)
                     setJitterIntervalSeconds(exportData.jitterIntervalSeconds)
                     setJitterIdleIntervalSeconds(exportData.jitterIdleIntervalSeconds)
+                    setJitterSpeedIdleVariationPct(exportData.jitterSpeedIdleVariationPct)
+                    setJitterSpeedMovingVariationPct(exportData.jitterSpeedMovingVariationPct)
                     userFeedback.emit(UserFeedback("Import complete"))
                 } catch (e: Exception) {
                     Log.e(TAG, "Import failed", e)
@@ -496,6 +537,8 @@ class SettingsViewModel
                                 jitterMovingRadius = state.jitterMovingRadiusMeters,
                                 jitterIntervalSeconds = state.jitterIntervalSeconds,
                                 jitterIdleIntervalSeconds = state.jitterIdleIntervalSeconds,
+                                jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
+                                jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
                             ),
                         )
                     qrChunksReady.emit(result)
@@ -563,6 +606,8 @@ class SettingsViewModel
                     settingsRepository.setRealismWarmupEnabled(exportData.settings.warmupEnabled)
                     settingsRepository.setRealismSatelliteExtrasEnabled(exportData.settings.satelliteExtrasEnabled)
                     settingsRepository.setRealismSuspendedMockingEnabled(exportData.settings.suspendedMockingEnabled)
+                    settingsRepository.setJitterSpeedIdleVariationPct(exportData.jitterSpeedIdleVariationPct)
+                    settingsRepository.setJitterSpeedMovingVariationPct(exportData.jitterSpeedMovingVariationPct)
                     userFeedback.emit(UserFeedback("Import complete"))
                 } catch (e: Exception) {
                     Log.e(TAG, "Import from ExportData failed", e)
