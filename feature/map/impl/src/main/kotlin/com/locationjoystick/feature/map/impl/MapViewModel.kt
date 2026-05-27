@@ -163,14 +163,13 @@ class MapViewModel
 
         private fun observeRoaming() {
             viewModelScope.launch {
-                roamingRepository.isRoaming.collect { roaming ->
-                    _uiState.update { it.copy(isRoaming = roaming) }
-                }
-            }
-            viewModelScope.launch {
-                roamingRepository.isRoamingPaused.collect { paused ->
-                    _uiState.update { it.copy(isRoamingPaused = paused) }
-                }
+                combine(
+                    roamingRepository.isRoaming,
+                    roamingRepository.isRoamingPaused,
+                ) { roaming, paused -> roaming to paused }
+                    .collect { (roaming, paused) ->
+                        _uiState.update { it.copy(isRoaming = roaming, isRoamingPaused = paused) }
+                    }
             }
         }
 

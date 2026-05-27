@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.random.Random
 
 private const val TAG = "RoamingRepository"
 
@@ -68,7 +67,8 @@ class RoamingRepository
 
         /**
          * Generates a preview route for display on the map without starting actual roaming.
-         * Applies ±2% random jitter to center position and radius for variety on repeated calls.
+         * The destination is picked randomly within [radiusMeters] of [center] via
+         * [RoamingEngine.randomPointInRadius], so repeated calls produce varied routes naturally.
          */
         suspend fun generatePreviewRoute(
             center: LatLng,
@@ -76,11 +76,8 @@ class RoamingRepository
             followRoads: Boolean,
             speedProfileId: String,
         ): List<LatLng> {
-            val jitter = 0.02
-            val jitteredRadius = radiusMeters * (1.0 + Random.nextDouble(-jitter, jitter))
-            val jitteredCenter = roamingEngine.randomPointInRadius(center, radiusMeters * jitter)
-            val destination = roamingEngine.randomPointInRadius(jitteredCenter, jitteredRadius)
-            return roamingEngine.previewRoute(jitteredCenter, destination, followRoads, speedProfileId)
+            val destination = roamingEngine.randomPointInRadius(center, radiusMeters)
+            return roamingEngine.previewRoute(center, destination, followRoads, speedProfileId)
         }
 
         suspend fun stopRoaming() {
