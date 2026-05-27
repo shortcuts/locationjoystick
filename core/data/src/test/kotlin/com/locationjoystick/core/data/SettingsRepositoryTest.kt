@@ -721,6 +721,21 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         realismSuspendedMockingEnabledFlow.value = enabled
     }
 
+    private val routesSortNewestFirstFlow = MutableStateFlow(true)
+    private val favoritesSortNewestFirstFlow = MutableStateFlow(true)
+
+    override fun getRoutesSortNewestFirst(): Flow<Boolean> = routesSortNewestFirstFlow
+
+    override suspend fun setRoutesSortNewestFirst(newestFirst: Boolean) {
+        routesSortNewestFirstFlow.value = newestFirst
+    }
+
+    override fun getFavoritesSortNewestFirst(): Flow<Boolean> = favoritesSortNewestFirstFlow
+
+    override suspend fun setFavoritesSortNewestFirst(newestFirst: Boolean) {
+        favoritesSortNewestFirstFlow.value = newestFirst
+    }
+
     val recentSearchesFlow = MutableStateFlow<List<RecentSearch>>(emptyList())
 
     override fun getRecentSearches(): Flow<List<RecentSearch>> = recentSearchesFlow
