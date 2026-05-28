@@ -7,33 +7,36 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,13 +46,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjScaffold
-import com.locationjoystick.core.model.RouteReplayMode
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.distanceTo
 
@@ -74,7 +78,9 @@ fun RoutesRoute(
         onOpenDrawer = onOpenDrawer,
         onDeleteRoute = viewModel::deleteRoute,
         onExportRoute = { route -> viewModel.exportRouteAsGpx(context, route) },
-        onStartReplay = { route, mode -> viewModel.startReplay(route, mode) },
+        onStartReplay = { route, isLooping, isReverse, isReturnToLocation, teleportToStart ->
+            viewModel.startReplay(route, isLooping, isReverse, isReturnToLocation, teleportToStart)
+        },
         onPauseReplay = viewModel::pauseReplay,
         onResumeReplay = viewModel::resumeReplay,
         onStopReplay = viewModel::stopReplay,
@@ -95,7 +101,7 @@ private fun RoutesScreenPreview() {
         onOpenDrawer = {},
         onDeleteRoute = {},
         onExportRoute = {},
-        onStartReplay = { _, _ -> },
+        onStartReplay = { _, _, _, _, _ -> },
         onPauseReplay = {},
         onResumeReplay = {},
         onStopReplay = {},
@@ -112,7 +118,7 @@ internal fun RoutesScreen(
     onOpenDrawer: () -> Unit,
     onDeleteRoute: (String) -> Unit,
     onExportRoute: (com.locationjoystick.core.model.Route) -> Unit,
-    onStartReplay: (com.locationjoystick.core.model.Route, RouteReplayMode) -> Unit,
+    onStartReplay: (com.locationjoystick.core.model.Route, Boolean, Boolean, Boolean, Boolean) -> Unit,
     onPauseReplay: () -> Unit,
     onResumeReplay: () -> Unit,
     onStopReplay: () -> Unit,
@@ -221,7 +227,7 @@ private fun RouteCard(
     onNavigateToEdit: (String) -> Unit,
     onDeleteRoute: (com.locationjoystick.core.model.Route) -> Unit,
     onExport: (com.locationjoystick.core.model.Route) -> Unit,
-    onStartReplay: (com.locationjoystick.core.model.Route, RouteReplayMode) -> Unit,
+    onStartReplay: (com.locationjoystick.core.model.Route, Boolean, Boolean, Boolean, Boolean) -> Unit,
     onPauseReplay: () -> Unit,
     onResumeReplay: () -> Unit,
     onStopReplay: () -> Unit,
@@ -231,6 +237,7 @@ private fun RouteCard(
     val isPaused = isActiveRoute && playbackState.isPaused
     val isActive = isPlaying || isPaused
     var menuExpanded by remember { mutableStateOf(false) }
+    var showStartDialog by remember { mutableStateOf(false) }
 
     val distanceText =
         remember(route.waypoints) {
@@ -337,55 +344,99 @@ private fun RouteCard(
                 }
 
                 else -> {
-                    var replayMenuExpanded by remember { mutableStateOf(false) }
-                    Box {
-                        IconButton(
-                            onClick = { replayMenuExpanded = true },
-                            enabled = !isActive,
-                        ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "Start route")
-                        }
-                        DropdownMenu(
-                            expanded = replayMenuExpanded,
-                            onDismissRequest = { replayMenuExpanded = false },
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Walk route") },
-                                onClick = {
-                                    onStartReplay(route, RouteReplayMode.ONE_WAY)
-                                    replayMenuExpanded = false
-                                },
-                                leadingIcon = { Icon(Icons.AutoMirrored.Filled.DirectionsWalk, null) },
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Return to location") },
-                                onClick = {
-                                    onStartReplay(route, RouteReplayMode.RETURN_TO_LOCATION)
-                                    replayMenuExpanded = false
-                                },
-                                leadingIcon = { Icon(Icons.AutoMirrored.Filled.DirectionsWalk, null) },
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Loop") },
-                                onClick = {
-                                    onStartReplay(route, RouteReplayMode.LOOP)
-                                    replayMenuExpanded = false
-                                },
-                                leadingIcon = { Icon(Icons.Default.Repeat, null) },
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Loop in reverse") },
-                                onClick = {
-                                    onStartReplay(route, RouteReplayMode.LOOP_REVERSE)
-                                    replayMenuExpanded = false
-                                },
-                                leadingIcon = { Icon(Icons.Default.Repeat, null) },
-                            )
-                        }
+                    IconButton(
+                        onClick = { showStartDialog = true },
+                        enabled = !isActive,
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = "Start route")
                     }
                 }
             }
         }
+    }
+
+    if (showStartDialog) {
+        StartRouteDialog(
+            onDismiss = { showStartDialog = false },
+            onStart = { isLooping, isReverse, isReturnToLocation, teleportToStart ->
+                onStartReplay(route, isLooping, isReverse, isReturnToLocation, teleportToStart)
+                showStartDialog = false
+            },
+        )
+    }
+}
+
+@Composable
+private fun StartRouteDialog(
+    onDismiss: () -> Unit,
+    onStart: (isLooping: Boolean, isReverse: Boolean, isReturnToLocation: Boolean, teleportToStart: Boolean) -> Unit,
+) {
+    var loop by remember { mutableStateOf(false) }
+    var reverse by remember { mutableStateOf(false) }
+    var returnToLocation by remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(shape = RoundedCornerShape(16.dp)) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text("Start route", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(16.dp))
+
+                CheckboxRow(label = "Loop", checked = loop, onCheckedChange = { loop = it })
+                CheckboxRow(label = "Reverse", checked = reverse, onCheckedChange = { reverse = it })
+                CheckboxRow(
+                    label = "Return to location",
+                    checked = returnToLocation,
+                    enabled = !loop,
+                    onCheckedChange = { returnToLocation = it },
+                )
+
+                Spacer(Modifier.height(20.dp))
+
+                Button(
+                    onClick = { onStart(loop, reverse, returnToLocation && !loop, false) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Walk and start")
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { onStart(loop, reverse, returnToLocation && !loop, true) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Teleport and start")
+                }
+                Spacer(Modifier.height(4.dp))
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text("Cancel")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CheckboxRow(
+    label: String,
+    checked: Boolean,
+    enabled: Boolean = true,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(enabled = enabled) { onCheckedChange(!checked) }
+                .padding(vertical = 4.dp),
+    ) {
+        Checkbox(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+        Text(
+            text = label,
+            color = if (enabled) Color.Unspecified else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+        )
     }
 }
 
