@@ -16,10 +16,12 @@ import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.location.EphemeralReplayController
 import com.locationjoystick.core.location.MockLocationIntentBuilder
+import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.core.model.RouteReplayMode
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.toConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -504,6 +506,39 @@ class MapViewModel
                         }
                     }
                 }
+
+                MapAction.OpenRoutesSheet -> {
+                    _uiState.update { it.copy(showRoutesSheet = true) }
+                }
+
+                MapAction.CloseRoutesSheet -> {
+                    _uiState.update { it.copy(showRoutesSheet = false) }
+                }
+
+                is MapAction.StartRouteReplay -> {
+                    startRouteReplayWithMode(action.routeId, action.mode)
+                    _uiState.update { it.copy(showRoutesSheet = false) }
+                }
+
+                MapAction.PauseRouteReplay -> {
+                    context.startService(MockLocationIntentBuilder.pauseRouteReplay(context))
+                }
+
+                MapAction.ResumeRouteReplay -> {
+                    viewModelScope.launch {
+                        val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+                        context.startService(MockLocationIntentBuilder.resumeRouteReplay(context, speedMs))
+                    }
+                }
+
+                MapAction.StopRouteReplay -> {
+                    context.startService(MockLocationIntentBuilder.stopRouteReplay(context))
+                    _uiState.update { it.copy(isRouteControlsExpanded = false) }
+                }
+
+                MapAction.ToggleRouteControls -> {
+                    _uiState.update { it.copy(isRouteControlsExpanded = !it.isRouteControlsExpanded) }
+                }
             }
         }
 
@@ -576,6 +611,28 @@ class MapViewModel
                         MockLocationIntentBuilder.updatePosition(context, newPos.latitude, newPos.longitude, speedMs, bearing),
                     )
                 }
+            }
+        }
+
+        private fun startRouteReplayWithMode(routeId: String, mode: RouteReplayMode) {
+            viewModelScope.launch {
+                val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+                val isBackward = mode == RouteReplayMode.LOOP_REVERSE
+                val isLooping = mode == RouteReplayMode.LOOP || mode == RouteReplayMode.LOOP_REVERSE
+                val returnPosition = if (mode == RouteReplayMode.RETURN_TO_LOCATION) {
+                    locationRepository.currentPosition.value
+                } else {
+                    null
+                }
+                val intent = MockLocationIntentBuilder.startRouteReplay(context, routeId, speedMs, isBackward)
+                    .apply {
+                        putExtra(MockLocationService.EXTRA_IS_LOOPING, isLooping)
+                        if (returnPosition != null) {
+                            putExtra(MockLocationService.EXTRA_RETURN_LAT, returnPosition.latitude)
+                            putExtra(MockLocationService.EXTRA_RETURN_LON, returnPosition.longitude)
+                        }
+                    }
+                context.startService(intent)
             }
         }
 

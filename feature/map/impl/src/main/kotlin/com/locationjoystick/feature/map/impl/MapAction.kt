@@ -2,6 +2,7 @@ package com.locationjoystick.feature.map.impl
 
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.RouteReplayMode
 
 sealed interface MapAction {
     data class TapToTeleport(
@@ -115,4 +116,21 @@ sealed interface MapAction {
     data class WalkViaRoadsTo(
         val position: LatLng,
     ) : MapAction
+
+    data object OpenRoutesSheet : MapAction
+
+    data object CloseRoutesSheet : MapAction
+
+    data class StartRouteReplay(
+        val routeId: String,
+        val mode: RouteReplayMode,
+    ) : MapAction
+
+    data object PauseRouteReplay : MapAction
+
+    data object ResumeRouteReplay : MapAction
+
+    data object StopRouteReplay : MapAction
+
+    data object ToggleRouteControls : MapAction
 }

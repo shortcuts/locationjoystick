@@ -1,15 +1,23 @@
 package com.locationjoystick.feature.map.impl
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -20,12 +28,100 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.CooldownState
+import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.model.RouteReplayMode
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun RoutesPickerSheet(
+    uiState: MapUiState,
+    onAction: (MapAction) -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = { onAction(MapAction.CloseRoutesSheet) },
+    ) {
+        Column(modifier = Modifier.padding(bottom = 16.dp)) {
+            Text(
+                text = "Routes",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            if (uiState.routes.isEmpty()) {
+                Text(
+                    text = "No routes saved",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            } else {
+                LazyColumn {
+                    items(uiState.routes, key = { it.id }) { route ->
+                        var menuExpanded by remember { mutableStateOf(false) }
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = route.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Box {
+                                Button(onClick = { menuExpanded = true }) {
+                                    Icon(LjIcons.PlayArrow, contentDescription = "Start route")
+                                }
+                                DropdownMenu(
+                                    expanded = menuExpanded,
+                                    onDismissRequest = { menuExpanded = false },
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Walk route") },
+                                        onClick = {
+                                            onAction(MapAction.StartRouteReplay(route.id, RouteReplayMode.ONE_WAY))
+                                            menuExpanded = false
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Return to location") },
+                                        onClick = {
+                                            onAction(MapAction.StartRouteReplay(route.id, RouteReplayMode.RETURN_TO_LOCATION))
+                                            menuExpanded = false
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Loop") },
+                                        onClick = {
+                                            onAction(MapAction.StartRouteReplay(route.id, RouteReplayMode.LOOP))
+                                            menuExpanded = false
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Loop in reverse") },
+                                        onClick = {
+                                            onAction(MapAction.StartRouteReplay(route.id, RouteReplayMode.LOOP_REVERSE))
+                                            menuExpanded = false
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

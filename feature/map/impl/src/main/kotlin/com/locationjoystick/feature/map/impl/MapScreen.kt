@@ -216,7 +216,6 @@ internal fun MapScreen(
                 uiState = uiState,
                 isFollowingCamera = isFollowingCamera.value,
                 onAction = onAction,
-                onNavigateToRoutes = onNavigateToRoutes,
                 onToggleSearch = { showSearch.value = !showSearch.value },
             )
         },
@@ -455,6 +454,13 @@ internal fun MapScreen(
                 )
             }
         }
+    }
+
+    if (uiState.showRoutesSheet) {
+        RoutesPickerSheet(
+            uiState = uiState,
+            onAction = onAction,
+        )
     }
 
     if (uiState.showFavoritesSheet) {

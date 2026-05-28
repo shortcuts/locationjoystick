@@ -27,7 +27,6 @@ internal fun MapFabColumn(
     uiState: MapUiState,
     isFollowingCamera: Boolean,
     onAction: (MapAction) -> Unit,
-    onNavigateToRoutes: () -> Unit,
     onToggleSearch: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4)) {
@@ -83,14 +82,52 @@ internal fun MapFabColumn(
             onClick = { onAction(MapAction.OpenFavoritesPicker) },
         )
 
-        // Routes — always visible (new)
-        MapIconButton(
-            icon = LjIcons.Route,
-            contentDescription = "Go to routes",
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            onClick = onNavigateToRoutes,
-        )
+        // Routes — expandable: icon always, pause/stop expand when replay active
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4),
+        ) {
+            MapIconButton(
+                icon = LjIcons.Route,
+                contentDescription =
+                    if (uiState.isRouteReplay) "Route active" else "Open routes",
+                containerColor =
+                    if (uiState.isRouteReplay) Color(0xFF388E3C) else MaterialTheme.colorScheme.primaryContainer,
+                contentColor =
+                    if (uiState.isRouteReplay) Color.White else MaterialTheme.colorScheme.onPrimaryContainer,
+                onClick = {
+                    if (uiState.isRouteReplay) {
+                        onAction(MapAction.ToggleRouteControls)
+                    } else {
+                        onAction(MapAction.OpenRoutesSheet)
+                    }
+                },
+            )
+            AnimatedVisibility(visible = uiState.isRouteReplay && uiState.isRouteControlsExpanded) {
+                Row(horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4)) {
+                    MapIconButton(
+                        icon = if (uiState.isRoutePaused) LjIcons.PlayArrow else LjIcons.Pause,
+                        contentDescription = if (uiState.isRoutePaused) "Resume route" else "Pause route",
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        onClick = {
+                            if (uiState.isRoutePaused) {
+                                onAction(MapAction.ResumeRouteReplay)
+                            } else {
+                                onAction(MapAction.PauseRouteReplay)
+                            }
+                        },
+                    )
+                    MapIconButton(
+                        icon = LjIcons.Stop,
+                        contentDescription = "Stop route",
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                        onClick = { onAction(MapAction.StopRouteReplay) },
+                    )
+                }
+            }
+        }
 
         // Roaming — collapsible: compass icon always, pause/resume+stop expand when roaming active
         Row(

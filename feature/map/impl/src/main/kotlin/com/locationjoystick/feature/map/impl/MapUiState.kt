@@ -38,6 +38,8 @@ data class MapUiState(
     val walkMode: WalkMode = WalkMode.Idle,
     val isWalkPaused: Boolean = false,
     val isRouteReplay: Boolean = false,
+    val showRoutesSheet: Boolean = false,
+    val isRouteControlsExpanded: Boolean = false,
     val showRoamingSheet: Boolean = false,
     val roamingDraft: RoamingDefaults? = null,
     val isRoaming: Boolean = false,
@@ -57,3 +59,6 @@ val MapUiState.isWalkActive: Boolean get() = walkMode !is WalkMode.Idle
 
 val MapUiState.isSpoofing: Boolean
     get() = mockLocationState == MockLocationState.RUNNING
+
+val MapUiState.isRoutePaused: Boolean
+    get() = isRouteReplay && mockLocationState == MockLocationState.PAUSED
