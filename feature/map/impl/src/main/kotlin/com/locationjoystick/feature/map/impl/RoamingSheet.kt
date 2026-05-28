@@ -1,52 +1,16 @@
 package com.locationjoystick.feature.map.impl
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.designsystem.component.RoamingSheetContent
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
-import kotlin.math.roundToInt
-
-private val SPEED_PROFILES =
-    listOf(
-        AppConstants.ProfileConstants.PROFILE_ID_WALK,
-        AppConstants.ProfileConstants.PROFILE_ID_RUN,
-        AppConstants.ProfileConstants.PROFILE_ID_BIKE,
-    )
-private val SPEED_PROFILE_LABELS =
-    mapOf(
-        AppConstants.ProfileConstants.PROFILE_ID_WALK to "Walk",
-        AppConstants.ProfileConstants.PROFILE_ID_RUN to "Run",
-        AppConstants.ProfileConstants.PROFILE_ID_BIKE to "Bike",
-    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,166 +25,37 @@ fun RoamingSheet(
     onMinimize: () -> Unit = {},
     onDismiss: () -> Unit,
 ) {
-    val isMph = speedUnit == SpeedUnit.MPH
-    ModalBottomSheet(onDismissRequest = { if (hasPreview) onMinimize() else onDismiss() }) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 24.dp),
-        ) {
-            Text("Roaming", style = MaterialTheme.typography.headlineSmall)
-
-            Spacer(Modifier.height(16.dp))
-
-            var radiusText by remember(isMph) {
-                mutableStateOf(
-                    if (isMph) {
-                        String.format("%.2f", draft.radiusMeters / 1609.344)
-                    } else {
-                        draft.radiusMeters.roundToInt().toString()
-                    },
-                )
-            }
-            OutlinedTextField(
-                value = radiusText,
-                onValueChange = { text ->
-                    radiusText = text
-                    text.toDoubleOrNull()?.let { v ->
-                        val meters = if (isMph) v * 1609.344 else v
-                        onAction(
-                            MapAction.UpdateRoamingRadius(
-                                meters.coerceIn(
-                                    AppConstants.RoamingConstants.RADIUS_MIN_METERS,
-                                    AppConstants.RoamingConstants.RADIUS_MAX_METERS,
-                                ),
-                            ),
-                        )
-                    }
-                },
-                label = { Text(if (isMph) "Radius (mi)" else "Radius (m)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            var distanceText by remember(isMph) {
-                mutableStateOf(
-                    if (isMph) {
-                        String.format("%.2f", draft.distanceMeters / 1609.344)
-                    } else {
-                        draft.distanceMeters.roundToInt().toString()
-                    },
-                )
-            }
-            OutlinedTextField(
-                value = distanceText,
-                onValueChange = { text ->
-                    distanceText = text
-                    text.toDoubleOrNull()?.let { v ->
-                        val meters = if (isMph) v * 1609.344 else v
-                        onAction(
-                            MapAction.UpdateRoamingDistance(
-                                meters.coerceIn(
-                                    AppConstants.RoamingConstants.DISTANCE_MIN_METERS,
-                                    AppConstants.RoamingConstants.DISTANCE_MAX_METERS,
-                                ),
-                            ),
-                        )
-                    }
-                },
-                label = { Text(if (isMph) "Route distance (mi)" else "Route distance (m)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Text("Speed profile", style = MaterialTheme.typography.labelLarge)
-            Spacer(Modifier.height(4.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                SPEED_PROFILES.forEach { id ->
-                    if (draft.speedProfileId == id) {
-                        OutlinedButton(
-                            onClick = { onAction(MapAction.SelectRoamingSpeedProfile(id)) },
-                            modifier = Modifier.padding(end = 4.dp),
-                        ) { Text(SPEED_PROFILE_LABELS[id] ?: id) }
-                    } else {
-                        FilledTonalButton(
-                            onClick = { onAction(MapAction.SelectRoamingSpeedProfile(id)) },
-                            modifier = Modifier.padding(end = 4.dp),
-                        ) { Text(SPEED_PROFILE_LABELS[id] ?: id) }
-                    }
+    ModalBottomSheet(
+        onDismissRequest = { if (hasPreview) onMinimize() else onDismiss() },
+        modifier = Modifier.fillMaxHeight(0.8f),
+    ) {
+        RoamingSheetContent(
+            draft = draft,
+            speedUnit = speedUnit,
+            hasCurrentPosition = hasCurrentPosition,
+            isSpoofingActive = isSpoofingActive,
+            hasPreview = hasPreview,
+            onDraftChange = { updated ->
+                if (updated.radiusMeters != draft.radiusMeters) {
+                    onAction(MapAction.UpdateRoamingRadius(updated.radiusMeters))
                 }
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Checkbox(
-                    checked = draft.followRoads,
-                    onCheckedChange = { onAction(MapAction.ToggleRoamingFollowRoads(it)) },
-                )
-                Text("Follow roads", style = MaterialTheme.typography.bodyMedium)
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Checkbox(
-                    checked = draft.returnToInitialLocation,
-                    onCheckedChange = { onAction(MapAction.ToggleRoamingReturnToStart(it)) },
-                )
-                Text("Return to start", style = MaterialTheme.typography.bodyMedium)
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            Row(modifier = Modifier.fillMaxWidth()) {
-                OutlinedButton(
-                    onClick = onGeneratePreview,
-                    enabled = hasCurrentPosition,
-                    modifier = Modifier.weight(1f).padding(end = 4.dp),
-                ) {
-                    Text("Generate")
+                if (updated.distanceMeters != draft.distanceMeters) {
+                    onAction(MapAction.UpdateRoamingDistance(updated.distanceMeters))
                 }
-                Button(
-                    onClick = { onAction(MapAction.StartRoaming) },
-                    enabled = hasCurrentPosition && isSpoofingActive,
-                    modifier = Modifier.weight(1f).padding(start = 4.dp),
-                ) {
-                    Text("Start")
+                if (updated.speedProfileId != draft.speedProfileId) {
+                    onAction(MapAction.SelectRoamingSpeedProfile(updated.speedProfileId))
                 }
-            }
-
-            if (hasPreview) {
-                Spacer(Modifier.height(8.dp))
-                TextButton(
-                    onClick = onMinimize,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("View on map")
+                if (updated.followRoads != draft.followRoads) {
+                    onAction(MapAction.ToggleRoamingFollowRoads(updated.followRoads))
                 }
-            }
-
-            if (!hasCurrentPosition || !isSpoofingActive) {
-                Text(
-                    "Start location spoofing first to enable roaming",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
-        }
+                if (updated.returnToInitialLocation != draft.returnToInitialLocation) {
+                    onAction(MapAction.ToggleRoamingReturnToStart(updated.returnToInitialLocation))
+                }
+            },
+            onGenerate = onGeneratePreview,
+            onStart = { onAction(MapAction.StartRoaming) },
+            onViewOnMap = onMinimize,
+        )
     }
 }
 
@@ -233,7 +68,7 @@ private fun RoamingSheetPreview() {
                 RoamingDefaults(
                     radiusMeters = 5_000.0,
                     distanceMeters = 1_000.0,
-                    speedProfileId = "walk",
+                    speedProfileId = AppConstants.ProfileConstants.PROFILE_ID_WALK,
                     followRoads = true,
                     returnToInitialLocation = true,
                 ),

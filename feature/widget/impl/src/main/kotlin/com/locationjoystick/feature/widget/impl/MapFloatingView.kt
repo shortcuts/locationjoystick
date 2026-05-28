@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.widget.impl
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,34 +8,29 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -50,8 +46,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -61,7 +57,9 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjText
+import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
+import com.locationjoystick.core.designsystem.component.RoamingSheetContent
 import com.locationjoystick.core.map.geojson.buildLineGeoJson
 import com.locationjoystick.core.map.geojson.buildPointsGeoJson
 import com.locationjoystick.core.map.geojson.buildPositionGeoJson
@@ -91,7 +89,6 @@ import org.maplibre.android.style.layers.RasterLayer
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.style.sources.RasterSource
 import org.maplibre.android.style.sources.TileSet
-import kotlin.math.roundToInt
 import org.maplibre.android.geometry.LatLng as MapLatLng
 
 private val MAP_FLOATING_VIEW_OSM_SOURCE = AppConstants.MapConstants.PANEL_OSM_SOURCE_ID
@@ -406,7 +403,11 @@ internal fun MapFloatingView(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (!isFollowingCamera.value) {
-                FloatingActionButton(
+                MapIconButton(
+                    icon = Icons.Rounded.MyLocation,
+                    contentDescription = "Re-center on location",
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
                     onClick = {
                         isFollowingCamera.value = true
                         if (currentPosition != null) {
@@ -416,247 +417,99 @@ internal fun MapFloatingView(
                             )
                         }
                     },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                ) {
-                    Icon(Icons.Rounded.MyLocation, contentDescription = "Re-center on location")
-                }
-            }
-            FloatingActionButton(
-                onClick = { showFavoritesPicker = true },
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            ) {
-                Icon(Icons.Rounded.Favorite, contentDescription = "Open favorites")
-            }
-            if (isRoaming) {
-                FloatingActionButton(
-                    onClick = { onStopRoaming() },
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError,
-                ) {
-                    Icon(LjIcons.Stop, contentDescription = "Stop roaming")
-                }
-                FloatingActionButton(
-                    onClick = {
-                        if (isRoamingPaused) {
-                            onResumeRoaming()
-                        } else {
-                            onPauseRoaming()
-                        }
-                    },
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ) {
-                    Icon(
-                        imageVector = if (isRoamingPaused) LjIcons.PlayArrow else LjIcons.Pause,
-                        contentDescription = if (isRoamingPaused) "Resume roaming" else "Pause roaming",
-                    )
-                }
-            }
-            FloatingActionButton(
-                onClick = {
-                    if (!isRoaming) showRoamingSheet = true
-                },
-                containerColor = if (isRoaming) Color(0xFF388E3C) else MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = if (isRoaming) Color.White else MaterialTheme.colorScheme.onTertiaryContainer,
-            ) {
-                Icon(
-                    imageVector = LjIcons.Explore,
-                    contentDescription = if (isRoaming) "Roaming active" else "Start roaming",
                 )
             }
-            FloatingActionButton(
-                onClick = { showSearch = !showSearch },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            ) {
-                Icon(Icons.Rounded.Search, contentDescription = "Search location")
+            MapIconButton(
+                icon = Icons.Rounded.Favorite,
+                contentDescription = "Open favorites",
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                onClick = { showFavoritesPicker = true },
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                androidx.compose.animation.AnimatedVisibility(visible = isRoaming) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        MapIconButton(
+                            icon = LjIcons.Stop,
+                            contentDescription = "Stop roaming",
+                            containerColor = MaterialTheme.colorScheme.error,
+                            iconTint = MaterialTheme.colorScheme.onError,
+                            onClick = { onStopRoaming() },
+                        )
+                        MapIconButton(
+                            icon = if (isRoamingPaused) LjIcons.PlayArrow else LjIcons.Pause,
+                            contentDescription = if (isRoamingPaused) "Resume roaming" else "Pause roaming",
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            onClick = { if (isRoamingPaused) onResumeRoaming() else onPauseRoaming() },
+                        )
+                    }
+                }
+                MapIconButton(
+                    icon = LjIcons.Explore,
+                    contentDescription = if (isRoaming) "Roaming active" else "Start roaming",
+                    containerColor = if (isRoaming) Color(0xFF388E3C) else MaterialTheme.colorScheme.tertiaryContainer,
+                    iconTint = if (isRoaming) Color.White else MaterialTheme.colorScheme.onTertiaryContainer,
+                    onClick = { if (!isRoaming) showRoamingSheet = true },
+                )
             }
+            MapIconButton(
+                icon = Icons.Rounded.Search,
+                contentDescription = "Search location",
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                onClick = { showSearch = !showSearch },
+            )
             val isSpoofing = mockLocationState == MockLocationState.RUNNING
-            FloatingActionButton(
-                onClick = {
-                    if (isSpoofing) onStopSpoofing() else onStartSpoofing()
-                },
+            MapIconButton(
+                icon = if (isSpoofing) LjIcons.Stop else LjIcons.PlayArrow,
+                contentDescription = if (isSpoofing) "Stop spoofing" else "Start spoofing",
                 containerColor =
                     if (isSpoofing) {
                         MaterialTheme.colorScheme.error
                     } else {
-                        Color(AppConstants.MapColorConstants.ACTIVE_BUTTON_COLOR)
+                        Color(
+                            AppConstants.MapColorConstants.ACTIVE_BUTTON_COLOR,
+                        )
                     },
-                contentColor =
-                    if (isSpoofing) {
-                        MaterialTheme.colorScheme.onError
-                    } else {
-                        Color.White
-                    },
-            ) {
-                Icon(
-                    imageVector = if (isSpoofing) LjIcons.Stop else LjIcons.PlayArrow,
-                    contentDescription = if (isSpoofing) "Stop spoofing" else "Start spoofing",
-                )
-            }
+                iconTint = if (isSpoofing) MaterialTheme.colorScheme.onError else Color.White,
+                onClick = { if (isSpoofing) onStopSpoofing() else onStartSpoofing() },
+            )
         }
 
         if (showRoamingSheet) {
-            val isMph = speedUnit == SpeedUnit.MPH
             val isSpoofing = mockLocationState == MockLocationState.RUNNING
-            var draft by remember(roamingDefaults) {
-                mutableStateOf(roamingDefaults)
-            }
-            ModalBottomSheet(onDismissRequest = {
-                showRoamingSheet = false
-                roamingPreviewWaypoints = null
-            }) {
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 16.dp)
-                            .padding(bottom = 24.dp),
-                ) {
-                    Text("Roaming", style = MaterialTheme.typography.headlineSmall)
-                    Spacer(Modifier.height(16.dp))
-                    var radiusText by remember(isMph) {
-                        mutableStateOf(
-                            if (isMph) {
-                                String.format("%.2f", draft.radiusMeters / 1609.344)
-                            } else {
-                                draft.radiusMeters.roundToInt().toString()
-                            },
-                        )
-                    }
-                    OutlinedTextField(
-                        value = radiusText,
-                        onValueChange = { text ->
-                            radiusText = text
-                            text.toDoubleOrNull()?.let { v ->
-                                val meters = if (isMph) v * 1609.344 else v
-                                draft =
-                                    draft.copy(
-                                        radiusMeters =
-                                            meters.coerceIn(
-                                                AppConstants.RoamingConstants.RADIUS_MIN_METERS,
-                                                AppConstants.RoamingConstants.RADIUS_MAX_METERS,
-                                            ),
-                                    )
-                            }
-                        },
-                        label = { Text(if (isMph) "Radius (mi)" else "Radius (m)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    var distanceText by remember(isMph) {
-                        mutableStateOf(
-                            if (isMph) {
-                                String.format("%.2f", draft.distanceMeters / 1609.344)
-                            } else {
-                                draft.distanceMeters.roundToInt().toString()
-                            },
-                        )
-                    }
-                    OutlinedTextField(
-                        value = distanceText,
-                        onValueChange = { text ->
-                            distanceText = text
-                            text.toDoubleOrNull()?.let { v ->
-                                val meters = if (isMph) v * 1609.344 else v
-                                draft =
-                                    draft.copy(
-                                        distanceMeters =
-                                            meters.coerceIn(
-                                                AppConstants.RoamingConstants.DISTANCE_MIN_METERS,
-                                                AppConstants.RoamingConstants.DISTANCE_MAX_METERS,
-                                            ),
-                                    )
-                            }
-                        },
-                        label = { Text(if (isMph) "Route distance (mi)" else "Route distance (m)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Text("Speed profile", style = MaterialTheme.typography.labelLarge)
-                    Spacer(Modifier.height(4.dp))
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        listOf(
-                            AppConstants.ProfileConstants.PROFILE_ID_WALK,
-                            AppConstants.ProfileConstants.PROFILE_ID_RUN,
-                            AppConstants.ProfileConstants.PROFILE_ID_BIKE,
-                        ).forEach { id ->
-                            val label = mapOf("walk" to "Walk", "run" to "Run", "bike" to "Bike")[id] ?: id
-                            if (draft.speedProfileId == id) {
-                                OutlinedButton(
-                                    onClick = { draft = draft.copy(speedProfileId = id) },
-                                    modifier = Modifier.padding(end = 4.dp),
-                                ) { Text(label) }
-                            } else {
-                                FilledTonalButton(
-                                    onClick = { draft = draft.copy(speedProfileId = id) },
-                                    modifier = Modifier.padding(end = 4.dp),
-                                ) { Text(label) }
-                            }
+            var draft by remember(roamingDefaults) { mutableStateOf(roamingDefaults) }
+            ModalBottomSheet(
+                onDismissRequest = {
+                    showRoamingSheet = false
+                    roamingPreviewWaypoints = null
+                },
+                modifier = Modifier.fillMaxHeight(0.8f),
+            ) {
+                RoamingSheetContent(
+                    draft = draft,
+                    speedUnit = speedUnit,
+                    hasCurrentPosition = currentPosition != null,
+                    isSpoofingActive = isSpoofing,
+                    hasPreview = roamingPreviewWaypoints != null,
+                    onDraftChange = { draft = it },
+                    onGenerate = {
+                        scope.launch {
+                            val pos = currentPosition ?: return@launch
+                            roamingPreviewWaypoints =
+                                onGeneratePreviewRoute(pos, draft.radiusMeters, draft.followRoads, draft.speedProfileId)
                         }
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        Checkbox(checked = draft.followRoads, onCheckedChange = { draft = draft.copy(followRoads = it) })
-                        Text("Follow roads", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        Checkbox(checked = draft.returnToInitialLocation, onCheckedChange = {
-                            draft =
-                                draft.copy(returnToInitialLocation = it)
-                        })
-                        Text("Return to start", style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    val hasPosition = currentPosition != null
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedButton(
-                            onClick = {
-                                scope.launch {
-                                    val pos = currentPosition ?: return@launch
-                                    val waypoints =
-                                        onGeneratePreviewRoute(
-                                            pos,
-                                            draft.radiusMeters,
-                                            draft.followRoads,
-                                            draft.speedProfileId,
-                                        )
-                                    roamingPreviewWaypoints = waypoints
-                                }
-                            },
-                            enabled = hasPosition,
-                            modifier = Modifier.weight(1f).padding(end = 4.dp),
-                        ) {
-                            Text("Generate")
-                        }
-                        Button(
-                            onClick = {
-                                onStartRoaming(draft)
-                                showRoamingSheet = false
-                                roamingPreviewWaypoints = null
-                            },
-                            enabled = isSpoofing,
-                            modifier = Modifier.weight(1f).padding(start = 4.dp),
-                        ) {
-                            Text("Start")
-                        }
-                    }
-                    if (!hasPosition || !isSpoofing) {
-                        Text(
-                            "Start location spoofing first to enable roaming",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                    }
-                }
+                    },
+                    onStart = {
+                        onStartRoaming(draft)
+                        showRoamingSheet = false
+                        roamingPreviewWaypoints = null
+                    },
+                    onViewOnMap = {
+                        showRoamingSheet = false
+                    },
+                )
             }
         }
 
@@ -803,5 +656,30 @@ internal fun MapFloatingView(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MapIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    containerColor: Color,
+    iconTint: Color,
+    onClick: () -> Unit,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier =
+            Modifier
+                .size(UiConstants.FAB_CONTAINER_SIZE)
+                .background(containerColor, CircleShape)
+                .clickable(onClick = onClick),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = iconTint,
+            modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
+        )
     }
 }

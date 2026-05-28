@@ -134,7 +134,11 @@ fun LjNavHost(
             )
         }
 
-        mapScreen(onOpenDrawer = onOpenDrawer, bottomBar = { LjBannerAd() })
+        mapScreen(
+            onOpenDrawer = onOpenDrawer,
+            onNavigateToRoutes = { navController.navigate(ROUTES_GRAPH) { launchSingleTop = true } },
+            bottomBar = { LjBannerAd() },
+        )
 
         navigation(startDestination = ROUTES_ROUTE, route = ROUTES_GRAPH) {
             composable(

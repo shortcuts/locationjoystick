@@ -10,29 +10,14 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -56,10 +41,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.locationjoystick.core.common.constants.AppConstants
-import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
-import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.map.geojson.buildLineGeoJson
@@ -71,8 +54,6 @@ import com.locationjoystick.core.map.geojson.emptyGeoJson
 import com.locationjoystick.core.map.maplibre.MapLibreLayerIds
 import com.locationjoystick.core.map.maplibre.MapLibreSourceIds
 import com.locationjoystick.core.map.maplibre.addEphemeralRouteLayers
-import com.locationjoystick.core.model.FavoriteLocation
-import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.feature.map.api.MAP_ROUTE
 import org.maplibre.android.MapLibre
@@ -126,6 +107,7 @@ private fun fadeOutScale(): ExitTransition =
 
 fun NavGraphBuilder.mapScreen(
     onOpenDrawer: () -> Unit,
+    onNavigateToRoutes: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
 ) {
     composable(
@@ -135,13 +117,14 @@ fun NavGraphBuilder.mapScreen(
         popEnterTransition = { fadeInScale() },
         popExitTransition = { fadeOutScale() },
     ) {
-        MapRoute(onOpenDrawer = onOpenDrawer, bottomBar = bottomBar)
+        MapRoute(onOpenDrawer = onOpenDrawer, onNavigateToRoutes = onNavigateToRoutes, bottomBar = bottomBar)
     }
 }
 
 @Composable
 fun MapRoute(
     onOpenDrawer: () -> Unit,
+    onNavigateToRoutes: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     viewModel: MapViewModel = hiltViewModel(),
 ) {
@@ -153,6 +136,7 @@ fun MapRoute(
         onOpenDrawer = onOpenDrawer,
         onAction = viewModel::onAction,
         onSearchCommitted = viewModel::addRecentSearch,
+        onNavigateToRoutes = onNavigateToRoutes,
         bottomBar = bottomBar,
     )
 }
@@ -164,6 +148,7 @@ internal fun MapScreen(
     onAction: (MapAction) -> Unit,
     recentSearches: List<RecentSearch> = emptyList(),
     onSearchCommitted: ((String, Double, Double) -> Unit)? = null,
+    onNavigateToRoutes: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -227,141 +212,13 @@ internal fun MapScreen(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = bottomBar,
         floatingActionButton = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (!isFollowingCamera.value) {
-                    FloatingActionButton(
-                        onClick = { onAction(MapAction.RecenterCamera) },
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    ) {
-                        Icon(
-                            imageVector = LjIcons.MyLocation,
-                            contentDescription = "Re-center on location",
-                        )
-                    }
-                }
-                if (uiState.walkTarget != null) {
-                    FloatingActionButton(
-                        onClick = { onAction(MapAction.StopWalk) },
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                    ) {
-                        Icon(LjIcons.Stop, contentDescription = "Stop walk")
-                    }
-                    FloatingActionButton(
-                        onClick = {
-                            if (uiState.isWalkPaused) {
-                                onAction(MapAction.ResumeWalk)
-                            } else {
-                                onAction(MapAction.PauseWalk)
-                            }
-                        },
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ) {
-                        Icon(
-                            imageVector = if (uiState.isWalkPaused) LjIcons.PlayArrow else LjIcons.Pause,
-                            contentDescription = if (uiState.isWalkPaused) "Resume walk" else "Pause walk",
-                        )
-                    }
-                }
-                FloatingActionButton(
-                    onClick = { onAction(MapAction.OpenFavoritesPicker) },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                ) {
-                    Icon(
-                        imageVector = LjIcons.Favorite,
-                        contentDescription = "Open favorites",
-                    )
-                }
-                val hasClearableContent =
-                    !uiState.isRoaming &&
-                        (
-                            uiState.roamingPreviewWaypoints != null ||
-                                uiState.ephemeralWaypoints.isNotEmpty() ||
-                                uiState.walkTarget != null ||
-                                uiState.pendingTapPosition != null
-                        )
-                if (hasClearableContent) {
-                    FloatingActionButton(
-                        onClick = { onAction(MapAction.ClearMap) },
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                    ) {
-                        Icon(
-                            imageVector = LjIcons.Delete,
-                            contentDescription = "Clear map",
-                        )
-                    }
-                }
-                if (uiState.isRoaming) {
-                    FloatingActionButton(
-                        onClick = { onAction(MapAction.StopRoaming) },
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                    ) {
-                        Icon(LjIcons.Stop, contentDescription = "Stop roaming")
-                    }
-                    FloatingActionButton(
-                        onClick = {
-                            if (uiState.isRoamingPaused) {
-                                onAction(MapAction.ResumeRoaming)
-                            } else {
-                                onAction(MapAction.PauseRoaming)
-                            }
-                        },
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ) {
-                        Icon(
-                            imageVector = if (uiState.isRoamingPaused) LjIcons.PlayArrow else LjIcons.Pause,
-                            contentDescription = if (uiState.isRoamingPaused) "Resume roaming" else "Pause roaming",
-                        )
-                    }
-                }
-                FloatingActionButton(
-                    onClick = {
-                        when {
-                            uiState.isRoamingSheetMinimized -> onAction(MapAction.ExpandRoamingSheet)
-                            !uiState.isRoaming -> onAction(MapAction.OpenRoamingSheet)
-                        }
-                    },
-                    containerColor = when {
-                        uiState.isRoaming -> Color(0xFF388E3C)
-                        uiState.isRoamingSheetMinimized -> MaterialTheme.colorScheme.tertiary
-                        else -> MaterialTheme.colorScheme.tertiaryContainer
-                    },
-                    contentColor = when {
-                        uiState.isRoaming || uiState.isRoamingSheetMinimized -> Color.White
-                        else -> MaterialTheme.colorScheme.onTertiaryContainer
-                    },
-                ) {
-                    Icon(
-                        imageVector = LjIcons.Explore,
-                        contentDescription = when {
-                            uiState.isRoaming -> "Roaming active"
-                            uiState.isRoamingSheetMinimized -> "Expand roaming sheet"
-                            else -> "Start roaming"
-                        },
-                    )
-                }
-                FloatingActionButton(
-                    onClick = { showSearch.value = !showSearch.value },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search location",
-                    )
-                }
-                MapFab(
-                    isSpoofing = uiState.isSpoofing,
-                    onStart = { onAction(MapAction.StartSpoofing) },
-                    onStop = { onAction(MapAction.StopSpoofing) },
-                )
-            }
+            MapFabColumn(
+                uiState = uiState,
+                isFollowingCamera = isFollowingCamera.value,
+                onAction = onAction,
+                onNavigateToRoutes = onNavigateToRoutes,
+                onToggleSearch = { showSearch.value = !showSearch.value },
+            )
         },
     ) { paddingValues ->
         Box(
@@ -631,291 +488,5 @@ internal fun MapScreen(
             onMinimize = { onAction(MapAction.MinimizeRoamingSheet) },
             onDismiss = { onAction(MapAction.DismissRoamingSheet) },
         )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FavoritesPickerSheet(
-    uiState: MapUiState,
-    onAction: (MapAction) -> Unit,
-) {
-    var showSaveDialog by remember { mutableStateOf(false) }
-
-    ModalBottomSheet(
-        onDismissRequest = { onAction(MapAction.CloseFavoritesPicker) },
-    ) {
-        val target = uiState.favoriteTarget
-        if (target == null) {
-            FavoritesList(
-                title = "Favorites",
-                favorites = uiState.favorites,
-                onSelect = { onAction(MapAction.SelectFavorite(it)) },
-                onSaveCurrentLocation =
-                    if (uiState.currentPosition != null) {
-                        { showSaveDialog = true }
-                    } else {
-                        null
-                    },
-            )
-        } else {
-            FavoriteTargetDetail(
-                favorite = target,
-                onSetLocation = { onAction(MapAction.SetLocationTo(target.position)) },
-                onGoToLocation = { onAction(MapAction.WalkStraightTo(target.position)) },
-                onGoToLocationViaRoads = { onAction(MapAction.WalkViaRoadsTo(target.position)) },
-                onDismiss = { onAction(MapAction.CloseFavoritesPicker) },
-            )
-        }
-    }
-
-    if (showSaveDialog) {
-        SaveCurrentLocationDialog(
-            onDismiss = { showSaveDialog = false },
-            onSave = { name ->
-                onAction(MapAction.SaveCurrentLocation(name))
-                showSaveDialog = false
-            },
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PendingTapSheet(
-    position: com.locationjoystick.core.model.LatLng,
-    isRouteReplay: Boolean,
-    isWalkActive: Boolean,
-    cooldownState: CooldownState,
-    onAction: (MapAction) -> Unit,
-) {
-    ModalBottomSheet(
-        onDismissRequest = { onAction(MapAction.ClearPendingTap) },
-    ) {
-        Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
-            if (isRouteReplay) {
-                Text("Route in progress", style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = { onAction(MapAction.StopRouteAndTeleport(position)) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Stop route and teleport")
-                }
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = { onAction(MapAction.StopRouteAndWalkTo(position)) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Stop route and walk here")
-                }
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = { onAction(MapAction.FinishRouteAndWalkTo(position)) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Finish route and walk here")
-                }
-            } else {
-                Text("Move to this location?", style = MaterialTheme.typography.titleMedium)
-                if (cooldownState is CooldownState.Cooling) {
-                    Spacer(Modifier.height(12.dp))
-                    val distKm = cooldownState.distanceMeters / 1000.0
-                    val distLabel = if (distKm >= 1.0) "%.1f km".format(distKm) else "%.0f m".format(cooldownState.distanceMeters)
-                    val remaining = cooldownState.remainingSeconds
-                    val hours = remaining / AppConstants.TimeConstants.SECONDS_PER_HOUR
-                    val minutes = (remaining % AppConstants.TimeConstants.SECONDS_PER_HOUR) / AppConstants.TimeConstants.SECONDS_PER_MINUTE
-                    val seconds = remaining % AppConstants.TimeConstants.SECONDS_PER_MINUTE
-                    val timeLabel =
-                        when {
-                            hours > 0 -> "%dh %dm".format(hours, minutes)
-                            minutes > 0 -> "%dm %ds".format(minutes, seconds)
-                            else -> "%ds".format(seconds)
-                        }
-                    androidx.compose.material3.Surface(
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = "Suggested wait: $timeLabel · $distLabel teleport",
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        )
-                    }
-                }
-                Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = { onAction(MapAction.ConfirmTeleport(position)) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Teleport here")
-                }
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = {
-                        onAction(MapAction.LongPressTapToWalk(position))
-                        onAction(MapAction.ClearPendingTap)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Walk here")
-                }
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = {
-                        onAction(MapAction.WalkViaRoadsTo(position))
-                        onAction(MapAction.ClearPendingTap)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Walk here via roads")
-                }
-                if (isWalkActive) {
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = { onAction(MapAction.AddEphemeralWaypoint(position)) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text("Add next point")
-                    }
-                }
-            }
-            Spacer(Modifier.height(4.dp))
-            TextButton(
-                onClick = { onAction(MapAction.ClearPendingTap) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Do nothing")
-            }
-        }
-    }
-}
-
-@Composable
-private fun FavoriteTargetDetail(
-    favorite: FavoriteLocation,
-    onSetLocation: () -> Unit,
-    onGoToLocation: () -> Unit,
-    onGoToLocationViaRoads: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-    ) {
-        Text(favorite.name, style = MaterialTheme.typography.headlineSmall)
-        Text(
-            "${String.format("%.4f", favorite.position.latitude)}, " +
-                "${String.format("%.4f", favorite.position.longitude)}",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-
-        Button(
-            onClick = onSetLocation,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-        ) {
-            Text("Set Location")
-        }
-        Button(
-            onClick = onGoToLocation,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-        ) {
-            Text("Walk To Location")
-        }
-        OutlinedButton(
-            onClick = onGoToLocationViaRoads,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-        ) {
-            Text("Walk via roads")
-        }
-        TextButton(
-            onClick = onDismiss,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        ) {
-            Text("Do nothing")
-        }
-    }
-}
-
-@Composable
-private fun SaveCurrentLocationDialog(
-    onDismiss: () -> Unit,
-    onSave: (String) -> Unit,
-) {
-    var name by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Save current location") },
-        text = {
-            androidx.compose.material3.OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Name") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (name.isNotBlank()) onSave(name.trim())
-                },
-            ) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
-}
-
-@Composable
-private fun MapFab(
-    isSpoofing: Boolean,
-    onStart: () -> Unit,
-    onStop: () -> Unit,
-) {
-    FloatingActionButton(
-        onClick = if (isSpoofing) onStop else onStart,
-        containerColor = if (isSpoofing) MaterialTheme.colorScheme.error else Color(AppConstants.MapColorConstants.ACTIVE_BUTTON_COLOR),
-        contentColor = if (isSpoofing) MaterialTheme.colorScheme.onError else Color.White,
-    ) {
-        Icon(
-            imageVector = if (isSpoofing) LjIcons.Stop else LjIcons.PlayArrow,
-            contentDescription = if (isSpoofing) "Stop location simulation" else "Start location simulation",
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun MapFabStartPreview() {
-    LjTheme {
-        MapFab(isSpoofing = false, onStart = {}, onStop = {})
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun MapFabStopPreview() {
-    LjTheme {
-        MapFab(isSpoofing = true, onStart = {}, onStop = {})
     }
 }

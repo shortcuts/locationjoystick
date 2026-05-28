@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjText
+import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.RouteReplayMode
 import com.locationjoystick.core.model.WidgetFeature
@@ -90,7 +91,7 @@ internal fun WidgetPanel(
             modifier =
                 Modifier
                     .padding(4.dp)
-                    .size(36.dp)
+                    .size(UiConstants.FAB_CONTAINER_SIZE)
                     .background(MaterialTheme.colorScheme.primary, CircleShape)
                     .pointerInput(Unit) {
                         var isDragging = false
@@ -134,7 +135,7 @@ internal fun WidgetPanel(
                             modifier =
                                 Modifier
                                     .padding(4.dp)
-                                    .size(36.dp)
+                                    .size(UiConstants.FAB_CONTAINER_SIZE)
                                     .background(Color.Black, CircleShape)
                                     .clickable { onRouteClicked() },
                         ) {
@@ -142,7 +143,7 @@ internal fun WidgetPanel(
                                 imageVector = Icons.Rounded.Route,
                                 contentDescription = "Routes picker",
                                 tint = routeIconTint,
-                                modifier = Modifier.size(20.dp),
+                                modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
                             )
                         }
                         // Pause/stop shown to the right when activity active and expanded
@@ -155,7 +156,7 @@ internal fun WidgetPanel(
                                     modifier =
                                         Modifier
                                             .padding(4.dp)
-                                            .size(36.dp)
+                                            .size(UiConstants.FAB_CONTAINER_SIZE)
                                             .background(Color.Black, CircleShape)
                                             .clickable { onRoutePauseResume() },
                                 ) {
@@ -163,7 +164,7 @@ internal fun WidgetPanel(
                                         imageVector = pauseResumeIcon,
                                         contentDescription = if (isActivityPaused) "Resume" else "Pause",
                                         tint = pauseResumeTint,
-                                        modifier = Modifier.size(20.dp),
+                                        modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
                                     )
                                 }
                             }
@@ -172,7 +173,7 @@ internal fun WidgetPanel(
                                 modifier =
                                     Modifier
                                         .padding(4.dp)
-                                        .size(36.dp)
+                                        .size(UiConstants.FAB_CONTAINER_SIZE)
                                         .background(Color.Black, CircleShape)
                                         .clickable { onRouteStop() },
                             ) {
@@ -180,7 +181,7 @@ internal fun WidgetPanel(
                                     imageVector = Icons.Rounded.Stop,
                                     contentDescription = "Stop",
                                     tint = Color(0xFFF44336),
-                                    modifier = Modifier.size(20.dp),
+                                    modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
                                 )
                             }
                         }
@@ -193,7 +194,7 @@ internal fun WidgetPanel(
                         modifier =
                             Modifier
                                 .padding(4.dp)
-                                .size(36.dp)
+                                .size(UiConstants.FAB_CONTAINER_SIZE)
                                 .background(Color.Black, CircleShape)
                                 .clickable { onFeatureClicked(feature) },
                     ) {
@@ -201,7 +202,7 @@ internal fun WidgetPanel(
                             imageVector = icon,
                             contentDescription = feature.toContentDescription(),
                             tint = iconTint,
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
                         )
                     }
                 }
