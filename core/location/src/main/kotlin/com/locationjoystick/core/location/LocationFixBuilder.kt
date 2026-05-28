@@ -156,6 +156,44 @@ internal fun gaussianLatLonOffset(
     return Pair(lat + dlat, lon + dlon)
 }
 
+/**
+ * Bearing-aware position jitter. Applies full Gaussian noise perpendicular to [bearingDeg]
+ * and a fraction of that noise along [bearingDeg], so moving jitter does not fight the
+ * intended direction of travel.
+ *
+ * bearingDeg: 0 = North, 90 = East (Android convention).
+ */
+internal fun gaussianLatLonOffsetLateral(
+    lat: Double,
+    lon: Double,
+    radiusMeters: Double,
+    bearingDeg: Float,
+    longitudinalFraction: Double,
+    random: Random,
+): Pair<Double, Double> {
+    val u1 = random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
+    val u2 = random.nextDouble()
+    val mag = kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1))
+    val theta = 2.0 * kotlin.math.PI * u2
+    val gLateral = mag * kotlin.math.cos(theta) * radiusMeters
+    val gLongitudinal = mag * kotlin.math.sin(theta) * radiusMeters * longitudinalFraction
+
+    val bearingRad = Math.toRadians(bearingDeg.toDouble())
+    val northFwd = kotlin.math.cos(bearingRad)
+    val eastFwd = kotlin.math.sin(bearingRad)
+    val northLat = -kotlin.math.sin(bearingRad)
+    val eastLat = kotlin.math.cos(bearingRad)
+
+    val northOffsetM = gLateral * northLat + gLongitudinal * northFwd
+    val eastOffsetM = gLateral * eastLat + gLongitudinal * eastFwd
+
+    val metersPerDeg = AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
+    return Pair(
+        lat + northOffsetM / metersPerDeg,
+        lon + eastOffsetM / (metersPerDeg * kotlin.math.cos(Math.toRadians(lat))),
+    )
+}
+
 /** Adds bounded Gaussian noise to [base] accuracy, clamped to [[ACCURACY_MIN], [ACCURACY_MAX]]. */
 internal fun perturbAccuracy(
     base: Float,
@@ -242,7 +280,17 @@ internal fun buildLocation(
 
             state.mode != MockMode.TELEPORT && state.shouldApplyMovingJitter &&
                 state.jitterMovingRadiusMeters > 0.0 -> {
-                gaussianLatLonOffset(state.latitude, state.longitude, state.jitterMovingRadiusMeters, random)
+                if (state.speedMs > 0f) {
+                    gaussianLatLonOffsetLateral(
+                        state.latitude, state.longitude,
+                        state.jitterMovingRadiusMeters,
+                        state.bearing,
+                        AppConstants.JitterConstants.LONGITUDINAL_JITTER_FRACTION,
+                        random,
+                    )
+                } else {
+                    gaussianLatLonOffset(state.latitude, state.longitude, state.jitterMovingRadiusMeters, random)
+                }
             }
 
             else -> {

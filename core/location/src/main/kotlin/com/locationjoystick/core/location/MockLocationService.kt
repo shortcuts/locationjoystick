@@ -127,7 +127,7 @@ class MockLocationService : Service() {
 
     @Volatile private var jitterMovingRadiusMeters: Double = 1.0
 
-    @Volatile private var jitterIntervalSeconds: Int = 3
+    @Volatile private var jitterIntervalSeconds: Int = AppConstants.JitterConstants.DEFAULT_MOVING_INTERVAL_SECONDS
 
     @Volatile private var lastJitterTimestampMs: Long = 0L
 

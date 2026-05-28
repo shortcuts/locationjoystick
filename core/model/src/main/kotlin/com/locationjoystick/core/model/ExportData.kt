@@ -9,7 +9,7 @@ data class ExportData(
     val favoriteLocations: List<FavoriteLocation> = emptyList(),
     val jitterIdleRadius: Double = 0.8,
     val jitterMovingRadius: Double = 1.0,
-    val jitterIntervalSeconds: Int = 3,
+    val jitterIntervalSeconds: Int = 10,
     val jitterIdleIntervalSeconds: Int = 30,
     val jitterSpeedIdleVariationPct: Int = 5,
     val jitterSpeedMovingVariationPct: Int = 8,
