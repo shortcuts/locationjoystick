@@ -10,6 +10,3 @@ No outstanding documentation issues.
 
 ### UI/UX issues
 
-#### Walk here via roads
-
-This only walks here via a straight line, however we want to follow the roads similarly to what we do with the routes.

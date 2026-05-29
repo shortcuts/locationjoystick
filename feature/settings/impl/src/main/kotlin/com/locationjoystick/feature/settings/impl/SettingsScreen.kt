@@ -2,7 +2,6 @@ package com.locationjoystick.feature.settings.impl
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -54,7 +53,6 @@ import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
-import kotlin.math.roundToInt
 
 @Composable
 fun SettingsRoute(
@@ -525,72 +523,13 @@ private fun SpeedProfileInput(
     }
 }
 
-private fun formatJitterDouble(d: Double): String {
-    val rounded = (d * 100).roundToInt() / 100.0
-    return if (rounded % 1.0 == 0.0) rounded.toInt().toString() else rounded.toString()
-}
-
 @Composable
-private fun JitterInput(
-    value: Double,
-    onValueChange: (Double) -> Unit,
-    label: String,
-    modifier: Modifier = Modifier.fillMaxWidth(),
-) {
-    var localValue by remember { mutableStateOf(formatJitterDouble(value)) }
-    var lastSentValue by remember { mutableStateOf(value) }
-
-    LaunchedEffect(value) {
-        if (value != lastSentValue) {
-            localValue = formatJitterDouble(value)
-            lastSentValue = value
-        }
-    }
-
-    OutlinedTextField(
-        value = localValue,
-        onValueChange = { v ->
-            localValue = v
-            v.toDoubleOrNull()?.let {
-                onValueChange(it)
-                lastSentValue = it
-            }
-        },
-        label = { Text(label) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = modifier,
-    )
-}
-
-@Composable
-private fun JitterInput(
-    value: Int,
-    onValueChange: (Int) -> Unit,
-    label: String,
-    modifier: Modifier = Modifier.fillMaxWidth(),
-) {
-    var localValue by remember { mutableStateOf(value.toString()) }
-    var lastSentValue by remember { mutableStateOf(value) }
-
-    LaunchedEffect(value) {
-        if (value != lastSentValue) {
-            localValue = value.toString()
-            lastSentValue = value
-        }
-    }
-
-    OutlinedTextField(
-        value = localValue,
-        onValueChange = { v ->
-            localValue = v
-            v.toIntOrNull()?.let {
-                onValueChange(it)
-                lastSentValue = it
-            }
-        },
-        label = { Text(label) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = modifier,
+private fun AntiCheatWarning() {
+    Text(
+        text = "Speed exceeds 8 m/s — may trigger anti-cheat in some games",
+        color = MaterialTheme.colorScheme.errorContainer,
+        style = MaterialTheme.typography.labelSmall,
+        modifier = Modifier.padding(start = 4.dp, top = 2.dp),
     )
 }
 
@@ -638,14 +577,7 @@ private fun SpeedProfilesSection(
         onSpeedChange = { onSetWalkSpeed(it) },
         unit = if (uiState.speedUnit == SpeedUnit.KMH) "km/h" else "mph",
     )
-    if (uiState.walkSpeed > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS) {
-        Text(
-            text = "Speed exceeds 8 m/s — may trigger anti-cheat in some games",
-            color = MaterialTheme.colorScheme.errorContainer,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(start = 4.dp, top = 2.dp),
-        )
-    }
+    if (uiState.walkSpeed > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS) AntiCheatWarning()
 
     Spacer(modifier = Modifier.height(8.dp))
 
@@ -655,14 +587,7 @@ private fun SpeedProfilesSection(
         onSpeedChange = { onSetRunSpeed(it) },
         unit = if (uiState.speedUnit == SpeedUnit.KMH) "km/h" else "mph",
     )
-    if (uiState.runSpeed > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS) {
-        Text(
-            text = "Speed exceeds 8 m/s — may trigger anti-cheat in some games",
-            color = MaterialTheme.colorScheme.errorContainer,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(start = 4.dp, top = 2.dp),
-        )
-    }
+    if (uiState.runSpeed > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS) AntiCheatWarning()
 
     Spacer(modifier = Modifier.height(8.dp))
 
@@ -672,203 +597,7 @@ private fun SpeedProfilesSection(
         onSpeedChange = { onSetBikeSpeed(it) },
         unit = if (uiState.speedUnit == SpeedUnit.KMH) "km/h" else "mph",
     )
-    if (uiState.bikeSpeed > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS) {
-        Text(
-            text = "Speed exceeds 8 m/s — may trigger anti-cheat in some games",
-            color = MaterialTheme.colorScheme.errorContainer,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(start = 4.dp, top = 2.dp),
-        )
-    }
-}
-
-@Composable
-private fun GpsJitterSection(
-    uiState: SettingsUiState,
-    isMph: Boolean,
-    onSetJitterIdleRadius: (Double) -> Unit,
-    onSetJitterMovingRadius: (Double) -> Unit,
-    onSetJitterIntervalSeconds: (Int) -> Unit,
-    onSetJitterIdleIntervalSeconds: (Int) -> Unit,
-    onSetJitterSpeedIdleVariationPct: (Int) -> Unit,
-    onSetJitterSpeedMovingVariationPct: (Int) -> Unit,
-) {
-    Text("GPS Jitter", style = MaterialTheme.typography.titleMedium)
-    Spacer(modifier = Modifier.height(4.dp))
-    Text(
-        "Adds noise to each location update. Set 0 to disable.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        JitterInput(
-            value = if (isMph) uiState.jitterIdleRadiusMeters * 3.28084 else uiState.jitterIdleRadiusMeters,
-            onValueChange = { onSetJitterIdleRadius(if (isMph) it / 3.28084 else it) },
-            label = if (isMph) "Idle radius (ft)" else "Idle radius (m)",
-            modifier = Modifier.weight(1f),
-        )
-        JitterInput(
-            value = uiState.jitterIdleIntervalSeconds,
-            onValueChange = { onSetJitterIdleIntervalSeconds(it) },
-            label = "Idle interval (s)",
-            modifier = Modifier.weight(1f),
-        )
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        JitterInput(
-            value = if (isMph) uiState.jitterMovingRadiusMeters * 3.28084 else uiState.jitterMovingRadiusMeters,
-            onValueChange = { onSetJitterMovingRadius(if (isMph) it / 3.28084 else it) },
-            label = if (isMph) "Moving radius (ft)" else "Moving radius (m)",
-            modifier = Modifier.weight(1f),
-        )
-        JitterInput(
-            value = uiState.jitterIntervalSeconds,
-            onValueChange = { onSetJitterIntervalSeconds(it) },
-            label = "Moving interval (s)",
-            modifier = Modifier.weight(1f),
-        )
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        JitterInput(
-            value = uiState.jitterSpeedIdleVariationPct.toDouble(),
-            onValueChange = { onSetJitterSpeedIdleVariationPct(it.toInt()) },
-            label = "Idle speed variation (%)",
-            modifier = Modifier.weight(1f),
-        )
-        JitterInput(
-            value = uiState.jitterSpeedMovingVariationPct.toDouble(),
-            onValueChange = { onSetJitterSpeedMovingVariationPct(it.toInt()) },
-            label = "Moving speed variation (%)",
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Composable
-private fun GpsRealismSection(
-    uiState: SettingsUiState,
-    onSetRealismBearingHoldIdle: (Boolean) -> Unit,
-    onSetRealismAltitudeEnabled: (Boolean) -> Unit,
-    onSetRealismWarmupEnabled: (Boolean) -> Unit,
-    onSetRealismSatelliteExtrasEnabled: (Boolean) -> Unit,
-    onSetRealismSuspendedMockingEnabled: (Boolean) -> Unit,
-) {
-    Text("GPS Realism", style = MaterialTheme.typography.titleMedium)
-    Spacer(modifier = Modifier.height(4.dp))
-    Text(
-        "Controls how the spoofed GPS signal behaves. These options add metadata and variation that real GPS chips produce — some apps and games inspect these signals to detect mock providers.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(
-            checked = uiState.realismBearingHoldIdle,
-            onCheckedChange = { onSetRealismBearingHoldIdle(it) },
-        )
-        Column(modifier = Modifier.padding(start = 8.dp)) {
-            Text("Hold bearing when stationary")
-            Text(
-                "Keeps the last known direction when you stop moving instead of snapping to 0° (north). Real GPS chips do the same — a sudden reset to north is a common mock-location tell.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(
-            checked = uiState.realismAltitudeEnabled,
-            onCheckedChange = { onSetRealismAltitudeEnabled(it) },
-        )
-        Column(modifier = Modifier.padding(start = 8.dp)) {
-            Text("Vary altitude")
-            Text(
-                "Simulates a plausible altitude with small random drift instead of always reporting 0 m. A flat zero altitude is an obvious signal that the location is synthetic.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(
-            checked = uiState.realismWarmupEnabled,
-            onCheckedChange = { onSetRealismWarmupEnabled(it) },
-        )
-        Column(modifier = Modifier.padding(start = 8.dp)) {
-            Text("GPS warm-up simulation")
-            Text(
-                "Starts each session with degraded accuracy (like a cold GPS fix) that converges to normal over ~30 s. Off by default because it temporarily reduces location precision at session start.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(
-            checked = uiState.realismSatelliteExtrasEnabled,
-            onCheckedChange = { onSetRealismSatelliteExtrasEnabled(it) },
-        )
-        Column(modifier = Modifier.padding(start = 8.dp)) {
-            Text("Realistic satellite count")
-            Text(
-                "Attaches satellite metadata to each update (7–14 satellites visible, 6–12 in fix) instead of zero. Some apps check for zero satellites as a spoofing signal.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(
-            checked = uiState.realismSuspendedMockingEnabled,
-            onCheckedChange = { onSetRealismSuspendedMockingEnabled(it) },
-        )
-        Column(modifier = Modifier.padding(start = 8.dp)) {
-            Text("Suspended mocking")
-            Text(
-                "Briefly pauses location updates (~2 s every ~10 s) to mimic real GPS dropouts. Off by default because the pauses cause visible position freezes in many apps. Automatically skipped during route replay.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+    if (uiState.bikeSpeed > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS) AntiCheatWarning()
 }
 
 @Composable
@@ -886,47 +615,18 @@ private fun MapSection(
     )
     Spacer(modifier = Modifier.height(8.dp))
 
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(
-            checked = uiState.rememberLastLocation,
-            onCheckedChange = { onSetRememberLastLocation(it) },
-        )
-        Column(modifier = Modifier.padding(start = 8.dp)) {
-            Text("Remember last location")
-            Text(
-                "Restores the last spoofed position when the app restarts, so you don't have to re-enter it.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(
-            checked = uiState.mapFollowsLocation,
-            onCheckedChange = { onSetMapFollowsLocation(it) },
-        )
-        Column(modifier = Modifier.padding(start = 8.dp)) {
-            Text("Follow location on map")
-            Text(
-                "Keeps the map camera centered on the spoofed position as it moves.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+    SettingsCheckboxRow(
+        checked = uiState.rememberLastLocation,
+        onCheckedChange = onSetRememberLastLocation,
+        title = "Remember last location",
+        description = "Restores the last spoofed position when the app restarts, so you don't have to re-enter it.",
+    )
+    SettingsCheckboxRow(
+        checked = uiState.mapFollowsLocation,
+        onCheckedChange = onSetMapFollowsLocation,
+        title = "Follow location on map",
+        description = "Keeps the map camera centered on the spoofed position as it moves.",
+    )
 }
 
 @Composable

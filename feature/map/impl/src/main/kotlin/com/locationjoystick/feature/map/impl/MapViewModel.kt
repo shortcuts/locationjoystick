@@ -622,24 +622,30 @@ class MapViewModel
             }
         }
 
-        private fun startRouteReplayWithMode(routeId: String, mode: RouteReplayMode) {
+        private fun startRouteReplayWithMode(
+            routeId: String,
+            mode: RouteReplayMode,
+        ) {
             viewModelScope.launch {
                 val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
                 val isBackward = mode == RouteReplayMode.LOOP_REVERSE
                 val isLooping = mode == RouteReplayMode.LOOP || mode == RouteReplayMode.LOOP_REVERSE
-                val returnPosition = if (mode == RouteReplayMode.RETURN_TO_LOCATION) {
-                    locationRepository.currentPosition.value
-                } else {
-                    null
-                }
-                val intent = MockLocationIntentBuilder.startRouteReplay(context, routeId, speedMs, isBackward)
-                    .apply {
-                        putExtra(MockLocationService.EXTRA_IS_LOOPING, isLooping)
-                        if (returnPosition != null) {
-                            putExtra(MockLocationService.EXTRA_RETURN_LAT, returnPosition.latitude)
-                            putExtra(MockLocationService.EXTRA_RETURN_LON, returnPosition.longitude)
-                        }
+                val returnPosition =
+                    if (mode == RouteReplayMode.RETURN_TO_LOCATION) {
+                        locationRepository.currentPosition.value
+                    } else {
+                        null
                     }
+                val intent =
+                    MockLocationIntentBuilder
+                        .startRouteReplay(context, routeId, speedMs, isBackward)
+                        .apply {
+                            putExtra(MockLocationService.EXTRA_IS_LOOPING, isLooping)
+                            if (returnPosition != null) {
+                                putExtra(MockLocationService.EXTRA_RETURN_LAT, returnPosition.latitude)
+                                putExtra(MockLocationService.EXTRA_RETURN_LON, returnPosition.longitude)
+                            }
+                        }
                 context.startService(intent)
             }
         }

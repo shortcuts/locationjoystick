@@ -62,6 +62,15 @@ class SettingsViewModel
 
         internal val userFeedback = MutableSharedFlow<UserFeedback>(extraBufferCapacity = 1)
 
+        private data class JitterChunk(
+            val idleRadius: Double,
+            val movingRadius: Double,
+            val intervalSeconds: Int,
+            val idleIntervalSeconds: Int,
+            val speedIdleVariationPct: Int,
+            val speedMovingVariationPct: Int,
+        )
+
         private data class RepoRealismChunk(
             val mapFollowsLocation: Boolean,
             val bearingHoldIdle: Boolean,
@@ -142,14 +151,14 @@ class SettingsViewModel
                     settingsRepository.getJitterSpeedIdleVariationPct(),
                     settingsRepository.getJitterSpeedMovingVariationPct(),
                 ) { triple, idleInterval, idleVarPct, movingVarPct ->
-                    object {
-                        val idleRadius = triple.first
-                        val movingRadius = triple.second
-                        val intervalSeconds = triple.third
-                        val idleIntervalSeconds = idleInterval
-                        val speedIdleVariationPct = idleVarPct
-                        val speedMovingVariationPct = movingVarPct
-                    }
+                    JitterChunk(
+                        idleRadius = triple.first,
+                        movingRadius = triple.second,
+                        intervalSeconds = triple.third,
+                        idleIntervalSeconds = idleInterval,
+                        speedIdleVariationPct = idleVarPct,
+                        speedMovingVariationPct = movingVarPct,
+                    )
                 },
                 combine(
                     settingsRepository.getMapFollowsLocation(),
@@ -388,49 +397,47 @@ class SettingsViewModel
                 SpeedUnit.MPH -> displaySpeed / 2.237
             }
 
+        private suspend fun buildCurrentExportData(): ExportData {
+            val state = uiState.value
+            val speedProfiles =
+                listOf(
+                    SpeedProfile(id = "walk", name = "Walk", speedMetersPerSecond = state.walkSpeed),
+                    SpeedProfile(id = "run", name = "Run", speedMetersPerSecond = state.runSpeed),
+                    SpeedProfile(id = "bike", name = "Bike", speedMetersPerSecond = state.bikeSpeed),
+                )
+            val settings =
+                AppSettings(
+                    speedUnit = state.speedUnit,
+                    enabledWidgetFeatures = state.enabledWidgetFeatures.toList(),
+                    bearingHoldOnIdle = state.realismBearingHoldIdle,
+                    altitudeEnabled = state.realismAltitudeEnabled,
+                    warmupEnabled = state.realismWarmupEnabled,
+                    satelliteExtrasEnabled = state.realismSatelliteExtrasEnabled,
+                    suspendedMockingEnabled = state.realismSuspendedMockingEnabled,
+                )
+            return ExportData(
+                schemaVersion = AppConstants.ExportConstants.SCHEMA_VERSION,
+                exportedAt = System.currentTimeMillis(),
+                settings = settings,
+                speedProfiles = speedProfiles,
+                routes = routeRepository.getRoutes().first(),
+                favoriteLocations = favoriteRepository.getFavorites().first(),
+                jitterIdleRadius = state.jitterIdleRadiusMeters,
+                jitterMovingRadius = state.jitterMovingRadiusMeters,
+                jitterIntervalSeconds = state.jitterIntervalSeconds,
+                jitterIdleIntervalSeconds = state.jitterIdleIntervalSeconds,
+                jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
+                jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
+            )
+        }
+
         fun writeExportToUri(
             context: Context,
             uri: Uri,
         ) {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
-                    val state = uiState.value
-                    val speedProfiles =
-                        listOf(
-                            SpeedProfile(id = "walk", name = "Walk", speedMetersPerSecond = state.walkSpeed),
-                            SpeedProfile(id = "run", name = "Run", speedMetersPerSecond = state.runSpeed),
-                            SpeedProfile(id = "bike", name = "Bike", speedMetersPerSecond = state.bikeSpeed),
-                        )
-                    val settings =
-                        AppSettings(
-                            speedUnit = state.speedUnit,
-                            enabledWidgetFeatures = state.enabledWidgetFeatures.toList(),
-                            bearingHoldOnIdle = state.realismBearingHoldIdle,
-                            altitudeEnabled = state.realismAltitudeEnabled,
-                            warmupEnabled = state.realismWarmupEnabled,
-                            satelliteExtrasEnabled = state.realismSatelliteExtrasEnabled,
-                            suspendedMockingEnabled = state.realismSuspendedMockingEnabled,
-                        )
-                    val routes = routeRepository.getRoutes().first()
-                    val favorites = favoriteRepository.getFavorites().first()
-
-                    val exportData =
-                        ExportData(
-                            schemaVersion = AppConstants.ExportConstants.SCHEMA_VERSION,
-                            exportedAt = System.currentTimeMillis(),
-                            settings = settings,
-                            speedProfiles = speedProfiles,
-                            routes = routes,
-                            favoriteLocations = favorites,
-                            jitterIdleRadius = state.jitterIdleRadiusMeters,
-                            jitterMovingRadius = state.jitterMovingRadiusMeters,
-                            jitterIntervalSeconds = state.jitterIntervalSeconds,
-                            jitterIdleIntervalSeconds = state.jitterIdleIntervalSeconds,
-                            jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
-                            jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
-                        )
-
-                    val json = serializeExportData(exportData)
+                    val json = serializeExportData(buildCurrentExportData())
                     context.contentResolver.openOutputStream(uri)?.use { stream ->
                         stream.write(json.toByteArray(Charsets.UTF_8))
                     }
@@ -505,43 +512,7 @@ class SettingsViewModel
         fun prepareQrChunks() {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
-                    val state = uiState.value
-                    val speedProfiles =
-                        listOf(
-                            SpeedProfile(id = "walk", name = "Walk", speedMetersPerSecond = state.walkSpeed),
-                            SpeedProfile(id = "run", name = "Run", speedMetersPerSecond = state.runSpeed),
-                            SpeedProfile(id = "bike", name = "Bike", speedMetersPerSecond = state.bikeSpeed),
-                        )
-                    val settings =
-                        AppSettings(
-                            speedUnit = state.speedUnit,
-                            enabledWidgetFeatures = state.enabledWidgetFeatures.toList(),
-                            bearingHoldOnIdle = state.realismBearingHoldIdle,
-                            altitudeEnabled = state.realismAltitudeEnabled,
-                            warmupEnabled = state.realismWarmupEnabled,
-                            satelliteExtrasEnabled = state.realismSatelliteExtrasEnabled,
-                            suspendedMockingEnabled = state.realismSuspendedMockingEnabled,
-                        )
-                    val routes = routeRepository.getRoutes().first()
-                    val favorites = favoriteRepository.getFavorites().first()
-                    val result =
-                        QrChunker.chunk(
-                            ExportData(
-                                schemaVersion = AppConstants.ExportConstants.SCHEMA_VERSION,
-                                exportedAt = System.currentTimeMillis(),
-                                settings = settings,
-                                speedProfiles = speedProfiles,
-                                routes = routes,
-                                favoriteLocations = favorites,
-                                jitterIdleRadius = state.jitterIdleRadiusMeters,
-                                jitterMovingRadius = state.jitterMovingRadiusMeters,
-                                jitterIntervalSeconds = state.jitterIntervalSeconds,
-                                jitterIdleIntervalSeconds = state.jitterIdleIntervalSeconds,
-                                jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
-                                jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
-                            ),
-                        )
-                    qrChunksReady.emit(result)
+                    qrChunksReady.emit(QrChunker.chunk(buildCurrentExportData()))
                 } catch (e: Exception) {
                     Log.e(TAG, "QR chunk preparation failed", e)
                     userFeedback.emit(UserFeedback("Failed to prepare QR export", isError = true))
