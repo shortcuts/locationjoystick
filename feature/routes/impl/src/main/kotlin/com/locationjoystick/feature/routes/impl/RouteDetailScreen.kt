@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -230,7 +228,7 @@ fun RouteDetailScreen(
                                 )
                             }
                             IconButton(onClick = { viewModel.removeWaypoint(waypoint.id) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Remove waypoint")
+                                Icon(LjIcons.Delete, contentDescription = "Remove waypoint")
                             }
                         }
                     }

@@ -13,17 +13,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.MyLocation
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -46,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -58,6 +51,7 @@ import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.UiConstants
+import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.designsystem.component.RoamingSheetContent
 import com.locationjoystick.core.map.geojson.buildLineGeoJson
@@ -391,7 +385,7 @@ internal fun MapFloatingView(
                     .padding(8.dp)
                     .background(LjBg, CircleShape),
         ) {
-            Icon(Icons.Rounded.Close, contentDescription = "Close", tint = LjText)
+            Icon(LjIcons.Close, contentDescription = "Close", tint = LjText)
         }
 
         // FAB column — bottom-right, mirrors main map layout
@@ -403,11 +397,11 @@ internal fun MapFloatingView(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (!isFollowingCamera.value) {
-                MapIconButton(
-                    icon = Icons.Rounded.MyLocation,
+                LjMapIconButton(
+                    icon = LjIcons.MyLocation,
                     contentDescription = "Re-center on location",
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                     onClick = {
                         isFollowingCamera.value = true
                         if (currentPosition != null) {
@@ -419,49 +413,49 @@ internal fun MapFloatingView(
                     },
                 )
             }
-            MapIconButton(
-                icon = Icons.Rounded.Favorite,
+            LjMapIconButton(
+                icon = LjIcons.Favorite,
                 contentDescription = "Open favorites",
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 onClick = { showFavoritesPicker = true },
             )
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 androidx.compose.animation.AnimatedVisibility(visible = isRoaming) {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        MapIconButton(
+                        LjMapIconButton(
                             icon = LjIcons.Stop,
                             contentDescription = "Stop roaming",
                             containerColor = MaterialTheme.colorScheme.error,
-                            iconTint = MaterialTheme.colorScheme.onError,
+                            contentColor = MaterialTheme.colorScheme.onError,
                             onClick = { onStopRoaming() },
                         )
-                        MapIconButton(
+                        LjMapIconButton(
                             icon = if (isRoamingPaused) LjIcons.PlayArrow else LjIcons.Pause,
                             contentDescription = if (isRoamingPaused) "Resume roaming" else "Pause roaming",
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             onClick = { if (isRoamingPaused) onResumeRoaming() else onPauseRoaming() },
                         )
                     }
                 }
-                MapIconButton(
+                LjMapIconButton(
                     icon = LjIcons.Explore,
                     contentDescription = if (isRoaming) "Roaming active" else "Start roaming",
                     containerColor = if (isRoaming) Color(0xFF388E3C) else MaterialTheme.colorScheme.tertiaryContainer,
-                    iconTint = if (isRoaming) Color.White else MaterialTheme.colorScheme.onTertiaryContainer,
+                    contentColor = if (isRoaming) Color.White else MaterialTheme.colorScheme.onTertiaryContainer,
                     onClick = { if (!isRoaming) showRoamingSheet = true },
                 )
             }
-            MapIconButton(
-                icon = Icons.Rounded.Search,
+            LjMapIconButton(
+                icon = LjIcons.Search,
                 contentDescription = "Search location",
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
-                iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 onClick = { showSearch = !showSearch },
             )
             val isSpoofing = mockLocationState == MockLocationState.RUNNING
-            MapIconButton(
+            LjMapIconButton(
                 icon = if (isSpoofing) LjIcons.Stop else LjIcons.PlayArrow,
                 contentDescription = if (isSpoofing) "Stop spoofing" else "Start spoofing",
                 containerColor =
@@ -472,7 +466,7 @@ internal fun MapFloatingView(
                             AppConstants.MapColorConstants.ACTIVE_BUTTON_COLOR,
                         )
                     },
-                iconTint = if (isSpoofing) MaterialTheme.colorScheme.onError else Color.White,
+                contentColor = if (isSpoofing) MaterialTheme.colorScheme.onError else Color.White,
                 onClick = { if (isSpoofing) onStopSpoofing() else onStartSpoofing() },
             )
         }
@@ -614,7 +608,7 @@ internal fun MapFloatingView(
                 ) {
                     Text("Favorites", style = MaterialTheme.typography.titleLarge, color = LjText)
                     IconButton(onClick = { showFavoritesPicker = false }) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close favorites", tint = LjText)
+                        Icon(LjIcons.Close, contentDescription = "Close favorites", tint = LjText)
                     }
                 }
                 Spacer(Modifier.height(12.dp))
@@ -656,30 +650,5 @@ internal fun MapFloatingView(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun MapIconButton(
-    icon: ImageVector,
-    contentDescription: String,
-    containerColor: Color,
-    iconTint: Color,
-    onClick: () -> Unit,
-) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier =
-            Modifier
-                .size(UiConstants.FAB_CONTAINER_SIZE)
-                .background(containerColor, CircleShape)
-                .clickable(onClick = onClick),
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            tint = iconTint,
-            modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
-        )
     }
 }

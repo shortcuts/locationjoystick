@@ -1,20 +1,15 @@
 package com.locationjoystick.feature.favorites.impl
 
 import android.content.Intent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -39,6 +34,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.UiConstants
+import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.map.geojson.buildMarkerGeoJson
@@ -150,23 +147,28 @@ internal fun MapPickerScreen(
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = bottomBar,
-        actions = {
-            IconButton(onClick = { showSearchBar = !showSearchBar }) {
-                Icon(Icons.Default.Search, contentDescription = "Search location")
-            }
-        },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { if (selectedPosition.value != null) showNameDialog = true },
-                expanded = selectedPosition.value != null,
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Save,
-                        contentDescription = null,
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(UiConstants.FAB_SPACING),
+            ) {
+                LjMapIconButton(
+                    icon = LjIcons.Search,
+                    contentDescription = "Search location",
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    onClick = { showSearchBar = !showSearchBar },
+                )
+                if (selectedPosition.value != null) {
+                    LjMapIconButton(
+                        icon = LjIcons.Save,
+                        contentDescription = "Save location",
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        onClick = { showNameDialog = true },
                     )
-                },
-                text = { Text("Save Location") },
-            )
+                }
+            }
         },
     ) { paddingValues ->
         Box(

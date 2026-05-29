@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -49,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjAccent
+import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
@@ -337,7 +335,7 @@ internal fun SettingsScreen(
             var showDownloadMenu by remember { mutableStateOf(false) }
             Box {
                 IconButton(onClick = { showDownloadMenu = true }) {
-                    Icon(Icons.Default.FileDownload, contentDescription = "Export")
+                    Icon(LjIcons.FileDownload, contentDescription = "Export")
                 }
                 DropdownMenu(expanded = showDownloadMenu, onDismissRequest = { showDownloadMenu = false }) {
                     DropdownMenuItem(
@@ -359,7 +357,7 @@ internal fun SettingsScreen(
             var showUploadMenu by remember { mutableStateOf(false) }
             Box {
                 IconButton(onClick = { showUploadMenu = true }) {
-                    Icon(Icons.Default.Upload, contentDescription = "Import")
+                    Icon(LjIcons.FileUpload, contentDescription = "Import")
                 }
                 DropdownMenu(expanded = showUploadMenu, onDismissRequest = { showUploadMenu = false }) {
                     DropdownMenuItem(

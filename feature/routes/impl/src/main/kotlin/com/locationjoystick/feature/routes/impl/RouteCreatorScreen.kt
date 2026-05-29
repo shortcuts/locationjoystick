@@ -4,31 +4,18 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Undo
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -51,7 +38,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.FavoritesList
+import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.map.geojson.buildSegmentsGeoJson
@@ -188,15 +177,24 @@ internal fun RouteCreatorScreen(
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = bottomBar,
-        actions = {
-            IconButton(onClick = { showSearch = !showSearch }) {
-                Icon(Icons.Default.Search, contentDescription = "Search location")
-            }
-        },
         floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(UiConstants.FAB_SPACING),
+            ) {
+                LjMapIconButton(
+                    icon = LjIcons.Search,
+                    contentDescription = "Search location",
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    onClick = { showSearch = !showSearch },
+                )
                 if (currentPosition != null) {
-                    FloatingActionButton(
+                    LjMapIconButton(
+                        icon = LjIcons.MyLocation,
+                        contentDescription = "Center on location",
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                         onClick = {
                             mapRef.value?.animateCamera(
                                 CameraUpdateFactory.newLatLng(
@@ -205,51 +203,41 @@ internal fun RouteCreatorScreen(
                                 500,
                             )
                         },
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    ) {
-                        Icon(LjIcons.MyLocation, contentDescription = "Center on location")
-                    }
+                    )
                 }
-                FloatingActionButton(
-                    onClick = { showFavoritesSheet = true },
+                LjMapIconButton(
+                    icon = LjIcons.Favorite,
+                    contentDescription = "Pick from favorites",
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                ) {
-                    Icon(LjIcons.Favorite, contentDescription = "Pick from favorites")
-                }
-                FloatingActionButton(
-                    onClick = onUndo,
+                    onClick = { showFavoritesSheet = true },
+                )
+                LjMapIconButton(
+                    icon = LjIcons.Undo,
+                    contentDescription = "Undo last waypoint",
                     containerColor =
                         if (state.waypoints.isNotEmpty()) {
                             MaterialTheme.colorScheme.secondaryContainer
                         } else {
                             MaterialTheme.colorScheme.surfaceVariant
                         },
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Undo,
-                        contentDescription = "Undo last waypoint",
-                        tint =
-                            if (state.waypoints.isNotEmpty()) {
-                                MaterialTheme.colorScheme.onSecondaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                        modifier = Modifier.size(24.dp),
+                    contentColor =
+                        if (state.waypoints.isNotEmpty()) {
+                            MaterialTheme.colorScheme.onSecondaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    onClick = onUndo,
+                )
+                if (state.waypoints.size >= 2) {
+                    LjMapIconButton(
+                        icon = LjIcons.Save,
+                        contentDescription = "Save route",
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        onClick = { showSaveDialog = true },
                     )
                 }
-                ExtendedFloatingActionButton(
-                    onClick = { if (state.waypoints.size >= 2) showSaveDialog = true },
-                    expanded = state.waypoints.size >= 2,
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Save,
-                            contentDescription = null,
-                        )
-                    },
-                    text = { Text("Save Route") },
-                )
             }
         },
     ) { paddingValues ->

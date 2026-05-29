@@ -23,12 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Layers
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.DeveloperMode
-import androidx.compose.material.icons.rounded.LocationOn
-import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -159,7 +153,7 @@ internal fun OnboardingScreen(
                 title = "Location permission",
                 description = "Required to read your real position for map centering and route recording.",
                 isGranted = uiState.locationPermissionGranted,
-                icon = Icons.Rounded.LocationOn,
+                icon = LjIcons.LocationOn,
                 actionLabel = "Grant Permission",
                 isOptional = false,
                 onAction = { locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) },
@@ -171,7 +165,7 @@ internal fun OnboardingScreen(
                 title = "Display over other apps",
                 description = "Required for the floating joystick and quick-access widget while other apps are open.",
                 isGranted = uiState.overlayPermissionGranted,
-                icon = Icons.Outlined.Layers,
+                icon = LjIcons.Layers,
                 actionLabel = "Open Settings",
                 isOptional = false,
                 onAction = {
@@ -190,7 +184,7 @@ internal fun OnboardingScreen(
                 title = "Mock location app",
                 description = "In Developer Options → Select mock location app, choose locationjoystick.",
                 isGranted = uiState.mockLocationEnabled,
-                icon = Icons.Rounded.DeveloperMode,
+                icon = LjIcons.DeveloperMode,
                 actionLabel = "Open Developer Options",
                 isOptional = false,
                 onAction = {
@@ -272,7 +266,7 @@ private fun OnboardingStepCard(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = if (isGranted) Icons.Rounded.CheckCircle else icon,
+                        imageVector = if (isGranted) LjIcons.CheckCircle else icon,
                         contentDescription = null,
                         tint = statusColor,
                         modifier = Modifier.size(24.dp),

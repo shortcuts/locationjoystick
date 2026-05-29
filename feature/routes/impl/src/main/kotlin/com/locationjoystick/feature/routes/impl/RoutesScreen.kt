@@ -15,17 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.SwapVert
-import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -52,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.model.RouteType
@@ -134,10 +124,10 @@ internal fun RoutesScreen(
         bottomBar = bottomBar,
         actions = {
             IconButton(onClick = onToggleSort) {
-                Icon(Icons.Default.SwapVert, contentDescription = "Sort")
+                Icon(LjIcons.SwapVert, contentDescription = "Sort")
             }
             IconButton(onClick = { showAddMenu = !showAddMenu }) {
-                Icon(Icons.Default.Add, contentDescription = "Add route")
+                Icon(LjIcons.Add, contentDescription = "Add route")
             }
             DropdownMenu(
                 expanded = showAddMenu,
@@ -149,7 +139,7 @@ internal fun RoutesScreen(
                         onNavigateToCreate(RouteType.STRAIGHT)
                         showAddMenu = false
                     },
-                    leadingIcon = { Icon(Icons.Rounded.Map, null) },
+                    leadingIcon = { Icon(LjIcons.Map, null) },
                 )
                 DropdownMenuItem(
                     text = { Text("from GPX file") },
@@ -157,7 +147,7 @@ internal fun RoutesScreen(
                         onImportGpx()
                         showAddMenu = false
                     },
-                    leadingIcon = { Icon(Icons.Default.Add, null) },
+                    leadingIcon = { Icon(LjIcons.Add, null) },
                 )
             }
         },
@@ -175,7 +165,7 @@ internal fun RoutesScreen(
 
                 uiState.routes.isEmpty() -> {
                     EmptyState(
-                        icon = Icons.Default.PlayArrow,
+                        icon = LjIcons.PlayArrow,
                         message = "No routes yet",
                         modifier = Modifier.align(Alignment.Center),
                     )
@@ -282,7 +272,7 @@ private fun RouteCard(
             }
             Box {
                 IconButton(onClick = { menuExpanded = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                    Icon(LjIcons.MoreVert, contentDescription = "Menu")
                 }
                 DropdownMenu(
                     expanded = menuExpanded,
@@ -294,7 +284,7 @@ private fun RouteCard(
                             menuExpanded = false
                             onNavigateToEdit(route.id)
                         },
-                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                        leadingIcon = { Icon(LjIcons.Edit, contentDescription = null) },
                     )
                     DropdownMenuItem(
                         text = { Text("Export") },
@@ -302,7 +292,7 @@ private fun RouteCard(
                             menuExpanded = false
                             onExport(route)
                         },
-                        leadingIcon = { Icon(Icons.Default.FileDownload, contentDescription = null) },
+                        leadingIcon = { Icon(LjIcons.FileDownload, contentDescription = null) },
                     )
                     DropdownMenuItem(
                         text = { Text("Delete") },
@@ -310,7 +300,7 @@ private fun RouteCard(
                             menuExpanded = false
                             onDeleteRoute(route)
                         },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                        leadingIcon = { Icon(LjIcons.Delete, contentDescription = null) },
                     )
                 }
             }
@@ -327,19 +317,19 @@ private fun RouteCard(
             when {
                 isPlaying -> {
                     IconButton(onClick = onPauseReplay) {
-                        Icon(Icons.Default.Pause, contentDescription = "Pause")
+                        Icon(LjIcons.Pause, contentDescription = "Pause")
                     }
                     IconButton(onClick = onStopReplay) {
-                        Icon(Icons.Default.Stop, contentDescription = "Stop")
+                        Icon(LjIcons.Stop, contentDescription = "Stop")
                     }
                 }
 
                 isPaused -> {
                     IconButton(onClick = onResumeReplay) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = "Resume")
+                        Icon(LjIcons.PlayArrow, contentDescription = "Resume")
                     }
                     IconButton(onClick = onStopReplay) {
-                        Icon(Icons.Default.Stop, contentDescription = "Stop")
+                        Icon(LjIcons.Stop, contentDescription = "Stop")
                     }
                 }
 
@@ -348,7 +338,7 @@ private fun RouteCard(
                         onClick = { showStartDialog = true },
                         enabled = !isActive,
                     ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = "Start route")
+                        Icon(LjIcons.PlayArrow, contentDescription = "Start route")
                     }
                 }
             }

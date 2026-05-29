@@ -1,26 +1,17 @@
 package com.locationjoystick.feature.map.impl
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.UiConstants
+import com.locationjoystick.core.designsystem.component.LjMapIconButton
 
 @Composable
 internal fun MapFabColumn(
@@ -31,7 +22,7 @@ internal fun MapFabColumn(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4)) {
         if (!isFollowingCamera) {
-            MapIconButton(
+            LjMapIconButton(
                 icon = LjIcons.MyLocation,
                 contentDescription = "Re-center on location",
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
@@ -41,14 +32,14 @@ internal fun MapFabColumn(
         }
 
         if (uiState.walkTarget != null) {
-            MapIconButton(
+            LjMapIconButton(
                 icon = LjIcons.Stop,
                 contentDescription = "Stop walk",
                 containerColor = MaterialTheme.colorScheme.error,
                 contentColor = MaterialTheme.colorScheme.onError,
                 onClick = { onAction(MapAction.StopWalk) },
             )
-            MapIconButton(
+            LjMapIconButton(
                 icon = if (uiState.isWalkPaused) LjIcons.PlayArrow else LjIcons.Pause,
                 contentDescription = if (uiState.isWalkPaused) "Resume walk" else "Pause walk",
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -65,7 +56,7 @@ internal fun MapFabColumn(
 
         // Start/Stop spoof — always visible
         val isSpoofing = uiState.isSpoofing
-        MapIconButton(
+        LjMapIconButton(
             icon = if (isSpoofing) LjIcons.Stop else LjIcons.PlayArrow,
             contentDescription = if (isSpoofing) "Stop location simulation" else "Start location simulation",
             containerColor = if (isSpoofing) MaterialTheme.colorScheme.error else Color(AppConstants.MapColorConstants.ACTIVE_BUTTON_COLOR),
@@ -74,7 +65,7 @@ internal fun MapFabColumn(
         )
 
         // Favorites — always visible
-        MapIconButton(
+        LjMapIconButton(
             icon = LjIcons.Favorite,
             contentDescription = "Open favorites",
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -87,7 +78,7 @@ internal fun MapFabColumn(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4),
         ) {
-            MapIconButton(
+            LjMapIconButton(
                 icon = LjIcons.Route,
                 contentDescription =
                     if (uiState.isRouteReplay) "Route active" else "Open routes",
@@ -105,7 +96,7 @@ internal fun MapFabColumn(
             )
             AnimatedVisibility(visible = uiState.isRouteReplay && uiState.isRouteControlsExpanded) {
                 Row(horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4)) {
-                    MapIconButton(
+                    LjMapIconButton(
                         icon = if (uiState.isRoutePaused) LjIcons.PlayArrow else LjIcons.Pause,
                         contentDescription = if (uiState.isRoutePaused) "Resume route" else "Pause route",
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -118,7 +109,7 @@ internal fun MapFabColumn(
                             }
                         },
                     )
-                    MapIconButton(
+                    LjMapIconButton(
                         icon = LjIcons.Stop,
                         contentDescription = "Stop route",
                         containerColor = MaterialTheme.colorScheme.error,
@@ -136,14 +127,14 @@ internal fun MapFabColumn(
         ) {
             AnimatedVisibility(visible = uiState.isRoaming && uiState.isRoamingControlsExpanded) {
                 Row(horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4)) {
-                    MapIconButton(
+                    LjMapIconButton(
                         icon = LjIcons.Stop,
                         contentDescription = "Stop roaming",
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError,
                         onClick = { onAction(MapAction.StopRoaming) },
                     )
-                    MapIconButton(
+                    LjMapIconButton(
                         icon = if (uiState.isRoamingPaused) LjIcons.PlayArrow else LjIcons.Pause,
                         contentDescription = if (uiState.isRoamingPaused) "Resume roaming" else "Pause roaming",
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -158,7 +149,7 @@ internal fun MapFabColumn(
                     )
                 }
             }
-            MapIconButton(
+            LjMapIconButton(
                 icon = LjIcons.Explore,
                 contentDescription =
                     when {
@@ -188,8 +179,8 @@ internal fun MapFabColumn(
         }
 
         // Search — always visible
-        MapIconButton(
-            icon = Icons.Default.Search,
+        LjMapIconButton(
+            icon = LjIcons.Search,
             contentDescription = "Search location",
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -206,7 +197,7 @@ internal fun MapFabColumn(
                         uiState.pendingTapPosition != null
                 )
         if (hasClearableContent) {
-            MapIconButton(
+            LjMapIconButton(
                 icon = LjIcons.Delete,
                 contentDescription = "Clear map",
                 containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -214,30 +205,5 @@ internal fun MapFabColumn(
                 onClick = { onAction(MapAction.ClearMap) },
             )
         }
-    }
-}
-
-@Composable
-private fun MapIconButton(
-    icon: ImageVector,
-    contentDescription: String,
-    containerColor: Color,
-    contentColor: Color,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .size(UiConstants.FAB_CONTAINER_SIZE)
-                .background(containerColor, CircleShape)
-                .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            tint = contentColor,
-            modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
-        )
     }
 }

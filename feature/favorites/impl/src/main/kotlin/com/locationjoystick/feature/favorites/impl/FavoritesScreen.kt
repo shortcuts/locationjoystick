@@ -18,14 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.SwapVert
-import androidx.compose.material.icons.rounded.LocationOn
-import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -53,6 +45,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.data.CooldownState
+import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjScaffold
 
@@ -130,10 +123,10 @@ internal fun FavoritesScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         actions = {
             IconButton(onClick = onToggleSort) {
-                Icon(Icons.Default.SwapVert, contentDescription = "Sort")
+                Icon(LjIcons.SwapVert, contentDescription = "Sort")
             }
             IconButton(onClick = { showAddMenu = !showAddMenu }) {
-                Icon(Icons.Default.Add, contentDescription = "Add favorite")
+                Icon(LjIcons.Add, contentDescription = "Add favorite")
             }
             DropdownMenu(
                 expanded = showAddMenu,
@@ -145,7 +138,7 @@ internal fun FavoritesScreen(
                         onNavigateToMapPicker()
                         showAddMenu = false
                     },
-                    leadingIcon = { Icon(Icons.Rounded.Map, null) },
+                    leadingIcon = { Icon(LjIcons.Map, null) },
                 )
                 DropdownMenuItem(
                     text = { Text("from coordinates") },
@@ -155,7 +148,7 @@ internal fun FavoritesScreen(
                         showAddSheet = true
                         showAddMenu = false
                     },
-                    leadingIcon = { Icon(Icons.Default.Add, null) },
+                    leadingIcon = { Icon(LjIcons.Add, null) },
                 )
                 DropdownMenuItem(
                     text = { Text("from current location") },
@@ -166,7 +159,7 @@ internal fun FavoritesScreen(
                         showAddSheet = true
                         showAddMenu = false
                     },
-                    leadingIcon = { Icon(Icons.Rounded.LocationOn, null) },
+                    leadingIcon = { Icon(LjIcons.LocationOn, null) },
                 )
             }
         },
@@ -184,7 +177,7 @@ internal fun FavoritesScreen(
 
                 uiState.favorites.isEmpty() -> {
                     EmptyState(
-                        icon = Icons.Rounded.LocationOn,
+                        icon = LjIcons.LocationOn,
                         message = "No saved locations yet",
                         modifier = Modifier.align(Alignment.Center),
                     )
@@ -301,7 +294,7 @@ private fun FavoriteCard(
         }
         Box {
             IconButton(onClick = { menuExpanded = true }) {
-                Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                Icon(LjIcons.MoreVert, contentDescription = "More options")
             }
             DropdownMenu(
                 expanded = menuExpanded,
@@ -313,7 +306,7 @@ private fun FavoriteCard(
                         onEdit(favorite)
                         menuExpanded = false
                     },
-                    leadingIcon = { Icon(Icons.Default.Edit, null) },
+                    leadingIcon = { Icon(LjIcons.Edit, null) },
                 )
                 DropdownMenuItem(
                     text = { Text("Delete") },
@@ -321,7 +314,7 @@ private fun FavoriteCard(
                         onDelete(favorite)
                         menuExpanded = false
                     },
-                    leadingIcon = { Icon(Icons.Default.Delete, null) },
+                    leadingIcon = { Icon(LjIcons.Delete, null) },
                 )
             }
         }

@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.locationjoystick.core.designsystem.LjIcons
 import java.util.concurrent.Executors
 import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 
@@ -194,7 +193,7 @@ fun QrScannerScreen(
             onClick = onNavigateBack,
             modifier = Modifier.align(Alignment.TopStart),
         ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            Icon(LjIcons.ArrowBack, contentDescription = "Back")
         }
     }
 }

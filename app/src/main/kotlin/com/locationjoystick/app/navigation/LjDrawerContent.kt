@@ -7,13 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.LocationOn
-import androidx.compose.material.icons.rounded.Route
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.locationjoystick.app.ABOUT_ROUTE
 import com.locationjoystick.app.IDLE_ROUTE
+import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.feature.favorites.api.FAVORITES_ROUTE
 import com.locationjoystick.feature.map.api.MAP_ROUTE
 import com.locationjoystick.feature.routes.api.ROUTES_ROUTE
@@ -46,12 +40,12 @@ fun LjDrawerContent(
             horizontalArrangement = Arrangement.End,
         ) {
             IconButton(onClick = { scope.launch { drawerState.close() } }) {
-                Icon(Icons.Rounded.Close, contentDescription = "Close menu")
+                Icon(LjIcons.Close, contentDescription = "Close menu")
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
         NavigationDrawerItem(
-            icon = { Icon(Icons.Rounded.LocationOn, "Map") },
+            icon = { Icon(LjIcons.LocationOn, "Map") },
             label = { Text("Map") },
             selected = false,
             onClick = {
@@ -64,7 +58,7 @@ fun LjDrawerContent(
             },
         )
         NavigationDrawerItem(
-            icon = { Icon(Icons.Rounded.Route, "Routes") },
+            icon = { Icon(LjIcons.Route, "Routes") },
             label = { Text("Routes") },
             selected = false,
             onClick = {
@@ -77,7 +71,7 @@ fun LjDrawerContent(
             },
         )
         NavigationDrawerItem(
-            icon = { Icon(Icons.Rounded.Favorite, "Favorites") },
+            icon = { Icon(LjIcons.Favorite, "Favorites") },
             label = { Text("Favorites") },
             selected = false,
             onClick = {
@@ -90,7 +84,7 @@ fun LjDrawerContent(
             },
         )
         NavigationDrawerItem(
-            icon = { Icon(Icons.Rounded.Settings, "Settings") },
+            icon = { Icon(LjIcons.Settings, "Settings") },
             label = { Text("Settings") },
             selected = false,
             onClick = {
@@ -103,7 +97,7 @@ fun LjDrawerContent(
             },
         )
         NavigationDrawerItem(
-            icon = { Icon(Icons.Rounded.Info, "About") },
+            icon = { Icon(LjIcons.Info, "About") },
             label = { Text("About") },
             selected = false,
             onClick = {

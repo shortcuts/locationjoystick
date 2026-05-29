@@ -21,21 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.DirectionsBike
-import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
-import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.LocationOn
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.LockOpen
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Route
-import androidx.compose.material.icons.rounded.Stop
-import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -60,6 +45,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjBg
+import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.model.FavoriteLocation
@@ -140,7 +126,7 @@ internal fun WidgetPanel(
                                     .clickable { onRouteClicked() },
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Route,
+                                imageVector = LjIcons.Route,
                                 contentDescription = "Routes picker",
                                 tint = routeIconTint,
                                 modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
@@ -149,7 +135,7 @@ internal fun WidgetPanel(
                         // Pause/stop shown to the right when activity active and expanded
                         if (isActivityActive && routeExpanded) {
                             if (isActivityPausable) {
-                                val pauseResumeIcon = if (isActivityPaused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause
+                                val pauseResumeIcon = if (isActivityPaused) LjIcons.PlayArrow else LjIcons.Pause
                                 val pauseResumeTint = if (isActivityPaused) Color(0xFF4CAF50) else Color(0xFF757575)
                                 Box(
                                     contentAlignment = Alignment.Center,
@@ -178,7 +164,7 @@ internal fun WidgetPanel(
                                         .clickable { onRouteStop() },
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Stop,
+                                    imageVector = LjIcons.Stop,
                                     contentDescription = "Stop",
                                     tint = Color(0xFFF44336),
                                     modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
@@ -255,7 +241,7 @@ internal fun FavoritesFloatingView(
                         color = LjText,
                     )
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = LjText)
+                        Icon(LjIcons.Close, contentDescription = "Close", tint = LjText)
                     }
                 }
                 Spacer(Modifier.height(12.dp))
@@ -357,7 +343,7 @@ internal fun FavoritesFloatingView(
                         onClick = { showAddForm = true },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Icon(Icons.Rounded.Add, contentDescription = null)
+                        Icon(LjIcons.Add, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text("Add from current location")
                     }
@@ -406,7 +392,7 @@ internal fun RoutesFloatingView(
                         color = LjText,
                     )
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = LjText)
+                        Icon(LjIcons.Close, contentDescription = "Close", tint = LjText)
                     }
                 }
                 Spacer(Modifier.height(12.dp))
@@ -437,7 +423,7 @@ internal fun RoutesFloatingView(
                                     var routeMenuExpanded by remember { mutableStateOf(false) }
                                     Box {
                                         Button(onClick = { routeMenuExpanded = true }) {
-                                            Icon(Icons.Rounded.PlayArrow, contentDescription = null)
+                                            Icon(LjIcons.PlayArrow, contentDescription = null)
                                         }
                                         DropdownMenu(
                                             expanded = routeMenuExpanded,
@@ -490,7 +476,7 @@ internal fun RoutesFloatingView(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(Icons.Rounded.Add, contentDescription = null)
+                    Icon(LjIcons.Add, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text("Create route from map")
                 }
@@ -507,37 +493,37 @@ private fun featureIconAndState(
 ): Pair<ImageVector, Boolean> =
     when (feature) {
         WidgetFeature.JOYSTICK_TOGGLE -> {
-            Pair(Icons.Rounded.Visibility, joystickVisible)
+            Pair(LjIcons.Visibility, joystickVisible)
         }
 
         WidgetFeature.JOYSTICK_LOCK -> {
             Pair(
-                if (joystickLocked) Icons.Rounded.Lock else Icons.Rounded.LockOpen,
+                if (joystickLocked) LjIcons.Lock else LjIcons.LockOpen,
                 joystickLocked,
             )
         }
 
         WidgetFeature.ROUTES_FLOATING -> {
-            Pair(Icons.Rounded.Route, true)
+            Pair(LjIcons.Route, true)
         }
 
         WidgetFeature.FAVORITES_FLOATING -> {
-            Pair(Icons.Rounded.Favorite, true)
+            Pair(LjIcons.Favorite, true)
         }
 
         WidgetFeature.SPEED_CYCLE -> {
             Pair(
                 when (activeProfileId) {
-                    AppConstants.ProfileConstants.PROFILE_ID_RUN -> Icons.AutoMirrored.Rounded.DirectionsRun
-                    AppConstants.ProfileConstants.PROFILE_ID_BIKE -> Icons.AutoMirrored.Rounded.DirectionsBike
-                    else -> Icons.AutoMirrored.Rounded.DirectionsWalk
+                    AppConstants.ProfileConstants.PROFILE_ID_RUN -> LjIcons.DirectionsRun
+                    AppConstants.ProfileConstants.PROFILE_ID_BIKE -> LjIcons.DirectionsBike
+                    else -> LjIcons.DirectionsWalk
                 },
                 true,
             )
         }
 
         WidgetFeature.MAP_FLOATING -> {
-            Pair(Icons.Rounded.LocationOn, true)
+            Pair(LjIcons.LocationOn, true)
         }
     }
 
