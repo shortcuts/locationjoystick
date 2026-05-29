@@ -122,9 +122,18 @@ class RoamingEngine
                     var remainingMeters = config.distanceMeters
                     val distancePerTick = speedMs * (AppConstants.LocationConstants.UPDATE_INTERVAL_MS / 1000.0)
 
+                    val firstLegPreview = config.previewWaypoints?.takeIf { it.size >= 2 }
+                    var isFirstLeg = true
                     while (isActive && remainingMeters > 0) {
-                        val destination = randomPointInRadius(config.centerPosition, config.radiusMeters)
-                        val route = fetchRoute(config, currentPosition, destination)
+                        val route =
+                            if (isFirstLeg && firstLegPreview != null) {
+                                isFirstLeg = false
+                                firstLegPreview
+                            } else {
+                                isFirstLeg = false
+                                val destination = randomPointInRadius(config.centerPosition, config.radiusMeters)
+                                fetchRoute(config, currentPosition, destination)
+                            }
                         onRouteUpdate(route)
                         // Guard against empty route to avoid a tight busy-spin
                         if (route.size < 2) {

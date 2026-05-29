@@ -469,7 +469,8 @@ class MapViewModel
                                 .firstOrNull { it.id == draft.speedProfileId }
                                 ?.speedMetersPerSecond
                                 ?: settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
-                        val config = draft.toConfig(position)
+                        val previewWaypoints = _uiState.value.roamingPreviewWaypoints
+                        val config = draft.toConfig(position).copy(previewWaypoints = previewWaypoints)
                         roamingRepository.startRoaming(config, speedMs)
                     }
                     _uiState.update { it.copy(showRoamingSheet = false, roamingDraft = null, isRoamingSheetMinimized = false) }
