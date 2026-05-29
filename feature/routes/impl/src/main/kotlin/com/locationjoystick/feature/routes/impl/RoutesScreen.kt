@@ -142,6 +142,14 @@ internal fun RoutesScreen(
                     leadingIcon = { Icon(LjIcons.Map, null) },
                 )
                 DropdownMenuItem(
+                    text = { Text("from map follow roads") },
+                    onClick = {
+                        onNavigateToCreate(RouteType.GUIDED)
+                        showAddMenu = false
+                    },
+                    leadingIcon = { Icon(LjIcons.Map, null) },
+                )
+                DropdownMenuItem(
                     text = { Text("from GPX file") },
                     onClick = {
                         onImportGpx()
