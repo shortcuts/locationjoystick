@@ -371,7 +371,7 @@ private fun StartRouteDialog(
                 Text("Start route", style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.height(16.dp))
 
-                CheckboxRow(label = "Loop", checked = loop, onCheckedChange = { loop = it })
+                CheckboxRow(label = "Loop", checked = loop, enabled = !returnToLocation, onCheckedChange = { loop = it })
                 CheckboxRow(label = "Reverse", checked = reverse, onCheckedChange = { reverse = it })
                 CheckboxRow(
                     label = "Return to location",

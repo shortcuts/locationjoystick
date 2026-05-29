@@ -10,7 +10,6 @@ No outstanding documentation issues.
 
 ### UI/UX issues
 
-- Route start modal shouldn't offer "loop" when "return to location" is checked.
 - Create route should offer a "from map follow roads" option in the menu
 - Starting a route (from the Map Screen or the floating widget) should open the same modal as from the route list to expose every options possible
 - The "roaming" icon when expanded isn't correct. It should expand on the left, not the right. The colors of the icon should match the route one: "compass" should be green, background black, "stop" should be red, background black.
