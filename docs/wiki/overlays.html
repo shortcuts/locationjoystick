@@ -8,66 +8,67 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="layout">
 
-<header class="site-header">
-  <img src="icon.png" alt="locationjoystick icon" width="48" height="48">
-  <h1><a href="index.html">locationjoystick</a></h1>
-</header>
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <img src="icon.png" alt="" width="32" height="32">
+      <span class="brand-name">locationjoystick</span>
+    </a>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a href="home.html">Home</a>
+      <a href="map.html">Map</a>
+      <a href="routes.html">Routes</a>
+      <a href="favorites.html">Favorites</a>
+      <a href="settings.html">Settings</a>
+      <a href="overlays.html" class="active">Overlays</a>
+      <a href="onboarding.html">Onboarding</a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> · MIT License
+    </div>
+  </aside>
 
-<nav>
-  <a href="index.html">Overview</a>
-  <a href="home.html">Home</a>
-  <a href="map.html">Map</a>
-  <a href="routes.html">Routes</a>
-  <a href="favorites.html">Favorites</a>
-  <a href="settings.html">Settings</a>
-  <a href="overlays.html" class="active">Overlays</a>
-  <a href="onboarding.html">Onboarding</a>
-</nav>
+  <main>
+    <h2>Floating joystick</h2>
+    <p>
+      A circular directional pad that floats over any app. Drag to move your spoofed
+      location in real time while something else is in the foreground.
+    </p>
 
-<main>
-  <h2>Floating joystick</h2>
-  <p>
-    A circular directional pad that floats over any app. Drag to move your spoofed
-    location in real time while something else is in the foreground.
-  </p>
+    <div class="feature-section" id="joystick-overlay">
+      <img class="phone-shot" src="screenshots/14_joystick_overlay.png" alt="Floating joystick overlay">
+      <ul class="section-bullets">
+        <li>Drag the thumb in any direction to move at the currently selected speed.</li>
+        <li>Release to stop moving; your position holds at the last point.</li>
+        <li>Drag the outer ring to reposition the joystick anywhere on screen.</li>
+      </ul>
+    </div>
 
-  <section id="joystick-overlay">
-    <img src="screenshots/14_joystick_overlay.png" alt="Floating joystick overlay">
-    <ul>
-      <li>Drag the thumb in any direction to move at the currently selected speed.</li>
-      <li>Release to stop moving; your position holds at the last point.</li>
-      <li>Drag the outer ring to reposition the joystick anywhere on screen.</li>
-    </ul>
-  </section>
+    <h2>Floating widget</h2>
+    <p>
+      A compact panel with quick-access controls. Tap the FAB to expand it, then use
+      whichever controls you've configured in Settings — without opening the app.
+    </p>
 
-  <h2>Floating widget</h2>
-  <p>
-    A compact panel with quick-access controls. Tap the FAB to expand it, then use
-    whichever controls you've configured in Settings — without opening the app.
-  </p>
+    <div class="feature-section" id="widget-overlay">
+      <img class="phone-shot" src="screenshots/15_widget_overlay.png" alt="Floating widget overlay">
+      <ul class="section-bullets">
+        <li>Choose any combination of controls in Settings: joystick toggle, speed cycle, routes, favorites, or map view.</li>
+        <li>Collapse back to a single FAB when not needed.</li>
+        <li>Drag the FAB to any edge of the screen to keep it out of the way.</li>
+      </ul>
+    </div>
 
-  <section id="widget-overlay">
-    <img src="screenshots/15_widget_overlay.png" alt="Floating widget overlay">
-    <ul>
-      <li>Choose any combination of controls in Settings: joystick toggle, speed cycle, routes, favorites, or map view.</li>
-      <li>Collapse back to a single FAB when not needed.</li>
-      <li>Drag the FAB to any edge of the screen to keep it out of the way.</li>
-    </ul>
-  </section>
+    <h2>Requirements</h2>
+    <p>
+      Both overlays require the <strong>Display over other apps</strong> permission
+      (<code>SYSTEM_ALERT_WINDOW</code>). The onboarding flow guides you through granting it.
+      No root is required.
+    </p>
+  </main>
 
-  <h2>Requirements</h2>
-  <p>
-    Both overlays require the <strong>Display over other apps</strong> permission
-    (<code>SYSTEM_ALERT_WINDOW</code>). The onboarding flow guides you through granting it.
-    No root is required.
-  </p>
-</main>
-
-<footer>
-  <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> ·
-  MIT License
-</footer>
-
+</div>
 </body>
 </html>

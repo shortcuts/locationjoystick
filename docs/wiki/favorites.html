@@ -8,59 +8,60 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="layout">
 
-<header class="site-header">
-  <img src="icon.png" alt="locationjoystick icon" width="48" height="48">
-  <h1><a href="index.html">locationjoystick</a></h1>
-</header>
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <img src="icon.png" alt="" width="32" height="32">
+      <span class="brand-name">locationjoystick</span>
+    </a>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a href="home.html">Home</a>
+      <a href="map.html">Map</a>
+      <a href="routes.html">Routes</a>
+      <a href="favorites.html" class="active">Favorites</a>
+      <a href="settings.html">Settings</a>
+      <a href="overlays.html">Overlays</a>
+      <a href="onboarding.html">Onboarding</a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> · MIT License
+    </div>
+  </aside>
 
-<nav>
-  <a href="index.html">Overview</a>
-  <a href="home.html">Home</a>
-  <a href="map.html">Map</a>
-  <a href="routes.html">Routes</a>
-  <a href="favorites.html" class="active">Favorites</a>
-  <a href="settings.html">Settings</a>
-  <a href="overlays.html">Overlays</a>
-  <a href="onboarding.html">Onboarding</a>
-</nav>
+  <main>
+    <h2>Favorites</h2>
+    <p>
+      Save named positions and jump to any of them instantly. Favorites appear in both the Favorites
+      screen and in the map's favorites sheet for quick access without leaving the map.
+    </p>
 
-<main>
-  <h2>Favorites</h2>
-  <p>
-    Save named positions and jump to any of them instantly. Favorites appear in both the Favorites
-    screen and in the map's favorites sheet for quick access without leaving the map.
-  </p>
+    <div class="feature-section" id="favorites-list">
+      <img class="phone-shot" src="screenshots/04_favorites.png" alt="Favorites screen">
+      <ul class="section-bullets">
+        <li>Tap a favorite to walk or teleport to that location immediately.</li>
+        <li>Long-press a favorite to rename or delete it.</li>
+        <li>Add a favorite by entering coordinates directly or by picking a point on the map.</li>
+      </ul>
+    </div>
 
-  <section id="favorites-list">
-    <img src="screenshots/04_favorites.png" alt="Favorites screen">
-    <ul>
-      <li>Tap a favorite to walk or teleport to that location immediately.</li>
-      <li>Long-press a favorite to rename or delete it.</li>
-      <li>Add a favorite by entering coordinates directly or by picking a point on the map.</li>
-    </ul>
-  </section>
+    <h2>Map picker</h2>
+    <p>
+      When adding a favorite "from map", a full-screen map opens. Tap to place a pin,
+      or use the Nominatim search to find a location by name.
+    </p>
 
-  <h2>Map picker</h2>
-  <p>
-    When adding a favorite "from map", a full-screen map opens. Tap to place a pin,
-    or use the Nominatim search to find a location by name.
-  </p>
+    <div class="feature-section" id="map-picker">
+      <img class="phone-shot" src="screenshots/11_map_picker.png" alt="Map picker screen">
+      <ul class="section-bullets">
+        <li>Search by place name to jump the map to a specific address or landmark.</li>
+        <li>Tap the map to move the pin to any exact coordinate.</li>
+        <li>Confirm to save with a name of your choice.</li>
+      </ul>
+    </div>
+  </main>
 
-  <section id="map-picker">
-    <img src="screenshots/11_map_picker.png" alt="Map picker screen">
-    <ul>
-      <li>Search by place name to jump the map to a specific address or landmark.</li>
-      <li>Tap the map to move the pin to any exact coordinate.</li>
-      <li>Confirm to save with a name of your choice.</li>
-    </ul>
-  </section>
-</main>
-
-<footer>
-  <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> ·
-  MIT License
-</footer>
-
+</div>
 </body>
 </html>

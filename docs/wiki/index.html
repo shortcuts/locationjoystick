@@ -8,87 +8,88 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="layout">
 
-<header class="site-header">
-  <img src="icon.png" alt="locationjoystick icon" width="48" height="48">
-  <h1><a href="index.html">locationjoystick</a></h1>
-</header>
-
-<nav>
-  <a href="index.html" class="active">Overview</a>
-  <a href="home.html">Home</a>
-  <a href="map.html">Map</a>
-  <a href="routes.html">Routes</a>
-  <a href="favorites.html">Favorites</a>
-  <a href="settings.html">Settings</a>
-  <a href="overlays.html">Overlays</a>
-  <a href="onboarding.html">Onboarding</a>
-</nav>
-
-<main>
-  <h2>What is locationjoystick?</h2>
-  <p>
-    locationjoystick lets you spoof your GPS location on Android — no root required.
-    Use a floating joystick, saved routes, or automatic roaming to move your location
-    anywhere while your other apps keep running normally.
-  </p>
-  <p>
-    It uses Android's official mock location API. Enable Developer Options, select
-    locationjoystick as your mock location provider, and every app on the device
-    sees the location you choose.
-  </p>
-
-  <h2>Screens</h2>
-  <div class="card-grid">
-    <a href="home.html" class="card">
-      <h3>Home</h3>
-      <p>Main hub. Start, stop, and navigate to all features.</p>
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <img src="icon.png" alt="" width="32" height="32">
+      <span class="brand-name">locationjoystick</span>
     </a>
-    <a href="map.html" class="card">
-      <h3>Map</h3>
-      <p>OpenStreetMap view. Tap to walk or teleport. Launch routes, favorites, and roaming from here.</p>
-    </a>
-    <a href="routes.html" class="card">
-      <h3>Routes</h3>
-      <p>Create, edit, and replay saved waypoint routes. Straight-line or road-following.</p>
-    </a>
-    <a href="favorites.html" class="card">
-      <h3>Favorites</h3>
-      <p>Save named locations. Teleport or walk there instantly.</p>
-    </a>
-    <a href="settings.html" class="card">
-      <h3>Settings</h3>
-      <p>Speed profiles, GPS realism toggles, widget config, export/import, and QR transfer.</p>
-    </a>
-    <a href="overlays.html" class="card">
-      <h3>Overlays</h3>
-      <p>Floating joystick and widget that stay on top of any app.</p>
-    </a>
-    <a href="onboarding.html" class="card">
-      <h3>Onboarding</h3>
-      <p>First-run setup: permissions, mock location provider selection.</p>
-    </a>
-  </div>
+    <nav>
+      <a href="index.html" class="active">Overview</a>
+      <a href="home.html">Home</a>
+      <a href="map.html">Map</a>
+      <a href="routes.html">Routes</a>
+      <a href="favorites.html">Favorites</a>
+      <a href="settings.html">Settings</a>
+      <a href="overlays.html">Overlays</a>
+      <a href="onboarding.html">Onboarding</a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> · MIT License
+    </div>
+  </aside>
 
-  <h2>Quick start</h2>
-  <ol>
-    <li>Install the app and open it.</li>
-    <li>Follow the onboarding flow: grant location permission, overlay permission, and set locationjoystick as your mock location app in Developer Options.</li>
-    <li>Tap the <strong>Map</strong> card, tap the start button, then long-press the map to walk or teleport anywhere.</li>
-    <li>Use the floating widget or joystick overlay to control your location while other apps are in the foreground.</li>
-  </ol>
+  <main>
+    <p class="page-title">locationjoystick</p>
+    <p>
+      Spoof your GPS location on Android — no root required.
+      Use a floating joystick, saved routes, or automatic roaming to move your location
+      anywhere while your other apps run normally.
+    </p>
+    <p>
+      Uses Android's official mock location API. Enable Developer Options, select
+      locationjoystick as your mock location provider, and every app on the device
+      sees the location you choose.
+    </p>
 
-  <h2>Source</h2>
-  <p>
-    <a href="https://github.com/shortcuts/locationjoystick">github.com/shortcuts/locationjoystick</a>
-    — MIT license, open source.
-  </p>
-</main>
+    <h2>Screens</h2>
+    <div class="card-grid">
+      <a href="home.html" class="card">
+        <h3>Home</h3>
+        <p>Main hub. Start, stop, and navigate to all features.</p>
+      </a>
+      <a href="map.html" class="card">
+        <h3>Map</h3>
+        <p>Live map. Long-press to walk or teleport. Launch routes, favorites, and roaming.</p>
+      </a>
+      <a href="routes.html" class="card">
+        <h3>Routes</h3>
+        <p>Create and replay waypoint routes. Straight-line or road-following.</p>
+      </a>
+      <a href="favorites.html" class="card">
+        <h3>Favorites</h3>
+        <p>Save named locations. Teleport or walk there instantly.</p>
+      </a>
+      <a href="settings.html" class="card">
+        <h3>Settings</h3>
+        <p>Speed profiles, GPS realism, widget config, export/import, QR transfer.</p>
+      </a>
+      <a href="overlays.html" class="card">
+        <h3>Overlays</h3>
+        <p>Floating joystick and widget that stay on top of any app.</p>
+      </a>
+      <a href="onboarding.html" class="card">
+        <h3>Onboarding</h3>
+        <p>First-run setup: permissions and mock location provider.</p>
+      </a>
+    </div>
 
-<footer>
-  <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> ·
-  MIT License
-</footer>
+    <h2>Quick start</h2>
+    <ol class="quickstart">
+      <li>Install the app and open it.</li>
+      <li>Follow onboarding: grant location permission, overlay permission, then set locationjoystick as your mock location app in Developer Options.</li>
+      <li>Tap <strong>Map</strong>, tap the start button, then long-press the map to walk or teleport anywhere.</li>
+      <li>Use the floating widget or joystick overlay to control your location while other apps are in the foreground.</li>
+    </ol>
 
+    <h2>Source</h2>
+    <p>
+      <a href="https://github.com/shortcuts/locationjoystick">github.com/shortcuts/locationjoystick</a>
+      — MIT license, open source.
+    </p>
+  </main>
+
+</div>
 </body>
 </html>

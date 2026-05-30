@@ -8,67 +8,68 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="layout">
 
-<header class="site-header">
-  <img src="icon.png" alt="locationjoystick icon" width="48" height="48">
-  <h1><a href="index.html">locationjoystick</a></h1>
-</header>
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <img src="icon.png" alt="" width="32" height="32">
+      <span class="brand-name">locationjoystick</span>
+    </a>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a href="home.html">Home</a>
+      <a href="map.html">Map</a>
+      <a href="routes.html">Routes</a>
+      <a href="favorites.html">Favorites</a>
+      <a href="settings.html" class="active">Settings</a>
+      <a href="overlays.html">Overlays</a>
+      <a href="onboarding.html">Onboarding</a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> · MIT License
+    </div>
+  </aside>
 
-<nav>
-  <a href="index.html">Overview</a>
-  <a href="home.html">Home</a>
-  <a href="map.html">Map</a>
-  <a href="routes.html">Routes</a>
-  <a href="favorites.html">Favorites</a>
-  <a href="settings.html" class="active">Settings</a>
-  <a href="overlays.html">Overlays</a>
-  <a href="onboarding.html">Onboarding</a>
-</nav>
+  <main>
+    <h2>Settings</h2>
+    <p>Configure speed profiles, GPS realism, widget controls, and data export/import.</p>
 
-<main>
-  <h2>Settings</h2>
-  <p>Configure speed profiles, GPS realism, widget controls, and data export/import.</p>
+    <div class="feature-section" id="settings-main">
+      <img class="phone-shot" src="screenshots/05_settings.png" alt="Settings screen">
+      <ul class="section-bullets">
+        <li>Edit Walk, Run, and Bike speed presets used by the joystick, routes, and roaming.</li>
+        <li>Toggle GPS realism features independently: bearing hold, altitude drift, warm-up envelope, satellite count, signal dropouts.</li>
+        <li>Choose which controls appear in the floating widget.</li>
+      </ul>
+    </div>
 
-  <section id="settings-main">
-    <img src="screenshots/05_settings.png" alt="Settings screen">
-    <ul>
-      <li>Edit Walk, Run, and Bike speed presets used by the joystick, routes, and roaming.</li>
-      <li>Toggle GPS realism features independently: bearing hold, altitude drift, warm-up envelope, satellite count, signal dropouts.</li>
-      <li>Choose which controls appear in the floating widget.</li>
-    </ul>
-  </section>
+    <h2>More settings</h2>
 
-  <h2>More settings</h2>
+    <div class="feature-section" id="settings-scrolled">
+      <img class="phone-shot" src="screenshots/12_settings_scrolled.png" alt="Settings screen scrolled">
+      <ul class="section-bullets">
+        <li>Configure roaming defaults: radius, distance, speed profile, and road-following preference.</li>
+        <li>Export all data (routes, favorites, profiles) to a JSON file or import a previous backup.</li>
+        <li>Import data from GPS Joystick or YAMLA to migrate in seconds.</li>
+      </ul>
+    </div>
 
-  <section id="settings-scrolled">
-    <img src="screenshots/12_settings_scrolled.png" alt="Settings screen scrolled">
-    <ul>
-      <li>Configure roaming defaults: radius, distance, speed profile, and road-following preference.</li>
-      <li>Export all data (routes, favorites, profiles) to a JSON file or import a previous backup.</li>
-      <li>Import data from GPS Joystick or YAMLA to migrate in seconds.</li>
-    </ul>
-  </section>
+    <h2>QR transfer</h2>
+    <p>
+      Share your entire configuration between devices by scanning a sequence of QR codes —
+      no cables, no accounts, no cloud.
+    </p>
 
-  <h2>QR transfer</h2>
-  <p>
-    Share your entire configuration between devices by scanning a sequence of QR codes —
-    no cables, no accounts, no cloud.
-  </p>
+    <div class="feature-section" id="qr-share">
+      <img class="phone-shot" src="screenshots/13_qr_share.png" alt="QR share dialog">
+      <ul class="section-bullets">
+        <li>Export splits your data into multiple QR codes; swipe through them on the sending device.</li>
+        <li>The receiving device scans each code in sequence; import starts automatically when all chunks are collected.</li>
+        <li>Works entirely offline between two devices in the same room.</li>
+      </ul>
+    </div>
+  </main>
 
-  <section id="qr-share">
-    <img src="screenshots/13_qr_share.png" alt="QR share dialog">
-    <ul>
-      <li>Export splits your data into multiple QR codes; swipe through them on the sending device.</li>
-      <li>The receiving device scans each code in sequence; import starts automatically when all chunks are collected.</li>
-      <li>Works entirely offline between two devices in the same room.</li>
-    </ul>
-  </section>
-</main>
-
-<footer>
-  <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> ·
-  MIT License
-</footer>
-
+</div>
 </body>
 </html>

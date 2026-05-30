@@ -8,54 +8,55 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="layout">
 
-<header class="site-header">
-  <img src="icon.png" alt="locationjoystick icon" width="48" height="48">
-  <h1><a href="index.html">locationjoystick</a></h1>
-</header>
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <img src="icon.png" alt="" width="32" height="32">
+      <span class="brand-name">locationjoystick</span>
+    </a>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a href="home.html" class="active">Home</a>
+      <a href="map.html">Map</a>
+      <a href="routes.html">Routes</a>
+      <a href="favorites.html">Favorites</a>
+      <a href="settings.html">Settings</a>
+      <a href="overlays.html">Overlays</a>
+      <a href="onboarding.html">Onboarding</a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> · MIT License
+    </div>
+  </aside>
 
-<nav>
-  <a href="index.html">Overview</a>
-  <a href="home.html" class="active">Home</a>
-  <a href="map.html">Map</a>
-  <a href="routes.html">Routes</a>
-  <a href="favorites.html">Favorites</a>
-  <a href="settings.html">Settings</a>
-  <a href="overlays.html">Overlays</a>
-  <a href="onboarding.html">Onboarding</a>
-</nav>
+  <main>
+    <h2>Home screen</h2>
+    <p>The main hub after onboarding. Navigate to any feature from here.</p>
 
-<main>
-  <h2>Home screen</h2>
-  <p>The main hub after onboarding. Navigate to any feature from here.</p>
+    <div class="feature-section" id="idle">
+      <img class="phone-shot" src="screenshots/01_idle.png" alt="Home / Idle screen">
+      <ul class="section-bullets">
+        <li>Tap any card to navigate to Map, Routes, Favorites, Settings, or About.</li>
+        <li>Open the navigation drawer (hamburger icon) to jump between screens from anywhere in the app.</li>
+        <li>The status bar shows whether mock location is currently active.</li>
+      </ul>
+    </div>
 
-  <section id="idle">
-    <img src="screenshots/01_idle.png" alt="Home / Idle screen">
-    <ul>
-      <li>Tap any card to navigate to Map, Routes, Favorites, Settings, or About.</li>
-      <li>Open the navigation drawer (hamburger icon) to jump between screens from anywhere in the app.</li>
-      <li>The status bar shows whether mock location is currently active.</li>
-    </ul>
-  </section>
+    <h2>Last remembered location</h2>
+    <p>
+      When you reopen the app, locationjoystick restores the last spoofed position automatically.
+      No need to re-enter coordinates after a restart. Toggle this in Settings if you prefer to always start fresh.
+    </p>
 
-  <h2>Last remembered location</h2>
-  <p>
-    When you reopen the app, locationjoystick restores the last spoofed position automatically.
-    No need to re-enter coordinates after a restart. Toggle this in Settings if you prefer to always start fresh.
-  </p>
+    <h2>Background service</h2>
+    <p>
+      Once spoofing is started, a foreground service keeps it running while you use other apps
+      or the screen is off. A persistent low-priority notification indicates the service is active.
+      Stopping from the notification or from within the app ends spoofing cleanly.
+    </p>
+  </main>
 
-  <h2>Background service</h2>
-  <p>
-    Once spoofing is started, a foreground service keeps it running while you use other apps
-    or the screen is off. A persistent low-priority notification indicates the service is active.
-    Stopping from the notification or from within the app ends spoofing cleanly.
-  </p>
-</main>
-
-<footer>
-  <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> ·
-  MIT License
-</footer>
-
+</div>
 </body>
 </html>

@@ -209,6 +209,56 @@ make coverage-open   # open HTML report in browser
 
 ---
 
+---
+
+## Website (GitHub Pages)
+
+Static documentation site at `docs/wiki/`. Served via GitHub Pages; run locally with:
+
+```bash
+make wiki-serve   # http://localhost:8080
+```
+
+### Structure
+
+| File | Purpose |
+|------|---------|
+| `docs/wiki/index.html` | Overview + card grid + quick start |
+| `docs/wiki/home.html` | Home screen + background service |
+| `docs/wiki/map.html` | Map screen + bottom sheets |
+| `docs/wiki/routes.html` | Routes list + creator + detail |
+| `docs/wiki/favorites.html` | Favorites list + map picker |
+| `docs/wiki/settings.html` | Settings + QR transfer |
+| `docs/wiki/overlays.html` | Joystick + widget overlays |
+| `docs/wiki/onboarding.html` | First-run setup + troubleshooting |
+| `docs/wiki/style.css` | Single stylesheet — all pages share it |
+| `docs/wiki/screenshots/` | Phone screenshots (PNG, numbered 01–15) |
+
+### Regenerating screenshots
+
+Screenshots are captured from a connected device/emulator via:
+
+```bash
+make screenshot   # outputs to docs/wiki/screenshots/
+```
+
+The script (`scripts/screenshot-gallery.sh`) navigates the app and captures all 15 canonical screens. Re-run after any UI change. Commit updated PNGs alongside the code change.
+
+Missing screenshots (14 `joystick_overlay`, 15 `widget_overlay`) require the overlay services running — capture manually if the script can't reach them.
+
+### Maintaining content
+
+- Each HTML page maps 1-to-1 to a feature. Update the page when the feature changes.
+- Screenshots are referenced by number (`01_idle.png` … `15_widget_overlay.png`). Renaming a file breaks the page — update both together.
+- All pages use the same sidebar nav snippet. When adding a new page, add its `<a>` entry to the `<nav>` block in **every** HTML file.
+- No external resources — no CDN fonts, no JS libraries. Keep it that way.
+
+### Design changes
+
+Invoke `/frontend-design:frontend-design` for any visual redesign or layout iteration. The skill owns aesthetic decisions; pass the desired direction and constraints as arguments. After the skill runs, verify with `make wiki-serve` and check all pages render correctly.
+
+---
+
 <!-- code-review-graph MCP tools -->
 ## MCP Tools: code-review-graph
 

@@ -8,81 +8,92 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="layout">
 
-<header class="site-header">
-  <img src="icon.png" alt="locationjoystick icon" width="48" height="48">
-  <h1><a href="index.html">locationjoystick</a></h1>
-</header>
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <img src="icon.png" alt="" width="32" height="32">
+      <span class="brand-name">locationjoystick</span>
+    </a>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a href="home.html">Home</a>
+      <a href="map.html">Map</a>
+      <a href="routes.html">Routes</a>
+      <a href="favorites.html">Favorites</a>
+      <a href="settings.html">Settings</a>
+      <a href="overlays.html">Overlays</a>
+      <a href="onboarding.html" class="active">Onboarding</a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> · MIT License
+    </div>
+  </aside>
 
-<nav>
-  <a href="index.html">Overview</a>
-  <a href="home.html">Home</a>
-  <a href="map.html">Map</a>
-  <a href="routes.html">Routes</a>
-  <a href="favorites.html">Favorites</a>
-  <a href="settings.html">Settings</a>
-  <a href="overlays.html">Overlays</a>
-  <a href="onboarding.html" class="active">Onboarding</a>
-</nav>
-
-<main>
-  <h2>First-run setup</h2>
-  <p>
-    The onboarding flow runs once when you first open the app. It walks you through
-    the three permissions locationjoystick needs to work.
-  </p>
-
-  <section id="onboarding-steps">
-    <h3>Step 1 — Location permission</h3>
+  <main>
+    <h2>First-run setup</h2>
     <p>
-      Grant <strong>Precise location</strong> so the map can center on your position
-      and route recording works correctly.
+      The onboarding flow runs once when you first open the app. It walks you through
+      the three permissions locationjoystick needs to work.
     </p>
 
-    <h3>Step 2 — Overlay permission</h3>
+    <ul class="step-list">
+      <li>
+        <div>
+          <strong>Location permission</strong>
+          <p>
+            Grant <strong>Precise location</strong> so the map can center on your position
+            and route recording works correctly.
+          </p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Overlay permission</strong>
+          <p>
+            Grant <strong>Display over other apps</strong> to enable the floating joystick
+            and widget. The app opens the system settings page directly — toggle locationjoystick
+            in the list and return to the app.
+          </p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Mock location provider</strong>
+          <p>
+            Enable <strong>Developer Options</strong> on your device (Settings → About phone →
+            tap Build number seven times), then go to Settings → Developer Options →
+            <strong>Select mock location app</strong> and choose locationjoystick.
+            Tap <strong>Check again</strong> in the app — it verifies the setting and advances automatically.
+          </p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>All done</strong>
+          <p>
+            Onboarding completes and you land on the Map screen ready to start spoofing.
+            You won't see this flow again unless you clear app data.
+          </p>
+        </div>
+      </li>
+    </ul>
+
+    <h2>Skipping steps</h2>
     <p>
-      Grant <strong>Display over other apps</strong> to enable the floating joystick
-      and widget. The app opens the system settings page directly; toggle locationjoystick
-      in the list and return to the app.
+      Each step can be skipped. If a required permission is missing later, a banner appears
+      on the relevant screen prompting you to grant it. The app checks permission state
+      every time you return to a screen that needs it.
     </p>
 
-    <h3>Step 3 — Mock location provider</h3>
-    <p>
-      Enable <strong>Developer Options</strong> on your device (Settings → About phone →
-      tap Build number seven times), then go to Settings → Developer Options →
-      <strong>Select mock location app</strong> and choose locationjoystick.
-    </p>
-    <p>
-      Tap <strong>Check again</strong> in the app after completing this step.
-      The app verifies the setting automatically and advances when it detects the change.
-    </p>
+    <h2>Troubleshooting</h2>
+    <ul class="trouble">
+      <li><strong>Mock location not detected</strong> — some devices require rebooting after changing the Developer Options setting. Try rebooting, then tap Check again.</li>
+      <li><strong>Overlay permission resets on reboot</strong> — a known issue on some custom Android skins (MIUI, ColorOS). Re-grant the permission after each reboot or check your device's autostart settings.</li>
+      <li><strong>Another app holds the mock location slot</strong> — only one app can be the active mock location provider. Make sure no other mock location app is selected in Developer Options.</li>
+    </ul>
+  </main>
 
-    <h3>All done</h3>
-    <p>
-      Once all three steps are complete, onboarding is finished and you land on the Map screen
-      ready to start spoofing. You won't see the onboarding flow again unless you clear app data.
-    </p>
-  </section>
-
-  <h2>Skipping steps</h2>
-  <p>
-    Each step can be skipped. If a required permission is missing later, a banner appears
-    on the relevant screen prompting you to grant it. The app checks permission state
-    every time you return to a screen that needs it.
-  </p>
-
-  <h2>Troubleshooting</h2>
-  <ul>
-    <li><strong>Mock location not detected</strong> — some devices require rebooting after changing the Developer Options setting. Try rebooting, then tap Check again.</li>
-    <li><strong>Overlay permission resets on reboot</strong> — a known issue on some custom Android skins (MIUI, ColorOS). Re-grant the permission after each reboot or check your device's autostart settings.</li>
-    <li><strong>Another app holds the mock location slot</strong> — only one app can be the active mock location provider. Make sure no other mock location app is selected in Developer Options.</li>
-  </ul>
-</main>
-
-<footer>
-  <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> ·
-  MIT License
-</footer>
-
+</div>
 </body>
 </html>

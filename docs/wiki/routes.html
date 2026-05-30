@@ -8,68 +8,69 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="layout">
 
-<header class="site-header">
-  <img src="icon.png" alt="locationjoystick icon" width="48" height="48">
-  <h1><a href="index.html">locationjoystick</a></h1>
-</header>
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <img src="icon.png" alt="" width="32" height="32">
+      <span class="brand-name">locationjoystick</span>
+    </a>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a href="home.html">Home</a>
+      <a href="map.html">Map</a>
+      <a href="routes.html" class="active">Routes</a>
+      <a href="favorites.html">Favorites</a>
+      <a href="settings.html">Settings</a>
+      <a href="overlays.html">Overlays</a>
+      <a href="onboarding.html">Onboarding</a>
+    </nav>
+    <div class="sidebar-foot">
+      <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> · MIT License
+    </div>
+  </aside>
 
-<nav>
-  <a href="index.html">Overview</a>
-  <a href="home.html">Home</a>
-  <a href="map.html">Map</a>
-  <a href="routes.html" class="active">Routes</a>
-  <a href="favorites.html">Favorites</a>
-  <a href="settings.html">Settings</a>
-  <a href="overlays.html">Overlays</a>
-  <a href="onboarding.html">Onboarding</a>
-</nav>
+  <main>
+    <h2>Routes</h2>
+    <p>
+      Create a series of waypoints on the map and replay them at your chosen speed.
+      Routes can follow straight lines between waypoints or snap to real roads using OSRM routing.
+    </p>
 
-<main>
-  <h2>Routes</h2>
-  <p>
-    Create a series of waypoints on the map and replay them at your chosen speed.
-    Routes can follow straight lines between waypoints or snap to real roads using OSRM routing.
-  </p>
+    <div class="feature-section" id="routes-list">
+      <img class="phone-shot" src="screenshots/03_routes.png" alt="Routes list screen">
+      <ul class="section-bullets">
+        <li>Tap the add button to create a new route by placing waypoints on the map or importing a file.</li>
+        <li>Tap a saved route to start it; options include loop, reverse, and return-to-start.</li>
+        <li>Import routes from GPX files, GPS Joystick, or YAMLA via the overflow menu.</li>
+      </ul>
+    </div>
 
-  <section id="routes-list">
-    <img src="screenshots/03_routes.png" alt="Routes list screen">
-    <ul>
-      <li>Tap the add button to create a new route by placing waypoints on the map or by importing a file.</li>
-      <li>Tap a saved route to start it; options include loop, reverse, and return-to-start.</li>
-      <li>Import routes from GPX files, GPS Joystick, or YAMLA via the overflow menu.</li>
-    </ul>
-  </section>
+    <h2>Route creator</h2>
+    <p>Place waypoints by tapping the map. The route previews as a polyline as you add points.</p>
 
-  <h2>Route creator</h2>
-  <p>Place waypoints by tapping the map. The route previews as a polyline as you add points.</p>
+    <div class="feature-section" id="route-creator">
+      <img class="phone-shot" src="screenshots/09_route_creator.png" alt="Route creator screen">
+      <ul class="section-bullets">
+        <li>Search for a location by name using the search FAB to jump the map to a specific place.</li>
+        <li>Undo the last waypoint with the undo button.</li>
+        <li>Choose between straight-line and road-following (OSRM) before saving.</li>
+      </ul>
+    </div>
 
-  <section id="route-creator">
-    <img src="screenshots/09_route_creator.png" alt="Route creator screen">
-    <ul>
-      <li>Search for a location by name using the search FAB to jump the map to a specific place.</li>
-      <li>Undo the last waypoint with the undo button.</li>
-      <li>Choose between straight-line and road-following (OSRM) before saving.</li>
-    </ul>
-  </section>
+    <h2>Route detail</h2>
+    <p>Edit an existing route: rename it, reorder or delete individual waypoints, change the route type.</p>
 
-  <h2>Route detail</h2>
-  <p>Edit an existing route: rename it, reorder or delete individual waypoints, change the route type.</p>
+    <div class="feature-section" id="route-detail">
+      <img class="phone-shot" src="screenshots/10_route_detail.png" alt="Route detail / edit screen">
+      <ul class="section-bullets">
+        <li>Drag waypoints in the list to reorder them.</li>
+        <li>Tap a waypoint to highlight it on the embedded map.</li>
+        <li>Delete the route permanently from the action bar.</li>
+      </ul>
+    </div>
+  </main>
 
-  <section id="route-detail">
-    <img src="screenshots/10_route_detail.png" alt="Route detail / edit screen">
-    <ul>
-      <li>Drag waypoints in the list to reorder them.</li>
-      <li>Tap a waypoint to highlight it on the embedded map.</li>
-      <li>Delete the route permanently from the action bar.</li>
-    </ul>
-  </section>
-</main>
-
-<footer>
-  <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> ·
-  MIT License
-</footer>
-
+</div>
 </body>
 </html>
