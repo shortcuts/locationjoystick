@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Map — locationjoystick</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <img src="icon.png" alt="locationjoystick icon" width="48" height="48">
+  <h1><a href="index.html">locationjoystick</a></h1>
+</header>
+
+<nav>
+  <a href="index.html">Overview</a>
+  <a href="home.html">Home</a>
+  <a href="map.html" class="active">Map</a>
+  <a href="routes.html">Routes</a>
+  <a href="favorites.html">Favorites</a>
+  <a href="settings.html">Settings</a>
+  <a href="overlays.html">Overlays</a>
+  <a href="onboarding.html">Onboarding</a>
+</nav>
+
+<main>
+  <h2>Map</h2>
+  <p>
+    OpenStreetMap rendered via MapLibre. Your spoofed location appears as a live marker.
+    Use the map to set your position directly or launch routes, favorites, and roaming from the floating action buttons.
+  </p>
+
+  <section id="map-main">
+    <img src="screenshots/02_map.png" alt="Map screen">
+    <ul>
+      <li>Long-press anywhere on the map to open a sheet with "Walk here" or "Teleport here".</li>
+      <li>Tap the start button to begin spoofing from the current map position.</li>
+      <li>Use the re-center FAB to re-lock the camera to your moving position after panning away.</li>
+    </ul>
+  </section>
+
+  <h2>Routes sheet</h2>
+  <p>Open your saved routes and start replaying one directly from the map.</p>
+
+  <section id="map-routes-sheet">
+    <img src="screenshots/06_map_routes_sheet.png" alt="Map routes bottom sheet">
+    <ul>
+      <li>Tap a route to preview its polyline on the map.</li>
+      <li>Start, loop, or reverse the route without leaving the map screen.</li>
+    </ul>
+  </section>
+
+  <h2>Favorites sheet</h2>
+  <p>Jump to any saved favorite location without navigating to the Favorites screen.</p>
+
+  <section id="map-favorites-sheet">
+    <img src="screenshots/07_map_favorites_sheet.png" alt="Map favorites bottom sheet">
+    <ul>
+      <li>Tap a favorite to walk or teleport there instantly.</li>
+      <li>Saved favorites appear with their name and distance from the current spoofed position.</li>
+    </ul>
+  </section>
+
+  <h2>Roaming sheet</h2>
+  <p>Configure and start automatic roaming — locationjoystick walks for you within a set area.</p>
+
+  <section id="map-roaming-sheet">
+    <img src="screenshots/08_map_roaming_sheet.png" alt="Map roaming bottom sheet">
+    <ul>
+      <li>Set a center point (defaults to current spoofed position), radius, and total distance.</li>
+      <li>Enable road-following to have roaming stay on real streets via OSRM routing.</li>
+      <li>Optionally return to the starting position when the distance quota is reached.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <a href="https://github.com/shortcuts/locationjoystick">GitHub</a> ·
+  MIT License
+</footer>
+
+</body>
+</html>
