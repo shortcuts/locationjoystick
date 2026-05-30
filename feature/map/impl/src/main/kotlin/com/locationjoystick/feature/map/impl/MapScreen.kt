@@ -18,6 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -130,6 +132,12 @@ fun MapRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) {
+        viewModel.completionMessages.collect { msg ->
+            snackbarHostState.showSnackbar(msg)
+        }
+    }
     MapScreen(
         uiState = uiState,
         recentSearches = recentSearches,
@@ -138,6 +146,7 @@ fun MapRoute(
         onSearchCommitted = viewModel::addRecentSearch,
         onNavigateToRoutes = onNavigateToRoutes,
         bottomBar = bottomBar,
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -150,6 +159,7 @@ internal fun MapScreen(
     onSearchCommitted: ((String, Double, Double) -> Unit)? = null,
     onNavigateToRoutes: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -211,6 +221,7 @@ internal fun MapScreen(
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = bottomBar,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             MapFabColumn(
                 uiState = uiState,

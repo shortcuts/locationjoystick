@@ -19,11 +19,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -88,7 +86,6 @@ import org.maplibre.android.geometry.LatLng as MapLatLng
 private val MAP_FLOATING_VIEW_OSM_SOURCE = AppConstants.MapConstants.PANEL_OSM_SOURCE_ID
 private val MAP_FLOATING_VIEW_OSM_LAYER = AppConstants.MapConstants.PANEL_OSM_LAYER_ID
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MapFloatingView(
     currentPosition: LatLng?,
@@ -474,12 +471,26 @@ internal fun MapFloatingView(
         if (showRoamingSheet) {
             val isSpoofing = mockLocationState == MockLocationState.RUNNING
             var draft by remember(roamingDefaults) { mutableStateOf(roamingDefaults) }
-            ModalBottomSheet(
-                onDismissRequest = {
-                    showRoamingSheet = false
-                    roamingPreviewWaypoints = null
-                },
-                modifier = Modifier.fillMaxHeight(0.8f),
+            // Scrim: fills screen, tapping outside the sheet dismisses it.
+            // ModalBottomSheet is not used here because it creates a Dialog internally,
+            // which requires an Activity window token unavailable in a service overlay.
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .clickable {
+                            showRoamingSheet = false
+                            roamingPreviewWaypoints = null
+                        },
+            )
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.8f)
+                        .background(LjBg, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                        .clickable {}, // consume touches so they don't fall through to scrim
             ) {
                 RoamingSheetContent(
                     draft = draft,

@@ -85,6 +85,7 @@ internal class ReplayOrchestrator(
                         walkToPosition(returnPosition, speedMs)
                     }
                     locationRepository.setMockMode(MockMode.TELEPORT)
+                    locationRepository.emitCompletion("Route complete")
                 },
             )
         }
@@ -172,7 +173,10 @@ internal class ReplayOrchestrator(
         speedMs: Double,
         isLooping: Boolean,
         persistMetadata: (suspend () -> Unit)? = null,
-        onComplete: suspend () -> Unit = { locationRepository.setMockMode(MockMode.TELEPORT) },
+        onComplete: suspend () -> Unit = {
+            locationRepository.setMockMode(MockMode.TELEPORT)
+            locationRepository.emitCompletion("Route complete")
+        },
     ) {
         if (locationRepository.currentMode.value == MockMode.ROAMING) roamingRepository.stopRoaming()
         if (waypoints.size < 2) return

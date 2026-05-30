@@ -6,8 +6,11 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -59,6 +62,13 @@ class LocationRepository
 
         private val _currentMode = MutableStateFlow(MockMode.TELEPORT)
         val currentMode: StateFlow<MockMode> = _currentMode.asStateFlow()
+
+        private val _completionEvents = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        val completionEvents: SharedFlow<String> = _completionEvents.asSharedFlow()
+
+        fun emitCompletion(message: String) {
+            _completionEvents.tryEmit(message)
+        }
 
         /**
          * True whenever any active movement mode is running:
