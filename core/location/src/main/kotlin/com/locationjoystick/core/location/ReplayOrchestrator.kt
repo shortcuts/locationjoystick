@@ -132,6 +132,7 @@ internal class ReplayOrchestrator(
                 onStateChange(MockLocationState.IDLE)
                 locationRepository.setMockMode(MockMode.TELEPORT)
                 locationRepository.stopSpoofing()
+                locationRepository.emitCompletion("Route complete")
             },
         )
         Log.i(TAG, "Replay resumed at ${speedMs}m/s")
