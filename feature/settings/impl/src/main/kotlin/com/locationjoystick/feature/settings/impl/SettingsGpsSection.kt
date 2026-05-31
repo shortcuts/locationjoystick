@@ -179,31 +179,42 @@ internal fun GpsRealismSection(
         checked = uiState.realismBearingHoldIdle,
         onCheckedChange = onSetRealismBearingHoldIdle,
         title = "Hold bearing when stationary",
-        description = "Keeps the last known direction when you stop moving instead of snapping to 0° (north). Real GPS chips do the same — a sudden reset to north is a common mock-location tell.",
+        description =
+            "Keeps the last known direction when you stop moving instead of snapping to 0° (north). " +
+                "Real GPS chips do the same — a sudden reset to north is a common mock-location tell.",
     )
     SettingsCheckboxRow(
         checked = uiState.realismAltitudeEnabled,
         onCheckedChange = onSetRealismAltitudeEnabled,
         title = "Vary altitude",
-        description = "Simulates a plausible altitude with small random drift instead of always reporting 0 m. A flat zero altitude is an obvious signal that the location is synthetic.",
+        description =
+            "Simulates a plausible altitude with small random drift instead of always reporting 0 m. " +
+                "A flat zero altitude is an obvious signal that the location is synthetic.",
     )
     SettingsCheckboxRow(
         checked = uiState.realismWarmupEnabled,
         onCheckedChange = onSetRealismWarmupEnabled,
         title = "GPS warm-up simulation",
-        description = "Starts each session with degraded accuracy (like a cold GPS fix) that converges to normal over ~30 s. Off by default because it temporarily reduces location precision at session start.",
+        description =
+            "Starts each session with degraded accuracy (like a cold GPS fix) that converges to normal over ~30 s. " +
+                "Off by default because it temporarily reduces location precision at session start.",
     )
     SettingsCheckboxRow(
         checked = uiState.realismSatelliteExtrasEnabled,
         onCheckedChange = onSetRealismSatelliteExtrasEnabled,
         title = "Realistic satellite count",
-        description = "Attaches satellite metadata to each update (7–14 satellites visible, 6–12 in fix) instead of zero. Some apps check for zero satellites as a spoofing signal.",
+        description =
+            "Attaches satellite metadata to each update (7–14 satellites visible, 6–12 in fix) instead of zero. " +
+                "Some apps check for zero satellites as a spoofing signal.",
     )
     SettingsCheckboxRow(
         checked = uiState.realismSuspendedMockingEnabled,
         onCheckedChange = onSetRealismSuspendedMockingEnabled,
         title = "Suspended mocking",
-        description = "Briefly pauses location updates (~2 s every ~10 s) to mimic real GPS dropouts. Off by default because the pauses cause visible position freezes in many apps. Automatically skipped during route replay.",
+        description =
+            "Briefly pauses location updates (~2 s every ~10 s) to mimic real GPS dropouts. " +
+                "Off by default because the pauses cause visible position freezes in many apps. " +
+                "Automatically skipped during route replay.",
     )
 }
 

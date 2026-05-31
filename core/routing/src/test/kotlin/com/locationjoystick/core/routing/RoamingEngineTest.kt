@@ -87,14 +87,15 @@ class RoamingEngineTest {
 
         fun runAndCount(returnToStart: Boolean): Int {
             val e = RoamingEngine(OsrmClient(), RouteInterpolator(), kotlinx.coroutines.Dispatchers.Unconfined)
-            val config = RoamingConfig(
-                centerPosition = center,
-                radiusMeters = 500.0,
-                distanceMeters = distanceMeters,
-                useRoadSnapping = false,
-                speedProfileId = "walk",
-                returnToInitialLocation = returnToStart,
-            )
+            val config =
+                RoamingConfig(
+                    centerPosition = center,
+                    radiusMeters = 500.0,
+                    distanceMeters = distanceMeters,
+                    useRoadSnapping = false,
+                    speedProfileId = "walk",
+                    returnToInitialLocation = returnToStart,
+                )
             var ticks = 0
             val latch = CountDownLatch(1)
             e.startRoaming(config, speedMs, onComplete = { latch.countDown() }) { ticks++ }

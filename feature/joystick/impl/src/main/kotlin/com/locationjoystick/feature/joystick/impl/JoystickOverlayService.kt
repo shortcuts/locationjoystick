@@ -142,7 +142,11 @@ class JoystickOverlayService : OverlayService() {
     /** Joystick starts hidden; user enables it via the floating widget. */
     override fun showOverlayOnStart(): Boolean = false
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         val result = super.onStartCommand(intent, flags, startId)
         if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_SHOW_OVERLAY, false) == true) {
             showOverlay()

@@ -8,4 +8,5 @@ No outstanding documentation issues.
 
 ## Backlog
 
-No outstanding issues.
+- implement ~/.claude/plans/let-s-make-sure-the-concurrent-kitten.md
+- increase spacing between list items (in favorites and routes)

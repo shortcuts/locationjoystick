@@ -178,8 +178,10 @@ class JoystickView
             }
         }
 
-        private fun isDragTouch(x: Float, y: Float): Boolean =
-            hypot(x - centerX, y - centerY) > outerRadius
+        private fun isDragTouch(
+            x: Float,
+            y: Float,
+        ): Boolean = hypot(x - centerX, y - centerY) > outerRadius
 
         override fun onTouchEvent(event: MotionEvent): Boolean {
             val pointerIndex = event.actionIndex

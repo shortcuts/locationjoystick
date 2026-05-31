@@ -29,6 +29,6 @@ I've been using GPS Joystick for more than 4 years and YAMLA for a few months, o
 
 You can download it [on the Play Store]() or [on GitHub](https://github.com/shortcuts/locationjoystick/releases), and directly import your settings from GPS Joystick or YAMLA to get started in seconds!
 
-Don't hesitate to browse [the docs](https://github.com/shortcuts/locationjoystick/tree/main/docs) to have a better view of the global feature set, how to navigate in the app etc.
+Don't hesitate to browse [the website](https://shortcuts.github.io/locationjoystick/) to have a better view of the global feature set, how to navigate in the app etc.
 
 Thanks!
