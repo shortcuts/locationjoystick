@@ -1,11 +1,11 @@
 :root {
-  --bg:       #0f0f11;
-  --surface:  #18181c;
-  --border:   #26262e;
-  --text:     #dddde4;
-  --muted:    #77778a;
-  --accent:   #3ddc84;
-  --accent-bg:rgba(61,220,132,0.07);
+  --bg:       #1e1e24;
+  --surface:  #25252e;
+  --border:   #32323e;
+  --text:     #f7ebe8;
+  --muted:    #9a9aaa;
+  --accent:   #f79d5c;
+  --accent-bg:rgba(247,157,92,0.08);
   --mono: ui-monospace,'Cascadia Code','SF Mono',Menlo,'Courier New',monospace;
   --sans: ui-sans-serif,system-ui,-apple-system,'Segoe UI',Helvetica,sans-serif;
   --nav-w: 212px;
