@@ -178,6 +178,9 @@ class JoystickView
             }
         }
 
+        private fun isDragTouch(x: Float, y: Float): Boolean =
+            hypot(x - centerX, y - centerY) > outerRadius
+
         override fun onTouchEvent(event: MotionEvent): Boolean {
             val pointerIndex = event.actionIndex
             val pointerId = event.getPointerId(pointerIndex)
@@ -186,7 +189,7 @@ class JoystickView
                 MotionEvent.ACTION_DOWN -> {
                     val x = event.x
                     val y = event.y
-                    if (dragHandleHitRect.contains(x, y)) {
+                    if (isDragTouch(x, y)) {
                         dragPointerId = pointerId
                         onDragHandleDown?.invoke(event.rawX, event.rawY)
                         return true
@@ -197,7 +200,7 @@ class JoystickView
                 MotionEvent.ACTION_POINTER_DOWN -> {
                     val x = event.getX(pointerIndex)
                     val y = event.getY(pointerIndex)
-                    if (dragPointerId == -1 && dragHandleHitRect.contains(x, y)) {
+                    if (dragPointerId == -1 && isDragTouch(x, y)) {
                         dragPointerId = pointerId
                         onDragHandleDown?.invoke(event.getRawX(pointerIndex), event.getRawY(pointerIndex))
                         return true
@@ -256,9 +259,11 @@ class JoystickView
             val distance = hypot(dx, dy)
 
             val clampedDistance = min(distance, outerRadius)
+            // Clamp visual position so knob stays inside outer circle boundary.
+            val visualDistance = min(distance, outerRadius - knobRadius)
             val angle = atan2(dy, dx)
-            knobOffsetX = clampedDistance * kotlin.math.cos(angle)
-            knobOffsetY = clampedDistance * kotlin.math.sin(angle)
+            knobOffsetX = visualDistance * kotlin.math.cos(angle)
+            knobOffsetY = visualDistance * kotlin.math.sin(angle)
 
             val force =
                 if (clampedDistance <= deadzoneRadius) {
