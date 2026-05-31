@@ -179,6 +179,7 @@ fun NominatimSearchBar(
                 Text(
                     text = result.displayName,
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier =
