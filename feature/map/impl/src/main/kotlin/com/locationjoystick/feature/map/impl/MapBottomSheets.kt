@@ -142,7 +142,8 @@ internal fun FavoritesPickerSheet(
             FavoriteTargetDetail(
                 favorite = target,
                 onSetLocation = { onAction(MapAction.SetLocationTo(target.position)) },
-                onGoToLocation = { onAction(MapAction.WalkViaRoadsTo(target.position)) },
+                onGoToLocation = { onAction(MapAction.WalkStraightTo(target.position)) },
+                onGoToLocationViaRoads = { onAction(MapAction.WalkViaRoadsTo(target.position)) },
                 onDismiss = { onAction(MapAction.CloseFavoritesPicker) },
             )
         }
@@ -233,12 +234,22 @@ internal fun PendingTapSheet(
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(
                     onClick = {
-                        onAction(MapAction.WalkViaRoadsTo(position))
+                        onAction(MapAction.LongPressTapToWalk(position))
                         onAction(MapAction.ClearPendingTap)
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text("Walk here")
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = {
+                        onAction(MapAction.WalkViaRoadsTo(position))
+                        onAction(MapAction.ClearPendingTap)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Walk here via roads")
                 }
                 if (isWalkActive) {
                     Spacer(Modifier.height(8.dp))
@@ -266,6 +277,7 @@ internal fun FavoriteTargetDetail(
     favorite: FavoriteLocation,
     onSetLocation: () -> Unit,
     onGoToLocation: () -> Unit,
+    onGoToLocationViaRoads: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     Column(
@@ -299,6 +311,15 @@ internal fun FavoriteTargetDetail(
                     .padding(top = 8.dp),
         ) {
             Text("Walk to location")
+        }
+        OutlinedButton(
+            onClick = onGoToLocationViaRoads,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+        ) {
+            Text("Walk via roads")
         }
         TextButton(
             onClick = onDismiss,
