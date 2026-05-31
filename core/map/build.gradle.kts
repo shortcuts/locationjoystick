@@ -13,4 +13,6 @@ dependencies {
     api(libs.maplibre.android.sdk)
     implementation(libs.androidx.compose.ui)
     implementation(libs.bundles.lifecycle)
+
+    testImplementation(libs.junit)
 }
