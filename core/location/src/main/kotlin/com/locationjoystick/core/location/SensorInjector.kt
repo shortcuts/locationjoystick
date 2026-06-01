@@ -50,45 +50,13 @@ class SensorInjector @Inject constructor(
         injectSensor(method, Sensor.TYPE_ROTATION_VECTOR, rotValues, timestamp)
     }
 
-    private fun computeGravityVector(mode: ElevationMode, tiltDeg: Float, random: Random): FloatArray {
-        val tiltRad = Math.toRadians(tiltDeg.toDouble()).toFloat()
-        val yBase: Float
-        val zBase: Float
-        when (mode) {
-            ElevationMode.Neutral -> {
-                yBase = 0f
-                zBase = GRAVITY
-            }
-            ElevationMode.TiltUp -> {
-                yBase = -sin(tiltRad) * GRAVITY
-                zBase = cos(tiltRad) * GRAVITY
-            }
-            ElevationMode.TiltDown -> {
-                yBase = sin(tiltRad) * GRAVITY
-                zBase = cos(tiltRad) * GRAVITY
-            }
-        }
-        return floatArrayOf(
-            noise(random),
-            yBase + noise(random),
-            zBase + noise(random),
-        )
-    }
+    private fun computeGravityVector(mode: ElevationMode, tiltDeg: Float, random: Random): FloatArray =
+        elevationGravityVector(mode, tiltDeg, random)
 
-    private fun computeRotationVector(mode: ElevationMode, tiltDeg: Float): FloatArray {
-        val halfTilt = Math.toRadians(tiltDeg / 2.0)
-        return when (mode) {
-            ElevationMode.Neutral -> floatArrayOf(0f, 0f, 0f, 1f)
-            ElevationMode.TiltUp -> floatArrayOf(
-                -sin(halfTilt).toFloat(), 0f, 0f, cos(halfTilt).toFloat()
-            )
-            ElevationMode.TiltDown -> floatArrayOf(
-                sin(halfTilt).toFloat(), 0f, 0f, cos(halfTilt).toFloat()
-            )
-        }
-    }
+    private fun computeRotationVector(mode: ElevationMode, tiltDeg: Float): FloatArray =
+        elevationRotationVector(mode, tiltDeg)
 
-    private fun noise(r: Random) = (r.nextFloat() * 2f - 1f) * NOISE_AMPLITUDE_MS2
+    private fun noise(r: Random) = elevationNoise(r)
 
     private fun injectSensor(method: Method, sensorType: Int, values: FloatArray, timestamp: Long) {
         val sensor = sensorManager.getDefaultSensor(sensorType) ?: return
@@ -99,3 +67,39 @@ class SensorInjector @Inject constructor(
         }
     }
 }
+
+internal fun elevationGravityVector(mode: ElevationMode, tiltDeg: Float, random: Random): FloatArray {
+    val tiltRad = Math.toRadians(tiltDeg.toDouble()).toFloat()
+    val yBase: Float
+    val zBase: Float
+    when (mode) {
+        ElevationMode.Neutral -> {
+            yBase = 0f
+            zBase = GRAVITY
+        }
+        ElevationMode.TiltUp -> {
+            yBase = -sin(tiltRad) * GRAVITY
+            zBase = cos(tiltRad) * GRAVITY
+        }
+        ElevationMode.TiltDown -> {
+            yBase = sin(tiltRad) * GRAVITY
+            zBase = cos(tiltRad) * GRAVITY
+        }
+    }
+    return floatArrayOf(
+        elevationNoise(random),
+        yBase + elevationNoise(random),
+        zBase + elevationNoise(random),
+    )
+}
+
+internal fun elevationRotationVector(mode: ElevationMode, tiltDeg: Float): FloatArray {
+    val halfTilt = Math.toRadians(tiltDeg / 2.0)
+    return when (mode) {
+        ElevationMode.Neutral -> floatArrayOf(0f, 0f, 0f, 1f)
+        ElevationMode.TiltUp -> floatArrayOf(-sin(halfTilt).toFloat(), 0f, 0f, cos(halfTilt).toFloat())
+        ElevationMode.TiltDown -> floatArrayOf(sin(halfTilt).toFloat(), 0f, 0f, cos(halfTilt).toFloat())
+    }
+}
+
+internal fun elevationNoise(r: Random) = (r.nextFloat() * 2f - 1f) * NOISE_AMPLITUDE_MS2
