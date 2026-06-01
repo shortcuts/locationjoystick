@@ -1,20 +1,20 @@
 package com.locationjoystick.core.common.root
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class RootCapabilityChecker @Inject constructor() {
-    suspend fun isRooted(): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "id"))
-            val exitCode = process.waitFor()
-            process.destroy()
-            exitCode == 0
-        } catch (e: Exception) {
-            false
-        }
+    fun isRooted(): Boolean = SU_PATHS.any { File(it).exists() }
+
+    private companion object {
+        val SU_PATHS = listOf(
+            "/system/bin/su",
+            "/system/xbin/su",
+            "/sbin/su",
+            "/data/adb/magisk",
+            "/data/adb/ksu",
+        )
     }
 }

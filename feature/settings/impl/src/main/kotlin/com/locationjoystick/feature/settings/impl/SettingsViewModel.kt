@@ -67,9 +67,7 @@ class SettingsViewModel
                 )
 
         init {
-            viewModelScope.launch {
-                _isRooted.value = rootCapabilityChecker.isRooted()
-            }
+            _isRooted.value = rootCapabilityChecker.isRooted()
         }
 
         internal data class UserFeedback(
