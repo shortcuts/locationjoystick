@@ -225,6 +225,7 @@ internal fun SettingsCheckboxRow(
     title: String,
     description: String? = null,
     enabled: Boolean = true,
+    descriptionColor: androidx.compose.ui.graphics.Color? = null,
 ) {
     Row(
         modifier =
@@ -250,7 +251,7 @@ internal fun SettingsCheckboxRow(
                 Text(
                     description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = descriptionColor ?: MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

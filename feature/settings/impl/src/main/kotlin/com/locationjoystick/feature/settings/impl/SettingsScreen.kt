@@ -630,6 +630,7 @@ private fun WidgetFeatureRow(
     onSetWidgetFeatures: (Set<WidgetFeature>) -> Unit,
     enabled: Boolean = true,
     subtitle: String? = null,
+    subtitleColor: androidx.compose.ui.graphics.Color? = null,
 ) {
     SettingsCheckboxRow(
         checked = feature in enabledFeatures,
@@ -643,6 +644,7 @@ private fun WidgetFeatureRow(
         title = label,
         description = subtitle,
         enabled = enabled,
+        descriptionColor = subtitleColor,
     )
 }
 
@@ -666,7 +668,8 @@ private fun FloatingWidgetSection(
         label = "Elevation controls",
         enabledFeatures = uiState.enabledWidgetFeatures,
         onSetWidgetFeatures = onSetWidgetFeatures,
-        subtitle = "Injects sensor data to simulate phone tilt (requires root)",
+        subtitle = "Injects sensor data to simulate phone tilt · requires root",
+        subtitleColor = MaterialTheme.colorScheme.error,
     )
 }
 

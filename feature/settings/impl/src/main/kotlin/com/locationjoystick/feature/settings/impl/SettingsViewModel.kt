@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.root.RootCapabilityChecker
-import com.locationjoystick.core.common.root.SensorPermissionBootstrap
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -41,7 +40,6 @@ class SettingsViewModel
         private val favoriteRepository: FavoriteRepository,
         private val routeRepository: RouteRepository,
         private val rootCapabilityChecker: RootCapabilityChecker,
-        private val sensorPermissionBootstrap: SensorPermissionBootstrap,
     ) : ViewModel() {
         companion object {
             private const val TAG = "SettingsViewModel"
@@ -349,21 +347,7 @@ class SettingsViewModel
                     if (d.runSpeed != null) settingsRepository.setRunSpeed(d.runSpeed)
                     if (d.bikeSpeed != null) settingsRepository.setBikeSpeed(d.bikeSpeed)
                     if (d.speedUnit != null) settingsRepository.setSpeedUnit(d.speedUnit)
-                    if (d.widgetFeatures != null) {
-                        val featuresToSave =
-                            if (WidgetFeature.ELEVATION_CONTROLS in d.widgetFeatures) {
-                                val granted = sensorPermissionBootstrap.grantIfNeeded()
-                                if (!granted) {
-                                    userFeedback.emit(UserFeedback("Root access required for elevation controls — permission not granted", isError = true))
-                                    d.widgetFeatures - WidgetFeature.ELEVATION_CONTROLS
-                                } else {
-                                    d.widgetFeatures
-                                }
-                            } else {
-                                d.widgetFeatures
-                            }
-                        settingsRepository.setWidgetFeatures(featuresToSave.toList())
-                    }
+                    if (d.widgetFeatures != null) settingsRepository.setWidgetFeatures(d.widgetFeatures.toList())
                     if (d.rememberLastLocation != null) settingsRepository.setRememberLastLocation(d.rememberLastLocation)
                     if (d.mapFollowsLocation != null) settingsRepository.setMapFollowsLocation(d.mapFollowsLocation)
                     if (d.jitterIdleRadius != null) settingsRepository.setJitterIdleRadius(d.jitterIdleRadius)
