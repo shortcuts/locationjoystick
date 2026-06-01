@@ -82,7 +82,7 @@ internal fun MapFabColumn(
             icon = if (isSpoofing) LjIcons.Stop else LjIcons.PlayArrow,
             contentDescription = if (isSpoofing) "Stop location simulation" else "Start location simulation",
             containerColor = if (isSpoofing) MaterialTheme.colorScheme.error else Color(AppConstants.MapColorConstants.ACTIVE_BUTTON_COLOR),
-            contentColor = if (isSpoofing) MaterialTheme.colorScheme.onError else Color.White,
+            contentColor = if (isSpoofing) MaterialTheme.colorScheme.onError else LjBg,
             onClick = { if (isSpoofing) onAction(MapAction.StopSpoofing) else onAction(MapAction.StartSpoofing) },
         )
 
@@ -107,7 +107,7 @@ internal fun MapFabColumn(
                 containerColor =
                     if (uiState.isRouteReplay) LjSuccess else MaterialTheme.colorScheme.primaryContainer,
                 contentColor =
-                    if (uiState.isRouteReplay) Color.White else MaterialTheme.colorScheme.onPrimaryContainer,
+                    if (uiState.isRouteReplay) LjBg else MaterialTheme.colorScheme.onPrimaryContainer,
                 onClick = {
                     if (uiState.isRouteReplay) {
                         onAction(MapAction.ToggleRouteControls)
@@ -188,7 +188,7 @@ internal fun MapFabColumn(
                 contentColor =
                     when {
                         uiState.isRoaming -> LjSuccess
-                        uiState.isRoamingSheetMinimized -> Color.White
+                        uiState.isRoamingSheetMinimized -> MaterialTheme.colorScheme.onTertiary
                         else -> MaterialTheme.colorScheme.onPrimaryContainer
                     },
                 onClick = {

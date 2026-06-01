@@ -441,7 +441,7 @@ internal fun MapFloatingView(
                     icon = LjIcons.Explore,
                     contentDescription = if (isRoaming) "Roaming active" else "Start roaming",
                     containerColor = if (isRoaming) LjSuccess else MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = if (isRoaming) Color.White else MaterialTheme.colorScheme.onTertiaryContainer,
+                    contentColor = if (isRoaming) LjBg else MaterialTheme.colorScheme.onTertiaryContainer,
                     onClick = { if (!isRoaming) showRoamingSheet = true },
                 )
             }
@@ -464,7 +464,7 @@ internal fun MapFloatingView(
                             AppConstants.MapColorConstants.ACTIVE_BUTTON_COLOR,
                         )
                     },
-                contentColor = if (isSpoofing) MaterialTheme.colorScheme.onError else Color.White,
+                contentColor = if (isSpoofing) MaterialTheme.colorScheme.onError else LjBg,
                 onClick = { if (isSpoofing) onStopSpoofing() else onStartSpoofing() },
             )
         }
