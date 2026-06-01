@@ -128,7 +128,7 @@ class FloatingWidgetService :
     // Master panel expand/collapse
     private val isPanelExpandedFlow = MutableStateFlow(false)
 
-    private val _elevationMode = MutableStateFlow<ElevationMode?>(null)
+    private val elevationModeFlow = MutableStateFlow<ElevationMode?>(null)
 
     // Drag position — class-level so onConfigurationChanged can re-clamp them after rotation.
     private var dragOffsetX = 0f
@@ -285,7 +285,7 @@ class FloatingWidgetService :
                     (mockMode == com.locationjoystick.core.model.MockMode.ROAMING && isRoamingPausedWidget)
             val routeExpanded by routeExpandedFlow.collectAsStateWithLifecycle()
             val isPanelExpanded by isPanelExpandedFlow.collectAsStateWithLifecycle()
-            val elevationMode by _elevationMode.collectAsStateWithLifecycle()
+            val elevationMode by elevationModeFlow.collectAsStateWithLifecycle()
 
             LjTheme {
                 WidgetPanel(
@@ -482,7 +482,7 @@ class FloatingWidgetService :
     }
 
     private fun onElevationModeSelected(mode: ElevationMode) {
-        _elevationMode.value = mode
+        elevationModeFlow.value = mode
         mockLocationService?.setElevationMode(mode)
     }
 
