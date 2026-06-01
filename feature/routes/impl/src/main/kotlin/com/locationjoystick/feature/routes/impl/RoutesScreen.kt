@@ -262,12 +262,12 @@ private fun RouteCard(
                 .padding(bottom = 12.dp)
                 .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
     ) {
-        // Row 1: name + distance + 3-dot menu
+        // Single row: name + distance + play/controls + 3-dot menu
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 4.dp),
+                    .padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -277,6 +277,31 @@ private fun RouteCard(
                     "${route.waypoints.size} waypoints",
                     style = MaterialTheme.typography.bodySmall,
                 )
+            }
+            when {
+                isPlaying -> {
+                    IconButton(onClick = onPauseReplay) {
+                        Icon(LjIcons.Pause, contentDescription = "Pause")
+                    }
+                    IconButton(onClick = onStopReplay) {
+                        Icon(LjIcons.Stop, contentDescription = "Stop")
+                    }
+                }
+
+                isPaused -> {
+                    IconButton(onClick = onResumeReplay) {
+                        Icon(LjIcons.PlayArrow, contentDescription = "Resume")
+                    }
+                    IconButton(onClick = onStopReplay) {
+                        Icon(LjIcons.Stop, contentDescription = "Stop")
+                    }
+                }
+
+                else -> {
+                    IconButton(onClick = { showStartDialog = true }) {
+                        Icon(LjIcons.PlayArrow, contentDescription = "Start route")
+                    }
+                }
             }
             Box {
                 IconButton(onClick = { menuExpanded = true }) {
@@ -310,44 +335,6 @@ private fun RouteCard(
                         },
                         leadingIcon = { Icon(LjIcons.Delete, contentDescription = null) },
                     )
-                }
-            }
-        }
-
-        // Row 2: playback controls
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            when {
-                isPlaying -> {
-                    IconButton(onClick = onPauseReplay) {
-                        Icon(LjIcons.Pause, contentDescription = "Pause")
-                    }
-                    IconButton(onClick = onStopReplay) {
-                        Icon(LjIcons.Stop, contentDescription = "Stop")
-                    }
-                }
-
-                isPaused -> {
-                    IconButton(onClick = onResumeReplay) {
-                        Icon(LjIcons.PlayArrow, contentDescription = "Resume")
-                    }
-                    IconButton(onClick = onStopReplay) {
-                        Icon(LjIcons.Stop, contentDescription = "Stop")
-                    }
-                }
-
-                else -> {
-                    IconButton(
-                        onClick = { showStartDialog = true },
-                        enabled = !isActive,
-                    ) {
-                        Icon(LjIcons.PlayArrow, contentDescription = "Start route")
-                    }
                 }
             }
         }
