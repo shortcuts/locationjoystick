@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -246,6 +247,7 @@ fun SettingsRoute(
         onSetJitterSpeedMovingVariationPct = viewModel::setJitterSpeedMovingVariationPct,
         onSetElevationTiltJitterDegrees = viewModel::setElevationTiltJitterDegrees,
         onSetElevationNoiseAmplitudeMs2 = viewModel::setElevationNoiseAmplitudeMs2,
+        onElevationControlsEnabled = viewModel::requestElevationAccess,
         convertMsToDisplay = viewModel::convertMsToDisplay,
         onUpdateRoamingDefaults = viewModel::updateRoamingDefaults,
         onExport = { exportLauncher.launch("${AppConstants.ExportConstants.FILENAME_PREFIX}-${System.currentTimeMillis()}.json") },
@@ -323,6 +325,7 @@ internal fun SettingsScreen(
     onSetJitterSpeedMovingVariationPct: (Int) -> Unit,
     onSetElevationTiltJitterDegrees: (Float) -> Unit,
     onSetElevationNoiseAmplitudeMs2: (Float) -> Unit,
+    onElevationControlsEnabled: () -> Unit = {},
     convertMsToDisplay: (Double, SpeedUnit) -> Double,
     onUpdateRoamingDefaults: (RoamingDefaults) -> Unit = {},
     onExport: () -> Unit,
@@ -445,6 +448,13 @@ internal fun SettingsScreen(
                             onSetJitterSpeedMovingVariationPct,
                         )
                         Spacer(modifier = Modifier.height(24.dp))
+                        ElevationJitterSection(
+                            uiState,
+                            elevationControlsEnabled = WidgetFeature.ELEVATION_CONTROLS in uiState.enabledWidgetFeatures,
+                            onSetElevationTiltJitterDegrees,
+                            onSetElevationNoiseAmplitudeMs2,
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
                         GpsRealismSection(
                             uiState,
                             onSetRealismBearingHoldIdle,
@@ -454,15 +464,9 @@ internal fun SettingsScreen(
                             onSetRealismSuspendedMockingEnabled,
                         )
                         Spacer(modifier = Modifier.height(24.dp))
-                        ElevationJitterSection(
-                            uiState,
-                            onSetElevationTiltJitterDegrees,
-                            onSetElevationNoiseAmplitudeMs2,
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
                         MapSection(uiState, onSetRememberLastLocation, onSetMapFollowsLocation)
                         Spacer(modifier = Modifier.height(24.dp))
-                        FloatingWidgetSection(uiState, onSetWidgetFeatures, isRooted)
+                        FloatingWidgetSection(uiState, onSetWidgetFeatures, isRooted, onElevationControlsEnabled)
                         Spacer(modifier = Modifier.height(24.dp))
                         RoamingSection(roamingDefaults, isMph, onUpdateRoamingDefaults)
                     }
@@ -558,6 +562,12 @@ private fun SpeedProfilesSection(
     convertMsToDisplay: (Double, SpeedUnit) -> Double,
 ) {
     Text("Speed Profiles", style = MaterialTheme.typography.headlineSmall)
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        "Movement speed used by the joystick, route replay, and roaming. Select a unit, then set each preset.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
     Spacer(modifier = Modifier.height(8.dp))
 
     Row(
@@ -642,13 +652,20 @@ private fun WidgetFeatureRow(
     enabled: Boolean = true,
     subtitle: String? = null,
     subtitleColor: androidx.compose.ui.graphics.Color? = null,
+    icon: ImageVector? = null,
+    onEnabled: (() -> Unit)? = null,
 ) {
     SettingsCheckboxRow(
         checked = feature in enabledFeatures,
         onCheckedChange = { isChecked ->
             if (enabled) {
                 val updated = enabledFeatures.toMutableSet()
-                if (isChecked) updated.add(feature) else updated.remove(feature)
+                if (isChecked) {
+                    updated.add(feature)
+                    onEnabled?.invoke()
+                } else {
+                    updated.remove(feature)
+                }
                 onSetWidgetFeatures(updated)
             }
         },
@@ -656,6 +673,7 @@ private fun WidgetFeatureRow(
         description = subtitle,
         enabled = enabled,
         descriptionColor = subtitleColor,
+        icon = icon,
     )
 }
 
@@ -664,23 +682,74 @@ private fun FloatingWidgetSection(
     uiState: SettingsUiState,
     onSetWidgetFeatures: (Set<WidgetFeature>) -> Unit,
     isRooted: Boolean = false,
+    onElevationControlsEnabled: () -> Unit = {},
 ) {
     Text("Floating Widget", style = MaterialTheme.typography.headlineSmall)
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        "Choose which quick-access buttons appear in the floating widget overlay.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
     Spacer(modifier = Modifier.height(8.dp))
 
-    WidgetFeatureRow(WidgetFeature.MAP_FLOATING, "Map shortcut", uiState.enabledWidgetFeatures, onSetWidgetFeatures)
-    WidgetFeatureRow(WidgetFeature.JOYSTICK_TOGGLE, "Show/hide joystick", uiState.enabledWidgetFeatures, onSetWidgetFeatures)
-    WidgetFeatureRow(WidgetFeature.JOYSTICK_LOCK, "Lock joystick position", uiState.enabledWidgetFeatures, onSetWidgetFeatures)
-    WidgetFeatureRow(WidgetFeature.ROUTES_FLOATING, "Routes picker", uiState.enabledWidgetFeatures, onSetWidgetFeatures)
-    WidgetFeatureRow(WidgetFeature.FAVORITES_FLOATING, "Favorites picker", uiState.enabledWidgetFeatures, onSetWidgetFeatures)
-    WidgetFeatureRow(WidgetFeature.SPEED_CYCLE, "Speed cycle", uiState.enabledWidgetFeatures, onSetWidgetFeatures)
+    WidgetFeatureRow(
+        feature = WidgetFeature.MAP_FLOATING,
+        label = "Map shortcut",
+        enabledFeatures = uiState.enabledWidgetFeatures,
+        onSetWidgetFeatures = onSetWidgetFeatures,
+        icon = LjIcons.LocationOn,
+        subtitle = "Opens a compact map view without switching to the main app.",
+    )
+    WidgetFeatureRow(
+        feature = WidgetFeature.JOYSTICK_TOGGLE,
+        label = "Show/hide joystick",
+        enabledFeatures = uiState.enabledWidgetFeatures,
+        onSetWidgetFeatures = onSetWidgetFeatures,
+        icon = LjIcons.Visibility,
+        subtitle = "Toggles the floating joystick overlay on or off.",
+    )
+    WidgetFeatureRow(
+        feature = WidgetFeature.JOYSTICK_LOCK,
+        label = "Lock joystick",
+        enabledFeatures = uiState.enabledWidgetFeatures,
+        onSetWidgetFeatures = onSetWidgetFeatures,
+        icon = LjIcons.Lock,
+        subtitle = "Keeps the joystick moving in the last held direction after you release.",
+    )
+    WidgetFeatureRow(
+        feature = WidgetFeature.ROUTES_FLOATING,
+        label = "Routes picker",
+        enabledFeatures = uiState.enabledWidgetFeatures,
+        onSetWidgetFeatures = onSetWidgetFeatures,
+        icon = LjIcons.Route,
+        subtitle = "Lists saved routes and starts replay without opening the app.",
+    )
+    WidgetFeatureRow(
+        feature = WidgetFeature.FAVORITES_FLOATING,
+        label = "Favorites picker",
+        enabledFeatures = uiState.enabledWidgetFeatures,
+        onSetWidgetFeatures = onSetWidgetFeatures,
+        icon = LjIcons.Favorite,
+        subtitle = "Lists favorite locations with one-tap teleport and walk shortcuts.",
+    )
+    WidgetFeatureRow(
+        feature = WidgetFeature.SPEED_CYCLE,
+        label = "Speed cycle",
+        enabledFeatures = uiState.enabledWidgetFeatures,
+        onSetWidgetFeatures = onSetWidgetFeatures,
+        icon = LjIcons.Speed,
+        subtitle = "Cycles through Walk, Run, and Bike speed profiles with a single tap.",
+    )
     WidgetFeatureRow(
         feature = WidgetFeature.ELEVATION_CONTROLS,
         label = "Elevation controls",
         enabledFeatures = uiState.enabledWidgetFeatures,
         onSetWidgetFeatures = onSetWidgetFeatures,
-        subtitle = "Injects sensor data to simulate phone tilt · requires root",
+        icon = LjIcons.Layers,
+        subtitle = "Shows a floating overlay to tilt the simulated sensor angle · requires root",
         subtitleColor = MaterialTheme.colorScheme.error,
+        onEnabled = onElevationControlsEnabled,
     )
 }
 
@@ -764,11 +833,13 @@ private fun RoamingSection(
         checked = roamingDefaults.followRoads,
         onCheckedChange = { onUpdateRoamingDefaults(roamingDefaults.copy(followRoads = it)) },
         title = "Follow roads",
+        description = "Uses OSRM road routing to stay on walkable paths. Falls back to straight-line if unavailable.",
     )
     SettingsCheckboxRow(
         checked = roamingDefaults.returnToInitialLocation,
         onCheckedChange = { onUpdateRoamingDefaults(roamingDefaults.copy(returnToInitialLocation = it)) },
         title = "Return to start",
+        description = "Walks back to the starting position after the roaming session completes.",
     )
 }
 

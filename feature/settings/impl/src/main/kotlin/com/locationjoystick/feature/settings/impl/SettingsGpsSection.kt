@@ -7,8 +7,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -20,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
@@ -35,6 +39,7 @@ private fun JitterInput(
     onValueChange: (Double) -> Unit,
     label: String,
     modifier: Modifier = Modifier.fillMaxWidth(),
+    enabled: Boolean = true,
 ) {
     var localValue by remember { mutableStateOf(formatJitterDouble(value)) }
     var lastSentValue by remember { mutableStateOf(value) }
@@ -58,6 +63,7 @@ private fun JitterInput(
         label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = modifier,
+        enabled = enabled,
     )
 }
 
@@ -67,6 +73,7 @@ private fun JitterInput(
     onValueChange: (Int) -> Unit,
     label: String,
     modifier: Modifier = Modifier.fillMaxWidth(),
+    enabled: Boolean = true,
 ) {
     var localValue by remember { mutableStateOf(value.toString()) }
     var lastSentValue by remember { mutableStateOf(value) }
@@ -90,6 +97,7 @@ private fun JitterInput(
         label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = modifier,
+        enabled = enabled,
     )
 }
 
@@ -161,13 +169,18 @@ internal fun GpsJitterSection(
 @Composable
 internal fun ElevationJitterSection(
     uiState: SettingsUiState,
+    elevationControlsEnabled: Boolean,
     onSetTiltJitterDegrees: (Float) -> Unit,
     onSetNoiseAmplitudeMs2: (Float) -> Unit,
 ) {
     Text("Elevation Jitter", style = MaterialTheme.typography.headlineSmall)
     Spacer(modifier = Modifier.height(4.dp))
     Text(
-        "Noise applied to sensor injection each tick. Set 0 to disable.",
+        if (elevationControlsEnabled) {
+            "Noise applied to sensor injection each tick. Set 0 to disable."
+        } else {
+            "Enable Elevation controls in the Floating Widget section to configure these inputs."
+        },
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -178,12 +191,14 @@ internal fun ElevationJitterSection(
             onValueChange = { onSetTiltJitterDegrees(it.toFloat()) },
             label = "Tilt jitter (°)",
             modifier = Modifier.weight(1f),
+            enabled = elevationControlsEnabled,
         )
         JitterInput(
             value = uiState.elevationNoiseAmplitudeMs2.toDouble(),
             onValueChange = { onSetNoiseAmplitudeMs2(it.toFloat()) },
             label = "Accel noise (m/s²)",
             modifier = Modifier.weight(1f),
+            enabled = elevationControlsEnabled,
         )
     }
 }
@@ -256,6 +271,7 @@ internal fun SettingsCheckboxRow(
     description: String? = null,
     enabled: Boolean = true,
     descriptionColor: androidx.compose.ui.graphics.Color? = null,
+    icon: ImageVector? = null,
 ) {
     Row(
         modifier =
@@ -265,6 +281,20 @@ internal fun SettingsCheckboxRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint =
+                    if (enabled) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    },
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+        }
         Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(
                 title,
