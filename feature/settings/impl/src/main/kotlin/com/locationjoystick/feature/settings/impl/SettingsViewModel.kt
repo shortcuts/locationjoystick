@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.root.RootCapabilityChecker
+import com.locationjoystick.core.common.root.SensorPermissionBootstrap
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -40,6 +41,7 @@ class SettingsViewModel
         private val favoriteRepository: FavoriteRepository,
         private val routeRepository: RouteRepository,
         private val rootCapabilityChecker: RootCapabilityChecker,
+        private val sensorPermissionBootstrap: SensorPermissionBootstrap,
     ) : ViewModel() {
         companion object {
             private const val TAG = "SettingsViewModel"
@@ -429,6 +431,12 @@ class SettingsViewModel
 
         fun discardChanges() {
             mutableDraft.value = DraftState()
+        }
+
+        fun requestElevationAccess() {
+            viewModelScope.launch {
+                sensorPermissionBootstrap.grantIfNeeded()
+            }
         }
 
         fun convertMsToDisplay(
