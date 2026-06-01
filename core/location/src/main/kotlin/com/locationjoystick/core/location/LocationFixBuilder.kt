@@ -210,7 +210,7 @@ internal fun perturbAccuracy(
 /**
  * Pure, side-effect-free GPS fix builder. No Android imports; [random] is injectable for testing.
  *
- * Execution order: suspended-phase check → altitude Gaussian walk → bearing hold → speed perturbation
+ * Execution order: suspended-phase check → altitude Gaussian walk → bearing hold + noise → speed perturbation
  * → position jitter → warm-up accuracy envelope → accuracy perturbation → satellite extras.
  *
  * @param state Immutable snapshot of all service state for this tick.
@@ -244,12 +244,19 @@ internal fun buildLocation(
             AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
         }
 
-    // Bearing hold
-    val outBearing =
+    // Bearing hold + noise
+    val rawBearing =
         when {
             state.speedMs == 0f && state.bearingHoldEnabled -> state.lastNonZeroBearing
             state.speedMs == 0f -> 0f
             else -> state.bearing
+        }
+    val outBearing =
+        if (state.speedMs > 0f) {
+            val noise = (random.nextFloat() - 0.5f) * 2f * AppConstants.RealismConstants.BEARING_NOISE_DEGREES
+            ((rawBearing + noise) % 360f + 360f) % 360f
+        } else {
+            rawBearing
         }
 
     // Speed perturbation

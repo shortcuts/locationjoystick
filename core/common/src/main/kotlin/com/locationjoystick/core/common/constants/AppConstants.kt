@@ -40,7 +40,7 @@ object AppConstants {
         const val ACCURACY_MAX = 5.0f
         const val ACCURACY_PERTURBATION_RANGE = 3.0
         const val SPEED_IDLE_VARIATION_PCT_DEFAULT = 5
-        const val SPEED_MOVING_VARIATION_PCT_DEFAULT = 8
+        const val SPEED_MOVING_VARIATION_PCT_DEFAULT = 5
         const val SPEED_VARIATION_PCT_MIN = 0
         const val SPEED_VARIATION_PCT_MAX = 50
     }
@@ -52,6 +52,7 @@ object AppConstants {
         const val ALTITUDE_CLAMP_RADIUS_METERS = 25.0
         const val VERTICAL_ACCURACY_METERS = 4.0f
         const val BEARING_ACCURACY_DEGREES = 3.0f
+        const val BEARING_NOISE_DEGREES = 5.0f
         const val SPEED_ACCURACY_MPS = 0.3f
         const val SATELLITES_MIN = 7
         const val SATELLITES_MAX = 14

@@ -116,11 +116,11 @@ class BuildLocationTest {
     }
 
     @Test
-    fun `bearing passthrough when moving`() {
+    fun `bearing is near travel direction when moving`() {
         val snap = baseSnapshot(speedMs = 1.5f, bearing = 270f, lastNonZeroBearing = 137f)
         val fix = buildLocation(snap, 1000L, Random(1))
         assertNotNull(fix)
-        assertEquals(270f, fix!!.bearing, 0.01f)
+        assertEquals(270f, fix!!.bearing, 5.0f)
     }
 
     @Test
