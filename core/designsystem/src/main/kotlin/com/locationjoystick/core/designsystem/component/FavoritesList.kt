@@ -101,22 +101,30 @@ fun FavoritesList(
                         val label = cooldownLabel?.invoke(favorite)
                         if (label != null) {
                             Spacer(Modifier.height(6.dp))
-                            Surface(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                shape = MaterialTheme.shapes.small,
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text(
-                                    text = "Suggested wait: $label",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                )
-                            }
+                            CooldownAdvisoryBadge(label)
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun CooldownAdvisoryBadge(
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        shape = MaterialTheme.shapes.small,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = "Suggested wait: $label",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+        )
     }
 }
 

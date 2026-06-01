@@ -233,7 +233,6 @@ private fun RouteCard(
     val isActiveRoute = playbackState.activeRouteId == route.id
     val isPlaying = isActiveRoute && playbackState.isPlaying
     val isPaused = isActiveRoute && playbackState.isPaused
-    val isActive = isPlaying || isPaused
     var menuExpanded by remember { mutableStateOf(false) }
     var showStartDialog by remember { mutableStateOf(false) }
 

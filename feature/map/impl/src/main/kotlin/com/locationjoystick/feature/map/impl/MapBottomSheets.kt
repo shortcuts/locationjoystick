@@ -37,9 +37,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.model.FavoriteLocation
 
@@ -114,22 +114,6 @@ internal fun RoutesPickerSheet(
     }
 }
 
-private fun formatCooldownLabel(state: CooldownState.Cooling): String {
-    val remaining = state.remainingSeconds
-    val hours = remaining / AppConstants.TimeConstants.SECONDS_PER_HOUR
-    val minutes = (remaining % AppConstants.TimeConstants.SECONDS_PER_HOUR) / AppConstants.TimeConstants.SECONDS_PER_MINUTE
-    val seconds = remaining % AppConstants.TimeConstants.SECONDS_PER_MINUTE
-    val timeLabel =
-        when {
-            hours > 0 -> "%dh %dm".format(hours, minutes)
-            minutes > 0 -> "%dm %ds".format(minutes, seconds)
-            else -> "%ds".format(seconds)
-        }
-    val distKm = state.distanceMeters / 1000.0
-    val distLabel = if (distKm >= 1.0) "%.1f km".format(distKm) else "%.0f m".format(state.distanceMeters)
-    return "$timeLabel · $distLabel teleport"
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun FavoritesPickerSheet(
@@ -154,8 +138,7 @@ internal fun FavoritesPickerSheet(
                         null
                     },
                 cooldownLabel = { fav ->
-                    val state = uiState.favoriteCooldownStates[fav.id]
-                    if (state is CooldownState.Cooling) formatCooldownLabel(state) else null
+                    (uiState.favoriteCooldownStates[fav.id] as? CooldownState.Cooling)?.toAdvisoryLabel()
                 },
             )
         } else {
@@ -221,17 +204,7 @@ internal fun PendingTapSheet(
                 Text("Move to this location?", style = MaterialTheme.typography.titleMedium)
                 if (cooldownState is CooldownState.Cooling) {
                     Spacer(Modifier.height(12.dp))
-                    androidx.compose.material3.Surface(
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = "Suggested wait: ${formatCooldownLabel(cooldownState)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        )
-                    }
+                    CooldownAdvisoryBadge(cooldownState.toAdvisoryLabel())
                 }
                 Spacer(Modifier.height(16.dp))
                 Button(

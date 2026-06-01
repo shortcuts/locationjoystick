@@ -6,7 +6,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
-import com.locationjoystick.core.data.CooldownEngine
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
@@ -27,7 +26,6 @@ import com.locationjoystick.core.model.toConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,7 +34,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -217,26 +214,12 @@ class MapViewModel
         }
 
         private fun observeFavoriteCooldowns() {
-            val ticker =
-                flow {
-                    while (true) {
-                        emit(Unit)
-                        delay(30_000L)
-                    }
-                }
             viewModelScope.launch {
-                combine(
-                    settingsRepository.getLastTeleportTime(),
-                    settingsRepository.getLastLocation(),
-                    favoriteRepository.getFavorites(),
-                    ticker,
-                ) { teleportTime, lastLoc, favorites, _ ->
-                    favorites.associate { fav ->
-                        fav.id to CooldownEngine.computeState(teleportTime, lastLoc, fav.position)
+                teleportUseCase
+                    .cooldownsFor(favoriteRepository.getFavorites())
+                    .collect { states ->
+                        _uiState.update { it.copy(favoriteCooldownStates = states) }
                     }
-                }.collect { states ->
-                    _uiState.update { it.copy(favoriteCooldownStates = states) }
-                }
             }
         }
 

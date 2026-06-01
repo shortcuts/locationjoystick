@@ -29,7 +29,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,9 +42,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjScaffold
 
@@ -274,30 +273,8 @@ private fun FavoriteCard(
                 style = MaterialTheme.typography.bodySmall,
             )
             if (cooldownState is CooldownState.Cooling) {
-                val remaining = cooldownState.remainingSeconds
-                val hours = remaining / AppConstants.TimeConstants.SECONDS_PER_HOUR
-                val minutes = (remaining % AppConstants.TimeConstants.SECONDS_PER_HOUR) / AppConstants.TimeConstants.SECONDS_PER_MINUTE
-                val seconds = remaining % AppConstants.TimeConstants.SECONDS_PER_MINUTE
-                val timeLabel =
-                    when {
-                        hours > 0 -> "%dh %dm".format(hours, minutes)
-                        minutes > 0 -> "%dm %ds".format(minutes, seconds)
-                        else -> "%ds".format(seconds)
-                    }
-                val distKm = cooldownState.distanceMeters / 1000.0
-                val distLabel = if (distKm >= 1.0) "%.1f km".format(distKm) else "%.0f m".format(cooldownState.distanceMeters)
                 Spacer(Modifier.height(6.dp))
-                Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = "Suggested wait: $timeLabel · $distLabel teleport",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    )
-                }
+                CooldownAdvisoryBadge(cooldownState.toAdvisoryLabel())
             }
         }
         Box {

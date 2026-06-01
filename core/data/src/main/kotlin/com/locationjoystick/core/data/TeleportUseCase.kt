@@ -4,10 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -66,4 +69,30 @@ class TeleportUseCase
             ) { lastTeleportMs, lastLocation ->
                 CooldownEngine.computeState(lastTeleportMs, lastLocation, target)
             }
+
+        /**
+         * Returns a [Flow] of cooldown states keyed by favorite ID.
+         *
+         * Re-evaluates every 30 seconds so remaining-time displays stay current without requiring
+         * external DataStore writes. The ticker is an implementation detail of this use case.
+         */
+        fun cooldownsFor(favoritesFlow: Flow<List<FavoriteLocation>>): Flow<Map<String, CooldownState>> {
+            val ticker =
+                flow {
+                    while (true) {
+                        emit(Unit)
+                        delay(30_000L)
+                    }
+                }
+            return combine(
+                settingsRepository.getLastTeleportTime(),
+                settingsRepository.getLastLocation(),
+                favoritesFlow,
+                ticker,
+            ) { teleportTime, lastLoc, favorites, _ ->
+                favorites.associate { fav ->
+                    fav.id to CooldownEngine.computeState(teleportTime, lastLoc, fav.position)
+                }
+            }
+        }
     }
