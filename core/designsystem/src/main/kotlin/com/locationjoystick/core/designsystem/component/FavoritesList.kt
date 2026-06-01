@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,6 +35,8 @@ import com.locationjoystick.core.model.LatLng
  * @param favorites List of [FavoriteLocation] items to display.
  * @param onSelect Called with the selected [FavoriteLocation].
  * @param onSaveCurrentLocation Optional: when non-null, an Add icon button is shown in the header.
+ * @param cooldownLabel Optional: returns a pre-formatted cooldown label for each favorite (e.g.
+ *   "5m 30s · 2.3 km teleport"). When non-null for an item, a cooldown hint Surface is shown.
  */
 @Composable
 fun FavoritesList(
@@ -40,6 +45,7 @@ fun FavoritesList(
     onSelect: (FavoriteLocation) -> Unit,
     modifier: Modifier = Modifier,
     onSaveCurrentLocation: (() -> Unit)? = null,
+    cooldownLabel: ((FavoriteLocation) -> String?)? = null,
 ) {
     Column(
         modifier =
@@ -76,7 +82,7 @@ fun FavoritesList(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(items = favorites, key = { it.id }) { favorite ->
-                    Row(
+                    Column(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
@@ -85,15 +91,27 @@ fun FavoritesList(
                                     RoundedCornerShape(8.dp),
                                 ).clickable { onSelect(favorite) }
                                 .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(favorite.name, style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                "${String.format("%.4f", favorite.position.latitude)}, " +
-                                    "${String.format("%.4f", favorite.position.longitude)}",
-                                style = MaterialTheme.typography.bodySmall,
-                            )
+                        Text(favorite.name, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "${String.format("%.4f", favorite.position.latitude)}, " +
+                                "${String.format("%.4f", favorite.position.longitude)}",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        val label = cooldownLabel?.invoke(favorite)
+                        if (label != null) {
+                            Spacer(Modifier.height(6.dp))
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                shape = MaterialTheme.shapes.small,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(
+                                    text = "Suggested wait: $label",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                )
+                            }
                         }
                     }
                 }
