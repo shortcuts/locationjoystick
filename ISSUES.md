@@ -14,4 +14,10 @@ No outstanding bugs.
 
 ## Frontend UI/UX
 
-No outstanding UI/UX issues.
+No outstanding UI/UX items.
+
+---
+
+## Wiki
+
+No outstanding wiki items.
