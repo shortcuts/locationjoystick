@@ -4,20 +4,45 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy — locationjoystick</title>
+  <link rel="icon" href="icon.png" type="image/png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <nav>
-    <a href="index.html">Overview</a>
-    <a href="home.html">Home</a>
-    <a href="map.html">Map</a>
-    <a href="routes.html">Routes</a>
-    <a href="favorites.html">Favorites</a>
-    <a href="settings.html">Settings</a>
-    <a href="overlays.html">Overlays</a>
-    <a href="onboarding.html">Onboarding</a>
-    <a href="privacy.html" class="active">Privacy</a>
-  </nav>
+<div class="layout">
+
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <img src="icon.png" alt="" width="32" height="32">
+      <span class="brand-name">locationjoystick</span>
+    </a>
+    <button class="nav-toggle-btn" aria-label="Toggle navigation" onclick="this.closest('.sidebar').querySelector('nav').classList.toggle('open')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a href="home.html">Home</a>
+      <a href="map.html">Map</a>
+      <a href="routes.html">Routes</a>
+      <a href="favorites.html">Favorites</a>
+      <a href="settings.html">Settings</a>
+      <a href="overlays.html">Overlays</a>
+      <a href="onboarding.html">Onboarding</a>
+      <a href="privacy.html" class="active">Privacy</a>
+      <span class="nav-sep"></span>
+      <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+      <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/issues/new?labels=bug" target="_blank" rel="noopener">Report a bug</a>
+      <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/issues/new?labels=enhancement" target="_blank" rel="noopener">Request a feature</a>
+    </nav>
+    <div class="sidebar-foot">
+      <a class="gh-star" href="https://github.com/shortcuts/locationjoystick" target="_blank" rel="noopener">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.872 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+        Star
+        <span class="gh-star-sep"></span>
+        <span class="gh-star-count">—</span>
+      </a><span class="sidebar-foot-lic">· MIT License</span>
+    </div>
+  </aside>
+
   <main>
     <h1>Privacy Policy</h1>
     <p><em>Last updated: 2026-05-31</em></p>
@@ -45,5 +70,16 @@
     <h2>Contact</h2>
     <p>Questions or requests: open an issue at <a href="https://github.com/shortcuts/locationjoystick/issues" target="_blank" rel="noopener">github.com/shortcuts/locationjoystick/issues</a>.</p>
   </main>
+
+</div>
+<script>
+fetch('https://api.github.com/repos/shortcuts/locationjoystick')
+  .then(function(r){return r.json()})
+  .then(function(d){
+    var n=d.stargazers_count,t=n>=1000?(n/1000).toFixed(1)+'k':String(n);
+    document.querySelectorAll('.gh-star-count').forEach(function(el){el.textContent=t});
+  })
+  .catch(function(){});
+</script>
 </body>
 </html>
