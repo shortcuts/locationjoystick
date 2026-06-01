@@ -21,6 +21,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -37,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -50,6 +55,7 @@ import com.locationjoystick.core.designsystem.LjInactive
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.UiConstants
+import com.locationjoystick.core.model.ElevationMode
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.WidgetFeature
 
@@ -64,8 +70,10 @@ internal fun WidgetPanel(
     isActivityPausable: Boolean,
     routeExpanded: Boolean,
     isPanelExpanded: Boolean,
+    elevationMode: ElevationMode?,
     onToggleMaster: () -> Unit,
     onFeatureClicked: (WidgetFeature) -> Unit,
+    onElevationModeSelected: (ElevationMode) -> Unit,
     onRouteClicked: () -> Unit,
     onRoutePauseResume: () -> Unit,
     onRouteStop: () -> Unit,
@@ -168,6 +176,32 @@ internal fun WidgetPanel(
                                     imageVector = LjIcons.Stop,
                                     contentDescription = "Stop",
                                     tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
+                                )
+                            }
+                        }
+                    }
+                } else if (feature == WidgetFeature.ELEVATION_CONTROLS) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        listOf(
+                            Triple(ElevationMode.TiltUp, Icons.Rounded.KeyboardArrowUp, "Tilt up"),
+                            Triple(ElevationMode.Neutral, Icons.Rounded.RadioButtonUnchecked, "Neutral"),
+                            Triple(ElevationMode.TiltDown, Icons.Rounded.KeyboardArrowDown, "Tilt down"),
+                        ).forEach { (mode, icon, desc) ->
+                            val active = elevationMode == mode
+                            val tint = if (active) MaterialTheme.colorScheme.primary else LjInactive
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .padding(4.dp)
+                                    .size(UiConstants.FAB_CONTAINER_SIZE)
+                                    .background(Color.Black, CircleShape)
+                                    .clickable { onElevationModeSelected(mode) },
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = desc,
+                                    tint = tint,
                                     modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
                                 )
                             }
@@ -570,6 +604,10 @@ private fun featureIconAndState(
         WidgetFeature.MAP_FLOATING -> {
             Pair(LjIcons.LocationOn, true)
         }
+
+        WidgetFeature.ELEVATION_CONTROLS -> {
+            Pair(Icons.Rounded.KeyboardArrowUp, false)
+        }
     }
 
 private fun WidgetFeature.toContentDescription(): String =
@@ -580,4 +618,5 @@ private fun WidgetFeature.toContentDescription(): String =
         WidgetFeature.FAVORITES_FLOATING -> "Favorites picker"
         WidgetFeature.SPEED_CYCLE -> "Speed cycle"
         WidgetFeature.MAP_FLOATING -> "Open map"
+        WidgetFeature.ELEVATION_CONTROLS -> "Elevation controls"
     }

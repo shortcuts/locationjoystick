@@ -25,6 +25,7 @@ import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.BuildConfig
+import com.locationjoystick.core.model.ElevationMode
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -85,6 +86,10 @@ class MockLocationService : Service() {
         fun getService(): MockLocationService = this@MockLocationService
     }
 
+    fun setElevationMode(mode: ElevationMode?) {
+        currentElevationMode = mode
+    }
+
     private val binder = LocalBinder()
 
     @Inject lateinit var locationManager: LocationManager
@@ -98,6 +103,8 @@ class MockLocationService : Service() {
     @Inject lateinit var settingsRepository: SettingsRepository
 
     @Inject lateinit var routeReplayEngine: RouteReplayEngine
+
+    @Inject lateinit var sensorInjector: SensorInjector
     private val exceptionHandler =
         CoroutineExceptionHandler { _, throwable ->
             Log.e(TAG, "MockLocationService coroutine crashed", throwable)
@@ -158,6 +165,12 @@ class MockLocationService : Service() {
     @Volatile private var speedMovingVariationPct: Int = AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT
 
     @Volatile private var activeProfileSpeedMs: Double = AppConstants.ProfileConstants.WALK_SPEED_MPS
+
+    @Volatile private var elevationControlsEnabled = false
+
+    @Volatile private var elevationTiltDegrees = AppConstants.ElevationConstants.DEFAULT_TILT_DEGREES
+
+    @Volatile private var currentElevationMode: ElevationMode? = null
 
     @Volatile private var rememberLastLocation: Boolean = false
 
@@ -286,6 +299,17 @@ class MockLocationService : Service() {
         observeSetting("speedIdleVariationPct", settingsRepository.getJitterSpeedIdleVariationPct()) { speedIdleVariationPct = it }
         observeSetting("speedMovingVariationPct", settingsRepository.getJitterSpeedMovingVariationPct()) { speedMovingVariationPct = it }
         observeSetting("activeProfileSpeed", settingsRepository.getActiveSpeedProfile()) { activeProfileSpeedMs = it.speedMetersPerSecond }
+        serviceScope.launch {
+            settingsRepository.getElevationControlsEnabled().collect { enabled ->
+                elevationControlsEnabled = enabled
+                if (!enabled) currentElevationMode = null
+            }
+        }
+        serviceScope.launch {
+            settingsRepository.getElevationTiltDegrees().collect { degrees ->
+                elevationTiltDegrees = degrees
+            }
+        }
     }
 
     private fun <T> observeSetting(
@@ -753,6 +777,10 @@ class MockLocationService : Service() {
                 lastIdleJitterTimestampMs = nowMs
             }
             applyToProvider(fix, nowNanos)
+            val elevMode = currentElevationMode
+            if (elevationControlsEnabled && elevMode != null) {
+                sensorInjector.inject(elevMode, elevationTiltDegrees, Random.Default)
+            }
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Failed to push location update", e)
         } catch (e: Exception) {

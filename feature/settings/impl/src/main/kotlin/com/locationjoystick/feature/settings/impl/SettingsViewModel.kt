@@ -6,6 +6,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.root.RootCapabilityChecker
+import com.locationjoystick.core.common.root.SensorPermissionBootstrap
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -38,9 +40,36 @@ class SettingsViewModel
         private val settingsRepository: SettingsRepository,
         private val favoriteRepository: FavoriteRepository,
         private val routeRepository: RouteRepository,
+        private val rootCapabilityChecker: RootCapabilityChecker,
+        private val sensorPermissionBootstrap: SensorPermissionBootstrap,
     ) : ViewModel() {
         companion object {
             private const val TAG = "SettingsViewModel"
+        }
+
+        private val _isRooted = MutableStateFlow(false)
+        val isRooted: StateFlow<Boolean> = _isRooted.asStateFlow()
+
+        val elevationControlsEnabled: StateFlow<Boolean> =
+            settingsRepository.getElevationControlsEnabled()
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5_000),
+                    initialValue = false,
+                )
+
+        val elevationTiltDegrees: StateFlow<Float> =
+            settingsRepository.getElevationTiltDegrees()
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5_000),
+                    initialValue = AppConstants.ElevationConstants.DEFAULT_TILT_DEGREES,
+                )
+
+        init {
+            viewModelScope.launch {
+                _isRooted.value = rootCapabilityChecker.isRooted()
+            }
         }
 
         internal data class UserFeedback(
@@ -706,4 +735,17 @@ class SettingsViewModel
         private fun serializeExportData(data: ExportData) = SettingsExportCodec.serializeExportData(data)
 
         private fun parseExportData(json: String) = SettingsExportCodec.parseExportData(json)
+
+        fun setElevationControlsEnabled(enabled: Boolean) {
+            viewModelScope.launch {
+                if (enabled) {
+                    sensorPermissionBootstrap.grantIfNeeded()
+                }
+                settingsRepository.setElevationControlsEnabled(enabled)
+            }
+        }
+
+        fun setElevationTiltDegrees(degrees: Float) {
+            viewModelScope.launch { settingsRepository.setElevationTiltDegrees(degrees) }
+        }
     }

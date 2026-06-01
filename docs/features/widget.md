@@ -21,3 +21,17 @@ Key files: `:feature:widget:impl/FloatingWidgetService.kt`, `:feature:settings:i
 - No items configured → show placeholder.
 - Clamp panel to screen bounds.
 - Re-clamp on `onConfigurationChanged`.
+
+## ELEVATION_CONTROLS Feature
+
+When `ELEVATION_CONTROLS` is enabled in Experimental Settings (requires root), it appears in the widget panel as a 3-button column:
+
+| Button | Icon | ElevationMode |
+|--------|------|---------------|
+| ↑ | KeyboardArrowUp | `TiltUp` |
+| ○ | RadioButtonUnchecked | `Neutral` |
+| ↓ | KeyboardArrowDown | `TiltDown` |
+
+The active mode is highlighted with `MaterialTheme.colorScheme.primary`; inactive buttons use `LjInactive`. Tapping a button calls `onElevationModeSelected`, which updates `_elevationMode` in `FloatingWidgetService` and relays the new mode to `MockLocationService.setElevationMode()`.
+
+`ELEVATION_CONTROLS` is filtered out of `getWidgetFeatures()` automatically when elevation controls is disabled in settings — it never appears in the widget panel for non-root users.

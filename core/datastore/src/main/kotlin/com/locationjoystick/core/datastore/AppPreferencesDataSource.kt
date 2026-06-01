@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -171,6 +172,18 @@ interface PreferencesDataSource {
 
     /** Sets the GPS jitter moving speed variation percentage. */
     suspend fun setJitterSpeedMovingVariationPct(pct: Int)
+
+    /** Gets whether elevation controls (sensor injection) are enabled. */
+    fun getElevationControlsEnabled(): Flow<Boolean>
+
+    /** Gets the tilt angle in degrees for elevation controls. */
+    fun getElevationTiltDegrees(): Flow<Float>
+
+    /** Sets whether elevation controls are enabled. */
+    suspend fun setElevationControlsEnabled(enabled: Boolean)
+
+    /** Sets the tilt angle in degrees for elevation controls. */
+    suspend fun setElevationTiltDegrees(degrees: Float)
 }
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -231,6 +244,8 @@ class AppPreferencesDataSource
             val FAVORITES_SORT_NEWEST_FIRST = booleanPreferencesKey("favorites_sort_newest_first")
             val JITTER_SPEED_IDLE_VARIATION_PCT = intPreferencesKey("jitter_speed_idle_variation_pct")
             val JITTER_SPEED_MOVING_VARIATION_PCT = intPreferencesKey("jitter_speed_moving_variation_pct")
+            val ELEVATION_CONTROLS_ENABLED = booleanPreferencesKey("elevation_controls_enabled")
+            val ELEVATION_TILT_DEGREES = floatPreferencesKey("elevation_tilt_degrees")
         }
 
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -646,6 +661,36 @@ class AppPreferencesDataSource
                         AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
                     )
             }
+        }
+
+        override fun getElevationControlsEnabled(): Flow<Boolean> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading elevation controls enabled", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.ELEVATION_CONTROLS_ENABLED] ?: false }
+
+        override fun getElevationTiltDegrees(): Flow<Float> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading elevation tilt degrees", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.ELEVATION_TILT_DEGREES] ?: AppConstants.ElevationConstants.DEFAULT_TILT_DEGREES }
+
+        override suspend fun setElevationControlsEnabled(enabled: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.ELEVATION_CONTROLS_ENABLED] = enabled }
+        }
+
+        override suspend fun setElevationTiltDegrees(degrees: Float) {
+            dataStore.edit { prefs -> prefs[Keys.ELEVATION_TILT_DEGREES] = degrees }
         }
 
         companion object {

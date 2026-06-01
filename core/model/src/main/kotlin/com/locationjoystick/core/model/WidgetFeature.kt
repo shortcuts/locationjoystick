@@ -7,4 +7,5 @@ enum class WidgetFeature {
     FAVORITES_FLOATING,
     SPEED_CYCLE,
     MAP_FLOATING,
+    ELEVATION_CONTROLS,
 }

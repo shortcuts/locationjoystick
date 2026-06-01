@@ -160,6 +160,7 @@ Replace `<your-model-id>` with active model:
 | Last Remembered Location | @docs/features/last-location.md |
 | Onboarding | @docs/features/onboarding.md |
 | About Page | @docs/features/about-page.md |
+| Elevation Controls (Experimental) | @docs/features/elevation-controls.md |
 
 ---
 

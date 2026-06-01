@@ -812,4 +812,19 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
                 .take(AppConstants.NominatimConstants.RECENT_SEARCHES_MAX_COUNT)
         recentSearchesFlow.value = updated
     }
+
+    private val elevationControlsEnabledFlow = MutableStateFlow(false)
+    private val elevationTiltDegreesFlow = MutableStateFlow(AppConstants.ElevationConstants.DEFAULT_TILT_DEGREES)
+
+    override fun getElevationControlsEnabled(): Flow<Boolean> = elevationControlsEnabledFlow
+
+    override fun getElevationTiltDegrees(): Flow<Float> = elevationTiltDegreesFlow
+
+    override suspend fun setElevationControlsEnabled(enabled: Boolean) {
+        elevationControlsEnabledFlow.value = enabled
+    }
+
+    override suspend fun setElevationTiltDegrees(degrees: Float) {
+        elevationTiltDegreesFlow.value = degrees
+    }
 }

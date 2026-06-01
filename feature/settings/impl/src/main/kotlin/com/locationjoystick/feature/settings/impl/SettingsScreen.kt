@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -59,6 +60,9 @@ fun SettingsRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val roamingDefaults by viewModel.roamingDefaults.collectAsStateWithLifecycle()
+    val isRooted by viewModel.isRooted.collectAsStateWithLifecycle()
+    val elevationControlsEnabled by viewModel.elevationControlsEnabled.collectAsStateWithLifecycle()
+    val elevationTiltDegrees by viewModel.elevationTiltDegrees.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var pendingImportUri by remember { mutableStateOf<android.net.Uri?>(null) }
     var pendingQrImportData by remember { mutableStateOf<com.locationjoystick.core.model.ExportData?>(null) }
@@ -224,6 +228,9 @@ fun SettingsRoute(
     SettingsScreen(
         uiState = uiState,
         roamingDefaults = roamingDefaults,
+        isRooted = isRooted,
+        elevationControlsEnabled = elevationControlsEnabled,
+        elevationTiltDegrees = elevationTiltDegrees,
         onOpenDrawer = onOpenDrawer,
         onSetWalkSpeed = viewModel::setWalkSpeed,
         onSetRunSpeed = viewModel::setRunSpeed,
@@ -245,6 +252,8 @@ fun SettingsRoute(
         onSetJitterSpeedMovingVariationPct = viewModel::setJitterSpeedMovingVariationPct,
         convertMsToDisplay = viewModel::convertMsToDisplay,
         onUpdateRoamingDefaults = viewModel::updateRoamingDefaults,
+        onSetElevationControlsEnabled = viewModel::setElevationControlsEnabled,
+        onSetElevationTiltDegrees = viewModel::setElevationTiltDegrees,
         onExport = { exportLauncher.launch("${AppConstants.ExportConstants.FILENAME_PREFIX}-${System.currentTimeMillis()}.json") },
         onImport = { importLauncher.launch(arrayOf(AppConstants.ExportConstants.MIME_TYPE)) },
         onImportGpsJoystick = { importGpsJoystickLauncher.launch(arrayOf("*/*")) },
@@ -296,6 +305,9 @@ private fun SettingsScreenPreview() {
 internal fun SettingsScreen(
     uiState: SettingsUiState,
     roamingDefaults: RoamingDefaults = RoamingDefaults(),
+    isRooted: Boolean = false,
+    elevationControlsEnabled: Boolean = false,
+    elevationTiltDegrees: Float = AppConstants.ElevationConstants.DEFAULT_TILT_DEGREES,
     onOpenDrawer: () -> Unit = {},
     onSetWalkSpeed: (Double) -> Unit,
     onSetRunSpeed: (Double) -> Unit,
@@ -317,6 +329,8 @@ internal fun SettingsScreen(
     onSetJitterSpeedMovingVariationPct: (Int) -> Unit,
     convertMsToDisplay: (Double, SpeedUnit) -> Double,
     onUpdateRoamingDefaults: (RoamingDefaults) -> Unit = {},
+    onSetElevationControlsEnabled: (Boolean) -> Unit = {},
+    onSetElevationTiltDegrees: (Float) -> Unit = {},
     onExport: () -> Unit,
     onImport: () -> Unit,
     onImportGpsJoystick: () -> Unit,
@@ -451,6 +465,14 @@ internal fun SettingsScreen(
                         FloatingWidgetSection(uiState, onSetWidgetFeatures)
                         Spacer(modifier = Modifier.height(24.dp))
                         RoamingSection(roamingDefaults, isMph, onUpdateRoamingDefaults)
+                        Spacer(modifier = Modifier.height(24.dp))
+                        ExperimentalSection(
+                            isRooted = isRooted,
+                            elevationControlsEnabled = elevationControlsEnabled,
+                            elevationTiltDegrees = elevationTiltDegrees,
+                            onSetElevationControlsEnabled = onSetElevationControlsEnabled,
+                            onSetElevationTiltDegrees = onSetElevationTiltDegrees,
+                        )
                     }
                 }
             }
@@ -739,6 +761,49 @@ private fun RoamingSection(
         onCheckedChange = { onUpdateRoamingDefaults(roamingDefaults.copy(returnToInitialLocation = it)) },
         title = "Return to start",
     )
+}
+
+@Composable
+private fun ExperimentalSection(
+    isRooted: Boolean,
+    elevationControlsEnabled: Boolean,
+    elevationTiltDegrees: Float,
+    onSetElevationControlsEnabled: (Boolean) -> Unit,
+    onSetElevationTiltDegrees: (Float) -> Unit,
+) {
+    Text("Experimental", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.error)
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        "These features are unstable and may not work on all devices.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        val rootLabel = if (isRooted) "Rooted" else "Root not detected"
+        val rootColor = if (isRooted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+        Text(rootLabel, style = MaterialTheme.typography.labelMedium, color = rootColor)
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    SettingsCheckboxRow(
+        checked = elevationControlsEnabled,
+        onCheckedChange = { if (isRooted) onSetElevationControlsEnabled(it) },
+        title = "Elevation Controls",
+        description = "Injects sensor data to simulate phone tilt. Requires root (Magisk/KernelSU).",
+    )
+    if (elevationControlsEnabled && isRooted) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "Tilt angle: ${elevationTiltDegrees.toInt()}°",
+            style = MaterialTheme.typography.labelLarge,
+        )
+        Slider(
+            value = elevationTiltDegrees,
+            onValueChange = onSetElevationTiltDegrees,
+            valueRange = AppConstants.ElevationConstants.MIN_TILT_DEGREES..AppConstants.ElevationConstants.MAX_TILT_DEGREES,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }
 
 @Composable

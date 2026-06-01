@@ -17,4 +17,6 @@ data class AppSettings(
     val warmupEnabled: Boolean = false,
     val satelliteExtrasEnabled: Boolean = true,
     val suspendedMockingEnabled: Boolean = false,
+    val elevationControlsEnabled: Boolean = false,
+    val elevationTiltDegrees: Float = 45f,
 )

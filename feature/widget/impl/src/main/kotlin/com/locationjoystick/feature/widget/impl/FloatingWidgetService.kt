@@ -33,6 +33,7 @@ import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.location.EphemeralReplayController
 import com.locationjoystick.core.location.MockLocationIntentBuilder
 import com.locationjoystick.core.location.MockLocationService
+import com.locationjoystick.core.model.ElevationMode
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RoamingConfig
@@ -126,6 +127,8 @@ class FloatingWidgetService :
 
     // Master panel expand/collapse
     private val isPanelExpandedFlow = MutableStateFlow(false)
+
+    private val _elevationMode = MutableStateFlow<ElevationMode?>(null)
 
     // Drag position — class-level so onConfigurationChanged can re-clamp them after rotation.
     private var dragOffsetX = 0f
@@ -282,6 +285,7 @@ class FloatingWidgetService :
                     (mockMode == com.locationjoystick.core.model.MockMode.ROAMING && isRoamingPausedWidget)
             val routeExpanded by routeExpandedFlow.collectAsStateWithLifecycle()
             val isPanelExpanded by isPanelExpandedFlow.collectAsStateWithLifecycle()
+            val elevationMode by _elevationMode.collectAsStateWithLifecycle()
 
             LjTheme {
                 WidgetPanel(
@@ -294,8 +298,10 @@ class FloatingWidgetService :
                     isActivityPausable = isActivityPausable,
                     routeExpanded = routeExpanded,
                     isPanelExpanded = isPanelExpanded,
+                    elevationMode = elevationMode,
                     onToggleMaster = { isPanelExpandedFlow.value = !isPanelExpandedFlow.value },
                     onFeatureClicked = { feature -> onFeatureButtonClicked(feature) },
+                    onElevationModeSelected = { mode -> onElevationModeSelected(mode) },
                     onRouteClicked = { onRouteIconClicked() },
                     onRoutePauseResume = { onRoutePauseResumeClicked() },
                     onRouteStop = { onRouteStopClicked() },
@@ -453,7 +459,13 @@ class FloatingWidgetService :
             WidgetFeature.FAVORITES_FLOATING -> showFavoritesFloatingView()
             WidgetFeature.SPEED_CYCLE -> cycleSpeedProfile()
             WidgetFeature.MAP_FLOATING -> showMapFloatingView()
+            WidgetFeature.ELEVATION_CONTROLS -> { /* handled by sub-buttons */ }
         }
+    }
+
+    private fun onElevationModeSelected(mode: ElevationMode) {
+        _elevationMode.value = mode
+        mockLocationService?.setElevationMode(mode)
     }
 
     private fun onRouteIconClicked() {
