@@ -666,8 +666,7 @@ private fun FloatingWidgetSection(
         label = "Elevation controls",
         enabledFeatures = uiState.enabledWidgetFeatures,
         onSetWidgetFeatures = onSetWidgetFeatures,
-        enabled = isRooted,
-        subtitle = if (!isRooted) "Requires root (Magisk/KernelSU)" else "Injects sensor data to simulate phone tilt",
+        subtitle = "Injects sensor data to simulate phone tilt (requires root)",
     )
 }
 

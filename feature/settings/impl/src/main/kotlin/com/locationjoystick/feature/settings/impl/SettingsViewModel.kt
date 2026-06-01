@@ -350,10 +350,19 @@ class SettingsViewModel
                     if (d.bikeSpeed != null) settingsRepository.setBikeSpeed(d.bikeSpeed)
                     if (d.speedUnit != null) settingsRepository.setSpeedUnit(d.speedUnit)
                     if (d.widgetFeatures != null) {
-                        if (WidgetFeature.ELEVATION_CONTROLS in d.widgetFeatures) {
-                            sensorPermissionBootstrap.grantIfNeeded()
-                        }
-                        settingsRepository.setWidgetFeatures(d.widgetFeatures.toList())
+                        val featuresToSave =
+                            if (WidgetFeature.ELEVATION_CONTROLS in d.widgetFeatures) {
+                                val granted = sensorPermissionBootstrap.grantIfNeeded()
+                                if (!granted) {
+                                    userFeedback.emit(UserFeedback("Root access required for elevation controls — permission not granted", isError = true))
+                                    d.widgetFeatures - WidgetFeature.ELEVATION_CONTROLS
+                                } else {
+                                    d.widgetFeatures
+                                }
+                            } else {
+                                d.widgetFeatures
+                            }
+                        settingsRepository.setWidgetFeatures(featuresToSave.toList())
                     }
                     if (d.rememberLastLocation != null) settingsRepository.setRememberLastLocation(d.rememberLastLocation)
                     if (d.mapFollowsLocation != null) settingsRepository.setMapFollowsLocation(d.mapFollowsLocation)
