@@ -56,16 +56,199 @@
       </ul>
     </div>
 
-    <h2>More settings</h2>
+    <h2>Speed Profiles</h2>
+    <p>Sets the movement speed for joystick, route replay, and roaming. Changes apply to the next tick.</p>
 
-    <div class="feature-section" id="settings-scrolled">
-      <img class="phone-shot" src="screenshots/12_settings_scrolled.png" alt="Settings screen scrolled">
-      <ul class="section-bullets">
-        <li>Configure roaming defaults: radius, distance, speed profile, and road-following preference.</li>
-        <li>Export all data (routes, favorites, profiles) to a JSON file or import a previous backup.</li>
-        <li>Import data from GPS Joystick or YAMLA to migrate in seconds.</li>
-      </ul>
-    </div>
+    <table class="option-table">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Unit</strong></td>
+          <td>Display unit for speed inputs. Choosing <em>km/h</em> or <em>mph</em> converts all speed fields — stored internally in m/s regardless of unit.</td>
+        </tr>
+        <tr>
+          <td><strong>Walk</strong></td>
+          <td>Speed for the Walk profile. Default ~5 km/h (1.4 m/s). Used when the joystick or route replay has the Walk profile active.</td>
+        </tr>
+        <tr>
+          <td><strong>Run</strong></td>
+          <td>Speed for the Run profile. Default ~10 km/h (2.8 m/s). Speeds above ~8 m/s show an anti-cheat warning.</td>
+        </tr>
+        <tr>
+          <td><strong>Bike</strong></td>
+          <td>Speed for the Bike profile. Default ~25 km/h (6.9 m/s). Also selects the cycling profile in OSRM road routing.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>GPS Jitter</h2>
+    <p>Adds per-tick noise to each location update to simulate natural GPS drift. Set any value to 0 to disable that dimension of noise.</p>
+
+    <table class="option-table">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Idle radius</strong></td>
+          <td>Maximum random offset applied while stationary (in meters or feet depending on unit). A small idle radius (1–3 m) makes the position look like a real GPS chip slowly drifting.</td>
+        </tr>
+        <tr>
+          <td><strong>Idle interval</strong></td>
+          <td>How often (in seconds) a new random offset is picked while stationary. Longer intervals reduce noise frequency; shorter intervals create a jittery trace.</td>
+        </tr>
+        <tr>
+          <td><strong>Moving radius</strong></td>
+          <td>Maximum random offset applied while moving. Keep this smaller than the idle radius to avoid position jumps that look unnatural when the joystick is active.</td>
+        </tr>
+        <tr>
+          <td><strong>Moving interval</strong></td>
+          <td>How often (in seconds) a new random offset is picked while moving.</td>
+        </tr>
+        <tr>
+          <td><strong>Idle speed variation</strong></td>
+          <td>Random ±% applied to the reported speed while stationary. Set to 0 for a perfectly still position (speed = 0). A value of 5–10% simulates minor GPS measurement noise at rest.</td>
+        </tr>
+        <tr>
+          <td><strong>Moving speed variation</strong></td>
+          <td>Random ±% applied to the reported speed while moving. Adds natural variation so the speed field does not read as a constant integer every tick.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Elevation Jitter</h2>
+    <p>Controls the noise injected into the accelerometer and rotation-vector sensors used by Elevation Controls. Only active when Elevation Controls is enabled in the Floating Widget section. Requires root.</p>
+
+    <table class="option-table">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Tilt jitter (°)</strong></td>
+          <td>Random variation added to the tilt angle each tick. Default ±2.25° (5% of the 45° base angle). Simulates natural hand tremor so the sensor output does not look synthetic.</td>
+        </tr>
+        <tr>
+          <td><strong>Accel noise (m/s²)</strong></td>
+          <td>Per-axis Gaussian noise added to the accelerometer values each tick. Default ±0.35 m/s². Mimics real sensor noise seen on physical hardware.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>GPS Realism</h2>
+    <p>Independent toggles that make the spoofed GPS signal behave more like a real hardware chip. Some apps and games inspect these fields to detect mock providers — enabling all options reduces the chance of detection.</p>
+
+    <table class="option-table">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Hold bearing when stationary</strong></td>
+          <td>Keeps the last known heading when the simulated device stops moving, instead of snapping to 0° (north). Real GPS chips do the same — a sudden north-reset is a common mock-location tell. <em>Default: on.</em></td>
+        </tr>
+        <tr>
+          <td><strong>Vary altitude</strong></td>
+          <td>Applies a small Gaussian random walk to the reported altitude instead of always reporting 0 m. A flat zero altitude is an obvious signal that the location is synthetic. <em>Default: on.</em></td>
+        </tr>
+        <tr>
+          <td><strong>GPS warm-up simulation</strong></td>
+          <td>Starts each spoofing session with degraded accuracy (wide accuracy radius) that converges to normal over ~30 s, simulating a cold GPS fix. Turn off if you need precise positioning immediately at session start. <em>Default: off.</em></td>
+        </tr>
+        <tr>
+          <td><strong>Realistic satellite count</strong></td>
+          <td>Attaches satellite metadata to each update: 7–14 satellites visible, 6–12 contributing to the fix. Some apps flag zero satellites as a spoofing signal. <em>Default: on.</em></td>
+        </tr>
+        <tr>
+          <td><strong>Suspended mocking</strong></td>
+          <td>Briefly pauses location updates (~2 s every ~10 s) to mimic real GPS signal dropouts. Automatically disabled during route replay. Turn on only if the target app specifically watches for continuous update streams. <em>Default: off.</em></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Map</h2>
+    <p>Controls how the in-app map behaves while spoofing is active.</p>
+
+    <table class="option-table">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Remember last location</strong></td>
+          <td>Restores the most recently spoofed position on app restart so you do not have to re-enter coordinates. The position is saved to local storage after every update.</td>
+        </tr>
+        <tr>
+          <td><strong>Follow location on map</strong></td>
+          <td>Keeps the map camera centred on the spoofed position as it moves. Panning the map manually disables follow until you tap the re-centre button.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Floating Widget</h2>
+    <p>Selects which quick-access buttons appear in the floating widget overlay when it is expanded. Each item can be toggled independently.</p>
+
+    <table class="option-table">
+      <thead><tr><th>Option</th><th>Icon</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Map shortcut</strong></td>
+          <td>📍</td>
+          <td>Opens a compact full-screen map overlay without switching back to the main app. Supports walk-to, teleport, and roaming controls from the overlay.</td>
+        </tr>
+        <tr>
+          <td><strong>Show/hide joystick</strong></td>
+          <td>👁</td>
+          <td>Toggles the floating joystick overlay on or off without opening the app. The joystick must already be running via the main screen.</td>
+        </tr>
+        <tr>
+          <td><strong>Lock joystick</strong></td>
+          <td>🔒</td>
+          <td>Holds the joystick direction after you release your finger, so the simulated device keeps moving without continuous input. Tap again to unlock.</td>
+        </tr>
+        <tr>
+          <td><strong>Routes picker</strong></td>
+          <td>🗺</td>
+          <td>Lists all saved routes with start, loop, reverse, and return options. While a route is replaying, the icon expands to show pause and stop controls inline.</td>
+        </tr>
+        <tr>
+          <td><strong>Favorites picker</strong></td>
+          <td>❤️</td>
+          <td>Lists saved favorite locations with one-tap teleport and walk shortcuts. Also lets you save the current spoofed position as a new favorite from the overlay.</td>
+        </tr>
+        <tr>
+          <td><strong>Speed cycle</strong></td>
+          <td>⚡</td>
+          <td>Cycles through Walk → Run → Bike speed profiles with a single tap. The icon changes to reflect the active profile.</td>
+        </tr>
+        <tr>
+          <td><strong>Elevation controls</strong></td>
+          <td>⊞</td>
+          <td>Shows a separate floating overlay with three elevation buttons: tilt up (↑), neutral (○), tilt down (↓). Injects synthetic sensor events to make apps see the phone as tilted. <strong>Requires root.</strong> Enabling this option triggers a Magisk root-access prompt.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Roaming defaults</h2>
+    <p>Default values pre-filled in the roaming setup sheet when starting a roaming session from the map.</p>
+
+    <table class="option-table">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Radius</strong></td>
+          <td>Maximum distance from the starting point that random waypoints can be placed. Larger values spread movement further from the centre.</td>
+        </tr>
+        <tr>
+          <td><strong>Route distance</strong></td>
+          <td>Total distance to walk before the roaming session ends. The session stops once the cumulative distance reaches this value.</td>
+        </tr>
+        <tr>
+          <td><strong>Speed profile</strong></td>
+          <td>Which speed preset (Walk / Run / Bike) is used for roaming movement. Bike also selects the cycling profile in OSRM road routing.</td>
+        </tr>
+        <tr>
+          <td><strong>Follow roads</strong></td>
+          <td>Routes each leg through OSRM so movement follows real walkable paths instead of straight lines. Falls back to straight-line if OSRM is unavailable.</td>
+        </tr>
+        <tr>
+          <td><strong>Return to start</strong></td>
+          <td>After the main roaming loop completes, the simulated device walks back to the original starting position.</td>
+        </tr>
+      </tbody>
+    </table>
 
     <h2>QR transfer</h2>
     <p>
@@ -81,6 +264,40 @@
         <li>Works entirely offline between two devices in the same room.</li>
       </ul>
     </div>
+
+    <h2>Export / Import</h2>
+    <p>Back up or restore all app data — routes, favorites, speed profiles, widget config, jitter settings, and roaming defaults.</p>
+
+    <table class="option-table">
+      <thead><tr><th>Action</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Export via QR code</strong></td>
+          <td>Serialises the current configuration into a sequence of QR codes for scanning on another device.</td>
+        </tr>
+        <tr>
+          <td><strong>Export settings</strong></td>
+          <td>Writes a JSON backup file to device storage, which you can share or keep manually.</td>
+        </tr>
+        <tr>
+          <td><strong>Import from QR code</strong></td>
+          <td>Opens the camera to scan an export from another device. Collects chunks until complete, then prompts to Add (merge) or Replace existing data.</td>
+        </tr>
+        <tr>
+          <td><strong>Import from file</strong></td>
+          <td>Opens a file picker for a previously exported JSON backup. Prompts to Add or Replace.</td>
+        </tr>
+        <tr>
+          <td><strong>Import from GPS Joystick</strong></td>
+          <td>Migrates routes and favorites from a GPS Joystick export file. Imported routes are saved as straight-line segments.</td>
+        </tr>
+        <tr>
+          <td><strong>Import from YAMLA</strong></td>
+          <td>Migrates favorites and speed settings from a YAMLA JSON export.</td>
+        </tr>
+      </tbody>
+    </table>
+
   </main>
 
 </div>
