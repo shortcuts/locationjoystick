@@ -239,6 +239,9 @@ class JoystickOverlayService : OverlayService() {
 
     override fun getWindowManagerParams(view: View): WindowManager.LayoutParams {
         val sizePx = (AppConstants.JoystickConstants.SIZE_DP * resources.displayMetrics.density).toInt()
+        val metrics = windowManager.currentWindowMetrics
+        val screenW = metrics.bounds.width()
+        val screenH = metrics.bounds.height()
 
         return WindowManager
             .LayoutParams(
@@ -249,9 +252,9 @@ class JoystickOverlayService : OverlayService() {
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT,
             ).apply {
-                gravity = Gravity.CENTER_VERTICAL or Gravity.END
-                x = 0
-                y = 0
+                gravity = Gravity.TOP or Gravity.START
+                x = (screenW - sizePx).coerceAtLeast(0)
+                y = ((screenH - sizePx) / 2).coerceAtLeast(0)
             }
     }
 
