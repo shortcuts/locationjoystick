@@ -93,13 +93,20 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: make build
 
-      - name: Rename APK
+      - name: Rename APKs
         if: ${{ needs.release-please.outputs.release_created == 'true' }}
-        run: mv app/build/outputs/apk/release/app-release.apk locationjoystick-${{ needs.release-please.outputs.tag_name }}.apk
+        run: |
+          TAG=${{ needs.release-please.outputs.tag_name }}
+          mv app/build/outputs/apk/release/app-arm64-v8a-release.apk locationjoystick-${TAG}-arm64-v8a.apk
+          mv app/build/outputs/apk/release/app-armeabi-v7a-release.apk locationjoystick-${TAG}-armeabi-v7a.apk
+          mv app/build/outputs/apk/release/app-universal-release.apk locationjoystick-${TAG}-universal.apk
 
       - name: Upload APK to GitHub Release
         if: ${{ needs.release-please.outputs.release_created == 'true' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
-          files: locationjoystick-${{ needs.release-please.outputs.tag_name }}.apk
+          files: |
+            locationjoystick-${{ needs.release-please.outputs.tag_name }}-arm64-v8a.apk
+            locationjoystick-${{ needs.release-please.outputs.tag_name }}-armeabi-v7a.apk
+            locationjoystick-${{ needs.release-please.outputs.tag_name }}-universal.apk
