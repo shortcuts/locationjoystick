@@ -8,7 +8,7 @@ No outstanding documentation issues.
 
 ## Bugs
 
-No outstanding bugs.
+- **Map zooms out on search/favorite selection** — selecting a location from Nominatim search or Favorites teleports the camera but uses an incorrect zoom level instead of `AppConstants.MapConstants.DEFAULT_ZOOM`. Should call `CameraUpdateFactory.newLatLngZoom(position, DEFAULT_ZOOM)` (or equivalent MapLibre call) rather than `newLatLng` alone.
 
 ---
 
