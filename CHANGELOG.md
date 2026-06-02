@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/shortcuts/locationjoystick/compare/v0.1.0...v0.2.0) (2026-06-02)
+
+
+### Features
+
+* **app:** expand AboutScreen credits with full OSS library list ([eeaed37](https://github.com/shortcuts/locationjoystick/commit/eeaed370cf004bc2296e0a98223f12c2a8db3346))
+* **core/common:** add DOCS_URL and ACKNOWLEDGEMENTS_URL constants ([3381de9](https://github.com/shortcuts/locationjoystick/commit/3381de96e8c12cf876e4def6169208df83d45b5b))
+
+
+### Bug Fixes
+
+* zoom to DEFAULT_ZOOM when panning to favorite ([bf28cb6](https://github.com/shortcuts/locationjoystick/commit/bf28cb6b74bb2ceeadba528311483a7b44e185a0))
+
 ## [0.1.0](https://github.com/shortcuts/locationjoystick/compare/v0.0.1...v0.1.0) (2026-06-02)
 
 
