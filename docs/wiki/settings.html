@@ -28,6 +28,7 @@
       <a href="overlays.html">Overlays</a>
       <a href="onboarding.html">Onboarding</a>
       <a href="privacy.html">Privacy</a>
+      <a href="acknowledgements.html">Acknowledgements</a>
       <span class="nav-sep"></span>
       <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
       <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/issues/new?labels=bug" target="_blank" rel="noopener">Report a bug</a>
@@ -57,29 +58,43 @@
     </div>
 
     <h2>Speed Profiles</h2>
-    <p>Sets the movement speed for joystick, route replay, and roaming. Changes apply to the next tick.</p>
+    <p>Sets the movement speed for joystick, route replay, and roaming. Changes apply to the next tick. All speeds are stored internally in m/s regardless of the display unit you choose.</p>
 
     <table class="option-table">
       <thead><tr><th>Option</th><th>Description</th></tr></thead>
       <tbody>
         <tr>
           <td><strong>Unit</strong></td>
-          <td>Display unit for speed inputs. Choosing <em>km/h</em> or <em>mph</em> converts all speed fields — stored internally in m/s regardless of unit.</td>
+          <td>Display unit for speed inputs: m/s, km/h, or mph. Switching units converts all speed fields in the UI — the underlying value in m/s is unchanged.</td>
         </tr>
         <tr>
           <td><strong>Walk</strong></td>
-          <td>Speed for the Walk profile. Default ~2 km/h (0.56 m/s). Used when the joystick or route replay has the Walk profile active.</td>
+          <td>Default <strong>2.0 km/h (0.5556 m/s)</strong>. Typical slow walking pace. Used when the joystick or route replay has the Walk profile active. Walk is also the default profile for route replay when no profile is specified.</td>
         </tr>
         <tr>
           <td><strong>Run</strong></td>
-          <td>Speed for the Run profile. Default ~8 km/h (2.2 m/s). Speeds above ~8 m/s show an anti-cheat warning.</td>
+          <td>Default <strong>8.0 km/h (2.2222 m/s)</strong>. Typical jogging pace. Selects the foot-routing profile in OSRM when road-following is enabled.</td>
         </tr>
         <tr>
           <td><strong>Bike</strong></td>
-          <td>Speed for the Bike profile. Default ~15 km/h (4.2 m/s). Also selects the cycling profile in OSRM road routing.</td>
+          <td>Default <strong>15.0 km/h (4.1667 m/s)</strong>. Cycling pace. Selects the cycling profile in OSRM road routing, which prefers bike lanes and avoids motorways.</td>
         </tr>
       </tbody>
     </table>
+
+    <p><strong>Limits:</strong> Each profile is clamped to a minimum of <strong>0.1 m/s</strong> (~0.36 km/h) and a maximum of <strong>15.0 m/s</strong> (~54 km/h). Values outside this range are silently coerced on save.</p>
+
+    <h2>Anti-cheat warning</h2>
+    <p>
+      If any speed profile is set above <strong>8 m/s (~28.8 km/h / ~17.9 mph)</strong>, a warning banner appears inline below that field in Settings. The warning reads:
+    </p>
+    <blockquote><em>"Speed exceeds 8 m/s — may trigger anti-cheat in some games"</em></blockquote>
+    <p>
+      This is a passive advisory only — it does not block saving, cap your speed, or communicate with any external service. The threshold of 8 m/s was chosen because it is well above any realistic human movement speed. Many location-aware games flag sustained GPS movement faster than a sprint (roughly 7–10 m/s) as suspicious, since no pedestrian legitimately moves that fast for extended periods.
+    </p>
+    <p>
+      The warning applies independently to each of the three profiles. You can dismiss it by lowering the speed below 8 m/s, or ignore it if you are using the app for a purpose where speed detection is not a concern. The app does not impose any speed limit — 15 m/s (~54 km/h) is the maximum the input field accepts.
+    </p>
 
     <h2>GPS Jitter</h2>
     <p>Adds per-tick noise to each location update to simulate natural GPS drift. Set any value to 0 to disable that dimension of noise.</p>
@@ -249,6 +264,31 @@
         </tr>
       </tbody>
     </table>
+
+    <h2>External services</h2>
+    <p>locationjoystick is offline-first. It does not require an account and sends no analytics or telemetry. However, two optional network features make outbound requests:</p>
+
+    <table class="option-table">
+      <thead><tr><th>Service</th><th>When used</th><th>What is sent</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>OSRM</strong><br><small><a href="https://router.project-osrm.org" target="_blank" rel="noopener">router.project-osrm.org</a></small></td>
+          <td>Road-following routes, roaming with "Follow roads" enabled, guided route creation. Only contacted when you explicitly choose road-following.</td>
+          <td>A list of latitude/longitude coordinate pairs (your waypoints or random roaming targets). No device identifiers, no account data. The public OSRM demo server is operated by the OSRM project.</td>
+        </tr>
+        <tr>
+          <td><strong>Nominatim</strong><br><small><a href="https://nominatim.openstreetmap.org" target="_blank" rel="noopener">nominatim.openstreetmap.org</a></small></td>
+          <td>Place-name search in the route creator and the favorites map picker. Only contacted when you type a search query.</td>
+          <td>The search string you type (place name or address). No GPS coordinates, no identifiers. The public Nominatim instance is operated by the OpenStreetMap Foundation.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      Map tiles (OpenStreetMap via MapLibre) are fetched from <a href="https://tile.openstreetmap.org" target="_blank" rel="noopener">tile.openstreetmap.org</a> as you pan and zoom the map. Each tile request includes the tile coordinates (zoom level, x, y) but no personal data.
+    </p>
+    <p>
+      All three services are used only as needed by the feature you are actively using and can be avoided entirely by not using road-following, place search, or the map (e.g. by entering coordinates directly in Favorites).
+    </p>
 
     <h2>QR transfer</h2>
     <p>

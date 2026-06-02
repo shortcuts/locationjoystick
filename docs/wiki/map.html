@@ -28,6 +28,7 @@
       <a href="overlays.html">Overlays</a>
       <a href="onboarding.html">Onboarding</a>
       <a href="privacy.html">Privacy</a>
+      <a href="acknowledgements.html">Acknowledgements</a>
       <span class="nav-sep"></span>
       <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
       <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/issues/new?labels=bug" target="_blank" rel="noopener">Report a bug</a>
@@ -46,8 +47,11 @@
   <main>
     <h2>Map</h2>
     <p>
-      OpenStreetMap rendered via MapLibre. Your spoofed location appears as a live marker.
+      OpenStreetMap rendered via MapLibre (GPU-accelerated, offline-capable after tiles are cached). Your spoofed location appears as a live marker that updates in real time.
       Use the map to set your position directly or launch routes, favorites, and roaming from the floating action buttons.
+    </p>
+    <p>
+      Map tiles are fetched from <a href="https://tile.openstreetmap.org" target="_blank" rel="noopener">tile.openstreetmap.org</a> as you pan and zoom. Tiles are cached on-device after the first load; previously viewed areas work without a network connection.
     </p>
 
     <div class="feature-section" id="map-main">
@@ -59,6 +63,22 @@
       </ul>
     </div>
 
+    <h2>Click-to-move</h2>
+    <p>Long-pressing any point on the map opens a bottom sheet with two movement options:</p>
+    <table class="option-table">
+      <thead><tr><th>Action</th><th>Behaviour</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Walk here</strong></td>
+          <td>The simulated device moves from the current position to the tapped point at the active speed profile. The movement is interpolated along a straight line (no road-following). GPS updates continue at ~1 Hz during the walk. Walk-to is automatically paused if a route replay is started, and resumes when the route ends or is stopped.</td>
+        </tr>
+        <tr>
+          <td><strong>Teleport here</strong></td>
+          <td>Position jumps instantly to the tapped point in the next GPS update. No movement interpolation is applied. Use this when you need to reposition quickly without the path between points mattering.</td>
+        </tr>
+      </tbody>
+    </table>
+
     <h2>Routes sheet</h2>
     <p>Open your saved routes and start replaying one directly from the map.</p>
 
@@ -67,6 +87,7 @@
       <ul class="section-bullets">
         <li>Tap a route to preview its polyline on the map.</li>
         <li>Start, loop, or reverse the route without leaving the map screen.</li>
+        <li>Active route progress is shown on the map as the position marker advances along the polyline.</li>
       </ul>
     </div>
 
@@ -78,18 +99,24 @@
       <ul class="section-bullets">
         <li>Tap a favorite to walk or teleport there instantly.</li>
         <li>Saved favorites appear with their name and distance from the current spoofed position.</li>
+        <li>Distance is calculated as straight-line (great-circle) distance, not road distance.</li>
       </ul>
     </div>
 
     <h2>Roaming sheet</h2>
-    <p>Configure and start automatic roaming — locationjoystick walks for you within a set area.</p>
+    <p>
+      Configure and start automatic roaming — locationjoystick picks random waypoints within a radius and walks between them for you.
+      Useful for apps that require continuous movement without manual input.
+    </p>
 
     <div class="feature-section" id="map-roaming-sheet">
       <img class="phone-shot" src="screenshots/08_map_roaming_sheet.png" alt="Map roaming bottom sheet">
       <ul class="section-bullets">
-        <li>Set a center point (defaults to current spoofed position), radius, and total distance.</li>
-        <li>Enable road-following to have roaming stay on real streets via OSRM routing.</li>
+        <li>Set a center point (defaults to current spoofed position), radius, and total distance to cover.</li>
+        <li>Enable road-following to route each leg through OSRM, so movement stays on real walkable paths. Falls back to straight-line if OSRM is unreachable.</li>
         <li>Optionally return to the starting position when the distance quota is reached.</li>
+        <li>The roaming engine picks a new random waypoint within the radius each time the previous one is reached. Waypoints are chosen uniformly at random within the circle — there is no bias toward the centre.</li>
+        <li>Roaming runs inside the background service and continues while the screen is off.</li>
       </ul>
     </div>
   </main>

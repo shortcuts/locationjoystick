@@ -28,6 +28,7 @@
       <a href="overlays.html">Overlays</a>
       <a href="onboarding.html">Onboarding</a>
       <a href="privacy.html">Privacy</a>
+      <a href="acknowledgements.html">Acknowledgements</a>
       <span class="nav-sep"></span>
       <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
       <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/issues/new?labels=bug" target="_blank" rel="noopener">Report a bug</a>
@@ -48,6 +49,7 @@
     <p>
       Create a series of waypoints on the map and replay them at your chosen speed.
       Routes can follow straight lines between waypoints or snap to real roads using OSRM routing.
+      Route data is stored locally in the on-device Room database — no cloud sync, no account required.
     </p>
 
     <div class="feature-section" id="routes-list">
@@ -59,15 +61,54 @@
       </ul>
     </div>
 
+    <h2>Route types</h2>
+    <table class="option-table">
+      <thead><tr><th>Type</th><th>How it works</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Straight</strong></td>
+          <td>The replay engine interpolates positions along straight line segments between waypoints at the active speed. No network request is made. Position updates are emitted at the service tick rate (~1 Hz). This is the default type for GPX-imported routes.</td>
+        </tr>
+        <tr>
+          <td><strong>Guided (road-following)</strong></td>
+          <td>Each segment between waypoints is sent to the OSRM routing API at <a href="https://router.project-osrm.org" target="_blank" rel="noopener">router.project-osrm.org</a>. OSRM returns a snapped polyline following real roads. The Walk and Run profiles use the foot routing profile; the Bike profile uses the cycling profile. If OSRM is unreachable, the segment falls back to a straight line. Route geometry is stored after the first resolve — subsequent replays do not re-request OSRM.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Replay options</h2>
+    <table class="option-table">
+      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Loop</strong></td>
+          <td>When the last waypoint is reached, the replay restarts from the first waypoint. Continues indefinitely until stopped manually.</td>
+        </tr>
+        <tr>
+          <td><strong>Reverse</strong></td>
+          <td>Plays waypoints in reverse order (last → first). Can be combined with loop.</td>
+        </tr>
+        <tr>
+          <td><strong>Return to start</strong></td>
+          <td>After the final waypoint, the simulated device walks back to the first waypoint before stopping. Useful to avoid a large positional jump when ending a session.</td>
+        </tr>
+        <tr>
+          <td><strong>Pause / Resume</strong></td>
+          <td>Pauses forward movement while keeping the background service running and the current position held. Available from the widget and the routes screen while a route is active.</td>
+        </tr>
+      </tbody>
+    </table>
+
     <h2>Route creator</h2>
     <p>Place waypoints by tapping the map. The route previews as a polyline as you add points.</p>
 
     <div class="feature-section" id="route-creator">
       <img class="phone-shot" src="screenshots/09_route_creator.png" alt="Route creator screen">
       <ul class="section-bullets">
-        <li>Search for a location by name using the search FAB to jump the map to a specific place.</li>
+        <li>Search for a location by name using the search FAB — queries the Nominatim geocoder (<a href="https://nominatim.openstreetmap.org" target="_blank" rel="noopener">nominatim.openstreetmap.org</a>).</li>
         <li>Undo the last waypoint with the undo button.</li>
         <li>Choose between straight-line and road-following (OSRM) before saving.</li>
+        <li>Record mode: tap record to capture your real device's GPS trace as a new route in real time.</li>
       </ul>
     </div>
 
@@ -79,9 +120,33 @@
       <ul class="section-bullets">
         <li>Drag waypoints in the list to reorder them.</li>
         <li>Tap a waypoint to highlight it on the embedded map.</li>
+        <li>Changing route type from straight to guided re-resolves OSRM for each segment on next replay.</li>
         <li>Delete the route permanently from the action bar.</li>
       </ul>
     </div>
+
+    <h2>Import formats</h2>
+    <table class="option-table">
+      <thead><tr><th>Format</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>GPX</strong></td>
+          <td>Standard GPS Exchange Format. Track points (<code>&lt;trkpt&gt;</code>) and route points (<code>&lt;rtept&gt;</code>) are both supported. Imported as straight-line routes. Elevation data in GPX files is ignored (locationjoystick manages altitude separately via the GPS Realism settings).</td>
+        </tr>
+        <tr>
+          <td><strong>GPS Joystick</strong></td>
+          <td>JSON export format from the GPS Joystick app. Routes and favorites are imported. Speeds are mapped to the nearest profile where possible.</td>
+        </tr>
+        <tr>
+          <td><strong>YAMLA</strong></td>
+          <td>JSON export format from the YAMLA app. Favorites and speed settings are imported. Routes are imported as straight-line segments.</td>
+        </tr>
+        <tr>
+          <td><strong>locationjoystick JSON</strong></td>
+          <td>Native backup format. Preserves all fields including route type, waypoints, and metadata. Use Add to merge with existing data or Replace to overwrite.</td>
+        </tr>
+      </tbody>
+    </table>
   </main>
 
 </div>
