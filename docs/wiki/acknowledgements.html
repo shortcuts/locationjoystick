@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acknowledgements — locationjoystick</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <img src="icon.png" alt="" width="32" height="32">
+      <span class="brand-name">locationjoystick</span>
+    </a>
+    <button class="nav-toggle-btn" aria-label="Toggle navigation" onclick="this.closest('.sidebar').querySelector('nav').classList.toggle('open')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a href="home.html">Home</a>
+      <a href="map.html">Map</a>
+      <a href="routes.html">Routes</a>
+      <a href="favorites.html">Favorites</a>
+      <a href="settings.html">Settings</a>
+      <a href="overlays.html">Overlays</a>
+      <a href="onboarding.html">Onboarding</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="acknowledgements.html" class="active">Acknowledgements</a>
+      <span class="nav-sep"></span>
+      <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+      <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/issues/new?labels=bug" target="_blank" rel="noopener">Report a bug</a>
+      <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/issues/new?labels=enhancement" target="_blank" rel="noopener">Request a feature</a>
+    </nav>
+    <div class="sidebar-foot">
+      <a class="gh-star" href="https://github.com/shortcuts/locationjoystick" target="_blank" rel="noopener">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.872 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+        Star
+        <span class="gh-star-sep"></span>
+        <span class="gh-star-count">—</span>
+      </a><span class="sidebar-foot-lic">· MIT License</span>
+    </div>
+  </aside>
+
+  <main>
+    <h2>Acknowledgements</h2>
+    <p>
+      locationjoystick is built on the shoulders of many excellent open-source projects.
+      Every library and data source listed here is used directly in the production app.
+      Thank you to every contributor behind them.
+    </p>
+
+    <h2>Map &amp; location data</h2>
+    <table class="option-table">
+      <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong><a href="https://maplibre.org/maplibre-gl-js/docs/" target="_blank" rel="noopener">MapLibre Android SDK</a></strong></td>
+          <td>GPU-accelerated map rendering throughout the app. Powers all interactive map screens and the floating map overlay.</td>
+          <td><a href="https://github.com/maplibre/maplibre-native/blob/main/LICENSE.md" target="_blank" rel="noopener">BSD 2-Clause</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a></strong></td>
+          <td>Map tile data displayed on every map screen. Tiles are fetched from tile.openstreetmap.org as you navigate.</td>
+          <td><a href="https://opendatacommons.org/licenses/odbl/" target="_blank" rel="noopener">ODbL (© OpenStreetMap contributors)</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://project-osrm.org" target="_blank" rel="noopener">OSRM — Open Source Routing Machine</a></strong></td>
+          <td>Road-following route generation, guided route creation, and roaming with "Follow roads" enabled. The public demo server at router.project-osrm.org is used; waypoint coordinates are sent per request.</td>
+          <td><a href="https://github.com/Project-OSRM/osrm-backend/blob/master/LICENSE" target="_blank" rel="noopener">BSD 2-Clause</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://nominatim.openstreetmap.org" target="_blank" rel="noopener">Nominatim</a></strong> (OpenStreetMap Foundation)</td>
+          <td>Place-name geocoding used in the route creator search and the favorites map picker. The public OSMF instance is used; only the search string is sent.</td>
+          <td>Data: ODbL · Software: <a href="https://github.com/osm-search/Nominatim/blob/master/COPYING" target="_blank" rel="noopener">GPL-2.0</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Language &amp; async</h2>
+    <table class="option-table">
+      <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong><a href="https://kotlinlang.org" target="_blank" rel="noopener">Kotlin</a></strong> (JetBrains)</td>
+          <td>Primary language for the entire codebase.</td>
+          <td><a href="https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://github.com/Kotlin/kotlinx.coroutines" target="_blank" rel="noopener">Kotlin Coroutines</a></strong> (JetBrains)</td>
+          <td>All asynchronous operations, background service coordination, and StateFlow/SharedFlow reactive streams.</td>
+          <td><a href="https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://github.com/Kotlin/kotlinx.serialization" target="_blank" rel="noopener">Kotlin Serialization</a></strong> (JetBrains)</td>
+          <td>JSON serialization for import/export, QR transfer payloads, and OSRM API responses.</td>
+          <td><a href="https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>UI &amp; design</h2>
+    <table class="option-table">
+      <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong><a href="https://developer.android.com/compose" target="_blank" rel="noopener">Jetpack Compose</a></strong> (Google)</td>
+          <td>Entire UI layer. Every screen, dialog, and bottom sheet is written in Compose.</td>
+          <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://m3.material.io" target="_blank" rel="noopener">Material 3</a></strong> (Google)</td>
+          <td>Design system tokens, components (cards, bottom sheets, FABs, dialogs), and theming.</td>
+          <td><a href="https://github.com/material-components/material-components-android/blob/master/LICENSE" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://developer.android.com/jetpack/compose/navigation" target="_blank" rel="noopener">AndroidX Navigation Compose</a></strong> (Google)</td>
+          <td>In-app navigation between screens and the navigation drawer.</td>
+          <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://developer.android.com/training/camerax" target="_blank" rel="noopener">AndroidX CameraX</a></strong> (Google)</td>
+          <td>Camera preview and frame capture used by the QR code scanner during config import.</td>
+          <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Architecture &amp; storage</h2>
+    <table class="option-table">
+      <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong><a href="https://dagger.dev/hilt/" target="_blank" rel="noopener">Hilt (Dagger)</a></strong> (Google)</td>
+          <td>Dependency injection throughout all modules. Provides ViewModels, repositories, and services.</td>
+          <td><a href="https://github.com/google/dagger/blob/master/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://developer.android.com/training/data-storage/room" target="_blank" rel="noopener">AndroidX Room</a></strong> (Google)</td>
+          <td>On-device SQL database (v2) storing routes, waypoints, and favorites.</td>
+          <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://developer.android.com/topic/libraries/architecture/datastore" target="_blank" rel="noopener">AndroidX DataStore</a></strong> (Google)</td>
+          <td>Persistent key-value preferences for settings, speed profiles, GPS realism toggles, and widget configuration.</td>
+          <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://developer.android.com/topic/libraries/architecture/lifecycle" target="_blank" rel="noopener">AndroidX Lifecycle</a></strong> (Google)</td>
+          <td>ViewModel lifecycle management and <code>collectAsStateWithLifecycle()</code> for safe Compose state collection.</td>
+          <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Networking</h2>
+    <table class="option-table">
+      <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong><a href="https://square.github.io/retrofit/" target="_blank" rel="noopener">Retrofit</a></strong> (Square)</td>
+          <td>HTTP client for OSRM routing requests and Nominatim geocoding queries.</td>
+          <td><a href="https://github.com/square/retrofit/blob/trunk/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://square.github.io/okhttp/" target="_blank" rel="noopener">OkHttp</a></strong> (Square)</td>
+          <td>HTTP engine underlying Retrofit. Handles connection pooling, timeouts, and TLS.</td>
+          <td><a href="https://github.com/square/okhttp/blob/master/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>QR codes</h2>
+    <table class="option-table">
+      <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong><a href="https://github.com/zxing/zxing" target="_blank" rel="noopener">ZXing — Zebra Crossing</a></strong> (Google)</td>
+          <td>QR code encoding (export) and decoding (import) for the device-to-device config transfer feature.</td>
+          <td><a href="https://github.com/zxing/zxing/blob/master/LICENSE" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Build &amp; tooling</h2>
+    <p>These tools are used at build time and are not bundled in the released APK.</p>
+    <table class="option-table">
+      <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong><a href="https://github.com/google/ksp" target="_blank" rel="noopener">KSP — Kotlin Symbol Processing</a></strong> (Google)</td>
+          <td>Annotation processing for Hilt and Room code generation.</td>
+          <td><a href="https://github.com/google/ksp/blob/main/LICENSE" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://github.com/Kotlin/kotlinx-kover" target="_blank" rel="noopener">Kover</a></strong> (JetBrains)</td>
+          <td>Test coverage reporting. Aggregates coverage across all modules into a single HTML/XML report.</td>
+          <td><a href="https://github.com/Kotlin/kotlinx-kover/blob/main/LICENSE" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://junit.org/junit5/" target="_blank" rel="noopener">JUnit 5</a></strong></td>
+          <td>Unit test runner for all <code>:core:*</code> and <code>:feature:*</code> module tests.</td>
+          <td><a href="https://github.com/junit-team/junit5/blob/main/LICENSE.md" target="_blank" rel="noopener">EPL 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://mockk.io" target="_blank" rel="noopener">MockK</a></strong></td>
+          <td>Kotlin-native mocking library used in unit tests for repositories, services, and ViewModels.</td>
+          <td><a href="https://github.com/mockk/mockk/blob/master/LICENSE" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://github.com/cashapp/turbine" target="_blank" rel="noopener">Turbine</a></strong> (Cash App)</td>
+          <td>Testing utility for Kotlin Flows. Used to assert emission sequences in ViewModel and repository tests.</td>
+          <td><a href="https://github.com/cashapp/turbine/blob/trunk/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://robolectric.org" target="_blank" rel="noopener">Robolectric</a></strong></td>
+          <td>Android JVM test environment for tests that depend on Android framework classes without a device.</td>
+          <td><a href="https://github.com/robolectric/robolectric/blob/master/LICENSE" target="_blank" rel="noopener">MIT</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+  </main>
+
+</div>
+<script>
+fetch('https://api.github.com/repos/shortcuts/locationjoystick')
+  .then(function(r){return r.json()})
+  .then(function(d){
+    var n=d.stargazers_count,t=n>=1000?(n/1000).toFixed(1)+'k':String(n);
+    document.querySelectorAll('.gh-star-count').forEach(function(el){el.textContent=t});
+  })
+  .catch(function(){});
+</script>
+</body>
+</html>
