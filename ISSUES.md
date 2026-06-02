@@ -22,7 +22,7 @@ No outstanding documentation issues.
 
 ## Frontend UI/UX
 
-No outstanding UI/UX items.
+- **Black text on dark bottom sheet background** — bottom drawer sheet renders black text against a dark background, making content unreadable. Root cause: likely hardcoded `Color.Black` or missing `contentColor` propagation instead of `MaterialTheme.colorScheme.onSurface`. Audit all `ModalBottomSheet` / `BottomSheetScaffold` usages + any custom `Surface` wrappers across all feature screens — verify text, icons, and labels inherit correct content color from the design system. Use `/frontend-design` for the fix pass.
 
 ---
 
