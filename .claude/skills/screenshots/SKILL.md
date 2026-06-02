@@ -26,8 +26,55 @@ adb shell pm list packages | grep com.locationjoystick
 If device not found: tell the user to connect their Android device with USB debugging
 enabled, wait for it to appear under `adb devices`, then proceed.
 
-If app not installed: tell the user to install the debug APK (`make install`) and
-complete onboarding before continuing.
+If app not installed: run `make install-on-phone` (not `make install`) to build and
+install the debug APK, then follow the onboarding section below before running the
+script.
+
+---
+
+## Step 1b — Complete onboarding autonomously (if needed)
+
+The script requires onboarding to be complete. If the app lands on the onboarding screen
+after install, do **not** ask the user to complete it manually — do it via adb:
+
+```bash
+# Grant location permissions
+adb shell pm grant com.locationjoystick.app android.permission.ACCESS_FINE_LOCATION
+adb shell pm grant com.locationjoystick.app android.permission.ACCESS_COARSE_LOCATION
+
+# Grant overlay (draw over other apps) permission
+adb shell appops set com.locationjoystick.app SYSTEM_ALERT_WINDOW allow
+
+# Grant mock location permission (replaces "Select mock location app" in Developer Options)
+# The app checks OPSTR_MOCK_LOCATION via AppOpsManager — this satisfies it:
+adb shell appops set com.locationjoystick.app android:mock_location allow
+
+# Verify mock location is allowed
+adb shell appops get com.locationjoystick.app android:mock_location
+# Expected output: MOCK_LOCATION: allow
+```
+
+Then restart the app and dismiss the notification permission dialog (tap Allow):
+
+```bash
+adb shell am force-stop com.locationjoystick.app
+sleep 1
+adb shell am start -n com.locationjoystick.app/.MainActivity
+sleep 3
+# Tap "Allow" on the notification permission dialog (coordinates ~540,1400 on Pixel 7)
+adb shell input tap 540 1400
+sleep 1
+```
+
+Verify onboarding is past by dumping the UI — you should see app content (e.g. "Favorites",
+"Map", "Routes") rather than "Set up locationjoystick":
+
+```bash
+adb shell uiautomator dump /sdcard/ui.xml && adb pull /sdcard/ui.xml /tmp/ui.xml
+grep -o 'text="[^"]*"' /tmp/ui.xml | sort -u
+```
+
+Once past onboarding, proceed to Step 2.
 
 ---
 
