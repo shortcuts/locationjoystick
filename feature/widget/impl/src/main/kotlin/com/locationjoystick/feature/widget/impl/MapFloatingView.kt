@@ -511,29 +511,31 @@ internal fun MapFloatingView(
                                     .RoundedCornerShape(2.dp),
                             ),
                 )
-                RoamingSheetContent(
-                    draft = draft,
-                    speedUnit = speedUnit,
-                    hasCurrentPosition = currentPosition != null,
-                    isSpoofingActive = isSpoofing,
-                    hasPreview = roamingPreviewWaypoints != null,
-                    onDraftChange = { draft = it },
-                    onGenerate = {
-                        scope.launch {
-                            val pos = currentPosition ?: return@launch
-                            roamingPreviewWaypoints =
-                                onGeneratePreviewRoute(pos, draft.radiusMeters, draft.followRoads, draft.speedProfileId)
-                        }
-                    },
-                    onStart = {
-                        onStartRoaming(draft)
-                        showRoamingSheet = false
-                        roamingPreviewWaypoints = null
-                    },
-                    onViewOnMap = {
-                        showRoamingSheet = false
-                    },
-                )
+                Column(modifier = Modifier.fillMaxSize().padding(top = 28.dp)) {
+                    RoamingSheetContent(
+                        draft = draft,
+                        speedUnit = speedUnit,
+                        hasCurrentPosition = currentPosition != null,
+                        isSpoofingActive = isSpoofing,
+                        hasPreview = roamingPreviewWaypoints != null,
+                        onDraftChange = { draft = it },
+                        onGenerate = {
+                            scope.launch {
+                                val pos = currentPosition ?: return@launch
+                                roamingPreviewWaypoints =
+                                    onGeneratePreviewRoute(pos, draft.radiusMeters, draft.followRoads, draft.speedProfileId)
+                            }
+                        },
+                        onStart = {
+                            onStartRoaming(draft)
+                            showRoamingSheet = false
+                            roamingPreviewWaypoints = null
+                        },
+                        onViewOnMap = {
+                            showRoamingSheet = false
+                        },
+                    )
+                }
             }
         }
 
@@ -652,38 +654,54 @@ internal fun MapFloatingView(
                 Spacer(Modifier.height(12.dp))
                 if (favorites.isEmpty()) {
                     Text(
-                        "No favorites saved",
+                        "No favorites saved yet",
                         style = MaterialTheme.typography.bodyMedium,
                         color = LjText.copy(alpha = 0.6f),
                     )
                 } else {
-                    LazyColumn {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(favorites, key = { it.id }) { fav ->
-                            Row(
+                            Column(
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 6.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
+                                        .background(
+                                            Color.White.copy(alpha = 0.12f),
+                                            RoundedCornerShape(8.dp),
+                                        ).padding(12.dp),
                             ) {
                                 Text(
                                     fav.name,
-                                    style = MaterialTheme.typography.bodyLarge,
+                                    style = MaterialTheme.typography.titleMedium,
                                     color = LjText,
-                                    modifier = Modifier.weight(1f),
                                 )
-                                Button(onClick = {
-                                    onTeleport(fav.position)
-                                    showFavoritesPicker = false
-                                    onDismiss()
-                                }) { Text("Teleport") }
-                                Spacer(Modifier.width(8.dp))
-                                Button(onClick = {
-                                    onWalkTo(fav.position)
-                                    showFavoritesPicker = false
-                                    onDismiss()
-                                }) { Text("Walk") }
+                                Text(
+                                    text = "${String.format(
+                                        "%.4f",
+                                        fav.position.latitude,
+                                    )}, ${String.format("%.4f", fav.position.longitude)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = LjText.copy(alpha = 0.7f),
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(
+                                        onClick = {
+                                            onTeleport(fav.position)
+                                            showFavoritesPicker = false
+                                            onDismiss()
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                    ) { Text("Teleport") }
+                                    OutlinedButton(
+                                        onClick = {
+                                            onWalkTo(fav.position)
+                                            showFavoritesPicker = false
+                                            onDismiss()
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                    ) { Text("Walk") }
+                                }
                             }
                         }
                     }
