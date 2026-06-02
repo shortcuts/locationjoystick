@@ -27,7 +27,6 @@ import com.locationjoystick.app.ABOUT_ROUTE
 import com.locationjoystick.app.AboutScreen
 import com.locationjoystick.app.IDLE_ROUTE
 import com.locationjoystick.app.IdleScreen
-import com.locationjoystick.app.LjBannerAd
 import com.locationjoystick.core.common.util.isMockLocationEnabled
 import com.locationjoystick.core.common.util.isOverlayPermissionGranted
 import com.locationjoystick.feature.favorites.api.FAVORITES_ROUTE
@@ -102,7 +101,6 @@ fun LjNavHost(
                         popUpTo(ONBOARDING_ROUTE) { inclusive = true }
                     }
                 },
-                bottomBar = { LjBannerAd() },
             )
         }
 
@@ -130,14 +128,12 @@ fun LjNavHost(
                 onNavigateToAbout = {
                     navController.navigate(ABOUT_ROUTE) { launchSingleTop = true }
                 },
-                bottomBar = { LjBannerAd() },
             )
         }
 
         mapScreen(
             onOpenDrawer = onOpenDrawer,
             onNavigateToRoutes = { navController.navigate(ROUTES_GRAPH) { launchSingleTop = true } },
-            bottomBar = { LjBannerAd() },
         )
 
         navigation(startDestination = ROUTES_ROUTE, route = ROUTES_GRAPH) {
@@ -172,7 +168,6 @@ fun LjNavHost(
                     },
                     onOpenDrawer = onOpenDrawer,
                     viewModel = viewModel,
-                    bottomBar = { LjBannerAd() },
                 )
             }
 
@@ -186,7 +181,6 @@ fun LjNavHost(
                 RouteCreatorRoute(
                     onRouteSaved = { navController.navigateUp() },
                     onBack = { navController.navigateUp() },
-                    bottomBar = { LjBannerAd() },
                 )
             }
 
@@ -202,7 +196,6 @@ fun LjNavHost(
                     routeId = routeId,
                     onNavigateBack = { navController.navigateUp() },
                     onOpenDrawer = onOpenDrawer,
-                    bottomBar = { LjBannerAd() },
                 )
             }
         }
@@ -224,7 +217,6 @@ fun LjNavHost(
                     viewModel = favoritesViewModel,
                     onNavigateToMapPicker = { navController.navigate(MAP_PICKER_ROUTE) },
                     onOpenDrawer = onOpenDrawer,
-                    bottomBar = { LjBannerAd() },
                 )
             }
 
@@ -250,7 +242,6 @@ fun LjNavHost(
                     onBack = { navController.navigateUp() },
                     recentSearches = recentSearches,
                     onSearchCommitted = favoritesViewModel::addRecentSearch,
-                    bottomBar = { LjBannerAd() },
                 )
             }
         }
@@ -265,7 +256,6 @@ fun LjNavHost(
             SettingsRoute(
                 onOpenDrawer = onOpenDrawer,
                 viewModel = hiltViewModel(),
-                bottomBar = { LjBannerAd() },
             )
         }
 
@@ -276,7 +266,7 @@ fun LjNavHost(
             popEnterTransition = { fadeInScale() },
             popExitTransition = { fadeOutScale() },
         ) {
-            AboutScreen(onOpenDrawer = onOpenDrawer, bottomBar = { LjBannerAd() })
+            AboutScreen(onOpenDrawer = onOpenDrawer)
         }
     }
 }

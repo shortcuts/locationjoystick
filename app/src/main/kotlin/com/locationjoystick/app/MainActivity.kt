@@ -9,9 +9,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.android.gms.ads.MobileAds
-import com.google.android.ump.ConsentRequestParameters
-import com.google.android.ump.UserMessagingPlatform
 import com.locationjoystick.core.designsystem.LjTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -55,22 +52,6 @@ class MainActivity : ComponentActivity() {
         }
 
         handleIntent(intent)
-        initializeAds()
-    }
-
-    private fun initializeAds() {
-        val consentInformation = UserMessagingPlatform.getConsentInformation(this)
-        consentInformation.requestConsentInfoUpdate(
-            this,
-            ConsentRequestParameters.Builder().setTagForUnderAgeOfConsent(false).build(),
-            {
-                UserMessagingPlatform.loadAndShowConsentFormIfRequired(this) {
-                    if (consentInformation.canRequestAds()) MobileAds.initialize(this)
-                }
-            },
-            { MobileAds.initialize(this) },
-        )
-        if (consentInformation.canRequestAds()) MobileAds.initialize(this)
     }
 
     override fun onNewIntent(intent: Intent) {

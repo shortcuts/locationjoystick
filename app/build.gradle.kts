@@ -12,13 +12,6 @@ android {
     }
     defaultConfig {
         testInstrumentationRunner = "com.locationjoystick.app.HiltTestRunner"
-        manifestPlaceholders["admobAppId"] =
-            System.getenv("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
-        buildConfigField(
-            "String",
-            "ADMOB_BANNER_ID",
-            "\"${System.getenv("ADMOB_BANNER_ID") ?: "ca-app-pub-3940256099942544/6300978111"}\"",
-        )
     }
 }
 
@@ -58,9 +51,6 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-
-    implementation(libs.play.services.ads)
-    implementation(libs.user.messaging.platform)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.compose.ui.tooling.preview)

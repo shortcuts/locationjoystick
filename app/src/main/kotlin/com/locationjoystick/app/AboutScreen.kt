@@ -149,7 +149,7 @@ internal fun AboutScreen(
             Text(
                 text =
                     "App data (routes, favorites, settings) is stored locally on your device. " +
-                        "This app uses Google AdMob for advertising, which may collect device identifiers for ad personalisation.",
+                        "No data is shared with third parties.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
