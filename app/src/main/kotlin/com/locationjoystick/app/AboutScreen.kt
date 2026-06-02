@@ -94,10 +94,89 @@ internal fun AboutScreen(
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Map & location data",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text =
-                    "• MapLibre Android SDK\n• OpenStreetMap contributors\n" +
-                        "• OSRM — Open Source Routing Machine\n• ZXing — QR code library",
+                    "• MapLibre Android SDK — map rendering (BSD 2-Clause)\n" +
+                        "• OpenStreetMap contributors — map & routing data (ODbL)\n" +
+                        "• OSRM (router.project-osrm.org) — road routing (BSD 2-Clause)\n" +
+                        "• Nominatim / OSMF — place-name geocoding (ODbL / GPL-2.0)",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Language & async",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text =
+                    "• Kotlin — JetBrains (Apache 2.0)\n" +
+                        "• Kotlin Coroutines — JetBrains (Apache 2.0)\n" +
+                        "• Kotlin Serialization — JetBrains (Apache 2.0)",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "UI & design",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text =
+                    "• Jetpack Compose — Google (Apache 2.0)\n" +
+                        "• Material 3 — Google (Apache 2.0)\n" +
+                        "• AndroidX Navigation Compose — Google (Apache 2.0)\n" +
+                        "• AndroidX CameraX — Google (Apache 2.0)",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Architecture & storage",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text =
+                    "• Hilt / Dagger — Google (Apache 2.0)\n" +
+                        "• AndroidX Room — Google (Apache 2.0)\n" +
+                        "• AndroidX DataStore — Google (Apache 2.0)\n" +
+                        "• AndroidX Lifecycle — Google (Apache 2.0)",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Networking & QR",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text =
+                    "• Retrofit — Square (Apache 2.0)\n" +
+                        "• OkHttp — Square (Apache 2.0)\n" +
+                        "• ZXing — Google (Apache 2.0)",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -136,6 +215,13 @@ internal fun AboutScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.fillMaxWidth().clickable { openUrl(AppConstants.AppInfo.GITHUB_ISSUES_URL) },
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Acknowledgements",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.fillMaxWidth().clickable { openUrl(AppConstants.AppInfo.ACKNOWLEDGEMENTS_URL) },
             )
 
             Spacer(modifier = Modifier.height(24.dp))
