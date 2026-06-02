@@ -395,10 +395,10 @@ class MockLocationService : Service() {
             }
 
             ACTION_UPDATE_POSITION -> {
-                val lat = intent?.getDoubleExtra(ServiceConstants.EXTRA_LAT, currentLat) ?: currentLat
-                val lon = intent?.getDoubleExtra(ServiceConstants.EXTRA_LON, currentLon) ?: currentLon
-                val speedMs = intent?.getFloatExtra(ServiceConstants.EXTRA_SPEED_MS, 0f) ?: 0f
-                val bearing = intent?.getFloatExtra(ServiceConstants.EXTRA_BEARING, 0f) ?: 0f
+                val lat = intent.getDoubleExtra(ServiceConstants.EXTRA_LAT, currentLat)
+                val lon = intent.getDoubleExtra(ServiceConstants.EXTRA_LON, currentLon)
+                val speedMs = intent.getFloatExtra(ServiceConstants.EXTRA_SPEED_MS, 0f)
+                val bearing = intent.getFloatExtra(ServiceConstants.EXTRA_BEARING, 0f)
                 if (speedMs > 0f) {
                     updatePositionWithVector(lat, lon, speedMs, bearing)
                 } else {

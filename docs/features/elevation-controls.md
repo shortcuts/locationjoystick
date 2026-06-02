@@ -56,7 +56,7 @@ If the method is absent (`NoSuchMethodException`), `injectMethod` is `null` and 
 
 ## Noise Model
 
-Each injected value adds per-axis noise sampled from `Uniform(-NOISE_AMPLITUDE_MS2, +NOISE_AMPLITUDE_MS2)` (default ±0.35 m/s²). The tilt angle receives jitter of `±TILT_JITTER_DEGREES` (±2.25°) before the gravity decomposition, simulating natural hand tremor.
+Each injected value adds per-axis noise sampled from `Uniform(-DEFAULT_NOISE_AMPLITUDE_MS2, +DEFAULT_NOISE_AMPLITUDE_MS2)` (default ±0.35 m/s²). The tilt angle receives jitter of `±TILT_JITTER_DEGREES` (±2.25°) before the gravity decomposition, simulating natural hand tremor.
 
 ## Constants (`AppConstants.ElevationConstants`)
 

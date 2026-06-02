@@ -149,7 +149,7 @@ class FloatingWidgetService :
             }
         }
 
-    // Drag position — class-level so onConfigurationChanged can re-clamp them after rotation.
+    // Drag position — class-level so onConfigurationChanged can read them after rotation.
     private var dragOffsetX = 0f
     private var dragOffsetY = 0f
 
@@ -843,33 +843,6 @@ class FloatingWidgetService :
                     serviceScope.launch { settingsRepository.addRecentSearch(name, lat, lon) }
                 },
             )
-        }
-    }
-
-    private fun startRoamingWithDefaults() {
-        serviceScope.launch {
-            try {
-                val pos = locationRepository.currentPosition.value
-                if (pos == null) {
-                    Log.w(TAG, "Cannot start roaming: no current position")
-                    return@launch
-                }
-                val defaults = settingsRepository.getRoamingDefaults().first()
-                val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
-                val config =
-                    RoamingConfig(
-                        centerPosition = pos,
-                        radiusMeters = defaults.radiusMeters,
-                        distanceMeters = defaults.distanceMeters,
-                        speedProfileId = defaults.speedProfileId,
-                        useRoadSnapping = defaults.followRoads,
-                        returnToInitialLocation = defaults.returnToInitialLocation,
-                    )
-                roamingRepository.startRoaming(config, speedMs)
-                Log.d(TAG, "Started roaming with defaults")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to start roaming", e)
-            }
         }
     }
 

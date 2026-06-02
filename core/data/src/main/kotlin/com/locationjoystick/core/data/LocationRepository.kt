@@ -81,11 +81,10 @@ class LocationRepository
 
         /**
          * True when the current active mode supports pause/resume.
+         * All active movement modes (route replay, roaming, walk-to) support pause/resume,
+         * so this is always equivalent to [isActivityActive].
          */
-        val isActivityPausable: Flow<Boolean> =
-            _currentMode.map { mode ->
-                mode == MockMode.ROUTE_REPLAY || mode == MockMode.WALK_TO || mode == MockMode.ROAMING
-            }
+        val isActivityPausable: Flow<Boolean> = isActivityActive
 
         fun updatePosition(
             lat: Double,

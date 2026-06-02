@@ -1,5 +1,3 @@
-The error is clear: the second `:core:model` inline code was replaced by "there" in the last bullet. I'll restore it.
-
 # Constants
 
 All constants → `:core:common/constants/AppConstants.kt`.
@@ -10,11 +8,11 @@ All constants → `:core:common/constants/AppConstants.kt`.
 |--------|----------|
 | `LocationConstants` | Update interval, earth radius, walk threshold, RDP epsilon |
 | `ProfileConstants` | Walk/Run/Bike speed presets, min/max speed, anti-cheat threshold |
-| `JitterConstants` | Accuracy min/max, jitter radii |
+| `JitterConstants` | Accuracy min/max, jitter radii, intervals, speed variation percentages |
 | `RealismConstants` | Altitude sigma/drift/clamp, warmup duration, satellite interval, suspended push/pause durations |
-| `RoamingConstants` | OSRM profile, overview, geometries settings |
-| `OsrmConstants` | Base URL, endpoint paths |
-| `MapConstants` | Default lat/lon |
+| `RoamingConstants` | Default radius/distance, speed profile IDs, arrival threshold, road-snapping defaults |
+| `OsrmConstants` | Base URL, overview, geometries format |
+| `MapConstants` | Default coordinates, zoom, tile URL, map source/layer IDs |
 | `NominatimConstants` | Search endpoint |
 | `ExportConstants` | Schema version, MIME type, GPX MIME type, GPX version/creator, max GPX import size |
 | `CooldownConstants` | Walk-to and teleport cooldown durations |
@@ -29,7 +27,8 @@ All constants → `:core:common/constants/AppConstants.kt`.
 | `WidgetConstants` | Widget sizing |
 | `RouteConstants` | Route-related defaults |
 | `DatabaseConstants` | DB name, version |
-| `AppInfo` | Version name/code |
+| `AppInfo` | GitHub repo URL, issues URL, privacy policy URL |
+| `ElevationConstants` | Tilt angle, noise amplitude, tilt jitter, gravity constant |
 
 ## Rules
 
