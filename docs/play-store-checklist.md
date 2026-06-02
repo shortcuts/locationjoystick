@@ -3,6 +3,10 @@
 These require action in Google Play Console or external tools.
 Everything code-side is already implemented.
 
+**Code validation status (as of launch day):**
+- `make lint` → BUILD SUCCESSFUL ✓
+- `make test` → BUILD SUCCESSFUL ✓
+
 ---
 
 ## Before First Upload
@@ -14,8 +18,8 @@ Everything code-side is already implemented.
 
 ## Privacy Policy
 
-- [ ] Publish `docs/wiki/privacy.html` to GitHub Pages
-  - Enable GitHub Pages on the repo (Settings → Pages → main branch / docs folder)
+- [x] `docs/wiki/privacy.html` exists
+- [ ] Enable GitHub Pages on the repo (Settings → Pages → main branch / docs folder)
   - Verify URL works: `https://shortcuts.github.io/locationjoystick/privacy.html`
 - [ ] Add the privacy policy URL in Play Console → App content → Privacy policy
 
@@ -67,11 +71,11 @@ Play Console → App content → Target audience and content.
 
 ## Store Listing Assets
 
-- [ ] **Short description** (≤80 chars): `Mock your GPS location on Android — no root, no ads.`
-- [ ] **Full description** (≤4000 chars): explain all features
-- [ ] **Screenshots**: 15 already in `docs/wiki/screenshots/` — upload at least 2 phone screenshots
-- [ ] **Feature graphic** (1024×500 px): design and upload — shown at top of listing
-- [ ] **App icon** (512×512 px): use `docs/wiki/icon.png` (resize if needed)
+- [x] **Short description** (≤80 chars): `Mock your GPS location on Android — no root, no ads.`
+- [ ] **Full description** (≤4000 chars): use the feature list from `docs/reddit-post.md` as base, expand into Store prose
+- [x] **Screenshots**: all 15 in `docs/wiki/screenshots/` (1080×2340) — upload at least 2
+- [ ] **Feature graphic** (1024×500 px): does not exist yet — design and upload (shown at top of listing)
+- [ ] **App icon** (512×512 px): `docs/wiki/icon.png` is currently **192×192** — must be resized/exported at 512×512 before upload
 
 ---
 
@@ -88,9 +92,20 @@ Play Console → App content:
 
 ## Pre-launch Checklist
 
-- [ ] `make lint` passes with zero errors
-- [ ] `make test` passes
-- [ ] `make bundle` produces a signed AAB (env vars set)
+- [x] `make lint` passes with zero errors
+- [x] `make test` passes
+- [ ] `make bundle` produces a signed AAB (env vars `KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` set)
 - [ ] Internal test track upload succeeds in Play Console
-- [ ] Privacy Policy URL resolves in browser
+- [ ] Privacy Policy URL resolves in browser (`https://shortcuts.github.io/locationjoystick/privacy.html`)
 - [ ] About screen Privacy Policy link opens correctly in-app
+
+---
+
+## Blockers (must resolve before submission)
+
+1. **App icon** — resize `docs/wiki/icon.png` from 192×192 to 512×512
+2. **Feature graphic** — create a 1024×500 px banner image
+3. **Full store description** — write the Play Store long description
+4. **GitHub Pages** — enable in repo settings so the privacy URL resolves
+5. **Signed AAB** — run `make bundle` with signing env vars configured
+6. **Play Console account** — $25 registration if not done yet
