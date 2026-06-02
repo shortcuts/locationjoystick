@@ -31,6 +31,8 @@ jobs:
               - '**/gradle-wrapper.properties'
               - '**/AndroidManifest.xml'
               - 'Makefile'
+              - 'CHANGELOG.md'
+              - '.release-please-manifest.json'
 
   release-please:
     if: github.event_name == 'push'
