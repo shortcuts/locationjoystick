@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/shortcuts/locationjoystick/compare/v0.2.0...v0.3.0) (2026-06-02)
+
+
+### Features
+
+* **widget:** harmonize floating map roaming sheet and favorites list ([1cc66bf](https://github.com/shortcuts/locationjoystick/commit/1cc66bf0b873e91985bdbdf60e8bc9cf1e9f24a9))
+* **widget:** play-button pattern for favorites in floating widget ([7619081](https://github.com/shortcuts/locationjoystick/commit/76190815c15dfbae971ec6fa52af2701efc78868))
+
+
+### Bug Fixes
+
+* **ci:** upload per-ABI APKs to GitHub Release ([13fc9b4](https://github.com/shortcuts/locationjoystick/commit/13fc9b429b304d62a5c18161681d72137b0da89a))
+* **joystick:** correct overlay gravity so drag moves correctly ([71c4ae9](https://github.com/shortcuts/locationjoystick/commit/71c4ae990d20d98323fb937d2dc529d90b1ac26b))
+
 ## [0.2.0](https://github.com/shortcuts/locationjoystick/compare/v0.1.0...v0.2.0) (2026-06-02)
 
 
