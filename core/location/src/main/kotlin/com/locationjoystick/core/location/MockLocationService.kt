@@ -424,6 +424,12 @@ class MockLocationService : Service() {
         // serviceScope.cancel() below cancels updateJob (child of the scope) automatically.
         updateJob = null
         removeTestProvider()
+        // Persist last location on external kill (process killed, OOM, etc.)
+        // stopSpoofing() handles this on normal stop, but onDestroy may be called without it.
+        if (realism.rememberLastLocation && _state.value == MockLocationState.RUNNING) {
+            val pos = LatLng(currentLat, currentLon)
+            kotlinx.coroutines.runBlocking { settingsRepository.setLastLocation(pos) }
+        }
         locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
         routeReplayEngine.close()
