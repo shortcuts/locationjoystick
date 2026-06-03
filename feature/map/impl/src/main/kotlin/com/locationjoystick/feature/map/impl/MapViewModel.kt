@@ -622,7 +622,7 @@ class MapViewModel
         private fun observeDeepLinkCoords() {
             viewModelScope.launch {
                 deepLinkRepository.pendingCoords.collect { coords ->
-                    _uiState.update { it.copy(pendingTapPosition = coords) }
+                    _uiState.update { it.copy(pendingTapPosition = coords, pendingCameraTarget = coords) }
                 }
             }
         }

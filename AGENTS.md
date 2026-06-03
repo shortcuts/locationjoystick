@@ -157,6 +157,7 @@ Replace `<your-model-id>` with active model:
 | Roaming Mode | @docs/features/roaming.md |
 | Export / Import | @docs/features/export-import.md |
 | QR Share / Transfer | @docs/features/qr-transfer.md |
+| Deep Links & Location Sharing | @docs/features/deep-link.md |
 | Last Remembered Location | @docs/features/last-location.md |
 | Onboarding | @docs/features/onboarding.md |
 | About Page | @docs/features/about-page.md |
@@ -229,6 +230,7 @@ make wiki-serve   # http://localhost:8080
 | `docs/wiki/map.html` | Map screen + bottom sheets |
 | `docs/wiki/routes.html` | Routes list + creator + detail |
 | `docs/wiki/favorites.html` | Favorites list + map picker |
+| `docs/wiki/share.html` | Share & deep link URL reference |
 | `docs/wiki/settings.html` | Settings + QR transfer |
 | `docs/wiki/overlays.html` | Joystick + widget overlays |
 | `docs/wiki/onboarding.html` | First-run setup + troubleshooting |

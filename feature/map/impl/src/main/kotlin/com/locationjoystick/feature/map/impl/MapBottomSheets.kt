@@ -174,6 +174,7 @@ internal fun PendingTapSheet(
     cooldownState: CooldownState,
     onAction: (MapAction) -> Unit,
     isEphemeralReplay: Boolean = false,
+    onShare: (() -> Unit)? = null,
 ) {
     ModalBottomSheet(
         onDismissRequest = { onAction(MapAction.ClearPendingTap) },
@@ -244,6 +245,15 @@ internal fun PendingTapSheet(
                     ) {
                         Text("Add next point")
                     }
+                }
+            }
+            if (onShare != null) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onShare,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Share this location")
                 }
             }
             Spacer(Modifier.height(4.dp))

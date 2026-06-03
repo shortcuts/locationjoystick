@@ -40,6 +40,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import android.content.Intent
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
@@ -405,6 +406,14 @@ internal fun MapScreen(
             cooldownState = uiState.cooldownState,
             isEphemeralReplay = uiState.ephemeralWaypoints.isNotEmpty(),
             onAction = onAction,
+            onShare = {
+                val url = AppConstants.AppInfo.buildDeepLink(pending.latitude, pending.longitude)
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, url)
+                }
+                context.startActivity(Intent.createChooser(shareIntent, null))
+            },
         )
     }
 

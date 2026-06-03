@@ -43,6 +43,7 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.Visibility
 
@@ -84,6 +85,7 @@ object LjIcons {
     val Route = Icons.Rounded.Route
     val Save = Icons.Rounded.Save
     val Search = Icons.Rounded.Search
+    val Share = Icons.Rounded.Share
     val Settings = Icons.Rounded.Settings
     val Speed = Icons.Rounded.Speed
     val Stop = Icons.Rounded.Stop

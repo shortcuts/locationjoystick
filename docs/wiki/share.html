@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Share &amp; Deep Links — locationjoystick</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <a class="brand" href="index.html">
+      <img src="icon.png" alt="" width="32" height="32">
+      <span class="brand-name">locationjoystick</span>
+    </a>
+    <button class="nav-toggle-btn" aria-label="Toggle navigation" onclick="this.closest('.sidebar').querySelector('nav').classList.toggle('open')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a href="home.html">Home</a>
+      <a href="map.html">Map</a>
+      <a href="routes.html">Routes</a>
+      <a href="favorites.html">Favorites</a>
+      <a href="share.html" class="active">Share &amp; Deep Links</a>
+      <a href="settings.html">Settings</a>
+      <a href="overlays.html">Overlays</a>
+      <a href="onboarding.html">Onboarding</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="acknowledgements.html">Acknowledgements</a>
+      <span class="nav-sep"></span>
+      <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+      <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/issues/new?labels=bug" target="_blank" rel="noopener">Report a bug</a>
+      <a class="nav-ext" href="https://github.com/shortcuts/locationjoystick/issues/new?labels=enhancement" target="_blank" rel="noopener">Request a feature</a>
+    </nav>
+    <div class="sidebar-foot">
+      <a class="gh-star" href="https://github.com/shortcuts/locationjoystick" target="_blank" rel="noopener">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.872 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+        Star
+        <span class="gh-star-sep"></span>
+        <span class="gh-star-count">—</span>
+      </a><span class="sidebar-foot-lic">· MIT License</span>
+    </div>
+  </aside>
+
+  <main>
+    <h2>Share &amp; Deep Links</h2>
+    <p>
+      Share any coordinate or saved favorite as a link. Tapping the link on Android opens the app
+      directly, centers the map on the location, and asks what you want to do with it.
+    </p>
+
+    <h2>Sharing a location</h2>
+    <p>Two places in the app generate shareable links:</p>
+    <ul class="section-bullets">
+      <li><strong>Favorites</strong> — tap ⋮ on any saved favorite → <strong>Share</strong>.</li>
+      <li><strong>Map</strong> — long-press any point on the map → bottom sheet → <strong>Share this location</strong>.</li>
+    </ul>
+    <p>
+      Both fire the system share sheet with a plain-text URL. You can send it via any messaging
+      app, copy it to clipboard, or generate a QR code with a third-party tool.
+    </p>
+
+    <h2>What happens when the link is opened</h2>
+    <ol class="section-bullets">
+      <li>The app opens (or comes to the foreground if already running).</li>
+      <li>The map screen activates and pans to the linked coordinate.</li>
+      <li>A confirmation sheet appears with these options:
+        <ul>
+          <li><strong>Teleport here</strong> — instantly move your spoofed position.</li>
+          <li><strong>Walk here</strong> — walk to the coordinate at your current speed.</li>
+          <li><strong>Walk here via roads</strong> — follow road geometry to the coordinate.</li>
+          <li><strong>Do nothing</strong> — dismiss without changing position.</li>
+        </ul>
+      </li>
+    </ol>
+    <p>Nothing happens automatically — you always confirm the action.</p>
+
+    <h2>URL format</h2>
+    <p>The canonical link format is:</p>
+    <pre><code>https://locationjoystick.shrtcts.fr/?lat=LAT&amp;lon=LON</code></pre>
+
+    <table>
+      <thead>
+        <tr><th>Parameter</th><th>Type</th><th>Valid range</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>lat</code></td><td>decimal</td><td>−90 to 90</td><td>Latitude</td></tr>
+        <tr><td><code>lon</code></td><td>decimal</td><td>−180 to 180</td><td>Longitude</td></tr>
+      </tbody>
+    </table>
+
+    <p>Example:</p>
+    <pre><code>https://locationjoystick.shrtcts.fr/?lat=35.6762&amp;lon=139.6503</code></pre>
+
+    <h2>For third-party tools</h2>
+    <p>
+      If you build automation, scripts, or integrations that open coordinates in locationjoystick,
+      construct the URL directly — no API key or authentication required.
+    </p>
+    <ul class="section-bullets">
+      <li>Both <code>lat</code> and <code>lon</code> are required. Missing either silently drops the link.</li>
+      <li>Coordinates outside the valid range are rejected and the link is ignored.</li>
+      <li>Standard URL percent-encoding applies, though coordinates are pure ASCII.</li>
+    </ul>
+    <p>A custom URI scheme is also supported for app-to-app workflows:</p>
+    <pre><code>locationjoystick://open?lat=LAT&amp;lon=LON</code></pre>
+    <p>Both schemes are parsed identically. Use HTTPS for anything user-facing.</p>
+  </main>
+
+</div>
+<script>
+fetch('https://api.github.com/repos/shortcuts/locationjoystick')
+  .then(function(r){return r.json()})
+  .then(function(d){
+    var n=d.stargazers_count,t=n>=1000?(n/1000).toFixed(1)+'k':String(n);
+    document.querySelectorAll('.gh-star-count').forEach(function(el){el.textContent=t});
+  })
+  .catch(function(){});
+</script>
+</body>
+</html>

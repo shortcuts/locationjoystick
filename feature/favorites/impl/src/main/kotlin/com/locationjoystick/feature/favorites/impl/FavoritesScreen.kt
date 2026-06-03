@@ -38,10 +38,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.content.Intent
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
@@ -58,6 +61,7 @@ fun FavoritesRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cooldownStates by viewModel.cooldownStates.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     FavoritesScreen(
         uiState = uiState,
@@ -71,6 +75,14 @@ fun FavoritesRoute(
         onNavigateToMapPicker = onNavigateToMapPicker,
         onOpenDrawer = onOpenDrawer,
         onToggleSort = viewModel::toggleSort,
+        onShare = { fav ->
+            val url = AppConstants.AppInfo.buildDeepLink(fav.position.latitude, fav.position.longitude)
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, url)
+            }
+            context.startActivity(Intent.createChooser(shareIntent, null))
+        },
         getCurrentPosition = { viewModel.currentPosition },
         bottomBar = bottomBar,
     )
@@ -104,6 +116,7 @@ internal fun FavoritesScreen(
     onNavigateToMapPicker: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
     onToggleSort: () -> Unit = {},
+    onShare: (com.locationjoystick.core.model.FavoriteLocation) -> Unit = {},
     getCurrentPosition: () -> com.locationjoystick.core.model.LatLng? = { null },
     bottomBar: @Composable () -> Unit = {},
 ) {
@@ -197,6 +210,7 @@ internal fun FavoritesScreen(
                                 onRowClick = { onTeleport(favorite) },
                                 onEdit = { editingFavorite = it },
                                 onDelete = { onSetPendingDeleteId(it.id) },
+                                onShare = onShare,
                             )
                         }
                     }
@@ -255,6 +269,7 @@ private fun FavoriteCard(
     onRowClick: (com.locationjoystick.core.model.FavoriteLocation) -> Unit,
     onEdit: (com.locationjoystick.core.model.FavoriteLocation) -> Unit,
     onDelete: (com.locationjoystick.core.model.FavoriteLocation) -> Unit,
+    onShare: (com.locationjoystick.core.model.FavoriteLocation) -> Unit = {},
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -293,6 +308,14 @@ private fun FavoriteCard(
                         menuExpanded = false
                     },
                     leadingIcon = { Icon(LjIcons.Edit, null) },
+                )
+                DropdownMenuItem(
+                    text = { Text("Share") },
+                    onClick = {
+                        onShare(favorite)
+                        menuExpanded = false
+                    },
+                    leadingIcon = { Icon(LjIcons.Share, null) },
                 )
                 DropdownMenuItem(
                     text = { Text("Delete") },
