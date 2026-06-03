@@ -315,7 +315,9 @@ class FloatingWidgetService :
                 panelPresenter.showMapFloatingView()
             }
 
-            WidgetFeature.ELEVATION_CONTROLS -> Unit
+            WidgetFeature.ELEVATION_CONTROLS -> {
+                Unit
+            }
         }
     }
 

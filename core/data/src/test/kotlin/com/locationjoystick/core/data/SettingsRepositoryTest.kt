@@ -878,11 +878,12 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         )
 
     override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
-        speedProfilesFlow.value = speedProfilesFlow.value.copy(
-            walkSpeedMs = snapshot.walkSpeedMs,
-            runSpeedMs = snapshot.runSpeedMs,
-            bikeSpeedMs = snapshot.bikeSpeedMs,
-        )
+        speedProfilesFlow.value =
+            speedProfilesFlow.value.copy(
+                walkSpeedMs = snapshot.walkSpeedMs,
+                runSpeedMs = snapshot.runSpeedMs,
+                bikeSpeedMs = snapshot.bikeSpeedMs,
+            )
         widgetItemsFlow.value = snapshot.widgetFeatures.map { it.toKey() }.toSet()
     }
 }

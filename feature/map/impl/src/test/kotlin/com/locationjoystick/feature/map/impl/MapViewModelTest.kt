@@ -1,11 +1,11 @@
 package com.locationjoystick.feature.map.impl
 
 import android.content.Context
+import com.locationjoystick.core.data.DeepLinkRepository
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
-import com.locationjoystick.core.data.DeepLinkRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.data.WalkCoordinator

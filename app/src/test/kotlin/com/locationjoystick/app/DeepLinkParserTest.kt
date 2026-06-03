@@ -9,7 +9,11 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class DeepLinkParserTest {
-    private fun intent(lat: String?, lon: String?, scheme: String = "https"): Intent {
+    private fun intent(
+        lat: String?,
+        lon: String?,
+        scheme: String = "https",
+    ): Intent {
         val uri = mockk<Uri>()
         every { uri.getQueryParameter("lat") } returns lat
         every { uri.getQueryParameter("lon") } returns lon

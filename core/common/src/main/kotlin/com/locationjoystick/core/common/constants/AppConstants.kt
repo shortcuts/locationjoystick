@@ -248,7 +248,10 @@ object AppConstants {
         const val ACKNOWLEDGEMENTS_URL = "https://shortcuts.github.io/locationjoystick/acknowledgements.html"
         const val DEEP_LINK_HOST = "locationjoystick.shrtcts.fr"
 
-        fun buildDeepLink(lat: Double, lon: Double) = "https://$DEEP_LINK_HOST/?lat=$lat&lon=$lon"
+        fun buildDeepLink(
+            lat: Double,
+            lon: Double,
+        ) = "https://$DEEP_LINK_HOST/?lat=$lat&lon=$lon"
     }
 
     object UnitConversionConstants {

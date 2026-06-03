@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.favorites.impl
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +44,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import android.content.Intent
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
@@ -77,10 +77,11 @@ fun FavoritesRoute(
         onToggleSort = viewModel::toggleSort,
         onShare = { fav ->
             val url = AppConstants.AppInfo.buildDeepLink(fav.position.latitude, fav.position.longitude)
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, url)
-            }
+            val shareIntent =
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, url)
+                }
             context.startActivity(Intent.createChooser(shareIntent, null))
         },
         getCurrentPosition = { viewModel.currentPosition },
