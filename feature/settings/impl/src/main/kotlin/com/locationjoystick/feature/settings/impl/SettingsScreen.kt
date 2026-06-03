@@ -289,6 +289,10 @@ fun SettingsRoute(
                     viewModel.setElevationNoiseAmplitudeMs2(action.amplitude)
                 }
 
+                is SettingsAction.SetHotLocationsEnabled -> {
+                    viewModel.setHotLocationsEnabled(action.enabled)
+                }
+
                 is SettingsAction.RequestElevationAccess -> {
                     viewModel.requestElevationAccess()
                 }
@@ -466,6 +470,8 @@ internal fun SettingsScreen(
                         GpsRealismSection(uiState, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
                         MapSection(uiState, onAction)
+                        Spacer(modifier = Modifier.height(24.dp))
+                        FavoritesSection(uiState, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
                         FloatingWidgetSection(uiState, isRooted, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
@@ -645,6 +651,29 @@ private fun MapSection(
         onCheckedChange = { onAction(SettingsAction.SetMapFollowsLocation(it)) },
         title = "Follow location on map",
         description = "Keeps the map camera centered on the spoofed position as it moves.",
+    )
+}
+
+@Composable
+private fun FavoritesSection(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    Text("Favorites", style = MaterialTheme.typography.headlineSmall)
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        "Options for the favorites list.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    LjCheckboxRow(
+        checked = uiState.hotLocationsEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetHotLocationsEnabled(it)) },
+        title = "Show hot locations",
+        description =
+            "Adds a curated list of popular locations to your favorites. Enabling adds 26 locations;" +
+                " disabling removes the ones added by this feature.",
     )
 }
 

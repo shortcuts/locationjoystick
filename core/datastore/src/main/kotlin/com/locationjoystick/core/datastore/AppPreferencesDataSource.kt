@@ -186,6 +186,12 @@ interface PreferencesDataSource {
     /** Sets the elevation accelerometer noise amplitude in m/s². */
     suspend fun setElevationNoiseAmplitudeMs2(amplitude: Float)
 
+    /** Gets whether hot locations are enabled. */
+    fun getHotLocationsEnabled(): Flow<Boolean>
+
+    /** Sets whether hot locations are enabled. */
+    suspend fun setHotLocationsEnabled(enabled: Boolean)
+
     /** Returns all settings needed by the settings UI in a single DataStore scan. */
     fun getSettingsSnapshot(): Flow<SettingsSnapshot>
 }
@@ -211,6 +217,7 @@ data class SettingsSnapshot(
     val jitterSpeedMovingVariationPct: Int,
     val elevationTiltJitterDegrees: Float,
     val elevationNoiseAmplitudeMs2: Float,
+    val hotLocationsEnabled: Boolean,
 )
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -273,6 +280,7 @@ class AppPreferencesDataSource
             val JITTER_SPEED_MOVING_VARIATION_PCT = intPreferencesKey("jitter_speed_moving_variation_pct")
             val ELEVATION_TILT_JITTER_DEGREES = floatPreferencesKey("elevation_tilt_jitter_degrees")
             val ELEVATION_NOISE_AMPLITUDE_MS2 = floatPreferencesKey("elevation_noise_amplitude_ms2")
+            val HOT_LOCATIONS_ENABLED = booleanPreferencesKey("hot_locations_enabled")
         }
 
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -580,6 +588,12 @@ class AppPreferencesDataSource
             }
         }
 
+        override fun getHotLocationsEnabled(): Flow<Boolean> = pref(Keys.HOT_LOCATIONS_ENABLED, false)
+
+        override suspend fun setHotLocationsEnabled(enabled: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.HOT_LOCATIONS_ENABLED] = enabled }
+        }
+
         override fun getSettingsSnapshot(): Flow<SettingsSnapshot> =
             dataStore.data
                 .catch { e ->
@@ -629,6 +643,7 @@ class AppPreferencesDataSource
                         elevationNoiseAmplitudeMs2 =
                             prefs[Keys.ELEVATION_NOISE_AMPLITUDE_MS2]
                                 ?: DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2,
+                        hotLocationsEnabled = prefs[Keys.HOT_LOCATIONS_ENABLED] ?: false,
                     )
                 }
 

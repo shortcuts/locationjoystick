@@ -85,6 +85,10 @@ internal sealed class SettingsAction {
         val amplitude: Float,
     ) : SettingsAction()
 
+    data class SetHotLocationsEnabled(
+        val enabled: Boolean,
+    ) : SettingsAction()
+
     data object RequestElevationAccess : SettingsAction()
 
     data class UpdateRoamingDefaults(

@@ -151,4 +151,109 @@ class FavoriteRepositoryTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+    @Test
+    fun `upsertHotLocations inserts all 26 hot locations`() =
+        runTest {
+            repository.upsertHotLocations()
+
+            repository.getFavorites().test {
+                val list = awaitItem()
+                assertEquals(FavoriteRepository.HOT_LOCATIONS.size, list.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `upsertHotLocations uses hot_ id prefix for new entries`() =
+        runTest {
+            repository.upsertHotLocations()
+
+            repository.getFavorites().test {
+                val list = awaitItem()
+                list.forEach { fav ->
+                    assertTrue("Expected hot_ prefix for ${fav.name}", fav.id.startsWith("hot_"))
+                }
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `upsertHotLocations updates coordinates when name already exists`() =
+        runTest {
+            // Pre-existing favorite with same name as a hot location, different coords
+            repository.addFavorite("user-id", "Singapore", LatLng(0.0, 0.0), createdAt = 1_000L)
+
+            repository.upsertHotLocations()
+
+            repository.getFavorites().test {
+                val list = awaitItem()
+                val singapore = list.first { it.name == "Singapore" }
+                // Coords updated to hot location values
+                assertEquals(1.288719, singapore.position.latitude, 0.000001)
+                assertEquals(103.848742, singapore.position.longitude, 0.000001)
+                // Original id preserved (not replaced with hot_ prefix)
+                assertEquals("user-id", singapore.id)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `upsertHotLocations does not create duplicate when called twice`() =
+        runTest {
+            repository.upsertHotLocations()
+            repository.upsertHotLocations()
+
+            repository.getFavorites().test {
+                val list = awaitItem()
+                assertEquals(FavoriteRepository.HOT_LOCATIONS.size, list.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `removeHotLocations deletes hot_ prefixed entries`() =
+        runTest {
+            repository.upsertHotLocations()
+            repository.removeHotLocations()
+
+            repository.getFavorites().test {
+                val list = awaitItem()
+                assertTrue(list.isEmpty())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `removeHotLocations preserves user favorites with non-hot_ ids`() =
+        runTest {
+            repository.addFavorite("user-1", "My Place", LatLng(10.0, 20.0), createdAt = 1_000L)
+            repository.upsertHotLocations()
+            repository.removeHotLocations()
+
+            repository.getFavorites().test {
+                val list = awaitItem()
+                assertEquals(1, list.size)
+                assertEquals("My Place", list.first().name)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `removeHotLocations preserves user favorite that had name collision with hot location`() =
+        runTest {
+            // User had "Singapore" before hot locations were enabled — upsert updates coords, keeps user id
+            repository.addFavorite("user-id", "Singapore", LatLng(0.0, 0.0), createdAt = 1_000L)
+            repository.upsertHotLocations()
+            repository.removeHotLocations()
+
+            // "Singapore" kept because its id is "user-id", not "hot_*"
+            repository.getFavorites().test {
+                val list = awaitItem()
+                assertEquals(1, list.size)
+                assertEquals("Singapore", list.first().name)
+                assertEquals("user-id", list.first().id)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
 }

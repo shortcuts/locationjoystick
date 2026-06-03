@@ -28,4 +28,10 @@ interface FavoriteDao {
 
     @Query("DELETE FROM favorites")
     suspend fun deleteAll()
+
+    @Query("SELECT * FROM favorites WHERE name = :name LIMIT 1")
+    suspend fun getByName(name: String): FavoriteEntity?
+
+    @Query("DELETE FROM favorites WHERE id LIKE 'hot_%'")
+    suspend fun deleteHotLocations()
 }

@@ -27,5 +27,6 @@ data class SettingsUiState(
     val jitterSpeedMovingVariationPct: Int = AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT,
     val elevationTiltJitterDegrees: Float = AppConstants.ElevationConstants.DEFAULT_TILT_JITTER_DEGREES,
     val elevationNoiseAmplitudeMs2: Float = AppConstants.ElevationConstants.DEFAULT_NOISE_AMPLITUDE_MS2,
+    val hotLocationsEnabled: Boolean = false,
     val isDirty: Boolean = false,
 )

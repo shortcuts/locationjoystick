@@ -98,6 +98,7 @@ class SettingsViewModel
             val jitterSpeedMovingVariationPct: Int,
             val elevationTiltJitterDegrees: Float,
             val elevationNoiseAmplitudeMs2: Float,
+            val hotLocationsEnabled: Boolean,
         )
 
         private data class DraftState(
@@ -122,6 +123,7 @@ class SettingsViewModel
             val jitterSpeedMovingVariationPct: Int? = null,
             val elevationTiltJitterDegrees: Float? = null,
             val elevationNoiseAmplitudeMs2: Float? = null,
+            val hotLocationsEnabled: Boolean? = null,
         )
 
         private val mutableDraft = MutableStateFlow(DraftState())
@@ -149,6 +151,7 @@ class SettingsViewModel
                     jitterSpeedMovingVariationPct = s.jitterSpeedMovingVariationPct,
                     elevationTiltJitterDegrees = s.elevationTiltJitterDegrees,
                     elevationNoiseAmplitudeMs2 = s.elevationNoiseAmplitudeMs2,
+                    hotLocationsEnabled = s.hotLocationsEnabled,
                 )
             }
 
@@ -193,6 +196,7 @@ class SettingsViewModel
                     jitterSpeedMovingVariationPct = draftState.jitterSpeedMovingVariationPct ?: repoState.jitterSpeedMovingVariationPct,
                     elevationTiltJitterDegrees = draftState.elevationTiltJitterDegrees ?: repoState.elevationTiltJitterDegrees,
                     elevationNoiseAmplitudeMs2 = draftState.elevationNoiseAmplitudeMs2 ?: repoState.elevationNoiseAmplitudeMs2,
+                    hotLocationsEnabled = draftState.hotLocationsEnabled ?: repoState.hotLocationsEnabled,
                     isDirty = isDirty,
                 )
             }.stateIn(
@@ -285,6 +289,10 @@ class SettingsViewModel
             mutableDraft.update { it.copy(elevationNoiseAmplitudeMs2 = amplitude) }
         }
 
+        fun setHotLocationsEnabled(enabled: Boolean) {
+            mutableDraft.update { it.copy(hotLocationsEnabled = enabled) }
+        }
+
         fun saveChanges() {
             viewModelScope.launch {
                 try {
@@ -329,6 +337,14 @@ class SettingsViewModel
                     }
                     if (d.elevationNoiseAmplitudeMs2 != null) {
                         settingsRepository.setElevationNoiseAmplitudeMs2(d.elevationNoiseAmplitudeMs2)
+                    }
+                    if (d.hotLocationsEnabled != null) {
+                        settingsRepository.setHotLocationsEnabled(d.hotLocationsEnabled)
+                        if (d.hotLocationsEnabled) {
+                            favoriteRepository.upsertHotLocations()
+                        } else {
+                            favoriteRepository.removeHotLocations()
+                        }
                     }
                     mutableDraft.value = DraftState()
                     userFeedback.emit(UserFeedback("Settings saved"))
@@ -400,6 +416,7 @@ class SettingsViewModel
                 jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
                 elevationTiltJitterDegrees = state.elevationTiltJitterDegrees,
                 elevationNoiseAmplitudeMs2 = state.elevationNoiseAmplitudeMs2,
+                hotLocationsEnabled = state.hotLocationsEnabled,
             )
         }
 
@@ -463,6 +480,7 @@ class SettingsViewModel
                     setJitterSpeedMovingVariationPct(exportData.jitterSpeedMovingVariationPct)
                     setElevationTiltJitterDegrees(exportData.elevationTiltJitterDegrees)
                     setElevationNoiseAmplitudeMs2(exportData.elevationNoiseAmplitudeMs2)
+                    setHotLocationsEnabled(exportData.hotLocationsEnabled)
                     userFeedback.emit(UserFeedback("Import complete"))
                 } catch (e: Exception) {
                     Log.e(TAG, "Import failed", e)
@@ -550,6 +568,7 @@ class SettingsViewModel
                     settingsRepository.setJitterSpeedMovingVariationPct(exportData.jitterSpeedMovingVariationPct)
                     settingsRepository.setElevationTiltJitterDegrees(exportData.elevationTiltJitterDegrees)
                     settingsRepository.setElevationNoiseAmplitudeMs2(exportData.elevationNoiseAmplitudeMs2)
+                    settingsRepository.setHotLocationsEnabled(exportData.hotLocationsEnabled)
                     userFeedback.emit(UserFeedback("Import complete"))
                 } catch (e: Exception) {
                     Log.e(TAG, "Import from ExportData failed", e)

@@ -28,4 +28,10 @@ class FakeFavoriteDao : FavoriteDao {
     override suspend fun deleteAll() {
         state.value = emptyList()
     }
+
+    override suspend fun getByName(name: String): FavoriteEntity? = state.value.find { it.name == name }
+
+    override suspend fun deleteHotLocations() {
+        state.value = state.value.filter { !it.id.startsWith("hot_") }
+    }
 }

@@ -197,5 +197,9 @@ class SettingsRepository
 
         suspend fun setElevationNoiseAmplitudeMs2(amplitude: Float) = dataSource.setElevationNoiseAmplitudeMs2(amplitude)
 
+        fun getHotLocationsEnabled(): Flow<Boolean> = dataSource.getHotLocationsEnabled()
+
+        suspend fun setHotLocationsEnabled(enabled: Boolean) = dataSource.setHotLocationsEnabled(enabled)
+
         fun getSettingsSnapshot(): Flow<SettingsSnapshot> = dataSource.getSettingsSnapshot()
     }

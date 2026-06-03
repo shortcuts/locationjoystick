@@ -2,6 +2,7 @@ package com.locationjoystick.core.data
 
 import android.util.Log
 import com.locationjoystick.core.database.dao.FavoriteDao
+import com.locationjoystick.core.database.entities.FavoriteEntity
 import com.locationjoystick.core.database.entities.toDomain
 import com.locationjoystick.core.database.entities.toEntity
 import com.locationjoystick.core.model.FavoriteLocation
@@ -73,4 +74,68 @@ class FavoriteRepository
                     Log.e(TAG, "Failed to delete all favorites", e)
                 }
             }
+
+        suspend fun upsertHotLocations(): Result<Unit> =
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    HOT_LOCATIONS.forEach { (name, lat, lon) ->
+                        val existing = favoriteDao.getByName(name)
+                        if (existing != null) {
+                            favoriteDao.update(existing.copy(latitude = lat, longitude = lon))
+                        } else {
+                            val id = HOT_ID_PREFIX + name.lowercase().replace(Regex("[^a-z0-9]"), "_")
+                            favoriteDao.insert(
+                                FavoriteEntity(
+                                    id = id,
+                                    name = name,
+                                    latitude = lat,
+                                    longitude = lon,
+                                    createdAt = System.currentTimeMillis(),
+                                ),
+                            )
+                        }
+                    }
+                }.onFailure { e -> Log.e(TAG, "Failed to upsert hot locations", e) }
+            }
+
+        suspend fun removeHotLocations(): Result<Unit> =
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    favoriteDao.deleteHotLocations()
+                }.onFailure { e -> Log.e(TAG, "Failed to remove hot locations", e) }
+            }
+
+        companion object {
+            private const val HOT_ID_PREFIX = "hot_"
+
+            val HOT_LOCATIONS =
+                listOf(
+                    Triple("Kiritimati", 1.98715, -157.47714),
+                    Triple("Wellington Botanical Gardens", -41.28141, 174.76649),
+                    Triple("Melbourne Australia", -37.81751, 144.96330),
+                    Triple("Sydney", -33.868820, 151.209296),
+                    Triple("Osaka Tokyo", 34.70246, 135.50024),
+                    Triple("Taipei Taiwan", 25.05544, 121.52250),
+                    Triple("Singapore", 1.288719, 103.848742),
+                    Triple("Antalya Turkey", 36.87944, 30.70900),
+                    Triple("Bornova Buyuk Park Turkey", 38.46314, 27.21649),
+                    Triple("Budapest", 47.52876, 19.05138),
+                    Triple("Canary Islands", 28.12890, -15.43390),
+                    Triple("Dubai", 25.07675, 55.13294),
+                    Triple("Thessaloniki Greece", 40.62773, 22.95471),
+                    Triple("UK", 53.190085, -2.89158),
+                    Triple("Zaragoza Spain", 41.661342, -0.892832),
+                    Triple("Santa Cruz Spain", 28.48952, -16.31807),
+                    Triple("Indaial Brazil", -26.89304, -49.22998),
+                    Triple("Sao Paulo Brazil", -23.58659, -46.65702),
+                    Triple("Bryant Park NY", 40.7537, -73.9835),
+                    Triple("Times Square NYC", 40.7589, -73.9851),
+                    Triple("Millennium Park Chicago", 41.886473, -87.626356),
+                    Triple("Niantic HQ", 37.789464, -122.401621),
+                    Triple("SF Union Square", 37.787993, -122.407437),
+                    Triple("Pier 39 California", 37.808673, -122.409821),
+                    Triple("Honolulu Hawaii", 21.29836, -157.86011),
+                    Triple("Pago Pago", -14.27859, -170.68886),
+                )
+        }
     }

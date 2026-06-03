@@ -15,4 +15,5 @@ data class ExportData(
     val jitterSpeedMovingVariationPct: Int = 8,
     val elevationTiltJitterDegrees: Float = 2.25f,
     val elevationNoiseAmplitudeMs2: Float = 0.35f,
+    val hotLocationsEnabled: Boolean = false,
 )
