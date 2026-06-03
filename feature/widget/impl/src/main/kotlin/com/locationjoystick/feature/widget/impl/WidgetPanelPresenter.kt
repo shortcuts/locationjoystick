@@ -21,6 +21,7 @@ import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.core.model.sortedByAge
 import com.locationjoystick.core.model.SpeedUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -167,8 +168,7 @@ internal class WidgetPanelPresenter(
         serviceScope.launch {
             val favSortNewestFirst = settingsRepository.getFavoritesSortNewestFirst().first()
             val rawFavorites = favoriteRepository.getFavorites().first()
-            favoritesDataFlow.value =
-                if (favSortNewestFirst) rawFavorites.sortedByDescending { it.createdAt } else rawFavorites.sortedBy { it.createdAt }
+            favoritesDataFlow.value = rawFavorites.sortedByAge(favSortNewestFirst)
             // mapPanelLayoutParams() drops FLAG_NOT_FOCUSABLE so the keyboard can appear
             // when the user taps "Add from current location" text field.
             showPanel(params = mapPanelLayoutParams(), logTag = "favorites") {
@@ -198,14 +198,7 @@ internal class WidgetPanelPresenter(
                                     position = pos,
                                 )
                                 val refreshed = favoriteRepository.getFavorites().first()
-                                favoritesDataFlow.value =
-                                    if (favSortNewestFirst) {
-                                        refreshed.sortedByDescending {
-                                            it.createdAt
-                                        }
-                                    } else {
-                                        refreshed.sortedBy { it.createdAt }
-                                    }
+                                favoritesDataFlow.value = refreshed.sortedByAge(favSortNewestFirst)
                             } else {
                                 Log.w(TAG, "Cannot add favorite: no current position")
                             }
@@ -220,8 +213,7 @@ internal class WidgetPanelPresenter(
         serviceScope.launch {
             val routeSortNewestFirst = settingsRepository.getRoutesSortNewestFirst().first()
             val rawRoutes = routeRepository.getRoutes().first()
-            routesDataFlow.value =
-                if (routeSortNewestFirst) rawRoutes.sortedByDescending { it.createdAt } else rawRoutes.sortedBy { it.createdAt }
+            routesDataFlow.value = rawRoutes.sortedByAge(routeSortNewestFirst)
             showPanel(logTag = "routes") {
                 val routes by routesDataFlow.collectAsStateWithLifecycle()
                 RoutesFloatingView(

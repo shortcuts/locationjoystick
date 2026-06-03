@@ -4,5 +4,5 @@ data class FavoriteLocation(
     val id: String,
     val name: String,
     val position: LatLng,
-    val createdAt: Long = 0L,
-)
+    override val createdAt: Long = 0L,
+) : HasCreatedAt

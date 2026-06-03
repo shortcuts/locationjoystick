@@ -8,6 +8,6 @@ data class Route(
     val waypoints: List<Waypoint> = emptyList(),
     val isLooping: Boolean = false,
     val routeType: RouteType = RouteType.STRAIGHT,
-    val createdAt: Long = 0L,
+    override val createdAt: Long = 0L,
     val updatedAt: Long = 0L,
-)
+) : HasCreatedAt
