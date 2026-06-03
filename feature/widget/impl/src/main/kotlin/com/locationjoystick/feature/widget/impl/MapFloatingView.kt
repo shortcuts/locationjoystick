@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -116,7 +117,6 @@ internal fun MapFloatingView(
     val isRoaming = mockMode == MockMode.ROAMING
     val isRouteReplay = mockMode == MockMode.ROUTE_REPLAY
     val isWalkActive = walkTarget != null || isRouteReplay
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var roamingPreviewWaypoints by remember { mutableStateOf<List<com.locationjoystick.core.model.LatLng>?>(null) }
     var showRoamingSheet by remember { mutableStateOf(false) }
@@ -411,243 +411,267 @@ internal fun MapFloatingView(
         }
 
         if (showRoamingSheet) {
-            val isSpoofing = mockLocationState == MockLocationState.RUNNING
-            var draft by remember(roamingDefaults) { mutableStateOf(roamingDefaults) }
-            // Scrim: fills screen, tapping outside the sheet dismisses it.
-            // ModalBottomSheet is not used here because it creates a Dialog internally,
-            // which requires an Activity window token unavailable in a service overlay.
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .clickable {
-                            showRoamingSheet = false
-                            roamingPreviewWaypoints = null
-                        },
+            OverlayRoamingSheet(
+                currentPosition = currentPosition,
+                roamingDefaults = roamingDefaults,
+                speedUnit = speedUnit,
+                mockLocationState = mockLocationState,
+                hasPreview = roamingPreviewWaypoints != null,
+                onGeneratePreviewRoute = onGeneratePreviewRoute,
+                onPreviewGenerated = { roamingPreviewWaypoints = it },
+                onStart = { draft -> onStartRoaming(draft); showRoamingSheet = false; roamingPreviewWaypoints = null },
+                onDismiss = { showRoamingSheet = false; roamingPreviewWaypoints = null },
             )
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.8f)
-                        .background(LjBg, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                        .clickable {}, // consume touches so they don't fall through to scrim
-            ) {
-                // Drag handle indicator — matches ModalBottomSheet visual
-                Box(
-                    modifier =
-                        Modifier
-                            .align(Alignment.TopCenter)
-                            .padding(top = 8.dp)
-                            .width(32.dp)
-                            .height(4.dp)
-                            .background(
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                androidx.compose.foundation.shape
-                                    .RoundedCornerShape(2.dp),
-                            ),
-                )
-                Column(modifier = Modifier.fillMaxSize().padding(top = 28.dp)) {
-                    RoamingSheetContent(
-                        draft = draft,
-                        speedUnit = speedUnit,
-                        hasCurrentPosition = currentPosition != null,
-                        isSpoofingActive = isSpoofing,
-                        hasPreview = roamingPreviewWaypoints != null,
-                        onDraftChange = { draft = it },
-                        onGenerate = {
-                            scope.launch {
-                                val pos = currentPosition ?: return@launch
-                                roamingPreviewWaypoints =
-                                    onGeneratePreviewRoute(pos, draft.radiusMeters, draft.followRoads, draft.speedProfileId)
-                            }
-                        },
-                        onStart = {
-                            onStartRoaming(draft)
-                            showRoamingSheet = false
-                            roamingPreviewWaypoints = null
-                        },
-                        onViewOnMap = {
-                            showRoamingSheet = false
-                        },
-                    )
-                }
-            }
         }
 
-        // Tap confirmation panel (appears at bottom of map)
         val tap = pendingTap
         if (tap != null) {
-            Column(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(LjBg)
-                        .clickable { }
-                        .padding(16.dp),
-            ) {
-                if (isRouteReplay) {
-                    Text("Route in progress", style = MaterialTheme.typography.titleMedium, color = LjText)
-                    Spacer(Modifier.height(16.dp))
-                    Button(
-                        onClick = {
-                            onStopRouteAndTeleport(tap)
-                            pendingTap = null
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Stop route and teleport") }
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = {
-                            onStopRouteAndWalkTo(tap)
-                            pendingTap = null
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Stop route and walk here") }
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = {
-                            onFinishRouteAndWalkTo(tap)
-                            pendingTap = null
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Finish route and walk here") }
-                } else {
-                    Text("Move to this location?", style = MaterialTheme.typography.titleMedium, color = LjText)
-                    val cooldownState by remember(tap) {
-                        cooldownForPosition?.invoke(tap) ?: flowOf(CooldownState.Ready)
-                    }.collectAsStateWithLifecycle(initialValue = CooldownState.Ready)
-                    val cooling = cooldownState as? CooldownState.Cooling
-                    if (cooling != null) {
-                        Spacer(Modifier.height(8.dp))
-                        CooldownAdvisoryBadge(cooling.toAdvisoryLabel())
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    Button(
-                        onClick = {
-                            onTeleport(tap)
-                            pendingTap = null
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Teleport here") }
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = {
-                            onWalkTo(tap)
-                            pendingTap = null
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Walk here") }
-                    if (isWalkActive) {
-                        Spacer(Modifier.height(8.dp))
-                        OutlinedButton(
-                            onClick = {
-                                val wStart = walkStart
-                                val wTarget = walkTarget
-                                val existingWaypoints = routeWaypoints
-                                ephemeralHint =
-                                    when {
-                                        existingWaypoints != null -> existingWaypoints + tap
-                                        wStart != null && wTarget != null -> listOf(wStart, wTarget, tap)
-                                        else -> null
-                                    }
-                                onAddEphemeralWaypoint(tap)
-                                pendingTap = null
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) { Text("Add next point") }
-                    }
-                }
-                Spacer(Modifier.height(4.dp))
-                TextButton(
-                    onClick = { pendingTap = null },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Do nothing") }
-            }
+            TapActionPanel(
+                tap = tap,
+                isRouteReplay = isRouteReplay,
+                isWalkActive = isWalkActive,
+                walkStart = walkStart,
+                walkTarget = walkTarget,
+                routeWaypoints = routeWaypoints,
+                cooldownForPosition = cooldownForPosition,
+                onTeleport = onTeleport,
+                onWalkTo = onWalkTo,
+                onStopRouteAndTeleport = onStopRouteAndTeleport,
+                onStopRouteAndWalkTo = onStopRouteAndWalkTo,
+                onFinishRouteAndWalkTo = onFinishRouteAndWalkTo,
+                onAddEphemeralWaypoint = onAddEphemeralWaypoint,
+                onEphemeralHintUpdate = { ephemeralHint = it },
+                onDismiss = { pendingTap = null },
+            )
         }
 
-        // Favorites picker — bottom sheet capped at 80% height
         if (showFavoritesPicker) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .clickable { showFavoritesPicker = false },
+            FavoritesOverlayPicker(
+                favorites = favorites,
+                onTeleport = { pos -> onTeleport(pos); showFavoritesPicker = false; onDismiss() },
+                onWalkTo = { pos -> onWalkTo(pos); showFavoritesPicker = false; onDismiss() },
+                onDismiss = { showFavoritesPicker = false },
             )
-            Column(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.8f)
-                        .background(LjBg, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                        .clickable {}
-                        .padding(16.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("Favorites", style = MaterialTheme.typography.titleLarge, color = LjText)
-                    IconButton(onClick = { showFavoritesPicker = false }) {
-                        Icon(LjIcons.Close, contentDescription = "Close favorites", tint = LjText)
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.OverlayRoamingSheet(
+    currentPosition: LatLng?,
+    roamingDefaults: RoamingDefaults,
+    speedUnit: SpeedUnit,
+    mockLocationState: MockLocationState,
+    hasPreview: Boolean,
+    onGeneratePreviewRoute: suspend (center: LatLng, radiusMeters: Double, followRoads: Boolean, speedProfileId: String) -> List<LatLng>?,
+    onPreviewGenerated: (List<LatLng>?) -> Unit,
+    onStart: (RoamingDefaults) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val isSpoofing = mockLocationState == MockLocationState.RUNNING
+    var draft by remember(roamingDefaults) { mutableStateOf(roamingDefaults) }
+    val scope = rememberCoroutineScope()
+    // Scrim — tapping outside the sheet dismisses it. ModalBottomSheet is not used because it
+    // creates a Dialog internally, which requires an Activity window token unavailable in a
+    // service overlay.
+    Box(modifier = Modifier.fillMaxSize().clickable { onDismiss() })
+    Box(
+        modifier =
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .fillMaxHeight(0.8f)
+                .background(LjBg, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .clickable {},
+    ) {
+        // Drag handle — matches ModalBottomSheet visual
+        Box(
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp)
+                    .width(32.dp)
+                    .height(4.dp)
+                    .background(
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                        RoundedCornerShape(2.dp),
+                    ),
+        )
+        Column(modifier = Modifier.fillMaxSize().padding(top = 28.dp)) {
+            RoamingSheetContent(
+                draft = draft,
+                speedUnit = speedUnit,
+                hasCurrentPosition = currentPosition != null,
+                isSpoofingActive = isSpoofing,
+                hasPreview = hasPreview,
+                onDraftChange = { draft = it },
+                onGenerate = {
+                    scope.launch {
+                        val pos = currentPosition ?: return@launch
+                        onPreviewGenerated(
+                            onGeneratePreviewRoute(pos, draft.radiusMeters, draft.followRoads, draft.speedProfileId),
+                        )
                     }
-                }
-                Spacer(Modifier.height(12.dp))
-                if (favorites.isEmpty()) {
-                    Text(
-                        "No favorites saved yet",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = LjText.copy(alpha = 0.6f),
-                    )
-                } else {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(favorites, key = { it.id }) { fav ->
-                            Column(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .background(
-                                            Color.White.copy(alpha = 0.12f),
-                                            RoundedCornerShape(8.dp),
-                                        ).padding(12.dp),
-                            ) {
-                                Text(
-                                    fav.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = LjText,
-                                )
-                                Text(
-                                    text = "${String.format(
-                                        "%.4f",
-                                        fav.position.latitude,
-                                    )}, ${String.format("%.4f", fav.position.longitude)}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LjText.copy(alpha = 0.7f),
-                                )
-                                Spacer(Modifier.height(8.dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Button(
-                                        onClick = {
-                                            onTeleport(fav.position)
-                                            showFavoritesPicker = false
-                                            onDismiss()
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                    ) { Text("Teleport") }
-                                    OutlinedButton(
-                                        onClick = {
-                                            onWalkTo(fav.position)
-                                            showFavoritesPicker = false
-                                            onDismiss()
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                    ) { Text("Walk") }
-                                }
-                            }
+                },
+                onStart = { onStart(draft) },
+                onViewOnMap = { onDismiss() },
+            )
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.TapActionPanel(
+    tap: LatLng,
+    isRouteReplay: Boolean,
+    isWalkActive: Boolean,
+    walkStart: LatLng?,
+    walkTarget: LatLng?,
+    routeWaypoints: List<LatLng>?,
+    cooldownForPosition: ((LatLng) -> Flow<CooldownState>)?,
+    onTeleport: (LatLng) -> Unit,
+    onWalkTo: (LatLng) -> Unit,
+    onStopRouteAndTeleport: (LatLng) -> Unit,
+    onStopRouteAndWalkTo: (LatLng) -> Unit,
+    onFinishRouteAndWalkTo: (LatLng) -> Unit,
+    onAddEphemeralWaypoint: (LatLng) -> Unit,
+    onEphemeralHintUpdate: (List<LatLng>?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(LjBg)
+                .clickable {}
+                .padding(16.dp),
+    ) {
+        if (isRouteReplay) {
+            Text("Route in progress", style = MaterialTheme.typography.titleMedium, color = LjText)
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = { onStopRouteAndTeleport(tap); onDismiss() },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Stop route and teleport") }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { onStopRouteAndWalkTo(tap); onDismiss() },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Stop route and walk here") }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { onFinishRouteAndWalkTo(tap); onDismiss() },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Finish route and walk here") }
+        } else {
+            Text("Move to this location?", style = MaterialTheme.typography.titleMedium, color = LjText)
+            val cooldownState by remember(tap) {
+                cooldownForPosition?.invoke(tap) ?: flowOf(CooldownState.Ready)
+            }.collectAsStateWithLifecycle(initialValue = CooldownState.Ready)
+            val cooling = cooldownState as? CooldownState.Cooling
+            if (cooling != null) {
+                Spacer(Modifier.height(8.dp))
+                CooldownAdvisoryBadge(cooling.toAdvisoryLabel())
+            }
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = { onTeleport(tap); onDismiss() },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Teleport here") }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { onWalkTo(tap); onDismiss() },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Walk here") }
+            if (isWalkActive) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = {
+                        val existingWaypoints = routeWaypoints
+                        onEphemeralHintUpdate(
+                            when {
+                                existingWaypoints != null -> existingWaypoints + tap
+                                walkStart != null && walkTarget != null -> listOf(walkStart, walkTarget, tap)
+                                else -> null
+                            },
+                        )
+                        onAddEphemeralWaypoint(tap)
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Add next point") }
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        TextButton(
+            onClick = { onDismiss() },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Do nothing") }
+    }
+}
+
+@Composable
+private fun BoxScope.FavoritesOverlayPicker(
+    favorites: List<FavoriteLocation>,
+    onTeleport: (LatLng) -> Unit,
+    onWalkTo: (LatLng) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Box(modifier = Modifier.fillMaxSize().clickable { onDismiss() })
+    Column(
+        modifier =
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .fillMaxHeight(0.8f)
+                .background(LjBg, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .clickable {}
+                .padding(16.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Favorites", style = MaterialTheme.typography.titleLarge, color = LjText)
+            IconButton(onClick = { onDismiss() }) {
+                Icon(LjIcons.Close, contentDescription = "Close favorites", tint = LjText)
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        if (favorites.isEmpty()) {
+            Text(
+                "No favorites saved yet",
+                style = MaterialTheme.typography.bodyMedium,
+                color = LjText.copy(alpha = 0.6f),
+            )
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(favorites, key = { it.id }) { fav ->
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .background(Color.White.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                                .padding(12.dp),
+                    ) {
+                        Text(fav.name, style = MaterialTheme.typography.titleMedium, color = LjText)
+                        Text(
+                            text = "${String.format("%.4f", fav.position.latitude)}, ${String.format("%.4f", fav.position.longitude)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LjText.copy(alpha = 0.7f),
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { onTeleport(fav.position) },
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Teleport") }
+                            OutlinedButton(
+                                onClick = { onWalkTo(fav.position) },
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Walk") }
                         }
                     }
                 }
