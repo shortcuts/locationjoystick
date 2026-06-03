@@ -9,6 +9,10 @@ No outstanding documentation issues.
 ## Bugs
 
 - FloatingWidgetService -> Map -> Search -> Select result -> Doesn't show the anti-cheat cooldown timeout
+- "Walk here via roads" doesn't work, it just creates a straight line
+- "Add next point" should be "straight" line if the user only clicked "walk here", if he clicked "walk here via roads" it should be adding a point following roads
+- Stopping a "walk here" road from the map screen doesn't clear the traced points
+- When we generate a "roaming" road with "return to start", we walk to the given "distance", we should create a loop of that distance in the given radius, the idea is to walk to half that distance, then come back
 
 ---
 
