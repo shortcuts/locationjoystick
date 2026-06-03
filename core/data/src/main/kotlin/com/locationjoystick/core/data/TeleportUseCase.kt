@@ -59,16 +59,25 @@ class TeleportUseCase
         /**
          * Returns a [Flow] of [CooldownState] for the given [target] position.
          *
-         * Combines [SettingsRepository.getLastTeleportTime] and [SettingsRepository.getLastLocation]
-         * so that the state updates reactively whenever either changes.
+         * Ticks every second so remaining-time display stays current without requiring
+         * external DataStore writes. Also ensures the first emission arrives within ~1 ms
+         * (the ticker fires immediately), even before any DataStore write occurs.
          */
-        fun cooldownFor(target: LatLng): Flow<CooldownState> =
-            combine(
+        fun cooldownFor(target: LatLng): Flow<CooldownState> {
+            val ticker = flow {
+                while (true) {
+                    emit(Unit)
+                    delay(1_000L)
+                }
+            }
+            return combine(
                 settingsRepository.getLastTeleportTime(),
                 settingsRepository.getLastLocation(),
-            ) { lastTeleportMs, lastLocation ->
+                ticker,
+            ) { lastTeleportMs, lastLocation, _ ->
                 CooldownEngine.computeState(lastTeleportMs, lastLocation, target)
             }
+        }
 
         /**
          * Returns a [Flow] of cooldown states keyed by favorite ID.
