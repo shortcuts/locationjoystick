@@ -51,6 +51,13 @@ import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
 
+private sealed class PendingImport {
+    data class File(val uri: android.net.Uri) : PendingImport()
+    data class QrData(val data: com.locationjoystick.core.model.ExportData) : PendingImport()
+    data class GpsJoystick(val uri: android.net.Uri) : PendingImport()
+    data class Yamla(val uri: android.net.Uri) : PendingImport()
+}
+
 @Composable
 fun SettingsRoute(
     viewModel: SettingsViewModel,
@@ -61,10 +68,7 @@ fun SettingsRoute(
     val roamingDefaults by viewModel.roamingDefaults.collectAsStateWithLifecycle()
     val isRooted by viewModel.isRooted.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var pendingImportUri by remember { mutableStateOf<android.net.Uri?>(null) }
-    var pendingQrImportData by remember { mutableStateOf<com.locationjoystick.core.model.ExportData?>(null) }
-    var pendingGpsJoystickUri by remember { mutableStateOf<android.net.Uri?>(null) }
-    var pendingYamlaUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var pendingImport by remember { mutableStateOf<PendingImport?>(null) }
     var showQrShare by remember { mutableStateOf(false) }
     var qrChunkResult by remember { mutableStateOf<QrChunker.ChunkResult?>(null) }
     var showQrScanner by remember { mutableStateOf(false) }
@@ -99,7 +103,7 @@ fun SettingsRoute(
     LaunchedEffect(Unit) {
         viewModel.qrImportReady.collect { exportData ->
             showQrScanner = false
-            pendingQrImportData = exportData
+            pendingImport = PendingImport.QrData(exportData)
         }
     }
 
@@ -121,80 +125,45 @@ fun SettingsRoute(
         rememberLauncherForActivityResult(
             ActivityResultContracts.OpenDocument(),
         ) { uri ->
-            if (uri != null) pendingImportUri = uri
+            if (uri != null) pendingImport = PendingImport.File(uri)
         }
 
     val importGpsJoystickLauncher =
         rememberLauncherForActivityResult(
             ActivityResultContracts.OpenDocument(),
         ) { uri ->
-            if (uri != null) pendingGpsJoystickUri = uri
+            if (uri != null) pendingImport = PendingImport.GpsJoystick(uri)
         }
 
     val importYamlaLauncher =
         rememberLauncherForActivityResult(
             ActivityResultContracts.OpenDocument(),
         ) { uri ->
-            if (uri != null) pendingYamlaUri = uri
+            if (uri != null) pendingImport = PendingImport.Yamla(uri)
         }
 
-    if (pendingImportUri != null) {
-        val uri = pendingImportUri!!
+    val pending = pendingImport
+    if (pending != null) {
         ImportConfirmDialog(
             onReplace = {
-                viewModel.importSettings(context, uri, replace = true)
-                pendingImportUri = null
+                when (pending) {
+                    is PendingImport.File -> viewModel.importSettings(context, pending.uri, replace = true)
+                    is PendingImport.QrData -> viewModel.importSettings(pending.data, replace = true)
+                    is PendingImport.GpsJoystick -> viewModel.importFromGpsJoystick(context, pending.uri, replace = true)
+                    is PendingImport.Yamla -> viewModel.importFromYamla(context, pending.uri, replace = true)
+                }
+                pendingImport = null
             },
             onAdd = {
-                viewModel.importSettings(context, uri, replace = false)
-                pendingImportUri = null
+                when (pending) {
+                    is PendingImport.File -> viewModel.importSettings(context, pending.uri, replace = false)
+                    is PendingImport.QrData -> viewModel.importSettings(pending.data, replace = false)
+                    is PendingImport.GpsJoystick -> viewModel.importFromGpsJoystick(context, pending.uri, replace = false)
+                    is PendingImport.Yamla -> viewModel.importFromYamla(context, pending.uri, replace = false)
+                }
+                pendingImport = null
             },
-            onDismiss = { pendingImportUri = null },
-        )
-    }
-
-    if (pendingQrImportData != null) {
-        val exportData = pendingQrImportData!!
-        ImportConfirmDialog(
-            onReplace = {
-                viewModel.importSettings(exportData, replace = true)
-                pendingQrImportData = null
-            },
-            onAdd = {
-                viewModel.importSettings(exportData, replace = false)
-                pendingQrImportData = null
-            },
-            onDismiss = { pendingQrImportData = null },
-        )
-    }
-
-    if (pendingGpsJoystickUri != null) {
-        val uri = pendingGpsJoystickUri!!
-        ImportConfirmDialog(
-            onReplace = {
-                viewModel.importFromGpsJoystick(context, uri, replace = true)
-                pendingGpsJoystickUri = null
-            },
-            onAdd = {
-                viewModel.importFromGpsJoystick(context, uri, replace = false)
-                pendingGpsJoystickUri = null
-            },
-            onDismiss = { pendingGpsJoystickUri = null },
-        )
-    }
-
-    if (pendingYamlaUri != null) {
-        val uri = pendingYamlaUri!!
-        ImportConfirmDialog(
-            onReplace = {
-                viewModel.importFromYamla(context, uri, replace = true)
-                pendingYamlaUri = null
-            },
-            onAdd = {
-                viewModel.importFromYamla(context, uri, replace = false)
-                pendingYamlaUri = null
-            },
-            onDismiss = { pendingYamlaUri = null },
+            onDismiss = { pendingImport = null },
         )
     }
 
@@ -227,38 +196,41 @@ fun SettingsRoute(
         roamingDefaults = roamingDefaults,
         isRooted = isRooted,
         onOpenDrawer = onOpenDrawer,
-        onSetWalkSpeed = viewModel::setWalkSpeed,
-        onSetRunSpeed = viewModel::setRunSpeed,
-        onSetBikeSpeed = viewModel::setBikeSpeed,
-        onSetSpeedUnit = viewModel::setSpeedUnit,
-        onSetWidgetFeatures = viewModel::setWidgetFeatures,
-        onSetRememberLastLocation = viewModel::setRememberLastLocation,
-        onSetMapFollowsLocation = viewModel::setMapFollowsLocation,
-        onSetJitterIdleRadius = viewModel::setJitterIdleRadius,
-        onSetJitterMovingRadius = viewModel::setJitterMovingRadius,
-        onSetJitterIntervalSeconds = viewModel::setJitterIntervalSeconds,
-        onSetJitterIdleIntervalSeconds = viewModel::setJitterIdleIntervalSeconds,
-        onSetRealismBearingHoldIdle = viewModel::setRealismBearingHoldIdle,
-        onSetRealismAltitudeEnabled = viewModel::setRealismAltitudeEnabled,
-        onSetRealismWarmupEnabled = viewModel::setRealismWarmupEnabled,
-        onSetRealismSatelliteExtrasEnabled = viewModel::setRealismSatelliteExtrasEnabled,
-        onSetRealismSuspendedMockingEnabled = viewModel::setRealismSuspendedMockingEnabled,
-        onSetJitterSpeedIdleVariationPct = viewModel::setJitterSpeedIdleVariationPct,
-        onSetJitterSpeedMovingVariationPct = viewModel::setJitterSpeedMovingVariationPct,
-        onSetElevationTiltJitterDegrees = viewModel::setElevationTiltJitterDegrees,
-        onSetElevationNoiseAmplitudeMs2 = viewModel::setElevationNoiseAmplitudeMs2,
-        onElevationControlsEnabled = viewModel::requestElevationAccess,
-        convertMsToDisplay = viewModel::convertMsToDisplay,
-        onUpdateRoamingDefaults = viewModel::updateRoamingDefaults,
-        onExport = { exportLauncher.launch("${AppConstants.ExportConstants.FILENAME_PREFIX}-${System.currentTimeMillis()}.json") },
-        onImport = { importLauncher.launch(arrayOf(AppConstants.ExportConstants.MIME_TYPE)) },
-        onImportGpsJoystick = { importGpsJoystickLauncher.launch(arrayOf("*/*")) },
-        onImportYamla = { importYamlaLauncher.launch(arrayOf("application/json")) },
+        onAction = { action ->
+            when (action) {
+                is SettingsAction.SetWalkSpeed -> viewModel.setWalkSpeed(action.displaySpeed)
+                is SettingsAction.SetRunSpeed -> viewModel.setRunSpeed(action.displaySpeed)
+                is SettingsAction.SetBikeSpeed -> viewModel.setBikeSpeed(action.displaySpeed)
+                is SettingsAction.SetSpeedUnit -> viewModel.setSpeedUnit(action.unit)
+                is SettingsAction.SetWidgetFeatures -> viewModel.setWidgetFeatures(action.features)
+                is SettingsAction.SetRememberLastLocation -> viewModel.setRememberLastLocation(action.enabled)
+                is SettingsAction.SetMapFollowsLocation -> viewModel.setMapFollowsLocation(action.enabled)
+                is SettingsAction.SetJitterIdleRadius -> viewModel.setJitterIdleRadius(action.meters)
+                is SettingsAction.SetJitterMovingRadius -> viewModel.setJitterMovingRadius(action.meters)
+                is SettingsAction.SetJitterIntervalSeconds -> viewModel.setJitterIntervalSeconds(action.seconds)
+                is SettingsAction.SetJitterIdleIntervalSeconds -> viewModel.setJitterIdleIntervalSeconds(action.seconds)
+                is SettingsAction.SetRealismBearingHoldIdle -> viewModel.setRealismBearingHoldIdle(action.enabled)
+                is SettingsAction.SetRealismAltitudeEnabled -> viewModel.setRealismAltitudeEnabled(action.enabled)
+                is SettingsAction.SetRealismWarmupEnabled -> viewModel.setRealismWarmupEnabled(action.enabled)
+                is SettingsAction.SetRealismSatelliteExtrasEnabled -> viewModel.setRealismSatelliteExtrasEnabled(action.enabled)
+                is SettingsAction.SetRealismSuspendedMockingEnabled -> viewModel.setRealismSuspendedMockingEnabled(action.enabled)
+                is SettingsAction.SetJitterSpeedIdleVariationPct -> viewModel.setJitterSpeedIdleVariationPct(action.pct)
+                is SettingsAction.SetJitterSpeedMovingVariationPct -> viewModel.setJitterSpeedMovingVariationPct(action.pct)
+                is SettingsAction.SetElevationTiltJitterDegrees -> viewModel.setElevationTiltJitterDegrees(action.degrees)
+                is SettingsAction.SetElevationNoiseAmplitudeMs2 -> viewModel.setElevationNoiseAmplitudeMs2(action.amplitude)
+                is SettingsAction.RequestElevationAccess -> viewModel.requestElevationAccess()
+                is SettingsAction.UpdateRoamingDefaults -> viewModel.updateRoamingDefaults(action.defaults)
+                SettingsAction.Export -> exportLauncher.launch("${AppConstants.ExportConstants.FILENAME_PREFIX}-${System.currentTimeMillis()}.json")
+                SettingsAction.Import -> importLauncher.launch(arrayOf(AppConstants.ExportConstants.MIME_TYPE))
+                SettingsAction.ImportGpsJoystick -> importGpsJoystickLauncher.launch(arrayOf("*/*"))
+                SettingsAction.ImportYamla -> importYamlaLauncher.launch(arrayOf("application/json"))
+                SettingsAction.QrShare -> viewModel.prepareQrChunks()
+                SettingsAction.QrScan -> showQrScanner = true
+                SettingsAction.SaveChanges -> viewModel.saveChanges()
+                SettingsAction.DiscardChanges -> viewModel.discardChanges()
+            }
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        onQrShare = { viewModel.prepareQrChunks() },
-        onQrScan = { showQrScanner = true },
-        onSaveChanges = viewModel::saveChanges,
-        onDiscardChanges = viewModel::discardChanges,
         bottomBar = bottomBar,
     )
 }
@@ -269,33 +241,7 @@ private fun SettingsScreenPreview() {
     SettingsScreen(
         uiState = SettingsUiState(),
         onOpenDrawer = {},
-        onSetWalkSpeed = {},
-        onSetRunSpeed = {},
-        onSetBikeSpeed = {},
-        onSetSpeedUnit = {},
-        onSetWidgetFeatures = {},
-        onSetRememberLastLocation = {},
-        onSetMapFollowsLocation = {},
-        onSetJitterIdleRadius = {},
-        onSetJitterMovingRadius = {},
-        onSetJitterIntervalSeconds = {},
-        onSetJitterIdleIntervalSeconds = {},
-        onSetRealismBearingHoldIdle = {},
-        onSetRealismAltitudeEnabled = {},
-        onSetRealismWarmupEnabled = {},
-        onSetRealismSatelliteExtrasEnabled = {},
-        onSetRealismSuspendedMockingEnabled = {},
-        onSetJitterSpeedIdleVariationPct = {},
-        onSetJitterSpeedMovingVariationPct = {},
-        onSetElevationTiltJitterDegrees = {},
-        onSetElevationNoiseAmplitudeMs2 = {},
-        convertMsToDisplay = { v, _ -> v },
-        onExport = {},
-        onImport = {},
-        onImportGpsJoystick = {},
-        onImportYamla = {},
-        onQrShare = {},
-        onQrScan = {},
+        onAction = {},
     )
 }
 
@@ -305,37 +251,7 @@ internal fun SettingsScreen(
     roamingDefaults: RoamingDefaults = RoamingDefaults(),
     isRooted: Boolean = false,
     onOpenDrawer: () -> Unit = {},
-    onSetWalkSpeed: (Double) -> Unit,
-    onSetRunSpeed: (Double) -> Unit,
-    onSetBikeSpeed: (Double) -> Unit,
-    onSetSpeedUnit: (SpeedUnit) -> Unit,
-    onSetWidgetFeatures: (Set<WidgetFeature>) -> Unit,
-    onSetRememberLastLocation: (Boolean) -> Unit,
-    onSetMapFollowsLocation: (Boolean) -> Unit,
-    onSetJitterIdleRadius: (Double) -> Unit,
-    onSetJitterMovingRadius: (Double) -> Unit,
-    onSetJitterIntervalSeconds: (Int) -> Unit,
-    onSetJitterIdleIntervalSeconds: (Int) -> Unit,
-    onSetRealismBearingHoldIdle: (Boolean) -> Unit,
-    onSetRealismAltitudeEnabled: (Boolean) -> Unit,
-    onSetRealismWarmupEnabled: (Boolean) -> Unit,
-    onSetRealismSatelliteExtrasEnabled: (Boolean) -> Unit,
-    onSetRealismSuspendedMockingEnabled: (Boolean) -> Unit,
-    onSetJitterSpeedIdleVariationPct: (Int) -> Unit,
-    onSetJitterSpeedMovingVariationPct: (Int) -> Unit,
-    onSetElevationTiltJitterDegrees: (Float) -> Unit,
-    onSetElevationNoiseAmplitudeMs2: (Float) -> Unit,
-    onElevationControlsEnabled: () -> Unit = {},
-    convertMsToDisplay: (Double, SpeedUnit) -> Double,
-    onUpdateRoamingDefaults: (RoamingDefaults) -> Unit = {},
-    onExport: () -> Unit,
-    onImport: () -> Unit,
-    onImportGpsJoystick: () -> Unit,
-    onImportYamla: () -> Unit,
-    onQrShare: () -> Unit,
-    onQrScan: () -> Unit,
-    onSaveChanges: () -> Unit = {},
-    onDiscardChanges: () -> Unit = {},
+    onAction: (SettingsAction) -> Unit,
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
 ) {
@@ -355,14 +271,14 @@ internal fun SettingsScreen(
                         text = { Text("Export via QR code") },
                         onClick = {
                             showDownloadMenu = false
-                            onQrShare()
+                            onAction(SettingsAction.QrShare)
                         },
                     )
                     DropdownMenuItem(
                         text = { Text("Export settings") },
                         onClick = {
                             showDownloadMenu = false
-                            onExport()
+                            onAction(SettingsAction.Export)
                         },
                     )
                 }
@@ -377,39 +293,39 @@ internal fun SettingsScreen(
                         text = { Text("Import from QR code") },
                         onClick = {
                             showUploadMenu = false
-                            onQrScan()
+                            onAction(SettingsAction.QrScan)
                         },
                     )
                     DropdownMenuItem(
                         text = { Text("Import from file") },
                         onClick = {
                             showUploadMenu = false
-                            onImport()
+                            onAction(SettingsAction.Import)
                         },
                     )
                     DropdownMenuItem(
                         text = { Text("Import from GPS Joystick") },
                         onClick = {
                             showUploadMenu = false
-                            onImportGpsJoystick()
+                            onAction(SettingsAction.ImportGpsJoystick)
                         },
                     )
                     DropdownMenuItem(
                         text = { Text("Import from YAMLA") },
                         onClick = {
                             showUploadMenu = false
-                            onImportYamla()
+                            onAction(SettingsAction.ImportYamla)
                         },
                     )
                 }
             }
             if (uiState.isDirty) {
                 TextButton(
-                    onClick = onDiscardChanges,
+                    onClick = { onAction(SettingsAction.DiscardChanges) },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
                 ) { Text("Discard") }
                 TextButton(
-                    onClick = onSaveChanges,
+                    onClick = { onAction(SettingsAction.SaveChanges) },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                 ) { Text("Save") }
             }
@@ -435,40 +351,23 @@ internal fun SettingsScreen(
                                 .padding(16.dp),
                     ) {
                         val isMph = uiState.speedUnit == SpeedUnit.MPH
-                        SpeedProfilesSection(uiState, onSetWalkSpeed, onSetRunSpeed, onSetBikeSpeed, onSetSpeedUnit, convertMsToDisplay)
+                        SpeedProfilesSection(uiState, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
-                        GpsJitterSection(
-                            uiState,
-                            isMph,
-                            onSetJitterIdleRadius,
-                            onSetJitterMovingRadius,
-                            onSetJitterIntervalSeconds,
-                            onSetJitterIdleIntervalSeconds,
-                            onSetJitterSpeedIdleVariationPct,
-                            onSetJitterSpeedMovingVariationPct,
-                        )
+                        GpsJitterSection(uiState, isMph, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
                         ElevationJitterSection(
                             uiState,
                             elevationControlsEnabled = WidgetFeature.ELEVATION_CONTROLS in uiState.enabledWidgetFeatures,
-                            onSetElevationTiltJitterDegrees,
-                            onSetElevationNoiseAmplitudeMs2,
+                            onAction,
                         )
                         Spacer(modifier = Modifier.height(24.dp))
-                        GpsRealismSection(
-                            uiState,
-                            onSetRealismBearingHoldIdle,
-                            onSetRealismAltitudeEnabled,
-                            onSetRealismWarmupEnabled,
-                            onSetRealismSatelliteExtrasEnabled,
-                            onSetRealismSuspendedMockingEnabled,
-                        )
+                        GpsRealismSection(uiState, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
-                        MapSection(uiState, onSetRememberLastLocation, onSetMapFollowsLocation)
+                        MapSection(uiState, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
-                        FloatingWidgetSection(uiState, onSetWidgetFeatures, isRooted, onElevationControlsEnabled)
+                        FloatingWidgetSection(uiState, isRooted, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
-                        RoamingSection(roamingDefaults, isMph, onUpdateRoamingDefaults)
+                        RoamingSection(roamingDefaults, isMph, onAction)
                     }
                 }
             }
@@ -552,14 +451,19 @@ private fun AntiCheatWarning() {
     )
 }
 
+private fun convertMsToDisplay(
+    ms: Double,
+    unit: SpeedUnit,
+): Double =
+    when (unit) {
+        SpeedUnit.KMH -> ms * 3.6
+        SpeedUnit.MPH -> ms * 2.237
+    }
+
 @Composable
 private fun SpeedProfilesSection(
     uiState: SettingsUiState,
-    onSetWalkSpeed: (Double) -> Unit,
-    onSetRunSpeed: (Double) -> Unit,
-    onSetBikeSpeed: (Double) -> Unit,
-    onSetSpeedUnit: (SpeedUnit) -> Unit,
-    convertMsToDisplay: (Double, SpeedUnit) -> Double,
+    onAction: (SettingsAction) -> Unit,
 ) {
     Text("Speed Profiles", style = MaterialTheme.typography.headlineSmall)
     Spacer(modifier = Modifier.height(4.dp))
@@ -578,7 +482,7 @@ private fun SpeedProfilesSection(
         LjSegmentedControl(
             options = listOf(SpeedUnit.KMH to "km/h", SpeedUnit.MPH to "mph"),
             selected = uiState.speedUnit,
-            onSelect = onSetSpeedUnit,
+            onSelect = { onAction(SettingsAction.SetSpeedUnit(it)) },
             modifier = Modifier.weight(0.7f),
         )
     }
@@ -588,7 +492,7 @@ private fun SpeedProfilesSection(
     SpeedProfileInput(
         label = "Walk",
         displaySpeed = convertMsToDisplay(uiState.walkSpeed, uiState.speedUnit),
-        onSpeedChange = { onSetWalkSpeed(it) },
+        onSpeedChange = { onAction(SettingsAction.SetWalkSpeed(it)) },
         unit = if (uiState.speedUnit == SpeedUnit.KMH) "km/h" else "mph",
     )
     if (uiState.walkSpeed > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS) AntiCheatWarning()
@@ -598,7 +502,7 @@ private fun SpeedProfilesSection(
     SpeedProfileInput(
         label = "Run",
         displaySpeed = convertMsToDisplay(uiState.runSpeed, uiState.speedUnit),
-        onSpeedChange = { onSetRunSpeed(it) },
+        onSpeedChange = { onAction(SettingsAction.SetRunSpeed(it)) },
         unit = if (uiState.speedUnit == SpeedUnit.KMH) "km/h" else "mph",
     )
     if (uiState.runSpeed > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS) AntiCheatWarning()
@@ -608,7 +512,7 @@ private fun SpeedProfilesSection(
     SpeedProfileInput(
         label = "Bike",
         displaySpeed = convertMsToDisplay(uiState.bikeSpeed, uiState.speedUnit),
-        onSpeedChange = { onSetBikeSpeed(it) },
+        onSpeedChange = { onAction(SettingsAction.SetBikeSpeed(it)) },
         unit = if (uiState.speedUnit == SpeedUnit.KMH) "km/h" else "mph",
     )
     if (uiState.bikeSpeed > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS) AntiCheatWarning()
@@ -617,8 +521,7 @@ private fun SpeedProfilesSection(
 @Composable
 private fun MapSection(
     uiState: SettingsUiState,
-    onSetRememberLastLocation: (Boolean) -> Unit,
-    onSetMapFollowsLocation: (Boolean) -> Unit,
+    onAction: (SettingsAction) -> Unit,
 ) {
     Text("Map", style = MaterialTheme.typography.headlineSmall)
     Spacer(modifier = Modifier.height(4.dp))
@@ -631,13 +534,13 @@ private fun MapSection(
 
     SettingsCheckboxRow(
         checked = uiState.rememberLastLocation,
-        onCheckedChange = onSetRememberLastLocation,
+        onCheckedChange = { onAction(SettingsAction.SetRememberLastLocation(it)) },
         title = "Remember last location",
         description = "Restores the last spoofed position when the app restarts, so you don't have to re-enter it.",
     )
     SettingsCheckboxRow(
         checked = uiState.mapFollowsLocation,
-        onCheckedChange = onSetMapFollowsLocation,
+        onCheckedChange = { onAction(SettingsAction.SetMapFollowsLocation(it)) },
         title = "Follow location on map",
         description = "Keeps the map camera centered on the spoofed position as it moves.",
     )
@@ -648,7 +551,7 @@ private fun WidgetFeatureRow(
     feature: WidgetFeature,
     label: String,
     enabledFeatures: Set<WidgetFeature>,
-    onSetWidgetFeatures: (Set<WidgetFeature>) -> Unit,
+    onAction: (SettingsAction) -> Unit,
     enabled: Boolean = true,
     subtitle: String? = null,
     subtitleColor: androidx.compose.ui.graphics.Color? = null,
@@ -666,7 +569,7 @@ private fun WidgetFeatureRow(
                 } else {
                     updated.remove(feature)
                 }
-                onSetWidgetFeatures(updated)
+                onAction(SettingsAction.SetWidgetFeatures(updated))
             }
         },
         title = label,
@@ -680,9 +583,8 @@ private fun WidgetFeatureRow(
 @Composable
 private fun FloatingWidgetSection(
     uiState: SettingsUiState,
-    onSetWidgetFeatures: (Set<WidgetFeature>) -> Unit,
     isRooted: Boolean = false,
-    onElevationControlsEnabled: () -> Unit = {},
+    onAction: (SettingsAction) -> Unit,
 ) {
     Text("Floating Widget", style = MaterialTheme.typography.headlineSmall)
     Spacer(modifier = Modifier.height(4.dp))
@@ -697,7 +599,7 @@ private fun FloatingWidgetSection(
         feature = WidgetFeature.MAP_FLOATING,
         label = "Map shortcut",
         enabledFeatures = uiState.enabledWidgetFeatures,
-        onSetWidgetFeatures = onSetWidgetFeatures,
+        onAction = onAction,
         icon = LjIcons.LocationOn,
         subtitle = "Opens a compact map view without switching to the main app.",
     )
@@ -705,7 +607,7 @@ private fun FloatingWidgetSection(
         feature = WidgetFeature.JOYSTICK_TOGGLE,
         label = "Show/hide joystick",
         enabledFeatures = uiState.enabledWidgetFeatures,
-        onSetWidgetFeatures = onSetWidgetFeatures,
+        onAction = onAction,
         icon = LjIcons.Visibility,
         subtitle = "Toggles the floating joystick overlay on or off.",
     )
@@ -713,7 +615,7 @@ private fun FloatingWidgetSection(
         feature = WidgetFeature.JOYSTICK_LOCK,
         label = "Lock joystick",
         enabledFeatures = uiState.enabledWidgetFeatures,
-        onSetWidgetFeatures = onSetWidgetFeatures,
+        onAction = onAction,
         icon = LjIcons.Lock,
         subtitle = "Keeps the joystick moving in the last held direction after you release.",
     )
@@ -721,7 +623,7 @@ private fun FloatingWidgetSection(
         feature = WidgetFeature.ROUTES_FLOATING,
         label = "Routes picker",
         enabledFeatures = uiState.enabledWidgetFeatures,
-        onSetWidgetFeatures = onSetWidgetFeatures,
+        onAction = onAction,
         icon = LjIcons.Route,
         subtitle = "Lists saved routes and starts replay without opening the app.",
     )
@@ -729,7 +631,7 @@ private fun FloatingWidgetSection(
         feature = WidgetFeature.FAVORITES_FLOATING,
         label = "Favorites picker",
         enabledFeatures = uiState.enabledWidgetFeatures,
-        onSetWidgetFeatures = onSetWidgetFeatures,
+        onAction = onAction,
         icon = LjIcons.Favorite,
         subtitle = "Lists favorite locations with one-tap teleport and walk shortcuts.",
     )
@@ -737,7 +639,7 @@ private fun FloatingWidgetSection(
         feature = WidgetFeature.SPEED_CYCLE,
         label = "Speed cycle",
         enabledFeatures = uiState.enabledWidgetFeatures,
-        onSetWidgetFeatures = onSetWidgetFeatures,
+        onAction = onAction,
         icon = LjIcons.Speed,
         subtitle = "Cycles through Walk, Run, and Bike speed profiles with a single tap.",
     )
@@ -745,11 +647,11 @@ private fun FloatingWidgetSection(
         feature = WidgetFeature.ELEVATION_CONTROLS,
         label = "Elevation controls",
         enabledFeatures = uiState.enabledWidgetFeatures,
-        onSetWidgetFeatures = onSetWidgetFeatures,
+        onAction = onAction,
         icon = LjIcons.Layers,
         subtitle = "Shows a floating overlay to tilt the simulated sensor angle · requires root",
         subtitleColor = MaterialTheme.colorScheme.error,
-        onEnabled = onElevationControlsEnabled,
+        onEnabled = { onAction(SettingsAction.RequestElevationAccess) },
     )
 }
 
@@ -757,7 +659,7 @@ private fun FloatingWidgetSection(
 private fun RoamingSection(
     roamingDefaults: RoamingDefaults,
     isMph: Boolean,
-    onUpdateRoamingDefaults: (RoamingDefaults) -> Unit,
+    onAction: (SettingsAction) -> Unit,
 ) {
     Text("Roaming", style = MaterialTheme.typography.headlineSmall)
     Spacer(modifier = Modifier.height(4.dp))
@@ -783,7 +685,7 @@ private fun RoamingSection(
             radiusText = text
             text.toDoubleOrNull()?.let { v ->
                 val meters = if (isMph) v * 1609.344 else v
-                onUpdateRoamingDefaults(roamingDefaults.copy(radiusMeters = meters.coerceIn(1_000.0, 100_000.0)))
+                onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(radiusMeters = meters.coerceIn(1_000.0, 100_000.0))))
             }
         },
         label = { Text(if (isMph) "Radius (mi)" else "Radius (m)") },
@@ -809,7 +711,7 @@ private fun RoamingSection(
             distanceText = text
             text.toDoubleOrNull()?.let { v ->
                 val meters = if (isMph) v * 1609.344 else v
-                onUpdateRoamingDefaults(roamingDefaults.copy(distanceMeters = meters.coerceIn(50.0, 50_000.0)))
+                onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(distanceMeters = meters.coerceIn(50.0, 50_000.0))))
             }
         },
         label = { Text(if (isMph) "Route distance (mi)" else "Route distance (m)") },
@@ -825,19 +727,19 @@ private fun RoamingSection(
     LjSegmentedControl(
         options = listOf("walk" to "Walk", "run" to "Run", "bike" to "Bike"),
         selected = roamingDefaults.speedProfileId,
-        onSelect = { onUpdateRoamingDefaults(roamingDefaults.copy(speedProfileId = it)) },
+        onSelect = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(speedProfileId = it))) },
         modifier = Modifier.fillMaxWidth(),
     )
 
     SettingsCheckboxRow(
         checked = roamingDefaults.followRoads,
-        onCheckedChange = { onUpdateRoamingDefaults(roamingDefaults.copy(followRoads = it)) },
+        onCheckedChange = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(followRoads = it))) },
         title = "Follow roads",
         description = "Uses OSRM road routing to stay on walkable paths. Falls back to straight-line if unavailable.",
     )
     SettingsCheckboxRow(
         checked = roamingDefaults.returnToInitialLocation,
-        onCheckedChange = { onUpdateRoamingDefaults(roamingDefaults.copy(returnToInitialLocation = it)) },
+        onCheckedChange = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(returnToInitialLocation = it))) },
         title = "Return to start",
         description = "Walks back to the starting position after the roaming session completes.",
     )
