@@ -32,8 +32,8 @@ import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
-import com.locationjoystick.core.model.toConfig
 import com.locationjoystick.core.model.WidgetFeature
+import com.locationjoystick.core.model.toConfig
 import com.locationjoystick.core.overlay.OverlayService
 import com.locationjoystick.core.overlay.OverlayServiceHelper
 import com.locationjoystick.feature.joystick.impl.JoystickOverlayService

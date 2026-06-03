@@ -8,11 +8,16 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class DeepLinkRepository @Inject constructor() {
-    private val _pendingCoords = Channel<LatLng>(Channel.CONFLATED)
-    val pendingCoords: Flow<LatLng> = _pendingCoords.receiveAsFlow()
+class DeepLinkRepository
+    @Inject
+    constructor() {
+        private val _pendingCoords = Channel<LatLng>(Channel.CONFLATED)
+        val pendingCoords: Flow<LatLng> = _pendingCoords.receiveAsFlow()
 
-    fun setPendingCoords(lat: Double, lon: Double) {
-        _pendingCoords.trySend(LatLng(lat, lon))
+        fun setPendingCoords(
+            lat: Double,
+            lon: Double,
+        ) {
+            _pendingCoords.trySend(LatLng(lat, lon))
+        }
     }
-}

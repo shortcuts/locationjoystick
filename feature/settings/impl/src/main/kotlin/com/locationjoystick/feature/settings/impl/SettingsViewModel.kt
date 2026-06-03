@@ -10,6 +10,7 @@ import com.locationjoystick.core.common.root.SensorPermissionBootstrap
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.RoamingDefaults
@@ -26,7 +27,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -77,30 +77,6 @@ class SettingsViewModel
 
         internal val userFeedback = MutableSharedFlow<UserFeedback>(extraBufferCapacity = 1)
 
-        private data class RepoState(
-            val walkSpeed: Double,
-            val runSpeed: Double,
-            val bikeSpeed: Double,
-            val speedUnit: SpeedUnit,
-            val widgetFeatures: Set<WidgetFeature>,
-            val rememberLastLocation: Boolean,
-            val mapFollowsLocation: Boolean,
-            val jitterIdleRadius: Double,
-            val jitterMovingRadius: Double,
-            val jitterIntervalSeconds: Int,
-            val jitterIdleIntervalSeconds: Int,
-            val realismBearingHoldIdle: Boolean,
-            val realismAltitudeEnabled: Boolean,
-            val realismWarmupEnabled: Boolean,
-            val realismSatelliteExtrasEnabled: Boolean,
-            val realismSuspendedMockingEnabled: Boolean,
-            val jitterSpeedIdleVariationPct: Int,
-            val jitterSpeedMovingVariationPct: Int,
-            val elevationTiltJitterDegrees: Float,
-            val elevationNoiseAmplitudeMs2: Float,
-            val hotLocationsEnabled: Boolean,
-        )
-
         private data class DraftState(
             val walkSpeed: Double? = null,
             val runSpeed: Double? = null,
@@ -128,32 +104,7 @@ class SettingsViewModel
 
         private val mutableDraft = MutableStateFlow(DraftState())
 
-        private val repoStateFlow =
-            settingsRepository.getSettingsSnapshot().map { s ->
-                RepoState(
-                    walkSpeed = s.walkSpeedMs,
-                    runSpeed = s.runSpeedMs,
-                    bikeSpeed = s.bikeSpeedMs,
-                    speedUnit = s.speedUnit,
-                    widgetFeatures = s.widgetFeatures,
-                    rememberLastLocation = s.rememberLastLocation,
-                    mapFollowsLocation = s.mapFollowsLocation,
-                    jitterIdleRadius = s.jitterIdleRadius,
-                    jitterMovingRadius = s.jitterMovingRadius,
-                    jitterIntervalSeconds = s.jitterIntervalSeconds,
-                    jitterIdleIntervalSeconds = s.jitterIdleIntervalSeconds,
-                    realismBearingHoldIdle = s.realismBearingHoldIdle,
-                    realismAltitudeEnabled = s.realismAltitudeEnabled,
-                    realismWarmupEnabled = s.realismWarmupEnabled,
-                    realismSatelliteExtrasEnabled = s.realismSatelliteExtrasEnabled,
-                    realismSuspendedMockingEnabled = s.realismSuspendedMockingEnabled,
-                    jitterSpeedIdleVariationPct = s.jitterSpeedIdleVariationPct,
-                    jitterSpeedMovingVariationPct = s.jitterSpeedMovingVariationPct,
-                    elevationTiltJitterDegrees = s.elevationTiltJitterDegrees,
-                    elevationNoiseAmplitudeMs2 = s.elevationNoiseAmplitudeMs2,
-                    hotLocationsEnabled = s.hotLocationsEnabled,
-                )
-            }
+        private val repoStateFlow = settingsRepository.getSettingsSnapshot()
 
         private val draftStateFlow = mutableDraft.asStateFlow()
 
@@ -176,9 +127,9 @@ class SettingsViewModel
                 val isDirty = draftState != DraftState()
                 SettingsUiState(
                     isLoading = false,
-                    walkSpeed = draftState.walkSpeed ?: repoState.walkSpeed,
-                    runSpeed = draftState.runSpeed ?: repoState.runSpeed,
-                    bikeSpeed = draftState.bikeSpeed ?: repoState.bikeSpeed,
+                    walkSpeed = draftState.walkSpeed ?: repoState.walkSpeedMs,
+                    runSpeed = draftState.runSpeed ?: repoState.runSpeedMs,
+                    bikeSpeed = draftState.bikeSpeed ?: repoState.bikeSpeedMs,
                     speedUnit = draftState.speedUnit ?: repoState.speedUnit,
                     enabledWidgetFeatures = draftState.widgetFeatures ?: repoState.widgetFeatures,
                     rememberLastLocation = draftState.rememberLastLocation ?: repoState.rememberLastLocation,
@@ -296,50 +247,35 @@ class SettingsViewModel
         fun saveChanges() {
             viewModelScope.launch {
                 try {
+                    val state = uiState.value
                     val d = mutableDraft.value
-                    if (d.walkSpeed != null) settingsRepository.setWalkSpeed(d.walkSpeed)
-                    if (d.runSpeed != null) settingsRepository.setRunSpeed(d.runSpeed)
-                    if (d.bikeSpeed != null) settingsRepository.setBikeSpeed(d.bikeSpeed)
-                    if (d.speedUnit != null) settingsRepository.setSpeedUnit(d.speedUnit)
-                    if (d.widgetFeatures != null) settingsRepository.setWidgetFeatures(d.widgetFeatures.toList())
-                    if (d.rememberLastLocation != null) settingsRepository.setRememberLastLocation(d.rememberLastLocation)
-                    if (d.mapFollowsLocation != null) settingsRepository.setMapFollowsLocation(d.mapFollowsLocation)
-                    if (d.jitterIdleRadius != null) settingsRepository.setJitterIdleRadius(d.jitterIdleRadius)
-                    if (d.jitterMovingRadius != null) settingsRepository.setJitterMovingRadius(d.jitterMovingRadius)
-                    if (d.jitterIntervalSeconds != null) settingsRepository.setJitterIntervalSeconds(d.jitterIntervalSeconds)
-                    if (d.jitterIdleIntervalSeconds != null) settingsRepository.setJitterIdleIntervalSeconds(d.jitterIdleIntervalSeconds)
+                    settingsRepository.applySnapshot(
+                        SettingsSnapshot(
+                            walkSpeedMs = state.walkSpeed,
+                            runSpeedMs = state.runSpeed,
+                            bikeSpeedMs = state.bikeSpeed,
+                            speedUnit = state.speedUnit,
+                            widgetFeatures = state.enabledWidgetFeatures,
+                            rememberLastLocation = state.rememberLastLocation,
+                            mapFollowsLocation = state.mapFollowsLocation,
+                            jitterIdleRadius = state.jitterIdleRadiusMeters,
+                            jitterMovingRadius = state.jitterMovingRadiusMeters,
+                            jitterIntervalSeconds = state.jitterIntervalSeconds,
+                            jitterIdleIntervalSeconds = state.jitterIdleIntervalSeconds,
+                            realismBearingHoldIdle = state.realismBearingHoldIdle,
+                            realismAltitudeEnabled = state.realismAltitudeEnabled,
+                            realismWarmupEnabled = state.realismWarmupEnabled,
+                            realismSatelliteExtrasEnabled = state.realismSatelliteExtrasEnabled,
+                            realismSuspendedMockingEnabled = state.realismSuspendedMockingEnabled,
+                            jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
+                            jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
+                            elevationTiltJitterDegrees = state.elevationTiltJitterDegrees,
+                            elevationNoiseAmplitudeMs2 = state.elevationNoiseAmplitudeMs2,
+                            hotLocationsEnabled = state.hotLocationsEnabled,
+                        ),
+                    )
                     if (d.roamingDefaults != null) settingsRepository.updateRoamingDefaults(d.roamingDefaults)
-                    if (d.realismBearingHoldIdle != null) settingsRepository.setRealismBearingHoldIdle(d.realismBearingHoldIdle)
-                    if (d.realismAltitudeEnabled != null) settingsRepository.setRealismAltitudeEnabled(d.realismAltitudeEnabled)
-                    if (d.realismWarmupEnabled != null) settingsRepository.setRealismWarmupEnabled(d.realismWarmupEnabled)
-                    if (d.realismSatelliteExtrasEnabled !=
-                        null
-                    ) {
-                        settingsRepository.setRealismSatelliteExtrasEnabled(d.realismSatelliteExtrasEnabled)
-                    }
-                    if (d.realismSuspendedMockingEnabled !=
-                        null
-                    ) {
-                        settingsRepository.setRealismSuspendedMockingEnabled(d.realismSuspendedMockingEnabled)
-                    }
-                    if (d.jitterSpeedIdleVariationPct !=
-                        null
-                    ) {
-                        settingsRepository.setJitterSpeedIdleVariationPct(d.jitterSpeedIdleVariationPct)
-                    }
-                    if (d.jitterSpeedMovingVariationPct !=
-                        null
-                    ) {
-                        settingsRepository.setJitterSpeedMovingVariationPct(d.jitterSpeedMovingVariationPct)
-                    }
-                    if (d.elevationTiltJitterDegrees != null) {
-                        settingsRepository.setElevationTiltJitterDegrees(d.elevationTiltJitterDegrees)
-                    }
-                    if (d.elevationNoiseAmplitudeMs2 != null) {
-                        settingsRepository.setElevationNoiseAmplitudeMs2(d.elevationNoiseAmplitudeMs2)
-                    }
                     if (d.hotLocationsEnabled != null) {
-                        settingsRepository.setHotLocationsEnabled(d.hotLocationsEnabled)
                         if (d.hotLocationsEnabled) {
                             favoriteRepository.upsertHotLocations()
                         } else {
@@ -445,42 +381,7 @@ class SettingsViewModel
                         userFeedback.emit(UserFeedback("Failed to import: empty file", isError = true))
                         return@launch
                     }
-                    val exportData = parseExportData(json)
-
-                    withContext(Dispatchers.IO) {
-                        if (replace) {
-                            favoriteRepository.deleteAllFavorites()
-                            routeRepository.deleteAllRoutes()
-                        }
-                        exportData.favoriteLocations.forEach { fav ->
-                            favoriteRepository.addFavorite(
-                                id = fav.id,
-                                name = fav.name,
-                                position = fav.position,
-                                createdAt = fav.createdAt,
-                            )
-                        }
-                        exportData.routes.forEach { routeRepository.insertRoute(it).getOrNull() }
-                    }
-
-                    setSpeedUnit(exportData.settings.speedUnit)
-                    exportData.speedProfiles.forEach { profile ->
-                        when (profile.id) {
-                            "walk" -> settingsRepository.setWalkSpeed(profile.speedMetersPerSecond)
-                            "run" -> settingsRepository.setRunSpeed(profile.speedMetersPerSecond)
-                            "bike" -> settingsRepository.setBikeSpeed(profile.speedMetersPerSecond)
-                        }
-                    }
-                    setWidgetFeatures(exportData.settings.enabledWidgetFeatures.toSet())
-                    setJitterIdleRadius(exportData.jitterIdleRadius)
-                    setJitterMovingRadius(exportData.jitterMovingRadius)
-                    setJitterIntervalSeconds(exportData.jitterIntervalSeconds)
-                    setJitterIdleIntervalSeconds(exportData.jitterIdleIntervalSeconds)
-                    setJitterSpeedIdleVariationPct(exportData.jitterSpeedIdleVariationPct)
-                    setJitterSpeedMovingVariationPct(exportData.jitterSpeedMovingVariationPct)
-                    setElevationTiltJitterDegrees(exportData.elevationTiltJitterDegrees)
-                    setElevationNoiseAmplitudeMs2(exportData.elevationNoiseAmplitudeMs2)
-                    setHotLocationsEnabled(exportData.hotLocationsEnabled)
+                    applyExportData(parseExportData(json), replace)
                     userFeedback.emit(UserFeedback("Import complete"))
                 } catch (e: Exception) {
                     Log.e(TAG, "Import failed", e)
@@ -534,46 +435,62 @@ class SettingsViewModel
         ) {
             viewModelScope.launch {
                 try {
-                    withContext(Dispatchers.IO) {
-                        if (replace) {
-                            favoriteRepository.deleteAllFavorites()
-                            routeRepository.deleteAllRoutes()
-                        }
-                        exportData.favoriteLocations.forEach { fav ->
-                            favoriteRepository.addFavorite(
-                                id = fav.id,
-                                name = fav.name,
-                                position = fav.position,
-                                createdAt = fav.createdAt,
-                            )
-                        }
-                        exportData.routes.forEach { routeRepository.insertRoute(it).getOrNull() }
-                    }
-                    exportData.speedProfiles.forEach { profile ->
-                        when (profile.id) {
-                            "walk" -> settingsRepository.setWalkSpeed(profile.speedMetersPerSecond)
-                            "run" -> settingsRepository.setRunSpeed(profile.speedMetersPerSecond)
-                            "bike" -> settingsRepository.setBikeSpeed(profile.speedMetersPerSecond)
-                        }
-                    }
-                    settingsRepository.setSpeedUnit(exportData.settings.speedUnit)
-                    settingsRepository.setWidgetFeatures(exportData.settings.enabledWidgetFeatures)
-                    settingsRepository.updateRoamingDefaults(exportData.settings.roamingDefaults)
-                    settingsRepository.setRealismBearingHoldIdle(exportData.settings.bearingHoldOnIdle)
-                    settingsRepository.setRealismAltitudeEnabled(exportData.settings.altitudeEnabled)
-                    settingsRepository.setRealismWarmupEnabled(exportData.settings.warmupEnabled)
-                    settingsRepository.setRealismSatelliteExtrasEnabled(exportData.settings.satelliteExtrasEnabled)
-                    settingsRepository.setRealismSuspendedMockingEnabled(exportData.settings.suspendedMockingEnabled)
-                    settingsRepository.setJitterSpeedIdleVariationPct(exportData.jitterSpeedIdleVariationPct)
-                    settingsRepository.setJitterSpeedMovingVariationPct(exportData.jitterSpeedMovingVariationPct)
-                    settingsRepository.setElevationTiltJitterDegrees(exportData.elevationTiltJitterDegrees)
-                    settingsRepository.setElevationNoiseAmplitudeMs2(exportData.elevationNoiseAmplitudeMs2)
-                    settingsRepository.setHotLocationsEnabled(exportData.hotLocationsEnabled)
+                    applyExportData(exportData, replace)
                     userFeedback.emit(UserFeedback("Import complete"))
                 } catch (e: Exception) {
                     Log.e(TAG, "Import from ExportData failed", e)
                     userFeedback.emit(UserFeedback("Failed to import", isError = true))
                 }
+            }
+        }
+
+        private suspend fun applyExportData(
+            data: ExportData,
+            replace: Boolean,
+        ) {
+            withContext(Dispatchers.IO) {
+                if (replace) {
+                    favoriteRepository.deleteAllFavorites()
+                    routeRepository.deleteAllRoutes()
+                }
+                data.favoriteLocations.forEach { fav ->
+                    favoriteRepository.addFavorite(
+                        id = fav.id,
+                        name = fav.name,
+                        position = fav.position,
+                        createdAt = fav.createdAt,
+                    )
+                }
+                data.routes.forEach { routeRepository.insertRoute(it).getOrNull() }
+            }
+            data.speedProfiles.forEach { profile ->
+                when (profile.id) {
+                    "walk" -> settingsRepository.setWalkSpeed(profile.speedMetersPerSecond)
+                    "run" -> settingsRepository.setRunSpeed(profile.speedMetersPerSecond)
+                    "bike" -> settingsRepository.setBikeSpeed(profile.speedMetersPerSecond)
+                }
+            }
+            settingsRepository.setSpeedUnit(data.settings.speedUnit)
+            settingsRepository.setWidgetFeatures(data.settings.enabledWidgetFeatures)
+            settingsRepository.updateRoamingDefaults(data.settings.roamingDefaults)
+            settingsRepository.setRealismBearingHoldIdle(data.settings.bearingHoldOnIdle)
+            settingsRepository.setRealismAltitudeEnabled(data.settings.altitudeEnabled)
+            settingsRepository.setRealismWarmupEnabled(data.settings.warmupEnabled)
+            settingsRepository.setRealismSatelliteExtrasEnabled(data.settings.satelliteExtrasEnabled)
+            settingsRepository.setRealismSuspendedMockingEnabled(data.settings.suspendedMockingEnabled)
+            settingsRepository.setJitterIdleRadius(data.jitterIdleRadius)
+            settingsRepository.setJitterMovingRadius(data.jitterMovingRadius)
+            settingsRepository.setJitterIntervalSeconds(data.jitterIntervalSeconds)
+            settingsRepository.setJitterIdleIntervalSeconds(data.jitterIdleIntervalSeconds)
+            settingsRepository.setJitterSpeedIdleVariationPct(data.jitterSpeedIdleVariationPct)
+            settingsRepository.setJitterSpeedMovingVariationPct(data.jitterSpeedMovingVariationPct)
+            settingsRepository.setElevationTiltJitterDegrees(data.elevationTiltJitterDegrees)
+            settingsRepository.setElevationNoiseAmplitudeMs2(data.elevationNoiseAmplitudeMs2)
+            settingsRepository.setHotLocationsEnabled(data.hotLocationsEnabled)
+            if (data.hotLocationsEnabled) {
+                favoriteRepository.upsertHotLocations()
+            } else {
+                favoriteRepository.removeHotLocations()
             }
         }
 

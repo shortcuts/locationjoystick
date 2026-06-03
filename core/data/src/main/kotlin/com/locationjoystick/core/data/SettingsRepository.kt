@@ -202,4 +202,6 @@ class SettingsRepository
         suspend fun setHotLocationsEnabled(enabled: Boolean) = dataSource.setHotLocationsEnabled(enabled)
 
         fun getSettingsSnapshot(): Flow<SettingsSnapshot> = dataSource.getSettingsSnapshot()
+
+        suspend fun applySnapshot(snapshot: SettingsSnapshot) = dataSource.applySnapshot(snapshot)
     }

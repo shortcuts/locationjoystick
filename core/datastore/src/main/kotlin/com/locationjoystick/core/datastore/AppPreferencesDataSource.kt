@@ -194,6 +194,9 @@ interface PreferencesDataSource {
 
     /** Returns all settings needed by the settings UI in a single DataStore scan. */
     fun getSettingsSnapshot(): Flow<SettingsSnapshot>
+
+    /** Writes all settings from [snapshot] atomically in a single DataStore transaction. */
+    suspend fun applySnapshot(snapshot: SettingsSnapshot)
 }
 
 data class SettingsSnapshot(
@@ -576,6 +579,50 @@ class AppPreferencesDataSource
 
         override suspend fun setHotLocationsEnabled(enabled: Boolean) {
             dataStore.edit { prefs -> prefs[Keys.HOT_LOCATIONS_ENABLED] = enabled }
+        }
+
+        override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
+            dataStore.edit { prefs ->
+                prefs[Keys.WALK_SPEED_MS] = snapshot.walkSpeedMs.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS)
+                prefs[Keys.RUN_SPEED_MS] = snapshot.runSpeedMs.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS)
+                prefs[Keys.BIKE_SPEED_MS] = snapshot.bikeSpeedMs.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS)
+                prefs[Keys.SPEED_UNIT] = snapshot.speedUnit.name
+                prefs[Keys.WIDGET_ITEMS] = snapshot.widgetFeatures.map { it.toKey() }.toSet()
+                prefs[Keys.REMEMBER_LAST_LOCATION] = snapshot.rememberLastLocation
+                prefs[Keys.MAP_FOLLOWS_LOCATION] = snapshot.mapFollowsLocation
+                prefs[Keys.JITTER_IDLE_RADIUS_METERS] = snapshot.jitterIdleRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
+                prefs[Keys.JITTER_MOVING_RADIUS_METERS] = snapshot.jitterMovingRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
+                prefs[Keys.JITTER_INTERVAL_SECONDS] =
+                    snapshot.jitterIntervalSeconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS)
+                prefs[Keys.JITTER_IDLE_INTERVAL_SECONDS] =
+                    snapshot.jitterIdleIntervalSeconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS)
+                prefs[Keys.REALISM_BEARING_HOLD_IDLE] = snapshot.realismBearingHoldIdle
+                prefs[Keys.REALISM_ALTITUDE_ENABLED] = snapshot.realismAltitudeEnabled
+                prefs[Keys.REALISM_WARMUP_ENABLED] = snapshot.realismWarmupEnabled
+                prefs[Keys.REALISM_SATELLITE_EXTRAS_ENABLED] = snapshot.realismSatelliteExtrasEnabled
+                prefs[Keys.REALISM_SUSPENDED_MOCKING_ENABLED] = snapshot.realismSuspendedMockingEnabled
+                prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] =
+                    snapshot.jitterSpeedIdleVariationPct.coerceIn(
+                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
+                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
+                    )
+                prefs[Keys.JITTER_SPEED_MOVING_VARIATION_PCT] =
+                    snapshot.jitterSpeedMovingVariationPct.coerceIn(
+                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
+                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
+                    )
+                prefs[Keys.ELEVATION_TILT_JITTER_DEGREES] =
+                    snapshot.elevationTiltJitterDegrees.coerceIn(
+                        AppConstants.ElevationConstants.MIN_TILT_JITTER_DEGREES,
+                        AppConstants.ElevationConstants.MAX_TILT_JITTER_DEGREES,
+                    )
+                prefs[Keys.ELEVATION_NOISE_AMPLITUDE_MS2] =
+                    snapshot.elevationNoiseAmplitudeMs2.coerceIn(
+                        AppConstants.ElevationConstants.MIN_NOISE_AMPLITUDE_MS2,
+                        AppConstants.ElevationConstants.MAX_NOISE_AMPLITUDE_MS2,
+                    )
+                prefs[Keys.HOT_LOCATIONS_ENABLED] = snapshot.hotLocationsEnabled
+            }
         }
 
         override fun getSettingsSnapshot(): Flow<SettingsSnapshot> =
