@@ -112,14 +112,20 @@ internal class WidgetPanelPresenter(
         )
 
     // Map panel allows keyboard focus so the Nominatim search field accepts text input.
+    // SOFT_INPUT_ADJUST_RESIZE ensures the keyboard pushes the panel content up rather than
+    // overlapping it — required for overlay windows where the IME otherwise stays hidden.
     private fun mapPanelLayoutParams() =
-        AndroidWindowManager.LayoutParams(
-            AndroidWindowManager.LayoutParams.MATCH_PARENT,
-            AndroidWindowManager.LayoutParams.MATCH_PARENT,
-            AndroidWindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            AndroidWindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-            android.graphics.PixelFormat.TRANSLUCENT,
-        )
+        AndroidWindowManager
+            .LayoutParams(
+                AndroidWindowManager.LayoutParams.MATCH_PARENT,
+                AndroidWindowManager.LayoutParams.MATCH_PARENT,
+                AndroidWindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                AndroidWindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                android.graphics.PixelFormat.TRANSLUCENT,
+            ).also {
+                @Suppress("DEPRECATION")
+                it.softInputMode = android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+            }
 
     fun hidePanelView() {
         panelComposeView?.let { view ->
@@ -280,18 +286,22 @@ internal class WidgetPanelPresenter(
                 onTeleport = { pos ->
                     callbacks.teleport(pos)
                     hidePanelView()
+                    callbacks.moveAppToBack()
                 },
                 onWalkTo = { pos ->
                     callbacks.walkTo(pos)
                     hidePanelView()
+                    callbacks.moveAppToBack()
                 },
                 onStopRouteAndTeleport = { pos ->
                     callbacks.stopRouteAndTeleport(pos)
                     hidePanelView()
+                    callbacks.moveAppToBack()
                 },
                 onStopRouteAndWalkTo = { pos ->
                     callbacks.stopRouteAndWalkTo(pos)
                     hidePanelView()
+                    callbacks.moveAppToBack()
                 },
                 onFinishRouteAndWalkTo = { pos ->
                     callbacks.finishRouteAndWalkTo(pos)
