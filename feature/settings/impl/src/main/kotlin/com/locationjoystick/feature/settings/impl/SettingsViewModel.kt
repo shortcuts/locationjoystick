@@ -1,6 +1,5 @@
 package com.locationjoystick.feature.settings.impl
 
-import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -43,6 +42,7 @@ class SettingsViewModel
         private val routeRepository: RouteRepository,
         private val rootCapabilityChecker: RootCapabilityChecker,
         private val sensorPermissionBootstrap: SensorPermissionBootstrap,
+        private val importExportRepository: ImportExportRepository,
     ) : ViewModel() {
         companion object {
             private const val TAG = "SettingsViewModel"
@@ -403,16 +403,11 @@ class SettingsViewModel
             )
         }
 
-        fun writeExportToUri(
-            context: Context,
-            uri: Uri,
-        ) {
+        fun writeExportToUri(uri: Uri) {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
                     val json = serializeExportData(buildCurrentExportData())
-                    context.contentResolver.openOutputStream(uri)?.use { stream ->
-                        stream.write(json.toByteArray(Charsets.UTF_8))
-                    }
+                    importExportRepository.writeToUri(uri, json)
                     userFeedback.emit(UserFeedback("Export complete"))
                 } catch (e: Exception) {
                     Log.e(TAG, "Export failed", e)
@@ -422,19 +417,12 @@ class SettingsViewModel
         }
 
         fun importSettings(
-            context: Context,
             uri: Uri,
             replace: Boolean = true,
         ) {
             viewModelScope.launch {
                 try {
-                    val json =
-                        withContext(Dispatchers.IO) {
-                            context.contentResolver
-                                .openInputStream(uri)
-                                ?.bufferedReader()
-                                ?.readText() ?: ""
-                        }
+                    val json = withContext(Dispatchers.IO) { importExportRepository.readTextFromUri(uri) }
                     if (json.isEmpty()) {
                         Log.e(TAG, "Import failed: empty file")
                         userFeedback.emit(UserFeedback("Failed to import: empty file", isError = true))
@@ -571,16 +559,12 @@ class SettingsViewModel
         }
 
         fun importFromGpsJoystick(
-            context: Context,
             uri: Uri,
             replace: Boolean,
         ) {
             viewModelScope.launch {
                 try {
-                    val bytes =
-                        withContext(Dispatchers.IO) {
-                            context.contentResolver.openInputStream(uri)?.readBytes() ?: ByteArray(0)
-                        }
+                    val bytes = withContext(Dispatchers.IO) { importExportRepository.readBytesFromUri(uri) }
                     if (bytes.isEmpty()) {
                         Log.e(TAG, "GPS Joystick import failed: empty file")
                         userFeedback.emit(UserFeedback("Failed to import from GPS Joystick", isError = true))
@@ -620,19 +604,12 @@ class SettingsViewModel
         }
 
         fun importFromYamla(
-            context: Context,
             uri: Uri,
             replace: Boolean,
         ) {
             viewModelScope.launch {
                 try {
-                    val json =
-                        withContext(Dispatchers.IO) {
-                            context.contentResolver
-                                .openInputStream(uri)
-                                ?.bufferedReader()
-                                ?.readText() ?: ""
-                        }
+                    val json = withContext(Dispatchers.IO) { importExportRepository.readTextFromUri(uri) }
                     if (json.isBlank()) {
                         Log.e(TAG, "YAMLA import failed: empty file")
                         userFeedback.emit(UserFeedback("Failed to import from YAMLA", isError = true))

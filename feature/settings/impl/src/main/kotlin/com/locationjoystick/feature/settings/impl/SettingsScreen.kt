@@ -118,7 +118,7 @@ fun SettingsRoute(
         rememberLauncherForActivityResult(
             ActivityResultContracts.CreateDocument(AppConstants.ExportConstants.MIME_TYPE),
         ) { uri ->
-            if (uri != null) viewModel.writeExportToUri(context, uri)
+            if (uri != null) viewModel.writeExportToUri(uri)
         }
 
     val importLauncher =
@@ -147,19 +147,19 @@ fun SettingsRoute(
         ImportConfirmDialog(
             onReplace = {
                 when (pending) {
-                    is PendingImport.File -> viewModel.importSettings(context, pending.uri, replace = true)
+                    is PendingImport.File -> viewModel.importSettings(pending.uri, replace = true)
                     is PendingImport.QrData -> viewModel.importSettings(pending.data, replace = true)
-                    is PendingImport.GpsJoystick -> viewModel.importFromGpsJoystick(context, pending.uri, replace = true)
-                    is PendingImport.Yamla -> viewModel.importFromYamla(context, pending.uri, replace = true)
+                    is PendingImport.GpsJoystick -> viewModel.importFromGpsJoystick(pending.uri, replace = true)
+                    is PendingImport.Yamla -> viewModel.importFromYamla(pending.uri, replace = true)
                 }
                 pendingImport = null
             },
             onAdd = {
                 when (pending) {
-                    is PendingImport.File -> viewModel.importSettings(context, pending.uri, replace = false)
+                    is PendingImport.File -> viewModel.importSettings(pending.uri, replace = false)
                     is PendingImport.QrData -> viewModel.importSettings(pending.data, replace = false)
-                    is PendingImport.GpsJoystick -> viewModel.importFromGpsJoystick(context, pending.uri, replace = false)
-                    is PendingImport.Yamla -> viewModel.importFromYamla(context, pending.uri, replace = false)
+                    is PendingImport.GpsJoystick -> viewModel.importFromGpsJoystick(pending.uri, replace = false)
+                    is PendingImport.Yamla -> viewModel.importFromYamla(pending.uri, replace = false)
                 }
                 pendingImport = null
             },
