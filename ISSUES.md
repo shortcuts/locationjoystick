@@ -8,7 +8,6 @@ No outstanding documentation issues.
 
 ## Bugs
 
-- Tackle each item in docs/refactoring-plan.md
 - FloatingWidgetService -> Map -> Search -> Select result -> Doesn't show the anti-cheat cooldown timeout
 
 ---
