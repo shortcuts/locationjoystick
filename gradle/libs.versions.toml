@@ -114,6 +114,7 @@ maplibre-android-sdk = { group = "org.maplibre.gl", name = "android-sdk", versio
 # Networking
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
 
 # QR Code & Camera
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }

@@ -1,13 +1,128 @@
 package com.locationjoystick.core.routing
 
 import com.locationjoystick.core.model.LatLng
+import kotlinx.coroutines.test.runTest
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class OsrmClientTest {
     private val client = OsrmClient()
+
+    // MockWebServer tests
+
+    private lateinit var server: MockWebServer
+    private lateinit var testClient: OsrmClient
+
+    @Before
+    fun setUpServer() {
+        server = MockWebServer()
+        server.start()
+        testClient = OsrmClient(server.url("/").toString())
+    }
+
+    @After
+    fun tearDownServer() {
+        server.shutdown()
+    }
+
+    @Test
+    fun `getRoute returns multi-point polyline on Ok response`() =
+        runTest {
+            val body =
+                """
+                {
+                  "code": "Ok",
+                  "routes": [{
+                    "geometry": {
+                      "type": "LineString",
+                      "coordinates": [
+                        [2.3522, 48.8566],
+                        [2.3540, 48.8580],
+                        [2.3560, 48.8600]
+                      ]
+                    },
+                    "distance": 500.0,
+                    "duration": 360.0
+                  }]
+                }
+                """.trimIndent()
+            server.enqueue(MockResponse().setResponseCode(200).setBody(body))
+
+            val result =
+                testClient.getRoute(
+                    profile = "foot",
+                    waypoints = listOf(LatLng(48.8566, 2.3522), LatLng(48.8600, 2.3560)),
+                )
+
+            assertTrue("Expected success", result.isSuccess)
+            val points = result.getOrNull()!!
+            assertTrue("Expected more than 2 points from OSRM polyline", points.size > 2)
+            // GeoJSON is [lon, lat]; verify parsing swaps them correctly
+            assertEquals(48.8566, points[0].latitude, 0.0001)
+            assertEquals(2.3522, points[0].longitude, 0.0001)
+        }
+
+    @Test
+    fun `getRoute returns failure on non-Ok OSRM code`() =
+        runTest {
+            val body = """{"code": "NoRoute", "routes": []}"""
+            server.enqueue(MockResponse().setResponseCode(200).setBody(body))
+
+            val result =
+                testClient.getRoute(
+                    profile = "foot",
+                    waypoints = listOf(LatLng(48.8566, 2.3522), LatLng(48.8600, 2.3560)),
+                )
+
+            assertTrue("Expected failure for non-Ok OSRM code", result.isFailure)
+        }
+
+    @Test
+    fun `getRoute returns failure on HTTP error`() =
+        runTest {
+            server.enqueue(MockResponse().setResponseCode(400).setBody("Bad Request"))
+
+            val result =
+                testClient.getRoute(
+                    profile = "foot",
+                    waypoints = listOf(LatLng(48.8566, 2.3522), LatLng(48.8600, 2.3560)),
+                )
+
+            assertTrue("Expected failure on HTTP 400", result.isFailure)
+        }
+
+    @Test
+    fun `getRoute request uses correct profile and coordinate format`() =
+        runTest {
+            val body =
+                """
+                {
+                  "code": "Ok",
+                  "routes": [{
+                    "geometry": {"type": "LineString", "coordinates": [[2.3522, 48.8566], [2.356, 48.86]]},
+                    "distance": 100.0,
+                    "duration": 60.0
+                  }]
+                }
+                """.trimIndent()
+            server.enqueue(MockResponse().setResponseCode(200).setBody(body))
+
+            testClient.getRoute(
+                profile = "foot",
+                waypoints = listOf(LatLng(48.8566, 2.3522), LatLng(48.8600, 2.3560)),
+            )
+
+            val request = server.takeRequest()
+            assertTrue("Path should contain profile 'foot'", request.path!!.contains("/foot/"))
+            // Coordinates are encoded as lon,lat;lon,lat
+            assertTrue("Path should contain coordinates", request.path!!.contains("2.3522,48.8566"))
+        }
 
     // straightLineRoute
 

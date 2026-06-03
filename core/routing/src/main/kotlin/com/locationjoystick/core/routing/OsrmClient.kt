@@ -72,16 +72,20 @@ data class OsrmCoordinate(
  */
 @Singleton
 class OsrmClient
-    @Inject
-    constructor() {
+    internal constructor(
+        baseUrl: String,
+    ) {
         companion object {
             const val PROFILE_FOOT = AppConstants.RoamingConstants.OSRM_PROFILE_FOOT
         }
 
+        @Inject
+        constructor() : this(AppConstants.OsrmConstants.BASE_URL)
+
         private val api: OsrmApi =
             Retrofit
                 .Builder()
-                .baseUrl(AppConstants.OsrmConstants.BASE_URL)
+                .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(OsrmApi::class.java)

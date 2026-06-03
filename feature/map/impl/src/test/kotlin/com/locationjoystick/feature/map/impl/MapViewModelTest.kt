@@ -731,4 +731,75 @@ class MapViewModelTest {
                     .isNotEmpty(),
             )
         }
+
+    // WalkViaRoadsTo tests
+
+    @Test
+    fun `walkViaRoadsTo_onOsrmSuccess_callsStartWalkAlongRouteNotStartWalk`() =
+        runTest {
+            val currentPos = LatLng(48.8566, 2.3522)
+            val target = LatLng(48.8600, 2.3600)
+            val osrmWaypoints = listOf(currentPos, LatLng(48.858, 2.354), LatLng(48.860, 2.358), target)
+
+            every { locationRepository.currentPosition } returns MutableStateFlow(currentPos)
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            coEvery { osrmClient.getRoute(any(), any()) } returns Result.success(osrmWaypoints)
+
+            viewModel =
+                MapViewModel(
+                    context,
+                    locationRepository,
+                    routeRepository,
+                    favoriteRepository,
+                    settingsRepository,
+                    roamingRepository,
+                    walkCoordinator,
+                    teleportUseCase,
+                    startRouteReplayUseCase,
+                    ephemeralReplayController,
+                    osrmClient,
+                    deepLinkRepository,
+                )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            viewModel.onAction(MapAction.WalkViaRoadsTo(target))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            verify { walkCoordinator.startWalkAlongRoute(osrmWaypoints, any(), any()) }
+            verify(exactly = 0) { walkCoordinator.startWalk(any(), any(), any()) }
+        }
+
+    @Test
+    fun `walkViaRoadsTo_onOsrmFailure_fallsBackToStraightWalk`() =
+        runTest {
+            val currentPos = LatLng(48.8566, 2.3522)
+            val target = LatLng(48.8600, 2.3600)
+
+            every { locationRepository.currentPosition } returns MutableStateFlow(currentPos)
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            coEvery { osrmClient.getRoute(any(), any()) } returns Result.failure(RuntimeException("network error"))
+
+            viewModel =
+                MapViewModel(
+                    context,
+                    locationRepository,
+                    routeRepository,
+                    favoriteRepository,
+                    settingsRepository,
+                    roamingRepository,
+                    walkCoordinator,
+                    teleportUseCase,
+                    startRouteReplayUseCase,
+                    ephemeralReplayController,
+                    osrmClient,
+                    deepLinkRepository,
+                )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            viewModel.onAction(MapAction.WalkViaRoadsTo(target))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            verify { walkCoordinator.startWalk(target, any(), any()) }
+            verify(exactly = 0) { walkCoordinator.startWalkAlongRoute(any(), any(), any()) }
+        }
 }
