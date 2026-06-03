@@ -8,9 +8,8 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.data.WalkCoordinator
-import com.locationjoystick.core.datastore.PreferencesDataSource
-import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.location.EphemeralReplayController
+import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
@@ -48,7 +47,7 @@ class MapViewModelTest {
     private lateinit var favoriteRepository: FavoriteRepository
     private lateinit var settingsRepository: SettingsRepository
     private lateinit var roamingRepository: RoamingRepository
-    private lateinit var preferencesDataSource: PreferencesDataSource
+    private lateinit var startRouteReplayUseCase: StartRouteReplayUseCase
     private lateinit var walkCoordinator: WalkCoordinator
     private lateinit var teleportUseCase: TeleportUseCase
     private lateinit var ephemeralReplayController: EphemeralReplayController
@@ -68,7 +67,7 @@ class MapViewModelTest {
         favoriteRepository = mockk()
         settingsRepository = mockk(relaxed = true)
         roamingRepository = mockk(relaxed = true)
-        preferencesDataSource = mockk(relaxed = true)
+        startRouteReplayUseCase = mockk(relaxed = true)
         walkCoordinator = mockk(relaxed = true)
         teleportUseCase = mockk(relaxed = true)
         ephemeralReplayController = mockk(relaxed = true)
@@ -83,20 +82,6 @@ class MapViewModelTest {
         every { routeRepository.getRoutes() } returns flowOf(emptyList<Route>())
         every { favoriteRepository.getFavorites() } returns flowOf(emptyList<FavoriteLocation>())
         every { roamingRepository.isRoaming } returns MutableStateFlow(false)
-        every { preferencesDataSource.getRoamingDefaults() } returns
-            flowOf(
-                com.locationjoystick.core.model
-                    .RoamingDefaults(),
-            )
-        every { preferencesDataSource.getSpeedProfiles() } returns
-            flowOf(
-                SpeedProfilePreferences(
-                    walkSpeedMs = 1.39,
-                    runSpeedMs = 3.0,
-                    bikeSpeedMs = 6.0,
-                    activeProfileId = "walk",
-                ),
-            )
         every { settingsRepository.getActiveSpeedProfile() } returns
             flowOf(SpeedProfile(id = "walk", name = "Walk", speedMetersPerSecond = 1.39))
         every { settingsRepository.getRememberLastLocation() } returns flowOf(false)
@@ -111,9 +96,9 @@ class MapViewModelTest {
                 favoriteRepository,
                 settingsRepository,
                 roamingRepository,
-                preferencesDataSource,
                 walkCoordinator,
                 teleportUseCase,
+                startRouteReplayUseCase,
                 ephemeralReplayController,
                 osrmClient,
             )
@@ -149,9 +134,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -177,9 +162,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -208,9 +193,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -260,9 +245,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -289,9 +274,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -319,9 +304,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -348,9 +333,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -383,9 +368,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -483,9 +468,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -524,9 +509,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -563,9 +548,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -590,9 +575,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -616,9 +601,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -645,9 +630,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )
@@ -709,9 +694,9 @@ class MapViewModelTest {
                     favoriteRepository,
                     settingsRepository,
                     roamingRepository,
-                    preferencesDataSource,
                     walkCoordinator,
                     teleportUseCase,
+                    startRouteReplayUseCase,
                     ephemeralReplayController,
                     osrmClient,
                 )

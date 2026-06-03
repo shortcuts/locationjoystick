@@ -12,8 +12,11 @@ import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.locationjoystick.core.datastore.SettingsSnapshot
+import com.locationjoystick.core.datastore.toWidgetFeature
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -837,4 +840,29 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
                 .take(AppConstants.NominatimConstants.RECENT_SEARCHES_MAX_COUNT)
         recentSearchesFlow.value = updated
     }
+
+    override fun getSettingsSnapshot(): Flow<SettingsSnapshot> = flowOf(
+        SettingsSnapshot(
+            walkSpeedMs = AppPreferencesDataSource.DEFAULT_WALK_SPEED_MS,
+            runSpeedMs = AppPreferencesDataSource.DEFAULT_RUN_SPEED_MS,
+            bikeSpeedMs = AppPreferencesDataSource.DEFAULT_BIKE_SPEED_MS,
+            speedUnit = SpeedUnit.KMH,
+            widgetFeatures = AppPreferencesDataSource.DEFAULT_WIDGET_ITEMS.mapNotNull { it.toWidgetFeature() }.toSet(),
+            rememberLastLocation = false,
+            mapFollowsLocation = true,
+            jitterIdleRadius = AppPreferencesDataSource.DEFAULT_JITTER_IDLE_RADIUS_METERS,
+            jitterMovingRadius = AppPreferencesDataSource.DEFAULT_JITTER_MOVING_RADIUS_METERS,
+            jitterIntervalSeconds = AppPreferencesDataSource.DEFAULT_JITTER_INTERVAL_SECONDS,
+            jitterIdleIntervalSeconds = AppPreferencesDataSource.DEFAULT_JITTER_IDLE_INTERVAL_SECONDS,
+            realismBearingHoldIdle = true,
+            realismAltitudeEnabled = true,
+            realismWarmupEnabled = false,
+            realismSatelliteExtrasEnabled = true,
+            realismSuspendedMockingEnabled = false,
+            jitterSpeedIdleVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,
+            jitterSpeedMovingVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT,
+            elevationTiltJitterDegrees = AppPreferencesDataSource.DEFAULT_ELEVATION_TILT_JITTER_DEGREES,
+            elevationNoiseAmplitudeMs2 = AppPreferencesDataSource.DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2,
+        ),
+    )
 }
