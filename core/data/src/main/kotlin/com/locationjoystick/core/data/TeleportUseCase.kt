@@ -81,6 +81,37 @@ class TeleportUseCase
         }
 
         /**
+         * Returns a [Flow] of [CooldownState] for the given [target] position,
+         * using pre-warmed [lastTeleportTimeFlow] and [lastLocationFlow].
+         *
+         * This overload is useful when the caller has already converted cold DataStore flows
+         * to hot [StateFlow]s via [stateIn(SharingStarted.Eagerly, ...)], ensuring that
+         * [combine] emits synchronously on the first collection (since all upstreams already have values).
+         *
+         * Ticks every second so remaining-time display stays current.
+         */
+        fun cooldownFor(
+            target: LatLng,
+            lastTeleportTimeFlow: Flow<Long>,
+            lastLocationFlow: Flow<LatLng?>,
+        ): Flow<CooldownState> {
+            val ticker =
+                flow {
+                    while (true) {
+                        emit(Unit)
+                        delay(1_000L)
+                    }
+                }
+            return combine(
+                lastTeleportTimeFlow,
+                lastLocationFlow,
+                ticker,
+            ) { lastTeleportMs, lastLocation, _ ->
+                CooldownEngine.computeState(lastTeleportMs, lastLocation, target)
+            }
+        }
+
+        /**
          * Returns a [Flow] of cooldown states keyed by favorite ID.
          *
          * Re-evaluates every 30 seconds so remaining-time displays stay current without requiring
