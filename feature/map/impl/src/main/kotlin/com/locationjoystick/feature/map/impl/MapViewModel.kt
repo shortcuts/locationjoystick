@@ -13,7 +13,6 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.data.WalkCoordinator
-import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.location.EphemeralReplayController
 import com.locationjoystick.core.location.MockLocationIntentBuilder
 import com.locationjoystick.core.location.MockLocationService
@@ -22,6 +21,7 @@ import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.sortedByAge
 import com.locationjoystick.core.model.toConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -80,7 +80,6 @@ class MapViewModel
         private val favoriteRepository: FavoriteRepository,
         private val settingsRepository: SettingsRepository,
         private val roamingRepository: RoamingRepository,
-        private val preferencesDataSource: PreferencesDataSource,
         private val walkCoordinator: WalkCoordinator,
         private val teleportUseCase: TeleportUseCase,
         private val ephemeralReplayController: EphemeralReplayController,
@@ -96,7 +95,10 @@ class MapViewModel
 
         val completionMessages: SharedFlow<String> = locationRepository.completionEvents
 
-        private var latestRoamingDefaults: RoamingDefaults = RoamingDefaults()
+        val roamingDefaults: StateFlow<RoamingDefaults> =
+            settingsRepository
+                .getRoamingDefaults()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RoamingDefaults())
 
         init {
             observeLocationState()
@@ -104,7 +106,6 @@ class MapViewModel
             observeFavorites()
             observeRouteWaypoints()
             observeRoaming()
-            observeRoamingDefaults()
             observeSpeedUnit()
             observeCooldownForPendingTap()
             observeFavoriteCooldowns()
@@ -139,7 +140,7 @@ class MapViewModel
                     routeRepository.getRoutes(),
                     settingsRepository.getRoutesSortNewestFirst(),
                 ) { routes, newestFirst ->
-                    if (newestFirst) routes.sortedByDescending { it.createdAt } else routes.sortedBy { it.createdAt }
+                    routes.sortedByAge(newestFirst)
                 }.collect { sorted ->
                     _uiState.update { current -> current.copy(routes = sorted) }
                 }
@@ -152,7 +153,7 @@ class MapViewModel
                     favoriteRepository.getFavorites(),
                     settingsRepository.getFavoritesSortNewestFirst(),
                 ) { favorites, newestFirst ->
-                    if (newestFirst) favorites.sortedByDescending { it.createdAt } else favorites.sortedBy { it.createdAt }
+                    favorites.sortedByAge(newestFirst)
                 }.collect { sorted ->
                     _uiState.update { current -> current.copy(favorites = sorted) }
                 }
@@ -176,14 +177,6 @@ class MapViewModel
                     .collect { (roaming, paused) ->
                         _uiState.update { it.copy(isRoaming = roaming, isRoamingPaused = paused) }
                     }
-            }
-        }
-
-        private fun observeRoamingDefaults() {
-            viewModelScope.launch {
-                preferencesDataSource.getRoamingDefaults().collect { defaults ->
-                    latestRoamingDefaults = defaults
-                }
             }
         }
 
@@ -384,7 +377,7 @@ class MapViewModel
                     _uiState.update {
                         it.copy(
                             showRoamingSheet = true,
-                            roamingDraft = latestRoamingDefaults,
+                            roamingDraft = roamingDefaults.value,
                             roamingPreviewWaypoints = null,
                             isRoamingSheetMinimized = false,
                         )
