@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.4.0](https://github.com/shortcuts/locationjoystick/compare/v0.3.0...v0.4.0) (2026-06-04)
+
+
+### Features
+
+* add deep link support for opening coordinates in map ([054723c](https://github.com/shortcuts/locationjoystick/commit/054723cac007c95ea7bd0d1b7963d6c69a75a507))
+* add followRoads parameter to EphemeralReplayController.addWaypoint() ([0e61de0](https://github.com/shortcuts/locationjoystick/commit/0e61de02058d1f163c504b045986ede7d2518de2))
+* add hot locations toggle to favorites settings ([adb87e5](https://github.com/shortcuts/locationjoystick/commit/adb87e55f75dc41e75ce719940ead012c104dd97))
+
+
+### Bug Fixes
+
+* clear road-walk trace when walk is stopped ([2f0dbe9](https://github.com/shortcuts/locationjoystick/commit/2f0dbe940f7f34a07f012e5ef43a16d45ca5d514))
+* clear routeTrace when stopping walk to remove polyline overlay ([bc21fc7](https://github.com/shortcuts/locationjoystick/commit/bc21fc73db607fb65359620dd18594db7d753d6b))
+* cooldown ticker, keyboard autofocus, and map navigation ([0cdd692](https://github.com/shortcuts/locationjoystick/commit/0cdd69256f83affb06728151b417ea4e2986a02a))
+* deep link uses SharedFlow(replay=0) to prevent redelivery on resubscription ([1e73d4c](https://github.com/shortcuts/locationjoystick/commit/1e73d4cc32a56ff174f2b393c861963116fc39ce))
+* fold roamingDefaults into applySnapshot for atomic DataStore save ([b47460f](https://github.com/shortcuts/locationjoystick/commit/b47460f1007d4c8e05f9dc9e4c5a227de881b46f))
+* move convertMsToDisplay to companion object for test access ([9bbcbaf](https://github.com/shortcuts/locationjoystick/commit/9bbcbaf2c973f5c4fada069db709035c06ad2a15))
+* persist last location when service is killed externally ([6f125a9](https://github.com/shortcuts/locationjoystick/commit/6f125a980e02adfe1235c09fbb101e1f2d04fe48))
+* preserve followRoads flag through ephemeral replay waypoint chain ([1ce2857](https://github.com/shortcuts/locationjoystick/commit/1ce2857925ff1bdb00a210cd533129b1c96178dd))
+* release mechanism ([099c355](https://github.com/shortcuts/locationjoystick/commit/099c355f3c02ef15627e07c4ee977b716429cb49))
+* remove hardcoded 15.0 display-unit cap from speed profile input ([7f420de](https://github.com/shortcuts/locationjoystick/commit/7f420de645501de5f239f2b9127b6a19f51243e4))
+* roaming return-to-start should use half distance for outward journey ([588a02b](https://github.com/shortcuts/locationjoystick/commit/588a02b42421a1c3a96706717891216d848798c7))
+* roaming sheet text renders white in widget overlay ([2e04939](https://github.com/shortcuts/locationjoystick/commit/2e049391d906f55d0276253ddd326514be13b6e6))
+* show cooldown badge immediately in widget map search results ([dcbc464](https://github.com/shortcuts/locationjoystick/commit/dcbc464debc2a3b29db8dab91b6eb9507f932a37))
+* show cooldown sheet when search result selected on map ([651748a](https://github.com/shortcuts/locationjoystick/commit/651748a36acdc54f8d00bf741a51149b998894e1))
+* update test files to match refactored constructor signatures ([17c2a9d](https://github.com/shortcuts/locationjoystick/commit/17c2a9d795c3a945a70bc33670cbd1b33703fbdd))
+* use ID-based lookup in upsertHotLocations instead of name ([635333e](https://github.com/shortcuts/locationjoystick/commit/635333e31f10339f2b48c06166f45d939697bf9c))
+* widget map close returns to previous app instead of home screen ([884184c](https://github.com/shortcuts/locationjoystick/commit/884184c28ad0d2d7f78e0bd7b915afc92a4b05fb))
+* widget map panel restore previous app on action and show keyboard ([f6b4a47](https://github.com/shortcuts/locationjoystick/commit/f6b4a47c4ff611b853421f58ea8a07c24582028b))
+* widget map roaming text visible on dark background ([e1b0817](https://github.com/shortcuts/locationjoystick/commit/e1b08171faf3d2de5541758cb2a422f27b80c5ef))
+* widget map shows anti-cheat cooldown and keyboard for favorites ([d443851](https://github.com/shortcuts/locationjoystick/commit/d443851cef29d61ea03a0df953ceb7130ec4276b))
+
 ## [0.3.0](https://github.com/shortcuts/locationjoystick/compare/v0.2.0...v0.3.0) (2026-06-02)
 
 
