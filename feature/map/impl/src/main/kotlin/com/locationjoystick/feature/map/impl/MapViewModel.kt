@@ -578,6 +578,10 @@ class MapViewModel
 
         private fun addEphemeralWaypoint(position: LatLng) {
             val state = _uiState.value
+            val followRoads =
+                (state.walkMode as? WalkMode.Walking)?.isViaRoads
+                    ?: (state.walkMode as? WalkMode.EphemeralReplay)?.followRoads
+                    ?: false
             viewModelScope.launch {
                 val result =
                     ephemeralReplayController.addWaypoint(
@@ -585,13 +589,13 @@ class MapViewModel
                         currentWaypoints = state.ephemeralWaypoints,
                         walkStart = state.walkStart,
                         walkTarget = state.walkTarget,
-                        followRoads = (state.walkMode as? WalkMode.Walking)?.isViaRoads ?: false,
+                        followRoads = followRoads,
                         context = context,
                         launchIntent = { context.startService(it) },
                     ) ?: return@launch
                 _uiState.update {
                     it.copy(
-                        walkMode = WalkMode.EphemeralReplay(result),
+                        walkMode = WalkMode.EphemeralReplay(result, followRoads),
                         pendingTapPosition = null,
                     )
                 }

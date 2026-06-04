@@ -22,6 +22,7 @@ sealed interface WalkMode {
     /** Replaying a chain of taps (ephemeral route) via [RouteReplayEngine]. */
     data class EphemeralReplay(
         val waypoints: List<LatLng>,
+        val followRoads: Boolean = false,
     ) : WalkMode
 }
 

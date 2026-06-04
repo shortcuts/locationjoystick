@@ -43,8 +43,9 @@ class EphemeralReplayController
          * @param currentWaypoints The caller's current ephemeral waypoint list (may be empty).
          * @param walkStart The start of the current walk leg, if any.
          * @param walkTarget The active walk target, if any.
-         * @param followRoads If true and transitioning from walk→ephemeral, replace the straight
-         *   walkTarget→newPoint leg with an OSRM road-following route.
+         * @param followRoads If true, use OSRM road-following for new segments: the
+         *   walkTarget→newPoint leg on the initial transition, and each appended segment
+         *   on subsequent taps.
          * @param context Android [Context] used to build service Intents.
          * @param launchIntent Callback to send the built [Intent] to the service.
          * @return The resulting full waypoint list (caller should update its UI state), or null
@@ -71,8 +72,17 @@ class EphemeralReplayController
             } else if (currentWaypoints.isNotEmpty() ||
                 locationRepository.currentMode.value == MockMode.ROUTE_REPLAY
             ) {
-                launchIntent(MockLocationIntentBuilder.appendWaypoint(context, newPoint))
-                currentWaypoints + newPoint
+                val appendSegment =
+                    if (followRoads && currentWaypoints.isNotEmpty()) {
+                        val from = currentWaypoints.last()
+                        osrmClient
+                            .resolveRoute(OsrmClient.PROFILE_FOOT, from, newPoint, followRoads = true)
+                            .drop(1) // first point is `from`, already in the route
+                    } else {
+                        listOf(newPoint)
+                    }
+                appendSegment.forEach { launchIntent(MockLocationIntentBuilder.appendWaypoint(context, it)) }
+                currentWaypoints + appendSegment
             } else {
                 null // no active walk, no-op
             }
