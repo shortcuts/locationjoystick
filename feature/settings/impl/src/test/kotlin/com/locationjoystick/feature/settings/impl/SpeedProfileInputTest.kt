@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import app.cash.turbine.test
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -66,31 +67,55 @@ class SpeedProfileInputTest {
     @Test
     fun `setWalkSpeed 50 kmh saves correct ms value`() =
         runTest(testDispatcher) {
-            viewModel.setWalkSpeed(50.0) // 50 km/h — was rejected by old 0.1..15.0 range
-            viewModel.saveChanges()
+            viewModel.uiState.test {
+                awaitItem() // consume initial loading state
+                viewModel.userFeedback.test {
+                    viewModel.setWalkSpeed(50.0) // 50 km/h — was rejected by old 0.1..15.0 range
+                    viewModel.saveChanges()
+                    awaitItem() // wait for "Settings saved" feedback
 
-            val saved = fakeDataSource.lastAppliedSnapshot!!.walkSpeedMs
-            assertEquals(50.0 / 3.6, saved, 0.01)
+                    val saved = fakeDataSource.lastAppliedSnapshot!!.walkSpeedMs
+                    assertEquals(50.0 / 3.6, saved, 0.01)
+                    cancelAndIgnoreRemainingEvents()
+                }
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     @Test
     fun `setBikeSpeed 100 kmh saves correct ms value`() =
         runTest(testDispatcher) {
-            viewModel.setBikeSpeed(100.0) // 100 km/h ≈ 27.8 m/s
-            viewModel.saveChanges()
+            viewModel.uiState.test {
+                awaitItem() // consume initial loading state
+                viewModel.userFeedback.test {
+                    viewModel.setBikeSpeed(100.0) // 100 km/h ≈ 27.8 m/s
+                    viewModel.saveChanges()
+                    awaitItem() // wait for "Settings saved" feedback
 
-            val saved = fakeDataSource.lastAppliedSnapshot!!.bikeSpeedMs
-            assertEquals(100.0 / 3.6, saved, 0.01)
+                    val saved = fakeDataSource.lastAppliedSnapshot!!.bikeSpeedMs
+                    assertEquals(100.0 / 3.6, saved, 0.01)
+                    cancelAndIgnoreRemainingEvents()
+                }
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     @Test
     fun `setRunSpeed 20 kmh saves correct ms value`() =
         runTest(testDispatcher) {
-            viewModel.setRunSpeed(20.0) // 20 km/h — also above old 15.0 cap
-            viewModel.saveChanges()
+            viewModel.uiState.test {
+                awaitItem() // consume initial loading state
+                viewModel.userFeedback.test {
+                    viewModel.setRunSpeed(20.0) // 20 km/h — also above old 15.0 cap
+                    viewModel.saveChanges()
+                    awaitItem() // wait for "Settings saved" feedback
 
-            val saved = fakeDataSource.lastAppliedSnapshot!!.runSpeedMs
-            assertEquals(20.0 / 3.6, saved, 0.01)
+                    val saved = fakeDataSource.lastAppliedSnapshot!!.runSpeedMs
+                    assertEquals(20.0 / 3.6, saved, 0.01)
+                    cancelAndIgnoreRemainingEvents()
+                }
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     // -------------------------------------------------------------------------
@@ -100,35 +125,59 @@ class SpeedProfileInputTest {
     @Test
     fun `speed above anti-cheat threshold is stored above threshold`() =
         runTest(testDispatcher) {
-            // 40 km/h = 11.1 m/s > ANTI_CHEAT_WARNING_THRESHOLD_MS (8.0 m/s)
-            viewModel.setWalkSpeed(40.0)
-            viewModel.saveChanges()
+            viewModel.uiState.test {
+                awaitItem() // consume initial loading state
+                viewModel.userFeedback.test {
+                    // 40 km/h = 11.1 m/s > ANTI_CHEAT_WARNING_THRESHOLD_MS (8.0 m/s)
+                    viewModel.setWalkSpeed(40.0)
+                    viewModel.saveChanges()
+                    awaitItem() // wait for "Settings saved" feedback
 
-            val savedMs = fakeDataSource.lastAppliedSnapshot!!.walkSpeedMs
-            assertTrue(savedMs > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS)
+                    val savedMs = fakeDataSource.lastAppliedSnapshot!!.walkSpeedMs
+                    assertTrue(savedMs > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS)
+                    cancelAndIgnoreRemainingEvents()
+                }
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     @Test
     fun `speed below anti-cheat threshold is stored below threshold`() =
         runTest(testDispatcher) {
-            // 10 km/h = 2.78 m/s < ANTI_CHEAT_WARNING_THRESHOLD_MS (8.0 m/s)
-            viewModel.setWalkSpeed(10.0)
-            viewModel.saveChanges()
+            viewModel.uiState.test {
+                awaitItem() // consume initial loading state
+                viewModel.userFeedback.test {
+                    // 10 km/h = 2.78 m/s < ANTI_CHEAT_WARNING_THRESHOLD_MS (8.0 m/s)
+                    viewModel.setWalkSpeed(10.0)
+                    viewModel.saveChanges()
+                    awaitItem() // wait for "Settings saved" feedback
 
-            val savedMs = fakeDataSource.lastAppliedSnapshot!!.walkSpeedMs
-            assertFalse(savedMs > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS)
+                    val savedMs = fakeDataSource.lastAppliedSnapshot!!.walkSpeedMs
+                    assertFalse(savedMs > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS)
+                    cancelAndIgnoreRemainingEvents()
+                }
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     @Test
     fun `speed exactly at anti-cheat threshold boundary is not above threshold`() =
         runTest(testDispatcher) {
-            // Threshold is 8.0 m/s = 28.8 km/h — strict > so boundary value must NOT trigger
-            val thresholdKmh = AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS * 3.6
-            viewModel.setBikeSpeed(thresholdKmh)
-            viewModel.saveChanges()
+            viewModel.uiState.test {
+                awaitItem() // consume initial loading state
+                viewModel.userFeedback.test {
+                    // Threshold is 8.0 m/s = 28.8 km/h — strict > so boundary value must NOT trigger
+                    val thresholdKmh = AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS * 3.6
+                    viewModel.setBikeSpeed(thresholdKmh)
+                    viewModel.saveChanges()
+                    awaitItem() // wait for "Settings saved" feedback
 
-            val savedMs = fakeDataSource.lastAppliedSnapshot!!.bikeSpeedMs
-            assertFalse(savedMs > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS)
+                    val savedMs = fakeDataSource.lastAppliedSnapshot!!.bikeSpeedMs
+                    assertFalse(savedMs > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS)
+                    cancelAndIgnoreRemainingEvents()
+                }
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     // -------------------------------------------------------------------------
