@@ -423,7 +423,7 @@ class MockLocationService : Service() {
         }
         locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
-        routeReplayEngine.close()
+        routeReplayEngine.cancelActiveReplay()
         roamingRepository.resetOnServiceDestroy()
         serviceScope.cancel()
         super.onDestroy()

@@ -160,8 +160,19 @@ class RouteReplayEngine
         }
 
         /**
-         * Releases the engine scope. Call only when the engine will never be reused
-         * (e.g. service onDestroy). Implements [AutoCloseable].
+         * Cancels any active replay job. Call from service onDestroy to stop movement
+         * without destroying the scope — the engine is a @Singleton and must remain
+         * usable after the service is recreated.
+         */
+        fun cancelActiveReplay() {
+            activeJob?.cancel()
+            activeJob = null
+        }
+
+        /**
+         * Releases the engine scope permanently. Only call when the engine will truly
+         * never be reused (i.e. process teardown). Do NOT call from service onDestroy
+         * since the engine is a @Singleton that outlives any single service instance.
          */
         override fun close() {
             activeJob?.cancel()

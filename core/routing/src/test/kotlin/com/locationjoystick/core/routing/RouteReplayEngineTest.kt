@@ -228,4 +228,33 @@ class RouteReplayEngineTest {
     fun `stop when no active job does not throw`() {
         kotlinx.coroutines.runBlocking { engine.stop() }
     }
+
+    @Test
+    fun `engine remains usable after cancelActiveReplay (service restart regression)`() {
+        // Regression: RouteReplayEngine is @Singleton. If close() was called from service
+        // onDestroy, engineScope was permanently cancelled and subsequent replays silently
+        // no-oped (green icon, no movement). cancelActiveReplay() must NOT cancel the scope.
+        engine.start(
+            waypoints = listOf(LatLng(0.0, 0.0), LatLng(10.0, 10.0)),
+            speedMs = 1.0,
+            onPositionUpdate = {},
+            onComplete = {},
+        )
+        engine.cancelActiveReplay() // simulates service onDestroy
+
+        // Simulate service restart: start a new replay on the same singleton instance
+        val updateCount = AtomicInteger(0)
+        engine.start(
+            waypoints = listOf(LatLng(0.0, 0.0), LatLng(10.0, 10.0)),
+            speedMs = 1.0,
+            onPositionUpdate = { _ -> updateCount.incrementAndGet() },
+            onComplete = {},
+        )
+        Thread.sleep(2500) // wait for 2 ticks at 1 Hz
+        kotlinx.coroutines.runBlocking { engine.stop() }
+        assertTrue(
+            "engine must emit updates after cancelActiveReplay; got ${updateCount.get()}",
+            updateCount.get() >= 2,
+        )
+    }
 }
