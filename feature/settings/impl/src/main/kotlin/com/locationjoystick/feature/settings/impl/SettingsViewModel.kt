@@ -44,6 +44,15 @@ class SettingsViewModel
     ) : ViewModel() {
         companion object {
             private const val TAG = "SettingsViewModel"
+
+            fun convertMsToDisplay(
+                ms: Double,
+                unit: SpeedUnit,
+            ): Double =
+                when (unit) {
+                    SpeedUnit.KMH -> ms * 3.6
+                    SpeedUnit.MPH -> ms * 2.237
+                }
         }
 
         private val _isRooted = MutableStateFlow(false)
@@ -306,15 +315,6 @@ class SettingsViewModel
                 }
             }
         }
-
-        fun convertMsToDisplay(
-            ms: Double,
-            unit: SpeedUnit,
-        ): Double =
-            when (unit) {
-                SpeedUnit.KMH -> ms * 3.6
-                SpeedUnit.MPH -> ms * 2.237
-            }
 
         private fun convertDisplayToMs(
             displaySpeed: Double,
