@@ -126,6 +126,20 @@ class OsrmClient
                 }
             }
 
+        /**
+         * Returns a route from [from] to [to].
+         * If [followRoads] is false or OSRM fails, falls back to a straight-line two-point route.
+         */
+        suspend fun resolveRoute(
+            profile: String,
+            from: LatLng,
+            to: LatLng,
+            followRoads: Boolean,
+        ): List<LatLng> {
+            if (!followRoads) return straightLineRoute(from, to)
+            return getRoute(profile, listOf(from, to)).getOrElse { straightLineRoute(from, to) }
+        }
+
         fun straightLineRoute(
             from: LatLng,
             to: LatLng,

@@ -473,14 +473,12 @@ class SettingsViewModel
             val currentSnapshot = settingsRepository.getSettingsSnapshot().first()
             val profileById = data.speedProfiles.associateBy { it.id }
             settingsRepository.applySnapshot(
-                SettingsSnapshot(
+                currentSnapshot.copy(
                     walkSpeedMs = profileById["walk"]?.speedMetersPerSecond ?: currentSnapshot.walkSpeedMs,
                     runSpeedMs = profileById["run"]?.speedMetersPerSecond ?: currentSnapshot.runSpeedMs,
                     bikeSpeedMs = profileById["bike"]?.speedMetersPerSecond ?: currentSnapshot.bikeSpeedMs,
                     speedUnit = data.settings.speedUnit,
                     widgetFeatures = data.settings.enabledWidgetFeatures.toSet(),
-                    rememberLastLocation = currentSnapshot.rememberLastLocation,
-                    mapFollowsLocation = currentSnapshot.mapFollowsLocation,
                     jitterIdleRadius = data.jitterIdleRadius,
                     jitterMovingRadius = data.jitterMovingRadius,
                     jitterIntervalSeconds = data.jitterIntervalSeconds,

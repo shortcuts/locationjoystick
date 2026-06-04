@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onStart
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -59,9 +60,9 @@ class TeleportUseCase
         /**
          * Returns a [Flow] of [CooldownState] for the given [target] position.
          *
-         * Ticks every second so remaining-time display stays current without requiring
-         * external DataStore writes. Also ensures the first emission arrives within ~1 ms
-         * (the ticker fires immediately), even before any DataStore write occurs.
+         * Ticks every second so remaining-time display stays current. Seeds both DataStore
+         * flows with safe defaults via [onStart] so [combine] emits synchronously on first
+         * collection — the badge appears immediately without a flicker delay.
          */
         fun cooldownFor(target: LatLng): Flow<CooldownState> {
             val ticker =
@@ -72,39 +73,8 @@ class TeleportUseCase
                     }
                 }
             return combine(
-                settingsRepository.getLastTeleportTime(),
-                settingsRepository.getLastLocation(),
-                ticker,
-            ) { lastTeleportMs, lastLocation, _ ->
-                CooldownEngine.computeState(lastTeleportMs, lastLocation, target)
-            }
-        }
-
-        /**
-         * Returns a [Flow] of [CooldownState] for the given [target] position,
-         * using pre-warmed [lastTeleportTimeFlow] and [lastLocationFlow].
-         *
-         * This overload is useful when the caller has already converted cold DataStore flows
-         * to hot [StateFlow]s via [stateIn(SharingStarted.Eagerly, ...)], ensuring that
-         * [combine] emits synchronously on the first collection (since all upstreams already have values).
-         *
-         * Ticks every second so remaining-time display stays current.
-         */
-        fun cooldownFor(
-            target: LatLng,
-            lastTeleportTimeFlow: Flow<Long>,
-            lastLocationFlow: Flow<LatLng?>,
-        ): Flow<CooldownState> {
-            val ticker =
-                flow {
-                    while (true) {
-                        emit(Unit)
-                        delay(1_000L)
-                    }
-                }
-            return combine(
-                lastTeleportTimeFlow,
-                lastLocationFlow,
+                settingsRepository.getLastTeleportTime().onStart { emit(0L) },
+                settingsRepository.getLastLocation().onStart { emit(null) },
                 ticker,
             ) { lastTeleportMs, lastLocation, _ ->
                 CooldownEngine.computeState(lastTeleportMs, lastLocation, target)

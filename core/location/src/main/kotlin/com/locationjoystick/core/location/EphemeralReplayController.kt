@@ -2,7 +2,6 @@ package com.locationjoystick.core.location
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.WalkCoordinator
@@ -63,27 +62,8 @@ class EphemeralReplayController
             if (currentWaypoints.isEmpty() && walkTarget != null) {
                 // First "Add next point" — transition from WalkCoordinator to RouteReplayEngine
                 val startPos = walkStart ?: locationRepository.currentPosition.value ?: newPoint
-                val initial =
-                    if (followRoads) {
-                        // Attempt to resolve walkTarget → newPoint via OSRM
-                        val roadWaypoints =
-                            osrmClient
-                                .getRoute(OsrmClient.PROFILE_FOOT, listOf(walkTarget, newPoint))
-                                .getOrNull()
-                        if (roadWaypoints.isNullOrEmpty()) {
-                            Log.w(
-                                "EphemeralReplayController",
-                                "OSRM road-following failed during 'Add next point'; falling back to straight segment",
-                            )
-                            // Fallback to straight segment
-                            listOf(startPos, walkTarget, newPoint)
-                        } else {
-                            // Replace the walkTarget → newPoint straight segment with road geometry
-                            listOf(startPos) + roadWaypoints
-                        }
-                    } else {
-                        listOf(startPos, walkTarget, newPoint)
-                    }
+                val segment = osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, walkTarget, newPoint, followRoads)
+                val initial = listOf(startPos) + segment
                 walkCoordinator.cancel()
                 val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
                 launchIntent(MockLocationIntentBuilder.startEphemeralReplay(context, initial, speedMs))

@@ -25,9 +25,7 @@ import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.sortedByAge
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -262,21 +260,6 @@ internal class WidgetPanelPresenter(
             val recentSearches by remember { settingsRepository.getRecentSearches() }.collectAsStateWithLifecycle(
                 initialValue = emptyList(),
             )
-            // Warm the DataStore flows so combine emits synchronously on first collection.
-            // This ensures the cooldown badge appears immediately when TapActionPanel renders,
-            // rather than flickering from Ready to Cooling after async DataStore reads.
-            val lastTeleportFlow =
-                remember {
-                    settingsRepository
-                        .getLastTeleportTime()
-                        .stateIn(serviceScope, SharingStarted.Eagerly, 0L)
-                }
-            val lastLocationFlow =
-                remember {
-                    settingsRepository
-                        .getLastLocation()
-                        .stateIn(serviceScope, SharingStarted.Eagerly, null)
-                }
             MapFloatingView(
                 currentPosition = currentPosition,
                 initialPosition = initialPosition,
@@ -337,7 +320,7 @@ internal class WidgetPanelPresenter(
                 onSearchCommitted = { name, lat, lon ->
                     serviceScope.launch { settingsRepository.addRecentSearch(name, lat, lon) }
                 },
-                cooldownForPosition = { pos -> teleportUseCase.cooldownFor(pos, lastTeleportFlow, lastLocationFlow) },
+                cooldownForPosition = { pos -> teleportUseCase.cooldownFor(pos) },
             )
         }
     }

@@ -250,27 +250,7 @@ class RoamingEngine
             to: LatLng,
             useRoadSnapping: Boolean,
             speedProfileId: String,
-        ): List<LatLng> {
-            if (!useRoadSnapping) {
-                return osrmClient.straightLineRoute(from, to)
-            }
-            val profile =
-                when (speedProfileId) {
-                    "bike" -> AppConstants.RoamingConstants.OSRM_PROFILE_CYCLING
-                    else -> AppConstants.RoamingConstants.OSRM_PROFILE_FOOT
-                }
-            return try {
-                osrmClient
-                    .getRoute(profile, listOf(from, to))
-                    .getOrElse { e ->
-                        Log.w(TAG, "OSRM unavailable for preview, using straight-line fallback", e)
-                        osrmClient.straightLineRoute(from, to)
-                    }
-            } catch (e: Exception) {
-                Log.w(TAG, "Preview route fetch failed, using straight-line fallback", e)
-                osrmClient.straightLineRoute(from, to)
-            }
-        }
+        ): List<LatLng> = osrmClient.resolveRoute(profileFor(speedProfileId), from, to, useRoadSnapping)
 
         /**
          * Fetches the return-to-start route, routing via a random intermediate point within the
@@ -283,11 +263,7 @@ class RoamingEngine
             to: LatLng,
         ): List<LatLng> {
             if (!config.useRoadSnapping) return osrmClient.straightLineRoute(from, to)
-            val profile =
-                when (config.speedProfileId) {
-                    "bike" -> AppConstants.RoamingConstants.OSRM_PROFILE_CYCLING
-                    else -> AppConstants.RoamingConstants.OSRM_PROFILE_FOOT
-                }
+            val profile = profileFor(config.speedProfileId)
             val mid = randomPointInRadius(config.centerPosition, config.radiusMeters * 0.4)
             return osrmClient
                 .getRoute(profile, listOf(from, mid, to))
@@ -302,34 +278,16 @@ class RoamingEngine
                 }
         }
 
-        /**
-         * Fetches a route between two points.
-         * If [config.useRoadSnapping] is true, uses OSRM for road-following.
-         * Falls back to straight-line on OSRM failure.
-         *
-         * @param config Roaming configuration
-         * @param from Starting position
-         * @param to Destination position
-         * @return List of waypoints forming the route
-         */
         private suspend fun fetchRoute(
             config: RoamingConfig,
             from: LatLng,
             to: LatLng,
-        ): List<LatLng> {
-            if (!config.useRoadSnapping) {
-                return osrmClient.straightLineRoute(from, to)
+        ): List<LatLng> = osrmClient.resolveRoute(profileFor(config.speedProfileId), from, to, config.useRoadSnapping)
+
+        private fun profileFor(speedProfileId: String): String =
+            if (speedProfileId == "bike") {
+                AppConstants.RoamingConstants.OSRM_PROFILE_CYCLING
+            } else {
+                AppConstants.RoamingConstants.OSRM_PROFILE_FOOT
             }
-            val profile =
-                when (config.speedProfileId) {
-                    "bike" -> AppConstants.RoamingConstants.OSRM_PROFILE_CYCLING
-                    else -> AppConstants.RoamingConstants.OSRM_PROFILE_FOOT
-                }
-            return osrmClient
-                .getRoute(profile, listOf(from, to))
-                .getOrElse { e ->
-                    Log.w(TAG, "OSRM unavailable, using straight-line fallback", e)
-                    osrmClient.straightLineRoute(from, to)
-                }
-        }
     }
