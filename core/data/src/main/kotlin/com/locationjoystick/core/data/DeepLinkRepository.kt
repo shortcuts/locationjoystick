@@ -11,10 +11,12 @@ import javax.inject.Singleton
 class DeepLinkRepository
     @Inject
     constructor() {
-        // replay=1 buffers the latest coord so cold-start deep links (emitted before
-        // MapViewModel starts collecting) are not silently dropped. consume() resets the
-        // replay cache after processing to prevent redelivery on ViewModel recreation.
-        private val _pendingCoords = MutableSharedFlow<LatLng>(replay = 1)
+        // replay=0 ensures one-shot event semantics: each emitted coord is delivered exactly
+        // once to current subscribers. No buffering of the last value means resubscription
+        // (ViewModel recreation, process death) will not replay a stale coord.
+        // Deep links are always received while the app is running (Android won't launch
+        // a background app via deep link), so we don't need cold-start buffering.
+        private val _pendingCoords = MutableSharedFlow<LatLng>(replay = 0)
         val pendingCoords: Flow<LatLng> = _pendingCoords.asSharedFlow()
 
         fun setPendingCoords(
@@ -25,6 +27,7 @@ class DeepLinkRepository
         }
 
         fun consume() {
-            _pendingCoords.resetReplayCache()
+            // No-op with replay=0, but kept for API compatibility and clarity.
+            // Explicit call documents intent: "this coord has been processed".
         }
     }
