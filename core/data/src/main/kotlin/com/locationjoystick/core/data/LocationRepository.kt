@@ -89,8 +89,8 @@ class LocationRepository
 
         /**
          * True when the current movement mode is paused.
-         * Handles walk-to and route-replay. Roaming pause lives in RoamingRepository —
-         * callers that need the full picture must OR this with [RoamingRepository.isRoamingPaused].
+         * Handles walk-to and route-replay pause state only. For the fully unified view
+         * (including roaming), use [ActivityStateRepository.isActivityPaused].
          */
         val isCurrentActivityPaused: Flow<Boolean> =
             combine(_currentMode, _mockLocationState, _isWalkPaused) { mode, state, walkPaused ->

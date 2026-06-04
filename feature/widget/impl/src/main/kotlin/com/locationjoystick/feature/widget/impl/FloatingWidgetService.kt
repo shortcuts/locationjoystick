@@ -17,6 +17,7 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.data.ActivityStateRepository
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
@@ -92,6 +93,8 @@ class FloatingWidgetService :
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry
     override val savedStateRegistry: SavedStateRegistry get() = savedStateRegistryController.savedStateRegistry
+
+    @Inject lateinit var activityStateRepository: ActivityStateRepository
 
     @Inject lateinit var routeRepository: RouteRepository
 
@@ -250,11 +253,7 @@ class FloatingWidgetService :
             val activeProfileId by activeProfileIdFlow.collectAsStateWithLifecycle()
             val isActivityActive by locationRepository.isActivityActive.collectAsStateWithLifecycle(initialValue = false)
             val isActivityPausable by locationRepository.isActivityPausable.collectAsStateWithLifecycle(initialValue = false)
-            val mockMode by locationRepository.currentMode.collectAsStateWithLifecycle()
-            val isLocActivityPaused by locationRepository.isCurrentActivityPaused.collectAsStateWithLifecycle(initialValue = false)
-            val isRoamingPaused by roamingRepository.isRoamingPaused.collectAsStateWithLifecycle(initialValue = false)
-            val isActivityPaused =
-                isLocActivityPaused || (mockMode == com.locationjoystick.core.model.MockMode.ROAMING && isRoamingPaused)
+            val isActivityPaused by activityStateRepository.isActivityPaused.collectAsStateWithLifecycle(initialValue = false)
             val routeExpanded by routeExpandedFlow.collectAsStateWithLifecycle()
             val isPanelExpanded by isPanelExpandedFlow.collectAsStateWithLifecycle()
             val elevationMode by elevationModeFlow.collectAsStateWithLifecycle()
