@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.settings.impl
 
+import app.cash.turbine.test
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.root.SensorPermissionBootstrap
 import com.locationjoystick.core.data.FavoriteRepository
@@ -14,7 +15,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import app.cash.turbine.test
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
