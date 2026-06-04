@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/shortcuts/locationjoystick/compare/v0.4.0...v0.4.1) (2026-06-04)
+
+
+### Bug Fixes
+
+* different build ([76cecef](https://github.com/shortcuts/locationjoystick/commit/76cecefe35266e96f3f5380536d7ec9f429d6240))
+
 ## [0.4.0](https://github.com/shortcuts/locationjoystick/compare/v0.3.0...v0.4.0) (2026-06-04)
 
 
