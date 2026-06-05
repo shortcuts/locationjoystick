@@ -154,7 +154,7 @@ internal class WidgetPanelPresenter(
     fun showFavoritesFloatingView() {
         showPanel(params = mapPanelLayoutParams(), logTag = "favorites") {
             val favs by remember { mapController.sharedState.map { it.favorites } }
-                .collectAsStateWithLifecycle(initialValue = mapController.sharedState.value.favorites)
+                .collectAsStateWithLifecycle(initialValue = emptyList())
             FavoritesFloatingView(
                 favorites = favs,
                 onDismiss = { hidePanelView() },
@@ -178,7 +178,7 @@ internal class WidgetPanelPresenter(
     fun showRoutesFloatingView() {
         showPanel(logTag = "routes") {
             val routes by remember { mapController.sharedState.map { it.routes } }
-                .collectAsStateWithLifecycle(initialValue = mapController.sharedState.value.routes)
+                .collectAsStateWithLifecycle(initialValue = emptyList())
             RoutesFloatingView(
                 routes = routes,
                 onDismiss = { hidePanelView() },
