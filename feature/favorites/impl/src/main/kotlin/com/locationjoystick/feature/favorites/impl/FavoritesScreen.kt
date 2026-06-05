@@ -289,10 +289,10 @@ private fun FavoriteCard(
                 "${String.format("%.4f", favorite.position.latitude)}, ${String.format("%.4f", favorite.position.longitude)}",
                 style = MaterialTheme.typography.bodySmall,
             )
-            if (cooldownState is CooldownState.Cooling) {
-                Spacer(Modifier.height(6.dp))
-                CooldownAdvisoryBadge(cooldownState.toAdvisoryLabel())
-            }
+            Spacer(Modifier.height(6.dp))
+            CooldownAdvisoryBadge(
+                (cooldownState as? CooldownState.Cooling)?.toAdvisoryLabel() ?: "No wait needed",
+            )
         }
         Box {
             IconButton(onClick = { menuExpanded = true }) {

@@ -206,10 +206,10 @@ internal fun PendingTapSheet(
                 }
             } else {
                 Text("Move to this location?", style = MaterialTheme.typography.titleMedium)
-                if (cooldownState is CooldownState.Cooling) {
-                    Spacer(Modifier.height(12.dp))
-                    CooldownAdvisoryBadge(cooldownState.toAdvisoryLabel())
-                }
+                Spacer(Modifier.height(12.dp))
+                CooldownAdvisoryBadge(
+                    (cooldownState as? CooldownState.Cooling)?.toAdvisoryLabel() ?: "No wait needed",
+                )
                 Spacer(Modifier.height(16.dp))
                 Button(
                     onClick = { onAction(MapAction.ConfirmTeleport(position)) },

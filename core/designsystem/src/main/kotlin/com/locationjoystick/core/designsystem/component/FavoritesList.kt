@@ -98,10 +98,9 @@ fun FavoritesList(
                                 "${String.format("%.4f", favorite.position.longitude)}",
                             style = MaterialTheme.typography.bodySmall,
                         )
-                        val label = cooldownLabel?.invoke(favorite)
-                        if (label != null) {
+                        if (cooldownLabel != null) {
                             Spacer(Modifier.height(6.dp))
-                            CooldownAdvisoryBadge(label)
+                            CooldownAdvisoryBadge(cooldownLabel.invoke(favorite) ?: "No wait needed")
                         }
                     }
                 }

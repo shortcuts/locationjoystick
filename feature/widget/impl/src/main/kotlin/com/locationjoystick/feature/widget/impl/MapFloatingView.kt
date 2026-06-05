@@ -592,11 +592,10 @@ private fun BoxScope.TapActionPanel(
             val cooldownState by remember(tap) {
                 cooldownForPosition?.invoke(tap) ?: flowOf(CooldownState.Ready)
             }.collectAsStateWithLifecycle(initialValue = CooldownState.Ready)
-            val cooling = cooldownState as? CooldownState.Cooling
-            if (cooling != null) {
-                Spacer(Modifier.height(8.dp))
-                CooldownAdvisoryBadge(cooling.toAdvisoryLabel())
-            }
+            Spacer(Modifier.height(8.dp))
+            CooldownAdvisoryBadge(
+                (cooldownState as? CooldownState.Cooling)?.toAdvisoryLabel() ?: "No wait needed",
+            )
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = {
