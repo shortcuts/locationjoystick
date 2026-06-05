@@ -83,6 +83,7 @@ class MapController
             observeFavoriteCooldowns()
             observeRecentSearches()
             observeRoamingDefaults()
+            observeModeCompletions()
             restoreLastLocationIfNeeded()
         }
 
@@ -199,6 +200,30 @@ class MapController
             appScope.launch {
                 settingsRepository.getRoamingDefaults().collect { defaults ->
                     _state.update { it.copy(roamingDefaults = defaults) }
+                }
+            }
+        }
+
+        private fun observeModeCompletions() {
+            appScope.launch {
+                var prevMode: MockMode? = null
+                locationRepository.currentMode.collect { mode ->
+                    val prev = prevMode
+                    prevMode = mode
+                    if (mode == MockMode.TELEPORT) {
+                        when (prev) {
+                            MockMode.WALK_TO -> {
+                                locationRepository.setRouteWaypoints(null)
+                                _state.update { it.copy(walkMode = WalkMode.Idle) }
+                            }
+                            MockMode.ROUTE_REPLAY -> {
+                                if (_state.value.walkMode is WalkMode.EphemeralReplay) {
+                                    ephemeralReplayController.clearPendingWaypoints()
+                                }
+                            }
+                            else -> {}
+                        }
+                    }
                 }
             }
         }
