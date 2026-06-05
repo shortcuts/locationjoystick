@@ -200,8 +200,10 @@ internal fun MapScreen(
 
     LaunchedEffect(uiState.pendingCameraTarget) {
         val target = uiState.pendingCameraTarget ?: return@LaunchedEffect
+        // Use closer zoom for favorite teleports (street-level), default zoom for other cases
+        val zoom = if (uiState.favoriteTarget != null) 18.0 else AppConstants.MapConstants.DEFAULT_ZOOM
         mapRef.value?.animateCamera(
-            CameraUpdateFactory.newLatLngZoom(MapLatLng(target.latitude, target.longitude), AppConstants.MapConstants.DEFAULT_ZOOM),
+            CameraUpdateFactory.newLatLngZoom(MapLatLng(target.latitude, target.longitude), zoom),
             500,
         )
         onAction(MapAction.CameraTargetConsumed)
