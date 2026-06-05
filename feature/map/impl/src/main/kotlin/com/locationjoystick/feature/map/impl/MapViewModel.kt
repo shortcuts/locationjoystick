@@ -87,12 +87,13 @@ class MapViewModel
 
         private fun observeCooldownForPendingTap() {
             viewModelScope.launch {
-                _uiState.flatMapLatest { state ->
-                    val target = state.pendingTapPosition
-                    if (target != null) teleportUseCase.cooldownFor(target) else flowOf(CooldownState.Ready)
-                }.collect { cooldown ->
-                    _uiState.update { it.copy(cooldownState = cooldown) }
-                }
+                _uiState
+                    .flatMapLatest { state ->
+                        val target = state.pendingTapPosition
+                        if (target != null) teleportUseCase.cooldownFor(target) else flowOf(CooldownState.Ready)
+                    }.collect { cooldown ->
+                        _uiState.update { it.copy(cooldownState = cooldown) }
+                    }
             }
         }
 
@@ -107,17 +108,25 @@ class MapViewModel
         fun onAction(action: MapAction) {
             when (action) {
                 // Teleport
-                is MapAction.TapToTeleport -> handleTapToTeleport(action.position)
+                is MapAction.TapToTeleport -> {
+                    handleTapToTeleport(action.position)
+                }
+
                 is MapAction.ConfirmTeleport -> {
                     mapController.teleportTo(action.position)
                     _uiState.update { it.copy(pendingTapPosition = null) }
                 }
-                is MapAction.ClearPendingTap -> _uiState.update { it.copy(pendingTapPosition = null) }
+
+                is MapAction.ClearPendingTap -> {
+                    _uiState.update { it.copy(pendingTapPosition = null) }
+                }
+
                 is MapAction.StopRouteAndTeleport -> {
                     mapController.stopRouteOnly()
                     mapController.teleportTo(action.position)
                     _uiState.update { it.copy(pendingTapPosition = null) }
                 }
+
                 is MapAction.SetLocationTo -> {
                     mapController.teleportTo(action.position)
                     _uiState.update { it.copy(showFavoritesSheet = false, favoriteTarget = null) }
@@ -128,39 +137,59 @@ class MapViewModel
                     _uiState.update { it.copy(roamingPreviewWaypoints = null) }
                     mapController.walkTo(action.position)
                 }
+
                 is MapAction.WalkViaRoadsTo -> {
                     _uiState.update { it.copy(roamingPreviewWaypoints = null) }
                     mapController.walkViaRoads(action.position)
                 }
+
                 is MapAction.WalkStraightTo -> {
                     mapController.walkTo(action.position)
                     _uiState.update { it.copy(showFavoritesSheet = false, favoriteTarget = null) }
                 }
+
                 is MapAction.StopRouteAndWalkTo -> {
                     mapController.stopRouteOnly()
                     mapController.walkTo(action.position)
                     _uiState.update { it.copy(pendingTapPosition = null) }
                 }
+
                 is MapAction.FinishRouteAndWalkTo -> {
                     mapController.appendWaypointToRoute(action.position)
                     _uiState.update { it.copy(pendingTapPosition = null) }
                 }
-                is MapAction.AddEphemeralWaypoint -> mapController.addEphemeralWaypoint(action.position)
-                MapAction.PauseWalk -> mapController.pauseWalk()
-                MapAction.ResumeWalk -> mapController.resumeWalk()
+
+                is MapAction.AddEphemeralWaypoint -> {
+                    mapController.addEphemeralWaypoint(action.position)
+                }
+
+                MapAction.PauseWalk -> {
+                    mapController.pauseWalk()
+                }
+
+                MapAction.ResumeWalk -> {
+                    mapController.resumeWalk()
+                }
+
                 MapAction.StopWalk -> {
                     mapController.stopWalk()
                     _uiState.update { it.copy(isWalkControlsExpanded = false) }
                 }
-                MapAction.ToggleWalkControls ->
+
+                MapAction.ToggleWalkControls -> {
                     _uiState.update { it.copy(isWalkControlsExpanded = !it.isWalkControlsExpanded) }
+                }
 
                 // Spoofing
-                MapAction.StartSpoofing -> mapController.startSpoofing()
+                MapAction.StartSpoofing -> {
+                    mapController.startSpoofing()
+                }
+
                 MapAction.StopSpoofing -> {
                     mapController.stopSpoofing()
                     _uiState.update { it.copy(pendingTapPosition = null, isWalkControlsExpanded = false) }
                 }
+
                 MapAction.ClearMap -> {
                     mapController.stopWalk()
                     _uiState.update {
@@ -176,21 +205,48 @@ class MapViewModel
                 }
 
                 // Camera
-                MapAction.RecenterCamera -> _uiState.update { it.copy(isUserPanning = false) }
-                MapAction.UserStartedPanning -> _uiState.update { it.copy(isUserPanning = true) }
-                MapAction.CameraTargetConsumed -> _uiState.update { it.copy(pendingCameraTarget = null) }
+                MapAction.RecenterCamera -> {
+                    _uiState.update { it.copy(isUserPanning = false) }
+                }
+
+                MapAction.UserStartedPanning -> {
+                    _uiState.update { it.copy(isUserPanning = true) }
+                }
+
+                MapAction.CameraTargetConsumed -> {
+                    _uiState.update { it.copy(pendingCameraTarget = null) }
+                }
 
                 // Favorites
-                MapAction.OpenFavoritesPicker -> _uiState.update { it.copy(showFavoritesSheet = true) }
-                MapAction.CloseFavoritesPicker ->
+                MapAction.OpenFavoritesPicker -> {
+                    _uiState.update { it.copy(showFavoritesSheet = true) }
+                }
+
+                MapAction.CloseFavoritesPicker -> {
                     _uiState.update { it.copy(showFavoritesSheet = false, favoriteTarget = null) }
-                MapAction.DeselectFavorite -> _uiState.update { it.copy(favoriteTarget = null) }
-                is MapAction.SelectFavorite -> handleSelectFavorite(action.favorite)
-                is MapAction.SaveCurrentLocation -> mapController.saveCurrentLocation(action.name)
+                }
+
+                MapAction.DeselectFavorite -> {
+                    _uiState.update { it.copy(favoriteTarget = null) }
+                }
+
+                is MapAction.SelectFavorite -> {
+                    handleSelectFavorite(action.favorite)
+                }
+
+                is MapAction.SaveCurrentLocation -> {
+                    mapController.saveCurrentLocation(action.name)
+                }
 
                 // Routes
-                MapAction.OpenRoutesSheet -> _uiState.update { it.copy(showRoutesSheet = true) }
-                MapAction.CloseRoutesSheet -> _uiState.update { it.copy(showRoutesSheet = false) }
+                MapAction.OpenRoutesSheet -> {
+                    _uiState.update { it.copy(showRoutesSheet = true) }
+                }
+
+                MapAction.CloseRoutesSheet -> {
+                    _uiState.update { it.copy(showRoutesSheet = false) }
+                }
+
                 is MapAction.StartRouteReplay -> {
                     mapController.startRouteReplay(
                         action.routeId,
@@ -201,58 +257,110 @@ class MapViewModel
                     )
                     _uiState.update { it.copy(showRoutesSheet = false) }
                 }
-                MapAction.PauseRouteReplay -> mapController.pauseRouteReplay()
-                MapAction.ResumeRouteReplay -> mapController.resumeRouteReplay()
+
+                MapAction.PauseRouteReplay -> {
+                    mapController.pauseRouteReplay()
+                }
+
+                MapAction.ResumeRouteReplay -> {
+                    mapController.resumeRouteReplay()
+                }
+
                 MapAction.StopRouteReplay -> {
                     mapController.stopRouteReplay()
                     _uiState.update { it.copy(isRouteControlsExpanded = false) }
                 }
-                MapAction.ToggleRouteControls ->
+
+                MapAction.ToggleRouteControls -> {
                     _uiState.update { it.copy(isRouteControlsExpanded = !it.isRouteControlsExpanded) }
+                }
 
                 // Roaming
-                MapAction.OpenRoamingSheet -> _uiState.update {
-                    it.copy(
-                        showRoamingSheet = true,
-                        roamingDraft = mapController.sharedState.value.roamingDefaults,
-                        roamingPreviewWaypoints = null,
-                        isRoamingSheetMinimized = false,
-                    )
+                MapAction.OpenRoamingSheet -> {
+                    _uiState.update {
+                        it.copy(
+                            showRoamingSheet = true,
+                            roamingDraft = mapController.sharedState.value.roamingDefaults,
+                            roamingPreviewWaypoints = null,
+                            isRoamingSheetMinimized = false,
+                        )
+                    }
                 }
-                MapAction.DismissRoamingSheet -> _uiState.update {
-                    it.copy(showRoamingSheet = false, roamingDraft = null, roamingPreviewWaypoints = null, isRoamingSheetMinimized = false)
+
+                MapAction.DismissRoamingSheet -> {
+                    _uiState.update {
+                        it.copy(
+                            showRoamingSheet = false,
+                            roamingDraft = null,
+                            roamingPreviewWaypoints = null,
+                            isRoamingSheetMinimized = false,
+                        )
+                    }
                 }
-                MapAction.GenerateRoamingPreview -> generateRoamingPreview()
-                MapAction.MinimizeRoamingSheet -> _uiState.update { it.copy(isRoamingSheetMinimized = true) }
-                MapAction.ExpandRoamingSheet -> _uiState.update { it.copy(isRoamingSheetMinimized = false) }
-                is MapAction.UpdateRoamingRadius ->
+
+                MapAction.GenerateRoamingPreview -> {
+                    generateRoamingPreview()
+                }
+
+                MapAction.MinimizeRoamingSheet -> {
+                    _uiState.update { it.copy(isRoamingSheetMinimized = true) }
+                }
+
+                MapAction.ExpandRoamingSheet -> {
+                    _uiState.update { it.copy(isRoamingSheetMinimized = false) }
+                }
+
+                is MapAction.UpdateRoamingRadius -> {
                     _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(radiusMeters = action.meters)) }
-                is MapAction.UpdateRoamingDistance ->
+                }
+
+                is MapAction.UpdateRoamingDistance -> {
                     _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(distanceMeters = action.meters)) }
-                is MapAction.SelectRoamingSpeedProfile ->
+                }
+
+                is MapAction.SelectRoamingSpeedProfile -> {
                     _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(speedProfileId = action.id)) }
-                is MapAction.ToggleRoamingFollowRoads ->
+                }
+
+                is MapAction.ToggleRoamingFollowRoads -> {
                     _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(followRoads = action.enabled)) }
-                is MapAction.ToggleRoamingReturnToStart ->
+                }
+
+                is MapAction.ToggleRoamingReturnToStart -> {
                     _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(returnToInitialLocation = action.enabled)) }
+                }
+
                 MapAction.StartRoaming -> {
                     val draft = _uiState.value.roamingDraft ?: return
                     val position = mapController.sharedState.value.currentPosition ?: return
                     mapController.startRoaming(draft, position, _uiState.value.roamingPreviewWaypoints)
                     _uiState.update { it.copy(showRoamingSheet = false, roamingDraft = null, isRoamingSheetMinimized = false) }
                 }
+
                 MapAction.StopRoaming -> {
                     mapController.stopRoaming()
                     _uiState.update { it.copy(isRoamingControlsExpanded = false) }
                 }
-                MapAction.PauseRoaming -> mapController.pauseRoaming()
-                MapAction.ResumeRoaming -> mapController.resumeRoaming()
-                MapAction.ToggleRoamingControls ->
+
+                MapAction.PauseRoaming -> {
+                    mapController.pauseRoaming()
+                }
+
+                MapAction.ResumeRoaming -> {
+                    mapController.resumeRoaming()
+                }
+
+                MapAction.ToggleRoamingControls -> {
                     _uiState.update { it.copy(isRoamingControlsExpanded = !it.isRoamingControlsExpanded) }
+                }
             }
         }
 
-        fun addRecentSearch(displayName: String, lat: Double, lon: Double) {
+        fun addRecentSearch(
+            displayName: String,
+            lat: Double,
+            lon: Double,
+        ) {
             mapController.addRecentSearch(displayName, lat, lon)
         }
 

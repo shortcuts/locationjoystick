@@ -338,7 +338,9 @@ class FloatingWidgetService :
                 }
             }
 
-            else -> Unit
+            else -> {
+                Unit
+            }
         }
     }
 
@@ -419,6 +421,8 @@ class FloatingWidgetService :
 
             override fun walkTo(pos: LatLng) = mapController.walkTo(pos)
 
+            override fun walkViaRoads(pos: LatLng) = mapController.walkViaRoads(pos)
+
             override fun stopRouteAndTeleport(pos: LatLng) {
                 mapController.stopRouteOnly()
                 mapController.teleportTo(pos)
@@ -434,10 +438,11 @@ class FloatingWidgetService :
             override fun addEphemeralWaypoint(pos: LatLng) = mapController.addEphemeralWaypoint(pos)
 
             override fun startRoamingWith(defaults: RoamingDefaults) {
-                val pos = mapController.sharedState.value.currentPosition ?: run {
-                    Log.w(TAG, "Cannot start roaming: no current position")
-                    return
-                }
+                val pos =
+                    mapController.sharedState.value.currentPosition ?: run {
+                        Log.w(TAG, "Cannot start roaming: no current position")
+                        return
+                    }
                 mapController.startRoaming(defaults, pos)
             }
 

@@ -66,6 +66,8 @@ internal class WidgetPanelPresenter(
 
         fun walkTo(pos: LatLng)
 
+        fun walkViaRoads(pos: LatLng)
+
         fun stopRouteAndTeleport(pos: LatLng)
 
         fun stopRouteAndWalkTo(pos: LatLng)
@@ -156,9 +158,18 @@ internal class WidgetPanelPresenter(
             FavoritesFloatingView(
                 favorites = favs,
                 onDismiss = { hidePanelView() },
-                onTeleport = { fav -> callbacks.teleportToFavorite(fav); callbacks.moveAppToBack() },
-                onWalk = { fav -> callbacks.startWalkToFavorite(fav); callbacks.moveAppToBack() },
-                onWalkViaRoads = { fav -> callbacks.startWalkViaRoadsToFavorite(fav); callbacks.moveAppToBack() },
+                onTeleport = { fav ->
+                    callbacks.teleportToFavorite(fav)
+                    callbacks.moveAppToBack()
+                },
+                onWalk = { fav ->
+                    callbacks.startWalkToFavorite(fav)
+                    callbacks.moveAppToBack()
+                },
+                onWalkViaRoads = { fav ->
+                    callbacks.startWalkViaRoadsToFavorite(fav)
+                    callbacks.moveAppToBack()
+                },
                 onAddFromHere = { name -> callbacks.saveCurrentLocation(name) },
             )
         }
@@ -210,6 +221,11 @@ internal class WidgetPanelPresenter(
                 },
                 onWalkTo = { pos ->
                     callbacks.walkTo(pos)
+                    hidePanelView()
+                    callbacks.moveAppToBack()
+                },
+                onWalkViaRoads = { pos ->
+                    callbacks.walkViaRoads(pos)
                     hidePanelView()
                     callbacks.moveAppToBack()
                 },

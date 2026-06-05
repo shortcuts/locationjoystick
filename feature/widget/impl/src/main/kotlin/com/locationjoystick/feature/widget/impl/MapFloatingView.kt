@@ -106,6 +106,7 @@ internal fun MapFloatingView(
     onGeneratePreviewRoute: suspend (center: LatLng, radiusMeters: Double, followRoads: Boolean, speedProfileId: String) -> List<LatLng>?,
     onTeleport: (LatLng) -> Unit,
     onWalkTo: (LatLng) -> Unit,
+    onWalkViaRoads: (LatLng) -> Unit,
     onStopRouteAndTeleport: (LatLng) -> Unit,
     onStopRouteAndWalkTo: (LatLng) -> Unit,
     onFinishRouteAndWalkTo: (LatLng) -> Unit,
@@ -439,6 +440,7 @@ internal fun MapFloatingView(
                 cooldownForPosition = cooldownForPosition,
                 onTeleport = onTeleport,
                 onWalkTo = onWalkTo,
+                onWalkViaRoads = onWalkViaRoads,
                 onStopRouteAndTeleport = onStopRouteAndTeleport,
                 onStopRouteAndWalkTo = onStopRouteAndWalkTo,
                 onFinishRouteAndWalkTo = onFinishRouteAndWalkTo,
@@ -543,6 +545,7 @@ private fun BoxScope.TapActionPanel(
     cooldownForPosition: ((LatLng) -> Flow<CooldownState>)?,
     onTeleport: (LatLng) -> Unit,
     onWalkTo: (LatLng) -> Unit,
+    onWalkViaRoads: (LatLng) -> Unit,
     onStopRouteAndTeleport: (LatLng) -> Unit,
     onStopRouteAndWalkTo: (LatLng) -> Unit,
     onFinishRouteAndWalkTo: (LatLng) -> Unit,
@@ -610,6 +613,14 @@ private fun BoxScope.TapActionPanel(
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Walk here") }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = {
+                    onWalkViaRoads(tap)
+                    onDismiss()
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Walk here via roads") }
             if (isWalkActive) {
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(

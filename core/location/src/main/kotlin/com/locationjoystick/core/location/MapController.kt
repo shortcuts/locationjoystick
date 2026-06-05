@@ -5,15 +5,14 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.di.ApplicationScope
+import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
-import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.data.WalkCoordinator
-import kotlinx.coroutines.flow.Flow
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -23,6 +22,7 @@ import com.locationjoystick.core.model.toConfig
 import com.locationjoystick.core.routing.OsrmClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -147,9 +147,14 @@ class MapController
                                 val followRoads = (current.walkMode as? WalkMode.EphemeralReplay)?.followRoads ?: false
                                 current.copy(walkMode = WalkMode.EphemeralReplay(waypoints, followRoads))
                             }
-                            waypoints.isEmpty() && current.walkMode is WalkMode.EphemeralReplay ->
+
+                            waypoints.isEmpty() && current.walkMode is WalkMode.EphemeralReplay -> {
                                 current.copy(walkMode = WalkMode.Idle)
-                            else -> current
+                            }
+
+                            else -> {
+                                current
+                            }
                         }
                     }
                 }
@@ -251,7 +256,10 @@ class MapController
         fun walkViaRoads(position: LatLng) {
             appScope.launch {
                 val current = locationRepository.currentPosition.value
-                if (current == null) { walkTo(position); return@launch }
+                if (current == null) {
+                    walkTo(position)
+                    return@launch
+                }
                 val waypoints =
                     osrmClient
                         .getRoute(OsrmClient.PROFILE_FOOT, listOf(current, position))
@@ -273,9 +281,13 @@ class MapController
             }
         }
 
-        fun pauseWalk() { locationRepository.setWalkPaused(true) }
+        fun pauseWalk() {
+            locationRepository.setWalkPaused(true)
+        }
 
-        fun resumeWalk() { locationRepository.setWalkPaused(false) }
+        fun resumeWalk() {
+            locationRepository.setWalkPaused(false)
+        }
 
         fun stopWalk() {
             walkCoordinator.cancel()
@@ -302,7 +314,11 @@ class MapController
                     context = context,
                     launchIntent = { context.startService(it) },
                 ) ?: return@launch
-                _state.update { it.copy(walkMode = WalkMode.EphemeralReplay(ephemeralReplayController.pendingWaypoints.value, followRoads)) }
+                _state.update {
+                    it.copy(
+                        walkMode = WalkMode.EphemeralReplay(ephemeralReplayController.pendingWaypoints.value, followRoads),
+                    )
+                }
             }
         }
 
@@ -369,16 +385,23 @@ class MapController
             appScope.launch { roamingRepository.stopRoaming() }
         }
 
-        fun pauseRoaming() { roamingRepository.pauseRoaming() }
+        fun pauseRoaming() {
+            roamingRepository.pauseRoaming()
+        }
 
-        fun resumeRoaming() { roamingRepository.resumeRoaming() }
+        fun resumeRoaming() {
+            roamingRepository.resumeRoaming()
+        }
 
         fun saveCurrentLocation(name: String) {
             val position = _state.value.currentPosition ?: return
             appScope.launch {
                 try {
                     favoriteRepository.addFavorite(
-                        id = java.util.UUID.randomUUID().toString(),
+                        id =
+                            java.util.UUID
+                                .randomUUID()
+                                .toString(),
                         name = name,
                         position = position,
                         createdAt = System.currentTimeMillis(),
@@ -389,7 +412,11 @@ class MapController
             }
         }
 
-        fun addRecentSearch(displayName: String, lat: Double, lon: Double) {
+        fun addRecentSearch(
+            displayName: String,
+            lat: Double,
+            lon: Double,
+        ) {
             appScope.launch { settingsRepository.addRecentSearch(displayName, lat, lon) }
         }
 
