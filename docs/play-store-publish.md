@@ -6,7 +6,7 @@ Complete every item in order. Items marked `[x]` are already done.
 
 ## 1. Keystore Setup
 
-- [ ] Generate keystore (one-time):
+- [x] Generate keystore (one-time):
   ```bash
   keytool -genkeypair -v \
     -keystore ~/locationjoystick-release.jks \
@@ -14,29 +14,29 @@ Complete every item in order. Items marked `[x]` are already done.
     -keyalg RSA -keysize 2048 \
     -validity 10000
   ```
-- [ ] Store `locationjoystick-release.jks` in a secure location (password manager, encrypted backup) — never commit it
+- [x] Store `locationjoystick-release.jks` in a secure location (password manager, encrypted backup) — never commit it
 
 ---
 
 ## 2. Version Bump
 
-- [ ] Increment `versionCode` in `build-logic/convention/src/main/kotlin/LjApplicationConventionPlugin.kt` (must strictly increase with every upload)
-- [ ] Update `VERSION_NAME` (the string shown to users)
+- [x] Increment `versionCode` in `build-logic/convention/src/main/kotlin/LjApplicationConventionPlugin.kt` (must strictly increase with every upload)
+- [x] Update `VERSION_NAME` (the string shown to users)
 
 ---
 
 ## 3. Build Signed AAB
 
-- [ ] Set signing environment variables:
+- [x] Set signing environment variables:
   ```bash
   export KEYSTORE_PATH=~/locationjoystick-release.jks
   export STORE_PASSWORD=<keystore-password>
   export KEY_ALIAS=locationjoystick
   export KEY_PASSWORD=<key-password>
   ```
-- [ ] Run `make lint` — must pass with zero errors
-- [ ] Run `make test` — must pass
-- [ ] Run `make bundle` — AAB output at `app/build/outputs/bundle/release/app-release.aab`
+- [x] Run `make lint` — must pass with zero errors
+- [x] Run `make test` — must pass
+- [x] Run `make bundle` — AAB output at `app/build/outputs/bundle/release/app-release.aab`
 
 ---
 

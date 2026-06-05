@@ -32,9 +32,9 @@ class LjApplicationConventionPlugin : Plugin<Project> {
 
                 defaultConfig {
                     minSdk = 31
-                    targetSdk = 35
+                    targetSdk = 36
                     versionCode = 1
-                    buildConfigField("String", "VERSION_NAME", "\"0.1.0\"")
+                    buildConfigField("String", "VERSION_NAME", "\"0.5.0\"")
                 }
 
                 buildFeatures {
