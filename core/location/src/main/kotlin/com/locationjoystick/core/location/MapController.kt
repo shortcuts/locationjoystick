@@ -53,7 +53,7 @@ private data class LocationStateSnapshot(
 class MapController
     @Inject
     constructor(
-        @ApplicationContext private val context: Context,
+        @param:ApplicationContext private val context: Context,
         private val locationRepository: LocationRepository,
         private val routeRepository: RouteRepository,
         private val favoriteRepository: FavoriteRepository,
@@ -64,7 +64,7 @@ class MapController
         private val startRouteReplayUseCase: StartRouteReplayUseCase,
         private val ephemeralReplayController: EphemeralReplayController,
         private val osrmClient: OsrmClient,
-        @ApplicationScope private val appScope: CoroutineScope,
+        @param:ApplicationScope private val appScope: CoroutineScope,
     ) {
         @Suppress("ktlint:standard:backing-property-naming")
         private val _state = MutableStateFlow(MapSharedState())
