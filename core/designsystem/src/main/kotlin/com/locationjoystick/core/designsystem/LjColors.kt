@@ -18,13 +18,9 @@ val LjWarningContainer = Color(0xFF451A03)
 
 object LjMapColors {
     val ActiveButton = Color(0xFF43A047)
-    val WaypointCircle = Color(0xFF1976D2)
-    val EndpointStroke = Color(0xFFFFFFFF)
-    val SelectedPoint = Color(0xFFFF5722)
-    val RouteCreatorLine = Color(0xFF2196F3)
-    val StartPoint = Color(0xFF4CAF50)
-    val EndpointCircle = Color(0xFF1E88E5)
-    val RouteLine = Color(0xFFFF9800)
+    val PositionBlue = Color(0xFF1976D2)
+    val RouteOrange = Color(0xFFFF9800)
+    val PointStroke = Color(0xFFFFFFFF)
 }
 
 val LjDarkColorScheme =

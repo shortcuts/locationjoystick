@@ -113,6 +113,9 @@ object AppConstants {
         const val EPHEMERAL_ROUTE_LAYER_ID = "ephemeral-route-layer"
         const val EPHEMERAL_ENDPOINTS_SOURCE_ID = "ephemeral-endpoints-source"
         const val EPHEMERAL_ENDPOINTS_LAYER_ID = "ephemeral-endpoints-layer"
+        const val POSITION_DOT_RADIUS = 12f
+        const val ROUTE_POINT_RADIUS = 8f
+        const val POINT_STROKE_WIDTH = 2f
     }
 
     object NominatimConstants {

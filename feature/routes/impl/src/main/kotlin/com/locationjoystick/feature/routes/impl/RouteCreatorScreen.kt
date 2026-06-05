@@ -25,7 +25,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,17 +36,15 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.LjMapColors
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
+import com.locationjoystick.core.map.geojson.buildPositionGeoJson
 import com.locationjoystick.core.map.geojson.buildSegmentsGeoJson
 import com.locationjoystick.core.map.geojson.buildWaypointsGeoJson
-import com.locationjoystick.core.map.geojson.emptyGeoJson
-import com.locationjoystick.core.map.maplibre.MapLibreLayerIds
-import com.locationjoystick.core.map.maplibre.MapLibreSourceIds
+import com.locationjoystick.core.map.maplibre.addCreatorLayers
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RecentSearch
@@ -58,17 +55,8 @@ import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
-import org.maplibre.android.style.layers.CircleLayer
-import org.maplibre.android.style.layers.LineLayer
-import org.maplibre.android.style.layers.PropertyFactory
-import org.maplibre.android.style.layers.RasterLayer
 import org.maplibre.android.style.sources.GeoJsonSource
-import org.maplibre.android.style.sources.RasterSource
-import org.maplibre.android.style.sources.TileSet
 import org.maplibre.android.geometry.LatLng as MapLatLng
-
-private val OSM_SOURCE_ID = AppConstants.MapConstants.OSM_SOURCE_ID
-private val OSM_LAYER_ID = AppConstants.MapConstants.OSM_LAYER_ID
 
 @Composable
 fun RouteCreatorRoute(
@@ -271,70 +259,13 @@ internal fun RouteCreatorScreen(
                                     ).zoom(AppConstants.MapConstants.DEFAULT_ZOOM)
                                     .build()
 
-                            map.setStyle(Style.Builder().fromUri("asset://empty.json")) { style ->
-                                style.addSource(
-                                    RasterSource(
-                                        OSM_SOURCE_ID,
-                                        TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
-                                            maxZoom =
-                                                AppConstants.MapConstants.OSM_MAX_ZOOM
-                                        },
-                                        256,
-                                    ),
-                                )
-                                style.addLayer(RasterLayer(OSM_LAYER_ID, OSM_SOURCE_ID))
-
-                                if (initialPosition != null) {
-                                    val currentPosSrc =
-                                        GeoJsonSource(
-                                            MapLibreSourceIds.CURRENT_POS,
-                                            """{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[${initialPosition.longitude},${initialPosition.latitude}]},"properties":{}}]}""",
-                                        )
-                                    style.addSource(currentPosSrc)
-                                    style.addLayer(
-                                        CircleLayer(MapLibreLayerIds.CURRENT_POS, MapLibreSourceIds.CURRENT_POS)
-                                            .withProperties(
-                                                PropertyFactory.circleRadius(9f),
-                                                PropertyFactory.circleColor(
-                                                    LjMapColors.WaypointCircle.toArgb(),
-                                                ),
-                                                PropertyFactory.circleStrokeColor(
-                                                    LjMapColors.EndpointStroke.toArgb(),
-                                                ),
-                                                PropertyFactory.circleStrokeWidth(2f),
-                                            ),
+                            map.setStyle(Style.Builder().fromUri(AppConstants.MapConstants.EMPTY_MAP_STYLE_URI)) { style ->
+                                val layers =
+                                    style.addCreatorLayers(
+                                        currentPosGeoJson = initialPosition?.let { buildPositionGeoJson(it) },
                                     )
-                                }
-
-                                val segSrc = GeoJsonSource(MapLibreSourceIds.ROUTE_SEGMENTS, emptyGeoJson())
-                                style.addSource(segSrc)
-                                style.addLayer(
-                                    LineLayer(MapLibreLayerIds.ROUTE_SEGMENTS, MapLibreSourceIds.ROUTE_SEGMENTS)
-                                        .withProperties(
-                                            PropertyFactory.lineColor(
-                                                LjMapColors.RouteCreatorLine.toArgb(),
-                                            ),
-                                            PropertyFactory.lineWidth(3f),
-                                        ),
-                                )
-                                segmentsSource.value = segSrc
-
-                                val wpSrc = GeoJsonSource(MapLibreSourceIds.ROUTE_WAYPOINTS, emptyGeoJson())
-                                style.addSource(wpSrc)
-                                style.addLayer(
-                                    CircleLayer(MapLibreLayerIds.ROUTE_WAYPOINTS, MapLibreSourceIds.ROUTE_WAYPOINTS)
-                                        .withProperties(
-                                            PropertyFactory.circleRadius(8f),
-                                            PropertyFactory.circleColor(
-                                                LjMapColors.StartPoint.toArgb(),
-                                            ),
-                                            PropertyFactory.circleStrokeColor(
-                                                LjMapColors.EndpointStroke.toArgb(),
-                                            ),
-                                            PropertyFactory.circleStrokeWidth(2f),
-                                        ),
-                                )
-                                waypointsSource.value = wpSrc
+                                segmentsSource.value = layers.segmentsSource
+                                waypointsSource.value = layers.waypointsSource
                             }
 
                             map.addOnMapClickListener { latLng ->
