@@ -43,6 +43,11 @@
                     android:scheme="https"
                     android:host="locationjoystick.shrtcts.fr" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="geo" />
+            </intent-filter>
         </activity>
 
         <provider
