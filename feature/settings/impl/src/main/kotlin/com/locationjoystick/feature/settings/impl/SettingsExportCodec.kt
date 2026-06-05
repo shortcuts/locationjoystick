@@ -116,6 +116,7 @@ internal object SettingsExportCodec {
         root.put("elevationTiltJitterDegrees", data.elevationTiltJitterDegrees)
         root.put("elevationNoiseAmplitudeMs2", data.elevationNoiseAmplitudeMs2)
         root.put("hotLocationsEnabled", data.hotLocationsEnabled)
+        root.put("selectedHotLocationIds", JSONArray(data.selectedHotLocationIds.toList()))
 
         return root.toString()
     }
@@ -279,6 +280,11 @@ internal object SettingsExportCodec {
                         AppConstants.ElevationConstants.DEFAULT_NOISE_AMPLITUDE_MS2.toDouble(),
                     ).toFloat(),
             hotLocationsEnabled = root.optBoolean("hotLocationsEnabled", false),
+            selectedHotLocationIds = buildSet {
+                root.optJSONArray("selectedHotLocationIds")?.let { arr ->
+                    for (i in 0 until arr.length()) add(arr.getString(i))
+                }
+            },
         )
     }
 }

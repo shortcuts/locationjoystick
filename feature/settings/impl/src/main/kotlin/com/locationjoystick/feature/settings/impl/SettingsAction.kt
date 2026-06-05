@@ -89,6 +89,10 @@ internal sealed class SettingsAction {
         val enabled: Boolean,
     ) : SettingsAction()
 
+    data class SetSelectedHotLocationIds(
+        val ids: Set<String>,
+    ) : SettingsAction()
+
     data object RequestElevationAccess : SettingsAction()
 
     data class UpdateRoamingDefaults(

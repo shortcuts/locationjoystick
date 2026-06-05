@@ -28,5 +28,6 @@ data class SettingsUiState(
     val elevationTiltJitterDegrees: Float = AppConstants.ElevationConstants.DEFAULT_TILT_JITTER_DEGREES,
     val elevationNoiseAmplitudeMs2: Float = AppConstants.ElevationConstants.DEFAULT_NOISE_AMPLITUDE_MS2,
     val hotLocationsEnabled: Boolean = false,
+    val selectedHotLocationIds: Set<String> = emptySet(),
     val isDirty: Boolean = false,
 )

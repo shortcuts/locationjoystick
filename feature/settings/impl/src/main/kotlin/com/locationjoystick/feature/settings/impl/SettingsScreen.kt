@@ -206,6 +206,7 @@ fun SettingsRoute(
         uiState = uiState,
         roamingDefaults = roamingDefaults,
         isRooted = isRooted,
+        hotLocations = viewModel.availableHotLocations,
         onOpenDrawer = onOpenDrawer,
         onAction = { action ->
             when (action) {
@@ -293,6 +294,10 @@ fun SettingsRoute(
                     viewModel.setHotLocationsEnabled(action.enabled)
                 }
 
+                is SettingsAction.SetSelectedHotLocationIds -> {
+                    viewModel.setSelectedHotLocationIds(action.ids)
+                }
+
                 is SettingsAction.RequestElevationAccess -> {
                     viewModel.requestElevationAccess()
                 }
@@ -356,6 +361,7 @@ internal fun SettingsScreen(
     uiState: SettingsUiState,
     roamingDefaults: RoamingDefaults = RoamingDefaults(),
     isRooted: Boolean = false,
+    hotLocations: List<Pair<String, String>> = emptyList(),
     onOpenDrawer: () -> Unit = {},
     onAction: (SettingsAction) -> Unit,
     bottomBar: @Composable () -> Unit = {},
@@ -471,7 +477,7 @@ internal fun SettingsScreen(
                         Spacer(modifier = Modifier.height(24.dp))
                         MapSection(uiState, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
-                        FavoritesSection(uiState, onAction)
+                        FavoritesSection(uiState, hotLocations, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
                         FloatingWidgetSection(uiState, isRooted, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
@@ -657,6 +663,7 @@ private fun MapSection(
 @Composable
 private fun FavoritesSection(
     uiState: SettingsUiState,
+    hotLocations: List<Pair<String, String>>,
     onAction: (SettingsAction) -> Unit,
 ) {
     Text("Favorites", style = MaterialTheme.typography.headlineSmall)
@@ -671,10 +678,24 @@ private fun FavoritesSection(
         checked = uiState.hotLocationsEnabled,
         onCheckedChange = { onAction(SettingsAction.SetHotLocationsEnabled(it)) },
         title = "Show hot locations",
-        description =
-            "Adds a curated list of popular locations to your favorites. Enabling adds 26 locations;" +
-                " disabling removes the ones added by this feature.",
+        description = "Adds a curated list of popular locations to your favorites. Select which ones to include below.",
     )
+    if (uiState.hotLocationsEnabled && hotLocations.isNotEmpty()) {
+        Spacer(modifier = Modifier.height(4.dp))
+        hotLocations.forEach { (id, name) ->
+            val checked = id in uiState.selectedHotLocationIds
+            LjCheckboxRow(
+                checked = checked,
+                onCheckedChange = { isChecked ->
+                    val updated = uiState.selectedHotLocationIds.toMutableSet()
+                    if (isChecked) updated.add(id) else updated.remove(id)
+                    onAction(SettingsAction.SetSelectedHotLocationIds(updated))
+                },
+                title = name,
+                modifier = Modifier.padding(start = 16.dp),
+            )
+        }
+    }
 }
 
 @Composable

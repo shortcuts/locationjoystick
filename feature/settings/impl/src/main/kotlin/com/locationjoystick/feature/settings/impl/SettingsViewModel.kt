@@ -107,6 +107,7 @@ class SettingsViewModel
             val elevationTiltJitterDegrees: Float? = null,
             val elevationNoiseAmplitudeMs2: Float? = null,
             val hotLocationsEnabled: Boolean? = null,
+            val selectedHotLocationIds: Set<String>? = null,
         )
 
         private val mutableDraft = MutableStateFlow(DraftState())
@@ -155,6 +156,7 @@ class SettingsViewModel
                     elevationTiltJitterDegrees = draftState.elevationTiltJitterDegrees ?: snapshot.elevationTiltJitterDegrees,
                     elevationNoiseAmplitudeMs2 = draftState.elevationNoiseAmplitudeMs2 ?: snapshot.elevationNoiseAmplitudeMs2,
                     hotLocationsEnabled = draftState.hotLocationsEnabled ?: snapshot.hotLocationsEnabled,
+                    selectedHotLocationIds = draftState.selectedHotLocationIds ?: snapshot.selectedHotLocationIds,
                     isDirty = isDirty,
                 )
             }.stateIn(
@@ -251,6 +253,13 @@ class SettingsViewModel
             mutableDraft.update { it.copy(hotLocationsEnabled = enabled) }
         }
 
+        fun setSelectedHotLocationIds(ids: Set<String>) {
+            mutableDraft.update { it.copy(selectedHotLocationIds = ids) }
+        }
+
+        val availableHotLocations: List<Pair<String, String>> =
+            FavoriteRepository.HOT_LOCATIONS.map { (name, _, _) -> FavoriteRepository.idForName(name) to name }
+
         fun saveChanges() {
             viewModelScope.launch {
                 try {
@@ -279,14 +288,15 @@ class SettingsViewModel
                             elevationTiltJitterDegrees = state.elevationTiltJitterDegrees,
                             elevationNoiseAmplitudeMs2 = state.elevationNoiseAmplitudeMs2,
                             hotLocationsEnabled = state.hotLocationsEnabled,
+                            selectedHotLocationIds = state.selectedHotLocationIds,
                             roamingDefaults =
                                 d.roamingDefaults
                                     ?: settingsRepository.getRoamingDefaults().first(),
                         ),
                     )
-                    if (d.hotLocationsEnabled != null) {
-                        if (d.hotLocationsEnabled) {
-                            favoriteRepository.upsertHotLocations()
+                    if (d.hotLocationsEnabled != null || d.selectedHotLocationIds != null) {
+                        if (state.hotLocationsEnabled) {
+                            favoriteRepository.upsertHotLocations(state.selectedHotLocationIds)
                         } else {
                             favoriteRepository.removeHotLocations()
                         }
@@ -359,6 +369,7 @@ class SettingsViewModel
                 elevationTiltJitterDegrees = state.elevationTiltJitterDegrees,
                 elevationNoiseAmplitudeMs2 = state.elevationNoiseAmplitudeMs2,
                 hotLocationsEnabled = state.hotLocationsEnabled,
+                selectedHotLocationIds = state.selectedHotLocationIds,
             )
         }
 
@@ -493,11 +504,12 @@ class SettingsViewModel
                     elevationTiltJitterDegrees = data.elevationTiltJitterDegrees,
                     elevationNoiseAmplitudeMs2 = data.elevationNoiseAmplitudeMs2,
                     hotLocationsEnabled = data.hotLocationsEnabled,
+                    selectedHotLocationIds = data.selectedHotLocationIds,
                     roamingDefaults = data.settings.roamingDefaults,
                 ),
             )
             if (data.hotLocationsEnabled) {
-                favoriteRepository.upsertHotLocations()
+                favoriteRepository.upsertHotLocations(data.selectedHotLocationIds)
             } else {
                 favoriteRepository.removeHotLocations()
             }

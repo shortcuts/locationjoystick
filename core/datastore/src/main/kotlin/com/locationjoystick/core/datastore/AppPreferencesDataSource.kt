@@ -192,6 +192,12 @@ interface PreferencesDataSource {
     /** Sets whether hot locations are enabled. */
     suspend fun setHotLocationsEnabled(enabled: Boolean)
 
+    /** Gets the set of selected hot location IDs. */
+    fun getSelectedHotLocationIds(): Flow<Set<String>>
+
+    /** Sets the selected hot location IDs. */
+    suspend fun setSelectedHotLocationIds(ids: Set<String>)
+
     /** Returns all settings needed by the settings UI in a single DataStore scan. */
     fun getSettingsSnapshot(): Flow<SettingsSnapshot>
 
@@ -221,6 +227,7 @@ data class SettingsSnapshot(
     val elevationTiltJitterDegrees: Float,
     val elevationNoiseAmplitudeMs2: Float,
     val hotLocationsEnabled: Boolean,
+    val selectedHotLocationIds: Set<String>,
     val roamingDefaults: RoamingDefaults,
 )
 
@@ -285,6 +292,7 @@ class AppPreferencesDataSource
             val ELEVATION_TILT_JITTER_DEGREES = floatPreferencesKey("elevation_tilt_jitter_degrees")
             val ELEVATION_NOISE_AMPLITUDE_MS2 = floatPreferencesKey("elevation_noise_amplitude_ms2")
             val HOT_LOCATIONS_ENABLED = booleanPreferencesKey("hot_locations_enabled")
+            val HOT_LOCATION_SELECTED_IDS = stringSetPreferencesKey("hot_location_selected_ids")
         }
 
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -582,6 +590,12 @@ class AppPreferencesDataSource
             dataStore.edit { prefs -> prefs[Keys.HOT_LOCATIONS_ENABLED] = enabled }
         }
 
+        override fun getSelectedHotLocationIds(): Flow<Set<String>> = pref(Keys.HOT_LOCATION_SELECTED_IDS, emptySet())
+
+        override suspend fun setSelectedHotLocationIds(ids: Set<String>) {
+            dataStore.edit { prefs -> prefs[Keys.HOT_LOCATION_SELECTED_IDS] = ids }
+        }
+
         override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
             dataStore.edit { prefs ->
                 prefs[Keys.WALK_SPEED_MS] = snapshot.walkSpeedMs.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS)
@@ -623,6 +637,7 @@ class AppPreferencesDataSource
                         AppConstants.ElevationConstants.MAX_NOISE_AMPLITUDE_MS2,
                     )
                 prefs[Keys.HOT_LOCATIONS_ENABLED] = snapshot.hotLocationsEnabled
+                prefs[Keys.HOT_LOCATION_SELECTED_IDS] = snapshot.selectedHotLocationIds
                 prefs[Keys.ROAMING_RADIUS_METERS] = snapshot.roamingDefaults.radiusMeters
                 prefs[Keys.ROAMING_DISTANCE_METERS] = snapshot.roamingDefaults.distanceMeters
                 prefs[Keys.ROAMING_SPEED_PROFILE_ID] = snapshot.roamingDefaults.speedProfileId
@@ -681,6 +696,7 @@ class AppPreferencesDataSource
                             prefs[Keys.ELEVATION_NOISE_AMPLITUDE_MS2]
                                 ?: DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2,
                         hotLocationsEnabled = prefs[Keys.HOT_LOCATIONS_ENABLED] ?: false,
+                        selectedHotLocationIds = prefs[Keys.HOT_LOCATION_SELECTED_IDS] ?: emptySet(),
                         roamingDefaults =
                             RoamingDefaults(
                                 radiusMeters = prefs[Keys.ROAMING_RADIUS_METERS] ?: DEFAULT_ROAMING_RADIUS_METERS,

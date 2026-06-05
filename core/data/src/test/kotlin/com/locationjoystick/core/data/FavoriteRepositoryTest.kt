@@ -188,8 +188,7 @@ class FavoriteRepositoryTest {
 
             repository.getFavorites().test {
                 val list = awaitItem()
-                // Should have 27 entries: 26 hot locations + 1 user favorite
-                assertEquals(27, list.size)
+                assertEquals(FavoriteRepository.HOT_LOCATIONS.size + 1, list.size)
 
                 // Find the hot location entry
                 val hotSingapore = list.first { it.id == "hot_singapore" }

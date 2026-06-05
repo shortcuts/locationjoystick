@@ -834,6 +834,10 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         hotLocationsEnabledFlow.value = enabled
     }
 
+    override fun getSelectedHotLocationIds(): Flow<Set<String>> = flowOf(emptySet())
+
+    override suspend fun setSelectedHotLocationIds(ids: Set<String>) = Unit
+
     val recentSearchesFlow = MutableStateFlow<List<RecentSearch>>(emptyList())
 
     override fun getRecentSearches(): Flow<List<RecentSearch>> = recentSearchesFlow
@@ -874,6 +878,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
                 elevationTiltJitterDegrees = AppPreferencesDataSource.DEFAULT_ELEVATION_TILT_JITTER_DEGREES,
                 elevationNoiseAmplitudeMs2 = AppPreferencesDataSource.DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2,
                 hotLocationsEnabled = false,
+                selectedHotLocationIds = emptySet(),
                 roamingDefaults = roamingDefaultsFlow.value,
             ),
         )

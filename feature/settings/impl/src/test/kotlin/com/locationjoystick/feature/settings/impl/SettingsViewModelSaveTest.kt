@@ -319,6 +319,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
                 elevationTiltJitterDegrees = AppPreferencesDataSource.DEFAULT_ELEVATION_TILT_JITTER_DEGREES,
                 elevationNoiseAmplitudeMs2 = AppPreferencesDataSource.DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2,
                 hotLocationsEnabled = false,
+                selectedHotLocationIds = emptySet(),
                 roamingDefaults = roamingDefaultsFlow.value,
             ),
         )
@@ -464,4 +465,8 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getHotLocationsEnabled(): Flow<Boolean> = flowOf(false)
 
     override suspend fun setHotLocationsEnabled(enabled: Boolean) = Unit
+
+    override fun getSelectedHotLocationIds(): Flow<Set<String>> = flowOf(emptySet())
+
+    override suspend fun setSelectedHotLocationIds(ids: Set<String>) = Unit
 }

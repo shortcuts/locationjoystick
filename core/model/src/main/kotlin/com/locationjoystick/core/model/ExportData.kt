@@ -16,4 +16,5 @@ data class ExportData(
     val elevationTiltJitterDegrees: Float = 2.25f,
     val elevationNoiseAmplitudeMs2: Float = 0.35f,
     val hotLocationsEnabled: Boolean = false,
+    val selectedHotLocationIds: Set<String> = emptySet(),
 )

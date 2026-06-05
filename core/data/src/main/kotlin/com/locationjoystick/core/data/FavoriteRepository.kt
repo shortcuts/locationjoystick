@@ -119,24 +119,29 @@ class FavoriteRepository
          * - [HOT_LOCATIONS] — the canonical list of hot location definitions
          * - ISSUES.md (lines 75–87) — full technical debt entry
          */
-        suspend fun upsertHotLocations(): Result<Unit> =
+        suspend fun upsertHotLocations(selectedIds: Set<String> = HOT_LOCATIONS.map { (name, _, _) -> idForName(name) }.toSet()): Result<Unit> =
             withContext(Dispatchers.IO) {
                 runCatching {
                     HOT_LOCATIONS.forEach { (name, lat, lon) ->
-                        val id = HOT_ID_PREFIX + name.lowercase().replace(Regex("[^a-z0-9]"), "_")
-                        val existing = favoriteDao.getById(id)
-                        if (existing != null) {
-                            favoriteDao.update(existing.copy(latitude = lat, longitude = lon))
+                        val id = idForName(name)
+                        if (id in selectedIds) {
+                            val existing = favoriteDao.getById(id)
+                            if (existing != null) {
+                                favoriteDao.update(existing.copy(latitude = lat, longitude = lon))
+                            } else {
+                                favoriteDao.insert(
+                                    FavoriteEntity(
+                                        id = id,
+                                        name = name,
+                                        latitude = lat,
+                                        longitude = lon,
+                                        createdAt = System.currentTimeMillis(),
+                                    ),
+                                )
+                            }
                         } else {
-                            favoriteDao.insert(
-                                FavoriteEntity(
-                                    id = id,
-                                    name = name,
-                                    latitude = lat,
-                                    longitude = lon,
-                                    createdAt = System.currentTimeMillis(),
-                                ),
-                            )
+                            val existing = favoriteDao.getById(id)
+                            if (existing != null) favoriteDao.delete(existing)
                         }
                     }
                 }.onFailure { e -> Log.e(TAG, "Failed to upsert hot locations", e) }
@@ -151,6 +156,8 @@ class FavoriteRepository
 
         companion object {
             private const val HOT_ID_PREFIX = "hot_"
+
+            fun idForName(name: String): String = HOT_ID_PREFIX + name.lowercase().replace(Regex("[^a-z0-9]"), "_")
 
             /**
              * Curated list of hot favorite locations bundled with the app.
@@ -209,6 +216,12 @@ class FavoriteRepository
                     Triple("Pier 39 California", 37.808673, -122.409821),
                     Triple("Honolulu Hawaii", 21.29836, -157.86011),
                     Triple("Pago Pago", -14.27859, -170.68886),
+                    Triple("Chicago 2026 Fest Park", 41.875549, -87.619066),
+                    Triple("Chicago City Experience", 41.891797, -87.611083),
+                    Triple("Chicago Friendship District", 41.828436, -87.633616),
+                    Triple("Chicago Scouting District", 41.861967, -87.663436),
+                    Triple("Chicago Investigation District", 41.916267, -87.63231),
+                    Triple("Chicago Collection District", 41.877598, -87.62369),
                 )
         }
     }
