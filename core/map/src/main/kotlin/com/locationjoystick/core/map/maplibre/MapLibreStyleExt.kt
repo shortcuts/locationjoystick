@@ -138,7 +138,7 @@ fun Style.addLocationLayers(
         CircleLayer(MapLibreLayerIds.PENDING_TAP, MapLibreSourceIds.PENDING_TAP)
             .withProperties(
                 PropertyFactory.circleRadius(AppConstants.MapConstants.ROUTE_POINT_RADIUS),
-                PropertyFactory.circleColor(LjMapColors.RouteOrange.toArgb()),
+                PropertyFactory.circleColor(LjMapColors.PendingTapGreen.toArgb()),
                 PropertyFactory.circleStrokeColor(LjMapColors.PointStroke.toArgb()),
                 PropertyFactory.circleStrokeWidth(AppConstants.MapConstants.POINT_STROKE_WIDTH),
             ),

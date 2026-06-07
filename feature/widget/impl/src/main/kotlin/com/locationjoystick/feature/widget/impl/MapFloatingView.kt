@@ -147,6 +147,7 @@ internal fun MapFloatingView(
     val endpointsSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val ephemeralRouteSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val ephemeralEndpointsSource = remember { mutableStateOf<GeoJsonSource?>(null) }
+    val pendingTapSource = remember { mutableStateOf<GeoJsonSource?>(null) }
 
     LaunchedEffect(roamingPreviewWaypoints) {
         val src = ephemeralRouteSource.value ?: return@LaunchedEffect
@@ -226,6 +227,7 @@ internal fun MapFloatingView(
                             tracedSource.value = layers.tracedSource
                             remainingSource.value = layers.remainingSource
                             endpointsSource.value = layers.endpointsSource
+                            pendingTapSource.value = layers.pendingTapSource
                             val ephemeralSrcs = style.addEphemeralRouteLayers()
                             ephemeralRouteSource.value = ephemeralSrcs.routeSource
                             ephemeralEndpointsSource.value = ephemeralSrcs.endpointsSource
@@ -283,6 +285,8 @@ internal fun MapFloatingView(
 
                 ephemeralRouteSrc.setGeoJson(emptyGeoJson())
                 ephemeralEndpointsSrc.setGeoJson(emptyGeoJson())
+
+                pendingTapSource.value?.setGeoJson(buildPositionGeoJson(pendingTap))
 
                 if (isFollowingCamera.value && position != null) {
                     mapRef.value?.animateCamera(

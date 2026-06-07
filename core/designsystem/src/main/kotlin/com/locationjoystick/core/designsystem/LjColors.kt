@@ -21,6 +21,7 @@ object LjMapColors {
     val PositionBlue = Color(0xFF1976D2)
     val RouteOrange = Color(0xFFFF9800)
     val PointStroke = Color(0xFFFFFFFF)
+    val PendingTapGreen = Color(0xFF4CAF50)
 }
 
 val LjDarkColorScheme =
