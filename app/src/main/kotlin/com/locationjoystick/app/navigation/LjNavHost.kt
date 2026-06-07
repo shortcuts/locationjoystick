@@ -163,7 +163,11 @@ fun LjNavHost(
                     },
                     onImportGpx = {
                         gpxLauncher.launch(
-                            arrayOf(com.locationjoystick.core.common.constants.AppConstants.ExportConstants.GPX_MIME_TYPE),
+                            arrayOf(
+                                com.locationjoystick.core.common.constants.AppConstants.ExportConstants.GPX_MIME_TYPE,
+                                "application/xml",
+                                "text/xml",
+                            ),
                         )
                     },
                     onOpenDrawer = onOpenDrawer,
