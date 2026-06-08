@@ -37,14 +37,15 @@ Complete every item in order. Items marked `[x]` are already done.
 - [x] Run `make lint` — must pass with zero errors
 - [x] Run `make test` — must pass
 - [x] Run `make bundle` — AAB output at `app/build/outputs/bundle/release/app-release.aab`
+- [x] `nativeDebugSymbolLevel = "SYMBOL_TABLE"` set in release build — eliminates Play Console "no debug symbols" warning for MapLibre native code
 
 ---
 
 ## 4. Play Console Account & App Entry
 
 - [x] Create Google Play Console developer account ($25 one-time fee)
-- [ ] Create app entry — package `com.locationjoystick.app`, Android App Bundle
-- [ ] On first upload, enrol in **Play App Signing**: upload your upload key (the JKS above). Google manages the final signing key from that point on — keep the upload key safe for all future uploads.
+- [x] Create app entry — package `com.locationjoystick.app`, Android App Bundle
+- [x] On first upload, enrol in **Play App Signing**: upload your upload key (the JKS above). Google manages the final signing key from that point on — keep the upload key safe for all future uploads.
 
 ---
 
@@ -61,9 +62,9 @@ Complete every item in order. Items marked `[x]` are already done.
 ## 6. Privacy Policy
 
 - [x] `docs/wiki/privacy.html` exists
-- [ ] Enable GitHub Pages (repo Settings → Pages → main branch / docs folder)
-- [ ] Verify URL resolves: `https://shortcuts.github.io/locationjoystick/privacy.html`
-- [ ] Add the privacy policy URL in Play Console → App content → Privacy policy
+- [x] Enable GitHub Pages (repo Settings → Pages → main branch / docs folder)
+- [x] Verify URL resolves: `https://shortcuts.github.io/locationjoystick/privacy.html`
+- [x] Add the privacy policy URL in Play Console → App content → Privacy policy
 
 ---
 
