@@ -348,7 +348,7 @@ internal fun MapFloatingView(
                         isFollowingCamera.value = true
                         if (currentPosition != null) {
                             mapRef.value?.animateCamera(
-                                CameraUpdateFactory.newLatLng(MapLatLng(currentPosition.latitude, currentPosition.longitude)),
+                                CameraUpdateFactory.newLatLngZoom(MapLatLng(currentPosition.latitude, currentPosition.longitude), AppConstants.MapConstants.DEFAULT_ZOOM),
                                 500,
                             )
                         }

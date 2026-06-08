@@ -208,7 +208,7 @@ class MapViewModel
 
                 // Camera
                 MapAction.RecenterCamera -> {
-                    _uiState.update { it.copy(isUserPanning = false) }
+                    _uiState.update { it.copy(isUserPanning = false, pendingCameraTarget = it.currentPosition) }
                 }
 
                 MapAction.UserStartedPanning -> {
