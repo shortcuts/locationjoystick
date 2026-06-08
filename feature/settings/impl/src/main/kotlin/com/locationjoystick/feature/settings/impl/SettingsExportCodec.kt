@@ -117,6 +117,8 @@ internal object SettingsExportCodec {
         root.put("elevationNoiseAmplitudeMs2", data.elevationNoiseAmplitudeMs2)
         root.put("hotLocationsEnabled", data.hotLocationsEnabled)
         root.put("selectedHotLocationIds", JSONArray(data.selectedHotLocationIds.toList()))
+        root.put("routesSortNewestFirst", data.routesSortNewestFirst)
+        root.put("favoritesSortNewestFirst", data.favoritesSortNewestFirst)
 
         return root.toString()
     }
@@ -286,6 +288,8 @@ internal object SettingsExportCodec {
                         for (i in 0 until arr.length()) add(arr.getString(i))
                     }
                 },
+            routesSortNewestFirst = root.optBoolean("routesSortNewestFirst", true),
+            favoritesSortNewestFirst = root.optBoolean("favoritesSortNewestFirst", true),
         )
     }
 }

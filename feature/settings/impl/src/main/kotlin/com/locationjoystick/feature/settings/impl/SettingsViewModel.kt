@@ -376,6 +376,8 @@ class SettingsViewModel
                 elevationNoiseAmplitudeMs2 = state.elevationNoiseAmplitudeMs2,
                 hotLocationsEnabled = state.hotLocationsEnabled,
                 selectedHotLocationIds = state.selectedHotLocationIds,
+                routesSortNewestFirst = settingsRepository.getRoutesSortNewestFirst().first(),
+                favoritesSortNewestFirst = settingsRepository.getFavoritesSortNewestFirst().first(),
             )
         }
 
@@ -519,6 +521,8 @@ class SettingsViewModel
             } else {
                 favoriteRepository.removeHotLocations()
             }
+            settingsRepository.setRoutesSortNewestFirst(data.routesSortNewestFirst)
+            settingsRepository.setFavoritesSortNewestFirst(data.favoritesSortNewestFirst)
         }
 
         fun importFromGpsJoystick(

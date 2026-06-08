@@ -206,6 +206,7 @@ internal fun FavoritesScreen(
                             key = { it.id },
                         ) { favorite ->
                             FavoriteCard(
+                                modifier = Modifier.animateItem(),
                                 favorite = favorite,
                                 cooldownState = cooldownStates[favorite.id] ?: CooldownState.Ready,
                                 onRowClick = { onTeleport(favorite) },
@@ -271,12 +272,13 @@ private fun FavoriteCard(
     onEdit: (com.locationjoystick.core.model.FavoriteLocation) -> Unit,
     onDelete: (com.locationjoystick.core.model.FavoriteLocation) -> Unit,
     onShare: (com.locationjoystick.core.model.FavoriteLocation) -> Unit = {},
+    modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
     Row(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                 .clickable { onRowClick(favorite) }

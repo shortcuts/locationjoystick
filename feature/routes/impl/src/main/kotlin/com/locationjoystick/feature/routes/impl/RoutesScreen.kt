@@ -189,6 +189,7 @@ internal fun RoutesScreen(
                             key = { it.id },
                         ) { route ->
                             RouteCard(
+                                modifier = Modifier.animateItem(),
                                 route = route,
                                 playbackState = playbackState,
                                 onNavigateToEdit = { onNavigateToDetail(route.id) },
@@ -229,6 +230,7 @@ private fun RouteCard(
     onPauseReplay: () -> Unit,
     onResumeReplay: () -> Unit,
     onStopReplay: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val isActiveRoute = playbackState.activeRouteId == route.id
     val isPlaying = isActiveRoute && playbackState.isPlaying
@@ -256,7 +258,7 @@ private fun RouteCard(
 
     Column(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
                 .padding(bottom = 12.dp)
                 .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
