@@ -46,6 +46,7 @@ screenshot:
 	./scripts/screenshot-gallery.sh --output docs/wiki/screenshots
 
 wiki-serve:
+	lsof -ti:8080 | xargs kill -9 || true
 	python3 -m http.server 8080 --directory docs/wiki
 
 SMOKE_TEST_CLASS = $(subst /,.,$(patsubst app/src/androidTest/kotlin/%,%,$(patsubst %.kt,%,$(TEST_FILE))))
