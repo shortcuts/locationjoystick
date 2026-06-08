@@ -347,7 +347,10 @@ internal fun MapFloatingView(
                         isFollowingCamera.value = true
                         if (currentPosition != null) {
                             mapRef.value?.animateCamera(
-                                CameraUpdateFactory.newLatLngZoom(MapLatLng(currentPosition.latitude, currentPosition.longitude), AppConstants.MapConstants.DEFAULT_ZOOM),
+                                CameraUpdateFactory.newLatLngZoom(
+                                    MapLatLng(currentPosition.latitude, currentPosition.longitude),
+                                    AppConstants.MapConstants.DEFAULT_ZOOM,
+                                ),
                                 500,
                             )
                         }
@@ -646,4 +649,3 @@ private fun BoxScope.TapActionPanel(
         ) { Text("Do nothing") }
     }
 }
-
