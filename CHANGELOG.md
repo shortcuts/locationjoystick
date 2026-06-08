@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.5.0](https://github.com/shortcuts/locationjoystick/compare/v0.4.1...v0.5.0) (2026-06-08)
+
+
+### Features
+
+* add 'walk via roads' option to floating widget map bottom sheet ([3989d83](https://github.com/shortcuts/locationjoystick/commit/3989d830429a7f25642a7f14466cbbf2a63a031e))
+* add missing export fields for hot locations and jitter settings ([d3ff603](https://github.com/shortcuts/locationjoystick/commit/d3ff6034c7eb5c493434ee1061e40dd08f5d9c2b))
+* add support for geo: URI scheme from coorward.html and similar tools ([3bf7a96](https://github.com/shortcuts/locationjoystick/commit/3bf7a964ba565177094c49c51b93fb02455f518c))
+* categorize hot locations by country/city with hierarchical checkboxes ([d65d32f](https://github.com/shortcuts/locationjoystick/commit/d65d32fbd91a58bce758891f61a2f0db0f85f290))
+* per-location hot locations selection + 6 Chicago locations ([21a716b](https://github.com/shortcuts/locationjoystick/commit/21a716b438982ffa26594a530a507c6bc15ec915))
+* show green dot on map when tapping a walk/waypoint location ([4e2d414](https://github.com/shortcuts/locationjoystick/commit/4e2d41419c4466dfa494395cf74d14b8282adf3b))
+* show tap marker on map and allow repositioning while sheet is open ([ad10141](https://github.com/shortcuts/locationjoystick/commit/ad10141c6de9c61bbb654701de4081bcb17462e0))
+* **wiki:** add Algolia DocSearch v4 ([972dc37](https://github.com/shortcuts/locationjoystick/commit/972dc37084daa21d6aa91519c2cc56e845371ec4))
+
+
+### Bug Fixes
+
+* accept application/xml and text/xml MIME types in GPX file picker ([0c32981](https://github.com/shortcuts/locationjoystick/commit/0c32981d9c950bb98cfde1fcd8676cc66248968f)), closes [#10](https://github.com/shortcuts/locationjoystick/issues/10)
+* allow infinite "Add next point" chaining in widget floating map ([b46675e](https://github.com/shortcuts/locationjoystick/commit/b46675e71e9558bf199ce1a4b9f510be003e6b40))
+* clear map traces when walk/route/ephemeral replay completes ([aa95a65](https://github.com/shortcuts/locationjoystick/commit/aa95a65681937f9eb1f1b8c8b4c93f419053ea03))
+* flicker on cooldown display ([3736143](https://github.com/shortcuts/locationjoystick/commit/37361430b922be5994eb0c46433a837577a215f6))
+* keep map floating view open after walk/roaming actions ([003d2c4](https://github.com/shortcuts/locationjoystick/commit/003d2c439c9d0abcfa25f3621ce98c46c3ff15fc))
+* persist last location regardless of spoof state ([2ed6078](https://github.com/shortcuts/locationjoystick/commit/2ed607842fa02a2e20512d6bd5ec2af342185028))
+* persist sort of routes/favorites ([0b10cd6](https://github.com/shortcuts/locationjoystick/commit/0b10cd6ebcb086aa06f64cbcf8d3f7ba43b20605))
+* reduce refresh rate on cooldown ([5aaf31a](https://github.com/shortcuts/locationjoystick/commit/5aaf31a9bcac8b8d9d53133b00d63e957fa8b4eb))
+* remove redundant city/country names from hot locations ([ef1b587](https://github.com/shortcuts/locationjoystick/commit/ef1b5870de9b12b01f65d7f05d69a261d8408149))
+* remove StateFlow.value calls within composition in WidgetPanelPresenter ([9d60c05](https://github.com/shortcuts/locationjoystick/commit/9d60c0561d373f37075abe57df6b670e4b3db8ac))
+* reset zoom to default when re-centering camera ([29af51d](https://github.com/shortcuts/locationjoystick/commit/29af51dff133069d6fca6c92b1ada7d1d3c2aeea))
+* resolve all Kotlin compiler warnings ([34277bb](https://github.com/shortcuts/locationjoystick/commit/34277bb854d0a837c92497707d2589a96226b281))
+* route replay broken after service restart due to cancelled singleton scope ([c4bb83c](https://github.com/shortcuts/locationjoystick/commit/c4bb83c1ff19c807109eb8ab5cb865e7417ea825))
+* share ephemeral waypoints via EphemeralReplayController.pendingWaypoints ([606c513](https://github.com/shortcuts/locationjoystick/commit/606c51335064854125b0049ec793d2e1c7573e5f))
+* use appropriate zoom level when teleporting to favorites ([4e21c80](https://github.com/shortcuts/locationjoystick/commit/4e21c80cfac77065b5fa28a38bd2778e73300368))
+
 ## [0.4.1](https://github.com/shortcuts/locationjoystick/compare/v0.4.0...v0.4.1) (2026-06-04)
 
 
