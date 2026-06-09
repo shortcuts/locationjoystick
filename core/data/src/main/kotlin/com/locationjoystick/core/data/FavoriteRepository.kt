@@ -200,12 +200,12 @@ class FavoriteRepository
                     HotLocation("Pier 39", 37.808673, -122.409821, "United States", "San Francisco"),
                     HotLocation("Honolulu", 21.29836, -157.86011, "United States", "Honolulu"),
                     HotLocation("Pago Pago", -14.27859, -170.68886, "American Samoa", "Pago Pago"),
-                    HotLocation("2026 Fest Park", 41.875549, -87.619066, "United States", "Chicago"),
-                    HotLocation("City Experience", 41.891797, -87.611083, "United States", "Chicago"),
-                    HotLocation("Friendship District", 41.828436, -87.633616, "United States", "Chicago"),
-                    HotLocation("Scouting District", 41.861967, -87.663436, "United States", "Chicago"),
-                    HotLocation("Investigation District", 41.916267, -87.63231, "United States", "Chicago"),
-                    HotLocation("Collection District", 41.877598, -87.62369, "United States", "Chicago"),
+                    HotLocation("Go Fest Park", 41.875549, -87.619066, "United States", "Chicago"),
+                    HotLocation("Go Fest City Experience", 41.891797, -87.611083, "United States", "Chicago"),
+                    HotLocation("Go Fest Friendship District", 41.828436, -87.633616, "United States", "Chicago"),
+                    HotLocation("Go Fest Scouting District", 41.861967, -87.663436, "United States", "Chicago"),
+                    HotLocation("Go Fest Investigation District", 41.916267, -87.63231, "United States", "Chicago"),
+                    HotLocation("Go Fest Collection District", 41.877598, -87.62369, "United States", "Chicago"),
                 )
         }
     }
