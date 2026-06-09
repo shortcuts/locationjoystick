@@ -142,9 +142,6 @@ class MockLocationService : Service() {
 
     @Volatile private var currentElevationMode: ElevationMode? = null
 
-    private var fractionalSteps = 0f
-    private var cumulativeSteps = 0L
-
     // Per-tick realism state
 
     /** Bearing from the last tick where speedMs > 0; held when the device is stationary. */
@@ -467,6 +464,7 @@ class MockLocationService : Service() {
         lastSatelliteUpdateMs = now
         lastJitterTimestampMs = now
         lastIdleJitterTimestampMs = now
+        sensorInjector.resetPedometerState()
         locationRepository.setPositionInternal(LatLng(lat, lon))
         locationRepository.setMockMode(MockMode.TELEPORT)
 
@@ -743,27 +741,7 @@ class MockLocationService : Service() {
                     Random.Default,
                 )
             }
-            if (realism.pedometerMockingEnabled) {
-                val speedMs = snapshot.speedMs
-                if (speedMs > 0f && speedMs <= AppConstants.PedometerConstants.MAX_WALKING_SPEED_MPS) {
-                    val baseStride = AppConstants.PedometerConstants.STRIDE_BASE_METERS + speedMs * AppConstants.PedometerConstants.STRIDE_SPEED_FACTOR
-                    var remaining = speedMs
-                    while (remaining > 0f) {
-                        val jitter = 1f + (Random.Default.nextFloat() * 2f - 1f) * AppConstants.PedometerConstants.STRIDE_JITTER_PCT
-                        val nextStride = baseStride * jitter
-                        val toNextStep = nextStride - fractionalSteps
-                        if (remaining >= toNextStep) {
-                            remaining -= toNextStep
-                            fractionalSteps = 0f
-                            cumulativeSteps++
-                            sensorInjector.injectSteps(cumulativeSteps, 1)
-                        } else {
-                            fractionalSteps += remaining
-                            remaining = 0f
-                        }
-                    }
-                }
-            }
+            if (realism.pedometerMockingEnabled) sensorInjector.injectPedometerTick(snapshot.speedMs)
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Failed to push location update", e)
         } catch (e: Exception) {

@@ -194,6 +194,7 @@ internal fun ElevationJitterSection(
 @Composable
 internal fun GpsRealismSection(
     uiState: SettingsUiState,
+    isRooted: Boolean,
     onAction: (SettingsAction) -> Unit,
 ) {
     Text("GPS Realism", style = MaterialTheme.typography.headlineSmall)
@@ -248,10 +249,15 @@ internal fun GpsRealismSection(
     LjCheckboxRow(
         checked = uiState.realismPedometerMockingEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismPedometerMockingEnabled(it)) },
+        enabled = isRooted,
         title = "Mock step counter",
         description =
-            "Injects synthetic step counts that match your movement speed. " +
-                "Some apps cross-check GPS movement against pedometer data to detect spoofing. " +
-                "Steps are only injected while walking or running (not while using the bike profile).",
+            if (isRooted) {
+                "Injects synthetic step counts that match your movement speed. " +
+                    "Some apps cross-check GPS movement against pedometer data to detect spoofing. " +
+                    "Steps are only injected while walking or running (not while using the bike profile)."
+            } else {
+                "Injects synthetic step counts that match your movement speed. Requires root access (same permission as Elevation controls)."
+            },
     )
 }

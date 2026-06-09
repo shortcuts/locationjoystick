@@ -4,6 +4,7 @@ import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.util.Log
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.constants.AppConstants.ElevationConstants.GRAVITY
 import com.locationjoystick.core.model.ElevationMode
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -39,16 +40,34 @@ class SensorInjector
             }
         }
 
-        fun injectSteps(
-            cumulativeSteps: Long,
-            stepCount: Int,
-        ) {
+        private var fractionalSteps = 0f
+        private var cumulativeSteps = 0L
+
+        // Called on each 1 Hz tick. speedMs == distance traveled (m) at 1 Hz.
+        fun injectPedometerTick(speedMs: Float) {
             val method = injectMethod ?: return
+            if (speedMs <= 0f || speedMs > AppConstants.PedometerConstants.MAX_WALKING_SPEED_MPS) return
+            val baseStride = AppConstants.PedometerConstants.STRIDE_BASE_METERS + speedMs * AppConstants.PedometerConstants.STRIDE_SPEED_FACTOR
             val timestamp = System.nanoTime()
-            injectSensor(method, Sensor.TYPE_STEP_COUNTER, floatArrayOf(cumulativeSteps.toFloat()), timestamp)
-            repeat(stepCount) {
-                injectSensor(method, Sensor.TYPE_STEP_DETECTOR, floatArrayOf(1.0f), timestamp)
+            var distanceM = speedMs
+            while (distanceM > 0f) {
+                val stride = baseStride * (1f + (Random.Default.nextFloat() * 2f - 1f) * AppConstants.PedometerConstants.STRIDE_JITTER_PCT)
+                val toNextStep = stride - fractionalSteps
+                if (distanceM >= toNextStep) {
+                    distanceM -= toNextStep
+                    fractionalSteps = 0f
+                    injectSensor(method, Sensor.TYPE_STEP_COUNTER, floatArrayOf((++cumulativeSteps).toFloat()), timestamp)
+                    injectSensor(method, Sensor.TYPE_STEP_DETECTOR, floatArrayOf(1.0f), timestamp)
+                } else {
+                    fractionalSteps += distanceM
+                    break
+                }
             }
+        }
+
+        // Reset sub-stride carry on spoofing restart; cumulativeSteps intentionally preserved (monotonic).
+        fun resetPedometerState() {
+            fractionalSteps = 0f
         }
 
         fun inject(

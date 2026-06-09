@@ -481,7 +481,7 @@ internal fun SettingsScreen(
                             onAction,
                         )
                         Spacer(modifier = Modifier.height(24.dp))
-                        GpsRealismSection(uiState, onAction)
+                        GpsRealismSection(uiState, isRooted, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
                         MapSection(uiState, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
