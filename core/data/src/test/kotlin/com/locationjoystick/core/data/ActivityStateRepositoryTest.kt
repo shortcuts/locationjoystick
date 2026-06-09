@@ -2,6 +2,8 @@ package com.locationjoystick.core.data
 
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.routing.RoamingEngine
+import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
@@ -99,5 +101,81 @@ class ActivityStateRepositoryTest {
 
             val result = locationRepo.isCurrentActivityPaused.first()
             assertFalse(result)
+        }
+
+    // ActivityStateRepository integration tests
+
+    private fun makeRepo(
+        locationRepo: LocationRepository = LocationRepository(),
+        roamingRepo: RoamingRepository = RoamingRepository(mockk(relaxed = true), LocationRepository()),
+    ) = ActivityStateRepository(locationRepo, roamingRepo)
+
+    @Test
+    fun `isActivityPaused false by default`() =
+        runTest {
+            val repo = makeRepo()
+            assertFalse(repo.isActivityPaused.first())
+        }
+
+    @Test
+    fun `isActivityPaused true when walk-to is paused`() =
+        runTest {
+            val locationRepo = LocationRepository()
+            locationRepo.setMockMode(MockMode.WALK_TO)
+            locationRepo.setWalkPaused(true)
+            val repo = makeRepo(locationRepo = locationRepo)
+            assertTrue(repo.isActivityPaused.first())
+        }
+
+    @Test
+    fun `isActivityPaused false when walk-to is not paused`() =
+        runTest {
+            val locationRepo = LocationRepository()
+            locationRepo.setMockMode(MockMode.WALK_TO)
+            locationRepo.setWalkPaused(false)
+            val repo = makeRepo(locationRepo = locationRepo)
+            assertFalse(repo.isActivityPaused.first())
+        }
+
+    @Test
+    fun `isActivityPaused true when route replay is paused`() =
+        runTest {
+            val locationRepo = LocationRepository()
+            locationRepo.setMockMode(MockMode.ROUTE_REPLAY)
+            locationRepo.pauseSpoofing()
+            val repo = makeRepo(locationRepo = locationRepo)
+            assertTrue(repo.isActivityPaused.first())
+        }
+
+    @Test
+    fun `isActivityPaused false when route replay is running`() =
+        runTest {
+            val locationRepo = LocationRepository()
+            locationRepo.setMockMode(MockMode.ROUTE_REPLAY)
+            locationRepo.startSpoofing()
+            val repo = makeRepo(locationRepo = locationRepo)
+            assertFalse(repo.isActivityPaused.first())
+        }
+
+    @Test
+    fun `isActivityPaused true when roaming mode and roaming is paused`() =
+        runTest {
+            val locationRepo = LocationRepository()
+            locationRepo.setMockMode(MockMode.ROAMING)
+            val roamingRepo = RoamingRepository(mockk(relaxed = true), LocationRepository())
+            roamingRepo.pauseRoaming()
+            val repo = ActivityStateRepository(locationRepo, roamingRepo)
+            assertTrue(repo.isActivityPaused.first())
+        }
+
+    @Test
+    fun `isActivityPaused false when non-roaming mode even if roaming paused`() =
+        runTest {
+            val locationRepo = LocationRepository()
+            locationRepo.setMockMode(MockMode.TELEPORT)
+            val roamingRepo = RoamingRepository(mockk(relaxed = true), LocationRepository())
+            roamingRepo.pauseRoaming()
+            val repo = ActivityStateRepository(locationRepo, roamingRepo)
+            assertFalse(repo.isActivityPaused.first())
         }
 }

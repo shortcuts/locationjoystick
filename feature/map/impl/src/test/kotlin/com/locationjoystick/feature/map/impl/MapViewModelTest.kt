@@ -20,6 +20,7 @@ import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.routing.OsrmClient
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -36,6 +37,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -597,5 +599,299 @@ class MapViewModelTest {
 
             verify { walkCoordinator.startWalk(target, any(), any()) }
             verify(exactly = 0) { walkCoordinator.startWalkAlongRoute(any(), any(), any()) }
+        }
+
+    // Sheet visibility tests
+
+    @Test
+    fun `OpenFavoritesPicker sets showFavoritesSheet true`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenFavoritesPicker)
+            assertEquals(true, viewModel.uiState.value.showFavoritesSheet)
+        }
+
+    @Test
+    fun `CloseFavoritesPicker sets showFavoritesSheet false`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenFavoritesPicker)
+            viewModel.onAction(MapAction.CloseFavoritesPicker)
+            assertEquals(false, viewModel.uiState.value.showFavoritesSheet)
+        }
+
+    @Test
+    fun `OpenRoutesSheet sets showRoutesSheet true`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoutesSheet)
+            assertEquals(true, viewModel.uiState.value.showRoutesSheet)
+        }
+
+    @Test
+    fun `CloseRoutesSheet sets showRoutesSheet false`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoutesSheet)
+            viewModel.onAction(MapAction.CloseRoutesSheet)
+            assertEquals(false, viewModel.uiState.value.showRoutesSheet)
+        }
+
+    @Test
+    fun `OpenRoamingSheet sets showRoamingSheet true and populates draft`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoamingSheet)
+            assertEquals(true, viewModel.uiState.value.showRoamingSheet)
+            assertNotNull(viewModel.uiState.value.roamingDraft)
+        }
+
+    @Test
+    fun `DismissRoamingSheet clears showRoamingSheet and draft`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoamingSheet)
+            viewModel.onAction(MapAction.DismissRoamingSheet)
+            assertEquals(false, viewModel.uiState.value.showRoamingSheet)
+            assertNull(viewModel.uiState.value.roamingDraft)
+        }
+
+    // Camera tests
+
+    @Test
+    fun `UserStartedPanning sets isUserPanning true`() =
+        runTest {
+            viewModel.onAction(MapAction.UserStartedPanning)
+            assertEquals(true, viewModel.uiState.value.isUserPanning)
+        }
+
+    @Test
+    fun `RecenterCamera clears isUserPanning`() =
+        runTest {
+            viewModel.onAction(MapAction.UserStartedPanning)
+            viewModel.onAction(MapAction.RecenterCamera)
+            assertEquals(false, viewModel.uiState.value.isUserPanning)
+        }
+
+    @Test
+    fun `CameraTargetConsumed clears pendingCameraTarget`() =
+        runTest {
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            viewModel = createViewModel()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            viewModel.onAction(MapAction.TapToTeleport(LatLng(1.0, 2.0)))
+            // pendingCameraTarget is set alongside pendingTapPosition for deep links;
+            // after consuming, it should be null
+            viewModel.onAction(MapAction.CameraTargetConsumed)
+            assertNull(viewModel.uiState.value.pendingCameraTarget)
+        }
+
+    // Route controls tests
+
+    @Test
+    fun `ToggleRouteControls expands and collapses`() =
+        runTest {
+            viewModel.onAction(MapAction.ToggleRouteControls)
+            assertEquals(true, viewModel.uiState.value.isRouteControlsExpanded)
+
+            viewModel.onAction(MapAction.ToggleRouteControls)
+            assertEquals(false, viewModel.uiState.value.isRouteControlsExpanded)
+        }
+
+    @Test
+    fun `StopRouteReplay clears isRouteControlsExpanded`() =
+        runTest {
+            viewModel.onAction(MapAction.ToggleRouteControls)
+            assertEquals(true, viewModel.uiState.value.isRouteControlsExpanded)
+
+            viewModel.onAction(MapAction.StopRouteReplay)
+            assertEquals(false, viewModel.uiState.value.isRouteControlsExpanded)
+        }
+
+    @Test
+    fun `StartRouteReplay calls startRouteReplayUseCase and closes routes sheet`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoutesSheet)
+            assertEquals(true, viewModel.uiState.value.showRoutesSheet)
+
+            viewModel.onAction(
+                MapAction.StartRouteReplay(
+                    routeId = "route-1",
+                    isLooping = false,
+                    isReverse = false,
+                    isReturnToLocation = false,
+                    teleportToStart = false,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify { startRouteReplayUseCase.execute("route-1", false, false, false, false) }
+            assertEquals(false, viewModel.uiState.value.showRoutesSheet)
+        }
+
+    @Test
+    fun `PauseRouteReplay sends intent`() =
+        runTest {
+            viewModel.onAction(MapAction.PauseRouteReplay)
+            verify { context.startService(any()) }
+        }
+
+    @Test
+    fun `StopRouteReplay sends intent`() =
+        runTest {
+            viewModel.onAction(MapAction.StopRouteReplay)
+            verify { context.startService(any()) }
+        }
+
+    // Roaming controls tests
+
+    @Test
+    fun `ToggleRoamingControls expands and collapses`() =
+        runTest {
+            viewModel.onAction(MapAction.ToggleRoamingControls)
+            assertEquals(true, viewModel.uiState.value.isRoamingControlsExpanded)
+
+            viewModel.onAction(MapAction.ToggleRoamingControls)
+            assertEquals(false, viewModel.uiState.value.isRoamingControlsExpanded)
+        }
+
+    @Test
+    fun `StopRoaming clears isRoamingControlsExpanded`() =
+        runTest {
+            viewModel.onAction(MapAction.ToggleRoamingControls)
+            assertEquals(true, viewModel.uiState.value.isRoamingControlsExpanded)
+
+            viewModel.onAction(MapAction.StopRoaming)
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertEquals(false, viewModel.uiState.value.isRoamingControlsExpanded)
+        }
+
+    @Test
+    fun `PauseRoaming calls roamingRepository pauseRoaming`() =
+        runTest {
+            viewModel.onAction(MapAction.PauseRoaming)
+            verify { roamingRepository.pauseRoaming() }
+        }
+
+    @Test
+    fun `ResumeRoaming calls roamingRepository resumeRoaming`() =
+        runTest {
+            viewModel.onAction(MapAction.ResumeRoaming)
+            verify { roamingRepository.resumeRoaming() }
+        }
+
+    // Roaming draft mutations
+
+    @Test
+    fun `UpdateRoamingRadius updates draft radiusMeters`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoamingSheet)
+            viewModel.onAction(MapAction.UpdateRoamingRadius(500.0))
+            assertEquals(500.0, viewModel.uiState.value.roamingDraft?.radiusMeters)
+        }
+
+    @Test
+    fun `UpdateRoamingDistance updates draft distanceMeters`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoamingSheet)
+            viewModel.onAction(MapAction.UpdateRoamingDistance(2000.0))
+            assertEquals(2000.0, viewModel.uiState.value.roamingDraft?.distanceMeters)
+        }
+
+    @Test
+    fun `MinimizeRoamingSheet sets isRoamingSheetMinimized true`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoamingSheet)
+            viewModel.onAction(MapAction.MinimizeRoamingSheet)
+            assertEquals(true, viewModel.uiState.value.isRoamingSheetMinimized)
+        }
+
+    @Test
+    fun `ExpandRoamingSheet clears isRoamingSheetMinimized`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoamingSheet)
+            viewModel.onAction(MapAction.MinimizeRoamingSheet)
+            viewModel.onAction(MapAction.ExpandRoamingSheet)
+            assertEquals(false, viewModel.uiState.value.isRoamingSheetMinimized)
+        }
+
+    // Favorites interaction tests
+
+    @Test
+    fun `SelectFavorite when not spoofing closes favorites sheet`() =
+        runTest {
+            val favorite = FavoriteLocation("1", "Tokyo", LatLng(35.6762, 139.6503), 0L)
+            viewModel.onAction(MapAction.OpenFavoritesPicker)
+            viewModel.onAction(MapAction.SelectFavorite(favorite))
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertEquals(false, viewModel.uiState.value.showFavoritesSheet)
+        }
+
+    @Test
+    fun `SelectFavorite when spoofing sets favoriteTarget and cameraTarget`() =
+        runTest {
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            viewModel = createViewModel()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            val favorite = FavoriteLocation("1", "Tokyo", LatLng(35.6762, 139.6503), 0L)
+            viewModel.onAction(MapAction.SelectFavorite(favorite))
+
+            assertEquals(favorite, viewModel.uiState.value.favoriteTarget)
+            assertEquals(favorite.position, viewModel.uiState.value.pendingCameraTarget)
+        }
+
+    @Test
+    fun `DeselectFavorite clears favoriteTarget`() =
+        runTest {
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            viewModel = createViewModel()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            viewModel.onAction(MapAction.SelectFavorite(FavoriteLocation("1", "X", LatLng(1.0, 2.0), 0L)))
+            viewModel.onAction(MapAction.DeselectFavorite)
+
+            assertNull(viewModel.uiState.value.favoriteTarget)
+        }
+
+    // Misc actions
+
+    @Test
+    fun `StartSpoofing sends foreground service intent`() =
+        runTest {
+            viewModel.onAction(MapAction.StartSpoofing)
+            testDispatcher.scheduler.advanceUntilIdle()
+            verify { context.startService(any()) }
+        }
+
+    @Test
+    fun `addRecentSearch calls settingsRepository addRecentSearch`() =
+        runTest {
+            viewModel.addRecentSearch("Tokyo", 35.6762, 139.6503)
+            testDispatcher.scheduler.advanceUntilIdle()
+            coVerify { settingsRepository.addRecentSearch("Tokyo", 35.6762, 139.6503) }
+        }
+
+    @Test
+    fun `SaveCurrentLocation with current position calls favoriteRepository`() =
+        runTest {
+            val currentPos = LatLng(35.6762, 139.6503)
+            every { locationRepository.currentPosition } returns MutableStateFlow(currentPos)
+            coEvery { favoriteRepository.addFavorite(any(), any(), any(), any()) } returns Result.success(Unit)
+            viewModel = createViewModel()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            viewModel.onAction(MapAction.SaveCurrentLocation("Tokyo"))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify { favoriteRepository.addFavorite(any(), eq("Tokyo"), eq(currentPos), any()) }
+        }
+
+    @Test
+    fun `ClearMap stops walk and resets roaming sheet state`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoamingSheet)
+            assertEquals(true, viewModel.uiState.value.showRoamingSheet)
+
+            viewModel.onAction(MapAction.ClearMap)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(false, viewModel.uiState.value.showRoamingSheet)
+            assertNull(viewModel.uiState.value.roamingDraft)
         }
 }

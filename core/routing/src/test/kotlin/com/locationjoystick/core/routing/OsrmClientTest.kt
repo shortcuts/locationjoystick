@@ -191,6 +191,105 @@ class OsrmClientTest {
         assertTrue(route.isNotEmpty())
     }
 
+    // resolveRoute
+
+    @Test
+    fun `resolveRoute with followRoads false returns straight line without network call`() =
+        runTest {
+            val from = LatLng(48.8566, 2.3522)
+            val to = LatLng(51.5074, -0.1278)
+            val route = client.resolveRoute("foot", from, to, followRoads = false)
+
+            assertEquals(2, route.size)
+            assertEquals(from, route[0])
+            assertEquals(to, route[1])
+        }
+
+    @Test
+    fun `resolveRoute with followRoads true and successful response returns OSRM route`() =
+        runTest {
+            val body =
+                """
+                {
+                  "code": "Ok",
+                  "routes": [{
+                    "geometry": {"type": "LineString", "coordinates": [[2.3522, 48.8566], [2.354, 48.858], [2.356, 48.86]]},
+                    "distance": 500.0,
+                    "duration": 360.0
+                  }]
+                }
+                """.trimIndent()
+            server.enqueue(MockResponse().setResponseCode(200).setBody(body))
+
+            val route =
+                testClient.resolveRoute(
+                    "foot",
+                    LatLng(48.8566, 2.3522),
+                    LatLng(48.86, 2.356),
+                    followRoads = true,
+                )
+
+            assertEquals(3, route.size)
+        }
+
+    @Test
+    fun `resolveRoute with followRoads true falls back to straight line on OSRM failure`() =
+        runTest {
+            server.enqueue(MockResponse().setResponseCode(500).setBody("error"))
+
+            val from = LatLng(48.8566, 2.3522)
+            val to = LatLng(51.5074, -0.1278)
+            val route = testClient.resolveRoute("foot", from, to, followRoads = true)
+
+            assertEquals(2, route.size)
+            assertEquals(from, route[0])
+            assertEquals(to, route[1])
+        }
+
+    @Test
+    fun `getRoute skips malformed coordinates with fewer than 2 elements`() =
+        runTest {
+            val body =
+                """
+                {
+                  "code": "Ok",
+                  "routes": [{
+                    "geometry": {
+                      "type": "LineString",
+                      "coordinates": [[2.3522, 48.8566], [2.354], [2.356, 48.86]]
+                    },
+                    "distance": 100.0,
+                    "duration": 60.0
+                  }]
+                }
+                """.trimIndent()
+            server.enqueue(MockResponse().setResponseCode(200).setBody(body))
+
+            val result =
+                testClient.getRoute(
+                    profile = "foot",
+                    waypoints = listOf(LatLng(48.8566, 2.3522), LatLng(48.86, 2.356)),
+                )
+
+            assertTrue(result.isSuccess)
+            assertEquals(2, result.getOrNull()!!.size)
+        }
+
+    @Test
+    fun `getRoute returns failure when routes list is null`() =
+        runTest {
+            val body = """{"code": "Ok"}"""
+            server.enqueue(MockResponse().setResponseCode(200).setBody(body))
+
+            val result =
+                testClient.getRoute(
+                    profile = "foot",
+                    waypoints = listOf(LatLng(48.8566, 2.3522), LatLng(48.86, 2.356)),
+                )
+
+            assertTrue("Expected failure when routes is null", result.isFailure)
+        }
+
     // PROFILE_FOOT constant
 
     @Test

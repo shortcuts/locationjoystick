@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -238,6 +239,56 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
+    fun `saveChanges with hotLocationsEnabled true upserts hot favorites`() =
+        runTest(testDispatcher) {
+            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            viewModel.userFeedback.test {
+                viewModel.setHotLocationsEnabled(true)
+                viewModel.saveChanges()
+                val feedback = awaitItem()
+                assertFalse(feedback.isError)
+                cancelAndIgnoreRemainingEvents()
+            }
+            // At least one hot favorite should be persisted
+            val favorites = fakeFavoriteRepo.getFavorites().first()
+            assertTrue("Expected hot favorites to be upserted", favorites.isNotEmpty())
+        }
+
+    @Test
+    fun `saveChanges with hotLocationsEnabled false removes hot favorites`() =
+        runTest(testDispatcher) {
+            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            // First upsert hot locations
+            viewModel.setHotLocationsEnabled(true)
+            viewModel.saveChanges()
+            val afterUpsert = fakeFavoriteRepo.getFavorites().first()
+            assertTrue("Precondition: hot favorites upserted", afterUpsert.isNotEmpty())
+
+            // Now disable and save — should remove them
+            viewModel.setHotLocationsEnabled(false)
+            viewModel.userFeedback.test {
+                viewModel.saveChanges()
+                awaitItem()
+                cancelAndIgnoreRemainingEvents()
+            }
+            val afterRemove = fakeFavoriteRepo.getFavorites().first().filter { it.id.startsWith("hot_") }
+            assertTrue("Expected hot favorites to be removed", afterRemove.isEmpty())
+        }
+
+    @Test
+    fun `onChunkScanned with invalid key emits error feedback`() =
+        runTest(testDispatcher) {
+            viewModel.userFeedback.test {
+                viewModel.onChunkScanned(
+                    ChunkEnvelope(k = "invalid", v = 2, session = "s1", chunk = 0, total = 1, d = ""),
+                )
+                val feedback = awaitItem()
+                assertTrue(feedback.isError)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `importSettings(ExportData) falls back to current speed when profile id absent from export`() =
         runTest(testDispatcher) {
             // Export omits the "bike" profile — bike speed must be retained from current snapshot.
@@ -314,6 +365,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
                 realismWarmupEnabled = false,
                 realismSatelliteExtrasEnabled = true,
                 realismSuspendedMockingEnabled = false,
+                realismPedometerMockingEnabled = false,
                 jitterSpeedIdleVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,
                 jitterSpeedMovingVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT,
                 elevationTiltJitterDegrees = AppPreferencesDataSource.DEFAULT_ELEVATION_TILT_JITTER_DEGREES,
@@ -420,6 +472,8 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getRealismSuspendedMockingEnabled(): Flow<Boolean> = flowOf(false)
 
+    override fun getRealismPedometerMockingEnabled(): Flow<Boolean> = flowOf(false)
+
     override suspend fun setRealismBearingHoldIdle(enabled: Boolean) = Unit
 
     override suspend fun setRealismAltitudeEnabled(enabled: Boolean) = Unit
@@ -429,6 +483,8 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override suspend fun setRealismSatelliteExtrasEnabled(enabled: Boolean) = Unit
 
     override suspend fun setRealismSuspendedMockingEnabled(enabled: Boolean) = Unit
+
+    override suspend fun setRealismPedometerMockingEnabled(enabled: Boolean) = Unit
 
     override fun getRecentSearches(): Flow<List<RecentSearch>> = flowOf(emptyList())
 

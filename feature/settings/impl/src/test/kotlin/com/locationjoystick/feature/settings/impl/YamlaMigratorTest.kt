@@ -205,6 +205,18 @@ class YamlaMigratorTest {
     }
 
     @Test
+    fun `returns failure when json does not start with object or array`() {
+        val result = YamlaMigrator.parse("\"just a string\"")
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `returns failure when array element has unrecognised format`() {
+        val result = YamlaMigrator.parse("""[{"unknown": "key"}]""")
+        assertTrue(result.isFailure)
+    }
+
+    @Test
     fun `empty array returns empty migration`() {
         val result = YamlaMigrator.parse("[]")
         assertTrue(result.isSuccess)

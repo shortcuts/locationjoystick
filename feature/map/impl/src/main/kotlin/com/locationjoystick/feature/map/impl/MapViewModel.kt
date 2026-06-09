@@ -103,6 +103,7 @@ class MapViewModel
             viewModelScope.launch {
                 deepLinkRepository.pendingCoords.collect { coords ->
                     _uiState.update { it.copy(pendingTapPosition = coords, pendingCameraTarget = coords) }
+                    deepLinkRepository.consume()
                 }
             }
         }

@@ -4,6 +4,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 /**
  * Unit tests for [GpsJoystickMigrator] using anonymized real .db fixtures.
@@ -160,6 +162,87 @@ class GpsJoystickMigratorTest {
         val m = result.getOrThrow()
         assertFavorites(m, expectedCount = 4, named = false)
         assertRoutes(m, expectedCount = 8, totalWaypoints = 38)
+    }
+
+    // ── synthetic binary tests (branch coverage) ─────────────────────────────
+
+    /** Minimal valid Realm header (T-DB at offset 16) with optional appended blocks. */
+    private fun buildRealm(vararg blocks: ByteArray): ByteArray {
+        val header = ByteArray(20)
+        header[16] = 'T'.code.toByte()
+        header[17] = '-'.code.toByte()
+        header[18] = 'D'.code.toByte()
+        header[19] = 'B'.code.toByte()
+        return blocks.fold(header) { acc, b -> acc + b }
+    }
+
+    /** Double array block in Realm binary format (0x0C type). */
+    private fun doubleBlock(vararg values: Double): ByteArray {
+        val data = ByteArray(values.size * 8)
+        val buf = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
+        values.forEach { buf.putDouble(it) }
+        return byteArrayOf(0x41, 0x41, 0x41, 0x41, 0x0C, 0, 0, values.size.toByte()) + data
+    }
+
+    /** String array block in Realm binary format (0x0D type), each entry padded to 16 bytes. */
+    private fun stringBlock(vararg names: String): ByteArray {
+        val header = byteArrayOf(0x41, 0x41, 0x41, 0x41, 0x0D, 0, 0, names.size.toByte())
+        val body = mutableListOf<Byte>()
+        var consumed = 0
+        names.forEach { name ->
+            val nb = name.toByteArray(Charsets.UTF_8)
+            nb.forEach { body.add(it) }
+            body.add(0)
+            consumed += nb.size + 1
+            val rem = consumed % 16
+            if (rem != 0) {
+                repeat(16 - rem) { body.add(0) }
+                consumed += 16 - rem
+            }
+        }
+        return header + body.toByteArray()
+    }
+
+    @Test
+    fun `valid realm header with no coord data returns empty migration`() {
+        val result = GpsJoystickMigrator.parse(buildRealm())
+        assertTrue(result.isSuccess)
+        val m = result.getOrThrow()
+        assertTrue(m.favorites.isEmpty())
+        assertTrue(m.routes.isEmpty())
+    }
+
+    @Test
+    fun `single coord pair with matching name array produces favorites only`() {
+        // count=1 string array + count=1 lat array + count=1 lon array
+        // hasMatchingNameArray=true → favPair set, routePair=null
+        val bytes = buildRealm(
+            stringBlock("Paris"),
+            doubleBlock(48.8566), // lat
+            doubleBlock(2.3522),  // lon
+        )
+        val result = GpsJoystickMigrator.parse(bytes)
+        assertTrue(result.isSuccess)
+        val m = result.getOrThrow()
+        assertEquals(1, m.favorites.size)
+        assertEquals("Paris", m.favorites[0].name)
+        assertTrue(m.routes.isEmpty())
+    }
+
+    @Test
+    fun `single coord pair with no matching name array produces routes only`() {
+        // count=2 lat + count=2 lon, no string array → hasMatchingNameArray=false
+        // favPair=null, routePair set
+        val bytes = buildRealm(
+            doubleBlock(48.8566, 48.9000), // lats
+            doubleBlock(2.3522, 2.4000),   // lons
+        )
+        val result = GpsJoystickMigrator.parse(bytes)
+        assertTrue(result.isSuccess)
+        val m = result.getOrThrow()
+        assertTrue(m.favorites.isEmpty())
+        assertEquals(1, m.routes.size)
+        assertEquals(2, m.routes[0].waypoints.size)
     }
 
     // ── speed profiles ────────────────────────────────────────────────────────

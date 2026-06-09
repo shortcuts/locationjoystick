@@ -580,6 +580,289 @@ class SettingsRepositoryTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+    // getJitterIdleIntervalSeconds / setJitterIdleIntervalSeconds
+
+    @Test
+    fun `getJitterIdleIntervalSeconds returns default`() =
+        runTest {
+            repository.getJitterIdleIntervalSeconds().test {
+                assertEquals(AppPreferencesDataSource.DEFAULT_JITTER_IDLE_INTERVAL_SECONDS, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setJitterIdleIntervalSeconds persists value`() =
+        runTest {
+            repository.setJitterIdleIntervalSeconds(8)
+            repository.getJitterIdleIntervalSeconds().test {
+                assertEquals(8, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // getLastTeleportTime / setLastTeleportTime
+
+    @Test
+    fun `getLastTeleportTime returns 0 initially`() =
+        runTest {
+            repository.getLastTeleportTime().test {
+                assertEquals(0L, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setLastTeleportTime persists value`() =
+        runTest {
+            repository.setLastTeleportTime(123456789L)
+            repository.getLastTeleportTime().test {
+                assertEquals(123456789L, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // getMapFollowsLocation / setMapFollowsLocation
+
+    @Test
+    fun `getMapFollowsLocation returns true by default`() =
+        runTest {
+            repository.getMapFollowsLocation().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setMapFollowsLocation persists false`() =
+        runTest {
+            repository.setMapFollowsLocation(false)
+            repository.getMapFollowsLocation().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // realism getters / setters
+
+    @Test
+    fun `getRealismBearingHoldIdle returns default true`() =
+        runTest {
+            repository.getRealismBearingHoldIdle().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setRealismBearingHoldIdle persists false`() =
+        runTest {
+            repository.setRealismBearingHoldIdle(false)
+            repository.getRealismBearingHoldIdle().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getRealismAltitudeEnabled returns default true`() =
+        runTest {
+            repository.getRealismAltitudeEnabled().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setRealismAltitudeEnabled persists false`() =
+        runTest {
+            repository.setRealismAltitudeEnabled(false)
+            repository.getRealismAltitudeEnabled().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getRealismWarmupEnabled returns default false`() =
+        runTest {
+            repository.getRealismWarmupEnabled().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setRealismWarmupEnabled persists true`() =
+        runTest {
+            repository.setRealismWarmupEnabled(true)
+            repository.getRealismWarmupEnabled().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getRealismSatelliteExtrasEnabled returns default true`() =
+        runTest {
+            repository.getRealismSatelliteExtrasEnabled().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setRealismSatelliteExtrasEnabled persists false`() =
+        runTest {
+            repository.setRealismSatelliteExtrasEnabled(false)
+            repository.getRealismSatelliteExtrasEnabled().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getRealismSuspendedMockingEnabled returns default false`() =
+        runTest {
+            repository.getRealismSuspendedMockingEnabled().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setRealismSuspendedMockingEnabled persists true`() =
+        runTest {
+            repository.setRealismSuspendedMockingEnabled(true)
+            repository.getRealismSuspendedMockingEnabled().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getRealismPedometerMockingEnabled returns default false`() =
+        runTest {
+            repository.getRealismPedometerMockingEnabled().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setRealismPedometerMockingEnabled persists true`() =
+        runTest {
+            repository.setRealismPedometerMockingEnabled(true)
+            repository.getRealismPedometerMockingEnabled().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // sort prefs
+
+    @Test
+    fun `getRoutesSortNewestFirst returns true by default`() =
+        runTest {
+            repository.getRoutesSortNewestFirst().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getFavoritesSortNewestFirst returns true by default`() =
+        runTest {
+            repository.getFavoritesSortNewestFirst().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // hot locations
+
+    @Test
+    fun `getHotLocationsEnabled returns false by default`() =
+        runTest {
+            repository.getHotLocationsEnabled().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setHotLocationsEnabled persists true`() =
+        runTest {
+            repository.setHotLocationsEnabled(true)
+            repository.getHotLocationsEnabled().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // recent searches
+
+    @Test
+    fun `getRecentSearches returns empty list initially`() =
+        runTest {
+            repository.getRecentSearches().test {
+                assertTrue(awaitItem().isEmpty())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `addRecentSearch adds an entry`() =
+        runTest {
+            repository.addRecentSearch("Tokyo", 35.6762, 139.6503)
+            repository.getRecentSearches().test {
+                val searches = awaitItem()
+                assertEquals(1, searches.size)
+                assertEquals("Tokyo", searches[0].displayName)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // elevation
+
+    @Test
+    fun `getElevationTiltJitterDegrees returns default`() =
+        runTest {
+            repository.getElevationTiltJitterDegrees().test {
+                assertEquals(AppPreferencesDataSource.DEFAULT_ELEVATION_TILT_JITTER_DEGREES, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setElevationTiltJitterDegrees persists value`() =
+        runTest {
+            repository.setElevationTiltJitterDegrees(3.0f)
+            repository.getElevationTiltJitterDegrees().test {
+                assertEquals(3.0f, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getElevationNoiseAmplitudeMs2 returns default`() =
+        runTest {
+            repository.getElevationNoiseAmplitudeMs2().test {
+                assertEquals(AppPreferencesDataSource.DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setElevationNoiseAmplitudeMs2 persists value`() =
+        runTest {
+            repository.setElevationNoiseAmplitudeMs2(0.5f)
+            repository.getElevationNoiseAmplitudeMs2().test {
+                assertEquals(0.5f, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
 }
 
 class FakeAppPreferencesDataSource : PreferencesDataSource {
@@ -732,6 +1015,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
     private val realismWarmupEnabledFlow = MutableStateFlow(AppConstants.RealismConstants.WARMUP_ENABLED_DEFAULT)
     private val realismSatelliteExtrasEnabledFlow = MutableStateFlow(AppConstants.RealismConstants.SATELLITE_EXTRAS_ENABLED_DEFAULT)
     private val realismSuspendedMockingEnabledFlow = MutableStateFlow(AppConstants.RealismConstants.SUSPENDED_MOCKING_ENABLED_DEFAULT)
+    private val realismPedometerMockingEnabledFlow = MutableStateFlow(false)
 
     override fun getRealismBearingHoldIdle(): Flow<Boolean> = realismBearingHoldIdleFlow
 
@@ -742,6 +1026,8 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
     override fun getRealismSatelliteExtrasEnabled(): Flow<Boolean> = realismSatelliteExtrasEnabledFlow
 
     override fun getRealismSuspendedMockingEnabled(): Flow<Boolean> = realismSuspendedMockingEnabledFlow
+
+    override fun getRealismPedometerMockingEnabled(): Flow<Boolean> = realismPedometerMockingEnabledFlow
 
     override suspend fun setRealismBearingHoldIdle(enabled: Boolean) {
         realismBearingHoldIdleFlow.value = enabled
@@ -761,6 +1047,10 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setRealismSuspendedMockingEnabled(enabled: Boolean) {
         realismSuspendedMockingEnabledFlow.value = enabled
+    }
+
+    override suspend fun setRealismPedometerMockingEnabled(enabled: Boolean) {
+        realismPedometerMockingEnabledFlow.value = enabled
     }
 
     private val routesSortNewestFirstFlow = MutableStateFlow(true)
@@ -873,6 +1163,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
                 realismWarmupEnabled = false,
                 realismSatelliteExtrasEnabled = true,
                 realismSuspendedMockingEnabled = false,
+                realismPedometerMockingEnabled = false,
                 jitterSpeedIdleVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,
                 jitterSpeedMovingVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT,
                 elevationTiltJitterDegrees = AppPreferencesDataSource.DEFAULT_ELEVATION_TILT_JITTER_DEGREES,

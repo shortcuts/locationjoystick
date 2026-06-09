@@ -6,8 +6,11 @@ import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
+import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.Waypoint
+import com.locationjoystick.core.model.WidgetFeature
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -229,5 +232,30 @@ class SettingsExportCodecEdgeCaseTest {
         val json =
             """{"schemaVersion":${AppConstants.ExportConstants.SCHEMA_VERSION + 1},"exportedAt":0,"settings":{},"speedProfiles":[],"routes":[],"favoriteLocations":[]}"""
         SettingsExportCodec.parseExportData(json)
+    }
+
+    // -------------------------------------------------------------------------
+    // Resilient parsing — unknown enum values fall back gracefully
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `invalid speedUnit falls back to KMH`() {
+        val json =
+            """{"schemaVersion":1,"exportedAt":0,"settings":{"speedUnit":"INVALID_UNIT","enabledWidgetFeatures":[]},"speedProfiles":[],"routes":[],"favoriteLocations":[]}"""
+
+        val parsed = SettingsExportCodec.parseExportData(json)
+
+        assertEquals(SpeedUnit.KMH, parsed.settings.speedUnit)
+    }
+
+    @Test
+    fun `unknown widget feature is skipped, known feature is preserved`() {
+        val json =
+            """{"schemaVersion":1,"exportedAt":0,"settings":{"speedUnit":"KMH","enabledWidgetFeatures":["UNKNOWN_FEATURE","JOYSTICK_TOGGLE"]},"speedProfiles":[],"routes":[],"favoriteLocations":[]}"""
+
+        val parsed = SettingsExportCodec.parseExportData(json)
+
+        assertEquals(1, parsed.settings.enabledWidgetFeatures.size)
+        assertTrue(parsed.settings.enabledWidgetFeatures.contains(WidgetFeature.JOYSTICK_TOGGLE))
     }
 }

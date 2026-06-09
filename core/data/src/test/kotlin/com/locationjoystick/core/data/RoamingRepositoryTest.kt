@@ -4,6 +4,7 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.routing.RoamingEngine
+import io.mockk.coEvery
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
@@ -205,6 +206,78 @@ class RoamingRepositoryTest {
             assertFalse(repository.isRoaming.first())
             assertFalse(repository.isRoamingPaused.first())
             assertEquals(MockMode.TELEPORT, fakeLocationRepository.currentMode.first())
+        }
+
+    // pauseRoaming / resumeRoaming
+
+    @Test
+    fun `pauseRoaming sets isRoamingPaused to true`() =
+        runTest {
+            repository.pauseRoaming()
+            assertTrue(repository.isRoamingPaused.first())
+        }
+
+    @Test
+    fun `resumeRoaming sets isRoamingPaused to false after pause`() =
+        runTest {
+            repository.pauseRoaming()
+            repository.resumeRoaming()
+            assertFalse(repository.isRoamingPaused.first())
+        }
+
+    @Test
+    fun `pauseRoaming delegates to roamingEngine`() =
+        runTest {
+            repository.pauseRoaming()
+            verify { fakeRoamingEngine.pauseRoaming() }
+        }
+
+    @Test
+    fun `resumeRoaming delegates to roamingEngine`() =
+        runTest {
+            repository.resumeRoaming()
+            verify { fakeRoamingEngine.resumeRoaming() }
+        }
+
+    // resetOnServiceDestroy
+
+    @Test
+    fun `resetOnServiceDestroy resets isRoaming and isRoamingPaused`() =
+        runTest {
+            val config = createDefaultConfig()
+            repository.startRoaming(config, speedMs = 1.4)
+            repository.pauseRoaming()
+
+            repository.resetOnServiceDestroy()
+
+            assertFalse(repository.isRoaming.first())
+            assertFalse(repository.isRoamingPaused.first())
+        }
+
+    @Test
+    fun `resetOnServiceDestroy sets MockMode to TELEPORT`() =
+        runTest {
+            val config = createDefaultConfig()
+            repository.startRoaming(config, speedMs = 1.4)
+            repository.resetOnServiceDestroy()
+
+            assertEquals(MockMode.TELEPORT, fakeLocationRepository.currentMode.first())
+        }
+
+    // generatePreviewRoute
+
+    @Test
+    fun `generatePreviewRoute delegates to engine and returns result`() =
+        runTest {
+            val center = LatLng(48.8566, 2.3522)
+            val destination = LatLng(48.86, 2.36)
+            val expected = listOf(center, destination)
+            every { fakeRoamingEngine.randomPointInRadius(center, 500.0) } returns destination
+            coEvery { fakeRoamingEngine.previewRoute(center, destination, false, "walk") } returns expected
+
+            val result = repository.generatePreviewRoute(center, 500.0, false, "walk")
+
+            assertEquals(expected, result)
         }
 
     private fun createDefaultConfig(): RoamingConfig =

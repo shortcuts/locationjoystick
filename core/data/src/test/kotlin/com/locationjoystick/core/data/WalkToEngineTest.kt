@@ -236,4 +236,25 @@ class WalkToEngineTest {
 
             assertTrue("onArrival should be called when within threshold", arrivalCalled)
         }
+
+    @Test
+    fun `launchWalkAlongRoute stops when currentPosition is null`() =
+        runTest {
+            val target = LatLng(48.9000, 2.3522)
+            // No current position set — repository.currentPosition.value is null
+            locationRepository.setWalkTarget(target)
+
+            var callCount = 0
+            with(engine) {
+                backgroundScope.launchWalkAlongRoute(
+                    waypoints = listOf(target),
+                    onPositionUpdate = { _, _, _ -> callCount++ },
+                    onArrival = {},
+                )
+            }
+
+            advanceTimeBy(AppConstants.LocationConstants.UPDATE_INTERVAL_MS + 1)
+
+            assertEquals("should not call onPositionUpdate with null position", 0, callCount)
+        }
 }
