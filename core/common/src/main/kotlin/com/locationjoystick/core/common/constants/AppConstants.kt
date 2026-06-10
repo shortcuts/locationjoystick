@@ -128,6 +128,7 @@ object AppConstants {
 
     object NominatimConstants {
         const val SEARCH_URL = "https://nominatim.openstreetmap.org/search"
+        const val REVERSE_URL = "https://nominatim.openstreetmap.org/reverse"
         const val SEARCH_DEBOUNCE_MS = 300L
         const val CONNECT_TIMEOUT_MS = 5000
         const val READ_TIMEOUT_MS = 5000

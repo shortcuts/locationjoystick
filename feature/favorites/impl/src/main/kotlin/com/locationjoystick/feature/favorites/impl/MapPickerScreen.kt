@@ -15,12 +15,18 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import android.util.Log
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -101,6 +107,10 @@ internal fun MapPickerScreen(
     val selectedPosition = remember { mutableStateOf<Pair<Double, Double>?>(null) }
     var showNameDialog by remember { mutableStateOf(false) }
     var showSearchBar by remember { mutableStateOf(false) }
+    var suggestedName by remember { mutableStateOf("") }
+
+    val effectivePosition: Pair<Double, Double>?
+        get() = selectedPosition.value ?: initialPosition?.let { it.latitude to it.longitude }
 
     LaunchedEffect(showNameDialog) {
         context.sendBroadcast(
@@ -112,6 +122,37 @@ internal fun MapPickerScreen(
                 },
             ),
         )
+        if (showNameDialog) {
+            val pos = effectivePosition
+            if (pos != null) {
+                suggestedName = ""
+                withContext(Dispatchers.IO) {
+                    try {
+                        val url = URL("${AppConstants.NominatimConstants.REVERSE_URL}?lat=${pos.first}&lon=${pos.second}&format=json")
+                        val conn = url.openConnection() as HttpURLConnection
+                        conn.setRequestProperty("User-Agent", "locationjoystick/1.0")
+                        conn.connectTimeout = AppConstants.NominatimConstants.CONNECT_TIMEOUT_MS
+                        conn.readTimeout = AppConstants.NominatimConstants.READ_TIMEOUT_MS
+                        try {
+                            val json = JSONObject(conn.inputStream.bufferedReader().readText())
+                            val address = json.optJSONObject("address")
+                            if (address != null) {
+                                val city = address.optString("city")
+                                    .ifEmpty { address.optString("town") }
+                                    .ifEmpty { address.optString("village") }
+                                    .ifEmpty { address.optString("state") }
+                                val country = address.optString("country")
+                                suggestedName = listOf(country, city).filter { it.isNotEmpty() }.joinToString(", ")
+                            }
+                        } finally {
+                            conn.disconnect()
+                        }
+                    } catch (e: Exception) {
+                        Log.e("MapPickerScreen", "Reverse geocode failed", e)
+                    }
+                }
+            }
+        }
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -151,7 +192,7 @@ internal fun MapPickerScreen(
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     onClick = { showSearchBar = !showSearchBar },
                 )
-                if (selectedPosition.value != null) {
+                if (effectivePosition != null) {
                     LjMapIconButton(
                         icon = LjIcons.Save,
                         contentDescription = "Save location",
@@ -243,9 +284,10 @@ internal fun MapPickerScreen(
     }
 
     if (showNameDialog) {
-        val pos = selectedPosition.value
+        val pos = effectivePosition
         if (pos != null) {
             SaveLocationDialog(
+                initialName = suggestedName,
                 onDismiss = { showNameDialog = false },
                 onSave = { name ->
                     onLocationPicked(name, pos.first, pos.second)
@@ -258,10 +300,11 @@ internal fun MapPickerScreen(
 
 @Composable
 private fun SaveLocationDialog(
+    initialName: String = "",
     onDismiss: () -> Unit,
     onSave: (String) -> Unit,
 ) {
-    var name by remember { mutableStateOf("") }
+    var name by remember(initialName) { mutableStateOf(initialName) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
