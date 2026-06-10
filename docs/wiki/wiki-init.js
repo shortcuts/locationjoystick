@@ -15,8 +15,8 @@
 
   var EXT_ITEMS = [
     { href: 'https://github.com/shortcuts/locationjoystick/blob/main/CONTRIBUTING.md', label: 'Contributing' },
-    { href: 'https://github.com/shortcuts/locationjoystick/issues/new?labels=bug', label: 'Report a bug' },
     { href: 'https://github.com/shortcuts/locationjoystick/issues/new?labels=enhancement', label: 'Request a feature' },
+    { href: 'https://github.com/shortcuts/locationjoystick/issues/new?labels=bug', label: 'Report a bug' },
   ];
 
   var currentFile = location.pathname.split('/').pop() || 'index.html';
