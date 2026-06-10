@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.settings.impl
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.MapFabFeature
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
@@ -30,5 +31,6 @@ data class SettingsUiState(
     val elevationNoiseAmplitudeMs2: Float = AppConstants.ElevationConstants.DEFAULT_NOISE_AMPLITUDE_MS2,
     val hotLocationsEnabled: Boolean = false,
     val selectedHotLocationIds: Set<String> = emptySet(),
+    val enabledMapFabFeatures: Set<MapFabFeature> = MapFabFeature.entries.toSet(),
     val isDirty: Boolean = false,
 )

@@ -61,11 +61,12 @@ import com.locationjoystick.core.designsystem.component.AppIcon
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSegmentedControl
+import com.locationjoystick.core.model.MapFabFeature
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
 
-private enum class SettingsSection { GPS, MENUS, FAVORITES_ROUTES }
+private enum class SettingsSection { GPS, MENUS, FAVORITES_ROUTES, MAP }
 
 private sealed class PendingImport {
     data class File(
@@ -244,6 +245,10 @@ fun SettingsRoute(
 
                 is SettingsAction.SetWidgetFeatures -> {
                     viewModel.setWidgetFeatures(action.features)
+                }
+
+                is SettingsAction.SetMapFabFeatures -> {
+                    viewModel.setMapFabFeatures(action.features)
                 }
 
                 is SettingsAction.SetRememberLastLocation -> {
@@ -438,6 +443,16 @@ internal fun SettingsScreen(
                 snackbarHost = snackbarHost,
             )
         }
+
+        SettingsSection.MAP -> {
+            SettingsMapSubScreen(
+                uiState = uiState,
+                onNavigateBack = { currentSection = null },
+                onAction = onAction,
+                bottomBar = bottomBar,
+                snackbarHost = snackbarHost,
+            )
+        }
     }
 }
 
@@ -564,6 +579,13 @@ private fun SettingsHubScreen(
                 title = "Favorites & Routes",
                 description = "Hot locations and default roaming settings.",
                 onClick = { onNavigate(SettingsSection.FAVORITES_ROUTES) },
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            SettingsDestinationCard(
+                icon = LjIcons.LocationOn,
+                title = "Map",
+                description = "Choose which buttons appear on the map screen.",
+                onClick = { onNavigate(SettingsSection.MAP) },
             )
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -1243,6 +1265,115 @@ private fun RoamingSection(
         onCheckedChange = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(returnToInitialLocation = it))) },
         title = "Return to start",
         description = "Walks back to the starting position after the roaming session completes.",
+    )
+}
+
+@Composable
+private fun SettingsMapSubScreen(
+    uiState: SettingsUiState,
+    onNavigateBack: () -> Unit,
+    onAction: (SettingsAction) -> Unit,
+    bottomBar: @Composable () -> Unit,
+    snackbarHost: @Composable () -> Unit,
+) {
+    LjScaffold(
+        title = "Map",
+        onNavigationClick = onNavigateBack,
+        navigationIcon = LjIcons.ArrowBack,
+        bottomBar = bottomBar,
+        snackbarHost = snackbarHost,
+        actions = { SubScreenActions(uiState.isDirty, onAction) },
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            when {
+                uiState.isLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                else -> {
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(remember { ScrollState(0) })
+                                .padding(16.dp),
+                    ) {
+                        MapButtonsSection(uiState, onAction)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MapButtonsSection(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    Text("Map Buttons", style = MaterialTheme.typography.headlineSmall)
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        "Choose which buttons appear in the map screen. Start/stop simulation is always shown.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+
+    val enabled = uiState.enabledMapFabFeatures
+    MapFabFeatureRow(
+        feature = MapFabFeature.FAVORITES,
+        label = "Favorites",
+        subtitle = "Opens the favorites picker to teleport or walk to a saved location.",
+        icon = LjIcons.Favorite,
+        enabledFeatures = enabled,
+        onAction = onAction,
+    )
+    MapFabFeatureRow(
+        feature = MapFabFeature.ROUTES,
+        label = "Routes",
+        subtitle = "Opens the routes picker to start or manage route replay.",
+        icon = LjIcons.Route,
+        enabledFeatures = enabled,
+        onAction = onAction,
+    )
+    MapFabFeatureRow(
+        feature = MapFabFeature.ROAMING,
+        label = "Roaming",
+        subtitle = "Opens the roaming sheet to configure and start random walking.",
+        icon = LjIcons.Explore,
+        enabledFeatures = enabled,
+        onAction = onAction,
+    )
+    MapFabFeatureRow(
+        feature = MapFabFeature.SEARCH,
+        label = "Search",
+        subtitle = "Opens the location search bar to find and jump to a place.",
+        icon = LjIcons.Search,
+        enabledFeatures = enabled,
+        onAction = onAction,
+    )
+}
+
+@Composable
+private fun MapFabFeatureRow(
+    feature: MapFabFeature,
+    label: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    enabledFeatures: Set<MapFabFeature>,
+    onAction: (SettingsAction) -> Unit,
+) {
+    LjCheckboxRow(
+        checked = feature in enabledFeatures,
+        onCheckedChange = { isChecked ->
+            val updated = enabledFeatures.toMutableSet()
+            if (isChecked) updated.add(feature) else updated.remove(feature)
+            onAction(SettingsAction.SetMapFabFeatures(updated))
+        },
+        title = label,
+        description = subtitle,
+        icon = icon,
     )
 }
 

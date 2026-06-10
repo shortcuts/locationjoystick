@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.settings.impl
 
+import com.locationjoystick.core.model.MapFabFeature
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
@@ -95,6 +96,10 @@ internal sealed class SettingsAction {
 
     data class SetSelectedHotLocationIds(
         val ids: Set<String>,
+    ) : SettingsAction()
+
+    data class SetMapFabFeatures(
+        val features: Set<MapFabFeature>,
     ) : SettingsAction()
 
     data object RequestElevationAccess : SettingsAction()

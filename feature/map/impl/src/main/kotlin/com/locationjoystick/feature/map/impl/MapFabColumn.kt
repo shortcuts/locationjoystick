@@ -15,6 +15,7 @@ import com.locationjoystick.core.designsystem.LjMapColors
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
+import com.locationjoystick.core.model.MapFabFeature
 
 @Composable
 internal fun MapFabColumn(
@@ -86,129 +87,135 @@ internal fun MapFabColumn(
             onClick = { if (isSpoofing) onAction(MapAction.StopSpoofing) else onAction(MapAction.StartSpoofing) },
         )
 
-        // Favorites — always visible
-        LjMapIconButton(
-            icon = LjIcons.Favorite,
-            contentDescription = "Open favorites",
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            onClick = { onAction(MapAction.OpenFavoritesPicker) },
-        )
+        if (MapFabFeature.FAVORITES in uiState.enabledMapFabFeatures) {
+            LjMapIconButton(
+                icon = LjIcons.Favorite,
+                contentDescription = "Open favorites",
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                onClick = { onAction(MapAction.OpenFavoritesPicker) },
+            )
+        }
 
         // Routes — expandable: icon always, pause/stop expand when replay active
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4),
-        ) {
-            LjMapIconButton(
-                icon = LjIcons.Route,
-                contentDescription =
-                    if (uiState.isRouteReplay) "Route active" else "Open routes",
-                containerColor =
-                    if (uiState.isRouteReplay) LjSuccess else MaterialTheme.colorScheme.primaryContainer,
-                contentColor =
-                    if (uiState.isRouteReplay) LjBg else MaterialTheme.colorScheme.onPrimaryContainer,
-                onClick = {
-                    if (uiState.isRouteReplay) {
-                        onAction(MapAction.ToggleRouteControls)
-                    } else {
-                        onAction(MapAction.OpenRoutesSheet)
+        if (MapFabFeature.ROUTES in uiState.enabledMapFabFeatures || uiState.isRouteReplay) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4),
+            ) {
+                LjMapIconButton(
+                    icon = LjIcons.Route,
+                    contentDescription =
+                        if (uiState.isRouteReplay) "Route active" else "Open routes",
+                    containerColor =
+                        if (uiState.isRouteReplay) LjSuccess else MaterialTheme.colorScheme.primaryContainer,
+                    contentColor =
+                        if (uiState.isRouteReplay) LjBg else MaterialTheme.colorScheme.onPrimaryContainer,
+                    onClick = {
+                        if (uiState.isRouteReplay) {
+                            onAction(MapAction.ToggleRouteControls)
+                        } else {
+                            onAction(MapAction.OpenRoutesSheet)
+                        }
+                    },
+                )
+                AnimatedVisibility(visible = uiState.isRouteReplay && uiState.isRouteControlsExpanded) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4)) {
+                        LjMapIconButton(
+                            icon = if (uiState.isRoutePaused) LjIcons.PlayArrow else LjIcons.Pause,
+                            contentDescription = if (uiState.isRoutePaused) "Resume route" else "Pause route",
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            onClick = {
+                                if (uiState.isRoutePaused) {
+                                    onAction(MapAction.ResumeRouteReplay)
+                                } else {
+                                    onAction(MapAction.PauseRouteReplay)
+                                }
+                            },
+                        )
+                        LjMapIconButton(
+                            icon = LjIcons.Stop,
+                            contentDescription = "Stop route",
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                            onClick = { onAction(MapAction.StopRouteReplay) },
+                        )
                     }
-                },
-            )
-            AnimatedVisibility(visible = uiState.isRouteReplay && uiState.isRouteControlsExpanded) {
-                Row(horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4)) {
-                    LjMapIconButton(
-                        icon = if (uiState.isRoutePaused) LjIcons.PlayArrow else LjIcons.Pause,
-                        contentDescription = if (uiState.isRoutePaused) "Resume route" else "Pause route",
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        onClick = {
-                            if (uiState.isRoutePaused) {
-                                onAction(MapAction.ResumeRouteReplay)
-                            } else {
-                                onAction(MapAction.PauseRouteReplay)
-                            }
-                        },
-                    )
-                    LjMapIconButton(
-                        icon = LjIcons.Stop,
-                        contentDescription = "Stop route",
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                        onClick = { onAction(MapAction.StopRouteReplay) },
-                    )
                 }
             }
         }
 
         // Roaming — collapsible: compass icon always, pause/resume+stop expand to the left when roaming active
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4),
-        ) {
-            AnimatedVisibility(visible = uiState.isRoaming && uiState.isRoamingControlsExpanded) {
-                Row(horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4)) {
-                    LjMapIconButton(
-                        icon = LjIcons.Stop,
-                        contentDescription = "Stop roaming",
-                        containerColor = Color.Black,
-                        contentColor = MaterialTheme.colorScheme.error,
-                        onClick = { onAction(MapAction.StopRoaming) },
-                    )
-                    LjMapIconButton(
-                        icon = if (uiState.isRoamingPaused) LjIcons.PlayArrow else LjIcons.Pause,
-                        contentDescription = if (uiState.isRoamingPaused) "Resume roaming" else "Pause roaming",
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        onClick = {
-                            if (uiState.isRoamingPaused) {
-                                onAction(MapAction.ResumeRoaming)
-                            } else {
-                                onAction(MapAction.PauseRoaming)
-                            }
-                        },
-                    )
-                }
-            }
-            LjMapIconButton(
-                icon = LjIcons.Explore,
-                contentDescription =
-                    when {
-                        uiState.isRoaming -> "Roaming active"
-                        uiState.isRoamingSheetMinimized -> "Expand roaming sheet"
-                        else -> "Start roaming"
-                    },
-                containerColor =
-                    when {
-                        uiState.isRoaming -> Color.Black
-                        uiState.isRoamingSheetMinimized -> MaterialTheme.colorScheme.tertiary
-                        else -> MaterialTheme.colorScheme.primaryContainer
-                    },
-                contentColor =
-                    when {
-                        uiState.isRoaming -> LjSuccess
-                        uiState.isRoamingSheetMinimized -> MaterialTheme.colorScheme.onTertiary
-                        else -> MaterialTheme.colorScheme.onPrimaryContainer
-                    },
-                onClick = {
-                    when {
-                        uiState.isRoaming -> onAction(MapAction.ToggleRoamingControls)
-                        uiState.isRoamingSheetMinimized -> onAction(MapAction.ExpandRoamingSheet)
-                        else -> onAction(MapAction.OpenRoamingSheet)
+        if (MapFabFeature.ROAMING in uiState.enabledMapFabFeatures || uiState.isRoaming || uiState.isRoamingSheetMinimized) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4),
+            ) {
+                AnimatedVisibility(visible = uiState.isRoaming && uiState.isRoamingControlsExpanded) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4)) {
+                        LjMapIconButton(
+                            icon = LjIcons.Stop,
+                            contentDescription = "Stop roaming",
+                            containerColor = Color.Black,
+                            contentColor = MaterialTheme.colorScheme.error,
+                            onClick = { onAction(MapAction.StopRoaming) },
+                        )
+                        LjMapIconButton(
+                            icon = if (uiState.isRoamingPaused) LjIcons.PlayArrow else LjIcons.Pause,
+                            contentDescription = if (uiState.isRoamingPaused) "Resume roaming" else "Pause roaming",
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            onClick = {
+                                if (uiState.isRoamingPaused) {
+                                    onAction(MapAction.ResumeRoaming)
+                                } else {
+                                    onAction(MapAction.PauseRoaming)
+                                }
+                            },
+                        )
                     }
-                },
-            )
+                }
+                LjMapIconButton(
+                    icon = LjIcons.Explore,
+                    contentDescription =
+                        when {
+                            uiState.isRoaming -> "Roaming active"
+                            uiState.isRoamingSheetMinimized -> "Expand roaming sheet"
+                            else -> "Start roaming"
+                        },
+                    containerColor =
+                        when {
+                            uiState.isRoaming -> Color.Black
+                            uiState.isRoamingSheetMinimized -> MaterialTheme.colorScheme.tertiary
+                            else -> MaterialTheme.colorScheme.primaryContainer
+                        },
+                    contentColor =
+                        when {
+                            uiState.isRoaming -> LjSuccess
+                            uiState.isRoamingSheetMinimized -> MaterialTheme.colorScheme.onTertiary
+                            else -> MaterialTheme.colorScheme.onPrimaryContainer
+                        },
+                    onClick = {
+                        when {
+                            uiState.isRoaming -> onAction(MapAction.ToggleRoamingControls)
+                            uiState.isRoamingSheetMinimized -> onAction(MapAction.ExpandRoamingSheet)
+                            else -> onAction(MapAction.OpenRoamingSheet)
+                        }
+                    },
+                )
+            }
         }
 
-        // Search — always visible
-        LjMapIconButton(
-            icon = LjIcons.Search,
-            contentDescription = "Search location",
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            onClick = onToggleSearch,
-        )
+        if (MapFabFeature.SEARCH in uiState.enabledMapFabFeatures) {
+            LjMapIconButton(
+                icon = LjIcons.Search,
+                contentDescription = "Search location",
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                onClick = onToggleSearch,
+            )
+        }
 
         // ClearMap — visible when there's clearable content
         val hasClearableContent =

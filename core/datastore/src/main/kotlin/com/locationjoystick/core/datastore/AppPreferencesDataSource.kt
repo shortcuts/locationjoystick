@@ -14,6 +14,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapFabFeature
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
@@ -234,6 +235,7 @@ data class SettingsSnapshot(
     val hotLocationsEnabled: Boolean,
     val selectedHotLocationIds: Set<String>,
     val roamingDefaults: RoamingDefaults,
+    val mapFabFeatures: Set<MapFabFeature>,
 )
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -254,6 +256,10 @@ fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
 fun WidgetFeature.toKey(): String = name.lowercase()
 
 fun String.toWidgetFeature(): WidgetFeature? = WidgetFeature.entries.firstOrNull { it.name.lowercase() == this }
+
+fun MapFabFeature.toKey(): String = name.lowercase()
+
+fun String.toMapFabFeature(): MapFabFeature? = MapFabFeature.entries.firstOrNull { it.name.lowercase() == this }
 
 @Singleton
 class AppPreferencesDataSource
@@ -299,6 +305,7 @@ class AppPreferencesDataSource
             val ELEVATION_NOISE_AMPLITUDE_MS2 = floatPreferencesKey("elevation_noise_amplitude_ms2")
             val HOT_LOCATIONS_ENABLED = booleanPreferencesKey("hot_locations_enabled")
             val HOT_LOCATION_SELECTED_IDS = stringSetPreferencesKey("hot_location_selected_ids")
+            val MAP_FAB_ITEMS = stringSetPreferencesKey("map_fab_items")
         }
 
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -651,6 +658,7 @@ class AppPreferencesDataSource
                     )
                 prefs[Keys.HOT_LOCATIONS_ENABLED] = snapshot.hotLocationsEnabled
                 prefs[Keys.HOT_LOCATION_SELECTED_IDS] = snapshot.selectedHotLocationIds
+                prefs[Keys.MAP_FAB_ITEMS] = snapshot.mapFabFeatures.map { it.toKey() }.toSet()
                 prefs[Keys.ROAMING_RADIUS_METERS] = snapshot.roamingDefaults.radiusMeters
                 prefs[Keys.ROAMING_DISTANCE_METERS] = snapshot.roamingDefaults.distanceMeters
                 prefs[Keys.ROAMING_SPEED_PROFILE_ID] = snapshot.roamingDefaults.speedProfileId
@@ -711,6 +719,10 @@ class AppPreferencesDataSource
                                 ?: DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2,
                         hotLocationsEnabled = prefs[Keys.HOT_LOCATIONS_ENABLED] ?: false,
                         selectedHotLocationIds = prefs[Keys.HOT_LOCATION_SELECTED_IDS] ?: emptySet(),
+                        mapFabFeatures =
+                            (prefs[Keys.MAP_FAB_ITEMS] ?: DEFAULT_MAP_FAB_ITEMS)
+                                .mapNotNull { it.toMapFabFeature() }
+                                .toSet(),
                         roamingDefaults =
                             RoamingDefaults(
                                 radiusMeters = prefs[Keys.ROAMING_RADIUS_METERS] ?: DEFAULT_ROAMING_RADIUS_METERS,
@@ -732,6 +744,9 @@ class AppPreferencesDataSource
 
             const val MIN_SPEED_MS = AppConstants.ProfileConstants.MIN_SPEED_MS
             const val MAX_SPEED_MS = AppConstants.ProfileConstants.MAX_SPEED_MS
+
+            val DEFAULT_MAP_FAB_ITEMS: Set<String> =
+                MapFabFeature.entries.map { it.toKey() }.toSet()
 
             val DEFAULT_WIDGET_ITEMS: Set<String> =
                 setOf(

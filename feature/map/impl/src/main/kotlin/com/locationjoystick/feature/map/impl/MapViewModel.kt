@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.DeepLinkRepository
 import com.locationjoystick.core.data.RoamingRepository
+import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.isRouteReplay
@@ -42,6 +43,7 @@ class MapViewModel
         private val roamingRepository: RoamingRepository,
         private val deepLinkRepository: DeepLinkRepository,
         private val teleportUseCase: TeleportUseCase,
+        private val settingsRepository: SettingsRepository,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MapUiState())
         val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
@@ -63,6 +65,19 @@ class MapViewModel
             observeSharedState()
             observeCooldownForPendingTap()
             observeDeepLinkCoords()
+            observeMapFabFeatures()
+        }
+
+        private fun observeMapFabFeatures() {
+            viewModelScope.launch {
+                settingsRepository
+                    .getSettingsSnapshot()
+                    .map { it.mapFabFeatures }
+                    .distinctUntilChanged()
+                    .collect { features ->
+                        _uiState.update { it.copy(enabledMapFabFeatures = features) }
+                    }
+            }
         }
 
         private fun observeSharedState() {

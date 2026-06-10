@@ -13,6 +13,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
+import com.locationjoystick.core.model.MapFabFeature
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
@@ -110,6 +111,7 @@ class SettingsViewModel
             val elevationNoiseAmplitudeMs2: Float? = null,
             val hotLocationsEnabled: Boolean? = null,
             val selectedHotLocationIds: Set<String>? = null,
+            val mapFabFeatures: Set<MapFabFeature>? = null,
         )
 
         private val mutableDraft = MutableStateFlow(DraftState())
@@ -160,6 +162,7 @@ class SettingsViewModel
                     elevationNoiseAmplitudeMs2 = draftState.elevationNoiseAmplitudeMs2 ?: snapshot.elevationNoiseAmplitudeMs2,
                     hotLocationsEnabled = draftState.hotLocationsEnabled ?: snapshot.hotLocationsEnabled,
                     selectedHotLocationIds = draftState.selectedHotLocationIds ?: snapshot.selectedHotLocationIds,
+                    enabledMapFabFeatures = draftState.mapFabFeatures ?: snapshot.mapFabFeatures,
                     isDirty = isDirty,
                 )
             }.stateIn(
@@ -186,6 +189,10 @@ class SettingsViewModel
 
         fun setWidgetFeatures(features: Set<WidgetFeature>) {
             mutableDraft.update { it.copy(widgetFeatures = features) }
+        }
+
+        fun setMapFabFeatures(features: Set<MapFabFeature>) {
+            mutableDraft.update { it.copy(mapFabFeatures = features) }
         }
 
         fun setRememberLastLocation(enabled: Boolean) {
@@ -302,6 +309,7 @@ class SettingsViewModel
                             elevationNoiseAmplitudeMs2 = state.elevationNoiseAmplitudeMs2,
                             hotLocationsEnabled = state.hotLocationsEnabled,
                             selectedHotLocationIds = state.selectedHotLocationIds,
+                            mapFabFeatures = state.enabledMapFabFeatures,
                             roamingDefaults =
                                 d.roamingDefaults
                                     ?: settingsRepository.getRoamingDefaults().first(),
