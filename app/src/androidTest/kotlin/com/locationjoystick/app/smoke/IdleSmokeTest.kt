@@ -91,5 +91,4 @@ class IdleSmokeTest : BaseSmokeTest() {
         composeRule.navigateViaDrawer("Favorites")
         composeRule.onNodeWithContentDescription("Add favorite").assertIsDisplayed()
     }
-
 }
