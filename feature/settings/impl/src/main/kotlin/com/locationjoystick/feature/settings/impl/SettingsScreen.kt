@@ -1,7 +1,10 @@
 package com.locationjoystick.feature.settings.impl
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,13 +13,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -37,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.state.ToggleableState
@@ -54,6 +62,8 @@ import com.locationjoystick.core.designsystem.component.LjSegmentedControl
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.WidgetFeature
+
+private enum class SettingsSection { GPS, MENUS, FAVORITES_ROUTES }
 
 private sealed class PendingImport {
     data class File(
@@ -375,6 +385,69 @@ internal fun SettingsScreen(
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
 ) {
+    var currentSection by remember { mutableStateOf<SettingsSection?>(null) }
+
+    BackHandler(enabled = currentSection != null) {
+        currentSection = null
+    }
+
+    when (currentSection) {
+        null -> {
+            SettingsHubScreen(
+                uiState = uiState,
+                onOpenDrawer = onOpenDrawer,
+                onNavigate = { currentSection = it },
+                onAction = onAction,
+                bottomBar = bottomBar,
+                snackbarHost = snackbarHost,
+            )
+        }
+
+        SettingsSection.GPS -> {
+            SettingsGpsSubScreen(
+                uiState = uiState,
+                isRooted = isRooted,
+                onNavigateBack = { currentSection = null },
+                onAction = onAction,
+                bottomBar = bottomBar,
+                snackbarHost = snackbarHost,
+            )
+        }
+
+        SettingsSection.MENUS -> {
+            SettingsMenusSubScreen(
+                uiState = uiState,
+                isRooted = isRooted,
+                onNavigateBack = { currentSection = null },
+                onAction = onAction,
+                bottomBar = bottomBar,
+                snackbarHost = snackbarHost,
+            )
+        }
+
+        SettingsSection.FAVORITES_ROUTES -> {
+            SettingsFavoritesRoutesSubScreen(
+                uiState = uiState,
+                roamingDefaults = roamingDefaults,
+                hotLocations = hotLocations,
+                onNavigateBack = { currentSection = null },
+                onAction = onAction,
+                bottomBar = bottomBar,
+                snackbarHost = snackbarHost,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsHubScreen(
+    uiState: SettingsUiState,
+    onOpenDrawer: () -> Unit,
+    onNavigate: (SettingsSection) -> Unit,
+    onAction: (SettingsAction) -> Unit,
+    bottomBar: @Composable () -> Unit,
+    snackbarHost: @Composable () -> Unit,
+) {
     LjScaffold(
         title = "Settings",
         onNavigationClick = onOpenDrawer,
@@ -451,12 +524,179 @@ internal fun SettingsScreen(
             }
         },
     ) { paddingValues ->
-        Box(
+        Column(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+            SettingsDestinationCard(
+                icon = LjIcons.LocationOn,
+                title = "GPS Settings",
+                description = "Speed profiles, GPS signal realism, and location jitter.",
+                onClick = { onNavigate(SettingsSection.GPS) },
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            SettingsDestinationCard(
+                icon = LjIcons.Joystick,
+                title = "Menus",
+                description = "Quick-access buttons in the floating widget panel.",
+                onClick = { onNavigate(SettingsSection.MENUS) },
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            SettingsDestinationCard(
+                icon = LjIcons.Favorite,
+                title = "Favorites & Routes",
+                description = "Hot locations and default roaming settings.",
+                onClick = { onNavigate(SettingsSection.FAVORITES_ROUTES) },
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun SettingsDestinationCard(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    onClick: () -> Unit,
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text(text = description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SubScreenActions(
+    isDirty: Boolean,
+    onAction: (SettingsAction) -> Unit,
+) {
+    if (isDirty) {
+        TextButton(
+            onClick = { onAction(SettingsAction.DiscardChanges) },
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
+        ) { Text("Discard") }
+        TextButton(
+            onClick = { onAction(SettingsAction.SaveChanges) },
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+        ) { Text("Save") }
+    }
+}
+
+@Composable
+private fun SettingsGpsSubScreen(
+    uiState: SettingsUiState,
+    isRooted: Boolean,
+    onNavigateBack: () -> Unit,
+    onAction: (SettingsAction) -> Unit,
+    bottomBar: @Composable () -> Unit,
+    snackbarHost: @Composable () -> Unit,
+) {
+    LjScaffold(
+        title = "GPS Settings",
+        onNavigationClick = onNavigateBack,
+        navigationIcon = LjIcons.ArrowBack,
+        bottomBar = bottomBar,
+        snackbarHost = snackbarHost,
+        actions = { SubScreenActions(uiState.isDirty, onAction) },
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            when {
+                uiState.isLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                else -> {
+                    val isMph = uiState.speedUnit == SpeedUnit.MPH
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(16.dp),
+                    ) {
+                        SpeedProfilesSection(uiState, onAction)
+                        Spacer(modifier = Modifier.height(24.dp))
+                        GpsJitterSection(uiState, isMph, onAction)
+                        if (WidgetFeature.ELEVATION_CONTROLS in uiState.enabledWidgetFeatures) {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            ElevationJitterSection(uiState, elevationControlsEnabled = true, onAction)
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                        GpsRealismSection(uiState, isRooted, onAction)
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text("Location Memory", style = MaterialTheme.typography.headlineSmall)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Controls how the app handles location state across restarts.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LjCheckboxRow(
+                            checked = uiState.rememberLastLocation,
+                            onCheckedChange = { onAction(SettingsAction.SetRememberLastLocation(it)) },
+                            title = "Remember last location",
+                            description = "Restores the last spoofed position when the app restarts.",
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsMenusSubScreen(
+    uiState: SettingsUiState,
+    isRooted: Boolean,
+    onNavigateBack: () -> Unit,
+    onAction: (SettingsAction) -> Unit,
+    bottomBar: @Composable () -> Unit,
+    snackbarHost: @Composable () -> Unit,
+) {
+    LjScaffold(
+        title = "Menus",
+        onNavigationClick = onNavigateBack,
+        navigationIcon = LjIcons.ArrowBack,
+        bottomBar = bottomBar,
+        snackbarHost = snackbarHost,
+        actions = { SubScreenActions(uiState.isDirty, onAction) },
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             when {
                 uiState.isLoading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -470,24 +710,48 @@ internal fun SettingsScreen(
                                 .verticalScroll(rememberScrollState())
                                 .padding(16.dp),
                     ) {
-                        val isMph = uiState.speedUnit == SpeedUnit.MPH
-                        SpeedProfilesSection(uiState, onAction)
-                        Spacer(modifier = Modifier.height(24.dp))
-                        GpsJitterSection(uiState, isMph, onAction)
-                        Spacer(modifier = Modifier.height(24.dp))
-                        ElevationJitterSection(
-                            uiState,
-                            elevationControlsEnabled = WidgetFeature.ELEVATION_CONTROLS in uiState.enabledWidgetFeatures,
-                            onAction,
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        GpsRealismSection(uiState, isRooted, onAction)
-                        Spacer(modifier = Modifier.height(24.dp))
-                        MapSection(uiState, onAction)
-                        Spacer(modifier = Modifier.height(24.dp))
-                        FavoritesSection(uiState, hotLocations, onAction)
-                        Spacer(modifier = Modifier.height(24.dp))
                         FloatingWidgetSection(uiState, isRooted, onAction)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsFavoritesRoutesSubScreen(
+    uiState: SettingsUiState,
+    roamingDefaults: RoamingDefaults,
+    hotLocations: List<HotLocation>,
+    onNavigateBack: () -> Unit,
+    onAction: (SettingsAction) -> Unit,
+    bottomBar: @Composable () -> Unit,
+    snackbarHost: @Composable () -> Unit,
+) {
+    LjScaffold(
+        title = "Favorites & Routes",
+        onNavigationClick = onNavigateBack,
+        navigationIcon = LjIcons.ArrowBack,
+        bottomBar = bottomBar,
+        snackbarHost = snackbarHost,
+        actions = { SubScreenActions(uiState.isDirty, onAction) },
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            when {
+                uiState.isLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                else -> {
+                    val isMph = uiState.speedUnit == SpeedUnit.MPH
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(16.dp),
+                    ) {
+                        FavoritesSection(uiState, hotLocations, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
                         RoamingSection(roamingDefaults, isMph, onAction)
                     }
@@ -521,23 +785,16 @@ private fun SpeedProfileInput(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            label,
-            modifier = Modifier.weight(0.2f),
-        )
+        Text(label, modifier = Modifier.weight(0.2f))
 
         Row(
-            modifier =
-                Modifier
-                    .weight(0.8f)
-                    .padding(horizontal = 8.dp),
+            modifier = Modifier.weight(0.8f).padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             OutlinedTextField(
                 value = localValue,
                 onValueChange = { newValue ->
                     localValue = newValue
-
                     val parsed = newValue.toDoubleOrNull()
                     if (parsed != null && parsed > 0.0) {
                         onSpeedChange(parsed)
@@ -547,18 +804,10 @@ private fun SpeedProfileInput(
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 isError = localValue.isNotBlank() && !isValid,
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = KeyboardType.Decimal,
-                    ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             )
-
             Spacer(modifier = Modifier.width(4.dp))
-
-            Text(
-                unit,
-                modifier = Modifier.width(40.dp),
-            )
+            Text(unit, modifier = Modifier.width(40.dp))
         }
     }
 }
@@ -641,34 +890,6 @@ private fun SpeedProfilesSection(
 }
 
 @Composable
-private fun MapSection(
-    uiState: SettingsUiState,
-    onAction: (SettingsAction) -> Unit,
-) {
-    Text("Map", style = MaterialTheme.typography.headlineSmall)
-    Spacer(modifier = Modifier.height(4.dp))
-    Text(
-        "Controls how the map behaves while spoofing is active.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-
-    LjCheckboxRow(
-        checked = uiState.rememberLastLocation,
-        onCheckedChange = { onAction(SettingsAction.SetRememberLastLocation(it)) },
-        title = "Remember last location",
-        description = "Restores the last spoofed position when the app restarts, so you don't have to re-enter it.",
-    )
-    LjCheckboxRow(
-        checked = uiState.mapFollowsLocation,
-        onCheckedChange = { onAction(SettingsAction.SetMapFollowsLocation(it)) },
-        title = "Follow location on map",
-        description = "Keeps the map camera centered on the spoofed position as it moves.",
-    )
-}
-
-@Composable
 private fun FavoritesSection(
     uiState: SettingsUiState,
     hotLocations: List<HotLocation>,
@@ -743,14 +964,9 @@ private fun FavoritesSection(
                         onAction(SettingsAction.SetSelectedHotLocationIds(newIds))
                     },
                 )
-                Text(
-                    country,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.weight(1f),
-                )
+                Text(country, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                 IconButton(onClick = {
-                    expandedCountries =
-                        if (isCountryExpanded) expandedCountries - country else expandedCountries + country
+                    expandedCountries = if (isCountryExpanded) expandedCountries - country else expandedCountries + country
                 }) {
                     Icon(
                         imageVector = if (isCountryExpanded) LjIcons.ElevationUp else LjIcons.ElevationDown,
@@ -785,15 +1001,10 @@ private fun FavoritesSection(
                                 onAction(SettingsAction.SetSelectedHotLocationIds(newIds))
                             },
                         )
-                        Text(
-                            city,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f),
-                        )
+                        Text(city, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                         if (hasMultiple) {
                             IconButton(onClick = {
-                                expandedCities =
-                                    if (isCityExpanded) expandedCities - cityKey else expandedCities + cityKey
+                                expandedCities = if (isCityExpanded) expandedCities - cityKey else expandedCities + cityKey
                             }) {
                                 Icon(
                                     imageVector = if (isCityExpanded) LjIcons.ElevationUp else LjIcons.ElevationDown,
