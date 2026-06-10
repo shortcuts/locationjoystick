@@ -43,7 +43,7 @@ coverage-open:
 	open build/reports/kover/html/index.html
 
 screenshot:
-	./scripts/screenshot-gallery.sh --output docs/wiki/screenshots
+	./scripts/screenshot-gallery.sh --auto
 
 wiki-serve:
 	lsof -ti:8080 | xargs kill -9 || true

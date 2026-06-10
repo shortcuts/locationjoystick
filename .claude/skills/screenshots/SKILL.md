@@ -15,6 +15,12 @@ directly via the Bash tool. No manual terminal steps needed.
 corner of Routes and Favorites screens. Screenshots 14 and 15 (overlays) now include
 service startup verification to improve reliability.
 
+**New in v3:** Use `--steps` to run only specific steps instead of the full suite:
+- `--steps 16,17` — run steps 16 and 17 only
+- `--steps 14-17` — run steps 14 through 17
+- `--steps 01,03,05` — run steps 1, 3, 5
+Seeding (routes, favorites) still runs automatically before the first selected step.
+
 ---
 
 ## Step 1 — Pre-flight checks (agent runs these)
@@ -176,67 +182,62 @@ The `--auto` flag replaces all manual pause points with adb automation:
 
 The script will print progress for every step. Total runtime ~2–3 minutes.
 
----
+### Running specific steps only
 
-## Step 3 — Verify output (agent runs this)
-
-```bash
-ls docs/wiki/screenshots/*.png | sort
-```
-
-Expected files:
-```
-01_idle.png
-02_map.png
-03_routes.png
-04_favorites.png
-05_settings.png
-06_map_routes_sheet.png
-07_map_favorites_sheet.png
-08_map_roaming_sheet.png
-09_route_creator.png
-10_route_detail.png
-11_map_picker.png
-12_settings_scrolled.png
-13_qr_share.png
-14_joystick_overlay.png
-15_widget_overlay.png
-16_routes_add_button.png
-17_favorites_add_button.png
-```
-
----
-
-## Step 3b — Generate Play Store variants (agent runs this)
-
-After capturing screenshots, generate 1024×500 Play Store versions for each PNG.
-Each source screenshot is scaled to fit within 500 px height and centered on a
-1024×500 canvas with a Material dark surface background (`#1C1B1F`).
-Output files use the same name with `_playstore` appended before the extension.
+To update only certain screenshots, add `--steps`:
 
 ```bash
-python3 << 'EOF'
-from PIL import Image
-import os
+# Capture steps 16 and 17 (Routes and Favorites add buttons)
+./scripts/screenshot-gallery.sh --auto --steps 16,17
 
-src_dir = "docs/wiki/screenshots"
-canvas_w, canvas_h = 1024, 500
-bg_color = (28, 27, 31)
+# Capture step 14 only (joystick overlay)
+./scripts/screenshot-gallery.sh --auto --steps 14
 
-files = sorted(f for f in os.listdir(src_dir) if f.endswith(".png") and "_playstore" not in f)
-for fname in files:
-    src_path = os.path.join(src_dir, fname)
-    name, ext = os.path.splitext(fname)
-    dst_path = os.path.join(src_dir, f"{name}_playstore{ext}")
-    img = Image.open(src_path)
-    img.thumbnail((canvas_w, canvas_h), Image.LANCZOS)
-    canvas = Image.new("RGB", (canvas_w, canvas_h), bg_color)
-    x = (canvas_w - img.width) // 2
-    y = (canvas_h - img.height) // 2
-    canvas.paste(img, (x, y), img if img.mode == "RGBA" else None)
-    canvas.save(dst_path, "PNG", optimize=True)
-    print(f"  {fname} → {os.path.basename(dst_path)}")
-EOF
+# Capture steps 14–17 (overlays and add buttons)
+./scripts/screenshot-gallery.sh --auto --steps 14-17
+
+# Capture steps 01, 03, 05 (specific screens)
+./scripts/screenshot-gallery.sh --auto --steps 01,03,05
+```
+
+**Format:**
+- Single step: `--steps 16`
+- Multiple steps: `--steps 16,17,18` (comma-separated, no spaces)
+- Range: `--steps 14-17` (inclusive)
+- Mixed: `--steps 01,03,06-09`
+
+**Seeding:** Routes and Favorites are still seeded automatically before the first
+selected step if they don't exist (for steps that need populated lists). This ensures
+steps 03–10 always show data if selected.
+
+---
+
+## Step 3 — Script output (automatic)
+
+The script automatically:
+1. Captures all 17 canonical screenshots to `docs/wiki/screenshots/`
+2. Generates 1024×500 Play Store variants (named `*_playstore.png`)
+3. Displays a summary table
+
+Expected output files (34 total: 17 source + 17 playstore variants):
+```
+01_idle.png + 01_idle_playstore.png
+02_map.png + 02_map_playstore.png
+03_routes.png + 03_routes_playstore.png
+04_favorites.png + 04_favorites_playstore.png
+05_settings.png + 05_settings_playstore.png
+06_map_routes_sheet.png + 06_map_routes_sheet_playstore.png
+07_map_favorites_sheet.png + 07_map_favorites_sheet_playstore.png
+08_map_roaming_sheet.png + 08_map_roaming_sheet_playstore.png
+09_route_creator.png + 09_route_creator_playstore.png
+10_route_detail.png + 10_route_detail_playstore.png
+11_map_picker.png + 11_map_picker_playstore.png
+12_settings_scrolled.png + 12_settings_scrolled_playstore.png
+13_qr_share.png + 13_qr_share_playstore.png
+14_joystick_overlay.png + 14_joystick_overlay_playstore.png
+15_widget_overlay.png + 15_widget_overlay_playstore.png
+16_routes_add_button.png + 16_routes_add_button_playstore.png
+17_favorites_add_button.png + 17_favorites_add_button_playstore.png
 ```
 
 If any file is missing:

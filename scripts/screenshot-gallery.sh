@@ -8,6 +8,9 @@
 #   ./scripts/screenshot-gallery.sh
 #   ./scripts/screenshot-gallery.sh --output /tmp/gallery
 #   ./scripts/screenshot-gallery.sh --device emulator-5554
+#   ./scripts/screenshot-gallery.sh --steps 16,17
+#   ./scripts/screenshot-gallery.sh --steps 14-17
+#   ./scripts/screenshot-gallery.sh --auto --steps 16-17
 #
 # Prerequisites:
 #   - adb in PATH, device connected with USB debugging on
@@ -20,6 +23,12 @@
 # Android Demo Mode is enabled for the duration of the run so screenshots show
 # a clean status bar (neutral clock, full battery/signal, no notifications).
 # Demo mode exits automatically on completion or error.
+#
+# --steps allows running only specific step numbers:
+#   --steps 16,17        (run steps 16 and 17 only)
+#   --steps 14-17        (run steps 14, 15, 16, 17)
+#   --steps 01,03,05     (run steps 1, 3, 5)
+# Seeding (routes, favorites) always runs before the first selected step.
 #
 # Output files (17 canonical PNGs):
 #   01_idle, 02_map, 03_routes, 04_favorites, 05_settings,
@@ -35,9 +44,11 @@ set -euo pipefail
 
 PACKAGE="com.locationjoystick.app"
 ACTIVITY=".MainActivity"
-OUTPUT_DIR="./screenshots"
+OUTPUT_DIR="docs/wiki/screenshots"
 ADB_DEVICE=""
 AUTO=false
+STEPS_FILTER=""  # Comma-separated or range, e.g. "16,17" or "14-17"
+ENABLED_STEPS=" "  # Space-separated list of enabled step numbers (01 02 03 etc)
 
 # ── Arg parsing ──────────────────────────────────────────────────────────────
 
@@ -46,9 +57,42 @@ while [[ $# -gt 0 ]]; do
     --output)  OUTPUT_DIR="$2"; shift 2 ;;
     --device)  ADB_DEVICE="-s $2"; shift 2 ;;
     --auto)    AUTO=true; shift ;;
+    --steps)   STEPS_FILTER="$2"; shift 2 ;;
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac
 done
+
+# Parse --steps into a space-separated list of enabled step numbers
+if [[ -n "$STEPS_FILTER" ]]; then
+  ENABLED_STEPS=" "
+  for part in $(echo "$STEPS_FILTER" | tr ',' '\n'); do
+    if [[ "$part" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+      # Range: e.g. "14-17"
+      start=${BASH_REMATCH[1]}
+      end=${BASH_REMATCH[2]}
+      for (( i=start; i<=end; i++ )); do
+        step_num=$(printf "%02d" $i)
+        ENABLED_STEPS="${ENABLED_STEPS}${step_num} "
+      done
+    elif [[ "$part" =~ ^[0-9]+$ ]]; then
+      # Single number: e.g. "16"
+      step_num=$(printf "%02d" $part)
+      ENABLED_STEPS="${ENABLED_STEPS}${step_num} "
+    else
+      echo "Invalid --steps format: $part (expected '16' or '14-17')"
+      exit 1
+    fi
+  done
+else
+  # No filter: enable all steps
+  for i in {01..17}; do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' $i) "; done
+fi
+
+# Helper to check if a step should run (e.g. should_run_step "16")
+should_run_step() {
+  local step="$1"
+  [[ "$ENABLED_STEPS" =~ " ${step} " ]]
+}
 
 ADB="adb $ADB_DEVICE"
 
@@ -375,6 +419,44 @@ collapse_widget_panel() {
   wait_s 1 "Panel collapsing"
 }
 
+# Generate 1024×500 Play Store variants for all captured screenshots.
+# Each source screenshot is scaled to fit within 500 px height and centered
+# on a 1024×500 canvas with Material dark surface background (#1C1B1F).
+generate_playstore_variants() {
+  log "Generating Play Store variants..."
+  python3 << 'PYTHON_EOF'
+from PIL import Image
+import os
+import sys
+
+src_dir = "docs/wiki/screenshots"
+canvas_w, canvas_h = 1024, 500
+bg_color = (28, 27, 31)
+
+if not os.path.isdir(src_dir):
+  print(f"  Error: {src_dir} not found", file=sys.stderr)
+  sys.exit(1)
+
+files = sorted(f for f in os.listdir(src_dir) if f.endswith(".png") and "_playstore" not in f)
+if not files:
+  print(f"  No source PNG files found in {src_dir}", file=sys.stderr)
+  sys.exit(1)
+
+for fname in files:
+  src_path = os.path.join(src_dir, fname)
+  name, ext = os.path.splitext(fname)
+  dst_path = os.path.join(src_dir, f"{name}_playstore{ext}")
+  img = Image.open(src_path)
+  img.thumbnail((canvas_w, canvas_h), Image.LANCZOS)
+  canvas = Image.new("RGB", (canvas_w, canvas_h), bg_color)
+  x = (canvas_w - img.width) // 2
+  y = (canvas_h - img.height) // 2
+  canvas.paste(img, (x, y), img if img.mode == "RGBA" else None)
+  canvas.save(dst_path, "PNG", optimize=True)
+  print(f"  {fname} → {os.path.basename(dst_path)}")
+PYTHON_EOF
+}
+
 # Expand widget panel (same tap — toggles).
 expand_widget_panel() { collapse_widget_panel; }
 
@@ -476,203 +558,244 @@ fi
 
 # ── 01. IdleScreen ───────────────────────────────────────────────────────────
 
-log "=== 01 IDLE ==="
-go_idle
-screenshot "01_idle"
+if should_run_step "01"; then
+  log "=== 01 IDLE ==="
+  go_idle
+  screenshot "01_idle"
+fi
 
 # ── 02. Map screen ───────────────────────────────────────────────────────────
 
-log "=== 02 MAP ==="
-# Y-min filter prevents matching the closed drawer "Map" item in the semantics tree.
-tap_text_below "Map" "$CARD_Y_MIN"
-wait_s 3 "Map loading"
-# Start spoofing so the map screenshot shows the running state (stop button visible).
-# content-desc is "Start location simulation" — "location simulation" is a reliable substring.
-tap_text "location simulation"
-wait_s 3 "Starting simulation"
-screenshot "02_map"
+if should_run_step "02"; then
+  log "=== 02 MAP ==="
+  # Y-min filter prevents matching the closed drawer "Map" item in the semantics tree.
+  tap_text_below "Map" "$CARD_Y_MIN"
+  wait_s 3 "Map loading"
+  # Start spoofing so the map screenshot shows the running state (stop button visible).
+  # content-desc is "Start location simulation" — "location simulation" is a reliable substring.
+  tap_text "location simulation"
+  wait_s 3 "Starting simulation"
+  screenshot "02_map"
+fi
 
 # ── 03. Routes screen ────────────────────────────────────────────────────────
 
-log "=== 03 ROUTES ==="
-go_idle
-tap_text_below "Routes" "$CARD_Y_MIN"
-wait_s 2 "Routes loading"
-screenshot "03_routes"
+if should_run_step "03"; then
+  log "=== 03 ROUTES ==="
+  go_idle
+  tap_text_below "Routes" "$CARD_Y_MIN"
+  wait_s 2 "Routes loading"
+  screenshot "03_routes"
+fi
 
 # ── 04. Favorites screen ─────────────────────────────────────────────────────
 
-log "=== 04 FAVORITES ==="
-go_idle
-tap_text_below "Favorites" "$CARD_Y_MIN"
-wait_s 2 "Favorites loading"
-screenshot "04_favorites"
+if should_run_step "04"; then
+  log "=== 04 FAVORITES ==="
+  go_idle
+  tap_text_below "Favorites" "$CARD_Y_MIN"
+  wait_s 2 "Favorites loading"
+  screenshot "04_favorites"
+fi
 
 # ── 05. Settings screen ──────────────────────────────────────────────────────
 
-log "=== 05 SETTINGS ==="
-go_idle
-tap_text_below "Settings" "$CARD_Y_MIN"
-wait_s 2 "Settings loading"
-screenshot "05_settings"
+if should_run_step "05"; then
+  log "=== 05 SETTINGS ==="
+  go_idle
+  tap_text_below "Settings" "$CARD_Y_MIN"
+  wait_s 2 "Settings loading"
+  screenshot "05_settings"
+fi
 
 # ── 06. Map → Routes bottom sheet ────────────────────────────────────────────
 
-log "=== 06 MAP ROUTES SHEET ==="
-go_idle
-tap_text_below "Map" "$CARD_Y_MIN"
-wait_s 3 "Map loading"
-# Use content-desc of the FAB, not the bare label "Routes" which would match the drawer.
-tap_text "open routes"
-wait_s 2 "Routes sheet opening"
-screenshot "06_map_routes_sheet"
-back
-wait_s 1 "Dismissing sheet"
-
-# ── 07. Map → Favorites bottom sheet ─────────────────────────────────────────
-
-log "=== 07 MAP FAVORITES SHEET ==="
-tap_text "open favorites"
-wait_s 2 "Favorites sheet opening"
-screenshot "07_map_favorites_sheet"
-back
-wait_s 1 "Dismissing sheet"
-
-# ── 08. Map → Roaming bottom sheet ───────────────────────────────────────────
-
-log "=== 08 MAP ROAMING SHEET ==="
-tap_text "start roaming"
-wait_s 2 "Roaming sheet opening"
-screenshot "08_map_roaming_sheet"
-back
-wait_s 1 "Dismissing sheet"
-
-# ── 09. Route creator ────────────────────────────────────────────────────────
-
-log "=== 09 ROUTE CREATOR ==="
-go_idle
-tap_text_below "Routes" "$CARD_Y_MIN"
-wait_s 2 "Routes loading"
-tap_text "Add route"
-wait_s 1 "Add menu opening"
-tap_text "from map"
-wait_s 3 "Route creator loading"
-screenshot "09_route_creator"
-back
-wait_s 1 "Returning to Routes"
-
-# ── 10. Route detail ─────────────────────────────────────────────────────────
-
-log "=== 10 ROUTE DETAIL ==="
-if $AUTO; then
-  seed_route_if_needed
-else
-  pause_for_user "Ensure at least one route exists in the Routes list, then press ENTER."
-fi
-# Open the overflow menu on the first visible route and tap Edit.
-# tap_text_below filters out the TopAppBar hamburger which shares content-desc "Menu".
-tap_text_below "Menu" 230
-wait_s 1 "Menu opening"
-tap_text "Edit"
-wait_s 2 "Route detail loading"
-screenshot "10_route_detail"
-back
-wait_s 1 "Returning to Routes"
-
-# ── 11. Map picker (from Favorites add flow) ──────────────────────────────────
-
-log "=== 11 MAP PICKER ==="
-go_idle
-tap_text_below "Favorites" "$CARD_Y_MIN"
-wait_s 2 "Favorites loading"
-tap_text "Add favorite"
-wait_s 1 "Add menu opening"
-tap_text "from map"
-wait_s 3 "Map picker loading"
-screenshot "11_map_picker"
-back
-wait_s 1 "Returning to Favorites"
-
-# ── 12. Settings scrolled ────────────────────────────────────────────────────
-
-log "=== 12 SETTINGS SCROLLED ==="
-go_idle
-tap_text_below "Settings" "$CARD_Y_MIN"
-wait_s 2 "Settings loading"
-$ADB shell input swipe 540 1800 540 600 600
-wait_s 1 "Scrolling"
-screenshot "12_settings_scrolled"
-
-# ── 13. QR share dialog ──────────────────────────────────────────────────────
-
-log "=== 13 QR SHARE ==="
-tap_text "Export"
-wait_s 1 "Export menu opening"
-tap_text "QR"
-wait_s 2 "QR share dialog opening"
-screenshot "13_qr_share"
-back
-wait_s 1 "Dismissing QR dialog"
-
-# ── 14. Joystick overlay ─────────────────────────────────────────────────────
-
-log "=== 14 JOYSTICK OVERLAY ==="
-if $AUTO; then
+if should_run_step "06"; then
+  log "=== 06 MAP ROUTES SHEET ==="
   go_idle
   tap_text_below "Map" "$CARD_Y_MIN"
   wait_s 3 "Map loading"
-  # Start spoofing first — required for JoystickOverlayService to bind correctly.
-  # content-desc is "Start location simulation"; "location simulation" is a safe substring.
-  tap_text "location simulation"
-  wait_s 3 "Starting simulation"
-  # Show joystick via widget panel toggle (EXTRA_SHOW_OVERLAY via am startservice is
-  # unreliable when the service is already running — the extra is not re-delivered).
-  show_joystick_via_widget
-  # Collapse the widget panel so the joystick is the focus of the screenshot.
-  collapse_widget_panel
-else
-  pause_for_user "Start mock location then enable the Floating Joystick.
-  The joystick overlay should be visible on screen before you press ENTER.
-  Tip: Map screen → start spoofing → enable joystick from widget or drawer."
+  # Use content-desc of the FAB, not the bare label "Routes" which would match the drawer.
+  tap_text "open routes"
+  wait_s 2 "Routes sheet opening"
+  screenshot "06_map_routes_sheet"
+  back
+  wait_s 1 "Dismissing sheet"
 fi
-screenshot "14_joystick_overlay"
+
+# ── 07. Map → Favorites bottom sheet ─────────────────────────────────────────
+
+if should_run_step "07"; then
+  log "=== 07 MAP FAVORITES SHEET ==="
+  tap_text "open favorites"
+  wait_s 2 "Favorites sheet opening"
+  screenshot "07_map_favorites_sheet"
+  back
+  wait_s 1 "Dismissing sheet"
+fi
+
+# ── 08. Map → Roaming bottom sheet ───────────────────────────────────────────
+
+if should_run_step "08"; then
+  log "=== 08 MAP ROAMING SHEET ==="
+  tap_text "start roaming"
+  wait_s 2 "Roaming sheet opening"
+  screenshot "08_map_roaming_sheet"
+  back
+  wait_s 1 "Dismissing sheet"
+fi
+
+# ── 09. Route creator ────────────────────────────────────────────────────────
+
+if should_run_step "09"; then
+  log "=== 09 ROUTE CREATOR ==="
+  go_idle
+  tap_text_below "Routes" "$CARD_Y_MIN"
+  wait_s 2 "Routes loading"
+  tap_text "Add route"
+  wait_s 1 "Add menu opening"
+  tap_text "from map"
+  wait_s 3 "Route creator loading"
+  screenshot "09_route_creator"
+  back
+  wait_s 1 "Returning to Routes"
+fi
+
+# ── 10. Route detail ─────────────────────────────────────────────────────────
+
+if should_run_step "10"; then
+  log "=== 10 ROUTE DETAIL ==="
+  if $AUTO; then
+    seed_route_if_needed
+  else
+    pause_for_user "Ensure at least one route exists in the Routes list, then press ENTER."
+  fi
+  # Open the overflow menu on the first visible route and tap Edit.
+  # tap_text_below filters out the TopAppBar hamburger which shares content-desc "Menu".
+  tap_text_below "Menu" 230
+  wait_s 1 "Menu opening"
+  tap_text "Edit"
+  wait_s 2 "Route detail loading"
+  screenshot "10_route_detail"
+  back
+  wait_s 1 "Returning to Routes"
+fi
+
+# ── 11. Map picker (from Favorites add flow) ──────────────────────────────────
+
+if should_run_step "11"; then
+  log "=== 11 MAP PICKER ==="
+  go_idle
+  tap_text_below "Favorites" "$CARD_Y_MIN"
+  wait_s 2 "Favorites loading"
+  tap_text "Add favorite"
+  wait_s 1 "Add menu opening"
+  tap_text "from map"
+  wait_s 3 "Map picker loading"
+  screenshot "11_map_picker"
+  back
+  wait_s 1 "Returning to Favorites"
+fi
+
+# ── 12. Settings scrolled ────────────────────────────────────────────────────
+
+if should_run_step "12"; then
+  log "=== 12 SETTINGS SCROLLED ==="
+  go_idle
+  tap_text_below "Settings" "$CARD_Y_MIN"
+  wait_s 2 "Settings loading"
+  $ADB shell input swipe 540 1800 540 600 600
+  wait_s 1 "Scrolling"
+  screenshot "12_settings_scrolled"
+fi
+
+# ── 13. QR share dialog ──────────────────────────────────────────────────────
+
+if should_run_step "13"; then
+  log "=== 13 QR SHARE ==="
+  tap_text "Export"
+  wait_s 1 "Export menu opening"
+  tap_text "QR"
+  wait_s 2 "QR share dialog opening"
+  screenshot "13_qr_share"
+  back
+  wait_s 1 "Dismissing QR dialog"
+fi
+
+# ── 14. Joystick overlay ─────────────────────────────────────────────────────
+
+if should_run_step "14"; then
+  log "=== 14 JOYSTICK OVERLAY ==="
+  if $AUTO; then
+    go_idle
+    tap_text_below "Map" "$CARD_Y_MIN"
+    wait_s 3 "Map loading"
+    # Start spoofing first — required for JoystickOverlayService to bind correctly.
+    # content-desc is "Start location simulation"; "location simulation" is a safe substring.
+    tap_text "location simulation"
+    wait_s 3 "Starting simulation"
+    # Show joystick via widget panel toggle (EXTRA_SHOW_OVERLAY via am startservice is
+    # unreliable when the service is already running — the extra is not re-delivered).
+    show_joystick_via_widget
+    # Collapse the widget panel so the joystick is the focus of the screenshot.
+    collapse_widget_panel
+  else
+    pause_for_user "Start mock location then enable the Floating Joystick.
+    The joystick overlay should be visible on screen before you press ENTER.
+    Tip: Map screen → start spoofing → enable joystick from widget or drawer."
+  fi
+  screenshot "14_joystick_overlay"
+fi
 
 # ── 15. Floating widget ──────────────────────────────────────────────────────
 
-log "=== 15 FLOATING WIDGET ==="
-if $AUTO; then
-  # Widget service already running; expand the panel for the screenshot.
-  expand_widget_panel
-else
-  pause_for_user "Dismiss the joystick (if open) and enable the Floating Widget instead.
-  The widget bubble should be visible on screen before you press ENTER."
+if should_run_step "15"; then
+  log "=== 15 FLOATING WIDGET ==="
+  if $AUTO; then
+    # Widget service already running; expand the panel for the screenshot.
+    expand_widget_panel
+  else
+    pause_for_user "Dismiss the joystick (if open) and enable the Floating Widget instead.
+    The widget bubble should be visible on screen before you press ENTER."
+  fi
+  screenshot "15_widget_overlay"
 fi
-screenshot "15_widget_overlay"
 
 # ── 16. Routes add button (FAB) ───────────────────────────────────────────────
 
-log "=== 16 ROUTES ADD BUTTON ==="
-go_idle
-tap_text_below "Routes" "$CARD_Y_MIN"
-wait_s 2 "Routes loading"
-screenshot "16_routes_add_button"
+if should_run_step "16"; then
+  log "=== 16 ROUTES ADD BUTTON ==="
+  go_idle
+  tap_text_below "Routes" "$CARD_Y_MIN"
+  wait_s 2 "Routes loading"
+  tap_text "Add route"
+  wait_s 1 "Add menu opening"
+  screenshot "16_routes_add_button"
+fi
 
 # ── 17. Favorites add button (FAB) ────────────────────────────────────────────
 
-log "=== 17 FAVORITES ADD BUTTON ==="
-go_idle
-tap_text_below "Favorites" "$CARD_Y_MIN"
-wait_s 2 "Favorites loading"
-screenshot "17_favorites_add_button"
+if should_run_step "17"; then
+  log "=== 17 FAVORITES ADD BUTTON ==="
+  go_idle
+  tap_text_below "Favorites" "$CARD_Y_MIN"
+  wait_s 2 "Favorites loading"
+  tap_text "Add favorite"
+  wait_s 1 "Add menu opening"
+  screenshot "17_favorites_add_button"
+fi
 
-# ── Done ─────────────────────────────────────────────────────────────────────
+# ── Done ─────────────────────────────────────────────
 
 demo_mode_exit
 trap - EXIT
 
+# Generate Play Store variants for all captured screenshots
+generate_playstore_variants
+
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Gallery captured: $OUTPUT_DIR"
+echo "  Screenshots complete: $OUTPUT_DIR"
 echo ""
 ls -1 "$OUTPUT_DIR"/*.png 2>/dev/null | while read -r f; do
   SIZE=$(du -h "$f" | cut -f1)
