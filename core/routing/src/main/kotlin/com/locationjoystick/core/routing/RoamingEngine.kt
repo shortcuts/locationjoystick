@@ -52,7 +52,11 @@ class RoamingEngine
         private val routeInterpolator: RouteInterpolator,
         dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default,
     ) : AutoCloseable {
-        /** Coroutine scope for all roaming coroutines. Uses SupervisorJob so one failure doesn't cancel others. */
+        /**
+         * Coroutine scope for all roaming coroutines. Uses SupervisorJob so one failure doesn't cancel others.
+         * Ownership is process-scoped: call [close] only on process teardown — not on service stop/restart,
+         * since this singleton is reused across service restarts within the same process.
+         */
         private val engineScope = CoroutineScope(SupervisorJob() + dispatcher)
 
         /** Current active roaming job. Null when not roaming. */

@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicReference
@@ -128,9 +129,7 @@ class MockLocationService : Service() {
     private val _state = MutableStateFlow(MockLocationState.IDLE)
     val state: StateFlow<MockLocationState> = _state.asStateFlow()
 
-    @Volatile private var currentLat: Double = 0.0
-
-    @Volatile private var currentLon: Double = 0.0
+    private val positionRef = AtomicReference(LatLng(0.0, 0.0))
 
     @Volatile private var currentSpeedMs: Float = 0.0f
 
@@ -279,18 +278,15 @@ class MockLocationService : Service() {
     }
 
     /**
-     * Single write entry point for [currentLat]/[currentLon]. All position writers — teleport,
-     * walk vectors, replay callbacks, and the repository position observer — funnel through here so
-     * the latitude/longitude pair is always written together, eliminating the interleaving between
-     * a mid-tick teleport and [updatePositionWithVector].
+     * Single write entry point for position. All position writers funnel through here so the
+     * latitude/longitude pair is always written atomically, eliminating torn reads between a
+     * mid-tick teleport and [updatePositionWithVector].
      */
-    @Synchronized
     private fun writeCurrentPosition(
         lat: Double,
         lon: Double,
     ) {
-        currentLat = lat
-        currentLon = lon
+        positionRef.set(LatLng(lat, lon))
     }
 
     private fun hasLocationPermission(): Boolean =
@@ -364,8 +360,9 @@ class MockLocationService : Service() {
             }
 
             ACTION_UPDATE_POSITION -> {
-                val lat = intent.getDoubleExtra(ServiceConstants.EXTRA_LAT, currentLat)
-                val lon = intent.getDoubleExtra(ServiceConstants.EXTRA_LON, currentLon)
+                val currentPos = positionRef.get()
+                val lat = intent.getDoubleExtra(ServiceConstants.EXTRA_LAT, currentPos.latitude)
+                val lon = intent.getDoubleExtra(ServiceConstants.EXTRA_LON, currentPos.longitude)
                 val speedMs = intent.getFloatExtra(ServiceConstants.EXTRA_SPEED_MS, 0f)
                 val bearing = intent.getFloatExtra(ServiceConstants.EXTRA_BEARING, 0f)
                 if (speedMs > 0f) {
@@ -442,13 +439,16 @@ class MockLocationService : Service() {
         // stopSpoofing() handles this on normal stop, but onDestroy may be called without it.
         // Always persist location; the rememberLastLocation setting only controls whether to restore it.
         if (_state.value == MockLocationState.RUNNING) {
-            val pos = LatLng(currentLat, currentLon)
-            kotlinx.coroutines.runBlocking { settingsRepository.setLastLocation(pos) }
+            val pos = positionRef.get()
+            CoroutineScope(NonCancellable + Dispatchers.IO).launch { settingsRepository.setLastLocation(pos) }
         }
         locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
         routeReplayEngine.cancelActiveReplay()
         roamingRepository.resetOnServiceDestroy()
+        // RoamingEngine.close() (which cancels engineScope) is not called here because RoamingEngine
+        // is not injected in this service. resetOnServiceDestroy() cancels the active job via stop();
+        // any further orphan cleanup happens at process death when the JVM GC collects the singleton.
         serviceScope.cancel()
         super.onDestroy()
     }
@@ -529,7 +529,7 @@ class MockLocationService : Service() {
             serviceScope.launch { roamingRepository.stopRoaming() }
         }
         // Always persist location; the rememberLastLocation setting only controls whether to restore it.
-        val pos = LatLng(currentLat, currentLon)
+        val pos = positionRef.get()
         serviceScope.launch { settingsRepository.setLastLocation(pos) }
         removeTestProvider()
         _state.value = MockLocationState.IDLE
@@ -540,7 +540,7 @@ class MockLocationService : Service() {
         Log.i(TAG, "Spoofing stopped")
     }
 
-    fun getCurrentPosition(): LatLng = LatLng(currentLat, currentLon)
+    fun getCurrentPosition(): LatLng = positionRef.get()
 
     private fun handleReplayStart(
         routeId: String,
@@ -677,9 +677,10 @@ class MockLocationService : Service() {
             lastSatelliteUpdateMs = nowMs
         }
 
+        val currentPos = positionRef.get()
         return LocationSnapshot(
-            latitude = currentLat,
-            longitude = currentLon,
+            latitude = currentPos.latitude,
+            longitude = currentPos.longitude,
             speedMs = currentSpeedMs,
             bearing = currentBearing,
             lastNonZeroBearing = lastNonZeroBearing,

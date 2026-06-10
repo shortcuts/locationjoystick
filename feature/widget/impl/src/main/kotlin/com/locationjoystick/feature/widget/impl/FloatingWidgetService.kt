@@ -43,7 +43,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.view.WindowManager as AndroidWindowManager
@@ -105,6 +104,7 @@ class FloatingWidgetService :
     private val joystickVisibleFlow = MutableStateFlow(false)
     private val joystickLockedFlow = MutableStateFlow(false)
     private val activeProfileIdFlow = MutableStateFlow("walk")
+    private val profilesFlow = MutableStateFlow<List<com.locationjoystick.core.model.SpeedProfile>>(emptyList())
 
     // Activity state — driven entirely by locationRepository.currentMode via isActivityActive/isActivityPausable
     private val routeExpandedFlow = MutableStateFlow(false)
@@ -155,6 +155,11 @@ class FloatingWidgetService :
         lifecycleScope.launch {
             settingsRepository.getActiveSpeedProfile().collect { profile ->
                 activeProfileIdFlow.value = profile.id
+            }
+        }
+        lifecycleScope.launch {
+            settingsRepository.getSpeedProfiles().collect { profiles ->
+                profilesFlow.value = profiles
             }
         }
         lifecycleScope.launch {
@@ -384,21 +389,19 @@ class FloatingWidgetService :
     }
 
     private fun cycleSpeedProfile() {
-        serviceScope.launch {
-            val profiles = settingsRepository.getSpeedProfiles().first()
-            if (profiles.isEmpty()) {
-                Log.w(TAG, "cycleSpeedProfile: no profiles available, skipping")
-                return@launch
-            }
-            val active = settingsRepository.getActiveSpeedProfile().first()
-            val currentIndex = profiles.indexOfFirst { it.id == active.id }
-            if (currentIndex == -1) {
-                Log.w(TAG, "cycleSpeedProfile: active profile not found in list, resetting to first")
-            }
-            val nextIndex = (currentIndex + 1) % profiles.size
-            settingsRepository.setActiveProfileId(profiles[nextIndex].id)
-            Log.d(TAG, "Cycled speed profile to: ${profiles[nextIndex].id}")
+        val profiles = profilesFlow.value
+        if (profiles.isEmpty()) {
+            Log.w(TAG, "cycleSpeedProfile: no profiles available, skipping")
+            return
         }
+        val activeId = activeProfileIdFlow.value
+        val currentIndex = profiles.indexOfFirst { it.id == activeId }
+        if (currentIndex == -1) {
+            Log.w(TAG, "cycleSpeedProfile: active profile not found in list, resetting to first")
+        }
+        val nextIndex = (currentIndex + 1) % profiles.size
+        serviceScope.launch { settingsRepository.setActiveProfileId(profiles[nextIndex].id) }
+        Log.d(TAG, "Cycled speed profile to: ${profiles[nextIndex].id}")
     }
 
     private val panelCallbacks =

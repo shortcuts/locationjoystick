@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -65,24 +66,38 @@ class MapViewModel
 
         private fun observeSharedState() {
             viewModelScope.launch {
-                mapController.sharedState.collect { shared ->
-                    _uiState.update { current ->
-                        current.copy(
-                            currentPosition = shared.currentPosition,
-                            mockLocationState = shared.mockLocationState,
-                            isWalkPaused = shared.isWalkPaused,
-                            isRouteReplay = shared.isRouteReplay,
-                            routes = shared.routes,
-                            favorites = shared.favorites,
-                            favoriteCooldownStates = shared.favoriteCooldownStates,
-                            routeTrace = shared.routeTrace,
-                            walkMode = shared.walkMode,
-                            isRoaming = shared.isRoaming,
-                            isRoamingPaused = shared.isRoamingPaused,
-                            speedUnit = shared.speedUnit,
-                        )
+                mapController.sharedState
+                    .map { it.currentPosition }
+                    .distinctUntilChanged()
+                    .collect { pos ->
+                        _uiState.update { it.copy(currentPosition = pos) }
                     }
-                }
+            }
+            viewModelScope.launch {
+                mapController.sharedState
+                    .distinctUntilChangedBy { shared ->
+                        Triple(shared.routes, shared.favorites, shared.mockLocationState) to
+                            Triple(shared.isWalkPaused, shared.isRouteReplay, shared.walkMode) to
+                            Triple(shared.isRoaming, shared.isRoamingPaused, shared.speedUnit) to
+                            Pair(shared.favoriteCooldownStates, shared.routeTrace)
+                    }
+                    .collect { shared ->
+                        _uiState.update { current ->
+                            current.copy(
+                                mockLocationState = shared.mockLocationState,
+                                isWalkPaused = shared.isWalkPaused,
+                                isRouteReplay = shared.isRouteReplay,
+                                routes = shared.routes,
+                                favorites = shared.favorites,
+                                favoriteCooldownStates = shared.favoriteCooldownStates,
+                                routeTrace = shared.routeTrace,
+                                walkMode = shared.walkMode,
+                                isRoaming = shared.isRoaming,
+                                isRoamingPaused = shared.isRoamingPaused,
+                                speedUnit = shared.speedUnit,
+                            )
+                        }
+                    }
             }
         }
 
