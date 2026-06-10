@@ -195,6 +195,8 @@ class FavoriteRepository
                     HotLocation("Go Fest Investigation District", 41.916267, -87.63231, "United States", "Chicago"),
                     HotLocation("Go Fest Park", 41.875549, -87.619066, "United States", "Chicago"),
                     HotLocation("Go Fest Scouting District", 41.861967, -87.663436, "United States", "Chicago"),
+                    HotLocation("Go Fest Park", 55.701744, 12.569932, "United States", "Chicago"),
+                    HotLocation("Go Fest City Experience", 55.684220, 12.580021, "Denmark", "Copenhagen"),
                     HotLocation("Honolulu", 21.29836, -157.86011, "United States", "Honolulu"),
                     HotLocation("Indaial", -26.89304, -49.22998, "Brazil", "Indaial"),
                     HotLocation("Jabalquinto", 38.096122, -3.626411, "Spain", "Jabalquinto"),
