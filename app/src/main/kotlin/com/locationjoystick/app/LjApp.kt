@@ -56,23 +56,24 @@ fun LjApp(
     }
 
     LaunchedEffect(navController) {
-        navigateToFavoritesFlow.collect {
-            drawerState.close()
-            navController.navigate(FAVORITES_ROUTE) {
-                launchSingleTop = true
-                popUpTo(IDLE_ROUTE) { saveState = true }
-                restoreState = true
+        launch {
+            navigateToFavoritesFlow.collect {
+                drawerState.close()
+                navController.navigate(FAVORITES_ROUTE) {
+                    launchSingleTop = true
+                    popUpTo(IDLE_ROUTE) { saveState = true }
+                    restoreState = true
+                }
             }
         }
-    }
-
-    LaunchedEffect(navController) {
-        navigateToRoutesFlow.collect {
-            drawerState.close()
-            navController.navigate(ROUTES_ROUTE) {
-                launchSingleTop = true
-                popUpTo(IDLE_ROUTE) { saveState = true }
-                restoreState = true
+        launch {
+            navigateToRoutesFlow.collect {
+                drawerState.close()
+                navController.navigate(ROUTES_ROUTE) {
+                    launchSingleTop = true
+                    popUpTo(IDLE_ROUTE) { saveState = true }
+                    restoreState = true
+                }
             }
         }
     }

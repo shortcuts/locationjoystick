@@ -2,6 +2,7 @@ package com.locationjoystick.app
 
 import android.content.Intent
 import app.cash.turbine.test
+import com.locationjoystick.core.common.constants.AppConstants
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -24,7 +25,7 @@ class NavigateToMapFlowTest {
         intent: Intent?,
         flow: MutableSharedFlow<Unit>,
     ) {
-        if (intent?.getBooleanExtra(MainActivity.EXTRA_NAVIGATE_TO_MAP, false) == true) {
+        if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_MAP, false) == true) {
             flow.tryEmit(Unit)
         }
     }
@@ -33,7 +34,7 @@ class NavigateToMapFlowTest {
     fun `navigate_to_map true emits on flow`() {
         val flow = MutableSharedFlow<Unit>(replay = 1)
         val intent = mockk<Intent>()
-        every { intent.getBooleanExtra(MainActivity.EXTRA_NAVIGATE_TO_MAP, false) } returns true
+        every { intent.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_MAP, false) } returns true
 
         handleIntent(intent, flow)
 
@@ -45,7 +46,7 @@ class NavigateToMapFlowTest {
         runTest {
             val flow = MutableSharedFlow<Unit>(replay = 1)
             val intent = mockk<Intent>()
-            every { intent.getBooleanExtra(MainActivity.EXTRA_NAVIGATE_TO_MAP, false) } returns false
+            every { intent.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_MAP, false) } returns false
 
             handleIntent(intent, flow)
 
@@ -67,7 +68,7 @@ class NavigateToMapFlowTest {
         runTest {
             val flow = MutableSharedFlow<Unit>(replay = 1)
             val intent = mockk<Intent>()
-            every { intent.getBooleanExtra(MainActivity.EXTRA_NAVIGATE_TO_MAP, false) } returns true
+            every { intent.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_MAP, false) } returns true
 
             // Simulate cold start: handleIntent fires before LaunchedEffect collect starts
             handleIntent(intent, flow)
@@ -87,7 +88,7 @@ class NavigateToMapFlowTest {
         runTest {
             val flow = MutableSharedFlow<Unit>(replay = 1)
             val intent = mockk<Intent>()
-            every { intent.getBooleanExtra(MainActivity.EXTRA_NAVIGATE_TO_MAP, false) } returns true
+            every { intent.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_MAP, false) } returns true
 
             handleIntent(intent, flow)
             handleIntent(intent, flow)

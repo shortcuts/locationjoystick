@@ -8,6 +8,8 @@ import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.routing.OsrmClient
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -83,8 +85,14 @@ class EphemeralReplayController
                     // the first leg means the whole chain stays road-following.
                     val initial =
                         if (followRoads) {
-                            val toTarget = osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, startPos, walkTarget, followRoads = true)
-                            val toNewPoint = osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, walkTarget, newPoint, followRoads = true)
+                            val (toTarget, toNewPoint) =
+                                coroutineScope {
+                                    val a =
+                                        async { osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, startPos, walkTarget, followRoads = true) }
+                                    val b =
+                                        async { osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, walkTarget, newPoint, followRoads = true) }
+                                    a.await() to b.await()
+                                }
                             toTarget + toNewPoint.drop(1) // walkTarget is last of toTarget, first of toNewPoint
                         } else {
                             listOf(startPos) + osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, walkTarget, newPoint, followRoads = false)

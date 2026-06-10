@@ -12,9 +12,17 @@ import com.locationjoystick.core.common.constants.AppConstants
 private val CHANNEL_ID = AppConstants.NotificationConstants.CHANNEL_ID_ACTIVE
 private val CHANNEL_ID_PERM_ERROR = AppConstants.NotificationConstants.CHANNEL_ID_PERMISSION_ERROR
 
+internal enum class NotificationAction {
+    STOP,
+    PAUSE,
+    RESUME,
+    NAV_MAP,
+    NAV_FAVORITES,
+}
+
 internal data class ActionSpec(
     val label: String,
-    val actionKey: String,
+    val action: NotificationAction,
 )
 
 internal fun selectNotificationActions(
@@ -24,25 +32,25 @@ internal fun selectNotificationActions(
     when {
         !replayActive -> {
             listOf(
-                ActionSpec(AppConstants.NotificationConstants.ACTION_STOP, AppConstants.ServiceConstants.ACTION_STOP),
-                ActionSpec(AppConstants.NotificationConstants.ACTION_OPEN_MAP, "nav_map"),
-                ActionSpec(AppConstants.NotificationConstants.ACTION_OPEN_FAVORITES, "nav_favorites"),
+                ActionSpec(AppConstants.NotificationConstants.ACTION_STOP, NotificationAction.STOP),
+                ActionSpec(AppConstants.NotificationConstants.ACTION_OPEN_MAP, NotificationAction.NAV_MAP),
+                ActionSpec(AppConstants.NotificationConstants.ACTION_OPEN_FAVORITES, NotificationAction.NAV_FAVORITES),
             )
         }
 
         replayPaused -> {
             listOf(
-                ActionSpec(AppConstants.NotificationConstants.ACTION_STOP, AppConstants.ServiceConstants.ACTION_STOP),
-                ActionSpec(AppConstants.NotificationConstants.ACTION_RESUME, AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_RESUME),
-                ActionSpec(AppConstants.NotificationConstants.ACTION_OPEN_MAP, "nav_map"),
+                ActionSpec(AppConstants.NotificationConstants.ACTION_STOP, NotificationAction.STOP),
+                ActionSpec(AppConstants.NotificationConstants.ACTION_RESUME, NotificationAction.RESUME),
+                ActionSpec(AppConstants.NotificationConstants.ACTION_OPEN_MAP, NotificationAction.NAV_MAP),
             )
         }
 
         else -> {
             listOf(
-                ActionSpec(AppConstants.NotificationConstants.ACTION_STOP, AppConstants.ServiceConstants.ACTION_STOP),
-                ActionSpec(AppConstants.NotificationConstants.ACTION_PAUSE, AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_PAUSE),
-                ActionSpec(AppConstants.NotificationConstants.ACTION_OPEN_MAP, "nav_map"),
+                ActionSpec(AppConstants.NotificationConstants.ACTION_STOP, NotificationAction.STOP),
+                ActionSpec(AppConstants.NotificationConstants.ACTION_PAUSE, NotificationAction.PAUSE),
+                ActionSpec(AppConstants.NotificationConstants.ACTION_OPEN_MAP, NotificationAction.NAV_MAP),
             )
         }
     }
@@ -51,17 +59,18 @@ private fun activityPendingIntent(
     context: Context,
     requestCode: Int,
     extraKey: String,
-): PendingIntent =
-    PendingIntent.getActivity(
+): PendingIntent? {
+    val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return null
+    return PendingIntent.getActivity(
         context,
         requestCode,
-        Intent().apply {
-            setClassName(context.packageName, AppConstants.ServiceConstants.MAIN_ACTIVITY_CLASS)
+        launchIntent.apply {
             putExtra(extraKey, true)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         },
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
+}
 
 internal fun createMockLocationNotificationChannels(context: Context) {
     val channel =
@@ -148,13 +157,12 @@ internal fun buildMockLocationNotification(
 
     for (action in selectNotificationActions(replayActive, replayPaused)) {
         val pendingIntent =
-            when (action.actionKey) {
-                AppConstants.ServiceConstants.ACTION_STOP -> stopPendingIntent
-                AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_PAUSE -> pausePendingIntent
-                AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_RESUME -> resumePendingIntent
-                "nav_map" -> mapPendingIntent
-                "nav_favorites" -> favoritesPendingIntent
-                else -> null
+            when (action.action) {
+                NotificationAction.STOP -> stopPendingIntent
+                NotificationAction.PAUSE -> pausePendingIntent
+                NotificationAction.RESUME -> resumePendingIntent
+                NotificationAction.NAV_MAP -> mapPendingIntent
+                NotificationAction.NAV_FAVORITES -> favoritesPendingIntent
             }
         if (pendingIntent != null) {
             builder.addAction(0, action.label, pendingIntent)

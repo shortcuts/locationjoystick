@@ -9,6 +9,7 @@ import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.isRouteReplay
 import com.locationjoystick.core.location.isSpoofing
+import com.locationjoystick.core.location.nonPositionKey
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RecentSearch
@@ -75,12 +76,7 @@ class MapViewModel
             }
             viewModelScope.launch {
                 mapController.sharedState
-                    .distinctUntilChangedBy { shared ->
-                        Triple(shared.routes, shared.favorites, shared.mockLocationState) to
-                            Triple(shared.isWalkPaused, shared.isRouteReplay, shared.walkMode) to
-                            Triple(shared.isRoaming, shared.isRoamingPaused, shared.speedUnit) to
-                            Pair(shared.favoriteCooldownStates, shared.routeTrace)
-                    }
+                    .distinctUntilChangedBy { it.nonPositionKey() }
                     .collect { shared ->
                         _uiState.update { current ->
                             current.copy(

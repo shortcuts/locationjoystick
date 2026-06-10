@@ -199,7 +199,6 @@ object AppConstants {
         const val EXTRA_NAVIGATE_TO_MAP = "navigate_to_map"
         const val EXTRA_NAVIGATE_TO_FAVORITES = "navigate_to_favorites"
         const val EXTRA_NAVIGATE_TO_ROUTES = "navigate_to_routes"
-        const val MAIN_ACTIVITY_CLASS = "com.locationjoystick.app.MainActivity"
         const val ACTION_OVERLAY_SHOW = "com.locationjoystick.action.OVERLAY_SHOW"
         const val ACTION_OVERLAY_HIDE = "com.locationjoystick.action.OVERLAY_HIDE"
         const val EXTRA_SHOW_OVERLAY = "extra_show_overlay"

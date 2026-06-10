@@ -41,3 +41,12 @@ val MapSharedState.ephemeralWaypoints: List<LatLng>
 val MapSharedState.isWalkActive: Boolean get() = walkMode !is WalkMode.Idle
 val MapSharedState.isRouteReplay: Boolean get() = mockMode == MockMode.ROUTE_REPLAY
 val MapSharedState.isSpoofing: Boolean get() = mockLocationState == MockLocationState.RUNNING
+
+fun MapSharedState.nonPositionKey(): Any =
+    Triple(
+        Triple(mockLocationState, mockMode, isWalkPaused) to
+            Triple(walkMode, routeTrace, routes) to
+            Triple(favorites, favoriteCooldownStates, isRoaming),
+        Triple(isRoamingPaused, speedUnit, recentSearches),
+        roamingDefaults,
+    )

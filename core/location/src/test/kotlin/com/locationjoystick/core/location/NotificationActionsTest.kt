@@ -43,26 +43,26 @@ class NotificationActionsTest {
     }
 
     @Test
-    fun `action keys are correct for non-replay`() {
+    fun `action enums are correct for non-replay`() {
         val actions = selectNotificationActions(replayActive = false, replayPaused = false)
-        assertEquals(AppConstants.ServiceConstants.ACTION_STOP, actions[0].actionKey)
-        assertEquals("nav_map", actions[1].actionKey)
-        assertEquals("nav_favorites", actions[2].actionKey)
+        assertEquals(NotificationAction.STOP, actions[0].action)
+        assertEquals(NotificationAction.NAV_MAP, actions[1].action)
+        assertEquals(NotificationAction.NAV_FAVORITES, actions[2].action)
     }
 
     @Test
-    fun `action keys are correct for replay paused`() {
+    fun `action enums are correct for replay paused`() {
         val actions = selectNotificationActions(replayActive = true, replayPaused = true)
-        assertEquals(AppConstants.ServiceConstants.ACTION_STOP, actions[0].actionKey)
-        assertEquals(AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_RESUME, actions[1].actionKey)
-        assertEquals("nav_map", actions[2].actionKey)
+        assertEquals(NotificationAction.STOP, actions[0].action)
+        assertEquals(NotificationAction.RESUME, actions[1].action)
+        assertEquals(NotificationAction.NAV_MAP, actions[2].action)
     }
 
     @Test
-    fun `action keys are correct for replay running`() {
+    fun `action enums are correct for replay running`() {
         val actions = selectNotificationActions(replayActive = true, replayPaused = false)
-        assertEquals(AppConstants.ServiceConstants.ACTION_STOP, actions[0].actionKey)
-        assertEquals(AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_PAUSE, actions[1].actionKey)
-        assertEquals("nav_map", actions[2].actionKey)
+        assertEquals(NotificationAction.STOP, actions[0].action)
+        assertEquals(NotificationAction.PAUSE, actions[1].action)
+        assertEquals(NotificationAction.NAV_MAP, actions[2].action)
     }
 }

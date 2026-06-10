@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.DeepLinkRepository
 import com.locationjoystick.core.designsystem.LjTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -21,10 +22,7 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var deepLinkRepository: DeepLinkRepository
 
     companion object {
-        const val EXTRA_NAVIGATE_TO_MAP = "navigate_to_map"
         const val EXTRA_NAVIGATE_TO_ROUTE_CREATOR = "navigate_to_route_creator"
-        const val EXTRA_NAVIGATE_TO_FAVORITES = "navigate_to_favorites"
-        const val EXTRA_NAVIGATE_TO_ROUTES = "navigate_to_routes"
         const val ACTION_MOVE_TO_BACK = "com.locationjoystick.app.ACTION_MOVE_TO_BACK"
     }
 
@@ -73,16 +71,16 @@ class MainActivity : ComponentActivity() {
     }
 
     internal fun handleIntent(intent: Intent?) {
-        if (intent?.getBooleanExtra(EXTRA_NAVIGATE_TO_MAP, false) == true) {
+        if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_MAP, false) == true) {
             navigateToMapMutableFlow.tryEmit(Unit)
         }
         if (intent?.getBooleanExtra(EXTRA_NAVIGATE_TO_ROUTE_CREATOR, false) == true) {
             navigateToRouteCreatorMutableFlow.tryEmit(Unit)
         }
-        if (intent?.getBooleanExtra(EXTRA_NAVIGATE_TO_FAVORITES, false) == true) {
+        if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_FAVORITES, false) == true) {
             navigateToFavoritesMutableFlow.tryEmit(Unit)
         }
-        if (intent?.getBooleanExtra(EXTRA_NAVIGATE_TO_ROUTES, false) == true) {
+        if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_ROUTES, false) == true) {
             navigateToRoutesMutableFlow.tryEmit(Unit)
         }
         if (intent?.action == ACTION_MOVE_TO_BACK) {
