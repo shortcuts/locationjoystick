@@ -52,6 +52,18 @@ fun LjDrawerContent(
         }
         Spacer(modifier = Modifier.height(16.dp))
         NavigationDrawerItem(
+            icon = { Icon(LjIcons.Home, "Home") },
+            label = { Text("Home") },
+            selected = currentRoute == IDLE_ROUTE,
+            onClick = {
+                navController.navigate(IDLE_ROUTE) {
+                    popUpTo(IDLE_ROUTE) { inclusive = true }
+                    launchSingleTop = true
+                }
+                scope.launch { drawerState.close() }
+            },
+        )
+        NavigationDrawerItem(
             icon = { Icon(LjIcons.LocationOn, "Map") },
             label = { Text("Map") },
             selected = currentRoute == MAP_ROUTE,

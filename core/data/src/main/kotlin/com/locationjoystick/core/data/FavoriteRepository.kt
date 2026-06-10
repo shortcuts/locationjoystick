@@ -132,7 +132,9 @@ class FavoriteRepository
          * - [HOT_LOCATIONS] — the canonical list of hot location definitions
          * - ISSUES.md (lines 75–87) — full technical debt entry
          */
-        suspend fun upsertHotLocations(selectedIds: Set<String> = HOT_LOCATIONS.map { idForLocation(it.name, it.city) }.toSet()): Result<Unit> =
+        suspend fun upsertHotLocations(
+            selectedIds: Set<String> = HOT_LOCATIONS.map { idForLocation(it.name, it.city) }.toSet(),
+        ): Result<Unit> =
             withContext(Dispatchers.IO) {
                 runCatching {
                     HOT_LOCATIONS.forEach { location ->
@@ -170,8 +172,10 @@ class FavoriteRepository
         companion object {
             private const val HOT_ID_PREFIX = "hot_"
 
-            fun idForLocation(name: String, city: String): String =
-                HOT_ID_PREFIX + "$name $city".lowercase().replace(Regex("[^a-z0-9]"), "_")
+            fun idForLocation(
+                name: String,
+                city: String,
+            ): String = HOT_ID_PREFIX + "$name $city".lowercase().replace(Regex("[^a-z0-9]"), "_")
 
             val HOT_LOCATIONS =
                 listOf(

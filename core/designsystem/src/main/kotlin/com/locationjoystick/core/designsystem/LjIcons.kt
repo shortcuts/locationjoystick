@@ -22,6 +22,7 @@ import androidx.compose.material.icons.rounded.DeveloperMode
 import androidx.compose.material.icons.rounded.Directions
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
@@ -68,6 +69,7 @@ object LjIcons {
     val FavoriteBorder = Icons.Outlined.FavoriteBorder
     val FileDownload = Icons.Outlined.FileDownload
     val FileUpload = Icons.Outlined.FileUpload
+    val Home = Icons.Rounded.Home
     val Info = Icons.Rounded.Info
     val Joystick = Icons.Rounded.SportsEsports
     val Layers = Icons.Outlined.Layers
