@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,6 +57,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.HotLocation
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.component.AppIcon
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSegmentedControl
@@ -531,8 +533,18 @@ private fun SettingsHubScreen(
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(40.dp))
+            AppIcon()
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "locationjoystick",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(modifier = Modifier.height(32.dp))
             SettingsDestinationCard(
                 icon = LjIcons.LocationOn,
                 title = "GPS Settings",
