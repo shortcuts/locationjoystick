@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/shortcuts/locationjoystick/compare/v0.7.0...v0.7.1) (2026-06-11)
+
+
+### Bug Fixes
+
+* trigger release ([d448ba0](https://github.com/shortcuts/locationjoystick/commit/d448ba0d97c8fbeab53c86a4b0fee8a2e8afb3b9))
+
 ## [0.7.0](https://github.com/shortcuts/locationjoystick/compare/v0.6.0...v0.7.0) (2026-06-11)
 
 
