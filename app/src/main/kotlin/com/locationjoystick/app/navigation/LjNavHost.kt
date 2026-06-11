@@ -157,13 +157,7 @@ fun LjNavHost(
                         navController.navigate("$ROUTE_CREATOR_ROUTE/${routeType.name}")
                     },
                     onImportGpx = {
-                        gpxLauncher.launch(
-                            arrayOf(
-                                com.locationjoystick.core.common.constants.AppConstants.ExportConstants.GPX_MIME_TYPE,
-                                "application/xml",
-                                "text/xml",
-                            ),
-                        )
+                        gpxLauncher.launch(arrayOf("*/*"))
                     },
                     onOpenDrawer = onOpenDrawer,
                     viewModel = viewModel,
