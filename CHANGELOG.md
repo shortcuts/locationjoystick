@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0](https://github.com/shortcuts/locationjoystick/compare/v0.6.0...v0.7.0) (2026-06-11)
+
+
+### Features
+
+* add Via Roads variants for all hot routes ([7ed72c2](https://github.com/shortcuts/locationjoystick/commit/7ed72c25555e5e517a4eb0103d9afcc5f6153d07))
+
+
+### Bug Fixes
+
+* cancel previous replay job before starting a new one ([23c59dc](https://github.com/shortcuts/locationjoystick/commit/23c59dc2935e0621df0559c035f08ceb33489f3a))
+* preserve app data on install-on-phone by skipping uninstall ([d002184](https://github.com/shortcuts/locationjoystick/commit/d002184f702703d2c0dff1abf933883504be06c3))
+
 ## [0.6.0](https://github.com/shortcuts/locationjoystick/compare/v0.5.0...v0.6.0) (2026-06-11)
 
 
