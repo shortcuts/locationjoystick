@@ -63,4 +63,8 @@ class FakeRouteDao(
     override suspend fun deleteAllWaypoints() {
         waypointDao.deleteAll()
     }
+
+    override suspend fun deleteHotRoutes() {
+        routeState.value = routeState.value.filter { !it.id.startsWith("hot_route_") }
+    }
 }
