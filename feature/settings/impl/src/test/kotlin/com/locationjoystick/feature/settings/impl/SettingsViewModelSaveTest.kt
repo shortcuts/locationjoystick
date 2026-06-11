@@ -63,7 +63,7 @@ class SettingsViewModelSaveTest {
         fakeDataSource = SaveTestPreferencesDataSource()
         fakeSettingsRepo = SettingsRepository(fakeDataSource)
         fakeFavoriteRepo = FavoriteRepository(FakeFavoriteDao())
-        fakeRouteRepo = RouteRepository(routeDao = FakeRouteDao())
+        fakeRouteRepo = RouteRepository(routeDao = FakeRouteDao(), context = context)
         viewModel =
             SettingsViewModel(
                 settingsRepository = fakeSettingsRepo,
@@ -372,6 +372,8 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
                 elevationNoiseAmplitudeMs2 = AppPreferencesDataSource.DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2,
                 hotLocationsEnabled = false,
                 selectedHotLocationIds = emptySet(),
+                hotRoutesEnabled = false,
+                selectedHotRouteIds = emptySet(),
                 mapFabFeatures = emptySet(),
                 roamingDefaults = roamingDefaultsFlow.value,
             ),
@@ -526,4 +528,12 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getSelectedHotLocationIds(): Flow<Set<String>> = flowOf(emptySet())
 
     override suspend fun setSelectedHotLocationIds(ids: Set<String>) = Unit
+
+    override fun getHotRoutesEnabled(): Flow<Boolean> = flowOf(false)
+
+    override suspend fun setHotRoutesEnabled(enabled: Boolean) = Unit
+
+    override fun getSelectedHotRouteIds(): Flow<Set<String>> = flowOf(emptySet())
+
+    override suspend fun setSelectedHotRouteIds(ids: Set<String>) = Unit
 }

@@ -56,6 +56,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.HotLocation
+import com.locationjoystick.core.data.HotRoute
+import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.AppIcon
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
@@ -224,6 +226,7 @@ fun SettingsRoute(
         roamingDefaults = roamingDefaults,
         isRooted = isRooted,
         hotLocations = viewModel.availableHotLocations,
+        hotRoutes = viewModel.availableHotRoutes,
         onOpenDrawer = onOpenDrawer,
         onAction = { action ->
             when (action) {
@@ -323,6 +326,14 @@ fun SettingsRoute(
                     viewModel.setSelectedHotLocationIds(action.ids)
                 }
 
+                is SettingsAction.SetHotRoutesEnabled -> {
+                    viewModel.setHotRoutesEnabled(action.enabled)
+                }
+
+                is SettingsAction.SetSelectedHotRouteIds -> {
+                    viewModel.setSelectedHotRouteIds(action.ids)
+                }
+
                 is SettingsAction.RequestElevationAccess -> {
                     viewModel.requestElevationAccess()
                 }
@@ -387,6 +398,7 @@ internal fun SettingsScreen(
     roamingDefaults: RoamingDefaults = RoamingDefaults(),
     isRooted: Boolean = false,
     hotLocations: List<HotLocation> = emptyList(),
+    hotRoutes: List<HotRoute> = emptyList(),
     onOpenDrawer: () -> Unit = {},
     onAction: (SettingsAction) -> Unit,
     bottomBar: @Composable () -> Unit = {},
@@ -437,6 +449,7 @@ internal fun SettingsScreen(
                 uiState = uiState,
                 roamingDefaults = roamingDefaults,
                 hotLocations = hotLocations,
+                hotRoutes = hotRoutes,
                 onNavigateBack = { currentSection = null },
                 onAction = onAction,
                 bottomBar = bottomBar,
@@ -757,6 +770,7 @@ private fun SettingsFavoritesRoutesSubScreen(
     uiState: SettingsUiState,
     roamingDefaults: RoamingDefaults,
     hotLocations: List<HotLocation>,
+    hotRoutes: List<HotRoute>,
     onNavigateBack: () -> Unit,
     onAction: (SettingsAction) -> Unit,
     bottomBar: @Composable () -> Unit,
@@ -787,7 +801,155 @@ private fun SettingsFavoritesRoutesSubScreen(
                     ) {
                         FavoritesSection(uiState, hotLocations, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
+                        RoutesSection(uiState, hotRoutes, onAction)
+                        Spacer(modifier = Modifier.height(24.dp))
                         RoamingSection(roamingDefaults, isMph, onAction)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoutesSection(
+    uiState: SettingsUiState,
+    hotRoutes: List<HotRoute>,
+    onAction: (SettingsAction) -> Unit,
+) {
+    Text("Routes", style = MaterialTheme.typography.headlineSmall)
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        "Options for the routes list.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    LjCheckboxRow(
+        checked = uiState.hotRoutesEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetHotRoutesEnabled(it)) },
+        title = "Show hot routes",
+        description = "Adds a curated set of pre-built routes to your routes list. Select which ones to include below.",
+    )
+    if (uiState.hotRoutesEnabled && hotRoutes.isNotEmpty()) {
+        val allIds = remember(hotRoutes) { hotRoutes.map { RouteRepository.idForRoute(it.name, it.city) }.toSet() }
+        val selectedIds = uiState.selectedHotRouteIds
+        val groupedByCountry =
+            remember(hotRoutes) {
+                hotRoutes.groupBy { it.country }.mapValues { (_, routes) -> routes.groupBy { it.city } }
+            }
+        var expandedCountries by remember { mutableStateOf(emptySet<String>()) }
+        var expandedCities by remember { mutableStateOf(emptySet<String>()) }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "Routes",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = { onAction(SettingsAction.SetSelectedHotRouteIds(emptySet())) }) {
+                Text("Uncheck all")
+            }
+            TextButton(onClick = { onAction(SettingsAction.SetSelectedHotRouteIds(allIds)) }) {
+                Text("Check all")
+            }
+        }
+
+        groupedByCountry.forEach { (country, citiesMap) ->
+            val countryIds =
+                citiesMap.values
+                    .flatten()
+                    .map { RouteRepository.idForRoute(it.name, it.city) }
+                    .toSet()
+            val selectedInCountry = countryIds.count { it in selectedIds }
+            val countryState =
+                when {
+                    selectedInCountry == countryIds.size -> ToggleableState.On
+                    selectedInCountry == 0 -> ToggleableState.Off
+                    else -> ToggleableState.Indeterminate
+                }
+            val isCountryExpanded = country in expandedCountries
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TriStateCheckbox(
+                    state = countryState,
+                    onClick = {
+                        val newIds = selectedIds.toMutableSet()
+                        if (countryState == ToggleableState.On) newIds.removeAll(countryIds) else newIds.addAll(countryIds)
+                        onAction(SettingsAction.SetSelectedHotRouteIds(newIds))
+                    },
+                )
+                Text(country, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                IconButton(onClick = {
+                    expandedCountries = if (isCountryExpanded) expandedCountries - country else expandedCountries + country
+                }) {
+                    Icon(
+                        imageVector = if (isCountryExpanded) LjIcons.ElevationUp else LjIcons.ElevationDown,
+                        contentDescription = if (isCountryExpanded) "Collapse" else "Expand",
+                    )
+                }
+            }
+
+            if (isCountryExpanded) {
+                citiesMap.forEach { (city, routes) ->
+                    val cityIds = routes.map { RouteRepository.idForRoute(it.name, it.city) }.toSet()
+                    val hasMultiple = routes.size > 1
+                    val cityKey = "$country/$city"
+                    val isCityExpanded = cityKey in expandedCities
+                    val selectedInCity = cityIds.count { it in selectedIds }
+                    val cityState =
+                        when {
+                            selectedInCity == cityIds.size -> ToggleableState.On
+                            selectedInCity == 0 -> ToggleableState.Off
+                            else -> ToggleableState.Indeterminate
+                        }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(start = 24.dp, top = 2.dp, bottom = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TriStateCheckbox(
+                            state = cityState,
+                            onClick = {
+                                val newIds = selectedIds.toMutableSet()
+                                if (cityState == ToggleableState.On) newIds.removeAll(cityIds) else newIds.addAll(cityIds)
+                                onAction(SettingsAction.SetSelectedHotRouteIds(newIds))
+                            },
+                        )
+                        Text(city, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                        if (hasMultiple) {
+                            IconButton(onClick = {
+                                expandedCities = if (isCityExpanded) expandedCities - cityKey else expandedCities + cityKey
+                            }) {
+                                Icon(
+                                    imageVector = if (isCityExpanded) LjIcons.ElevationUp else LjIcons.ElevationDown,
+                                    contentDescription = if (isCityExpanded) "Collapse" else "Expand",
+                                )
+                            }
+                        }
+                    }
+
+                    if (hasMultiple && isCityExpanded) {
+                        routes.forEach { route ->
+                            val routeId = RouteRepository.idForRoute(route.name, route.city)
+                            LjCheckboxRow(
+                                checked = routeId in selectedIds,
+                                onCheckedChange = { isChecked ->
+                                    val newIds = selectedIds.toMutableSet()
+                                    if (isChecked) newIds.add(routeId) else newIds.remove(routeId)
+                                    onAction(SettingsAction.SetSelectedHotRouteIds(newIds))
+                                },
+                                title = route.name,
+                                modifier = Modifier.padding(start = 48.dp),
+                            )
+                        }
                     }
                 }
             }

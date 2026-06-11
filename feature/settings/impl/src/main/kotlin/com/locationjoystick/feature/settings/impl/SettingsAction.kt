@@ -98,6 +98,14 @@ internal sealed class SettingsAction {
         val ids: Set<String>,
     ) : SettingsAction()
 
+    data class SetHotRoutesEnabled(
+        val enabled: Boolean,
+    ) : SettingsAction()
+
+    data class SetSelectedHotRouteIds(
+        val ids: Set<String>,
+    ) : SettingsAction()
+
     data class SetMapFabFeatures(
         val features: Set<MapFabFeature>,
     ) : SettingsAction()

@@ -203,6 +203,18 @@ interface PreferencesDataSource {
     /** Sets the selected hot location IDs. */
     suspend fun setSelectedHotLocationIds(ids: Set<String>)
 
+    /** Gets whether hot routes are enabled. */
+    fun getHotRoutesEnabled(): Flow<Boolean>
+
+    /** Sets whether hot routes are enabled. */
+    suspend fun setHotRoutesEnabled(enabled: Boolean)
+
+    /** Gets the set of selected hot route IDs. */
+    fun getSelectedHotRouteIds(): Flow<Set<String>>
+
+    /** Sets the selected hot route IDs. */
+    suspend fun setSelectedHotRouteIds(ids: Set<String>)
+
     /** Returns all settings needed by the settings UI in a single DataStore scan. */
     fun getSettingsSnapshot(): Flow<SettingsSnapshot>
 
@@ -234,6 +246,8 @@ data class SettingsSnapshot(
     val elevationNoiseAmplitudeMs2: Float,
     val hotLocationsEnabled: Boolean,
     val selectedHotLocationIds: Set<String>,
+    val hotRoutesEnabled: Boolean,
+    val selectedHotRouteIds: Set<String>,
     val roamingDefaults: RoamingDefaults,
     val mapFabFeatures: Set<MapFabFeature>,
 )
@@ -305,6 +319,8 @@ class AppPreferencesDataSource
             val ELEVATION_NOISE_AMPLITUDE_MS2 = floatPreferencesKey("elevation_noise_amplitude_ms2")
             val HOT_LOCATIONS_ENABLED = booleanPreferencesKey("hot_locations_enabled")
             val HOT_LOCATION_SELECTED_IDS = stringSetPreferencesKey("hot_location_selected_ids")
+            val HOT_ROUTES_ENABLED = booleanPreferencesKey("hot_routes_enabled")
+            val HOT_ROUTE_SELECTED_IDS = stringSetPreferencesKey("hot_route_selected_ids")
             val MAP_FAB_ITEMS = stringSetPreferencesKey("map_fab_items")
         }
 
@@ -615,6 +631,18 @@ class AppPreferencesDataSource
             dataStore.edit { prefs -> prefs[Keys.HOT_LOCATION_SELECTED_IDS] = ids }
         }
 
+        override fun getHotRoutesEnabled(): Flow<Boolean> = pref(Keys.HOT_ROUTES_ENABLED, false)
+
+        override suspend fun setHotRoutesEnabled(enabled: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.HOT_ROUTES_ENABLED] = enabled }
+        }
+
+        override fun getSelectedHotRouteIds(): Flow<Set<String>> = pref(Keys.HOT_ROUTE_SELECTED_IDS, emptySet())
+
+        override suspend fun setSelectedHotRouteIds(ids: Set<String>) {
+            dataStore.edit { prefs -> prefs[Keys.HOT_ROUTE_SELECTED_IDS] = ids }
+        }
+
         override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
             dataStore.edit { prefs ->
                 prefs[Keys.WALK_SPEED_MS] = snapshot.walkSpeedMs.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS)
@@ -658,6 +686,8 @@ class AppPreferencesDataSource
                     )
                 prefs[Keys.HOT_LOCATIONS_ENABLED] = snapshot.hotLocationsEnabled
                 prefs[Keys.HOT_LOCATION_SELECTED_IDS] = snapshot.selectedHotLocationIds
+                prefs[Keys.HOT_ROUTES_ENABLED] = snapshot.hotRoutesEnabled
+                prefs[Keys.HOT_ROUTE_SELECTED_IDS] = snapshot.selectedHotRouteIds
                 prefs[Keys.MAP_FAB_ITEMS] = snapshot.mapFabFeatures.map { it.toKey() }.toSet()
                 prefs[Keys.ROAMING_RADIUS_METERS] = snapshot.roamingDefaults.radiusMeters
                 prefs[Keys.ROAMING_DISTANCE_METERS] = snapshot.roamingDefaults.distanceMeters
@@ -719,6 +749,8 @@ class AppPreferencesDataSource
                                 ?: DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2,
                         hotLocationsEnabled = prefs[Keys.HOT_LOCATIONS_ENABLED] ?: false,
                         selectedHotLocationIds = prefs[Keys.HOT_LOCATION_SELECTED_IDS] ?: emptySet(),
+                        hotRoutesEnabled = prefs[Keys.HOT_ROUTES_ENABLED] ?: false,
+                        selectedHotRouteIds = prefs[Keys.HOT_ROUTE_SELECTED_IDS] ?: emptySet(),
                         mapFabFeatures =
                             (prefs[Keys.MAP_FAB_ITEMS] ?: DEFAULT_MAP_FAB_ITEMS)
                                 .mapNotNull { it.toMapFabFeature() }

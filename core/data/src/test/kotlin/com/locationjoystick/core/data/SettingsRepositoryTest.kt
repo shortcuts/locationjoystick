@@ -1128,6 +1128,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setSelectedHotLocationIds(ids: Set<String>) = Unit
 
+    override fun getHotRoutesEnabled(): Flow<Boolean> = flowOf(false)
+
+    override suspend fun setHotRoutesEnabled(enabled: Boolean) = Unit
+
+    override fun getSelectedHotRouteIds(): Flow<Set<String>> = flowOf(emptySet())
+
+    override suspend fun setSelectedHotRouteIds(ids: Set<String>) = Unit
+
     val recentSearchesFlow = MutableStateFlow<List<RecentSearch>>(emptyList())
 
     override fun getRecentSearches(): Flow<List<RecentSearch>> = recentSearchesFlow
@@ -1170,6 +1178,8 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
                 elevationNoiseAmplitudeMs2 = AppPreferencesDataSource.DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2,
                 hotLocationsEnabled = false,
                 selectedHotLocationIds = emptySet(),
+                hotRoutesEnabled = false,
+                selectedHotRouteIds = emptySet(),
                 mapFabFeatures = emptySet(),
                 roamingDefaults = roamingDefaultsFlow.value,
             ),

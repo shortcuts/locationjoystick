@@ -49,7 +49,7 @@ class SpeedProfileInputTest {
             SettingsViewModel(
                 settingsRepository = SettingsRepository(fakeDataSource),
                 favoriteRepository = FavoriteRepository(FakeFavoriteDao()),
-                routeRepository = RouteRepository(routeDao = FakeRouteDao()),
+                routeRepository = RouteRepository(routeDao = FakeRouteDao(), context = context),
                 sensorPermissionBootstrap = SensorPermissionBootstrap(context),
                 importExportRepository = ImportExportRepository(context),
             )

@@ -75,4 +75,7 @@ interface RouteDao {
 
     @Query("DELETE FROM waypoints")
     suspend fun deleteAllWaypoints()
+
+    @Query("DELETE FROM routes WHERE id LIKE 'hot_route_%'")
+    suspend fun deleteHotRoutes()
 }

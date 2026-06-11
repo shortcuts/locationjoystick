@@ -17,6 +17,8 @@ data class ExportData(
     val elevationNoiseAmplitudeMs2: Float = 0.35f,
     val hotLocationsEnabled: Boolean = false,
     val selectedHotLocationIds: Set<String> = emptySet(),
+    val hotRoutesEnabled: Boolean = false,
+    val selectedHotRouteIds: Set<String> = emptySet(),
     val routesSortNewestFirst: Boolean = true,
     val favoritesSortNewestFirst: Boolean = true,
 )

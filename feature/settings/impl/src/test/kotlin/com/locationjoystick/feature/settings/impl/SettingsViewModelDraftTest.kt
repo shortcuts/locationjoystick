@@ -44,7 +44,7 @@ class SettingsViewModelDraftTest {
             SettingsViewModel(
                 settingsRepository = settingsRepo,
                 favoriteRepository = FavoriteRepository(FakeFavoriteDao()),
-                routeRepository = RouteRepository(routeDao = FakeRouteDao()),
+                routeRepository = RouteRepository(routeDao = FakeRouteDao(), context = context),
                 sensorPermissionBootstrap = SensorPermissionBootstrap(context),
                 importExportRepository = ImportExportRepository(context),
             )

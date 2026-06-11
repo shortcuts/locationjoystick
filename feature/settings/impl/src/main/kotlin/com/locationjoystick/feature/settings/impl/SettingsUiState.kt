@@ -31,6 +31,8 @@ data class SettingsUiState(
     val elevationNoiseAmplitudeMs2: Float = AppConstants.ElevationConstants.DEFAULT_NOISE_AMPLITUDE_MS2,
     val hotLocationsEnabled: Boolean = false,
     val selectedHotLocationIds: Set<String> = emptySet(),
+    val hotRoutesEnabled: Boolean = false,
+    val selectedHotRouteIds: Set<String> = emptySet(),
     val enabledMapFabFeatures: Set<MapFabFeature> = MapFabFeature.entries.toSet(),
     val isDirty: Boolean = false,
 )

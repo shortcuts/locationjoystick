@@ -1,5 +1,6 @@
 package com.locationjoystick.core.data
 
+import android.content.Context
 import app.cash.turbine.test
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
@@ -7,6 +8,7 @@ import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.Waypoint
 import com.locationjoystick.core.testing.FakeRouteDao
 import com.locationjoystick.core.testing.FakeWaypointDao
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -32,7 +34,7 @@ class RouteRepositoryTest {
         Dispatchers.setMain(testDispatcher)
         waypointDao = FakeWaypointDao()
         routeDao = FakeRouteDao(waypointDao)
-        repository = RouteRepository(routeDao, testDispatcher)
+        repository = RouteRepository(routeDao, mockk<Context>(relaxed = true), testDispatcher)
     }
 
     @After

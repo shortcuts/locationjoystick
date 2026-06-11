@@ -8,6 +8,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.root.SensorPermissionBootstrap
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.HotLocation
+import com.locationjoystick.core.data.HotRoute
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.datastore.SettingsSnapshot
@@ -111,6 +112,8 @@ class SettingsViewModel
             val elevationNoiseAmplitudeMs2: Float? = null,
             val hotLocationsEnabled: Boolean? = null,
             val selectedHotLocationIds: Set<String>? = null,
+            val hotRoutesEnabled: Boolean? = null,
+            val selectedHotRouteIds: Set<String>? = null,
             val mapFabFeatures: Set<MapFabFeature>? = null,
         )
 
@@ -162,6 +165,8 @@ class SettingsViewModel
                     elevationNoiseAmplitudeMs2 = draftState.elevationNoiseAmplitudeMs2 ?: snapshot.elevationNoiseAmplitudeMs2,
                     hotLocationsEnabled = draftState.hotLocationsEnabled ?: snapshot.hotLocationsEnabled,
                     selectedHotLocationIds = draftState.selectedHotLocationIds ?: snapshot.selectedHotLocationIds,
+                    hotRoutesEnabled = draftState.hotRoutesEnabled ?: snapshot.hotRoutesEnabled,
+                    selectedHotRouteIds = draftState.selectedHotRouteIds ?: snapshot.selectedHotRouteIds,
                     enabledMapFabFeatures = draftState.mapFabFeatures ?: snapshot.mapFabFeatures,
                     isDirty = isDirty,
                 )
@@ -279,6 +284,22 @@ class SettingsViewModel
         val availableHotLocations: List<HotLocation> =
             FavoriteRepository.HOT_LOCATIONS
 
+        fun setHotRoutesEnabled(enabled: Boolean) {
+            val allIds = RouteRepository.HOT_ROUTES.map { RouteRepository.idForRoute(it.name, it.city) }.toSet()
+            mutableDraft.update { draft ->
+                val currentSelectedIds = draft.selectedHotRouteIds ?: uiState.value.selectedHotRouteIds
+                val newSelectedIds = if (enabled && currentSelectedIds.isEmpty()) allIds else draft.selectedHotRouteIds
+                draft.copy(hotRoutesEnabled = enabled, selectedHotRouteIds = newSelectedIds)
+            }
+        }
+
+        fun setSelectedHotRouteIds(ids: Set<String>) {
+            mutableDraft.update { it.copy(selectedHotRouteIds = ids) }
+        }
+
+        val availableHotRoutes: List<HotRoute> =
+            RouteRepository.HOT_ROUTES
+
         fun saveChanges() {
             viewModelScope.launch {
                 try {
@@ -309,6 +330,8 @@ class SettingsViewModel
                             elevationNoiseAmplitudeMs2 = state.elevationNoiseAmplitudeMs2,
                             hotLocationsEnabled = state.hotLocationsEnabled,
                             selectedHotLocationIds = state.selectedHotLocationIds,
+                            hotRoutesEnabled = state.hotRoutesEnabled,
+                            selectedHotRouteIds = state.selectedHotRouteIds,
                             mapFabFeatures = state.enabledMapFabFeatures,
                             roamingDefaults =
                                 d.roamingDefaults
@@ -320,6 +343,13 @@ class SettingsViewModel
                             favoriteRepository.upsertHotLocations(state.selectedHotLocationIds)
                         } else {
                             favoriteRepository.removeHotLocations()
+                        }
+                    }
+                    if (d.hotRoutesEnabled != null || d.selectedHotRouteIds != null) {
+                        if (state.hotRoutesEnabled) {
+                            routeRepository.upsertHotRoutes(state.selectedHotRouteIds)
+                        } else {
+                            routeRepository.removeHotRoutes()
                         }
                     }
                     mutableDraft.value = DraftState()
@@ -392,6 +422,8 @@ class SettingsViewModel
                 elevationNoiseAmplitudeMs2 = state.elevationNoiseAmplitudeMs2,
                 hotLocationsEnabled = state.hotLocationsEnabled,
                 selectedHotLocationIds = state.selectedHotLocationIds,
+                hotRoutesEnabled = state.hotRoutesEnabled,
+                selectedHotRouteIds = state.selectedHotRouteIds,
                 routesSortNewestFirst = settingsRepository.getRoutesSortNewestFirst().first(),
                 favoritesSortNewestFirst = settingsRepository.getFavoritesSortNewestFirst().first(),
             )
@@ -530,6 +562,8 @@ class SettingsViewModel
                     elevationNoiseAmplitudeMs2 = data.elevationNoiseAmplitudeMs2,
                     hotLocationsEnabled = data.hotLocationsEnabled,
                     selectedHotLocationIds = data.selectedHotLocationIds,
+                    hotRoutesEnabled = data.hotRoutesEnabled,
+                    selectedHotRouteIds = data.selectedHotRouteIds,
                     roamingDefaults = data.settings.roamingDefaults,
                 ),
             )
@@ -537,6 +571,11 @@ class SettingsViewModel
                 favoriteRepository.upsertHotLocations(data.selectedHotLocationIds)
             } else {
                 favoriteRepository.removeHotLocations()
+            }
+            if (data.hotRoutesEnabled) {
+                routeRepository.upsertHotRoutes(data.selectedHotRouteIds)
+            } else {
+                routeRepository.removeHotRoutes()
             }
             settingsRepository.setRoutesSortNewestFirst(data.routesSortNewestFirst)
             settingsRepository.setFavoritesSortNewestFirst(data.favoritesSortNewestFirst)
