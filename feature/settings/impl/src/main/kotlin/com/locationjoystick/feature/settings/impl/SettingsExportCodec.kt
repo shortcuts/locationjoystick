@@ -10,6 +10,7 @@ import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.Waypoint
+import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.WidgetFeature
 import org.json.JSONArray
 import org.json.JSONObject
@@ -61,6 +62,14 @@ internal object SettingsExportCodec {
         settingsObj.put("realismWarmupEnabled", data.settings.warmupEnabled)
         settingsObj.put("realismSatelliteExtrasEnabled", data.settings.satelliteExtrasEnabled)
         settingsObj.put("realismSuspendedMockingEnabled", data.settings.suspendedMockingEnabled)
+        settingsObj.put("realismPedometerMockingEnabled", data.settings.pedometerMockingEnabled)
+        val roamingObj = JSONObject()
+        roamingObj.put("radiusMeters", data.settings.roamingDefaults.radiusMeters)
+        roamingObj.put("distanceMeters", data.settings.roamingDefaults.distanceMeters)
+        roamingObj.put("speedProfileId", data.settings.roamingDefaults.speedProfileId)
+        roamingObj.put("followRoads", data.settings.roamingDefaults.followRoads)
+        roamingObj.put("returnToInitialLocation", data.settings.roamingDefaults.returnToInitialLocation)
+        settingsObj.put("roamingDefaults", roamingObj)
         root.put("settings", settingsObj)
 
         val profilesArray = JSONArray()
@@ -117,6 +126,8 @@ internal object SettingsExportCodec {
         root.put("elevationNoiseAmplitudeMs2", data.elevationNoiseAmplitudeMs2)
         root.put("hotLocationsEnabled", data.hotLocationsEnabled)
         root.put("selectedHotLocationIds", JSONArray(data.selectedHotLocationIds.toList()))
+        root.put("hotRoutesEnabled", data.hotRoutesEnabled)
+        root.put("selectedHotRouteIds", JSONArray(data.selectedHotRouteIds.toList()))
         root.put("routesSortNewestFirst", data.routesSortNewestFirst)
         root.put("favoritesSortNewestFirst", data.favoritesSortNewestFirst)
 
@@ -160,6 +171,28 @@ internal object SettingsExportCodec {
                 "realismSuspendedMockingEnabled",
                 AppConstants.RealismConstants.SUSPENDED_MOCKING_ENABLED_DEFAULT,
             )
+        val pedometerMockingEnabled =
+            settingsObj.optBoolean(
+                "realismPedometerMockingEnabled",
+                AppConstants.RealismConstants.PEDOMETER_MOCKING_ENABLED_DEFAULT,
+            )
+        val roamingDefaultsObj = settingsObj.optJSONObject("roamingDefaults")
+        val roamingDefaults =
+            if (roamingDefaultsObj != null) {
+                RoamingDefaults(
+                    radiusMeters = roamingDefaultsObj.optDouble("radiusMeters", RoamingDefaults().radiusMeters),
+                    distanceMeters = roamingDefaultsObj.optDouble("distanceMeters", RoamingDefaults().distanceMeters),
+                    speedProfileId = roamingDefaultsObj.optString("speedProfileId", RoamingDefaults().speedProfileId),
+                    followRoads = roamingDefaultsObj.optBoolean("followRoads", RoamingDefaults().followRoads),
+                    returnToInitialLocation =
+                        roamingDefaultsObj.optBoolean(
+                            "returnToInitialLocation",
+                            RoamingDefaults().returnToInitialLocation,
+                        ),
+                )
+            } else {
+                RoamingDefaults()
+            }
         val settings =
             AppSettings(
                 speedUnit = speedUnit,
@@ -169,6 +202,8 @@ internal object SettingsExportCodec {
                 warmupEnabled = warmupEnabled,
                 satelliteExtrasEnabled = satelliteExtrasEnabled,
                 suspendedMockingEnabled = suspendedMockingEnabled,
+                pedometerMockingEnabled = pedometerMockingEnabled,
+                roamingDefaults = roamingDefaults,
             )
 
         val speedProfiles = mutableListOf<SpeedProfile>()
@@ -285,6 +320,13 @@ internal object SettingsExportCodec {
             selectedHotLocationIds =
                 buildSet {
                     root.optJSONArray("selectedHotLocationIds")?.let { arr ->
+                        for (i in 0 until arr.length()) add(arr.getString(i))
+                    }
+                },
+            hotRoutesEnabled = root.optBoolean("hotRoutesEnabled", false),
+            selectedHotRouteIds =
+                buildSet {
+                    root.optJSONArray("selectedHotRouteIds")?.let { arr ->
                         for (i in 0 until arr.length()) add(arr.getString(i))
                     }
                 },
