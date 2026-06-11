@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.6.0](https://github.com/shortcuts/locationjoystick/compare/v0.5.0...v0.6.0) (2026-06-11)
+
+
+### Features
+
+* add CPH hot locations ([7fa0f60](https://github.com/shortcuts/locationjoystick/commit/7fa0f60d567b3746c1e13c3f29c5abdf397e9235))
+* add Go Fest Copenhagen 2026 hot locations and hot routes ([3caeb59](https://github.com/shortcuts/locationjoystick/commit/3caeb59905ab449afcf589d58d13fa5934f9719b))
+* add quick-action buttons to foreground service notification ([c9aadcf](https://github.com/shortcuts/locationjoystick/commit/c9aadcfe7fca405b94c3ff969af8d9e55d1a4414))
+* add reverse name search ([07a7afb](https://github.com/shortcuts/locationjoystick/commit/07a7afbe13e569e24414858723a370558641c05f))
+* map menu in settings ([b1c77a4](https://github.com/shortcuts/locationjoystick/commit/b1c77a47b563e27c8e1081dd9e805f418273dfaf))
+* **map:** pin persists after sheet dismiss; rename button to Close ([640e681](https://github.com/shortcuts/locationjoystick/commit/640e681cf290f45c67a41625a4a3aa4020982ad9))
+* mock step counter to complement GPS spoofing ([1706809](https://github.com/shortcuts/locationjoystick/commit/1706809b492e3b07b4ec7e4243ea9c995984b64e))
+* use GitHub issue templates for bug reports and feature requests ([8bdca34](https://github.com/shortcuts/locationjoystick/commit/8bdca34c1245cca14b9bf9f2bf5ea46649294ba5))
+
+
+### Bug Fixes
+
+* add deleteHotRoutes stub to FakeRouteDao in core:testing ([e1c3673](https://github.com/shortcuts/locationjoystick/commit/e1c3673b729dacc3bc8b752e354717ed206d502e))
+* add native debug symbols to release build ([8c760e9](https://github.com/shortcuts/locationjoystick/commit/8c760e9243a5e88dc098b647331d57c8c12c9f6f))
+* codebase consistency ([e022453](https://github.com/shortcuts/locationjoystick/commit/e02245337302aafbc85fb474205348f82754de80))
+* DocSearch button overflow and wiki-serve port cleanup ([676a49c](https://github.com/shortcuts/locationjoystick/commit/676a49c24aa0b8d04ee3ca712928746f1f561796))
+* pass context to RouteRepository in DataModule ([7c7f727](https://github.com/shortcuts/locationjoystick/commit/7c7f727413ef41424c9d4b155d85166823148625))
+* preserve road-following for first leg when adding ephemeral waypoint ([d51f64a](https://github.com/shortcuts/locationjoystick/commit/d51f64ac62acb92b771d76e16b8ff27d6b7ceb4d))
+* reset all scroll state ([b42729a](https://github.com/shortcuts/locationjoystick/commit/b42729a9d68920ee5196a92171a6fd60d9df94c9))
+* screenshots ([28f1f3c](https://github.com/shortcuts/locationjoystick/commit/28f1f3cbb48e74b5daff5e83dfb1668584d198ed))
+
+
+### Performance Improvements
+
+* reduce GC pressure and eliminate ANR risk in mock location stack ([f8ff233](https://github.com/shortcuts/locationjoystick/commit/f8ff2330f07514184df8155ae242fce205a37e3c))
+
 ## [0.5.0](https://github.com/shortcuts/locationjoystick/compare/v0.4.1...v0.5.0) (2026-06-08)
 
 
