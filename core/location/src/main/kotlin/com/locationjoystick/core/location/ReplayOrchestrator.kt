@@ -13,6 +13,8 @@ import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.routing.RouteReplayEngine
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -56,6 +58,9 @@ internal class ReplayOrchestrator(
     private var walkLat: Double = 0.0
     private var walkLon: Double = 0.0
 
+    /** Tracks the active scope.launch job so new starts can cancel it before launching. */
+    private var activeReplayJob: Job? = null
+
     fun handleStart(
         routeId: String,
         isBackward: Boolean,
@@ -63,7 +68,10 @@ internal class ReplayOrchestrator(
         isLoopingOverride: Boolean? = null,
         returnPosition: LatLng? = null,
     ) {
-        scope.launch {
+        val previous = activeReplayJob
+        activeReplayJob = scope.launch {
+            previous?.cancelAndJoin()
+            routeReplayEngine.stop()
             val route = routeRepository.getRouteWithWaypoints(routeId).first() ?: return@launch
             if (route.waypoints.size < 2) return@launch
             val latLngs = (if (isBackward) route.waypoints.reversed() else route.waypoints).map { it.position }
@@ -95,7 +103,10 @@ internal class ReplayOrchestrator(
         waypoints: List<LatLng>,
         speedMs: Double,
     ) {
-        scope.launch {
+        val previous = activeReplayJob
+        activeReplayJob = scope.launch {
+            previous?.cancelAndJoin()
+            routeReplayEngine.stop()
             startReplayWithWaypoints(
                 waypoints = waypoints,
                 speedMs = speedMs,
@@ -139,6 +150,8 @@ internal class ReplayOrchestrator(
     }
 
     suspend fun handleStop() {
+        activeReplayJob?.cancelAndJoin()
+        activeReplayJob = null
         locationRepository.setRouteWaypoints(null)
         routeReplayEngine.stop()
         locationRepository.setMockMode(MockMode.TELEPORT)
@@ -150,6 +163,8 @@ internal class ReplayOrchestrator(
     }
 
     suspend fun handleCancel() {
+        activeReplayJob?.cancelAndJoin()
+        activeReplayJob = null
         locationRepository.setRouteWaypoints(null)
         routeReplayEngine.stop()
         locationRepository.setMockMode(MockMode.TELEPORT)
