@@ -28,6 +28,9 @@ lint:
 	./gradlew lintRelease
 
 install-on-phone:
+	./gradlew installDebug
+
+reinstall-on-phone:
 	adb uninstall com.locationjoystick.app || true && ./gradlew installDebug
 
 start-on-phone:
