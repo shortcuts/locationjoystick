@@ -69,34 +69,35 @@ internal class ReplayOrchestrator(
         returnPosition: LatLng? = null,
     ) {
         val previous = activeReplayJob
-        activeReplayJob = scope.launch {
-            previous?.cancelAndJoin()
-            routeReplayEngine.stop()
-            val route = routeRepository.getRouteWithWaypoints(routeId).first() ?: return@launch
-            if (route.waypoints.size < 2) return@launch
-            val latLngs = (if (isBackward) route.waypoints.reversed() else route.waypoints).map { it.position }
-            val isLooping = isLoopingOverride ?: route.isLooping
+        activeReplayJob =
+            scope.launch {
+                previous?.cancelAndJoin()
+                routeReplayEngine.stop()
+                val route = routeRepository.getRouteWithWaypoints(routeId).first() ?: return@launch
+                if (route.waypoints.size < 2) return@launch
+                val latLngs = (if (isBackward) route.waypoints.reversed() else route.waypoints).map { it.position }
+                val isLooping = isLoopingOverride ?: route.isLooping
 
-            startReplayWithWaypoints(
-                waypoints = latLngs,
-                speedMs = speedMs,
-                isLooping = isLooping,
-                persistMetadata = {
-                    locationRepository.setActiveRouteId(routeId)
-                    locationRepository.setIsReplayBackward(isBackward)
-                    locationRepository.setRouteWaypoints(latLngs)
-                },
-                onComplete = {
-                    locationRepository.setRouteWaypoints(null)
-                    locationRepository.setActiveRouteId(null)
-                    if (returnPosition != null) {
-                        walkToPosition(returnPosition, speedMs)
-                    }
-                    locationRepository.setMockMode(MockMode.TELEPORT)
-                    locationRepository.emitCompletion("Route complete")
-                },
-            )
-        }
+                startReplayWithWaypoints(
+                    waypoints = latLngs,
+                    speedMs = speedMs,
+                    isLooping = isLooping,
+                    persistMetadata = {
+                        locationRepository.setActiveRouteId(routeId)
+                        locationRepository.setIsReplayBackward(isBackward)
+                        locationRepository.setRouteWaypoints(latLngs)
+                    },
+                    onComplete = {
+                        locationRepository.setRouteWaypoints(null)
+                        locationRepository.setActiveRouteId(null)
+                        if (returnPosition != null) {
+                            walkToPosition(returnPosition, speedMs)
+                        }
+                        locationRepository.setMockMode(MockMode.TELEPORT)
+                        locationRepository.emitCompletion("Route complete")
+                    },
+                )
+            }
     }
 
     fun handleEphemeralStart(
@@ -104,16 +105,17 @@ internal class ReplayOrchestrator(
         speedMs: Double,
     ) {
         val previous = activeReplayJob
-        activeReplayJob = scope.launch {
-            previous?.cancelAndJoin()
-            routeReplayEngine.stop()
-            startReplayWithWaypoints(
-                waypoints = waypoints,
-                speedMs = speedMs,
-                isLooping = false,
-                persistMetadata = null,
-            )
-        }
+        activeReplayJob =
+            scope.launch {
+                previous?.cancelAndJoin()
+                routeReplayEngine.stop()
+                startReplayWithWaypoints(
+                    waypoints = waypoints,
+                    speedMs = speedMs,
+                    isLooping = false,
+                    persistMetadata = null,
+                )
+            }
     }
 
     fun handlePause() {

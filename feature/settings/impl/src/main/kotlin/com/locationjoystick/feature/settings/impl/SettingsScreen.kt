@@ -456,7 +456,6 @@ internal fun SettingsScreen(
                 snackbarHost = snackbarHost,
             )
         }
-
     }
 }
 
@@ -1416,7 +1415,6 @@ private fun RoamingSection(
         description = "Walks back to the starting position after the roaming session completes.",
     )
 }
-
 
 @Composable
 private fun MapButtonsSection(
