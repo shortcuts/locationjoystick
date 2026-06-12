@@ -68,6 +68,7 @@ import com.locationjoystick.core.map.maplibre.addEphemeralRouteLayers
 import com.locationjoystick.core.map.maplibre.addLocationLayers
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapFabFeature
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RecentSearch
@@ -111,6 +112,10 @@ internal fun MapFloatingView(
     onAddEphemeralWaypoint: (LatLng) -> Unit,
     onStartRoaming: (RoamingDefaults) -> Unit,
     onStopRoaming: () -> Unit,
+    enabledMapFabFeatures: Set<MapFabFeature> = MapFabFeature.entries.toSet(),
+    onStopRouteReplay: () -> Unit,
+    onPauseRouteReplay: () -> Unit,
+    onResumeRouteReplay: () -> Unit,
     onDismiss: () -> Unit,
     ephemeralWaypoints: List<LatLng>? = null,
     recentSearches: List<RecentSearch> = emptyList(),
@@ -120,6 +125,7 @@ internal fun MapFloatingView(
 ) {
     val isRoaming = mockMode == MockMode.ROAMING
     val isRouteReplay = mockMode == MockMode.ROUTE_REPLAY
+    val isRoutePaused = isRouteReplay && mockLocationState == MockLocationState.PAUSED
     val isWalkActive = walkTarget != null || isRouteReplay
     val context = LocalContext.current
     var roamingPreviewWaypoints by remember { mutableStateOf<List<com.locationjoystick.core.model.LatLng>?>(null) }
@@ -364,6 +370,42 @@ internal fun MapFloatingView(
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 onClick = { showFavoritesPicker = true },
             )
+            if (MapFabFeature.ROUTES in enabledMapFabFeatures || isRouteReplay) {
+                var isRouteControlsExpanded by remember { mutableStateOf(false) }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    AnimatedVisibility(visible = isRouteReplay && isRouteControlsExpanded) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            LjMapIconButton(
+                                icon = LjIcons.Stop,
+                                contentDescription = "Stop route",
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError,
+                                onClick = {
+                                    isRouteControlsExpanded = false
+                                    onStopRouteReplay()
+                                },
+                            )
+                            LjMapIconButton(
+                                icon = if (isRoutePaused) LjIcons.PlayArrow else LjIcons.Pause,
+                                contentDescription = if (isRoutePaused) "Resume route" else "Pause route",
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                onClick = { if (isRoutePaused) onResumeRouteReplay() else onPauseRouteReplay() },
+                            )
+                        }
+                    }
+                    LjMapIconButton(
+                        icon = LjIcons.Route,
+                        contentDescription = if (isRouteReplay) "Route active" else "Open routes",
+                        containerColor = if (isRouteReplay) LjSuccess else MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = if (isRouteReplay) LjBg else MaterialTheme.colorScheme.onPrimaryContainer,
+                        onClick = { if (isRouteReplay) isRouteControlsExpanded = !isRouteControlsExpanded },
+                    )
+                }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 androidx.compose.animation.AnimatedVisibility(visible = isRoaming) {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {

@@ -3,6 +3,7 @@ package com.locationjoystick.core.location
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapFabFeature
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RecentSearch
@@ -29,6 +30,7 @@ data class MapSharedState(
     val favoriteCooldownStates: Map<String, CooldownState> = emptyMap(),
     val isRoaming: Boolean = false,
     val isRoamingPaused: Boolean = false,
+    val enabledMapFabFeatures: Set<MapFabFeature> = MapFabFeature.entries.toSet(),
     val speedUnit: SpeedUnit = SpeedUnit.KMH,
     val recentSearches: List<RecentSearch> = emptyList(),
     val roamingDefaults: RoamingDefaults = RoamingDefaults(),

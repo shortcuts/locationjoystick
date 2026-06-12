@@ -30,6 +30,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -89,6 +91,7 @@ class MapController
             observeFavoriteCooldowns()
             observeRecentSearches()
             observeRoamingDefaults()
+            observeMapFabFeatures()
             observeModeCompletions()
             restoreLastLocationIfNeeded()
         }
@@ -207,6 +210,17 @@ class MapController
                 settingsRepository.getRoamingDefaults().collect { defaults ->
                     _state.update { it.copy(roamingDefaults = defaults) }
                 }
+            }
+        }
+
+        private fun observeMapFabFeatures() {
+            appScope.launch {
+                settingsRepository.getSettingsSnapshot()
+                    .map { it.mapFabFeatures }
+                    .distinctUntilChanged()
+                    .collect { features ->
+                        _state.update { it.copy(enabledMapFabFeatures = features) }
+                    }
             }
         }
 
