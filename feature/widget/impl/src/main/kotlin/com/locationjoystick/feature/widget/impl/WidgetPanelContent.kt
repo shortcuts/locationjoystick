@@ -384,7 +384,11 @@ internal fun FavoritesFloatingView(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = LjText.copy(alpha = 0.7f),
                                     )
-                                    val badgeText = (cooldownStates[fav.id] ?: CooldownState.Ready).toBadgeText(currentPosition, fav.position)
+                                    val badgeText =
+                                        (cooldownStates[fav.id] ?: CooldownState.Ready).toBadgeText(
+                                            currentPosition,
+                                            fav.position,
+                                        )
                                     Spacer(Modifier.height(4.dp))
                                     Text(
                                         text = badgeText,

@@ -46,6 +46,9 @@ fun CooldownState.toBadgeText(
     (this as? CooldownState.Cooling)?.run { "Suggested wait: ${toAdvisoryLabel()}" }
         ?: currentPosition?.let { pos ->
             val m = haversineDistance(pos, targetPosition)
-            if (m >= 1000.0) "%.1f km away".format(Locale.US, m / 1000.0)
-            else "%.0f m away".format(Locale.US, m)
+            if (m >= 1000.0) {
+                "%.1f km away".format(Locale.US, m / 1000.0)
+            } else {
+                "%.0f m away".format(Locale.US, m)
+            }
         } ?: "No wait needed"
