@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import com.locationjoystick.app.MainActivity
+import com.locationjoystick.core.common.constants.AppConstants
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Before
@@ -30,7 +31,7 @@ class MainActivityIntentTest {
         composeRule.activityRule.scenario.onActivity { activity ->
             activity.handleIntent(
                 Intent(activity, MainActivity::class.java)
-                    .putExtra(MainActivity.EXTRA_NAVIGATE_TO_MAP, true),
+                    .putExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_MAP, true),
             )
         }
         composeRule.waitForIdle()
@@ -54,7 +55,7 @@ class MainActivityIntentTest {
         composeRule.activityRule.scenario.onActivity { activity ->
             activity.handleIntent(
                 Intent(activity, MainActivity::class.java)
-                    .putExtra(MainActivity.EXTRA_NAVIGATE_TO_FAVORITES, true),
+                    .putExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_FAVORITES, true),
             )
         }
         composeRule.waitForIdle()
@@ -66,7 +67,7 @@ class MainActivityIntentTest {
         composeRule.activityRule.scenario.onActivity { activity ->
             activity.handleIntent(
                 Intent(activity, MainActivity::class.java)
-                    .putExtra(MainActivity.EXTRA_NAVIGATE_TO_ROUTES, true),
+                    .putExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_ROUTES, true),
             )
         }
         composeRule.waitForIdle()
@@ -78,7 +79,7 @@ class MainActivityIntentTest {
         composeRule.activityRule.scenario.onActivity { activity ->
             activity.handleIntent(
                 Intent(activity, MainActivity::class.java)
-                    .putExtra(MainActivity.EXTRA_NAVIGATE_TO_MAP, true),
+                    .putExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_MAP, true),
             )
         }
         composeRule.waitForIdle()

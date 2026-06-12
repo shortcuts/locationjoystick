@@ -4,6 +4,10 @@ plugins {
 
 android {
     namespace = "com.locationjoystick.feature.routes.impl"
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -22,5 +26,9 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     // maplibre-android-sdk is available transitively via :core:map (api dependency)
 
-    testImplementation("junit:junit:4.13.2")
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(project(":core:testing"))
 }

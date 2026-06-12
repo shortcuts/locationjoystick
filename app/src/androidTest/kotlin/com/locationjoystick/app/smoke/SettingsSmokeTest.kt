@@ -20,11 +20,13 @@ class SettingsSmokeTest : BaseSmokeTest() {
 
     @Test
     fun settings_screen_loads() {
-        composeRule.onNodeWithText("Speed Profiles").assertIsDisplayed()
+        composeRule.onNodeWithText("GPS Settings").assertIsDisplayed()
     }
 
     @Test
     fun speed_unit_toggle_no_crash() {
+        composeRule.onNodeWithText("GPS Settings").performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("mph").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("km/h").performClick()
@@ -39,31 +41,43 @@ class SettingsSmokeTest : BaseSmokeTest() {
 
     @Test
     fun settings_shows_speed_profiles_section() {
+        composeRule.onNodeWithText("GPS Settings").performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("Speed Profiles").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_gps_jitter_section() {
+        composeRule.onNodeWithText("GPS Settings").performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("GPS Jitter").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_gps_realism_section() {
+        composeRule.onNodeWithText("GPS Settings").performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("GPS Realism").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_map_section() {
+        composeRule.onNodeWithText("GPS Settings").performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("Remember last location").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_floating_widget_section() {
+        composeRule.onNodeWithText("Menus").performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("Floating Widget").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_roaming_section() {
+        composeRule.onNodeWithText("Favorites & Routes").performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("Roaming").performScrollTo().assertIsDisplayed()
     }
 

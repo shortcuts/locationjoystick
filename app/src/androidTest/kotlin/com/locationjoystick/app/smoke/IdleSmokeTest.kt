@@ -65,7 +65,7 @@ class IdleSmokeTest : BaseSmokeTest() {
     @Test
     fun navigate_to_settings_via_card() {
         composeRule.navigateFromIdle("Settings")
-        composeRule.onNodeWithText("Speed Profiles").assertIsDisplayed()
+        composeRule.onNodeWithText("GPS Settings").assertIsDisplayed()
     }
 
     @Test
@@ -77,7 +77,7 @@ class IdleSmokeTest : BaseSmokeTest() {
     @Test
     fun navigate_to_settings_via_drawer() {
         composeRule.navigateViaDrawer("Settings")
-        composeRule.onNodeWithText("Speed Profiles").assertIsDisplayed()
+        composeRule.onNodeWithText("GPS Settings").assertIsDisplayed()
     }
 
     @Test

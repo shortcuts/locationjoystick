@@ -15,6 +15,8 @@ class FloatingWidgetSmokeTest : BaseSmokeTest() {
         super.setup()
         composeRule.waitForIdleScreen()
         composeRule.navigateFromIdle("Settings")
+        composeRule.onNodeWithText("Menus").performClick()
+        composeRule.waitForIdle()
     }
 
     @Test

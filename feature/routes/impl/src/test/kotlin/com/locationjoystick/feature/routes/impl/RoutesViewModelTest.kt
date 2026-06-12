@@ -1,13 +1,165 @@
 package com.locationjoystick.feature.routes.impl
 
+import android.content.Context
+import app.cash.turbine.test
+import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.RouteRepository
+import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.Waypoint
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class RoutesViewModelUiStateTest {
+    private val testDispatcher = UnconfinedTestDispatcher()
+    private val routeRepository: RouteRepository = mockk(relaxed = true)
+    private val locationRepository = LocationRepository()
+    private val settingsRepository: SettingsRepository = mockk(relaxed = true)
+    private val context: Context = mockk(relaxed = true)
+    private val routesFlow = MutableStateFlow<List<Route>>(emptyList())
+    private val sortFlow = MutableStateFlow(true)
+    private lateinit var viewModel: RoutesViewModel
+
+    @Before
+    fun setup() {
+        Dispatchers.setMain(testDispatcher)
+        every { routeRepository.getRoutes() } returns routesFlow
+        every { settingsRepository.getRoutesSortNewestFirst() } returns sortFlow
+        viewModel = RoutesViewModel(routeRepository, locationRepository, settingsRepository, context)
+    }
+
+    @After
+    fun teardown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun uiState_emits_empty_routes_initially() = runTest {
+        viewModel.uiState.test {
+            assertEquals(emptyList<Route>(), awaitItem().routes)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun uiState_sorts_routes_newest_first() = runTest {
+        routesFlow.value = listOf(
+            route("id1", "Old Route", createdAt = 1000L),
+            route("id2", "New Route", createdAt = 2000L),
+        )
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertEquals("New Route", state.routes[0].name)
+            assertEquals("Old Route", state.routes[1].name)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun uiState_sorts_routes_oldest_first_when_flag_false() = runTest {
+        sortFlow.value = false
+        routesFlow.value = listOf(
+            route("id2", "New Route", createdAt = 2000L),
+            route("id1", "Old Route", createdAt = 1000L),
+        )
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertEquals("Old Route", state.routes[0].name)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun toggleSort_calls_settings_repository() = runTest {
+        viewModel.toggleSort()
+        coVerify { settingsRepository.setRoutesSortNewestFirst(false) }
+    }
+
+    @Test
+    fun deleteRoute_calls_repository() = runTest {
+        viewModel.deleteRoute("route-id")
+        coVerify { routeRepository.deleteRoute("route-id") }
+    }
+
+    @Test
+    fun renameRoute_updates_route_name() = runTest {
+        routesFlow.value = listOf(route("r1", "Old Name", createdAt = 1000L))
+
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.renameRoute("r1", "New Name")
+            coVerify { routeRepository.updateRoute(match { it.name == "New Name" }) }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun playbackState_isPlaying_when_active_route_and_running() = runTest {
+        locationRepository.setActiveRouteId("r1")
+        locationRepository.startSpoofing()
+
+        viewModel.playbackState.test {
+            val state = awaitItem()
+            assertEquals("r1", state.activeRouteId)
+            assertTrue(state.isPlaying)
+            assertFalse(state.isPaused)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun playbackState_isPaused_when_active_route_and_paused() = runTest {
+        locationRepository.setActiveRouteId("r1")
+        locationRepository.pauseSpoofing()
+
+        viewModel.playbackState.test {
+            val state = awaitItem()
+            assertFalse(state.isPlaying)
+            assertTrue(state.isPaused)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun playbackState_idle_when_no_active_route() = runTest {
+        viewModel.playbackState.test {
+            val state = awaitItem()
+            assertFalse(state.isPlaying)
+            assertFalse(state.isPaused)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    private fun route(id: String, name: String, createdAt: Long = 0L) = Route(
+        id = id,
+        name = name,
+        waypoints = listOf(Waypoint("w1", LatLng(0.0, 0.0), 0)),
+        isLooping = false,
+        routeType = RouteType.STRAIGHT,
+        createdAt = createdAt,
+        updatedAt = createdAt,
+    )
+}
 
 /**
  * Unit tests for RoutesViewModel GPX import functionality.
@@ -196,8 +348,8 @@ class RoutesViewModelTest {
                 id = "route-123",
                 name = "Imported",
                 waypoints = waypoints,
-                isLooping = false, // Should always be false for new imports
-                routeType = RouteType.STRAIGHT, // Should always be STRAIGHT for GPX
+                isLooping = false,
+                routeType = RouteType.STRAIGHT,
                 createdAt = System.currentTimeMillis(),
                 updatedAt = System.currentTimeMillis(),
             )
@@ -229,10 +381,6 @@ class RoutesViewModelTest {
             .bufferedReader()
             .readText()
 
-    /**
-     * route-random-2026-05-25T13-38-39.gpx — track-point format (<trkpt>).
-     * Expects all 344 points parsed and the route name extracted from <metadata><name>.
-     */
     @Test
     fun `fixture routeRandom trkpt parses all 344 waypoints`() {
         val gpx = loadFixture("route-random-2026-05-25T13-38-39.gpx")
@@ -263,19 +411,12 @@ class RoutesViewModelTest {
         assertEquals("Generated Route", name)
     }
 
-    /**
-     * gpsjoystick_20250408232304.gpx — GPS JoyStick app export using <rtept> (route points).
-     * The current parser only handles <trkpt>; this fixture documents that <rtept> is NOT
-     * yet supported. When support is added, update this test to assert 185 waypoints.
-     */
     @Test
     fun `fixture gpsJoystick rtept format not yet supported returns empty`() {
         val gpx = loadFixture("gpsjoystick_20250408232304.gpx")
 
         val waypoints = parseGpxWaypoints(gpx)
 
-        // GPS JoyStick exports use <rtept> which the current regex does not match.
-        // This test documents the gap — 185 points are present but 0 are parsed.
         assertEquals(0, waypoints.size)
     }
 
