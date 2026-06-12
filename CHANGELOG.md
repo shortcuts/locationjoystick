@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.8.0](https://github.com/shortcuts/locationjoystick/compare/v0.7.1...v0.8.0) (2026-06-12)
+
+
+### Features
+
+* display app version on idle, onboarding, and settings screens ([007a5b4](https://github.com/shortcuts/locationjoystick/commit/007a5b4da52f8d70b98377e8fd4565ac558f55b9))
+* show cooldown and distance in floating widget favorites ([0d16dea](https://github.com/shortcuts/locationjoystick/commit/0d16dea9a26b00f219a62c68af812541d50321cb))
+
+
+### Bug Fixes
+
+* allow all file types in GPX import picker ([982a910](https://github.com/shortcuts/locationjoystick/commit/982a910d14c9f25390debffc21b194810072fc48))
+* make upsertHotRoutes atomic via @Transaction batch method ([0cb3980](https://github.com/shortcuts/locationjoystick/commit/0cb39800aaddd2ae924b7f906ff0fca09ed6e709))
+* serialize missing fields in export/import codec ([e687fba](https://github.com/shortcuts/locationjoystick/commit/e687fba205225885ea8aef74e288233db69bf6ac))
+* **settings:** swap inverted export/import icons ([fced915](https://github.com/shortcuts/locationjoystick/commit/fced9151af89f7b8046a6ea1fe16bf9d4dd32844)), closes [#15](https://github.com/shortcuts/locationjoystick/issues/15)
+* surface OSRM fallback to user when walk via roads silently degrades ([694332b](https://github.com/shortcuts/locationjoystick/commit/694332ba3b0a866c06d27fd003f1345d43bf281c))
+
 ## [0.7.1](https://github.com/shortcuts/locationjoystick/compare/v0.7.0...v0.7.1) (2026-06-11)
 
 
