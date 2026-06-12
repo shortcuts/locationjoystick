@@ -78,4 +78,28 @@ interface RouteDao {
 
     @Query("DELETE FROM routes WHERE id LIKE 'hot_route_%'")
     suspend fun deleteHotRoutes()
+
+    /**
+     * Applies a pre-computed hot-route batch atomically: inserts new routes, updates existing
+     * ones (with their waypoints), and deletes removed ones — all in one transaction so the DB
+     * is never left in a partial state if the app crashes mid-upsert.
+     */
+    @Transaction
+    suspend fun applyHotRouteBatch(
+        toInsert: List<Pair<RouteEntity, List<WaypointEntity>>>,
+        toUpdate: List<Pair<RouteEntity, List<WaypointEntity>>>,
+        toDelete: List<RouteEntity>,
+    ) {
+        for ((route, waypoints) in toInsert) {
+            insert(route)
+            insertWaypoints(waypoints)
+        }
+        for ((route, waypoints) in toUpdate) {
+            update(route)
+            replaceWaypoints(route.id, waypoints)
+        }
+        for (route in toDelete) {
+            delete(route)
+        }
+    }
 }
