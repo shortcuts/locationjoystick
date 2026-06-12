@@ -1,6 +1,8 @@
 package com.locationjoystick.core.data
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.haversineDistance
+import com.locationjoystick.core.model.LatLng
 import java.util.Locale
 
 /** Represents whether a cooldown advisory is in effect for a teleport action. */
@@ -36,3 +38,14 @@ sealed class CooldownState {
         }
     }
 }
+
+fun CooldownState.toBadgeText(
+    currentPosition: LatLng?,
+    targetPosition: LatLng,
+): String =
+    (this as? CooldownState.Cooling)?.run { "Suggested wait: ${toAdvisoryLabel()}" }
+        ?: currentPosition?.let { pos ->
+            val m = haversineDistance(pos, targetPosition)
+            if (m >= 1000.0) "%.1f km away".format(Locale.US, m / 1000.0)
+            else "%.0f m away".format(Locale.US, m)
+        } ?: "No wait needed"

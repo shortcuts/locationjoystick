@@ -48,8 +48,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
-import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.data.CooldownState
+import com.locationjoystick.core.data.toBadgeText
 import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjInactive
@@ -61,7 +61,6 @@ import com.locationjoystick.core.model.ElevationMode
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.WidgetFeature
-import java.util.Locale
 
 @Composable
 internal fun WidgetPanel(
@@ -385,14 +384,7 @@ internal fun FavoritesFloatingView(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = LjText.copy(alpha = 0.7f),
                                     )
-                                    val state = cooldownStates[fav.id] ?: CooldownState.Ready
-                                    val badgeText = (state as? CooldownState.Cooling)
-                                        ?.run { "Suggested wait: ${toAdvisoryLabel()}" }
-                                        ?: currentPosition?.let { pos ->
-                                            val m = haversineDistance(pos, fav.position)
-                                            if (m >= 1000.0) "%.1f km away".format(Locale.US, m / 1000.0)
-                                            else "%.0f m away".format(Locale.US, m)
-                                        } ?: "No wait needed"
+                                    val badgeText = (cooldownStates[fav.id] ?: CooldownState.Ready).toBadgeText(currentPosition, fav.position)
                                     Spacer(Modifier.height(4.dp))
                                     Text(
                                         text = badgeText,
