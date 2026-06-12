@@ -426,7 +426,7 @@ class MapViewModel
                 _uiState.update { it.copy(favoriteTarget = favorite, pendingCameraTarget = favorite.position) }
             } else {
                 mapController.teleportTo(favorite.position)
-                _uiState.update { it.copy(showFavoritesSheet = false) }
+                _uiState.update { it.copy(showFavoritesSheet = false, pendingCameraTarget = favorite.position) }
             }
         }
 
