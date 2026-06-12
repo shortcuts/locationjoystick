@@ -9,6 +9,7 @@ import com.locationjoystick.core.database.entities.toDomain
 import com.locationjoystick.core.database.entities.toEntity
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
+import com.locationjoystick.core.model.RouteType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +26,7 @@ data class HotRoute(
     val country: String,
     val city: String,
     val assetPath: String,
-    val routeType: String = "STRAIGHT",
+    val routeType: RouteType = RouteType.STRAIGHT,
 )
 
 @Singleton
@@ -115,48 +116,42 @@ class RouteRepository
         suspend fun upsertHotRoutes(selectedIds: Set<String> = HOT_ROUTES.map { idForRoute(it.name, it.city) }.toSet()): Result<Unit> =
             withContext(ioDispatcher) {
                 runCatching {
-                    HOT_ROUTES.forEach { hotRoute ->
+                    val now = System.currentTimeMillis()
+                    val toInsert = mutableListOf<Pair<RouteEntity, List<WaypointEntity>>>()
+                    val toUpdate = mutableListOf<Pair<RouteEntity, List<WaypointEntity>>>()
+                    val toDelete = mutableListOf<RouteEntity>()
+
+                    // Phase 1: read assets + current DB state; build batch lists (no writes yet).
+                    for (hotRoute in HOT_ROUTES) {
                         val id = idForRoute(hotRoute.name, hotRoute.city)
+                        val existing = routeDao.getById(id)
                         if (id in selectedIds) {
-                            val gpxContent =
-                                context.assets
-                                    .open(hotRoute.assetPath)
-                                    .bufferedReader()
-                                    .readText()
-                            val latLngs = parseWptGpx(gpxContent)
-                            val now = System.currentTimeMillis()
-                            val waypoints =
-                                latLngs.mapIndexed { index, latLng ->
-                                    WaypointEntity(
-                                        id = "$id:$index",
-                                        routeId = id,
-                                        latitude = latLng.latitude,
-                                        longitude = latLng.longitude,
-                                        orderIndex = index,
-                                    )
-                                }
-                            val existing = routeDao.getById(id)
-                            if (existing != null) {
-                                routeDao.update(existing.copy(name = hotRoute.name, updatedAt = now))
-                                routeDao.replaceWaypoints(id, waypoints)
-                            } else {
-                                routeDao.insert(
-                                    RouteEntity(
-                                        id = id,
-                                        name = hotRoute.name,
-                                        isLooping = false,
-                                        routeType = hotRoute.routeType,
-                                        createdAt = now,
-                                        updatedAt = now,
-                                    ),
+                            val gpxContent = context.assets.open(hotRoute.assetPath).bufferedReader().readText()
+                            val waypoints = parseWptGpx(gpxContent).mapIndexed { index, latLng ->
+                                WaypointEntity(
+                                    id = "$id:$index",
+                                    routeId = id,
+                                    latitude = latLng.latitude,
+                                    longitude = latLng.longitude,
+                                    orderIndex = index,
                                 )
-                                routeDao.insertWaypoints(waypoints)
                             }
-                        } else {
-                            val existing = routeDao.getById(id)
-                            if (existing != null) routeDao.delete(existing)
+                            val entity = RouteEntity(
+                                id = id,
+                                name = hotRoute.name,
+                                isLooping = false,
+                                routeType = hotRoute.routeType.name,
+                                createdAt = existing?.createdAt ?: now,
+                                updatedAt = now,
+                            )
+                            if (existing != null) toUpdate.add(entity to waypoints) else toInsert.add(entity to waypoints)
+                        } else if (existing != null) {
+                            toDelete.add(existing)
                         }
                     }
+
+                    // Phase 2: apply all writes atomically.
+                    routeDao.applyHotRouteBatch(toInsert, toUpdate, toDelete)
                 }.onFailure { e -> Log.e(TAG, "Failed to upsert hot routes", e) }
             }
 
@@ -189,11 +184,11 @@ class RouteRepository
             val HOT_ROUTES =
                 listOf(
                     HotRoute("City - Copenhagen", "Denmark", "Copenhagen", "hot_routes/cph_city.gpx"),
-                    HotRoute("City - Copenhagen (Via Roads)", "Denmark", "Copenhagen", "hot_routes/cph_city.gpx", "GUIDED"),
+                    HotRoute("City - Copenhagen (Via Roads)", "Denmark", "Copenhagen", "hot_routes/cph_city.gpx", RouteType.GUIDED),
                     HotRoute("Park - Faelledparken", "Denmark", "Copenhagen", "hot_routes/cph_park.gpx"),
-                    HotRoute("Park - Faelledparken (Via Roads)", "Denmark", "Copenhagen", "hot_routes/cph_park.gpx", "GUIDED"),
+                    HotRoute("Park - Faelledparken (Via Roads)", "Denmark", "Copenhagen", "hot_routes/cph_park.gpx", RouteType.GUIDED),
                     HotRoute("Stamp Rally - LEGO", "Denmark", "Copenhagen", "hot_routes/cph_stamp_rally.gpx"),
-                    HotRoute("Stamp Rally - LEGO (Via Roads)", "Denmark", "Copenhagen", "hot_routes/cph_stamp_rally.gpx", "GUIDED"),
+                    HotRoute("Stamp Rally - LEGO (Via Roads)", "Denmark", "Copenhagen", "hot_routes/cph_stamp_rally.gpx", RouteType.GUIDED),
                 )
         }
     }
