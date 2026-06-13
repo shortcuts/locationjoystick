@@ -291,9 +291,18 @@ class MapController
             appScope.launch { teleportUseCase.execute(position) }
         }
 
-        fun walkTo(position: LatLng) {
+        private fun cancelAnyActiveMovement() {
             pendingRoadWalkJob?.cancel()
             pendingRoadWalkJob = null
+            walkCoordinator.cancel()
+            if (_state.value.ephemeralWaypoints.isNotEmpty()) {
+                context.startService(MockLocationIntentBuilder.cancelRouteReplay(context))
+                ephemeralReplayController.clearPendingWaypoints()
+            }
+        }
+
+        fun walkTo(position: LatLng) {
+            cancelAnyActiveMovement()
             _state.update {
                 it.copy(
                     walkMode = WalkMode.Walking(target = position, start = it.currentPosition),
@@ -308,7 +317,7 @@ class MapController
         }
 
         fun walkViaRoads(position: LatLng) {
-            pendingRoadWalkJob?.cancel()
+            cancelAnyActiveMovement()
             pendingRoadWalkJob = appScope.launch {
                 val current = locationRepository.currentPosition.value
                 if (current == null) {
