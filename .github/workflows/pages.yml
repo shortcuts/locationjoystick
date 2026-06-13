@@ -14,22 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  filter:
-    runs-on: ubuntu-latest
-    outputs:
-      wiki: ${{ steps.filter.outputs.wiki }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            wiki:
-              - 'docs/wiki/**'
-
   deploy:
-    needs: filter
-    if: needs.filter.outputs.wiki == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
