@@ -22,6 +22,7 @@ import com.locationjoystick.core.model.toConfig
 import com.locationjoystick.core.routing.OsrmClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -79,6 +80,8 @@ class MapController
 
         private val _routingErrors = MutableSharedFlow<String>(extraBufferCapacity = 1)
         val routingErrors: SharedFlow<String> = _routingErrors.asSharedFlow()
+
+        private var pendingRoadWalkJob: Job? = null
 
         init {
             observeLocationState()
@@ -289,6 +292,8 @@ class MapController
         }
 
         fun walkTo(position: LatLng) {
+            pendingRoadWalkJob?.cancel()
+            pendingRoadWalkJob = null
             _state.update {
                 it.copy(
                     walkMode = WalkMode.Walking(target = position, start = it.currentPosition),
@@ -303,7 +308,8 @@ class MapController
         }
 
         fun walkViaRoads(position: LatLng) {
-            appScope.launch {
+            pendingRoadWalkJob?.cancel()
+            pendingRoadWalkJob = appScope.launch {
                 val current = locationRepository.currentPosition.value
                 if (current == null) {
                     Log.w(TAG, "walkViaRoads: no current position, straight walk")
@@ -341,6 +347,8 @@ class MapController
         }
 
         fun stopWalk() {
+            pendingRoadWalkJob?.cancel()
+            pendingRoadWalkJob = null
             walkCoordinator.cancel()
             if (_state.value.ephemeralWaypoints.isNotEmpty()) {
                 context.startService(MockLocationIntentBuilder.cancelRouteReplay(context))

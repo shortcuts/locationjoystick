@@ -6,6 +6,7 @@ import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.model.LatLng
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -101,6 +102,8 @@ class WalkToEngine
                     }
                     Log.d(TAG, "Reached final target; stopping walk")
                     onArrival()
+                } catch (_: CancellationException) {
+                    // normal cancellation — no log needed
                 } catch (e: Exception) {
                     Log.e(TAG, "Walk along route to $finalTarget interrupted", e)
                 } finally {
