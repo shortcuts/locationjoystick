@@ -6,6 +6,10 @@
         {
           "type": "generic",
           "path": "build-logic/convention/src/main/kotlin/LjApplicationConventionPlugin.kt"
+        },
+        {
+          "type": "generic",
+          "path": "core/common/src/main/kotlin/com/locationjoystick/core/common/constants/AppConstants.kt"
         }
       ]
     }

@@ -35,6 +35,7 @@ class LjApplicationConventionPlugin : Plugin<Project> {
                     targetSdk = 36
                     val versionName = "0.8.0" // x-release-please-version
                     val (maj, min, pat) = versionName.split(".").map { it.toInt() }
+                    this.versionName = versionName
                     versionCode = maj * 10000 + min * 100 + pat
                     buildConfigField("String", "VERSION_NAME", "\"$versionName\"")
                 }
