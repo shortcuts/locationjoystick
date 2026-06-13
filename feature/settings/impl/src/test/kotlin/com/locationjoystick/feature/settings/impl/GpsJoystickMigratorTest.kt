@@ -250,6 +250,18 @@ class GpsJoystickMigratorTest {
     // ── speed profiles ────────────────────────────────────────────────────────
 
     @Test
+    fun `20260613 - empty export returns success with no data`() {
+        val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20260613213704.db"))
+        assertTrue(result.isSuccess)
+        val m = result.getOrThrow()
+        assertTrue(m.favorites.isEmpty())
+        assertTrue(m.routes.isEmpty())
+        assertEquals(null, m.walkSpeed)
+        assertEquals(null, m.runSpeed)
+        assertEquals(null, m.bikeSpeed)
+    }
+
+    @Test
     fun `GPS Joystick db files do not contain speed profiles`() {
         listOf(
             "gpsjoystick_20260508222509.db",

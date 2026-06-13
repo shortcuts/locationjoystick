@@ -183,7 +183,7 @@ class RoutesViewModelUiStateTest {
  */
 class RoutesViewModelTest {
     private fun parseGpxWaypoints(gpxContent: String): List<LatLng> {
-        val trkptRegex = Regex("""<trkpt\s+lat="([^"]+)"\s+lon="([^"]+)""")
+        val trkptRegex = Regex("""<(?:trkpt|rtept)\s+lat="([^"]+)"\s+lon="([^"]+)""")
         return trkptRegex
             .findAll(gpxContent)
             .map { match ->
@@ -427,20 +427,38 @@ class RoutesViewModelTest {
     }
 
     @Test
-    fun `fixture gpsJoystick rtept format not yet supported returns empty`() {
+    fun `fixture gpsJoystick rtept parses all 185 waypoints`() {
         val gpx = loadFixture("gpsjoystick_20250408232304.gpx")
 
         val waypoints = parseGpxWaypoints(gpx)
 
-        assertEquals(0, waypoints.size)
+        assertEquals(185, waypoints.size)
     }
 
     @Test
-    fun `fixture gpsJoystick name extracted correctly despite rtept format`() {
+    fun `fixture gpsJoystick name extracted from first rte`() {
         val gpx = loadFixture("gpsjoystick_20250408232304.gpx")
 
         val name = extractGpxName(gpx)
 
         assertEquals("Paris Jardins", name)
+    }
+
+    @Test
+    fun `fixture gpsJoystick 20260613 rtept with scientific notation coords parses 19 waypoints`() {
+        val gpx = loadFixture("gpsjoystick_20260613213743.gpx")
+
+        val waypoints = parseGpxWaypoints(gpx)
+
+        assertEquals(19, waypoints.size)
+    }
+
+    @Test
+    fun `fixture gpsJoystick 20260613 name extracted from first rte`() {
+        val gpx = loadFixture("gpsjoystick_20260613213743.gpx")
+
+        val name = extractGpxName(gpx)
+
+        assertEquals("2", name)
     }
 }

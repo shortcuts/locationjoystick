@@ -298,7 +298,7 @@ class RoutesViewModel
             parser.setInput(gpxContent.reader())
             var event = parser.eventType
             while (event != XmlPullParser.END_DOCUMENT) {
-                if (event == XmlPullParser.START_TAG && parser.name == "trkpt") {
+                if (event == XmlPullParser.START_TAG && (parser.name == "trkpt" || parser.name == "rtept")) {
                     val lat = parser.getAttributeValue(null, "lat")?.toDoubleOrNull()
                     val lon = parser.getAttributeValue(null, "lon")?.toDoubleOrNull()
                     if (lat != null && lon != null) result.add(LatLng(lat, lon))
