@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.9.0](https://github.com/shortcuts/locationjoystick/compare/v0.8.0...v0.9.0) (2026-06-13)
+
+
+### Features
+
+* **import:** support rtept GPX format from GPS Joystick ([9c3e754](https://github.com/shortcuts/locationjoystick/commit/9c3e75479a8b7bd7880e54c488f41e553e087cc2))
+* **roaming:** pre-plan full route before walking begins ([cd20918](https://github.com/shortcuts/locationjoystick/commit/cd2091821871a9eea08620cbb1f5d4dcd4e5a11f))
+* **widget:** show red dot badge on FAB when route/walk completes ([eb671f9](https://github.com/shortcuts/locationjoystick/commit/eb671f98164f59e8172b02d8306f00c1ee22ee15))
+* **widget:** show route state in floating map with stop/pause controls ([6bcde30](https://github.com/shortcuts/locationjoystick/commit/6bcde309e6f73c5ecdc3e0bd81b3fd1d30e586aa))
+
+
+### Bug Fixes
+
+* **map:** center camera on favorite when not spoofing ([de4df41](https://github.com/shortcuts/locationjoystick/commit/de4df4164140107863b1fe66956a332b4fdaeca3))
+* **routing:** harden OsrmClient for release builds ([252d4a4](https://github.com/shortcuts/locationjoystick/commit/252d4a4517fe623155c0b28d8678db9134ba7913))
+* **version:** set versionName in manifest and fix stale 0.7.1 constant ([336fcde](https://github.com/shortcuts/locationjoystick/commit/336fcdeee451a5c7547a1076b2da1f3b41143b9d))
+* **walk:** cancel ephemeral replay when starting a new walk-to ([a4e0a57](https://github.com/shortcuts/locationjoystick/commit/a4e0a57d88fc94ca8c57f071b52ba26e5fc30d38))
+* **walk:** cancel in-flight OSRM request when starting new walk-to ([311729f](https://github.com/shortcuts/locationjoystick/commit/311729f23b4b347b7d9f789687e250618de7a4a7))
+
 ## [0.8.0](https://github.com/shortcuts/locationjoystick/compare/v0.7.1...v0.8.0) (2026-06-12)
 
 
