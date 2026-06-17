@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.random.Random
 
 private const val TAG = "LeaderSyncServer"
 
@@ -24,8 +23,6 @@ class LeaderSyncServer
     constructor() {
         @Volatile private var serverSocket: ServerSocket? = null
 
-        @Volatile private var groupId: String? = null
-
         private val executor = Executors.newCachedThreadPool()
         private val latestUpdate = AtomicReference<SyncPositionUpdate?>(null)
         private val seq = AtomicLong(0L)
@@ -33,13 +30,12 @@ class LeaderSyncServer
         val port: Int get() = serverSocket?.localPort ?: 0
 
         fun start(groupId: String): Int {
-            this.groupId = groupId
-            val port = findFreePort()
-            val socket = ServerSocket(port, AppConstants.SyncConstants.SERVER_BACKLOG)
+            // ServerSocket(0) lets the OS pick a free port — avoids TOCTOU race of probe-then-bind.
+            val socket = ServerSocket(0, AppConstants.SyncConstants.SERVER_BACKLOG)
             serverSocket = socket
             executor.submit { acceptLoop(socket, groupId) }
-            Log.i(TAG, "Leader server started on port $port")
-            return port
+            Log.i(TAG, "Leader server started on port ${socket.localPort}")
+            return socket.localPort
         }
 
         fun stop() {
@@ -49,8 +45,8 @@ class LeaderSyncServer
                 Log.w(TAG, "Error closing server socket", e)
             }
             serverSocket = null
-            groupId = null
             latestUpdate.set(null)
+            executor.shutdown()
             Log.i(TAG, "Leader server stopped")
         }
 
@@ -79,6 +75,7 @@ class LeaderSyncServer
             groupId: String,
         ) {
             try {
+                socket.soTimeout = AppConstants.SyncConstants.POLL_TIMEOUT_MS.toInt()
                 socket.use {
                     val reader = BufferedReader(InputStreamReader(it.getInputStream()))
                     val writer = PrintWriter(it.getOutputStream(), true)
@@ -94,6 +91,7 @@ class LeaderSyncServer
 
                     if (token != groupId) {
                         writer.print("HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n")
+                        writer.flush()
                         return
                     }
 
@@ -106,7 +104,6 @@ class LeaderSyncServer
                         path.startsWith("/position") -> {
                             val update = latestUpdate.get()
                             if (update == null) {
-                                val body = "{\"error\":\"no position\"}"
                                 writer.print("HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n")
                             } else {
                                 val body =
@@ -123,24 +120,11 @@ class LeaderSyncServer
                             writer.print("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n")
                         }
                     }
+                    writer.flush()
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Error handling client request", e)
             }
-        }
-
-        private fun findFreePort(): Int {
-            repeat(50) {
-                val port = Random.nextInt(AppConstants.SyncConstants.PORT_RANGE_START, AppConstants.SyncConstants.PORT_RANGE_END)
-                try {
-                    ServerSocket(port).close()
-                    return port
-                } catch (_: Exception) {
-                    // Try next port
-                }
-            }
-            // Let OS assign
-            return 0
         }
 
         private fun extractQueryParam(

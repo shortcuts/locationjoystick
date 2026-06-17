@@ -29,9 +29,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import javax.xml.parsers.DocumentBuilderFactory
 import java.util.UUID
 import javax.inject.Inject
+import javax.xml.parsers.DocumentBuilderFactory
 
 private const val TAG = "RoutesViewModel"
 
@@ -276,27 +276,39 @@ class RoutesViewModel
                     stream.bufferedReader().readText()
                 } ?: throw IllegalArgumentException("Cannot read GPX file")
             }
-
-
     }
 
 internal fun extractGpxName(gpxContent: String): String {
-    val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-        .parse(gpxContent.byteInputStream())
+    val doc =
+        DocumentBuilderFactory
+            .newInstance()
+            .newDocumentBuilder()
+            .parse(gpxContent.byteInputStream())
     val names = doc.getElementsByTagName("name")
     return names.item(0)?.textContent?.takeIf { it.isNotEmpty() } ?: "Imported Route"
 }
 
 internal fun parseGpxWaypoints(gpxContent: String): List<LatLng> {
-    val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-        .parse(gpxContent.byteInputStream())
+    val doc =
+        DocumentBuilderFactory
+            .newInstance()
+            .newDocumentBuilder()
+            .parse(gpxContent.byteInputStream())
     val result = mutableListOf<LatLng>()
     val allNodes = doc.getElementsByTagName("*")
     for (i in 0 until allNodes.length) {
         val node = allNodes.item(i)
         if (node.nodeName == "trkpt" || node.nodeName == "rtept") {
-            val lat = node.attributes?.getNamedItem("lat")?.nodeValue?.toDoubleOrNull() ?: continue
-            val lon = node.attributes?.getNamedItem("lon")?.nodeValue?.toDoubleOrNull() ?: continue
+            val lat =
+                node.attributes
+                    ?.getNamedItem("lat")
+                    ?.nodeValue
+                    ?.toDoubleOrNull() ?: continue
+            val lon =
+                node.attributes
+                    ?.getNamedItem("lon")
+                    ?.nodeValue
+                    ?.toDoubleOrNull() ?: continue
             result.add(LatLng(lat, lon))
         }
     }

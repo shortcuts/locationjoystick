@@ -208,6 +208,9 @@ object AppConstants {
         const val EXTRA_FOLLOWER_HOST = "extra_follower_host"
         const val EXTRA_FOLLOWER_PORT = "extra_follower_port"
         const val EXTRA_FOLLOWER_GROUP_ID = "extra_follower_group_id"
+        const val ACTION_START_LEADER = "com.locationjoystick.core.location.ACTION_START_LEADER"
+        const val ACTION_EXIT_LEADER = "com.locationjoystick.core.location.ACTION_EXIT_LEADER"
+        const val EXTRA_LEADER_GROUP_ID = "extra_leader_group_id"
         const val ACTION_OVERLAY_SHOW = "com.locationjoystick.action.OVERLAY_SHOW"
         const val ACTION_OVERLAY_HIDE = "com.locationjoystick.action.OVERLAY_HIDE"
         const val EXTRA_SHOW_OVERLAY = "extra_show_overlay"
@@ -217,6 +220,12 @@ object AppConstants {
         const val FILE_NAME = "app_preferences"
         const val DEFAULT_REMEMBER_LAST_LOCATION = true
         const val DEFAULT_LAST_TELEPORT_TIME_MS = 0L
+        const val KEY_GROUP_ROLE = "group_role"
+        const val KEY_GROUP_ID = "group_id"
+        const val KEY_GROUP_LEADER_HOST = "group_leader_host"
+        const val KEY_GROUP_LEADER_PORT = "group_leader_port"
+        const val KEY_GROUP_FOLLOWER_MODE_ENABLED = "group_follower_mode_enabled"
+        const val KEY_GROUP_SHARING_ENABLED = "group_sharing_enabled"
     }
 
     object CooldownConstants {

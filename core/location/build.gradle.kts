@@ -9,6 +9,10 @@ android {
     buildFeatures {
         buildConfig = true
     }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -20,8 +24,11 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.okhttp)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.orgjson)
 }

@@ -1,4 +1,4 @@
-package com.locationjoystick.core.routing
+package com.locationjoystick.core.location
 
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
@@ -6,6 +6,7 @@ import com.locationjoystick.core.model.SyncPositionUpdate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -22,12 +23,13 @@ private const val TAG = "FollowerSyncClient"
 class FollowerSyncClient
     @Inject
     constructor() {
+        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
         private val client =
             OkHttpClient
                 .Builder()
                 .connectTimeout(AppConstants.SyncConstants.POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS)
                 .readTimeout(AppConstants.SyncConstants.POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-                .callTimeout(AppConstants.SyncConstants.POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS)
                 .build()
 
         private var pollJob: Job? = null
@@ -37,12 +39,13 @@ class FollowerSyncClient
             host: String,
             port: Int,
             groupId: String,
+            pollIntervalMs: Long = AppConstants.SyncConstants.POLL_INTERVAL_MS,
             onPosition: (lat: Double, lon: Double) -> Unit,
         ) {
             stopPolling()
             lastSeq = -1L
             pollJob =
-                CoroutineScope(Dispatchers.IO).launch {
+                scope.launch {
                     while (isActive) {
                         try {
                             val update = fetchPosition(host, port, groupId)
@@ -57,7 +60,7 @@ class FollowerSyncClient
                         } catch (e: Exception) {
                             Log.w(TAG, "Poll failed", e)
                         }
-                        delay(AppConstants.SyncConstants.POLL_INTERVAL_MS)
+                        delay(pollIntervalMs)
                     }
                 }
             Log.i(TAG, "Polling started: $host:$port")
@@ -74,16 +77,15 @@ class FollowerSyncClient
             port: Int,
             groupId: String,
         ): SyncPositionUpdate? {
-            val url = "http://$host:$port/position?token=$groupId"
             val request =
                 Request
                     .Builder()
-                    .url(url)
+                    .url("http://$host:$port/position?token=$groupId")
                     .get()
                     .build()
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    Log.w(TAG, "Poll returned ${response.code}")
+                    Log.w(TAG, "Poll returned ${response.code} from $host:$port")
                     return null
                 }
                 val body = response.body?.string() ?: return null

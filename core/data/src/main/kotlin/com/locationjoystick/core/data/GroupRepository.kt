@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
@@ -23,12 +24,12 @@ class GroupRepository
         private val dataStore: DataStore<Preferences>,
     ) {
         private object Keys {
-            val GROUP_ROLE = stringPreferencesKey("group_role")
-            val GROUP_ID = stringPreferencesKey("group_id")
-            val GROUP_LEADER_HOST = stringPreferencesKey("group_leader_host")
-            val GROUP_LEADER_PORT = intPreferencesKey("group_leader_port")
-            val GROUP_FOLLOWER_MODE_ENABLED = booleanPreferencesKey("group_follower_mode_enabled")
-            val GROUP_SHARING_ENABLED = booleanPreferencesKey("group_sharing_enabled")
+            val GROUP_ROLE = stringPreferencesKey(AppConstants.DataStoreConstants.KEY_GROUP_ROLE)
+            val GROUP_ID = stringPreferencesKey(AppConstants.DataStoreConstants.KEY_GROUP_ID)
+            val GROUP_LEADER_HOST = stringPreferencesKey(AppConstants.DataStoreConstants.KEY_GROUP_LEADER_HOST)
+            val GROUP_LEADER_PORT = intPreferencesKey(AppConstants.DataStoreConstants.KEY_GROUP_LEADER_PORT)
+            val GROUP_FOLLOWER_MODE_ENABLED = booleanPreferencesKey(AppConstants.DataStoreConstants.KEY_GROUP_FOLLOWER_MODE_ENABLED)
+            val GROUP_SHARING_ENABLED = booleanPreferencesKey(AppConstants.DataStoreConstants.KEY_GROUP_SHARING_ENABLED)
         }
 
         val groupState: Flow<GroupState> =

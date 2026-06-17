@@ -10,7 +10,6 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.GroupRepository
-import com.locationjoystick.core.location.LeaderSyncServer
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
@@ -20,8 +19,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.net.Inet4Address
-import java.net.NetworkInterface
 import java.util.UUID
 import javax.inject.Inject
 
@@ -34,7 +31,6 @@ class GroupSyncViewModel
     constructor(
         @ApplicationContext private val context: Context,
         private val groupRepository: GroupRepository,
-        private val leaderSyncServer: LeaderSyncServer,
     ) : ViewModel() {
         private val _groupState = MutableStateFlow(GroupState())
         val groupState: StateFlow<GroupState> = _groupState.asStateFlow()
@@ -49,7 +45,7 @@ class GroupSyncViewModel
             viewModelScope.launch {
                 groupRepository.groupState.collect { state ->
                     _groupState.value = state
-                    // Regenerate QR if leader state is populated and we have no bitmap yet
+                    // Regenerate QR when leader state becomes available and we have no bitmap yet.
                     val host = state.leaderHost
                     val port = state.leaderPort
                     val id = state.groupId
@@ -68,29 +64,22 @@ class GroupSyncViewModel
         }
 
         fun createGroup() {
-            viewModelScope.launch {
-                try {
-                    val host =
-                        getLocalIpAddress() ?: run {
-                            _errorMessage.value = "Could not determine local IP address. Ensure Wi-Fi is connected."
-                            return@launch
-                        }
-                    val groupId = UUID.randomUUID().toString()
-                    val port = leaderSyncServer.start(groupId)
-                    groupRepository.createGroup(host = host, port = port, groupId = groupId)
-                    generateQrCode(host, port, groupId)
-                    Log.i(TAG, "Group created: $groupId at $host:$port")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to create group", e)
-                    _errorMessage.value = "Failed to start group server: ${e.message}"
-                }
+            val groupId = UUID.randomUUID().toString()
+            sendServiceAction(AppConstants.ServiceConstants.ACTION_START_LEADER) { intent ->
+                intent.putExtra(AppConstants.ServiceConstants.EXTRA_LEADER_GROUP_ID, groupId)
             }
+            Log.i(TAG, "Requested group creation: $groupId")
         }
 
         private fun handlePendingInvite(invite: GroupInvite) {
             viewModelScope.launch {
+                // Stop leader server if currently leading before switching to follower.
+                if (_groupState.value.role == GroupRole.LEADER) {
+                    sendServiceAction(AppConstants.ServiceConstants.ACTION_EXIT_LEADER)
+                }
                 groupRepository.joinGroup(invite)
                 groupRepository.consumeGroupInvite()
+                _qrBitmap.value = null
                 Log.i(TAG, "Joined group ${invite.groupId} at ${invite.host}:${invite.port}")
             }
         }
@@ -124,11 +113,20 @@ class GroupSyncViewModel
         fun leaveGroup() {
             val state = _groupState.value
             viewModelScope.launch {
-                if (state.role == GroupRole.FOLLOWER && state.followerModeEnabled) {
-                    sendServiceAction(AppConstants.ServiceConstants.ACTION_EXIT_FOLLOWER)
-                }
-                if (state.role == GroupRole.LEADER) {
-                    leaderSyncServer.stop()
+                when (state.role) {
+                    GroupRole.FOLLOWER -> {
+                        if (state.followerModeEnabled) {
+                            sendServiceAction(AppConstants.ServiceConstants.ACTION_EXIT_FOLLOWER)
+                        }
+                    }
+
+                    GroupRole.LEADER -> {
+                        sendServiceAction(AppConstants.ServiceConstants.ACTION_EXIT_LEADER)
+                    }
+
+                    GroupRole.NONE -> {
+                        Unit
+                    }
                 }
                 groupRepository.leaveGroup()
                 _qrBitmap.value = null
@@ -180,17 +178,4 @@ class GroupSyncViewModel
             configure?.invoke(intent)
             context.startService(intent)
         }
-
-        private fun getLocalIpAddress(): String? =
-            try {
-                NetworkInterface
-                    .getNetworkInterfaces()
-                    ?.toList()
-                    ?.flatMap { it.inetAddresses.toList() }
-                    ?.firstOrNull { addr -> !addr.isLoopbackAddress && addr is Inet4Address }
-                    ?.hostAddress
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to get local IP", e)
-                null
-            }
     }

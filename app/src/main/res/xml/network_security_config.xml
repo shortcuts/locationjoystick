@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Permits cleartext HTTP for local LAN sync (Group Sync feature). No PII or auth tokens in transit. -->
+    <!-- Permits cleartext HTTP for local LAN sync (Group Sync feature).
+         The group ID token travels in query params — acceptable on a trusted LAN,
+         but keep this in mind if the feature is extended beyond local network use. -->
     <base-config cleartextTrafficPermitted="true" />
 </network-security-config>
