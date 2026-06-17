@@ -607,7 +607,9 @@ class MockLocationService : Service() {
                 launch { roamingRepository.stopRoaming() }
             }
             locationRepository.setMockMode(MockMode.FOLLOWER)
-            val spoofingStarted = java.util.concurrent.atomic.AtomicBoolean(false)
+            val spoofingStarted =
+                java.util.concurrent.atomic
+                    .AtomicBoolean(false)
             followerSyncClient.startPolling(host, port, groupId) { lat, lon, speedMs, bearing ->
                 if (spoofingStarted.compareAndSet(false, true) && _state.value != MockLocationState.RUNNING) {
                     serviceScope.launch { startSpoofing(lat, lon) }

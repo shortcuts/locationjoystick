@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
@@ -18,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.semantics
@@ -107,19 +110,6 @@ fun LjDrawerContent(
             },
         )
         NavigationDrawerItem(
-            icon = { Icon(LjIcons.Settings, "Settings") },
-            label = { Text("Settings") },
-            selected = currentRoute == SETTINGS_ROUTE,
-            onClick = {
-                navController.navigate(SETTINGS_ROUTE) {
-                    popUpTo(IDLE_ROUTE) { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-                scope.launch { drawerState.close() }
-            },
-        )
-        NavigationDrawerItem(
             icon = { Icon(LjIcons.Share, "Group Sync") },
             label = { Text("Group Sync") },
             selected = currentRoute == GROUP_ROUTE,
@@ -133,8 +123,31 @@ fun LjDrawerContent(
             },
         )
         NavigationDrawerItem(
+            icon = { Icon(LjIcons.Settings, "Settings") },
+            label = { Text("Settings") },
+            selected = currentRoute == SETTINGS_ROUTE,
+            onClick = {
+                navController.navigate(SETTINGS_ROUTE) {
+                    popUpTo(IDLE_ROUTE) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+                scope.launch { drawerState.close() }
+            },
+        )
+        NavigationDrawerItem(
             icon = { Icon(LjIcons.Explore, "Website") },
-            label = { Text("Website") },
+            label = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Website")
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = LjIcons.OpenInNew,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            },
             selected = false,
             onClick = {
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://locationjoystick.shrtcts.fr/")))

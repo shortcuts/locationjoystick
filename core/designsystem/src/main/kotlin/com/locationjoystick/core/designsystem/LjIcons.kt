@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.MyLocation
+import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
@@ -78,6 +79,7 @@ object LjIcons {
     val LocationOff = Icons.Outlined.LocationOff
     val LocationOn = Icons.Rounded.LocationOn
     val Loop = Icons.Rounded.Loop
+    val OpenInNew = Icons.Rounded.OpenInNew
     val Map = Icons.Rounded.Map
     val Menu = Icons.Rounded.Menu
     val MoreVert = Icons.Rounded.MoreVert
