@@ -190,6 +190,15 @@ tap_text_below() {
 # Press the hardware back button.
 back() { $ADB shell input keyevent KEYCODE_BACK; }
 
+# Clear the focused text field by sending 80 backspace keypresses in one adb call.
+# Needed when a dialog reopens with a field that retains its previous value
+# (hint text disappears, so tap_text on the hint label fails to find the element).
+clear_field() {
+  local i keys=""
+  for (( i=0; i<80; i++ )); do keys+="KEYCODE_DEL "; done
+  $ADB shell input keyevent $keys
+}
+
 # Wait N seconds with a visible countdown.
 wait_s() {
   local n="$1" msg="${2:-Waiting}"
@@ -311,20 +320,27 @@ seed_favorites_if_needed() {
   local -a fav_lats=("35.6762" "48.8566" "51.5074")
   local -a fav_lons=("139.6503" "2.3522" "-0.1278")
   for i in "${!fav_names[@]}"; do
+    # Navigate fresh to Favorites each iteration so dialog always opens with empty fields.
+    go_idle
+    tap_text_below "Favorites" "$CARD_Y_MIN"
+    wait_s 2 "Favorites loading"
     tap_text "Add favorite"
     wait_s 1 "Add menu opening"
     tap_text "from coordinates"
     wait_s 1 "Dialog opening"
     tap_text "Name"
     wait_s 1
+    clear_field
     $ADB shell input text "${fav_names[$i]}"
     wait_s 1
     tap_text "Latitude"
     wait_s 1
+    clear_field
     $ADB shell input text "${fav_lats[$i]}"
     wait_s 1
     tap_text "Longitude"
     wait_s 1
+    clear_field
     $ADB shell input text "${fav_lons[$i]}"
     wait_s 1
     tap_text_exact "Save"
@@ -747,11 +763,14 @@ fi
 
 if should_run_step "12"; then
   log "=== 12 QR SHARE ==="
+  go_idle
+  tap_text_below "Settings" "$CARD_Y_MIN"
+  wait_s 2 "Settings loading"
   tap_text "Export"
   wait_s 1 "Export menu opening"
   tap_text "QR"
   wait_s 2 "QR share dialog opening"
-  screenshot "13_qr_share"
+  screenshot "12_qr_share"
   back
   wait_s 1 "Dismissing QR dialog"
 fi
@@ -824,10 +843,7 @@ fi
 if should_run_step "17"; then
   log "=== 17 GROUP SYNC ==="
   go_idle
-  # Open the navigation drawer and tap "Group Sync".
-  tap_text "Open navigation drawer"
-  wait_s 1 "Drawer opening"
-  tap_text "Group Sync"
+  tap_text_below "Group Sync" "$CARD_Y_MIN"
   wait_s 2 "Group Sync loading"
   screenshot "17_group_sync"
 fi
