@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":core:common"))
     implementation(project(":core:data"))
     implementation(project(":core:designsystem"))
+    implementation(project(":core:location"))
     implementation(project(":core:model"))
 
     implementation(libs.hilt.navigation.compose)
@@ -18,6 +19,9 @@ dependencies {
     implementation(libs.bundles.lifecycle)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.zxing.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
 
     testImplementation(libs.junit)
 }

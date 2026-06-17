@@ -122,6 +122,8 @@ class MockLocationService : Service() {
 
     @Inject lateinit var groupRepository: GroupRepository
 
+    @Inject lateinit var groupNsdManager: GroupNsdManager
+
     private val notificationManager: android.app.NotificationManager by lazy {
         getSystemService(android.app.NotificationManager::class.java)
     }
@@ -634,6 +636,7 @@ class MockLocationService : Service() {
                         return@launch
                     }
                 val port = leaderSyncServer.start(groupId)
+                groupNsdManager.startLeader(code = groupId, port = port)
                 groupRepository.createGroup(host = host, port = port, groupId = groupId)
                 Log.i(TAG, "Entered LEADER mode: $groupId at $host:$port")
             } catch (e: Exception) {
@@ -644,6 +647,7 @@ class MockLocationService : Service() {
 
     private fun exitLeaderMode() {
         leaderSyncServer.stop()
+        groupNsdManager.stopLeader()
         leaderSharingEnabled = false
         Log.i(TAG, "Exited LEADER mode")
     }

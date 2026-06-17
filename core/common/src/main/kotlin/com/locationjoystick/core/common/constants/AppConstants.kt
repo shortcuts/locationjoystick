@@ -317,6 +317,9 @@ object AppConstants {
         const val POLL_TIMEOUT_MS = 800L
         const val SERVER_BACKLOG = 5
         const val POSITION_STALE_THRESHOLD_MS = 5000L
+        const val NSD_SERVICE_TYPE = "_ljsync._tcp."
+        const val NSD_DISCOVERY_TIMEOUT_MS = 10_000L
+        const val GROUP_CODE_LENGTH = 6
     }
 
     object ElevationConstants {

@@ -12,33 +12,45 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.QrCode
+import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,6 +66,9 @@ fun GroupSyncRoute(
     val groupState by viewModel.groupState.collectAsStateWithLifecycle()
     val qrBitmap by viewModel.qrBitmap.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val isDiscovering by viewModel.isDiscovering.collectAsStateWithLifecycle()
+
+    var showQrScanner by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -64,17 +79,33 @@ fun GroupSyncRoute(
         }
     }
 
-    GroupSyncScreen(
-        groupState = groupState,
-        qrBitmap = qrBitmap,
-        snackbarHostState = snackbarHostState,
-        onOpenDrawer = onOpenDrawer,
-        onCreateGroup = viewModel::createGroup,
-        onSetFollowerModeEnabled = viewModel::setFollowerModeEnabled,
-        onSetSharingEnabled = viewModel::setSharingEnabled,
-        onLeaveGroup = viewModel::leaveGroup,
-        onRegenerateQr = viewModel::regenerateQr,
-    )
+    LaunchedEffect(groupState.role) {
+        if (groupState.role != GroupRole.NONE) showQrScanner = false
+    }
+
+    if (showQrScanner) {
+        GroupQrScannerScreen(
+            onQrScanned = { url ->
+                viewModel.joinViaScannedUrl(url)
+            },
+            onNavigateBack = { showQrScanner = false },
+        )
+    } else {
+        GroupSyncScreen(
+            groupState = groupState,
+            qrBitmap = qrBitmap,
+            snackbarHostState = snackbarHostState,
+            isDiscovering = isDiscovering,
+            onOpenDrawer = onOpenDrawer,
+            onCreateGroup = viewModel::createGroup,
+            onJoinViaQr = { showQrScanner = true },
+            onJoinByCode = viewModel::joinByCode,
+            onSetFollowerModeEnabled = viewModel::setFollowerModeEnabled,
+            onSetSharingEnabled = viewModel::setSharingEnabled,
+            onLeaveGroup = viewModel::leaveGroup,
+            onRegenerateQr = viewModel::regenerateQr,
+        )
+    }
 }
 
 @Composable
@@ -82,8 +113,11 @@ internal fun GroupSyncScreen(
     groupState: GroupState,
     qrBitmap: Bitmap?,
     snackbarHostState: SnackbarHostState,
+    isDiscovering: Boolean,
     onOpenDrawer: () -> Unit,
     onCreateGroup: () -> Unit,
+    onJoinViaQr: () -> Unit,
+    onJoinByCode: (String) -> Unit,
     onSetFollowerModeEnabled: (Boolean) -> Unit,
     onSetSharingEnabled: (Boolean) -> Unit,
     onLeaveGroup: () -> Unit,
@@ -107,7 +141,12 @@ internal fun GroupSyncScreen(
 
             when (groupState.role) {
                 GroupRole.NONE -> {
-                    NoGroupContent(onCreateGroup = onCreateGroup)
+                    NoGroupContent(
+                        isDiscovering = isDiscovering,
+                        onCreateGroup = onCreateGroup,
+                        onJoinViaQr = onJoinViaQr,
+                        onJoinByCode = onJoinByCode,
+                    )
                 }
 
                 GroupRole.LEADER -> {
@@ -135,7 +174,14 @@ internal fun GroupSyncScreen(
 }
 
 @Composable
-private fun NoGroupContent(onCreateGroup: () -> Unit) {
+private fun NoGroupContent(
+    isDiscovering: Boolean,
+    onCreateGroup: () -> Unit,
+    onJoinViaQr: () -> Unit,
+    onJoinByCode: (String) -> Unit,
+) {
+    var showCodeDialog by remember { mutableStateOf(false) }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -155,25 +201,102 @@ private fun NoGroupContent(onCreateGroup: () -> Unit) {
             text = "Sync your spoofed location across multiple devices on the same Wi-Fi network. No account needed.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "You are not in a group.",
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
+
         FilledTonalButton(
             onClick = onCreateGroup,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Create group — I'm the leader")
         }
+
         Text(
-            text = "To join a group, scan the QR code shown on the leader's device.",
+            text = "— or join an existing group —",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            OutlinedButton(
+                onClick = onJoinViaQr,
+                modifier = Modifier.weight(1f),
+                enabled = !isDiscovering,
+            ) {
+                Icon(Icons.Rounded.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.size(6.dp))
+                Text("Scan QR")
+            }
+            OutlinedButton(
+                onClick = { showCodeDialog = true },
+                modifier = Modifier.weight(1f),
+                enabled = !isDiscovering,
+            ) {
+                if (isDiscovering) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Enter code")
+                }
+            }
+        }
     }
+
+    if (showCodeDialog) {
+        EnterCodeDialog(
+            onDismiss = { showCodeDialog = false },
+            onConfirm = { code ->
+                showCodeDialog = false
+                onJoinByCode(code)
+            },
+        )
+    }
+}
+
+@Composable
+private fun EnterCodeDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var code by rememberSaveable { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Enter group code") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Ask the leader for their 6-character group code.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { code = it.uppercase().take(6) },
+                    label = { Text("Code") },
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { if (code.length == 6) onConfirm(code) }),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(code) },
+                enabled = code.length == 6,
+            ) {
+                Text("Join")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
 }
 
 @Composable
@@ -194,13 +317,35 @@ private fun LeaderContent(
             style = MaterialTheme.typography.titleMedium,
         )
 
-        val shortId = groupState.groupId?.takeLast(8) ?: "—"
-        Text(
-            text = "Group: …$shortId",
-            style = MaterialTheme.typography.bodyMedium,
-            fontFamily = FontFamily.Monospace,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        val code = groupState.groupId ?: "—"
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            ) {
+                Text(
+                    text = "Group code",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = code,
+                    style = MaterialTheme.typography.displaySmall,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Text(
+                    text = "Followers can scan the QR or type this code",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
 
         if (qrBitmap != null) {
             Card(
@@ -213,7 +358,7 @@ private fun LeaderContent(
                     Image(
                         bitmap = qrBitmap.asImageBitmap(),
                         contentDescription = "Group invite QR code",
-                        modifier = Modifier.size(220.dp),
+                        modifier = Modifier.size(200.dp),
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Rounded.QrCode, contentDescription = null, modifier = Modifier.size(16.dp))
