@@ -1,7 +1,6 @@
 (function () {
   var NAV_ITEMS = [
     { href: 'index.html', label: 'Getting Started' },
-    { href: 'home.html', label: 'Home' },
     { href: 'map.html', label: 'Map' },
     { href: 'routes.html', label: 'Routes' },
     { href: 'favorites.html', label: 'Favorites' },
@@ -9,6 +8,7 @@
     { href: 'group.html', label: 'Group Sync' },
     { href: 'settings.html', label: 'Settings' },
     { href: 'overlays.html', label: 'Overlays' },
+    { href: 'troubleshooting.html', label: 'Troubleshooting' },
     { href: 'changelog.html', label: 'Changelog' },
     { href: 'privacy.html', label: 'Privacy' },
     { href: 'acknowledgements.html', label: 'Acknowledgements' },

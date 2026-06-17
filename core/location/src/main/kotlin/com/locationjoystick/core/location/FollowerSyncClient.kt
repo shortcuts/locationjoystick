@@ -8,11 +8,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -98,7 +98,8 @@ class FollowerSyncClient
                 val body = response.body?.string() ?: return null
                 try {
                     _followerCount.value = JSONObject(body).optInt("followers", 0)
-                } catch (_: Exception) {}
+                } catch (_: Exception) {
+                }
                 return parsePosition(body)
             }
         }

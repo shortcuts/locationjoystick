@@ -3,6 +3,9 @@ package com.locationjoystick.core.location
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.SyncPositionUpdate
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
@@ -17,9 +20,6 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 private const val TAG = "LeaderSyncServer"
 

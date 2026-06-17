@@ -63,8 +63,7 @@ class GroupSyncViewModel
                         GroupRole.FOLLOWER -> followerSyncClient.followerCount
                         GroupRole.NONE -> flowOf(0)
                     }
-                }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+                }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
         init {
             viewModelScope.launch {
