@@ -6,6 +6,7 @@
     { href: 'routes.html', label: 'Routes' },
     { href: 'favorites.html', label: 'Favorites' },
     { href: 'share.html', label: 'Share &amp; Deep Links' },
+    { href: 'group.html', label: 'Group Sync' },
     { href: 'settings.html', label: 'Settings' },
     { href: 'overlays.html', label: 'Overlays' },
     { href: 'onboarding.html', label: 'Onboarding' },

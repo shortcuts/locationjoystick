@@ -30,13 +30,14 @@
 #   --steps 01,03,05     (run steps 1, 3, 5)
 # Seeding (routes, favorites) always runs before the first selected step.
 #
-# Output files (16 canonical PNGs):
+# Output files (17 canonical PNGs):
 #   01_idle, 02_map, 03_routes, 04_favorites, 05_settings,
 #   06_map_routes_sheet, 07_map_favorites_sheet, 08_map_roaming_sheet,
 #   09_route_creator, 10_route_detail, 11_map_picker,
 #   12_qr_share,
 #   13_joystick_overlay, 14_widget_overlay,
-#   15_routes_add_button, 16_favorites_add_button
+#   15_routes_add_button, 16_favorites_add_button,
+#   17_group_sync
 
 set -euo pipefail
 
@@ -85,7 +86,7 @@ if [[ -n "$STEPS_FILTER" ]]; then
   done
 else
   # No filter: enable all steps
-  for i in {01..16}; do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' $i) "; done
+  for i in {01..17}; do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' $i) "; done
 fi
 
 # Helper to check if a step should run (e.g. should_run_step "16")
@@ -813,6 +814,19 @@ if should_run_step "16"; then
   tap_text "Add favorite"
   wait_s 1 "Add menu opening"
   screenshot "17_favorites_add_button"
+fi
+
+# ── 17. Group Sync screen ────────────────────────────────────────────────────
+
+if should_run_step "17"; then
+  log "=== 17 GROUP SYNC ==="
+  go_idle
+  # Open the navigation drawer and tap "Group Sync".
+  tap_text "Open navigation drawer"
+  wait_s 1 "Drawer opening"
+  tap_text "Group Sync"
+  wait_s 2 "Group Sync loading"
+  screenshot "17_group_sync"
 fi
 
 # ── Done ─────────────────────────────────────────────

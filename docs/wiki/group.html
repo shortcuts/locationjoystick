@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Group Sync — locationjoystick</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4">
+</head>
+<body>
+<div class="layout">
+
+  <main>
+    <h2>Group Sync</h2>
+    <p>
+      Sync your spoofed location across multiple devices on the same Wi-Fi network.
+      One device acts as the leader and broadcasts its position; the others follow automatically.
+      No account, no internet connection, and no server required.
+    </p>
+
+    <div class="feature-section" id="group-main">
+      <img class="phone-shot" src="screenshots/17_group_sync.png" alt="Group Sync screen">
+      <ul class="section-bullets">
+        <li>One device creates the group and becomes the leader.</li>
+        <li>Other devices join by scanning a QR code shown on the leader's screen.</li>
+        <li>Followers mirror the leader's location automatically on the same Wi-Fi.</li>
+        <li>Works entirely on-device — no account, no cloud, no internet needed.</li>
+      </ul>
+    </div>
+
+    <h2>How it works</h2>
+    <ol class="section-bullets">
+      <li>The leader opens <strong>Group Sync</strong> from the navigation drawer and taps <strong>Create group — I'm the leader</strong>.</li>
+      <li>A QR code appears on the leader's screen containing the local IP address, port, and group ID.</li>
+      <li>Each follower opens <strong>Group Sync</strong> on their device and scans the QR code with their camera.</li>
+      <li>The follower is joined automatically. Enable <strong>Follow leader</strong> to start mirroring the leader's location.</li>
+    </ol>
+
+    <h2>Leader</h2>
+    <p>
+      The leader device runs a lightweight HTTP server on a random port (local network only).
+      It broadcasts its current spoofed position to all connected followers once per second.
+    </p>
+
+    <table class="option-table">
+      <thead><tr><th>Control</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>QR code</strong></td>
+          <td>Displays the join invite. Followers scan this to connect. Tap the refresh icon to regenerate a new QR code (rotates the group ID).</td>
+        </tr>
+        <tr>
+          <td><strong>Sharing</strong> toggle</td>
+          <td>When on, the leader actively broadcasts its position to followers. Turn off to pause broadcasting without leaving the group.</td>
+        </tr>
+        <tr>
+          <td><strong>Leave group</strong></td>
+          <td>Stops the server and removes the device from the group. All followers lose the connection and stop receiving updates.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Follower</h2>
+    <p>
+      Each follower connects to the leader's server and receives position updates. The follower's
+      spoofed location is updated to match the leader's position on every tick.
+    </p>
+
+    <table class="option-table">
+      <thead><tr><th>Control</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Follow leader</strong> toggle</td>
+          <td>When on, the device mirrors the leader's location in real time. Turn off to pause mirroring while staying in the group.</td>
+        </tr>
+        <tr>
+          <td><strong>Leave group</strong></td>
+          <td>Disconnects from the leader and clears the saved group credentials.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Persistence</h2>
+    <p>
+      Follower credentials (leader host, port, group ID) are saved to disk. If <strong>Follow leader</strong>
+      was enabled when the app was last closed, it resumes automatically on the next app launch — including after a device reboot.
+    </p>
+    <p>
+      Leader state is not persisted. The leader must tap <strong>Create group</strong> again after a reboot
+      and share a new QR code with followers.
+    </p>
+
+    <h2>Requirements</h2>
+    <ul class="section-bullets">
+      <li>All devices must be on the <strong>same Wi-Fi network</strong>.</li>
+      <li>Mock location must be active on each device independently — the follower spoofs its own GPS using the received coordinates.</li>
+      <li>No special permissions beyond what the app already requires.</li>
+    </ul>
+
+    <h2>Limitations</h2>
+    <ul class="section-bullets">
+      <li>Mobile data or VPN routing may prevent devices from reaching the leader's local IP address.</li>
+      <li>The leader's server binds to the device's local Wi-Fi IP. If that IP changes (e.g. DHCP reassignment), followers must rejoin by scanning a new QR code.</li>
+      <li>The leader can only have one active group at a time.</li>
+    </ul>
+  </main>
+
+</div>
+<script src="wiki-init.js"></script>
+</body>
+</html>
