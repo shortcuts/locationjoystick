@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Changelog — locationjoystick</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4">
+</head>
+<body>
+<div class="layout">
+
+  <main>
+    <h2>Changelog</h2>
+    <p>What's new in each release. Download the latest APK from <a href="https://github.com/shortcuts/locationjoystick/releases/latest" target="_blank" rel="noopener">GitHub Releases</a>.</p>
+
+    <h3><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.9.0" target="_blank" rel="noopener">0.9.0</a> — June 13, 2026</h3>
+    <ul>
+      <li>Roaming now plans the entire route before walking starts, so you see the full path on the map upfront.</li>
+      <li>The floating widget map shows route controls (pause and stop) while a route is replaying.</li>
+      <li>A red badge appears on the floating widget button when a route or walk finishes naturally.</li>
+      <li>GPX files exported from GPS Joystick (rtept format) can now be imported.</li>
+      <li>The map camera now centers on a favorite location even when spoofing is not active.</li>
+    </ul>
+
+    <h3><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.8.0" target="_blank" rel="noopener">0.8.0</a> — June 12, 2026</h3>
+    <ul>
+      <li>The app version is now shown on the home, onboarding, and settings screens.</li>
+      <li>The floating widget favorites list now shows the cooldown timer and distance to each location.</li>
+      <li>A warning now appears when "Walk via roads" falls back to a straight line because the routing service was unavailable.</li>
+      <li>Export and import icons in settings were swapped — now corrected.</li>
+      <li>GPX import now accepts files regardless of the file extension shown by your file manager.</li>
+    </ul>
+
+    <h3><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.7.0" target="_blank" rel="noopener">0.7.0</a> — June 11, 2026</h3>
+    <ul>
+      <li>Hot routes now include "Via Roads" variants that follow real streets instead of straight lines.</li>
+      <li>Starting a new route now correctly stops any route that was already running.</li>
+    </ul>
+
+    <h3><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.6.0" target="_blank" rel="noopener">0.6.0</a> — June 11, 2026</h3>
+    <ul>
+      <li>Added Copenhagen hot locations and routes for Go Fest 2026.</li>
+      <li>The persistent notification now has quick-action buttons to pause or stop spoofing without opening the app.</li>
+      <li>Tap any point on the map to see its address (reverse name search).</li>
+      <li>Mock step counter: the app now injects realistic step events alongside GPS spoofing for apps that track steps.</li>
+      <li>Map settings (camera follow, last location) moved to a dedicated Map section in Settings.</li>
+    </ul>
+
+    <h3><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.5.0" target="_blank" rel="noopener">0.5.0</a> — June 8, 2026</h3>
+    <ul>
+      <li>Hot locations are now organized by country and city with checkboxes so you can enable only the places you need.</li>
+      <li>"Walk via roads" is now available directly in the floating widget map.</li>
+      <li>The tap marker stays on the map after you dismiss the action sheet, so you can reposition before acting.</li>
+      <li>The app can now open coordinates sent via <code>geo:</code> links from other apps and tools.</li>
+      <li>Added 6 Chicago hot locations and per-location selection.</li>
+    </ul>
+
+    <h3><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.4.0" target="_blank" rel="noopener">0.4.0</a> — June 4, 2026</h3>
+    <ul>
+      <li>Deep link support: share any coordinate as a URL that opens the app and centers the map on that location.</li>
+      <li>Hot locations toggle added to the Favorites section in Settings.</li>
+      <li>"Add next point" while walking now uses road-following if the original walk used roads.</li>
+    </ul>
+
+    <h3><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.3.0" target="_blank" rel="noopener">0.3.0</a> — June 2, 2026</h3>
+    <ul>
+      <li>Floating widget favorites now show a play button for one-tap walk actions.</li>
+      <li>The roaming sheet in the floating widget matches the look and layout of the main app.</li>
+      <li>Fixed: the floating joystick drag direction was inverted — movement now matches the direction you drag.</li>
+    </ul>
+
+    <h3><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.2.0" target="_blank" rel="noopener">0.2.0</a> — June 2, 2026</h3>
+    <ul>
+      <li>The About screen now lists all open-source libraries used in the app.</li>
+      <li>Fixed: teleporting to a favorite now zooms the map to the right level.</li>
+    </ul>
+
+    <h3><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.1.0" target="_blank" rel="noopener">0.1.0</a> — June 2, 2026</h3>
+    <ul>
+      <li>Initial public release: mock GPS spoofing, floating joystick, saved routes, favorites, automatic roaming, floating widget, QR transfer, backup export/import, and GPS realism settings.</li>
+    </ul>
+
+  </main>
+
+</div>
+<script src="wiki-init.js"></script>
+</body>
+</html>

@@ -10,6 +10,7 @@
     { href: 'settings.html', label: 'Settings' },
     { href: 'overlays.html', label: 'Overlays' },
     { href: 'onboarding.html', label: 'Onboarding' },
+    { href: 'changelog.html', label: 'Changelog' },
     { href: 'privacy.html', label: 'Privacy' },
     { href: 'acknowledgements.html', label: 'Acknowledgements' },
   ];
