@@ -648,6 +648,9 @@ if should_run_step "05"; then
   go_idle
   tap_text_below "Settings" "$CARD_Y_MIN"
   wait_s 2 "Settings loading"
+  # Scroll to top to show the Settings landing page with all section headers visible
+  $ADB shell input swipe 540 400 540 1200
+  wait_s 1 "Scrolling to top"
   screenshot "05_settings"
 fi
 
