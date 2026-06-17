@@ -12,6 +12,8 @@ Nothing changes when joining a leader (static position not moving on the leader)
 
 What I expect when started is to get teleported at the exact same location asa the leader
 
+
+
 ---
 
 ## Documentation Outdated Items
@@ -20,13 +22,10 @@ What I expect when started is to get teleported at the exact same location asa t
 
 ## Frontend UI/UX
 
+In the Navbar, the "Group Sync" link should be before settings, the order should be the same as from the idlescreen
+
 ---
 
 ## Wiki
-
-- The Troubleshooting should be a standalone page, not be in index.html
-- Home is confusing, we shouldn't need this screenshot, we can move the content of this page to the Settings page, and make sure to update the screenshot script to not take a screenshot of the Home page
-- All headings should be linkable/sharable items (using the # pattern that most website offers)
-- The settings page screenshot is outdated, it should just show the settings landing page that describes each section, make sure the screenshot script is up to date
 
 ---
