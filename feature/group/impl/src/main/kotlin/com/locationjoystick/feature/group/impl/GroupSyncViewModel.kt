@@ -11,15 +11,21 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.GroupRepository
+import com.locationjoystick.core.location.FollowerSyncClient
 import com.locationjoystick.core.location.GroupNsdManager
+import com.locationjoystick.core.location.LeaderSyncServer
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,6 +40,8 @@ class GroupSyncViewModel
         @ApplicationContext private val context: Context,
         private val groupRepository: GroupRepository,
         private val groupNsdManager: GroupNsdManager,
+        private val leaderSyncServer: LeaderSyncServer,
+        private val followerSyncClient: FollowerSyncClient,
     ) : ViewModel() {
         private val _groupState = MutableStateFlow(GroupState())
         val groupState: StateFlow<GroupState> = _groupState.asStateFlow()
@@ -46,6 +54,17 @@ class GroupSyncViewModel
 
         private val _isDiscovering = MutableStateFlow(false)
         val isDiscovering: StateFlow<Boolean> = _isDiscovering.asStateFlow()
+
+        val followerCount: StateFlow<Int> =
+            groupRepository.groupState
+                .flatMapLatest { state ->
+                    when (state.role) {
+                        GroupRole.LEADER -> leaderSyncServer.followerCount
+                        GroupRole.FOLLOWER -> followerSyncClient.followerCount
+                        GroupRole.NONE -> flowOf(0)
+                    }
+                }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
         init {
             viewModelScope.launch {

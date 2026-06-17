@@ -9,11 +9,17 @@ import java.io.PrintWriter
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 private const val TAG = "LeaderSyncServer"
 
@@ -27,6 +33,11 @@ class LeaderSyncServer
         private val latestUpdate = AtomicReference<SyncPositionUpdate?>(null)
         private val seq = AtomicLong(0L)
 
+        private val activeFollowers = ConcurrentHashMap<String, Long>()
+        private val _followerCount = MutableStateFlow(0)
+        val followerCount: StateFlow<Int> = _followerCount.asStateFlow()
+        private var cleanupExecutor: ScheduledExecutorService? = null
+
         val port: Int get() = serverSocket?.localPort ?: 0
 
         fun start(groupId: String): Int {
@@ -34,6 +45,14 @@ class LeaderSyncServer
             val socket = ServerSocket(0, AppConstants.SyncConstants.SERVER_BACKLOG)
             serverSocket = socket
             executor.submit { acceptLoop(socket, groupId) }
+            val cleanupEx = Executors.newSingleThreadScheduledExecutor()
+            cleanupExecutor = cleanupEx
+            cleanupEx.scheduleAtFixedRate(
+                ::pruneStaleFollowers,
+                AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS,
+                AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS,
+                TimeUnit.MILLISECONDS,
+            )
             Log.i(TAG, "Leader server started on port ${socket.localPort}")
             return socket.localPort
         }
@@ -47,7 +66,17 @@ class LeaderSyncServer
             serverSocket = null
             latestUpdate.set(null)
             seq.set(0L)
+            cleanupExecutor?.shutdown()
+            cleanupExecutor = null
+            activeFollowers.clear()
+            _followerCount.value = 0
             Log.i(TAG, "Leader server stopped")
+        }
+
+        private fun pruneStaleFollowers() {
+            val threshold = System.currentTimeMillis() - AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS
+            activeFollowers.entries.removeIf { it.value < threshold }
+            _followerCount.value = activeFollowers.size
         }
 
         fun push(update: SyncPositionUpdate) {
@@ -102,14 +131,19 @@ class LeaderSyncServer
                         }
 
                         path.startsWith("/position") -> {
+                            val ip = socket.inetAddress.hostAddress ?: "unknown"
+                            activeFollowers[ip] = System.currentTimeMillis()
+                            _followerCount.value = activeFollowers.size
                             val update = latestUpdate.get()
                             if (update == null) {
                                 writer.print("HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n")
                             } else {
+                                val count = _followerCount.value
                                 val body =
                                     "{\"ts\":${update.timestamp},\"lat\":${update.latitude}," +
                                         "\"lon\":${update.longitude},\"speedMs\":${update.speedMs}," +
-                                        "\"bearing\":${update.bearing},\"seq\":${update.seq}}"
+                                        "\"bearing\":${update.bearing},\"seq\":${update.seq}," +
+                                        "\"followers\":$count}"
                                 writer.print(
                                     "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: ${body.length}\r\n\r\n$body",
                                 )

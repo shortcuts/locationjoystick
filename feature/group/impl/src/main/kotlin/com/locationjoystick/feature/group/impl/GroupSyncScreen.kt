@@ -67,6 +67,7 @@ fun GroupSyncRoute(
     val qrBitmap by viewModel.qrBitmap.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val isDiscovering by viewModel.isDiscovering.collectAsStateWithLifecycle()
+    val followerCount by viewModel.followerCount.collectAsStateWithLifecycle()
 
     var showQrScanner by remember { mutableStateOf(false) }
 
@@ -96,6 +97,7 @@ fun GroupSyncRoute(
             qrBitmap = qrBitmap,
             snackbarHostState = snackbarHostState,
             isDiscovering = isDiscovering,
+            followerCount = followerCount,
             onOpenDrawer = onOpenDrawer,
             onCreateGroup = viewModel::createGroup,
             onJoinViaQr = { showQrScanner = true },
@@ -114,6 +116,7 @@ internal fun GroupSyncScreen(
     qrBitmap: Bitmap?,
     snackbarHostState: SnackbarHostState,
     isDiscovering: Boolean,
+    followerCount: Int,
     onOpenDrawer: () -> Unit,
     onCreateGroup: () -> Unit,
     onJoinViaQr: () -> Unit,
@@ -153,6 +156,7 @@ internal fun GroupSyncScreen(
                     LeaderContent(
                         groupState = groupState,
                         qrBitmap = qrBitmap,
+                        followerCount = followerCount,
                         onSetSharingEnabled = onSetSharingEnabled,
                         onLeaveGroup = onLeaveGroup,
                         onRegenerateQr = onRegenerateQr,
@@ -162,6 +166,7 @@ internal fun GroupSyncScreen(
                 GroupRole.FOLLOWER -> {
                     FollowerContent(
                         groupState = groupState,
+                        followerCount = followerCount,
                         onSetFollowerModeEnabled = onSetFollowerModeEnabled,
                         onLeaveGroup = onLeaveGroup,
                     )
@@ -303,6 +308,7 @@ private fun EnterCodeDialog(
 private fun LeaderContent(
     groupState: GroupState,
     qrBitmap: Bitmap?,
+    followerCount: Int,
     onSetSharingEnabled: (Boolean) -> Unit,
     onLeaveGroup: () -> Unit,
     onRegenerateQr: () -> Unit,
@@ -343,6 +349,12 @@ private fun LeaderContent(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     textAlign = TextAlign.Center,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (followerCount == 1) "1 follower connected" else "$followerCount followers connected",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
         }
@@ -401,6 +413,7 @@ private fun LeaderContent(
 @Composable
 private fun FollowerContent(
     groupState: GroupState,
+    followerCount: Int,
     onSetFollowerModeEnabled: (Boolean) -> Unit,
     onLeaveGroup: () -> Unit,
 ) {
@@ -420,6 +433,14 @@ private fun FollowerContent(
             fontFamily = FontFamily.Monospace,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+
+        if (followerCount > 0) {
+            Text(
+                text = if (followerCount == 1) "1 follower in this group" else "$followerCount followers in this group",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
         SwitchRow(
             label = "Follow leader",
