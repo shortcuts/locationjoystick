@@ -46,7 +46,7 @@ class LeaderSyncServer
             }
             serverSocket = null
             latestUpdate.set(null)
-            executor.shutdown()
+            seq.set(0L)
             Log.i(TAG, "Leader server stopped")
         }
 
