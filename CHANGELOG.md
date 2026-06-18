@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.10.0](https://github.com/shortcuts/locationjoystick/compare/v0.9.0...v0.10.0) (2026-06-18)
+
+
+### Features
+
+* **group:** add 6-char group code and in-app QR scanner for joining ([021fabf](https://github.com/shortcuts/locationjoystick/commit/021fabfb65c87a0a972f3176c02f7a0940a85b81))
+* **group:** leader/follower location sync over local network ([fef82be](https://github.com/shortcuts/locationjoystick/commit/fef82bed02fa650c44a5dae0169892d3d5aee83b))
+* **group:** show follower count on leader and follower screens ([4a9da0c](https://github.com/shortcuts/locationjoystick/commit/4a9da0c1ea1bd7baaf41d6631c4610ebd8f71d93))
+
+
+### Bug Fixes
+
+* allow group creation ([4c86a39](https://github.com/shortcuts/locationjoystick/commit/4c86a39f0bdb4a5f7b4b05c0f7007ee3ce49025b))
+* **group:** follower preserves per-device jitter uniqueness ([d822d6e](https://github.com/shortcuts/locationjoystick/commit/d822d6ef05f9e924790f2e703902a3ecbea98bf4))
+* **group:** follower starts at ocean and leader shows 0 followers ([d55d967](https://github.com/shortcuts/locationjoystick/commit/d55d96739c6f98ad89cb191a3309056809de8618))
+* **group:** harden leader/follower sync — security, correctness, test coverage ([e561637](https://github.com/shortcuts/locationjoystick/commit/e561637635a811b05daa3aa735b5ffab808c3301))
+* **nav:** reorder drawer items to match idle screen, add external link icon to Website ([9877150](https://github.com/shortcuts/locationjoystick/commit/9877150ea883fb3562508f3697f67fb936ba7659))
+
 ## [0.9.0](https://github.com/shortcuts/locationjoystick/compare/v0.8.0...v0.9.0) (2026-06-13)
 
 
