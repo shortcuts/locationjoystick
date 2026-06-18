@@ -196,12 +196,8 @@ class RouteRepository
 
             val HOT_ROUTES =
                 listOf(
-                    HotRoute("City - Copenhagen", "Denmark", "Copenhagen", "hot_routes/cph_city.gpx"),
-                    HotRoute("City - Copenhagen (Via Roads)", "Denmark", "Copenhagen", "hot_routes/cph_city.gpx", RouteType.GUIDED),
-                    HotRoute("Park - Faelledparken", "Denmark", "Copenhagen", "hot_routes/cph_park.gpx"),
-                    HotRoute("Park - Faelledparken (Via Roads)", "Denmark", "Copenhagen", "hot_routes/cph_park.gpx", RouteType.GUIDED),
-                    HotRoute("Stamp Rally - LEGO", "Denmark", "Copenhagen", "hot_routes/cph_stamp_rally.gpx"),
-                    HotRoute("Stamp Rally - LEGO (Via Roads)", "Denmark", "Copenhagen", "hot_routes/cph_stamp_rally.gpx", RouteType.GUIDED),
+                    HotRoute("Faelledparken", "Denmark", "Copenhagen", "hot_routes/cph_park.gpx"),
+                    HotRoute("Faelledparken (Via Roads)", "Denmark", "Copenhagen", "hot_routes/cph_park.gpx", RouteType.GUIDED),
                 )
         }
     }
