@@ -142,6 +142,31 @@ h3{
 
 h3:first-child{margin-top:0}
 
+h2,h3{position:relative}
+
+.heading-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:6px;
+  padding:0;
+  width:20px;
+  height:20px;
+  border:none;
+  background:none;
+  color:var(--muted);
+  cursor:pointer;
+  opacity:0;
+  vertical-align:middle;
+  transition:opacity 0.1s,color 0.1s;
+}
+
+h2:hover .heading-link,h3:hover .heading-link,.heading-link:focus-visible{opacity:1}
+
+.heading-link:hover{color:var(--accent)}
+
+.heading-link.copied{opacity:1;color:var(--accent)}
+
 p{
   color:var(--muted);
   line-height:1.72;

@@ -81,4 +81,22 @@
     });
   };
   document.head.appendChild(ds);
+
+  document.querySelectorAll('main h2[id], main h3[id]').forEach(function (heading) {
+    var btn = document.createElement('button');
+    btn.className = 'heading-link';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Copy link to this section');
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none">'
+      + '<path d="M6.5 9.5a3.5 3.5 0 0 0 5 0l2-2a3.5 3.5 0 0 0-5-5l-1 1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>'
+      + '<path d="M9.5 6.5a3.5 3.5 0 0 0-5 0l-2 2a3.5 3.5 0 0 0 5 5l1-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>'
+      + '</svg>';
+    btn.addEventListener('click', function () {
+      var url = location.origin + location.pathname + '#' + heading.id;
+      navigator.clipboard.writeText(url).catch(function () {});
+      btn.classList.add('copied');
+      setTimeout(function () { btn.classList.remove('copied'); }, 1200);
+    });
+    heading.appendChild(btn);
+  });
 }());
