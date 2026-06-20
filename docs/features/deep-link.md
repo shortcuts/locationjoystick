@@ -78,7 +78,7 @@ Supported formats (all parsed by `parseDeepLinkCoords`):
 
 These intent filters are **not** `autoVerify` — we don't control those domains, so Android shows a disambiguation chooser rather than auto-opening. `www.google.com` is scoped to `pathPrefix="/maps"` so other Google links (search, etc.) aren't intercepted.
 
-Apps that launch Maps via an **explicit intent** (`setPackage`/`setClassName` targeting `com.google.android.apps.maps` directly, e.g. Pokémon Go's "Get Directions") bypass intent-filter resolution entirely — there is no fix for this case, since Android never runs the resolver for explicit intents.
+Apps that launch Maps via an **explicit intent** (`setPackage`/`setClassName` targeting `com.google.android.apps.maps` directly) bypass intent-filter resolution entirely — there is no fix for this case, since Android never runs the resolver for explicit intents.
 
 ### Google Maps "Share" Button
 
