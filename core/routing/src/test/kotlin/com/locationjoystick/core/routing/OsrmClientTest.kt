@@ -158,6 +158,43 @@ class OsrmClientTest {
             assertTrue("Retry request should use 'driving' profile", retryRequest.path!!.contains("/driving/"))
         }
 
+    @Test
+    fun `getRoute snaps waypoints to nearest road and retries on NoSegment`() =
+        runTest {
+            val noSegmentBody = """{"code": "NoSegment", "routes": []}"""
+            val nearestBody = """{"code": "Ok", "waypoints": [{"location": [2.353, 48.857]}]}"""
+            val okBody =
+                """
+                {
+                  "code": "Ok",
+                  "routes": [{
+                    "geometry": {"type": "LineString", "coordinates": [[2.353, 48.857], [2.356, 48.86]]},
+                    "distance": 100.0,
+                    "duration": 60.0
+                  }]
+                }
+                """.trimIndent()
+            server.enqueue(MockResponse().setResponseCode(200).setBody(noSegmentBody))
+            server.enqueue(MockResponse().setResponseCode(200).setBody(nearestBody))
+            server.enqueue(MockResponse().setResponseCode(200).setBody(nearestBody))
+            server.enqueue(MockResponse().setResponseCode(200).setBody(okBody))
+
+            val result =
+                testClient.getRoute(
+                    profile = "foot",
+                    waypoints = listOf(LatLng(48.8566, 2.3522), LatLng(48.8600, 2.3560)),
+                )
+
+            assertTrue("Expected success after snap-to-road retry", result.isSuccess)
+            server.takeRequest() // initial route request (NoSegment)
+            val nearest1 = server.takeRequest()
+            val nearest2 = server.takeRequest()
+            val retry = server.takeRequest()
+            assertTrue("Expected nearest lookup", nearest1.path!!.contains("/nearest/"))
+            assertTrue("Expected nearest lookup", nearest2.path!!.contains("/nearest/"))
+            assertTrue("Retry should use route endpoint", retry.path!!.contains("/route/"))
+        }
+
     // straightLineRoute
 
     @Test

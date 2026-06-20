@@ -32,6 +32,12 @@ internal interface OsrmApi {
         @Query("overview") overview: String = AppConstants.OsrmConstants.OVERVIEW,
         @Query("geometries") geometries: String = AppConstants.OsrmConstants.GEOMETRIES,
     ): Response<OsrmRouteResponse>
+
+    @GET("nearest/v1/{profile}/{coordinate}")
+    suspend fun getNearest(
+        @Path("profile") profile: String,
+        @Path(value = "coordinate", encoded = true) coordinate: String,
+    ): Response<OsrmNearestResponse>
 }
 
 // ---------------------------------------------------------------------------
@@ -69,6 +75,23 @@ data class OsrmRouteResult(
     val distanceMeters: Double,
 )
 
+/** OSRM nearest-service response wrapper. */
+data class OsrmNearestResponse(
+    val code: String,
+    val waypoints: List<OsrmNearestWaypoint>?,
+)
+
+/** Single snapped point from OSRM nearest service. */
+data class OsrmNearestWaypoint(
+    val location: List<Double>,
+)
+
+/** Thrown when OSRM returns a non-"Ok" status code, carrying that code for callers to branch on. */
+class OsrmRouteException(
+    val code: String,
+    message: String,
+) : Exception(message)
+
 /**
  * HTTP client for OSRM routing API.
  *
@@ -85,6 +108,7 @@ class OsrmClient
     ) {
         companion object {
             const val PROFILE_FOOT = AppConstants.RoamingConstants.OSRM_PROFILE_FOOT
+            private const val NO_SEGMENT = "NoSegment"
         }
 
         @Inject
@@ -129,7 +153,9 @@ class OsrmClient
             }
 
         /**
-         * Requests a route for [profile]. If [profile] is [PROFILE_FOOT] and the request fails,
+         * Requests a route for [profile]. If the failure is [NO_SEGMENT] (a waypoint is too far
+         * from any road), snaps every waypoint to its nearest road node and retries once before
+         * falling back further. If [profile] is [PROFILE_FOOT] and the request still fails,
          * retries once with [AppConstants.RoamingConstants.OSRM_PROFILE_DRIVING] — the app should
          * always prefer walking directions, falling back to driving only when walking routing is
          * unavailable (e.g. a self-hosted OSRM instance without a foot profile graph).
@@ -141,12 +167,44 @@ class OsrmClient
             withContext(Dispatchers.IO) {
                 requestRoute(profile, waypoints)
                     .recoverCatching { e ->
+                        if (e is OsrmRouteException && e.code == NO_SEGMENT) {
+                            Log.w(TAG, "OSRM route failed (NoSegment), snapping waypoints to nearest road", e)
+                            val snapped = snapToRoad(profile, waypoints)
+                            requestRoute(profile, snapped).getOrThrow()
+                        } else {
+                            throw e
+                        }
+                    }.recoverCatching { e ->
                         if (profile != PROFILE_FOOT) throw e
                         Log.w(TAG, "OSRM foot route failed, retrying with driving profile", e)
                         requestRoute(AppConstants.RoamingConstants.OSRM_PROFILE_DRIVING, waypoints).getOrThrow()
                     }.onFailure { e ->
                         Log.e(TAG, "OSRM route request failed — will fall back to straight-line", e)
                     }
+            }
+
+        /**
+         * Snaps each waypoint to its nearest road node via the OSRM nearest service.
+         * A waypoint that fails to snap is passed through unchanged.
+         */
+        private suspend fun snapToRoad(
+            profile: String,
+            waypoints: List<LatLng>,
+        ): List<LatLng> =
+            waypoints.map { point ->
+                runCatching {
+                    val coordinate = "${point.longitude},${point.latitude}"
+                    val response = api.getNearest(profile = profile, coordinate = coordinate)
+                    val body = response.body() ?: error("OSRM nearest response body is null")
+                    if (!response.isSuccessful || body.code != "Ok") error("OSRM nearest returned ${body.code}")
+                    val location =
+                        body.waypoints?.firstOrNull()?.location
+                            ?: error("OSRM nearest returned no waypoints")
+                    LatLng(latitude = location[1], longitude = location[0])
+                }.getOrElse { e ->
+                    Log.w(TAG, "OSRM nearest snap failed for $point, using original point", e)
+                    point
+                }
             }
 
         private suspend fun requestRoute(
@@ -168,7 +226,7 @@ class OsrmClient
                         ?: error("OSRM response body is null")
 
                 if (body.code != "Ok") {
-                    error("OSRM returned non-Ok code: ${body.code}")
+                    throw OsrmRouteException(body.code, "OSRM returned non-Ok code: ${body.code}")
                 }
 
                 body.routes?.firstOrNull()

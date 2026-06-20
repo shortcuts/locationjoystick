@@ -38,7 +38,7 @@ The entire route is pre-planned before walking begins. The map shows the complet
 
 Base URL, overview, geometries, and profile constants in `AppConstants.OsrmConstants` and `AppConstants.RoamingConstants`.
 
-All road-following OSRM requests (roaming, walk-via-roads, route creator, ephemeral replay) always use the foot profile. If a foot-profile request fails, `OsrmClient` retries once with the driving profile before the caller falls back to a straight line — this only changes behavior on an OSRM backend with separate profile graphs; the public `router.project-osrm.org` demo serves a single graph regardless of profile name.
+All road-following OSRM requests (roaming, walk-via-roads, route creator, ephemeral replay) always use the foot profile. If OSRM returns `NoSegment` (a waypoint too far from any road, e.g. tapped on water or an unmapped area), `OsrmClient` snaps every waypoint to its nearest road node via the OSRM `/nearest` endpoint and retries once before any further fallback. If a foot-profile request still fails, it retries once with the driving profile before the caller falls back to a straight line — this only changes behavior on an OSRM backend with separate profile graphs; the public `router.project-osrm.org` demo serves a single graph regardless of profile name.
 
 ## State Management
 
