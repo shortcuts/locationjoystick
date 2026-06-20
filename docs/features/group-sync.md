@@ -96,3 +96,4 @@ Followers apply independent per-device jitter to the received position, preservi
 - QR regeneration: leader can regenerate QR (new port/session) without changing the group code.
 - Code discovery timeout (10 s) → error snackbar shown, user can retry.
 - NSD registration failure → logged; QR still works as fallback.
+- **Group no longer exists**: `FollowerSyncClient` detects this two ways — an immediate `403 Forbidden` from `/position` (token rejected, e.g. leader restarted with a new group) or `AppConstants.SyncConstants.MAX_CONSECUTIVE_POLL_FAILURES` (5) consecutive request failures (leader server unreachable/torn down). Either condition fires `onGroupLost`, which calls `exitFollowerMode()` and `GroupRepository.leaveGroup()` to fully clear follower state automatically — no manual exit required.

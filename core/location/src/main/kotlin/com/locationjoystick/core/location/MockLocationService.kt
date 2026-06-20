@@ -622,7 +622,18 @@ class MockLocationService : Service() {
             val spoofingStarted =
                 java.util.concurrent.atomic
                     .AtomicBoolean(false)
-            followerSyncClient.startPolling(host, port, groupId) { lat, lon, speedMs, bearing ->
+            followerSyncClient.startPolling(
+                host,
+                port,
+                groupId,
+                onGroupLost = {
+                    Log.w(TAG, "Group $groupId no longer exists — leaving group")
+                    serviceScope.launch {
+                        exitFollowerMode()
+                        groupRepository.leaveGroup()
+                    }
+                },
+            ) { lat, lon, speedMs, bearing ->
                 if (spoofingStarted.compareAndSet(false, true) && _state.value != MockLocationState.RUNNING) {
                     serviceScope.launch { startSpoofing(lat, lon) }
                 }

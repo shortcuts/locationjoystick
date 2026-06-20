@@ -21,6 +21,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "FollowerSyncClient"
+private const val HTTP_FORBIDDEN = 403
 
 @Singleton
 class FollowerSyncClient
@@ -37,6 +38,7 @@ class FollowerSyncClient
 
         private var pollJob: Job? = null
         private var lastSeq: Long = -1L
+        private var consecutiveFailures = 0
 
         private val _followerCount = MutableStateFlow(0)
         val followerCount: StateFlow<Int> = _followerCount.asStateFlow()
@@ -46,15 +48,24 @@ class FollowerSyncClient
             port: Int,
             groupId: String,
             pollIntervalMs: Long = AppConstants.SyncConstants.POLL_INTERVAL_MS,
+            onGroupLost: () -> Unit = {},
             onPosition: (lat: Double, lon: Double, speedMs: Float, bearing: Float) -> Unit,
         ) {
             stopPolling()
             lastSeq = -1L
+            consecutiveFailures = 0
             pollJob =
                 scope.launch {
                     while (isActive) {
                         try {
-                            val update = fetchPosition(host, port, groupId)
+                            val result = fetchPosition(host, port, groupId)
+                            if (result == FetchResult.GroupGone) {
+                                Log.w(TAG, "Group $groupId no longer recognized by leader $host:$port")
+                                onGroupLost()
+                                break
+                            }
+                            consecutiveFailures = 0
+                            val update = (result as? FetchResult.Success)?.update
                             if (update != null) {
                                 val nowMs = System.currentTimeMillis()
                                 val stale = nowMs - update.timestamp > AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS
@@ -65,6 +76,12 @@ class FollowerSyncClient
                             }
                         } catch (e: Exception) {
                             Log.w(TAG, "Poll failed", e)
+                            consecutiveFailures++
+                            if (consecutiveFailures >= AppConstants.SyncConstants.MAX_CONSECUTIVE_POLL_FAILURES) {
+                                Log.w(TAG, "Leader $host:$port unreachable after $consecutiveFailures attempts — giving up")
+                                onGroupLost()
+                                break
+                            }
                         }
                         delay(pollIntervalMs)
                     }
@@ -79,11 +96,21 @@ class FollowerSyncClient
             Log.i(TAG, "Polling stopped")
         }
 
+        private sealed class FetchResult {
+            data class Success(
+                val update: SyncPositionUpdate?,
+            ) : FetchResult()
+
+            data object GroupGone : FetchResult()
+
+            data object Empty : FetchResult()
+        }
+
         private fun fetchPosition(
             host: String,
             port: Int,
             groupId: String,
-        ): SyncPositionUpdate? {
+        ): FetchResult {
             val request =
                 Request
                     .Builder()
@@ -91,16 +118,19 @@ class FollowerSyncClient
                     .get()
                     .build()
             client.newCall(request).execute().use { response ->
+                if (response.code == HTTP_FORBIDDEN) {
+                    return FetchResult.GroupGone
+                }
                 if (!response.isSuccessful) {
                     Log.w(TAG, "Poll returned ${response.code} from $host:$port")
-                    return null
+                    return FetchResult.Empty
                 }
-                val body = response.body?.string() ?: return null
+                val body = response.body?.string() ?: return FetchResult.Empty
                 try {
                     _followerCount.value = JSONObject(body).optInt("followers", 0)
                 } catch (_: Exception) {
                 }
-                return parsePosition(body)
+                return FetchResult.Success(parsePosition(body))
             }
         }
 
