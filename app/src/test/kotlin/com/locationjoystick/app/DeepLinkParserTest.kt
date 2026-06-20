@@ -167,41 +167,45 @@ class DeepLinkParserTest {
 
     @Test
     fun `maps google com with q param returns pair`() {
-        val intent = googleMapsUri(
-            host = "maps.google.com",
-            path = "/maps",
-            queryParams = mapOf("q" to "35.62,139.77"),
-        )
+        val intent =
+            googleMapsUri(
+                host = "maps.google.com",
+                path = "/maps",
+                queryParams = mapOf("q" to "35.62,139.77"),
+            )
         assertEquals(35.62 to 139.77, parseDeepLinkCoords(intent))
     }
 
     @Test
     fun `www google com maps with query param returns pair`() {
-        val intent = googleMapsUri(
-            host = "www.google.com",
-            path = "/maps/search/",
-            queryParams = mapOf("query" to "35.62,139.77"),
-        )
+        val intent =
+            googleMapsUri(
+                host = "www.google.com",
+                path = "/maps/search/",
+                queryParams = mapOf("query" to "35.62,139.77"),
+            )
         assertEquals(35.62 to 139.77, parseDeepLinkCoords(intent))
     }
 
     @Test
     fun `www google com non-maps path is not treated as maps link`() {
-        val intent = googleMapsUri(
-            host = "www.google.com",
-            path = "/search",
-            queryParams = mapOf("q" to "35.62,139.77"),
-        )
+        val intent =
+            googleMapsUri(
+                host = "www.google.com",
+                path = "/search",
+                queryParams = mapOf("q" to "35.62,139.77"),
+            )
         assertNull(parseDeepLinkCoords(intent))
     }
 
     @Test
     fun `google maps at-segment path returns pair`() {
-        val intent = googleMapsUri(
-            host = "www.google.com",
-            path = "/maps/@35.62,139.77,15z",
-            pathSegments = listOf("maps", "@35.62,139.77,15z"),
-        )
+        val intent =
+            googleMapsUri(
+                host = "www.google.com",
+                path = "/maps/@35.62,139.77,15z",
+                pathSegments = listOf("maps", "@35.62,139.77,15z"),
+            )
         assertEquals(35.62 to 139.77, parseDeepLinkCoords(intent))
     }
 }

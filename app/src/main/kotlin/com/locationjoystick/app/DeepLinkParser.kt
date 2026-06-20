@@ -47,10 +47,11 @@ private fun isGoogleMapsUri(uri: android.net.Uri): Boolean {
  * `?query=` (api=1 search/dir links), and the `/maps/@LAT,LON,Zoomz` path form.
  */
 private fun parseGoogleMapsUri(uri: android.net.Uri): Pair<Double, Double>? {
-    val queryParam = uri.getQueryParameter("q")
-        ?: uri.getQueryParameter("daddr")
-        ?: uri.getQueryParameter("destination")
-        ?: uri.getQueryParameter("query")
+    val queryParam =
+        uri.getQueryParameter("q")
+            ?: uri.getQueryParameter("daddr")
+            ?: uri.getQueryParameter("destination")
+            ?: uri.getQueryParameter("query")
     queryParam?.let { parseLatLonString(it) }?.let { return it }
 
     val atSegment = uri.pathSegments.firstOrNull { it.startsWith("@") } ?: return null
