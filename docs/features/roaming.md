@@ -17,7 +17,7 @@ The entire route is pre-planned before walking begins. The map shows the complet
 
 **Straight-line mode**: All waypoints generated upfront. With `returnToInitialLocation`, the second half mirrors back toward center with the center appended as the final point.
 
-**Road-following mode (OSRM)**: Picks random points iteratively, fetches OSRM segments, accumulates road distance until budget is met (safety cap: 50 OSRM calls). With `returnToInitialLocation`, a final OSRM segment from the last point back to center is fetched. Falls back to straight-line on any OSRM failure.
+**Road-following mode (OSRM)**: Picks random points iteratively, fetches OSRM segments, accumulates road distance until budget is met (safety cap: 50 OSRM calls). With `returnToInitialLocation`, a final OSRM segment from the last point back to center is fetched. Always requests the foot profile (never the speed profile's transport mode) — see OSRM Configuration below. Falls back to straight-line on any OSRM failure.
 
 **Preview = planning**: `generateRoamingPreview` runs the full planning algorithm. `startRoaming` walks the pre-planned route directly. If no preview exists at start time, planning runs inline.
 
@@ -28,7 +28,7 @@ The entire route is pre-planned before walking begins. The map shows the complet
 | `centerPosition` | Center of the roaming area |
 | `radiusMeters` | Radius of the random walk area |
 | `distanceMeters` | Total distance to walk before stopping |
-| `speedProfileId` | Selects OSRM profile (`"bike"` → cycling, else foot) |
+| `speedProfileId` | Movement speed only — does not affect OSRM profile selection |
 | `useRoadSnapping` | Enables OSRM road-following |
 | `returnToInitialLocation` | Walk back to center after roaming completes |
 
@@ -37,6 +37,8 @@ The entire route is pre-planned before walking begins. The map shows the complet
 ## OSRM Configuration
 
 Base URL, overview, geometries, and profile constants in `AppConstants.OsrmConstants` and `AppConstants.RoamingConstants`.
+
+All road-following OSRM requests (roaming, walk-via-roads, route creator, ephemeral replay) always use the foot profile. If a foot-profile request fails, `OsrmClient` retries once with the driving profile before the caller falls back to a straight line — this only changes behavior on an OSRM backend with separate profile graphs; the public `router.project-osrm.org` demo serves a single graph regardless of profile name.
 
 ## State Management
 

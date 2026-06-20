@@ -87,7 +87,7 @@ object AppConstants {
         const val DEFAULT_RADIUS_METERS = 2000.0
         const val DEFAULT_DURATION_SECONDS = 1800L
         const val OSRM_PROFILE_FOOT = "foot"
-        const val OSRM_PROFILE_CYCLING = "cycling"
+        const val OSRM_PROFILE_DRIVING = "driving"
         const val DEFAULT_TRANSPORT_MODE = ProfileConstants.PROFILE_ID_WALK
         const val WAYPOINT_ARRIVAL_THRESHOLD_METERS = 5.0
         const val DEFAULT_DISTANCE_METERS = 1_000.0

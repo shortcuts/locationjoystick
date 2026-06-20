@@ -76,7 +76,7 @@ data class OsrmRouteResult(
  * Falls back to straight-line routes on network failure.
  *
  * @see AppConstants.OsrmConstants for base URL and configuration
- * @see AppConstants.RoamingConstants for profile constants (foot/bike)
+ * @see AppConstants.RoamingConstants for profile constants (foot/driving)
  */
 @Singleton
 class OsrmClient
@@ -109,35 +109,10 @@ class OsrmClient
             profile: String,
             waypoints: List<LatLng>,
         ): Result<List<LatLng>> =
-            withContext(Dispatchers.IO) {
-                runCatching {
-                    require(waypoints.size >= 2) { "At least 2 waypoints required" }
-
-                    val coordinates = waypoints.joinToString(";") { "${it.longitude},${it.latitude}" }
-                    val response = api.getRoute(profile = profile, coordinates = coordinates)
-
-                    if (!response.isSuccessful) {
-                        error("OSRM HTTP ${response.code()}: ${response.message()}")
-                    }
-
-                    val body =
-                        response.body()
-                            ?: error("OSRM response body is null")
-
-                    if (body.code != "Ok") {
-                        error("OSRM returned non-Ok code: ${body.code}")
-                    }
-
-                    val route =
-                        body.routes?.firstOrNull()
-                            ?: error("OSRM returned no routes")
-
-                    route.geometry.coordinates.mapNotNull { coord ->
-                        // GeoJSON coordinates are [longitude, latitude]; guard against malformed entries.
-                        if (coord.size < 2) null else LatLng(latitude = coord[1], longitude = coord[0])
-                    }
-                }.onFailure { e ->
-                    Log.e(TAG, "OSRM route request failed — will fall back to straight-line", e)
+            fetchRoute(profile, waypoints).map { route ->
+                route.geometry.coordinates.mapNotNull { coord ->
+                    // GeoJSON coordinates are [longitude, latitude]; guard against malformed entries.
+                    if (coord.size < 2) null else LatLng(latitude = coord[1], longitude = coord[0])
                 }
             }
 
@@ -145,27 +120,59 @@ class OsrmClient
             profile: String,
             waypoints: List<LatLng>,
         ): Result<OsrmRouteResult> =
+            fetchRoute(profile, waypoints).map { route ->
+                val routeWaypoints =
+                    route.geometry.coordinates.mapNotNull { coord ->
+                        if (coord.size < 2) null else LatLng(latitude = coord[1], longitude = coord[0])
+                    }
+                OsrmRouteResult(waypoints = routeWaypoints, distanceMeters = route.distance)
+            }
+
+        /**
+         * Requests a route for [profile]. If [profile] is [PROFILE_FOOT] and the request fails,
+         * retries once with [AppConstants.RoamingConstants.OSRM_PROFILE_DRIVING] — the app should
+         * always prefer walking directions, falling back to driving only when walking routing is
+         * unavailable (e.g. a self-hosted OSRM instance without a foot profile graph).
+         */
+        private suspend fun fetchRoute(
+            profile: String,
+            waypoints: List<LatLng>,
+        ): Result<OsrmRoute> =
             withContext(Dispatchers.IO) {
-                runCatching {
-                    require(waypoints.size >= 2) { "At least 2 waypoints required" }
-                    val coordinates = waypoints.joinToString(";") { "${it.longitude},${it.latitude}" }
-                    val response = api.getRoute(profile = profile, coordinates = coordinates)
-                    if (!response.isSuccessful) {
-                        error("OSRM HTTP ${response.code()}: ${response.message()}")
+                requestRoute(profile, waypoints)
+                    .recoverCatching { e ->
+                        if (profile != PROFILE_FOOT) throw e
+                        Log.w(TAG, "OSRM foot route failed, retrying with driving profile", e)
+                        requestRoute(AppConstants.RoamingConstants.OSRM_PROFILE_DRIVING, waypoints).getOrThrow()
+                    }.onFailure { e ->
+                        Log.e(TAG, "OSRM route request failed — will fall back to straight-line", e)
                     }
-                    val body = response.body() ?: error("OSRM response body is null")
-                    if (body.code != "Ok") {
-                        error("OSRM returned non-Ok code: ${body.code}")
-                    }
-                    val route = body.routes?.firstOrNull() ?: error("OSRM returned no routes")
-                    val routeWaypoints =
-                        route.geometry.coordinates.mapNotNull { coord ->
-                            if (coord.size < 2) null else LatLng(latitude = coord[1], longitude = coord[0])
-                        }
-                    OsrmRouteResult(waypoints = routeWaypoints, distanceMeters = route.distance)
-                }.onFailure { e ->
-                    Log.e(TAG, "OSRM route request failed", e)
+            }
+
+        private suspend fun requestRoute(
+            profile: String,
+            waypoints: List<LatLng>,
+        ): Result<OsrmRoute> =
+            runCatching {
+                require(waypoints.size >= 2) { "At least 2 waypoints required" }
+
+                val coordinates = waypoints.joinToString(";") { "${it.longitude},${it.latitude}" }
+                val response = api.getRoute(profile = profile, coordinates = coordinates)
+
+                if (!response.isSuccessful) {
+                    error("OSRM HTTP ${response.code()}: ${response.message()}")
                 }
+
+                val body =
+                    response.body()
+                        ?: error("OSRM response body is null")
+
+                if (body.code != "Ok") {
+                    error("OSRM returned non-Ok code: ${body.code}")
+                }
+
+                body.routes?.firstOrNull()
+                    ?: error("OSRM returned no routes")
             }
 
         /**

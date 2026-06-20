@@ -92,7 +92,7 @@ class RoamingEngine
         }
 
         private suspend fun planRoadFollowingRoute(config: RoamingConfig): List<LatLng> {
-            val profile = profileFor(config.speedProfileId)
+            val profile = AppConstants.RoamingConstants.OSRM_PROFILE_FOOT
             val center = config.centerPosition
             val radius = config.radiusMeters
             val target = if (config.returnToInitialLocation) config.distanceMeters / 2.0 else config.distanceMeters
@@ -230,11 +230,4 @@ class RoamingEngine
             activeJob?.cancel()
             engineScope.cancel()
         }
-
-        private fun profileFor(speedProfileId: String): String =
-            if (speedProfileId == "bike") {
-                AppConstants.RoamingConstants.OSRM_PROFILE_CYCLING
-            } else {
-                AppConstants.RoamingConstants.OSRM_PROFILE_FOOT
-            }
     }

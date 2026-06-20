@@ -72,6 +72,8 @@ class OsrmClientTest {
     fun `getRoute returns failure on non-Ok OSRM code`() =
         runTest {
             val body = """{"code": "NoRoute", "routes": []}"""
+            // Foot profile failure triggers a driving-profile retry; enqueue a second failure for it.
+            server.enqueue(MockResponse().setResponseCode(200).setBody(body))
             server.enqueue(MockResponse().setResponseCode(200).setBody(body))
 
             val result =
@@ -86,6 +88,8 @@ class OsrmClientTest {
     @Test
     fun `getRoute returns failure on HTTP error`() =
         runTest {
+            // Foot profile failure triggers a driving-profile retry; enqueue a second failure for it.
+            server.enqueue(MockResponse().setResponseCode(400).setBody("Bad Request"))
             server.enqueue(MockResponse().setResponseCode(400).setBody("Bad Request"))
 
             val result =
@@ -122,6 +126,36 @@ class OsrmClientTest {
             assertTrue("Path should contain profile 'foot'", request.path!!.contains("/foot/"))
             // Coordinates are encoded as lon,lat;lon,lat
             assertTrue("Path should contain coordinates", request.path!!.contains("2.3522,48.8566"))
+        }
+
+    @Test
+    fun `getRoute retries with driving profile when foot profile fails`() =
+        runTest {
+            val okBody =
+                """
+                {
+                  "code": "Ok",
+                  "routes": [{
+                    "geometry": {"type": "LineString", "coordinates": [[2.3522, 48.8566], [2.356, 48.86]]},
+                    "distance": 100.0,
+                    "duration": 60.0
+                  }]
+                }
+                """.trimIndent()
+            server.enqueue(MockResponse().setResponseCode(500).setBody("error"))
+            server.enqueue(MockResponse().setResponseCode(200).setBody(okBody))
+
+            val result =
+                testClient.getRoute(
+                    profile = "foot",
+                    waypoints = listOf(LatLng(48.8566, 2.3522), LatLng(48.8600, 2.3560)),
+                )
+
+            assertTrue("Expected success after driving-profile retry", result.isSuccess)
+            val firstRequest = server.takeRequest()
+            val retryRequest = server.takeRequest()
+            assertTrue("First request should use 'foot' profile", firstRequest.path!!.contains("/foot/"))
+            assertTrue("Retry request should use 'driving' profile", retryRequest.path!!.contains("/driving/"))
         }
 
     // straightLineRoute
@@ -235,6 +269,8 @@ class OsrmClientTest {
     @Test
     fun `resolveRoute with followRoads true falls back to straight line on OSRM failure`() =
         runTest {
+            // Foot profile failure triggers a driving-profile retry; enqueue a second failure for it.
+            server.enqueue(MockResponse().setResponseCode(500).setBody("error"))
             server.enqueue(MockResponse().setResponseCode(500).setBody("error"))
 
             val from = LatLng(48.8566, 2.3522)
@@ -279,6 +315,8 @@ class OsrmClientTest {
     fun `getRoute returns failure when routes list is null`() =
         runTest {
             val body = """{"code": "Ok"}"""
+            // Foot profile failure triggers a driving-profile retry; enqueue a second failure for it.
+            server.enqueue(MockResponse().setResponseCode(200).setBody(body))
             server.enqueue(MockResponse().setResponseCode(200).setBody(body))
 
             val result =
