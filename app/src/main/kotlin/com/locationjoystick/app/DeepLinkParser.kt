@@ -56,7 +56,9 @@ private fun isGoogleMapsUri(uri: android.net.Uri): Boolean {
 
 /**
  * Handles the various Google Maps URL shapes: `?q=`, `?daddr=`, `?destination=`,
- * `?query=` (api=1 search/dir links), and the `/maps/@LAT,LON,Zoomz` path form.
+ * `?query=` (api=1 search/dir links), `/maps/place/.../data=!3dLAT!4dLON` (precise place pin —
+ * preferred over the `@` segment below, since that's just the last camera/viewport position and
+ * can diverge from the actual shared place), and the `/maps/@LAT,LON,Zoomz` path form.
  */
 private fun parseGoogleMapsUri(uri: android.net.Uri): Pair<Double, Double>? {
     val queryParam =
@@ -66,8 +68,24 @@ private fun parseGoogleMapsUri(uri: android.net.Uri): Pair<Double, Double>? {
             ?: uri.getQueryParameter("query")
     queryParam?.let { parseLatLonString(it) }?.let { return it }
 
+    parsePlaceDataCoords(uri.path)?.let { return it }
+
     val atSegment = uri.pathSegments.firstOrNull { it.startsWith("@") } ?: return null
     return parseLatLonString(atSegment.removePrefix("@"))
+}
+
+private val PLACE_DATA_REGEX = Regex("""!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)""")
+
+/**
+ * Parses the precise place coordinates out of a `/data=!...!3dLAT!4dLON!...` path segment,
+ * present on Google Maps "place" links (e.g. shared via the Maps app's Share button).
+ */
+private fun parsePlaceDataCoords(path: String?): Pair<Double, Double>? {
+    val match = path?.let { PLACE_DATA_REGEX.find(it) } ?: return null
+    val lat = match.groupValues[1].toDoubleOrNull() ?: return null
+    val lon = match.groupValues[2].toDoubleOrNull() ?: return null
+    if (lat !in -90.0..90.0 || lon !in -180.0..180.0) return null
+    return lat to lon
 }
 
 /**

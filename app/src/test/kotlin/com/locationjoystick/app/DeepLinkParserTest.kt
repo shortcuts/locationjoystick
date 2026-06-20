@@ -208,4 +208,35 @@ class DeepLinkParserTest {
             )
         assertEquals(35.62 to 139.77, parseDeepLinkCoords(intent))
     }
+
+    @Test
+    fun `google maps place link with data param returns pair`() {
+        val intent =
+            googleMapsUri(
+                host = "www.google.com",
+                path =
+                    "/maps/place/50%C2%B018'20.1%22N+2%C2%B047'31.4%22E/@50.305571,2.792041,15z" +
+                        "/data=!4m4!3m3!8m2!3d50.305571!4d2.792041",
+                pathSegments =
+                    listOf(
+                        "maps",
+                        "place",
+                        "50°18'20.1\"N 2°47'31.4\"E",
+                        "@50.305571,2.792041,15z",
+                        "data=!4m4!3m3!8m2!3d50.305571!4d2.792041",
+                    ),
+            )
+        assertEquals(50.305571 to 2.792041, parseDeepLinkCoords(intent))
+    }
+
+    @Test
+    fun `google maps place link prefers data param over differing at-segment`() {
+        val intent =
+            googleMapsUri(
+                host = "www.google.com",
+                path = "/maps/place/Some+Place/@1.0,2.0,15z/data=!3d50.305571!4d2.792041",
+                pathSegments = listOf("maps", "place", "Some Place", "@1.0,2.0,15z", "data=!3d50.305571!4d2.792041"),
+            )
+        assertEquals(50.305571 to 2.792041, parseDeepLinkCoords(intent))
+    }
 }

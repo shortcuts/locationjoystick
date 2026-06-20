@@ -74,6 +74,7 @@ Supported formats (all parsed by `parseDeepLinkCoords`):
 | `maps.google.com` (any path) | `https://maps.google.com/maps?q=35.62,139.77` |
 | `www.google.com/maps*` | `https://www.google.com/maps/search/?api=1&query=35.62,139.77` |
 | `www.google.com/maps/@LAT,LON,Zoomz` path form | `https://www.google.com/maps/@35.62,139.77,15z` |
+| `www.google.com/maps/place/.../data=!3dLAT!4dLON` (place link) | `https://www.google.com/maps/place/Name/@1.0,2.0,15z/data=!3d50.305571!4d2.792041` — `data=!3d!4d` is preferred over the `@` segment, since `@` is just the last camera/viewport position and can diverge from the actual shared place |
 
 These intent filters are **not** `autoVerify` — we don't control those domains, so Android shows a disambiguation chooser rather than auto-opening. `www.google.com` is scoped to `pathPrefix="/maps"` so other Google links (search, etc.) aren't intercepted.
 
