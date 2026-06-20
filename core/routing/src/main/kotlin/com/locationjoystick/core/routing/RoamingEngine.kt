@@ -17,15 +17,9 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.PI
-import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.roundToInt
-import kotlin.math.sin
-import kotlin.math.sqrt
-import kotlin.random.Random
-
-private fun Double.toRadians(): Double = Math.toRadians(this)
+import com.locationjoystick.core.common.util.randomPointInRadius as geoRandomPointInRadius
 
 private const val TAG = "RoamingEngine"
 
@@ -54,13 +48,7 @@ class RoamingEngine
         internal fun randomPointInRadius(
             center: LatLng,
             radiusMeters: Double,
-        ): LatLng {
-            val r = radiusMeters * sqrt(Random.nextDouble())
-            val theta = Random.nextDouble() * 2 * PI
-            val dLat = r * cos(theta) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
-            val dLon = r * sin(theta) / (AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE * cos(center.latitude.toRadians()))
-            return LatLng(center.latitude + dLat, center.longitude + dLon)
-        }
+        ): LatLng = geoRandomPointInRadius(center, radiusMeters)
 
         /**
          * Plans the full roaming route before walking begins.

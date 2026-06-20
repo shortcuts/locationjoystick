@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.joystick.impl
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -17,12 +18,16 @@ class JoystickStepTest {
     private val speedMs = 1.0
     private val stepSeconds = 0.1
 
+    // computeJoystickStep now advances via GeoUtils' great-circle formula (EARTH_RADIUS_METERS),
+    // not a flat 111320 m/degree constant — derive the expected meters-per-degree the same way.
+    private val metersPerLatDegree = AppConstants.LocationConstants.EARTH_RADIUS_METERS * Math.PI / 180.0
+
     // angleDegrees=270 → finger up (north in screen coords) → bearing 0° → latitude increases
     @Test
     fun `north input moves latitude up`() {
         val step = computeJoystickStep(origin, angleDegrees = 270f, force = 1f, speedMs = speedMs, stepSeconds = stepSeconds)
         val expectedDistance = speedMs * stepSeconds // 0.1 m
-        val expectedDLat = expectedDistance / 111320.0
+        val expectedDLat = expectedDistance / metersPerLatDegree
         assertEquals(origin.latitude + expectedDLat, step.latitude, 1e-9)
         assertEquals(origin.longitude, step.longitude, 1e-6)
     }
@@ -43,7 +48,7 @@ class JoystickStepTest {
         }
         // 10 × 0.5556 m/s × 0.1 s = 0.5556 m north
         val totalMeters = walkSpeedMs * stepSeconds * 10
-        val expectedLat = origin.latitude + totalMeters / 111320.0
+        val expectedLat = origin.latitude + totalMeters / metersPerLatDegree
         assertEquals(expectedLat, pos.latitude, 1e-8)
         assertEquals(origin.longitude, pos.longitude, 1e-6)
     }

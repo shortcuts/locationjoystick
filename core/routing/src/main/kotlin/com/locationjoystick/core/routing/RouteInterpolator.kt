@@ -6,14 +6,7 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.distanceTo
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.asin
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
-
-private fun Double.toRadians(): Double = Math.toRadians(this)
-
-private fun Double.toDegrees(): Double = Math.toDegrees(this)
+import com.locationjoystick.core.common.util.advancePosition as geoAdvancePosition
 
 /**
  * Handles position interpolation along routes for replay and roaming.
@@ -43,13 +36,8 @@ class RouteInterpolator
             bearingDeg: Double,
             distanceMeters: Double,
         ): LatLng {
-            val d = distanceMeters / AppConstants.LocationConstants.EARTH_RADIUS_METERS
-            val brng = bearingDeg.toRadians()
-            val lat1 = from.latitude.toRadians()
-            val lon1 = from.longitude.toRadians()
-            val lat2 = asin(sin(lat1) * cos(d) + cos(lat1) * sin(d) * cos(brng))
-            val lon2 = lon1 + atan2(sin(brng) * sin(d) * cos(lat1), cos(d) - sin(lat1) * sin(lat2))
-            return LatLng(lat2.toDegrees(), lon2.toDegrees())
+            val (lat, lon) = geoAdvancePosition(from.latitude, from.longitude, bearingDeg, distanceMeters)
+            return LatLng(lat, lon)
         }
 
         /**

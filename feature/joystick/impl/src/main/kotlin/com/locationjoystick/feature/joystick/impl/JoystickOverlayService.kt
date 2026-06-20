@@ -11,6 +11,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.MockLocationService
@@ -53,7 +54,6 @@ internal fun angleToBearing(angleDegrees: Float): Double {
 
 /**
  * Pure position-advance function for one joystick tick.
- * Uses flat-earth approximation (accurate to within ~0.1% for distances < 1 km).
  */
 internal fun computeJoystickStep(
     currentPos: LatLng,
@@ -63,13 +63,9 @@ internal fun computeJoystickStep(
     stepSeconds: Double,
 ): LatLng {
     val bearingDeg = angleToBearing(angleDegrees)
-    val bearingRad = bearingDeg.toRadians()
     val distanceMeters = speedMs * stepSeconds * force
-    val dLat = distanceMeters * cos(bearingRad) / AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
-    val dLon =
-        distanceMeters * sin(bearingRad) /
-            (AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE * cos(currentPos.latitude.toRadians()))
-    return LatLng(latitude = currentPos.latitude + dLat, longitude = currentPos.longitude + dLon)
+    val (lat, lon) = advancePosition(currentPos.latitude, currentPos.longitude, bearingDeg, distanceMeters)
+    return LatLng(latitude = lat, longitude = lon)
 }
 
 @AndroidEntryPoint
