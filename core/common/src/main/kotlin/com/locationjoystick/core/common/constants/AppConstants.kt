@@ -323,6 +323,7 @@ object AppConstants {
         const val NSD_DISCOVERY_TIMEOUT_MS = 10_000L
         const val GROUP_CODE_LENGTH = 6
         const val MAX_CONSECUTIVE_POLL_FAILURES = 5
+        const val EXPORT_FETCH_TIMEOUT_MS = 8000L
     }
 
     object ElevationConstants {

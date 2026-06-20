@@ -285,16 +285,16 @@
 
     <h2 id="qr-transfer">QR transfer</h2>
     <p>
-      Share your entire configuration between devices by scanning a sequence of QR codes —
+      Share your entire configuration between devices by scanning a single QR code —
       no cables, no accounts, no cloud.
     </p>
 
     <div class="feature-section" id="qr-share">
       <img class="phone-shot" src="screenshots/12_qr_share.png" alt="QR share dialog">
       <ul class="section-bullets">
-        <li>Export splits your data into multiple QR codes; swipe through them on the sending device.</li>
-        <li>The receiving device scans each code in sequence; import starts automatically when all chunks are collected.</li>
-        <li>Works entirely offline between two devices in the same room.</li>
+        <li>Both devices need to be on the same Wi-Fi network.</li>
+        <li>The sending device shows one QR code; the receiving device scans it and imports right away.</li>
+        <li>No cloud involved — the data travels directly between the two devices over the network.</li>
       </ul>
     </div>
 
@@ -306,7 +306,7 @@
       <tbody>
         <tr>
           <td><strong>Export via QR code</strong></td>
-          <td>Packages your current configuration into a sequence of QR codes for scanning on another device.</td>
+          <td>Shows a QR code that another device on the same Wi-Fi network can scan to receive your current configuration.</td>
         </tr>
         <tr>
           <td><strong>Export settings</strong></td>
@@ -314,7 +314,7 @@
         </tr>
         <tr>
           <td><strong>Import from QR code</strong></td>
-          <td>Opens the camera to scan an export from another device. Collects chunks until complete, then prompts to Add (merge) or Replace existing data.</td>
+          <td>Opens the camera to scan a code shown on another device (same Wi-Fi network), then prompts to Add (merge) or Replace existing data.</td>
         </tr>
         <tr>
           <td><strong>Import from file</strong></td>

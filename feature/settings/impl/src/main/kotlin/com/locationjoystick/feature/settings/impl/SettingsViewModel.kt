@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.root.SensorPermissionBootstrap
+import com.locationjoystick.core.common.util.NetworkUtils
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -42,6 +43,8 @@ class SettingsViewModel
         private val routeRepository: RouteRepository,
         private val sensorPermissionBootstrap: SensorPermissionBootstrap,
         private val importExportRepository: ImportExportRepository,
+        private val exportSyncServer: ExportSyncServer,
+        private val exportSyncClient: ExportSyncClient,
     ) : ViewModel() {
         companion object {
             private const val TAG = "SettingsViewModel"
@@ -68,20 +71,14 @@ class SettingsViewModel
             val isError: Boolean = false,
         )
 
-        private data class ChunkSession(
-            val total: Int,
-            val chunks: MutableMap<Int, List<ChunkContent>>,
-        )
-
-        private val chunkSessions = mutableMapOf<String, ChunkSession>()
-
         private val _qrImportReady = MutableSharedFlow<ExportData>(extraBufferCapacity = 1)
         val qrImportReady: SharedFlow<ExportData> = _qrImportReady
 
-        private val _qrScanProgress = MutableStateFlow<Pair<Int, Int>?>(null)
-        val qrScanProgress: StateFlow<Pair<Int, Int>?> = _qrScanProgress.asStateFlow()
+        private val _qrImportFetching = MutableStateFlow(false)
+        val qrImportFetching: StateFlow<Boolean> = _qrImportFetching.asStateFlow()
 
-        internal val qrChunksReady = MutableSharedFlow<QrChunker.ChunkResult>(extraBufferCapacity = 1)
+        // The text to render as a QR code — a locationjoystick://export URL pointing at exportSyncServer.
+        internal val qrExportReady = MutableSharedFlow<String>(extraBufferCapacity = 1)
 
         internal val userFeedback = MutableSharedFlow<UserFeedback>(extraBufferCapacity = 1)
 
@@ -483,41 +480,51 @@ class SettingsViewModel
             }
         }
 
-        fun prepareQrChunks() {
+        /** Starts [exportSyncServer] and emits a QR-ready URL pointing at it. Call [stopQrExport] when the share dialog closes. */
+        fun prepareQrExport() {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
-                    qrChunksReady.emit(QrChunker.chunk(buildCurrentExportData()))
+                    val json = SettingsExportCodec.serializeExportData(buildCurrentExportData())
+                    val host =
+                        NetworkUtils.getLocalIpAddress()
+                            ?: error("Cannot determine local IP — ensure Wi-Fi is connected")
+                    val token = java.util.UUID.randomUUID().toString().take(8)
+                    val port = exportSyncServer.start(token, json)
+                    qrExportReady.emit("locationjoystick://export?host=$host&port=$port&token=$token")
                 } catch (e: Exception) {
-                    Log.e(TAG, "QR chunk preparation failed", e)
-                    userFeedback.emit(UserFeedback("Failed to prepare QR export", isError = true))
+                    Log.e(TAG, "QR export preparation failed", e)
+                    userFeedback.emit(UserFeedback("Failed to prepare QR export — ensure Wi-Fi is connected", isError = true))
                 }
             }
         }
 
-        fun onChunkScanned(envelope: ChunkEnvelope) {
+        fun stopQrExport() {
+            exportSyncServer.stop()
+        }
+
+        fun onQrScanned(url: String) {
             viewModelScope.launch {
-                if (envelope.k != "lj.s" || envelope.v != 2) {
-                    Log.e(TAG, "Unknown QR format: k=${envelope.k} v=${envelope.v}")
+                val uri = Uri.parse(url)
+                val host = uri.getQueryParameter("host")
+                val port = uri.getQueryParameter("port")?.toIntOrNull()
+                val token = uri.getQueryParameter("token")
+                if (host == null || port == null || token == null) {
+                    Log.e(TAG, "Unrecognized QR code: $url")
                     userFeedback.emit(UserFeedback("Invalid QR code — not a Location Joystick export", isError = true))
                     return@launch
                 }
+                _qrImportFetching.value = true
                 try {
-                    val content = withContext(Dispatchers.Default) { decodeChunkEnvelope(envelope) }
-                    val session =
-                        chunkSessions.getOrPut(envelope.session) {
-                            ChunkSession(envelope.total, mutableMapOf())
-                        }
-                    session.chunks[envelope.chunk] = content
-                    _qrScanProgress.value = session.chunks.size to session.total
-                    if (session.chunks.size == session.total) {
-                        chunkSessions.remove(envelope.session)
-                        _qrScanProgress.value = null
-                        val merged = withContext(Dispatchers.Default) { mergeChunkContents(session.chunks.values.flatten()) }
-                        _qrImportReady.emit(merged)
-                    }
+                    val json = exportSyncClient.fetch(host, port, token)
+                    val data = withContext(Dispatchers.Default) { SettingsExportCodec.parseExportData(json) }
+                    _qrImportReady.emit(data)
                 } catch (e: Exception) {
-                    Log.e(TAG, "QR chunk decode failed", e)
-                    userFeedback.emit(UserFeedback("Failed to read QR code — try scanning again", isError = true))
+                    Log.e(TAG, "QR import fetch failed", e)
+                    userFeedback.emit(
+                        UserFeedback("Failed to fetch export — ensure both devices are on the same Wi-Fi", isError = true),
+                    )
+                } finally {
+                    _qrImportFetching.value = false
                 }
             }
         }

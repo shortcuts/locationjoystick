@@ -20,7 +20,7 @@ import org.json.JSONObject
  *
  * Used by Settings screen for:
  * - JSON export via share intent
- * - QR code chunking via [QrChunker]
+ * - QR code export/import, served whole over the local network via [ExportSyncServer]/[ExportSyncClient]
  * - JSON import from file picker
  *
  * Schema:

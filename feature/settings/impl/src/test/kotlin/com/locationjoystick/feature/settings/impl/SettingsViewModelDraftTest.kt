@@ -47,6 +47,8 @@ class SettingsViewModelDraftTest {
                 routeRepository = RouteRepository(routeDao = FakeRouteDao(), context = context),
                 sensorPermissionBootstrap = SensorPermissionBootstrap(context),
                 importExportRepository = ImportExportRepository(context),
+                exportSyncServer = ExportSyncServer(),
+                exportSyncClient = ExportSyncClient(),
             )
     }
 

@@ -11,23 +11,21 @@ import com.google.zxing.MultiFormatReader
 import com.google.zxing.NotFoundException
 import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.common.HybridBinarizer
-import org.json.JSONObject
 
 /**
  * CameraX ImageAnalysis analyzer that decodes QR codes using ZXing.
  *
  * Used by [QrScannerScreen] to scan QR codes emitted by [QrShareDialog].
- * Each scanned QR is parsed as JSON and converted to a [ChunkEnvelope].
  *
  * Key features:
  * - Debouncing: ignores duplicate scans within 500ms
  * - YUV format handling: converts camera YUV_420_888 to ZXing's planar format
  * - Error tolerance: logs failures but doesn't crash on bad codes
  *
- * @param onQrScanned Callback invoked with successfully parsed [ChunkEnvelope]
+ * @param onQrScanned Callback invoked with the raw decoded QR text
  */
 class ZxingImageAnalyzer(
-    private val onQrScanned: (ChunkEnvelope) -> Unit,
+    private val onQrScanned: (String) -> Unit,
 ) : ImageAnalysis.Analyzer {
     private val multiFormatReader =
         MultiFormatReader().apply {
@@ -75,20 +73,18 @@ class ZxingImageAnalyzer(
             val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
 
             val rawResult = multiFormatReader.decodeWithState(binaryBitmap)
-            val json = rawResult.text
-            Log.d(TAG, "QR decoded: ${json.take(80)}")
+            val text = rawResult.text
+            Log.d(TAG, "QR decoded: ${text.take(80)}")
 
             // Debounce: skip duplicate scans within 1 second
             val now = System.currentTimeMillis()
-            if (json == lastScannedData && now - lastScanTime < 1000L) {
+            if (text == lastScannedData && now - lastScanTime < 1000L) {
                 return
             }
 
-            val envelope = parseEnvelope(json)
-            lastScannedData = json
+            lastScannedData = text
             lastScanTime = now
-            Log.d(TAG, "chunk ${envelope.chunk}/${envelope.total} session=${envelope.session}")
-            onQrScanned(envelope)
+            onQrScanned(text)
         } catch (e: NotFoundException) {
             // No QR found — silent, keep scanning
         } catch (e: Exception) {
@@ -151,18 +147,6 @@ class ZxingImageAnalyzer(
 
             else -> RotatedFrame(tight, width, width, height)
         }
-    }
-
-    private fun parseEnvelope(json: String): ChunkEnvelope {
-        val obj = JSONObject(json)
-        return ChunkEnvelope(
-            k = obj.getString("k"),
-            v = obj.getInt("v"),
-            session = obj.getString("session"),
-            chunk = obj.getInt("chunk"),
-            total = obj.getInt("total"),
-            d = obj.getString("d"),
-        )
     }
 
     private companion object {

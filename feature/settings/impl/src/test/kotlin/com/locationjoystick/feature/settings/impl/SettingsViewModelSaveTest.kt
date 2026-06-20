@@ -70,6 +70,8 @@ class SettingsViewModelSaveTest {
                 routeRepository = fakeRouteRepo,
                 sensorPermissionBootstrap = SensorPermissionBootstrap(context),
                 importExportRepository = ImportExportRepository(context),
+                exportSyncServer = ExportSyncServer(),
+                exportSyncClient = ExportSyncClient(),
             )
     }
 
@@ -275,12 +277,10 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
-    fun `onChunkScanned with invalid key emits error feedback`() =
+    fun `onQrScanned with malformed url emits error feedback`() =
         runTest(testDispatcher) {
             viewModel.userFeedback.test {
-                viewModel.onChunkScanned(
-                    ChunkEnvelope(k = "invalid", v = 2, session = "s1", chunk = 0, total = 1, d = ""),
-                )
+                viewModel.onQrScanned("locationjoystick://export?host=1.2.3.4")
                 val feedback = awaitItem()
                 assertTrue(feedback.isError)
                 cancelAndIgnoreRemainingEvents()

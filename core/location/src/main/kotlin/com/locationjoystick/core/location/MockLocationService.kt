@@ -19,6 +19,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.common.util.calculateBearing
+import com.locationjoystick.core.common.util.NetworkUtils
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.data.LocationRepository
@@ -55,8 +56,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.net.Inet4Address
-import java.net.NetworkInterface
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import kotlin.random.Random
@@ -660,7 +659,7 @@ class MockLocationService : Service() {
         serviceScope.launch {
             try {
                 val host =
-                    getLocalIpAddress() ?: run {
+                    NetworkUtils.getLocalIpAddress() ?: run {
                         Log.e(TAG, "Cannot determine local IP — ensure Wi-Fi is connected")
                         return@launch
                     }
@@ -688,19 +687,6 @@ class MockLocationService : Service() {
             }
         }
     }
-
-    private fun getLocalIpAddress(): String? =
-        try {
-            NetworkInterface
-                .getNetworkInterfaces()
-                ?.toList()
-                ?.flatMap { it.inetAddresses.toList() }
-                ?.firstOrNull { addr -> !addr.isLoopbackAddress && addr is Inet4Address }
-                ?.hostAddress
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to get local IP", e)
-            null
-        }
 
     private fun handleReplayStart(
         routeId: String,

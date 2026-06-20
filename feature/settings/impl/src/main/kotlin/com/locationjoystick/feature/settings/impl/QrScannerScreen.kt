@@ -46,40 +46,35 @@ import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 /**
  * QR code scanner screen for importing settings via camera.
  *
- * Uses CameraX + ZXing to scan QR codes emitted by [QrShareDialog].
- * Scanned chunks are passed to the caller (typically [SettingsViewModel])
- * for reassembly via [ChunkReassembler].
- *
- * Flow:
- * 1. Request camera permission
- * 2. Start camera preview with [ZxingImageAnalyzer]
- * 3. On QR detection, parse [ChunkEnvelope] from JSON
- * 4. Pass valid chunks to [onChunkScanned]
- * 5. Caller tracks progress and reassembles when all chunks received
+ * Uses CameraX + ZXing to scan a QR code emitted by [QrShareDialog]. The decoded text is a
+ * `locationjoystick://export?host=...&port=...&token=...` URL pointing at the sender's
+ * [ExportSyncServer]; the caller (typically [SettingsViewModel]) fetches the export over the
+ * local network via [ExportSyncClient].
  *
  * Requires CAMERA permission (handled internally).
  *
- * @param onChunkScanned Called with each successfully scanned chunk
+ * @param onQrScanned Called with the raw decoded QR text
  * @param onPermissionDenied Called when user denies camera permission
  * @param onNavigateBack Called when user taps back button
+ * @param isFetching True while the scanned QR's export is being downloaded
  */
 @ComposePreview(showBackground = true)
 @Composable
 private fun QrScannerScreenPreview() {
     QrScannerScreen(
-        onChunkScanned = {},
+        onQrScanned = {},
         onPermissionDenied = {},
         onNavigateBack = {},
-        scanProgress = null,
+        isFetching = false,
     )
 }
 
 @Composable
 fun QrScannerScreen(
-    onChunkScanned: (ChunkEnvelope) -> Unit,
+    onQrScanned: (String) -> Unit,
     onPermissionDenied: () -> Unit,
     onNavigateBack: () -> Unit,
-    scanProgress: Pair<Int, Int>? = null,
+    isFetching: Boolean = false,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -165,7 +160,7 @@ fun QrScannerScreen(
                                 .apply {
                                     setAnalyzer(
                                         analyzerExecutor,
-                                        ZxingImageAnalyzer(onChunkScanned),
+                                        ZxingImageAnalyzer(onQrScanned),
                                     )
                                 }
 
@@ -188,8 +183,8 @@ fun QrScannerScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val label =
-                if (scanProgress != null) {
-                    "Chunk ${scanProgress.first}/${scanProgress.second} received — scan next QR code"
+                if (isFetching) {
+                    "Connecting to sender — make sure both devices are on the same Wi-Fi"
                 } else {
                     "Point camera at QR code"
                 }

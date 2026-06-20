@@ -94,7 +94,7 @@ fun SettingsRoute(
     val context = LocalContext.current
     var pendingImport by remember { mutableStateOf<PendingImport?>(null) }
     var showQrShare by remember { mutableStateOf(false) }
-    var qrChunkResult by remember { mutableStateOf<QrChunker.ChunkResult?>(null) }
+    var qrExportText by remember { mutableStateOf<String?>(null) }
     var showQrScanner by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -132,8 +132,8 @@ fun SettingsRoute(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.qrChunksReady.collect { result ->
-            qrChunkResult = result
+        viewModel.qrExportReady.collect { text ->
+            qrExportText = text
             showQrShare = true
         }
     }
@@ -191,26 +191,26 @@ fun SettingsRoute(
         )
     }
 
-    val qrScanProgress by viewModel.qrScanProgress.collectAsStateWithLifecycle()
+    val qrImportFetching by viewModel.qrImportFetching.collectAsStateWithLifecycle()
 
     if (showQrScanner) {
         QrScannerScreen(
-            onChunkScanned = viewModel::onChunkScanned,
+            onQrScanned = viewModel::onQrScanned,
             onPermissionDenied = { showQrScanner = false },
             onNavigateBack = { showQrScanner = false },
-            scanProgress = qrScanProgress,
+            isFetching = qrImportFetching,
         )
         return
     }
 
-    val result = qrChunkResult
-    if (showQrShare && result != null) {
+    val exportText = qrExportText
+    if (showQrShare && exportText != null) {
         QrShareDialog(
-            chunks = result.chunks,
-            skippedRoutes = result.skippedRoutes,
+            qrText = exportText,
             onDismiss = {
+                viewModel.stopQrExport()
                 showQrShare = false
-                qrChunkResult = null
+                qrExportText = null
             },
         )
     }
@@ -355,7 +355,7 @@ fun SettingsRoute(
                 }
 
                 SettingsAction.QrShare -> {
-                    viewModel.prepareQrChunks()
+                    viewModel.prepareQrExport()
                 }
 
                 SettingsAction.QrScan -> {

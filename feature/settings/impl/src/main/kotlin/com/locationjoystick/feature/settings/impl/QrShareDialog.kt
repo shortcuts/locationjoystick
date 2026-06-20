@@ -6,18 +6,12 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
@@ -42,19 +35,13 @@ private const val TAG = "QrShareDialog"
 
 @Composable
 fun QrShareDialog(
-    chunks: List<ChunkEnvelope>,
-    skippedRoutes: List<String>,
+    qrText: String,
     onDismiss: () -> Unit,
 ) {
-    val pagerState = rememberPagerState(pageCount = { chunks.size })
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    // Encode all bitmaps once and cache them for the lifetime of this dialog.
-    val bitmaps =
-        remember(chunks) {
-            chunks.map { QrEncoder.encodeToQr(it) }
-        }
+    val bitmap = remember(qrText) { QrEncoder.encodeToQr(qrText) }
 
     Dialog(onDismissRequest = onDismiss) {
         Column(
@@ -64,108 +51,36 @@ fun QrShareDialog(
                     .background(Color.White, RoundedCornerShape(8.dp))
                     .padding(16.dp),
         ) {
-            // Warning banner if routes were skipped due to size.
-            if (skippedRoutes.isNotEmpty()) {
-                Card(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        ),
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text(
-                            "${skippedRoutes.size} route(s) too large for QR:",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        skippedRoutes.forEach { name ->
-                            Text(name, style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                }
-            }
-
-            // QR pager.
-            HorizontalPager(state = pagerState) { page ->
-                val bitmap = bitmaps.getOrNull(page)
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    if (bitmap != null) {
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "QR chunk ${page + 1}",
-                            modifier = Modifier.fillMaxWidth().aspectRatio(1f),
-                        )
-                    } else {
-                        Text("Failed to encode QR")
-                    }
-                }
-            }
-
-            // Progress indicator.
             Text(
-                "Chunk ${pagerState.currentPage + 1} of ${chunks.size}",
-                modifier =
-                    Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(top = 8.dp),
-                style = MaterialTheme.typography.labelSmall,
+                "Scan this on the other device — both must be on the same Wi-Fi network",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 8.dp),
             )
 
-            // Prev / Share / Next row.
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Export QR code",
+                    modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+                )
+            } else {
+                Text("Failed to encode QR")
+            }
+
+            Button(
+                onClick = {
+                    if (bitmap != null) {
+                        scope.launch { shareQrBitmap(context, bitmap) }
+                    }
+                },
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 16.dp),
             ) {
-                Button(
-                    onClick = {
-                        scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                        }
-                    },
-                    enabled = pagerState.currentPage > 0,
-                ) {
-                    Text("← Prev")
-                }
-
-                Button(
-                    onClick = {
-                        val bitmap = bitmaps.getOrNull(pagerState.currentPage)
-                        if (bitmap != null) {
-                            scope.launch { shareQrBitmap(context, bitmap, pagerState.currentPage + 1) }
-                        }
-                    },
-                ) {
-                    Text("Share")
-                }
-
-                Button(
-                    onClick = {
-                        scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
-                    },
-                    enabled = pagerState.currentPage < chunks.size - 1,
-                ) {
-                    Text("Next →")
-                }
+                Text("Share")
             }
 
             Button(
                 onClick = onDismiss,
-                modifier =
-                    Modifier
-                        .align(Alignment.End)
-                        .padding(top = 8.dp),
+                modifier = Modifier.align(Alignment.End).padding(top = 8.dp),
             ) {
                 Text("Done")
             }
@@ -176,12 +91,11 @@ fun QrShareDialog(
 private suspend fun shareQrBitmap(
     context: Context,
     bitmap: Bitmap,
-    chunkNumber: Int,
 ) {
     withContext(Dispatchers.IO) {
         try {
             val cacheDir = File(context.cacheDir, "qr_share").also { it.mkdirs() }
-            val file = File(cacheDir, "qr_chunk_$chunkNumber.png")
+            val file = File(cacheDir, "qr_export.png")
             FileOutputStream(file).use { out ->
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
