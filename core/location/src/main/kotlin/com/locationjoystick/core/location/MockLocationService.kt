@@ -17,9 +17,10 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
+import com.locationjoystick.core.common.util.NetworkUtils
+import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.common.util.calculateBearing
-import com.locationjoystick.core.common.util.NetworkUtils
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.data.LocationRepository
@@ -124,7 +125,7 @@ class MockLocationService : Service() {
 
     @Inject lateinit var groupRepository: GroupRepository
 
-    @Inject lateinit var groupNsdManager: GroupNsdManager
+    @Inject lateinit var groupNsdManager: NsdCodeManager
 
     private val notificationManager: android.app.NotificationManager by lazy {
         getSystemService(android.app.NotificationManager::class.java)
@@ -664,7 +665,7 @@ class MockLocationService : Service() {
                         return@launch
                     }
                 val port = leaderSyncServer.start(groupId)
-                groupNsdManager.startLeader(code = groupId, port = port)
+                groupNsdManager.startAdvertising(code = groupId, port = port)
                 groupRepository.createGroup(host = host, port = port, groupId = groupId)
                 Log.i(TAG, "Entered LEADER mode: $groupId at $host:$port")
             } catch (e: Exception) {
@@ -675,7 +676,7 @@ class MockLocationService : Service() {
 
     private fun exitLeaderMode() {
         leaderSyncServer.stop()
-        groupNsdManager.stopLeader()
+        groupNsdManager.stopAdvertising()
         leaderSharingEnabled = false
         Log.i(TAG, "Exited LEADER mode")
     }

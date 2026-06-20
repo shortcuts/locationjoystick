@@ -3,9 +3,9 @@ package com.locationjoystick.feature.group.impl
 import android.content.Context
 import android.net.Uri
 import app.cash.turbine.test
+import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.location.FollowerSyncClient
-import com.locationjoystick.core.location.GroupNsdManager
 import com.locationjoystick.core.location.LeaderSyncServer
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
@@ -37,7 +37,7 @@ class GroupSyncViewModelTest {
 
     private lateinit var context: Context
     private lateinit var groupRepository: GroupRepository
-    private lateinit var groupNsdManager: GroupNsdManager
+    private lateinit var groupNsdManager: NsdCodeManager
     private lateinit var leaderSyncServer: LeaderSyncServer
     private lateinit var followerSyncClient: FollowerSyncClient
 

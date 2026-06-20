@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.root.SensorPermissionBootstrap
 import com.locationjoystick.core.common.util.NetworkUtils
+import com.locationjoystick.core.common.util.NsdCodeManager
+import com.locationjoystick.core.common.util.RandomCode
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -45,6 +47,7 @@ class SettingsViewModel
         private val importExportRepository: ImportExportRepository,
         private val exportSyncServer: ExportSyncServer,
         private val exportSyncClient: ExportSyncClient,
+        private val nsdCodeManager: NsdCodeManager,
     ) : ViewModel() {
         companion object {
             private const val TAG = "SettingsViewModel"
@@ -77,8 +80,13 @@ class SettingsViewModel
         private val _qrImportFetching = MutableStateFlow(false)
         val qrImportFetching: StateFlow<Boolean> = _qrImportFetching.asStateFlow()
 
-        // The text to render as a QR code — a locationjoystick://export URL pointing at exportSyncServer.
-        internal val qrExportReady = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        /** [qrText] renders as the QR; [code] is the same session typeable manually on the other device. */
+        internal data class QrExportSession(
+            val qrText: String,
+            val code: String,
+        )
+
+        internal val qrExportReady = MutableSharedFlow<QrExportSession>(extraBufferCapacity = 1)
 
         internal val userFeedback = MutableSharedFlow<UserFeedback>(extraBufferCapacity = 1)
 
@@ -480,7 +488,10 @@ class SettingsViewModel
             }
         }
 
-        /** Starts [exportSyncServer] and emits a QR-ready URL pointing at it. Call [stopQrExport] when the share dialog closes. */
+        /**
+         * Starts [exportSyncServer] (HTTP) and [nsdCodeManager] (NSD advertising), and emits a QR
+         * code + typeable code for the same session. Call [stopQrExport] when the share dialog closes.
+         */
         fun prepareQrExport() {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
@@ -488,9 +499,10 @@ class SettingsViewModel
                     val host =
                         NetworkUtils.getLocalIpAddress()
                             ?: error("Cannot determine local IP — ensure Wi-Fi is connected")
-                    val token = java.util.UUID.randomUUID().toString().take(8)
-                    val port = exportSyncServer.start(token, json)
-                    qrExportReady.emit("locationjoystick://export?host=$host&port=$port&token=$token")
+                    val code = RandomCode.generate()
+                    val port = exportSyncServer.start(code, json)
+                    nsdCodeManager.startAdvertising(code, port)
+                    qrExportReady.emit(QrExportSession(qrText = "locationjoystick://export?host=$host&port=$port&token=$code", code = code))
                 } catch (e: Exception) {
                     Log.e(TAG, "QR export preparation failed", e)
                     userFeedback.emit(UserFeedback("Failed to prepare QR export — ensure Wi-Fi is connected", isError = true))
@@ -500,19 +512,52 @@ class SettingsViewModel
 
         fun stopQrExport() {
             exportSyncServer.stop()
+            nsdCodeManager.stopAdvertising()
         }
 
         fun onQrScanned(url: String) {
-            viewModelScope.launch {
-                val uri = Uri.parse(url)
-                val host = uri.getQueryParameter("host")
-                val port = uri.getQueryParameter("port")?.toIntOrNull()
-                val token = uri.getQueryParameter("token")
-                if (host == null || port == null || token == null) {
+            val uri = Uri.parse(url)
+            val host = uri.getQueryParameter("host")
+            val port = uri.getQueryParameter("port")?.toIntOrNull()
+            val token = uri.getQueryParameter("token")
+            if (host == null || port == null || token == null) {
+                viewModelScope.launch {
                     Log.e(TAG, "Unrecognized QR code: $url")
                     userFeedback.emit(UserFeedback("Invalid QR code — not a Location Joystick export", isError = true))
+                }
+                return
+            }
+            fetchAndImportExport(host, port, token)
+        }
+
+        /** Alternative to scanning a QR — resolve the sender via NSD using the typed code instead. */
+        fun onExportCodeEntered(code: String) {
+            val normalized = code.uppercase().trim()
+            viewModelScope.launch {
+                if (normalized.length != AppConstants.SyncConstants.GROUP_CODE_LENGTH) {
+                    userFeedback.emit(
+                        UserFeedback("Code must be ${AppConstants.SyncConstants.GROUP_CODE_LENGTH} characters", isError = true),
+                    )
                     return@launch
                 }
+                _qrImportFetching.value = true
+                val resolved = nsdCodeManager.discoverByCode(normalized)
+                _qrImportFetching.value = false
+                if (resolved == null) {
+                    userFeedback.emit(UserFeedback("No sender found for code $normalized", isError = true))
+                    return@launch
+                }
+                val (host, port) = resolved
+                fetchAndImportExport(host, port, normalized)
+            }
+        }
+
+        private fun fetchAndImportExport(
+            host: String,
+            port: Int,
+            token: String,
+        ) {
+            viewModelScope.launch {
                 _qrImportFetching.value = true
                 try {
                     val json = exportSyncClient.fetch(host, port, token)

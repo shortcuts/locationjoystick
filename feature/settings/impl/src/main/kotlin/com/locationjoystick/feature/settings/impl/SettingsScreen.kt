@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -40,12 +41,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -94,8 +98,9 @@ fun SettingsRoute(
     val context = LocalContext.current
     var pendingImport by remember { mutableStateOf<PendingImport?>(null) }
     var showQrShare by remember { mutableStateOf(false) }
-    var qrExportText by remember { mutableStateOf<String?>(null) }
+    var qrExportSession by remember { mutableStateOf<SettingsViewModel.QrExportSession?>(null) }
     var showQrScanner by remember { mutableStateOf(false) }
+    var showEnterCodeDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
@@ -132,8 +137,8 @@ fun SettingsRoute(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.qrExportReady.collect { text ->
-            qrExportText = text
+        viewModel.qrExportReady.collect { session ->
+            qrExportSession = session
             showQrShare = true
         }
     }
@@ -203,14 +208,25 @@ fun SettingsRoute(
         return
     }
 
-    val exportText = qrExportText
-    if (showQrShare && exportText != null) {
+    val exportSession = qrExportSession
+    if (showQrShare && exportSession != null) {
         QrShareDialog(
-            qrText = exportText,
+            qrText = exportSession.qrText,
+            code = exportSession.code,
             onDismiss = {
                 viewModel.stopQrExport()
                 showQrShare = false
-                qrExportText = null
+                qrExportSession = null
+            },
+        )
+    }
+
+    if (showEnterCodeDialog) {
+        EnterExportCodeDialog(
+            onDismiss = { showEnterCodeDialog = false },
+            onConfirm = { code ->
+                showEnterCodeDialog = false
+                viewModel.onExportCodeEntered(code)
             },
         )
     }
@@ -362,6 +378,10 @@ fun SettingsRoute(
                     showQrScanner = true
                 }
 
+                SettingsAction.QrEnterCode -> {
+                    showEnterCodeDialog = true
+                }
+
                 SettingsAction.SaveChanges -> {
                     viewModel.saveChanges()
                 }
@@ -501,6 +521,13 @@ private fun SettingsHubScreen(
                         onClick = {
                             showUploadMenu = false
                             onAction(SettingsAction.QrScan)
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Import via code") },
+                        onClick = {
+                            showUploadMenu = false
+                            onAction(SettingsAction.QrEnterCode)
                         },
                     )
                     DropdownMenuItem(
@@ -1276,5 +1303,43 @@ private fun ImportConfirmDialog(
             }
         },
         dismissButton = {},
+    )
+}
+
+@Composable
+private fun EnterExportCodeDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var code by rememberSaveable { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Enter export code") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Ask the sender for their 6-character code shown in the QR share dialog.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { code = it.uppercase().take(6) },
+                    label = { Text("Code") },
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { if (code.length == 6) onConfirm(code) }),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(code) }, enabled = code.length == 6) { Text("Import") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
     )
 }

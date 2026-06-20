@@ -36,6 +36,7 @@ private const val TAG = "QrShareDialog"
 @Composable
 fun QrShareDialog(
     qrText: String,
+    code: String,
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -66,6 +67,12 @@ fun QrShareDialog(
             } else {
                 Text("Failed to encode QR")
             }
+
+            Text(
+                "Or enter code: $code",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 12.dp),
+            )
 
             Button(
                 onClick = {

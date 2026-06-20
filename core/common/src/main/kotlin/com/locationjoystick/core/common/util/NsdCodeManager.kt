@@ -1,4 +1,4 @@
-package com.locationjoystick.core.location
+package com.locationjoystick.core.common.util
 
 import android.content.Context
 import android.net.nsd.NsdManager
@@ -13,10 +13,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 
-private const val TAG = "GroupNsdManager"
+private const val TAG = "NsdCodeManager"
 
+/**
+ * Advertises and discovers a host:port pair on the local network, keyed by a short code.
+ * Used by both Group Sync (leader/follower) and QR export/import.
+ */
 @Singleton
-class GroupNsdManager
+class NsdCodeManager
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
@@ -24,7 +28,7 @@ class GroupNsdManager
         private val nsdManager = context.getSystemService(Context.NSD_SERVICE) as NsdManager
         private var registrationListener: NsdManager.RegistrationListener? = null
 
-        fun startLeader(
+        fun startAdvertising(
             code: String,
             port: Int,
         ) {
@@ -66,7 +70,7 @@ class GroupNsdManager
             }
         }
 
-        fun stopLeader() {
+        fun stopAdvertising() {
             registrationListener?.let { listener ->
                 try {
                     nsdManager.unregisterService(listener)

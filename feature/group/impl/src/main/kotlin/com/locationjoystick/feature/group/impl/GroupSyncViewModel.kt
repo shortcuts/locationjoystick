@@ -10,9 +10,10 @@ import androidx.lifecycle.viewModelScope
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.NsdCodeManager
+import com.locationjoystick.core.common.util.RandomCode
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.location.FollowerSyncClient
-import com.locationjoystick.core.location.GroupNsdManager
 import com.locationjoystick.core.location.LeaderSyncServer
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.GroupInvite
@@ -32,7 +33,6 @@ import javax.inject.Inject
 
 private const val TAG = "GroupSyncViewModel"
 private const val QR_SIZE = 512
-private val CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 @HiltViewModel
 class GroupSyncViewModel
@@ -40,7 +40,7 @@ class GroupSyncViewModel
     constructor(
         @ApplicationContext private val context: Context,
         private val groupRepository: GroupRepository,
-        private val groupNsdManager: GroupNsdManager,
+        private val groupNsdManager: NsdCodeManager,
         private val leaderSyncServer: LeaderSyncServer,
         private val followerSyncClient: FollowerSyncClient,
     ) : ViewModel() {
@@ -88,7 +88,7 @@ class GroupSyncViewModel
         }
 
         fun createGroup() {
-            val code = generateShortCode()
+            val code = RandomCode.generate(AppConstants.SyncConstants.GROUP_CODE_LENGTH)
             sendServiceAction(AppConstants.ServiceConstants.ACTION_START_LEADER) { intent ->
                 intent.putExtra(AppConstants.ServiceConstants.EXTRA_LEADER_GROUP_ID, code)
             }
@@ -216,11 +216,6 @@ class GroupSyncViewModel
                 Log.e(TAG, "Failed to generate QR code", e)
             }
         }
-
-        private fun generateShortCode(): String =
-            (1..AppConstants.SyncConstants.GROUP_CODE_LENGTH)
-                .map { CODE_CHARS.random() }
-                .joinToString("")
 
         private fun parseGroupUrl(url: String): GroupInvite? {
             return try {

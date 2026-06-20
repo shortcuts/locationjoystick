@@ -128,6 +128,8 @@ internal sealed class SettingsAction {
 
     data object QrScan : SettingsAction()
 
+    data object QrEnterCode : SettingsAction()
+
     data object SaveChanges : SettingsAction()
 
     data object DiscardChanges : SettingsAction()

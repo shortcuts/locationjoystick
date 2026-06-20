@@ -3,6 +3,7 @@ package com.locationjoystick.feature.settings.impl
 import app.cash.turbine.test
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.root.SensorPermissionBootstrap
+import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -72,6 +73,7 @@ class SettingsViewModelSaveTest {
                 importExportRepository = ImportExportRepository(context),
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
+                nsdCodeManager = NsdCodeManager(context),
             )
     }
 
