@@ -452,7 +452,7 @@ class SettingsViewModel
         fun writeExportToUri(uri: Uri) {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
-                    val json = serializeExportData(buildCurrentExportData())
+                    val json = SettingsExportCodec.serializeExportData(buildCurrentExportData())
                     importExportRepository.writeToUri(uri, json)
                     userFeedback.emit(UserFeedback("Export complete"))
                 } catch (e: Exception) {
@@ -474,7 +474,7 @@ class SettingsViewModel
                         userFeedback.emit(UserFeedback("Failed to import: empty file", isError = true))
                         return@launch
                     }
-                    applyExportData(parseExportData(json), replace)
+                    applyExportData(SettingsExportCodec.parseExportData(json), replace)
                     userFeedback.emit(UserFeedback("Import complete"))
                 } catch (e: Exception) {
                     Log.e(TAG, "Import failed", e)
@@ -502,7 +502,7 @@ class SettingsViewModel
                     return@launch
                 }
                 try {
-                    val content = withContext(Dispatchers.Default) { decodeChunkContent(envelope.d) }
+                    val content = withContext(Dispatchers.Default) { decodeChunkEnvelope(envelope) }
                     val session =
                         chunkSessions.getOrPut(envelope.session) {
                             ChunkSession(envelope.total, mutableMapOf())
@@ -512,7 +512,7 @@ class SettingsViewModel
                     if (session.chunks.size == session.total) {
                         chunkSessions.remove(envelope.session)
                         _qrScanProgress.value = null
-                        val merged = withContext(Dispatchers.Default) { mergeChunks(session.chunks.values.flatten()) }
+                        val merged = withContext(Dispatchers.Default) { mergeChunkContents(session.chunks.values.flatten()) }
                         _qrImportReady.emit(merged)
                     }
                 } catch (e: Exception) {
@@ -690,13 +690,4 @@ class SettingsViewModel
                 }
             }
         }
-
-        private fun decodeChunkContent(encoded: String): List<ChunkContent> =
-            decodeChunkEnvelope(ChunkEnvelope(session = "", chunk = 0, total = 0, d = encoded))
-
-        private fun mergeChunks(allContent: List<ChunkContent>): ExportData = mergeChunkContents(allContent)
-
-        private fun serializeExportData(data: ExportData) = SettingsExportCodec.serializeExportData(data)
-
-        private fun parseExportData(json: String) = SettingsExportCodec.parseExportData(json)
     }
