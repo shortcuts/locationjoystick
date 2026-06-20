@@ -9,13 +9,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.DeepLinkRepository
+import com.locationjoystick.core.data.GoogleMapsShortLinkResolver
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.designsystem.LjTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -23,6 +26,8 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var deepLinkRepository: DeepLinkRepository
 
     @Inject lateinit var groupRepository: GroupRepository
+
+    @Inject lateinit var shortLinkResolver: GoogleMapsShortLinkResolver
 
     companion object {
         const val ACTION_MOVE_TO_BACK = "com.locationjoystick.app.ACTION_MOVE_TO_BACK"
@@ -101,7 +106,14 @@ class MainActivity : ComponentActivity() {
         }
         if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
             val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
-            sharedText?.let(::parseSharedTextCoords)?.let { (lat, lon) ->
+            sharedText?.let(::extractUrlFromText)?.let(::handleSharedUrl)
+        }
+    }
+
+    private fun handleSharedUrl(url: String) {
+        lifecycleScope.launch {
+            val resolvedUrl = if (shortLinkResolver.isShortLink(url)) shortLinkResolver.resolve(url) ?: url else url
+            parseUrlCoords(resolvedUrl)?.let { (lat, lon) ->
                 deepLinkRepository.setPendingCoords(lat, lon)
                 navigateToMapMutableFlow.tryEmit(Unit)
             }

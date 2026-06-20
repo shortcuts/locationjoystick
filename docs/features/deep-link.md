@@ -89,7 +89,9 @@ The Maps app's **Share** button uses Android's `ACTION_SEND` share sheet (text/p
 </intent-filter>
 ```
 
-`MainActivity.handleIntent` checks for `ACTION_SEND` + `text/plain`, reads `EXTRA_TEXT`, and extracts the first `http(s)://` URL via `parseSharedTextCoords` (in `DeepLinkParser.kt`), then runs it through the same coordinate parsing as a normal deep link.
+`MainActivity.handleIntent` checks for `ACTION_SEND` + `text/plain`, reads `EXTRA_TEXT`, and extracts the first `http(s)://` URL via `extractUrlFromText` (in `DeepLinkParser.kt`).
+
+The shared text usually contains a shortened link (`https://goo.gl/maps/...` or `https://maps.app.goo.gl/...`) with no embedded coordinates — the real lat/lon only exists in the page the shortener redirects to. `GoogleMapsShortLinkResolver` (`:core:data`) detects these hosts and follows the HTTP redirect chain (OkHttp, `Dispatchers.IO`) to recover the final long URL before parsing coordinates via `parseUrlCoords`.
 
 ## Implementation
 

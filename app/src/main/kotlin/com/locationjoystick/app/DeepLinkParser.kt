@@ -41,14 +41,12 @@ private fun parseCoordsFromUri(uri: android.net.Uri): Pair<Double, Double>? =
 private val URL_REGEX = Regex("""https?://\S+""")
 
 /**
- * Parses coords out of free-form shared text (e.g. Google Maps "Share" button, which sends
- * `ACTION_SEND` text/plain containing a place name plus a maps.google.com/www.google.com URL).
+ * Extracts the first http(s) URL out of free-form shared text (e.g. Google Maps "Share" button,
+ * which sends `ACTION_SEND` text/plain containing a place name plus a maps URL).
  */
-internal fun parseSharedTextCoords(text: String): Pair<Double, Double>? {
-    val url = URL_REGEX.find(text)?.value ?: return null
-    val uri = android.net.Uri.parse(url)
-    return parseCoordsFromUri(uri)
-}
+internal fun extractUrlFromText(text: String): String? = URL_REGEX.find(text)?.value
+
+internal fun parseUrlCoords(url: String): Pair<Double, Double>? = parseCoordsFromUri(android.net.Uri.parse(url))
 
 private fun isGoogleMapsUri(uri: android.net.Uri): Boolean {
     val host = uri.host ?: return false
