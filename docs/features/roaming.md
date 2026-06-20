@@ -7,7 +7,7 @@ Key files: `:core:routing/RoamingEngine.kt`, `:core:routing/OsrmClient.kt`, `:co
 ## Modes
 
 - **Simple** (straight-line): no network required.
-- **Road-following** (OSRM routes): opt-in. On OSRM failure, falls back to straight-line automatically.
+- **Road-following** (OSRM routes): opt-in. On OSRM failure, the affected segment falls back to a straight line automatically; already-planned road segments are kept.
 
 ## Algorithm
 
@@ -17,7 +17,7 @@ The entire route is pre-planned before walking begins. The map shows the complet
 
 **Straight-line mode**: All waypoints generated upfront. With `returnToInitialLocation`, the second half mirrors back toward center with the center appended as the final point.
 
-**Road-following mode (OSRM)**: Picks random points iteratively, fetches OSRM segments, accumulates road distance until budget is met (safety cap: 50 OSRM calls). With `returnToInitialLocation`, a final OSRM segment from the last point back to center is fetched. Always requests the foot profile (never the speed profile's transport mode) — see OSRM Configuration below. Falls back to straight-line on any OSRM failure.
+**Road-following mode (OSRM)**: Picks random points iteratively, fetches OSRM segments, accumulates road distance until budget is met (safety cap: 50 OSRM calls). With `returnToInitialLocation`, a final OSRM segment from the last point back to center is fetched. Always requests the foot profile (never the speed profile's transport mode) — see OSRM Configuration below. If an individual segment request fails, only that segment falls back to a straight line (haversine distance counted toward the budget) — road segments already fetched earlier in the route are kept, not discarded.
 
 **Preview = planning**: `generateRoamingPreview` runs the full planning algorithm. `startRoaming` walks the pre-planned route directly. If no preview exists at start time, planning runs inline.
 

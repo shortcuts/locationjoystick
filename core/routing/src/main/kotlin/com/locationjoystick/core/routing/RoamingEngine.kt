@@ -2,6 +2,7 @@ package com.locationjoystick.core.routing
 
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RoamingConfig
 import kotlinx.coroutines.CoroutineScope
@@ -102,13 +103,7 @@ class RoamingEngine
 
             while (coveredDistance < target && callCount < AppConstants.RoamingConstants.MAX_OSRM_PLANNING_CALLS) {
                 val dest = randomPointInRadius(center, radius)
-                val result =
-                    osrmClient
-                        .getRouteWithDistance(profile, listOf(allWaypoints.last(), dest))
-                        .getOrElse { e ->
-                            Log.w(TAG, "OSRM planning call failed, falling back to straight-line", e)
-                            return planStraightLineRoute(config)
-                        }
+                val result = fetchSegmentOrFallback(profile, allWaypoints.last(), dest)
                 allWaypoints.addAll(result.waypoints.drop(1))
                 coveredDistance += result.distanceMeters
                 callCount++
@@ -118,29 +113,36 @@ class RoamingEngine
                 var returnDistance = 0.0
                 while (returnDistance < target && callCount < AppConstants.RoamingConstants.MAX_OSRM_PLANNING_CALLS) {
                     val dest = randomPointInRadius(center, radius)
-                    val result =
-                        osrmClient
-                            .getRouteWithDistance(profile, listOf(allWaypoints.last(), dest))
-                            .getOrElse { e ->
-                                Log.w(TAG, "OSRM planning call failed during return phase, falling back to straight-line", e)
-                                return planStraightLineRoute(config)
-                            }
+                    val result = fetchSegmentOrFallback(profile, allWaypoints.last(), dest)
                     allWaypoints.addAll(result.waypoints.drop(1))
                     returnDistance += result.distanceMeters
                     callCount++
                 }
                 // Final leg: follow roads back to center
-                osrmClient
-                    .getRouteWithDistance(profile, listOf(allWaypoints.last(), center))
-                    .onSuccess { result -> allWaypoints.addAll(result.waypoints.drop(1)) }
-                    .onFailure { e ->
-                        Log.w(TAG, "OSRM final return leg failed, appending straight-line", e)
-                        allWaypoints.add(center)
-                    }
+                val result = fetchSegmentOrFallback(profile, allWaypoints.last(), center)
+                allWaypoints.addAll(result.waypoints.drop(1))
             }
 
             return allWaypoints
         }
+
+        /**
+         * Fetches one OSRM segment, falling back to a straight-line two-point segment
+         * (with haversine distance) if the request fails. Keeps the planning loop's
+         * already-accumulated road segments intact instead of abandoning the whole route.
+         */
+        private suspend fun fetchSegmentOrFallback(
+            profile: String,
+            from: LatLng,
+            to: LatLng,
+        ): OsrmRouteResult =
+            osrmClient.getRouteWithDistance(profile, listOf(from, to)).getOrElse { e ->
+                Log.w(TAG, "OSRM segment failed, falling back to straight-line segment", e)
+                OsrmRouteResult(
+                    waypoints = listOf(from, to),
+                    distanceMeters = haversineDistance(from, to),
+                )
+            }
 
         /**
          * Starts a roaming session.
