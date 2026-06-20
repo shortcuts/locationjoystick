@@ -520,14 +520,14 @@ class SettingsViewModel
             val host = uri.getQueryParameter("host")
             val port = uri.getQueryParameter("port")?.toIntOrNull()
             val token = uri.getQueryParameter("token")
-            if (host == null || port == null || token == null) {
-                viewModelScope.launch {
+            viewModelScope.launch {
+                if (host == null || port == null || token == null) {
                     Log.e(TAG, "Unrecognized QR code: $url")
                     userFeedback.emit(UserFeedback("Invalid QR code — not a Location Joystick export", isError = true))
+                    return@launch
                 }
-                return
+                fetchAndImportExport(host, port, token)
             }
-            fetchAndImportExport(host, port, token)
         }
 
         /** Alternative to scanning a QR — resolve the sender via NSD using the typed code instead. */
@@ -541,36 +541,38 @@ class SettingsViewModel
                     return@launch
                 }
                 _qrImportFetching.value = true
-                val resolved = nsdCodeManager.discoverByCode(normalized)
-                _qrImportFetching.value = false
-                if (resolved == null) {
-                    userFeedback.emit(UserFeedback("No sender found for code $normalized", isError = true))
-                    return@launch
+                try {
+                    val resolved = nsdCodeManager.discoverByCode(normalized)
+                    if (resolved == null) {
+                        userFeedback.emit(UserFeedback("No sender found for code $normalized", isError = true))
+                        return@launch
+                    }
+                    val (host, port) = resolved
+                    fetchAndImportExport(host, port, normalized)
+                } finally {
+                    _qrImportFetching.value = false
                 }
-                val (host, port) = resolved
-                fetchAndImportExport(host, port, normalized)
             }
         }
 
-        private fun fetchAndImportExport(
+        /** Caller owns [_qrImportFetching] for the duration of its own launch; this only does the fetch. */
+        private suspend fun fetchAndImportExport(
             host: String,
             port: Int,
             token: String,
         ) {
-            viewModelScope.launch {
-                _qrImportFetching.value = true
-                try {
-                    val json = exportSyncClient.fetch(host, port, token)
-                    val data = withContext(Dispatchers.Default) { SettingsExportCodec.parseExportData(json) }
-                    _qrImportReady.emit(data)
-                } catch (e: Exception) {
-                    Log.e(TAG, "QR import fetch failed", e)
-                    userFeedback.emit(
-                        UserFeedback("Failed to fetch export — ensure both devices are on the same Wi-Fi", isError = true),
-                    )
-                } finally {
-                    _qrImportFetching.value = false
-                }
+            _qrImportFetching.value = true
+            try {
+                val json = exportSyncClient.fetch(host, port, token)
+                val data = withContext(Dispatchers.Default) { SettingsExportCodec.parseExportData(json) }
+                _qrImportReady.emit(data)
+            } catch (e: Exception) {
+                Log.e(TAG, "QR import fetch failed", e)
+                userFeedback.emit(
+                    UserFeedback("Failed to fetch export — ensure both devices are on the same Wi-Fi", isError = true),
+                )
+            } finally {
+                _qrImportFetching.value = false
             }
         }
 
