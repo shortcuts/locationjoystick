@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.11.0](https://github.com/shortcuts/locationjoystick/compare/v0.10.0...v0.11.0) (2026-06-21)
+
+
+### Features
+
+* **deep-link:** intercept Google Maps location links ([d66a8b0](https://github.com/shortcuts/locationjoystick/commit/d66a8b08c8dff2ad521730c7504f79ec4063fd56))
+* **qr:** allow typing a code as an alternative to scanning ([dae984c](https://github.com/shortcuts/locationjoystick/commit/dae984c473072142f5c0c3eb1240638920cfdc36))
+* **scripts:** add Play Store FOREGROUND_SERVICE_LOCATION demo video script ([e44d6e0](https://github.com/shortcuts/locationjoystick/commit/e44d6e0616679bfe4f391f5211872e6d9a08ce79))
+* **ui:** add global start/stop spoofing button to every top bar ([d10d7d1](https://github.com/shortcuts/locationjoystick/commit/d10d7d168e3ccdab49b2aae7a2e84f58bc99d67c))
+* **ui:** redesign top bar start/stop control as icon button ([f072aa4](https://github.com/shortcuts/locationjoystick/commit/f072aa4ff1f3bd8be685e2794ba6947021ab13b7))
+* **wiki:** add copy-link button to wiki page headings ([f8afe71](https://github.com/shortcuts/locationjoystick/commit/f8afe718d77e031bdb6b5c44af584eb51f1be4d8))
+
+
+### Bug Fixes
+
+* allow coodinates to be sent ([5197ba6](https://github.com/shortcuts/locationjoystick/commit/5197ba67e03b045eb0191069bd5e019d7b850baf))
+* **deep-link:** prefer place data=!3d!4d coords over @ camera segment ([1fd2c7f](https://github.com/shortcuts/locationjoystick/commit/1fd2c7f78b8123dbd29f8536a415ef5e0f908898))
+* **deep-link:** resolve shortened Google Maps share links ([05d0e70](https://github.com/shortcuts/locationjoystick/commit/05d0e7076d964a1b2050a2544093e9ee4f2fdb23))
+* **deep-link:** show snackbar feedback when link parse/resolve fails ([8aa2b2b](https://github.com/shortcuts/locationjoystick/commit/8aa2b2b757ca09239db6be590f3357d29221cfbd))
+* **group-sync:** auto-leave group when leader/group is gone ([fe04a44](https://github.com/shortcuts/locationjoystick/commit/fe04a4484b7aa88260f5bb8dd6d0539f44e4709c))
+* **group-sync:** resume leader role and re-resolve follower address on OS restart ([7717f86](https://github.com/shortcuts/locationjoystick/commit/7717f866ef22ab4f3c0aa74fdc523a7d824f657d))
+* **qr:** correct camera frame rotation in QR scanner ([889c791](https://github.com/shortcuts/locationjoystick/commit/889c791ac4f4ed54c5065469df45111bd30630f2))
+* **qr:** make exported QR codes scannable ([578a788](https://github.com/shortcuts/locationjoystick/commit/578a788f4f0d459e2e2aa69714b2f16b43ccc82d))
+* **roaming:** always use OSRM foot profile, retry driving on failure ([2bc7b60](https://github.com/shortcuts/locationjoystick/commit/2bc7b60a21c4863e35be1603c8b755ef9f36110a))
+* **roaming:** snap waypoints to nearest road on OSRM NoSegment ([d7fd90b](https://github.com/shortcuts/locationjoystick/commit/d7fd90b92eae6ea326391a089c85f978d97e4a4e))
+* **settings:** give each QR-import caller sole ownership of fetching flag ([92ec468](https://github.com/shortcuts/locationjoystick/commit/92ec4687716463658fe71e80885f778e1edf0e0a))
+* **settings:** make fetchAndImportExport sole owner of qrImportFetching ([3ab7828](https://github.com/shortcuts/locationjoystick/commit/3ab7828f8ba99613f786d6500b598ad68a8ce76e))
+* **settings:** remove hard 54 km/h cap on speed profiles ([1f43a5f](https://github.com/shortcuts/locationjoystick/commit/1f43a5fa9051485e245cb5a3d71e2ca3dd92078d)), closes [#20](https://github.com/shortcuts/locationjoystick/issues/20)
+
 ## [0.10.0](https://github.com/shortcuts/locationjoystick/compare/v0.9.0...v0.10.0) (2026-06-18)
 
 
