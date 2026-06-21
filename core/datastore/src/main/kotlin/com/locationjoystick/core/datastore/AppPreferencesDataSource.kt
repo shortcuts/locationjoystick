@@ -337,15 +337,15 @@ class AppPreferencesDataSource
                 }
 
         override suspend fun setWalkSpeed(ms: Double) {
-            dataStore.edit { prefs -> prefs[Keys.WALK_SPEED_MS] = ms.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS) }
+            dataStore.edit { prefs -> prefs[Keys.WALK_SPEED_MS] = ms.coerceAtLeast(MIN_SPEED_MS) }
         }
 
         override suspend fun setRunSpeed(ms: Double) {
-            dataStore.edit { prefs -> prefs[Keys.RUN_SPEED_MS] = ms.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS) }
+            dataStore.edit { prefs -> prefs[Keys.RUN_SPEED_MS] = ms.coerceAtLeast(MIN_SPEED_MS) }
         }
 
         override suspend fun setBikeSpeed(ms: Double) {
-            dataStore.edit { prefs -> prefs[Keys.BIKE_SPEED_MS] = ms.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS) }
+            dataStore.edit { prefs -> prefs[Keys.BIKE_SPEED_MS] = ms.coerceAtLeast(MIN_SPEED_MS) }
         }
 
         override suspend fun setActiveProfileId(profileId: String) {
@@ -639,9 +639,9 @@ class AppPreferencesDataSource
 
         override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
             dataStore.edit { prefs ->
-                prefs[Keys.WALK_SPEED_MS] = snapshot.walkSpeedMs.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS)
-                prefs[Keys.RUN_SPEED_MS] = snapshot.runSpeedMs.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS)
-                prefs[Keys.BIKE_SPEED_MS] = snapshot.bikeSpeedMs.coerceIn(MIN_SPEED_MS, MAX_SPEED_MS)
+                prefs[Keys.WALK_SPEED_MS] = snapshot.walkSpeedMs.coerceAtLeast(MIN_SPEED_MS)
+                prefs[Keys.RUN_SPEED_MS] = snapshot.runSpeedMs.coerceAtLeast(MIN_SPEED_MS)
+                prefs[Keys.BIKE_SPEED_MS] = snapshot.bikeSpeedMs.coerceAtLeast(MIN_SPEED_MS)
                 prefs[Keys.SPEED_UNIT] = snapshot.speedUnit.name
                 prefs[Keys.WIDGET_ITEMS] = snapshot.widgetFeatures.map { it.name.lowercase() }.toSet()
                 prefs[Keys.REMEMBER_LAST_LOCATION] = snapshot.rememberLastLocation
@@ -769,7 +769,6 @@ class AppPreferencesDataSource
             const val DEFAULT_ACTIVE_PROFILE_ID = AppConstants.ProfileConstants.DEFAULT_ACTIVE_PROFILE_ID
 
             const val MIN_SPEED_MS = AppConstants.ProfileConstants.MIN_SPEED_MS
-            const val MAX_SPEED_MS = AppConstants.ProfileConstants.MAX_SPEED_MS
 
             val DEFAULT_MAP_FAB_ITEMS: Set<String> =
                 MapFabFeature.entries.map { it.name.lowercase() }.toSet()

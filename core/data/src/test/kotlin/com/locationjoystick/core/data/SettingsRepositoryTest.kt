@@ -342,6 +342,27 @@ class SettingsRepositoryTest {
             }
         }
 
+    @Test
+    fun `setWalkSpeed RunSpeed BikeSpeed allow values above former 15 ms anti-cheat cap`() =
+        runTest {
+            repository.setWalkSpeed(50.0)
+            repository.setRunSpeed(50.0)
+            repository.setBikeSpeed(50.0)
+
+            repository.getWalkSpeed().test {
+                assertEquals(50.0, awaitItem(), 0.001)
+                cancelAndIgnoreRemainingEvents()
+            }
+            repository.getRunSpeed().test {
+                assertEquals(50.0, awaitItem(), 0.001)
+                cancelAndIgnoreRemainingEvents()
+            }
+            repository.getBikeSpeed().test {
+                assertEquals(50.0, awaitItem(), 0.001)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
     // setActiveProfileId
 
     @Test
@@ -913,21 +934,21 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
     override suspend fun setWalkSpeed(ms: Double) {
         speedProfilesFlow.value =
             speedProfilesFlow.value.copy(
-                walkSpeedMs = ms.coerceIn(AppPreferencesDataSource.MIN_SPEED_MS, AppPreferencesDataSource.MAX_SPEED_MS),
+                walkSpeedMs = ms.coerceAtLeast(AppPreferencesDataSource.MIN_SPEED_MS),
             )
     }
 
     override suspend fun setRunSpeed(ms: Double) {
         speedProfilesFlow.value =
             speedProfilesFlow.value.copy(
-                runSpeedMs = ms.coerceIn(AppPreferencesDataSource.MIN_SPEED_MS, AppPreferencesDataSource.MAX_SPEED_MS),
+                runSpeedMs = ms.coerceAtLeast(AppPreferencesDataSource.MIN_SPEED_MS),
             )
     }
 
     override suspend fun setBikeSpeed(ms: Double) {
         speedProfilesFlow.value =
             speedProfilesFlow.value.copy(
-                bikeSpeedMs = ms.coerceIn(AppPreferencesDataSource.MIN_SPEED_MS, AppPreferencesDataSource.MAX_SPEED_MS),
+                bikeSpeedMs = ms.coerceAtLeast(AppPreferencesDataSource.MIN_SPEED_MS),
             )
     }
 
