@@ -58,6 +58,7 @@ import com.locationjoystick.core.designsystem.LjWarningContainer
 import com.locationjoystick.core.designsystem.component.AppIcon
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.location.SpoofToggleViewModel
 import com.locationjoystick.feature.onboarding.api.ONBOARDING_ROUTE
 
 fun NavGraphBuilder.onboardingScreen(onSetupComplete: () -> Unit) {
@@ -71,8 +72,10 @@ fun OnboardingRoute(
     onSetupComplete: () -> Unit,
     bottomBar: @Composable () -> Unit = {},
     viewModel: OnboardingViewModel = hiltViewModel(),
+    spoofToggleViewModel: SpoofToggleViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isSpoofing by spoofToggleViewModel.isSpoofing.collectAsStateWithLifecycle()
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -93,6 +96,8 @@ fun OnboardingRoute(
             viewModel.onSetupComplete()
             onSetupComplete()
         },
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = spoofToggleViewModel::toggle,
         bottomBar = bottomBar,
     )
 }
@@ -102,6 +107,8 @@ internal fun OnboardingScreen(
     uiState: OnboardingUiState,
     onCheckPermissions: () -> Unit,
     onSetupComplete: () -> Unit,
+    isSpoofing: Boolean = false,
+    onToggleSpoofing: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -114,6 +121,8 @@ internal fun OnboardingScreen(
 
     LjScaffold(
         title = "",
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
         onNavigationClick = null,
         bottomBar = bottomBar,
         containerColor = MaterialTheme.colorScheme.background,

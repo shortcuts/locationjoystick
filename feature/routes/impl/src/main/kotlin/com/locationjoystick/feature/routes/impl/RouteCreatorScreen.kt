@@ -41,6 +41,7 @@ import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
+import com.locationjoystick.core.location.SpoofToggleViewModel
 import com.locationjoystick.core.map.geojson.buildPositionGeoJson
 import com.locationjoystick.core.map.geojson.buildSegmentsGeoJson
 import com.locationjoystick.core.map.geojson.buildWaypointsGeoJson
@@ -65,10 +66,12 @@ fun RouteCreatorRoute(
     bottomBar: @Composable () -> Unit = {},
 ) {
     val viewModel: RouteCreatorViewModel = hiltViewModel()
+    val spoofToggleViewModel: SpoofToggleViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
     val livePosition by viewModel.livePosition.collectAsStateWithLifecycle()
     val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
+    val isSpoofing by spoofToggleViewModel.isSpoofing.collectAsStateWithLifecycle()
 
     RouteCreatorScreen(
         state = state,
@@ -84,6 +87,8 @@ fun RouteCreatorRoute(
         },
         onSearchCommitted = viewModel::addRecentSearch,
         onBack = onBack,
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = spoofToggleViewModel::toggle,
         bottomBar = bottomBar,
     )
 }
@@ -114,6 +119,8 @@ internal fun RouteCreatorScreen(
     onSaveRoute: (String) -> Unit,
     onSearchCommitted: ((String, Double, Double) -> Unit)? = null,
     onBack: () -> Unit,
+    isSpoofing: Boolean = false,
+    onToggleSpoofing: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -164,6 +171,8 @@ internal fun RouteCreatorScreen(
 
     LjScaffold(
         title = "Create Route",
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
         onNavigationClick = onBack,
         navigationIcon = LjIcons.ArrowBack,
         contentWindowInsets = WindowInsets.safeDrawing,

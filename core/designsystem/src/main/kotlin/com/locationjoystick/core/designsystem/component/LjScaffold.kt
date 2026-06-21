@@ -16,6 +16,8 @@ import com.locationjoystick.core.designsystem.LjIcons
 @Composable
 fun LjScaffold(
     title: String,
+    isSpoofing: Boolean,
+    onToggleSpoofing: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigationClick: (() -> Unit)? = null,
     navigationIcon: ImageVector = LjIcons.Menu,
@@ -32,6 +34,8 @@ fun LjScaffold(
         topBar = {
             LjTopBar(
                 title = title,
+                isSpoofing = isSpoofing,
+                onToggleSpoofing = onToggleSpoofing,
                 onNavigationClick = onNavigationClick,
                 navigationIcon = navigationIcon,
                 actions = actions,

@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -78,6 +80,11 @@ class MapController
         val sharedState: StateFlow<MapSharedState> = _state.asStateFlow()
 
         val completionMessages = locationRepository.completionEvents
+
+        val isSpoofing: StateFlow<Boolean> =
+            locationRepository.mockLocationState
+                .map { it != MockLocationState.IDLE }
+                .stateIn(appScope, SharingStarted.Eagerly, false)
 
         private val _routingErrors = MutableSharedFlow<String>(extraBufferCapacity = 1)
         val routingErrors: SharedFlow<String> = _routingErrors.asSharedFlow()
@@ -286,6 +293,10 @@ class MapController
             ContextCompat.startForegroundService(context, MockLocationIntentBuilder.stopSpoofing(context))
             ephemeralReplayController.clearPendingWaypoints()
             _state.update { it.copy(walkMode = WalkMode.Idle, routeTrace = null) }
+        }
+
+        fun toggleSpoofing() {
+            if (isSpoofing.value) stopSpoofing() else startSpoofing()
         }
 
         fun teleportTo(position: LatLng) {

@@ -13,6 +13,7 @@ android {
 dependencies {
     implementation(project(":feature:onboarding:api"))
     implementation(project(":core:data"))
+    implementation(project(":core:location"))
 
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)

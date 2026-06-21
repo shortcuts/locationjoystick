@@ -4,6 +4,12 @@ Injects fake GPS into Android. All apps get spoofed coords as real GPS.
 
 Key files: `:core:location/MockLocationService.kt`, `:core:data/LocationRepository.kt`
 
+## Global Start/Stop Control
+
+Every screen's top bar (`LjTopBar`/`LjScaffold`, `:core:designsystem`) shows a full-text toggle button — `> start` / `|| stop` — in the title slot, driving spoofing from anywhere in the app, not just the Map screen.
+
+Backed by `MapController.isSpoofing` (`StateFlow<Boolean>`, derived from `LocationRepository.mockLocationState != IDLE`) and `MapController.toggleSpoofing()` (`:core:location`). Each screen obtains these via the shared `SpoofToggleViewModel` (`hiltViewModel()`), a thin wrapper so feature ViewModels don't need their own `MapController` dependency just for this control.
+
 ## Core Mechanics
 
 - Update rate: `AppConstants.LocationConstants.UPDATE_INTERVAL_MS` (1 Hz, real GPS cadence)

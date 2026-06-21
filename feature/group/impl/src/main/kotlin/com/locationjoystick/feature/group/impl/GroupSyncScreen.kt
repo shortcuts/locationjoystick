@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.location.SpoofToggleViewModel
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
 
@@ -62,12 +63,14 @@ import com.locationjoystick.core.model.GroupState
 fun GroupSyncRoute(
     onOpenDrawer: () -> Unit,
     viewModel: GroupSyncViewModel = hiltViewModel(),
+    spoofToggleViewModel: SpoofToggleViewModel = hiltViewModel(),
 ) {
     val groupState by viewModel.groupState.collectAsStateWithLifecycle()
     val qrBitmap by viewModel.qrBitmap.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val isDiscovering by viewModel.isDiscovering.collectAsStateWithLifecycle()
     val followerCount by viewModel.followerCount.collectAsStateWithLifecycle()
+    val isSpoofing by spoofToggleViewModel.isSpoofing.collectAsStateWithLifecycle()
 
     var showQrScanner by remember { mutableStateOf(false) }
 
@@ -98,6 +101,8 @@ fun GroupSyncRoute(
             snackbarHostState = snackbarHostState,
             isDiscovering = isDiscovering,
             followerCount = followerCount,
+            isSpoofing = isSpoofing,
+            onToggleSpoofing = spoofToggleViewModel::toggle,
             onOpenDrawer = onOpenDrawer,
             onCreateGroup = viewModel::createGroup,
             onJoinViaQr = { showQrScanner = true },
@@ -117,6 +122,8 @@ internal fun GroupSyncScreen(
     snackbarHostState: SnackbarHostState,
     isDiscovering: Boolean,
     followerCount: Int,
+    isSpoofing: Boolean,
+    onToggleSpoofing: () -> Unit,
     onOpenDrawer: () -> Unit,
     onCreateGroup: () -> Unit,
     onJoinViaQr: () -> Unit,
@@ -128,6 +135,8 @@ internal fun GroupSyncScreen(
 ) {
     LjScaffold(
         title = "Group Sync",
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
         onNavigationClick = onOpenDrawer,
         snackbarHost = { SnackbarHost(snackbarHostState) { Snackbar(it) } },
     ) { paddingValues ->

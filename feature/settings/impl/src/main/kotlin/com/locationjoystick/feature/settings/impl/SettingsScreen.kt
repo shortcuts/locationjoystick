@@ -54,6 +54,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
@@ -61,6 +62,7 @@ import com.locationjoystick.core.designsystem.component.AppIcon
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSegmentedControl
+import com.locationjoystick.core.location.SpoofToggleViewModel
 import com.locationjoystick.core.model.MapFabFeature
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
@@ -91,10 +93,12 @@ fun SettingsRoute(
     viewModel: SettingsViewModel,
     onOpenDrawer: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
+    spoofToggleViewModel: SpoofToggleViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val roamingDefaults by viewModel.roamingDefaults.collectAsStateWithLifecycle()
     val isRooted by viewModel.isRooted.collectAsStateWithLifecycle()
+    val isSpoofing by spoofToggleViewModel.isSpoofing.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var pendingImport by remember { mutableStateOf<PendingImport?>(null) }
     var showQrShare by remember { mutableStateOf(false) }
@@ -238,6 +242,8 @@ fun SettingsRoute(
         hotLocationTree = viewModel.hotLocationTree,
         hotRouteTree = viewModel.hotRouteTree,
         onOpenDrawer = onOpenDrawer,
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = spoofToggleViewModel::toggle,
         onAction = { action ->
             when (action) {
                 is SettingsAction.SetWalkSpeed -> {
@@ -414,6 +420,8 @@ internal fun SettingsScreen(
     hotLocationTree: HotItemTree = HotItemTree.Empty,
     hotRouteTree: HotItemTree = HotItemTree.Empty,
     onOpenDrawer: () -> Unit = {},
+    isSpoofing: Boolean = false,
+    onToggleSpoofing: () -> Unit = {},
     onAction: (SettingsAction) -> Unit,
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
@@ -430,6 +438,8 @@ internal fun SettingsScreen(
                 uiState = uiState,
                 onOpenDrawer = onOpenDrawer,
                 onNavigate = { currentSection = it },
+                isSpoofing = isSpoofing,
+                onToggleSpoofing = onToggleSpoofing,
                 onAction = onAction,
                 bottomBar = bottomBar,
                 snackbarHost = snackbarHost,
@@ -441,6 +451,8 @@ internal fun SettingsScreen(
                 uiState = uiState,
                 isRooted = isRooted,
                 onNavigateBack = { currentSection = null },
+                isSpoofing = isSpoofing,
+                onToggleSpoofing = onToggleSpoofing,
                 onAction = onAction,
                 bottomBar = bottomBar,
                 snackbarHost = snackbarHost,
@@ -452,6 +464,8 @@ internal fun SettingsScreen(
                 uiState = uiState,
                 isRooted = isRooted,
                 onNavigateBack = { currentSection = null },
+                isSpoofing = isSpoofing,
+                onToggleSpoofing = onToggleSpoofing,
                 onAction = onAction,
                 bottomBar = bottomBar,
                 snackbarHost = snackbarHost,
@@ -465,6 +479,8 @@ internal fun SettingsScreen(
                 hotLocationTree = hotLocationTree,
                 hotRouteTree = hotRouteTree,
                 onNavigateBack = { currentSection = null },
+                isSpoofing = isSpoofing,
+                onToggleSpoofing = onToggleSpoofing,
                 onAction = onAction,
                 bottomBar = bottomBar,
                 snackbarHost = snackbarHost,
@@ -478,12 +494,16 @@ private fun SettingsHubScreen(
     uiState: SettingsUiState,
     onOpenDrawer: () -> Unit,
     onNavigate: (SettingsSection) -> Unit,
+    isSpoofing: Boolean,
+    onToggleSpoofing: () -> Unit,
     onAction: (SettingsAction) -> Unit,
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
     LjScaffold(
         title = "Settings",
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
         onNavigationClick = onOpenDrawer,
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
@@ -680,12 +700,16 @@ private fun SettingsGpsSubScreen(
     uiState: SettingsUiState,
     isRooted: Boolean,
     onNavigateBack: () -> Unit,
+    isSpoofing: Boolean,
+    onToggleSpoofing: () -> Unit,
     onAction: (SettingsAction) -> Unit,
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
     LjScaffold(
         title = "GPS Settings",
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
         onNavigationClick = onNavigateBack,
         navigationIcon = LjIcons.ArrowBack,
         bottomBar = bottomBar,
@@ -743,12 +767,16 @@ private fun SettingsMenusSubScreen(
     uiState: SettingsUiState,
     isRooted: Boolean,
     onNavigateBack: () -> Unit,
+    isSpoofing: Boolean,
+    onToggleSpoofing: () -> Unit,
     onAction: (SettingsAction) -> Unit,
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
     LjScaffold(
         title = "Menus",
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
         onNavigationClick = onNavigateBack,
         navigationIcon = LjIcons.ArrowBack,
         bottomBar = bottomBar,
@@ -786,12 +814,16 @@ private fun SettingsFavoritesRoutesSubScreen(
     hotLocationTree: HotItemTree,
     hotRouteTree: HotItemTree,
     onNavigateBack: () -> Unit,
+    isSpoofing: Boolean,
+    onToggleSpoofing: () -> Unit,
     onAction: (SettingsAction) -> Unit,
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
     LjScaffold(
         title = "Favorites & Routes",
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
         onNavigationClick = onNavigateBack,
         navigationIcon = LjIcons.ArrowBack,
         bottomBar = bottomBar,

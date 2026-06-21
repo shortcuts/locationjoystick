@@ -38,6 +38,7 @@ import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.location.SpoofToggleViewModel
 import com.locationjoystick.core.model.Route
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -122,9 +123,11 @@ fun RouteDetailScreen(
     onOpenDrawer: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     viewModel: RouteDetailViewModel = hiltViewModel(),
+    spoofToggleViewModel: SpoofToggleViewModel = hiltViewModel(),
 ) {
     val route by viewModel.route.collectAsStateWithLifecycle()
     val nameError by viewModel.nameError.collectAsStateWithLifecycle()
+    val isSpoofing by spoofToggleViewModel.isSpoofing.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
 
     var editedName by remember { mutableStateOf("") }
@@ -150,6 +153,8 @@ fun RouteDetailScreen(
 
     LjScaffold(
         title = "Route Details",
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = spoofToggleViewModel::toggle,
         onNavigationClick = onOpenDrawer,
         bottomBar = bottomBar,
         actions = {

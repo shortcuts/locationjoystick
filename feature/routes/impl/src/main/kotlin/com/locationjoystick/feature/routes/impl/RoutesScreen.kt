@@ -40,10 +40,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.location.SpoofToggleViewModel
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.distanceTo
 
@@ -55,10 +57,12 @@ fun RoutesRoute(
     onOpenDrawer: () -> Unit,
     viewModel: RoutesViewModel,
     bottomBar: @Composable () -> Unit = {},
+    spoofToggleViewModel: SpoofToggleViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val playbackState by viewModel.playbackState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val isSpoofing by spoofToggleViewModel.isSpoofing.collectAsStateWithLifecycle()
     RoutesScreen(
         uiState = uiState,
         playbackState = playbackState,
@@ -66,6 +70,8 @@ fun RoutesRoute(
         onNavigateToCreate = onNavigateToCreate,
         onImportGpx = onImportGpx,
         onOpenDrawer = onOpenDrawer,
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = spoofToggleViewModel::toggle,
         onDeleteRoute = viewModel::deleteRoute,
         onExportRoute = { route -> viewModel.exportRouteAsGpx(context, route) },
         onStartReplay = { route, isLooping, isReverse, isReturnToLocation, teleportToStart ->
@@ -112,6 +118,8 @@ internal fun RoutesScreen(
     onPauseReplay: () -> Unit,
     onResumeReplay: () -> Unit,
     onStopReplay: () -> Unit,
+    isSpoofing: Boolean = false,
+    onToggleSpoofing: () -> Unit = {},
     onToggleSort: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
 ) {
@@ -120,6 +128,8 @@ internal fun RoutesScreen(
 
     LjScaffold(
         title = "Routes",
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
         onNavigationClick = onOpenDrawer,
         bottomBar = bottomBar,
         actions = {

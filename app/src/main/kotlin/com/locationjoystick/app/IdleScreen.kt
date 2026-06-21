@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,10 +34,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.AppIcon
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.location.SpoofToggleViewModel
 
 internal const val IDLE_ROUTE = "idle"
 
@@ -51,9 +55,13 @@ internal fun IdleScreen(
     bottomBar: @Composable () -> Unit = {},
 ) {
     val isWide = LocalConfiguration.current.screenWidthDp >= 600
+    val spoofToggleViewModel: SpoofToggleViewModel = hiltViewModel()
+    val isSpoofing by spoofToggleViewModel.isSpoofing.collectAsStateWithLifecycle()
 
     LjScaffold(
         title = "Home",
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = spoofToggleViewModel::toggle,
         onNavigationClick = onOpenDrawer,
         bottomBar = bottomBar,
         containerColor = MaterialTheme.colorScheme.background,

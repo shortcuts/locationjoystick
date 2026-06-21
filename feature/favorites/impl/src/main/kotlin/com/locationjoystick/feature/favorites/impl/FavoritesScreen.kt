@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.CooldownState
@@ -51,6 +52,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.location.SpoofToggleViewModel
 import com.locationjoystick.core.model.LatLng
 
 @Composable
@@ -59,11 +61,13 @@ fun FavoritesRoute(
     onNavigateToMapPicker: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
+    spoofToggleViewModel: SpoofToggleViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cooldownStates by viewModel.cooldownStates.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val isSpoofing by spoofToggleViewModel.isSpoofing.collectAsStateWithLifecycle()
 
     FavoritesScreen(
         uiState = uiState,
@@ -76,6 +80,8 @@ fun FavoritesRoute(
         onUpdateFavorite = viewModel::updateFavorite,
         onNavigateToMapPicker = onNavigateToMapPicker,
         onOpenDrawer = onOpenDrawer,
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = spoofToggleViewModel::toggle,
         onToggleSort = viewModel::toggleSort,
         onShare = { fav ->
             val url = AppConstants.AppInfo.buildDeepLink(fav.position.latitude, fav.position.longitude)
@@ -118,6 +124,8 @@ internal fun FavoritesScreen(
     cooldownStates: Map<String, CooldownState> = emptyMap(),
     onNavigateToMapPicker: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
+    isSpoofing: Boolean = false,
+    onToggleSpoofing: () -> Unit = {},
     onToggleSort: () -> Unit = {},
     onShare: (com.locationjoystick.core.model.FavoriteLocation) -> Unit = {},
     getCurrentPosition: () -> com.locationjoystick.core.model.LatLng? = { null },
@@ -132,6 +140,8 @@ internal fun FavoritesScreen(
 
     LjScaffold(
         title = "Favorites",
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
         onNavigationClick = onOpenDrawer,
         bottomBar = bottomBar,
         snackbarHost = { SnackbarHost(snackbarHostState) },
