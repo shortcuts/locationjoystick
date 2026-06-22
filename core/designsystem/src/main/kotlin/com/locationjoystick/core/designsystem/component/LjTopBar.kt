@@ -38,7 +38,7 @@ fun LjTopBar(
 ) {
     TopAppBar(
         title = {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
                 TextButton(
                     onClick = onToggleSpoofing,
                     shape = RoundedCornerShape(50),
