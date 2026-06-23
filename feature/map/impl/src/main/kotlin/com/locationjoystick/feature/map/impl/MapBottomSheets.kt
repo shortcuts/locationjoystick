@@ -17,7 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
@@ -54,23 +52,19 @@ internal fun RoutesPickerSheet(
         onDismissRequest = { onAction(MapAction.CloseRoutesSheet) },
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Column(modifier = Modifier.padding(bottom = 16.dp)) {
-            Text(
-                text = "Routes",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Text(text = "Routes", style = MaterialTheme.typography.headlineSmall)
             if (uiState.routes.isEmpty()) {
                 Text(
                     text = "No routes saved",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(top = 16.dp),
                 )
             } else {
                 LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    contentPadding = PaddingValues(vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(uiState.routes, key = { it.id }) { route ->
                         Row(
@@ -369,12 +363,11 @@ private fun StartRouteDialog(
     var reverse by remember { mutableStateOf(false) }
     var returnToLocation by remember { mutableStateOf(false) }
 
-    Dialog(onDismissRequest = onDismiss) {
-        Card(shape = MaterialTheme.shapes.medium) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text("Start route", style = MaterialTheme.typography.titleLarge)
-                Spacer(Modifier.height(16.dp))
-
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Start route") },
+        text = {
+            Column {
                 LjCheckboxRow(title = "Loop", checked = loop, enabled = !returnToLocation, onCheckedChange = { loop = it })
                 LjCheckboxRow(title = "Reverse", checked = reverse, onCheckedChange = { reverse = it })
                 LjCheckboxRow(
@@ -383,30 +376,24 @@ private fun StartRouteDialog(
                     enabled = !loop,
                     onCheckedChange = { returnToLocation = it },
                 )
-
-                Spacer(Modifier.height(20.dp))
-
-                Button(
-                    onClick = { onStart(loop, reverse, returnToLocation && !loop, false) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Walk and start")
-                }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
                 OutlinedButton(
                     onClick = { onStart(loop, reverse, returnToLocation && !loop, true) },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text("Teleport and start")
                 }
-                Spacer(Modifier.height(4.dp))
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.End),
-                ) {
-                    Text("Cancel")
-                }
             }
-        }
-    }
+        },
+        confirmButton = {
+            TextButton(onClick = { onStart(loop, reverse, returnToLocation && !loop, false) }) {
+                Text("Walk and start")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
 }

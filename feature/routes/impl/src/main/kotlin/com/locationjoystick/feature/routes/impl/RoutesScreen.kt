@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -40,7 +39,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.EmptyState
@@ -385,12 +383,11 @@ private fun StartRouteDialog(
     var reverse by remember { mutableStateOf(false) }
     var returnToLocation by remember { mutableStateOf(false) }
 
-    Dialog(onDismissRequest = onDismiss) {
-        Card(shape = MaterialTheme.shapes.medium) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text("Start route", style = MaterialTheme.typography.titleLarge)
-                Spacer(Modifier.height(16.dp))
-
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Start route") },
+        text = {
+            Column {
                 CheckboxRow(label = "Loop", checked = loop, enabled = !returnToLocation, onCheckedChange = { loop = it })
                 CheckboxRow(label = "Reverse", checked = reverse, onCheckedChange = { reverse = it })
                 CheckboxRow(
@@ -399,32 +396,26 @@ private fun StartRouteDialog(
                     enabled = !loop,
                     onCheckedChange = { returnToLocation = it },
                 )
-
-                Spacer(Modifier.height(20.dp))
-
-                Button(
-                    onClick = { onStart(loop, reverse, returnToLocation && !loop, false) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Walk and start")
-                }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
                 OutlinedButton(
                     onClick = { onStart(loop, reverse, returnToLocation && !loop, true) },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text("Teleport and start")
                 }
-                Spacer(Modifier.height(4.dp))
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.End),
-                ) {
-                    Text("Cancel")
-                }
             }
-        }
-    }
+        },
+        confirmButton = {
+            TextButton(onClick = { onStart(loop, reverse, returnToLocation && !loop, false) }) {
+                Text("Walk and start")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
 }
 
 @Composable
