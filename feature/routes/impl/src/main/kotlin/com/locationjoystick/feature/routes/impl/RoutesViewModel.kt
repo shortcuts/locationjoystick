@@ -21,8 +21,10 @@ import com.locationjoystick.core.model.Waypoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
@@ -63,6 +65,13 @@ class RoutesViewModel
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = RoutesUiState(isLoading = true),
             )
+
+        private val _errorMessage = MutableStateFlow<String?>(null)
+        val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+        fun clearError() {
+            _errorMessage.value = null
+        }
 
         val playbackState: StateFlow<RoutePlaybackState> =
             combine(
@@ -202,6 +211,7 @@ class RoutesViewModel
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Export GPX failed", e)
+                    _errorMessage.value = "Export failed: ${e.message}"
                 }
             }
         }

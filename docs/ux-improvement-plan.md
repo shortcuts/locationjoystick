@@ -31,14 +31,18 @@ The shape scale already exists in `LjShapes.kt` — problem is screens use raw `
 - [ ] For the 50dp "pill" outlier found in audit — decide: is it a legitimate one-off (e.g. a chip/pill control) or should `LjShapes` gain an explicit `pill`/`full` tier? Don't silently absorb it into `extraLarge`.
 - [ ] Spacing: no `LjSpacing` token object exists yet. Add one to `:core:designsystem` (e.g. `xs=4dp, sm=8dp, md=16dp, lg=24dp, xl=32dp`) mirroring the `LjShapes` pattern, then sweep raw `.dp` padding/spacing literals in screens to match the nearest tier. Don't invent new in-between values (12dp/20dp) going forward.
 
-## Phase 3 — Unify state handling (HIGH — ties directly to "reliability" goal)
+## Phase 3 — Unify state handling (HIGH — ties directly to "reliability" goal) — DONE 2026-06-23
 
-Coverage is uneven: Routes has loading + empty state, Map has neither, Onboarding has no error UI.
+- [x] Map screen loading affordance: `MapViewModel.generateRoamingPreview()` (an OSRM network call that can take seconds) gave zero feedback while in flight. Added `MapUiState.isRoamingPreviewLoading`, set around the call in a `try/finally`, threaded through `RoamingSheet` → `RoamingSheetContent` to show an inline `CircularProgressIndicator` in the "Generate" button and disable both Generate/Start while loading. Mirrored the same fix in the floating-widget's `OverlayRoamingSheet` (`MapFloatingView.kt`), which has its own independent OSRM-calling code path. Map's "search loading" has no async step to show a spinner for (Nominatim search bar already has its own internal debounce/loading — out of scope here) — error feedback for routing failures was already wired via `routingErrors`/`completionMessages` snackbars in `MapRoute`.
+- [x] Added `SnackbarHost`/error surface to Routes screen: `RoutesViewModel` gained `errorMessage: StateFlow<String?>` + `clearError()`, set on GPX export failure (previously only `Log.e`, silently dropped on the user). `RoutesScreen`/`RoutesRoute` now follow the same `snackbarHostState` + `LaunchedEffect(errorMessage)` pattern already used by Group Sync/Favorites/Map. Also swapped the raw `CircularProgressIndicator` for the existing `LoadingIndicator` component to match the rest of the app.
+- [x] Onboarding error handling: re-examined — there's no exception/failure path here, only "permission granted vs not". `OnboardingStepCard` already shows a warning-colored card with an inline fix action per ungranted step (matches `docs/features/onboarding.md`'s "Show a banner if a required permission is missing"). A snackbar on top would be redundant (it'd re-fire every `onResume` until the user acts). No change needed.
+- [x] Canonical state-handling pattern (write-up below).
 
-- [ ] Add Map screen empty/loading affordance for async states (route preview loading, search loading) using existing `LoadingIndicator`/`EmptyState` components — don't invent new ones
-- [ ] Add `SnackbarHost`/error surface to Routes screen (audit flagged it's missing despite `LjScaffold` supporting it)
-- [ ] Onboarding: define what "error" even means per step (permission denied, mock-location not enabled) and surface it via existing snackbar pattern rather than silent fallback
-- [ ] Write down (in this doc) the canonical state-handling pattern once agreed, so new screens default to it instead of reinventing
+### Canonical state-handling pattern
+
+- **Loading**: expose a `Boolean` in the screen's `UiState`, flip it around the suspending call in `viewModelScope.launch { ... try { } finally { isXLoading = false } }`. Render with the shared `LoadingIndicator` component (or inline `CircularProgressIndicator` sized to the trigger control, e.g. inside a button).
+- **Empty**: render the shared `EmptyState` component when a list/collection is empty and not loading.
+- **Errors**: ViewModel exposes `errorMessage: StateFlow<String?>` (`null` = no pending error) + a `clearError()` function. Screen holds `val snackbarHostState = remember { SnackbarHostState() }`, wires `LaunchedEffect(errorMessage) { if (errorMessage != null) { snackbarHostState.showSnackbar(errorMessage!!); viewModel.clearError() } }`, and passes `snackbarHost = { SnackbarHost(snackbarHostState) }` into `LjScaffold`. This is already the convention in Group Sync, Favorites, and Map — Routes now follows it too.
 
 ## Phase 4 — Unify dialog/sheet patterns (MEDIUM)
 

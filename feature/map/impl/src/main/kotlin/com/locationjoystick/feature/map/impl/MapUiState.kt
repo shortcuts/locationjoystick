@@ -33,6 +33,7 @@ data class MapUiState(
     val isRoamingPaused: Boolean = false,
     val isRoamingControlsExpanded: Boolean = false,
     val roamingPreviewWaypoints: List<LatLng>? = null,
+    val isRoamingPreviewLoading: Boolean = false,
     val isRoamingSheetMinimized: Boolean = false,
     val speedUnit: SpeedUnit = SpeedUnit.KMH,
     val enabledMapFabFeatures: Set<MapFabFeature> = MapFabFeature.entries.toSet(),

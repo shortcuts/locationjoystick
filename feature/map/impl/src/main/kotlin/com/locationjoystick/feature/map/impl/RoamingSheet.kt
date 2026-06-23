@@ -20,6 +20,7 @@ fun RoamingSheet(
     isSpoofingActive: Boolean = true,
     speedUnit: SpeedUnit = SpeedUnit.KMH,
     hasPreview: Boolean = false,
+    isPreviewLoading: Boolean = false,
     onAction: (MapAction) -> Unit,
     onGeneratePreview: () -> Unit = {},
     onMinimize: () -> Unit = {},
@@ -35,6 +36,7 @@ fun RoamingSheet(
             hasCurrentPosition = hasCurrentPosition,
             isSpoofingActive = isSpoofingActive,
             hasPreview = hasPreview,
+            isPreviewLoading = isPreviewLoading,
             onDraftChange = { updated ->
                 if (updated.radiusMeters != draft.radiusMeters) {
                     onAction(MapAction.UpdateRoamingRadius(updated.radiusMeters))

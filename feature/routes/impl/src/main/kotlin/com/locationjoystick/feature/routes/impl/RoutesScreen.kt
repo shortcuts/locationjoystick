@@ -19,16 +19,18 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LoadingIndicator
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.distanceTo
@@ -59,11 +62,22 @@ fun RoutesRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val playbackState by viewModel.playbackState.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val spoofToggle = rememberSpoofToggleState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage!!)
+            viewModel.clearError()
+        }
+    }
+
     RoutesScreen(
         uiState = uiState,
         playbackState = playbackState,
+        snackbarHostState = snackbarHostState,
         onNavigateToDetail = onNavigateToDetail,
         onNavigateToCreate = onNavigateToCreate,
         onImportGpx = onImportGpx,
@@ -89,6 +103,7 @@ private fun RoutesScreenPreview() {
     RoutesScreen(
         uiState = RoutesUiState(),
         playbackState = RoutePlaybackState(),
+        snackbarHostState = remember { SnackbarHostState() },
         onNavigateToDetail = {},
         onNavigateToCreate = {},
         onImportGpx = {},
@@ -106,6 +121,7 @@ private fun RoutesScreenPreview() {
 internal fun RoutesScreen(
     uiState: RoutesUiState,
     playbackState: RoutePlaybackState,
+    snackbarHostState: SnackbarHostState,
     onNavigateToDetail: (String) -> Unit,
     onNavigateToCreate: (RouteType) -> Unit,
     onImportGpx: () -> Unit,
@@ -130,6 +146,7 @@ internal fun RoutesScreen(
         onToggleSpoofing = onToggleSpoofing,
         onNavigationClick = onOpenDrawer,
         bottomBar = bottomBar,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         actions = {
             IconButton(onClick = onToggleSort) {
                 Icon(LjIcons.SwapVert, contentDescription = "Sort")
@@ -176,7 +193,7 @@ internal fun RoutesScreen(
         ) {
             when {
                 uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    LoadingIndicator()
                 }
 
                 uiState.routes.isEmpty() -> {

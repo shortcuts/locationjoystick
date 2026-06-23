@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -48,6 +50,7 @@ fun RoamingSheetContent(
     hasCurrentPosition: Boolean,
     isSpoofingActive: Boolean,
     hasPreview: Boolean,
+    isPreviewLoading: Boolean = false,
     onDraftChange: (RoamingDefaults) -> Unit,
     onGenerate: () -> Unit,
     onStart: () -> Unit,
@@ -198,14 +201,21 @@ fun RoamingSheetContent(
         Row(modifier = Modifier.fillMaxWidth()) {
             LjOutlinedButton(
                 onClick = onGenerate,
-                enabled = hasCurrentPosition,
+                enabled = hasCurrentPosition && !isPreviewLoading,
                 modifier = Modifier.weight(1f).padding(end = 4.dp),
             ) {
-                Text("Generate")
+                if (isPreviewLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Text("Generate")
+                }
             }
             LjButton(
                 onClick = onStart,
-                enabled = hasCurrentPosition && isSpoofingActive,
+                enabled = hasCurrentPosition && isSpoofingActive && !isPreviewLoading,
                 modifier = Modifier.weight(1f).padding(start = 4.dp),
             ) {
                 Text("Start")

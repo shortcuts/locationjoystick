@@ -444,6 +444,7 @@ internal fun MapScreen(
             isSpoofingActive = uiState.isSpoofing,
             speedUnit = uiState.speedUnit,
             hasPreview = uiState.roamingPreviewWaypoints != null,
+            isPreviewLoading = uiState.isRoamingPreviewLoading,
             onAction = onAction,
             onGeneratePreview = { onAction(MapAction.GenerateRoamingPreview) },
             onMinimize = { onAction(MapAction.MinimizeRoamingSheet) },

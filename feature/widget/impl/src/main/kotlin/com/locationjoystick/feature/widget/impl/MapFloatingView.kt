@@ -534,6 +534,7 @@ private fun BoxScope.OverlayRoamingSheet(
 ) {
     val isSpoofing = mockLocationState == MockLocationState.RUNNING
     var draft by remember(roamingDefaults) { mutableStateOf(roamingDefaults) }
+    var isPreviewLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     // Scrim — tapping outside the sheet dismisses it. ModalBottomSheet is not used because it
     // creates a Dialog internally, which requires an Activity window token unavailable in a
@@ -569,13 +570,19 @@ private fun BoxScope.OverlayRoamingSheet(
                     hasCurrentPosition = currentPosition != null,
                     isSpoofingActive = isSpoofing,
                     hasPreview = hasPreview,
+                    isPreviewLoading = isPreviewLoading,
                     onDraftChange = { draft = it },
                     onGenerate = {
                         scope.launch {
                             val pos = currentPosition ?: return@launch
-                            onPreviewGenerated(
-                                onGeneratePreviewRoute(pos, draft.radiusMeters, draft.followRoads, draft.speedProfileId),
-                            )
+                            isPreviewLoading = true
+                            try {
+                                onPreviewGenerated(
+                                    onGeneratePreviewRoute(pos, draft.radiusMeters, draft.followRoads, draft.speedProfileId),
+                                )
+                            } finally {
+                                isPreviewLoading = false
+                            }
                         }
                     },
                     onStart = { onStart(draft) },

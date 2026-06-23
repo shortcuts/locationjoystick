@@ -435,9 +435,14 @@ class MapViewModel
             val draft = _uiState.value.roamingDraft ?: return
             val center = mapController.sharedState.value.currentPosition ?: return
             viewModelScope.launch {
-                val config = draft.toConfig(center)
-                val waypoints = roamingRepository.planRoute(config)
-                _uiState.update { it.copy(roamingPreviewWaypoints = waypoints) }
+                _uiState.update { it.copy(isRoamingPreviewLoading = true) }
+                try {
+                    val config = draft.toConfig(center)
+                    val waypoints = roamingRepository.planRoute(config)
+                    _uiState.update { it.copy(roamingPreviewWaypoints = waypoints) }
+                } finally {
+                    _uiState.update { it.copy(isRoamingPreviewLoading = false) }
+                }
             }
         }
     }
