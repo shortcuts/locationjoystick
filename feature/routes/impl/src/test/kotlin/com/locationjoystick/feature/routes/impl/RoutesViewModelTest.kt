@@ -178,12 +178,13 @@ class RoutesViewModelUiStateTest {
 
 class RoutesViewModelTest {
     @Test
-    fun testParseGpxWaypoints_validGpx() {
+    fun testParseGpxRoutes_validGpx() {
         val gpxContent =
             """
             <?xml version="1.0" encoding="UTF-8"?>
             <gpx version="1.1">
               <trk>
+                <name>Track Name</name>
                 <trkseg>
                   <trkpt lat="48.8566" lon="2.3522">
                     <ele>35</ele>
@@ -199,8 +200,11 @@ class RoutesViewModelTest {
             </gpx>
             """.trimIndent()
 
-        val waypoints = parseGpxWaypoints(gpxContent)
+        val routes = parseGpxRoutes(gpxContent)
 
+        assertEquals(1, routes.size)
+        assertEquals("Track Name", routes[0].name)
+        val waypoints = routes[0].waypoints
         assertEquals(3, waypoints.size)
         assertEquals(48.8566, waypoints[0].latitude, 0.0001)
         assertEquals(2.3522, waypoints[0].longitude, 0.0001)
@@ -209,7 +213,7 @@ class RoutesViewModelTest {
     }
 
     @Test
-    fun testParseGpxWaypoints_emptyGpx() {
+    fun testParseGpxRoutes_emptyGpx() {
         val gpxContent =
             """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -221,61 +225,89 @@ class RoutesViewModelTest {
             </gpx>
             """.trimIndent()
 
-        val waypoints = parseGpxWaypoints(gpxContent)
+        val routes = parseGpxRoutes(gpxContent)
 
-        assertEquals(0, waypoints.size)
+        assertEquals(0, routes.size)
     }
 
     @Test
-    fun testExtractGpxName_validName() {
-        val gpxContent =
-            """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <gpx version="1.1">
-              <metadata>
-                <name>Test Route Name</name>
-              </metadata>
-            </gpx>
-            """.trimIndent()
-
-        val name = extractGpxName(gpxContent)
-
-        assertEquals("Test Route Name", name)
-    }
-
-    @Test
-    fun testExtractGpxName_missingName() {
-        val gpxContent =
-            """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <gpx version="1.1">
-              <metadata>
-              </metadata>
-            </gpx>
-            """.trimIndent()
-
-        val name = extractGpxName(gpxContent)
-
-        assertEquals("Imported Route", name)
-    }
-
-    @Test
-    fun testExtractGpxName_trkNameTag() {
+    fun testParseGpxRoutes_missingName_fallsBackToImportedRoute() {
         val gpxContent =
             """
             <?xml version="1.0" encoding="UTF-8"?>
             <gpx version="1.1">
               <trk>
-                <name>Track Name</name>
                 <trkseg>
+                  <trkpt lat="1.0" lon="2.0"/>
                 </trkseg>
               </trk>
             </gpx>
             """.trimIndent()
 
-        val name = extractGpxName(gpxContent)
+        val routes = parseGpxRoutes(gpxContent)
 
-        assertEquals("Track Name", name)
+        assertEquals(1, routes.size)
+        assertEquals("Imported Route", routes[0].name)
+    }
+
+    @Test
+    fun testParseGpxRoutes_multipleRteElements_oneRoutePerElement() {
+        // Sample from github.com/shortcuts/locationjoystick/issues/21 — a GPX file with
+        // multiple <rte> elements must import as multiple routes, not one merged route.
+        val gpxContent =
+            """
+            <?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="GPS JoyStick - gpsjoystick@gmail.com - https://www.facebook.com/gpsjoystick">
+            <rte><name>Zaragoza</name><number>0</number>
+            <rtept lat="41.6622857209573" lon="-0.89515943080186"/>
+            <rtept lat="41.6620422571306" lon="-0.8941837772727"/>
+            <rtept lat="41.6614338440167" lon="-0.89422401040792"/>
+            <rtept lat="41.6611297605447" lon="-0.89590240269899"/></rte>
+            <rte><name>hg0829</name><number>0</number>
+            <rtept lat="38.50748001528502" lon="-122.09600671884579"/>
+            <rtept lat="38.50748001528502" lon="-122.09799728115425"/>
+            <rtept lat="38.50882900000001" lon="-122.09700200000002"/></rte>
+            <rte><name>Auckland</name><number>0</number>
+            <rtept lat="-36.85221397537331" lon="174.76393103599548"><ele>33.0</ele></rtept>
+            <rtept lat="-36.85317200261459" lon="174.7635106050017"><ele>12.375</ele></rtept>
+            <rtept lat="-36.85413002837526" lon="174.76309016346931"><ele>8.25</ele></rtept>
+            <rtept lat="-36.85346872455474" lon="174.76482085883617"><ele>33.0</ele></rtept></rte>
+            <rte><name>Wellington</name><number>0</number>
+            <rtept lat="-41.282965" lon="174.766473"/>
+            <rtept lat="-41.283305" lon="174.765187"/>
+            <rtept lat="-41.280788" lon="174.769201"/></rte>
+            </gpx>
+            """.trimIndent()
+
+        val routes = parseGpxRoutes(gpxContent)
+
+        assertEquals(4, routes.size)
+        assertEquals("Zaragoza", routes[0].name)
+        assertEquals(4, routes[0].waypoints.size)
+        assertEquals(41.6622857209573, routes[0].waypoints[0].latitude, 0.0000001)
+        assertEquals("hg0829", routes[1].name)
+        assertEquals(3, routes[1].waypoints.size)
+        assertEquals("Auckland", routes[2].name)
+        assertEquals(4, routes[2].waypoints.size)
+        assertEquals("Wellington", routes[3].name)
+        assertEquals(3, routes[3].waypoints.size)
+    }
+
+    @Test
+    fun testParseGpxRoutes_multipleUnnamedSegments_numbersFallbackNames() {
+        val gpxContent =
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <gpx version="1.1">
+              <rte><rtept lat="1.0" lon="2.0"/><rtept lat="3.0" lon="4.0"/></rte>
+              <rte><rtept lat="5.0" lon="6.0"/><rtept lat="7.0" lon="8.0"/></rte>
+            </gpx>
+            """.trimIndent()
+
+        val routes = parseGpxRoutes(gpxContent)
+
+        assertEquals(2, routes.size)
+        assertEquals("Imported Route 1", routes[0].name)
+        assertEquals("Imported Route 2", routes[1].name)
     }
 
     @Test
@@ -374,19 +406,20 @@ class RoutesViewModelTest {
             .readText()
 
     @Test
-    fun `fixture routeRandom trkpt parses all 344 waypoints`() {
+    fun `fixture routeRandom trkpt parses single route with all 344 waypoints`() {
         val gpx = loadFixture("route-random-2026-05-25T13-38-39.gpx")
 
-        val waypoints = parseGpxWaypoints(gpx)
+        val routes = parseGpxRoutes(gpx)
 
-        assertEquals(344, waypoints.size)
+        assertEquals(1, routes.size)
+        assertEquals(344, routes[0].waypoints.size)
     }
 
     @Test
     fun `fixture routeRandom first and last coordinates correct`() {
         val gpx = loadFixture("route-random-2026-05-25T13-38-39.gpx")
 
-        val waypoints = parseGpxWaypoints(gpx)
+        val waypoints = parseGpxRoutes(gpx).single().waypoints
 
         assertEquals(51.512219, waypoints.first().latitude, 0.000001)
         assertEquals(-0.132268, waypoints.first().longitude, 0.000001)
@@ -398,72 +431,66 @@ class RoutesViewModelTest {
     fun `fixture routeRandom name extracted from metadata`() {
         val gpx = loadFixture("route-random-2026-05-25T13-38-39.gpx")
 
-        val name = extractGpxName(gpx)
+        val name = parseGpxRoutes(gpx).single().name
 
         assertEquals("Generated Route", name)
     }
 
     @Test
-    fun `fixture gpsJoystick rtept parses all 185 waypoints`() {
+    fun `fixture gpsJoystick parses two separate routes, not one merged route`() {
+        // Regression for issue #21: this real export has 2 <rte> elements (68 + 117 points)
+        // that the old single-flatten parser merged into one 185-point "Paris Jardins" route.
         val gpx = loadFixture("gpsjoystick_20250408232304.gpx")
 
-        val waypoints = parseGpxWaypoints(gpx)
+        val routes = parseGpxRoutes(gpx)
 
-        assertEquals(185, waypoints.size)
+        assertEquals(2, routes.size)
+        assertEquals("Paris Jardins", routes[0].name)
+        assertEquals(68, routes[0].waypoints.size)
+        assertEquals("Paris Discord", routes[1].name)
+        assertEquals(117, routes[1].waypoints.size)
     }
 
     @Test
-    fun `fixture gpsJoystick name extracted from first rte`() {
-        val gpx = loadFixture("gpsjoystick_20250408232304.gpx")
-
-        val name = extractGpxName(gpx)
-
-        assertEquals("Paris Jardins", name)
-    }
-
-    @Test
-    fun `fixture gpsJoystick 20260613 rtept with scientific notation coords parses 19 waypoints`() {
+    fun `fixture gpsJoystick 20260613 rtept with scientific notation coords parses two routes`() {
         val gpx = loadFixture("gpsjoystick_20260613213743.gpx")
 
-        val waypoints = parseGpxWaypoints(gpx)
+        val routes = parseGpxRoutes(gpx)
 
-        assertEquals(19, waypoints.size)
+        assertEquals(2, routes.size)
+        assertEquals("2", routes[0].name)
+        assertEquals(9, routes[0].waypoints.size) // one malformed <rtept/> (no lat/lon) is skipped
+        assertEquals("1", routes[1].name)
+        assertEquals(10, routes[1].waypoints.size) // one malformed <rtept/> (no lat/lon) is skipped
     }
 
     @Test
-    fun `fixture gpsJoystick 20260613 name extracted from first rte`() {
-        val gpx = loadFixture("gpsjoystick_20260613213743.gpx")
-
-        val name = extractGpxName(gpx)
-
-        assertEquals("2", name)
-    }
-
-    @Test
-    fun `mixed trkpt and rtept in same file parses both`() {
+    fun `mixed trkpt and rtept in same file parses as separate routes`() {
         val gpxContent =
             """
             <?xml version="1.0" encoding="UTF-8"?>
             <gpx version="1.1">
               <trk>
+                <name>Track</name>
                 <trkseg>
                   <trkpt lat="1.0" lon="2.0"/>
                   <trkpt lat="3.0" lon="4.0"/>
                 </trkseg>
               </trk>
               <rte>
+                <name>Route</name>
                 <rtept lat="5.0" lon="6.0"/>
                 <rtept lat="7.0" lon="8.0"/>
               </rte>
             </gpx>
             """.trimIndent()
 
-        val waypoints = parseGpxWaypoints(gpxContent)
+        val routes = parseGpxRoutes(gpxContent)
 
-        assertEquals(4, waypoints.size)
-        assertEquals(LatLng(1.0, 2.0), waypoints[0])
-        assertEquals(LatLng(3.0, 4.0), waypoints[1])
-        assertEquals(LatLng(5.0, 6.0), waypoints[2])
-        assertEquals(LatLng(7.0, 8.0), waypoints[3])
+        assertEquals(2, routes.size)
+        assertEquals("Track", routes[0].name)
+        assertEquals(listOf(LatLng(1.0, 2.0), LatLng(3.0, 4.0)), routes[0].waypoints)
+        assertEquals("Route", routes[1].name)
+        assertEquals(listOf(LatLng(5.0, 6.0), LatLng(7.0, 8.0)), routes[1].waypoints)
     }
 }

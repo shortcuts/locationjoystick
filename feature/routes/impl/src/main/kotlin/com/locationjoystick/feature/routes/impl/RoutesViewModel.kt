@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.w3c.dom.Element
+import org.w3c.dom.NodeList
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
@@ -224,10 +226,16 @@ class RoutesViewModel
         ) {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
-                    val route = importRouteFromGpx(uri)
-                    routeRepository.insertRoute(route)
+                    val routes = importRoutesFromGpx(uri)
+                    routes.forEach { routeRepository.insertRoute(it) }
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Route imported: ${route.name}", Toast.LENGTH_SHORT).show()
+                        val message =
+                            if (routes.size == 1) {
+                                "Route imported: ${routes.first().name}"
+                            } else {
+                                "${routes.size} routes imported"
+                            }
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "GPX import failed", e)
@@ -238,28 +246,31 @@ class RoutesViewModel
             }
         }
 
-        private suspend fun importRouteFromGpx(uri: Uri): Route =
+        /** One [Route] per `<trk>`/`<rte>` element in the GPX file — a file may describe multiple routes. */
+        private suspend fun importRoutesFromGpx(uri: Uri): List<Route> =
             withContext(Dispatchers.IO) {
                 val gpxContent = readGpxContent(uri)
-                val name = extractGpxName(gpxContent)
-                val latLngs = parseGpxWaypoints(gpxContent)
-                val waypoints =
-                    latLngs.mapIndexed { index, latLng ->
-                        Waypoint(
-                            id = UUID.randomUUID().toString(),
-                            position = latLng,
-                            orderIndex = index,
-                        )
-                    }
-                Route(
-                    id = UUID.randomUUID().toString(),
-                    name = name,
-                    waypoints = waypoints,
-                    isLooping = false,
-                    routeType = RouteType.STRAIGHT,
-                    createdAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis(),
-                )
+                val gpxRoutes = parseGpxRoutes(gpxContent)
+                if (gpxRoutes.isEmpty()) throw IllegalArgumentException("No routes found in GPX file")
+                gpxRoutes.map { gpxRoute ->
+                    val waypoints =
+                        gpxRoute.waypoints.mapIndexed { index, latLng ->
+                            Waypoint(
+                                id = UUID.randomUUID().toString(),
+                                position = latLng,
+                                orderIndex = index,
+                            )
+                        }
+                    Route(
+                        id = UUID.randomUUID().toString(),
+                        name = gpxRoute.name,
+                        waypoints = waypoints,
+                        isLooping = false,
+                        routeType = RouteType.STRAIGHT,
+                        createdAt = System.currentTimeMillis(),
+                        updatedAt = System.currentTimeMillis(),
+                    )
+                }
             }
 
         internal suspend fun readGpxContent(uri: Uri): String =
@@ -278,39 +289,65 @@ class RoutesViewModel
             }
     }
 
-internal fun extractGpxName(gpxContent: String): String {
+/** One parsed `<trk>` or `<rte>` element, with its own name and points — never merged across elements. */
+internal data class GpxImportedRoute(
+    val name: String,
+    val waypoints: List<LatLng>,
+)
+
+/**
+ * Parses every `<trk>` and `<rte>` element in [gpxContent] into its own [GpxImportedRoute] — a GPX
+ * file (e.g. from the GPS Joystick app) commonly bundles multiple distinct routes, and merging them
+ * into a single route silently discards that structure (see issue #21).
+ */
+internal fun parseGpxRoutes(gpxContent: String): List<GpxImportedRoute> {
     val doc =
         DocumentBuilderFactory
             .newInstance()
             .newDocumentBuilder()
             .parse(gpxContent.byteInputStream())
-    val names = doc.getElementsByTagName("name")
-    return names.item(0)?.textContent?.takeIf { it.isNotEmpty() } ?: "Imported Route"
+    val segments = mutableListOf<Pair<String?, List<LatLng>>>()
+    segments += collectGpxSegments(doc.getElementsByTagName("trk"), "trkpt")
+    segments += collectGpxSegments(doc.getElementsByTagName("rte"), "rtept")
+    val withPoints = segments.filter { it.second.isNotEmpty() }
+    return withPoints.mapIndexed { index, (name, points) ->
+        val resolvedName =
+            name?.takeIf { it.isNotBlank() }
+                ?: if (withPoints.size > 1) "Imported Route ${index + 1}" else "Imported Route"
+        GpxImportedRoute(resolvedName, points)
+    }
 }
 
-internal fun parseGpxWaypoints(gpxContent: String): List<LatLng> {
-    val doc =
-        DocumentBuilderFactory
-            .newInstance()
-            .newDocumentBuilder()
-            .parse(gpxContent.byteInputStream())
-    val result = mutableListOf<LatLng>()
-    val allNodes = doc.getElementsByTagName("*")
-    for (i in 0 until allNodes.length) {
-        val node = allNodes.item(i)
-        if (node.nodeName == "trkpt" || node.nodeName == "rtept") {
-            val lat =
-                node.attributes
-                    ?.getNamedItem("lat")
-                    ?.nodeValue
-                    ?.toDoubleOrNull() ?: continue
-            val lon =
-                node.attributes
-                    ?.getNamedItem("lon")
-                    ?.nodeValue
-                    ?.toDoubleOrNull() ?: continue
-            result.add(LatLng(lat, lon))
-        }
+private fun collectGpxSegments(
+    elements: NodeList,
+    pointTag: String,
+): List<Pair<String?, List<LatLng>>> =
+    (0 until elements.length).map { i ->
+        val element = elements.item(i) as Element
+        val nameNodes = element.getElementsByTagName("name")
+        val name = if (nameNodes.length > 0) nameNodes.item(0).textContent else null
+        name to collectGpxPoints(element, pointTag)
     }
-    return result
+
+private fun collectGpxPoints(
+    element: Element,
+    tagName: String,
+): List<LatLng> {
+    val nodes = element.getElementsByTagName(tagName)
+    val points = mutableListOf<LatLng>()
+    for (i in 0 until nodes.length) {
+        val node = nodes.item(i)
+        val lat =
+            node.attributes
+                ?.getNamedItem("lat")
+                ?.nodeValue
+                ?.toDoubleOrNull() ?: continue
+        val lon =
+            node.attributes
+                ?.getNamedItem("lon")
+                ?.nodeValue
+                ?.toDoubleOrNull() ?: continue
+        points.add(LatLng(lat, lon))
+    }
+    return points
 }
