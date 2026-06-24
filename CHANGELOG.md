@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.12.0](https://github.com/shortcuts/locationjoystick/compare/v0.11.0...v0.12.0) (2026-06-24)
+
+
+### Features
+
+* **routing:** add OSRM retry, bisection, and reason-specific error reporting ([d2f8910](https://github.com/shortcuts/locationjoystick/commit/d2f8910dbca98523bbafcb8b9b730aba2a4697b8))
+* **settings:** unify widget/map feature config with drag-reorder, drop redundant map spoof toggle ([1c87889](https://github.com/shortcuts/locationjoystick/commit/1c87889e663efdeec3bad186cb43a463f5442d8f))
+* **ux:** unify state handling across Map and Routes screens ([c0febbf](https://github.com/shortcuts/locationjoystick/commit/c0febbfab56159ac31b50067b9ee3b9b7eb3dad5))
+
+
+### Bug Fixes
+
+* **designsystem:** center and shrink navbar start/stop toggle ([91730ba](https://github.com/shortcuts/locationjoystick/commit/91730ba79a3b67eb10fec0f589ffa5013dc161e5))
+* do not display start/stop button in the navbar ([97a8f80](https://github.com/shortcuts/locationjoystick/commit/97a8f80ea1fe32a60648f79bdba3cf808f3de457))
+* **group-sync:** re-resolve leader host:port via NSD when re-enabling follower mode ([5ed10e6](https://github.com/shortcuts/locationjoystick/commit/5ed10e69124557f98353e49597208801df55830b))
+* restore correct spoof-toggle accessibility label; expand smoke coverage ([1a93e1b](https://github.com/shortcuts/locationjoystick/commit/1a93e1b7bca898b40330c25eda4e64ba46285f06))
+* **routes:** import each GPX trk/rte as a separate route ([ed805db](https://github.com/shortcuts/locationjoystick/commit/ed805db7ed4c6abc344b7cdf0d477cc0c408d88d))
+* settings screen ux ([6962a90](https://github.com/shortcuts/locationjoystick/commit/6962a9095369ea1f67b538bfb2c0108b3b3378cd))
+* **test:** widen flaky quadrant-distribution tolerance in RoamingEngineTest ([aab627b](https://github.com/shortcuts/locationjoystick/commit/aab627b275028961e5315f352720f6b2145eda0c))
+* **ux:** bump FAB touch target from 36dp to 48dp minimum ([931c545](https://github.com/shortcuts/locationjoystick/commit/931c5452c7d2983801be4bc02b5ca1efa7001b3e))
+* **ux:** tune FAB touch target to 42dp ([89a8a74](https://github.com/shortcuts/locationjoystick/commit/89a8a741c60a708ce604daa94486193a7af94c36))
+
 ## [0.11.0](https://github.com/shortcuts/locationjoystick/compare/v0.10.0...v0.11.0) (2026-06-21)
 
 
