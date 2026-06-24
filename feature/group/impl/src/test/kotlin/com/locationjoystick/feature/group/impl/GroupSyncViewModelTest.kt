@@ -210,11 +210,40 @@ class GroupSyncViewModelTest {
         runTest {
             groupStateFlow.value =
                 GroupState(role = GroupRole.FOLLOWER, groupId = "g", leaderHost = "h", leaderPort = 7)
+            coEvery { groupNsdManager.discoverByCode("g") } returns ("h" to 7)
 
             viewModel.setFollowerModeEnabled(true)
 
             coVerify { groupRepository.setFollowerModeEnabled(true) }
             verify { context.startService(any()) }
+        }
+
+    @Test
+    fun `setFollowerModeEnabled true re-resolves stale host and port via NSD`() =
+        runTest {
+            groupStateFlow.value =
+                GroupState(role = GroupRole.FOLLOWER, groupId = "g", leaderHost = "stale-host", leaderPort = 1)
+            coEvery { groupNsdManager.discoverByCode("g") } returns ("10.0.0.9" to 5555)
+
+            viewModel.setFollowerModeEnabled(true)
+
+            coVerify { groupNsdManager.discoverByCode("g") }
+            coVerify { groupRepository.setFollowerModeEnabled(true) }
+            verify { context.startService(any()) }
+        }
+
+    @Test
+    fun `setFollowerModeEnabled true reverts the flag when NSD re-resolution fails`() =
+        runTest {
+            groupStateFlow.value =
+                GroupState(role = GroupRole.FOLLOWER, groupId = "g", leaderHost = "h", leaderPort = 7)
+            coEvery { groupNsdManager.discoverByCode("g") } returns null
+
+            viewModel.setFollowerModeEnabled(true)
+
+            assertEquals("No group found for code g", viewModel.errorMessage.value)
+            coVerify { groupRepository.setFollowerModeEnabled(false) }
+            verify(exactly = 0) { context.startService(any()) }
         }
 
     @Test

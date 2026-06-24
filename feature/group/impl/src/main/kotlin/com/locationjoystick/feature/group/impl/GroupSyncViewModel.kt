@@ -138,12 +138,22 @@ class GroupSyncViewModel
         fun setFollowerModeEnabled(enabled: Boolean) {
             val state = _groupState.value
             if (state.role != GroupRole.FOLLOWER) return
-            val host = state.leaderHost ?: return
-            val port = state.leaderPort ?: return
             val id = state.groupId ?: return
             viewModelScope.launch {
                 groupRepository.setFollowerModeEnabled(enabled)
                 if (enabled) {
+                    // The leader's host:port may have changed since the invite was saved (e.g. the
+                    // leader's device restarted and got a new OS-assigned port) — re-resolve via NSD
+                    // rather than trusting the persisted host:port.
+                    _isDiscovering.value = true
+                    val resolved = groupNsdManager.discoverByCode(id)
+                    _isDiscovering.value = false
+                    if (resolved == null) {
+                        _errorMessage.value = "No group found for code $id"
+                        groupRepository.setFollowerModeEnabled(false)
+                        return@launch
+                    }
+                    val (host, port) = resolved
                     sendServiceAction(AppConstants.ServiceConstants.ACTION_ENTER_FOLLOWER) { intent ->
                         intent.putExtra(AppConstants.ServiceConstants.EXTRA_FOLLOWER_HOST, host)
                         intent.putExtra(AppConstants.ServiceConstants.EXTRA_FOLLOWER_PORT, port)
