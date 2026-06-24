@@ -73,11 +73,18 @@ class MapViewModel
         private fun observeMapFabFeatures() {
             viewModelScope.launch {
                 settingsRepository
-                    .getSettingsSnapshot()
-                    .map { it.mapFabFeatures }
+                    .getMapFeatureOrder()
                     .distinctUntilChanged()
-                    .collect { features ->
-                        _uiState.update { it.copy(enabledMapFabFeatures = features) }
+                    .collect { order ->
+                        _uiState.update { it.copy(mapFeatureOrder = order) }
+                    }
+            }
+            viewModelScope.launch {
+                settingsRepository
+                    .getEnabledMapFeatures()
+                    .distinctUntilChanged()
+                    .collect { enabled ->
+                        _uiState.update { it.copy(enabledMapFeatures = enabled) }
                     }
             }
         }
@@ -219,16 +226,6 @@ class MapViewModel
 
                 MapAction.ToggleWalkControls -> {
                     _uiState.update { it.copy(isWalkControlsExpanded = !it.isWalkControlsExpanded) }
-                }
-
-                // Spoofing
-                MapAction.StartSpoofing -> {
-                    mapController.startSpoofing()
-                }
-
-                MapAction.StopSpoofing -> {
-                    mapController.stopSpoofing()
-                    _uiState.update { it.copy(pendingTapPosition = null, isPendingTapSheetOpen = false, isWalkControlsExpanded = false) }
                 }
 
                 MapAction.ClearMap -> {

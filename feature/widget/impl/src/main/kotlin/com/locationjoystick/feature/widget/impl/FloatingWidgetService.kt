@@ -27,13 +27,13 @@ import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationIntentBuilder
 import com.locationjoystick.core.location.MockLocationService
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.ElevationMode
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingDefaults
-import com.locationjoystick.core.model.WidgetFeature
 import com.locationjoystick.core.overlay.OverlayService
 import com.locationjoystick.core.overlay.OverlayServiceHelper
 import com.locationjoystick.feature.joystick.impl.JoystickOverlayService
@@ -57,7 +57,7 @@ import android.view.WindowManager as AndroidWindowManager
  * - Favorites list with teleport buttons
  * - Speed profile switcher
  *
- * The widget is configured via [WidgetFeature] items stored in DataStore.
+ * The widget is configured via [AppFeature] items stored in DataStore.
  * Each feature can be enabled/disabled independently in Settings.
  *
  * Lifecycle:
@@ -67,7 +67,7 @@ import android.view.WindowManager as AndroidWindowManager
  *
  * Requires SYSTEM_ALERT_WINDOW permission (enforced by [OverlayService]).
  *
- * @see WidgetFeature for available features
+ * @see AppFeature for available features
  * @see SettingsRepository.getWidgetFeatures for configuration
  */
 @AndroidEntryPoint
@@ -183,7 +183,7 @@ class FloatingWidgetService :
         }
         lifecycleScope.launch {
             settingsRepository.getWidgetFeatures().collect { features ->
-                if (WidgetFeature.ELEVATION_CONTROLS !in features) setElevationMode(null)
+                if (AppFeature.ELEVATION_CONTROLS !in features) setElevationMode(null)
             }
         }
     }
@@ -290,33 +290,37 @@ class FloatingWidgetService :
         return view
     }
 
-    private fun onFeatureButtonClicked(feature: WidgetFeature) {
+    private fun onFeatureButtonClicked(feature: AppFeature) {
         when (feature) {
-            WidgetFeature.JOYSTICK_TOGGLE -> {
+            AppFeature.JOYSTICK_TOGGLE -> {
                 toggleJoystick()
             }
 
-            WidgetFeature.JOYSTICK_LOCK -> {
+            AppFeature.JOYSTICK_LOCK -> {
                 toggleJoystickLock()
             }
 
-            WidgetFeature.ROUTES_FLOATING -> {
+            AppFeature.ROUTES -> {
                 onRouteIconClicked()
             }
 
-            WidgetFeature.FAVORITES_FLOATING -> {
+            AppFeature.FAVORITES -> {
                 panelPresenter.showFavoritesFloatingView()
             }
 
-            WidgetFeature.SPEED_CYCLE -> {
+            AppFeature.SPEED_CYCLE -> {
                 cycleSpeedProfile()
             }
 
-            WidgetFeature.MAP_FLOATING -> {
+            AppFeature.MAP_FLOATING -> {
                 panelPresenter.showMapFloatingView()
             }
 
-            WidgetFeature.ELEVATION_CONTROLS -> {
+            AppFeature.ELEVATION_CONTROLS -> {
+                Unit
+            }
+
+            AppFeature.ROAMING, AppFeature.SEARCH -> {
                 Unit
             }
         }

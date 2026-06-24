@@ -1,10 +1,9 @@
 package com.locationjoystick.feature.settings.impl
 
 import com.locationjoystick.core.common.constants.AppConstants
-import com.locationjoystick.core.model.MapFabFeature
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.model.WidgetFeature
 
 data class SettingsUiState(
     val isLoading: Boolean = true,
@@ -12,7 +11,8 @@ data class SettingsUiState(
     val runSpeed: Double = SpeedProfile.RUN_SPEED_MPS,
     val bikeSpeed: Double = SpeedProfile.BIKE_SPEED_MPS,
     val speedUnit: SpeedUnit = SpeedUnit.KMH,
-    val enabledWidgetFeatures: Set<WidgetFeature> = WidgetFeature.entries.toSet(),
+    val featureOrder: List<AppFeature> = AppFeature.DEFAULT_ORDER,
+    val enabledWidgetFeatures: Set<AppFeature> = AppFeature.DEFAULT_WIDGET_ENABLED,
     val rememberLastLocation: Boolean = true,
     val mapFollowsLocation: Boolean = true,
     val jitterIdleRadiusMeters: Double = AppConstants.JitterConstants.DEFAULT_IDLE_RADIUS_METERS,
@@ -33,6 +33,6 @@ data class SettingsUiState(
     val selectedHotLocationIds: Set<String> = emptySet(),
     val hotRoutesEnabled: Boolean = false,
     val selectedHotRouteIds: Set<String> = emptySet(),
-    val enabledMapFabFeatures: Set<MapFabFeature> = MapFabFeature.entries.toSet(),
+    val enabledMapFeatures: Set<AppFeature> = AppFeature.DEFAULT_MAP_ENABLED,
     val isDirty: Boolean = false,
 )

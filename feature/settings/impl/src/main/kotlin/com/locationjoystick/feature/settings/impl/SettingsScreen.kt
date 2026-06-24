@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -45,14 +47,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
@@ -61,10 +68,11 @@ import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSegmentedControl
 import com.locationjoystick.core.location.rememberSpoofToggleState
-import com.locationjoystick.core.model.MapFabFeature
+import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.FeatureSurface
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.model.WidgetFeature
+import kotlin.math.roundToInt
 
 private enum class SettingsSection { GPS, MENUS, FAVORITES_ROUTES }
 
@@ -263,8 +271,12 @@ fun SettingsRoute(
                     viewModel.setWidgetFeatures(action.features)
                 }
 
-                is SettingsAction.SetMapFabFeatures -> {
-                    viewModel.setMapFabFeatures(action.features)
+                is SettingsAction.SetMapFeatures -> {
+                    viewModel.setMapFeatures(action.features)
+                }
+
+                is SettingsAction.SetFeatureOrder -> {
+                    viewModel.setFeatureOrder(action.order)
                 }
 
                 is SettingsAction.SetRememberLastLocation -> {
@@ -731,7 +743,7 @@ private fun SettingsGpsSubScreen(
                         SpeedProfilesSection(uiState, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
                         GpsJitterSection(uiState, isMph, onAction)
-                        if (WidgetFeature.ELEVATION_CONTROLS in uiState.enabledWidgetFeatures) {
+                        if (AppFeature.ELEVATION_CONTROLS in uiState.enabledWidgetFeatures) {
                             Spacer(modifier = Modifier.height(24.dp))
                             ElevationJitterSection(uiState, elevationControlsEnabled = true, onAction)
                         }
@@ -794,9 +806,7 @@ private fun SettingsMenusSubScreen(
                                 .verticalScroll(remember { ScrollState(0) })
                                 .padding(16.dp),
                     ) {
-                        FloatingWidgetSection(uiState, isRooted, onAction)
-                        Spacer(modifier = Modifier.height(24.dp))
-                        MapButtonsSection(uiState, onAction)
+                        AppFeaturesSection(uiState, isRooted, onAction)
                     }
                 }
             }
@@ -1044,113 +1054,219 @@ private fun FavoritesSection(
     }
 }
 
-@Composable
-private fun WidgetFeatureRow(
-    feature: WidgetFeature,
-    label: String,
-    enabledFeatures: Set<WidgetFeature>,
-    onAction: (SettingsAction) -> Unit,
-    enabled: Boolean = true,
-    subtitle: String? = null,
-    subtitleColor: androidx.compose.ui.graphics.Color? = null,
-    icon: ImageVector? = null,
-    onEnabled: (() -> Unit)? = null,
-) {
-    LjCheckboxRow(
-        checked = feature in enabledFeatures,
-        onCheckedChange = { isChecked ->
-            if (enabled) {
-                val updated = enabledFeatures.toMutableSet()
-                if (isChecked) {
-                    updated.add(feature)
-                    onEnabled?.invoke()
-                } else {
-                    updated.remove(feature)
-                }
-                onAction(SettingsAction.SetWidgetFeatures(updated))
-            }
-        },
-        title = label,
-        description = subtitle,
-        enabled = enabled,
-        descriptionColor = subtitleColor,
-        icon = icon,
-    )
-}
+private data class FeatureMeta(
+    val label: String,
+    val subtitle: String,
+    val icon: ImageVector,
+    val isRootGated: Boolean = false,
+)
+
+private fun featureMeta(feature: AppFeature): FeatureMeta =
+    when (feature) {
+        AppFeature.MAP_FLOATING -> {
+            FeatureMeta("Map shortcut", "Opens a compact map view without switching to the main app.", LjIcons.LocationOn)
+        }
+
+        AppFeature.JOYSTICK_TOGGLE -> {
+            FeatureMeta("Show/hide joystick", "Toggles the floating joystick overlay on or off.", LjIcons.Visibility)
+        }
+
+        AppFeature.JOYSTICK_LOCK -> {
+            FeatureMeta(
+                "Lock joystick",
+                "Keeps the joystick moving in the last held direction after you release.",
+                LjIcons.Lock,
+            )
+        }
+
+        AppFeature.FAVORITES -> {
+            FeatureMeta("Favorites", "Teleport or walk to a saved location.", LjIcons.Favorite)
+        }
+
+        AppFeature.ROUTES -> {
+            FeatureMeta("Routes", "Lists saved routes and starts replay.", LjIcons.Route)
+        }
+
+        AppFeature.ROAMING -> {
+            FeatureMeta("Roaming", "Configure and start random walking within a radius.", LjIcons.Explore)
+        }
+
+        AppFeature.SEARCH -> {
+            FeatureMeta("Search", "Find and jump to a place by name.", LjIcons.Search)
+        }
+
+        AppFeature.SPEED_CYCLE -> {
+            FeatureMeta("Speed cycle", "Cycles through Walk, Run, and Bike speed profiles with a single tap.", LjIcons.Speed)
+        }
+
+        AppFeature.ELEVATION_CONTROLS -> {
+            FeatureMeta(
+                "Elevation controls",
+                "Shows a floating overlay to tilt the simulated sensor angle · requires root",
+                LjIcons.Layers,
+                isRootGated = true,
+            )
+        }
+    }
+
+private val FEATURE_ROW_HEIGHT = 56.dp
 
 @Composable
-private fun FloatingWidgetSection(
+private fun AppFeaturesSection(
     uiState: SettingsUiState,
-    isRooted: Boolean = false,
+    isRooted: Boolean,
     onAction: (SettingsAction) -> Unit,
 ) {
-    Text("Floating Widget", style = MaterialTheme.typography.headlineSmall)
+    Text("App Features", style = MaterialTheme.typography.headlineSmall)
     Spacer(modifier = Modifier.height(4.dp))
     Text(
-        "Choose which quick-access buttons appear in the floating widget overlay.",
+        "Choose which quick-access features appear in the floating widget and on the map screen, " +
+            "and drag to reorder them. Both surfaces share the same order by default.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(modifier = Modifier.height(8.dp))
 
-    WidgetFeatureRow(
-        feature = WidgetFeature.MAP_FLOATING,
-        label = "Map shortcut",
-        enabledFeatures = uiState.enabledWidgetFeatures,
-        onAction = onAction,
-        icon = LjIcons.LocationOn,
-        subtitle = "Opens a compact map view without switching to the main app.",
-    )
-    WidgetFeatureRow(
-        feature = WidgetFeature.JOYSTICK_TOGGLE,
-        label = "Show/hide joystick",
-        enabledFeatures = uiState.enabledWidgetFeatures,
-        onAction = onAction,
-        icon = LjIcons.Visibility,
-        subtitle = "Toggles the floating joystick overlay on or off.",
-    )
-    WidgetFeatureRow(
-        feature = WidgetFeature.JOYSTICK_LOCK,
-        label = "Lock joystick",
-        enabledFeatures = uiState.enabledWidgetFeatures,
-        onAction = onAction,
-        icon = LjIcons.Lock,
-        subtitle = "Keeps the joystick moving in the last held direction after you release.",
-    )
-    WidgetFeatureRow(
-        feature = WidgetFeature.ROUTES_FLOATING,
-        label = "Routes picker",
-        enabledFeatures = uiState.enabledWidgetFeatures,
-        onAction = onAction,
-        icon = LjIcons.Route,
-        subtitle = "Lists saved routes and starts replay without opening the app.",
-    )
-    WidgetFeatureRow(
-        feature = WidgetFeature.FAVORITES_FLOATING,
-        label = "Favorites picker",
-        enabledFeatures = uiState.enabledWidgetFeatures,
-        onAction = onAction,
-        icon = LjIcons.Favorite,
-        subtitle = "Lists favorite locations with one-tap teleport and walk shortcuts.",
-    )
-    WidgetFeatureRow(
-        feature = WidgetFeature.SPEED_CYCLE,
-        label = "Speed cycle",
-        enabledFeatures = uiState.enabledWidgetFeatures,
-        onAction = onAction,
-        icon = LjIcons.Speed,
-        subtitle = "Cycles through Walk, Run, and Bike speed profiles with a single tap.",
-    )
-    WidgetFeatureRow(
-        feature = WidgetFeature.ELEVATION_CONTROLS,
-        label = "Elevation controls",
-        enabledFeatures = uiState.enabledWidgetFeatures,
-        onAction = onAction,
-        icon = LjIcons.Layers,
-        subtitle = "Shows a floating overlay to tilt the simulated sensor angle · requires root",
-        subtitleColor = MaterialTheme.colorScheme.error,
-        onEnabled = { onAction(SettingsAction.RequestElevationAccess) },
-    )
+    Row(modifier = Modifier.fillMaxWidth().padding(start = 48.dp), horizontalArrangement = Arrangement.End) {
+        Text("Widget", style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(56.dp), textAlign = TextAlign.Center)
+        Text("Map", style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(56.dp), textAlign = TextAlign.Center)
+    }
+
+    val order = uiState.featureOrder
+    val rowHeightPx = with(LocalDensity.current) { FEATURE_ROW_HEIGHT.toPx() }
+    var draggingIndex by remember { mutableStateOf<Int?>(null) }
+    var dragDeltaY by remember { mutableStateOf(0f) }
+
+    Column {
+        order.forEachIndexed { index, feature ->
+            val isDragging = draggingIndex == index
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .zIndex(if (isDragging) 1f else 0f)
+                        .let { mod ->
+                            if (isDragging) {
+                                mod.graphicsLayerTranslationY(dragDeltaY)
+                            } else {
+                                mod
+                            }
+                        },
+            ) {
+                FeatureRow(
+                    feature = feature,
+                    isRooted = isRooted,
+                    uiState = uiState,
+                    onAction = onAction,
+                    dragModifier =
+                        Modifier.pointerInput(feature) {
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = {
+                                    draggingIndex = index
+                                    dragDeltaY = 0f
+                                },
+                                onDragEnd = {
+                                    val targetIndex =
+                                        (index + (dragDeltaY / rowHeightPx).roundToInt()).coerceIn(0, order.lastIndex)
+                                    if (targetIndex != index) {
+                                        val newOrder = order.toMutableList()
+                                        val moved = newOrder.removeAt(index)
+                                        newOrder.add(targetIndex, moved)
+                                        onAction(SettingsAction.SetFeatureOrder(newOrder))
+                                    }
+                                    draggingIndex = null
+                                    dragDeltaY = 0f
+                                },
+                                onDragCancel = {
+                                    draggingIndex = null
+                                    dragDeltaY = 0f
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    dragDeltaY += dragAmount.y
+                                },
+                            )
+                        },
+                )
+            }
+        }
+    }
+}
+
+private fun Modifier.graphicsLayerTranslationY(ty: Float): Modifier = this.then(Modifier.graphicsLayer { translationY = ty })
+
+@Composable
+private fun FeatureRow(
+    feature: AppFeature,
+    isRooted: Boolean,
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+    dragModifier: Modifier,
+) {
+    val meta = featureMeta(feature)
+    val rowEnabled = !meta.isRootGated || isRooted
+    Row(
+        modifier = Modifier.fillMaxWidth().height(FEATURE_ROW_HEIGHT),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = LjIcons.DragHandle,
+            contentDescription = "Drag to reorder ${meta.label}",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = dragModifier.size(24.dp),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Icon(
+            imageVector = meta.icon,
+            contentDescription = null,
+            tint = if (rowEnabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+            modifier = Modifier.size(20.dp),
+        )
+        Column(modifier = Modifier.weight(1f).padding(start = 12.dp, end = 8.dp)) {
+            Text(
+                text = meta.label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (rowEnabled) Color.Unspecified else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+            )
+            Text(
+                text = meta.subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (meta.isRootGated) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (FeatureSurface.WIDGET in feature.surfaces) {
+            Checkbox(
+                checked = feature in uiState.enabledWidgetFeatures,
+                enabled = rowEnabled,
+                modifier = Modifier.width(56.dp),
+                onCheckedChange = { checked ->
+                    val updated = uiState.enabledWidgetFeatures.toMutableSet()
+                    if (checked) {
+                        updated.add(feature)
+                        if (meta.isRootGated) onAction(SettingsAction.RequestElevationAccess)
+                    } else {
+                        updated.remove(feature)
+                    }
+                    onAction(SettingsAction.SetWidgetFeatures(updated))
+                },
+            )
+        } else {
+            Spacer(modifier = Modifier.width(56.dp))
+        }
+        if (FeatureSurface.MAP in feature.surfaces) {
+            Checkbox(
+                checked = feature in uiState.enabledMapFeatures,
+                modifier = Modifier.width(56.dp),
+                onCheckedChange = { checked ->
+                    val updated = uiState.enabledMapFeatures.toMutableSet()
+                    if (checked) updated.add(feature) else updated.remove(feature)
+                    onAction(SettingsAction.SetMapFeatures(updated))
+                },
+            )
+        } else {
+            Spacer(modifier = Modifier.width(56.dp))
+        }
+    }
 }
 
 @Composable
@@ -1240,77 +1356,6 @@ private fun RoamingSection(
         onCheckedChange = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(returnToInitialLocation = it))) },
         title = "Return to start",
         description = "Walks back to the starting position after the roaming session completes.",
-    )
-}
-
-@Composable
-private fun MapButtonsSection(
-    uiState: SettingsUiState,
-    onAction: (SettingsAction) -> Unit,
-) {
-    Text("Map Buttons", style = MaterialTheme.typography.headlineSmall)
-    Spacer(modifier = Modifier.height(4.dp))
-    Text(
-        "Choose which buttons appear in the map screen. Start/stop simulation is always shown.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-
-    val enabled = uiState.enabledMapFabFeatures
-    MapFabFeatureRow(
-        feature = MapFabFeature.FAVORITES,
-        label = "Favorites",
-        subtitle = "Opens the favorites picker to teleport or walk to a saved location.",
-        icon = LjIcons.Favorite,
-        enabledFeatures = enabled,
-        onAction = onAction,
-    )
-    MapFabFeatureRow(
-        feature = MapFabFeature.ROUTES,
-        label = "Routes",
-        subtitle = "Opens the routes picker to start or manage route replay.",
-        icon = LjIcons.Route,
-        enabledFeatures = enabled,
-        onAction = onAction,
-    )
-    MapFabFeatureRow(
-        feature = MapFabFeature.ROAMING,
-        label = "Roaming",
-        subtitle = "Opens the roaming sheet to configure and start random walking.",
-        icon = LjIcons.Explore,
-        enabledFeatures = enabled,
-        onAction = onAction,
-    )
-    MapFabFeatureRow(
-        feature = MapFabFeature.SEARCH,
-        label = "Search",
-        subtitle = "Opens the location search bar to find and jump to a place.",
-        icon = LjIcons.Search,
-        enabledFeatures = enabled,
-        onAction = onAction,
-    )
-}
-
-@Composable
-private fun MapFabFeatureRow(
-    feature: MapFabFeature,
-    label: String,
-    subtitle: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    enabledFeatures: Set<MapFabFeature>,
-    onAction: (SettingsAction) -> Unit,
-) {
-    LjCheckboxRow(
-        checked = feature in enabledFeatures,
-        onCheckedChange = { isChecked ->
-            val updated = enabledFeatures.toMutableSet()
-            if (isChecked) updated.add(feature) else updated.remove(feature)
-            onAction(SettingsAction.SetMapFabFeatures(updated))
-        },
-        title = label,
-        description = subtitle,
-        icon = icon,
     )
 }
 

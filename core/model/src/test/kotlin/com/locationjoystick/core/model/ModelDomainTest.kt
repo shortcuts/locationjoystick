@@ -191,7 +191,7 @@ class ModelDomainTest {
             AppSettings(
                 activeSpeedProfileId = "walk",
                 joystickStyle = JoystickStyle.FLOATING,
-                enabledWidgetFeatures = listOf(WidgetFeature.MAP_FLOATING, WidgetFeature.JOYSTICK_TOGGLE),
+                enabledWidgetFeatures = setOf(AppFeature.MAP_FLOATING, AppFeature.JOYSTICK_TOGGLE),
                 mapFollowsLocation = true,
                 useRoadSnappingByDefault = false,
                 speedUnit = SpeedUnit.KMH,
@@ -217,7 +217,7 @@ class ModelDomainTest {
                     AppSettings(
                         activeSpeedProfileId = "walk",
                         joystickStyle = JoystickStyle.FLOATING,
-                        enabledWidgetFeatures = emptyList(),
+                        enabledWidgetFeatures = emptySet(),
                         mapFollowsLocation = false,
                         useRoadSnappingByDefault = false,
                         speedUnit = SpeedUnit.KMH,
@@ -276,12 +276,14 @@ class ModelDomainTest {
     }
 
     @Test
-    fun `WidgetFeature has all expected values`() {
-        val features = WidgetFeature.entries.map { it.name }.toSet()
+    fun `AppFeature has all expected values`() {
+        val features = AppFeature.entries.map { it.name }.toSet()
         assertTrue(features.contains("JOYSTICK_TOGGLE"))
         assertTrue(features.contains("JOYSTICK_LOCK"))
-        assertTrue(features.contains("ROUTES_FLOATING"))
-        assertTrue(features.contains("FAVORITES_FLOATING"))
+        assertTrue(features.contains("ROUTES"))
+        assertTrue(features.contains("FAVORITES"))
+        assertTrue(features.contains("ROAMING"))
+        assertTrue(features.contains("SEARCH"))
         assertTrue(features.contains("SPEED_CYCLE"))
         assertTrue(features.contains("MAP_FLOATING"))
     }

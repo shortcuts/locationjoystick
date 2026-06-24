@@ -13,7 +13,7 @@ internal fun minimalExportData(): ExportData =
             AppSettings(
                 activeSpeedProfileId = "walk",
                 joystickStyle = JoystickStyle.FLOATING,
-                enabledWidgetFeatures = emptyList(),
+                enabledWidgetFeatures = emptySet(),
                 mapFollowsLocation = true,
                 useRoadSnappingByDefault = false,
                 speedUnit = SpeedUnit.KMH,

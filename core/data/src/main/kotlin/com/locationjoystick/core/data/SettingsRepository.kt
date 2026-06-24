@@ -4,32 +4,19 @@ import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.datastore.toActiveSpeedProfile
-import com.locationjoystick.core.datastore.toEnumFeature
+import com.locationjoystick.core.datastore.toAppFeature
+import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.FeatureSurface
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.model.WidgetFeature
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
-
-/**
- * Display order for widget features in the floating widget.
- * Items are sorted by this order when retrieved.
- */
-private val widgetDisplayOrder =
-    listOf(
-        WidgetFeature.MAP_FLOATING,
-        WidgetFeature.JOYSTICK_TOGGLE,
-        WidgetFeature.JOYSTICK_LOCK,
-        WidgetFeature.ROUTES_FLOATING,
-        WidgetFeature.FAVORITES_FLOATING,
-        WidgetFeature.SPEED_CYCLE,
-        WidgetFeature.ELEVATION_CONTROLS,
-    )
 
 /**
  * Repository for all user settings and preferences.
@@ -71,12 +58,28 @@ class SettingsRepository
                 prefs.toActiveSpeedProfile()
             }
 
-        fun getWidgetFeatures(): Flow<List<WidgetFeature>> =
-            dataSource.getWidgetItems().map { keys ->
-                keys
-                    .mapNotNull { key -> key.toEnumFeature<WidgetFeature>() }
-                    .sortedBy { widgetDisplayOrder.indexOf(it) }
+        fun getFeatureOrder(): Flow<List<AppFeature>> = dataSource.getFeatureOrder()
+
+        suspend fun setFeatureOrder(order: List<AppFeature>) = dataSource.setFeatureOrder(order)
+
+        fun getWidgetFeatures(): Flow<List<AppFeature>> =
+            combine(dataSource.getFeatureOrder(), dataSource.getWidgetItems()) { order, keys ->
+                val enabled = keys.mapNotNull { it.toAppFeature() }.toSet()
+                order.filter { FeatureSurface.WIDGET in it.surfaces && it in enabled }
             }
+
+        fun getMapFeatures(): Flow<List<AppFeature>> =
+            combine(dataSource.getFeatureOrder(), dataSource.getMapItems()) { order, keys ->
+                val enabled = keys.mapNotNull { it.toAppFeature() }.toSet()
+                order.filter { FeatureSurface.MAP in it.surfaces && it in enabled }
+            }
+
+        /** All map-eligible features in shared display order, regardless of enabled state. */
+        fun getMapFeatureOrder(): Flow<List<AppFeature>> =
+            dataSource.getFeatureOrder().map { order -> order.filter { FeatureSurface.MAP in it.surfaces } }
+
+        fun getEnabledMapFeatures(): Flow<Set<AppFeature>> =
+            dataSource.getMapItems().map { keys -> keys.mapNotNull { it.toAppFeature() }.toSet() }
 
         fun getOnboardingComplete(): Flow<Boolean> = dataSource.getOnboardingComplete()
 
@@ -92,9 +95,12 @@ class SettingsRepository
 
         suspend fun setActiveProfileId(profileId: String) = dataSource.setActiveProfileId(profileId)
 
-        suspend fun setWidgetFeatures(features: List<WidgetFeature>) {
-            val keys = features.map { it.name.lowercase() }.toSet()
-            dataSource.setWidgetItems(keys)
+        suspend fun setWidgetFeatures(features: Set<AppFeature>) {
+            dataSource.setWidgetItems(features.map { it.name.lowercase() }.toSet())
+        }
+
+        suspend fun setMapFeatures(features: Set<AppFeature>) {
+            dataSource.setMapItems(features.map { it.name.lowercase() }.toSet())
         }
 
         suspend fun setOnboardingComplete(complete: Boolean) = dataSource.setOnboardingComplete(complete)

@@ -231,7 +231,7 @@ internal class WidgetPanelPresenter(
                 onFinishRouteAndWalkTo = { pos -> callbacks.finishRouteAndWalkTo(pos) },
                 onAddEphemeralWaypoint = { pos -> callbacks.addEphemeralWaypoint(pos) },
                 onStartRoaming = { defaults -> callbacks.startRoamingWith(defaults) },
-                enabledMapFabFeatures = shared.enabledMapFabFeatures,
+                enabledMapFabFeatures = shared.enabledMapFeatures,
                 onStopRoaming = { mapController.stopRoaming() },
                 onStopRouteReplay = { mapController.stopRouteReplay() },
                 onPauseRouteReplay = { mapController.pauseRouteReplay() },

@@ -5,8 +5,8 @@ import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.model.WidgetFeature
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import com.locationjoystick.core.testing.FakeRouteDao
 import kotlinx.coroutines.Dispatchers
@@ -109,7 +109,7 @@ class SettingsViewModelDraftTest {
     fun `setWidgetFeatures marks dirty`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
-            val features = setOf(WidgetFeature.JOYSTICK_TOGGLE, WidgetFeature.SPEED_CYCLE)
+            val features = setOf(AppFeature.JOYSTICK_TOGGLE, AppFeature.SPEED_CYCLE)
             viewModel.setWidgetFeatures(features)
             assertTrue(viewModel.uiState.value.isDirty)
             assertEquals(features, viewModel.uiState.value.enabledWidgetFeatures)

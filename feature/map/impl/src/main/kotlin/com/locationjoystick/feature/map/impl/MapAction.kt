@@ -12,10 +12,6 @@ sealed interface MapAction {
         val position: LatLng,
     ) : MapAction
 
-    data object StartSpoofing : MapAction
-
-    data object StopSpoofing : MapAction
-
     data object RecenterCamera : MapAction
 
     data object UserStartedPanning : MapAction

@@ -56,14 +56,14 @@ import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.ElevationMode
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
-import com.locationjoystick.core.model.WidgetFeature
 
 @Composable
 internal fun WidgetPanel(
-    features: List<WidgetFeature>,
+    features: List<AppFeature>,
     joystickVisible: Boolean,
     joystickLocked: Boolean,
     activeProfileId: String,
@@ -75,7 +75,7 @@ internal fun WidgetPanel(
     elevationMode: ElevationMode?,
     hasPendingCompletion: Boolean,
     onToggleMaster: () -> Unit,
-    onFeatureClicked: (WidgetFeature) -> Unit,
+    onFeatureClicked: (AppFeature) -> Unit,
     onElevationModeSelected: (ElevationMode?) -> Unit,
     onRouteClicked: () -> Unit,
     onRoutePauseResume: () -> Unit,
@@ -135,7 +135,7 @@ internal fun WidgetPanel(
         // Feature icons — only shown when panel expanded
         if (isPanelExpanded) {
             features.forEach { feature ->
-                if (feature == WidgetFeature.ROUTES_FLOATING) {
+                if (feature == AppFeature.ROUTES) {
                     val routeIconTint = if (isActivityActive) LjSuccess else MaterialTheme.colorScheme.primary
                     // Route icon + active controls in a horizontal row
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -195,7 +195,7 @@ internal fun WidgetPanel(
                             }
                         }
                     }
-                } else if (feature == WidgetFeature.ELEVATION_CONTROLS) {
+                } else if (feature == AppFeature.ELEVATION_CONTROLS) {
                     listOf(
                         Triple(ElevationMode.TiltUp, LjIcons.ElevationUp, "Tilt up"),
                         Triple(ElevationMode.Neutral, LjIcons.ElevationNeutral, "Neutral"),
@@ -572,32 +572,32 @@ internal fun RoutesFloatingView(
 }
 
 private fun featureIconAndState(
-    feature: WidgetFeature,
+    feature: AppFeature,
     joystickVisible: Boolean,
     joystickLocked: Boolean,
     activeProfileId: String,
 ): Pair<ImageVector, Boolean> =
     when (feature) {
-        WidgetFeature.JOYSTICK_TOGGLE -> {
+        AppFeature.JOYSTICK_TOGGLE -> {
             Pair(LjIcons.Visibility, joystickVisible)
         }
 
-        WidgetFeature.JOYSTICK_LOCK -> {
+        AppFeature.JOYSTICK_LOCK -> {
             Pair(
                 if (joystickLocked) LjIcons.Lock else LjIcons.LockOpen,
                 joystickLocked,
             )
         }
 
-        WidgetFeature.ROUTES_FLOATING -> {
+        AppFeature.ROUTES -> {
             Pair(LjIcons.Route, true)
         }
 
-        WidgetFeature.FAVORITES_FLOATING -> {
+        AppFeature.FAVORITES -> {
             Pair(LjIcons.Favorite, true)
         }
 
-        WidgetFeature.SPEED_CYCLE -> {
+        AppFeature.SPEED_CYCLE -> {
             Pair(
                 when (activeProfileId) {
                     AppConstants.ProfileConstants.PROFILE_ID_RUN -> LjIcons.DirectionsRun
@@ -608,22 +608,27 @@ private fun featureIconAndState(
             )
         }
 
-        WidgetFeature.MAP_FLOATING -> {
+        AppFeature.MAP_FLOATING -> {
             Pair(LjIcons.LocationOn, true)
         }
 
-        WidgetFeature.ELEVATION_CONTROLS -> {
+        AppFeature.ELEVATION_CONTROLS -> {
             Pair(LjIcons.Layers, false)
+        }
+
+        AppFeature.ROAMING, AppFeature.SEARCH -> {
+            error("$feature is map-only and never appears in the widget panel")
         }
     }
 
-private fun WidgetFeature.toContentDescription(): String =
+private fun AppFeature.toContentDescription(): String =
     when (this) {
-        WidgetFeature.JOYSTICK_TOGGLE -> "Show/hide joystick"
-        WidgetFeature.JOYSTICK_LOCK -> "Lock joystick position"
-        WidgetFeature.ROUTES_FLOATING -> "Routes picker"
-        WidgetFeature.FAVORITES_FLOATING -> "Favorites picker"
-        WidgetFeature.SPEED_CYCLE -> "Speed cycle"
-        WidgetFeature.MAP_FLOATING -> "Open map"
-        WidgetFeature.ELEVATION_CONTROLS -> "Elevation controls"
+        AppFeature.JOYSTICK_TOGGLE -> "Show/hide joystick"
+        AppFeature.JOYSTICK_LOCK -> "Lock joystick position"
+        AppFeature.ROUTES -> "Routes picker"
+        AppFeature.FAVORITES -> "Favorites picker"
+        AppFeature.SPEED_CYCLE -> "Speed cycle"
+        AppFeature.MAP_FLOATING -> "Open map"
+        AppFeature.ELEVATION_CONTROLS -> "Elevation controls"
+        AppFeature.ROAMING, AppFeature.SEARCH -> error("$this is map-only and never appears in the widget panel")
     }

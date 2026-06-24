@@ -197,44 +197,6 @@ class MapViewModelTest {
         }
 
     @Test
-    fun `StopSpoofing action sends stop intent to service`() =
-        runTest {
-            viewModel.onAction(MapAction.StopSpoofing)
-
-            // Service must be stopped via intent so MockLocationService.stopSpoofing() runs
-            // inside the service scope — avoids the stuck-start regression where the service
-            // keeps running with _state=RUNNING and ignores the next ACTION_START.
-            verify { context.startService(any()) }
-        }
-
-    @Test
-    fun `StopSpoofing action does not call locationRepository stopSpoofing directly`() =
-        runTest {
-            viewModel.onAction(MapAction.StopSpoofing)
-
-            // Repository state is managed by MockLocationService, not by the ViewModel.
-            // Direct calls here raced with serviceScope.cancel in onDestroy and left
-            // mockLocationState stuck at RUNNING.
-            verify(exactly = 0) { locationRepository.stopSpoofing() }
-        }
-
-    @Test
-    fun `stopSpoofing_clearsPendingTapPosition`() =
-        runTest {
-            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
-            every { locationRepository.currentPosition } returns MutableStateFlow(null)
-            viewModel = createViewModel()
-            testDispatcher.scheduler.advanceUntilIdle()
-
-            viewModel.onAction(MapAction.TapToTeleport(LatLng(3.0, 4.0)))
-            assertEquals(LatLng(3.0, 4.0), viewModel.uiState.value.pendingTapPosition)
-
-            viewModel.onAction(MapAction.StopSpoofing)
-
-            assertNull(viewModel.uiState.value.pendingTapPosition)
-        }
-
-    @Test
     fun `tapToTeleport_preservesExactCoordinates`() =
         runTest {
             every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
@@ -865,14 +827,6 @@ class MapViewModelTest {
         }
 
     // Misc actions
-
-    @Test
-    fun `StartSpoofing sends foreground service intent`() =
-        runTest {
-            viewModel.onAction(MapAction.StartSpoofing)
-            testDispatcher.scheduler.advanceUntilIdle()
-            verify { context.startService(any()) }
-        }
 
     @Test
     fun `addRecentSearch calls settingsRepository addRecentSearch`() =

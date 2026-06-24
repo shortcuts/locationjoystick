@@ -66,9 +66,9 @@ import com.locationjoystick.core.map.maplibre.MapLibreLayerIds
 import com.locationjoystick.core.map.maplibre.MapLibreSourceIds
 import com.locationjoystick.core.map.maplibre.addEphemeralRouteLayers
 import com.locationjoystick.core.map.maplibre.addLocationLayers
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
-import com.locationjoystick.core.model.MapFabFeature
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RecentSearch
@@ -112,7 +112,7 @@ internal fun MapFloatingView(
     onAddEphemeralWaypoint: (LatLng) -> Unit,
     onStartRoaming: (RoamingDefaults) -> Unit,
     onStopRoaming: () -> Unit,
-    enabledMapFabFeatures: Set<MapFabFeature> = MapFabFeature.entries.toSet(),
+    enabledMapFabFeatures: Set<AppFeature> = AppFeature.DEFAULT_MAP_ENABLED,
     onStopRouteReplay: () -> Unit,
     onPauseRouteReplay: () -> Unit,
     onResumeRouteReplay: () -> Unit,
@@ -370,7 +370,7 @@ internal fun MapFloatingView(
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 onClick = { showFavoritesPicker = true },
             )
-            if (MapFabFeature.ROUTES in enabledMapFabFeatures || isRouteReplay) {
+            if (AppFeature.ROUTES in enabledMapFabFeatures || isRouteReplay) {
                 var isRouteControlsExpanded by remember { mutableStateOf(false) }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),

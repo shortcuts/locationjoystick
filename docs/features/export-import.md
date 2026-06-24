@@ -6,7 +6,9 @@ Key files: `:feature:settings:impl/SettingsScreen.kt`, `:core:data/SettingsRepos
 
 ## Scope
 
-Covers: routes, favorites, speed profiles, widget config, roaming defaults, jitter settings, hot locations state, hot routes state, sort preferences.
+Covers: routes, favorites, speed profiles, widget/map feature config + shared display order, roaming defaults, jitter settings, hot locations state, hot routes state, sort preferences.
+
+`AppSettings.featureOrder`/`enabledWidgetFeatures`/`enabledMapFeatures` (`AppFeature` enum) round-trip through `enabledWidgetFeatures`/`enabledMapFeatures`/`featureOrder` JSON arrays. Old exports from before the `WidgetFeature`/`MapFabFeature` merge still import correctly — `SettingsExportCodec` aliases the legacy `ROUTES_FLOATING`/`FAVORITES_FLOATING` names to `AppFeature.ROUTES`/`AppFeature.FAVORITES`, and missing `enabledMapFeatures`/`featureOrder` fields fall back to defaults.
 
 Schema version: `AppConstants.ExportConstants.SCHEMA_VERSION`.
 

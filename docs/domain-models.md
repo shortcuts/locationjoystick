@@ -12,14 +12,15 @@ All in `:core:model`. Pure Kotlin — no Android, no Room. Room entities in `:co
 | `SpeedProfile` | `id: String`, `name: String`, `speedMetersPerSecond: Double` |
 | `RoamingConfig` | `centerPosition: LatLng`, `radiusMeters: Double`, `durationSeconds: Long`, `useRoadSnapping: Boolean` |
 | `RoamingDefaults` | `radiusMeters: Double`, `distanceMeters: Double`, `speedProfileId: String`, `followRoads: Boolean`, `returnToInitialLocation: Boolean` |
-| `AppSettings` | `activeSpeedProfileId: String`, `joystickStyle: JoystickStyle`, `enabledWidgetFeatures: List<WidgetFeature>`, `mapFollowsLocation: Boolean`, `useRoadSnappingByDefault: Boolean`, `speedUnit: SpeedUnit`, `roamingDefaults: RoamingDefaults`, `bearingHoldOnIdle: Boolean`, `altitudeEnabled: Boolean`, `warmupEnabled: Boolean`, `satelliteExtrasEnabled: Boolean`, `suspendedMockingEnabled: Boolean`, `pedometerMockingEnabled: Boolean` |
+| `AppSettings` | `activeSpeedProfileId: String`, `joystickStyle: JoystickStyle`, `featureOrder: List<AppFeature>`, `enabledWidgetFeatures: Set<AppFeature>`, `enabledMapFeatures: Set<AppFeature>`, `mapFollowsLocation: Boolean`, `useRoadSnappingByDefault: Boolean`, `speedUnit: SpeedUnit`, `roamingDefaults: RoamingDefaults`, `bearingHoldOnIdle: Boolean`, `altitudeEnabled: Boolean`, `warmupEnabled: Boolean`, `satelliteExtrasEnabled: Boolean`, `suspendedMockingEnabled: Boolean`, `pedometerMockingEnabled: Boolean` |
 | `ExportData` | `schemaVersion: Int`, `exportedAt: Long`, `settings: AppSettings`, `speedProfiles: List<SpeedProfile>`, `routes: List<Route>`, `favoriteLocations: List<FavoriteLocation>`, `jitterIdleRadius: Double`, `jitterMovingRadius: Double`, `jitterIntervalSeconds: Int`, `jitterIdleIntervalSeconds: Int`, `jitterSpeedIdleVariationPct: Int`, `jitterSpeedMovingVariationPct: Int`, `elevationTiltJitterDegrees: Float`, `elevationNoiseAmplitudeMs2: Float`, `hotLocationsEnabled: Boolean`, `selectedHotLocationIds: Set<String>`, `hotRoutesEnabled: Boolean`, `selectedHotRouteIds: Set<String>`, `routesSortNewestFirst: Boolean`, `favoritesSortNewestFirst: Boolean` |
 | `MockMode` | enum: `JOYSTICK`, `ROUTE_REPLAY`, `ROAMING`, `TELEPORT` |
 | `MockLocationState` | enum: `IDLE`, `RUNNING`, `PAUSED`, `ERROR` |
 | `ElevationMode` | sealed class: `Neutral`, `TiltUp`, `TiltDown` |
 | `RouteReplayMode` | enum: `ONE_WAY`, `RETURN_TO_LOCATION`, `LOOP`, `LOOP_REVERSE` |
 | `RecentSearch` | `displayName: String`, `lat: Double`, `lon: Double` |
-| `WidgetFeature` | enum: `JOYSTICK_TOGGLE`, `JOYSTICK_LOCK`, `ROUTES_FLOATING`, `FAVORITES_FLOATING`, `SPEED_CYCLE`, `MAP_FLOATING`, `ELEVATION_CONTROLS` |
+| `AppFeature` | enum (default order shared across widget + map): `MAP_FLOATING`, `JOYSTICK_TOGGLE`, `JOYSTICK_LOCK`, `FAVORITES`, `ROUTES`, `ROAMING`, `SEARCH`, `SPEED_CYCLE`, `ELEVATION_CONTROLS`. Each value declares its eligible `FeatureSurface`s (`WIDGET`, `MAP`, or both). |
+| `FeatureSurface` | enum: `WIDGET`, `MAP` |
 | `JoystickStyle` | enum: `FLOATING`, `FIXED` |
 | `SpeedUnit` | enum: `KMH`, `MPH` |
 | `GroupRole` | enum: `NONE`, `LEADER`, `FOLLOWER` |

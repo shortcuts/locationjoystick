@@ -19,7 +19,7 @@ class MapSmokeTest : BaseSmokeTest() {
 
     @Test
     fun map_screen_loads() {
-        composeRule.onNodeWithContentDescription("Start location simulation").assertIsDisplayed()
+        composeRule.onNodeWithText("Start").assertIsDisplayed()
     }
 
     @Test
@@ -27,11 +27,6 @@ class MapSmokeTest : BaseSmokeTest() {
         composeRule.onNodeWithContentDescription("Open navigation menu").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Routes").assertIsDisplayed()
-    }
-
-    @Test
-    fun map_start_simulation_fab_is_displayed() {
-        composeRule.onNodeWithContentDescription("Start location simulation").assertIsDisplayed()
     }
 
     @Test

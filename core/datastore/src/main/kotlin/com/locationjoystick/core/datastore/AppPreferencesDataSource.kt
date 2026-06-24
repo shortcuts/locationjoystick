@@ -13,13 +13,12 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.LatLng
-import com.locationjoystick.core.model.MapFabFeature
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.model.WidgetFeature
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -58,6 +57,18 @@ interface PreferencesDataSource {
 
     /** Sets the enabled widget feature keys. */
     suspend fun setWidgetItems(items: Set<String>)
+
+    /** Gets the set of enabled map FAB feature keys. */
+    fun getMapItems(): Flow<Set<String>>
+
+    /** Sets the enabled map FAB feature keys. */
+    suspend fun setMapItems(items: Set<String>)
+
+    /** Gets the shared display order for [AppFeature]s, used by both the widget panel and map FAB column. */
+    fun getFeatureOrder(): Flow<List<AppFeature>>
+
+    /** Sets the shared display order for [AppFeature]s. */
+    suspend fun setFeatureOrder(order: List<AppFeature>)
 
     /** Gets the default roaming configuration. */
     fun getRoamingDefaults(): Flow<RoamingDefaults>
@@ -227,7 +238,9 @@ data class SettingsSnapshot(
     val runSpeedMs: Double,
     val bikeSpeedMs: Double,
     val speedUnit: SpeedUnit,
-    val widgetFeatures: Set<WidgetFeature>,
+    val featureOrder: List<AppFeature>,
+    val enabledWidgetFeatures: Set<AppFeature>,
+    val enabledMapFeatures: Set<AppFeature>,
     val rememberLastLocation: Boolean,
     val mapFollowsLocation: Boolean,
     val jitterIdleRadius: Double,
@@ -249,7 +262,6 @@ data class SettingsSnapshot(
     val hotRoutesEnabled: Boolean,
     val selectedHotRouteIds: Set<String>,
     val roamingDefaults: RoamingDefaults,
-    val mapFabFeatures: Set<MapFabFeature>,
 )
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -268,6 +280,27 @@ fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
 }
 
 inline fun <reified T : Enum<T>> String.toEnumFeature(): T? = enumValues<T>().firstOrNull { it.name.lowercase() == this }
+
+/**
+ * Old `WidgetFeature` names that were renamed when [AppFeature] merged it with the old
+ * `MapFabFeature`. Keeps existing users' widget toggle choices intact across the upgrade.
+ */
+private val legacyAppFeatureAliases =
+    mapOf(
+        "routes_floating" to AppFeature.ROUTES,
+        "favorites_floating" to AppFeature.FAVORITES,
+    )
+
+fun String.toAppFeature(): AppFeature? = legacyAppFeatureAliases[this] ?: toEnumFeature<AppFeature>()
+
+fun List<AppFeature>.withMissingEntriesAppended(): List<AppFeature> = this + (AppFeature.entries - this.toSet())
+
+fun parseFeatureOrder(raw: String?): List<AppFeature> {
+    if (raw.isNullOrBlank()) return AppFeature.DEFAULT_ORDER
+    return raw.split(",").mapNotNull { it.toAppFeature() }.withMissingEntriesAppended()
+}
+
+fun List<AppFeature>.serializeFeatureOrder(): String = joinToString(",") { it.name.lowercase() }
 
 @Singleton
 class AppPreferencesDataSource
@@ -316,6 +349,7 @@ class AppPreferencesDataSource
             val HOT_ROUTES_ENABLED = booleanPreferencesKey("hot_routes_enabled")
             val HOT_ROUTE_SELECTED_IDS = stringSetPreferencesKey("hot_route_selected_ids")
             val MAP_FAB_ITEMS = stringSetPreferencesKey("map_fab_items")
+            val FEATURE_ORDER = stringPreferencesKey("feature_order")
         }
 
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -370,6 +404,27 @@ class AppPreferencesDataSource
 
         override suspend fun setWidgetItems(items: Set<String>) {
             dataStore.edit { prefs -> prefs[Keys.WIDGET_ITEMS] = items }
+        }
+
+        override fun getMapItems(): Flow<Set<String>> = pref(Keys.MAP_FAB_ITEMS, DEFAULT_MAP_FAB_ITEMS)
+
+        override suspend fun setMapItems(items: Set<String>) {
+            dataStore.edit { prefs -> prefs[Keys.MAP_FAB_ITEMS] = items }
+        }
+
+        override fun getFeatureOrder(): Flow<List<AppFeature>> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading feature order", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> parseFeatureOrder(prefs[Keys.FEATURE_ORDER]) }
+
+        override suspend fun setFeatureOrder(order: List<AppFeature>) {
+            dataStore.edit { prefs -> prefs[Keys.FEATURE_ORDER] = order.serializeFeatureOrder() }
         }
 
         override fun getRoamingDefaults(): Flow<RoamingDefaults> =
@@ -643,7 +698,9 @@ class AppPreferencesDataSource
                 prefs[Keys.RUN_SPEED_MS] = snapshot.runSpeedMs.coerceAtLeast(MIN_SPEED_MS)
                 prefs[Keys.BIKE_SPEED_MS] = snapshot.bikeSpeedMs.coerceAtLeast(MIN_SPEED_MS)
                 prefs[Keys.SPEED_UNIT] = snapshot.speedUnit.name
-                prefs[Keys.WIDGET_ITEMS] = snapshot.widgetFeatures.map { it.name.lowercase() }.toSet()
+                prefs[Keys.WIDGET_ITEMS] = snapshot.enabledWidgetFeatures.map { it.name.lowercase() }.toSet()
+                prefs[Keys.MAP_FAB_ITEMS] = snapshot.enabledMapFeatures.map { it.name.lowercase() }.toSet()
+                prefs[Keys.FEATURE_ORDER] = snapshot.featureOrder.serializeFeatureOrder()
                 prefs[Keys.REMEMBER_LAST_LOCATION] = snapshot.rememberLastLocation
                 prefs[Keys.MAP_FOLLOWS_LOCATION] = snapshot.mapFollowsLocation
                 prefs[Keys.JITTER_IDLE_RADIUS_METERS] = snapshot.jitterIdleRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
@@ -682,7 +739,6 @@ class AppPreferencesDataSource
                 prefs[Keys.HOT_LOCATION_SELECTED_IDS] = snapshot.selectedHotLocationIds
                 prefs[Keys.HOT_ROUTES_ENABLED] = snapshot.hotRoutesEnabled
                 prefs[Keys.HOT_ROUTE_SELECTED_IDS] = snapshot.selectedHotRouteIds
-                prefs[Keys.MAP_FAB_ITEMS] = snapshot.mapFabFeatures.map { it.name.lowercase() }.toSet()
                 prefs[Keys.ROAMING_RADIUS_METERS] = snapshot.roamingDefaults.radiusMeters
                 prefs[Keys.ROAMING_DISTANCE_METERS] = snapshot.roamingDefaults.distanceMeters
                 prefs[Keys.ROAMING_SPEED_PROFILE_ID] = snapshot.roamingDefaults.speedProfileId
@@ -709,12 +765,15 @@ class AppPreferencesDataSource
                             SpeedUnit.KMH
                         }
                     val widgetItems = prefs[Keys.WIDGET_ITEMS] ?: DEFAULT_WIDGET_ITEMS
+                    val mapItems = prefs[Keys.MAP_FAB_ITEMS] ?: DEFAULT_MAP_FAB_ITEMS
                     SettingsSnapshot(
                         walkSpeedMs = prefs[Keys.WALK_SPEED_MS] ?: DEFAULT_WALK_SPEED_MS,
                         runSpeedMs = prefs[Keys.RUN_SPEED_MS] ?: DEFAULT_RUN_SPEED_MS,
                         bikeSpeedMs = prefs[Keys.BIKE_SPEED_MS] ?: DEFAULT_BIKE_SPEED_MS,
                         speedUnit = speedUnit,
-                        widgetFeatures = widgetItems.mapNotNull { it.toEnumFeature<WidgetFeature>() }.toSet(),
+                        featureOrder = parseFeatureOrder(prefs[Keys.FEATURE_ORDER]),
+                        enabledWidgetFeatures = widgetItems.mapNotNull { it.toAppFeature() }.toSet(),
+                        enabledMapFeatures = mapItems.mapNotNull { it.toAppFeature() }.toSet(),
                         rememberLastLocation =
                             prefs[Keys.REMEMBER_LAST_LOCATION]
                                 ?: AppConstants.DataStoreConstants.DEFAULT_REMEMBER_LAST_LOCATION,
@@ -745,10 +804,6 @@ class AppPreferencesDataSource
                         selectedHotLocationIds = prefs[Keys.HOT_LOCATION_SELECTED_IDS] ?: emptySet(),
                         hotRoutesEnabled = prefs[Keys.HOT_ROUTES_ENABLED] ?: false,
                         selectedHotRouteIds = prefs[Keys.HOT_ROUTE_SELECTED_IDS] ?: emptySet(),
-                        mapFabFeatures =
-                            (prefs[Keys.MAP_FAB_ITEMS] ?: DEFAULT_MAP_FAB_ITEMS)
-                                .mapNotNull { it.toEnumFeature<MapFabFeature>() }
-                                .toSet(),
                         roamingDefaults =
                             RoamingDefaults(
                                 radiusMeters = prefs[Keys.ROAMING_RADIUS_METERS] ?: DEFAULT_ROAMING_RADIUS_METERS,
@@ -771,17 +826,10 @@ class AppPreferencesDataSource
             const val MIN_SPEED_MS = AppConstants.ProfileConstants.MIN_SPEED_MS
 
             val DEFAULT_MAP_FAB_ITEMS: Set<String> =
-                MapFabFeature.entries.map { it.name.lowercase() }.toSet()
+                AppFeature.DEFAULT_MAP_ENABLED.map { it.name.lowercase() }.toSet()
 
             val DEFAULT_WIDGET_ITEMS: Set<String> =
-                setOf(
-                    WidgetFeature.MAP_FLOATING.name.lowercase(),
-                    WidgetFeature.JOYSTICK_TOGGLE.name.lowercase(),
-                    WidgetFeature.JOYSTICK_LOCK.name.lowercase(),
-                    WidgetFeature.ROUTES_FLOATING.name.lowercase(),
-                    WidgetFeature.FAVORITES_FLOATING.name.lowercase(),
-                    WidgetFeature.SPEED_CYCLE.name.lowercase(),
-                )
+                AppFeature.DEFAULT_WIDGET_ENABLED.map { it.name.lowercase() }.toSet()
 
             const val DEFAULT_ROAMING_RADIUS_METERS = AppConstants.RoamingConstants.DEFAULT_RADIUS_METERS
             const val DEFAULT_ROAMING_DISTANCE_METERS = AppConstants.RoamingConstants.DEFAULT_DISTANCE_METERS

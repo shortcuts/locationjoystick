@@ -1,9 +1,8 @@
 package com.locationjoystick.feature.settings.impl
 
-import com.locationjoystick.core.model.MapFabFeature
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.model.WidgetFeature
 
 internal sealed class SettingsAction {
     data class SetWalkSpeed(
@@ -23,7 +22,11 @@ internal sealed class SettingsAction {
     ) : SettingsAction()
 
     data class SetWidgetFeatures(
-        val features: Set<WidgetFeature>,
+        val features: Set<AppFeature>,
+    ) : SettingsAction()
+
+    data class SetFeatureOrder(
+        val order: List<AppFeature>,
     ) : SettingsAction()
 
     data class SetRememberLastLocation(
@@ -106,8 +109,8 @@ internal sealed class SettingsAction {
         val ids: Set<String>,
     ) : SettingsAction()
 
-    data class SetMapFabFeatures(
-        val features: Set<MapFabFeature>,
+    data class SetMapFeatures(
+        val features: Set<AppFeature>,
     ) : SettingsAction()
 
     data object RequestElevationAccess : SettingsAction()

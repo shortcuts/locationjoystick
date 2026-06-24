@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.settings.impl
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
@@ -8,7 +9,6 @@ import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.Waypoint
-import com.locationjoystick.core.model.WidgetFeature
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -256,6 +256,6 @@ class SettingsExportCodecEdgeCaseTest {
         val parsed = SettingsExportCodec.parseExportData(json)
 
         assertEquals(1, parsed.settings.enabledWidgetFeatures.size)
-        assertTrue(parsed.settings.enabledWidgetFeatures.contains(WidgetFeature.JOYSTICK_TOGGLE))
+        assertTrue(parsed.settings.enabledWidgetFeatures.contains(AppFeature.JOYSTICK_TOGGLE))
     }
 }

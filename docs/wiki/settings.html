@@ -20,7 +20,7 @@
       <ul class="section-bullets">
         <li>Edit Walk, Run, and Bike speed presets used by the joystick, routes, and roaming.</li>
         <li>Toggle GPS realism features independently: bearing hold, altitude drift, warm-up envelope, satellite count, signal dropouts.</li>
-        <li>Choose which controls appear in the floating widget.</li>
+        <li>Choose which features appear in the floating widget and on the map, and drag to reorder them.</li>
       </ul>
     </div>
 
@@ -97,7 +97,7 @@
     </table>
 
     <h2 id="elevation-jitter">Elevation Jitter</h2>
-    <p>Fine-tunes the natural variation applied by Elevation Controls. Only active when Elevation Controls is enabled in the Floating Widget section. Requires root.</p>
+    <p>Fine-tunes the natural variation applied by Elevation Controls. Only active when Elevation Controls is enabled in the App Features section. Requires root.</p>
 
     <table class="option-table">
       <thead><tr><th>Option</th><th>Description</th></tr></thead>
@@ -185,49 +185,65 @@
       </tbody>
     </table>
 
-    <h2 id="floating-widget">Floating Widget</h2>
-    <p>Selects which quick-access buttons appear in the floating widget overlay when it is expanded. Each item can be toggled independently.</p>
+    <h2 id="app-features">App Features</h2>
+    <p>
+      Selects which quick-access features appear in the floating widget overlay and on the map screen, and in what
+      order. Each feature has its own checkbox for the widget and for the map — turn either on independently — plus
+      a drag handle on the left so you can reorder the whole list by dragging. Both surfaces follow the same order,
+      so reordering once keeps everything consistent.
+    </p>
 
     <table class="option-table">
-      <thead><tr><th>Option</th><th>Icon</th><th>Description</th></tr></thead>
+      <thead><tr><th>Feature</th><th>Icon</th><th>Description</th></tr></thead>
       <tbody>
         <tr>
           <td><strong>Map shortcut</strong></td>
           <td>📍</td>
-          <td>Opens a compact full-screen map overlay without switching back to the main app. Supports walk-to, teleport, and roaming controls from the overlay.</td>
+          <td>Widget only. Opens a compact full-screen map overlay without switching back to the main app. Supports walk-to, teleport, and roaming controls from the overlay.</td>
         </tr>
         <tr>
           <td><strong>Show/hide joystick</strong></td>
           <td>👁</td>
-          <td>Toggles the floating joystick overlay on or off without opening the app. The joystick must already be running via the main screen.</td>
+          <td>Widget only. Toggles the floating joystick overlay on or off without opening the app. The joystick must already be running via the main screen.</td>
         </tr>
         <tr>
           <td><strong>Lock joystick</strong></td>
           <td>🔒</td>
-          <td>Holds the joystick direction after you release your finger, so the simulated device keeps moving without continuous input. Tap again to unlock.</td>
+          <td>Widget only. Holds the joystick direction after you release your finger, so the simulated device keeps moving without continuous input. Tap again to unlock.</td>
         </tr>
         <tr>
-          <td><strong>Routes picker</strong></td>
-          <td>🗺</td>
-          <td>Lists all saved routes with start, loop, reverse, and return options. While a route is replaying, the icon expands to show pause and stop controls inline.</td>
-        </tr>
-        <tr>
-          <td><strong>Favorites picker</strong></td>
+          <td><strong>Favorites</strong></td>
           <td>❤️</td>
-          <td>Lists saved favorite locations with one-tap teleport and walk shortcuts. Also lets you save the current spoofed position as a new favorite from the overlay.</td>
+          <td>Widget and map. Lists saved favorite locations with one-tap teleport and walk shortcuts. From the widget, also lets you save the current spoofed position as a new favorite.</td>
+        </tr>
+        <tr>
+          <td><strong>Routes</strong></td>
+          <td>🗺</td>
+          <td>Widget and map. Lists all saved routes with start, loop, reverse, and return options. While a route is replaying, the button expands to show pause and stop controls inline.</td>
+        </tr>
+        <tr>
+          <td><strong>Roaming</strong></td>
+          <td>🧭</td>
+          <td>Map only. Opens the roaming setup sheet to configure and start a random walk.</td>
+        </tr>
+        <tr>
+          <td><strong>Search</strong></td>
+          <td>🔍</td>
+          <td>Map only. Opens the location search bar to find and jump to a place by name.</td>
         </tr>
         <tr>
           <td><strong>Speed cycle</strong></td>
           <td>⚡</td>
-          <td>Cycles through Walk → Run → Bike speed profiles with a single tap. The icon changes to reflect the active profile.</td>
+          <td>Widget only. Cycles through Walk → Run → Bike speed profiles with a single tap. The icon changes to reflect the active profile.</td>
         </tr>
         <tr>
           <td><strong>Elevation controls</strong></td>
           <td>⊞</td>
-          <td>Shows a separate floating overlay with three elevation buttons: tilt up (↑), neutral (○), tilt down (↓). Injects synthetic sensor events to make apps see the phone as tilted. <strong>Requires root.</strong> Enabling this option triggers a Magisk root-access prompt.</td>
+          <td>Widget only. Shows a separate floating overlay with three elevation buttons: tilt up (↑), neutral (○), tilt down (↓). Injects synthetic sensor events to make apps see the phone as tilted. <strong>Requires root.</strong> Enabling this option triggers a Magisk root-access prompt.</td>
         </tr>
       </tbody>
     </table>
+    <p>Starting and stopping location simulation is always available from the bar at the top of every screen, so it isn't one of the configurable features above.</p>
 
     <h2 id="roaming-defaults">Roaming defaults</h2>
     <p>Default values pre-filled in the roaming setup sheet when starting a roaming session from the map.</p>

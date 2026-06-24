@@ -3,11 +3,9 @@ package com.locationjoystick.core.model
 data class AppSettings(
     val activeSpeedProfileId: String = "walk",
     val joystickStyle: JoystickStyle = JoystickStyle.FLOATING,
-    val enabledWidgetFeatures: List<WidgetFeature> =
-        listOf(
-            WidgetFeature.JOYSTICK_TOGGLE,
-            WidgetFeature.SPEED_CYCLE,
-        ),
+    val featureOrder: List<AppFeature> = AppFeature.DEFAULT_ORDER,
+    val enabledWidgetFeatures: Set<AppFeature> = AppFeature.DEFAULT_WIDGET_ENABLED,
+    val enabledMapFeatures: Set<AppFeature> = AppFeature.DEFAULT_MAP_ENABLED,
     val mapFollowsLocation: Boolean = true,
     val useRoadSnappingByDefault: Boolean = false,
     val speedUnit: SpeedUnit = SpeedUnit.KMH,

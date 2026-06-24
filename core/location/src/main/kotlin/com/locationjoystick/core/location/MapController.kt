@@ -228,11 +228,18 @@ class MapController
         private fun observeMapFabFeatures() {
             appScope.launch {
                 settingsRepository
-                    .getSettingsSnapshot()
-                    .map { it.mapFabFeatures }
+                    .getMapFeatureOrder()
                     .distinctUntilChanged()
-                    .collect { features ->
-                        _state.update { it.copy(enabledMapFabFeatures = features) }
+                    .collect { order ->
+                        _state.update { it.copy(mapFeatureOrder = order) }
+                    }
+            }
+            appScope.launch {
+                settingsRepository
+                    .getEnabledMapFeatures()
+                    .distinctUntilChanged()
+                    .collect { enabled ->
+                        _state.update { it.copy(enabledMapFeatures = enabled) }
                     }
             }
         }

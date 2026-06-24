@@ -6,13 +6,13 @@ import com.locationjoystick.core.datastore.AppPreferencesDataSource
 import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
-import com.locationjoystick.core.datastore.toEnumFeature
+import com.locationjoystick.core.datastore.toAppFeature
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.model.WidgetFeature
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -228,8 +228,8 @@ class SettingsRepositoryTest {
             repository.getWidgetFeatures().test {
                 val features = awaitItem()
                 assertEquals(2, features.size)
-                assertTrue(features.contains(WidgetFeature.MAP_FLOATING))
-                assertTrue(features.contains(WidgetFeature.JOYSTICK_TOGGLE))
+                assertTrue(features.contains(AppFeature.MAP_FLOATING))
+                assertTrue(features.contains(AppFeature.JOYSTICK_TOGGLE))
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -242,8 +242,8 @@ class SettingsRepositoryTest {
             repository.getWidgetFeatures().test {
                 val features = awaitItem()
                 assertEquals(2, features.size)
-                assertTrue(features.contains(WidgetFeature.MAP_FLOATING))
-                assertTrue(features.contains(WidgetFeature.JOYSTICK_LOCK))
+                assertTrue(features.contains(AppFeature.MAP_FLOATING))
+                assertTrue(features.contains(AppFeature.JOYSTICK_LOCK))
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -382,13 +382,13 @@ class SettingsRepositoryTest {
     @Test
     fun `setWidgetFeatures stores widget feature keys`() =
         runTest {
-            repository.setWidgetFeatures(listOf(WidgetFeature.SPEED_CYCLE, WidgetFeature.ROUTES_FLOATING))
+            repository.setWidgetFeatures(setOf(AppFeature.SPEED_CYCLE, AppFeature.ROUTES))
 
             repository.getWidgetFeatures().test {
                 val features = awaitItem()
                 assertEquals(2, features.size)
-                assertTrue(features.contains(WidgetFeature.SPEED_CYCLE))
-                assertTrue(features.contains(WidgetFeature.ROUTES_FLOATING))
+                assertTrue(features.contains(AppFeature.SPEED_CYCLE))
+                assertTrue(features.contains(AppFeature.ROUTES))
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -898,6 +898,10 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     val widgetItemsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_WIDGET_ITEMS)
 
+    val mapItemsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_MAP_FAB_ITEMS)
+
+    val featureOrderFlow = MutableStateFlow(AppFeature.DEFAULT_ORDER)
+
     val roamingDefaultsFlow =
         MutableStateFlow(
             RoamingDefaults(
@@ -960,6 +964,18 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setWidgetItems(items: Set<String>) {
         widgetItemsFlow.value = items
+    }
+
+    override fun getMapItems(): Flow<Set<String>> = mapItemsFlow
+
+    override suspend fun setMapItems(items: Set<String>) {
+        mapItemsFlow.value = items
+    }
+
+    override fun getFeatureOrder(): Flow<List<AppFeature>> = featureOrderFlow
+
+    override suspend fun setFeatureOrder(order: List<AppFeature>) {
+        featureOrderFlow.value = order
     }
 
     override fun getRoamingDefaults(): Flow<RoamingDefaults> = roamingDefaultsFlow
@@ -1179,7 +1195,9 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
                 runSpeedMs = AppPreferencesDataSource.DEFAULT_RUN_SPEED_MS,
                 bikeSpeedMs = AppPreferencesDataSource.DEFAULT_BIKE_SPEED_MS,
                 speedUnit = SpeedUnit.KMH,
-                widgetFeatures = AppPreferencesDataSource.DEFAULT_WIDGET_ITEMS.mapNotNull { it.toEnumFeature<WidgetFeature>() }.toSet(),
+                featureOrder = featureOrderFlow.value,
+                enabledWidgetFeatures = AppPreferencesDataSource.DEFAULT_WIDGET_ITEMS.mapNotNull { it.toAppFeature() }.toSet(),
+                enabledMapFeatures = AppPreferencesDataSource.DEFAULT_MAP_FAB_ITEMS.mapNotNull { it.toAppFeature() }.toSet(),
                 rememberLastLocation = false,
                 mapFollowsLocation = true,
                 jitterIdleRadius = AppPreferencesDataSource.DEFAULT_JITTER_IDLE_RADIUS_METERS,
@@ -1200,7 +1218,6 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
                 selectedHotLocationIds = emptySet(),
                 hotRoutesEnabled = false,
                 selectedHotRouteIds = emptySet(),
-                mapFabFeatures = emptySet(),
                 roamingDefaults = roamingDefaultsFlow.value,
             ),
         )
@@ -1212,6 +1229,8 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
                 runSpeedMs = snapshot.runSpeedMs,
                 bikeSpeedMs = snapshot.bikeSpeedMs,
             )
-        widgetItemsFlow.value = snapshot.widgetFeatures.map { it.name.lowercase() }.toSet()
+        widgetItemsFlow.value = snapshot.enabledWidgetFeatures.map { it.name.lowercase() }.toSet()
+        mapItemsFlow.value = snapshot.enabledMapFeatures.map { it.name.lowercase() }.toSet()
+        featureOrderFlow.value = snapshot.featureOrder
     }
 }

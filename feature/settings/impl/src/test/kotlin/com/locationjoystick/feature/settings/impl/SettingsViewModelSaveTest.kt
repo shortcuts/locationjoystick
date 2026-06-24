@@ -11,7 +11,8 @@ import com.locationjoystick.core.datastore.AppPreferencesDataSource
 import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
-import com.locationjoystick.core.datastore.toEnumFeature
+import com.locationjoystick.core.datastore.toAppFeature
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.LatLng
@@ -19,7 +20,6 @@ import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.model.WidgetFeature
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import com.locationjoystick.core.testing.FakeRouteDao
 import kotlinx.coroutines.Dispatchers
@@ -168,7 +168,7 @@ class SettingsViewModelSaveTest {
                     settings =
                         AppSettings(
                             speedUnit = SpeedUnit.MPH,
-                            enabledWidgetFeatures = listOf(WidgetFeature.JOYSTICK_TOGGLE),
+                            enabledWidgetFeatures = setOf(AppFeature.JOYSTICK_TOGGLE),
                             bearingHoldOnIdle = false,
                             altitudeEnabled = false,
                             warmupEnabled = true,
@@ -205,7 +205,7 @@ class SettingsViewModelSaveTest {
             assertEquals(3.3, snapshot.runSpeedMs, 0.001)
             assertEquals(7.7, snapshot.bikeSpeedMs, 0.001)
             assertEquals(SpeedUnit.MPH, snapshot.speedUnit)
-            assertEquals(setOf(WidgetFeature.JOYSTICK_TOGGLE), snapshot.widgetFeatures)
+            assertEquals(setOf(AppFeature.JOYSTICK_TOGGLE), snapshot.enabledWidgetFeatures)
             assertFalse(snapshot.realismBearingHoldIdle)
             assertFalse(snapshot.realismAltitudeEnabled)
             assertTrue(snapshot.realismWarmupEnabled)
@@ -336,6 +336,8 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
             ),
         )
     private val widgetItemsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_WIDGET_ITEMS)
+    private val mapItemsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_MAP_FAB_ITEMS)
+    private val featureOrderFlow = MutableStateFlow(AppFeature.DEFAULT_ORDER)
     private val roamingDefaultsFlow =
         MutableStateFlow(
             RoamingDefaults(
@@ -354,7 +356,9 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
                 runSpeedMs = speedProfilesFlow.value.runSpeedMs,
                 bikeSpeedMs = speedProfilesFlow.value.bikeSpeedMs,
                 speedUnit = SpeedUnit.KMH,
-                widgetFeatures = widgetItemsFlow.value.mapNotNull { it.toEnumFeature<WidgetFeature>() }.toSet(),
+                featureOrder = featureOrderFlow.value,
+                enabledWidgetFeatures = widgetItemsFlow.value.mapNotNull { it.toAppFeature() }.toSet(),
+                enabledMapFeatures = mapItemsFlow.value.mapNotNull { it.toAppFeature() }.toSet(),
                 rememberLastLocation = false,
                 mapFollowsLocation = true,
                 jitterIdleRadius = AppPreferencesDataSource.DEFAULT_JITTER_IDLE_RADIUS_METERS,
@@ -375,7 +379,6 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
                 selectedHotLocationIds = emptySet(),
                 hotRoutesEnabled = false,
                 selectedHotRouteIds = emptySet(),
-                mapFabFeatures = emptySet(),
                 roamingDefaults = roamingDefaultsFlow.value,
             ),
         )
@@ -390,7 +393,9 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
                 runSpeedMs = snapshot.runSpeedMs,
                 bikeSpeedMs = snapshot.bikeSpeedMs,
             )
-        widgetItemsFlow.value = snapshot.widgetFeatures.map { it.name.lowercase() }.toSet()
+        widgetItemsFlow.value = snapshot.enabledWidgetFeatures.map { it.name.lowercase() }.toSet()
+        mapItemsFlow.value = snapshot.enabledMapFeatures.map { it.name.lowercase() }.toSet()
+        featureOrderFlow.value = snapshot.featureOrder
         roamingDefaultsFlow.value = snapshot.roamingDefaults
     }
 
@@ -418,6 +423,18 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setWidgetItems(items: Set<String>) {
         widgetItemsFlow.value = items
+    }
+
+    override fun getMapItems(): Flow<Set<String>> = mapItemsFlow
+
+    override suspend fun setMapItems(items: Set<String>) {
+        mapItemsFlow.value = items
+    }
+
+    override fun getFeatureOrder(): Flow<List<AppFeature>> = featureOrderFlow
+
+    override suspend fun setFeatureOrder(order: List<AppFeature>) {
+        featureOrderFlow.value = order
     }
 
     override fun getRoamingDefaults(): Flow<RoamingDefaults> = roamingDefaultsFlow

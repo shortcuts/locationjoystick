@@ -68,10 +68,10 @@ class SettingsSmokeTest : BaseSmokeTest() {
     }
 
     @Test
-    fun settings_shows_floating_widget_section() {
+    fun settings_shows_app_features_section() {
         composeRule.onNodeWithText("Menus").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Floating Widget").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("App Features").performScrollTo().assertIsDisplayed()
     }
 
     @Test

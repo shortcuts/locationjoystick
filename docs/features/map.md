@@ -16,6 +16,7 @@ MapLibre Android SDK 12.x. Not osmdroid, not Google Maps.
 ## Navigation
 
 - TopAppBar hamburger opens nav drawer via `onOpenDrawer: () -> Unit`. Drawer owned by `LjApp`, not `LjNavHost`.
+- Start/stop spoofing is controlled solely from the top bar's `LjScaffold`/`LjTopBar` toggle (see @docs/features/mock-location.md, "Global Start/Stop Control") — there is no separate start/stop FAB on the map screen.
 
 ## Interactions
 
@@ -23,6 +24,10 @@ MapLibre Android SDK 12.x. Not osmdroid, not Google Maps.
 - Tap route point → select.
 - Tap empty map in edit mode → add waypoint.
 - Camera follow: disabled on `REASON_API_GESTURE`. Re-enabled via re-center FAB.
+
+## Configurable FABs
+
+`MapFabColumn` renders Favorites/Routes/Roaming/Search in the shared `AppFeature` order (see @docs/features/widget.md, "Configurability"), filtered to features enabled for the `MAP` surface — configured in Settings → Menus → "App Features". Routes and Roaming also force-show while actively in progress, even if toggled off, so the user can still control a running session.
 
 ## Lifecycle
 

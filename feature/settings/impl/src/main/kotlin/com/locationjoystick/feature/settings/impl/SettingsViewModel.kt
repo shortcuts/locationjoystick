@@ -13,13 +13,12 @@ import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.datastore.SettingsSnapshot
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
-import com.locationjoystick.core.model.MapFabFeature
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.model.WidgetFeature
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -95,7 +94,9 @@ class SettingsViewModel
             val runSpeed: Double? = null,
             val bikeSpeed: Double? = null,
             val speedUnit: SpeedUnit? = null,
-            val widgetFeatures: Set<WidgetFeature>? = null,
+            val featureOrder: List<AppFeature>? = null,
+            val widgetFeatures: Set<AppFeature>? = null,
+            val mapFeatures: Set<AppFeature>? = null,
             val rememberLastLocation: Boolean? = null,
             val mapFollowsLocation: Boolean? = null,
             val jitterIdleRadius: Double? = null,
@@ -117,7 +118,6 @@ class SettingsViewModel
             val selectedHotLocationIds: Set<String>? = null,
             val hotRoutesEnabled: Boolean? = null,
             val selectedHotRouteIds: Set<String>? = null,
-            val mapFabFeatures: Set<MapFabFeature>? = null,
         )
 
         private val mutableDraft = MutableStateFlow(DraftState())
@@ -149,7 +149,9 @@ class SettingsViewModel
                     runSpeed = draftState.runSpeed ?: snapshot.runSpeedMs,
                     bikeSpeed = draftState.bikeSpeed ?: snapshot.bikeSpeedMs,
                     speedUnit = draftState.speedUnit ?: snapshot.speedUnit,
-                    enabledWidgetFeatures = draftState.widgetFeatures ?: snapshot.widgetFeatures,
+                    featureOrder = draftState.featureOrder ?: snapshot.featureOrder,
+                    enabledWidgetFeatures = draftState.widgetFeatures ?: snapshot.enabledWidgetFeatures,
+                    enabledMapFeatures = draftState.mapFeatures ?: snapshot.enabledMapFeatures,
                     rememberLastLocation = draftState.rememberLastLocation ?: snapshot.rememberLastLocation,
                     mapFollowsLocation = draftState.mapFollowsLocation ?: snapshot.mapFollowsLocation,
                     jitterIdleRadiusMeters = draftState.jitterIdleRadius ?: snapshot.jitterIdleRadius,
@@ -170,7 +172,6 @@ class SettingsViewModel
                     selectedHotLocationIds = draftState.selectedHotLocationIds ?: snapshot.selectedHotLocationIds,
                     hotRoutesEnabled = draftState.hotRoutesEnabled ?: snapshot.hotRoutesEnabled,
                     selectedHotRouteIds = draftState.selectedHotRouteIds ?: snapshot.selectedHotRouteIds,
-                    enabledMapFabFeatures = draftState.mapFabFeatures ?: snapshot.mapFabFeatures,
                     isDirty = isDirty,
                 )
             }.stateIn(
@@ -195,12 +196,16 @@ class SettingsViewModel
             mutableDraft.update { it.copy(speedUnit = unit) }
         }
 
-        fun setWidgetFeatures(features: Set<WidgetFeature>) {
+        fun setWidgetFeatures(features: Set<AppFeature>) {
             mutableDraft.update { it.copy(widgetFeatures = features) }
         }
 
-        fun setMapFabFeatures(features: Set<MapFabFeature>) {
-            mutableDraft.update { it.copy(mapFabFeatures = features) }
+        fun setMapFeatures(features: Set<AppFeature>) {
+            mutableDraft.update { it.copy(mapFeatures = features) }
+        }
+
+        fun setFeatureOrder(order: List<AppFeature>) {
+            mutableDraft.update { it.copy(featureOrder = order) }
         }
 
         fun setRememberLastLocation(enabled: Boolean) {
@@ -336,7 +341,9 @@ class SettingsViewModel
                             runSpeedMs = state.runSpeed,
                             bikeSpeedMs = state.bikeSpeed,
                             speedUnit = state.speedUnit,
-                            widgetFeatures = state.enabledWidgetFeatures,
+                            featureOrder = state.featureOrder,
+                            enabledWidgetFeatures = state.enabledWidgetFeatures,
+                            enabledMapFeatures = state.enabledMapFeatures,
                             rememberLastLocation = state.rememberLastLocation,
                             mapFollowsLocation = state.mapFollowsLocation,
                             jitterIdleRadius = state.jitterIdleRadiusMeters,
@@ -357,7 +364,6 @@ class SettingsViewModel
                             selectedHotLocationIds = state.selectedHotLocationIds,
                             hotRoutesEnabled = state.hotRoutesEnabled,
                             selectedHotRouteIds = state.selectedHotRouteIds,
-                            mapFabFeatures = state.enabledMapFabFeatures,
                             roamingDefaults =
                                 d.roamingDefaults
                                     ?: settingsRepository.getRoamingDefaults().first(),
@@ -422,7 +428,9 @@ class SettingsViewModel
             val settings =
                 AppSettings(
                     speedUnit = state.speedUnit,
-                    enabledWidgetFeatures = state.enabledWidgetFeatures.toList(),
+                    featureOrder = state.featureOrder,
+                    enabledWidgetFeatures = state.enabledWidgetFeatures,
+                    enabledMapFeatures = state.enabledMapFeatures,
                     bearingHoldOnIdle = state.realismBearingHoldIdle,
                     altitudeEnabled = state.realismAltitudeEnabled,
                     warmupEnabled = state.realismWarmupEnabled,
@@ -614,7 +622,9 @@ class SettingsViewModel
                     runSpeedMs = profileById["run"]?.speedMetersPerSecond ?: currentSnapshot.runSpeedMs,
                     bikeSpeedMs = profileById["bike"]?.speedMetersPerSecond ?: currentSnapshot.bikeSpeedMs,
                     speedUnit = data.settings.speedUnit,
-                    widgetFeatures = data.settings.enabledWidgetFeatures.toSet(),
+                    featureOrder = data.settings.featureOrder,
+                    enabledWidgetFeatures = data.settings.enabledWidgetFeatures,
+                    enabledMapFeatures = data.settings.enabledMapFeatures,
                     jitterIdleRadius = data.jitterIdleRadius,
                     jitterMovingRadius = data.jitterMovingRadius,
                     jitterIntervalSeconds = data.jitterIntervalSeconds,

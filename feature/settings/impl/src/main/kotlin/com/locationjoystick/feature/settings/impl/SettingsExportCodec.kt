@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.settings.impl
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.FavoriteLocation
@@ -11,9 +12,23 @@ import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.Waypoint
-import com.locationjoystick.core.model.WidgetFeature
 import org.json.JSONArray
 import org.json.JSONObject
+
+/** Old `WidgetFeature`/`MapFabFeature` names, kept so old export files still import correctly. */
+private val legacyAppFeatureAliases =
+    mapOf(
+        "ROUTES_FLOATING" to AppFeature.ROUTES,
+        "FAVORITES_FLOATING" to AppFeature.FAVORITES,
+    )
+
+private fun parseAppFeature(raw: String): AppFeature? =
+    legacyAppFeatureAliases[raw]
+        ?: try {
+            AppFeature.valueOf(raw)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
 
 /**
  * Serializes and deserializes app data for export/import.
@@ -57,6 +72,8 @@ internal object SettingsExportCodec {
         val settingsObj = JSONObject()
         settingsObj.put("speedUnit", data.settings.speedUnit.name)
         settingsObj.put("enabledWidgetFeatures", JSONArray(data.settings.enabledWidgetFeatures.map { it.name }))
+        settingsObj.put("enabledMapFeatures", JSONArray(data.settings.enabledMapFeatures.map { it.name }))
+        settingsObj.put("featureOrder", JSONArray(data.settings.featureOrder.map { it.name }))
         settingsObj.put("realismBearingHoldIdle", data.settings.bearingHoldOnIdle)
         settingsObj.put("realismAltitudeEnabled", data.settings.altitudeEnabled)
         settingsObj.put("realismWarmupEnabled", data.settings.warmupEnabled)
@@ -148,16 +165,26 @@ internal object SettingsExportCodec {
             } catch (e: IllegalArgumentException) {
                 SpeedUnit.KMH
             }
-        val enabledFeatures = mutableListOf<WidgetFeature>()
-        settingsObj.optJSONArray("enabledWidgetFeatures")?.let { arr ->
-            for (i in 0 until arr.length()) {
-                try {
-                    enabledFeatures.add(WidgetFeature.valueOf(arr.getString(i)))
-                } catch (e: IllegalArgumentException) {
-                    // skip unknown features
+        val enabledWidgetFeatures =
+            buildSet {
+                settingsObj.optJSONArray("enabledWidgetFeatures")?.let { arr ->
+                    for (i in 0 until arr.length()) parseAppFeature(arr.getString(i))?.let { add(it) }
                 }
             }
-        }
+        val enabledMapFeatures =
+            settingsObj.optJSONArray("enabledMapFeatures")?.let { arr ->
+                buildSet {
+                    for (i in 0 until arr.length()) parseAppFeature(arr.getString(i))?.let { add(it) }
+                }
+            } ?: AppFeature.DEFAULT_MAP_ENABLED
+        val featureOrder =
+            settingsObj
+                .optJSONArray("featureOrder")
+                ?.let { arr ->
+                    buildList {
+                        for (i in 0 until arr.length()) parseAppFeature(arr.getString(i))?.let { add(it) }
+                    }
+                }?.takeIf { it.isNotEmpty() } ?: AppFeature.DEFAULT_ORDER
         val bearingHoldOnIdle = settingsObj.optBoolean("realismBearingHoldIdle", AppConstants.RealismConstants.BEARING_HOLD_ON_IDLE_DEFAULT)
         val altitudeEnabled = settingsObj.optBoolean("realismAltitudeEnabled", AppConstants.RealismConstants.ALTITUDE_ENABLED_DEFAULT)
         val warmupEnabled = settingsObj.optBoolean("realismWarmupEnabled", AppConstants.RealismConstants.WARMUP_ENABLED_DEFAULT)
@@ -196,7 +223,9 @@ internal object SettingsExportCodec {
         val settings =
             AppSettings(
                 speedUnit = speedUnit,
-                enabledWidgetFeatures = enabledFeatures,
+                featureOrder = featureOrder,
+                enabledWidgetFeatures = enabledWidgetFeatures,
+                enabledMapFeatures = enabledMapFeatures,
                 bearingHoldOnIdle = bearingHoldOnIdle,
                 altitudeEnabled = altitudeEnabled,
                 warmupEnabled = warmupEnabled,
