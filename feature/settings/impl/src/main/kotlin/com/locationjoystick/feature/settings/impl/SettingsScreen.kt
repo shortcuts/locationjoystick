@@ -1109,7 +1109,8 @@ private fun featureMeta(feature: AppFeature): FeatureMeta =
         }
     }
 
-private val FEATURE_ROW_HEIGHT = 56.dp
+private val FEATURE_ROW_HEIGHT = 64.dp
+private val FEATURE_ROW_SPACING = 8.dp
 
 @Composable
 private fun AppFeaturesSection(
@@ -1133,11 +1134,11 @@ private fun AppFeaturesSection(
     }
 
     val order = uiState.featureOrder
-    val rowHeightPx = with(LocalDensity.current) { FEATURE_ROW_HEIGHT.toPx() }
+    val rowHeightPx = with(LocalDensity.current) { (FEATURE_ROW_HEIGHT + FEATURE_ROW_SPACING).toPx() }
     var draggingIndex by remember { mutableStateOf<Int?>(null) }
     var dragDeltaY by remember { mutableStateOf(0f) }
 
-    Column {
+    Column(verticalArrangement = Arrangement.spacedBy(FEATURE_ROW_SPACING)) {
         order.forEachIndexed { index, feature ->
             val isDragging = draggingIndex == index
             Box(
@@ -1251,7 +1252,12 @@ private fun FeatureRow(
                 },
             )
         } else {
-            Spacer(modifier = Modifier.width(56.dp))
+            Checkbox(
+                checked = false,
+                enabled = false,
+                modifier = Modifier.width(56.dp),
+                onCheckedChange = {},
+            )
         }
         if (FeatureSurface.MAP in feature.surfaces) {
             Checkbox(
@@ -1264,7 +1270,12 @@ private fun FeatureRow(
                 },
             )
         } else {
-            Spacer(modifier = Modifier.width(56.dp))
+            Checkbox(
+                checked = false,
+                enabled = false,
+                modifier = Modifier.width(56.dp),
+                onCheckedChange = {},
+            )
         }
     }
 }
