@@ -51,6 +51,7 @@ class SettingsViewModelDraftTest {
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
+                context = context,
             )
     }
 

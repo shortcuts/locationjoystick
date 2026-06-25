@@ -145,6 +145,16 @@ internal sealed class SettingsAction {
         val scale: Int,
     ) : SettingsAction()
 
+    data class SetCompassTrackingEnabled(
+        val enabled: Boolean,
+    ) : SettingsAction()
+
+    data class SetCompassRegion(
+        val cx: Float,
+        val cy: Float,
+        val radius: Float,
+    ) : SettingsAction()
+
     data object SaveChanges : SettingsAction()
 
     data object DiscardChanges : SettingsAction()

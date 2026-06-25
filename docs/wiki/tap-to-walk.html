@@ -57,10 +57,45 @@
     <p>
       The overlay assumes the map you're tapping is oriented with north at the top. If the game
       rotates the map to follow your character, taps may not land in the expected direction.
+      The <strong>Compass orientation</strong> feature below can correct for this automatically.
     </p>
     <p>
       Some apps can detect when location is being mocked and may take action on the account.
       Use this feature only in apps where you understand and accept that risk.
+    </p>
+
+    <h2 id="compass-orientation">Compass orientation</h2>
+    <p>
+      When this is on, locationjoystick takes a screenshot the moment you open the tap-to-walk
+      overlay and looks for the red north arrow in the compass. It uses the arrow's direction to
+      rotate the walk target so it lands in the right place even when the game map is turned.
+    </p>
+
+    <h3 id="compass-setup">Setup</h3>
+    <ol>
+      <li>Go to <strong>Settings → Menus → Tap to Walk</strong>.</li>
+      <li>Make sure <strong>Screen tap-to-walk overlay</strong> is turned on first.</li>
+      <li>Under <strong>Compass orientation</strong>, tap <strong>Open Settings</strong> to open
+          Android's Accessibility Settings.</li>
+      <li>Find <strong>locationjoystick compass</strong> in the list and enable it.</li>
+      <li>Return to locationjoystick — the status will update to <em>Enabled</em>.</li>
+      <li>Turn on <strong>Detect compass orientation</strong>.</li>
+    </ol>
+
+    <h3 id="compass-region">Compass region</h3>
+    <p>
+      By default the app looks for the compass in the top-right corner of the screen. If the game
+      you use puts the compass somewhere else, expand <strong>Compass region (advanced)</strong>
+      in Settings and adjust the horizontal position, vertical position, and radius sliders to
+      match the compass location.
+    </p>
+
+    <h3 id="compass-warning">Important note</h3>
+    <p>
+      Accessibility services can be detected by some apps. If the game you use monitors for
+      accessibility services and restricts features when one is active, turn off
+      <strong>Detect compass orientation</strong> or disable the locationjoystick compass service
+      in Android Accessibility Settings.
     </p>
   </main>
 

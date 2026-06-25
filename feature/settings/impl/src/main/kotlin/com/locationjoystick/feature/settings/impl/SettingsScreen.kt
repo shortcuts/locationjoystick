@@ -233,6 +233,7 @@ fun SettingsRoute(
         onOpenDrawer = onOpenDrawer,
         isSpoofing = spoofToggle.isSpoofing,
         onToggleSpoofing = spoofToggle.onToggle,
+        onCheckCompassService = { viewModel.checkCompassServiceGranted() },
         onAction = { action ->
             when (action) {
                 is SettingsAction.SetWalkSpeed -> {
@@ -363,6 +364,14 @@ fun SettingsRoute(
                     viewModel.setTapToWalkScaleMpx(action.scale)
                 }
 
+                is SettingsAction.SetCompassTrackingEnabled -> {
+                    viewModel.setCompassTrackingEnabled(action.enabled)
+                }
+
+                is SettingsAction.SetCompassRegion -> {
+                    viewModel.setCompassRegion(action.cx, action.cy, action.radius)
+                }
+
                 SettingsAction.Export -> {
                     exportLauncher.launch(
                         "${AppConstants.ExportConstants.FILENAME_PREFIX}-${System.currentTimeMillis()}.json",
@@ -428,6 +437,7 @@ internal fun SettingsScreen(
     isSpoofing: Boolean = false,
     onToggleSpoofing: () -> Unit = {},
     onAction: (SettingsAction) -> Unit,
+    onCheckCompassService: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
 ) {
@@ -472,6 +482,7 @@ internal fun SettingsScreen(
                 isSpoofing = isSpoofing,
                 onToggleSpoofing = onToggleSpoofing,
                 onAction = onAction,
+                onCheckCompassService = onCheckCompassService,
                 bottomBar = bottomBar,
                 snackbarHost = snackbarHost,
             )

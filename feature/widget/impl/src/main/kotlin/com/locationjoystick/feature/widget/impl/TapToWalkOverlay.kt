@@ -30,8 +30,15 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.model.LatLng
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.sin
 
 internal class TapToWalkOverlay(
     private val context: Context,
@@ -42,13 +49,21 @@ internal class TapToWalkOverlay(
     private val getPosition: () -> LatLng?,
     private val getScaleMpx: () -> Double,
     private val onDismissed: () -> Unit,
+    private val getHeadingAsync: (suspend () -> Float?)? = null,
 ) {
     private var overlayView: ComposeView? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var preCapturedHeading: Float? = null
 
     fun isShowing(): Boolean = overlayView?.isAttachedToWindow == true
 
     fun show() {
         if (isShowing()) return
+        if (getHeadingAsync != null) {
+            scope.launch {
+                preCapturedHeading = withTimeoutOrNull(1500L) { getHeadingAsync.invoke() }
+            }
+        }
         val view =
             ComposeView(context).apply {
                 setViewTreeLifecycleOwner(lifecycleOwner)
@@ -59,7 +74,8 @@ internal class TapToWalkOverlay(
                             onTap = { x, y, screenW, screenH ->
                                 val pos = getPosition()
                                 if (pos != null) {
-                                    val newPos = computeWalkTarget(pos, x, y, screenW, screenH, getScaleMpx())
+                                    val northAngle = preCapturedHeading?.toDouble() ?: 0.0
+                                    val newPos = computeWalkTarget(pos, x, y, screenW, screenH, getScaleMpx(), northAngle)
                                     onWalkTo(newPos)
                                 }
                                 dismiss()
@@ -80,6 +96,8 @@ internal class TapToWalkOverlay(
     }
 
     fun dismiss() {
+        scope.coroutineContext.cancelChildren()
+        preCapturedHeading = null
         val had = overlayView != null
         overlayView?.let { view ->
             try {
@@ -108,8 +126,10 @@ internal class TapToWalkOverlay(
 
         /**
          * Converts a screen tap position to a GPS coordinate.
-         * Assumes the game map is north-up. Accuracy depends on game zoom level —
-         * zooming out reduces positioning error per pixel.
+         *
+         * [northAngleRad] is the clockwise angle from screen-up to geographic north
+         * (atan2 of red-pixel centroid offset). Default 0 = north-up map.
+         * Zooming out reduces positioning error per pixel.
          */
         fun computeWalkTarget(
             currentPos: LatLng,
@@ -118,9 +138,12 @@ internal class TapToWalkOverlay(
             screenW: Int,
             screenH: Int,
             metersPerPixel: Double,
+            northAngleRad: Double = 0.0,
         ): LatLng {
-            val dx = (tapX - screenW / 2f) * metersPerPixel
-            val dy = -(tapY - screenH / 2f) * metersPerPixel
+            val rawDx = (tapX - screenW / 2f) * metersPerPixel
+            val rawDy = -(tapY - screenH / 2f) * metersPerPixel
+            val dx = rawDx * cos(northAngleRad) - rawDy * sin(northAngleRad)
+            val dy = rawDx * sin(northAngleRad) + rawDy * cos(northAngleRad)
             val lat = currentPos.latitude + (dy / AppConstants.LocationConstants.EARTH_RADIUS_METERS) * (180.0 / PI)
             val lon =
                 currentPos.longitude +

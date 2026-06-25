@@ -357,4 +357,11 @@ object AppConstants {
         const val MIN_SCALE_MPX = 1
         const val MAX_SCALE_MPX = 50
     }
+
+    object CompassTrackingConstants {
+        const val DEFAULT_REGION_CX_PCT = 0.88f
+        const val DEFAULT_REGION_CY_PCT = 0.09f
+        const val DEFAULT_REGION_RADIUS_PCT = 0.06f
+        const val MIN_RED_PIXELS = 20
+    }
 }

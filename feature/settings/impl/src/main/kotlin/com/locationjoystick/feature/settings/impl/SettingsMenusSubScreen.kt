@@ -1,5 +1,7 @@
 package com.locationjoystick.feature.settings.impl
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
@@ -16,14 +18,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,7 +40,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -43,6 +50,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
@@ -59,9 +68,20 @@ internal fun SettingsMenusSubScreen(
     isSpoofing: Boolean,
     onToggleSpoofing: () -> Unit,
     onAction: (SettingsAction) -> Unit,
+    onCheckCompassService: () -> Unit = {},
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) onCheckCompassService()
+            }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     LjScaffold(
         title = "Menus",
         isSpoofing = isSpoofing,
@@ -154,6 +174,10 @@ private fun TapToWalkSection(
             modifier = Modifier.fillMaxWidth(),
         )
     }
+    if (uiState.tapToWalkOverlayEnabled) {
+        Spacer(Modifier.height(16.dp))
+        CompassOrientationSection(uiState, onAction)
+    }
     if (showOverlayWarning) {
         AlertDialog(
             onDismissRequest = { showOverlayWarning = false },
@@ -174,6 +198,98 @@ private fun TapToWalkSection(
             dismissButton = {
                 TextButton(onClick = { showOverlayWarning = false }) { Text("Cancel") }
             },
+        )
+    }
+}
+
+@Composable
+private fun CompassOrientationSection(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    val context = LocalContext.current
+    var showAdvanced by rememberSaveable { mutableStateOf(false) }
+
+    Text("Compass orientation", style = MaterialTheme.typography.headlineSmall)
+    Spacer(Modifier.height(4.dp))
+    Text(
+        "Takes a screenshot when you open the overlay to detect the map's north direction. " +
+            "Corrects the walk target when the game map is rotated. " +
+            "Requires an Accessibility Service. " +
+            "Note: some games detect accessibility services — disable if you encounter issues.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(8.dp))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                "Accessibility Service",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                if (uiState.isCompassServiceGranted) "Enabled" else "Not enabled — open Android Settings to grant",
+                style = MaterialTheme.typography.bodySmall,
+                color =
+                    if (uiState.isCompassServiceGranted) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+            )
+        }
+        if (!uiState.isCompassServiceGranted) {
+            Spacer(Modifier.width(8.dp))
+            Button(onClick = {
+                context.startActivity(
+                    Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    },
+                )
+            }) { Text("Open Settings") }
+        }
+    }
+    Spacer(Modifier.height(8.dp))
+    LjCheckboxRow(
+        checked = uiState.compassTrackingEnabled,
+        enabled = uiState.isCompassServiceGranted,
+        onCheckedChange = { onAction(SettingsAction.SetCompassTrackingEnabled(it)) },
+        title = "Detect compass orientation",
+        description = "Reads the red north arrow before each walk to correct the target position.",
+    )
+    Spacer(Modifier.height(8.dp))
+    TextButton(onClick = { showAdvanced = !showAdvanced }) {
+        Text(if (showAdvanced) "Hide advanced" else "Compass region (advanced)")
+    }
+    if (showAdvanced) {
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Adjust if the compass is not at the default top-right position.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text("Horizontal position: ${"%.2f".format(uiState.compassRegionCxPct)}", style = MaterialTheme.typography.bodySmall)
+        Slider(
+            value = uiState.compassRegionCxPct,
+            onValueChange = { onAction(SettingsAction.SetCompassRegion(it, uiState.compassRegionCyPct, uiState.compassRegionRadiusPct)) },
+            valueRange = 0f..1f,
+        )
+        Text("Vertical position: ${"%.2f".format(uiState.compassRegionCyPct)}", style = MaterialTheme.typography.bodySmall)
+        Slider(
+            value = uiState.compassRegionCyPct,
+            onValueChange = { onAction(SettingsAction.SetCompassRegion(uiState.compassRegionCxPct, it, uiState.compassRegionRadiusPct)) },
+            valueRange = 0f..1f,
+        )
+        Text("Radius: ${"%.3f".format(uiState.compassRegionRadiusPct)}", style = MaterialTheme.typography.bodySmall)
+        Slider(
+            value = uiState.compassRegionRadiusPct,
+            onValueChange = { onAction(SettingsAction.SetCompassRegion(uiState.compassRegionCxPct, uiState.compassRegionCyPct, it)) },
+            valueRange = 0.02f..0.2f,
         )
     }
 }

@@ -1,7 +1,10 @@
 package com.locationjoystick.feature.settings.impl
 
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.content.Context
 import android.net.Uri
 import android.util.Log
+import android.view.accessibility.AccessibilityManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
@@ -20,6 +23,7 @@ import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +51,7 @@ class SettingsViewModel
         private val exportSyncServer: ExportSyncServer,
         private val exportSyncClient: ExportSyncClient,
         private val nsdCodeManager: NsdCodeManager,
+        @ApplicationContext private val context: Context,
     ) : ViewModel() {
         companion object {
             private const val TAG = "SettingsViewModel"
@@ -63,6 +68,8 @@ class SettingsViewModel
 
         private val _isRooted = MutableStateFlow(false)
         val isRooted: StateFlow<Boolean> = _isRooted.asStateFlow()
+
+        private val compassServiceGranted = MutableStateFlow(false)
 
         init {
             _isRooted.value = sensorPermissionBootstrap.isGranted()
@@ -140,11 +147,27 @@ class SettingsViewModel
                     initialValue = RoamingDefaults(),
                 )
 
+        private data class CompassPrefsState(
+            val enabled: Boolean = false,
+            val cx: Float = AppConstants.CompassTrackingConstants.DEFAULT_REGION_CX_PCT,
+            val cy: Float = AppConstants.CompassTrackingConstants.DEFAULT_REGION_CY_PCT,
+            val radius: Float = AppConstants.CompassTrackingConstants.DEFAULT_REGION_RADIUS_PCT,
+        )
+
+        private val compassPrefsFlow =
+            combine(
+                settingsRepository.getCompassTrackingEnabled(),
+                settingsRepository.getCompassRegionCxPct(),
+                settingsRepository.getCompassRegionCyPct(),
+                settingsRepository.getCompassRegionRadiusPct(),
+            ) { enabled, cx, cy, radius -> CompassPrefsState(enabled, cx, cy, radius) }
+
         val uiState: StateFlow<SettingsUiState> =
             combine(
-                snapshotFlow,
-                draftStateFlow,
-            ) { snapshot, draftState ->
+                combine(snapshotFlow, draftStateFlow) { snapshot, draft -> Pair(snapshot, draft) },
+                compassPrefsFlow,
+                compassServiceGranted,
+            ) { (snapshot, draftState), compass, isServiceGranted ->
                 val isDirty = draftState != DraftState()
                 SettingsUiState(
                     isLoading = false,
@@ -178,6 +201,11 @@ class SettingsViewModel
                     floatingMapQuickWalk = draftState.floatingMapQuickWalk ?: snapshot.floatingMapQuickWalk,
                     tapToWalkOverlayEnabled = draftState.tapToWalkOverlayEnabled ?: snapshot.tapToWalkOverlayEnabled,
                     tapToWalkScaleMpx = draftState.tapToWalkScaleMpx ?: snapshot.tapToWalkScaleMpx,
+                    compassTrackingEnabled = compass.enabled,
+                    isCompassServiceGranted = isServiceGranted,
+                    compassRegionCxPct = compass.cx,
+                    compassRegionCyPct = compass.cy,
+                    compassRegionRadiusPct = compass.radius,
                     isDirty = isDirty,
                 )
             }.stateIn(
@@ -332,6 +360,31 @@ class SettingsViewModel
 
         fun setTapToWalkScaleMpx(scale: Int) {
             mutableDraft.update { it.copy(tapToWalkScaleMpx = scale) }
+        }
+
+        fun setCompassTrackingEnabled(enabled: Boolean) {
+            viewModelScope.launch { settingsRepository.setCompassTrackingEnabled(enabled) }
+        }
+
+        fun setCompassRegion(
+            cx: Float,
+            cy: Float,
+            radius: Float,
+        ) {
+            viewModelScope.launch {
+                settingsRepository.setCompassRegionCxPct(cx)
+                settingsRepository.setCompassRegionCyPct(cy)
+                settingsRepository.setCompassRegionRadiusPct(radius)
+            }
+        }
+
+        fun checkCompassServiceGranted() {
+            val am = context.getSystemService(AccessibilityManager::class.java)
+            compassServiceGranted.value =
+                am
+                    ?.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+                    ?.any { it.id.contains("CompassAccessibilityService") }
+                    ?: false
         }
 
         val hotRouteTree: HotItemTree =

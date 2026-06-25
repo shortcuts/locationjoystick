@@ -37,5 +37,10 @@ data class SettingsUiState(
     val floatingMapQuickWalk: Boolean = false,
     val tapToWalkOverlayEnabled: Boolean = false,
     val tapToWalkScaleMpx: Int = AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX,
+    val compassTrackingEnabled: Boolean = false,
+    val isCompassServiceGranted: Boolean = false,
+    val compassRegionCxPct: Float = AppConstants.CompassTrackingConstants.DEFAULT_REGION_CX_PCT,
+    val compassRegionCyPct: Float = AppConstants.CompassTrackingConstants.DEFAULT_REGION_CY_PCT,
+    val compassRegionRadiusPct: Float = AppConstants.CompassTrackingConstants.DEFAULT_REGION_RADIUS_PCT,
     val isDirty: Boolean = false,
 )

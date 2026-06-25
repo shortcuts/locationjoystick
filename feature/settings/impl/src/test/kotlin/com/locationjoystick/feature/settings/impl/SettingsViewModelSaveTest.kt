@@ -74,6 +74,7 @@ class SettingsViewModelSaveTest {
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
+                context = context,
             )
     }
 
@@ -560,4 +561,20 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getTapToWalkOverlayEnabled(): Flow<Boolean> = flowOf(false)
 
     override fun getTapToWalkScaleMpx(): Flow<Int> = flowOf(AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
+
+    override fun getCompassTrackingEnabled(): Flow<Boolean> = flowOf(false)
+
+    override suspend fun setCompassTrackingEnabled(enabled: Boolean) = Unit
+
+    override fun getCompassRegionCxPct(): Flow<Float> = flowOf(AppConstants.CompassTrackingConstants.DEFAULT_REGION_CX_PCT)
+
+    override suspend fun setCompassRegionCxPct(cx: Float) = Unit
+
+    override fun getCompassRegionCyPct(): Flow<Float> = flowOf(AppConstants.CompassTrackingConstants.DEFAULT_REGION_CY_PCT)
+
+    override suspend fun setCompassRegionCyPct(cy: Float) = Unit
+
+    override fun getCompassRegionRadiusPct(): Flow<Float> = flowOf(AppConstants.CompassTrackingConstants.DEFAULT_REGION_RADIUS_PCT)
+
+    override suspend fun setCompassRegionRadiusPct(radius: Float) = Unit
 }

@@ -24,6 +24,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.location.CompassHeadingSource
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationIntentBuilder
 import com.locationjoystick.core.location.MockLocationService
@@ -102,6 +103,8 @@ class FloatingWidgetService :
 
     @Inject lateinit var mapController: MapController
 
+    @Inject lateinit var compassHeadingSource: CompassHeadingSource
+
     private var composeView: ComposeView? = null
 
     // Joystick state
@@ -123,6 +126,10 @@ class FloatingWidgetService :
 
     private val isTapToWalkActiveFlow = MutableStateFlow(false)
     private lateinit var tapToWalkScaleMpx: StateFlow<Int>
+    private lateinit var compassTrackingEnabled: StateFlow<Boolean>
+    private lateinit var compassRegionCx: StateFlow<Float>
+    private lateinit var compassRegionCy: StateFlow<Float>
+    private lateinit var compassRegionRadius: StateFlow<Float>
     private var tapToWalkOverlay: TapToWalkOverlay? = null
 
     // Drag position — class-level so onConfigurationChanged can read them after rotation.
@@ -167,6 +174,22 @@ class FloatingWidgetService :
             settingsRepository
                 .getTapToWalkScaleMpx()
                 .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
+        compassTrackingEnabled =
+            settingsRepository
+                .getCompassTrackingEnabled()
+                .stateIn(lifecycleScope, SharingStarted.Eagerly, false)
+        compassRegionCx =
+            settingsRepository
+                .getCompassRegionCxPct()
+                .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.CompassTrackingConstants.DEFAULT_REGION_CX_PCT)
+        compassRegionCy =
+            settingsRepository
+                .getCompassRegionCyPct()
+                .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.CompassTrackingConstants.DEFAULT_REGION_CY_PCT)
+        compassRegionRadius =
+            settingsRepository
+                .getCompassRegionRadiusPct()
+                .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.CompassTrackingConstants.DEFAULT_REGION_RADIUS_PCT)
         serviceBinder.bind()
         lifecycleScope.launch {
             settingsRepository.getActiveSpeedProfile().collect { profile ->
@@ -368,6 +391,18 @@ class FloatingWidgetService :
                     getPosition = { mapController.sharedState.value.currentPosition },
                     getScaleMpx = { tapToWalkScaleMpx.value.toDouble() },
                     onDismissed = { isTapToWalkActiveFlow.value = false },
+                    getHeadingAsync =
+                        if (compassTrackingEnabled.value) {
+                            {
+                                compassHeadingSource.captureHeading(
+                                    cx = compassRegionCx.value,
+                                    cy = compassRegionCy.value,
+                                    radius = compassRegionRadius.value,
+                                )
+                            }
+                        } else {
+                            null
+                        },
                 )
             tapToWalkOverlay = overlay
             isTapToWalkActiveFlow.value = true
