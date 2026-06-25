@@ -127,13 +127,13 @@ class SettingsSmokeTest : BaseSmokeTest() {
     fun settings_shows_favorites_section() {
         composeRule.onNodeWithText("Favorites & Routes").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Favorites").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Options for the favorites list.").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_routes_section() {
         composeRule.onNodeWithText("Favorites & Routes").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Routes").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Options for the routes list.").performScrollTo().assertIsDisplayed()
     }
 }
