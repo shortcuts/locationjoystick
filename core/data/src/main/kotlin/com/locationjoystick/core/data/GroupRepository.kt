@@ -10,6 +10,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -103,6 +104,7 @@ class GroupRepository
             _pendingGroupInvite.tryEmit(invite)
         }
 
+        @OptIn(ExperimentalCoroutinesApi::class)
         fun consumeGroupInvite() {
             _pendingGroupInvite.resetReplayCache()
         }

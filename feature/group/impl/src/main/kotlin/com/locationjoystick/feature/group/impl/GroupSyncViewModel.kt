@@ -21,6 +21,7 @@ import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -35,10 +36,11 @@ private const val TAG = "GroupSyncViewModel"
 private const val QR_SIZE = 512
 
 @HiltViewModel
+@OptIn(ExperimentalCoroutinesApi::class)
 class GroupSyncViewModel
     @Inject
     constructor(
-        @ApplicationContext private val context: Context,
+        @param:ApplicationContext private val context: Context,
         private val groupRepository: GroupRepository,
         private val groupNsdManager: NsdCodeManager,
         private val leaderSyncServer: LeaderSyncServer,
