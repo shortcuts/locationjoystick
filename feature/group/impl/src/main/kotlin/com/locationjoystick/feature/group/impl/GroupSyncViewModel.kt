@@ -85,6 +85,11 @@ class GroupSyncViewModel
                     handlePendingInvite(invite)
                 }
             }
+            viewModelScope.launch {
+                groupRepository.groupLostEvent.collect {
+                    _errorMessage.value = "Disconnected from group — leader is no longer reachable"
+                }
+            }
         }
 
         fun createGroup() {

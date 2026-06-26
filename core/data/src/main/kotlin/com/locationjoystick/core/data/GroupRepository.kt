@@ -106,4 +106,11 @@ class GroupRepository
         fun consumeGroupInvite() {
             _pendingGroupInvite.resetReplayCache()
         }
+
+        private val _groupLostEvent = MutableSharedFlow<Unit>()
+        val groupLostEvent = _groupLostEvent.asSharedFlow()
+
+        fun emitGroupLost() {
+            _groupLostEvent.tryEmit(Unit)
+        }
     }

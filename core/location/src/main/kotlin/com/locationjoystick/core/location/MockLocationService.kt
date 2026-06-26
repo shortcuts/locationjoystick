@@ -635,6 +635,7 @@ class MockLocationService : Service() {
                     serviceScope.launch {
                         exitFollowerMode()
                         groupRepository.leaveGroup()
+                        groupRepository.emitGroupLost()
                     }
                 },
             ) { lat, lon, speedMs, bearing ->
