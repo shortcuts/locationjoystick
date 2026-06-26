@@ -67,6 +67,7 @@ class GroupSyncViewModelTest {
 
         every { groupRepository.groupState } returns groupStateFlow
         every { groupRepository.pendingGroupInvite } returns pendingInviteFlow
+        every { groupRepository.groupLostEvent } returns MutableSharedFlow()
         every { leaderSyncServer.followerCount } returns leaderFollowerCount
         every { followerSyncClient.followerCount } returns followerFollowerCount
 

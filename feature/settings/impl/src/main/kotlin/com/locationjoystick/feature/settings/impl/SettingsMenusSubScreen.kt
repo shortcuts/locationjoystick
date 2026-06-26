@@ -247,7 +247,12 @@ private fun CompassOrientationSection(
             Text(
                 if (uiState.isCompassServiceGranted) "Enabled" else "Not enabled — tap to open Android Settings",
                 style = MaterialTheme.typography.bodySmall,
-                color = if (uiState.isCompassServiceGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                color =
+                    if (uiState.isCompassServiceGranted) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
         }
         if (!uiState.isCompassServiceGranted) {
