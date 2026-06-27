@@ -5,6 +5,7 @@ import android.provider.Settings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -366,6 +367,7 @@ private fun PhoneScreenPreview(
             Modifier
                 .fillMaxWidth()
                 .aspectRatio(9f / 16f)
+                .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
                 .clip(RoundedCornerShape(8.dp))
                 .background(bgColor)
                 .pointerInput(Unit) {
