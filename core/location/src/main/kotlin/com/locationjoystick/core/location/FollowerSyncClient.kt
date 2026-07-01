@@ -40,6 +40,8 @@ class FollowerSyncClient
         private var lastSeq: Long = -1L
         private var consecutiveFailures = 0
 
+        val isPolling: Boolean get() = pollJob?.isActive == true
+
         private val _followerCount = MutableStateFlow(0)
         val followerCount: StateFlow<Int> = _followerCount.asStateFlow()
 

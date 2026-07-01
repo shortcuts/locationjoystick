@@ -71,6 +71,7 @@ class GroupSyncViewModel
         init {
             viewModelScope.launch {
                 var leaderRestoreSent = false
+                var followerRestoreSent = false
                 groupRepository.groupState.collect { state ->
                     _groupState.value = state
                     val host = state.leaderHost
@@ -87,6 +88,18 @@ class GroupSyncViewModel
                             sendServiceAction(AppConstants.ServiceConstants.ACTION_START_LEADER) { intent ->
                                 intent.putExtra(AppConstants.ServiceConstants.EXTRA_LEADER_GROUP_ID, id)
                             }
+                            return@collect
+                        }
+                    }
+                    // On the first emission where we're a follower with follow mode enabled, check
+                    // whether the client is actually polling. After a reboot, the service may have
+                    // failed NSD re-discovery silently (leader not yet advertising) and stayed idle
+                    // while DataStore still says followerModeEnabled=true. Re-trigger follow mode so
+                    // NSD runs again with more time elapsed and the leader is reachable.
+                    if (state.role == GroupRole.FOLLOWER && state.followerModeEnabled && !followerRestoreSent) {
+                        followerRestoreSent = true
+                        if (!followerSyncClient.isPolling) {
+                            setFollowerModeEnabled(true)
                             return@collect
                         }
                     }
