@@ -47,7 +47,7 @@ internal fun SettingsGpsSubScreen(
     snackbarHost: @Composable () -> Unit,
 ) {
     LjScaffold(
-        title = "GPS Settings",
+        title = "Movement & GPS",
         isSpoofing = isSpoofing,
         onToggleSpoofing = onToggleSpoofing,
         locationLabel = locationLabel,
@@ -75,10 +75,12 @@ internal fun SettingsGpsSubScreen(
                         SpeedProfilesSection(uiState, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
                         GpsJitterSection(uiState, isMph, onAction)
-                        if (AppFeature.ELEVATION_CONTROLS in uiState.enabledWidgetFeatures) {
-                            Spacer(modifier = Modifier.height(24.dp))
-                            ElevationJitterSection(uiState, elevationControlsEnabled = true, onAction)
-                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                        ElevationJitterSection(
+                            uiState = uiState,
+                            elevationControlsEnabled = AppFeature.ELEVATION_CONTROLS in uiState.enabledWidgetFeatures,
+                            onAction = onAction,
+                        )
                         Spacer(modifier = Modifier.height(24.dp))
                         GpsRealismSection(uiState, isRooted, onAction)
                         Spacer(modifier = Modifier.height(24.dp))

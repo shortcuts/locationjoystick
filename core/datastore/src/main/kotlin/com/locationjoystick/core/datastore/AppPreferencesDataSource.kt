@@ -739,7 +739,8 @@ class AppPreferencesDataSource
 
         override fun getTapToWalkOverlayEnabled(): Flow<Boolean> = pref(Keys.TAP_TO_WALK_OVERLAY_ENABLED, false)
 
-        override fun getTapToWalkScaleMpx(): Flow<Double> = pref(Keys.TAP_TO_WALK_SCALE_MPX, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
+        override fun getTapToWalkScaleMpx(): Flow<Double> =
+            pref(Keys.TAP_TO_WALK_SCALE_MPX, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
 
         override fun getCompassTrackingEnabled(): Flow<Boolean> = pref(Keys.COMPASS_TRACKING_ENABLED, false)
 

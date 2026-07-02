@@ -58,7 +58,7 @@ import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.RoamingDefaults
 
-private enum class SettingsSection { GPS, MENUS, FAVORITES_ROUTES }
+private enum class SettingsSection { GPS, MENUS, FAVORITES_ROUTES, ROAMING }
 
 private sealed class PendingImport {
     data class File(
@@ -496,9 +496,22 @@ internal fun SettingsScreen(
         SettingsSection.FAVORITES_ROUTES -> {
             SettingsFavoritesRoutesSubScreen(
                 uiState = uiState,
-                roamingDefaults = roamingDefaults,
                 hotLocationTree = hotLocationTree,
                 hotRouteTree = hotRouteTree,
+                onNavigateBack = { currentSection = null },
+                isSpoofing = isSpoofing,
+                onToggleSpoofing = onToggleSpoofing,
+                locationLabel = locationLabel,
+                onAction = onAction,
+                bottomBar = bottomBar,
+                snackbarHost = snackbarHost,
+            )
+        }
+
+        SettingsSection.ROAMING -> {
+            SettingsRoamingSubScreen(
+                uiState = uiState,
+                roamingDefaults = roamingDefaults,
                 onNavigateBack = { currentSection = null },
                 isSpoofing = isSpoofing,
                 onToggleSpoofing = onToggleSpoofing,
@@ -636,24 +649,31 @@ private fun SettingsHubScreen(
             )
             Spacer(modifier = Modifier.height(28.dp))
             SettingsDestinationCard(
-                icon = LjIcons.LocationOn,
-                title = "GPS Settings",
-                description = "Movement speed, signal behavior, and location randomness.",
+                icon = LjIcons.Speed,
+                title = "Movement & GPS",
+                description = "Speed presets, signal realism, and location randomness for all movement modes.",
                 onClick = { onNavigate(SettingsSection.GPS) },
             )
             Spacer(modifier = Modifier.height(12.dp))
             SettingsDestinationCard(
                 icon = LjIcons.Joystick,
                 title = "Menus",
-                description = "Quick-access buttons in the floating widget and map screen.",
+                description = "Which features appear in the floating widget and map buttons, and how to trigger walks by tapping.",
                 onClick = { onNavigate(SettingsSection.MENUS) },
             )
             Spacer(modifier = Modifier.height(12.dp))
             SettingsDestinationCard(
                 icon = LjIcons.Favorite,
                 title = "Favorites & Routes",
-                description = "Hot locations and default roaming settings.",
+                description = "Curated hot locations and pre-built routes to populate your library.",
                 onClick = { onNavigate(SettingsSection.FAVORITES_ROUTES) },
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            SettingsDestinationCard(
+                icon = LjIcons.Explore,
+                title = "Roaming",
+                description = "Default area, distance, speed, and routing style for random walks.",
+                onClick = { onNavigate(SettingsSection.ROAMING) },
             )
 
             Spacer(modifier = Modifier.height(24.dp))

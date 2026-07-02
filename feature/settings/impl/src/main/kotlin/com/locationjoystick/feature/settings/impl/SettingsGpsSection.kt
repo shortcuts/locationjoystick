@@ -109,6 +109,8 @@ internal fun GpsJitterSection(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(modifier = Modifier.height(8.dp))
+    Text("Position jitter", style = MaterialTheme.typography.labelLarge)
+    Spacer(modifier = Modifier.height(4.dp))
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         JitterInput(
             value = if (isMph) uiState.jitterIdleRadiusMeters * 3.28084 else uiState.jitterIdleRadiusMeters,
@@ -139,6 +141,8 @@ internal fun GpsJitterSection(
         )
     }
     Spacer(modifier = Modifier.height(8.dp))
+    Text("Speed variation", style = MaterialTheme.typography.labelLarge)
+    Spacer(modifier = Modifier.height(4.dp))
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         JitterInput(
             value = uiState.jitterSpeedIdleVariationPct.toDouble(),

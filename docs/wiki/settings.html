@@ -13,18 +13,22 @@
 
   <main>
     <h2 id="settings">Settings</h2>
-    <p>Configure speed profiles, GPS realism, widget controls, and data export/import.</p>
+    <p>Configure speed profiles, GPS realism, widget controls, roaming defaults, and data export/import. The Settings hub organizes configuration into four sub-screens: Movement & GPS, Menus, Favorites & Routes, and Roaming.</p>
 
     <div class="feature-section" id="settings-main">
       <img class="phone-shot" src="screenshots/05_settings.png" alt="Settings screen">
       <ul class="section-bullets">
-        <li>Edit Walk, Run, and Bike speed presets used by the joystick, routes, and roaming.</li>
-        <li>Toggle GPS realism features independently: bearing hold, altitude drift, warm-up envelope, satellite count, signal dropouts.</li>
-        <li>Choose which features appear in the floating widget and on the map, and drag to reorder them.</li>
+        <li><strong>Movement & GPS:</strong> Edit Walk, Run, and Bike speed presets used by the joystick, routes, and roaming. Toggle GPS realism features independently: bearing hold, altitude drift, warm-up envelope, satellite count, signal dropouts.</li>
+        <li><strong>Menus:</strong> Choose which features appear in the floating widget and on the map, and drag to reorder them.</li>
+        <li><strong>Favorites & Routes:</strong> Enable curated hot locations and routes for quick access.</li>
+        <li><strong>Roaming:</strong> Configure default area, distance, speed profile, road-following, and auto-return behavior for roaming sessions.</li>
       </ul>
     </div>
 
-    <h2 id="speed-profiles">Speed Profiles</h2>
+    <h2 id="speed-profiles">Movement & GPS</h2>
+    <p>Combines speed profile configuration with GPS realism settings. Configure the movement speeds and customize how the spoofed signal behaves.</p>
+
+    <h3 id="speed-profiles">Speed Profiles</h3>
     <p>Sets the movement speed for joystick, route replay, and roaming. Changes apply immediately.</p>
 
     <table class="option-table">
@@ -63,7 +67,7 @@
       The warning applies independently to each of the three profiles. You can dismiss it by lowering the speed below 29 km/h, or ignore it if speed detection is not a concern. The app does not impose any speed limit — 54 km/h is the maximum the input field accepts.
     </p>
 
-    <h2 id="gps-jitter">GPS Jitter</h2>
+    <h3 id="gps-jitter">Location Randomness</h3>
     <p>Adds small random variations to each location update to simulate natural GPS drift. Set any value to 0 to disable that dimension of variation.</p>
 
     <table class="option-table">
@@ -96,7 +100,7 @@
       </tbody>
     </table>
 
-    <h2 id="elevation-jitter">Elevation Jitter</h2>
+    <h3 id="elevation-jitter">Elevation Jitter</h3>
     <p>Fine-tunes the natural variation applied by Elevation Controls. Only active when Elevation Controls is enabled in the App Features section. Requires root.</p>
 
     <table class="option-table">
@@ -113,7 +117,7 @@
       </tbody>
     </table>
 
-    <h2 id="gps-realism">GPS Realism</h2>
+    <h3 id="gps-realism">GPS Realism</h3>
     <p>Independent toggles that make the spoofed GPS signal behave more like a real hardware chip. Some apps and games inspect these fields to detect mock providers — enabling all options reduces the chance of detection.</p>
 
     <table class="option-table">
@@ -141,19 +145,6 @@
         </tr>
       </tbody>
     </table>
-
-    <h2 id="background-service">Background service</h2>
-    <p>
-      Once spoofing is started, the app keeps running in the background while you use other apps or the screen is off.
-      A persistent notification shows that spoofing is active — tap "Stop" in the notification to end it without opening the app.
-    </p>
-    <p>
-      If Android stops the app in the background (common on devices with aggressive battery management), spoofing stops
-      and your location reverts to real GPS. Re-open the app to restart.
-    </p>
-    <p>
-      Routes, roaming, and walk-to all continue uninterrupted while the screen is off or another app is in the foreground.
-    </p>
 
     <h2 id="map">Map</h2>
     <p>Controls how the in-app map behaves while spoofing is active.</p>
@@ -185,13 +176,8 @@
       </tbody>
     </table>
 
-    <h2 id="app-features">App Features</h2>
-    <p>
-      Selects which quick-access features appear in the floating widget overlay and on the map screen, and in what
-      order. Each feature has its own checkbox for the widget and for the map — turn either on independently — plus
-      a drag handle on the left so you can reorder the whole list by dragging. Both surfaces follow the same order,
-      so reordering once keeps everything consistent.
-    </p>
+    <h2 id="menus">Menus</h2>
+    <p>Selects which quick-access features appear in the floating widget overlay and on the map screen, and in what order. Each feature has its own checkbox for the widget and for the map — turn either on independently — plus a drag handle on the left so you can reorder the whole list by dragging. Both surfaces follow the same order, so reordering once keeps everything consistent.</p>
 
     <table class="option-table">
       <thead><tr><th>Feature</th><th>Icon</th><th>Description</th></tr></thead>
@@ -245,8 +231,11 @@
     </table>
     <p>Starting and stopping location simulation is always available from the bar at the top of every screen, so it isn't one of the configurable features above.</p>
 
-    <h2 id="roaming-defaults">Roaming defaults</h2>
-    <p>Default values pre-filled in the roaming setup sheet when starting a roaming session from the map.</p>
+    <h2 id="favorites-routes">Favorites & Routes</h2>
+    <p>Enables curated hot locations and routes for quick access.</p>
+
+    <h2 id="roaming">Roaming</h2>
+    <p>Configure default area, distance, speed profile, road-following, and auto-return behavior for roaming sessions.</p>
 
     <table class="option-table">
       <thead><tr><th>Option</th><th>Description</th></tr></thead>
