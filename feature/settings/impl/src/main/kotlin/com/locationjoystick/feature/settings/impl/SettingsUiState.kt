@@ -27,8 +27,6 @@ data class SettingsUiState(
     val realismPedometerMockingEnabled: Boolean = AppConstants.RealismConstants.PEDOMETER_MOCKING_ENABLED_DEFAULT,
     val jitterSpeedIdleVariationPct: Int = AppConstants.JitterConstants.SPEED_IDLE_VARIATION_PCT_DEFAULT,
     val jitterSpeedMovingVariationPct: Int = AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT,
-    val elevationTiltJitterDegrees: Float = AppConstants.ElevationConstants.DEFAULT_TILT_JITTER_DEGREES,
-    val elevationNoiseAmplitudeMs2: Float = AppConstants.ElevationConstants.DEFAULT_NOISE_AMPLITUDE_MS2,
     val hotLocationsEnabled: Boolean = false,
     val selectedHotLocationIds: Set<String> = emptySet(),
     val hotRoutesEnabled: Boolean = false,

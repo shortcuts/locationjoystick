@@ -57,7 +57,6 @@ import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.model.AppFeature
-import com.locationjoystick.core.model.ElevationMode
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 
@@ -72,11 +71,9 @@ internal fun WidgetPanel(
     isActivityPausable: Boolean,
     routeExpanded: Boolean,
     isPanelExpanded: Boolean,
-    elevationMode: ElevationMode?,
     hasPendingCompletion: Boolean,
     onToggleMaster: () -> Unit,
     onFeatureClicked: (AppFeature) -> Unit,
-    onElevationModeSelected: (ElevationMode?) -> Unit,
     onRouteClicked: () -> Unit,
     onRoutePauseResume: () -> Unit,
     onRouteStop: () -> Unit,
@@ -196,30 +193,6 @@ internal fun WidgetPanel(
                                     modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
                                 )
                             }
-                        }
-                    }
-                } else if (feature == AppFeature.ELEVATION_CONTROLS) {
-                    listOf(
-                        Triple(ElevationMode.TiltUp, LjIcons.ElevationUp, "Tilt up"),
-                        Triple(ElevationMode.Neutral, LjIcons.ElevationNeutral, "Neutral"),
-                        Triple(ElevationMode.TiltDown, LjIcons.ElevationDown, "Tilt down"),
-                    ).forEach { (mode, icon, desc) ->
-                        val tint = if (elevationMode == mode) MaterialTheme.colorScheme.primary else LjInactive
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier =
-                                Modifier
-                                    .padding(4.dp)
-                                    .size(UiConstants.FAB_CONTAINER_SIZE)
-                                    .background(Color.Black, CircleShape)
-                                    .clickable { onElevationModeSelected(if (elevationMode == mode) null else mode) },
-                        ) {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = desc,
-                                tint = tint,
-                                modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
-                            )
                         }
                     }
                 } else {
@@ -634,10 +607,6 @@ private fun featureIconAndState(
             Pair(LjIcons.LocationOn, true)
         }
 
-        AppFeature.ELEVATION_CONTROLS -> {
-            Pair(LjIcons.Layers, false)
-        }
-
         AppFeature.ROAMING, AppFeature.SEARCH -> {
             error("$feature is map-only and never appears in the widget panel")
         }
@@ -651,6 +620,5 @@ private fun AppFeature.toContentDescription(): String =
         AppFeature.FAVORITES -> "Favorites picker"
         AppFeature.SPEED_CYCLE -> "Speed cycle"
         AppFeature.MAP_FLOATING -> "Open map"
-        AppFeature.ELEVATION_CONTROLS -> "Elevation controls"
         AppFeature.ROAMING, AppFeature.SEARCH -> error("$this is map-only and never appears in the widget panel")
     }

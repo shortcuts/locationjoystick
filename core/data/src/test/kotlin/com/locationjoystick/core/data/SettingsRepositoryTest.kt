@@ -843,46 +843,6 @@ class SettingsRepositoryTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
-
-    // elevation
-
-    @Test
-    fun `getElevationTiltJitterDegrees returns default`() =
-        runTest {
-            repository.getElevationTiltJitterDegrees().test {
-                assertEquals(AppPreferencesDataSource.DEFAULT_ELEVATION_TILT_JITTER_DEGREES, awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `setElevationTiltJitterDegrees persists value`() =
-        runTest {
-            repository.setElevationTiltJitterDegrees(3.0f)
-            repository.getElevationTiltJitterDegrees().test {
-                assertEquals(3.0f, awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `getElevationNoiseAmplitudeMs2 returns default`() =
-        runTest {
-            repository.getElevationNoiseAmplitudeMs2().test {
-                assertEquals(AppPreferencesDataSource.DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2, awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `setElevationNoiseAmplitudeMs2 persists value`() =
-        runTest {
-            repository.setElevationNoiseAmplitudeMs2(0.5f)
-            repository.getElevationNoiseAmplitudeMs2().test {
-                assertEquals(0.5f, awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
 }
 
 class FakeAppPreferencesDataSource : PreferencesDataSource {
@@ -1127,31 +1087,6 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
             )
     }
 
-    private val elevationTiltJitterDegreesFlow =
-        MutableStateFlow(AppPreferencesDataSource.DEFAULT_ELEVATION_TILT_JITTER_DEGREES)
-    private val elevationNoiseAmplitudeMs2Flow =
-        MutableStateFlow(AppPreferencesDataSource.DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2)
-
-    override fun getElevationTiltJitterDegrees(): Flow<Float> = elevationTiltJitterDegreesFlow
-
-    override suspend fun setElevationTiltJitterDegrees(degrees: Float) {
-        elevationTiltJitterDegreesFlow.value =
-            degrees.coerceIn(
-                AppConstants.ElevationConstants.MIN_TILT_JITTER_DEGREES,
-                AppConstants.ElevationConstants.MAX_TILT_JITTER_DEGREES,
-            )
-    }
-
-    override fun getElevationNoiseAmplitudeMs2(): Flow<Float> = elevationNoiseAmplitudeMs2Flow
-
-    override suspend fun setElevationNoiseAmplitudeMs2(amplitude: Float) {
-        elevationNoiseAmplitudeMs2Flow.value =
-            amplitude.coerceIn(
-                AppConstants.ElevationConstants.MIN_NOISE_AMPLITUDE_MS2,
-                AppConstants.ElevationConstants.MAX_NOISE_AMPLITUDE_MS2,
-            )
-    }
-
     private val hotLocationsEnabledFlow = MutableStateFlow(false)
 
     override fun getHotLocationsEnabled(): Flow<Boolean> = hotLocationsEnabledFlow
@@ -1234,8 +1169,6 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
                 realismPedometerMockingEnabled = false,
                 jitterSpeedIdleVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,
                 jitterSpeedMovingVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT,
-                elevationTiltJitterDegrees = AppPreferencesDataSource.DEFAULT_ELEVATION_TILT_JITTER_DEGREES,
-                elevationNoiseAmplitudeMs2 = AppPreferencesDataSource.DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2,
                 hotLocationsEnabled = false,
                 selectedHotLocationIds = emptySet(),
                 hotRoutesEnabled = false,

@@ -340,19 +340,6 @@ object AppConstants {
         const val EXPORT_FETCH_TIMEOUT_MS = 8000L
     }
 
-    object ElevationConstants {
-        const val DEFAULT_TILT_DEGREES = 45f
-        const val MIN_TILT_DEGREES = 20f
-        const val MAX_TILT_DEGREES = 75f
-        const val DEFAULT_NOISE_AMPLITUDE_MS2 = 0.35f
-        const val DEFAULT_TILT_JITTER_DEGREES = 2.25f
-        const val MIN_TILT_JITTER_DEGREES = 0f
-        const val MAX_TILT_JITTER_DEGREES = 10f
-        const val MIN_NOISE_AMPLITUDE_MS2 = 0f
-        const val MAX_NOISE_AMPLITUDE_MS2 = 2f
-        const val GRAVITY = 9.80665f
-    }
-
     object TapToWalkConstants {
         // Calibrated for Pokémon Go fully zoomed out: two pokéstops ~40.5 m apart spanning ~173 px → 0.23 m/px.
         const val DEFAULT_SCALE_MPX = 0.23

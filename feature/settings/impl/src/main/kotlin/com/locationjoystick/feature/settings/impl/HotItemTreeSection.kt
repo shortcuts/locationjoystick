@@ -3,6 +3,9 @@ package com.locationjoystick.feature.settings.impl
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -79,7 +82,7 @@ internal fun HotItemTreeSection(
                 expandedCountries = if (isCountryExpanded) expandedCountries - country else expandedCountries + country
             }) {
                 Icon(
-                    imageVector = if (isCountryExpanded) LjIcons.ElevationUp else LjIcons.ElevationDown,
+                    imageVector = if (isCountryExpanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
                     contentDescription = if (isCountryExpanded) "Collapse" else "Expand",
                 )
             }
@@ -117,7 +120,7 @@ internal fun HotItemTreeSection(
                             expandedCities = if (isCityExpanded) expandedCities - cityKey else expandedCities + cityKey
                         }) {
                             Icon(
-                                imageVector = if (isCityExpanded) LjIcons.ElevationUp else LjIcons.ElevationDown,
+                                imageVector = if (isCityExpanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
                                 contentDescription = if (isCityExpanded) "Collapse" else "Expand",
                             )
                         }

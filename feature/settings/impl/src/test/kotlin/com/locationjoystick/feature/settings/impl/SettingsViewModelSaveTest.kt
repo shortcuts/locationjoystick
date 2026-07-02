@@ -189,8 +189,6 @@ class SettingsViewModelSaveTest {
                     jitterIdleIntervalSeconds = 45,
                     jitterSpeedIdleVariationPct = 10,
                     jitterSpeedMovingVariationPct = 20,
-                    elevationTiltJitterDegrees = 1.5f,
-                    elevationNoiseAmplitudeMs2 = 0.25f,
                     hotLocationsEnabled = false,
                 )
 
@@ -218,8 +216,6 @@ class SettingsViewModelSaveTest {
             assertEquals(45, snapshot.jitterIdleIntervalSeconds)
             assertEquals(10, snapshot.jitterSpeedIdleVariationPct)
             assertEquals(20, snapshot.jitterSpeedMovingVariationPct)
-            assertEquals(1.5f, snapshot.elevationTiltJitterDegrees, 0.001f)
-            assertEquals(0.25f, snapshot.elevationNoiseAmplitudeMs2, 0.001f)
             assertFalse(snapshot.hotLocationsEnabled)
             assertEquals(750.0, snapshot.roamingDefaults.radiusMeters, 0.001)
             assertEquals(3000.0, snapshot.roamingDefaults.distanceMeters, 0.001)
@@ -374,8 +370,6 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
                 realismPedometerMockingEnabled = false,
                 jitterSpeedIdleVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,
                 jitterSpeedMovingVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT,
-                elevationTiltJitterDegrees = AppPreferencesDataSource.DEFAULT_ELEVATION_TILT_JITTER_DEGREES,
-                elevationNoiseAmplitudeMs2 = AppPreferencesDataSource.DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2,
                 hotLocationsEnabled = false,
                 selectedHotLocationIds = emptySet(),
                 hotRoutesEnabled = false,
@@ -531,14 +525,6 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override suspend fun setJitterSpeedIdleVariationPct(pct: Int) = Unit
 
     override suspend fun setJitterSpeedMovingVariationPct(pct: Int) = Unit
-
-    override fun getElevationTiltJitterDegrees(): Flow<Float> = flowOf(AppPreferencesDataSource.DEFAULT_ELEVATION_TILT_JITTER_DEGREES)
-
-    override suspend fun setElevationTiltJitterDegrees(degrees: Float) = Unit
-
-    override fun getElevationNoiseAmplitudeMs2(): Flow<Float> = flowOf(AppPreferencesDataSource.DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2)
-
-    override suspend fun setElevationNoiseAmplitudeMs2(amplitude: Float) = Unit
 
     override fun getHotLocationsEnabled(): Flow<Boolean> = flowOf(false)
 

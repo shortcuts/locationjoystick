@@ -58,12 +58,6 @@ internal class RealismSettingsState {
     @Volatile var activeProfileSpeedMs: Double = AppConstants.ProfileConstants.WALK_SPEED_MPS
         private set
 
-    @Volatile var elevationTiltJitterDegrees: Float = AppConstants.ElevationConstants.DEFAULT_TILT_JITTER_DEGREES
-        private set
-
-    @Volatile var elevationNoiseAmplitudeMs2: Float = AppConstants.ElevationConstants.DEFAULT_NOISE_AMPLITUDE_MS2
-        private set
-
     /**
      * Launches one collection coroutine per realism setting on [scope]. Each coroutine writes its
      * `@Volatile` field as the source flow emits. Mirrors the prior inline wiring in
@@ -86,8 +80,6 @@ internal class RealismSettingsState {
         scope.collectInto(settingsRepository.getRememberLastLocation()) { rememberLastLocation = it }
         scope.collectInto(settingsRepository.getJitterSpeedIdleVariationPct()) { speedIdleVariationPct = it }
         scope.collectInto(settingsRepository.getJitterSpeedMovingVariationPct()) { speedMovingVariationPct = it }
-        scope.collectInto(settingsRepository.getElevationTiltJitterDegrees()) { elevationTiltJitterDegrees = it }
-        scope.collectInto(settingsRepository.getElevationNoiseAmplitudeMs2()) { elevationNoiseAmplitudeMs2 = it }
         scope.collectInto(settingsRepository.getActiveSpeedProfile()) { activeProfileSpeedMs = it.speedMetersPerSecond }
     }
 

@@ -190,18 +190,6 @@ interface PreferencesDataSource {
     /** Sets the GPS jitter moving speed variation percentage. */
     suspend fun setJitterSpeedMovingVariationPct(pct: Int)
 
-    /** Gets the elevation tilt jitter in degrees (0 = disabled). */
-    fun getElevationTiltJitterDegrees(): Flow<Float>
-
-    /** Sets the elevation tilt jitter in degrees. */
-    suspend fun setElevationTiltJitterDegrees(degrees: Float)
-
-    /** Gets the elevation accelerometer noise amplitude in m/s² (0 = disabled). */
-    fun getElevationNoiseAmplitudeMs2(): Flow<Float>
-
-    /** Sets the elevation accelerometer noise amplitude in m/s². */
-    suspend fun setElevationNoiseAmplitudeMs2(amplitude: Float)
-
     /** Gets whether hot locations are enabled. */
     fun getHotLocationsEnabled(): Flow<Boolean>
 
@@ -288,8 +276,6 @@ data class SettingsSnapshot(
     val realismPedometerMockingEnabled: Boolean,
     val jitterSpeedIdleVariationPct: Int,
     val jitterSpeedMovingVariationPct: Int,
-    val elevationTiltJitterDegrees: Float,
-    val elevationNoiseAmplitudeMs2: Float,
     val hotLocationsEnabled: Boolean,
     val selectedHotLocationIds: Set<String>,
     val hotRoutesEnabled: Boolean,
@@ -378,8 +364,6 @@ class AppPreferencesDataSource
             val FAVORITES_SORT_NEWEST_FIRST = booleanPreferencesKey("favorites_sort_newest_first")
             val JITTER_SPEED_IDLE_VARIATION_PCT = intPreferencesKey("jitter_speed_idle_variation_pct")
             val JITTER_SPEED_MOVING_VARIATION_PCT = intPreferencesKey("jitter_speed_moving_variation_pct")
-            val ELEVATION_TILT_JITTER_DEGREES = floatPreferencesKey("elevation_tilt_jitter_degrees")
-            val ELEVATION_NOISE_AMPLITUDE_MS2 = floatPreferencesKey("elevation_noise_amplitude_ms2")
             val HOT_LOCATIONS_ENABLED = booleanPreferencesKey("hot_locations_enabled")
             val HOT_LOCATION_SELECTED_IDS = stringSetPreferencesKey("hot_location_selected_ids")
             val HOT_ROUTES_ENABLED = booleanPreferencesKey("hot_routes_enabled")
@@ -685,32 +669,6 @@ class AppPreferencesDataSource
             }
         }
 
-        override fun getElevationTiltJitterDegrees(): Flow<Float> =
-            pref(Keys.ELEVATION_TILT_JITTER_DEGREES, DEFAULT_ELEVATION_TILT_JITTER_DEGREES)
-
-        override suspend fun setElevationTiltJitterDegrees(degrees: Float) {
-            dataStore.edit { prefs ->
-                prefs[Keys.ELEVATION_TILT_JITTER_DEGREES] =
-                    degrees.coerceIn(
-                        AppConstants.ElevationConstants.MIN_TILT_JITTER_DEGREES,
-                        AppConstants.ElevationConstants.MAX_TILT_JITTER_DEGREES,
-                    )
-            }
-        }
-
-        override fun getElevationNoiseAmplitudeMs2(): Flow<Float> =
-            pref(Keys.ELEVATION_NOISE_AMPLITUDE_MS2, DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2)
-
-        override suspend fun setElevationNoiseAmplitudeMs2(amplitude: Float) {
-            dataStore.edit { prefs ->
-                prefs[Keys.ELEVATION_NOISE_AMPLITUDE_MS2] =
-                    amplitude.coerceIn(
-                        AppConstants.ElevationConstants.MIN_NOISE_AMPLITUDE_MS2,
-                        AppConstants.ElevationConstants.MAX_NOISE_AMPLITUDE_MS2,
-                    )
-            }
-        }
-
         override fun getHotLocationsEnabled(): Flow<Boolean> = pref(Keys.HOT_LOCATIONS_ENABLED, false)
 
         override suspend fun setHotLocationsEnabled(enabled: Boolean) {
@@ -802,16 +760,6 @@ class AppPreferencesDataSource
                         AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
                         AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
                     )
-                prefs[Keys.ELEVATION_TILT_JITTER_DEGREES] =
-                    snapshot.elevationTiltJitterDegrees.coerceIn(
-                        AppConstants.ElevationConstants.MIN_TILT_JITTER_DEGREES,
-                        AppConstants.ElevationConstants.MAX_TILT_JITTER_DEGREES,
-                    )
-                prefs[Keys.ELEVATION_NOISE_AMPLITUDE_MS2] =
-                    snapshot.elevationNoiseAmplitudeMs2.coerceIn(
-                        AppConstants.ElevationConstants.MIN_NOISE_AMPLITUDE_MS2,
-                        AppConstants.ElevationConstants.MAX_NOISE_AMPLITUDE_MS2,
-                    )
                 prefs[Keys.HOT_LOCATIONS_ENABLED] = snapshot.hotLocationsEnabled
                 prefs[Keys.HOT_LOCATION_SELECTED_IDS] = snapshot.selectedHotLocationIds
                 prefs[Keys.HOT_ROUTES_ENABLED] = snapshot.hotRoutesEnabled
@@ -878,12 +826,6 @@ class AppPreferencesDataSource
                         jitterSpeedMovingVariationPct =
                             prefs[Keys.JITTER_SPEED_MOVING_VARIATION_PCT]
                                 ?: DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT,
-                        elevationTiltJitterDegrees =
-                            prefs[Keys.ELEVATION_TILT_JITTER_DEGREES]
-                                ?: DEFAULT_ELEVATION_TILT_JITTER_DEGREES,
-                        elevationNoiseAmplitudeMs2 =
-                            prefs[Keys.ELEVATION_NOISE_AMPLITUDE_MS2]
-                                ?: DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2,
                         hotLocationsEnabled = prefs[Keys.HOT_LOCATIONS_ENABLED] ?: false,
                         selectedHotLocationIds = prefs[Keys.HOT_LOCATION_SELECTED_IDS] ?: emptySet(),
                         hotRoutesEnabled = prefs[Keys.HOT_ROUTES_ENABLED] ?: false,
@@ -936,9 +878,6 @@ class AppPreferencesDataSource
 
             const val DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT = AppConstants.JitterConstants.SPEED_IDLE_VARIATION_PCT_DEFAULT
             const val DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT = AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT
-
-            const val DEFAULT_ELEVATION_TILT_JITTER_DEGREES = AppConstants.ElevationConstants.DEFAULT_TILT_JITTER_DEGREES
-            const val DEFAULT_ELEVATION_NOISE_AMPLITUDE_MS2 = AppConstants.ElevationConstants.DEFAULT_NOISE_AMPLITUDE_MS2
         }
     }
 

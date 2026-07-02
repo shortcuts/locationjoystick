@@ -321,14 +321,6 @@ fun SettingsRoute(
                     viewModel.setJitterSpeedMovingVariationPct(action.pct)
                 }
 
-                is SettingsAction.SetElevationTiltJitterDegrees -> {
-                    viewModel.setElevationTiltJitterDegrees(action.degrees)
-                }
-
-                is SettingsAction.SetElevationNoiseAmplitudeMs2 -> {
-                    viewModel.setElevationNoiseAmplitudeMs2(action.amplitude)
-                }
-
                 is SettingsAction.SetHotLocationsEnabled -> {
                     viewModel.setHotLocationsEnabled(action.enabled)
                 }
@@ -343,10 +335,6 @@ fun SettingsRoute(
 
                 is SettingsAction.SetSelectedHotRouteIds -> {
                     viewModel.setSelectedHotRouteIds(action.ids)
-                }
-
-                is SettingsAction.RequestElevationAccess -> {
-                    viewModel.requestElevationAccess()
                 }
 
                 is SettingsAction.UpdateRoamingDefaults -> {

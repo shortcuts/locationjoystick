@@ -29,7 +29,6 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.WalkToEngine
 import com.locationjoystick.core.location.BuildConfig
-import com.locationjoystick.core.model.ElevationMode
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
@@ -97,10 +96,6 @@ class MockLocationService : Service() {
         fun getService(): MockLocationService = this@MockLocationService
     }
 
-    fun setElevationMode(mode: ElevationMode?) {
-        currentElevationMode = mode
-    }
-
     private val binder = LocalBinder()
 
     @Inject lateinit var locationManager: LocationManager
@@ -116,8 +111,6 @@ class MockLocationService : Service() {
     @Inject lateinit var routeReplayEngine: RouteReplayEngine
 
     @Inject lateinit var walkToEngine: WalkToEngine
-
-    @Inject lateinit var sensorInjector: SensorInjector
 
     @Inject lateinit var leaderSyncServer: LeaderSyncServer
 
@@ -164,8 +157,6 @@ class MockLocationService : Service() {
     private val realism = RealismSettingsState()
 
     @Volatile private var humanAltitudeOffsetMeters: Double = AppConstants.RealismConstants.ALTITUDE_HUMAN_OFFSET_METERS
-
-    @Volatile private var currentElevationMode: ElevationMode? = null
 
     @Volatile private var leaderSharingEnabled: Boolean = false
 
@@ -553,7 +544,6 @@ class MockLocationService : Service() {
         lastSatelliteUpdateMs = now
         lastJitterTimestampMs = now
         lastIdleJitterTimestampMs = now
-        sensorInjector.resetPedometerState()
         locationRepository.setPositionInternal(LatLng(lat, lon))
         locationRepository.setMockMode(MockMode.TELEPORT)
 
@@ -931,17 +921,6 @@ class MockLocationService : Service() {
                     ),
                 )
             }
-            val elevMode = currentElevationMode
-            if (elevMode != null) {
-                sensorInjector.inject(
-                    elevMode,
-                    AppConstants.ElevationConstants.DEFAULT_TILT_DEGREES,
-                    realism.elevationTiltJitterDegrees,
-                    realism.elevationNoiseAmplitudeMs2,
-                    Random.Default,
-                )
-            }
-            if (realism.pedometerMockingEnabled) sensorInjector.injectPedometerTick(snapshot.speedMs)
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Failed to push location update", e)
         } catch (e: Exception) {

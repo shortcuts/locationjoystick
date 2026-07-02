@@ -119,8 +119,6 @@ class SettingsViewModel
             val realismPedometerMockingEnabled: Boolean? = null,
             val jitterSpeedIdleVariationPct: Int? = null,
             val jitterSpeedMovingVariationPct: Int? = null,
-            val elevationTiltJitterDegrees: Float? = null,
-            val elevationNoiseAmplitudeMs2: Float? = null,
             val hotLocationsEnabled: Boolean? = null,
             val selectedHotLocationIds: Set<String>? = null,
             val hotRoutesEnabled: Boolean? = null,
@@ -192,8 +190,6 @@ class SettingsViewModel
                     realismPedometerMockingEnabled = draftState.realismPedometerMockingEnabled ?: snapshot.realismPedometerMockingEnabled,
                     jitterSpeedIdleVariationPct = draftState.jitterSpeedIdleVariationPct ?: snapshot.jitterSpeedIdleVariationPct,
                     jitterSpeedMovingVariationPct = draftState.jitterSpeedMovingVariationPct ?: snapshot.jitterSpeedMovingVariationPct,
-                    elevationTiltJitterDegrees = draftState.elevationTiltJitterDegrees ?: snapshot.elevationTiltJitterDegrees,
-                    elevationNoiseAmplitudeMs2 = draftState.elevationNoiseAmplitudeMs2 ?: snapshot.elevationNoiseAmplitudeMs2,
                     hotLocationsEnabled = draftState.hotLocationsEnabled ?: snapshot.hotLocationsEnabled,
                     selectedHotLocationIds = draftState.selectedHotLocationIds ?: snapshot.selectedHotLocationIds,
                     hotRoutesEnabled = draftState.hotRoutesEnabled ?: snapshot.hotRoutesEnabled,
@@ -300,14 +296,6 @@ class SettingsViewModel
 
         fun setJitterSpeedMovingVariationPct(pct: Int) {
             mutableDraft.update { it.copy(jitterSpeedMovingVariationPct = pct) }
-        }
-
-        fun setElevationTiltJitterDegrees(degrees: Float) {
-            mutableDraft.update { it.copy(elevationTiltJitterDegrees = degrees) }
-        }
-
-        fun setElevationNoiseAmplitudeMs2(amplitude: Float) {
-            mutableDraft.update { it.copy(elevationNoiseAmplitudeMs2 = amplitude) }
         }
 
         fun setHotLocationsEnabled(enabled: Boolean) {
@@ -429,8 +417,6 @@ class SettingsViewModel
                             realismPedometerMockingEnabled = state.realismPedometerMockingEnabled,
                             jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
                             jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
-                            elevationTiltJitterDegrees = state.elevationTiltJitterDegrees,
-                            elevationNoiseAmplitudeMs2 = state.elevationNoiseAmplitudeMs2,
                             hotLocationsEnabled = state.hotLocationsEnabled,
                             selectedHotLocationIds = state.selectedHotLocationIds,
                             hotRoutesEnabled = state.hotRoutesEnabled,
@@ -468,18 +454,6 @@ class SettingsViewModel
 
         fun discardChanges() {
             mutableDraft.value = DraftState()
-        }
-
-        fun requestElevationAccess() {
-            viewModelScope.launch {
-                val granted = sensorPermissionBootstrap.grantIfNeeded()
-                _isRooted.value = granted
-                if (granted) {
-                    userFeedback.emit(UserFeedback("Root access granted"))
-                } else {
-                    userFeedback.emit(UserFeedback("Root access unavailable", isError = true))
-                }
-            }
         }
 
         private fun convertDisplayToMs(
@@ -525,8 +499,6 @@ class SettingsViewModel
                 jitterIdleIntervalSeconds = state.jitterIdleIntervalSeconds,
                 jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
                 jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
-                elevationTiltJitterDegrees = state.elevationTiltJitterDegrees,
-                elevationNoiseAmplitudeMs2 = state.elevationNoiseAmplitudeMs2,
                 hotLocationsEnabled = state.hotLocationsEnabled,
                 selectedHotLocationIds = state.selectedHotLocationIds,
                 hotRoutesEnabled = state.hotRoutesEnabled,
@@ -711,8 +683,6 @@ class SettingsViewModel
                     realismPedometerMockingEnabled = data.settings.pedometerMockingEnabled,
                     jitterSpeedIdleVariationPct = data.jitterSpeedIdleVariationPct,
                     jitterSpeedMovingVariationPct = data.jitterSpeedMovingVariationPct,
-                    elevationTiltJitterDegrees = data.elevationTiltJitterDegrees,
-                    elevationNoiseAmplitudeMs2 = data.elevationNoiseAmplitudeMs2,
                     hotLocationsEnabled = data.hotLocationsEnabled,
                     selectedHotLocationIds = data.selectedHotLocationIds,
                     hotRoutesEnabled = data.hotRoutesEnabled,

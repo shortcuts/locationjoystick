@@ -114,7 +114,6 @@ Rules:
 | Deep Links & Location Sharing | @docs/features/deep-link.md |
 | Last Remembered Location | @docs/features/last-location.md |
 | Onboarding | @docs/features/onboarding.md |
-| Elevation Controls (Experimental) | @docs/features/elevation-controls.md |
 | Group Sync | @docs/features/group-sync.md |
 | Tap to Walk | @docs/features/tap-to-walk.md |
 

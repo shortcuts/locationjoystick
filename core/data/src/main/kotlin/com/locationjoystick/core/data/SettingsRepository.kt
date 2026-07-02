@@ -198,14 +198,6 @@ class SettingsRepository
 
         suspend fun setJitterSpeedMovingVariationPct(pct: Int) = dataSource.setJitterSpeedMovingVariationPct(pct)
 
-        fun getElevationTiltJitterDegrees(): Flow<Float> = dataSource.getElevationTiltJitterDegrees()
-
-        suspend fun setElevationTiltJitterDegrees(degrees: Float) = dataSource.setElevationTiltJitterDegrees(degrees)
-
-        fun getElevationNoiseAmplitudeMs2(): Flow<Float> = dataSource.getElevationNoiseAmplitudeMs2()
-
-        suspend fun setElevationNoiseAmplitudeMs2(amplitude: Float) = dataSource.setElevationNoiseAmplitudeMs2(amplitude)
-
         fun getHotLocationsEnabled(): Flow<Boolean> = dataSource.getHotLocationsEnabled()
 
         suspend fun setHotLocationsEnabled(enabled: Boolean) = dataSource.setHotLocationsEnabled(enabled)

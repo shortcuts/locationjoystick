@@ -439,15 +439,6 @@ private fun featureMeta(feature: AppFeature): FeatureMeta =
         AppFeature.SPEED_CYCLE -> {
             FeatureMeta("Speed cycle", "Cycles through Walk, Run, and Bike speed profiles with a single tap.", LjIcons.Speed)
         }
-
-        AppFeature.ELEVATION_CONTROLS -> {
-            FeatureMeta(
-                "Elevation controls",
-                "Shows tilt controls in the floating widget · requires root",
-                LjIcons.Layers,
-                isRootGated = true,
-            )
-        }
     }
 
 private val FEATURE_ROW_HEIGHT = 64.dp
@@ -585,7 +576,6 @@ private fun FeatureRow(
                     val updated = uiState.enabledWidgetFeatures.toMutableSet()
                     if (checked) {
                         updated.add(feature)
-                        if (meta.isRootGated) onAction(SettingsAction.RequestElevationAccess)
                     } else {
                         updated.remove(feature)
                     }

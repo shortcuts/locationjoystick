@@ -139,8 +139,6 @@ internal object SettingsExportCodec {
         root.put("jitterIdleIntervalSeconds", data.jitterIdleIntervalSeconds)
         root.put("jitterSpeedIdleVariationPct", data.jitterSpeedIdleVariationPct)
         root.put("jitterSpeedMovingVariationPct", data.jitterSpeedMovingVariationPct)
-        root.put("elevationTiltJitterDegrees", data.elevationTiltJitterDegrees)
-        root.put("elevationNoiseAmplitudeMs2", data.elevationNoiseAmplitudeMs2)
         root.put("hotLocationsEnabled", data.hotLocationsEnabled)
         root.put("selectedHotLocationIds", JSONArray(data.selectedHotLocationIds.toList()))
         root.put("hotRoutesEnabled", data.hotRoutesEnabled)
@@ -333,18 +331,6 @@ internal object SettingsExportCodec {
                     "jitterSpeedMovingVariationPct",
                     AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT,
                 ),
-            elevationTiltJitterDegrees =
-                root
-                    .optDouble(
-                        "elevationTiltJitterDegrees",
-                        AppConstants.ElevationConstants.DEFAULT_TILT_JITTER_DEGREES.toDouble(),
-                    ).toFloat(),
-            elevationNoiseAmplitudeMs2 =
-                root
-                    .optDouble(
-                        "elevationNoiseAmplitudeMs2",
-                        AppConstants.ElevationConstants.DEFAULT_NOISE_AMPLITUDE_MS2.toDouble(),
-                    ).toFloat(),
             hotLocationsEnabled = root.optBoolean("hotLocationsEnabled", false),
             selectedHotLocationIds =
                 buildSet {

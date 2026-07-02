@@ -64,9 +64,6 @@ object LjIcons {
     val Directions = Icons.Rounded.Directions
     val DragHandle = Icons.Rounded.DragHandle
     val Edit = Icons.Outlined.EditNote
-    val ElevationDown = Icons.Rounded.KeyboardArrowDown
-    val ElevationNeutral = Icons.Rounded.RadioButtonUnchecked
-    val ElevationUp = Icons.Rounded.KeyboardArrowUp
     val Explore = Icons.Rounded.Explore
     val Favorite = Icons.Rounded.Favorite
     val FavoriteBorder = Icons.Outlined.FavoriteBorder

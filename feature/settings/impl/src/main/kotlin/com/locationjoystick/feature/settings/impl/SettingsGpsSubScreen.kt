@@ -76,12 +76,6 @@ internal fun SettingsGpsSubScreen(
                         Spacer(modifier = Modifier.height(24.dp))
                         GpsJitterSection(uiState, isMph, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
-                        ElevationJitterSection(
-                            uiState = uiState,
-                            elevationControlsEnabled = AppFeature.ELEVATION_CONTROLS in uiState.enabledWidgetFeatures,
-                            onAction = onAction,
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
                         GpsRealismSection(uiState, isRooted, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
                         Text("Location Memory", style = MaterialTheme.typography.headlineSmall)

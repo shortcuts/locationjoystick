@@ -29,7 +29,6 @@ All constants → `:core:common/constants/AppConstants.kt`.
 | `RouteConstants` | Route-related defaults |
 | `DatabaseConstants` | DB name, version |
 | `AppInfo` | GitHub repo URL, issues URL, privacy policy URL |
-| `ElevationConstants` | Tilt angle, noise amplitude, tilt jitter, gravity constant |
 
 ## Rules
 

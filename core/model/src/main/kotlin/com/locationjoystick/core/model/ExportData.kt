@@ -13,8 +13,6 @@ data class ExportData(
     val jitterIdleIntervalSeconds: Int = 30,
     val jitterSpeedIdleVariationPct: Int = 5,
     val jitterSpeedMovingVariationPct: Int = 8,
-    val elevationTiltJitterDegrees: Float = 2.25f,
-    val elevationNoiseAmplitudeMs2: Float = 0.35f,
     val hotLocationsEnabled: Boolean = false,
     val selectedHotLocationIds: Set<String> = emptySet(),
     val hotRoutesEnabled: Boolean = false,

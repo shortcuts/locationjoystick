@@ -85,14 +85,6 @@ internal sealed class SettingsAction {
         val pct: Int,
     ) : SettingsAction()
 
-    data class SetElevationTiltJitterDegrees(
-        val degrees: Float,
-    ) : SettingsAction()
-
-    data class SetElevationNoiseAmplitudeMs2(
-        val amplitude: Float,
-    ) : SettingsAction()
-
     data class SetHotLocationsEnabled(
         val enabled: Boolean,
     ) : SettingsAction()
@@ -112,8 +104,6 @@ internal sealed class SettingsAction {
     data class SetMapFeatures(
         val features: Set<AppFeature>,
     ) : SettingsAction()
-
-    data object RequestElevationAccess : SettingsAction()
 
     data class UpdateRoamingDefaults(
         val defaults: RoamingDefaults,

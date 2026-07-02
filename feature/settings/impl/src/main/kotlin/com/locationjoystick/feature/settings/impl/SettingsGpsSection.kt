@@ -160,42 +160,6 @@ internal fun GpsJitterSection(
 }
 
 @Composable
-internal fun ElevationJitterSection(
-    uiState: SettingsUiState,
-    elevationControlsEnabled: Boolean,
-    onAction: (SettingsAction) -> Unit,
-) {
-    Text("Tilt Randomness", style = MaterialTheme.typography.headlineSmall)
-    Spacer(modifier = Modifier.height(4.dp))
-    Text(
-        if (elevationControlsEnabled) {
-            "Adds small random variation to the phone tilt simulation. Set 0 to disable."
-        } else {
-            "Enable Elevation controls in the Floating Widget section to configure these inputs."
-        },
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        JitterInput(
-            value = uiState.elevationTiltJitterDegrees.toDouble(),
-            onValueChange = { onAction(SettingsAction.SetElevationTiltJitterDegrees(it.toFloat())) },
-            label = "Tilt wobble (°)",
-            modifier = Modifier.weight(1f),
-            enabled = elevationControlsEnabled,
-        )
-        JitterInput(
-            value = uiState.elevationNoiseAmplitudeMs2.toDouble(),
-            onValueChange = { onAction(SettingsAction.SetElevationNoiseAmplitudeMs2(it.toFloat())) },
-            label = "Sensor wobble (m/s²)",
-            modifier = Modifier.weight(1f),
-            enabled = elevationControlsEnabled,
-        )
-    }
-}
-
-@Composable
 internal fun GpsRealismSection(
     uiState: SettingsUiState,
     isRooted: Boolean,

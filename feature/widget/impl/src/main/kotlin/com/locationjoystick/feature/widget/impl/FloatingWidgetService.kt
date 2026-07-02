@@ -29,7 +29,6 @@ import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationIntentBuilder
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.AppFeature
-import com.locationjoystick.core.model.ElevationMode
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
@@ -121,8 +120,6 @@ class FloatingWidgetService :
 
     // Red dot badge — set when a route/walk completes, cleared when panel is opened
     private val pendingCompletionFlow = MutableStateFlow(false)
-
-    private val elevationModeFlow = MutableStateFlow<ElevationMode?>(null)
 
     private val isTapToWalkActiveFlow = MutableStateFlow(false)
     private lateinit var tapToWalkScaleMpx: StateFlow<Double>
@@ -217,11 +214,6 @@ class FloatingWidgetService :
             }
         }
         lifecycleScope.launch {
-            settingsRepository.getWidgetFeatures().collect { features ->
-                if (AppFeature.ELEVATION_CONTROLS !in features) setElevationMode(null)
-            }
-        }
-        lifecycleScope.launch {
             settingsRepository.getTapToWalkOverlayEnabled().collect { enabled ->
                 if (!enabled) dismissTapToWalkOverlay()
             }
@@ -294,7 +286,6 @@ class FloatingWidgetService :
             val isActivityPaused by activityStateRepository.isActivityPaused.collectAsStateWithLifecycle(initialValue = false)
             val routeExpanded by routeExpandedFlow.collectAsStateWithLifecycle()
             val isPanelExpanded by isPanelExpandedFlow.collectAsStateWithLifecycle()
-            val elevationMode by elevationModeFlow.collectAsStateWithLifecycle()
             val hasPendingCompletion by pendingCompletionFlow.collectAsStateWithLifecycle()
             val isTapToWalkEnabled by settingsRepository.getTapToWalkOverlayEnabled().collectAsStateWithLifecycle(initialValue = false)
             val isTapToWalkActive by isTapToWalkActiveFlow.collectAsStateWithLifecycle()
@@ -310,7 +301,6 @@ class FloatingWidgetService :
                     isActivityPausable = isActivityPausable,
                     routeExpanded = routeExpanded,
                     isPanelExpanded = isPanelExpanded,
-                    elevationMode = elevationMode,
                     hasPendingCompletion = hasPendingCompletion,
                     isTapToWalkEnabled = isTapToWalkEnabled,
                     isTapToWalkActive = isTapToWalkActive,
@@ -320,7 +310,6 @@ class FloatingWidgetService :
                         isPanelExpandedFlow.value = !isPanelExpandedFlow.value
                     },
                     onFeatureClicked = { feature -> onFeatureButtonClicked(feature) },
-                    onElevationModeSelected = { mode -> setElevationMode(mode) },
                     onRouteClicked = { onRouteIconClicked() },
                     onRoutePauseResume = { onRoutePauseResumeClicked() },
                     onRouteStop = { onRouteStopClicked() },
@@ -362,19 +351,10 @@ class FloatingWidgetService :
                 panelPresenter.showMapFloatingView()
             }
 
-            AppFeature.ELEVATION_CONTROLS -> {
-                Unit
-            }
-
             AppFeature.ROAMING, AppFeature.SEARCH -> {
                 Unit
             }
         }
-    }
-
-    private fun setElevationMode(mode: ElevationMode?) {
-        elevationModeFlow.value = mode
-        mockLocationService?.setElevationMode(mode)
     }
 
     private fun onTapToWalkClicked() {

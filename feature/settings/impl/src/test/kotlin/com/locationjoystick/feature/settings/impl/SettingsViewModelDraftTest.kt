@@ -190,19 +190,6 @@ class SettingsViewModelDraftTest {
             assertTrue(viewModel.uiState.value.isDirty)
         }
 
-    @Test
-    fun `elevation setters mark dirty`() =
-        runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
-            viewModel.setElevationTiltJitterDegrees(3.5f)
-            assertEquals(3.5f, viewModel.uiState.value.elevationTiltJitterDegrees, 0.001f)
-
-            viewModel.setElevationNoiseAmplitudeMs2(0.5f)
-            assertEquals(0.5f, viewModel.uiState.value.elevationNoiseAmplitudeMs2, 0.001f)
-
-            assertTrue(viewModel.uiState.value.isDirty)
-        }
-
     // -------------------------------------------------------------------------
     // setHotLocationsEnabled logic
     // -------------------------------------------------------------------------
