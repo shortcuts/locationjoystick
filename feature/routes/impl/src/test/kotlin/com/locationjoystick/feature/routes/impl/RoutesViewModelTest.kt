@@ -231,6 +231,30 @@ class RoutesViewModelTest {
     }
 
     @Test
+    fun testParseGpxRoutes_bareWptNoTrkOrRte_parsesAsSingleRoute() {
+        // github.com/shortcuts/locationjoystick/issues/27 — some GPX generators (e.g. pokedex100)
+        // emit bare top-level <wpt> points with no <trk>/<rte> wrapper.
+        val gpxContent =
+            """
+            <?xml version="1.0" encoding="utf-8" standalone="yes"?>
+            <gpx version="1.1">
+            <wpt lat="40.761299" lon="-73.985921"></wpt>
+            <wpt lat="40.761466" lon="-73.985785"></wpt>
+            <wpt lat="40.761185" lon="-73.985653"></wpt>
+            </gpx>
+            """.trimIndent()
+
+        val routes = parseGpxRoutes(gpxContent)
+
+        assertEquals(1, routes.size)
+        assertEquals("Imported Route", routes[0].name)
+        val waypoints = routes[0].waypoints
+        assertEquals(3, waypoints.size)
+        assertEquals(40.761299, waypoints[0].latitude, 0.0000001)
+        assertEquals(-73.985921, waypoints[0].longitude, 0.0000001)
+    }
+
+    @Test
     fun testParseGpxRoutes_missingName_fallsBackToImportedRoute() {
         val gpxContent =
             """

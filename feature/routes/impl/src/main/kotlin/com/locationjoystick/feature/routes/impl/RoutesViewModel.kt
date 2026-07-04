@@ -319,7 +319,13 @@ internal fun parseGpxRoutes(gpxContent: String): List<GpxImportedRoute> {
     val segments = mutableListOf<Pair<String?, List<LatLng>>>()
     segments += collectGpxSegments(doc.getElementsByTagName("trk"), "trkpt")
     segments += collectGpxSegments(doc.getElementsByTagName("rte"), "rtept")
-    val withPoints = segments.filter { it.second.isNotEmpty() }
+    var withPoints = segments.filter { it.second.isNotEmpty() }
+    if (withPoints.isEmpty()) {
+        // Some GPX generators (e.g. pokedex100) emit bare top-level <wpt> points with no
+        // <trk>/<rte> wrapper — treat them all as a single route (see issue #27).
+        val barePoints = collectGpxPoints(doc.documentElement, "wpt")
+        if (barePoints.isNotEmpty()) withPoints = listOf(null to barePoints)
+    }
     return withPoints.mapIndexed { index, (name, points) ->
         val resolvedName =
             name?.takeIf { it.isNotBlank() }

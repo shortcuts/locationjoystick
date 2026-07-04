@@ -35,7 +35,8 @@ Routes can be imported from GPX files via the Routes screen overflow menu → "I
 - File picker with `application/gpx+xml` MIME type.
 - Max file size: `AppConstants.ExportConstants.MAX_GPX_IMPORT_SIZE_BYTES` (10 MB).
 - A GPX file may describe multiple routes — every `<trk>` and `<rte>` element is imported as its own separate `RouteType.STRAIGHT` route, named from that element's own `<name>` child (falling back to "Imported Route"/"Imported Route N" when absent). Elements are never merged together, even if unnamed.
-- A file with no `<trk>`/`<rte>` waypoints shows an "Import failed" error rather than creating an empty route.
+- If a file has no `<trk>`/`<rte>` elements, bare top-level `<wpt>` points (some generators, e.g. pokedex100, emit these with no track/route wrapper) are imported as a single "Imported Route".
+- A file with no `<trk>`/`<rte>`/`<wpt>` points at all shows an "Import failed" error rather than creating an empty route.
 
 Key function: `parseGpxRoutes` in `:feature:routes:impl/RoutesViewModel.kt`.
 
