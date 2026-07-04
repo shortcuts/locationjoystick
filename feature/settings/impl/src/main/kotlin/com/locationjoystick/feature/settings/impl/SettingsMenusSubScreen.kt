@@ -136,7 +136,21 @@ private fun TapToWalkSection(
     var showWarning by rememberSaveable { mutableStateOf(false) }
     val enabled = uiState.floatingMapQuickWalk || uiState.tapToWalkOverlayEnabled
 
-    Text("Tap to Walk", style = MaterialTheme.typography.headlineSmall)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text("Tap to Walk", style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.width(8.dp))
+        Box(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(4.dp))
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+        ) {
+            Text(
+                "BETA",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+        }
+    }
     Spacer(Modifier.height(4.dp))
     Text(
         "Walk to a location by tapping it — no confirmation needed.",
