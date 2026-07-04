@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.13.0](https://github.com/shortcuts/locationjoystick/compare/v0.12.0...v0.13.0) (2026-07-04)
+
+
+### Features
+
+* **group-sync:** show snackbar when follower disconnects from group ([fc0393c](https://github.com/shortcuts/locationjoystick/commit/fc0393c317863e7ef8f399486e72b71c84dd391b))
+* **settings:** tag Tap to Walk section as Beta ([246a57f](https://github.com/shortcuts/locationjoystick/commit/246a57f98277cea43aa69645279342e5e18339e7))
+* **ux:** show location name in Start button ([f046b8d](https://github.com/shortcuts/locationjoystick/commit/f046b8d5791b40b2a63ee76f48c759c5d2ad8ebe))
+* **widget:** add compass-aware tap-to-walk orientation ([ae94991](https://github.com/shortcuts/locationjoystick/commit/ae94991bac7a5b06288107feb7e31b4ee7a1f1d1))
+* **widget:** add Tap to Walk — floating map quick walk + screen overlay ([7c93b7d](https://github.com/shortcuts/locationjoystick/commit/7c93b7d629f5ee737ecb9e678aa4448f11fb8d75))
+
+
+### Bug Fixes
+
+* **compass:** calibrate default region to match Pokemon Go compass position ([73914c1](https://github.com/shortcuts/locationjoystick/commit/73914c161ce2c0c35fb45c9fb95c235d83ba61c6))
+* **group-sync:** restore follower polling after app/device restart ([9022ac9](https://github.com/shortcuts/locationjoystick/commit/9022ac97ae61d7cfe2d39ccced8783de8b5bff12))
+* **group-sync:** restore leader after reboot and reconnect follower on network change ([53a44c7](https://github.com/shortcuts/locationjoystick/commit/53a44c7444e61072d95800acb62c7ea985306f8a))
+* **group-sync:** stub groupLostEvent in tests + fix line length ([180cc1e](https://github.com/shortcuts/locationjoystick/commit/180cc1e8173019c274f3bab75cb7d0a19b82564c))
+* remove elevation controls feature ([9737f9c](https://github.com/shortcuts/locationjoystick/commit/9737f9ce6e0a012e10224f9e648d045eeb86c6ea))
+* **routes:** support bare &lt;wpt&gt; GPX imports with no trk/rte wrapper ([7774050](https://github.com/shortcuts/locationjoystick/commit/7774050513d40618063c927be1db7c5974d04dd5)), closes [#27](https://github.com/shortcuts/locationjoystick/issues/27)
+* **speed-profiles:** lower minimum speed floor to allow sub-0.1 mph values ([ffb426e](https://github.com/shortcuts/locationjoystick/commit/ffb426eab5b75a574e0d5e6f855f4bbbce3afa67)), closes [#26](https://github.com/shortcuts/locationjoystick/issues/26)
+* **tap-to-walk:** calibrate default scale for Pokemon Go ([a44e6ba](https://github.com/shortcuts/locationjoystick/commit/a44e6ba8385281b7acd7fd50196af374c4e8593b))
+* **tap-to-walk:** calibrate default scale for Pokémon Go, switch to slider ([8ed0280](https://github.com/shortcuts/locationjoystick/commit/8ed0280055d0737e42c8a8c84d6764e854f39686))
+* **tap-to-walk:** update draft test for Int→Double scale migration ([d628b0c](https://github.com/shortcuts/locationjoystick/commit/d628b0cd535dd931d07d94269b5b1fb3473b4eef))
+* **ux:** add accent-color border to compass calibration drag area ([b06a467](https://github.com/shortcuts/locationjoystick/commit/b06a46766df8aa5476b4b779531a480f977f8d24))
+* **ux:** increase start/stop button background opacity for readability ([d625eac](https://github.com/shortcuts/locationjoystick/commit/d625eacef2c77c456a0315247e69cc2bf2ce1c99))
+* **walk:** prevent walk A onArrival from clobbering walk B state ([90f5bc9](https://github.com/shortcuts/locationjoystick/commit/90f5bc9379103e125060e6651e930c44d78ab401))
+
 ## [0.12.0](https://github.com/shortcuts/locationjoystick/compare/v0.11.0...v0.12.0) (2026-06-24)
 
 
