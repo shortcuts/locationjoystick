@@ -544,4 +544,63 @@ class GeoUtilsTest {
         val viaRaw2 = calculateBearing(a.latitude, a.longitude, b.latitude, b.longitude)
         assertEquals(viaRaw1, viaRaw2, 0.001)
     }
+
+    // parseRawLatLng
+
+    @Test
+    fun `parseRawLatLng parses comma separated pair`() {
+        val result = parseRawLatLng("35.6762,139.6503")
+        assertEquals(LatLng(35.6762, 139.6503), result)
+    }
+
+    @Test
+    fun `parseRawLatLng parses pair with space after comma`() {
+        val result = parseRawLatLng("35.6762, 139.6503")
+        assertEquals(LatLng(35.6762, 139.6503), result)
+    }
+
+    @Test
+    fun `parseRawLatLng parses negative coordinates`() {
+        val result = parseRawLatLng("-33.8688, 151.2093")
+        assertEquals(LatLng(-33.8688, 151.2093), result)
+    }
+
+    @Test
+    fun `parseRawLatLng parses boundary values`() {
+        assertEquals(LatLng(-90.0, 180.0), parseRawLatLng("-90,180"))
+        assertEquals(LatLng(90.0, -180.0), parseRawLatLng("90,-180"))
+    }
+
+    @Test
+    fun `parseRawLatLng rejects out of range latitude`() {
+        assertEquals(null, parseRawLatLng("91,0"))
+        assertEquals(null, parseRawLatLng("-91,0"))
+    }
+
+    @Test
+    fun `parseRawLatLng rejects out of range longitude`() {
+        assertEquals(null, parseRawLatLng("0,181"))
+        assertEquals(null, parseRawLatLng("0,-181"))
+    }
+
+    @Test
+    fun `parseRawLatLng rejects plain text`() {
+        assertEquals(null, parseRawLatLng("Tokyo"))
+    }
+
+    @Test
+    fun `parseRawLatLng rejects single number`() {
+        assertEquals(null, parseRawLatLng("35.6762"))
+    }
+
+    @Test
+    fun `parseRawLatLng rejects empty string`() {
+        assertEquals(null, parseRawLatLng(""))
+    }
+
+    @Test
+    fun `parseRawLatLng tolerates surrounding whitespace`() {
+        val result = parseRawLatLng("  35.6762 , 139.6503  ")
+        assertEquals(LatLng(35.6762, 139.6503), result)
+    }
 }

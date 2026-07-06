@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.parseRawLatLng
 import com.locationjoystick.core.model.RecentSearch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -55,6 +56,19 @@ fun NominatimSearchBar(
     var isLoading by remember { mutableStateOf(false) }
 
     LaunchedEffect(query) {
+        val rawCoords = parseRawLatLng(query)
+        if (rawCoords != null) {
+            results =
+                listOf(
+                    NominatimResult(
+                        lat = rawCoords.latitude,
+                        lon = rawCoords.longitude,
+                        displayName = "Go to ${rawCoords.latitude}, ${rawCoords.longitude}",
+                    ),
+                )
+            isLoading = false
+            return@LaunchedEffect
+        }
         if (query.length < 2) {
             results = emptyList()
             return@LaunchedEffect

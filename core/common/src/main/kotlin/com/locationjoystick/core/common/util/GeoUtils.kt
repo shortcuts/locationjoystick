@@ -204,3 +204,17 @@ fun snapBearingToCardinal(
     val step = AppConstants.LocationConstants.CARDINAL_SNAP_STEP_DEGREES.toFloat()
     return (kotlin.math.round(bearing / step) * step % AppConstants.LocationConstants.DEGREES_IN_CIRCLE.toFloat())
 }
+
+private val RAW_LAT_LNG_REGEX = Regex("""^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$""")
+
+/**
+ * Parses a raw "lat,lon" or "lat, lon" string typed/pasted by the user.
+ * @return the parsed [LatLng], or null if [query] isn't a valid coordinate pair
+ */
+fun parseRawLatLng(query: String): LatLng? {
+    val match = RAW_LAT_LNG_REGEX.matchEntire(query) ?: return null
+    val lat = match.groupValues[1].toDoubleOrNull() ?: return null
+    val lon = match.groupValues[2].toDoubleOrNull() ?: return null
+    if (lat !in -90.0..90.0 || lon !in -180.0..180.0) return null
+    return LatLng(lat, lon)
+}

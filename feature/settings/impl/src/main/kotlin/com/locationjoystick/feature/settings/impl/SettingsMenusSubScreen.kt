@@ -140,9 +140,10 @@ private fun TapToWalkSection(
         Text("Tap to Walk", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.width(8.dp))
         Box(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(4.dp))
-                .padding(horizontal = 6.dp, vertical = 2.dp),
+            modifier =
+                Modifier
+                    .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(4.dp))
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
         ) {
             Text(
                 "BETA",
