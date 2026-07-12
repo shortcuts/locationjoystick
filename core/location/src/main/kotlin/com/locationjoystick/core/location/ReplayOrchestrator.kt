@@ -138,7 +138,12 @@ internal class ReplayOrchestrator(
         activeReplayJob = null
         locationRepository.setRouteWaypoints(null)
         routeReplayEngine.stop()
-        locationRepository.setMockMode(MockMode.TELEPORT)
+        // Only reset mode if we are still in ROUTE_REPLAY to avoid clobbering a mode set by
+        // another subsystem while cancelAndJoin was suspended (e.g. a new walk-to started
+        // immediately after this cancel was requested — see MapController.walkTo/walkViaRoads).
+        if (locationRepository.currentMode.value == MockMode.ROUTE_REPLAY) {
+            locationRepository.setMockMode(MockMode.TELEPORT)
+        }
         locationRepository.setActiveRouteId(null)
         if (locationRepository.mockLocationState.value == MockLocationState.RUNNING) {
             startUpdateLoop()
@@ -151,7 +156,12 @@ internal class ReplayOrchestrator(
         activeReplayJob = null
         locationRepository.setRouteWaypoints(null)
         routeReplayEngine.stop()
-        locationRepository.setMockMode(MockMode.TELEPORT)
+        // Only reset mode if we are still in ROUTE_REPLAY to avoid clobbering a mode set by
+        // another subsystem while cancelAndJoin was suspended (e.g. a new walk-to started
+        // immediately after this cancel was requested — see MapController.walkTo/walkViaRoads).
+        if (locationRepository.currentMode.value == MockMode.ROUTE_REPLAY) {
+            locationRepository.setMockMode(MockMode.TELEPORT)
+        }
         locationRepository.setActiveRouteId(null)
         if (locationRepository.mockLocationState.value == MockLocationState.RUNNING) {
             startUpdateLoop()

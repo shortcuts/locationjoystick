@@ -135,4 +135,39 @@ class ReplayOrchestratorTest {
 
             assertEquals(MockMode.TELEPORT, locationRepository.currentMode.value)
         }
+
+    @Test
+    fun handleCancel_whenInRouteReplay_transitionsToTeleport() =
+        runTest {
+            locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+
+            orchestrator.handleCancel()
+
+            assertEquals(MockMode.TELEPORT, locationRepository.currentMode.value)
+        }
+
+    @Test
+    fun handleCancel_doesNotClobberModeSetByNewWalkStartedDuringCancellation() =
+        runTest {
+            // Simulates the race where cancelAnyActiveMovement() sends an async
+            // ACTION_ROUTE_REPLAY_CANCEL intent, then MapController.walkTo() synchronously
+            // starts a brand new walk (mode -> WALK_TO) before this cancel actually runs.
+            locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+            locationRepository.setMockMode(MockMode.WALK_TO)
+
+            orchestrator.handleCancel()
+
+            assertEquals(MockMode.WALK_TO, locationRepository.currentMode.value)
+        }
+
+    @Test
+    fun handleStop_doesNotClobberModeSetByNewWalkStartedDuringCancellation() =
+        runTest {
+            locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+            locationRepository.setMockMode(MockMode.WALK_TO)
+
+            orchestrator.handleStop()
+
+            assertEquals(MockMode.WALK_TO, locationRepository.currentMode.value)
+        }
 }
