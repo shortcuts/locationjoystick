@@ -649,8 +649,12 @@ class MockLocationService : Service() {
         }
     }
 
-    private fun exitFollowerMode() {
+    internal fun exitFollowerMode() {
         followerSyncClient.stopPolling()
+        // Follower ticks set currentSpeedMs/currentBearing from the leader's last update;
+        // clear them so a stale nonzero speed doesn't keep broadcasting after we leave the group.
+        currentSpeedMs = 0.0f
+        currentBearing = 0.0f
         locationRepository.setMockMode(MockMode.TELEPORT)
         Log.i(TAG, "Exited FOLLOWER mode")
     }
@@ -806,7 +810,7 @@ class MockLocationService : Service() {
      * in the tick loop. Also computes [LocationSnapshot.shouldApplyMovingJitter] and refreshes the
      * slow-churn satellite counts when their interval has elapsed.
      */
-    private fun captureSnapshot(nowMs: Long): LocationSnapshot {
+    internal fun captureSnapshot(nowMs: Long): LocationSnapshot {
         val mode = locationRepository.currentMode.value
         val jitterIntervalMs = realism.jitterIntervalSeconds * 1000L
         val shouldApplyMovingJitter = (nowMs - lastJitterTimestampMs) >= jitterIntervalMs
