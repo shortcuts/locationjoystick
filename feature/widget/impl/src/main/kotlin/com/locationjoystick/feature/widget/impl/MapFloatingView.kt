@@ -348,6 +348,7 @@ internal fun MapFloatingView(
                     .align(Alignment.BottomEnd)
                     .padding(end = 8.dp, bottom = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.End,
         ) {
             if (!isFollowingCamera.value) {
                 LjMapIconButton(
