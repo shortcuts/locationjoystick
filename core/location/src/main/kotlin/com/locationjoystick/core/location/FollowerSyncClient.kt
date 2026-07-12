@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -124,8 +125,7 @@ class FollowerSyncClient
                     return FetchResult.GroupGone
                 }
                 if (!response.isSuccessful) {
-                    Log.w(TAG, "Poll returned ${response.code} from $host:$port")
-                    return FetchResult.Empty
+                    throw IOException("Poll returned ${response.code} from $host:$port")
                 }
                 val body = response.body?.string() ?: return FetchResult.Empty
                 try {

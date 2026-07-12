@@ -1,14 +1,20 @@
 package com.locationjoystick.core.location
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.SyncPositionUpdate
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.PrintWriter
+import java.net.Socket
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 class FollowerSyncClientTest {
     private val server = LeaderSyncServer()
@@ -124,5 +130,98 @@ class FollowerSyncClientTest {
         val second = results.poll(3, TimeUnit.SECONDS)
         assertNotNull("New seq should be delivered", second)
         assertEquals(10.0, second!!.first, 0.0)
+    }
+
+    @Test
+    fun `repeated non-403 error responses eventually trigger group-lost`() {
+        val errorServer = AlwaysErrorServer()
+        val errorPort = errorServer.start("test-group")
+        val groupLost = LinkedBlockingQueue<Unit>()
+        val pollIntervalMs = 20L
+
+        try {
+            client.startPolling(
+                "127.0.0.1",
+                errorPort,
+                "test-group",
+                pollIntervalMs = pollIntervalMs,
+                onGroupLost = { groupLost.offer(Unit) },
+            ) { _, _, _, _ -> }
+
+            val timeoutMs =
+                AppConstants.SyncConstants.MAX_CONSECUTIVE_POLL_FAILURES * (pollIntervalMs + 200) + 2_000
+            val lost = groupLost.poll(timeoutMs, TimeUnit.MILLISECONDS)
+            assertNotNull("500 responses should eventually surface as group-lost", lost)
+        } finally {
+            errorServer.stop()
+        }
+    }
+
+    @Test
+    fun `alternating success and failure never triggers group-lost`() {
+        val alternatingServer = AlternatingServer()
+        val altPort = alternatingServer.start("test-group")
+        val groupLost = AtomicInteger(0)
+
+        try {
+            client.startPolling(
+                "127.0.0.1",
+                altPort,
+                "test-group",
+                pollIntervalMs = 20,
+                onGroupLost = { groupLost.incrementAndGet() },
+            ) { _, _, _, _ -> }
+
+            Thread.sleep(1_000)
+            assertTrue("Alternating success/failure should keep polling", client.isPolling)
+            assertFalse("Reset-on-success must be preserved", groupLost.get() > 0)
+        } finally {
+            alternatingServer.stop()
+        }
+    }
+
+    private class AlwaysErrorServer : TokenAuthHttpServer(TAG) {
+        fun start(groupId: String): Int = startServer(groupId)
+
+        fun stop() = stopServer()
+
+        override fun handleRequest(
+            path: String,
+            socket: Socket,
+            writer: PrintWriter,
+        ) {
+            writer.print("HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n")
+            writer.flush()
+        }
+
+        companion object {
+            private const val TAG = "AlwaysErrorServer"
+        }
+    }
+
+    private class AlternatingServer : TokenAuthHttpServer(TAG) {
+        private val requestCount = AtomicInteger(0)
+
+        fun start(groupId: String): Int = startServer(groupId)
+
+        fun stop() = stopServer()
+
+        override fun handleRequest(
+            path: String,
+            socket: Socket,
+            writer: PrintWriter,
+        ) {
+            val n = requestCount.getAndIncrement()
+            if (n % 2 == 0) {
+                writer.print("HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n")
+            } else {
+                writer.print("HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n")
+            }
+            writer.flush()
+        }
+
+        companion object {
+            private const val TAG = "AlternatingServer"
+        }
     }
 }
