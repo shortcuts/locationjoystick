@@ -239,11 +239,17 @@ class MockLocationService : Service() {
 
                     MockLocationState.IDLE, MockLocationState.ERROR -> {
                         updateJobMutex.withLock {
-                            if (updateJob != null) {
-                                updateJob?.cancel()
-                                updateJob = null
-                                removeTestProvider()
-                                Log.i(TAG, "State changed to IDLE/ERROR - stopped update loop")
+                            when (computeIdleOrErrorLoopAction(state, leaderSharingEnabled, updateJob != null)) {
+                                LocationLoopAction.KEEP_ALIVE -> {
+                                    Log.i(TAG, "State changed to $state - leader sharing active, keeping test provider alive")
+                                }
+                                LocationLoopAction.TEAR_DOWN -> {
+                                    updateJob?.cancel()
+                                    updateJob = null
+                                    removeTestProvider()
+                                    Log.i(TAG, "State changed to $state - stopped update loop")
+                                }
+                                LocationLoopAction.NO_OP -> Unit
                             }
                         }
                         stopService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))

@@ -9,6 +9,7 @@ import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.routing.RouteReplayEngine
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -170,4 +171,44 @@ class ReplayOrchestratorTest {
 
             assertEquals(MockMode.WALK_TO, locationRepository.currentMode.value)
         }
+
+    // Regression coverage for the group-sync leader bug: a route replay that completes naturally
+    // *after* being paused and resumed must not force IDLE/stopSpoofing — that unconditionally
+    // tore down the leader's test provider and killed broadcasting to followers on completion.
+    // The resumed-replay completion path must behave identically to the never-paused one.
+    @Test
+    fun handleResume_onComplete_doesNotForceIdleState() {
+        val onCompleteSlot = slot<() -> Unit>()
+        orchestrator.handleResume(1.4)
+        verify { routeReplayEngine.resume(any(), capture(onCompleteSlot)) }
+        stateChanges.clear()
+
+        onCompleteSlot.captured.invoke()
+
+        assertFalse(stateChanges.contains(MockLocationState.IDLE))
+    }
+
+    @Test
+    fun handleResume_onComplete_doesNotCallStopSpoofing() {
+        locationRepository.startSpoofing()
+        val onCompleteSlot = slot<() -> Unit>()
+        orchestrator.handleResume(1.4)
+        verify { routeReplayEngine.resume(any(), capture(onCompleteSlot)) }
+
+        onCompleteSlot.captured.invoke()
+
+        assertEquals(MockLocationState.RUNNING, locationRepository.mockLocationState.value)
+    }
+
+    @Test
+    fun handleResume_onComplete_resetsModeToTeleportAndEmitsCompletion() {
+        locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+        val onCompleteSlot = slot<() -> Unit>()
+        orchestrator.handleResume(1.4)
+        verify { routeReplayEngine.resume(any(), capture(onCompleteSlot)) }
+
+        onCompleteSlot.captured.invoke()
+
+        assertEquals(MockMode.TELEPORT, locationRepository.currentMode.value)
+    }
 }

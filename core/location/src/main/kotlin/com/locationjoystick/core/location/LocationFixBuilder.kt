@@ -1,6 +1,7 @@
 package com.locationjoystick.core.location
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import kotlin.random.Random
 
@@ -110,6 +111,41 @@ internal data class SuspendedPhaseState(
  * Returns the next [SuspendedPhaseState] given the current state and clock. No side effects.
  * Disabled or mode-gated: resets isActive to false (startMs updated to now).
  */
+/**
+ * Decision for what [MockLocationService.observeLocationState] should do to the update loop /
+ * test provider on an IDLE or ERROR state transition.
+ */
+internal enum class LocationLoopAction {
+    /** Leave the update loop (and test provider) running untouched. */
+    KEEP_ALIVE,
+
+    /** Cancel the update loop and remove the test provider. */
+    TEAR_DOWN,
+
+    /** Nothing to do (no active loop to cancel). */
+    NO_OP,
+}
+
+/**
+ * Pure decision for the IDLE/ERROR branch of [MockLocationService.observeLocationState].
+ *
+ * A group-sync leader must never have its test provider torn down by an *incidental* IDLE
+ * transition (e.g. a walk or route replay completing naturally) — only an explicit
+ * `stopSpoofing()` call (which removes the provider itself before this collector observes the
+ * state change) should end broadcasting to followers. ERROR is always torn down: it represents
+ * a genuine unrecoverable failure, not a natural completion, so group sync gets no exception.
+ */
+internal fun computeIdleOrErrorLoopAction(
+    state: MockLocationState,
+    leaderSharingEnabled: Boolean,
+    hasActiveUpdateJob: Boolean,
+): LocationLoopAction =
+    when {
+        state == MockLocationState.IDLE && leaderSharingEnabled -> LocationLoopAction.KEEP_ALIVE
+        hasActiveUpdateJob -> LocationLoopAction.TEAR_DOWN
+        else -> LocationLoopAction.NO_OP
+    }
+
 internal fun advanceSuspendedPhase(
     current: SuspendedPhaseState,
     now: Long,

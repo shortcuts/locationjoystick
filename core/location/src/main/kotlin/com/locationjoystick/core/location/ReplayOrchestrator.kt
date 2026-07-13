@@ -121,12 +121,11 @@ internal class ReplayOrchestrator(
                 }
             },
             onComplete = {
+                // Matches startReplayWithWaypoints' default onComplete (used when a replay finishes
+                // without ever being paused) — a natural completion must not force IDLE/stopSpoofing.
+                // Forcing IDLE here previously killed a group-sync leader's broadcast on completion.
                 locationRepository.setRouteWaypoints(null)
-                // Stop spoofing is delegated back to the service — signal via state change to IDLE.
-                // The service's observeLocationState handles the IDLE transition.
-                onStateChange(MockLocationState.IDLE)
                 locationRepository.setMockMode(MockMode.TELEPORT)
-                locationRepository.stopSpoofing()
                 locationRepository.emitCompletion("Route complete")
             },
         )
