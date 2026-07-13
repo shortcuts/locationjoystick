@@ -111,6 +111,7 @@ internal data class SuspendedPhaseState(
  * Returns the next [SuspendedPhaseState] given the current state and clock. No side effects.
  * Disabled or mode-gated: resets isActive to false (startMs updated to now).
  */
+
 /**
  * Decision for what [MockLocationService.observeLocationState] should do to the update loop /
  * test provider on an IDLE or ERROR state transition.
