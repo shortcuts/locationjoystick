@@ -106,13 +106,6 @@ internal data class SuspendedPhaseState(
 )
 
 /**
- * Pure transition function for the suspended-mocking push/pause state machine.
- *
- * Returns the next [SuspendedPhaseState] given the current state and clock. No side effects.
- * Disabled or mode-gated: resets isActive to false (startMs updated to now).
- */
-
-/**
  * Decision for what [MockLocationService.observeLocationState] should do to the update loop /
  * test provider on an IDLE or ERROR state transition.
  */
@@ -147,6 +140,12 @@ internal fun computeIdleOrErrorLoopAction(
         else -> LocationLoopAction.NO_OP
     }
 
+/**
+ * Pure transition function for the suspended-mocking push/pause state machine.
+ *
+ * Returns the next [SuspendedPhaseState] given the current state and clock. No side effects.
+ * Disabled or mode-gated: resets isActive to false (startMs updated to now).
+ */
 internal fun advanceSuspendedPhase(
     current: SuspendedPhaseState,
     now: Long,
