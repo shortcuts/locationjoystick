@@ -75,4 +75,28 @@ class LocationLoopActionTest {
             )
         assertEquals(LocationLoopAction.NO_OP, action)
     }
+
+    @Test
+    fun `PAUSED with leader sharing and no active job starts the loop`() {
+        val action = computePausedLoopAction(leaderSharingEnabled = true, hasActiveUpdateJob = false)
+        assertEquals(LocationLoopAction.START_UP, action)
+    }
+
+    @Test
+    fun `PAUSED with leader sharing and an active job keeps it alive`() {
+        val action = computePausedLoopAction(leaderSharingEnabled = true, hasActiveUpdateJob = true)
+        assertEquals(LocationLoopAction.KEEP_ALIVE, action)
+    }
+
+    @Test
+    fun `PAUSED without leader sharing tears down an active job`() {
+        val action = computePausedLoopAction(leaderSharingEnabled = false, hasActiveUpdateJob = true)
+        assertEquals(LocationLoopAction.TEAR_DOWN, action)
+    }
+
+    @Test
+    fun `PAUSED without leader sharing and no active job is a no-op`() {
+        val action = computePausedLoopAction(leaderSharingEnabled = false, hasActiveUpdateJob = false)
+        assertEquals(LocationLoopAction.NO_OP, action)
+    }
 }

@@ -17,7 +17,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -62,20 +61,39 @@ class FollowerSyncClient
                 scope.launch {
                     while (isActive) {
                         try {
-                            val result = fetchPosition(host, port, groupId)
-                            if (result == FetchResult.GroupGone) {
-                                Log.w(TAG, "Group $groupId no longer recognized by leader $host:$port")
-                                onGroupLost()
-                                break
-                            }
-                            consecutiveFailures = 0
-                            val update = (result as? FetchResult.Success)?.update
-                            if (update != null) {
-                                val nowMs = System.currentTimeMillis()
-                                val stale = nowMs - update.timestamp > AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS
-                                if (!stale && update.seq > lastSeq) {
-                                    lastSeq = update.seq
-                                    onPosition(update.latitude, update.longitude, update.speedMs, update.bearing)
+                            when (val result = fetchPosition(host, port, groupId)) {
+                                FetchResult.GroupGone -> {
+                                    Log.w(TAG, "Group $groupId no longer recognized by leader $host:$port")
+                                    onGroupLost()
+                                    break
+                                }
+
+                                is FetchResult.Failed -> {
+                                    Log.w(TAG, "Poll returned ${result.code} from $host:$port")
+                                    consecutiveFailures++
+                                    if (consecutiveFailures >= AppConstants.SyncConstants.MAX_CONSECUTIVE_POLL_FAILURES) {
+                                        Log.w(TAG, "Leader $host:$port unreachable after $consecutiveFailures attempts — giving up")
+                                        onGroupLost()
+                                        break
+                                    }
+                                }
+
+                                is FetchResult.Success -> {
+                                    consecutiveFailures = 0
+                                    val update = result.update
+                                    if (update != null) {
+                                        val nowMs = System.currentTimeMillis()
+                                        val stale =
+                                            nowMs - update.timestamp > AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS
+                                        if (!stale && update.seq > lastSeq) {
+                                            lastSeq = update.seq
+                                            onPosition(update.latitude, update.longitude, update.speedMs, update.bearing)
+                                        }
+                                    }
+                                }
+
+                                FetchResult.Empty -> {
+                                    consecutiveFailures = 0
                                 }
                             }
                         } catch (e: Exception) {
@@ -122,6 +140,11 @@ class FollowerSyncClient
             data object GroupGone : FetchResult()
 
             data object Empty : FetchResult()
+
+            /** Non-2xx, non-403 HTTP response — a routine polling failure, not an exceptional one. */
+            data class Failed(
+                val code: Int,
+            ) : FetchResult()
         }
 
         private fun fetchPosition(
@@ -140,7 +163,7 @@ class FollowerSyncClient
                     return FetchResult.GroupGone
                 }
                 if (!response.isSuccessful) {
-                    throw IOException("Poll returned ${response.code} from $host:$port")
+                    return FetchResult.Failed(response.code)
                 }
                 val body = response.body?.string() ?: return FetchResult.Empty
                 try {
