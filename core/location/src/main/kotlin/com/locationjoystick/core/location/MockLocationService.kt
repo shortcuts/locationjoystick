@@ -669,7 +669,12 @@ class MockLocationService : Service() {
                     // starting straight at the leader's position carries no anti-cheat risk.
                     // Once already RUNNING, the catch-up walk in pushLocationUpdate() takes over
                     // instead, so an already-spoofing follower never jumps.
-                    serviceScope.launch { startSpoofing(lat, lon) }
+                    serviceScope.launch {
+                        startSpoofing(lat, lon)
+                        // startSpoofing() unconditionally sets mode to TELEPORT — reassert FOLLOWER
+                        // so advanceFollowerCatchUp() doesn't no-op on every subsequent tick.
+                        locationRepository.setMockMode(MockMode.FOLLOWER)
+                    }
                 }
             }
             Log.i(TAG, "Entered FOLLOWER mode for group $groupId at $host:$port")
