@@ -7,14 +7,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.DeepLinkRepository
 import com.locationjoystick.core.data.GoogleMapsShortLinkResolver
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.model.ThemeMode
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -60,7 +64,9 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            LjTheme {
+            val themeViewModel: ThemeViewModel = hiltViewModel()
+            val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
+            LjTheme(darkTheme = themeMode == ThemeMode.DARK) {
                 LjApp(
                     navigateToMapFlow = navigateToMapFlow,
                     navigateToRouteCreatorFlow = navigateToRouteCreatorFlow,

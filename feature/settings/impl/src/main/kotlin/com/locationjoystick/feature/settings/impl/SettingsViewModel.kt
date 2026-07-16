@@ -22,6 +22,7 @@ import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -167,7 +168,8 @@ class SettingsViewModel
                 combine(snapshotFlow, draftStateFlow) { snapshot, draft -> Pair(snapshot, draft) },
                 compassPrefsFlow,
                 compassServiceGranted,
-            ) { (snapshot, draftState), compass, isServiceGranted ->
+                settingsRepository.getThemeMode(),
+            ) { (snapshot, draftState), compass, isServiceGranted, themeMode ->
                 val isDirty = draftState != DraftState()
                 SettingsUiState(
                     isLoading = false,
@@ -206,6 +208,7 @@ class SettingsViewModel
                     compassRegionCxPct = compass.cx,
                     compassRegionCyPct = compass.cy,
                     compassRegionRadiusPct = compass.radius,
+                    themeMode = themeMode,
                     isDirty = isDirty,
                 )
             }.stateIn(
@@ -364,6 +367,10 @@ class SettingsViewModel
 
         fun setCompassTrackingEnabled(enabled: Boolean) {
             viewModelScope.launch { settingsRepository.setCompassTrackingEnabled(enabled) }
+        }
+
+        fun setThemeMode(mode: ThemeMode) {
+            viewModelScope.launch { settingsRepository.setThemeMode(mode) }
         }
 
         fun setCompassRegion(

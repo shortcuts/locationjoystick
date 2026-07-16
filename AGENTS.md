@@ -116,6 +116,7 @@ Rules:
 | Onboarding | @docs/features/onboarding.md |
 | Group Sync | @docs/features/group-sync.md |
 | Tap to Walk | @docs/features/tap-to-walk.md |
+| Theme | @docs/features/theme.md |
 
 ---
 

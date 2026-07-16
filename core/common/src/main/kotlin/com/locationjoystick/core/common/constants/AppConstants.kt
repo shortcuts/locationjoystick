@@ -240,6 +240,7 @@ object AppConstants {
         const val FILE_NAME = "app_preferences"
         const val DEFAULT_REMEMBER_LAST_LOCATION = true
         const val DEFAULT_LAST_TELEPORT_TIME_MS = 0L
+        const val DEFAULT_THEME_MODE = "DARK"
         const val KEY_GROUP_ROLE = "group_role"
         const val KEY_GROUP_ID = "group_id"
         const val KEY_GROUP_LEADER_HOST = "group_leader_host"

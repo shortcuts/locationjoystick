@@ -4,9 +4,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 
 @Composable
-fun LjTheme(content: @Composable () -> Unit) {
+fun LjTheme(
+    darkTheme: Boolean = true,
+    content: @Composable () -> Unit,
+) {
     MaterialTheme(
-        colorScheme = LjDarkColorScheme,
+        colorScheme = if (darkTheme) LjDarkColorScheme else LjLightColorScheme,
         typography = LjTypography,
         shapes = LjShapes,
         content = content,

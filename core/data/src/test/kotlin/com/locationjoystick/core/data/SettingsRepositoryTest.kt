@@ -909,6 +909,8 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     val speedUnitFlow = MutableStateFlow("KMH")
 
+    val themeModeFlow = MutableStateFlow("DARK")
+
     val rememberLastLocationFlow = MutableStateFlow(false)
 
     val lastLocationFlow = MutableStateFlow<LatLng?>(null)
@@ -1000,6 +1002,12 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setSpeedUnit(unit: String) {
         speedUnitFlow.value = unit
+    }
+
+    override fun getThemeMode(): Flow<String> = themeModeFlow
+
+    override suspend fun setThemeMode(mode: String) {
+        themeModeFlow.value = mode
     }
 
     override fun getRememberLastLocation(): Flow<Boolean> = rememberLastLocationFlow

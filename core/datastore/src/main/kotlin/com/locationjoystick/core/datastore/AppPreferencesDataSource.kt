@@ -94,6 +94,12 @@ interface PreferencesDataSource {
     /** Sets the speed unit preference. */
     suspend fun setSpeedUnit(unit: String)
 
+    /** Gets the theme mode preference (DARK/LIGHT). */
+    fun getThemeMode(): Flow<String>
+
+    /** Sets the theme mode preference. */
+    suspend fun setThemeMode(mode: String)
+
     /** Gets whether to remember the last spoofed location. */
     fun getRememberLastLocation(): Flow<Boolean>
 
@@ -364,6 +370,7 @@ class AppPreferencesDataSource
             val ROAMING_SPEED_PROFILE_ID = stringPreferencesKey("roaming_speed_profile_id")
             val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
             val SPEED_UNIT = stringPreferencesKey("speed_unit")
+            val THEME_MODE = stringPreferencesKey("theme_mode")
             val REMEMBER_LAST_LOCATION = booleanPreferencesKey("remember_last_location")
             val LAST_LATITUDE = doublePreferencesKey("last_latitude")
             val LAST_LONGITUDE = doublePreferencesKey("last_longitude")
@@ -523,6 +530,12 @@ class AppPreferencesDataSource
 
         override suspend fun setSpeedUnit(unit: String) {
             dataStore.edit { prefs -> prefs[Keys.SPEED_UNIT] = unit }
+        }
+
+        override fun getThemeMode(): Flow<String> = pref(Keys.THEME_MODE, AppConstants.DataStoreConstants.DEFAULT_THEME_MODE)
+
+        override suspend fun setThemeMode(mode: String) {
+            dataStore.edit { prefs -> prefs[Keys.THEME_MODE] = mode }
         }
 
         override fun getRememberLastLocation(): Flow<Boolean> =

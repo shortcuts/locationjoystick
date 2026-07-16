@@ -380,6 +380,10 @@ fun SettingsRoute(
                     viewModel.setCompassRegion(action.cx, action.cy, action.radius)
                 }
 
+                is SettingsAction.SetThemeMode -> {
+                    viewModel.setThemeMode(action.mode)
+                }
+
                 SettingsAction.Export -> {
                     exportLauncher.launch(
                         "${AppConstants.ExportConstants.FILENAME_PREFIX}-${System.currentTimeMillis()}.json",

@@ -3,6 +3,7 @@ package com.locationjoystick.feature.settings.impl
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.ThemeMode
 
 internal sealed class SettingsAction {
     data class SetSlowWalkSpeed(
@@ -151,6 +152,10 @@ internal sealed class SettingsAction {
         val cx: Float,
         val cy: Float,
         val radius: Float,
+    ) : SettingsAction()
+
+    data class SetThemeMode(
+        val mode: ThemeMode,
     ) : SettingsAction()
 
     data object SaveChanges : SettingsAction()

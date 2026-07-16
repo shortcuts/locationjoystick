@@ -479,6 +479,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setSpeedUnit(unit: String) = Unit
 
+    override fun getThemeMode(): Flow<String> = flowOf("DARK")
+
+    override suspend fun setThemeMode(mode: String) = Unit
+
     override fun getRememberLastLocation(): Flow<Boolean> = flowOf(false)
 
     override suspend fun setRememberLastLocation(enabled: Boolean) = Unit

@@ -12,6 +12,7 @@ import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -125,6 +126,19 @@ class SettingsRepository
                     SpeedUnit.valueOf(unitName)
                 } catch (e: IllegalArgumentException) {
                     SpeedUnit.KMH
+                }
+            }
+
+        suspend fun setThemeMode(mode: ThemeMode) {
+            dataSource.setThemeMode(mode.name)
+        }
+
+        fun getThemeMode(): Flow<ThemeMode> =
+            dataSource.getThemeMode().map { modeName ->
+                try {
+                    ThemeMode.valueOf(modeName)
+                } catch (e: IllegalArgumentException) {
+                    ThemeMode.DARK
                 }
             }
 

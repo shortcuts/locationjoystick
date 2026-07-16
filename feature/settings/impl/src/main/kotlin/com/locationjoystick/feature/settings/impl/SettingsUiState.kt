@@ -4,6 +4,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.ThemeMode
 
 data class SettingsUiState(
     val isLoading: Boolean = true,
@@ -42,5 +43,6 @@ data class SettingsUiState(
     val compassRegionCxPct: Float = AppConstants.CompassTrackingConstants.DEFAULT_REGION_CX_PCT,
     val compassRegionCyPct: Float = AppConstants.CompassTrackingConstants.DEFAULT_REGION_CY_PCT,
     val compassRegionRadiusPct: Float = AppConstants.CompassTrackingConstants.DEFAULT_REGION_RADIUS_PCT,
+    val themeMode: ThemeMode = ThemeMode.DARK,
     val isDirty: Boolean = false,
 )

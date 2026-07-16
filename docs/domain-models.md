@@ -22,6 +22,7 @@ All in `:core:model`. Pure Kotlin — no Android, no Room. Room entities in `:co
 | `FeatureSurface` | enum: `WIDGET`, `MAP` |
 | `JoystickStyle` | enum: `FLOATING`, `FIXED` |
 | `SpeedUnit` | enum: `KMH`, `MPH` |
+| `ThemeMode` | enum: `DARK`, `LIGHT` |
 | `GroupRole` | enum: `NONE`, `LEADER`, `FOLLOWER` |
 | `GroupState` | `role: GroupRole`, `groupId: String?`, `leaderHost: String?`, `leaderPort: Int?`, `followerModeEnabled: Boolean`, `sharingEnabled: Boolean` |
 | `SyncPositionUpdate` | `timestamp: Long`, `latitude: Double`, `longitude: Double`, `speedMs: Float`, `bearing: Float`, `seq: Long` |

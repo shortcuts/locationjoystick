@@ -68,6 +68,7 @@ import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FeatureSurface
+import com.locationjoystick.core.model.ThemeMode
 import kotlin.math.roundToInt
 
 @Composable
@@ -118,6 +119,8 @@ internal fun SettingsMenusSubScreen(
                                 .verticalScroll(remember { ScrollState(0) })
                                 .padding(16.dp),
                     ) {
+                        ThemeSection(uiState, onAction)
+                        Spacer(Modifier.height(24.dp))
                         AppFeaturesSection(uiState, isRooted, onAction)
                         Spacer(Modifier.height(24.dp))
                         TapToWalkSection(uiState, onAction)
@@ -125,6 +128,37 @@ internal fun SettingsMenusSubScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ThemeSection(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    Text("Appearance", style = MaterialTheme.typography.headlineSmall)
+    Spacer(Modifier.height(4.dp))
+    Text(
+        "Switch to a light theme for better readability in bright/sunny conditions.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(8.dp))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "Light mode",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+        Switch(
+            checked = uiState.themeMode == ThemeMode.LIGHT,
+            onCheckedChange = { light ->
+                onAction(SettingsAction.SetThemeMode(if (light) ThemeMode.LIGHT else ThemeMode.DARK))
+            },
+        )
     }
 }
 
