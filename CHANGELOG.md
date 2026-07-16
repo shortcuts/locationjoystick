@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.14.0](https://github.com/shortcuts/locationjoystick/compare/v0.13.0...v0.14.0) (2026-07-16)
+
+
+### Features
+
+* **designsystem:** add light theme variant ([fb71f81](https://github.com/shortcuts/locationjoystick/commit/fb71f81a344f5b0c39c9545785429d2ef63f3083))
+* **favorites:** add search bar and category field for hot locations ([2a7dd9d](https://github.com/shortcuts/locationjoystick/commit/2a7dd9df5796fb34b8dcac515bd6a7075696e777))
+* **search:** allow raw coordinate input in search bar ([399ce3e](https://github.com/shortcuts/locationjoystick/commit/399ce3ebb7152f2614a451a427ac6080412f2def))
+* **settings:** add Reset all data button ([ca60e97](https://github.com/shortcuts/locationjoystick/commit/ca60e9799dfdb0dfcc17a4d91ebe5dca6418b885))
+* **settings:** add Slow Walk and Drive speed profiles ([802f940](https://github.com/shortcuts/locationjoystick/commit/802f940eab295e3c4bee22eeb1f21a41426a7253))
+
+
+### Bug Fixes
+
+* **click-to-move:** prevent stale replay cancellation from wiping walk polyline ([2a1cb5f](https://github.com/shortcuts/locationjoystick/commit/2a1cb5f869ff0212d9674831da02d920c3514396))
+* group sync disconnects ([e14777f](https://github.com/shortcuts/locationjoystick/commit/e14777ff26f4db311a6839a0652e5eb101648be5))
+* **group-sync:** check group existence immediately on screen entry ([782788e](https://github.com/shortcuts/locationjoystick/commit/782788e8b4bac39baa6068cb73997c50539a3a48))
+* **group-sync:** follower reports leader bearing once caught up ([0c765bc](https://github.com/shortcuts/locationjoystick/commit/0c765bc849d50718048a9c6e5f1d533c9c57b2eb))
+* **group-sync:** follower walks toward leader instead of teleporting ([ebbea12](https://github.com/shortcuts/locationjoystick/commit/ebbea12093fcd1eafbdb7e25a5b37d98e7636bc7))
+* **group-sync:** keep leader broadcasting position while paused ([be88a2b](https://github.com/shortcuts/locationjoystick/commit/be88a2b4150702f843fb9821654e094a98bb08e3))
+* **group-sync:** reassert FOLLOWER mode after bootstrap startSpoofing ([576bfb4](https://github.com/shortcuts/locationjoystick/commit/576bfb47ce1444fdd16a3f101f2a78ca1572c9f9))
+* **group-sync:** reset stale speed/bearing when exiting follower mode ([f4d9fb8](https://github.com/shortcuts/locationjoystick/commit/f4d9fb806c55e5a8505126e996996032eaa42173))
+* **group-sync:** retry on consecutive failures ([7f4e321](https://github.com/shortcuts/locationjoystick/commit/7f4e321772f7adbc0df4c77274a242353768fea3))
+* **group-sync:** stop leader spoof from dying on natural completion ([21a3db0](https://github.com/shortcuts/locationjoystick/commit/21a3db0312649e68a855f9b820e960a2815bcd58))
+* **location:** relocate kdoc for advanceSuspendedPhase function ([19070c7](https://github.com/shortcuts/locationjoystick/commit/19070c700f47302345b610e4f071e00df8b5a2d7))
+* **settings:** pin GPS Joystick import regression, fix SCHEMA_NAMES collision bug ([ee0fad0](https://github.com/shortcuts/locationjoystick/commit/ee0fad07c601c6206505d0bbd1dc7441830f19e3))
+* smoke tests ([edd1810](https://github.com/shortcuts/locationjoystick/commit/edd1810007a3f014d8e0de8be53790602a39c14c))
+* **widget:** keep floating map FAB column pinned right when route controls expand ([0075017](https://github.com/shortcuts/locationjoystick/commit/0075017dc50b267cbc3aac15a5d512738aca8047))
+* **widget:** remove spoofing start/stop control from floating map ([08b79f4](https://github.com/shortcuts/locationjoystick/commit/08b79f4043f1043204320c4e3003c3f43c7e9b8f))
+
 ## [0.13.0](https://github.com/shortcuts/locationjoystick/compare/v0.12.0...v0.13.0) (2026-07-04)
 
 
