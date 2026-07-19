@@ -184,6 +184,7 @@ internal class ReplayOrchestrator(
         isLooping: Boolean,
         persistMetadata: (suspend () -> Unit)? = null,
         onComplete: suspend () -> Unit = {
+            locationRepository.setRouteWaypoints(null)
             locationRepository.setMockMode(MockMode.TELEPORT)
             locationRepository.emitCompletion("Route complete")
         },
