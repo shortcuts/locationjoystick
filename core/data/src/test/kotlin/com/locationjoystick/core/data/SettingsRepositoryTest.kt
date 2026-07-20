@@ -894,6 +894,8 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     val featureOrderFlow = MutableStateFlow(AppFeature.DEFAULT_ORDER)
 
+    val enabledSpeedProfileIdsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_ENABLED_SPEED_PROFILE_IDS)
+
     val roamingDefaultsFlow =
         MutableStateFlow(
             RoamingDefaults(
@@ -984,6 +986,12 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setFeatureOrder(order: List<AppFeature>) {
         featureOrderFlow.value = order
+    }
+
+    override fun getEnabledSpeedProfileIds(): Flow<Set<String>> = enabledSpeedProfileIdsFlow
+
+    override suspend fun setEnabledSpeedProfileIds(ids: Set<String>) {
+        enabledSpeedProfileIdsFlow.value = ids
     }
 
     override fun getRoamingDefaults(): Flow<RoamingDefaults> = roamingDefaultsFlow

@@ -260,6 +260,10 @@ fun SettingsRoute(
                     viewModel.setWidgetFeatures(action.features)
                 }
 
+                is SettingsAction.SetEnabledSpeedProfileIds -> {
+                    viewModel.setEnabledSpeedProfileIds(action.ids)
+                }
+
                 is SettingsAction.SetMapFeatures -> {
                     viewModel.setMapFeatures(action.features)
                 }

@@ -69,6 +69,16 @@ class SettingsRepository
 
         suspend fun setFeatureOrder(order: List<AppFeature>) = dataSource.setFeatureOrder(order)
 
+        fun getEnabledSpeedProfileIds(): Flow<Set<String>> = dataSource.getEnabledSpeedProfileIds()
+
+        suspend fun setEnabledSpeedProfileIds(ids: Set<String>) = dataSource.setEnabledSpeedProfileIds(ids)
+
+        /** Profiles eligible for cycling (widget Speed Cycle), filtered to the enabled set. Falls back to all profiles if none are enabled. */
+        fun getEnabledSpeedProfiles(): Flow<List<SpeedProfile>> =
+            combine(getSpeedProfiles(), dataSource.getEnabledSpeedProfileIds()) { profiles, enabledIds ->
+                profiles.filter { it.id in enabledIds }.ifEmpty { profiles }
+            }
+
         fun getWidgetFeatures(): Flow<List<AppFeature>> =
             combine(dataSource.getFeatureOrder(), dataSource.getWidgetItems()) { order, keys ->
                 val enabled = keys.mapNotNull { it.toAppFeature() }.toSet()

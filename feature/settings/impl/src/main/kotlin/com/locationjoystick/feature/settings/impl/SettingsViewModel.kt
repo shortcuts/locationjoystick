@@ -102,6 +102,7 @@ class SettingsViewModel
             val speedUnit: SpeedUnit? = null,
             val featureOrder: List<AppFeature>? = null,
             val widgetFeatures: Set<AppFeature>? = null,
+            val enabledSpeedProfileIds: Set<String>? = null,
             val mapFeatures: Set<AppFeature>? = null,
             val rememberLastLocation: Boolean? = null,
             val mapFollowsLocation: Boolean? = null,
@@ -173,6 +174,7 @@ class SettingsViewModel
                     speedUnit = draftState.speedUnit ?: snapshot.speedUnit,
                     featureOrder = draftState.featureOrder ?: snapshot.featureOrder,
                     enabledWidgetFeatures = draftState.widgetFeatures ?: snapshot.enabledWidgetFeatures,
+                    enabledSpeedProfileIds = draftState.enabledSpeedProfileIds ?: snapshot.enabledSpeedProfileIds,
                     enabledMapFeatures = draftState.mapFeatures ?: snapshot.enabledMapFeatures,
                     rememberLastLocation = draftState.rememberLastLocation ?: snapshot.rememberLastLocation,
                     mapFollowsLocation = draftState.mapFollowsLocation ?: snapshot.mapFollowsLocation,
@@ -223,6 +225,12 @@ class SettingsViewModel
 
         fun setWidgetFeatures(features: Set<AppFeature>) {
             mutableDraft.update { it.copy(widgetFeatures = features) }
+        }
+
+        /** No-op if [ids] is empty — at least one speed profile must stay enabled for cycling to work. */
+        fun setEnabledSpeedProfileIds(ids: Set<String>) {
+            if (ids.isEmpty()) return
+            mutableDraft.update { it.copy(enabledSpeedProfileIds = ids) }
         }
 
         fun setMapFeatures(features: Set<AppFeature>) {
@@ -404,6 +412,7 @@ class SettingsViewModel
                             featureOrder = state.featureOrder,
                             enabledWidgetFeatures = state.enabledWidgetFeatures,
                             enabledMapFeatures = state.enabledMapFeatures,
+                            enabledSpeedProfileIds = state.enabledSpeedProfileIds,
                             rememberLastLocation = state.rememberLastLocation,
                             mapFollowsLocation = state.mapFollowsLocation,
                             jitterIdleRadius = state.jitterIdleRadiusMeters,
@@ -504,6 +513,7 @@ class SettingsViewModel
                     featureOrder = state.featureOrder,
                     enabledWidgetFeatures = state.enabledWidgetFeatures,
                     enabledMapFeatures = state.enabledMapFeatures,
+                    enabledSpeedProfileIds = state.enabledSpeedProfileIds,
                     bearingHoldOnIdle = state.realismBearingHoldIdle,
                     altitudeEnabled = state.realismAltitudeEnabled,
                     warmupEnabled = state.realismWarmupEnabled,
@@ -698,6 +708,7 @@ class SettingsViewModel
                     featureOrder = data.settings.featureOrder,
                     enabledWidgetFeatures = data.settings.enabledWidgetFeatures,
                     enabledMapFeatures = data.settings.enabledMapFeatures,
+                    enabledSpeedProfileIds = data.settings.enabledSpeedProfileIds,
                     jitterIdleRadius = data.jitterIdleRadius,
                     jitterMovingRadius = data.jitterMovingRadius,
                     jitterIntervalSeconds = data.jitterIntervalSeconds,

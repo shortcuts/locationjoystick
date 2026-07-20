@@ -356,6 +356,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     private val widgetItemsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_WIDGET_ITEMS)
     private val mapItemsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_MAP_FAB_ITEMS)
     private val featureOrderFlow = MutableStateFlow(AppFeature.DEFAULT_ORDER)
+    private val enabledSpeedProfileIdsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_ENABLED_SPEED_PROFILE_IDS)
     private val roamingDefaultsFlow =
         MutableStateFlow(
             RoamingDefaults(
@@ -398,6 +399,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
                 hotRoutesEnabled = false,
                 selectedHotRouteIds = emptySet(),
                 roamingDefaults = roamingDefaultsFlow.value,
+                enabledSpeedProfileIds = enabledSpeedProfileIdsFlow.value,
             ),
         )
 
@@ -417,6 +419,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
         mapItemsFlow.value = snapshot.enabledMapFeatures.map { it.name.lowercase() }.toSet()
         featureOrderFlow.value = snapshot.featureOrder
         roamingDefaultsFlow.value = snapshot.roamingDefaults
+        enabledSpeedProfileIdsFlow.value = snapshot.enabledSpeedProfileIds
     }
 
     // --- minimal implementations for remaining interface methods ---
@@ -463,6 +466,12 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setFeatureOrder(order: List<AppFeature>) {
         featureOrderFlow.value = order
+    }
+
+    override fun getEnabledSpeedProfileIds(): Flow<Set<String>> = enabledSpeedProfileIdsFlow
+
+    override suspend fun setEnabledSpeedProfileIds(ids: Set<String>) {
+        enabledSpeedProfileIdsFlow.value = ids
     }
 
     override fun getRoamingDefaults(): Flow<RoamingDefaults> = roamingDefaultsFlow

@@ -68,6 +68,7 @@ import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FeatureSurface
+import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.ThemeMode
 import kotlin.math.roundToInt
 
@@ -122,6 +123,8 @@ internal fun SettingsMenusSubScreen(
                         ThemeSection(uiState, onAction)
                         Spacer(Modifier.height(24.dp))
                         AppFeaturesSection(uiState, isRooted, onAction)
+                        Spacer(Modifier.height(24.dp))
+                        SpeedCycleSection(uiState, onAction)
                         Spacer(Modifier.height(24.dp))
                         TapToWalkSection(uiState, onAction)
                     }
@@ -576,6 +579,36 @@ private fun AppFeaturesSection(
 }
 
 private fun Modifier.graphicsLayerTranslationY(ty: Float): Modifier = this.then(Modifier.graphicsLayer { translationY = ty })
+
+@Composable
+private fun SpeedCycleSection(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    Text("Speed Cycle", style = MaterialTheme.typography.headlineSmall)
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        "Choose which speed profiles the widget's Speed Cycle button cycles through.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Column {
+        SpeedProfile.defaultProfiles().forEach { profile ->
+            val checked = profile.id in uiState.enabledSpeedProfileIds
+            LjCheckboxRow(
+                checked = checked,
+                title = profile.name,
+                onCheckedChange = { isChecked ->
+                    val updated = uiState.enabledSpeedProfileIds.toMutableSet()
+                    if (isChecked) updated.add(profile.id) else updated.remove(profile.id)
+                    onAction(SettingsAction.SetEnabledSpeedProfileIds(updated))
+                },
+            )
+        }
+    }
+}
 
 @Composable
 private fun FeatureRow(

@@ -194,7 +194,7 @@ class FloatingWidgetService :
             }
         }
         lifecycleScope.launch {
-            settingsRepository.getSpeedProfiles().collect { profiles ->
+            settingsRepository.getEnabledSpeedProfiles().collect { profiles ->
                 profilesFlow.value = profiles
             }
         }

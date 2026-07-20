@@ -19,6 +19,10 @@ internal sealed class SettingsAction {
         val features: Set<AppFeature>,
     ) : SettingsAction()
 
+    data class SetEnabledSpeedProfileIds(
+        val ids: Set<String>,
+    ) : SettingsAction()
+
     data class SetFeatureOrder(
         val order: List<AppFeature>,
     ) : SettingsAction()

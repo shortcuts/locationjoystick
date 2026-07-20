@@ -74,6 +74,7 @@ internal object SettingsExportCodec {
         settingsObj.put("enabledWidgetFeatures", JSONArray(data.settings.enabledWidgetFeatures.map { it.name }))
         settingsObj.put("enabledMapFeatures", JSONArray(data.settings.enabledMapFeatures.map { it.name }))
         settingsObj.put("featureOrder", JSONArray(data.settings.featureOrder.map { it.name }))
+        settingsObj.put("enabledSpeedProfileIds", JSONArray(data.settings.enabledSpeedProfileIds))
         settingsObj.put("realismBearingHoldIdle", data.settings.bearingHoldOnIdle)
         settingsObj.put("realismAltitudeEnabled", data.settings.altitudeEnabled)
         settingsObj.put("realismWarmupEnabled", data.settings.warmupEnabled)
@@ -184,6 +185,14 @@ internal object SettingsExportCodec {
                         for (i in 0 until arr.length()) parseAppFeature(arr.getString(i))?.let { add(it) }
                     }
                 }?.takeIf { it.isNotEmpty() } ?: AppFeature.DEFAULT_ORDER
+        val enabledSpeedProfileIds =
+            settingsObj
+                .optJSONArray("enabledSpeedProfileIds")
+                ?.let { arr ->
+                    buildSet {
+                        for (i in 0 until arr.length()) add(arr.getString(i))
+                    }
+                }?.takeIf { it.isNotEmpty() } ?: AppConstants.ProfileConstants.DEFAULT_ENABLED_SPEED_PROFILE_IDS
         val bearingHoldOnIdle = settingsObj.optBoolean("realismBearingHoldIdle", AppConstants.RealismConstants.BEARING_HOLD_ON_IDLE_DEFAULT)
         val altitudeEnabled = settingsObj.optBoolean("realismAltitudeEnabled", AppConstants.RealismConstants.ALTITUDE_ENABLED_DEFAULT)
         val warmupEnabled = settingsObj.optBoolean("realismWarmupEnabled", AppConstants.RealismConstants.WARMUP_ENABLED_DEFAULT)
@@ -225,6 +234,7 @@ internal object SettingsExportCodec {
                 featureOrder = featureOrder,
                 enabledWidgetFeatures = enabledWidgetFeatures,
                 enabledMapFeatures = enabledMapFeatures,
+                enabledSpeedProfileIds = enabledSpeedProfileIds,
                 bearingHoldOnIdle = bearingHoldOnIdle,
                 altitudeEnabled = altitudeEnabled,
                 warmupEnabled = warmupEnabled,

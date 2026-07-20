@@ -76,6 +76,12 @@ interface PreferencesDataSource {
     /** Sets the shared display order for [AppFeature]s. */
     suspend fun setFeatureOrder(order: List<AppFeature>)
 
+    /** Gets the set of speed profile IDs enabled for cycling (widget Speed Cycle). */
+    fun getEnabledSpeedProfileIds(): Flow<Set<String>>
+
+    /** Sets the set of speed profile IDs enabled for cycling. */
+    suspend fun setEnabledSpeedProfileIds(ids: Set<String>)
+
     /** Gets the default roaming configuration. */
     fun getRoamingDefaults(): Flow<RoamingDefaults>
 
@@ -301,6 +307,7 @@ data class SettingsSnapshot(
     val floatingMapQuickWalk: Boolean = false,
     val tapToWalkOverlayEnabled: Boolean = false,
     val tapToWalkScaleMpx: Double = AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX,
+    val enabledSpeedProfileIds: Set<String> = AppConstants.ProfileConstants.DEFAULT_ENABLED_SPEED_PROFILE_IDS,
 )
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -397,6 +404,7 @@ class AppPreferencesDataSource
             val HOT_ROUTE_SELECTED_IDS = stringSetPreferencesKey("hot_route_selected_ids")
             val MAP_FAB_ITEMS = stringSetPreferencesKey("map_fab_items")
             val FEATURE_ORDER = stringPreferencesKey("feature_order")
+            val ENABLED_SPEED_PROFILE_IDS = stringSetPreferencesKey("enabled_speed_profile_ids")
             val FLOATING_MAP_QUICK_WALK = booleanPreferencesKey("floating_map_quick_walk")
             val TAP_TO_WALK_OVERLAY_ENABLED = booleanPreferencesKey("tap_to_walk_overlay_enabled")
             val TAP_TO_WALK_SCALE_MPX = doublePreferencesKey("tap_to_walk_scale_mpx")
@@ -489,6 +497,13 @@ class AppPreferencesDataSource
 
         override suspend fun setFeatureOrder(order: List<AppFeature>) {
             dataStore.edit { prefs -> prefs[Keys.FEATURE_ORDER] = order.serializeFeatureOrder() }
+        }
+
+        override fun getEnabledSpeedProfileIds(): Flow<Set<String>> =
+            pref(Keys.ENABLED_SPEED_PROFILE_IDS, DEFAULT_ENABLED_SPEED_PROFILE_IDS)
+
+        override suspend fun setEnabledSpeedProfileIds(ids: Set<String>) {
+            dataStore.edit { prefs -> prefs[Keys.ENABLED_SPEED_PROFILE_IDS] = ids }
         }
 
         override fun getRoamingDefaults(): Flow<RoamingDefaults> =
@@ -781,6 +796,7 @@ class AppPreferencesDataSource
                 prefs[Keys.WIDGET_ITEMS] = snapshot.enabledWidgetFeatures.map { it.name.lowercase() }.toSet()
                 prefs[Keys.MAP_FAB_ITEMS] = snapshot.enabledMapFeatures.map { it.name.lowercase() }.toSet()
                 prefs[Keys.FEATURE_ORDER] = snapshot.featureOrder.serializeFeatureOrder()
+                prefs[Keys.ENABLED_SPEED_PROFILE_IDS] = snapshot.enabledSpeedProfileIds
                 prefs[Keys.REMEMBER_LAST_LOCATION] = snapshot.rememberLastLocation
                 prefs[Keys.MAP_FOLLOWS_LOCATION] = snapshot.mapFollowsLocation
                 prefs[Keys.JITTER_IDLE_RADIUS_METERS] = snapshot.jitterIdleRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
@@ -863,6 +879,8 @@ class AppPreferencesDataSource
                         featureOrder = parseFeatureOrder(prefs[Keys.FEATURE_ORDER]),
                         enabledWidgetFeatures = widgetItems.mapNotNull { it.toAppFeature() }.toSet(),
                         enabledMapFeatures = mapItems.mapNotNull { it.toAppFeature() }.toSet(),
+                        enabledSpeedProfileIds =
+                            prefs[Keys.ENABLED_SPEED_PROFILE_IDS] ?: DEFAULT_ENABLED_SPEED_PROFILE_IDS,
                         rememberLastLocation =
                             prefs[Keys.REMEMBER_LAST_LOCATION]
                                 ?: AppConstants.DataStoreConstants.DEFAULT_REMEMBER_LAST_LOCATION,
@@ -920,6 +938,8 @@ class AppPreferencesDataSource
 
             val DEFAULT_WIDGET_ITEMS: Set<String> =
                 AppFeature.DEFAULT_WIDGET_ENABLED.map { it.name.lowercase() }.toSet()
+
+            val DEFAULT_ENABLED_SPEED_PROFILE_IDS = AppConstants.ProfileConstants.DEFAULT_ENABLED_SPEED_PROFILE_IDS
 
             const val DEFAULT_ROAMING_RADIUS_METERS = AppConstants.RoamingConstants.DEFAULT_RADIUS_METERS
             const val DEFAULT_ROAMING_DISTANCE_METERS = AppConstants.RoamingConstants.DEFAULT_DISTANCE_METERS

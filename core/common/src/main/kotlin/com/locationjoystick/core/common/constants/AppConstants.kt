@@ -29,6 +29,7 @@ object AppConstants {
         const val MAX_SPEED_MS = 15.0
         const val ANTI_CHEAT_WARNING_THRESHOLD_MS = 8.0
         const val DEFAULT_SPEED_UNIT = "KMH"
+        val DEFAULT_ENABLED_SPEED_PROFILE_IDS = setOf(PROFILE_ID_WALK, PROFILE_ID_RUN, PROFILE_ID_BIKE)
     }
 
     object JitterConstants {
