@@ -36,6 +36,11 @@ class RoamingRepository
             _isRoamingPaused.value = false
         }
 
+        /** Propagates a live speed-profile change into the active roaming walk. */
+        fun updateSpeed(speedMs: Double) {
+            roamingEngine.updateSpeed(speedMs)
+        }
+
         fun startRoaming(
             config: RoamingConfig,
             speedMs: Double,

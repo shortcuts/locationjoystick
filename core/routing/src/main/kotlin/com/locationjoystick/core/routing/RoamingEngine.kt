@@ -38,12 +38,22 @@ class RoamingEngine
 
         @Volatile private var isPaused = false
 
+        /** Live movement speed, read each tick by [walkRouteSegment] so profile changes apply immediately. */
+        @Volatile private var currentSpeedMs: Double = 0.0
+
         fun pauseRoaming() {
             isPaused = true
         }
 
         fun resumeRoaming() {
             isPaused = false
+        }
+
+        /**
+         * Updates the speed used by the active roaming walk. Takes effect on the next tick.
+         */
+        fun updateSpeed(speedMs: Double) {
+            currentSpeedMs = speedMs
         }
 
         internal fun randomPointInRadius(
@@ -170,6 +180,7 @@ class RoamingEngine
         ): Job {
             val previous = activeJob
             activeJob = null
+            currentSpeedMs = speedMs
 
             val job =
                 engineScope.launch {
@@ -180,7 +191,7 @@ class RoamingEngine
                     onRouteUpdate(route)
 
                     if (route.size >= 2) {
-                        walkRouteSegment(route, route.first(), speedMs, onPositionUpdate)
+                        walkRouteSegment(route, route.first(), onPositionUpdate)
                     }
 
                     onRouteUpdate(emptyList())
@@ -193,7 +204,6 @@ class RoamingEngine
         private suspend fun walkRouteSegment(
             route: List<LatLng>,
             startPosition: LatLng,
-            speedMs: Double,
             onPositionUpdate: (LatLng) -> Unit,
             onTick: () -> Unit = {},
         ): LatLng {
@@ -209,7 +219,7 @@ class RoamingEngine
                         waypoints = route,
                         currentPosition = currentPosition,
                         currentWaypointIndex = waypointIndex,
-                        speedMs = speedMs,
+                        speedMs = currentSpeedMs,
                         deltaTimeMs = AppConstants.LocationConstants.UPDATE_INTERVAL_MS,
                     )
                 currentPosition = result.position
