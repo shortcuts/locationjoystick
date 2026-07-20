@@ -36,6 +36,8 @@ Here's everything included:
 | **Onboarding** | Multi-step first-run flow: location permission, overlay permission, mock location enablement. |
 | **Group Sync** | Sync spoofed location across multiple devices on the same Wi-Fi network. No account needed. One device is the leader (shares position via QR-joined session); others are followers (mirror leader's location). |
 | **Tap to Walk** | Two quick-walk shortcuts. Floating map quick-walk: tap the floating map to walk there without a confirmation sheet. Screen overlay: a crosshair button in the widget panel activates a transparent full-screen overlay — tap any point in a game or map app to walk there. Configurable meters-per-pixel scale. |
+| **Deep Links & Location Sharing** | Share any coordinate or saved favorite as a link. Anyone who taps it on Android with the app installed lands directly on that spot with a confirm sheet (teleport / walk / walk via roads). Also registers as a handler for Google Maps and `geo:` links from other apps. |
+| **Theme** | Light and dark color themes for readability across lighting conditions. Toggle in Settings → Appearance. |
 
 ---
 

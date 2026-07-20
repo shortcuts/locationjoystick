@@ -29,6 +29,7 @@ All constants → `:core:common/constants/AppConstants.kt`.
 | `RouteConstants` | Route-related defaults |
 | `DatabaseConstants` | DB name, version |
 | `AppInfo` | GitHub repo URL, issues URL, privacy policy URL |
+| `FollowerRestorationConstants` | Follower boot restoration retry delay, max delay, max attempts, jitter range |
 
 ## Rules
 

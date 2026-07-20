@@ -104,20 +104,28 @@ Followers apply independent per-device jitter to the received position, preservi
 
 ## Follower Boot Sequence
 
-After a device restart, a follower that was previously synced automatically rejoin the group in the background without requiring user intervention.
+After a device restart, a follower that was previously synced automatically rejoins the group in the background without requiring a visit to the Group Sync screen.
 
-1. **Service startup**: `MockLocationService` is started by Android via `START_STICKY` recovery.
-2. **Async restoration**: If the follower was in `FOLLOWER` mode with `followerModeEnabled = true`, the service launches a background async job to re-discover the leader via NSD.
-3. **Exponential backoff retries**: The discovery job retries up to 5 times with exponential backoff (500 ms, 1 s, 2 s, 4 s, 8 s + random jitter ±100 ms), accounting for the leader not having advertised yet if both devices rebooted simultaneously.
-4. **Success**: Once the leader is found, the follower enters sync mode and begins following.
-5. **Exhaustion**: If discovery fails after all retries (e.g., both devices on different Wi-Fi networks, or group deleted), the follower stays idle. If the follower app is opened, `GroupSyncViewModel` re-triggers discovery as a final safety net.
+There is no `RECEIVE_BOOT_COMPLETED` receiver in this app, so nothing runs after a genuine
+device reboot until the user opens the app:
+
+1. **App launch trigger**: `LjApplication.onCreate()` reads the persisted `GroupRepository.groupState`. If the role is `LEADER`, or `FOLLOWER` with `followerModeEnabled = true`, it starts `MockLocationService` directly with a plain launch intent — this is what actually resumes sync after a device reboot, since the service was never running to be recovered by the OS.
+2. **OS-restart trigger (secondary path)**: if the app process is killed while `MockLocationService` is already running (e.g. low memory), Android restarts the service via `START_STICKY` with a null intent — no reboot involved.
+3. **Async restoration**: either trigger routes into the same `onStartCommand` `null ->` branch. If the follower was in `FOLLOWER` mode with `followerModeEnabled = true`, the service launches a background async job to re-discover the leader via NSD.
+4. **Exponential backoff retries**: the discovery job retries up to 5 times with exponential backoff (500 ms, 1 s, 2 s, 4 s, 8 s + random jitter ±100 ms), accounting for the leader not having advertised yet if both devices rebooted simultaneously.
+5. **Success**: once the leader is found, the follower enters sync mode and begins following.
+6. **Exhaustion**: if discovery fails after all retries (e.g., both devices on different Wi-Fi networks, or group deleted), the follower stays idle. If the follower app is opened again, `GroupSyncViewModel` re-triggers discovery as a final safety net.
 
 ### Boot timing scenarios
 
-- **Leader boots first**: Follower discovers it on first or second attempt.
-- **Follower boots first**: Follower retries until leader advertises (within ~30 seconds of startup).
-- **Simultaneous boot**: Exponential backoff with jitter prevents thundering herd; most followers reconnect within 10–15 seconds.
-- **Wi-Fi disconnected at boot**: Restoration retries continue; once Wi-Fi reconnects, discovery succeeds on the next attempt.
+Timing below is measured from app launch (post-reboot) or service restart (process killed
+while running) — not from the device's own boot time, since the app has no way to run
+earlier than that.
+
+- **Leader's app opens first**: follower discovers it on first or second attempt.
+- **Follower's app opens first**: follower retries until leader advertises (within ~30 seconds of the follower's restoration start).
+- **Both open around the same time**: exponential backoff with jitter prevents thundering herd; most followers reconnect within 10–15 seconds.
+- **Wi-Fi disconnected at restoration start**: restoration retries continue; once Wi-Fi reconnects, discovery succeeds on the next attempt.
 
 ## Edge Cases
 
