@@ -193,6 +193,66 @@ code{
   color:var(--text);
 }
 
+/* ── Option tables ── */
+.table-wrap{
+  overflow-x:auto;
+  margin:4px 0 32px;
+  border:1px solid var(--border);
+  border-radius:var(--r);
+}
+
+.table-wrap:last-child{margin-bottom:0}
+
+.option-table{
+  width:100%;
+  min-width:420px;
+  border-collapse:collapse;
+  font-size:0.84rem;
+}
+
+.option-table th{
+  font-family:var(--mono);
+  font-size:0.66rem;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--muted);
+  text-align:left;
+  padding:10px 16px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+
+.option-table td{
+  padding:12px 16px;
+  border-top:1px solid var(--border);
+  color:var(--muted);
+  vertical-align:top;
+  line-height:1.55;
+}
+
+.option-table tr:first-child td{border-top:none}
+
+.option-table td:first-child{
+  color:var(--text);
+  font-weight:600;
+  white-space:nowrap;
+}
+
+.option-table td.default-cell{
+  color:var(--accent);
+  font-family:var(--mono);
+  font-size:0.78rem;
+  white-space:nowrap;
+}
+
+.option-table tbody tr:hover td{background:var(--accent-bg)}
+
+@media(max-width:680px){
+  .option-table{min-width:340px}
+}
+
 /* ── Feature sections ── */
 .feature-section{
   display:flex;

@@ -29,109 +29,133 @@
     <p>Combines speed profile configuration with GPS realism settings. Configure the movement speeds and customize how the spoofed signal behaves.</p>
 
     <h3 id="speed-profiles">Speed Profiles</h3>
-    <p>Sets the movement speed for joystick, route replay, and roaming. Changes apply immediately.</p>
+    <p>Five presets set the movement speed for the joystick, route replay, and roaming. Edit any of them; changes apply immediately. A <strong>km/h ↔ mph</strong> switch at the top converts every field in the app at once.</p>
 
+    <div class="table-wrap">
     <table class="option-table">
-      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <thead><tr><th>Profile</th><th>Default</th><th>Pace</th></tr></thead>
       <tbody>
         <tr>
-          <td><strong>Unit</strong></td>
-          <td>Display unit for speed inputs: km/h or mph. Switching units converts all speed fields in the app.</td>
+          <td>Slow Walk</td>
+          <td class="default-cell">1.1 km/h</td>
+          <td>Strolling, browsing shopfronts</td>
         </tr>
         <tr>
-          <td><strong>Walk</strong></td>
-          <td>Default <strong>2.0 km/h</strong>. Typical slow walking pace.</td>
+          <td>Walk</td>
+          <td class="default-cell">2.0 km/h</td>
+          <td>Regular walking pace</td>
         </tr>
         <tr>
-          <td><strong>Run</strong></td>
-          <td>Default <strong>8.0 km/h</strong>. Typical jogging pace. When road-following is enabled, this profile routes along footpaths.</td>
+          <td>Run</td>
+          <td class="default-cell">8.0 km/h</td>
+          <td>Jogging — follows footpaths when road-following is on</td>
         </tr>
         <tr>
-          <td><strong>Bike</strong></td>
-          <td>Default <strong>15.0 km/h</strong>. Cycling pace. When road-following is enabled, this profile routes along bike lanes and avoids motorways.</td>
+          <td>Bike</td>
+          <td class="default-cell">15.0 km/h</td>
+          <td>Cycling — follows bike lanes when road-following is on</td>
+        </tr>
+        <tr>
+          <td>Drive</td>
+          <td class="default-cell">54.0 km/h</td>
+          <td>Driving — well above the anti-cheat threshold below</td>
         </tr>
       </tbody>
     </table>
+    </div>
 
-    <p><strong>Limits:</strong> Each profile accepts values between <strong>0.36 km/h</strong> and <strong>54 km/h</strong>. Values outside this range are adjusted to the nearest limit when saved.</p>
+    <p>There's no upper limit — type any speed you want. Values only get floored, never capped: anything entered below <strong>0.04 km/h</strong> snaps up to it, since a true 0 would mean the simulated device never moves at all.</p>
+
+    <p>Each profile also has a checkbox controlling whether it's included when the widget's <a href="#menus">Speed cycle</a> button cycles through presets — <strong>Walk, Run, and Bike</strong> are on by default; Slow Walk and Drive are opt-in. This only affects cycling — all five stay editable here regardless.</p>
 
     <h2 id="anti-cheat-warning">Anti-cheat warning</h2>
-    <p>
-      If any speed profile is set above <strong>28.8 km/h (17.9 mph)</strong>, a warning banner appears inline below that field in Settings. The warning reads:
-    </p>
+    <p>Set any profile above <strong>28.8 km/h (17.9 mph)</strong> and a warning appears inline below that field:</p>
     <blockquote><em>"Speed exceeds 8 m/s — may trigger anti-cheat in some games"</em></blockquote>
     <p>
-      This is a passive advisory only — it does not block saving, cap your speed, or communicate with any external service. The threshold was chosen because it is well above any realistic human movement speed (~29 km/h). Many location-aware games flag sustained GPS movement faster than a sprint as suspicious, since no person legitimately moves that fast on foot for extended periods.
-    </p>
-    <p>
-      The warning applies independently to each of the three profiles. You can dismiss it by lowering the speed below 29 km/h, or ignore it if speed detection is not a concern. The app does not impose any speed limit — 54 km/h is the maximum the input field accepts.
+      It's advisory only — nothing is blocked, capped, or sent anywhere. The threshold sits just above any realistic human pace on foot, which is what many location-aware games watch for. Each profile is checked independently; lower it below the threshold to clear the warning, or ignore it if that's not a concern for what you're using it with.
     </p>
 
     <h3 id="gps-jitter">Location Randomness</h3>
     <p>Adds small random variations to each location update to simulate natural GPS drift. Set any value to 0 to disable that dimension of variation.</p>
 
+    <div class="table-wrap">
     <table class="option-table">
-      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <thead><tr><th>Option</th><th>Applies</th><th>What it does</th></tr></thead>
       <tbody>
         <tr>
-          <td><strong>Idle radius</strong></td>
-          <td>Maximum random offset applied while stationary (in meters or feet depending on unit). A small idle radius (1–3 m) makes the position look like a real GPS chip slowly drifting.</td>
+          <td>Idle radius</td>
+          <td>Stationary</td>
+          <td>Max random offset while standing still. 1–3 m reads as a real chip drifting in place.</td>
         </tr>
         <tr>
-          <td><strong>Idle interval</strong></td>
-          <td>How often (in seconds) a new random offset is picked while stationary. Longer intervals reduce noise frequency; shorter intervals create a jittery trace.</td>
+          <td>Idle interval</td>
+          <td>Stationary</td>
+          <td>Seconds between new offsets while still. Shorter = jitterier trace.</td>
         </tr>
         <tr>
-          <td><strong>Moving radius</strong></td>
-          <td>Maximum random offset applied while moving. Keep this smaller than the idle radius to avoid position jumps that look unnatural when the joystick is active.</td>
+          <td>Moving radius</td>
+          <td>Moving</td>
+          <td>Max random offset while moving. Keep below idle radius to avoid unnatural jumps.</td>
         </tr>
         <tr>
-          <td><strong>Moving interval</strong></td>
-          <td>How often (in seconds) a new random offset is picked while moving.</td>
+          <td>Moving interval</td>
+          <td>Moving</td>
+          <td>Seconds between new offsets while moving.</td>
         </tr>
         <tr>
-          <td><strong>Idle speed variation</strong></td>
-          <td>Random ±% applied to the reported speed while stationary. Set to 0 for a perfectly still position (speed = 0). A value of 5–10% simulates minor GPS measurement noise at rest.</td>
+          <td>Idle speed variation</td>
+          <td>Stationary</td>
+          <td>Random ±% on reported speed at rest. 5–10% mimics measurement noise; 0 reads as perfectly still.</td>
         </tr>
         <tr>
-          <td><strong>Moving speed variation</strong></td>
-          <td>Random ±% applied to the reported speed while moving. Adds natural variation so the speed field does not read as a constant integer every tick.</td>
+          <td>Moving speed variation</td>
+          <td>Moving</td>
+          <td>Random ±% on reported speed while moving, so it doesn't read as a flat constant.</td>
         </tr>
       </tbody>
     </table>
+    </div>
 
     <h3 id="gps-realism">GPS Realism</h3>
     <p>Independent toggles that make the spoofed GPS signal behave more like a real hardware chip. Some apps and games inspect these fields to detect mock providers — enabling all options reduces the chance of detection.</p>
 
+    <div class="table-wrap">
     <table class="option-table">
-      <thead><tr><th>Option</th><th>Description</th></tr></thead>
+      <thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
       <tbody>
         <tr>
-          <td><strong>Hold bearing when stationary</strong></td>
-          <td>Keeps the last known heading when the simulated device stops moving, instead of snapping to 0° (north). Real GPS chips do the same — a sudden north-reset is a common mock-location tell. <em>Default: on.</em></td>
+          <td>Hold bearing when stationary</td>
+          <td class="default-cell">On</td>
+          <td>Keeps the last heading instead of snapping to north on stop — a sudden reset is a common tell.</td>
         </tr>
         <tr>
-          <td><strong>Vary altitude</strong></td>
-          <td>Adds a small random variation to the reported altitude instead of always reporting the same height. A constant altitude is a common sign that a location is being spoofed. <em>Default: on.</em></td>
+          <td>Vary altitude</td>
+          <td class="default-cell">On</td>
+          <td>Drifts the reported altitude slightly rather than holding one constant height.</td>
         </tr>
         <tr>
-          <td><strong>GPS warm-up simulation</strong></td>
-          <td>Starts each spoofing session with degraded accuracy (wide accuracy radius) that converges to normal over ~30 s, simulating a cold GPS fix. Turn off if you need precise positioning immediately at session start. <em>Default: off.</em></td>
+          <td>GPS warm-up simulation</td>
+          <td class="default-cell">Off</td>
+          <td>Starts each session with degraded accuracy that sharpens over ~30 s, like a cold GPS fix.</td>
         </tr>
         <tr>
-          <td><strong>Realistic satellite count</strong></td>
-          <td>Attaches satellite metadata to each update: 7–14 satellites visible, 6–12 contributing to the fix. Some apps flag zero satellites as a spoofing signal. <em>Default: on.</em></td>
+          <td>Realistic satellite count</td>
+          <td class="default-cell">On</td>
+          <td>Reports 7–14 visible satellites, 6–12 in use. Zero satellites is a spoofing tell some apps check for.</td>
         </tr>
         <tr>
-          <td><strong>Suspended mocking</strong></td>
-          <td>Briefly pauses location updates (~2 s every ~10 s) to mimic real GPS signal dropouts. Automatically disabled during route replay. Turn on only if the target app specifically watches for continuous update streams. <em>Default: off.</em></td>
+          <td>Suspended mocking</td>
+          <td class="default-cell">Off</td>
+          <td>Briefly drops updates (~2 s every ~10 s) to mimic real signal dropouts. Off automatically during route replay.</td>
         </tr>
       </tbody>
     </table>
+    </div>
 
     <h2 id="map">Map</h2>
     <p>Controls how the in-app map behaves while spoofing is active.</p>
 
+    <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Option</th><th>Description</th></tr></thead>
       <tbody>
@@ -145,19 +169,22 @@
         </tr>
       </tbody>
     </table>
+    </div>
 
     <h2 id="favorites">Favorites</h2>
     <p>Options for the favorites list.</p>
 
+    <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Option</th><th>Description</th></tr></thead>
       <tbody>
         <tr>
           <td><strong>Show hot locations</strong></td>
-          <td>Upserts a curated list of 26 popular locations (cities, parks, landmarks) into your favorites. Off by default. When disabled, only the entries added by this feature are removed — your own favorites are never deleted. See <a href="favorites.html#hot-locations">Favorites → Hot locations</a> for the full list of locations and upsert behaviour.</td>
+          <td>Upserts a curated list of popular locations (cities, parks, landmarks) into your favorites. Off by default. When disabled, only the entries added by this feature are removed — your own favorites are never deleted. See <a href="favorites.html#hot-locations">Favorites → Hot locations</a> for the full list and upsert behaviour.</td>
         </tr>
       </tbody>
     </table>
+    </div>
 
     <h2 id="menus">Menus</h2>
 
@@ -166,6 +193,7 @@
 
     <p>Selects which quick-access features appear in the floating widget overlay and on the map screen, and in what order. Each feature has its own checkbox for the widget and for the map — turn either on independently — plus a drag handle on the left so you can reorder the whole list by dragging. Both surfaces follow the same order, so reordering once keeps everything consistent.</p>
 
+    <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Feature</th><th>Icon</th><th>Description</th></tr></thead>
       <tbody>
@@ -207,10 +235,11 @@
         <tr>
           <td><strong>Speed cycle</strong></td>
           <td>⚡</td>
-          <td>Widget only. Cycles through Slow Walk, Walk, Run, Bike, and Drive speed profiles with a single tap. The icon changes to reflect the active profile.</td>
+          <td>Widget only. Cycles through your enabled speed profiles with a single tap — pick which ones below. The icon changes to reflect the active profile.</td>
         </tr>
       </tbody>
     </table>
+    </div>
     <p>Starting and stopping location simulation is always available from the bar at the top of every screen, so it isn't one of the configurable features above.</p>
 
     <h2 id="favorites-routes">Favorites & Routes</h2>
@@ -219,6 +248,7 @@
     <h2 id="roaming">Roaming</h2>
     <p>Configure default area, distance, speed profile, road-following, and auto-return behavior for roaming sessions.</p>
 
+    <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Option</th><th>Description</th></tr></thead>
       <tbody>
@@ -244,10 +274,12 @@
         </tr>
       </tbody>
     </table>
+    </div>
 
     <h2 id="external-services">External services</h2>
     <p>locationjoystick is offline-first. It does not require an account and sends no analytics or telemetry. However, two optional network features make outbound requests:</p>
 
+    <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Service</th><th>When used</th><th>What is sent</th></tr></thead>
       <tbody>
@@ -263,6 +295,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
     <p>
       Map tiles (OpenStreetMap via MapLibre) are fetched from <a href="https://tile.openstreetmap.org" target="_blank" rel="noopener">tile.openstreetmap.org</a> as you pan and zoom the map. Each tile request includes the tile coordinates (zoom level, x, y) but no personal data.
     </p>
@@ -288,6 +321,7 @@
     <h2 id="export-import">Export / Import</h2>
     <p>Back up or restore all app data — routes, favorites, speed profiles, widget config, jitter settings, and roaming defaults.</p>
 
+    <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Action</th><th>Description</th></tr></thead>
       <tbody>
@@ -321,6 +355,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
 
     <p>Next to the export/import buttons is a <strong>Reset all data</strong> button. It asks you to confirm, then permanently deletes all favorites, routes, and settings — without needing to clear the app's data through your phone's system settings. Your permission grants are kept, so you won't need to go through setup again.</p>
 
