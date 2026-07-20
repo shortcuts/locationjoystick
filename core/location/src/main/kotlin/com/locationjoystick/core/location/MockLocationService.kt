@@ -1015,7 +1015,9 @@ class MockLocationService : Service() {
             if (snapshot.shouldApplyMovingJitter && snapshot.mode != MockMode.TELEPORT) {
                 lastJitterTimestampMs = nowMs
             }
-            if (snapshot.shouldApplyIdleJitter && snapshot.mode == MockMode.TELEPORT) {
+            if (snapshot.shouldApplyIdleJitter &&
+                (snapshot.mode == MockMode.TELEPORT || (snapshot.mode == MockMode.FOLLOWER && snapshot.speedMs == 0f))
+            ) {
                 lastIdleJitterTimestampMs = nowMs
             }
             applyToProvider(fix, nowNanos)
