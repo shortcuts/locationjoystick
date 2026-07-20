@@ -317,6 +317,15 @@ class MockLocationService : Service() {
         }
         // Jitter and realism settings — each updates a @Volatile field consumed by captureSnapshot().
         realism.observe(serviceScope, settingsRepository)
+        // Propagate live speed-profile changes (e.g. widget Speed Cycle) into an active route
+        // replay — RouteReplayEngine otherwise freezes speedMs at the value passed to start().
+        serviceScope.launch {
+            settingsRepository.getActiveSpeedProfile().collect { profile ->
+                if (locationRepository.currentMode.value == MockMode.ROUTE_REPLAY) {
+                    replayOrchestrator.updateSpeed(profile.speedMetersPerSecond)
+                }
+            }
+        }
     }
 
     /**

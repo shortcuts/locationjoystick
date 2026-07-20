@@ -151,6 +151,15 @@ class RouteReplayEngine
         }
 
         /**
+         * Updates the speed used by the active (or next-resumed) replay. Takes effect on the
+         * next tick — no restart needed.
+         * @param speedMs New movement speed in meters per second
+         */
+        fun updateSpeed(speedMs: Double) {
+            savedSpeedMs = speedMs
+        }
+
+        /**
          * Appends a waypoint to the current replay (used for recording).
          * @param pos Position to append
          */

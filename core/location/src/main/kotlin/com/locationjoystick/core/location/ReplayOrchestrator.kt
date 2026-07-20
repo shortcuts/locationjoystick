@@ -100,6 +100,16 @@ internal class ReplayOrchestrator(
             }
     }
 
+    /**
+     * Propagates a live speed-profile change into the active replay. Caller must only invoke
+     * this while a replay is actually running (mode == ROUTE_REPLAY), since it also overwrites
+     * the service's reported `currentSpeedMs`.
+     */
+    fun updateSpeed(speedMs: Double) {
+        routeReplayEngine.updateSpeed(speedMs)
+        onSpeedChange(speedMs.toFloat())
+    }
+
     fun handlePause() {
         routeReplayEngine.pause()
         onStateChange(MockLocationState.PAUSED)
