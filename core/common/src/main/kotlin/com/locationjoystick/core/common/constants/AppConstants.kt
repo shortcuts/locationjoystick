@@ -8,7 +8,6 @@ object AppConstants {
         const val LOCATION_ACCURACY_FINE = 3.0f
         const val WALK_ARRIVAL_THRESHOLD_METERS = 1.0
         const val DEFAULT_REPLAY_SPEED_MS = ProfileConstants.WALK_SPEED_MPS
-        const val RDP_SIMPLIFICATION_EPSILON_METERS = 5.0
         const val DEGREES_IN_CIRCLE = 360.0
         const val CARDINAL_SNAP_STEP_DEGREES = 45.0
     }
@@ -75,26 +74,17 @@ object AppConstants {
         const val BEARING_HOLD_ON_IDLE_DEFAULT = true
         const val ALTITUDE_ENABLED_DEFAULT = true
         const val SATELLITE_EXTRAS_ENABLED_DEFAULT = true
-        const val RECOMMENDED_IDLE_RADIUS_METERS = 0.8
         const val ALTITUDE_HUMAN_OFFSET_METERS = 0.8
         const val ALTITUDE_HUMAN_OFFSET_JITTER_PCT = 0.05
         const val ALTITUDE_HUMAN_OFFSET_CLAMP_FACTOR = 0.5
     }
 
-    object PedometerConstants {
-        const val MAX_WALKING_SPEED_MPS = 4.0f
-        const val STRIDE_BASE_METERS = 0.4f
-        const val STRIDE_SPEED_FACTOR = 0.25f
-        const val STRIDE_JITTER_PCT = 0.15f
-    }
+    object PedometerConstants
 
     object RoamingConstants {
         const val DEFAULT_RADIUS_METERS = 2000.0
-        const val DEFAULT_DURATION_SECONDS = 1800L
         const val OSRM_PROFILE_FOOT = "foot"
         const val OSRM_PROFILE_DRIVING = "driving"
-        const val DEFAULT_TRANSPORT_MODE = ProfileConstants.PROFILE_ID_WALK
-        const val WAYPOINT_ARRIVAL_THRESHOLD_METERS = 5.0
         const val DEFAULT_DISTANCE_METERS = 1_000.0
         const val DEFAULT_FOLLOW_ROADS = true
         const val DEFAULT_RETURN_TO_START = true
@@ -158,13 +148,8 @@ object AppConstants {
         const val SCHEMA_VERSION = 2
         const val FILENAME_PREFIX = "locationjoystick-export"
         const val MIME_TYPE = "application/json"
-        const val GPX_MIME_TYPE = "application/gpx+xml"
         const val GPX_VERSION = "1.1"
         const val GPX_CREATOR = "locationjoystick"
-
-        // Kept low so each chunk stays at a low QR version (large modules, easy to scan)
-        // instead of maxing out into a dense version 30-40 code that a phone camera can't resolve.
-        const val QR_CHUNK_SIZE_LIMIT = 800
 
         /** Maximum GPX file size accepted for import (10 MB). Larger files are rejected to prevent OOM. */
         const val MAX_GPX_IMPORT_SIZE_BYTES = 10 * 1024 * 1024L
@@ -186,7 +171,6 @@ object AppConstants {
         const val ACTION_STOP = "Stop"
         const val ACTION_OPEN_MAP = "Map"
         const val ACTION_OPEN_FAVORITES = "Favorites"
-        const val ACTION_OPEN_ROUTES = "Routes"
         const val ACTION_PAUSE = "Pause"
         const val ACTION_RESUME = "Resume"
     }
@@ -287,9 +271,7 @@ object AppConstants {
         const val OUTER_ALPHA = 80
     }
 
-    object WidgetConstants {
-        const val PANEL_ANIMATION_DURATION_MS = 200L
-    }
+    object WidgetConstants
 
     object RouteConstants {
         const val WAYPOINT_SNAP_THRESHOLD_METERS = 1.0
@@ -301,13 +283,9 @@ object AppConstants {
 
     object AppInfo {
         const val VERSION_NAME = "0.14.0" // x-release-please-version
-        const val GITHUB_URL = "https://github.com/shortcuts/locationjoystick"
         const val GITHUB_ISSUES_URL = "https://github.com/shortcuts/locationjoystick/issues/new?template=bug_report.yml"
-        const val GITHUB_FEATURE_REQUEST_URL = "https://github.com/shortcuts/locationjoystick/issues/new?template=feature_request.md"
         const val DOCS_URL = "https://shortcuts.github.io/locationjoystick/"
         const val TROUBLESHOOTING_URL = "https://shortcuts.github.io/locationjoystick/troubleshooting.html"
-        const val PRIVACY_POLICY_URL = "https://shortcuts.github.io/locationjoystick/privacy.html"
-        const val ACKNOWLEDGEMENTS_URL = "https://shortcuts.github.io/locationjoystick/acknowledgements.html"
         const val DEEP_LINK_HOST = "locationjoystick.shrtcts.fr"
 
         fun buildDeepLink(
@@ -316,16 +294,11 @@ object AppConstants {
         ) = "https://$DEEP_LINK_HOST/?lat=$lat&lon=$lon"
     }
 
-    object UnitConversionConstants {
-        const val METERS_PER_MILE = 1609.344
-        const val FEET_PER_METER = 3.28084
-    }
+    object UnitConversionConstants
 
     object AnimationConstants {
-        const val MAP_CAMERA_DURATION_MS = 500
         const val SPRING_DAMPING_RATIO = 0.85f
         const val SPRING_STIFFNESS = 400f
-        const val SCALE_IN_INITIAL = 0.95f
     }
 
     object TimeConstants {
@@ -334,8 +307,6 @@ object AppConstants {
     }
 
     object SyncConstants {
-        const val PORT_RANGE_START = 4000
-        const val PORT_RANGE_END = 9999
         const val POLL_INTERVAL_MS = 1000L
         const val POLL_TIMEOUT_MS = 800L
         const val SERVER_BACKLOG = 5
