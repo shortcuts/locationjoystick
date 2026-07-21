@@ -6,7 +6,7 @@ All constants → `:core:common/constants/AppConstants.kt`.
 
 | Object | Contents |
 |--------|----------|
-| `LocationConstants` | Update interval, earth radius, walk threshold, RDP epsilon |
+| `LocationConstants` | Update interval, earth radius, walk threshold |
 | `ProfileConstants` | Slow Walk/Walk/Run/Bike/Drive speed presets, min/max speed, anti-cheat threshold |
 | `JitterConstants` | Accuracy min/max, jitter radii, intervals, speed variation percentages |
 | `RealismConstants` | Altitude sigma/drift/clamp, warmup duration, satellite interval, suspended push/pause durations, pedometer mocking enabled default |
@@ -15,7 +15,7 @@ All constants → `:core:common/constants/AppConstants.kt`.
 | `OsrmConstants` | Base URL, overview, geometries format |
 | `MapConstants` | Default coordinates, zoom, tile URL, map source/layer IDs |
 | `NominatimConstants` | Search endpoint |
-| `ExportConstants` | Schema version, MIME type, GPX MIME type, GPX version/creator, max GPX import size |
+| `ExportConstants` | Schema version, MIME type, GPX version/creator, max GPX import size |
 | `CooldownConstants` | Walk-to and teleport cooldown durations |
 | `UnitConversionConstants` | Speed/distance unit conversion factors |
 | `MapColorConstants` | Map active button color, route colors |

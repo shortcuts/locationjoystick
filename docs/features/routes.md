@@ -26,7 +26,7 @@ Routes can also be imported from GPX files via the Routes screen overflow menu â
 ## Recording
 
 - Collect location every `AppConstants.LocationConstants.UPDATE_INTERVAL_MS` ms.
-- Simplify via Ramer-Douglas-Peucker (epsilon = `AppConstants.LocationConstants.RDP_SIMPLIFICATION_EPSILON_METERS` m).
+- Simplify via Ramer-Douglas-Peucker.
 - Save on stop.
 
 ## Hot Routes

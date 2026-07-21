@@ -39,7 +39,6 @@ maplibre = "13.2.0"
 # Joystick
 
 # Networking (for routing)
-retrofit = "2.9.0"
 okhttp = "4.12.0"
 
 # QR Code & Camera
@@ -112,8 +111,6 @@ datastore-preferences = { group = "androidx.datastore", name = "datastore-prefer
 maplibre-android-sdk = { group = "org.maplibre.gl", name = "android-sdk", version.ref = "maplibre" }
 
 # Networking
-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
-retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
 
