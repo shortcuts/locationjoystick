@@ -10,6 +10,7 @@ import android.location.LocationManager
 import android.location.provider.ProviderProperties
 import android.os.Binder
 import android.os.IBinder
+import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
@@ -121,6 +122,14 @@ class MockLocationService : Service() {
     private val notificationManager: android.app.NotificationManager by lazy {
         getSystemService(android.app.NotificationManager::class.java)
     }
+
+    private val powerManager: PowerManager by lazy {
+        getSystemService(PowerManager::class.java)
+    }
+
+    /** Held only while actively spoofing (RUNNING/PAUSED) — works around Doze/Adaptive Battery
+     * throttling the update loop on some devices (e.g. Android 15 Pixel) when the screen locks. */
+    @Volatile private var wakeLock: PowerManager.WakeLock? = null
 
     private val exceptionHandler =
         CoroutineExceptionHandler { _, throwable ->
@@ -529,6 +538,7 @@ class MockLocationService : Service() {
         // serviceScope.cancel() below cancels updateJob (child of the scope) automatically.
         updateJob = null
         removeTestProvider()
+        releaseWakeLock()
         // Persist last location on external kill (process killed, OOM, etc.)
         // stopSpoofing() handles this on normal stop, but onDestroy may be called without it.
         // Always persist location; the rememberLastLocation setting only controls whether to restore it.
@@ -590,9 +600,27 @@ class MockLocationService : Service() {
         // Setting state to RUNNING triggers observeLocationState(), which calls
         // setupTestProvider() + startUpdateLoop(). Do NOT call them here to avoid
         // a double-invocation race.
+        acquireWakeLock()
         _state.value = MockLocationState.RUNNING
         locationRepository.startSpoofing()
         Log.i(TAG, "Spoofing started at ($lat, $lon)")
+    }
+
+    private fun acquireWakeLock() {
+        try {
+            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "locationjoystick:spoofing").apply {
+                acquire()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to acquire wakelock; falling back to foreground service alone", e)
+        }
+    }
+
+    private fun releaseWakeLock() {
+        wakeLock?.let {
+            if (it.isHeld) it.release()
+        }
+        wakeLock = null
     }
 
     fun updatePosition(
@@ -630,6 +658,7 @@ class MockLocationService : Service() {
         val pos = positionRef.get()
         serviceScope.launch { settingsRepository.setLastLocation(pos) }
         removeTestProvider()
+        releaseWakeLock()
         _state.value = MockLocationState.IDLE
         locationRepository.setMockMode(MockMode.TELEPORT)
         locationRepository.stopSpoofing()
