@@ -2,6 +2,7 @@ package com.locationjoystick.core.routing
 
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.AppJson
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.common.util.interpolatePosition
 import com.locationjoystick.core.model.LatLng
@@ -11,13 +12,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -28,39 +24,19 @@ import javax.inject.Singleton
 private const val TAG = "OsrmClient"
 private const val NO_SEGMENT = "NoSegment"
 
-/**
- * Retrofit API interface for OSRM (Open Source Routing Machine) HTTP API.
- *
- * Used for road-following routes in roaming mode and guided routes.
- * See [AppConstants.OsrmConstants] for base URL and other constants.
- */
-internal interface OsrmApi {
-    @GET("route/v1/{profile}/{coordinates}")
-    suspend fun getRoute(
-        @Path("profile") profile: String,
-        @Path(value = "coordinates", encoded = true) coordinates: String,
-        @Query("overview") overview: String = AppConstants.OsrmConstants.OVERVIEW,
-        @Query("geometries") geometries: String = AppConstants.OsrmConstants.GEOMETRIES,
-    ): Response<OsrmRouteResponse>
-
-    @GET("nearest/v1/{profile}/{coordinate}")
-    suspend fun getNearest(
-        @Path("profile") profile: String,
-        @Path(value = "coordinate", encoded = true) coordinate: String,
-    ): Response<OsrmNearestResponse>
-}
-
 // ---------------------------------------------------------------------------
-// Response data classes (Gson-mapped)
+// Response data classes (kotlinx.serialization)
 // ---------------------------------------------------------------------------
 
 /** OSRM API response wrapper. */
+@Serializable
 data class OsrmRouteResponse(
     val code: String,
     val routes: List<OsrmRoute>?,
 )
 
 /** Single route from OSRM response. */
+@Serializable
 data class OsrmRoute(
     val geometry: OsrmGeometry,
     val distance: Double,
@@ -68,12 +44,14 @@ data class OsrmRoute(
 )
 
 /** Route geometry containing coordinate list. */
+@Serializable
 data class OsrmGeometry(
     val coordinates: List<List<Double>>,
     val type: String,
 )
 
 /** Helper class for coordinate parsing. */
+@Serializable
 data class OsrmCoordinate(
     val latitude: Double,
     val longitude: Double,
@@ -86,12 +64,14 @@ data class OsrmRouteResult(
 )
 
 /** OSRM nearest-service response wrapper. */
+@Serializable
 data class OsrmNearestResponse(
     val code: String,
     val waypoints: List<OsrmNearestWaypoint>?,
 )
 
 /** Single snapped point from OSRM nearest service. */
+@Serializable
 data class OsrmNearestWaypoint(
     val location: List<Double>,
 )
@@ -153,7 +133,7 @@ private fun isRetryable(reason: OsrmFailureReason): Boolean =
     reason is OsrmFailureReason.Timeout || reason is OsrmFailureReason.ServerError || reason is OsrmFailureReason.NetworkUnavailable
 
 /**
- * HTTP client for OSRM routing API.
+ * HTTP client for OSRM routing API using OkHttp and kotlinx.serialization.
  *
  * Provides road-following routes between two points using OSRM public demo server.
  * Falls back to straight-line routes on network failure.
@@ -173,20 +153,14 @@ class OsrmClient
         @Inject
         constructor() : this(AppConstants.OsrmConstants.BASE_URL)
 
-        private val api: OsrmApi =
-            Retrofit
+        private val baseUrl: String = baseUrl
+        private val okHttpClient: OkHttpClient =
+            OkHttpClient
                 .Builder()
-                .baseUrl(baseUrl)
-                .client(
-                    OkHttpClient
-                        .Builder()
-                        .connectTimeout(15, TimeUnit.SECONDS)
-                        .readTimeout(30, TimeUnit.SECONDS)
-                        .callTimeout(30, TimeUnit.SECONDS)
-                        .build(),
-                ).addConverterFactory(GsonConverterFactory.create())
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .callTimeout(30, TimeUnit.SECONDS)
                 .build()
-                .create(OsrmApi::class.java)
 
         suspend fun getRoute(
             profile: String,
@@ -376,13 +350,22 @@ class OsrmClient
             waypoints.map { point ->
                 runCatching {
                     val coordinate = "${point.longitude},${point.latitude}"
-                    val response = api.getNearest(profile = profile, coordinate = coordinate)
-                    val body = response.body() ?: error("OSRM nearest response body is null")
-                    if (!response.isSuccessful || body.code != "Ok") error("OSRM nearest returned ${body.code}")
-                    val location =
-                        body.waypoints?.firstOrNull()?.location
-                            ?: error("OSRM nearest returned no waypoints")
-                    LatLng(latitude = location[1], longitude = location[0])
+                    val url = "$baseUrl/nearest/v1/$profile/$coordinate"
+                    val request =
+                        okhttp3.Request
+                            .Builder()
+                            .url(url)
+                            .build()
+                    val response = okHttpClient.newCall(request).execute()
+                    response.use {
+                        val body = it.body?.string() ?: error("OSRM nearest response body is null")
+                        val parsed = AppJson.decodeFromString<OsrmNearestResponse>(body)
+                        if (!it.isSuccessful || parsed.code != "Ok") error("OSRM nearest returned ${parsed.code}")
+                        val location =
+                            parsed.waypoints?.firstOrNull()?.location
+                                ?: error("OSRM nearest returned no waypoints")
+                        LatLng(latitude = location[1], longitude = location[0])
+                    }
                 }.getOrElse { e ->
                     Log.w(TAG, "OSRM nearest snap failed for $point, using original point", e)
                     point
@@ -397,22 +380,35 @@ class OsrmClient
                 require(waypoints.size >= 2) { "At least 2 waypoints required" }
 
                 val coordinates = waypoints.joinToString(";") { "${it.longitude},${it.latitude}" }
-                val response = api.getRoute(profile = profile, coordinates = coordinates)
+                val overview = AppConstants.OsrmConstants.OVERVIEW
+                val geometries = AppConstants.OsrmConstants.GEOMETRIES
+                val url =
+                    "$baseUrl/route/v1/$profile/$coordinates?overview=$overview&geometries=$geometries"
+                val request =
+                    okhttp3.Request
+                        .Builder()
+                        .url(url)
+                        .build()
+                val response = okHttpClient.newCall(request).execute()
 
-                if (!response.isSuccessful) {
-                    throw OsrmHttpException(response.code(), "OSRM HTTP ${response.code()}: ${response.message()}")
+                response.use {
+                    if (!it.isSuccessful) {
+                        throw OsrmHttpException(it.code, "OSRM HTTP ${it.code}: ${it.message}")
+                    }
+
+                    val body =
+                        it.body?.string()
+                            ?: error("OSRM response body is null")
+
+                    val parsed = AppJson.decodeFromString<OsrmRouteResponse>(body)
+
+                    if (parsed.code != "Ok") {
+                        throw OsrmRouteException(parsed.code, "OSRM returned non-Ok code: ${parsed.code}")
+                    }
+
+                    parsed.routes?.firstOrNull()
+                        ?: error("OSRM returned no routes")
                 }
-
-                val body =
-                    response.body()
-                        ?: error("OSRM response body is null")
-
-                if (body.code != "Ok") {
-                    throw OsrmRouteException(body.code, "OSRM returned non-Ok code: ${body.code}")
-                }
-
-                body.routes?.firstOrNull()
-                    ?: error("OSRM returned no routes")
             }
 
         /**
