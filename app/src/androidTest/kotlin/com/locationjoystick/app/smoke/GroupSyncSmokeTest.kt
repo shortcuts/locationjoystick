@@ -13,7 +13,7 @@ import org.junit.Test
 
 @HiltAndroidTest
 class GroupSyncSmokeTest : BaseSmokeTest() {
-    @get:Rule(order = 2)
+    @get:Rule(order = -1)
     val permissionRule: GrantPermissionRule = GrantPermissionRule.grant(Manifest.permission.CAMERA)
 
     @Before
