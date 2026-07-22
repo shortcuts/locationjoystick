@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.14.1](https://github.com/shortcuts/locationjoystick/compare/v0.14.0...v0.14.1) (2026-07-22)
+
+
+### Bug Fixes
+
+* build ([bae585b](https://github.com/shortcuts/locationjoystick/commit/bae585bb1564b4cfbb1fcadd29713b5b303cd643))
+* build warnings ([6967726](https://github.com/shortcuts/locationjoystick/commit/69677265dbccf17ad2899cf2d57c430b641cdb26))
+* **group-sync:** auto-rejoin followers after device restart with async retries ([29fe0ba](https://github.com/shortcuts/locationjoystick/commit/29fe0ba763d14259822a404f97efdd6d359a0c64))
+* **group-sync:** cancel follower restoration job on explicit mode change ([d9f4c64](https://github.com/shortcuts/locationjoystick/commit/d9f4c649d5b3f75e1f8b7cd9f132468d6eb8fe76))
+* **group-sync:** correct follower restoration attempt count from 6 to 5 ([2a3b7dd](https://github.com/shortcuts/locationjoystick/commit/2a3b7dd595766c1e213fb918bf0fb46140e50823))
+* **group-sync:** reset idle-jitter timer in follower mode ([6e9fb8c](https://github.com/shortcuts/locationjoystick/commit/6e9fb8c106d90cd359b4e47cde45952b11f1bd20))
+* **group-sync:** resume follower/leader mode on app start, not just screen visit ([ad11365](https://github.com/shortcuts/locationjoystick/commit/ad113659989cc40cd2da59d2c01edcdf131c84dd))
+* hold PARTIAL_WAKE_LOCK while spoofing to survive screen lock ([a71b8fc](https://github.com/shortcuts/locationjoystick/commit/a71b8fce43241b6539bc761dbfab24f632577da6))
+* **replay-orchestrator:** clear route waypoints in ephemeral replay completion ([bf37648](https://github.com/shortcuts/locationjoystick/commit/bf37648da4964d84b4d0fff371c3a92413bdc1f0))
+* **roaming:** apply live speed-profile changes to active roaming walk ([75f812b](https://github.com/shortcuts/locationjoystick/commit/75f812b8d0a99485c170bb9fbea3f158c04560b8))
+* **route-replay:** apply live speed-profile changes to active replay ([7beccab](https://github.com/shortcuts/locationjoystick/commit/7beccab2d94de0740c5c123b4297a9e15b5c9b32))
+* slow walk speed profile ([6e5e2d0](https://github.com/shortcuts/locationjoystick/commit/6e5e2d07b418d5d01d533ac6dd73e3fb6ff21f51))
+* smoke tests ([ff629a5](https://github.com/shortcuts/locationjoystick/commit/ff629a559d67fc3ad8fd3e9c9dffd9afb560013e))
+
 ## [0.14.0](https://github.com/shortcuts/locationjoystick/compare/v0.13.0...v0.14.0) (2026-07-16)
 
 
