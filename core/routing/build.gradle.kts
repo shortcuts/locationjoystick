@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.locationjoystick.android.library)
     alias(libs.plugins.locationjoystick.hilt)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
