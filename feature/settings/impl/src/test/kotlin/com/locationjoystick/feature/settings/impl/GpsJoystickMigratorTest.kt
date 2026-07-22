@@ -168,9 +168,6 @@ class GpsJoystickMigratorTest {
     }
 
     /**
-     * Pinned regression for the real user-submitted export described in ISSUES.md
-     * ("collapses multiple routes/favorites into generic single entries").
-     *
      * Investigation of this fixture showed the file has never been compacted: its underlying
      * Realm/TightDB commit history duplicates the coordinate table across ~1400 historical
      * versions (13 MB on disk vs 12-16 KB for the other fixtures), and — unlike every other

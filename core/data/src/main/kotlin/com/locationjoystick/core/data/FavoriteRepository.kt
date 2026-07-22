@@ -126,11 +126,6 @@ class FavoriteRepository
          * **Mitigation:** Avoid changing existing hot location names without manual
          * cleanup. If a name must change in the code, consider deleting the old entry
          * from [HOT_LOCATIONS] instead of renaming (forcing a fresh insertion).
-         *
-         * ## See Also
-         * - [removeHotLocations] — deletes all hot location entries
-         * - [HOT_LOCATIONS] — the canonical list of hot location definitions
-         * - ISSUES.md (lines 75–87) — full technical debt entry
          */
         suspend fun upsertHotLocations(
             selectedIds: Set<String> = HOT_LOCATIONS.map { idForLocation(it.name, it.city) }.toSet(),
