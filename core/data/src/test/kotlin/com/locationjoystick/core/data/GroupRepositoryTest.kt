@@ -136,6 +136,16 @@ class GroupRepositoryTest {
         }
 
     @Test
+    fun `emitTeleportUnavailable delivers event to subscriber`() =
+        runTest {
+            repository.teleportUnavailableEvent.test {
+                repository.emitTeleportUnavailable()
+                awaitItem()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `unknown role string falls back to NONE`() =
         runTest {
             // Write a garbage role directly via the fake store

@@ -51,6 +51,27 @@ class LeaderSyncServerTest {
         assertTrue(body.contains("\"lat\":1.5"))
         assertTrue(body.contains("\"lon\":2.5"))
         assertTrue(body.contains("\"ts\":1000"))
+        assertTrue(body.contains("\"active\":true"))
+    }
+
+    @Test
+    fun `pushed inactive update reports active false`() {
+        val port = server.start("gid")
+        server.push(
+            SyncPositionUpdate(
+                timestamp = 1000L,
+                latitude = 1.5,
+                longitude = 2.5,
+                speedMs = 0f,
+                bearing = 0f,
+                seq = 0,
+                active = false,
+            ),
+        )
+        val conn = URL("http://localhost:$port/position?token=gid").openConnection() as HttpURLConnection
+        val body = conn.inputStream.bufferedReader().readText()
+        conn.disconnect()
+        assertTrue(body.contains("\"active\":false"))
     }
 
     @Test

@@ -52,7 +52,7 @@ class FollowerSyncClient
             groupId: String,
             pollIntervalMs: Long = AppConstants.SyncConstants.POLL_INTERVAL_MS,
             onGroupLost: () -> Unit = {},
-            onPosition: (lat: Double, lon: Double, speedMs: Float, bearing: Float) -> Unit,
+            onPosition: (lat: Double, lon: Double, speedMs: Float, bearing: Float, active: Boolean) -> Unit,
         ) {
             stopPolling()
             lastSeq = -1L
@@ -87,7 +87,7 @@ class FollowerSyncClient
                                             nowMs - update.timestamp > AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS
                                         if (!stale && update.seq > lastSeq) {
                                             lastSeq = update.seq
-                                            onPosition(update.latitude, update.longitude, update.speedMs, update.bearing)
+                                            onPosition(update.latitude, update.longitude, update.speedMs, update.bearing, update.active)
                                         }
                                     }
                                 }
@@ -184,6 +184,7 @@ class FollowerSyncClient
                     speedMs = obj.optDouble("speedMs", 0.0).toFloat(),
                     bearing = obj.optDouble("bearing", 0.0).toFloat(),
                     seq = obj.getLong("seq"),
+                    active = obj.optBoolean("active", true),
                 )
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to parse position JSON", e)

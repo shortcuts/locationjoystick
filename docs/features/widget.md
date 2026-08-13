@@ -10,6 +10,11 @@ Key files: `:feature:widget:impl/FloatingWidgetService.kt`, `:feature:settings:i
 - Separate service, toggled independently of the joystick.
 - State transitions: collapsed (FAB) ↔ expanded (panel) via `ValueAnimator`.
 - Enabled features stored in DataStore as `stringSetPreferencesKey`; the shared display order (see below) is a separate `stringPreferencesKey`.
+- `MockLocationService` auto-starts the widget overlay (alongside the joystick overlay) whenever spoofing starts and `SYSTEM_ALERT_WINDOW` is granted — there is no separate manual start button for it.
+
+## Hiding the Overlay
+
+Settings → Menus → Privacy → "Hide floating widget" (`AppSettings.hideWidgetOverlay`, DataStore key `hide_widget_overlay`, default `false`) stops `MockLocationService` from starting `FloatingWidgetService` when spoofing starts. The joystick overlay and any accessibility-based features (e.g. compass tracking, see @docs/features/tap-to-walk.md) are unaffected — this only hides the widget button/panel itself. Round-trips through `ExportData` like `hideTeleportFeatures`.
 
 ## Configurability
 
@@ -55,6 +60,11 @@ button:
   **Teleport to leader now** — which sends `ACTION_FOLLOWER_TELEPORT` to
   `MockLocationService`, the same action the Group Sync screen's own
   "Teleport to leader now" button sends (see @docs/features/group-sync.md).
+  If a cooldown advisory applies (same distance-tiered `CooldownEngine` used
+  elsewhere), `FloatingWidgetService` shows it as a one-shot Toast after
+  tapping — the teleport still goes through, the Toast is advisory only. The
+  icon-only row has no room for the persistent badge the Group Sync screen
+  shows.
 - **Auto-collapse**: the button (and its inline teleport action) disappears
   entirely once the device stops being an enabled follower — nothing is left
   on screen for the expand state to affect.

@@ -99,4 +99,59 @@ class LocationLoopActionTest {
         val action = computePausedLoopAction(leaderSharingEnabled = false, hasActiveUpdateJob = false)
         assertEquals(PausedLoopAction.NO_OP, action)
     }
+
+    @Test
+    fun `follower not yet spoofing bootstraps when leader is active`() {
+        val action =
+            computeFollowerActiveAction(
+                leaderActive = true,
+                spoofingStarted = false,
+                currentState = MockLocationState.IDLE,
+            )
+        assertEquals(FollowerActiveAction.BOOTSTRAP, action)
+    }
+
+    @Test
+    fun `follower already running does not re-bootstrap while leader stays active`() {
+        val action =
+            computeFollowerActiveAction(
+                leaderActive = true,
+                spoofingStarted = true,
+                currentState = MockLocationState.RUNNING,
+            )
+        assertEquals(FollowerActiveAction.NO_OP, action)
+    }
+
+    @Test
+    fun `spoofing follower pauses when leader goes inactive`() {
+        val action =
+            computeFollowerActiveAction(
+                leaderActive = false,
+                spoofingStarted = true,
+                currentState = MockLocationState.RUNNING,
+            )
+        assertEquals(FollowerActiveAction.PAUSE, action)
+    }
+
+    @Test
+    fun `already-paused follower is a no-op while leader stays inactive`() {
+        val action =
+            computeFollowerActiveAction(
+                leaderActive = false,
+                spoofingStarted = false,
+                currentState = MockLocationState.IDLE,
+            )
+        assertEquals(FollowerActiveAction.NO_OP, action)
+    }
+
+    @Test
+    fun `leader active but follower not yet running and never bootstrapped is a bootstrap`() {
+        val action =
+            computeFollowerActiveAction(
+                leaderActive = true,
+                spoofingStarted = false,
+                currentState = MockLocationState.PAUSED,
+            )
+        assertEquals(FollowerActiveAction.BOOTSTRAP, action)
+    }
 }

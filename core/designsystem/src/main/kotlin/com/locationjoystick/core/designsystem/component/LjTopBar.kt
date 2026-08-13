@@ -1,5 +1,7 @@
 package com.locationjoystick.core.designsystem.component
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -81,11 +83,17 @@ fun LjTopBar(
                             contentDescription = if (isSpoofing) "Stop location simulation" else "Start location simulation"
                         },
                 ) {
-                    Icon(
-                        imageVector = if (isSpoofing) LjIcons.Stop else LjIcons.PlayArrow,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp).padding(end = 4.dp),
-                    )
+                    Crossfade(
+                        targetState = isSpoofing,
+                        animationSpec = tween(150),
+                        label = "spoofToggleIcon",
+                    ) { spoofing ->
+                        Icon(
+                            imageVector = if (spoofing) LjIcons.Stop else LjIcons.PlayArrow,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp).padding(end = 4.dp),
+                        )
+                    }
                     Text(
                         text =
                             if (isSpoofing) {

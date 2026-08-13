@@ -18,6 +18,7 @@ data class SyncPositionUpdate(
     val speedMs: Float,
     val bearing: Float,
     val seq: Long,
+    val active: Boolean = true,
 )
 
 data class GroupInvite(

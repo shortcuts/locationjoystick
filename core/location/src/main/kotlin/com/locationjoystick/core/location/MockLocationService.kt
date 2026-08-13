@@ -242,7 +242,9 @@ class MockLocationService : Service() {
                         }
                         if (Settings.canDrawOverlays(this@MockLocationService)) {
                             startService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))
-                            startService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
+                            if (!settingsRepository.getHideWidgetOverlay().first()) {
+                                startService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
+                            }
                             Log.i(TAG, "Overlay services started")
                         } else {
                             Log.i(TAG, "SYSTEM_ALERT_WINDOW not granted — skipping overlay start")
@@ -673,6 +675,18 @@ class MockLocationService : Service() {
         Log.i(TAG, "Spoofing stopped")
     }
 
+    /**
+     * Follower-only pause: leader stopped spoofing. Unlike [stopSpoofing], this never calls
+     * [stopSelf] — the service, notification, and follower polling all stay alive so the leader's
+     * next active tick can resume the mirror automatically (see [enterFollowerMode]).
+     */
+    private fun pauseFollowerForInactiveLeader() {
+        releaseWakeLock()
+        locationRepository.stopSpoofing()
+        _state.value = MockLocationState.IDLE
+        Log.i(TAG, "Leader stopped spoofing — pausing follower mirror")
+    }
+
     fun getCurrentPosition(): LatLng = positionRef.get()
 
     private fun enterFollowerMode(
@@ -717,18 +731,36 @@ class MockLocationService : Service() {
                         }
                     }
                 },
-            ) { lat, lon, _, bearing ->
+            ) { lat, lon, _, bearing, active ->
                 followerCatchUp.setTarget(LatLng(lat, lon), bearing)
-                if (spoofingStarted.compareAndSet(false, true) && _state.value != MockLocationState.RUNNING) {
-                    // Spoofing wasn't active yet — nothing was being reported to other apps, so
-                    // starting straight at the leader's position carries no anti-cheat risk.
-                    // Once already RUNNING, the catch-up walk in pushLocationUpdate() takes over
-                    // instead, so an already-spoofing follower never jumps.
-                    serviceScope.launch {
-                        startSpoofing(lat, lon)
-                        // startSpoofing() unconditionally sets mode to TELEPORT — reassert FOLLOWER
-                        // so advanceFollowerCatchUp() doesn't no-op on every subsequent tick.
-                        locationRepository.setMockMode(MockMode.FOLLOWER)
+                groupRepository.setLeaderPosition(LatLng(lat, lon))
+                when (computeFollowerActiveAction(active, spoofingStarted.get(), _state.value)) {
+                    FollowerActiveAction.BOOTSTRAP -> {
+                        // Spoofing wasn't active yet — nothing was being reported to other apps, so
+                        // starting straight at the leader's position carries no anti-cheat risk.
+                        // Once already RUNNING, the catch-up walk in pushLocationUpdate() takes over
+                        // instead, so an already-spoofing follower never jumps.
+                        if (spoofingStarted.compareAndSet(false, true)) {
+                            serviceScope.launch {
+                                startSpoofing(lat, lon)
+                                // startSpoofing() unconditionally sets mode to TELEPORT — reassert
+                                // FOLLOWER so advanceFollowerCatchUp() doesn't no-op on later ticks.
+                                locationRepository.setMockMode(MockMode.FOLLOWER)
+                            }
+                        }
+                    }
+
+                    FollowerActiveAction.PAUSE -> {
+                        // Leader stopped spoofing — pause the mirror without tearing down the
+                        // service, so polling keeps running and the leader's next active tick
+                        // resumes it via BOOTSTRAP above (spoofingStarted reset to false here).
+                        if (spoofingStarted.compareAndSet(true, false)) {
+                            serviceScope.launch { pauseFollowerForInactiveLeader() }
+                        }
+                    }
+
+                    FollowerActiveAction.NO_OP -> {
+                        Unit
                     }
                 }
             }
@@ -740,16 +772,25 @@ class MockLocationService : Service() {
         stopFollowerRestoration()
         followerSyncClient.stopPolling()
         followerCatchUp.clear()
+        groupRepository.setLeaderPosition(null)
         locationRepository.setMockMode(MockMode.TELEPORT)
         Log.i(TAG, "Exited FOLLOWER mode")
     }
 
     /** Manual override: snap straight to the last-known leader position instead of walking there. */
     internal fun teleportToLeaderNow() {
-        val target = followerCatchUp.currentTarget() ?: return
+        val target =
+            followerCatchUp.currentTarget() ?: run {
+                Log.w(TAG, "Teleport to leader requested but leader position not yet known")
+                groupRepository.emitTeleportUnavailable()
+                return
+            }
         writeCurrentPosition(target.latitude, target.longitude)
         followerCatchUp.markArrived()
         locationRepository.setPositionInternal(target)
+        // Shares the same cooldown clock as every other teleport (Favorites, map long-press) —
+        // see CooldownEngine/settingsRepository.getLastTeleportTime().
+        serviceScope.launch { settingsRepository.setLastTeleportTime(System.currentTimeMillis()) }
         Log.i(TAG, "Follower teleported to leader at (${target.latitude}, ${target.longitude})")
     }
 
@@ -1077,6 +1118,7 @@ class MockLocationService : Service() {
                         speedMs = fix.speedMs,
                         bearing = fix.bearing,
                         seq = 0,
+                        active = _state.value != MockLocationState.IDLE && _state.value != MockLocationState.ERROR,
                     ),
                 )
             }

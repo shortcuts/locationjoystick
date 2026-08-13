@@ -31,8 +31,7 @@ import javax.inject.Singleton
 /**
  * Interface for accessing app preferences stored in DataStore.
  *
- * This abstraction allows for easy testing and potential future migration
- * from DataStore to another storage mechanism.
+ * Abstracted for fake-based unit testing (see SettingsRepositoryTest etc).
  *
  * Keys are defined in [AppConstants.DataStoreConstants].
  */
@@ -180,6 +179,12 @@ interface PreferencesDataSource {
     /** Sets whether every teleport entry point in the app is hidden. */
     suspend fun setHideTeleportFeatures(enabled: Boolean)
 
+    /** Gets whether the floating widget overlay is hidden. */
+    fun getHideWidgetOverlay(): Flow<Boolean>
+
+    /** Sets whether the floating widget overlay is hidden. */
+    suspend fun setHideWidgetOverlay(enabled: Boolean)
+
     /** Gets the list of recently searched locations, newest first. */
     fun getRecentSearches(): Flow<List<RecentSearch>>
 
@@ -310,6 +315,7 @@ data class SettingsSnapshot(
     val tapToWalkScaleMpx: Double = AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX,
     val enabledSpeedProfileIds: Set<String> = AppConstants.ProfileConstants.DEFAULT_ENABLED_SPEED_PROFILE_IDS,
     val hideTeleportFeatures: Boolean = false,
+    val hideWidgetOverlay: Boolean = false,
 )
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -395,6 +401,7 @@ class AppPreferencesDataSource
             val REALISM_SATELLITE_EXTRAS_ENABLED = booleanPreferencesKey("realism_satellite_extras_enabled")
             val REALISM_SUSPENDED_MOCKING_ENABLED = booleanPreferencesKey("realism_suspended_mocking_enabled")
             val HIDE_TELEPORT_FEATURES = booleanPreferencesKey("hide_teleport_features")
+            val HIDE_WIDGET_OVERLAY = booleanPreferencesKey("hide_widget_overlay")
             val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
             val ROUTES_SORT_NEWEST_FIRST = booleanPreferencesKey("routes_sort_newest_first")
             val FAVORITES_SORT_NEWEST_FIRST = booleanPreferencesKey("favorites_sort_newest_first")
@@ -662,6 +669,12 @@ class AppPreferencesDataSource
             dataStore.edit { prefs -> prefs[Keys.HIDE_TELEPORT_FEATURES] = enabled }
         }
 
+        override fun getHideWidgetOverlay(): Flow<Boolean> = pref(Keys.HIDE_WIDGET_OVERLAY, false)
+
+        override suspend fun setHideWidgetOverlay(enabled: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.HIDE_WIDGET_OVERLAY] = enabled }
+        }
+
         override fun getRecentSearches(): Flow<List<RecentSearch>> =
             dataStore.data
                 .catch { e ->
@@ -813,6 +826,7 @@ class AppPreferencesDataSource
                 prefs[Keys.REALISM_SATELLITE_EXTRAS_ENABLED] = snapshot.realismSatelliteExtrasEnabled
                 prefs[Keys.REALISM_SUSPENDED_MOCKING_ENABLED] = snapshot.realismSuspendedMockingEnabled
                 prefs[Keys.HIDE_TELEPORT_FEATURES] = snapshot.hideTeleportFeatures
+                prefs[Keys.HIDE_WIDGET_OVERLAY] = snapshot.hideWidgetOverlay
                 prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] =
                     snapshot.jitterSpeedIdleVariationPct.coerceIn(
                         AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
@@ -897,6 +911,7 @@ class AppPreferencesDataSource
                         realismSatelliteExtrasEnabled = prefs[Keys.REALISM_SATELLITE_EXTRAS_ENABLED] ?: true,
                         realismSuspendedMockingEnabled = prefs[Keys.REALISM_SUSPENDED_MOCKING_ENABLED] ?: false,
                         hideTeleportFeatures = prefs[Keys.HIDE_TELEPORT_FEATURES] ?: false,
+                        hideWidgetOverlay = prefs[Keys.HIDE_WIDGET_OVERLAY] ?: false,
                         jitterSpeedIdleVariationPct =
                             prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT]
                                 ?: DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,

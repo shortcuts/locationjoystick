@@ -8,9 +8,9 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.View
 import androidx.compose.ui.graphics.toArgb
 import com.locationjoystick.core.designsystem.LjAccent
-import com.locationjoystick.core.overlay.OverlayView
 import kotlin.math.atan2
 import kotlin.math.hypot
 import kotlin.math.min
@@ -29,7 +29,7 @@ class JoystickView
         context: Context,
         attrs: AttributeSet? = null,
         defStyleAttr: Int = 0,
-    ) : OverlayView(context, attrs, defStyleAttr) {
+    ) : View(context, attrs, defStyleAttr) {
         companion object {
             private const val KNOB_RADIUS_FRACTION = 0.25f
             private const val DEADZONE_FRACTION = 0.15f

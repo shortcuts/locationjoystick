@@ -17,4 +17,5 @@ data class AppSettings(
     val satelliteExtrasEnabled: Boolean = true,
     val suspendedMockingEnabled: Boolean = false,
     val hideTeleportFeatures: Boolean = false,
+    val hideWidgetOverlay: Boolean = false,
 )

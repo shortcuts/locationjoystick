@@ -352,6 +352,10 @@ fun SettingsRoute(
                     viewModel.setHideTeleportFeatures(action.enabled)
                 }
 
+                is SettingsAction.SetHideWidgetOverlay -> {
+                    viewModel.setHideWidgetOverlay(action.enabled)
+                }
+
                 is SettingsAction.SetTapToWalkOverlayEnabled -> {
                     viewModel.setTapToWalkOverlayEnabled(action.enabled)
                 }

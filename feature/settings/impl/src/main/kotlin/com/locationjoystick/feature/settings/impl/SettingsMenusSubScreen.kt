@@ -283,6 +283,13 @@ private fun PrivacySection(
             "Removes every teleport option across the app — map, favorites, " +
                 "routes, group sync, and the widget. Only walking and route replay remain available.",
     )
+    Spacer(Modifier.height(8.dp))
+    LjCheckboxRow(
+        checked = uiState.hideWidgetOverlay,
+        onCheckedChange = { onAction(SettingsAction.SetHideWidgetOverlay(it)) },
+        title = "Hide floating widget",
+        description = "Keeps the floating widget button from appearing while spoofing is active.",
+    )
 }
 
 @Composable

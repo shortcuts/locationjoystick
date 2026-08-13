@@ -19,6 +19,7 @@ class FollowerExitSpeedResetTest {
         MockLocationService().apply {
             locationRepository = LocationRepository()
             followerSyncClient = mockk(relaxed = true)
+            groupRepository = mockk(relaxed = true)
         }
 
     @Test

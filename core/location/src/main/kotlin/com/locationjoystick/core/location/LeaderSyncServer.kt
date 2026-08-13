@@ -91,7 +91,7 @@ class LeaderSyncServer
                             "{\"ts\":${update.timestamp},\"lat\":${update.latitude}," +
                                 "\"lon\":${update.longitude},\"speedMs\":${update.speedMs}," +
                                 "\"bearing\":${update.bearing},\"seq\":${update.seq}," +
-                                "\"followers\":$count}"
+                                "\"followers\":$count,\"active\":${update.active}}"
                         writer.print(
                             "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: ${body.length}\r\n\r\n$body",
                         )

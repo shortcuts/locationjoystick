@@ -4,13 +4,16 @@ import android.content.Context
 import android.net.Uri
 import app.cash.turbine.test
 import com.locationjoystick.core.common.util.NsdCodeManager
+import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.GroupRepository
+import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.FollowerSyncClient
 import com.locationjoystick.core.location.LeaderSyncServer
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
+import com.locationjoystick.core.model.LatLng
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -29,6 +32,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -42,11 +46,16 @@ class GroupSyncViewModelTest {
     private lateinit var leaderSyncServer: LeaderSyncServer
     private lateinit var followerSyncClient: FollowerSyncClient
     private lateinit var settingsRepository: SettingsRepository
+    private lateinit var locationRepository: LocationRepository
 
     private lateinit var groupStateFlow: MutableStateFlow<GroupState>
     private lateinit var pendingInviteFlow: MutableSharedFlow<GroupInvite>
+    private lateinit var teleportUnavailableFlow: MutableSharedFlow<Unit>
     private lateinit var leaderFollowerCount: MutableStateFlow<Int>
     private lateinit var followerFollowerCount: MutableStateFlow<Int>
+    private lateinit var leaderPositionFlow: MutableStateFlow<LatLng?>
+    private lateinit var currentPositionFlow: MutableStateFlow<LatLng?>
+    private lateinit var lastTeleportTimeFlow: MutableStateFlow<Long>
 
     private lateinit var viewModel: GroupSyncViewModel
 
@@ -62,18 +71,27 @@ class GroupSyncViewModelTest {
         leaderSyncServer = mockk(relaxed = true)
         followerSyncClient = mockk(relaxed = true)
         settingsRepository = mockk(relaxed = true)
+        locationRepository = mockk(relaxed = true)
         every { settingsRepository.getHideTeleportFeatures() } returns MutableStateFlow(false)
+        lastTeleportTimeFlow = MutableStateFlow(0L)
+        every { settingsRepository.getLastTeleportTime() } returns lastTeleportTimeFlow
 
         groupStateFlow = MutableStateFlow(GroupState())
         pendingInviteFlow = MutableSharedFlow(replay = 1)
+        teleportUnavailableFlow = MutableSharedFlow(replay = 1)
         leaderFollowerCount = MutableStateFlow(0)
         followerFollowerCount = MutableStateFlow(0)
+        leaderPositionFlow = MutableStateFlow(null)
+        currentPositionFlow = MutableStateFlow(null)
 
         every { groupRepository.groupState } returns groupStateFlow
         every { groupRepository.pendingGroupInvite } returns pendingInviteFlow
         every { groupRepository.groupLostEvent } returns MutableSharedFlow()
+        every { groupRepository.teleportUnavailableEvent } returns teleportUnavailableFlow
+        every { groupRepository.leaderPosition } returns leaderPositionFlow
         every { leaderSyncServer.followerCount } returns leaderFollowerCount
         every { followerSyncClient.followerCount } returns followerFollowerCount
+        every { locationRepository.currentPosition } returns currentPositionFlow
 
         viewModel =
             GroupSyncViewModel(
@@ -83,6 +101,7 @@ class GroupSyncViewModelTest {
                 leaderSyncServer = leaderSyncServer,
                 followerSyncClient = followerSyncClient,
                 settingsRepository = settingsRepository,
+                locationRepository = locationRepository,
             )
     }
 
@@ -317,6 +336,14 @@ class GroupSyncViewModelTest {
         }
 
     @Test
+    fun `teleportUnavailableEvent from repository sets error message`() =
+        runTest {
+            teleportUnavailableFlow.tryEmit(Unit)
+
+            assertEquals("Leader position not yet known — try again in a moment", viewModel.errorMessage.value)
+        }
+
+    @Test
     fun `clearError resets error message to null`() =
         runTest {
             viewModel.joinByCode("AB")
@@ -358,6 +385,30 @@ class GroupSyncViewModelTest {
 
             viewModel.followerCount.test {
                 assertEquals(0, awaitItem())
+            }
+        }
+
+    @Test
+    fun `cooldownState is Ready when leader position is unknown`() =
+        runTest {
+            currentPositionFlow.value = LatLng(1.0, 1.0)
+            leaderPositionFlow.value = null
+
+            viewModel.cooldownState.test {
+                assertEquals(CooldownState.Ready, awaitItem())
+            }
+        }
+
+    @Test
+    fun `cooldownState is Cooling for a far leader right after a teleport`() =
+        runTest {
+            lastTeleportTimeFlow.value = System.currentTimeMillis()
+            currentPositionFlow.value = LatLng(0.0, 0.0)
+            leaderPositionFlow.value = LatLng(1.0, 1.0)
+
+            viewModel.cooldownState.test {
+                val state = awaitItem()
+                assertTrue("Expected Cooling, was $state", state is CooldownState.Cooling)
             }
         }
 }

@@ -12,7 +12,10 @@ import com.google.zxing.MultiFormatWriter
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.common.util.RandomCode
+import com.locationjoystick.core.data.CooldownEngine
+import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.GroupRepository
+import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.FollowerSyncClient
 import com.locationjoystick.core.location.LeaderSyncServer
@@ -20,14 +23,18 @@ import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
+import com.locationjoystick.core.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -47,6 +54,7 @@ class GroupSyncViewModel
         private val leaderSyncServer: LeaderSyncServer,
         private val followerSyncClient: FollowerSyncClient,
         private val settingsRepository: SettingsRepository,
+        private val locationRepository: LocationRepository,
     ) : ViewModel() {
         private val _groupState = MutableStateFlow(GroupState())
         val groupState: StateFlow<GroupState> = _groupState.asStateFlow()
@@ -74,6 +82,30 @@ class GroupSyncViewModel
                         GroupRole.NONE -> flowOf(0)
                     }
                 }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+        val leaderPosition: StateFlow<LatLng?> =
+            groupRepository.leaderPosition
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+        val currentPosition: StateFlow<LatLng?> =
+            locationRepository.currentPosition
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+        /** Distance/cooldown advisory for "Teleport to leader now" — same clock and math as
+         * every other teleport (Favorites, map long-press); see CooldownEngine. */
+        val cooldownState: StateFlow<CooldownState> =
+            combine(
+                settingsRepository.getLastTeleportTime(),
+                locationRepository.currentPosition,
+                groupRepository.leaderPosition,
+                tickerFlow(30_000L),
+            ) { teleportTime, currentPos, leaderPos, _ ->
+                if (leaderPos == null || currentPos == null) {
+                    CooldownState.Ready
+                } else {
+                    CooldownEngine.computeState(teleportTime, currentPos, leaderPos)
+                }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CooldownState.Ready)
 
         init {
             viewModelScope.launch {
@@ -138,6 +170,11 @@ class GroupSyncViewModel
             viewModelScope.launch {
                 groupRepository.groupLostEvent.collect {
                     _errorMessage.value = "Disconnected from group — leader is no longer reachable"
+                }
+            }
+            viewModelScope.launch {
+                groupRepository.teleportUnavailableEvent.collect {
+                    _errorMessage.value = "Leader position not yet known — try again in a moment"
                 }
             }
         }
@@ -307,5 +344,14 @@ class GroupSyncViewModel
             val intent = Intent(context, MockLocationService::class.java).apply { this.action = action }
             configure?.invoke(intent)
             context.startService(intent)
+        }
+    }
+
+/** Emits [Unit] immediately and then every [intervalMs] milliseconds. Cancelled with its scope. */
+private fun tickerFlow(intervalMs: Long) =
+    flow {
+        while (true) {
+            emit(Unit)
+            delay(intervalMs)
         }
     }

@@ -1,5 +1,10 @@
 package com.locationjoystick.core.designsystem.component
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -7,8 +12,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,6 +32,9 @@ fun LjMapIconButton(
     contentColor: Color,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, label = "fabPressScale")
     // 48dp hit box meets the Android minimum touch target while keeping the smaller visual size.
     Box(
         modifier = Modifier.size(48.dp),
@@ -33,15 +44,18 @@ fun LjMapIconButton(
             onClick = onClick,
             shape = CircleShape,
             color = containerColor,
-            modifier = Modifier.size(UiConstants.FAB_CONTAINER_SIZE),
+            interactionSource = interactionSource,
+            modifier = Modifier.size(UiConstants.FAB_CONTAINER_SIZE).scale(scale),
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = contentDescription,
-                    tint = contentColor,
-                    modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
-                )
+                Crossfade(targetState = icon, animationSpec = tween(150), label = "fabIcon") { animatedIcon ->
+                    Icon(
+                        imageVector = animatedIcon,
+                        contentDescription = contentDescription,
+                        tint = contentColor,
+                        modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
+                    )
+                }
             }
         }
     }
