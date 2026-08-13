@@ -1,6 +1,9 @@
 package com.locationjoystick.core.designsystem.component
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -15,11 +18,22 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjAccent
 import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjText
+
+/** Press feedback shared by every LjButton variant: 0.96 scale, never lower (feels exaggerated below). */
+@Composable
+private fun rememberPressScale(interactionSource: MutableInteractionSource): Float {
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, label = "pressScale")
+    return scale
+}
 
 @Composable
 fun LjButton(
@@ -28,10 +42,13 @@ fun LjButton(
     enabled: Boolean = true,
     content: @Composable RowScope.() -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val scale = rememberPressScale(interactionSource)
     Button(
         onClick = onClick,
-        modifier = modifier.defaultMinSize(minHeight = 48.dp),
+        modifier = modifier.defaultMinSize(minHeight = 48.dp).scale(scale),
         enabled = enabled,
+        interactionSource = interactionSource,
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
         content = content,
     )
@@ -44,10 +61,13 @@ fun LjOutlinedButton(
     enabled: Boolean = true,
     content: @Composable RowScope.() -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val scale = rememberPressScale(interactionSource)
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.defaultMinSize(minHeight = 48.dp),
+        modifier = modifier.defaultMinSize(minHeight = 48.dp).scale(scale),
         enabled = enabled,
+        interactionSource = interactionSource,
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
         content = content,
     )
@@ -60,10 +80,13 @@ fun LjTextButton(
     enabled: Boolean = true,
     content: @Composable RowScope.() -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val scale = rememberPressScale(interactionSource)
     TextButton(
         onClick = onClick,
-        modifier = modifier.defaultMinSize(minHeight = 48.dp),
+        modifier = modifier.defaultMinSize(minHeight = 48.dp).scale(scale),
         enabled = enabled,
+        interactionSource = interactionSource,
         content = content,
     )
 }

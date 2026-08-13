@@ -248,6 +248,10 @@ class SettingsRepository
 
         suspend fun setHideTeleportFeatures(enabled: Boolean) = dataSource.setHideTeleportFeatures(enabled)
 
+        fun getHideWidgetOverlay(): Flow<Boolean> = dataSource.getHideWidgetOverlay()
+
+        suspend fun setHideWidgetOverlay(enabled: Boolean) = dataSource.setHideWidgetOverlay(enabled)
+
         fun getFloatingMapQuickWalk(): Flow<Boolean> = dataSource.getFloatingMapQuickWalk()
 
         fun getTapToWalkOverlayEnabled(): Flow<Boolean> = dataSource.getTapToWalkOverlayEnabled()

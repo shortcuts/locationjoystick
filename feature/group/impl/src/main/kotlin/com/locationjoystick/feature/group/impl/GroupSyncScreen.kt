@@ -54,10 +54,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.locationjoystick.core.data.CooldownState
+import com.locationjoystick.core.data.toBadgeText
+import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
+import com.locationjoystick.core.model.LatLng
 
 @Composable
 fun GroupSyncRoute(
@@ -70,6 +74,9 @@ fun GroupSyncRoute(
     val isDiscovering by viewModel.isDiscovering.collectAsStateWithLifecycle()
     val followerCount by viewModel.followerCount.collectAsStateWithLifecycle()
     val hideTeleportFeatures by viewModel.hideTeleportFeatures.collectAsStateWithLifecycle()
+    val leaderPosition by viewModel.leaderPosition.collectAsStateWithLifecycle()
+    val currentPosition by viewModel.currentPosition.collectAsStateWithLifecycle()
+    val cooldownState by viewModel.cooldownState.collectAsStateWithLifecycle()
     val spoofToggle = rememberSpoofToggleState()
 
     var showQrScanner by remember { mutableStateOf(false) }
@@ -114,6 +121,9 @@ fun GroupSyncRoute(
             onLeaveGroup = viewModel::leaveGroup,
             onRegenerateQr = viewModel::regenerateQr,
             hideTeleportFeatures = hideTeleportFeatures,
+            leaderPosition = leaderPosition,
+            currentPosition = currentPosition,
+            cooldownState = cooldownState,
         )
     }
 }
@@ -138,6 +148,9 @@ internal fun GroupSyncScreen(
     onLeaveGroup: () -> Unit,
     onRegenerateQr: () -> Unit,
     hideTeleportFeatures: Boolean = false,
+    leaderPosition: LatLng? = null,
+    currentPosition: LatLng? = null,
+    cooldownState: CooldownState = CooldownState.Ready,
 ) {
     LjScaffold(
         title = "Group Sync",
@@ -187,6 +200,9 @@ internal fun GroupSyncScreen(
                         onTeleportToLeaderNow = onTeleportToLeaderNow,
                         onLeaveGroup = onLeaveGroup,
                         hideTeleportFeatures = hideTeleportFeatures,
+                        leaderPosition = leaderPosition,
+                        currentPosition = currentPosition,
+                        cooldownState = cooldownState,
                     )
                 }
             }
@@ -436,6 +452,9 @@ private fun FollowerContent(
     onTeleportToLeaderNow: () -> Unit,
     onLeaveGroup: () -> Unit,
     hideTeleportFeatures: Boolean = false,
+    leaderPosition: LatLng? = null,
+    currentPosition: LatLng? = null,
+    cooldownState: CooldownState = CooldownState.Ready,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -475,6 +494,9 @@ private fun FollowerContent(
         )
 
         if (groupState.followerModeEnabled && !hideTeleportFeatures) {
+            leaderPosition?.let { leaderPos ->
+                CooldownAdvisoryBadge(cooldownState.toBadgeText(currentPosition, leaderPos))
+            }
             OutlinedButton(
                 onClick = onTeleportToLeaderNow,
                 modifier = Modifier.fillMaxWidth(),

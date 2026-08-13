@@ -67,3 +67,32 @@ internal fun computePausedLoopAction(
         hasActiveUpdateJob -> PausedLoopAction.TEAR_DOWN
         else -> PausedLoopAction.NO_OP
     }
+
+/** Decision for a follower's reaction to a leader position update, in [MockLocationService.enterFollowerMode]. */
+internal enum class FollowerActiveAction {
+    /** Leader is active and the follower isn't spoofing yet — snap straight to its position. */
+    BOOTSTRAP,
+
+    /** Leader stopped spoofing and the follower was mirroring it — pause without tearing down the service. */
+    PAUSE,
+
+    /** Nothing to do. */
+    NO_OP,
+}
+
+/**
+ * Pure decision for whether a follower should start, pause, or ignore a leader position update.
+ *
+ * [spoofingStarted] doubles as "has the follower already bootstrapped for the current active
+ * streak" — it's reset on [PAUSE] so the next [BOOTSTRAP] can fire again once the leader resumes.
+ */
+internal fun computeFollowerActiveAction(
+    leaderActive: Boolean,
+    spoofingStarted: Boolean,
+    currentState: MockLocationState,
+): FollowerActiveAction =
+    when {
+        leaderActive && !spoofingStarted && currentState != MockLocationState.RUNNING -> FollowerActiveAction.BOOTSTRAP
+        !leaderActive && spoofingStarted && currentState == MockLocationState.RUNNING -> FollowerActiveAction.PAUSE
+        else -> FollowerActiveAction.NO_OP
+    }

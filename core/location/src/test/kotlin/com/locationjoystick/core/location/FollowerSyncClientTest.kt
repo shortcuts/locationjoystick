@@ -51,7 +51,7 @@ class FollowerSyncClientTest {
         server.push(freshUpdate(lat = 1.0, lon = 2.0))
         val results = LinkedBlockingQueue<Pair<Double, Double>>()
 
-        client.startPolling("127.0.0.1", serverPort, "test-group") { lat, lon, _, _ ->
+        client.startPolling("127.0.0.1", serverPort, "test-group") { lat, lon, _, _, _ ->
             results.offer(Pair(lat, lon))
         }
 
@@ -59,6 +59,20 @@ class FollowerSyncClientTest {
         assertNotNull("Callback should be invoked within timeout", result)
         assertEquals(1.0, result!!.first, 0.0)
         assertEquals(2.0, result.second, 0.0)
+    }
+
+    @Test
+    fun `inactive leader update delivers active false to callback`() {
+        server.push(freshUpdate(lat = 1.0, lon = 2.0).copy(active = false))
+        val results = LinkedBlockingQueue<Boolean>()
+
+        client.startPolling("127.0.0.1", serverPort, "test-group") { _, _, _, _, active ->
+            results.offer(active)
+        }
+
+        val result = results.poll(3, TimeUnit.SECONDS)
+        assertNotNull("Callback should be invoked within timeout", result)
+        assertFalse("Inactive leader update should deliver active=false", result!!)
     }
 
     @Test
@@ -75,7 +89,7 @@ class FollowerSyncClientTest {
         server.push(staleUpdate)
         val results = LinkedBlockingQueue<Pair<Double, Double>>()
 
-        client.startPolling("127.0.0.1", serverPort, "test-group") { lat, lon, _, _ ->
+        client.startPolling("127.0.0.1", serverPort, "test-group") { lat, lon, _, _, _ ->
             results.offer(Pair(lat, lon))
         }
 
@@ -89,7 +103,7 @@ class FollowerSyncClientTest {
         val results = LinkedBlockingQueue<Pair<Double, Double>>()
 
         // Intentionally wrong groupId — server returns 403, client skips
-        client.startPolling("127.0.0.1", serverPort, "wrong-group") { lat, lon, _, _ ->
+        client.startPolling("127.0.0.1", serverPort, "wrong-group") { lat, lon, _, _, _ ->
             results.offer(Pair(lat, lon))
         }
 
@@ -102,7 +116,7 @@ class FollowerSyncClientTest {
         server.push(freshUpdate(lat = 3.0, lon = 4.0))
         val results = LinkedBlockingQueue<Pair<Double, Double>>()
 
-        client.startPolling("127.0.0.1", serverPort, "test-group", pollIntervalMs = 50) { lat, lon, _, _ ->
+        client.startPolling("127.0.0.1", serverPort, "test-group", pollIntervalMs = 50) { lat, lon, _, _, _ ->
             results.offer(Pair(lat, lon))
         }
 
@@ -118,7 +132,7 @@ class FollowerSyncClientTest {
         server.push(freshUpdate(lat = 1.0, lon = 2.0))
         val results = LinkedBlockingQueue<Pair<Double, Double>>()
 
-        client.startPolling("127.0.0.1", serverPort, "test-group", pollIntervalMs = 50) { lat, lon, _, _ ->
+        client.startPolling("127.0.0.1", serverPort, "test-group", pollIntervalMs = 50) { lat, lon, _, _, _ ->
             results.offer(Pair(lat, lon))
         }
 
@@ -147,7 +161,7 @@ class FollowerSyncClientTest {
                 "test-group",
                 pollIntervalMs = pollIntervalMs,
                 onGroupLost = { groupLost.offer(Unit) },
-            ) { _, _, _, _ -> }
+            ) { _, _, _, _, _ -> }
 
             val timeoutMs =
                 AppConstants.SyncConstants.MAX_CONSECUTIVE_POLL_FAILURES * (pollIntervalMs + 200) + 2_000
@@ -171,7 +185,7 @@ class FollowerSyncClientTest {
                 "test-group",
                 pollIntervalMs = 20,
                 onGroupLost = { groupLost.incrementAndGet() },
-            ) { _, _, _, _ -> }
+            ) { _, _, _, _, _ -> }
 
             Thread.sleep(1_000)
             assertTrue("Alternating success/failure should keep polling", client.isPolling)

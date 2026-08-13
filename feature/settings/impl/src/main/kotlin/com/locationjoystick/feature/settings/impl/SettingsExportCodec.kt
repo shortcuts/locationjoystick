@@ -81,6 +81,7 @@ internal object SettingsExportCodec {
         settingsObj.put("realismSatelliteExtrasEnabled", data.settings.satelliteExtrasEnabled)
         settingsObj.put("realismSuspendedMockingEnabled", data.settings.suspendedMockingEnabled)
         settingsObj.put("hideTeleportFeatures", data.settings.hideTeleportFeatures)
+        settingsObj.put("hideWidgetOverlay", data.settings.hideWidgetOverlay)
         val roamingObj = JSONObject()
         roamingObj.put("radiusMeters", data.settings.roamingDefaults.radiusMeters)
         roamingObj.put("distanceMeters", data.settings.roamingDefaults.distanceMeters)
@@ -208,6 +209,7 @@ internal object SettingsExportCodec {
                 AppConstants.RealismConstants.SUSPENDED_MOCKING_ENABLED_DEFAULT,
             )
         val hideTeleportFeatures = settingsObj.optBoolean("hideTeleportFeatures", false)
+        val hideWidgetOverlay = settingsObj.optBoolean("hideWidgetOverlay", false)
         val roamingDefaultsObj = settingsObj.optJSONObject("roamingDefaults")
         val roamingDefaults =
             if (roamingDefaultsObj != null) {
@@ -238,6 +240,7 @@ internal object SettingsExportCodec {
                 satelliteExtrasEnabled = satelliteExtrasEnabled,
                 suspendedMockingEnabled = suspendedMockingEnabled,
                 hideTeleportFeatures = hideTeleportFeatures,
+                hideWidgetOverlay = hideWidgetOverlay,
                 roamingDefaults = roamingDefaults,
             )
 

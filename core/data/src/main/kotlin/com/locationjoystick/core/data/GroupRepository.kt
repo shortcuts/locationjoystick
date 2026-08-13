@@ -10,10 +10,14 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
+import com.locationjoystick.core.model.LatLng
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -95,6 +99,15 @@ class GroupRepository
                 prefs.remove(Keys.GROUP_FOLLOWER_MODE_ENABLED)
                 prefs.remove(Keys.GROUP_SHARING_ENABLED)
             }
+            _leaderPosition.value = null
+        }
+
+        /** Follower-only, in-memory: the leader's last-known position, for cooldown/distance UI. Not persisted. */
+        private val _leaderPosition = MutableStateFlow<LatLng?>(null)
+        val leaderPosition: StateFlow<LatLng?> = _leaderPosition.asStateFlow()
+
+        fun setLeaderPosition(position: LatLng?) {
+            _leaderPosition.value = position
         }
 
         private val _pendingGroupInvite = MutableSharedFlow<GroupInvite>(replay = 1)
@@ -114,5 +127,12 @@ class GroupRepository
 
         fun emitGroupLost() {
             _groupLostEvent.tryEmit(Unit)
+        }
+
+        private val _teleportUnavailableEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        val teleportUnavailableEvent = _teleportUnavailableEvent.asSharedFlow()
+
+        fun emitTeleportUnavailable() {
+            _teleportUnavailableEvent.tryEmit(Unit)
         }
     }

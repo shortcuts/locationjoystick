@@ -19,6 +19,8 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.ActivityStateRepository
+import com.locationjoystick.core.data.CooldownEngine
+import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -49,6 +51,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -219,6 +222,13 @@ class FloatingWidgetService :
         lifecycleScope.launch {
             mapController.completionMessages.collect {
                 pendingCompletionFlow.value = true
+            }
+        }
+        lifecycleScope.launch {
+            groupRepository.teleportUnavailableEvent.collect {
+                Toast
+                    .makeText(this@FloatingWidgetService, "Leader position not yet known — try again in a moment", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
         lifecycleScope.launch {
@@ -467,6 +477,22 @@ class FloatingWidgetService :
                 action = AppConstants.ServiceConstants.ACTION_FOLLOWER_TELEPORT
             }
         startService(intent)
+        // Advisory only — same cooldown clock as everywhere else, doesn't block the teleport
+        // itself. The icon-only panel row has no room for a persistent badge like the Group
+        // Sync screen's, so a warning here is a one-shot Toast instead.
+        lifecycleScope.launch {
+            val leaderPos = groupRepository.leaderPosition.value
+            val currentPos = locationRepository.currentPosition.value
+            if (leaderPos != null && currentPos != null) {
+                val teleportTime = settingsRepository.getLastTeleportTime().first()
+                val state = CooldownEngine.computeState(teleportTime, currentPos, leaderPos)
+                if (state is CooldownState.Cooling) {
+                    Toast
+                        .makeText(this@FloatingWidgetService, "Suggested wait: ${state.toAdvisoryLabel()}", Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
+        }
     }
 
     private fun toggleJoystick() {
