@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.widget.impl
 
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.ComposeView
@@ -97,7 +98,8 @@ internal class WidgetPanelPresenter(
      * fresh [ComposeView] on every open — local composable state would silently reset to collapsed
      * each time the map panel is reopened mid-replay, leaving no way back to the controls.
      */
-    private val mapRouteControlsExpanded = MutableStateFlow(false)
+    @VisibleForTesting
+    internal val mapRouteControlsExpanded = MutableStateFlow(false)
 
     init {
         // Collapse once the replay ends so the next route does not start pre-expanded.
