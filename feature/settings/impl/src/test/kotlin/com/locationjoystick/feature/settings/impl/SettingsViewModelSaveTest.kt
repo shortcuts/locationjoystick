@@ -577,6 +577,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setHideTeleportFeatures(enabled: Boolean) = Unit
 
+    override fun getHideWidgetOverlay(): Flow<Boolean> = flowOf(false)
+
+    override suspend fun setHideWidgetOverlay(enabled: Boolean) = Unit
+
     override fun getSelectedHotLocationIds(): Flow<Set<String>> = flowOf(emptySet())
 
     override suspend fun setSelectedHotLocationIds(ids: Set<String>) = Unit

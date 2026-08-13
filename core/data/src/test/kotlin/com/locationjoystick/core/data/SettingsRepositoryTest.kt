@@ -1213,6 +1213,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         hideTeleportFeaturesFlow.value = enabled
     }
 
+    private val hideWidgetOverlayFlow = MutableStateFlow(false)
+
+    override fun getHideWidgetOverlay(): Flow<Boolean> = hideWidgetOverlayFlow
+
+    override suspend fun setHideWidgetOverlay(enabled: Boolean) {
+        hideWidgetOverlayFlow.value = enabled
+    }
+
     override fun getSelectedHotLocationIds(): Flow<Set<String>> = flowOf(emptySet())
 
     override suspend fun setSelectedHotLocationIds(ids: Set<String>) = Unit
@@ -1328,6 +1336,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         rememberLastLocationFlow.value = false
         hotLocationsEnabledFlow.value = false
         hideTeleportFeaturesFlow.value = false
+        hideWidgetOverlayFlow.value = false
         onboardingCompleteFlow.value = onboardingComplete
     }
 }
