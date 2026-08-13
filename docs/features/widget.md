@@ -39,6 +39,8 @@ When `AppFeature.MAP_FLOATING` is enabled, the floating map's FAB column include
 - **Expand controls**: tapping the route button expands two inline buttons to the left:
   - **Stop** — ends the replay immediately.
   - **Pause / Resume** — toggles replay pause state.
+- **No replay active**: tapping the route button opens the floating routes picker (`showRoutesFloatingView()`), matching the main map screen's behaviour and the button's own "Open routes" label.
+- **Expansion state ownership**: the expanded/collapsed flag lives in `WidgetPanelPresenter.mapRouteControlsExpanded`, **not** in a `remember` inside `MapFloatingView`. `showPanel()` builds a fresh `ComposeView` on every open, so composable-local state would reset to collapsed each time the map panel was reopened mid-replay — leaving the pause/stop controls unreachable. The presenter collapses the flag automatically once `mockMode` leaves `ROUTE_REPLAY`, so a new route never starts pre-expanded.
 - **Settings gate**: `enabledMapFeatures` flows through `MapSharedState` so the floating map respects the same visibility toggle as the main map screen.
 
 ## Group Sync Button

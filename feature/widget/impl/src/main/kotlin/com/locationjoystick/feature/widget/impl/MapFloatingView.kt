@@ -114,6 +114,9 @@ internal fun MapFloatingView(
     onStopRouteReplay: () -> Unit,
     onPauseRouteReplay: () -> Unit,
     onResumeRouteReplay: () -> Unit,
+    isRouteControlsExpanded: Boolean,
+    onRouteControlsExpandedChange: (Boolean) -> Unit,
+    onOpenRoutes: () -> Unit,
     onDismiss: () -> Unit,
     ephemeralWaypoints: List<LatLng>? = null,
     recentSearches: List<RecentSearch> = emptyList(),
@@ -380,7 +383,6 @@ internal fun MapFloatingView(
                 onClick = { showFavoritesPicker = true },
             )
             if (AppFeature.ROUTES in enabledMapFabFeatures || isRouteReplay) {
-                var isRouteControlsExpanded by remember { mutableStateOf(false) }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -393,7 +395,7 @@ internal fun MapFloatingView(
                                 containerColor = MaterialTheme.colorScheme.error,
                                 contentColor = MaterialTheme.colorScheme.onError,
                                 onClick = {
-                                    isRouteControlsExpanded = false
+                                    onRouteControlsExpandedChange(false)
                                     onStopRouteReplay()
                                 },
                             )
@@ -411,7 +413,13 @@ internal fun MapFloatingView(
                         contentDescription = if (isRouteReplay) "Route active" else "Open routes",
                         containerColor = if (isRouteReplay) LjSuccess else MaterialTheme.colorScheme.primaryContainer,
                         contentColor = if (isRouteReplay) LjBg else MaterialTheme.colorScheme.onPrimaryContainer,
-                        onClick = { if (isRouteReplay) isRouteControlsExpanded = !isRouteControlsExpanded },
+                        onClick = {
+                            if (isRouteReplay) {
+                                onRouteControlsExpandedChange(!isRouteControlsExpanded)
+                            } else {
+                                onOpenRoutes()
+                            }
+                        },
                     )
                 }
             }

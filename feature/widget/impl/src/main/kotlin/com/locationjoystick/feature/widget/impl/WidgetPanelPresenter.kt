@@ -16,8 +16,11 @@ import com.locationjoystick.core.location.ephemeralWaypoints
 import com.locationjoystick.core.location.walkTarget
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingDefaults
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -86,6 +89,25 @@ internal class WidgetPanelPresenter(
     }
 
     private var panelComposeView: ComposeView? = null
+
+    /**
+     * Expanded state of the floating map's route controls (pause/resume + stop).
+     *
+     * Owned here rather than `remember`ed inside [MapFloatingView] because [showPanel] builds a
+     * fresh [ComposeView] on every open — local composable state would silently reset to collapsed
+     * each time the map panel is reopened mid-replay, leaving no way back to the controls.
+     */
+    private val mapRouteControlsExpanded = MutableStateFlow(false)
+
+    init {
+        // Collapse once the replay ends so the next route does not start pre-expanded.
+        serviceScope.launch {
+            mapController.sharedState
+                .map { it.mockMode == MockMode.ROUTE_REPLAY }
+                .distinctUntilChanged()
+                .collect { isReplaying -> if (!isReplaying) mapRouteControlsExpanded.value = false }
+        }
+    }
 
     private fun panelLayoutParams() =
         AndroidWindowManager.LayoutParams(
@@ -203,6 +225,7 @@ internal class WidgetPanelPresenter(
             val initialPosition = remember { mapController.sharedState.value.currentPosition }
             val quickWalk by settingsRepository.getFloatingMapQuickWalk().collectAsStateWithLifecycle(initialValue = false)
             val hideTeleportFeatures by settingsRepository.getHideTeleportFeatures().collectAsStateWithLifecycle(initialValue = false)
+            val routeControlsExpanded by mapRouteControlsExpanded.collectAsStateWithLifecycle()
             MapFloatingView(
                 currentPosition = shared.currentPosition,
                 initialPosition = initialPosition,
@@ -242,6 +265,9 @@ internal class WidgetPanelPresenter(
                 onStopRouteReplay = { mapController.stopRouteReplay() },
                 onPauseRouteReplay = { mapController.pauseRouteReplay() },
                 onResumeRouteReplay = { mapController.resumeRouteReplay() },
+                isRouteControlsExpanded = routeControlsExpanded,
+                onRouteControlsExpandedChange = { expanded -> mapRouteControlsExpanded.value = expanded },
+                onOpenRoutes = { showRoutesFloatingView() },
                 onDismiss = { hidePanelView() },
                 onSearchCommitted = { name, lat, lon -> mapController.addRecentSearch(name, lat, lon) },
                 cooldownForPosition = { pos -> mapController.cooldownForPosition(pos) },
