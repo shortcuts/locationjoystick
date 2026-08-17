@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.16.0](https://github.com/shortcuts/locationjoystick/compare/v0.15.0...v0.16.0) (2026-08-17)
+
+
+### Features
+
+* **group-sync:** show leader distance and cooldown on follower teleport ([15c51ab](https://github.com/shortcuts/locationjoystick/commit/15c51abd83ff27fab1fbabb227a1c728a74e8696))
+* lower minSdk to API 28 (Android 9) ([1a85fd0](https://github.com/shortcuts/locationjoystick/commit/1a85fd0c590cf326543f354a34737d79cc1caa26))
+* **routes:** jump to next/previous waypoint during replay ([16d2237](https://github.com/shortcuts/locationjoystick/commit/16d2237288c1129d3fd3c889773964950bf0356c))
+* **routes:** let a route pin its own speed profile ([02c61f4](https://github.com/shortcuts/locationjoystick/commit/02c61f4c063eb4962acaf98a5dd4a4e4f9fab6a2))
+* **settings:** add Hide floating widget toggle ([47fa195](https://github.com/shortcuts/locationjoystick/commit/47fa195546e859e0e505db48ef4922a5ba7918f0))
+* **settings:** add toggle for route jump buttons ([3cc8515](https://github.com/shortcuts/locationjoystick/commit/3cc85152029f18fe82d26a0c533bc08dfff9df65))
+* **settings:** add toggle to hide all teleport features ([71923ca](https://github.com/shortcuts/locationjoystick/commit/71923caea5e72dedfcb9e8b830d37452d6353400))
+
+
+### Bug Fixes
+
+* **ci:** stop skipped release-please job from skipping build ([a71a567](https://github.com/shortcuts/locationjoystick/commit/a71a567b3ada05e613f6fc409a0fd7273b1656a7))
+* **export-import:** default enabledWidgetFeatures when missing ([9ef6b0a](https://github.com/shortcuts/locationjoystick/commit/9ef6b0a68834c48f075d7b1d3f7c530c402a678f))
+* **favorites:** thread category through addFavorite on import ([f195b9b](https://github.com/shortcuts/locationjoystick/commit/f195b9bddccb073fa9f0f35e98cfecd986ec4b3c))
+* **joystick:** stop drags from stealing mode mid-replay/roam/walk ([daface4](https://github.com/shortcuts/locationjoystick/commit/daface4454e3c9169fdf02cf347d18c01544e1a2))
+* **location:** persist live position, not just on stop ([f9e3165](https://github.com/shortcuts/locationjoystick/commit/f9e316579fc73a5b5aec673226d8dcb3dfc059bb))
+* **location:** write follower catch-up position to repository ([eb6ab73](https://github.com/shortcuts/locationjoystick/commit/eb6ab7314ad160603231ca30be32d0bfe554dd6f))
+* propagate leader stop/start to group-sync followers ([f13565f](https://github.com/shortcuts/locationjoystick/commit/f13565f99f7a4c69e6f2da23b7f43c666fc2a40a))
+* surface message when leader position unknown on teleport tap ([6d93509](https://github.com/shortcuts/locationjoystick/commit/6d9350960ad8d05126156454b55edcba5ea5b73a))
+* **test:** implement missing hideWidgetOverlay members in fake PreferencesDataSource ([060bbe9](https://github.com/shortcuts/locationjoystick/commit/060bbe912e25818bf981abc16609cc91dfc6cb65))
+* tests ([99cee96](https://github.com/shortcuts/locationjoystick/commit/99cee96b4adcc02492c5d2ebf9ce071442e8447f))
+* **widget:** keep floating map route controls reachable after reopen ([910ae77](https://github.com/shortcuts/locationjoystick/commit/910ae77183d9ba278b6555c38d417b5fbec3ae07))
+
 ## [0.15.0](https://github.com/shortcuts/locationjoystick/compare/v0.14.0...v0.15.0) (2026-07-28)
 
 

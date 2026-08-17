@@ -293,7 +293,7 @@ object AppConstants {
     }
 
     object AppInfo {
-        const val VERSION_NAME = "0.15.0" // x-release-please-version
+        const val VERSION_NAME = "0.16.0" // x-release-please-version
         const val GITHUB_ISSUES_URL = "https://github.com/shortcuts/locationjoystick/issues/new?template=bug_report.yml"
         const val DOCS_URL = "https://shortcuts.github.io/locationjoystick/"
         const val TROUBLESHOOTING_URL = "https://shortcuts.github.io/locationjoystick/troubleshooting.html"
