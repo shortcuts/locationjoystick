@@ -3,12 +3,9 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Hilt / Dagger
+# Hilt / Dagger (ships its own consumer rules; only the entry points below
+# aren't covered by those — reflection-free injection needs no blanket keep)
 # -----------------------------------------------------------------------------
--keep class dagger.hilt.** { *; }
--keep class * extends dagger.hilt.** { *; }
--keep class javax.inject.** { *; }
--keep class dagger.** { *; }
 -keepclassmembers class * {
     @javax.inject.Inject <init>(...);
     @javax.inject.Inject <fields>;
@@ -53,16 +50,12 @@
 -keepclasseswithmembers class * {
     kotlinx.serialization.KSerializer serializer(...);
 }
-# Keep serialization descriptors and factories
--keep class kotlinx.serialization.** { *; }
 -keepclassmembers @kotlinx.serialization.Serializable class * {
     static ** $serializer;
     static ** Companion;
     ** serializer();
     ** serializer(kotlinx.serialization.modules.SerializersModule);
 }
-# Keep data classes used for export/import (model package already kept below)
--keep @kotlinx.serialization.Serializable class * { *; }
 
 # -----------------------------------------------------------------------------
 # Model package (domain models — serialized to/from JSON)
@@ -80,10 +73,9 @@
 -keep public class * extends android.view.View
 
 # -----------------------------------------------------------------------------
-# MapLibre (JNI + reflection-accessed classes)
+# MapLibre (JNI + reflection-accessed classes only — the SDK is too large
+# to keep in full without gutting shrink/obfuscation)
 # -----------------------------------------------------------------------------
--keep class org.maplibre.android.** { *; }
--keep interface org.maplibre.android.** { *; }
 -dontwarn org.maplibre.android.**
 # Native peer classes accessed via JNI
 -keepclassmembers class org.maplibre.android.maps.** { *; }
@@ -96,23 +88,18 @@
 }
 
 # -----------------------------------------------------------------------------
-# OkHttp
+# OkHttp (ships its own consumer rules)
 # -----------------------------------------------------------------------------
 -dontwarn okhttp3.**
 -dontwarn okio.**
--keep class okhttp3.** { *; }
--keep interface okhttp3.** { *; }
--keep class okio.** { *; }
 # OkHttp internal platform detection
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
 
 # -----------------------------------------------------------------------------
-# Retrofit
+# Retrofit (ships its own consumer rules)
 # -----------------------------------------------------------------------------
--keep class retrofit2.** { *; }
--keep interface retrofit2.** { *; }
 -keepattributes Signature
 -keepattributes Exceptions
 -keepclassmembers,allowshrinking,allowobfuscation interface * {
@@ -126,10 +113,9 @@
 -keepattributes RuntimeInvisibleParameterAnnotations
 
 # -----------------------------------------------------------------------------
-# ZXing (QR code scanning and generation)
+# ZXing (QR code scanning and generation) — keep only the specific classes
+# reflection/native code touches, not the whole library
 # -----------------------------------------------------------------------------
--keep class com.google.zxing.** { *; }
--keep interface com.google.zxing.** { *; }
 -dontwarn com.google.zxing.**
 # Core decoder used for QR scanning
 -keep class com.google.zxing.MultiFormatReader { *; }
@@ -140,23 +126,22 @@
 # BarcodeFormat enum used in QrEncoder
 -keep enum com.google.zxing.BarcodeFormat { *; }
 -keep class com.google.zxing.EncodeHintType { *; }
--keep class com.journeyapps.barcodescanner.** { *; }
+# BarcodeView/CaptureManager are custom Views, already covered by the
+# "extends android.view.View" rule above.
 -dontwarn com.journeyapps.barcodescanner.**
 
 # -----------------------------------------------------------------------------
-# CameraX (used by QR scanner)
+# CameraX (used by QR scanner; ships its own consumer rules)
 # -----------------------------------------------------------------------------
--keep class androidx.camera.** { *; }
 -dontwarn androidx.camera.**
 
 # -----------------------------------------------------------------------------
-# Kotlin coroutines
+# Kotlin coroutines (ships its own consumer rules)
 # -----------------------------------------------------------------------------
 -keepclassmembernames class kotlinx.** {
     volatile <fields>;
 }
 -dontwarn kotlinx.coroutines.**
--keep class kotlinx.coroutines.** { *; }
 
 # -----------------------------------------------------------------------------
 # Kotlin stdlib / reflection
@@ -170,15 +155,13 @@
 -keepattributes InnerClasses
 
 # -----------------------------------------------------------------------------
-# DataStore
+# DataStore (ships its own consumer rules)
 # -----------------------------------------------------------------------------
--keep class androidx.datastore.** { *; }
 -dontwarn androidx.datastore.**
 
 # -----------------------------------------------------------------------------
-# Compose (runtime kept by AGP; annotation classes need explicit keep)
+# Compose (ships its own consumer rules; runtime kept by AGP)
 # -----------------------------------------------------------------------------
--keep class androidx.compose.** { *; }
 -dontwarn androidx.compose.**
 
 # -----------------------------------------------------------------------------
@@ -186,8 +169,6 @@
 # Gson uses reflection to map JSON fields to data class properties.
 # Without these rules R8 strips field names and deserialization silently returns nulls.
 # -----------------------------------------------------------------------------
--keep class com.google.gson.** { *; }
--keep interface com.google.gson.** { *; }
 -dontwarn com.google.gson.**
 # Keep OSRM Retrofit interface and response models (Gson-mapped via retrofit-converter-gson)
 -keep interface com.locationjoystick.core.routing.OsrmApi { *; }
