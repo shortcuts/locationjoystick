@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
@@ -110,7 +111,7 @@ fun RoamingSheetContent(
                 value = radiusText,
                 onValueChange = { text ->
                     radiusText = text
-                    text.toDoubleOrNull()?.let { v ->
+                    text.toLocaleDoubleOrNull()?.let { v ->
                         val meters = if (isMph) v * 1609.344 else v
                         onDraftChange(
                             draft.copy(
@@ -132,7 +133,7 @@ fun RoamingSheetContent(
                 value = distanceText,
                 onValueChange = { text ->
                     distanceText = text
-                    text.toDoubleOrNull()?.let { v ->
+                    text.toLocaleDoubleOrNull()?.let { v ->
                         val meters = if (isMph) v * 1609.344 else v
                         onDraftChange(
                             draft.copy(
