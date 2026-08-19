@@ -180,6 +180,11 @@ class MockLocationService : Service() {
 
     @Volatile private var leaderSharingEnabled: Boolean = false
 
+    // Mirrors the current hideNotification setting so onStartCommand's re-post of the
+    // notification (e.g. on every joystick-driven ACTION_UPDATE_POSITION) doesn't clobber
+    // the minimized channel back to visible — see the reactive collector that writes it below.
+    @Volatile private var hideNotificationSetting: Boolean = false
+
     // Per-tick realism state
 
     /** Bearing from the last tick where speedMs > 0; held when the device is stationary. */
@@ -326,6 +331,7 @@ class MockLocationService : Service() {
             ) { mode, state, hideNotification -> Triple(mode, state, hideNotification) }
                 .distinctUntilChanged()
                 .collect { (mode, state, hideNotification) ->
+                    hideNotificationSetting = hideNotification
                     // Double-guarded: walk-to PAUSED never triggers replayPaused=true
                     val replayActive = mode == MockMode.ROUTE_REPLAY
                     val replayPaused = mode == MockMode.ROUTE_REPLAY && state == MockLocationState.PAUSED
@@ -400,13 +406,23 @@ class MockLocationService : Service() {
                 // FOREGROUND_SERVICE_TYPE_LOCATION requires permission on API 34+, so fall back
                 // to type 0 to avoid the SecurityException.
                 Log.w(TAG, "DEBUG: location permission missing — starting foreground with no service type.")
-                ServiceCompat.startForeground(this, NOTIFICATION_ID, buildNotification(), 0)
+                ServiceCompat.startForeground(
+                    this,
+                    NOTIFICATION_ID,
+                    buildNotification(hideNotification = hideNotificationSetting),
+                    0,
+                )
             } else {
                 Log.e(TAG, "Location permission not granted — posting error notification and resetting onboarding.")
                 // Cannot call startForeground with FOREGROUND_SERVICE_TYPE_LOCATION without location
                 // permission granted — doing so throws SecurityException on API 34+. Start foreground
                 // with no service type as a fallback just long enough to post the error notification.
-                ServiceCompat.startForeground(this, NOTIFICATION_ID, buildNotification(), 0)
+                ServiceCompat.startForeground(
+                    this,
+                    NOTIFICATION_ID,
+                    buildNotification(hideNotification = hideNotificationSetting),
+                    0,
+                )
                 postPermissionErrorNotification()
                 serviceScope.launch { settingsRepository.setOnboardingComplete(false) }
                 stopSelf()
@@ -419,7 +435,7 @@ class MockLocationService : Service() {
             ServiceCompat.startForeground(
                 this,
                 NOTIFICATION_ID,
-                buildNotification(),
+                buildNotification(hideNotification = hideNotificationSetting),
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
             )
         }
@@ -1210,6 +1226,6 @@ class MockLocationService : Service() {
     private fun buildNotification(
         replayActive: Boolean = false,
         replayPaused: Boolean = false,
-        hideNotification: Boolean = false,
+        hideNotification: Boolean,
     ): Notification = buildMockLocationNotification(this, replayActive, replayPaused, hideNotification)
 }

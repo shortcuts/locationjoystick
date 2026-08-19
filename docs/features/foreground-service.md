@@ -47,3 +47,10 @@ and `location_spoof_channel_minimized` (`IMPORTANCE_MIN`) — selected per
 notification build via `notificationChannelId(hideNotification)`, since a
 channel's importance can't be changed after creation. Round-trips through
 `ExportData` like `hideWidgetOverlay`.
+
+`onStartCommand()` re-posts the notification via `startForeground()` on
+every call, not just service creation (e.g. once per joystick-driven
+`ACTION_UPDATE_POSITION` intent). It reads the setting from the
+`@Volatile` field the same reactive collector writes, instead of a
+hardcoded default — otherwise every re-post would silently revert the
+notification back to the visible channel mid-session.
