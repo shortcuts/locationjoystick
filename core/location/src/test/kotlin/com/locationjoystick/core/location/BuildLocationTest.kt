@@ -60,13 +60,23 @@ class BuildLocationTest {
     )
 
     @Test
-    fun `suspended phase returns null`() {
-        val snapshot = baseSnapshot(isSuspendedPhase = true)
-        assertNull(buildLocation(snapshot, 1000L, Random(42)))
+    fun `suspended phase reports zero speed and skips jitter`() {
+        val snapshot =
+            baseSnapshot(
+                isSuspendedPhase = true,
+                speedMs = 3.0f,
+                mode = MockMode.TELEPORT,
+                shouldApplyIdleJitter = true,
+                jitterIdleRadiusMeters = 5.0,
+            )
+        val fix = buildLocation(snapshot, 1000L, Random(42))
+        assertEquals(0f, fix.speedMs)
+        assertEquals(48.8566, fix.latitude, 0.0)
+        assertEquals(2.3522, fix.longitude, 0.0)
     }
 
     @Test
-    fun `not suspended returns non-null`() {
+    fun `not suspended returns a fix`() {
         val snapshot = baseSnapshot(isSuspendedPhase = false)
         assertNotNull(buildLocation(snapshot, 1000L, Random(42)))
     }
@@ -285,13 +295,13 @@ class BuildLocationTest {
     }
 
     @Test
-    fun `suspended null proportion matches push-pause duty cycle`() {
+    fun `suspended proportion of stationary fixes matches push-pause duty cycle`() {
         val pushMs = AppConstants.RealismConstants.SUSPENDED_PUSH_DURATION_MS
         val pauseMs = AppConstants.RealismConstants.SUSPENDED_PAUSE_DURATION_MS
         val tickMs = 1_000L
         // Simulate 5 full cycles (external phase management, like updateSuspendedPhase())
         val totalMs = (pushMs + pauseMs) * 5
-        var nullCount = 0
+        var stationaryCount = 0
         var totalCount = 0
         var phaseStartMs = 0L
         var isSuspendedPhase = false
@@ -305,16 +315,17 @@ class BuildLocationTest {
                 isSuspendedPhase = false
                 phaseStartMs = t
             }
-            val snap = baseSnapshot(isSuspendedPhase = isSuspendedPhase)
-            if (buildLocation(snap, t, Random(t.toInt())) == null) nullCount++
+            val snap = baseSnapshot(isSuspendedPhase = isSuspendedPhase, speedMs = 5f)
+            val fix = buildLocation(snap, t, Random(t.toInt()))
+            if (fix.speedMs == 0f) stationaryCount++
             totalCount++
             t += tickMs
         }
-        val nullRatio = nullCount.toDouble() / totalCount
+        val stationaryRatio = stationaryCount.toDouble() / totalCount
         val expectedRatio = pauseMs.toDouble() / (pushMs + pauseMs)
         assertTrue(
-            "Null ratio $nullRatio should be within 0.1 of expected $expectedRatio",
-            kotlin.math.abs(nullRatio - expectedRatio) < 0.1,
+            "Stationary ratio $stationaryRatio should be within 0.1 of expected $expectedRatio",
+            kotlin.math.abs(stationaryRatio - expectedRatio) < 0.1,
         )
     }
 

@@ -1146,7 +1146,7 @@ class MockLocationService : Service() {
             val nowNanos = SystemClock.elapsedRealtimeNanos()
             val nowMs = nowNanos / 1_000_000L
             val snapshot = captureSnapshot(nowMs)
-            val fix = buildLocation(snapshot, nowMs, Random.Default) ?: return
+            val fix = buildLocation(snapshot, nowMs, Random.Default)
             currentAltitudeMeters = fix.altitudeMeters - fix.humanAltitudeOffsetMeters
             humanAltitudeOffsetMeters = fix.humanAltitudeOffsetMeters
             if (snapshot.speedMs > 0f) lastNonZeroBearing = snapshot.bearing

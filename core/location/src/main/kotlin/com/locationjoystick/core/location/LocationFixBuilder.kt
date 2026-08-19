@@ -34,7 +34,8 @@ import kotlin.random.Random
  * @property activeProfileSpeedMs Active speed profile speed in m/s, used as the scale for idle variation.
  * @property suspendedPhaseStartMs Timestamp of the last phase transition in the push/pause cycle.
  * @property isSuspendedPhase True when currently in the pause window of the push/pause cycle;
- *   [buildLocation] returns null for the entire duration of this phase.
+ *   [buildLocation] reports a stationary fix (speed `0`, no jitter) for the entire duration of
+ *   this phase instead of skipping the push — see docs/features/mock-location.md.
  * @property cachedSatelliteCount Slow-churn total satellite count, refreshed every
  *   [AppConstants.RealismConstants.SATELLITE_UPDATE_INTERVAL_MS] ms by captureSnapshot.
  * @property cachedUsedInFixCount Slow-churn in-fix satellite count, updated alongside
@@ -228,15 +229,14 @@ internal fun perturbAccuracy(
  * @param state Immutable snapshot of all service state for this tick.
  * @param nowMs Elapsed realtime ms at the start of the tick, used for the warm-up curve.
  * @param random Source of randomness; pass [Random.Default] in production.
- * @return A completed [LocationFix], or null when [state.isSuspendedPhase] is true (skip this tick).
+ * @return Always non-null — the suspended-phase window still returns a fix, just a
+ *   stationary/unjittered one.
  */
 internal fun buildLocation(
     state: LocationSnapshot,
     nowMs: Long,
     random: Random,
-): LocationFix? {
-    if (state.isSuspendedPhase) return null
-
+): LocationFix {
     // Altitude with Gaussian random walk
     val newAltitude =
         if (state.altitudeEnabled) {
@@ -282,6 +282,8 @@ internal fun buildLocation(
     // Speed perturbation
     val outSpeed =
         when {
+            state.isSuspendedPhase -> 0f
+
             state.speedMs == 0f && state.speedIdleVariationPct > 0 -> {
                 val sigma = state.activeProfileSpeedMs * state.speedIdleVariationPct / 100.0
                 (random.nextDouble() * sigma).toFloat().coerceAtLeast(0.01f)
@@ -303,6 +305,8 @@ internal fun buildLocation(
     // falls into the moving branch below and applies lateral jitter using the leader's bearing.
     val (outLat, outLon) =
         when {
+            state.isSuspendedPhase -> Pair(state.latitude, state.longitude)
+
             (
                 state.mode == MockMode.TELEPORT ||
                     (state.mode == MockMode.FOLLOWER && state.speedMs == 0f)
