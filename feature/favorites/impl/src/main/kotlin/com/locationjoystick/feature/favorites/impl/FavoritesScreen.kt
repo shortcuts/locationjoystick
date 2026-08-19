@@ -44,6 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.toBadgeText
 import com.locationjoystick.core.designsystem.LjIcons
@@ -461,8 +462,8 @@ private fun AddFavoriteSheet(
             }
             TextButton(
                 onClick = {
-                    val latVal = lat.toDoubleOrNull()
-                    val lonVal = lon.toDoubleOrNull()
+                    val latVal = lat.toLocaleDoubleOrNull()
+                    val lonVal = lon.toLocaleDoubleOrNull()
                     if (name.isNotEmpty() && latVal != null && lonVal != null) {
                         onAdd(name, latVal, lonVal)
                     }
@@ -518,8 +519,8 @@ private fun EditFavoriteDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    val latVal = lat.toDoubleOrNull()
-                    val lonVal = lon.toDoubleOrNull()
+                    val latVal = lat.toLocaleDoubleOrNull()
+                    val lonVal = lon.toLocaleDoubleOrNull()
                     if (name.isNotEmpty() && latVal != null && lonVal != null) {
                         onSave(name, latVal, lonVal)
                     }
