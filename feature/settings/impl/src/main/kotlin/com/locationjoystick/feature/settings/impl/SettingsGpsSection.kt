@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import kotlin.math.roundToInt
 
@@ -48,7 +49,7 @@ private fun JitterInput(
         value = localValue,
         onValueChange = { v ->
             localValue = v
-            v.toDoubleOrNull()?.let {
+            v.toLocaleDoubleOrNull()?.let {
                 onValueChange(it)
                 lastSentValue = it
             }

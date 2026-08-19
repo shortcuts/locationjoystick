@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjScaffold
@@ -158,7 +159,7 @@ private fun SpeedProfileInput(
         }
     }
 
-    val parsedValue = localValue.toDoubleOrNull()
+    val parsedValue = localValue.toLocaleDoubleOrNull()
     val isValid = parsedValue != null && parsedValue > 0.0
 
     Row(
@@ -175,7 +176,7 @@ private fun SpeedProfileInput(
                 value = localValue,
                 onValueChange = { newValue ->
                     localValue = newValue
-                    val parsed = newValue.toDoubleOrNull()
+                    val parsed = newValue.toLocaleDoubleOrNull()
                     if (parsed != null && parsed > 0.0) {
                         onSpeedChange(parsed)
                         lastSentValue = parsed

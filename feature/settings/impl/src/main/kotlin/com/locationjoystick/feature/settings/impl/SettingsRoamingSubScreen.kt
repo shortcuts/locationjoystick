@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjScaffold
@@ -105,7 +106,7 @@ private fun RoamingSection(
         value = radiusText,
         onValueChange = { text ->
             radiusText = text
-            text.toDoubleOrNull()?.let { v ->
+            text.toLocaleDoubleOrNull()?.let { v ->
                 val meters = if (isMph) v * 1609.344 else v
                 onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(radiusMeters = meters.coerceIn(1_000.0, 100_000.0))))
             }
@@ -131,7 +132,7 @@ private fun RoamingSection(
         value = distanceText,
         onValueChange = { text ->
             distanceText = text
-            text.toDoubleOrNull()?.let { v ->
+            text.toLocaleDoubleOrNull()?.let { v ->
                 val meters = if (isMph) v * 1609.344 else v
                 onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(distanceMeters = meters.coerceIn(50.0, 50_000.0))))
             }
