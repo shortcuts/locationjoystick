@@ -22,6 +22,10 @@ Routes can also be imported from GPX files via the Routes screen overflow menu �
 - Advance: `speed * deltaTime`.
 - Snap at `AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS`.
 - Loop: smooth interpolation last→first waypoint.
+- Pausing keeps pushing the frozen position to the mock location provider
+  every tick (1 Hz) instead of stopping ticks entirely — otherwise the mock
+  fix goes stale and some location consumers fall back to the device's real
+  GPS position until the replay resumes.
 
 ### Per-Route Speed Profile
 

@@ -21,12 +21,6 @@ internal enum class PausedLoopAction {
 
     /** Leave the update loop (and test provider) running untouched. */
     KEEP_ALIVE,
-
-    /** Cancel the update loop and remove the test provider. */
-    TEAR_DOWN,
-
-    /** Nothing to do (no active loop to cancel). */
-    NO_OP,
 }
 
 /**
@@ -52,21 +46,14 @@ internal fun computeIdleOrErrorLoopAction(
 /**
  * Pure decision for the PAUSED branch of [MockLocationService.observeLocationState].
  *
- * Route replay/roaming/walk-to stop driving ticks while paused, but a group-sync leader must
- * keep broadcasting its (frozen) position so followers don't see a stale/dead feed — the loop
- * is started (if not already running) rather than torn down, mirroring the IDLE/ERROR policy
- * in [computeIdleOrErrorLoopAction].
+ * A paused route replay must keep pushing its frozen position to the test provider every tick —
+ * otherwise the mock fix goes stale and some location consumers (e.g. fused location on certain
+ * OEM/Android builds) fall back to a real location source until ticks resume. This mirrors what
+ * was previously only done for a group-sync leader (see docs/features/group-sync.md) but applies
+ * to every paused replay, group sync or not.
  */
-internal fun computePausedLoopAction(
-    leaderSharingEnabled: Boolean,
-    hasActiveUpdateJob: Boolean,
-): PausedLoopAction =
-    when {
-        leaderSharingEnabled && !hasActiveUpdateJob -> PausedLoopAction.START_UP
-        leaderSharingEnabled -> PausedLoopAction.KEEP_ALIVE
-        hasActiveUpdateJob -> PausedLoopAction.TEAR_DOWN
-        else -> PausedLoopAction.NO_OP
-    }
+internal fun computePausedLoopAction(hasActiveUpdateJob: Boolean): PausedLoopAction =
+    if (hasActiveUpdateJob) PausedLoopAction.KEEP_ALIVE else PausedLoopAction.START_UP
 
 /** Decision for a follower's reaction to a leader position update, in [MockLocationService.enterFollowerMode]. */
 internal enum class FollowerActiveAction {

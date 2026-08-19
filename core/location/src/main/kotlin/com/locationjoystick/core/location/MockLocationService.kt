@@ -229,19 +229,19 @@ class MockLocationService : Service() {
                 when (state) {
                     MockLocationState.RUNNING -> {
                         updateJobMutex.withLock {
-                            if (updateJob == null) {
-                                // Route replay drives its own position updates via the onPositionUpdate
-                                // callback — starting a background loop here would cause duplicate pushes.
-                                // Skip the loop when replay mode is already active.
-                                val mode = locationRepository.currentMode.value
-                                if (mode != MockMode.ROUTE_REPLAY) {
-                                    setupTestProvider()
-                                    startUpdateLoop()
-                                    Log.i(TAG, "State changed to RUNNING - started update loop")
-                                } else {
-                                    setupTestProvider()
-                                    Log.i(TAG, "State changed to RUNNING (route replay) - skipped update loop")
-                                }
+                            // Route replay drives its own position updates via the onPositionUpdate
+                            // callback. If the idle loop was kept alive to push the frozen position
+                            // while PAUSED, stop it here so a resumed replay doesn't double-push.
+                            val mode = locationRepository.currentMode.value
+                            if (mode == MockMode.ROUTE_REPLAY) {
+                                updateJob?.cancel()
+                                updateJob = null
+                                setupTestProvider()
+                                Log.i(TAG, "State changed to RUNNING (route replay) - stopped idle loop")
+                            } else if (updateJob == null) {
+                                setupTestProvider()
+                                startUpdateLoop()
+                                Log.i(TAG, "State changed to RUNNING - started update loop")
                             }
                         }
                         if (Settings.canDrawOverlays(this@MockLocationService)) {
@@ -284,27 +284,14 @@ class MockLocationService : Service() {
 
                     MockLocationState.PAUSED -> {
                         updateJobMutex.withLock {
-                            when (computePausedLoopAction(leaderSharingEnabled, updateJob != null)) {
+                            when (computePausedLoopAction(updateJob != null)) {
                                 PausedLoopAction.START_UP -> {
                                     startUpdateLoop()
-                                    Log.i(TAG, "State changed to PAUSED - kept update loop alive for group sync")
+                                    Log.i(TAG, "State changed to PAUSED - started idle loop to keep position frozen")
                                 }
 
                                 PausedLoopAction.KEEP_ALIVE -> {
-                                    Log.i(
-                                        TAG,
-                                        "State changed to PAUSED - leader sharing active, keeping update loop alive",
-                                    )
-                                }
-
-                                PausedLoopAction.TEAR_DOWN -> {
-                                    updateJob?.cancel()
-                                    updateJob = null
-                                    Log.i(TAG, "State changed to PAUSED - paused update loop")
-                                }
-
-                                PausedLoopAction.NO_OP -> {
-                                    Unit
+                                    Log.i(TAG, "State changed to PAUSED - idle loop already alive")
                                 }
                             }
                         }
