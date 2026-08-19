@@ -581,6 +581,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setHideWidgetOverlay(enabled: Boolean) = Unit
 
+    override fun getHideForegroundNotification(): Flow<Boolean> = flowOf(false)
+
+    override suspend fun setHideForegroundNotification(enabled: Boolean) = Unit
+
     override fun getShowRouteJumpButtons(): Flow<Boolean> = flowOf(false)
 
     override suspend fun setShowRouteJumpButtons(enabled: Boolean) = Unit

@@ -65,4 +65,17 @@ class NotificationActionsTest {
         assertEquals(NotificationAction.PAUSE, actions[1].action)
         assertEquals(NotificationAction.NAV_MAP, actions[2].action)
     }
+
+    @Test
+    fun `notificationChannelId - not hidden uses active channel`() {
+        assertEquals(AppConstants.NotificationConstants.CHANNEL_ID_ACTIVE, notificationChannelId(hideNotification = false))
+    }
+
+    @Test
+    fun `notificationChannelId - hidden uses minimized channel`() {
+        assertEquals(
+            AppConstants.NotificationConstants.CHANNEL_ID_ACTIVE_MINIMIZED,
+            notificationChannelId(hideNotification = true),
+        )
+    }
 }

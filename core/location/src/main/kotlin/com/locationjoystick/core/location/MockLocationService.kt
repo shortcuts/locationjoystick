@@ -319,16 +319,24 @@ class MockLocationService : Service() {
         // Reactive notification refresh — source of truth is repository flows, not _state.
         // distinctUntilChanged prevents notify storm during 1 Hz position ticks.
         serviceScope.launch {
-            combine(locationRepository.currentMode, locationRepository.mockLocationState) { mode, state ->
-                Pair(mode, state)
-            }.distinctUntilChanged()
-                .collect { (mode, state) ->
+            combine(
+                locationRepository.currentMode,
+                locationRepository.mockLocationState,
+                settingsRepository.getHideForegroundNotification(),
+            ) { mode, state, hideNotification -> Triple(mode, state, hideNotification) }
+                .distinctUntilChanged()
+                .collect { (mode, state, hideNotification) ->
                     // Double-guarded: walk-to PAUSED never triggers replayPaused=true
                     val replayActive = mode == MockMode.ROUTE_REPLAY
                     val replayPaused = mode == MockMode.ROUTE_REPLAY && state == MockLocationState.PAUSED
                     notificationManager.notify(
                         AppConstants.NotificationConstants.ID_ACTIVE,
-                        buildMockLocationNotification(this@MockLocationService, replayActive, replayPaused),
+                        buildMockLocationNotification(
+                            this@MockLocationService,
+                            replayActive,
+                            replayPaused,
+                            hideNotification,
+                        ),
                     )
                 }
         }
@@ -1202,5 +1210,6 @@ class MockLocationService : Service() {
     private fun buildNotification(
         replayActive: Boolean = false,
         replayPaused: Boolean = false,
-    ): Notification = buildMockLocationNotification(this, replayActive, replayPaused)
+        hideNotification: Boolean = false,
+    ): Notification = buildMockLocationNotification(this, replayActive, replayPaused, hideNotification)
 }

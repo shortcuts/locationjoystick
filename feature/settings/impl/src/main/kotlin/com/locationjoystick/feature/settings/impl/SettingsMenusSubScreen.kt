@@ -296,6 +296,15 @@ private fun PrivacySection(
     )
     Spacer(Modifier.height(8.dp))
     LjCheckboxRow(
+        checked = uiState.hideForegroundNotification,
+        onCheckedChange = { onAction(SettingsAction.SetHideForegroundNotification(it)) },
+        title = "Hide notification icon",
+        description =
+            "Removes the status bar icon for the spoofing notification. Android requires the " +
+                "notification to keep existing — it's tucked into the notification shade instead.",
+    )
+    Spacer(Modifier.height(8.dp))
+    LjCheckboxRow(
         checked = uiState.showRouteJumpButtons,
         onCheckedChange = { onAction(SettingsAction.SetShowRouteJumpButtons(it)) },
         title = "Show route jump buttons",

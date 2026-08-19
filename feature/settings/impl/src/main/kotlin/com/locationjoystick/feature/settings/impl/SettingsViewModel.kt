@@ -127,6 +127,7 @@ class SettingsViewModel
             val tapToWalkScaleMpx: Double? = null,
             val hideTeleportFeatures: Boolean? = null,
             val hideWidgetOverlay: Boolean? = null,
+            val hideForegroundNotification: Boolean? = null,
             val showRouteJumpButtons: Boolean? = null,
         )
 
@@ -200,6 +201,8 @@ class SettingsViewModel
                     tapToWalkScaleMpx = draftState.tapToWalkScaleMpx ?: snapshot.tapToWalkScaleMpx,
                     hideTeleportFeatures = draftState.hideTeleportFeatures ?: snapshot.hideTeleportFeatures,
                     hideWidgetOverlay = draftState.hideWidgetOverlay ?: snapshot.hideWidgetOverlay,
+                    hideForegroundNotification =
+                        draftState.hideForegroundNotification ?: snapshot.hideForegroundNotification,
                     showRouteJumpButtons = draftState.showRouteJumpButtons ?: snapshot.showRouteJumpButtons,
                     compassTrackingEnabled = compass.enabled,
                     isCompassServiceGranted = isServiceGranted,
@@ -353,6 +356,10 @@ class SettingsViewModel
             mutableDraft.update { it.copy(hideWidgetOverlay = enabled) }
         }
 
+        fun setHideForegroundNotification(enabled: Boolean) {
+            mutableDraft.update { it.copy(hideForegroundNotification = enabled) }
+        }
+
         fun setShowRouteJumpButtons(enabled: Boolean) {
             mutableDraft.update { it.copy(showRouteJumpButtons = enabled) }
         }
@@ -447,6 +454,7 @@ class SettingsViewModel
                             tapToWalkScaleMpx = state.tapToWalkScaleMpx,
                             hideTeleportFeatures = state.hideTeleportFeatures,
                             hideWidgetOverlay = state.hideWidgetOverlay,
+                            hideForegroundNotification = state.hideForegroundNotification,
                             showRouteJumpButtons = state.showRouteJumpButtons,
                             roamingDefaults =
                                 d.roamingDefaults
@@ -535,6 +543,7 @@ class SettingsViewModel
                     suspendedMockingEnabled = state.realismSuspendedMockingEnabled,
                     hideTeleportFeatures = state.hideTeleportFeatures,
                     hideWidgetOverlay = state.hideWidgetOverlay,
+                    hideForegroundNotification = state.hideForegroundNotification,
                     showRouteJumpButtons = state.showRouteJumpButtons,
                 )
             return ExportData(
@@ -737,6 +746,7 @@ class SettingsViewModel
                     realismSuspendedMockingEnabled = data.settings.suspendedMockingEnabled,
                     hideTeleportFeatures = data.settings.hideTeleportFeatures,
                     hideWidgetOverlay = data.settings.hideWidgetOverlay,
+                    hideForegroundNotification = data.settings.hideForegroundNotification,
                     showRouteJumpButtons = data.settings.showRouteJumpButtons,
                     jitterSpeedIdleVariationPct = data.jitterSpeedIdleVariationPct,
                     jitterSpeedMovingVariationPct = data.jitterSpeedMovingVariationPct,

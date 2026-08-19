@@ -185,6 +185,12 @@ interface PreferencesDataSource {
     /** Sets whether the floating widget overlay is hidden. */
     suspend fun setHideWidgetOverlay(enabled: Boolean)
 
+    /** Gets whether the foreground-service notification's status bar icon is hidden. */
+    fun getHideForegroundNotification(): Flow<Boolean>
+
+    /** Sets whether the foreground-service notification's status bar icon is hidden. */
+    suspend fun setHideForegroundNotification(enabled: Boolean)
+
     /** Gets whether the route-replay jump-to-waypoint buttons are shown. */
     fun getShowRouteJumpButtons(): Flow<Boolean>
 
@@ -322,6 +328,7 @@ data class SettingsSnapshot(
     val enabledSpeedProfileIds: Set<String> = AppConstants.ProfileConstants.DEFAULT_ENABLED_SPEED_PROFILE_IDS,
     val hideTeleportFeatures: Boolean = false,
     val hideWidgetOverlay: Boolean = false,
+    val hideForegroundNotification: Boolean = false,
     val showRouteJumpButtons: Boolean = false,
 )
 
@@ -412,6 +419,7 @@ class AppPreferencesDataSource
             val REALISM_SUSPENDED_MOCKING_ENABLED = booleanPreferencesKey("realism_suspended_mocking_enabled")
             val HIDE_TELEPORT_FEATURES = booleanPreferencesKey("hide_teleport_features")
             val HIDE_WIDGET_OVERLAY = booleanPreferencesKey("hide_widget_overlay")
+            val HIDE_FOREGROUND_NOTIFICATION = booleanPreferencesKey("hide_foreground_notification")
             val SHOW_ROUTE_JUMP_BUTTONS = booleanPreferencesKey("show_route_jump_buttons")
             val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
             val ROUTES_SORT_NEWEST_FIRST = booleanPreferencesKey("routes_sort_newest_first")
@@ -720,6 +728,12 @@ class AppPreferencesDataSource
             dataStore.edit { prefs -> prefs[Keys.HIDE_WIDGET_OVERLAY] = enabled }
         }
 
+        override fun getHideForegroundNotification(): Flow<Boolean> = pref(Keys.HIDE_FOREGROUND_NOTIFICATION, false)
+
+        override suspend fun setHideForegroundNotification(enabled: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] = enabled }
+        }
+
         override fun getShowRouteJumpButtons(): Flow<Boolean> = pref(Keys.SHOW_ROUTE_JUMP_BUTTONS, false)
 
         override suspend fun setShowRouteJumpButtons(enabled: Boolean) {
@@ -878,6 +892,7 @@ class AppPreferencesDataSource
                 prefs[Keys.REALISM_SUSPENDED_MOCKING_ENABLED] = snapshot.realismSuspendedMockingEnabled
                 prefs[Keys.HIDE_TELEPORT_FEATURES] = snapshot.hideTeleportFeatures
                 prefs[Keys.HIDE_WIDGET_OVERLAY] = snapshot.hideWidgetOverlay
+                prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] = snapshot.hideForegroundNotification
                 prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] = snapshot.showRouteJumpButtons
                 prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] =
                     snapshot.jitterSpeedIdleVariationPct.coerceIn(
@@ -964,6 +979,7 @@ class AppPreferencesDataSource
                         realismSuspendedMockingEnabled = prefs[Keys.REALISM_SUSPENDED_MOCKING_ENABLED] ?: false,
                         hideTeleportFeatures = prefs[Keys.HIDE_TELEPORT_FEATURES] ?: false,
                         hideWidgetOverlay = prefs[Keys.HIDE_WIDGET_OVERLAY] ?: false,
+                        hideForegroundNotification = prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] ?: false,
                         showRouteJumpButtons = prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] ?: false,
                         jitterSpeedIdleVariationPct =
                             prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT]

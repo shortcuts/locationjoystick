@@ -42,6 +42,7 @@ data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.DARK,
     val hideTeleportFeatures: Boolean = false,
     val hideWidgetOverlay: Boolean = false,
+    val hideForegroundNotification: Boolean = false,
     val showRouteJumpButtons: Boolean = false,
     val isDirty: Boolean = false,
 )

@@ -18,5 +18,6 @@ data class AppSettings(
     val suspendedMockingEnabled: Boolean = false,
     val hideTeleportFeatures: Boolean = false,
     val hideWidgetOverlay: Boolean = false,
+    val hideForegroundNotification: Boolean = false,
     val showRouteJumpButtons: Boolean = false,
 )

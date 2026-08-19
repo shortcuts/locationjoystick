@@ -129,6 +129,10 @@ internal sealed class SettingsAction {
         val enabled: Boolean,
     ) : SettingsAction()
 
+    data class SetHideForegroundNotification(
+        val enabled: Boolean,
+    ) : SettingsAction()
+
     data class SetShowRouteJumpButtons(
         val enabled: Boolean,
     ) : SettingsAction()

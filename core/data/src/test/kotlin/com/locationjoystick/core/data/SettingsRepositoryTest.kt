@@ -881,6 +881,27 @@ class SettingsRepositoryTest {
             }
         }
 
+    // hide foreground notification
+
+    @Test
+    fun `getHideForegroundNotification returns false by default`() =
+        runTest {
+            repository.getHideForegroundNotification().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setHideForegroundNotification persists true`() =
+        runTest {
+            repository.setHideForegroundNotification(true)
+            repository.getHideForegroundNotification().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
     // route jump buttons
 
     @Test
@@ -1246,6 +1267,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         hideWidgetOverlayFlow.value = enabled
     }
 
+    private val hideForegroundNotificationFlow = MutableStateFlow(false)
+
+    override fun getHideForegroundNotification(): Flow<Boolean> = hideForegroundNotificationFlow
+
+    override suspend fun setHideForegroundNotification(enabled: Boolean) {
+        hideForegroundNotificationFlow.value = enabled
+    }
+
     private val showRouteJumpButtonsFlow = MutableStateFlow(false)
 
     override fun getShowRouteJumpButtons(): Flow<Boolean> = showRouteJumpButtonsFlow
@@ -1379,6 +1408,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         hotLocationsEnabledFlow.value = false
         hideTeleportFeaturesFlow.value = false
         hideWidgetOverlayFlow.value = false
+        hideForegroundNotificationFlow.value = false
         showRouteJumpButtonsFlow.value = false
         onboardingCompleteFlow.value = onboardingComplete
     }

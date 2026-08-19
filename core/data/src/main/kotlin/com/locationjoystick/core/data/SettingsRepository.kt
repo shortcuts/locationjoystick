@@ -260,6 +260,10 @@ class SettingsRepository
 
         suspend fun setHideWidgetOverlay(enabled: Boolean) = dataSource.setHideWidgetOverlay(enabled)
 
+        fun getHideForegroundNotification(): Flow<Boolean> = dataSource.getHideForegroundNotification()
+
+        suspend fun setHideForegroundNotification(enabled: Boolean) = dataSource.setHideForegroundNotification(enabled)
+
         fun getShowRouteJumpButtons(): Flow<Boolean> = dataSource.getShowRouteJumpButtons()
 
         suspend fun setShowRouteJumpButtons(enabled: Boolean) = dataSource.setShowRouteJumpButtons(enabled)

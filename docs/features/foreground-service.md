@@ -25,3 +25,25 @@ Clients bind via `LocalBinder` inner class + `ServiceConnection`. Unbind in `onD
 ## Wakelock Handling
 
 To keep route replay and walk-to advancing reliably when the screen locks (workaround for Doze/Adaptive Battery throttling on some devices), the service holds a `PARTIAL_WAKE_LOCK` while spoofing is active (`state != IDLE`). Acquired in `startSpoofing()`, released in `stopSpoofing()` and `onDestroy()`.
+
+## Hiding the Notification Icon
+
+Settings → Menus → Privacy → "Hide notification icon"
+(`AppSettings.hideForegroundNotification`, DataStore key
+`hide_foreground_notification`, default `false`) switches the notification
+to an `IMPORTANCE_MIN` channel instead of the default `IMPORTANCE_LOW`
+channel. This removes the status bar icon, lock-screen visibility, and
+heads-up alerting — the maximum degree of hiding Android permits.
+
+Android requires every foreground service to post an active notification;
+there is no API to run one with zero notification. The notification still
+exists and is reachable by pulling down the notification shade (collapsed
+under "Show silent notifications"), which satisfies the platform
+requirement without keeping a persistent icon visible.
+
+Implemented as two pre-registered `NotificationChannel`s
+(`MockLocationNotification.kt`) — `location_spoof_channel` (`IMPORTANCE_LOW`)
+and `location_spoof_channel_minimized` (`IMPORTANCE_MIN`) — selected per
+notification build via `notificationChannelId(hideNotification)`, since a
+channel's importance can't be changed after creation. Round-trips through
+`ExportData` like `hideWidgetOverlay`.

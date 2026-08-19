@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import com.locationjoystick.core.common.constants.AppConstants
 
 private val CHANNEL_ID = AppConstants.NotificationConstants.CHANNEL_ID_ACTIVE
+private val CHANNEL_ID_MINIMIZED = AppConstants.NotificationConstants.CHANNEL_ID_ACTIVE_MINIMIZED
 private val CHANNEL_ID_PERM_ERROR = AppConstants.NotificationConstants.CHANNEL_ID_PERMISSION_ERROR
 
 internal enum class NotificationAction {
@@ -82,6 +83,15 @@ internal fun createMockLocationNotificationChannels(context: Context) {
             description = AppConstants.NotificationConstants.CHANNEL_DESC_ACTIVE
             setShowBadge(false)
         }
+    val minimizedChannel =
+        NotificationChannel(
+            CHANNEL_ID_MINIMIZED,
+            AppConstants.NotificationConstants.CHANNEL_NAME_ACTIVE_MINIMIZED,
+            NotificationManager.IMPORTANCE_MIN,
+        ).apply {
+            description = AppConstants.NotificationConstants.CHANNEL_DESC_ACTIVE_MINIMIZED
+            setShowBadge(false)
+        }
     val errorChannel =
         NotificationChannel(
             CHANNEL_ID_PERM_ERROR,
@@ -92,13 +102,17 @@ internal fun createMockLocationNotificationChannels(context: Context) {
         }
     val notificationManager = context.getSystemService(NotificationManager::class.java)
     notificationManager.createNotificationChannel(channel)
+    notificationManager.createNotificationChannel(minimizedChannel)
     notificationManager.createNotificationChannel(errorChannel)
 }
+
+internal fun notificationChannelId(hideNotification: Boolean): String = if (hideNotification) CHANNEL_ID_MINIMIZED else CHANNEL_ID
 
 internal fun buildMockLocationNotification(
     context: Context,
     replayActive: Boolean = false,
     replayPaused: Boolean = false,
+    hideNotification: Boolean = false,
 ): Notification {
     val openAppIntent =
         context.packageManager
@@ -148,7 +162,7 @@ internal fun buildMockLocationNotification(
 
     val builder =
         NotificationCompat
-            .Builder(context, CHANNEL_ID)
+            .Builder(context, notificationChannelId(hideNotification))
             .setContentTitle(AppConstants.NotificationConstants.TITLE_ACTIVE)
             .setContentText(AppConstants.NotificationConstants.TEXT_ACTIVE)
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
