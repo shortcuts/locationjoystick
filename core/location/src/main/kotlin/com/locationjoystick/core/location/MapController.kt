@@ -432,6 +432,7 @@ class MapController
             isReverse: Boolean = false,
             isReturnToLocation: Boolean = false,
             teleportToStart: Boolean = false,
+            followRoadsToStart: Boolean = false,
         ) {
             appScope.launch {
                 startRouteReplayUseCase.execute(
@@ -440,6 +441,7 @@ class MapController
                     isReverse = isReverse,
                     isReturnToLocation = isReturnToLocation,
                     teleportToStart = teleportToStart,
+                    followRoadsToStart = followRoadsToStart,
                 )
             }
         }

@@ -32,7 +32,9 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.SyncPositionUpdate
+import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.RouteReplayEngine
+import com.locationjoystick.core.routing.RoutingErrorReporter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -90,6 +92,7 @@ class MockLocationService : Service() {
         const val EXTRA_IS_LOOPING = AppConstants.ServiceConstants.EXTRA_IS_LOOPING
         const val EXTRA_RETURN_LAT = AppConstants.ServiceConstants.EXTRA_RETURN_LAT
         const val EXTRA_RETURN_LON = AppConstants.ServiceConstants.EXTRA_RETURN_LON
+        const val EXTRA_FOLLOW_ROADS_TO_START = AppConstants.ServiceConstants.EXTRA_FOLLOW_ROADS_TO_START
     }
 
     inner class LocalBinder : Binder() {
@@ -111,6 +114,10 @@ class MockLocationService : Service() {
     @Inject lateinit var routeReplayEngine: RouteReplayEngine
 
     @Inject lateinit var walkToEngine: WalkToEngine
+
+    @Inject lateinit var osrmClient: OsrmClient
+
+    @Inject lateinit var routingErrorReporter: RoutingErrorReporter
 
     @Inject lateinit var leaderSyncServer: LeaderSyncServer
 
@@ -209,6 +216,8 @@ class MockLocationService : Service() {
                 roamingRepository = roamingRepository,
                 routeReplayEngine = routeReplayEngine,
                 walkToEngine = walkToEngine,
+                osrmClient = osrmClient,
+                routingErrorReporter = routingErrorReporter,
                 scope = serviceScope,
                 onStateChange = { _state.value = it },
                 onPositionChange = { lat, lon ->
@@ -516,7 +525,8 @@ class MockLocationService : Service() {
                     val returnLon = intent.getDoubleExtra(EXTRA_RETURN_LON, Double.NaN)
                     val returnPosition =
                         if (!returnLat.isNaN() && !returnLon.isNaN()) LatLng(returnLat, returnLon) else null
-                    handleReplayStart(routeId, isBackward, speedMs, isLoopingOverride, returnPosition)
+                    val followRoadsToStart = intent.getBooleanExtra(EXTRA_FOLLOW_ROADS_TO_START, false)
+                    handleReplayStart(routeId, isBackward, speedMs, isLoopingOverride, returnPosition, followRoadsToStart)
                 }
             }
 
@@ -906,7 +916,8 @@ class MockLocationService : Service() {
         speedMs: Double,
         isLoopingOverride: Boolean? = null,
         returnPosition: LatLng? = null,
-    ) = replayOrchestrator.handleStart(routeId, isBackward, speedMs, isLoopingOverride, returnPosition)
+        followRoadsToStart: Boolean = false,
+    ) = replayOrchestrator.handleStart(routeId, isBackward, speedMs, isLoopingOverride, returnPosition, followRoadsToStart)
 
     private fun handleEphemeralReplayStart(
         waypoints: List<LatLng>,

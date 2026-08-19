@@ -213,6 +213,7 @@ object AppConstants {
         const val EXTRA_IS_LOOPING = "extra_is_looping"
         const val EXTRA_RETURN_LAT = "extra_return_lat"
         const val EXTRA_RETURN_LON = "extra_return_lon"
+        const val EXTRA_FOLLOW_ROADS_TO_START = "extra_follow_roads_to_start"
 
         /** Compact encoding of ephemeral waypoints: "lat,lon;lat,lon;...". Replaces the old parallel DoubleArray extras. */
         const val EXTRA_EPHEMERAL_WAYPOINTS = "extra_ephemeral_waypoints"

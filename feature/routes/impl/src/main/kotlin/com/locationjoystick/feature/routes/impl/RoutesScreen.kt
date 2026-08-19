@@ -82,8 +82,8 @@ fun RoutesRoute(
         locationLabel = spoofToggle.locationLabel,
         onDeleteRoute = viewModel::deleteRoute,
         onExportRoute = { route -> viewModel.exportRouteAsGpx(context, route) },
-        onStartReplay = { route, isLooping, isReverse, isReturnToLocation, teleportToStart ->
-            viewModel.startReplay(route, isLooping, isReverse, isReturnToLocation, teleportToStart)
+        onStartReplay = { route, isLooping, isReverse, isReturnToLocation, teleportToStart, followRoadsToStart ->
+            viewModel.startReplay(route, isLooping, isReverse, isReturnToLocation, teleportToStart, followRoadsToStart)
         },
         onPauseReplay = viewModel::pauseReplay,
         onResumeReplay = viewModel::resumeReplay,
@@ -106,7 +106,7 @@ private fun RoutesScreenPreview() {
         onOpenDrawer = {},
         onDeleteRoute = {},
         onExportRoute = {},
-        onStartReplay = { _, _, _, _, _ -> },
+        onStartReplay = { _, _, _, _, _, _ -> },
         onPauseReplay = {},
         onResumeReplay = {},
         onStopReplay = {},
@@ -124,7 +124,7 @@ internal fun RoutesScreen(
     onOpenDrawer: () -> Unit,
     onDeleteRoute: (String) -> Unit,
     onExportRoute: (com.locationjoystick.core.model.Route) -> Unit,
-    onStartReplay: (com.locationjoystick.core.model.Route, Boolean, Boolean, Boolean, Boolean) -> Unit,
+    onStartReplay: (com.locationjoystick.core.model.Route, Boolean, Boolean, Boolean, Boolean, Boolean) -> Unit,
     onPauseReplay: () -> Unit,
     onResumeReplay: () -> Unit,
     onStopReplay: () -> Unit,
@@ -250,7 +250,7 @@ private fun RouteCard(
     onNavigateToEdit: (String) -> Unit,
     onDeleteRoute: (com.locationjoystick.core.model.Route) -> Unit,
     onExport: (com.locationjoystick.core.model.Route) -> Unit,
-    onStartReplay: (com.locationjoystick.core.model.Route, Boolean, Boolean, Boolean, Boolean) -> Unit,
+    onStartReplay: (com.locationjoystick.core.model.Route, Boolean, Boolean, Boolean, Boolean, Boolean) -> Unit,
     onPauseReplay: () -> Unit,
     onResumeReplay: () -> Unit,
     onStopReplay: () -> Unit,
@@ -369,8 +369,8 @@ private fun RouteCard(
     if (showStartDialog) {
         StartRouteDialog(
             onDismiss = { showStartDialog = false },
-            onStart = { isLooping, isReverse, isReturnToLocation, teleportToStart ->
-                onStartReplay(route, isLooping, isReverse, isReturnToLocation, teleportToStart)
+            onStart = { isLooping, isReverse, isReturnToLocation, teleportToStart, followRoadsToStart ->
+                onStartReplay(route, isLooping, isReverse, isReturnToLocation, teleportToStart, followRoadsToStart)
                 showStartDialog = false
             },
             hideTeleport = hideTeleportFeatures,
@@ -381,7 +381,13 @@ private fun RouteCard(
 @Composable
 private fun StartRouteDialog(
     onDismiss: () -> Unit,
-    onStart: (isLooping: Boolean, isReverse: Boolean, isReturnToLocation: Boolean, teleportToStart: Boolean) -> Unit,
+    onStart: (
+        isLooping: Boolean,
+        isReverse: Boolean,
+        isReturnToLocation: Boolean,
+        teleportToStart: Boolean,
+        followRoadsToStart: Boolean,
+    ) -> Unit,
     hideTeleport: Boolean = false,
 ) {
     var loop by remember { mutableStateOf(false) }
@@ -406,10 +412,17 @@ private fun StartRouteDialog(
                     enabled = !loop,
                     onCheckedChange = { returnToLocation = it },
                 )
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = { onStart(loop, reverse, returnToLocation && !loop, false, true) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Walk via roads and start")
+                }
                 if (!hideTeleport) {
                     Spacer(Modifier.height(12.dp))
                     OutlinedButton(
-                        onClick = { onStart(loop, reverse, returnToLocation && !loop, true) },
+                        onClick = { onStart(loop, reverse, returnToLocation && !loop, true, false) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text("Teleport and start")
@@ -418,7 +431,7 @@ private fun StartRouteDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onStart(loop, reverse, returnToLocation && !loop, false) }) {
+            TextButton(onClick = { onStart(loop, reverse, returnToLocation && !loop, false, false) }) {
                 Text("Walk and start")
             }
         },

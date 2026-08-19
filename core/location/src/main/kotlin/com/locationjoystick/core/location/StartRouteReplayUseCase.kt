@@ -26,6 +26,7 @@ class StartRouteReplayUseCase
             isReverse: Boolean = false,
             isReturnToLocation: Boolean = false,
             teleportToStart: Boolean = false,
+            followRoadsToStart: Boolean = false,
         ) {
             val route = routeRepository.getRouteWithWaypoints(routeId).first()
             val speedMs = settingsRepository.getRouteSpeedMs(route?.speedProfileId).first()
@@ -39,7 +40,7 @@ class StartRouteReplayUseCase
             }
             val intent =
                 MockLocationIntentBuilder
-                    .startRouteReplay(context, routeId, speedMs, isReverse)
+                    .startRouteReplay(context, routeId, speedMs, isReverse, followRoadsToStart)
                     .apply {
                         putExtra(MockLocationService.EXTRA_IS_LOOPING, isLooping)
                         if (returnPosition != null) {

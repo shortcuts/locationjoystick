@@ -122,6 +122,7 @@ sealed interface MapAction {
         val isReverse: Boolean = false,
         val isReturnToLocation: Boolean = false,
         val teleportToStart: Boolean = false,
+        val followRoadsToStart: Boolean = false,
     ) : MapAction
 
     data object PauseRouteReplay : MapAction

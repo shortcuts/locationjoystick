@@ -127,6 +127,7 @@ class RoutesViewModel
             isReverse: Boolean = false,
             isReturnToLocation: Boolean = false,
             teleportToStart: Boolean = false,
+            followRoadsToStart: Boolean = false,
         ) {
             viewModelScope.launch {
                 val speedMs = settingsRepository.getRouteSpeedMs(route.speedProfileId).first()
@@ -150,6 +151,7 @@ class RoutesViewModel
                         putExtra(MockLocationService.EXTRA_IS_BACKWARD, isReverse)
                         putExtra(MockLocationService.EXTRA_IS_LOOPING, isLooping)
                         putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
+                        putExtra(MockLocationService.EXTRA_FOLLOW_ROADS_TO_START, followRoadsToStart)
                         if (returnPosition != null) {
                             putExtra(MockLocationService.EXTRA_RETURN_LAT, returnPosition.latitude)
                             putExtra(MockLocationService.EXTRA_RETURN_LON, returnPosition.longitude)

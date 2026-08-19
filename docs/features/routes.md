@@ -53,6 +53,30 @@ for them to show: `!hideTeleportFeatures && showRouteJumpButtons`.
 Jumping to the last waypoint while replay is running lets it complete
 naturally on the next tick, same as reaching it by walking.
 
+### Start Flow
+
+Starting a saved route offers three options, shown as buttons in the "Start
+route" dialog on all three surfaces (Routes screen, map long-press sheet,
+widget panel/floating map):
+
+- **Walk and start** — straight-line walk from the current position to the
+  route's first waypoint, then replay begins.
+- **Walk via roads and start** — same as above, but the walk to the first
+  waypoint follows roads via OSRM (foot profile) instead of a straight line.
+  Reuses the same OSRM backend ladder and straight-line fallback documented
+  in @docs/features/roaming.md's "Reliability" section — if road-following
+  fails, the affected leg falls back to a straight line and a message is
+  shown, same as the ad-hoc "Walk via roads" flow
+  (@docs/features/click-to-move.md).
+- **Teleport and start** — instantly teleports to the first waypoint, then
+  replay begins. Hidden when `hideTeleportFeatures` is on
+  (@docs/features/hide-teleport.md); the other two options are always shown.
+
+Implemented via a `followRoadsToStart: Boolean` flag threaded from each
+dialog through `StartRouteReplayUseCase` / `RoutesViewModel.startReplay()`
+into `ReplayOrchestrator.startReplayWithWaypoints()`, which resolves the
+walk-to-start leg through `OsrmClient.resolveRoute()` when set.
+
 ## Recording
 
 - Collect location every `AppConstants.LocationConstants.UPDATE_INTERVAL_MS` ms.

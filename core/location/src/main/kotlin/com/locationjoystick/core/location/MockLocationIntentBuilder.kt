@@ -51,12 +51,14 @@ object MockLocationIntentBuilder {
         routeId: String,
         speedMs: Double,
         isBackward: Boolean = false,
+        followRoadsToStart: Boolean = false,
     ): Intent =
         Intent(context, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_ROUTE_REPLAY_START
             putExtra(MockLocationService.EXTRA_ROUTE_ID, routeId)
             putExtra(MockLocationService.EXTRA_IS_BACKWARD, isBackward)
             putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
+            putExtra(MockLocationService.EXTRA_FOLLOW_ROADS_TO_START, followRoadsToStart)
         }
 
     fun cancelRouteReplay(context: Context): Intent =

@@ -66,6 +66,7 @@ internal class WidgetPanelPresenter(
             isReverse: Boolean,
             isReturnToLocation: Boolean,
             teleportToStart: Boolean,
+            followRoadsToStart: Boolean,
         )
 
         fun teleport(pos: LatLng)
@@ -212,8 +213,15 @@ internal class WidgetPanelPresenter(
             RoutesFloatingView(
                 routes = routes,
                 onDismiss = { hidePanelView() },
-                onStartRoute = { routeId, isLooping, isReverse, isReturnToLocation, teleportToStart ->
-                    callbacks.startRouteReplayWithMode(routeId, isLooping, isReverse, isReturnToLocation, teleportToStart)
+                onStartRoute = { routeId, isLooping, isReverse, isReturnToLocation, teleportToStart, followRoadsToStart ->
+                    callbacks.startRouteReplayWithMode(
+                        routeId,
+                        isLooping,
+                        isReverse,
+                        isReturnToLocation,
+                        teleportToStart,
+                        followRoadsToStart,
+                    )
                     callbacks.moveAppToBack()
                 },
                 hideTeleport = hideTeleportFeatures,

@@ -316,6 +316,7 @@ class MapViewModel
                         action.isReverse,
                         action.isReturnToLocation,
                         action.teleportToStart,
+                        action.followRoadsToStart,
                     )
                     _uiState.update { it.copy(showRoutesSheet = false) }
                 }

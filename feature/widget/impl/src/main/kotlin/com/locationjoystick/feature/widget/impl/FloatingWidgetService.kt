@@ -559,7 +559,15 @@ class FloatingWidgetService :
                 isReverse: Boolean,
                 isReturnToLocation: Boolean,
                 teleportToStart: Boolean,
-            ) = mapController.startRouteReplay(routeId, isLooping, isReverse, isReturnToLocation, teleportToStart)
+                followRoadsToStart: Boolean,
+            ) = mapController.startRouteReplay(
+                routeId,
+                isLooping,
+                isReverse,
+                isReturnToLocation,
+                teleportToStart,
+                followRoadsToStart,
+            )
 
             override fun teleport(pos: LatLng) = mapController.teleportTo(pos)
 

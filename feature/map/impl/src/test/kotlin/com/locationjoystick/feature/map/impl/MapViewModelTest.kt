@@ -689,7 +689,7 @@ class MapViewModelTest {
             )
             testDispatcher.scheduler.advanceUntilIdle()
 
-            coVerify { startRouteReplayUseCase.execute("route-1", false, false, false, false) }
+            coVerify { startRouteReplayUseCase.execute("route-1", false, false, false, false, false) }
             assertEquals(false, viewModel.uiState.value.showRoutesSheet)
         }
 

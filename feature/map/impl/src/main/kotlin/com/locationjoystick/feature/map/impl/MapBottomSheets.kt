@@ -97,8 +97,17 @@ internal fun RoutesPickerSheet(
     selectedRouteId?.let { routeId ->
         StartRouteDialog(
             onDismiss = { selectedRouteId = null },
-            onStart = { isLooping, isReverse, isReturnToLocation, teleportToStart ->
-                onAction(MapAction.StartRouteReplay(routeId, isLooping, isReverse, isReturnToLocation, teleportToStart))
+            onStart = { isLooping, isReverse, isReturnToLocation, teleportToStart, followRoadsToStart ->
+                onAction(
+                    MapAction.StartRouteReplay(
+                        routeId,
+                        isLooping,
+                        isReverse,
+                        isReturnToLocation,
+                        teleportToStart,
+                        followRoadsToStart,
+                    ),
+                )
                 selectedRouteId = null
             },
             hideTeleport = uiState.hideTeleportFeatures,
@@ -364,7 +373,13 @@ internal fun SaveCurrentLocationDialog(
 @Composable
 private fun StartRouteDialog(
     onDismiss: () -> Unit,
-    onStart: (isLooping: Boolean, isReverse: Boolean, isReturnToLocation: Boolean, teleportToStart: Boolean) -> Unit,
+    onStart: (
+        isLooping: Boolean,
+        isReverse: Boolean,
+        isReturnToLocation: Boolean,
+        teleportToStart: Boolean,
+        followRoadsToStart: Boolean,
+    ) -> Unit,
     hideTeleport: Boolean = false,
 ) {
     var loop by remember { mutableStateOf(false) }
@@ -384,10 +399,17 @@ private fun StartRouteDialog(
                     enabled = !loop,
                     onCheckedChange = { returnToLocation = it },
                 )
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = { onStart(loop, reverse, returnToLocation && !loop, false, true) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Walk via roads and start")
+                }
                 if (!hideTeleport) {
                     Spacer(Modifier.height(12.dp))
                     OutlinedButton(
-                        onClick = { onStart(loop, reverse, returnToLocation && !loop, true) },
+                        onClick = { onStart(loop, reverse, returnToLocation && !loop, true, false) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text("Teleport and start")
@@ -396,7 +418,7 @@ private fun StartRouteDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onStart(loop, reverse, returnToLocation && !loop, false) }) {
+            TextButton(onClick = { onStart(loop, reverse, returnToLocation && !loop, false, false) }) {
                 Text("Walk and start")
             }
         },

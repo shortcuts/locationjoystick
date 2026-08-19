@@ -535,7 +535,14 @@ internal fun FavoritesFloatingView(
 internal fun RoutesFloatingView(
     routes: List<com.locationjoystick.core.model.Route>,
     onDismiss: () -> Unit,
-    onStartRoute: (routeId: String, isLooping: Boolean, isReverse: Boolean, isReturnToLocation: Boolean, teleportToStart: Boolean) -> Unit,
+    onStartRoute: (
+        routeId: String,
+        isLooping: Boolean,
+        isReverse: Boolean,
+        isReturnToLocation: Boolean,
+        teleportToStart: Boolean,
+        followRoadsToStart: Boolean,
+    ) -> Unit,
     hideTeleport: Boolean = false,
 ) {
     var selectedRouteId by remember { mutableStateOf<String?>(null) }
@@ -562,7 +569,7 @@ internal fun RoutesFloatingView(
 
             Button(
                 onClick = {
-                    onStartRoute(routeId, loop, reverse, returnToLocation && !loop, false)
+                    onStartRoute(routeId, loop, reverse, returnToLocation && !loop, false, false)
                     selectedRouteId = null
                     onDismiss()
                 },
@@ -570,11 +577,22 @@ internal fun RoutesFloatingView(
             ) {
                 Text("Walk and start", color = LjText)
             }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = {
+                    onStartRoute(routeId, loop, reverse, returnToLocation && !loop, false, true)
+                    selectedRouteId = null
+                    onDismiss()
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Walk via roads and start", color = LjText)
+            }
             if (!hideTeleport) {
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(
                     onClick = {
-                        onStartRoute(routeId, loop, reverse, returnToLocation && !loop, true)
+                        onStartRoute(routeId, loop, reverse, returnToLocation && !loop, true, false)
                         selectedRouteId = null
                         onDismiss()
                     },

@@ -7,7 +7,9 @@ import com.locationjoystick.core.data.WalkToEngine
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.RouteReplayEngine
+import com.locationjoystick.core.routing.RoutingErrorReporter
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -31,6 +33,8 @@ class ReplayOrchestratorTest {
     private val roamingRepository: RoamingRepository = mockk(relaxed = true)
     private val routeReplayEngine: RouteReplayEngine = mockk(relaxed = true)
     private val walkToEngine: WalkToEngine = mockk(relaxed = true)
+    private val osrmClient: OsrmClient = mockk(relaxed = true)
+    private val routingErrorReporter: RoutingErrorReporter = mockk(relaxed = true)
 
     private val stateChanges = mutableListOf<MockLocationState>()
     private var startUpdateLoopCalled = false
@@ -48,6 +52,8 @@ class ReplayOrchestratorTest {
                 roamingRepository = roamingRepository,
                 routeReplayEngine = routeReplayEngine,
                 walkToEngine = walkToEngine,
+                osrmClient = osrmClient,
+                routingErrorReporter = routingErrorReporter,
                 scope = kotlinx.coroutines.CoroutineScope(dispatcher),
                 onStateChange = { stateChanges.add(it) },
                 onPositionChange = { _, _ -> },
@@ -269,6 +275,8 @@ class ReplayOrchestratorTest {
                     roamingRepository = roamingRepository,
                     routeReplayEngine = routeReplayEngine,
                     walkToEngine = walkToEngine,
+                    osrmClient = osrmClient,
+                    routingErrorReporter = routingErrorReporter,
                     scope = kotlinx.coroutines.CoroutineScope(dispatcher),
                     onStateChange = { },
                     onPositionChange = { _, _ -> },
@@ -280,5 +288,51 @@ class ReplayOrchestratorTest {
             throwingOrchestrator.handleEphemeralStart(listOf(LatLng(0.0, 0.0), LatLng(2.0, 2.0)), 1.4)
 
             assertEquals(LatLng(1.0, 1.0), locationRepository.currentPosition.value)
+        }
+
+    @Test
+    fun handleStart_followRoadsToStart_walksEachOsrmLegBeforeReplay() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val route =
+                com.locationjoystick.core.model.Route(
+                    id = "route-1",
+                    name = "R",
+                    waypoints =
+                        listOf(
+                            com.locationjoystick.core.model.Waypoint("w1", LatLng(2.0, 2.0), 0),
+                            com.locationjoystick.core.model.Waypoint("w2", LatLng(3.0, 3.0), 1),
+                        ),
+                )
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
+            coEvery {
+                osrmClient.resolveRoute(any(), LatLng(0.0, 0.0), LatLng(2.0, 2.0), true, any())
+            } returns listOf(LatLng(0.0, 0.0), LatLng(1.0, 1.0), LatLng(2.0, 2.0))
+
+            orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4, followRoadsToStart = true)
+
+            coVerify { walkToEngine.walkToOnce(LatLng(0.0, 0.0), LatLng(1.0, 1.0), 1.4, any()) }
+            coVerify { walkToEngine.walkToOnce(LatLng(1.0, 1.0), LatLng(2.0, 2.0), 1.4, any()) }
+        }
+
+    @Test
+    fun handleStart_followRoadsToStartFalse_neverCallsOsrmClient() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val route =
+                com.locationjoystick.core.model.Route(
+                    id = "route-1",
+                    name = "R",
+                    waypoints =
+                        listOf(
+                            com.locationjoystick.core.model.Waypoint("w1", LatLng(2.0, 2.0), 0),
+                            com.locationjoystick.core.model.Waypoint("w2", LatLng(3.0, 3.0), 1),
+                        ),
+                )
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
+
+            orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4)
+
+            coVerify(exactly = 0) { osrmClient.resolveRoute(any(), any(), any(), any(), any()) }
         }
 }

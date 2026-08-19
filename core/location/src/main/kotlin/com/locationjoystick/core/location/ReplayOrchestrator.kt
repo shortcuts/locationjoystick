@@ -8,7 +8,11 @@ import com.locationjoystick.core.data.WalkToEngine
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.routing.OsrmClient
+import com.locationjoystick.core.routing.OsrmFailureReason
 import com.locationjoystick.core.routing.RouteReplayEngine
+import com.locationjoystick.core.routing.RoutingErrorReporter
+import com.locationjoystick.core.routing.osrmFailureMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -33,6 +37,8 @@ internal class ReplayOrchestrator(
     private val roamingRepository: RoamingRepository,
     private val routeReplayEngine: RouteReplayEngine,
     private val walkToEngine: WalkToEngine,
+    private val osrmClient: OsrmClient,
+    private val routingErrorReporter: RoutingErrorReporter,
     private val scope: CoroutineScope,
     private val onStateChange: (MockLocationState) -> Unit,
     private val onPositionChange: (lat: Double, lon: Double) -> Unit,
@@ -49,6 +55,7 @@ internal class ReplayOrchestrator(
         speedMs: Double,
         isLoopingOverride: Boolean? = null,
         returnPosition: LatLng? = null,
+        followRoadsToStart: Boolean = false,
     ) {
         val previous = activeReplayJob
         activeReplayJob =
@@ -64,6 +71,7 @@ internal class ReplayOrchestrator(
                     waypoints = latLngs,
                     speedMs = speedMs,
                     isLooping = isLooping,
+                    followRoadsToStart = followRoadsToStart,
                     persistMetadata = {
                         locationRepository.setActiveRouteId(routeId)
                         locationRepository.setIsReplayBackward(isBackward)
@@ -219,6 +227,7 @@ internal class ReplayOrchestrator(
         waypoints: List<LatLng>,
         speedMs: Double,
         isLooping: Boolean,
+        followRoadsToStart: Boolean = false,
         persistMetadata: (suspend () -> Unit)? = null,
         onComplete: suspend () -> Unit = {
             locationRepository.setRouteWaypoints(null)
@@ -239,7 +248,7 @@ internal class ReplayOrchestrator(
         onStateChange(MockLocationState.RUNNING)
         locationRepository.startSpoofing()
 
-        walkToPosition(waypoints.first(), speedMs)
+        walkToPosition(waypoints.first(), speedMs, followRoadsToStart)
 
         routeReplayEngine.start(
             waypoints = waypoints,
@@ -257,8 +266,27 @@ internal class ReplayOrchestrator(
     private suspend fun walkToPosition(
         target: LatLng,
         speedMs: Double,
+        followRoads: Boolean = false,
     ) {
         val startPos = locationRepository.currentPosition.value ?: return
-        walkToEngine.walkToOnce(startPos, target, speedMs, ::tickPosition)
+        if (!followRoads) {
+            walkToEngine.walkToOnce(startPos, target, speedMs, ::tickPosition)
+            return
+        }
+        val legs =
+            osrmClient.resolveRoute(
+                OsrmClient.PROFILE_FOOT,
+                startPos,
+                target,
+                followRoads = true,
+                onFallback = ::reportWalkToStartFallback,
+            )
+        for (i in 0 until legs.size - 1) {
+            walkToEngine.walkToOnce(legs[i], legs[i + 1], speedMs, ::tickPosition)
+        }
+    }
+
+    private fun reportWalkToStartFallback(reason: OsrmFailureReason) {
+        routingErrorReporter.report("${osrmFailureMessage(reason)} — using straight walk to the route start")
     }
 }
