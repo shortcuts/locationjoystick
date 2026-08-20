@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.17.0](https://github.com/shortcuts/locationjoystick/compare/v0.16.0...v0.17.0) (2026-08-20)
+
+
+### Features
+
+* **routes:** add walk-via-roads-and-start option ([1ef78b1](https://github.com/shortcuts/locationjoystick/commit/1ef78b100ba324eebf1ba2197aa5d409f8235174))
+* **settings:** add option to hide notification icon ([ed15b05](https://github.com/shortcuts/locationjoystick/commit/ed15b0528811fc3054162602e40a3a4ad21eb626))
+
+
+### Bug Fixes
+
+* **favorites:** accept comma decimal separator in lat/lon inputs ([03c1958](https://github.com/shortcuts/locationjoystick/commit/03c19580e43c2e5ace9eceb17a8e4af789efbcb9))
+* **location:** cache hideNotification so onStartCommand won't revert it ([39cbf4e](https://github.com/shortcuts/locationjoystick/commit/39cbf4e4523c80037c831dd58b2507dd543347a3))
+* **location:** keep pushing frozen fix during suspended-mocking pause ([f4a93f4](https://github.com/shortcuts/locationjoystick/commit/f4a93f493444a95429e66d106bb4ecf110503ec6))
+* **location:** keep pushing frozen position while route replay paused ([2a96c28](https://github.com/shortcuts/locationjoystick/commit/2a96c28a95fa6400a915a1e7e6e567af937cd199))
+* **map:** accept comma decimal separator in roaming sheet inputs ([629039a](https://github.com/shortcuts/locationjoystick/commit/629039a7d848bc3c20ffd674796d78d7a62b35b7))
+* **settings:** accept comma as decimal separator in numeric inputs ([43f0977](https://github.com/shortcuts/locationjoystick/commit/43f09773ae95002cfcf9087857b7aed53db2aad3))
+
 ## [0.16.0](https://github.com/shortcuts/locationjoystick/compare/v0.15.0...v0.16.0) (2026-08-17)
 
 
