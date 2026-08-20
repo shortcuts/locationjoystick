@@ -23,7 +23,7 @@
       <img class="phone-shot" src="screenshots/17_group_sync.png" alt="Group Sync screen">
       <ul class="section-bullets">
         <li>One device creates the group and becomes the leader.</li>
-        <li>Other devices join by scanning a QR code shown on the leader's screen.</li>
+        <li>Other devices join by scanning a QR code shown on the leader's screen, or by typing a short join code shown next to it.</li>
         <li>Followers walk toward the leader's location automatically over the same Wi-Fi, moving at their own current speed.</li>
         <li>Everything happens on the devices themselves, with no account, no cloud, and no internet needed.</li>
       </ul>
@@ -32,8 +32,8 @@
     <h2 id="how-it-works">How it works</h2>
     <ol class="section-bullets">
       <li>The leader opens <strong>Group Sync</strong> from the navigation drawer and taps <strong>Create group: I'm the leader</strong>.</li>
-      <li>A QR code appears on the leader's screen. It contains the leader's local network address and a group code.</li>
-      <li>Each follower opens <strong>Group Sync</strong> on their own device and scans that QR code with their camera.</li>
+      <li>A QR code and a short join code appear on the leader's screen. Either one identifies the group.</li>
+      <li>Each follower opens <strong>Group Sync</strong> on their own device, then either scans the QR code with their camera or types the join code by hand.</li>
       <li>The follower joins automatically. Turn on <strong>Follow leader</strong> to start mirroring the leader's location.</li>
     </ol>
 
@@ -48,7 +48,7 @@
       <tbody>
         <tr>
           <td><strong>QR code</strong></td>
-          <td>Shows the join invite. Followers scan this to connect. Tap the refresh icon to generate a new code, which also changes the group's join code.</td>
+          <td>Shows the join invite, plus the join code as text for typing in by hand. Tap the refresh icon to generate a fresh QR code without changing the join code.</td>
         </tr>
         <tr>
           <td><strong>Sharing</strong> toggle</td>
@@ -99,8 +99,9 @@
       you open the app, even after a device restart.
     </p>
     <p>
-      A leader's state is not saved this way. After a restart, the leader has to tap
-      <strong>Create group</strong> again and share a fresh QR code with followers.
+      A leader's role is saved the same way — the group starts back up automatically the next
+      time the app opens, including after a device restart, without needing to tap
+      <strong>Create group</strong> again.
     </p>
 
     <h2 id="requirements">Requirements</h2>
@@ -113,7 +114,8 @@
     <h2 id="limitations">Limitations</h2>
     <ul class="section-bullets">
       <li>Mobile data or a VPN can prevent a device from reaching the leader's local address.</li>
-      <li>If the leader's Wi-Fi address changes, for example after the router restarts, followers need to rejoin by scanning a new QR code.</li>
+      <li>If the leader's network address changes, for example after its own app restarts, followers try to reconnect automatically for a short while before giving up; if that fails, rejoin by scanning a new QR code or re-entering the join code.</li>
+      <li>Some phone hotspots don't allow the join code to find the leader (a Wi-Fi limitation on the hotspot's end) — scanning the QR code works around it, since it doesn't need that discovery step.</li>
       <li>A leader can only run one active group at a time.</li>
       <li>A follower joining far from the leader walks there at its own speed instead of jumping instantly. Use <strong>Teleport to leader now</strong> for an immediate jump.</li>
     </ul>

@@ -20,8 +20,7 @@ Complete every item in order. Items marked `[x]` are already done.
 
 ## 2. Version Bump
 
-- [x] Increment `versionCode` in `build-logic/convention/src/main/kotlin/LjApplicationConventionPlugin.kt` (must strictly increase with every upload)
-- [x] Update `VERSION_NAME` (the string shown to users)
+- [x] `versionName`/`versionCode` are auto-managed: [release-please](https://github.com/googleapis/release-please) bumps the single `versionName = "X.Y.Z" // x-release-please-version` line in `build-logic/convention/src/main/kotlin/LjApplicationConventionPlugin.kt` on every release PR merge; `versionCode` derives from it (`major*10000 + minor*100 + patch`), so it strictly increases automatically. No manual edit needed.
 
 ---
 
@@ -52,8 +51,8 @@ Complete every item in order. Items marked `[x]` are already done.
 ## 5. Store Listing Assets
 
 - [x] **Short description** (≤80 chars): `Mock your GPS location on Android — no root, no ads.`
-- [ ] **Full description** (≤4000 chars): use `docs/reddit-post.md` as base, expand into Store prose
-- [x] **Screenshots**: all 15 in `docs/wiki/screenshots/` (1080×2340) — upload at least 2
+- [ ] **Full description** (≤4000 chars): write from the feature table in `README.md`, expand into Store prose
+- [x] **Screenshots**: 17 canonical shots in `docs/wiki/screenshots/` (1080×2340, `*_playstore` variants pre-cropped for the listing) — upload at least 2
 - [ ] **App icon** (512×512 px): `docs/wiki/icon.png` is currently 192×192 — resize/export at 512×512 before upload
 - [ ] **Feature graphic** (1024×500 px): does not exist yet — design and upload (shown at top of listing)
 
@@ -130,14 +129,14 @@ Play Console → App content:
 
 ## 12. App Links Setup (`locationjoystick.shrtcts.fr`)
 
-Enables `https://locationjoystick.shrtcts.fr/?coords=LAT,LON` URLs to open the app directly from Discord, Telegram, etc. Requires Play App Signing to be enrolled first (step 4).
+Enables `https://locationjoystick.shrtcts.fr/?lat=LAT&lon=LON` URLs to open the app directly from Discord, Telegram, etc. Requires Play App Signing to be enrolled first (step 4).
 
 - [ ] Get SHA-256 signing cert fingerprint: Play Console → Setup → App signing → "App signing key certificate" → copy the SHA-256 fingerprint
 - [ ] Replace `REPLACE_WITH_YOUR_SHA256_SIGNING_CERT_FINGERPRINT` in `docs/wiki/.well-known/assetlinks.json` with the fingerprint (colon-separated uppercase hex, e.g. `AB:CD:EF:…`)
 - [ ] Add DNS record: CNAME `locationjoystick.shrtcts.fr` → `shortcuts.github.io` (or wherever GitHub Pages is served from)
 - [ ] Enable GitHub Pages to serve `docs/wiki/` so `https://locationjoystick.shrtcts.fr/.well-known/assetlinks.json` resolves with `Content-Type: application/json`
 - [ ] Verify: `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://locationjoystick.shrtcts.fr&relation=delegate_permission/common.handle_all_urls`
-- [ ] Test on device: tap `https://locationjoystick.shrtcts.fr/?coords=35.62460,139.77627` in Chrome → app opens directly (no chooser dialog)
+- [ ] Test on device: tap `https://locationjoystick.shrtcts.fr/?lat=35.62460&lon=139.77627` in Chrome → app opens directly (no chooser dialog)
 
 ---
 

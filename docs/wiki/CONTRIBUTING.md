@@ -26,16 +26,7 @@ All wiki pages are read by **app users, not developers**. Write every sentence a
 
 All nav items live in `docs/wiki/wiki-init.js`, in the `NAV_ITEMS` array near the top of the file.
 
-```js
-var NAV_ITEMS = [
-  { href: 'index.html',       label: 'Quick Start' },
-  { href: 'home.html',        label: 'Home' },
-  // ...
-  { href: 'changelog.html',   label: 'Changelog' },
-  { href: 'privacy.html',     label: 'Privacy' },
-  { href: 'acknowledgements.html', label: 'Acknowledgements' },
-];
-```
+See the current `NAV_ITEMS` array at the top of `docs/wiki/wiki-init.js` for the live list and label wording — don't copy an example here, it drifts.
 
 Steps:
 

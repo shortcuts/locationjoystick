@@ -33,21 +33,19 @@ Work is NOT complete until affected docs are updated. These files must stay in s
 
 | File | Update when |
 |------|-------------|
-| `AGENTS.md` (this file) — feature table | Adding or removing a feature |
-| `AGENTS.md` — module table in `docs/architecture.md` | Adding or removing a Gradle module |
+| `AGENTS.md` (this file) — Feature Specifications table | Adding or removing a feature |
 | `AGENTS.md` — Key Services table | Adding, removing, or renaming a service or singleton |
-| `docs/architecture.md` | Module added/removed or architecture pattern changes |
+| `docs/architecture.md` — module table | Adding or removing a Gradle module (also update `docs/architecture.md` for architecture pattern changes) |
 | `docs/domain-models.md` | Any change to `core/model/` data classes or enums |
 | `docs/features/<feature>.md` | Behaviour change in the corresponding feature |
 | `docs/features/export-import.md` | Any change to `ExportData` fields or import/export scope |
 | `README.md` — feature table | Adding or removing a user-visible feature |
-| `README.md` — module table | Adding or removing a Gradle module |
 | `docs/wiki/<feature>.html` | Adding or changing any user-visible feature |
 | `docs/wiki/changelog.html` | Any release with user-visible changes |
 
 Rules:
-- New feature → create `docs/features/<feature>.md` AND add row to AGENTS.md feature table AND README.md feature table.
-- New Gradle module → add row to `docs/architecture.md` module table AND README.md module table.
+- New feature → create `docs/features/<feature>.md` AND add row to AGENTS.md's Feature Specifications table AND README.md's feature table.
+- New Gradle module → add row to `docs/architecture.md`'s module table (the single source of truth — README.md links to it, doesn't duplicate it).
 - New domain model or field → update `docs/domain-models.md`.
 - Deleted feature/module → remove from all tables above.
 - Doc changes go in the same commit as the code change, not a follow-up.
@@ -186,17 +184,23 @@ make wiki-serve   # http://localhost:8080
 
 | File | Purpose |
 |------|---------|
-| `docs/wiki/index.html` | Overview + card grid + quick start |
-| `docs/wiki/home.html` | Home screen + background service |
+| `docs/wiki/index.html` | Overview + install + first-run setup quick start |
 | `docs/wiki/map.html` | Map screen + bottom sheets |
 | `docs/wiki/routes.html` | Routes list + creator + detail |
 | `docs/wiki/favorites.html` | Favorites list + map picker |
 | `docs/wiki/share.html` | Share & deep link URL reference |
+| `docs/wiki/group.html` | Group Sync (leader/follower Wi-Fi sync) |
+| `docs/wiki/tap-to-walk.html` | Tap to Walk (quick-walk + screen overlay) |
 | `docs/wiki/settings.html` | Settings + QR transfer |
 | `docs/wiki/overlays.html` | Joystick + widget overlays |
-| `docs/wiki/onboarding.html` | First-run setup + troubleshooting |
+| `docs/wiki/troubleshooting.html` | First-run setup + troubleshooting |
+| `docs/wiki/changelog.html` | Curated, user-facing release notes |
+| `docs/wiki/privacy.html` | Privacy policy |
+| `docs/wiki/acknowledgements.html` | Third-party credits |
 | `docs/wiki/style.css` | Single stylesheet — all pages share it |
-| `docs/wiki/screenshots/` | Phone screenshots (PNG, numbered 01–15) |
+| `docs/wiki/screenshots/` | Phone screenshots (PNG, numbered 01–17, plus `*_playstore` crops) |
+
+Nav order/labels are the single source of truth in `NAV_ITEMS` (`docs/wiki/wiki-init.js`) — every HTML page's sidebar renders from that script, so a new page needs an entry there, not a hand-edited `<nav>` block per file.
 
 ### Regenerating screenshots
 
@@ -206,16 +210,14 @@ Screenshots are captured from a connected device/emulator via:
 make screenshot   # outputs to docs/wiki/screenshots/
 ```
 
-The script (`scripts/screenshot-gallery.sh`) navigates the app and captures all 15 canonical screens. Re-run after any UI change. Commit updated PNGs alongside the code change.
-
-Missing screenshots (14 `joystick_overlay`, 15 `widget_overlay`) require the overlay services running — capture manually if the script can't reach them.
+The script (`scripts/screenshot-gallery.sh`) navigates the app and captures 17 canonical screens (see the script's header comment for the current numbered list — it is the source of truth, not this doc). Re-run after any UI change. Commit updated PNGs alongside the code change. `--playstore-only` regenerates the `*_playstore` crops from existing screenshots without a device. Overlay screens (joystick, widget) require manual activation — the script pauses and prompts at those steps.
 
 ### Maintaining content
 
 - Each HTML page maps 1-to-1 to a feature. Update the page when the feature changes.
-- Screenshots are referenced by number (`01_idle.png` … `15_widget_overlay.png`). Renaming a file breaks the page — update both together.
-- All pages use the same sidebar nav snippet. When adding a new page, add its `<a>` entry to the `<nav>` block in **every** HTML file.
-- No external resources — no CDN fonts, no JS libraries. Keep it that way.
+- Screenshots are referenced by number. Renaming a file breaks the page — update both together.
+- Sidebar nav is generated by `docs/wiki/wiki-init.js` (`NAV_ITEMS`), shared by every page. Add new pages there, not by hand-editing a `<nav>` block per file.
+- No external resources for page content — no CDN fonts, no JS libraries for content rendering. (`wiki-init.js` itself loads the DocSearch CDN script and calls the GitHub API for the star count — an accepted exception for search/chrome, not precedent for page content.)
 
 ### Design changes
 
