@@ -85,6 +85,44 @@ class RouteReplayEngineJumpTest {
     }
 
     @Test
+    fun `jumpToNextWaypoint lands only on boundary points when the path is road-expanded`() {
+        // 4 real waypoints (indices 0, 2, 5, 7 in the expanded, road-following path) with
+        // extra OSRM via-points interleaved between them.
+        // Real waypoints a, b, c, d sit at expanded indices 0, 2, 5, 7 below.
+        val expanded =
+            listOf(
+                a,
+                LatLng(0.0002, 0.0),
+                b,
+                LatLng(0.0012, 0.0),
+                LatLng(0.0015, 0.0),
+                c,
+                LatLng(0.0025, 0.0),
+                d,
+            )
+        val boundaries = listOf(0, 2, 5, 7)
+        engine.start(
+            waypoints = expanded,
+            speedMs = 1.4,
+            onPositionUpdate = {},
+            onComplete = {},
+            boundaryIndices = boundaries,
+        )
+        engine.pause()
+
+        val next = engine.jumpToNextWaypoint(onPositionUpdate = {}, onComplete = {})
+        assertEquals(b, next)
+
+        val nextAgain = engine.jumpToNextWaypoint(onPositionUpdate = {}, onComplete = {})
+        assertEquals(c, nextAgain)
+
+        val previous = engine.jumpToPreviousWaypoint(onPositionUpdate = {}, onComplete = {})
+        assertEquals(b, previous)
+
+        kotlinx.coroutines.runBlocking { engine.stop() }
+    }
+
+    @Test
     fun `jumpToNextWaypoint while running resumes ticking toward the following waypoint`() {
         val positions = mutableListOf<LatLng>()
         engine.start(waypoints = waypoints, speedMs = 1.4, onPositionUpdate = { pos -> positions.add(pos) }, onComplete = {})

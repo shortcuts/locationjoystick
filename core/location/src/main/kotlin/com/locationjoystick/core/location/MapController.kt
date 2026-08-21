@@ -431,7 +431,6 @@ class MapController
             isLooping: Boolean = false,
             isReverse: Boolean = false,
             isReturnToLocation: Boolean = false,
-            teleportToStart: Boolean = false,
             followRoadsToStart: Boolean = false,
         ) {
             appScope.launch {
@@ -440,7 +439,6 @@ class MapController
                     isLooping = isLooping,
                     isReverse = isReverse,
                     isReturnToLocation = isReturnToLocation,
-                    teleportToStart = teleportToStart,
                     followRoadsToStart = followRoadsToStart,
                 )
             }

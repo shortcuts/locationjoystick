@@ -4,7 +4,6 @@ import android.content.Context
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
-import com.locationjoystick.core.data.TeleportUseCase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -18,26 +17,17 @@ class StartRouteReplayUseCase
         private val settingsRepository: SettingsRepository,
         private val locationRepository: LocationRepository,
         private val routeRepository: RouteRepository,
-        private val teleportUseCase: TeleportUseCase,
     ) {
         suspend fun execute(
             routeId: String,
             isLooping: Boolean = false,
             isReverse: Boolean = false,
             isReturnToLocation: Boolean = false,
-            teleportToStart: Boolean = false,
             followRoadsToStart: Boolean = false,
         ) {
             val route = routeRepository.getRouteWithWaypoints(routeId).first()
             val speedMs = settingsRepository.getRouteSpeedMs(route?.speedProfileId).first()
             val returnPosition = if (isReturnToLocation) locationRepository.currentPosition.value else null
-            if (teleportToStart) {
-                val waypoints = route?.waypoints
-                if (!waypoints.isNullOrEmpty()) {
-                    val startWaypoint = if (isReverse) waypoints.last() else waypoints.first()
-                    teleportUseCase.execute(startWaypoint.position)
-                }
-            }
             val intent =
                 MockLocationIntentBuilder
                     .startRouteReplay(context, routeId, speedMs, isReverse, followRoadsToStart)

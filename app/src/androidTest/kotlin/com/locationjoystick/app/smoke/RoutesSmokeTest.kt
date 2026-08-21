@@ -65,8 +65,10 @@ class RoutesSmokeTest : BaseSmokeTest() {
         composeRule.onNodeWithText("Loop").assertIsDisplayed()
         composeRule.onNodeWithText("Reverse").assertIsDisplayed()
         composeRule.onNodeWithText("Return to location").assertIsDisplayed()
-        composeRule.onNodeWithText("Walk and start").assertIsDisplayed()
-        composeRule.onNodeWithText("Teleport and start").assertIsDisplayed()
+        composeRule.onNodeWithText("Follow roads").assertIsDisplayed()
+        composeRule.onNodeWithText("Teleport").assertIsDisplayed()
+        composeRule.onNodeWithText("Cancel").assertIsDisplayed()
+        composeRule.onNodeWithText("Start").assertIsDisplayed()
     }
 
     @Test

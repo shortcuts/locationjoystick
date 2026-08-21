@@ -1,6 +1,8 @@
 package com.locationjoystick.core.designsystem.component
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,9 +22,11 @@ fun LjRouteStartOptions(
     onReverseChange: (Boolean) -> Unit,
     returnToLocation: Boolean,
     onReturnToLocationChange: (Boolean) -> Unit,
-    onWalkAndStart: () -> Unit,
-    onWalkViaRoadsAndStart: () -> Unit,
-    onTeleportAndStart: () -> Unit,
+    followRoads: Boolean,
+    onFollowRoadsChange: (Boolean) -> Unit,
+    onTeleport: () -> Unit,
+    onCancel: () -> Unit,
+    onStart: () -> Unit,
     hideTeleport: Boolean = false,
     textColor: Color = Color.Unspecified,
 ) {
@@ -47,18 +51,25 @@ fun LjRouteStartOptions(
             onCheckedChange = onReturnToLocationChange,
             textColor = textColor,
         )
-        Spacer(Modifier.height(20.dp))
-        Button(onClick = onWalkAndStart, modifier = Modifier.fillMaxWidth()) {
-            Text("Walk and start", color = textColor)
-        }
-        Spacer(Modifier.height(8.dp))
-        OutlinedButton(onClick = onWalkViaRoadsAndStart, modifier = Modifier.fillMaxWidth()) {
-            Text("Walk via roads and start", color = textColor)
-        }
+        LjCheckboxRow(
+            title = "Follow roads",
+            checked = followRoads,
+            onCheckedChange = onFollowRoadsChange,
+            textColor = textColor,
+        )
         if (!hideTeleport) {
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(onClick = onTeleportAndStart, modifier = Modifier.fillMaxWidth()) {
-                Text("Teleport and start", color = textColor)
+            Spacer(Modifier.height(20.dp))
+            OutlinedButton(onClick = onTeleport, modifier = Modifier.fillMaxWidth()) {
+                Text("Teleport", color = textColor)
+            }
+        }
+        Spacer(Modifier.height(20.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
+                Text("Cancel", color = textColor)
+            }
+            Button(onClick = onStart, modifier = Modifier.weight(1f)) {
+                Text("Start", color = textColor)
             }
         }
     }

@@ -684,13 +684,26 @@ class MapViewModelTest {
                     isLooping = false,
                     isReverse = false,
                     isReturnToLocation = false,
-                    teleportToStart = false,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
 
-            coVerify { startRouteReplayUseCase.execute("route-1", false, false, false, false, false) }
+            coVerify { startRouteReplayUseCase.execute("route-1", false, false, false, false) }
             assertEquals(false, viewModel.uiState.value.showRoutesSheet)
+        }
+
+    @Test
+    fun `Teleport calls mapController teleportTo and keeps routes sheet open`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoutesSheet)
+            assertEquals(true, viewModel.uiState.value.showRoutesSheet)
+
+            val position = LatLng(1.0, 2.0)
+            viewModel.onAction(MapAction.Teleport(position))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify { teleportUseCase.execute(position) }
+            assertEquals(true, viewModel.uiState.value.showRoutesSheet)
         }
 
     @Test

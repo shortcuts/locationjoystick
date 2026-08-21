@@ -44,6 +44,7 @@ import com.locationjoystick.core.designsystem.component.LoadingIndicator
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.distanceTo
+import com.locationjoystick.core.model.startWaypoint
 
 @Composable
 fun RoutesRoute(
@@ -81,9 +82,10 @@ fun RoutesRoute(
         locationLabel = spoofToggle.locationLabel,
         onDeleteRoute = viewModel::deleteRoute,
         onExportRoute = { route -> viewModel.exportRouteAsGpx(context, route) },
-        onStartReplay = { route, isLooping, isReverse, isReturnToLocation, teleportToStart, followRoadsToStart ->
-            viewModel.startReplay(route, isLooping, isReverse, isReturnToLocation, teleportToStart, followRoadsToStart)
+        onStartReplay = { route, isLooping, isReverse, isReturnToLocation, followRoadsToStart ->
+            viewModel.startReplay(route, isLooping, isReverse, isReturnToLocation, followRoadsToStart)
         },
+        onTeleportToRouteStart = viewModel::teleportTo,
         onPauseReplay = viewModel::pauseReplay,
         onResumeReplay = viewModel::resumeReplay,
         onStopReplay = viewModel::stopReplay,
@@ -105,7 +107,8 @@ private fun RoutesScreenPreview() {
         onOpenDrawer = {},
         onDeleteRoute = {},
         onExportRoute = {},
-        onStartReplay = { _, _, _, _, _, _ -> },
+        onStartReplay = { _, _, _, _, _ -> },
+        onTeleportToRouteStart = {},
         onPauseReplay = {},
         onResumeReplay = {},
         onStopReplay = {},
@@ -123,7 +126,8 @@ internal fun RoutesScreen(
     onOpenDrawer: () -> Unit,
     onDeleteRoute: (String) -> Unit,
     onExportRoute: (com.locationjoystick.core.model.Route) -> Unit,
-    onStartReplay: (com.locationjoystick.core.model.Route, Boolean, Boolean, Boolean, Boolean, Boolean) -> Unit,
+    onStartReplay: (com.locationjoystick.core.model.Route, Boolean, Boolean, Boolean, Boolean) -> Unit,
+    onTeleportToRouteStart: (com.locationjoystick.core.model.LatLng) -> Unit,
     onPauseReplay: () -> Unit,
     onResumeReplay: () -> Unit,
     onStopReplay: () -> Unit,
@@ -218,6 +222,7 @@ internal fun RoutesScreen(
                                 onDeleteRoute = { deletingRoute = route },
                                 onExport = { onExportRoute(route) },
                                 onStartReplay = onStartReplay,
+                                onTeleportToRouteStart = onTeleportToRouteStart,
                                 onPauseReplay = onPauseReplay,
                                 onResumeReplay = onResumeReplay,
                                 onStopReplay = onStopReplay,
@@ -250,7 +255,8 @@ private fun RouteCard(
     onNavigateToEdit: (String) -> Unit,
     onDeleteRoute: (com.locationjoystick.core.model.Route) -> Unit,
     onExport: (com.locationjoystick.core.model.Route) -> Unit,
-    onStartReplay: (com.locationjoystick.core.model.Route, Boolean, Boolean, Boolean, Boolean, Boolean) -> Unit,
+    onStartReplay: (com.locationjoystick.core.model.Route, Boolean, Boolean, Boolean, Boolean) -> Unit,
+    onTeleportToRouteStart: (com.locationjoystick.core.model.LatLng) -> Unit,
     onPauseReplay: () -> Unit,
     onResumeReplay: () -> Unit,
     onStopReplay: () -> Unit,
@@ -377,6 +383,7 @@ private fun RouteCard(
                 var loop by remember { mutableStateOf(false) }
                 var reverse by remember { mutableStateOf(false) }
                 var returnToLocation by remember { mutableStateOf(false) }
+                var followRoads by remember { mutableStateOf(false) }
                 LjRouteStartOptions(
                     loop = loop,
                     onLoopChange = { loop = it },
@@ -384,16 +391,14 @@ private fun RouteCard(
                     onReverseChange = { reverse = it },
                     returnToLocation = returnToLocation,
                     onReturnToLocationChange = { returnToLocation = it },
-                    onWalkAndStart = {
-                        onStartReplay(route, loop, reverse, returnToLocation && !loop, false, false)
-                        showStartDialog = false
+                    followRoads = followRoads,
+                    onFollowRoadsChange = { followRoads = it },
+                    onTeleport = {
+                        route.startWaypoint(reverse)?.let { onTeleportToRouteStart(it.position) }
                     },
-                    onWalkViaRoadsAndStart = {
-                        onStartReplay(route, loop, reverse, returnToLocation && !loop, false, true)
-                        showStartDialog = false
-                    },
-                    onTeleportAndStart = {
-                        onStartReplay(route, loop, reverse, returnToLocation && !loop, true, false)
+                    onCancel = { showStartDialog = false },
+                    onStart = {
+                        onStartReplay(route, loop, reverse, returnToLocation && !loop, followRoads)
                         showStartDialog = false
                     },
                     hideTeleport = hideTeleportFeatures,

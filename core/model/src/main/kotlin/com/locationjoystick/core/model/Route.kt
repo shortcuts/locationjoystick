@@ -12,3 +12,6 @@ data class Route(
     override val createdAt: Long = 0L,
     val updatedAt: Long = 0L,
 ) : HasCreatedAt
+
+/** Waypoint replay starts (and Teleport jumps to): first, or last when [isReverse]. */
+fun Route.startWaypoint(isReverse: Boolean): Waypoint? = if (isReverse) waypoints.lastOrNull() else waypoints.firstOrNull()

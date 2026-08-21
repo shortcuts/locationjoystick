@@ -37,6 +37,7 @@ import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
 import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.model.startWaypoint
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,13 +56,14 @@ internal fun RoutesPickerSheet(
     ) {
         val routeId = selectedRouteId
         if (routeId != null) {
+            val route = uiState.routes.find { it.id == routeId }
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { selectedRouteId = null }) {
                         Icon(LjIcons.ArrowBack, contentDescription = "Back")
                     }
                     Text(
-                        text = uiState.routes.find { it.id == routeId }?.name ?: "Start route",
+                        text = route?.name ?: "Start route",
                         style = MaterialTheme.typography.headlineSmall,
                     )
                 }
@@ -69,6 +71,7 @@ internal fun RoutesPickerSheet(
                 var loop by remember(routeId) { mutableStateOf(false) }
                 var reverse by remember(routeId) { mutableStateOf(false) }
                 var returnToLocation by remember(routeId) { mutableStateOf(false) }
+                var followRoads by remember(routeId) { mutableStateOf(false) }
                 LjRouteStartOptions(
                     loop = loop,
                     onLoopChange = { loop = it },
@@ -76,21 +79,18 @@ internal fun RoutesPickerSheet(
                     onReverseChange = { reverse = it },
                     returnToLocation = returnToLocation,
                     onReturnToLocationChange = { returnToLocation = it },
-                    onWalkAndStart = {
-                        onAction(
-                            MapAction.StartRouteReplay(routeId, loop, reverse, returnToLocation && !loop, false, false),
-                        )
-                        selectedRouteId = null
+                    followRoads = followRoads,
+                    onFollowRoadsChange = { followRoads = it },
+                    onTeleport = {
+                        route?.startWaypoint(reverse)?.let { onAction(MapAction.Teleport(it.position)) }
                     },
-                    onWalkViaRoadsAndStart = {
-                        onAction(
-                            MapAction.StartRouteReplay(routeId, loop, reverse, returnToLocation && !loop, false, true),
-                        )
+                    onCancel = {
                         selectedRouteId = null
+                        onAction(MapAction.CloseRoutesSheet)
                     },
-                    onTeleportAndStart = {
+                    onStart = {
                         onAction(
-                            MapAction.StartRouteReplay(routeId, loop, reverse, returnToLocation && !loop, true, false),
+                            MapAction.StartRouteReplay(routeId, loop, reverse, returnToLocation && !loop, followRoads),
                         )
                         selectedRouteId = null
                     },

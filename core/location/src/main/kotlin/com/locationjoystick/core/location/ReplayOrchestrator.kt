@@ -24,6 +24,10 @@ private const val TAG = "ReplayOrchestrator"
 /**
  * Owns all route-replay and walk-to orchestration logic extracted from [MockLocationService].
  *
+ * `followRoadsToStart` governs both the pre-replay walk from the current position to the
+ * route's first waypoint AND every leg between the route's own saved waypoints during
+ * replay (see [expandWaypointsForFollowRoads]) — not just the pre-replay walk.
+ *
  * Communicates back to the service via lambdas:
  * - [onStateChange]: writes into the service's `_state` MutableStateFlow
  * - [onPositionChange]: updates `currentLat` / `currentLon` @Volatile fields
@@ -66,16 +70,19 @@ internal class ReplayOrchestrator(
                 if (route.waypoints.size < 2) return@launch
                 val latLngs = (if (isBackward) route.waypoints.reversed() else route.waypoints).map { it.position }
                 val isLooping = isLoopingOverride ?: route.isLooping
+                val (replayWaypoints, boundaryIndices) =
+                    if (followRoadsToStart) expandWaypointsForFollowRoads(latLngs) else latLngs to null
 
                 startReplayWithWaypoints(
-                    waypoints = latLngs,
+                    waypoints = replayWaypoints,
                     speedMs = speedMs,
                     isLooping = isLooping,
                     followRoadsToStart = followRoadsToStart,
+                    boundaryIndices = boundaryIndices,
                     persistMetadata = {
                         locationRepository.setActiveRouteId(routeId)
                         locationRepository.setIsReplayBackward(isBackward)
-                        locationRepository.setRouteWaypoints(latLngs)
+                        locationRepository.setRouteWaypoints(replayWaypoints)
                     },
                     onComplete = {
                         locationRepository.setRouteWaypoints(null)
@@ -228,6 +235,7 @@ internal class ReplayOrchestrator(
         speedMs: Double,
         isLooping: Boolean,
         followRoadsToStart: Boolean = false,
+        boundaryIndices: List<Int>? = null,
         persistMetadata: (suspend () -> Unit)? = null,
         onComplete: suspend () -> Unit = {
             locationRepository.setRouteWaypoints(null)
@@ -256,11 +264,47 @@ internal class ReplayOrchestrator(
             isLooping = isLooping,
             onPositionUpdate = ::tickPosition,
             onComplete = { scope.launch { onComplete() } },
+            boundaryIndices = boundaryIndices,
         )
 
         // If pause was requested during walk-to-start (before engine launched),
         // ensure the engine is paused now that it has been initialized.
         if (locationRepository.mockLocationState.value == MockLocationState.PAUSED) routeReplayEngine.pause()
+    }
+
+    /**
+     * Pre-plans a road-following path between the route's own saved waypoints, mirroring
+     * [com.locationjoystick.core.routing.RoamingEngine.planRoadFollowingRoute]. Resolves each
+     * leg independently via OSRM (foot profile); a leg that fails falls back to a straight
+     * line and is counted, with one aggregated summary reported afterward if any legs fell
+     * back.
+     *
+     * @return the expanded waypoint list plus the indices within it that are the route's
+     *   real, named stops ("boundary indices"), so jump-to-waypoint keeps targeting real stops.
+     */
+    private suspend fun expandWaypointsForFollowRoads(waypoints: List<LatLng>): Pair<List<LatLng>, List<Int>> {
+        val expanded = mutableListOf(waypoints.first())
+        val boundaryIndices = mutableListOf(0)
+        var fallbackCount = 0
+        for (i in 0 until waypoints.size - 1) {
+            val leg =
+                osrmClient.resolveRoute(
+                    OsrmClient.PROFILE_FOOT,
+                    waypoints[i],
+                    waypoints[i + 1],
+                    followRoads = true,
+                    onFallback = { fallbackCount++ },
+                )
+            expanded.addAll(leg.drop(1))
+            boundaryIndices.add(expanded.size - 1)
+        }
+        if (fallbackCount > 0) {
+            routingErrorReporter.report(
+                "Road-following partially unavailable — $fallbackCount of " +
+                    "${waypoints.size - 1} legs used straight-line paths",
+            )
+        }
+        return expanded to boundaryIndices
     }
 
     private suspend fun walkToPosition(

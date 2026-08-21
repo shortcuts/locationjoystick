@@ -71,6 +71,7 @@ import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.startWaypoint
 
 /** Shared circular icon button for the widget panel: press scale + icon crossfade on state change. */
 @Composable
@@ -540,9 +541,9 @@ internal fun RoutesFloatingView(
         isLooping: Boolean,
         isReverse: Boolean,
         isReturnToLocation: Boolean,
-        teleportToStart: Boolean,
         followRoadsToStart: Boolean,
     ) -> Unit,
+    onTeleport: (LatLng) -> Unit,
     hideTeleport: Boolean = false,
 ) {
     var selectedRouteId by remember { mutableStateOf<String?>(null) }
@@ -555,9 +556,11 @@ internal fun RoutesFloatingView(
     ) {
         if (selectedRouteId != null) {
             val routeId = selectedRouteId!!
+            val route = routes.find { it.id == routeId }
             var loop by remember(routeId) { mutableStateOf(false) }
             var reverse by remember(routeId) { mutableStateOf(false) }
             var returnToLocation by remember(routeId) { mutableStateOf(false) }
+            var followRoads by remember(routeId) { mutableStateOf(false) }
 
             LjRouteStartOptions(
                 loop = loop,
@@ -566,18 +569,17 @@ internal fun RoutesFloatingView(
                 onReverseChange = { reverse = it },
                 returnToLocation = returnToLocation,
                 onReturnToLocationChange = { returnToLocation = it },
-                onWalkAndStart = {
-                    onStartRoute(routeId, loop, reverse, returnToLocation && !loop, false, false)
+                followRoads = followRoads,
+                onFollowRoadsChange = { followRoads = it },
+                onTeleport = {
+                    route?.startWaypoint(reverse)?.let { onTeleport(it.position) }
+                },
+                onCancel = {
                     selectedRouteId = null
                     onDismiss()
                 },
-                onWalkViaRoadsAndStart = {
-                    onStartRoute(routeId, loop, reverse, returnToLocation && !loop, false, true)
-                    selectedRouteId = null
-                    onDismiss()
-                },
-                onTeleportAndStart = {
-                    onStartRoute(routeId, loop, reverse, returnToLocation && !loop, true, false)
+                onStart = {
+                    onStartRoute(routeId, loop, reverse, returnToLocation && !loop, followRoads)
                     selectedRouteId = null
                     onDismiss()
                 },

@@ -5,6 +5,7 @@ import app.cash.turbine.test
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
@@ -34,6 +35,7 @@ class RoutesViewModelUiStateTest {
     private val routeRepository: RouteRepository = mockk(relaxed = true)
     private val locationRepository = LocationRepository()
     private val settingsRepository: SettingsRepository = mockk(relaxed = true)
+    private val teleportUseCase: TeleportUseCase = mockk(relaxed = true)
     private val context: Context = mockk(relaxed = true)
     private val routesFlow = MutableStateFlow<List<Route>>(emptyList())
     private val sortFlow = MutableStateFlow(true)
@@ -45,7 +47,7 @@ class RoutesViewModelUiStateTest {
         every { routeRepository.getRoutes() } returns routesFlow
         every { settingsRepository.getRoutesSortNewestFirst() } returns sortFlow
         every { settingsRepository.getHideTeleportFeatures() } returns MutableStateFlow(false)
-        viewModel = RoutesViewModel(routeRepository, locationRepository, settingsRepository, context)
+        viewModel = RoutesViewModel(routeRepository, locationRepository, settingsRepository, teleportUseCase, context)
     }
 
     @After
@@ -133,6 +135,15 @@ class RoutesViewModelUiStateTest {
 
             verify { settingsRepository.getRouteSpeedMs("bike") }
             verify(exactly = 0) { settingsRepository.getActiveSpeedProfile() }
+        }
+
+    @Test
+    fun teleportTo_calls_teleportUseCase() =
+        runTest {
+            val position = LatLng(1.0, 2.0)
+            viewModel.teleportTo(position)
+
+            coVerify { teleportUseCase.execute(position) }
         }
 
     @Test

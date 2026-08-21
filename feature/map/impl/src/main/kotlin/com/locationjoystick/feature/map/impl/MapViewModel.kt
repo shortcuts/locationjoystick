@@ -315,10 +315,13 @@ class MapViewModel
                         action.isLooping,
                         action.isReverse,
                         action.isReturnToLocation,
-                        action.teleportToStart,
                         action.followRoadsToStart,
                     )
                     _uiState.update { it.copy(showRoutesSheet = false) }
+                }
+
+                is MapAction.Teleport -> {
+                    mapController.teleportTo(action.position)
                 }
 
                 MapAction.PauseRouteReplay -> {

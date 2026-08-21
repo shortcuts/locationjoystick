@@ -43,7 +43,9 @@ Pause/Resume/Stop.
 Implemented as `RouteReplayEngine.jumpToNextWaypoint()` /
 `jumpToPreviousWaypoint()`, reusing the engine's existing
 `resumeWaypointIndex` pointer rather than tracking a separate discrete
-index. Not available for ephemeral (walk-here "Add next point") replay,
+index. When Follow roads has expanded the waypoint list, jumps snap to the
+nearest *named* waypoint via the engine's boundary-index list rather than
+the nearest expanded point. Not available for ephemeral (walk-here "Add next point") replay,
 which has no persisted waypoint list. Gated by `hideTeleportFeatures` like every other teleport entry point
 (@docs/features/hide-teleport.md), **and** by a separate, independent
 opt-in toggle — `AppSettings.showRouteJumpButtons` (Settings → Menus →
@@ -55,28 +57,39 @@ naturally on the next tick, same as reaching it by walking.
 
 ### Start Flow
 
-Starting a saved route offers three options, shown as buttons in a non-modal
-options panel on all three surfaces (a bottom sheet on the Routes screen and
-map long-press sheet, an in-place panel in the widget — see
-`LjRouteStartOptions` in `:core:designsystem`):
+Starting a saved route shows a bottom sheet (Routes screen, map long-press
+sheet, widget panel/floating map) with four checkboxes — Loop, Reverse,
+Return to location, and **Follow roads** — plus a standalone **Teleport**
+button and, at the bottom, **Cancel** / **Start**.
 
-- **Walk and start** — straight-line walk from the current position to the
-  route's first waypoint, then replay begins.
-- **Walk via roads and start** — same as above, but the walk to the first
-  waypoint follows roads via OSRM (foot profile) instead of a straight line.
-  Reuses the same OSRM backend ladder and straight-line fallback documented
-  in @docs/features/roaming.md's "Reliability" section — if road-following
-  fails, the affected leg falls back to a straight line and a message is
-  shown, same as the ad-hoc "Walk via roads" flow
-  (@docs/features/click-to-move.md).
-- **Teleport and start** — instantly teleports to the first waypoint, then
-  replay begins. Hidden when `hideTeleportFeatures` is on
-  (@docs/features/hide-teleport.md); the other two options are always shown.
+- **Follow roads** — when checked, road-following (via OSRM, foot profile)
+  applies to both the walk from the current position to the route's first
+  waypoint AND every leg between the route's own saved waypoints during
+  replay. Unchecked, both use straight-line interpolation (today's default
+  behavior). Per-leg OSRM failures fall back to a straight line for that
+  leg only; if any between-waypoint legs fell back, one summary message is
+  reported via `RoutingErrorReporter` (e.g. "Road-following partially
+  unavailable — 2 of 5 legs used straight-line paths"), mirroring
+  `RoamingEngine.planRoadFollowingRoute` (@docs/features/roaming.md).
+- **Teleport** — instantly teleports to the route's first waypoint (last,
+  if Reverse is checked). Does not start replay; the sheet stays open so
+  the user can still press Start afterward. Hidden when
+  `hideTeleportFeatures` is on (@docs/features/hide-teleport.md).
+- **Start** — walks (straight or via roads, per Follow roads) from the
+  current position to the first waypoint, then begins replay honoring
+  Loop/Reverse/Return to location and Follow roads for the between-waypoint
+  legs too.
 
-Implemented via a `followRoadsToStart: Boolean` flag threaded from each
-surface through `StartRouteReplayUseCase` / `RoutesViewModel.startReplay()`
-into `ReplayOrchestrator.startReplayWithWaypoints()`, which resolves the
-walk-to-start leg through `OsrmClient.resolveRoute()` when set.
+Implemented via a `followRoadsToStart: Boolean` flag (name unchanged, scope
+widened) threaded through `StartRouteReplayUseCase` / `RoutesViewModel.startReplay()`
+into `ReplayOrchestrator.handleStart()`, which now expands the route's
+waypoint list into a road-resolved path (`expandWaypointsForFollowRoads`,
+via `OsrmClient.resolveRoute()` per leg) before handing it to
+`RouteReplayEngine`, in addition to resolving the walk-to-start leg the
+same way it already did. `RouteReplayEngine` tracks which indices in the
+(possibly expanded) waypoint list are the route's real, named stops
+("boundary indices"), so Previous/Next Waypoint (below) keeps jumping
+between actual stops rather than the denser road-following points.
 
 ## Recording
 

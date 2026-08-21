@@ -558,14 +558,12 @@ class FloatingWidgetService :
                 isLooping: Boolean,
                 isReverse: Boolean,
                 isReturnToLocation: Boolean,
-                teleportToStart: Boolean,
                 followRoadsToStart: Boolean,
             ) = mapController.startRouteReplay(
                 routeId,
                 isLooping,
                 isReverse,
                 isReturnToLocation,
-                teleportToStart,
                 followRoadsToStart,
             )
 

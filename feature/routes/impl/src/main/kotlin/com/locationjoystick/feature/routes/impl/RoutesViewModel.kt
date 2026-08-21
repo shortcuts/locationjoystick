@@ -12,6 +12,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
@@ -46,6 +47,7 @@ class RoutesViewModel
         private val routeRepository: RouteRepository,
         private val locationRepository: LocationRepository,
         private val settingsRepository: SettingsRepository,
+        private val teleportUseCase: TeleportUseCase,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
         val uiState: StateFlow<RoutesUiState> =
@@ -126,23 +128,11 @@ class RoutesViewModel
             isLooping: Boolean = false,
             isReverse: Boolean = false,
             isReturnToLocation: Boolean = false,
-            teleportToStart: Boolean = false,
             followRoadsToStart: Boolean = false,
         ) {
             viewModelScope.launch {
                 val speedMs = settingsRepository.getRouteSpeedMs(route.speedProfileId).first()
                 val returnPosition = if (isReturnToLocation) locationRepository.currentPosition.value else null
-
-                if (teleportToStart && route.waypoints.isNotEmpty()) {
-                    val startWaypoint = if (isReverse) route.waypoints.last() else route.waypoints.first()
-                    context.startService(
-                        Intent(context, MockLocationService::class.java).apply {
-                            action = MockLocationService.ACTION_UPDATE_POSITION
-                            putExtra(AppConstants.ServiceConstants.EXTRA_LAT, startWaypoint.position.latitude)
-                            putExtra(AppConstants.ServiceConstants.EXTRA_LON, startWaypoint.position.longitude)
-                        },
-                    )
-                }
 
                 context.startService(
                     Intent(context, MockLocationService::class.java).apply {
@@ -159,6 +149,10 @@ class RoutesViewModel
                     },
                 )
             }
+        }
+
+        fun teleportTo(position: LatLng) {
+            viewModelScope.launch { teleportUseCase.execute(position) }
         }
 
         fun pauseReplay() {

@@ -308,6 +308,9 @@ class ReplayOrchestratorTest {
             coEvery {
                 osrmClient.resolveRoute(any(), LatLng(0.0, 0.0), LatLng(2.0, 2.0), true, any())
             } returns listOf(LatLng(0.0, 0.0), LatLng(1.0, 1.0), LatLng(2.0, 2.0))
+            coEvery {
+                osrmClient.resolveRoute(any(), LatLng(2.0, 2.0), LatLng(3.0, 3.0), true, any())
+            } returns listOf(LatLng(2.0, 2.0), LatLng(3.0, 3.0))
 
             orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4, followRoadsToStart = true)
 
@@ -334,5 +337,79 @@ class ReplayOrchestratorTest {
             orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4)
 
             coVerify(exactly = 0) { osrmClient.resolveRoute(any(), any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun handleStart_followRoadsToStart_expandsBetweenWaypointLegsBeforeReplay() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val w1 = LatLng(2.0, 2.0)
+            val w2 = LatLng(3.0, 3.0)
+            val w3 = LatLng(4.0, 4.0)
+            val route =
+                com.locationjoystick.core.model.Route(
+                    id = "route-1",
+                    name = "R",
+                    waypoints =
+                        listOf(
+                            com.locationjoystick.core.model.Waypoint("w1", w1, 0),
+                            com.locationjoystick.core.model.Waypoint("w2", w2, 1),
+                            com.locationjoystick.core.model.Waypoint("w3", w3, 2),
+                        ),
+                )
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
+            coEvery { osrmClient.resolveRoute(any(), LatLng(0.0, 0.0), w1, true, any()) } returns listOf(LatLng(0.0, 0.0), w1)
+            val betweenLeg1 = listOf(w1, LatLng(2.5, 2.5), w2)
+            val betweenLeg2 = listOf(w2, LatLng(3.5, 3.5), w3)
+            coEvery { osrmClient.resolveRoute(any(), w1, w2, true, any()) } returns betweenLeg1
+            coEvery { osrmClient.resolveRoute(any(), w2, w3, true, any()) } returns betweenLeg2
+
+            orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4, followRoadsToStart = true)
+
+            val expected = listOf(w1, LatLng(2.5, 2.5), w2, LatLng(3.5, 3.5), w3)
+            verify {
+                routeReplayEngine.start(
+                    waypoints = expected,
+                    speedMs = 1.4,
+                    isLooping = false,
+                    onPositionUpdate = any(),
+                    onComplete = any(),
+                    boundaryIndices = listOf(0, 2, 4),
+                )
+            }
+        }
+
+    @Test
+    fun handleStart_followRoadsToStart_reportsFallbackSummaryWhenALegFallsBack() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val w1 = LatLng(2.0, 2.0)
+            val w2 = LatLng(3.0, 3.0)
+            val w3 = LatLng(4.0, 4.0)
+            val route =
+                com.locationjoystick.core.model.Route(
+                    id = "route-1",
+                    name = "R",
+                    waypoints =
+                        listOf(
+                            com.locationjoystick.core.model.Waypoint("w1", w1, 0),
+                            com.locationjoystick.core.model.Waypoint("w2", w2, 1),
+                            com.locationjoystick.core.model.Waypoint("w3", w3, 2),
+                        ),
+                )
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
+            coEvery { osrmClient.resolveRoute(any(), LatLng(0.0, 0.0), w1, true, any()) } returns listOf(LatLng(0.0, 0.0), w1)
+            coEvery { osrmClient.resolveRoute(any(), w1, w2, true, any()) } returns listOf(w1, w2)
+            val onFallbackSlot = slot<(com.locationjoystick.core.routing.OsrmFailureReason) -> Unit>()
+            coEvery {
+                osrmClient.resolveRoute(any(), w2, w3, true, capture(onFallbackSlot))
+            } coAnswers {
+                onFallbackSlot.captured.invoke(com.locationjoystick.core.routing.OsrmFailureReason.Timeout)
+                listOf(w2, w3)
+            }
+
+            orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4, followRoadsToStart = true)
+
+            verify { routingErrorReporter.report(match { it.contains("1 of 2 legs") }) }
         }
 }

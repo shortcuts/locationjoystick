@@ -84,6 +84,15 @@ class RouteReplayEngine
         @Volatile private var isLooping: Boolean = false
 
         /**
+         * Indices into the (possibly road-expanded) waypoint list that correspond to the
+         * route's real, named stops. Defaults to the identity list (every index is a
+         * boundary) when [start] receives no explicit list, matching the pre-existing
+         * behavior. Used by [jumpToNextWaypoint]/[jumpToPreviousWaypoint] so Follow-roads
+         * expansion never changes which stop "next/previous waypoint" jumps to.
+         */
+        @Volatile private var boundaryIndices: List<Int> = emptyList()
+
+        /**
          * Starts a new route replay from the first waypoint.
          *
          * @param waypoints List of waypoints in order
@@ -91,6 +100,9 @@ class RouteReplayEngine
          * @param isLooping Whether to loop back to start when reaching end
          * @param onPositionUpdate Callback invoked each tick with new position
          * @param onComplete Callback invoked when replay finishes or stops
+         * @param boundaryIndices Indices of the route's real named stops within [waypoints].
+         *   Defaults to every index (identity) when null — the pre-existing behavior for
+         *   callers that never expand the waypoint list.
          */
         fun start(
             waypoints: List<LatLng>,
@@ -98,10 +110,12 @@ class RouteReplayEngine
             isLooping: Boolean = false,
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
+            boundaryIndices: List<Int>? = null,
         ) {
             savedWaypointsRef.set(waypoints)
             savedSpeedMs = speedMs
             this.isLooping = isLooping
+            this.boundaryIndices = boundaryIndices ?: waypoints.indices.toList()
             resumePosition = waypoints.firstOrNull()
             resumeWaypointIndex = 1
             launchReplay(onPositionUpdate, onComplete)
@@ -199,17 +213,32 @@ class RouteReplayEngine
             return waypoints[clamped]
         }
 
+        /**
+         * Nearest boundary index at or after [idx], clamped to the last boundary. Falls back to
+         * [idx] itself when no replay is active (empty [boundaryIndices]) — [jumpToWaypoint]
+         * discards it anyway via its own empty-waypoints guard.
+         */
+        private fun nextBoundaryAtOrAfter(idx: Int): Int = boundaryIndices.firstOrNull { it >= idx } ?: boundaryIndices.lastOrNull() ?: idx
+
+        /** Nearest boundary index strictly before [idx], clamped to the first boundary (or [idx], see above). */
+        private fun previousBoundaryBefore(idx: Int): Int = boundaryIndices.lastOrNull { it < idx } ?: boundaryIndices.firstOrNull() ?: idx
+
         /** Jumps to the waypoint currently being walked toward (index unchanged if already at the last one). */
         fun jumpToNextWaypoint(
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
-        ): LatLng? = jumpToWaypoint(resumeWaypointIndex, onPositionUpdate, onComplete)
+        ): LatLng? = jumpToWaypoint(nextBoundaryAtOrAfter(resumeWaypointIndex), onPositionUpdate, onComplete)
 
         /** Jumps to the waypoint before the one last departed from (index unchanged if already at the first one). */
         fun jumpToPreviousWaypoint(
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
-        ): LatLng? = jumpToWaypoint(resumeWaypointIndex - 2, onPositionUpdate, onComplete)
+        ): LatLng? =
+            jumpToWaypoint(
+                previousBoundaryBefore(previousBoundaryBefore(resumeWaypointIndex)),
+                onPositionUpdate,
+                onComplete,
+            )
 
         /**
          * Cancels any active replay job. Call from service onDestroy to stop movement
