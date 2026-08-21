@@ -1,16 +1,11 @@
 package com.locationjoystick.feature.map.impl
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -32,11 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.data.CooldownState
+import com.locationjoystick.core.data.toBadgeText
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
+import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
 import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
-import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.designsystem.component.RoutesPickerList
 import com.locationjoystick.core.model.startWaypoint
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -98,49 +95,11 @@ internal fun RoutesPickerSheet(
                 )
             }
         } else {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                Text(text = "Routes", style = MaterialTheme.typography.headlineSmall)
-                if (uiState.routes.isEmpty()) {
-                    Text(
-                        text = "No routes saved",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 16.dp),
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                        contentPadding = PaddingValues(vertical = 4.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        items(uiState.routes, key = { it.id }) { route ->
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
-                                        .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = route.name,
-                                        style = MaterialTheme.typography.titleMedium,
-                                    )
-                                    Text(
-                                        text = "${route.waypoints.size} waypoints",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                                Button(onClick = { selectedRouteId = route.id }) {
-                                    Icon(LjIcons.PlayArrow, contentDescription = "Start route")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            RoutesPickerList(
+                routes = uiState.routes,
+                onSelect = { selectedRouteId = it.id },
+                title = "Routes",
+            )
         }
     }
 }
@@ -169,8 +128,9 @@ internal fun FavoritesPickerSheet(
                     } else {
                         null
                     },
-                cooldownLabel = { fav ->
-                    (uiState.favoriteCooldownStates[fav.id] as? CooldownState.Cooling)?.toAdvisoryLabel()
+                cooldownBadgeText = { fav ->
+                    (uiState.favoriteCooldownStates[fav.id] ?: CooldownState.Ready)
+                        .toBadgeText(uiState.currentPosition, fav.position)
                 },
             )
         } else {
@@ -299,67 +259,6 @@ internal fun PendingTapSheet(
             ) {
                 Text("Close")
             }
-        }
-    }
-}
-
-@Composable
-internal fun FavoriteTargetDetail(
-    favorite: FavoriteLocation,
-    onSetLocation: () -> Unit,
-    onGoToLocation: () -> Unit,
-    onGoToLocationViaRoads: () -> Unit,
-    onDismiss: () -> Unit,
-    hideTeleportFeatures: Boolean = false,
-) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-    ) {
-        Text(favorite.name, style = MaterialTheme.typography.headlineSmall)
-        Text(
-            "${String.format("%.4f", favorite.position.latitude)}, " +
-                "${String.format("%.4f", favorite.position.longitude)}",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-
-        if (!hideTeleportFeatures) {
-            Button(
-                onClick = onSetLocation,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-            ) {
-                Text("Set location")
-            }
-        }
-        OutlinedButton(
-            onClick = onGoToLocation,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-        ) {
-            Text("Walk to location")
-        }
-        OutlinedButton(
-            onClick = onGoToLocationViaRoads,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-        ) {
-            Text("Walk via roads")
-        }
-        TextButton(
-            onClick = onDismiss,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        ) {
-            Text("Do nothing")
         }
     }
 }

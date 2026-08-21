@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,8 +28,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -36,7 +35,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -67,7 +65,10 @@ import com.locationjoystick.core.designsystem.LjInactive
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.UiConstants
+import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
+import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
+import com.locationjoystick.core.designsystem.component.RoutesPickerList
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
@@ -385,91 +386,41 @@ internal fun FavoritesFloatingView(
     ) {
         val selected = selectedFavorite
         if (selected != null) {
-            if (!hideTeleport) {
-                Button(
-                    onClick = {
-                        onTeleport(selected)
-                        selectedFavorite = null
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Teleport") }
-                Spacer(Modifier.height(8.dp))
-            }
-            OutlinedButton(
-                onClick = {
+            FavoriteTargetDetail(
+                favorite = selected,
+                onSetLocation = {
+                    onTeleport(selected)
+                    selectedFavorite = null
+                    onDismiss()
+                },
+                onGoToLocation = {
                     onWalk(selected)
                     selectedFavorite = null
                     onDismiss()
                 },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Walk", color = LjText) }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = {
+                onGoToLocationViaRoads = {
                     onWalkViaRoads(selected)
                     selectedFavorite = null
                     onDismiss()
                 },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Via roads", color = LjText) }
+                onDismiss = { selectedFavorite = null },
+                hideTeleportFeatures = hideTeleport,
+                showDismissButton = false,
+                textColor = LjText,
+            )
         } else {
-            Box(modifier = Modifier.weight(1f)) {
-                if (favorites.isEmpty()) {
-                    Text(
-                        text = "No favorites saved",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = LjText.copy(alpha = 0.6f),
-                    )
-                } else {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(favorites, key = { it.id }) { fav ->
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .background(
-                                            androidx.compose.ui.graphics.Color.White
-                                                .copy(alpha = 0.12f),
-                                            MaterialTheme.shapes.small,
-                                        ).padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = fav.name,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = LjText,
-                                    )
-                                    Text(
-                                        text = "${String.format(
-                                            "%.4f",
-                                            fav.position.latitude,
-                                        )}, ${String.format("%.4f", fav.position.longitude)}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = LjText.copy(alpha = 0.7f),
-                                    )
-                                    val badgeText =
-                                        (cooldownStates[fav.id] ?: CooldownState.Ready).toBadgeText(
-                                            currentPosition,
-                                            fav.position,
-                                        )
-                                    Spacer(Modifier.height(4.dp))
-                                    Text(
-                                        text = badgeText,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = LjText.copy(alpha = 0.5f),
-                                    )
-                                }
-                                Button(onClick = { selectedFavorite = fav }) {
-                                    Icon(LjIcons.PlayArrow, contentDescription = null)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            FavoritesList(
+                title = null,
+                favorites = favorites,
+                onSelect = { selectedFavorite = it },
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(0.dp),
+                rowBackground = Color.White.copy(alpha = 0.12f),
+                textColor = LjText,
+                cooldownBadgeText = { fav ->
+                    (cooldownStates[fav.id] ?: CooldownState.Ready).toBadgeText(currentPosition, fav.position)
+                },
+            )
             if (onAddFromHere != null) {
                 Spacer(Modifier.height(12.dp))
                 if (showAddForm) {
@@ -587,47 +538,14 @@ internal fun RoutesFloatingView(
                 textColor = LjText,
             )
         } else {
-            Box(modifier = Modifier.weight(1f)) {
-                if (routes.isEmpty()) {
-                    Text(
-                        text = "No routes saved",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = LjText.copy(alpha = 0.6f),
-                    )
-                } else {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(routes, key = { it.id }) { route ->
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .background(
-                                            Color.White.copy(alpha = 0.12f),
-                                            MaterialTheme.shapes.small,
-                                        ).padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = route.name,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = LjText,
-                                    )
-                                    Text(
-                                        text = "${route.waypoints.size} waypoints",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = LjText.copy(alpha = 0.7f),
-                                    )
-                                }
-                                Button(onClick = { selectedRouteId = route.id }) {
-                                    Icon(LjIcons.PlayArrow, contentDescription = null)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            RoutesPickerList(
+                routes = routes,
+                onSelect = { selectedRouteId = it.id },
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(0.dp),
+                rowBackground = Color.White.copy(alpha = 0.12f),
+                textColor = LjText,
+            )
         }
     }
 }

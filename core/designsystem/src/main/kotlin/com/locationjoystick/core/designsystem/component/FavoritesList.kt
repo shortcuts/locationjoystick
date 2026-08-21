@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.model.FavoriteLocation
@@ -30,37 +31,43 @@ import com.locationjoystick.core.model.LatLng
 /**
  * Shared composable for displaying a list of favorite locations.
  *
- * @param title Header text (e.g. "Favorites", "Jump to Favorite").
+ * @param title Header text (e.g. "Favorites", "Jump to Favorite"). Null skips the header entirely
+ *   — for embedding inside a container that already renders its own title.
  * @param favorites List of [FavoriteLocation] items to display.
  * @param onSelect Called with the selected [FavoriteLocation].
  * @param onSaveCurrentLocation Optional: when non-null, an Add icon button is shown in the header.
- * @param cooldownLabel Optional: returns a pre-formatted cooldown label for each favorite (e.g.
- *   "5m 30s · 2.3 km teleport"). When non-null for an item, a cooldown hint Surface is shown.
+ * @param cooldownBadgeText Optional: returns the full badge text for each favorite (e.g.
+ *   "Suggested wait: 5m 30s · 2.3 km teleport" or "1.2 km away"). When non-null, a badge is shown.
  */
 @Composable
 fun FavoritesList(
-    title: String,
+    title: String?,
     favorites: List<FavoriteLocation>,
     onSelect: (FavoriteLocation) -> Unit,
     modifier: Modifier = Modifier,
     onSaveCurrentLocation: (() -> Unit)? = null,
-    cooldownLabel: ((FavoriteLocation) -> String?)? = null,
+    cooldownBadgeText: ((FavoriteLocation) -> String)? = null,
+    contentPadding: PaddingValues = PaddingValues(16.dp),
+    rowBackground: Color = MaterialTheme.colorScheme.surfaceVariant,
+    textColor: Color = Color.Unspecified,
 ) {
     Column(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(contentPadding),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(title, style = MaterialTheme.typography.headlineSmall)
-            if (onSaveCurrentLocation != null) {
-                IconButton(onClick = onSaveCurrentLocation) {
-                    Icon(Icons.Default.Add, contentDescription = "Save current location")
+        if (title != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(title, style = MaterialTheme.typography.headlineSmall, color = textColor)
+                if (onSaveCurrentLocation != null) {
+                    IconButton(onClick = onSaveCurrentLocation) {
+                        Icon(Icons.Default.Add, contentDescription = "Save current location")
+                    }
                 }
             }
         }
@@ -69,6 +76,7 @@ fun FavoritesList(
             Text(
                 "No saved favorites yet",
                 style = MaterialTheme.typography.bodyMedium,
+                color = textColor,
                 modifier = Modifier.padding(top = 16.dp),
             )
         } else {
@@ -86,22 +94,21 @@ fun FavoritesList(
                             Modifier
                                 .fillMaxWidth()
                                 .background(
-                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    rowBackground,
                                     MaterialTheme.shapes.small,
                                 ).clickable { onSelect(favorite) }
                                 .padding(12.dp),
                     ) {
-                        Text(favorite.name, style = MaterialTheme.typography.titleMedium)
+                        Text(favorite.name, style = MaterialTheme.typography.titleMedium, color = textColor)
                         Text(
                             "${String.format("%.4f", favorite.position.latitude)}, " +
                                 "${String.format("%.4f", favorite.position.longitude)}",
                             style = MaterialTheme.typography.bodySmall,
+                            color = textColor,
                         )
-                        if (cooldownLabel != null) {
+                        if (cooldownBadgeText != null) {
                             Spacer(Modifier.height(6.dp))
-                            CooldownAdvisoryBadge(
-                                cooldownLabel.invoke(favorite)?.let { "Suggested wait: $it" } ?: "No wait needed",
-                            )
+                            CooldownAdvisoryBadge(cooldownBadgeText(favorite))
                         }
                     }
                 }
