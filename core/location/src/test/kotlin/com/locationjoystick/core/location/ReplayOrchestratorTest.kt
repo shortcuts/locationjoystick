@@ -379,6 +379,66 @@ class ReplayOrchestratorTest {
             }
         }
 
+    // Pins down that the *expanded* road-following path (not just the engine's
+    // waypoints arg, verified above) also feeds LocationRepository.routeWaypoints —
+    // the field the map's polyline actually reads (see docs/features/map.md).
+    @Test
+    fun handleStart_followRoadsToStart_setsRouteWaypointsToExpandedPath() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val w1 = LatLng(2.0, 2.0)
+            val w2 = LatLng(3.0, 3.0)
+            val w3 = LatLng(4.0, 4.0)
+            val route =
+                com.locationjoystick.core.model.Route(
+                    id = "route-1",
+                    name = "R",
+                    waypoints =
+                        listOf(
+                            com.locationjoystick.core.model.Waypoint("w1", w1, 0),
+                            com.locationjoystick.core.model.Waypoint("w2", w2, 1),
+                            com.locationjoystick.core.model.Waypoint("w3", w3, 2),
+                        ),
+                )
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
+            coEvery { osrmClient.resolveRoute(any(), LatLng(0.0, 0.0), w1, true, any()) } returns listOf(LatLng(0.0, 0.0), w1)
+            val betweenLeg1 = listOf(w1, LatLng(2.5, 2.5), w2)
+            val betweenLeg2 = listOf(w2, LatLng(3.5, 3.5), w3)
+            coEvery { osrmClient.resolveRoute(any(), w1, w2, true, any()) } returns betweenLeg1
+            coEvery { osrmClient.resolveRoute(any(), w2, w3, true, any()) } returns betweenLeg2
+
+            orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4, followRoadsToStart = true)
+
+            val expected = listOf(w1, LatLng(2.5, 2.5), w2, LatLng(3.5, 3.5), w3)
+            assertEquals(expected, locationRepository.routeWaypoints.value)
+        }
+
+    // Locks in that when the checkbox is off, the map still shows the saved
+    // straight-line path (raw, unexpanded) — a future change can't silently
+    // start expanding it unconditionally.
+    @Test
+    fun handleStart_followRoadsToStartFalse_setsRouteWaypointsToRawWaypoints() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val w1 = LatLng(2.0, 2.0)
+            val w2 = LatLng(3.0, 3.0)
+            val route =
+                com.locationjoystick.core.model.Route(
+                    id = "route-1",
+                    name = "R",
+                    waypoints =
+                        listOf(
+                            com.locationjoystick.core.model.Waypoint("w1", w1, 0),
+                            com.locationjoystick.core.model.Waypoint("w2", w2, 1),
+                        ),
+                )
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
+
+            orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4, followRoadsToStart = false)
+
+            assertEquals(listOf(w1, w2), locationRepository.routeWaypoints.value)
+        }
+
     @Test
     fun handleStart_followRoadsToStart_reportsFallbackSummaryWhenALegFallsBack() =
         runTest {

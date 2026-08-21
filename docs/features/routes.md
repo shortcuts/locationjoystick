@@ -91,6 +91,12 @@ same way it already did. `RouteReplayEngine` tracks which indices in the
 ("boundary indices"), so Previous/Next Waypoint (below) keeps jumping
 between actual stops rather than the denser road-following points.
 
+The same `replayWaypoints` list feeds `LocationRepository.routeWaypoints`, so the
+map's polyline (main screen and floating widget map, via `MapController`'s existing
+generic `routeTrace` plumbing) shows the resolved road-following path during replay,
+not the route's saved straight-line waypoints — reverting to the saved shape once the
+session ends or restarts without Follow roads.
+
 ## Recording
 
 - Collect location every `AppConstants.LocationConstants.UPDATE_INTERVAL_MS` ms.
