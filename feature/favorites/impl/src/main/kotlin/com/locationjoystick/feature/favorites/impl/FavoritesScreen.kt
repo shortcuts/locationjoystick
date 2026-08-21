@@ -475,6 +475,7 @@ private fun AddFavoriteSheet(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditFavoriteDialog(
     favorite: com.locationjoystick.core.model.FavoriteLocation,
@@ -485,56 +486,53 @@ private fun EditFavoriteDialog(
     var lat by remember(favorite) { mutableStateOf(favorite.position.latitude.toString()) }
     var lon by remember(favorite) { mutableStateOf(favorite.position.longitude.toString()) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Edit Favorite") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name") },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                )
-                OutlinedTextField(
-                    value = lat,
-                    onValueChange = { lat = it },
-                    label = { Text("Latitude") },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                )
-                OutlinedTextField(
-                    value = lon,
-                    onValueChange = { lon = it },
-                    label = { Text("Longitude") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.fillMaxWidth().padding(16.dp)) {
+            Text("Edit Favorite", style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Name") },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+            )
+            OutlinedTextField(
+                value = lat,
+                onValueChange = { lat = it },
+                label = { Text("Latitude") },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+            )
+            OutlinedTextField(
+                value = lon,
+                onValueChange = { lon = it },
+                label = { Text("Longitude") },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+                TextButton(
+                    onClick = {
+                        val latVal = lat.toLocaleDoubleOrNull()
+                        val lonVal = lon.toLocaleDoubleOrNull()
+                        if (name.isNotEmpty() && latVal != null && lonVal != null) {
+                            onSave(name, latVal, lonVal)
+                        }
+                    },
+                ) {
+                    Text("Save")
+                }
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val latVal = lat.toLocaleDoubleOrNull()
-                    val lonVal = lon.toLocaleDoubleOrNull()
-                    if (name.isNotEmpty() && latVal != null && lonVal != null) {
-                        onSave(name, latVal, lonVal)
-                    }
-                },
-            ) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
+        }
+    }
 }
 
 @Composable

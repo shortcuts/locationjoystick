@@ -29,8 +29,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -394,6 +396,7 @@ private fun CompassOrientationSection(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CompassCalibrationDialog(
     cx: Float,
@@ -406,42 +409,39 @@ private fun CompassCalibrationDialog(
     var currentCy by remember { mutableFloatStateOf(cy) }
     var currentRadius by remember { mutableFloatStateOf(radius) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Calibrate compass region") },
-        text = {
-            Column {
-                Text(
-                    "Drag the circle over where the compass appears on your game screen.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(12.dp))
-                PhoneScreenPreview(
-                    cx = currentCx,
-                    cy = currentCy,
-                    radius = currentRadius,
-                    onPositionChange = { newCx, newCy ->
-                        currentCx = newCx
-                        currentCy = newCy
-                    },
-                )
-                Spacer(Modifier.height(8.dp))
-                Text("Circle size", style = MaterialTheme.typography.bodySmall)
-                Slider(
-                    value = currentRadius,
-                    onValueChange = { currentRadius = it },
-                    valueRange = 0.02f..0.2f,
-                )
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.fillMaxWidth().padding(16.dp)) {
+            Text("Calibrate compass region", style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "Drag the circle over where the compass appears on your game screen.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(12.dp))
+            PhoneScreenPreview(
+                cx = currentCx,
+                cy = currentCy,
+                radius = currentRadius,
+                onPositionChange = { newCx, newCy ->
+                    currentCx = newCx
+                    currentCy = newCy
+                },
+            )
+            Spacer(Modifier.height(8.dp))
+            Text("Circle size", style = MaterialTheme.typography.bodySmall)
+            Slider(
+                value = currentRadius,
+                onValueChange = { currentRadius = it },
+                valueRange = 0.02f..0.2f,
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(onClick = { onConfirm(currentCx, currentCy, currentRadius) }) { Text("Done") }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(currentCx, currentCy, currentRadius) }) { Text("Done") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        },
-    )
+        }
+    }
 }
 
 @Composable
