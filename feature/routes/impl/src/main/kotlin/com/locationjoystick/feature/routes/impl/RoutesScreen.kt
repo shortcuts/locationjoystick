@@ -1,7 +1,6 @@
 package com.locationjoystick.feature.routes.impl
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,13 +13,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -33,13 +32,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LoadingIndicator
 import com.locationjoystick.core.location.rememberSpoofToggleState
@@ -243,6 +242,7 @@ internal fun RoutesScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RouteCard(
     route: com.locationjoystick.core.model.Route,
@@ -367,102 +367,39 @@ private fun RouteCard(
     }
 
     if (showStartDialog) {
-        StartRouteDialog(
-            onDismiss = { showStartDialog = false },
-            onStart = { isLooping, isReverse, isReturnToLocation, teleportToStart, followRoadsToStart ->
-                onStartReplay(route, isLooping, isReverse, isReturnToLocation, teleportToStart, followRoadsToStart)
-                showStartDialog = false
-            },
-            hideTeleport = hideTeleportFeatures,
-        )
-    }
-}
-
-@Composable
-private fun StartRouteDialog(
-    onDismiss: () -> Unit,
-    onStart: (
-        isLooping: Boolean,
-        isReverse: Boolean,
-        isReturnToLocation: Boolean,
-        teleportToStart: Boolean,
-        followRoadsToStart: Boolean,
-    ) -> Unit,
-    hideTeleport: Boolean = false,
-) {
-    var loop by remember { mutableStateOf(false) }
-    var reverse by remember { mutableStateOf(false) }
-    var returnToLocation by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Start route") },
-        text = {
-            Column {
-                CheckboxRow(
-                    label = "Loop (restart when done)",
-                    checked = loop,
-                    enabled = !returnToLocation,
-                    onCheckedChange = { loop = it },
-                )
-                CheckboxRow(label = "Reverse (walk backwards)", checked = reverse, onCheckedChange = { reverse = it })
-                CheckboxRow(
-                    label = "Return to location",
-                    checked = returnToLocation,
-                    enabled = !loop,
-                    onCheckedChange = { returnToLocation = it },
-                )
+        ModalBottomSheet(
+            onDismissRequest = { showStartDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Text("Start route", style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(12.dp))
-                OutlinedButton(
-                    onClick = { onStart(loop, reverse, returnToLocation && !loop, false, true) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Walk via roads and start")
-                }
-                if (!hideTeleport) {
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedButton(
-                        onClick = { onStart(loop, reverse, returnToLocation && !loop, true, false) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text("Teleport and start")
-                    }
-                }
+                var loop by remember { mutableStateOf(false) }
+                var reverse by remember { mutableStateOf(false) }
+                var returnToLocation by remember { mutableStateOf(false) }
+                LjRouteStartOptions(
+                    loop = loop,
+                    onLoopChange = { loop = it },
+                    reverse = reverse,
+                    onReverseChange = { reverse = it },
+                    returnToLocation = returnToLocation,
+                    onReturnToLocationChange = { returnToLocation = it },
+                    onWalkAndStart = {
+                        onStartReplay(route, loop, reverse, returnToLocation && !loop, false, false)
+                        showStartDialog = false
+                    },
+                    onWalkViaRoadsAndStart = {
+                        onStartReplay(route, loop, reverse, returnToLocation && !loop, false, true)
+                        showStartDialog = false
+                    },
+                    onTeleportAndStart = {
+                        onStartReplay(route, loop, reverse, returnToLocation && !loop, true, false)
+                        showStartDialog = false
+                    },
+                    hideTeleport = hideTeleportFeatures,
+                )
             }
-        },
-        confirmButton = {
-            TextButton(onClick = { onStart(loop, reverse, returnToLocation && !loop, false, false) }) {
-                Text("Walk and start")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
-}
-
-@Composable
-private fun CheckboxRow(
-    label: String,
-    checked: Boolean,
-    enabled: Boolean = true,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(enabled = enabled) { onCheckedChange(!checked) }
-                .padding(vertical = 4.dp),
-    ) {
-        Checkbox(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
-        Text(
-            text = label,
-            color = if (enabled) Color.Unspecified else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-        )
+        }
     }
 }
 

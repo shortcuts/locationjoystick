@@ -55,9 +55,10 @@ naturally on the next tick, same as reaching it by walking.
 
 ### Start Flow
 
-Starting a saved route offers three options, shown as buttons in the "Start
-route" dialog on all three surfaces (Routes screen, map long-press sheet,
-widget panel/floating map):
+Starting a saved route offers three options, shown as buttons in a non-modal
+options panel on all three surfaces (a bottom sheet on the Routes screen and
+map long-press sheet, an in-place panel in the widget — see
+`LjRouteStartOptions` in `:core:designsystem`):
 
 - **Walk and start** — straight-line walk from the current position to the
   route's first waypoint, then replay begins.
@@ -73,7 +74,7 @@ widget panel/floating map):
   (@docs/features/hide-teleport.md); the other two options are always shown.
 
 Implemented via a `followRoadsToStart: Boolean` flag threaded from each
-dialog through `StartRouteReplayUseCase` / `RoutesViewModel.startReplay()`
+surface through `StartRouteReplayUseCase` / `RoutesViewModel.startReplay()`
 into `ReplayOrchestrator.startReplayWithWaypoints()`, which resolves the
 walk-to-start leg through `OsrmClient.resolveRoute()` when set.
 

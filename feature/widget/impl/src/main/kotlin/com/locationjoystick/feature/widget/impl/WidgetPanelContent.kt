@@ -67,7 +67,7 @@ import com.locationjoystick.core.designsystem.LjInactive
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.UiConstants
-import com.locationjoystick.core.designsystem.component.LjCheckboxRow
+import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
@@ -559,48 +559,31 @@ internal fun RoutesFloatingView(
             var reverse by remember(routeId) { mutableStateOf(false) }
             var returnToLocation by remember(routeId) { mutableStateOf(false) }
 
-            LjCheckboxRow(title = "Loop", checked = loop, onCheckedChange = { loop = it }, enabled = !returnToLocation, textColor = LjText)
-            LjCheckboxRow(title = "Reverse", checked = reverse, onCheckedChange = { reverse = it }, textColor = LjText)
-            LjCheckboxRow(title = "Return to location", checked = returnToLocation, onCheckedChange = {
-                returnToLocation = it
-            }, enabled = !loop, textColor = LjText)
-
-            Spacer(Modifier.height(20.dp))
-
-            Button(
-                onClick = {
+            LjRouteStartOptions(
+                loop = loop,
+                onLoopChange = { loop = it },
+                reverse = reverse,
+                onReverseChange = { reverse = it },
+                returnToLocation = returnToLocation,
+                onReturnToLocationChange = { returnToLocation = it },
+                onWalkAndStart = {
                     onStartRoute(routeId, loop, reverse, returnToLocation && !loop, false, false)
                     selectedRouteId = null
                     onDismiss()
                 },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Walk and start", color = LjText)
-            }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = {
+                onWalkViaRoadsAndStart = {
                     onStartRoute(routeId, loop, reverse, returnToLocation && !loop, false, true)
                     selectedRouteId = null
                     onDismiss()
                 },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Walk via roads and start", color = LjText)
-            }
-            if (!hideTeleport) {
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = {
-                        onStartRoute(routeId, loop, reverse, returnToLocation && !loop, true, false)
-                        selectedRouteId = null
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Teleport and start", color = LjText)
-                }
-            }
+                onTeleportAndStart = {
+                    onStartRoute(routeId, loop, reverse, returnToLocation && !loop, true, false)
+                    selectedRouteId = null
+                    onDismiss()
+                },
+                hideTeleport = hideTeleport,
+                textColor = LjText,
+            )
         } else {
             Box(modifier = Modifier.weight(1f)) {
                 if (routes.isEmpty()) {

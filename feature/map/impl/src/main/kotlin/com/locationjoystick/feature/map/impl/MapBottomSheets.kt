@@ -17,6 +17,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -34,7 +35,7 @@ import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.FavoritesList
-import com.locationjoystick.core.designsystem.component.LjCheckboxRow
+import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
 import com.locationjoystick.core.model.FavoriteLocation
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,72 +47,101 @@ internal fun RoutesPickerSheet(
     var selectedRouteId by remember { mutableStateOf<String?>(null) }
 
     ModalBottomSheet(
-        onDismissRequest = { onAction(MapAction.CloseRoutesSheet) },
+        onDismissRequest = {
+            selectedRouteId = null
+            onAction(MapAction.CloseRoutesSheet)
+        },
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            Text(text = "Routes", style = MaterialTheme.typography.headlineSmall)
-            if (uiState.routes.isEmpty()) {
-                Text(
-                    text = "No routes saved",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 16.dp),
+        val routeId = selectedRouteId
+        if (routeId != null) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { selectedRouteId = null }) {
+                        Icon(LjIcons.ArrowBack, contentDescription = "Back")
+                    }
+                    Text(
+                        text = uiState.routes.find { it.id == routeId }?.name ?: "Start route",
+                        style = MaterialTheme.typography.headlineSmall,
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                var loop by remember(routeId) { mutableStateOf(false) }
+                var reverse by remember(routeId) { mutableStateOf(false) }
+                var returnToLocation by remember(routeId) { mutableStateOf(false) }
+                LjRouteStartOptions(
+                    loop = loop,
+                    onLoopChange = { loop = it },
+                    reverse = reverse,
+                    onReverseChange = { reverse = it },
+                    returnToLocation = returnToLocation,
+                    onReturnToLocationChange = { returnToLocation = it },
+                    onWalkAndStart = {
+                        onAction(
+                            MapAction.StartRouteReplay(routeId, loop, reverse, returnToLocation && !loop, false, false),
+                        )
+                        selectedRouteId = null
+                    },
+                    onWalkViaRoadsAndStart = {
+                        onAction(
+                            MapAction.StartRouteReplay(routeId, loop, reverse, returnToLocation && !loop, false, true),
+                        )
+                        selectedRouteId = null
+                    },
+                    onTeleportAndStart = {
+                        onAction(
+                            MapAction.StartRouteReplay(routeId, loop, reverse, returnToLocation && !loop, true, false),
+                        )
+                        selectedRouteId = null
+                    },
+                    hideTeleport = uiState.hideTeleportFeatures,
                 )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                    contentPadding = PaddingValues(vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(uiState.routes, key = { it.id }) { route ->
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
-                                    .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = route.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                )
-                                Text(
-                                    text = "${route.waypoints.size} waypoints",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            Button(onClick = { selectedRouteId = route.id }) {
-                                Icon(LjIcons.PlayArrow, contentDescription = "Start route")
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Text(text = "Routes", style = MaterialTheme.typography.headlineSmall)
+                if (uiState.routes.isEmpty()) {
+                    Text(
+                        text = "No routes saved",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 16.dp),
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                        contentPadding = PaddingValues(vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(uiState.routes, key = { it.id }) { route ->
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
+                                        .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = route.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                    )
+                                    Text(
+                                        text = "${route.waypoints.size} waypoints",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                Button(onClick = { selectedRouteId = route.id }) {
+                                    Icon(LjIcons.PlayArrow, contentDescription = "Start route")
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
-
-    selectedRouteId?.let { routeId ->
-        StartRouteDialog(
-            onDismiss = { selectedRouteId = null },
-            onStart = { isLooping, isReverse, isReturnToLocation, teleportToStart, followRoadsToStart ->
-                onAction(
-                    MapAction.StartRouteReplay(
-                        routeId,
-                        isLooping,
-                        isReverse,
-                        isReturnToLocation,
-                        teleportToStart,
-                        followRoadsToStart,
-                    ),
-                )
-                selectedRouteId = null
-            },
-            hideTeleport = uiState.hideTeleportFeatures,
-        )
     }
 }
 
@@ -360,66 +390,6 @@ internal fun SaveCurrentLocationDialog(
                 },
             ) {
                 Text("Save")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
-}
-
-@Composable
-private fun StartRouteDialog(
-    onDismiss: () -> Unit,
-    onStart: (
-        isLooping: Boolean,
-        isReverse: Boolean,
-        isReturnToLocation: Boolean,
-        teleportToStart: Boolean,
-        followRoadsToStart: Boolean,
-    ) -> Unit,
-    hideTeleport: Boolean = false,
-) {
-    var loop by remember { mutableStateOf(false) }
-    var reverse by remember { mutableStateOf(false) }
-    var returnToLocation by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Start route") },
-        text = {
-            Column {
-                LjCheckboxRow(title = "Loop", checked = loop, enabled = !returnToLocation, onCheckedChange = { loop = it })
-                LjCheckboxRow(title = "Reverse", checked = reverse, onCheckedChange = { reverse = it })
-                LjCheckboxRow(
-                    title = "Return to location",
-                    checked = returnToLocation,
-                    enabled = !loop,
-                    onCheckedChange = { returnToLocation = it },
-                )
-                Spacer(Modifier.height(12.dp))
-                OutlinedButton(
-                    onClick = { onStart(loop, reverse, returnToLocation && !loop, false, true) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Walk via roads and start")
-                }
-                if (!hideTeleport) {
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedButton(
-                        onClick = { onStart(loop, reverse, returnToLocation && !loop, true, false) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text("Teleport and start")
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onStart(loop, reverse, returnToLocation && !loop, false, false) }) {
-                Text("Walk and start")
             }
         },
         dismissButton = {

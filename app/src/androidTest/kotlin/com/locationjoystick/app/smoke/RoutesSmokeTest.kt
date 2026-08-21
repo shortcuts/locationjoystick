@@ -62,8 +62,8 @@ class RoutesSmokeTest : BaseSmokeTest() {
     fun start_route_dialog_shows_all_options() {
         composeRule.onNodeWithContentDescription("Start route").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Loop (restart when done)").assertIsDisplayed()
-        composeRule.onNodeWithText("Reverse (walk backwards)").assertIsDisplayed()
+        composeRule.onNodeWithText("Loop").assertIsDisplayed()
+        composeRule.onNodeWithText("Reverse").assertIsDisplayed()
         composeRule.onNodeWithText("Return to location").assertIsDisplayed()
         composeRule.onNodeWithText("Walk and start").assertIsDisplayed()
         composeRule.onNodeWithText("Teleport and start").assertIsDisplayed()
