@@ -142,4 +142,46 @@ class LocationLoopActionTest {
             )
         assertEquals(FollowerActiveAction.BOOTSTRAP, action)
     }
+
+    @Test
+    fun `widget overlay starts while running and not hidden`() {
+        val action = computeWidgetOverlayAction(state = MockLocationState.RUNNING, hideWidgetOverlay = false)
+        assertEquals(WidgetOverlayAction.START, action)
+    }
+
+    @Test
+    fun `widget overlay stops while running and hidden`() {
+        val action = computeWidgetOverlayAction(state = MockLocationState.RUNNING, hideWidgetOverlay = true)
+        assertEquals(WidgetOverlayAction.STOP, action)
+    }
+
+    @Test
+    fun `widget overlay stops while paused and hidden`() {
+        val action = computeWidgetOverlayAction(state = MockLocationState.PAUSED, hideWidgetOverlay = true)
+        assertEquals(WidgetOverlayAction.STOP, action)
+    }
+
+    @Test
+    fun `widget overlay is a no-op while idle regardless of the hide setting`() {
+        assertEquals(
+            WidgetOverlayAction.NO_OP,
+            computeWidgetOverlayAction(state = MockLocationState.IDLE, hideWidgetOverlay = false),
+        )
+        assertEquals(
+            WidgetOverlayAction.NO_OP,
+            computeWidgetOverlayAction(state = MockLocationState.IDLE, hideWidgetOverlay = true),
+        )
+    }
+
+    @Test
+    fun `widget overlay is a no-op while in error regardless of the hide setting`() {
+        assertEquals(
+            WidgetOverlayAction.NO_OP,
+            computeWidgetOverlayAction(state = MockLocationState.ERROR, hideWidgetOverlay = false),
+        )
+        assertEquals(
+            WidgetOverlayAction.NO_OP,
+            computeWidgetOverlayAction(state = MockLocationState.ERROR, hideWidgetOverlay = true),
+        )
+    }
 }

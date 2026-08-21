@@ -83,3 +83,29 @@ internal fun computeFollowerActiveAction(
         !leaderActive && spoofingStarted && currentState == MockLocationState.RUNNING -> FollowerActiveAction.PAUSE
         else -> FollowerActiveAction.NO_OP
     }
+
+/** Decision for the "Hide floating widget" live-toggle collector in [MockLocationService.observeLocationState]. */
+internal enum class WidgetOverlayAction {
+    /** Start (or leave running) the widget overlay service. */
+    START,
+
+    /** Stop the widget overlay service. */
+    STOP,
+
+    /** Not currently spoofing — leave the overlay service untouched either way. */
+    NO_OP,
+}
+
+/**
+ * Pure decision for whether the widget overlay service should be started or stopped when the
+ * "Hide floating widget" setting changes mid-session (not just at the RUNNING transition).
+ */
+internal fun computeWidgetOverlayAction(
+    state: MockLocationState,
+    hideWidgetOverlay: Boolean,
+): WidgetOverlayAction =
+    when {
+        state == MockLocationState.IDLE || state == MockLocationState.ERROR -> WidgetOverlayAction.NO_OP
+        hideWidgetOverlay -> WidgetOverlayAction.STOP
+        else -> WidgetOverlayAction.START
+    }

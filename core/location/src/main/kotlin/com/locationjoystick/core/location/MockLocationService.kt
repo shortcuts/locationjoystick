@@ -259,10 +259,9 @@ class MockLocationService : Service() {
                             }
                         }
                         if (Settings.canDrawOverlays(this@MockLocationService)) {
+                            // Widget overlay is started by the reactive collector below, which also
+                            // reacts to getHideWidgetOverlay() flipping mid-session, not just here.
                             startService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))
-                            if (!settingsRepository.getHideWidgetOverlay().first()) {
-                                startService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
-                            }
                             Log.i(TAG, "Overlay services started")
                         } else {
                             Log.i(TAG, "SYSTEM_ALERT_WINDOW not granted — skipping overlay start")
@@ -344,6 +343,22 @@ class MockLocationService : Service() {
                             hideNotification,
                         ),
                     )
+                }
+        }
+        // Reactive widget-overlay toggle — the RUNNING branch above only reads this setting at
+        // the transition to RUNNING, so flipping it mid-session had no effect until this
+        // collector was added (see docs/features/widget.md, "Hiding the Overlay").
+        serviceScope.launch {
+            combine(_state, settingsRepository.getHideWidgetOverlay()) { state, hideWidget -> state to hideWidget }
+                .distinctUntilChanged()
+                .collect { (state, hideWidget) ->
+                    if (!Settings.canDrawOverlays(this@MockLocationService)) return@collect
+                    val intent = Intent().setClassName(packageName, WIDGET_SERVICE_CLASS)
+                    when (computeWidgetOverlayAction(state, hideWidget)) {
+                        WidgetOverlayAction.START -> startService(intent)
+                        WidgetOverlayAction.STOP -> stopService(intent)
+                        WidgetOverlayAction.NO_OP -> Unit
+                    }
                 }
         }
         // Jitter and realism settings — each updates a @Volatile field consumed by captureSnapshot().
