@@ -137,10 +137,6 @@ internal sealed class SettingsAction {
         val enabled: Boolean,
     ) : SettingsAction()
 
-    data class SetBypassMockLocationCheck(
-        val enabled: Boolean,
-    ) : SettingsAction()
-
     data class SetTapToWalkOverlayEnabled(
         val enabled: Boolean,
     ) : SettingsAction()

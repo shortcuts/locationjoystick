@@ -129,7 +129,6 @@ class SettingsViewModel
             val hideWidgetOverlay: Boolean? = null,
             val hideForegroundNotification: Boolean? = null,
             val showRouteJumpButtons: Boolean? = null,
-            val bypassMockLocationCheck: Boolean? = null,
         )
 
         private val mutableDraft = MutableStateFlow(DraftState())
@@ -205,8 +204,6 @@ class SettingsViewModel
                     hideForegroundNotification =
                         draftState.hideForegroundNotification ?: snapshot.hideForegroundNotification,
                     showRouteJumpButtons = draftState.showRouteJumpButtons ?: snapshot.showRouteJumpButtons,
-                    bypassMockLocationCheck =
-                        draftState.bypassMockLocationCheck ?: snapshot.bypassMockLocationCheck,
                     compassTrackingEnabled = compass.enabled,
                     isCompassServiceGranted = isServiceGranted,
                     compassRegionCxPct = compass.cx,
@@ -367,10 +364,6 @@ class SettingsViewModel
             mutableDraft.update { it.copy(showRouteJumpButtons = enabled) }
         }
 
-        fun setBypassMockLocationCheck(enabled: Boolean) {
-            mutableDraft.update { it.copy(bypassMockLocationCheck = enabled) }
-        }
-
         fun setTapToWalkOverlayEnabled(enabled: Boolean) {
             mutableDraft.update { it.copy(tapToWalkOverlayEnabled = enabled) }
         }
@@ -463,7 +456,6 @@ class SettingsViewModel
                             hideWidgetOverlay = state.hideWidgetOverlay,
                             hideForegroundNotification = state.hideForegroundNotification,
                             showRouteJumpButtons = state.showRouteJumpButtons,
-                            bypassMockLocationCheck = state.bypassMockLocationCheck,
                             roamingDefaults =
                                 d.roamingDefaults
                                     ?: settingsRepository.getRoamingDefaults().first(),
@@ -553,7 +545,7 @@ class SettingsViewModel
                     hideWidgetOverlay = state.hideWidgetOverlay,
                     hideForegroundNotification = state.hideForegroundNotification,
                     showRouteJumpButtons = state.showRouteJumpButtons,
-                    bypassMockLocationCheck = state.bypassMockLocationCheck,
+                    bypassMockLocationCheck = settingsRepository.getBypassMockLocationCheck().first(),
                 )
             return ExportData(
                 schemaVersion = AppConstants.ExportConstants.SCHEMA_VERSION,

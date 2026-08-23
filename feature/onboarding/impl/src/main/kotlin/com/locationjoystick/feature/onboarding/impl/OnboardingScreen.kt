@@ -91,6 +91,7 @@ fun OnboardingRoute(
     OnboardingScreen(
         uiState = uiState,
         onCheckPermissions = viewModel::checkPermissions,
+        onSkipMockLocationCheck = viewModel::skipMockLocationCheck,
         onSetupComplete = {
             viewModel.onSetupComplete()
             onSetupComplete()
@@ -106,6 +107,7 @@ fun OnboardingRoute(
 internal fun OnboardingScreen(
     uiState: OnboardingUiState,
     onCheckPermissions: () -> Unit,
+    onSkipMockLocationCheck: () -> Unit = {},
     onSetupComplete: () -> Unit,
     isSpoofing: Boolean = false,
     onToggleSpoofing: () -> Unit = {},
@@ -258,6 +260,8 @@ internal fun OnboardingScreen(
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     )
                 },
+                extraActionLabel = "This check doesn't work for me",
+                onExtraAction = onSkipMockLocationCheck,
             )
 
             Spacer(modifier = Modifier.height(32.dp))

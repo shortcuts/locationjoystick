@@ -20,27 +20,31 @@ Key files: `:feature:onboarding:impl/OnboardingScreen.kt`, `:feature:onboarding:
 | `SYSTEM_ALERT_WINDOW` | `Settings.canDrawOverlays(context)` |
 | Mock location | `AppOpsManager.checkOpNoThrow(OPSTR_MOCK_LOCATION)` |
 
-## Bypass Mock-Location Check
+## Skip Mock-Location Check
 
-Settings → Menus → Privacy → "Bypass mock location check"
-(`AppSettings.bypassMockLocationCheck`, DataStore key
-`bypass_mock_location_check`, default `false`) skips the
-`AppOpsManager.OPSTR_MOCK_LOCATION` check that step 4 (and the post-onboarding
-gate below) otherwise requires. Some modified mock-location apps evade
-AppOpsManager detection, so `isMockLocationEnabled()`
-(`core/common/util/AppOpsUtils.kt`) never reports `MODE_ALLOWED` for them
-even though mock location actually works — this setting lets those users
-finish onboarding and start spoofing anyway. Off by default, since for most
-users the check catches a real misconfiguration.
+Step 4's card ("Set as fake GPS app") has a secondary action, "This check
+doesn't work for me", next to the primary "Open Developer Options" button.
+Some modified mock-location apps evade `AppOpsManager` detection, so
+`isMockLocationEnabled()` (`core/common/util/AppOpsUtils.kt`) never reports
+`MODE_ALLOWED` for them even though mock location actually works. Tapping it
+calls `OnboardingViewModel.skipMockLocationCheck()`, which persists
+`AppSettings.bypassMockLocationCheck` (DataStore key
+`bypass_mock_location_check`, default `false`) and re-runs
+`checkPermissions()`, marking the step done immediately.
 
-Both gates honor it:
+This is an onboarding action, not a Settings toggle — there is no way to
+re-enable the check from the UI short of a fresh install or "Reset all
+data" (@docs/features/export-import.md).
+
+Both gates honor the persisted flag:
 - `OnboardingViewModel.checkPermissions()` treats mock location as enabled
-  when the bypass is on, regardless of what `isMockLocationEnabled()` reports.
+  once it's set, regardless of what `isMockLocationEnabled()` reports.
 - `LjNavHost`'s start-destination check (`app/navigation/LjNavHost.kt`) does
   the same — via `NavGateViewModel`, since the DataStore read is async and
   the nav graph's start destination is otherwise fixed at first composition,
   it corrects an already-chosen `ONBOARDING_ROUTE` to `IDLE_ROUTE` once the
-  bypass value loads and the other permissions are granted.
+  flag loads and the other permissions are granted. This is also what keeps
+  onboarding from ever being shown again after a skip.
 
 Round-trips through `ExportData` like `hideTeleportFeatures`.
 

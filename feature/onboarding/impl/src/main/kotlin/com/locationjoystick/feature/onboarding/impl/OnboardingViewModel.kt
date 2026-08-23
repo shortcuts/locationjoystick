@@ -55,4 +55,12 @@ class OnboardingViewModel
                 settingsRepository.setOnboardingComplete(true)
             }
         }
+
+        /** Modified mock-location setups can evade the AppOpsManager check even though spoofing works. */
+        fun skipMockLocationCheck() {
+            viewModelScope.launch {
+                settingsRepository.setBypassMockLocationCheck(true)
+                checkPermissions()
+            }
+        }
     }

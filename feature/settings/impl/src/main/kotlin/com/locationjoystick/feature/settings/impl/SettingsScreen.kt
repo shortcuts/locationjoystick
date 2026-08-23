@@ -364,10 +364,6 @@ fun SettingsRoute(
                     viewModel.setShowRouteJumpButtons(action.enabled)
                 }
 
-                is SettingsAction.SetBypassMockLocationCheck -> {
-                    viewModel.setBypassMockLocationCheck(action.enabled)
-                }
-
                 is SettingsAction.SetTapToWalkOverlayEnabled -> {
                     viewModel.setTapToWalkOverlayEnabled(action.enabled)
                 }
