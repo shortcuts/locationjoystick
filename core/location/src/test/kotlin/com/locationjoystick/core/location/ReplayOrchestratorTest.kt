@@ -1,5 +1,6 @@
 package com.locationjoystick.core.location
 
+import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
@@ -471,5 +472,43 @@ class ReplayOrchestratorTest {
             orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4, followRoadsToStart = true)
 
             verify { routingErrorReporter.report(match { it.contains("1 of 2 legs") }) }
+        }
+
+    @Test
+    fun handleEphemeralStart_ticksPublishTravelDirectionBearing() =
+        runTest {
+            var capturedCallback: ((LatLng) -> Unit)? = null
+            every {
+                routeReplayEngine.start(any(), any(), any(), any(), any(), any())
+            } answers {
+                capturedCallback = arg(3)
+            }
+
+            orchestrator.handleEphemeralStart(listOf(LatLng(0.0, 0.0), LatLng(2.0, 2.0)), 1.4)
+
+            val p1 = LatLng(0.0, 0.0)
+            val p2 = LatLng(1.0, 1.0)
+            capturedCallback?.invoke(p1)
+            capturedCallback?.invoke(p2)
+
+            val expected = calculateBearing(p1.latitude, p1.longitude, p2.latitude, p2.longitude).toFloat()
+            assertEquals(expected, locationRepository.currentBearing.value)
+        }
+
+    @Test
+    fun handleEphemeralStart_singleTick_doesNotSetBearing() =
+        runTest {
+            var capturedCallback: ((LatLng) -> Unit)? = null
+            every {
+                routeReplayEngine.start(any(), any(), any(), any(), any(), any())
+            } answers {
+                capturedCallback = arg(3)
+            }
+
+            orchestrator.handleEphemeralStart(listOf(LatLng(0.0, 0.0), LatLng(2.0, 2.0)), 1.4)
+
+            capturedCallback?.invoke(LatLng(0.0, 0.0))
+
+            assertEquals(null, locationRepository.currentBearing.value)
         }
 }

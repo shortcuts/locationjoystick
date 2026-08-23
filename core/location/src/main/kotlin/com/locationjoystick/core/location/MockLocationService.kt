@@ -320,6 +320,11 @@ class MockLocationService : Service() {
                 }
             }
         }
+        serviceScope.launch {
+            locationRepository.currentBearing.collect { bearing ->
+                if (bearing != null) currentBearing = bearing
+            }
+        }
         // Reactive notification refresh — source of truth is repository flows, not _state.
         // distinctUntilChanged prevents notify storm during 1 Hz position ticks.
         serviceScope.launch {

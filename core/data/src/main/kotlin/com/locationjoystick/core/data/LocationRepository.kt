@@ -40,6 +40,20 @@ class LocationRepository
         private val _currentPosition = MutableStateFlow<LatLng?>(null)
         val currentPosition: StateFlow<LatLng?> = _currentPosition.asStateFlow()
 
+        private val _currentBearing = MutableStateFlow<Float?>(null)
+
+        /**
+         * Bearing published by movement engines that don't go through
+         * MockLocationService's updatePositionWithVector directly (route replay, roaming).
+         * Null until the first real movement of a session. Consumed by
+         * MockLocationService's reactive collector to update its own `currentBearing` field.
+         */
+        val currentBearing: StateFlow<Float?> = _currentBearing.asStateFlow()
+
+        fun setBearingInternal(bearing: Float) {
+            _currentBearing.value = bearing
+        }
+
         private val _mockLocationState = MutableStateFlow(MockLocationState.IDLE)
         val mockLocationState: StateFlow<MockLocationState> = _mockLocationState.asStateFlow()
 

@@ -1,6 +1,7 @@
 package com.locationjoystick.core.data
 
 import android.util.Log
+import com.locationjoystick.core.common.util.BearingTracker
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingConfig
@@ -25,6 +26,8 @@ class RoamingRepository
 
         private val _isRoamingPaused = MutableStateFlow(false)
         val isRoamingPaused: StateFlow<Boolean> = _isRoamingPaused.asStateFlow()
+
+        private val bearingTracker = BearingTracker()
 
         fun pauseRoaming() {
             roamingEngine.pauseRoaming()
@@ -55,6 +58,7 @@ class RoamingRepository
                 config = config,
                 speedMs = speedMs,
                 onPositionUpdate = { position ->
+                    bearingTracker.advance(position)?.let { locationRepository.setBearingInternal(it) }
                     locationRepository.setPositionInternal(position)
                 },
                 onRouteUpdate = { waypoints ->

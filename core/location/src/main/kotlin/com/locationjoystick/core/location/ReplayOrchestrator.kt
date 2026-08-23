@@ -1,6 +1,7 @@
 package com.locationjoystick.core.location
 
 import android.util.Log
+import com.locationjoystick.core.common.util.BearingTracker
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
@@ -52,6 +53,8 @@ internal class ReplayOrchestrator(
 ) {
     /** Tracks the active scope.launch job so new starts can cancel it before launching. */
     private var activeReplayJob: Job? = null
+
+    private val bearingTracker = BearingTracker()
 
     fun handleStart(
         routeId: String,
@@ -176,6 +179,7 @@ internal class ReplayOrchestrator(
      */
     private fun tickPosition(pos: LatLng) {
         onPositionChange(pos.latitude, pos.longitude)
+        bearingTracker.advance(pos)?.let { locationRepository.setBearingInternal(it) }
         try {
             locationRepository.setPositionInternal(pos)
             pushLocationUpdate()

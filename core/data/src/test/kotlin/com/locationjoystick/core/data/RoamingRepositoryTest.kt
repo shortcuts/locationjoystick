@@ -1,5 +1,6 @@
 package com.locationjoystick.core.data
 
+import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingConfig
@@ -124,6 +125,31 @@ class RoamingRepositoryTest {
             capturedCallback?.invoke(testPosition)
 
             assertEquals(testPosition, fakeLocationRepository.currentPosition.first())
+
+            repository.stopRoaming()
+        }
+
+    @Test
+    fun `startRoaming onPositionUpdate publishes travel-direction bearing between ticks`() =
+        runTest {
+            val config = createDefaultConfig()
+            var capturedCallback: ((LatLng) -> Unit)? = null
+            every {
+                fakeRoamingEngine.startRoaming(any(), any(), any(), any(), any())
+            } answers {
+                capturedCallback = arg(4)
+                Job()
+            }
+
+            repository.startRoaming(config, speedMs = 1.4)
+
+            val p1 = LatLng(48.8566, 2.3522)
+            val p2 = LatLng(48.86, 2.36)
+            capturedCallback?.invoke(p1)
+            capturedCallback?.invoke(p2)
+
+            val expected = calculateBearing(p1.latitude, p1.longitude, p2.latitude, p2.longitude).toFloat()
+            assertEquals(expected, fakeLocationRepository.currentBearing.value)
 
             repository.stopRoaming()
         }

@@ -61,3 +61,4 @@ Public OSRM servers have no SLA and can throttle, error, or time out unpredictab
 - `RoamingRepository` owns `isRoaming` and `isRoamingPaused` `StateFlow`s.
 - `RoamingEngine` owns `activeJob` and the coroutine scope. Only one session active at a time — starting a new one awaits cancellation of the previous via `cancelAndJoin` before movement begins.
 - Completion (natural loop exit) fires `onComplete` callback → `RoamingRepository` resets mode and clears route waypoints.
+- `RoamingRepository` reports live travel-direction bearing between consecutive ticks via `LocationRepository.currentBearing`, the same mechanism route replay uses (@docs/features/routes.md, "Replay") — previously frozen at 0°/north for the whole roaming session.

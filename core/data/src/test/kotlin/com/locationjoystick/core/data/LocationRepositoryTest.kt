@@ -94,6 +94,21 @@ class LocationRepositoryTest {
             }
         }
 
+    // setBearingInternal
+
+    @Test
+    fun `setBearingInternal emits new bearing via currentBearing`() =
+        runTest {
+            repository.currentBearing.test {
+                assertNull(awaitItem())
+
+                repository.setBearingInternal(90.0f)
+
+                assertEquals(90.0f, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
     // updatePosition
 
     @Test

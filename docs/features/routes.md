@@ -18,7 +18,10 @@ Routes can also be imported from GPX files via the Routes screen overflow menu �
 ## Replay
 
 - Interpolate waypoints at speed (m/s).
-- Bearing via `atan2`.
+- Bearing: recomputed each tick from the previous to the current interpolated position
+  via `calculateBearing` (`core/common/util/GeoUtils.kt`), published through
+  `LocationRepository.currentBearing` and picked up by `MockLocationService` — covers
+  route replay, ephemeral replay, the walk-to-start-of-route phase, and waypoint jumps.
 - Advance: `speed * deltaTime`.
 - Snap at `AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS`.
 - Loop: smooth interpolation last→first waypoint.
