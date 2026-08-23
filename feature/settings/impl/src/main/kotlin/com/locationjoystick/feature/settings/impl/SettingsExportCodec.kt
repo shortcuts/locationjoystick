@@ -84,6 +84,7 @@ internal object SettingsExportCodec {
         settingsObj.put("hideWidgetOverlay", data.settings.hideWidgetOverlay)
         settingsObj.put("hideForegroundNotification", data.settings.hideForegroundNotification)
         settingsObj.put("showRouteJumpButtons", data.settings.showRouteJumpButtons)
+        settingsObj.put("bypassMockLocationCheck", data.settings.bypassMockLocationCheck)
         val roamingObj = JSONObject()
         roamingObj.put("radiusMeters", data.settings.roamingDefaults.radiusMeters)
         roamingObj.put("distanceMeters", data.settings.roamingDefaults.distanceMeters)
@@ -214,6 +215,7 @@ internal object SettingsExportCodec {
         val hideWidgetOverlay = settingsObj.optBoolean("hideWidgetOverlay", false)
         val hideForegroundNotification = settingsObj.optBoolean("hideForegroundNotification", false)
         val showRouteJumpButtons = settingsObj.optBoolean("showRouteJumpButtons", false)
+        val bypassMockLocationCheck = settingsObj.optBoolean("bypassMockLocationCheck", false)
         val roamingDefaultsObj = settingsObj.optJSONObject("roamingDefaults")
         val roamingDefaults =
             if (roamingDefaultsObj != null) {
@@ -247,6 +249,7 @@ internal object SettingsExportCodec {
                 hideWidgetOverlay = hideWidgetOverlay,
                 hideForegroundNotification = hideForegroundNotification,
                 showRouteJumpButtons = showRouteJumpButtons,
+                bypassMockLocationCheck = bypassMockLocationCheck,
                 roamingDefaults = roamingDefaults,
             )
 

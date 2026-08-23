@@ -14,6 +14,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,16 +34,19 @@ class OnboardingViewModel
         }
 
         fun checkPermissions() {
-            _uiState.update { current ->
-                current.copy(
-                    locationPermissionGranted =
-                        ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                        ) == PackageManager.PERMISSION_GRANTED,
-                    overlayPermissionGranted = isOverlayPermissionGranted(context),
-                    mockLocationEnabled = isMockLocationEnabled(context),
-                )
+            viewModelScope.launch {
+                val bypassMockLocationCheck = settingsRepository.getBypassMockLocationCheck().first()
+                _uiState.update { current ->
+                    current.copy(
+                        locationPermissionGranted =
+                            ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                            ) == PackageManager.PERMISSION_GRANTED,
+                        overlayPermissionGranted = isOverlayPermissionGranted(context),
+                        mockLocationEnabled = bypassMockLocationCheck || isMockLocationEnabled(context),
+                    )
+                }
             }
         }
 

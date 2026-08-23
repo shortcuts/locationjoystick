@@ -44,5 +44,6 @@ data class SettingsUiState(
     val hideWidgetOverlay: Boolean = false,
     val hideForegroundNotification: Boolean = false,
     val showRouteJumpButtons: Boolean = false,
+    val bypassMockLocationCheck: Boolean = false,
     val isDirty: Boolean = false,
 )

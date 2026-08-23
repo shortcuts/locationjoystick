@@ -1283,6 +1283,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         showRouteJumpButtonsFlow.value = enabled
     }
 
+    private val bypassMockLocationCheckFlow = MutableStateFlow(false)
+
+    override fun getBypassMockLocationCheck(): Flow<Boolean> = bypassMockLocationCheckFlow
+
+    override suspend fun setBypassMockLocationCheck(enabled: Boolean) {
+        bypassMockLocationCheckFlow.value = enabled
+    }
+
     override fun getSelectedHotLocationIds(): Flow<Set<String>> = flowOf(emptySet())
 
     override suspend fun setSelectedHotLocationIds(ids: Set<String>) = Unit
@@ -1410,6 +1418,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         hideWidgetOverlayFlow.value = false
         hideForegroundNotificationFlow.value = false
         showRouteJumpButtonsFlow.value = false
+        bypassMockLocationCheckFlow.value = false
         onboardingCompleteFlow.value = onboardingComplete
     }
 }

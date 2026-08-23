@@ -589,6 +589,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setShowRouteJumpButtons(enabled: Boolean) = Unit
 
+    override fun getBypassMockLocationCheck(): Flow<Boolean> = flowOf(false)
+
+    override suspend fun setBypassMockLocationCheck(enabled: Boolean) = Unit
+
     override fun getSelectedHotLocationIds(): Flow<Set<String>> = flowOf(emptySet())
 
     override suspend fun setSelectedHotLocationIds(ids: Set<String>) = Unit

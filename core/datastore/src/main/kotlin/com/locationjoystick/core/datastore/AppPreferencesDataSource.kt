@@ -197,6 +197,12 @@ interface PreferencesDataSource {
     /** Sets whether the route-replay jump-to-waypoint buttons are shown. */
     suspend fun setShowRouteJumpButtons(enabled: Boolean)
 
+    /** Gets whether the AppOpsManager mock-location check is bypassed. */
+    fun getBypassMockLocationCheck(): Flow<Boolean>
+
+    /** Sets whether the AppOpsManager mock-location check is bypassed. */
+    suspend fun setBypassMockLocationCheck(enabled: Boolean)
+
     /** Gets the list of recently searched locations, newest first. */
     fun getRecentSearches(): Flow<List<RecentSearch>>
 
@@ -330,6 +336,7 @@ data class SettingsSnapshot(
     val hideWidgetOverlay: Boolean = false,
     val hideForegroundNotification: Boolean = false,
     val showRouteJumpButtons: Boolean = false,
+    val bypassMockLocationCheck: Boolean = false,
 )
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -421,6 +428,7 @@ class AppPreferencesDataSource
             val HIDE_WIDGET_OVERLAY = booleanPreferencesKey("hide_widget_overlay")
             val HIDE_FOREGROUND_NOTIFICATION = booleanPreferencesKey("hide_foreground_notification")
             val SHOW_ROUTE_JUMP_BUTTONS = booleanPreferencesKey("show_route_jump_buttons")
+            val BYPASS_MOCK_LOCATION_CHECK = booleanPreferencesKey("bypass_mock_location_check")
             val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
             val ROUTES_SORT_NEWEST_FIRST = booleanPreferencesKey("routes_sort_newest_first")
             val FAVORITES_SORT_NEWEST_FIRST = booleanPreferencesKey("favorites_sort_newest_first")
@@ -740,6 +748,12 @@ class AppPreferencesDataSource
             dataStore.edit { prefs -> prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] = enabled }
         }
 
+        override fun getBypassMockLocationCheck(): Flow<Boolean> = pref(Keys.BYPASS_MOCK_LOCATION_CHECK, false)
+
+        override suspend fun setBypassMockLocationCheck(enabled: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] = enabled }
+        }
+
         override fun getRecentSearches(): Flow<List<RecentSearch>> =
             dataStore.data
                 .catch { e ->
@@ -894,6 +908,7 @@ class AppPreferencesDataSource
                 prefs[Keys.HIDE_WIDGET_OVERLAY] = snapshot.hideWidgetOverlay
                 prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] = snapshot.hideForegroundNotification
                 prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] = snapshot.showRouteJumpButtons
+                prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] = snapshot.bypassMockLocationCheck
                 prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] =
                     snapshot.jitterSpeedIdleVariationPct.coerceIn(
                         AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
@@ -981,6 +996,7 @@ class AppPreferencesDataSource
                         hideWidgetOverlay = prefs[Keys.HIDE_WIDGET_OVERLAY] ?: false,
                         hideForegroundNotification = prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] ?: false,
                         showRouteJumpButtons = prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] ?: false,
+                        bypassMockLocationCheck = prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] ?: false,
                         jitterSpeedIdleVariationPct =
                             prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT]
                                 ?: DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,

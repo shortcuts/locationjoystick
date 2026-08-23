@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -64,13 +65,18 @@ private fun fadeOutScale(): ExitTransition =
             animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f),
         )
 
-private fun allPermissionsGranted(context: Context): Boolean {
+private fun allPermissionsGranted(
+    context: Context,
+    bypassMockLocationCheck: Boolean,
+): Boolean {
     val locationGranted =
         ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.ACCESS_FINE_LOCATION,
         ) == PackageManager.PERMISSION_GRANTED
-    return locationGranted && isOverlayPermissionGranted(context) && isMockLocationEnabled(context)
+    return locationGranted &&
+        isOverlayPermissionGranted(context) &&
+        (bypassMockLocationCheck || isMockLocationEnabled(context))
 }
 
 @Composable
@@ -79,10 +85,24 @@ fun LjNavHost(
     onOpenDrawer: () -> Unit,
 ) {
     val context = LocalContext.current
+    // Default false for the first frame — the DataStore-backed value below settles a moment
+    // later and, if it flips this decision, corrects it via the LaunchedEffect below.
     val startDestination =
         remember {
-            if (allPermissionsGranted(context)) IDLE_ROUTE else ONBOARDING_ROUTE
+            if (allPermissionsGranted(context, bypassMockLocationCheck = false)) IDLE_ROUTE else ONBOARDING_ROUTE
         }
+
+    if (startDestination == ONBOARDING_ROUTE) {
+        val navGateViewModel: NavGateViewModel = hiltViewModel()
+        val bypassMockLocationCheck by navGateViewModel.bypassMockLocationCheck.collectAsStateWithLifecycle()
+        LaunchedEffect(bypassMockLocationCheck) {
+            if (bypassMockLocationCheck && allPermissionsGranted(context, bypassMockLocationCheck = true)) {
+                navController.navigate(IDLE_ROUTE) {
+                    popUpTo(ONBOARDING_ROUTE) { inclusive = true }
+                }
+            }
+        }
+    }
 
     NavHost(
         navController = navController,

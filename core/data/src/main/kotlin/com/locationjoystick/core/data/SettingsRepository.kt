@@ -268,6 +268,10 @@ class SettingsRepository
 
         suspend fun setShowRouteJumpButtons(enabled: Boolean) = dataSource.setShowRouteJumpButtons(enabled)
 
+        fun getBypassMockLocationCheck(): Flow<Boolean> = dataSource.getBypassMockLocationCheck()
+
+        suspend fun setBypassMockLocationCheck(enabled: Boolean) = dataSource.setBypassMockLocationCheck(enabled)
+
         fun getFloatingMapQuickWalk(): Flow<Boolean> = dataSource.getFloatingMapQuickWalk()
 
         fun getTapToWalkOverlayEnabled(): Flow<Boolean> = dataSource.getTapToWalkOverlayEnabled()

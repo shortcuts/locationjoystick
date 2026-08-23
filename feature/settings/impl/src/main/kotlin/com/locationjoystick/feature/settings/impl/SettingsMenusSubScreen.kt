@@ -314,6 +314,15 @@ private fun PrivacySection(
             "Adds Previous waypoint / Next waypoint buttons to route replay controls, " +
                 "for instantly teleporting between waypoints. Off by default.",
     )
+    Spacer(Modifier.height(8.dp))
+    LjCheckboxRow(
+        checked = uiState.bypassMockLocationCheck,
+        onCheckedChange = { onAction(SettingsAction.SetBypassMockLocationCheck(it)) },
+        title = "Bypass mock location check",
+        description =
+            "Skips the Android check that confirms mock location is enabled. Use this if a " +
+                "modified mock-location setup blocks that check from ever passing.",
+    )
 }
 
 @Composable
