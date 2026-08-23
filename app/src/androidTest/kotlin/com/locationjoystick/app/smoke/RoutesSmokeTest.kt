@@ -1,6 +1,8 @@
 package com.locationjoystick.app.smoke
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -68,7 +70,10 @@ class RoutesSmokeTest : BaseSmokeTest() {
         composeRule.onNodeWithText("Follow roads").assertIsDisplayed()
         composeRule.onNodeWithText("Teleport").assertIsDisplayed()
         composeRule.onNodeWithText("Cancel").assertIsDisplayed()
-        composeRule.onNodeWithText("Start").assertIsDisplayed()
+        // "Start" also matches the top bar's global spoof toggle, so exclude it by its contentDescription.
+        composeRule
+            .onNode(hasText("Start") and !hasContentDescription("Start location simulation"))
+            .assertIsDisplayed()
     }
 
     @Test
