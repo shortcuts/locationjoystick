@@ -727,6 +727,14 @@ class MockLocationService : Service() {
         currentBearing = bearing
     }
 
+    // Callers: JoystickOverlayService, on unlock/release — clears the stale motion vector left by
+    // updatePositionWithVector so realism ticks settle into idle jitter instead of re-randomizing
+    // around the frozen position as if still moving.
+    fun clearMotionVector() {
+        currentSpeedMs = 0.0f
+        currentBearing = 0.0f
+    }
+
     fun stopSpoofing() {
         // Cancel immediately (idempotent); null assignment deferred under mutex so the
         // RUNNING observer can't start a new loop between our cancel and the null write.

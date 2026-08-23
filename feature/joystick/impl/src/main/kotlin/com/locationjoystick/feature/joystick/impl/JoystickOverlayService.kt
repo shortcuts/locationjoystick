@@ -173,6 +173,10 @@ class JoystickOverlayService : OverlayService() {
         if (!value) {
             movementJob?.cancel()
             movementJob = null
+            if (locationRepository.currentMode.value !in ENGINE_OWNED_MODES) {
+                locationRepository.setMockMode(MockMode.TELEPORT)
+                mockLocationService?.clearMotionVector()
+            }
         }
         Log.d(TAG, "Joystick locked: $value")
     }
@@ -211,6 +215,7 @@ class JoystickOverlayService : OverlayService() {
                 movementJob?.cancel()
                 movementJob = null
                 locationRepository.setMockMode(MockMode.TELEPORT)
+                mockLocationService?.clearMotionVector()
                 Log.d(TAG, "Joystick released — movement stopped")
             }
         }
