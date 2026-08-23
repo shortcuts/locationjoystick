@@ -9,11 +9,15 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.rules.ActivityScenarioRule
+import androidx.test.platform.app.InstrumentationRegistry
 import com.locationjoystick.app.MainActivity
 
 typealias SmokeRule = AndroidComposeTestRule<ActivityScenarioRule<MainActivity>, MainActivity>
 
 fun SmokeRule.waitForIdleScreen() {
+    val uiAutomation = InstrumentationRegistry.getInstrumentation().uiAutomation
+    uiAutomation.executeShellCommand("input keyevent KEYCODE_WAKEUP").close()
+    uiAutomation.executeShellCommand("wm dismiss-keyguard").close()
     activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
     waitForIdle()
     waitForIdle()
