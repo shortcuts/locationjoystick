@@ -66,16 +66,22 @@ class WalkCoordinator
             locationRepository.setWalkTarget(finalTarget)
             locationRepository.setMockMode(MockMode.WALK_TO)
 
+            var lastBearing = 0f
             with(walkToEngine) {
                 activeWalkJob =
                     scope.launchWalkAlongRoute(
                         waypoints = waypoints,
                         onPositionUpdate = { newPos, speedMs, bearing ->
+                            lastBearing = bearing
                             locationRepository.updatePosition(newPos)
                             onPositionUpdate?.invoke(newPos, speedMs, bearing)
                         },
                         onArrival = {
                             Log.d(TAG, "Arrived at road-following destination $finalTarget")
+                            // Zero speed while mode is still WALK_TO — MockLocationService.
+                            // updatePositionWithVector() only accepts updates in JOYSTICK/WALK_TO mode,
+                            // so this must happen before setMockMode(TELEPORT) below.
+                            onPositionUpdate?.invoke(finalTarget, 0f, lastBearing)
                             locationRepository.setMockMode(MockMode.TELEPORT)
                             locationRepository.emitCompletion("Walk complete")
                         },

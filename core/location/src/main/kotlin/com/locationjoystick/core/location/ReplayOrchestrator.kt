@@ -93,6 +93,7 @@ internal class ReplayOrchestrator(
                         if (returnPosition != null) {
                             walkToPosition(returnPosition, speedMs)
                         }
+                        onSpeedChange(0f)
                         locationRepository.setMockMode(MockMode.TELEPORT)
                         locationRepository.emitCompletion("Route complete")
                     },
@@ -145,6 +146,7 @@ internal class ReplayOrchestrator(
                 // without ever being paused) — a natural completion must not force IDLE/stopSpoofing.
                 // Forcing IDLE here previously killed a group-sync leader's broadcast on completion.
                 locationRepository.setRouteWaypoints(null)
+                onSpeedChange(0f)
                 locationRepository.setMockMode(MockMode.TELEPORT)
                 locationRepository.emitCompletion("Route complete")
             },
@@ -160,6 +162,7 @@ internal class ReplayOrchestrator(
         if (locationRepository.currentMode.value != MockMode.ROUTE_REPLAY) return
         val onReplayComplete: () -> Unit = {
             locationRepository.setRouteWaypoints(null)
+            onSpeedChange(0f)
             locationRepository.setMockMode(MockMode.TELEPORT)
             locationRepository.emitCompletion("Route complete")
         }
@@ -221,6 +224,7 @@ internal class ReplayOrchestrator(
      */
     private fun resetModeIfStillReplaying() {
         if (locationRepository.currentMode.value == MockMode.ROUTE_REPLAY) {
+            onSpeedChange(0f)
             locationRepository.setMockMode(MockMode.TELEPORT)
         }
     }
@@ -243,6 +247,7 @@ internal class ReplayOrchestrator(
         persistMetadata: (suspend () -> Unit)? = null,
         onComplete: suspend () -> Unit = {
             locationRepository.setRouteWaypoints(null)
+            onSpeedChange(0f)
             locationRepository.setMockMode(MockMode.TELEPORT)
             locationRepository.emitCompletion("Route complete")
         },

@@ -125,6 +125,23 @@ class WalkCoordinatorTest {
             )
         }
 
+    // Regression coverage for GH-48: currentSpeedMs must not stay frozen at the last
+    // in-transit value once a walk-here arrives.
+    @Test
+    fun `onArrival forwards a final zero-speed tick before switching to TELEPORT`() =
+        runTest {
+            val current = LatLng(48.8566, 2.3522)
+            val target = LatLng(48.856604498, 2.3522)
+            locationRepository.setPositionInternal(current)
+            val speeds = mutableListOf<Float>()
+
+            walkCoordinator.startWalk(target, backgroundScope) { _, speedMs, _ -> speeds.add(speedMs) }
+
+            advanceTimeBy(AppConstants.LocationConstants.UPDATE_INTERVAL_MS + 1)
+
+            assertEquals("Last forwarded tick must report zero speed", 0f, speeds.last())
+        }
+
     @Test
     fun `startWalkAlongRoute sets final waypoint as walk target`() =
         runTest {

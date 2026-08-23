@@ -38,6 +38,7 @@ class ReplayOrchestratorTest {
     private val routingErrorReporter: RoutingErrorReporter = mockk(relaxed = true)
 
     private val stateChanges = mutableListOf<MockLocationState>()
+    private val speedChanges = mutableListOf<Float>()
     private var startUpdateLoopCalled = false
 
     private lateinit var orchestrator: ReplayOrchestrator
@@ -45,6 +46,7 @@ class ReplayOrchestratorTest {
     @Before
     fun setup() {
         stateChanges.clear()
+        speedChanges.clear()
         startUpdateLoopCalled = false
         orchestrator =
             ReplayOrchestrator(
@@ -58,7 +60,7 @@ class ReplayOrchestratorTest {
                 scope = kotlinx.coroutines.CoroutineScope(dispatcher),
                 onStateChange = { stateChanges.add(it) },
                 onPositionChange = { _, _ -> },
-                onSpeedChange = { },
+                onSpeedChange = { speedChanges.add(it) },
                 pushLocationUpdate = { },
                 startUpdateLoop = { startUpdateLoopCalled = true },
             )
@@ -158,6 +160,26 @@ class ReplayOrchestratorTest {
         }
 
     @Test
+    fun handleCancel_whenInRouteReplay_zeroesSpeed() =
+        runTest {
+            locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+
+            orchestrator.handleCancel()
+
+            assertEquals(0f, speedChanges.last())
+        }
+
+    @Test
+    fun handleStop_whenInRouteReplay_zeroesSpeed() =
+        runTest {
+            locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+
+            orchestrator.handleStop()
+
+            assertEquals(0f, speedChanges.last())
+        }
+
+    @Test
     fun handleCancel_doesNotClobberModeSetByNewWalkStartedDuringCancellation() =
         runTest {
             // Simulates the race where cancelAnyActiveMovement() sends an async
@@ -180,6 +202,17 @@ class ReplayOrchestratorTest {
             orchestrator.handleStop()
 
             assertEquals(MockMode.WALK_TO, locationRepository.currentMode.value)
+        }
+
+    @Test
+    fun handleStop_doesNotClobberSpeedWhenNotInRouteReplay() =
+        runTest {
+            locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+            locationRepository.setMockMode(MockMode.WALK_TO)
+
+            orchestrator.handleStop()
+
+            assertTrue(speedChanges.isEmpty())
         }
 
     // Regression coverage for the group-sync leader bug: a route replay that completes naturally
@@ -222,6 +255,20 @@ class ReplayOrchestratorTest {
         assertEquals(MockMode.TELEPORT, locationRepository.currentMode.value)
     }
 
+    // Regression coverage for GH-48: currentSpeedMs must not stay frozen at the last
+    // in-transit value once a replay finishes naturally.
+    @Test
+    fun handleResume_onComplete_zeroesSpeed() {
+        val onCompleteSlot = slot<() -> Unit>()
+        orchestrator.handleResume(1.4)
+        verify { routeReplayEngine.resume(any(), capture(onCompleteSlot)) }
+        speedChanges.clear()
+
+        onCompleteSlot.captured.invoke()
+
+        assertEquals(0f, speedChanges.last())
+    }
+
     @Test
     fun handleJumpToNextWaypoint_whenNotInRouteReplay_doesNothing() {
         orchestrator.handleJumpToNextWaypoint()
@@ -256,6 +303,19 @@ class ReplayOrchestratorTest {
         orchestrator.handleJumpToNextWaypoint()
 
         assertEquals(target, locationRepository.currentPosition.value)
+    }
+
+    @Test
+    fun handleJumpToNextWaypoint_onReplayComplete_zeroesSpeed() {
+        locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+        val onCompleteSlot = slot<() -> Unit>()
+        every { routeReplayEngine.jumpToNextWaypoint(any(), capture(onCompleteSlot)) } returns null
+
+        orchestrator.handleJumpToNextWaypoint()
+        speedChanges.clear()
+        onCompleteSlot.captured.invoke()
+
+        assertEquals(0f, speedChanges.last())
     }
 
     // walkToPosition (the walk-to-start-of-route phase) is routed through the same
@@ -317,6 +377,33 @@ class ReplayOrchestratorTest {
 
             coVerify { walkToEngine.walkToOnce(LatLng(0.0, 0.0), LatLng(1.0, 1.0), 1.4, any()) }
             coVerify { walkToEngine.walkToOnce(LatLng(1.0, 1.0), LatLng(2.0, 2.0), 1.4, any()) }
+        }
+
+    @Test
+    fun handleStart_onComplete_zeroesSpeed() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val route =
+                com.locationjoystick.core.model.Route(
+                    id = "route-1",
+                    name = "R",
+                    waypoints =
+                        listOf(
+                            com.locationjoystick.core.model.Waypoint("w1", LatLng(2.0, 2.0), 0),
+                            com.locationjoystick.core.model.Waypoint("w2", LatLng(3.0, 3.0), 1),
+                        ),
+                )
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
+            val onCompleteSlot = slot<() -> Unit>()
+            every {
+                routeReplayEngine.start(any(), any(), any(), any(), capture(onCompleteSlot), any())
+            } returns Unit
+
+            orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4)
+            speedChanges.clear()
+            onCompleteSlot.captured.invoke()
+
+            assertEquals(0f, speedChanges.last())
         }
 
     @Test
