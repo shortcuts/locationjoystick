@@ -23,14 +23,23 @@ Key files: `:feature:map:impl/MapViewModel.kt`, `:core:location/EphemeralReplayC
 
 ## Add Next Point (Ephemeral Replay)
 
-While a walk-here is active, the user can tap "Add next point" on the map to chain waypoints without saving a route.
+While a walk-here is active, the user can tap "Add next point" (straight line) or "Add next
+point via roads" on the map to chain waypoints without saving a route. Each tap picks
+road-following independently for that leg only — it is not inherited from how the walk or
+any earlier point was started.
 
 Managed by `EphemeralReplayController` (`@Singleton`, `:core:location`), injected by both `MapViewModel` and `FloatingWidgetService`:
 
 - **First tap** (walk active): cancels the walk via `WalkCoordinator`, builds a 3-point list (walkStart → walkTarget → newPoint), starts `RouteReplayEngine` in ephemeral mode.
-  - If the current walk was "via roads", the `walkTarget → newPoint` leg is resolved via OSRM (`followRoads = true`).
-- **Subsequent taps** (already in `ROUTE_REPLAY`): appends the new point to the live route.
+  - The `walkTarget → newPoint` leg is resolved via OSRM (`followRoads = true`) only if the
+    tapped button was "via roads" — independent of whether the walk itself was via roads.
+- **Subsequent taps** (already in `ROUTE_REPLAY`): appends the new point to the live route, using that tap's own `followRoads` choice.
 - **No active walk**: no-op.
+
+`MapController.addEphemeralWaypoint(position, followRoads)` takes `followRoads` as a caller-supplied
+parameter rather than deriving it from `WalkMode` — deriving it from prior state mixed up
+road/no-road legs across taps (e.g. two straight-line taps followed by a road-following one
+would silently reuse a stale flag).
 
 This eliminates duplicated state-machine logic that previously existed in both `MapViewModel` and `FloatingWidgetService`.
 

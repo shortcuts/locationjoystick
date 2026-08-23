@@ -106,7 +106,7 @@ internal fun MapFloatingView(
     onStopRouteAndTeleport: (LatLng) -> Unit,
     onStopRouteAndWalkTo: (LatLng) -> Unit,
     onFinishRouteAndWalkTo: (LatLng) -> Unit,
-    onAddEphemeralWaypoint: (LatLng) -> Unit,
+    onAddEphemeralWaypoint: (LatLng, Boolean) -> Unit,
     onStartRoaming: (RoamingDefaults) -> Unit,
     onStopRoaming: () -> Unit,
     enabledMapFabFeatures: Set<AppFeature> = AppFeature.DEFAULT_MAP_ENABLED,
@@ -633,7 +633,7 @@ private fun BoxScope.TapActionPanel(
     onStopRouteAndTeleport: (LatLng) -> Unit,
     onStopRouteAndWalkTo: (LatLng) -> Unit,
     onFinishRouteAndWalkTo: (LatLng) -> Unit,
-    onAddEphemeralWaypoint: (LatLng) -> Unit,
+    onAddEphemeralWaypoint: (LatLng, Boolean) -> Unit,
     onDismiss: () -> Unit,
     hideTeleportFeatures: Boolean = false,
 ) {
@@ -713,11 +713,19 @@ private fun BoxScope.TapActionPanel(
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(
                     onClick = {
-                        onAddEphemeralWaypoint(tap)
+                        onAddEphemeralWaypoint(tap, false)
                         onDismiss()
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Add next point") }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = {
+                        onAddEphemeralWaypoint(tap, true)
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Add next point via roads") }
             }
         }
         Spacer(Modifier.height(4.dp))

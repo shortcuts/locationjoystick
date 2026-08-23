@@ -80,7 +80,10 @@ internal class WidgetPanelPresenter(
 
         fun finishRouteAndWalkTo(pos: LatLng)
 
-        fun addEphemeralWaypoint(pos: LatLng)
+        fun addEphemeralWaypoint(
+            pos: LatLng,
+            followRoads: Boolean,
+        )
 
         fun startRoamingWith(defaults: RoamingDefaults)
 
@@ -268,7 +271,7 @@ internal class WidgetPanelPresenter(
                 },
                 onStopRouteAndWalkTo = { pos -> callbacks.stopRouteAndWalkTo(pos) },
                 onFinishRouteAndWalkTo = { pos -> callbacks.finishRouteAndWalkTo(pos) },
-                onAddEphemeralWaypoint = { pos -> callbacks.addEphemeralWaypoint(pos) },
+                onAddEphemeralWaypoint = { pos, followRoads -> callbacks.addEphemeralWaypoint(pos, followRoads) },
                 onStartRoaming = { defaults -> callbacks.startRoamingWith(defaults) },
                 enabledMapFabFeatures = shared.enabledMapFeatures,
                 onStopRoaming = { mapController.stopRoaming() },

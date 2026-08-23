@@ -394,12 +394,11 @@ class MapController
             _state.update { it.copy(walkMode = WalkMode.Idle, isWalkPaused = false, routeTrace = null) }
         }
 
-        fun addEphemeralWaypoint(position: LatLng) {
+        fun addEphemeralWaypoint(
+            position: LatLng,
+            followRoads: Boolean = false,
+        ) {
             val current = _state.value
-            val followRoads =
-                (current.walkMode as? WalkMode.Walking)?.isViaRoads
-                    ?: (current.walkMode as? WalkMode.EphemeralReplay)?.followRoads
-                    ?: false
             appScope.launch {
                 ephemeralReplayController.addWaypoint(
                     newPoint = position,

@@ -585,7 +585,10 @@ class FloatingWidgetService :
 
             override fun finishRouteAndWalkTo(pos: LatLng) = mapController.appendWaypointToRoute(pos)
 
-            override fun addEphemeralWaypoint(pos: LatLng) = mapController.addEphemeralWaypoint(pos)
+            override fun addEphemeralWaypoint(
+                pos: LatLng,
+                followRoads: Boolean,
+            ) = mapController.addEphemeralWaypoint(pos, followRoads)
 
             override fun startRoamingWith(defaults: RoamingDefaults) {
                 val pos =

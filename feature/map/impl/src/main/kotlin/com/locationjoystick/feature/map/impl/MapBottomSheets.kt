@@ -236,10 +236,17 @@ internal fun PendingTapSheet(
                 if (isWalkActive) {
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(
-                        onClick = { onAction(MapAction.AddEphemeralWaypoint(position)) },
+                        onClick = { onAction(MapAction.AddEphemeralWaypoint(position, followRoads = false)) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text("Add next point")
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { onAction(MapAction.AddEphemeralWaypoint(position, followRoads = true)) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Add next point via roads")
                     }
                 }
             }

@@ -106,6 +106,7 @@ sealed interface MapAction {
 
     data class AddEphemeralWaypoint(
         val position: LatLng,
+        val followRoads: Boolean = false,
     ) : MapAction
 
     data class WalkViaRoadsTo(

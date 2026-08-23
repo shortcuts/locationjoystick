@@ -224,7 +224,7 @@ class MapViewModel
                 }
 
                 is MapAction.AddEphemeralWaypoint -> {
-                    mapController.addEphemeralWaypoint(action.position)
+                    mapController.addEphemeralWaypoint(action.position, action.followRoads)
                 }
 
                 MapAction.PauseWalk -> {
