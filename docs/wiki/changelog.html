@@ -15,6 +15,34 @@
     <h2 id="changelog">Changelog</h2>
     <p>What's new in each release. Download the latest APK from <a href="https://github.com/shortcuts/locationjoystick/releases/latest" target="_blank" rel="noopener">GitHub Releases</a>.</p>
 
+    <h3 id="v0160"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.16.0" target="_blank" rel="noopener">0.16.0</a>, August 25, 2026</h3>
+    <ul>
+      <li>New: lowered the minimum supported Android version, so more phones can now install the app.</li>
+      <li>New: a setting to hide every teleport button throughout the app, leaving only walking and route playback as ways to move.</li>
+      <li>New: a setting to hide the floating widget overlay.</li>
+      <li>New: a setting to hide the notification icon while spoofing is active.</li>
+      <li>New: buttons to jump straight to the next or previous stop while a route is playing.</li>
+      <li>New: an option to walk via roads to a route's starting point before playback begins.</li>
+      <li>New: a route can now be pinned to its own speed, independent of the app's overall speed setting.</li>
+      <li>New: distance and a wait-time hint are now shown when teleporting to the group leader as a follower.</li>
+      <li>Setup: if the "set as fake GPS app" check doesn't detect your setup, the "Skip" option now explains what it means before you confirm, instead of skipping instantly.</li>
+      <li>Fixed the joystick sometimes keeping its last direction after you released or unlocked it.</li>
+      <li>Fixed the reported speed not resetting to zero right after a route or walk finished.</li>
+      <li>Fixed the travel direction shown during route playback and roaming.</li>
+      <li>Fixed the floating widget not disappearing right away when its setting was turned off mid-session.</li>
+      <li>Fixed coordinate and speed fields rejecting a comma as the decimal separator.</li>
+      <li>Fixed the hide-notification-icon setting sometimes turning itself back off.</li>
+      <li>Fixed a road-following option not applying correctly to newly added route points.</li>
+      <li>Fixed your position freezing incorrectly, instead of holding steady, while spoofing was paused.</li>
+      <li>Fixed your last known location only saving when you stopped, instead of throughout the session.</li>
+      <li>Fixed a follower's position not saving properly while following a leader.</li>
+      <li>Fixed imported favorites losing their category.</li>
+      <li>Fixed the floating map's route controls sometimes becoming unreachable after reopening the panel.</li>
+      <li>Fixed some widget and map features going missing after importing settings.</li>
+      <li>Fixed the group leader's stop/start state not always reaching followers.</li>
+      <li>Fixed no message appearing when teleporting to a leader before their position is known.</li>
+    </ul>
+
     <h3 id="v0140"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.14.0" target="_blank" rel="noopener">0.14.0</a>, July 16, 2026</h3>
     <ul>
       <li>New: Light mode, a high-contrast light theme option, alongside the existing dark theme.</li>
