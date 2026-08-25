@@ -233,12 +233,12 @@ class RouteReplayEngine
         fun jumpToPreviousWaypoint(
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
-        ): LatLng? =
-            jumpToWaypoint(
-                previousBoundaryBefore(previousBoundaryBefore(resumeWaypointIndex)),
-                onPositionUpdate,
-                onComplete,
-            )
+        ): LatLng? {
+            // resumeWaypointIndex targets the waypoint ahead; step back once to the one just
+            // departed, then once more to the one before that.
+            val lastDeparted = previousBoundaryBefore(resumeWaypointIndex)
+            return jumpToWaypoint(previousBoundaryBefore(lastDeparted), onPositionUpdate, onComplete)
+        }
 
         /**
          * Cancels any active replay job. Call from service onDestroy to stop movement
