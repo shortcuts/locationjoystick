@@ -93,8 +93,7 @@ internal class ReplayOrchestrator(
                         if (returnPosition != null) {
                             walkToPosition(returnPosition, speedMs)
                         }
-                        onSpeedChange(0f)
-                        locationRepository.setMockMode(MockMode.TELEPORT)
+                        finishReplay()
                         locationRepository.emitCompletion("Route complete")
                     },
                 )
@@ -145,9 +144,7 @@ internal class ReplayOrchestrator(
                 // Matches startReplayWithWaypoints' default onComplete (used when a replay finishes
                 // without ever being paused) — a natural completion must not force IDLE/stopSpoofing.
                 // Forcing IDLE here previously killed a group-sync leader's broadcast on completion.
-                locationRepository.setRouteWaypoints(null)
-                onSpeedChange(0f)
-                locationRepository.setMockMode(MockMode.TELEPORT)
+                finishReplay()
                 locationRepository.emitCompletion("Route complete")
             },
         )
@@ -161,9 +158,7 @@ internal class ReplayOrchestrator(
     private fun handleJumpToWaypoint(forward: Boolean) {
         if (locationRepository.currentMode.value != MockMode.ROUTE_REPLAY) return
         val onReplayComplete: () -> Unit = {
-            locationRepository.setRouteWaypoints(null)
-            onSpeedChange(0f)
-            locationRepository.setMockMode(MockMode.TELEPORT)
+            finishReplay()
             locationRepository.emitCompletion("Route complete")
         }
         val target =
@@ -224,9 +219,15 @@ internal class ReplayOrchestrator(
      */
     private fun resetModeIfStillReplaying() {
         if (locationRepository.currentMode.value == MockMode.ROUTE_REPLAY) {
-            onSpeedChange(0f)
-            locationRepository.setMockMode(MockMode.TELEPORT)
+            finishReplay()
         }
+    }
+
+    /** Shared teardown for a completed/reset replay: clear route waypoints, zero speed, go idle. */
+    private fun finishReplay() {
+        locationRepository.setRouteWaypoints(null)
+        onSpeedChange(0f)
+        locationRepository.setMockMode(MockMode.TELEPORT)
     }
 
     /**
@@ -246,9 +247,7 @@ internal class ReplayOrchestrator(
         boundaryIndices: List<Int>? = null,
         persistMetadata: (suspend () -> Unit)? = null,
         onComplete: suspend () -> Unit = {
-            locationRepository.setRouteWaypoints(null)
-            onSpeedChange(0f)
-            locationRepository.setMockMode(MockMode.TELEPORT)
+            finishReplay()
             locationRepository.emitCompletion("Route complete")
         },
     ) {
