@@ -558,7 +558,7 @@ class ReplayOrchestratorTest {
 
             orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4, followRoadsToStart = true)
 
-            verify { routingErrorReporter.report(match { it.contains("1 of 2 legs") }) }
+            verify { routingErrorReporter.reportRoadFollowingFallbacks(1, 2) }
         }
 
     @Test

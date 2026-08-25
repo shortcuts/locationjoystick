@@ -130,11 +130,7 @@ class RoamingEngine
                 if (fellBack) fallbackCount++
             }
 
-            if (fallbackCount > 0) {
-                routingErrorReporter.report(
-                    "Road-following partially unavailable — $fallbackCount of $totalSegments legs used straight-line paths",
-                )
-            }
+            routingErrorReporter.reportRoadFollowingFallbacks(fallbackCount, totalSegments)
 
             return allWaypoints
         }

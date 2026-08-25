@@ -22,4 +22,21 @@ class RoutingErrorReporter
         fun report(message: String) {
             _errors.tryEmit(message)
         }
+
+        /**
+         * Reports one summary message when 1+ of [totalLegs] road-following legs fell back to a
+         * straight line — the exact "count fallbacks, report one summary" shape duplicated between
+         * RoamingEngine's dynamic road-following planner and ReplayOrchestrator's fixed-waypoint-list
+         * road-following expansion before this method existed. A no-op when [fallbackCount] is 0.
+         */
+        fun reportRoadFollowingFallbacks(
+            fallbackCount: Int,
+            totalLegs: Int,
+        ) {
+            if (fallbackCount > 0) {
+                report(
+                    "Road-following partially unavailable — $fallbackCount of $totalLegs legs used straight-line paths",
+                )
+            }
+        }
     }

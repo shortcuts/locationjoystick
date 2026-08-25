@@ -281,11 +281,13 @@ internal class ReplayOrchestrator(
     }
 
     /**
-     * Pre-plans a road-following path between the route's own saved waypoints, mirroring
-     * [com.locationjoystick.core.routing.RoamingEngine.planRoadFollowingRoute]. Resolves each
-     * leg independently via OSRM (foot profile); a leg that fails falls back to a straight
-     * line and is counted, with one aggregated summary reported afterward if any legs fell
-     * back.
+     * Pre-plans a road-following path between the route's own saved waypoints. The
+     * fallback-count/summary-report step is shared with
+     * [com.locationjoystick.core.routing.RoamingEngine.planRoadFollowingRoute] via
+     * [com.locationjoystick.core.routing.RoutingErrorReporter.reportRoadFollowingFallbacks];
+     * the leg-resolution loop itself is intentionally separate — this one resolves a fixed
+     * waypoint list known upfront, while `RoamingEngine`'s generates waypoints dynamically
+     * within a distance budget (see that method's own doc comment).
      *
      * @return the expanded waypoint list plus the indices within it that are the route's
      *   real, named stops ("boundary indices"), so jump-to-waypoint keeps targeting real stops.
@@ -306,12 +308,7 @@ internal class ReplayOrchestrator(
             expanded.addAll(leg.drop(1))
             boundaryIndices.add(expanded.size - 1)
         }
-        if (fallbackCount > 0) {
-            routingErrorReporter.report(
-                "Road-following partially unavailable — $fallbackCount of " +
-                    "${waypoints.size - 1} legs used straight-line paths",
-            )
-        }
+        routingErrorReporter.reportRoadFollowingFallbacks(fallbackCount, waypoints.size - 1)
         return expanded to boundaryIndices
     }
 

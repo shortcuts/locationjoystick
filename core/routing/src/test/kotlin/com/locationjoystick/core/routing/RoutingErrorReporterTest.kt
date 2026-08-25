@@ -27,4 +27,33 @@ class RoutingErrorReporterTest {
             job1.cancel()
             job2.cancel()
         }
+
+    @Test
+    fun `reportRoadFollowingFallbacks emits formatted summary when fallbackCount is positive`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val reporter = RoutingErrorReporter()
+            val received = mutableListOf<String>()
+            val job = backgroundScope.launch { reporter.errors.collect { received.add(it) } }
+
+            reporter.reportRoadFollowingFallbacks(fallbackCount = 2, totalLegs = 5)
+
+            assertEquals(
+                listOf("Road-following partially unavailable — 2 of 5 legs used straight-line paths"),
+                received,
+            )
+            job.cancel()
+        }
+
+    @Test
+    fun `reportRoadFollowingFallbacks emits nothing when fallbackCount is zero`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val reporter = RoutingErrorReporter()
+            val received = mutableListOf<String>()
+            val job = backgroundScope.launch { reporter.errors.collect { received.add(it) } }
+
+            reporter.reportRoadFollowingFallbacks(fallbackCount = 0, totalLegs = 5)
+
+            assertEquals(emptyList<String>(), received)
+            job.cancel()
+        }
 }
