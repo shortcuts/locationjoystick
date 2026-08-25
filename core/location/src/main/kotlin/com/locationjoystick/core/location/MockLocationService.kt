@@ -364,12 +364,22 @@ class MockLocationService : Service() {
      * Single write entry point for position. All position writers funnel through here so the
      * latitude/longitude pair is always written atomically, eliminating torn reads between a
      * mid-tick teleport and [updatePositionWithVector].
+     *
+     * [syncRepository] also pushes the same position to [LocationRepository] (consumed by the map
+     * UI) in the same call — pass `true` for any mode that has no other writer of its own already
+     * updating the repository (e.g. teleport, follower catch-up). Leave `false` when a caller
+     * already syncs the repository separately (e.g. [ReplayOrchestrator]) or is itself mirroring
+     * a repository change back into [positionRef], where syncing here would be circular.
      */
     private fun writeCurrentPosition(
         lat: Double,
         lon: Double,
+        syncRepository: Boolean = false,
     ) {
         positionRef.set(LatLng(lat, lon))
+        if (syncRepository) {
+            locationRepository.setPositionInternal(LatLng(lat, lon))
+        }
     }
 
     private fun hasLocationPermission(): Boolean =
@@ -624,7 +634,7 @@ class MockLocationService : Service() {
             _state.value = MockLocationState.IDLE
         }
 
-        writeCurrentPosition(lat, lon)
+        writeCurrentPosition(lat, lon, syncRepository = true)
         currentSpeedMs = 0.0f
         currentBearing = 0.0f
         val now = SystemClock.elapsedRealtime()
@@ -644,7 +654,6 @@ class MockLocationService : Service() {
         lastSatelliteUpdateMs = now
         lastJitterTimestampMs = now
         lastIdleJitterTimestampMs = now
-        locationRepository.setPositionInternal(LatLng(lat, lon))
         locationRepository.setMockMode(MockMode.TELEPORT)
 
         // Setting state to RUNNING triggers observeLocationState(), which calls
@@ -670,8 +679,7 @@ class MockLocationService : Service() {
         lon: Double,
     ) {
         if (locationRepository.currentMode.value == MockMode.FOLLOWER) return
-        writeCurrentPosition(lat, lon)
-        locationRepository.setPositionInternal(LatLng(lat, lon))
+        writeCurrentPosition(lat, lon, syncRepository = true)
     }
 
     // Callers: JoystickOverlayService (direct call) and the WalkCoordinator position callback
@@ -817,9 +825,8 @@ class MockLocationService : Service() {
                 groupRepository.emitTeleportUnavailable()
                 return
             }
-        writeCurrentPosition(target.latitude, target.longitude)
+        writeCurrentPosition(target.latitude, target.longitude, syncRepository = true)
         followerCatchUp.markArrived()
-        locationRepository.setPositionInternal(target)
         // Shares the same cooldown clock as every other teleport (Favorites, map long-press) —
         // see CooldownEngine/settingsRepository.getLastTeleportTime().
         serviceScope.launch { settingsRepository.setLastTeleportTime(System.currentTimeMillis()) }
@@ -1139,17 +1146,14 @@ class MockLocationService : Service() {
 
     /**
      * Applies one [FollowerCatchUpCoordinator.advance] step. Called once per tick, before
-     * [captureSnapshot] reads [positionRef]. Writes the new position to both [positionRef]
-     * (consumed by the real GPS test-provider fix) and [LocationRepository] (consumed by the
-     * map UI) — the two writers this service otherwise keeps separate for every other mode
-     * are collapsed here because FOLLOWER mode has no other in-process writer of its own.
-     * No-ops outside FOLLOWER mode.
+     * [captureSnapshot] reads [positionRef]. FOLLOWER mode has no other in-process writer of its
+     * own, so this syncs [LocationRepository] (consumed by the map UI) via [writeCurrentPosition]
+     * itself rather than the caller pairing the two writes manually. No-ops outside FOLLOWER mode.
      */
     internal fun advanceFollowerCatchUp() {
         if (locationRepository.currentMode.value != MockMode.FOLLOWER) return
         val result = followerCatchUp.advance(positionRef.get(), realism.activeProfileSpeedMs) ?: return
-        writeCurrentPosition(result.latitude, result.longitude)
-        locationRepository.setPositionInternal(LatLng(result.latitude, result.longitude))
+        writeCurrentPosition(result.latitude, result.longitude, syncRepository = true)
     }
 
     private fun pushLocationUpdate() {
