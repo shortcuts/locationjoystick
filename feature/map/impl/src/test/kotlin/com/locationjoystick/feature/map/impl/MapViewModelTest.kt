@@ -402,6 +402,36 @@ class MapViewModelTest {
             assertEquals(secondExtra, state.ephemeralWaypoints.last())
         }
 
+    @Test
+    fun `hideTeleportFeatures reflects settings repository flow`() =
+        runTest {
+            val flow = MutableStateFlow(false)
+            every { settingsRepository.getHideTeleportFeatures() } returns flow
+
+            viewModel = createViewModel()
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertEquals(false, viewModel.uiState.value.hideTeleportFeatures)
+
+            flow.value = true
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertEquals(true, viewModel.uiState.value.hideTeleportFeatures)
+        }
+
+    @Test
+    fun `showRouteJumpButtons reflects settings repository flow`() =
+        runTest {
+            val flow = MutableStateFlow(false)
+            every { settingsRepository.getShowRouteJumpButtons() } returns flow
+
+            viewModel = createViewModel()
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertEquals(false, viewModel.uiState.value.showRouteJumpButtons)
+
+            flow.value = true
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertEquals(true, viewModel.uiState.value.showRouteJumpButtons)
+        }
+
     // Issue 8: restore last location on init
 
     @Test

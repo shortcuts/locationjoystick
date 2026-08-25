@@ -1,13 +1,10 @@
 package com.locationjoystick.core.data
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.emptyPreferences
 import app.cash.turbine.test
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.testing.FakePreferencesDataStore
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -89,6 +86,30 @@ class GroupRepositoryTest {
         }
 
     @Test
+    fun `setLeaderPosition updates leaderPosition flow`() =
+        runTest {
+            repository.leaderPosition.test {
+                assertNull(awaitItem())
+                repository.setLeaderPosition(LatLng(1.0, 2.0))
+                val updated = awaitItem()
+                assertEquals(1.0, updated!!.latitude, 0.0)
+                assertEquals(2.0, updated.longitude, 0.0)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `leaveGroup clears leaderPosition`() =
+        runTest {
+            repository.setLeaderPosition(LatLng(1.0, 2.0))
+            repository.leaveGroup()
+            repository.leaderPosition.test {
+                assertNull(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `setFollowerModeEnabled updates followerModeEnabled`() =
         runTest {
             repository.joinGroup(GroupInvite("h", 1, "id"))
@@ -155,28 +176,4 @@ class GroupRepositoryTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
-}
-
-private class FakePreferencesDataStore : DataStore<Preferences> {
-    private val flow = MutableStateFlow<Preferences>(emptyPreferences())
-
-    override val data: Flow<Preferences> = flow
-
-    override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences {
-        val updated = transform(flow.value)
-        flow.value = updated
-        return updated
-    }
-
-    fun writeRaw(
-        key: String,
-        value: String,
-    ) {
-        val mutable = flow.value.toMutablePreferences()
-        mutable[
-            androidx.datastore.preferences.core
-                .stringPreferencesKey(key),
-        ] = value
-        flow.value = mutable
-    }
 }

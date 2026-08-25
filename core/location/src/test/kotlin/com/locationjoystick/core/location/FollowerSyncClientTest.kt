@@ -62,6 +62,21 @@ class FollowerSyncClientTest {
     }
 
     @Test
+    fun `poll delivers speedMs and bearing to callback unchanged`() {
+        server.push(freshUpdate(lat = 1.0, lon = 2.0).copy(speedMs = 2.5f, bearing = 90f))
+        val results = LinkedBlockingQueue<Pair<Float, Float>>()
+
+        client.startPolling("127.0.0.1", serverPort, "test-group") { _, _, speedMs, bearing, _ ->
+            results.offer(Pair(speedMs, bearing))
+        }
+
+        val result = results.poll(3, TimeUnit.SECONDS)
+        assertNotNull("Callback should be invoked within timeout", result)
+        assertEquals(2.5f, result!!.first, 0f)
+        assertEquals(90f, result.second, 0f)
+    }
+
+    @Test
     fun `inactive leader update delivers active false to callback`() {
         server.push(freshUpdate(lat = 1.0, lon = 2.0).copy(active = false))
         val results = LinkedBlockingQueue<Boolean>()

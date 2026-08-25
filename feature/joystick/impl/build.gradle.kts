@@ -16,4 +16,5 @@ dependencies {
     implementation(libs.bundles.lifecycle)
 
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
 }
