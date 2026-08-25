@@ -48,8 +48,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -148,6 +146,8 @@ class MockLocationService : Service() {
 
     private lateinit var replayOrchestrator: ReplayOrchestrator
 
+    private lateinit var overlayNotificationReactor: OverlayNotificationReactor
+
     /** Guards concurrent access to updateJob to prevent double-start from rapid state emissions. */
     private val updateJobMutex = Mutex()
 
@@ -180,11 +180,6 @@ class MockLocationService : Service() {
 
     @Volatile private var leaderSharingEnabled: Boolean = false
 
-    // Mirrors the current hideNotification setting so onStartCommand's re-post of the
-    // notification (e.g. on every joystick-driven ACTION_UPDATE_POSITION) doesn't clobber
-    // the minimized channel back to visible — see the reactive collector that writes it below.
-    @Volatile private var hideNotificationSetting: Boolean = false
-
     // Per-tick realism state
 
     /** Bearing from the last tick where speedMs > 0; held when the device is stationary. */
@@ -214,6 +209,13 @@ class MockLocationService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        overlayNotificationReactor =
+            OverlayNotificationReactor(
+                context = this,
+                notificationManager = notificationManager,
+                locationRepository = locationRepository,
+                settingsRepository = settingsRepository,
+            )
         replayOrchestrator =
             ReplayOrchestrator(
                 locationRepository = locationRepository,
@@ -325,47 +327,9 @@ class MockLocationService : Service() {
                 if (bearing != null) currentBearing = bearing
             }
         }
-        // Reactive notification refresh — source of truth is repository flows, not _state.
-        // distinctUntilChanged prevents notify storm during 1 Hz position ticks.
-        serviceScope.launch {
-            combine(
-                locationRepository.currentMode,
-                locationRepository.mockLocationState,
-                settingsRepository.getHideForegroundNotification(),
-            ) { mode, state, hideNotification -> Triple(mode, state, hideNotification) }
-                .distinctUntilChanged()
-                .collect { (mode, state, hideNotification) ->
-                    hideNotificationSetting = hideNotification
-                    // Double-guarded: walk-to PAUSED never triggers replayPaused=true
-                    val replayActive = mode == MockMode.ROUTE_REPLAY
-                    val replayPaused = mode == MockMode.ROUTE_REPLAY && state == MockLocationState.PAUSED
-                    notificationManager.notify(
-                        AppConstants.NotificationConstants.ID_ACTIVE,
-                        buildMockLocationNotification(
-                            this@MockLocationService,
-                            replayActive,
-                            replayPaused,
-                            hideNotification,
-                        ),
-                    )
-                }
-        }
-        // Reactive widget-overlay toggle — the RUNNING branch above only reads this setting at
-        // the transition to RUNNING, so flipping it mid-session had no effect until this
-        // collector was added (see docs/features/widget.md, "Hiding the Overlay").
-        serviceScope.launch {
-            combine(_state, settingsRepository.getHideWidgetOverlay()) { state, hideWidget -> state to hideWidget }
-                .distinctUntilChanged()
-                .collect { (state, hideWidget) ->
-                    if (!Settings.canDrawOverlays(this@MockLocationService)) return@collect
-                    val intent = Intent().setClassName(packageName, WIDGET_SERVICE_CLASS)
-                    when (computeWidgetOverlayAction(state, hideWidget)) {
-                        WidgetOverlayAction.START -> startService(intent)
-                        WidgetOverlayAction.STOP -> stopService(intent)
-                        WidgetOverlayAction.NO_OP -> Unit
-                    }
-                }
-        }
+        // Keeps the foreground notification and widget overlay in sync with live setting
+        // changes mid-session (see OverlayNotificationReactor's class doc for why).
+        overlayNotificationReactor.observe(serviceScope, _state)
         // Jitter and realism settings — each updates a @Volatile field consumed by captureSnapshot().
         realism.observe(serviceScope, settingsRepository)
         // Propagate live speed-profile changes (e.g. widget Speed Cycle) into an active route
@@ -429,7 +393,7 @@ class MockLocationService : Service() {
                 ServiceCompat.startForeground(
                     this,
                     NOTIFICATION_ID,
-                    buildNotification(hideNotification = hideNotificationSetting),
+                    buildNotification(hideNotification = overlayNotificationReactor.hideNotificationSetting),
                     0,
                 )
             } else {
@@ -440,7 +404,7 @@ class MockLocationService : Service() {
                 ServiceCompat.startForeground(
                     this,
                     NOTIFICATION_ID,
-                    buildNotification(hideNotification = hideNotificationSetting),
+                    buildNotification(hideNotification = overlayNotificationReactor.hideNotificationSetting),
                     0,
                 )
                 postPermissionErrorNotification()
@@ -455,7 +419,7 @@ class MockLocationService : Service() {
             ServiceCompat.startForeground(
                 this,
                 NOTIFICATION_ID,
-                buildNotification(hideNotification = hideNotificationSetting),
+                buildNotification(hideNotification = overlayNotificationReactor.hideNotificationSetting),
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
             )
         }
@@ -784,9 +748,7 @@ class MockLocationService : Service() {
                 launch { roamingRepository.stopRoaming() }
             }
             locationRepository.setMockMode(MockMode.FOLLOWER)
-            val spoofingStarted =
-                java.util.concurrent.atomic
-                    .AtomicBoolean(false)
+            followerCatchUp.resetBootstrapState()
             followerSyncClient.startPolling(
                 host,
                 port,
@@ -815,32 +777,21 @@ class MockLocationService : Service() {
             ) { lat, lon, _, bearing, active ->
                 followerCatchUp.setTarget(LatLng(lat, lon), bearing)
                 groupRepository.setLeaderPosition(LatLng(lat, lon))
-                when (computeFollowerActiveAction(active, spoofingStarted.get(), _state.value)) {
-                    FollowerActiveAction.BOOTSTRAP -> {
-                        // Spoofing wasn't active yet — nothing was being reported to other apps, so
-                        // starting straight at the leader's position carries no anti-cheat risk.
-                        // Once already RUNNING, the catch-up walk in pushLocationUpdate() takes over
-                        // instead, so an already-spoofing follower never jumps.
-                        if (spoofingStarted.compareAndSet(false, true)) {
-                            serviceScope.launch {
-                                startSpoofing(lat, lon)
-                                // startSpoofing() unconditionally sets mode to TELEPORT — reassert
-                                // FOLLOWER so advanceFollowerCatchUp() doesn't no-op on later ticks.
-                                locationRepository.setMockMode(MockMode.FOLLOWER)
-                            }
+                when (followerCatchUp.handleLeaderActiveUpdate(active, _state.value)) {
+                    FollowerBootstrapAction.BOOTSTRAP -> {
+                        serviceScope.launch {
+                            startSpoofing(lat, lon)
+                            // startSpoofing() unconditionally sets mode to TELEPORT — reassert
+                            // FOLLOWER so advanceFollowerCatchUp() doesn't no-op on later ticks.
+                            locationRepository.setMockMode(MockMode.FOLLOWER)
                         }
                     }
 
-                    FollowerActiveAction.PAUSE -> {
-                        // Leader stopped spoofing — pause the mirror without tearing down the
-                        // service, so polling keeps running and the leader's next active tick
-                        // resumes it via BOOTSTRAP above (spoofingStarted reset to false here).
-                        if (spoofingStarted.compareAndSet(true, false)) {
-                            serviceScope.launch { pauseFollowerForInactiveLeader() }
-                        }
+                    FollowerBootstrapAction.PAUSE -> {
+                        serviceScope.launch { pauseFollowerForInactiveLeader() }
                     }
 
-                    FollowerActiveAction.NO_OP -> {
+                    FollowerBootstrapAction.NONE -> {
                         Unit
                     }
                 }

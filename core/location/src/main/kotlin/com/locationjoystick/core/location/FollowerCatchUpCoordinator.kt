@@ -1,7 +1,13 @@
 package com.locationjoystick.core.location
 
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MockLocationState
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+
+/** Outcome of [FollowerCatchUpCoordinator.handleLeaderActiveUpdate] — the compareAndSet gating
+ * has already happened, so the caller can act on the result unconditionally. */
+internal enum class FollowerBootstrapAction { BOOTSTRAP, PAUSE, NONE }
 
 /**
  * Owns the FOLLOWER-mode catch-up target and the speed/bearing it produces, extracted from
@@ -12,6 +18,11 @@ import java.util.concurrent.atomic.AtomicReference
  */
 internal class FollowerCatchUpCoordinator {
     private val target = AtomicReference<LatLng?>(null)
+
+    /** Tracks whether this device has already bootstrapped spoofing for the current leader-active
+     * streak — gates [handleLeaderActiveUpdate] so BOOTSTRAP/PAUSE each fire exactly once per
+     * streak, mirroring the AtomicBoolean previously scoped to the enterFollowerMode() call site. */
+    private val spoofingStarted = AtomicBoolean(false)
 
     @Volatile private var speedMs: Float = 0f
 
@@ -37,6 +48,7 @@ internal class FollowerCatchUpCoordinator {
         speedMs = 0f
         bearing = 0f
         leaderBearing = 0f
+        spoofingStarted.set(false)
     }
 
     /** Last-known leader position, or null if no position has been received (or FOLLOWER mode is inactive). */
@@ -71,5 +83,33 @@ internal class FollowerCatchUpCoordinator {
         // pointed, which differs per-device and has no relation to the leader's actual bearing.
         bearing = result.bearing ?: leaderBearing
         return result
+    }
+
+    /**
+     * Reacts to one leader position update's `active` flag, extracted from
+     * [MockLocationService.enterFollowerMode]'s onPosition callback. Wraps
+     * [computeFollowerActiveAction] with the compareAndSet that gates each action to fire exactly
+     * once per active/inactive streak.
+     *
+     * BOOTSTRAP means spoofing wasn't active yet on this device — nothing was being reported to
+     * other apps, so snapping straight to the leader's position carries no anti-cheat risk. PAUSE
+     * means the leader stopped spoofing while this device was mirroring it; the caller pauses
+     * without tearing the service down so the next BOOTSTRAP can resume it.
+     */
+    fun handleLeaderActiveUpdate(
+        leaderActive: Boolean,
+        currentState: MockLocationState,
+    ): FollowerBootstrapAction =
+        when (computeFollowerActiveAction(leaderActive, spoofingStarted.get(), currentState)) {
+            FollowerActiveAction.BOOTSTRAP ->
+                if (spoofingStarted.compareAndSet(false, true)) FollowerBootstrapAction.BOOTSTRAP else FollowerBootstrapAction.NONE
+            FollowerActiveAction.PAUSE ->
+                if (spoofingStarted.compareAndSet(true, false)) FollowerBootstrapAction.PAUSE else FollowerBootstrapAction.NONE
+            FollowerActiveAction.NO_OP -> FollowerBootstrapAction.NONE
+        }
+
+    /** Resets bootstrap tracking for a fresh follower session — call at the start of enterFollowerMode(). */
+    fun resetBootstrapState() {
+        spoofingStarted.set(false)
     }
 }
