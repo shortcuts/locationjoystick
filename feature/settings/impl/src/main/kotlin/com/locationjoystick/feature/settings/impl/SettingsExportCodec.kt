@@ -175,7 +175,7 @@ internal object SettingsExportCodec {
                 buildSet {
                     for (i in 0 until arr.length()) parseAppFeature(arr.getString(i))?.let { add(it) }
                 }
-            }?.takeIf { it.isNotEmpty() } ?: AppFeature.DEFAULT_WIDGET_ENABLED
+            } ?: AppFeature.DEFAULT_WIDGET_ENABLED
         val enabledMapFeatures =
             settingsObj.optJSONArray("enabledMapFeatures")?.let { arr ->
                 buildSet {

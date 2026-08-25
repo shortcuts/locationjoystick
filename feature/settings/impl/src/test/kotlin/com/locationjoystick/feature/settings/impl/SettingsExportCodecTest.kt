@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.settings.impl
 
+import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
@@ -109,6 +110,16 @@ class SettingsExportCodecTest {
 
         assertEquals(1, parsed.routes.size)
         assertEquals(RouteType.STRAIGHT, parsed.routes[0].routeType)
+    }
+
+    @Test
+    fun `parse preserves explicit empty enabledWidgetFeatures instead of defaulting`() {
+        @Suppress("ktlint:standard:max-line-length") // JSON string literal cannot be split without changing its value
+        val json = """{"schemaVersion":1,"exportedAt":0,"settings":{"speedUnit":"KMH","enabledWidgetFeatures":[]},"speedProfiles":[],"routes":[],"favoriteLocations":[],"jitterIdleRadius":0.0,"jitterMovingRadius":1.0,"jitterIntervalSeconds":3}"""
+
+        val parsed = SettingsExportCodec.parseExportData(json)
+
+        assertEquals(emptySet<AppFeature>(), parsed.settings.enabledWidgetFeatures)
     }
 
     @Test
