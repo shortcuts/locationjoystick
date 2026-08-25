@@ -2,6 +2,7 @@ package com.locationjoystick.feature.favorites.impl
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.locationjoystick.core.common.util.tickerFlow
 import com.locationjoystick.core.data.CooldownEngine
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.FavoriteRepository
@@ -11,12 +12,10 @@ import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.RecentSearch
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -167,14 +166,5 @@ class FavoritesViewModel
             val idToDelete = pendingDeleteIdFlow.value ?: return
             pendingDeleteIdFlow.value = null
             deleteFavorite(idToDelete)
-        }
-    }
-
-/** Emits [Unit] immediately and then every [intervalMs] milliseconds. Cancelled with its scope. */
-private fun tickerFlow(intervalMs: Long) =
-    flow {
-        while (true) {
-            emit(Unit)
-            delay(intervalMs)
         }
     }

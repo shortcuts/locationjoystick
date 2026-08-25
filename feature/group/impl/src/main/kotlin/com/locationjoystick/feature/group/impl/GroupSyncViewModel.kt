@@ -12,6 +12,7 @@ import com.google.zxing.MultiFormatWriter
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.common.util.RandomCode
+import com.locationjoystick.core.common.util.tickerFlow
 import com.locationjoystick.core.data.CooldownEngine
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.GroupRepository
@@ -27,14 +28,12 @@ import com.locationjoystick.core.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -344,14 +343,5 @@ class GroupSyncViewModel
             val intent = Intent(context, MockLocationService::class.java).apply { this.action = action }
             configure?.invoke(intent)
             context.startService(intent)
-        }
-    }
-
-/** Emits [Unit] immediately and then every [intervalMs] milliseconds. Cancelled with its scope. */
-private fun tickerFlow(intervalMs: Long) =
-    flow {
-        while (true) {
-            emit(Unit)
-            delay(intervalMs)
         }
     }
