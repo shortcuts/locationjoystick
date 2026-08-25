@@ -24,6 +24,14 @@ import javax.inject.Singleton
 private const val TAG = "FollowerSyncClient"
 private const val HTTP_FORBIDDEN = 403
 
+data class FollowerPositionUpdate(
+    val lat: Double,
+    val lon: Double,
+    val speedMs: Float,
+    val bearing: Float,
+    val active: Boolean,
+)
+
 @Singleton
 class FollowerSyncClient
     @Inject
@@ -52,7 +60,7 @@ class FollowerSyncClient
             groupId: String,
             pollIntervalMs: Long = AppConstants.SyncConstants.POLL_INTERVAL_MS,
             onGroupLost: () -> Unit = {},
-            onPosition: (lat: Double, lon: Double, speedMs: Float, bearing: Float, active: Boolean) -> Unit,
+            onPosition: (FollowerPositionUpdate) -> Unit,
         ) {
             stopPolling()
             lastSeq = -1L
@@ -87,7 +95,15 @@ class FollowerSyncClient
                                             nowMs - update.timestamp > AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS
                                         if (!stale && update.seq > lastSeq) {
                                             lastSeq = update.seq
-                                            onPosition(update.latitude, update.longitude, update.speedMs, update.bearing, update.active)
+                                            onPosition(
+                                                FollowerPositionUpdate(
+                                                    lat = update.latitude,
+                                                    lon = update.longitude,
+                                                    speedMs = update.speedMs,
+                                                    bearing = update.bearing,
+                                                    active = update.active,
+                                                ),
+                                            )
                                         }
                                     }
                                 }

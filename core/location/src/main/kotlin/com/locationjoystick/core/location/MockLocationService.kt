@@ -782,7 +782,8 @@ class MockLocationService : Service() {
                         }
                     }
                 },
-            ) { lat, lon, _, bearing, active ->
+            ) { update ->
+                val (lat, lon, _, bearing, active) = update
                 followerCatchUp.setTarget(LatLng(lat, lon), bearing)
                 groupRepository.setLeaderPosition(LatLng(lat, lon))
                 when (followerCatchUp.handleLeaderActiveUpdate(active, _state.value)) {

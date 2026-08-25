@@ -51,8 +51,8 @@ class FollowerSyncClientTest {
         server.push(freshUpdate(lat = 1.0, lon = 2.0))
         val results = LinkedBlockingQueue<Pair<Double, Double>>()
 
-        client.startPolling("127.0.0.1", serverPort, "test-group") { lat, lon, _, _, _ ->
-            results.offer(Pair(lat, lon))
+        client.startPolling("127.0.0.1", serverPort, "test-group") { update ->
+            results.offer(Pair(update.lat, update.lon))
         }
 
         val result = results.poll(3, TimeUnit.SECONDS)
@@ -66,8 +66,8 @@ class FollowerSyncClientTest {
         server.push(freshUpdate(lat = 1.0, lon = 2.0).copy(speedMs = 2.5f, bearing = 90f))
         val results = LinkedBlockingQueue<Pair<Float, Float>>()
 
-        client.startPolling("127.0.0.1", serverPort, "test-group") { _, _, speedMs, bearing, _ ->
-            results.offer(Pair(speedMs, bearing))
+        client.startPolling("127.0.0.1", serverPort, "test-group") { update ->
+            results.offer(Pair(update.speedMs, update.bearing))
         }
 
         val result = results.poll(3, TimeUnit.SECONDS)
@@ -81,8 +81,8 @@ class FollowerSyncClientTest {
         server.push(freshUpdate(lat = 1.0, lon = 2.0).copy(active = false))
         val results = LinkedBlockingQueue<Boolean>()
 
-        client.startPolling("127.0.0.1", serverPort, "test-group") { _, _, _, _, active ->
-            results.offer(active)
+        client.startPolling("127.0.0.1", serverPort, "test-group") { update ->
+            results.offer(update.active)
         }
 
         val result = results.poll(3, TimeUnit.SECONDS)
@@ -104,8 +104,8 @@ class FollowerSyncClientTest {
         server.push(staleUpdate)
         val results = LinkedBlockingQueue<Pair<Double, Double>>()
 
-        client.startPolling("127.0.0.1", serverPort, "test-group") { lat, lon, _, _, _ ->
-            results.offer(Pair(lat, lon))
+        client.startPolling("127.0.0.1", serverPort, "test-group") { update ->
+            results.offer(Pair(update.lat, update.lon))
         }
 
         val result = results.poll(600, TimeUnit.MILLISECONDS)
@@ -118,8 +118,8 @@ class FollowerSyncClientTest {
         val results = LinkedBlockingQueue<Pair<Double, Double>>()
 
         // Intentionally wrong groupId — server returns 403, client skips
-        client.startPolling("127.0.0.1", serverPort, "wrong-group") { lat, lon, _, _, _ ->
-            results.offer(Pair(lat, lon))
+        client.startPolling("127.0.0.1", serverPort, "wrong-group") { update ->
+            results.offer(Pair(update.lat, update.lon))
         }
 
         val result = results.poll(600, TimeUnit.MILLISECONDS)
@@ -131,8 +131,8 @@ class FollowerSyncClientTest {
         server.push(freshUpdate(lat = 3.0, lon = 4.0))
         val results = LinkedBlockingQueue<Pair<Double, Double>>()
 
-        client.startPolling("127.0.0.1", serverPort, "test-group", pollIntervalMs = 50) { lat, lon, _, _, _ ->
-            results.offer(Pair(lat, lon))
+        client.startPolling("127.0.0.1", serverPort, "test-group", pollIntervalMs = 50) { update ->
+            results.offer(Pair(update.lat, update.lon))
         }
 
         // Wait long enough for multiple polls — server still serves same seq
@@ -147,8 +147,8 @@ class FollowerSyncClientTest {
         server.push(freshUpdate(lat = 1.0, lon = 2.0))
         val results = LinkedBlockingQueue<Pair<Double, Double>>()
 
-        client.startPolling("127.0.0.1", serverPort, "test-group", pollIntervalMs = 50) { lat, lon, _, _, _ ->
-            results.offer(Pair(lat, lon))
+        client.startPolling("127.0.0.1", serverPort, "test-group", pollIntervalMs = 50) { update ->
+            results.offer(Pair(update.lat, update.lon))
         }
 
         val first = results.poll(3, TimeUnit.SECONDS)
@@ -176,7 +176,7 @@ class FollowerSyncClientTest {
                 "test-group",
                 pollIntervalMs = pollIntervalMs,
                 onGroupLost = { groupLost.offer(Unit) },
-            ) { _, _, _, _, _ -> }
+            ) { }
 
             val timeoutMs =
                 AppConstants.SyncConstants.MAX_CONSECUTIVE_POLL_FAILURES * (pollIntervalMs + 200) + 2_000
@@ -200,7 +200,7 @@ class FollowerSyncClientTest {
                 "test-group",
                 pollIntervalMs = 20,
                 onGroupLost = { groupLost.incrementAndGet() },
-            ) { _, _, _, _, _ -> }
+            ) { }
 
             Thread.sleep(1_000)
             assertTrue("Alternating success/failure should keep polling", client.isPolling)
