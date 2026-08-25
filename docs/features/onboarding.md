@@ -22,12 +22,14 @@ Key files: `:feature:onboarding:impl/OnboardingScreen.kt`, `:feature:onboarding:
 
 ## Skip Mock-Location Check
 
-Step 4's card ("Set as fake GPS app") has a secondary action, "This check
-doesn't work for me", next to the primary "Open Developer Options" button.
-Some modified mock-location apps evade `AppOpsManager` detection, so
-`isMockLocationEnabled()` (`core/common/util/AppOpsUtils.kt`) never reports
-`MODE_ALLOWED` for them even though mock location actually works. Tapping it
-calls `OnboardingViewModel.skipMockLocationCheck()`, which persists
+Step 4's card ("Set as fake GPS app") has a secondary action, "Skip", next
+to the primary "Open Developer Options" button. Some modified mock-location
+apps evade `AppOpsManager` detection, so `isMockLocationEnabled()`
+(`core/common/util/AppOpsUtils.kt`) never reports `MODE_ALLOWED` for them
+even though mock location actually works. Tapping it shows a confirmation
+dialog ("Skip this check?") warning that most devices need this check to
+pass for spoofing to work — "Skip anyway" calls
+`OnboardingViewModel.skipMockLocationCheck()`, which persists
 `AppSettings.bypassMockLocationCheck` (DataStore key
 `bypass_mock_location_check`, default `false`) and re-runs
 `checkPermissions()`, marking the step done immediately.

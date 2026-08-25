@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -34,7 +35,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -115,6 +118,7 @@ internal fun OnboardingScreen(
     bottomBar: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
+    var showSkipMockLocationDialog by remember { mutableStateOf(false) }
 
     val locationPermissionLauncher =
         rememberLauncherForActivityResult(
@@ -260,8 +264,8 @@ internal fun OnboardingScreen(
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     )
                 },
-                extraActionLabel = "This check doesn't work for me",
-                onExtraAction = onSkipMockLocationCheck,
+                extraActionLabel = "Skip",
+                onExtraAction = { showSkipMockLocationDialog = true },
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -286,6 +290,44 @@ internal fun OnboardingScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
+
+    if (showSkipMockLocationDialog) {
+        SkipMockLocationConfirmDialog(
+            onDismiss = { showSkipMockLocationDialog = false },
+            onConfirm = {
+                showSkipMockLocationDialog = false
+                onSkipMockLocationCheck()
+            },
+        )
+    }
+}
+
+@Composable
+private fun SkipMockLocationConfirmDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Skip this check?") },
+        text = {
+            Text(
+                "Most devices need locationjoystick set as the mock location app for spoofing to " +
+                    "work. Only skip this if you've confirmed mock location works another way — " +
+                    "for example, a modified setup that Android doesn't report through this check.",
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Skip anyway")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
 }
 
 @Composable
