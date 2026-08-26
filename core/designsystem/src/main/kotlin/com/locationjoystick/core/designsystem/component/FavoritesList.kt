@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import java.util.Locale
 
 /**
  * Shared composable for displaying a list of favorite locations.
@@ -101,8 +102,7 @@ fun FavoritesList(
                     ) {
                         Text(favorite.name, style = MaterialTheme.typography.titleMedium, color = textColor)
                         Text(
-                            "${String.format("%.4f", favorite.position.latitude)}, " +
-                                "${String.format("%.4f", favorite.position.longitude)}",
+                            formatLatLng(favorite.position.latitude, favorite.position.longitude),
                             style = MaterialTheme.typography.bodySmall,
                             color = textColor,
                         )
@@ -116,6 +116,14 @@ fun FavoritesList(
         }
     }
 }
+
+/** Shared "lat, lon" formatting for coordinate rows across favorite detail/list composables. */
+fun formatLatLng(
+    latitude: Double,
+    longitude: Double,
+): String =
+    "${String.format(Locale.US, "%.4f", latitude)}, " +
+        String.format(Locale.US, "%.4f", longitude)
 
 @Composable
 fun CooldownAdvisoryBadge(

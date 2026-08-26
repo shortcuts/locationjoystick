@@ -13,4 +13,6 @@ dependencies {
     implementation(project(":core:model"))
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.lifecycle.runtime.compose)
+
+    testImplementation(libs.junit)
 }

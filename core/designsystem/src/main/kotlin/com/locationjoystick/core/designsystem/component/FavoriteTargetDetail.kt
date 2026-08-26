@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.model.FavoriteLocation
-import java.util.Locale
 
 /**
  * Shared composable for the "what to do with this favorite" detail — name, coordinates, and
@@ -43,8 +42,7 @@ fun FavoriteTargetDetail(
     ) {
         Text(favorite.name, style = MaterialTheme.typography.headlineSmall, color = textColor)
         Text(
-            "${String.format(Locale.US, "%.4f", favorite.position.latitude)}, " +
-                "${String.format(Locale.US, "%.4f", favorite.position.longitude)}",
+            formatLatLng(favorite.position.latitude, favorite.position.longitude),
             style = MaterialTheme.typography.bodyMedium,
             color = textColor,
             modifier = Modifier.padding(top = 4.dp),
