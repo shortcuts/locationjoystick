@@ -32,7 +32,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
 import com.locationjoystick.core.designsystem.component.FavoritesList
-import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
+import com.locationjoystick.core.designsystem.component.RouteStartSheetContent
 import com.locationjoystick.core.designsystem.component.RoutesPickerList
 import com.locationjoystick.core.model.startWaypoint
 
@@ -65,31 +65,18 @@ internal fun RoutesPickerSheet(
                     )
                 }
                 Spacer(Modifier.height(12.dp))
-                var loop by remember(routeId) { mutableStateOf(false) }
-                var reverse by remember(routeId) { mutableStateOf(false) }
-                var returnToLocation by remember(routeId) { mutableStateOf(false) }
-                var followRoads by remember(routeId) { mutableStateOf(false) }
-                LjRouteStartOptions(
-                    loop = loop,
-                    onLoopChange = { loop = it },
-                    reverse = reverse,
-                    onReverseChange = { reverse = it },
-                    returnToLocation = returnToLocation,
-                    onReturnToLocationChange = { returnToLocation = it },
-                    followRoads = followRoads,
-                    onFollowRoadsChange = { followRoads = it },
-                    onTeleport = {
+                RouteStartSheetContent(
+                    key = routeId,
+                    onTeleport = { reverse ->
                         route?.startWaypoint(reverse)?.let { onAction(MapAction.Teleport(it.position)) }
+                    },
+                    onStart = { loop, reverse, returnToLocation, followRoads ->
+                        onAction(MapAction.StartRouteReplay(routeId, loop, reverse, returnToLocation, followRoads))
+                        selectedRouteId = null
                     },
                     onCancel = {
                         selectedRouteId = null
                         onAction(MapAction.CloseRoutesSheet)
-                    },
-                    onStart = {
-                        onAction(
-                            MapAction.StartRouteReplay(routeId, loop, reverse, returnToLocation && !loop, followRoads),
-                        )
-                        selectedRouteId = null
                     },
                     hideTeleport = uiState.hideTeleportFeatures,
                 )

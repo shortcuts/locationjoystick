@@ -38,9 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.EmptyState
-import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LoadingIndicator
+import com.locationjoystick.core.designsystem.component.RouteStartSheetContent
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.distanceTo
@@ -380,27 +380,16 @@ private fun RouteCard(
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 Text("Start route", style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(12.dp))
-                var loop by remember { mutableStateOf(false) }
-                var reverse by remember { mutableStateOf(false) }
-                var returnToLocation by remember { mutableStateOf(false) }
-                var followRoads by remember { mutableStateOf(false) }
-                LjRouteStartOptions(
-                    loop = loop,
-                    onLoopChange = { loop = it },
-                    reverse = reverse,
-                    onReverseChange = { reverse = it },
-                    returnToLocation = returnToLocation,
-                    onReturnToLocationChange = { returnToLocation = it },
-                    followRoads = followRoads,
-                    onFollowRoadsChange = { followRoads = it },
-                    onTeleport = {
+                RouteStartSheetContent(
+                    key = route.id,
+                    onTeleport = { reverse ->
                         route.startWaypoint(reverse)?.let { onTeleportToRouteStart(it.position) }
                     },
-                    onCancel = { showStartDialog = false },
-                    onStart = {
-                        onStartReplay(route, loop, reverse, returnToLocation && !loop, followRoads)
+                    onStart = { loop, reverse, returnToLocation, followRoads ->
+                        onStartReplay(route, loop, reverse, returnToLocation, followRoads)
                         showStartDialog = false
                     },
+                    onCancel = { showStartDialog = false },
                     hideTeleport = hideTeleportFeatures,
                 )
             }
