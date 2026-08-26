@@ -756,7 +756,7 @@ class MockLocationService : Service() {
                 launch { roamingRepository.stopRoaming() }
             }
             locationRepository.setMockMode(MockMode.FOLLOWER)
-            followerCatchUp.resetBootstrapState()
+            followerCatchUp.clear()
             followerSyncClient.startPolling(
                 host,
                 port,

@@ -46,11 +46,11 @@ class FollowerBootstrapActionTest {
     }
 
     @Test
-    fun `resetBootstrapState allows an immediate re-bootstrap`() {
+    fun `clear allows an immediate re-bootstrap`() {
         val coordinator = FollowerCatchUpCoordinator()
         coordinator.handleLeaderActiveUpdate(leaderActive = true, currentState = MockLocationState.IDLE)
 
-        coordinator.resetBootstrapState()
+        coordinator.clear()
         val action = coordinator.handleLeaderActiveUpdate(leaderActive = true, currentState = MockLocationState.IDLE)
 
         assertEquals(FollowerBootstrapAction.BOOTSTRAP, action)

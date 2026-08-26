@@ -107,9 +107,4 @@ internal class FollowerCatchUpCoordinator {
                 if (spoofingStarted.compareAndSet(true, false)) FollowerBootstrapAction.PAUSE else FollowerBootstrapAction.NONE
             FollowerActiveAction.NO_OP -> FollowerBootstrapAction.NONE
         }
-
-    /** Resets bootstrap tracking for a fresh follower session — call at the start of enterFollowerMode(). */
-    fun resetBootstrapState() {
-        spoofingStarted.set(false)
-    }
 }
