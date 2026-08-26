@@ -125,10 +125,6 @@ sealed interface MapAction {
         val followRoadsToStart: Boolean = false,
     ) : MapAction
 
-    data class Teleport(
-        val position: LatLng,
-    ) : MapAction
-
     data object PauseRouteReplay : MapAction
 
     data object ResumeRouteReplay : MapAction

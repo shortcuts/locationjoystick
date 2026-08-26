@@ -320,10 +320,6 @@ class MapViewModel
                     _uiState.update { it.copy(showRoutesSheet = false) }
                 }
 
-                is MapAction.Teleport -> {
-                    mapController.teleportTo(action.position)
-                }
-
                 MapAction.PauseRouteReplay -> {
                     mapController.pauseRouteReplay()
                 }

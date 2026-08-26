@@ -68,7 +68,7 @@ internal fun RoutesPickerSheet(
                 RouteStartSheetContent(
                     key = routeId,
                     onTeleport = { reverse ->
-                        route?.startWaypoint(reverse)?.let { onAction(MapAction.Teleport(it.position)) }
+                        route?.startWaypoint(reverse)?.let { onAction(MapAction.ConfirmTeleport(it.position)) }
                     },
                     onStart = { loop, reverse, returnToLocation, followRoads ->
                         onAction(MapAction.StartRouteReplay(routeId, loop, reverse, returnToLocation, followRoads))

@@ -723,13 +723,13 @@ class MapViewModelTest {
         }
 
     @Test
-    fun `Teleport calls mapController teleportTo and keeps routes sheet open`() =
+    fun `ConfirmTeleport from routes sheet calls mapController teleportTo and keeps routes sheet open`() =
         runTest {
             viewModel.onAction(MapAction.OpenRoutesSheet)
             assertEquals(true, viewModel.uiState.value.showRoutesSheet)
 
             val position = LatLng(1.0, 2.0)
-            viewModel.onAction(MapAction.Teleport(position))
+            viewModel.onAction(MapAction.ConfirmTeleport(position))
             testDispatcher.scheduler.advanceUntilIdle()
 
             coVerify { teleportUseCase.execute(position) }
