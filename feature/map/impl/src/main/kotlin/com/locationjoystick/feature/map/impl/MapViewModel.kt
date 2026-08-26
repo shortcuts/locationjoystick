@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
@@ -88,19 +89,15 @@ class MapViewModel
                     }
             }
             viewModelScope.launch {
-                settingsRepository
-                    .getHideTeleportFeatures()
+                combine(
+                    settingsRepository.getHideTeleportFeatures(),
+                    settingsRepository.getShowRouteJumpButtons(),
+                ) { hideTeleport, showJumpButtons -> hideTeleport to showJumpButtons }
                     .distinctUntilChanged()
-                    .collect { enabled ->
-                        _uiState.update { it.copy(hideTeleportFeatures = enabled) }
-                    }
-            }
-            viewModelScope.launch {
-                settingsRepository
-                    .getShowRouteJumpButtons()
-                    .distinctUntilChanged()
-                    .collect { enabled ->
-                        _uiState.update { it.copy(showRouteJumpButtons = enabled) }
+                    .collect { (hideTeleport, showJumpButtons) ->
+                        _uiState.update {
+                            it.copy(hideTeleportFeatures = hideTeleport, showRouteJumpButtons = showJumpButtons)
+                        }
                     }
             }
         }

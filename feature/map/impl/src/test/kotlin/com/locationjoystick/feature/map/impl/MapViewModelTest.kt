@@ -99,6 +99,8 @@ class MapViewModelTest {
         every { settingsRepository.getRememberLastLocation() } returns flowOf(false)
         every { settingsRepository.getLastLocation() } returns flowOf(null)
         every { settingsRepository.getLastTeleportTime() } returns flowOf(0L)
+        every { settingsRepository.getHideTeleportFeatures() } returns flowOf(false)
+        every { settingsRepository.getShowRouteJumpButtons() } returns flowOf(false)
 
         viewModel = createViewModel()
     }
