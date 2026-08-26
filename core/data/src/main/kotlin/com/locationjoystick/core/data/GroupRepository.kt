@@ -91,6 +91,14 @@ class GroupRepository
             dataStore.edit { prefs -> prefs[Keys.GROUP_SHARING_ENABLED] = enabled }
         }
 
+        /** Follower-only, in-memory: the leader's last-known position, for cooldown/distance UI. Not persisted. */
+        private val _leaderPosition = MutableStateFlow<LatLng?>(null)
+        val leaderPosition: StateFlow<LatLng?> = _leaderPosition.asStateFlow()
+
+        fun setLeaderPosition(position: LatLng?) {
+            _leaderPosition.value = position
+        }
+
         suspend fun leaveGroup() {
             dataStore.edit { prefs ->
                 prefs.remove(Keys.GROUP_ROLE)
@@ -101,14 +109,6 @@ class GroupRepository
                 prefs.remove(Keys.GROUP_SHARING_ENABLED)
             }
             _leaderPosition.value = null
-        }
-
-        /** Follower-only, in-memory: the leader's last-known position, for cooldown/distance UI. Not persisted. */
-        private val _leaderPosition = MutableStateFlow<LatLng?>(null)
-        val leaderPosition: StateFlow<LatLng?> = _leaderPosition.asStateFlow()
-
-        fun setLeaderPosition(position: LatLng?) {
-            _leaderPosition.value = position
         }
 
         private val _pendingGroupInvite = MutableSharedFlow<GroupInvite>(replay = 1)
