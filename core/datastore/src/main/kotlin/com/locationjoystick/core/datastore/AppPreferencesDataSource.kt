@@ -470,28 +470,23 @@ class AppPreferencesDataSource
                     )
                 }
 
-        override suspend fun setSlowWalkSpeed(ms: Double) {
-            dataStore.edit { prefs -> prefs[Keys.SLOW_WALK_SPEED_MS] = ms.coerceAtLeast(MIN_SPEED_MS) }
-        }
+        override suspend fun setSlowWalkSpeed(ms: Double) = setPref(Keys.SLOW_WALK_SPEED_MS, ms.coerceAtLeast(MIN_SPEED_MS))
 
-        override suspend fun setWalkSpeed(ms: Double) {
-            dataStore.edit { prefs -> prefs[Keys.WALK_SPEED_MS] = ms.coerceAtLeast(MIN_SPEED_MS) }
-        }
+        override suspend fun setWalkSpeed(ms: Double) = setPref(Keys.WALK_SPEED_MS, ms.coerceAtLeast(MIN_SPEED_MS))
 
-        override suspend fun setRunSpeed(ms: Double) {
-            dataStore.edit { prefs -> prefs[Keys.RUN_SPEED_MS] = ms.coerceAtLeast(MIN_SPEED_MS) }
-        }
+        override suspend fun setRunSpeed(ms: Double) = setPref(Keys.RUN_SPEED_MS, ms.coerceAtLeast(MIN_SPEED_MS))
 
-        override suspend fun setBikeSpeed(ms: Double) {
-            dataStore.edit { prefs -> prefs[Keys.BIKE_SPEED_MS] = ms.coerceAtLeast(MIN_SPEED_MS) }
-        }
+        override suspend fun setBikeSpeed(ms: Double) = setPref(Keys.BIKE_SPEED_MS, ms.coerceAtLeast(MIN_SPEED_MS))
 
-        override suspend fun setDriveSpeed(ms: Double) {
-            dataStore.edit { prefs -> prefs[Keys.DRIVE_SPEED_MS] = ms.coerceAtLeast(MIN_SPEED_MS) }
-        }
+        override suspend fun setDriveSpeed(ms: Double) = setPref(Keys.DRIVE_SPEED_MS, ms.coerceAtLeast(MIN_SPEED_MS))
 
-        override suspend fun setActiveProfileId(profileId: String) {
-            dataStore.edit { prefs -> prefs[Keys.ACTIVE_PROFILE_ID] = profileId }
+        override suspend fun setActiveProfileId(profileId: String) = setPref(Keys.ACTIVE_PROFILE_ID, profileId)
+
+        private suspend fun <T> setPref(
+            key: Preferences.Key<T>,
+            value: T,
+        ) {
+            dataStore.edit { prefs -> prefs[key] = value }
         }
 
         private fun <T> pref(
@@ -510,15 +505,11 @@ class AppPreferencesDataSource
 
         override fun getWidgetItems(): Flow<Set<String>> = pref(Keys.WIDGET_ITEMS, DEFAULT_WIDGET_ITEMS)
 
-        override suspend fun setWidgetItems(items: Set<String>) {
-            dataStore.edit { prefs -> prefs[Keys.WIDGET_ITEMS] = items }
-        }
+        override suspend fun setWidgetItems(items: Set<String>) = setPref(Keys.WIDGET_ITEMS, items)
 
         override fun getMapItems(): Flow<Set<String>> = pref(Keys.MAP_FAB_ITEMS, DEFAULT_MAP_FAB_ITEMS)
 
-        override suspend fun setMapItems(items: Set<String>) {
-            dataStore.edit { prefs -> prefs[Keys.MAP_FAB_ITEMS] = items }
-        }
+        override suspend fun setMapItems(items: Set<String>) = setPref(Keys.MAP_FAB_ITEMS, items)
 
         override fun getFeatureOrder(): Flow<List<AppFeature>> =
             dataStore.data
@@ -531,16 +522,12 @@ class AppPreferencesDataSource
                     }
                 }.map { prefs -> parseFeatureOrder(prefs[Keys.FEATURE_ORDER]) }
 
-        override suspend fun setFeatureOrder(order: List<AppFeature>) {
-            dataStore.edit { prefs -> prefs[Keys.FEATURE_ORDER] = order.serializeFeatureOrder() }
-        }
+        override suspend fun setFeatureOrder(order: List<AppFeature>) = setPref(Keys.FEATURE_ORDER, order.serializeFeatureOrder())
 
         override fun getEnabledSpeedProfileIds(): Flow<Set<String>> =
             pref(Keys.ENABLED_SPEED_PROFILE_IDS, DEFAULT_ENABLED_SPEED_PROFILE_IDS)
 
-        override suspend fun setEnabledSpeedProfileIds(ids: Set<String>) {
-            dataStore.edit { prefs -> prefs[Keys.ENABLED_SPEED_PROFILE_IDS] = ids }
-        }
+        override suspend fun setEnabledSpeedProfileIds(ids: Set<String>) = setPref(Keys.ENABLED_SPEED_PROFILE_IDS, ids)
 
         override fun getRoamingDefaults(): Flow<RoamingDefaults> =
             dataStore.data
@@ -573,9 +560,7 @@ class AppPreferencesDataSource
 
         override fun getOnboardingComplete(): Flow<Boolean> = pref(Keys.ONBOARDING_COMPLETE, false)
 
-        override suspend fun setOnboardingComplete(complete: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.ONBOARDING_COMPLETE] = complete }
-        }
+        override suspend fun setOnboardingComplete(complete: Boolean) = setPref(Keys.ONBOARDING_COMPLETE, complete)
 
         override fun getSpeedUnit(): Flow<String> =
             pref(
@@ -583,9 +568,7 @@ class AppPreferencesDataSource
                 AppConstants.ProfileConstants.DEFAULT_SPEED_UNIT,
             )
 
-        override suspend fun setSpeedUnit(unit: String) {
-            dataStore.edit { prefs -> prefs[Keys.SPEED_UNIT] = unit }
-        }
+        override suspend fun setSpeedUnit(unit: String) = setPref(Keys.SPEED_UNIT, unit)
 
         override fun getThemeMode(): Flow<String> =
             pref(
@@ -593,16 +576,12 @@ class AppPreferencesDataSource
                 AppConstants.DataStoreConstants.DEFAULT_THEME_MODE,
             )
 
-        override suspend fun setThemeMode(mode: String) {
-            dataStore.edit { prefs -> prefs[Keys.THEME_MODE] = mode }
-        }
+        override suspend fun setThemeMode(mode: String) = setPref(Keys.THEME_MODE, mode)
 
         override fun getRememberLastLocation(): Flow<Boolean> =
             pref(Keys.REMEMBER_LAST_LOCATION, AppConstants.DataStoreConstants.DEFAULT_REMEMBER_LAST_LOCATION)
 
-        override suspend fun setRememberLastLocation(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.REMEMBER_LAST_LOCATION] = enabled }
-        }
+        override suspend fun setRememberLastLocation(enabled: Boolean) = setPref(Keys.REMEMBER_LAST_LOCATION, enabled)
 
         override fun getLastLocation(): Flow<LatLng?> =
             dataStore.data
@@ -638,19 +617,11 @@ class AppPreferencesDataSource
                 DEFAULT_JITTER_MOVING_RADIUS_METERS,
             )
 
-        override suspend fun setJitterIdleRadius(meters: Double) {
-            dataStore.edit {
-                    prefs ->
-                prefs[Keys.JITTER_IDLE_RADIUS_METERS] = meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
-            }
-        }
+        override suspend fun setJitterIdleRadius(meters: Double) =
+            setPref(Keys.JITTER_IDLE_RADIUS_METERS, meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS))
 
-        override suspend fun setJitterMovingRadius(meters: Double) {
-            dataStore.edit {
-                    prefs ->
-                prefs[Keys.JITTER_MOVING_RADIUS_METERS] = meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
-            }
-        }
+        override suspend fun setJitterMovingRadius(meters: Double) =
+            setPref(Keys.JITTER_MOVING_RADIUS_METERS, meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS))
 
         override fun getJitterIntervalSeconds(): Flow<Int> =
             pref(
@@ -658,33 +629,23 @@ class AppPreferencesDataSource
                 DEFAULT_JITTER_INTERVAL_SECONDS,
             )
 
-        override suspend fun setJitterIntervalSeconds(seconds: Int) {
-            dataStore.edit { prefs ->
-                prefs[Keys.JITTER_INTERVAL_SECONDS] = seconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS)
-            }
-        }
+        override suspend fun setJitterIntervalSeconds(seconds: Int) =
+            setPref(Keys.JITTER_INTERVAL_SECONDS, seconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS))
 
         override fun getJitterIdleIntervalSeconds(): Flow<Int> =
             pref(Keys.JITTER_IDLE_INTERVAL_SECONDS, DEFAULT_JITTER_IDLE_INTERVAL_SECONDS)
 
-        override suspend fun setJitterIdleIntervalSeconds(seconds: Int) {
-            dataStore.edit { prefs ->
-                prefs[Keys.JITTER_IDLE_INTERVAL_SECONDS] = seconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS)
-            }
-        }
+        override suspend fun setJitterIdleIntervalSeconds(seconds: Int) =
+            setPref(Keys.JITTER_IDLE_INTERVAL_SECONDS, seconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS))
 
         override fun getLastTeleportTime(): Flow<Long> =
             pref(Keys.LAST_TELEPORT_TIME_MS, AppConstants.DataStoreConstants.DEFAULT_LAST_TELEPORT_TIME_MS)
 
-        override suspend fun setLastTeleportTime(ms: Long) {
-            dataStore.edit { prefs -> prefs[Keys.LAST_TELEPORT_TIME_MS] = ms }
-        }
+        override suspend fun setLastTeleportTime(ms: Long) = setPref(Keys.LAST_TELEPORT_TIME_MS, ms)
 
         override fun getMapFollowsLocation(): Flow<Boolean> = pref(Keys.MAP_FOLLOWS_LOCATION, true)
 
-        override suspend fun setMapFollowsLocation(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.MAP_FOLLOWS_LOCATION] = enabled }
-        }
+        override suspend fun setMapFollowsLocation(enabled: Boolean) = setPref(Keys.MAP_FOLLOWS_LOCATION, enabled)
 
         override fun getRealismBearingHoldIdle(): Flow<Boolean> = pref(Keys.REALISM_BEARING_HOLD_IDLE, true)
 
@@ -704,55 +665,35 @@ class AppPreferencesDataSource
                 false,
             )
 
-        override suspend fun setRealismBearingHoldIdle(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.REALISM_BEARING_HOLD_IDLE] = enabled }
-        }
+        override suspend fun setRealismBearingHoldIdle(enabled: Boolean) = setPref(Keys.REALISM_BEARING_HOLD_IDLE, enabled)
 
-        override suspend fun setRealismAltitudeEnabled(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.REALISM_ALTITUDE_ENABLED] = enabled }
-        }
+        override suspend fun setRealismAltitudeEnabled(enabled: Boolean) = setPref(Keys.REALISM_ALTITUDE_ENABLED, enabled)
 
-        override suspend fun setRealismWarmupEnabled(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.REALISM_WARMUP_ENABLED] = enabled }
-        }
+        override suspend fun setRealismWarmupEnabled(enabled: Boolean) = setPref(Keys.REALISM_WARMUP_ENABLED, enabled)
 
-        override suspend fun setRealismSatelliteExtrasEnabled(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.REALISM_SATELLITE_EXTRAS_ENABLED] = enabled }
-        }
+        override suspend fun setRealismSatelliteExtrasEnabled(enabled: Boolean) = setPref(Keys.REALISM_SATELLITE_EXTRAS_ENABLED, enabled)
 
-        override suspend fun setRealismSuspendedMockingEnabled(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.REALISM_SUSPENDED_MOCKING_ENABLED] = enabled }
-        }
+        override suspend fun setRealismSuspendedMockingEnabled(enabled: Boolean) = setPref(Keys.REALISM_SUSPENDED_MOCKING_ENABLED, enabled)
 
         override fun getHideTeleportFeatures(): Flow<Boolean> = pref(Keys.HIDE_TELEPORT_FEATURES, false)
 
-        override suspend fun setHideTeleportFeatures(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.HIDE_TELEPORT_FEATURES] = enabled }
-        }
+        override suspend fun setHideTeleportFeatures(enabled: Boolean) = setPref(Keys.HIDE_TELEPORT_FEATURES, enabled)
 
         override fun getHideWidgetOverlay(): Flow<Boolean> = pref(Keys.HIDE_WIDGET_OVERLAY, false)
 
-        override suspend fun setHideWidgetOverlay(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.HIDE_WIDGET_OVERLAY] = enabled }
-        }
+        override suspend fun setHideWidgetOverlay(enabled: Boolean) = setPref(Keys.HIDE_WIDGET_OVERLAY, enabled)
 
         override fun getHideForegroundNotification(): Flow<Boolean> = pref(Keys.HIDE_FOREGROUND_NOTIFICATION, false)
 
-        override suspend fun setHideForegroundNotification(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] = enabled }
-        }
+        override suspend fun setHideForegroundNotification(enabled: Boolean) = setPref(Keys.HIDE_FOREGROUND_NOTIFICATION, enabled)
 
         override fun getShowRouteJumpButtons(): Flow<Boolean> = pref(Keys.SHOW_ROUTE_JUMP_BUTTONS, false)
 
-        override suspend fun setShowRouteJumpButtons(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] = enabled }
-        }
+        override suspend fun setShowRouteJumpButtons(enabled: Boolean) = setPref(Keys.SHOW_ROUTE_JUMP_BUTTONS, enabled)
 
         override fun getBypassMockLocationCheck(): Flow<Boolean> = pref(Keys.BYPASS_MOCK_LOCATION_CHECK, false)
 
-        override suspend fun setBypassMockLocationCheck(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] = enabled }
-        }
+        override suspend fun setBypassMockLocationCheck(enabled: Boolean) = setPref(Keys.BYPASS_MOCK_LOCATION_CHECK, enabled)
 
         override fun getRecentSearches(): Flow<List<RecentSearch>> =
             dataStore.data
@@ -785,15 +726,11 @@ class AppPreferencesDataSource
 
         override fun getRoutesSortNewestFirst(): Flow<Boolean> = pref(Keys.ROUTES_SORT_NEWEST_FIRST, true)
 
-        override suspend fun setRoutesSortNewestFirst(newestFirst: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.ROUTES_SORT_NEWEST_FIRST] = newestFirst }
-        }
+        override suspend fun setRoutesSortNewestFirst(newestFirst: Boolean) = setPref(Keys.ROUTES_SORT_NEWEST_FIRST, newestFirst)
 
         override fun getFavoritesSortNewestFirst(): Flow<Boolean> = pref(Keys.FAVORITES_SORT_NEWEST_FIRST, true)
 
-        override suspend fun setFavoritesSortNewestFirst(newestFirst: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.FAVORITES_SORT_NEWEST_FIRST] = newestFirst }
-        }
+        override suspend fun setFavoritesSortNewestFirst(newestFirst: Boolean) = setPref(Keys.FAVORITES_SORT_NEWEST_FIRST, newestFirst)
 
         override fun getJitterSpeedIdleVariationPct(): Flow<Int> =
             pref(Keys.JITTER_SPEED_IDLE_VARIATION_PCT, DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT)
@@ -801,49 +738,39 @@ class AppPreferencesDataSource
         override fun getJitterSpeedMovingVariationPct(): Flow<Int> =
             pref(Keys.JITTER_SPEED_MOVING_VARIATION_PCT, DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT)
 
-        override suspend fun setJitterSpeedIdleVariationPct(pct: Int) {
-            dataStore.edit { prefs ->
-                prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] =
-                    pct.coerceIn(
-                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
-                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
-                    )
-            }
-        }
+        override suspend fun setJitterSpeedIdleVariationPct(pct: Int) =
+            setPref(
+                Keys.JITTER_SPEED_IDLE_VARIATION_PCT,
+                pct.coerceIn(
+                    AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
+                    AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
+                ),
+            )
 
-        override suspend fun setJitterSpeedMovingVariationPct(pct: Int) {
-            dataStore.edit { prefs ->
-                prefs[Keys.JITTER_SPEED_MOVING_VARIATION_PCT] =
-                    pct.coerceIn(
-                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
-                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
-                    )
-            }
-        }
+        override suspend fun setJitterSpeedMovingVariationPct(pct: Int) =
+            setPref(
+                Keys.JITTER_SPEED_MOVING_VARIATION_PCT,
+                pct.coerceIn(
+                    AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
+                    AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
+                ),
+            )
 
         override fun getHotLocationsEnabled(): Flow<Boolean> = pref(Keys.HOT_LOCATIONS_ENABLED, false)
 
-        override suspend fun setHotLocationsEnabled(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.HOT_LOCATIONS_ENABLED] = enabled }
-        }
+        override suspend fun setHotLocationsEnabled(enabled: Boolean) = setPref(Keys.HOT_LOCATIONS_ENABLED, enabled)
 
         override fun getSelectedHotLocationIds(): Flow<Set<String>> = pref(Keys.HOT_LOCATION_SELECTED_IDS, emptySet())
 
-        override suspend fun setSelectedHotLocationIds(ids: Set<String>) {
-            dataStore.edit { prefs -> prefs[Keys.HOT_LOCATION_SELECTED_IDS] = ids }
-        }
+        override suspend fun setSelectedHotLocationIds(ids: Set<String>) = setPref(Keys.HOT_LOCATION_SELECTED_IDS, ids)
 
         override fun getHotRoutesEnabled(): Flow<Boolean> = pref(Keys.HOT_ROUTES_ENABLED, false)
 
-        override suspend fun setHotRoutesEnabled(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.HOT_ROUTES_ENABLED] = enabled }
-        }
+        override suspend fun setHotRoutesEnabled(enabled: Boolean) = setPref(Keys.HOT_ROUTES_ENABLED, enabled)
 
         override fun getSelectedHotRouteIds(): Flow<Set<String>> = pref(Keys.HOT_ROUTE_SELECTED_IDS, emptySet())
 
-        override suspend fun setSelectedHotRouteIds(ids: Set<String>) {
-            dataStore.edit { prefs -> prefs[Keys.HOT_ROUTE_SELECTED_IDS] = ids }
-        }
+        override suspend fun setSelectedHotRouteIds(ids: Set<String>) = setPref(Keys.HOT_ROUTE_SELECTED_IDS, ids)
 
         override fun getFloatingMapQuickWalk(): Flow<Boolean> = pref(Keys.FLOATING_MAP_QUICK_WALK, false)
 
@@ -854,30 +781,22 @@ class AppPreferencesDataSource
 
         override fun getCompassTrackingEnabled(): Flow<Boolean> = pref(Keys.COMPASS_TRACKING_ENABLED, false)
 
-        override suspend fun setCompassTrackingEnabled(enabled: Boolean) {
-            dataStore.edit { prefs -> prefs[Keys.COMPASS_TRACKING_ENABLED] = enabled }
-        }
+        override suspend fun setCompassTrackingEnabled(enabled: Boolean) = setPref(Keys.COMPASS_TRACKING_ENABLED, enabled)
 
         override fun getCompassRegionCxPct(): Flow<Float> =
             pref(Keys.COMPASS_REGION_CX_PCT, AppConstants.CompassTrackingConstants.DEFAULT_REGION_CX_PCT)
 
-        override suspend fun setCompassRegionCxPct(value: Float) {
-            dataStore.edit { prefs -> prefs[Keys.COMPASS_REGION_CX_PCT] = value.coerceIn(0f, 1f) }
-        }
+        override suspend fun setCompassRegionCxPct(value: Float) = setPref(Keys.COMPASS_REGION_CX_PCT, value.coerceIn(0f, 1f))
 
         override fun getCompassRegionCyPct(): Flow<Float> =
             pref(Keys.COMPASS_REGION_CY_PCT, AppConstants.CompassTrackingConstants.DEFAULT_REGION_CY_PCT)
 
-        override suspend fun setCompassRegionCyPct(value: Float) {
-            dataStore.edit { prefs -> prefs[Keys.COMPASS_REGION_CY_PCT] = value.coerceIn(0f, 1f) }
-        }
+        override suspend fun setCompassRegionCyPct(value: Float) = setPref(Keys.COMPASS_REGION_CY_PCT, value.coerceIn(0f, 1f))
 
         override fun getCompassRegionRadiusPct(): Flow<Float> =
             pref(Keys.COMPASS_REGION_RADIUS_PCT, AppConstants.CompassTrackingConstants.DEFAULT_REGION_RADIUS_PCT)
 
-        override suspend fun setCompassRegionRadiusPct(value: Float) {
-            dataStore.edit { prefs -> prefs[Keys.COMPASS_REGION_RADIUS_PCT] = value.coerceIn(0.02f, 0.2f) }
-        }
+        override suspend fun setCompassRegionRadiusPct(value: Float) = setPref(Keys.COMPASS_REGION_RADIUS_PCT, value.coerceIn(0.02f, 0.2f))
 
         override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
             dataStore.edit { prefs ->
