@@ -186,28 +186,16 @@ class JoystickView
 
         // MotionEvent#getRawX(int)/getRawY(int) (per-pointer overload) require API 29 — below
         // that, derive raw coords from this view's screen offset instead.
-        private fun rawX(
+        private fun rawXY(
             event: MotionEvent,
             pointerIndex: Int,
-        ): Float =
+        ): Pair<Float, Float> =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                event.getRawX(pointerIndex)
+                Pair(event.getRawX(pointerIndex), event.getRawY(pointerIndex))
             } else {
                 val loc = IntArray(2)
                 getLocationOnScreen(loc)
-                loc[0] + event.getX(pointerIndex)
-            }
-
-        private fun rawY(
-            event: MotionEvent,
-            pointerIndex: Int,
-        ): Float =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                event.getRawY(pointerIndex)
-            } else {
-                val loc = IntArray(2)
-                getLocationOnScreen(loc)
-                loc[1] + event.getY(pointerIndex)
+                Pair(loc[0] + event.getX(pointerIndex), loc[1] + event.getY(pointerIndex))
             }
 
         override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -231,7 +219,8 @@ class JoystickView
                     val y = event.getY(pointerIndex)
                     if (dragPointerId == -1 && isDragTouch(x, y)) {
                         dragPointerId = pointerId
-                        onDragHandleDown?.invoke(rawX(event, pointerIndex), rawY(event, pointerIndex))
+                        val (rx, ry) = rawXY(event, pointerIndex)
+                        onDragHandleDown?.invoke(rx, ry)
                         return true
                     }
                     return false
@@ -243,7 +232,8 @@ class JoystickView
                     if (dragPointerId != -1) {
                         val idx = event.findPointerIndex(dragPointerId)
                         if (idx != -1) {
-                            onDragHandleMoved?.invoke(rawX(event, idx), rawY(event, idx))
+                            val (rx, ry) = rawXY(event, idx)
+                            onDragHandleMoved?.invoke(rx, ry)
                             consumed = true
                         }
                     }
