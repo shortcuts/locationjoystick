@@ -112,6 +112,11 @@
           <td>Moving</td>
           <td>A random percentage added to or subtracted from the reported speed while moving, so it doesn't look like a flat, constant number.</td>
         </tr>
+        <tr>
+          <td>Altitude variation</td>
+          <td>Always</td>
+          <td>How much the reported height drifts up and down. Larger values look bumpier; set it to 0 for a perfectly flat height (the "Vary altitude" switch below still needs to be on).</td>
+        </tr>
       </tbody>
     </table>
     </div>
@@ -131,7 +136,17 @@
         <tr>
           <td>Vary altitude</td>
           <td class="default-cell">On</td>
-          <td>Drifts the reported altitude slightly rather than holding one constant height.</td>
+          <td>Drifts the reported altitude slightly rather than holding one constant height. How much it drifts is set by the "Altitude variation" field above.</td>
+        </tr>
+        <tr>
+          <td>Use real-world elevation</td>
+          <td class="default-cell">On</td>
+          <td>Looks up the actual ground height at your spoofed spot every minute, instead of a fixed ~35 m, and eases toward it gradually rather than jumping. Needs an internet connection; falls back to the fixed height if the lookup fails, and pauses automatically while an altitude override (below) is active. A "Reset elevation override" button clears an active override and lets this resume.</td>
+        </tr>
+        <tr>
+          <td>Show altitude override button</td>
+          <td class="default-cell">Off</td>
+          <td>Adds a button to the floating widget for typing in a fixed height from anywhere, overriding both the default and the real-world lookup until reset.</td>
         </tr>
         <tr>
           <td>GPS warm-up simulation</td>

@@ -155,6 +155,24 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
+    fun `saveChanges includes altitude fields in the single applySnapshot call`() =
+        runTest(testDispatcher) {
+            // Subscribe to uiState so WhileSubscribed flows activate
+            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            viewModel.setRealismRealElevationEnabled(false)
+            viewModel.setAltitudeJitterRadius(2.5)
+            viewModel.setAltitudeOverrideButtonEnabled(true)
+
+            viewModel.saveChanges()
+
+            assertEquals(1, fakeDataSource.applySnapshotCallCount)
+            val snapshot = fakeDataSource.lastAppliedSnapshot!!
+            assertFalse(snapshot.realismRealElevationEnabled)
+            assertEquals(2.5, snapshot.altitudeJitterRadiusMeters, 0.001)
+            assertTrue(snapshot.altitudeOverrideButtonEnabled)
+        }
+
+    @Test
     fun `importSettings(ExportData) applies all settings atomically via single applySnapshot call`() =
         runTest(testDispatcher) {
             val customRoaming =
@@ -592,6 +610,30 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getBypassMockLocationCheck(): Flow<Boolean> = flowOf(false)
 
     override suspend fun setBypassMockLocationCheck(enabled: Boolean) = Unit
+
+    override fun getRealismRealElevationEnabled(): Flow<Boolean> = flowOf(true)
+
+    override suspend fun setRealismRealElevationEnabled(enabled: Boolean) = Unit
+
+    private val baseAltitudeOverrideFlow = MutableStateFlow<Double?>(null)
+
+    override fun getBaseAltitudeOverride(): Flow<Double?> = baseAltitudeOverrideFlow
+
+    override suspend fun setBaseAltitudeOverride(meters: Double) {
+        baseAltitudeOverrideFlow.value = meters
+    }
+
+    override suspend fun clearBaseAltitudeOverride() {
+        baseAltitudeOverrideFlow.value = null
+    }
+
+    override fun getAltitudeOverrideButtonEnabled(): Flow<Boolean> = flowOf(false)
+
+    override suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) = Unit
+
+    override fun getAltitudeJitterRadius(): Flow<Double> = flowOf(AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS)
+
+    override suspend fun setAltitudeJitterRadius(meters: Double) = Unit
 
     override fun getSelectedHotLocationIds(): Flow<Set<String>> = flowOf(emptySet())
 

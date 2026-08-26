@@ -137,6 +137,20 @@ internal sealed class SettingsAction {
         val enabled: Boolean,
     ) : SettingsAction()
 
+    data class SetRealismRealElevationEnabled(
+        val enabled: Boolean,
+    ) : SettingsAction()
+
+    data object ResetAltitudeOverride : SettingsAction()
+
+    data class SetAltitudeJitterRadius(
+        val meters: Double,
+    ) : SettingsAction()
+
+    data class SetAltitudeOverrideButtonEnabled(
+        val enabled: Boolean,
+    ) : SettingsAction()
+
     data class SetTapToWalkOverlayEnabled(
         val enabled: Boolean,
     ) : SettingsAction()

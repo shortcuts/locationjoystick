@@ -129,6 +129,9 @@ class SettingsViewModel
             val hideWidgetOverlay: Boolean? = null,
             val hideForegroundNotification: Boolean? = null,
             val showRouteJumpButtons: Boolean? = null,
+            val realismRealElevationEnabled: Boolean? = null,
+            val altitudeJitterRadiusMeters: Double? = null,
+            val altitudeOverrideButtonEnabled: Boolean? = null,
         )
 
         private val mutableDraft = MutableStateFlow(DraftState())
@@ -169,7 +172,8 @@ class SettingsViewModel
                 compassPrefsFlow,
                 compassServiceGranted,
                 settingsRepository.getThemeMode(),
-            ) { (snapshot, draftState), compass, isServiceGranted, themeMode ->
+                settingsRepository.getBaseAltitudeOverride(),
+            ) { (snapshot, draftState), compass, isServiceGranted, themeMode, baseAltitudeOverride ->
                 val isDirty = draftState != DraftState()
                 SettingsUiState(
                     isLoading = false,
@@ -204,6 +208,12 @@ class SettingsViewModel
                     hideForegroundNotification =
                         draftState.hideForegroundNotification ?: snapshot.hideForegroundNotification,
                     showRouteJumpButtons = draftState.showRouteJumpButtons ?: snapshot.showRouteJumpButtons,
+                    realismRealElevationEnabled =
+                        draftState.realismRealElevationEnabled ?: snapshot.realismRealElevationEnabled,
+                    hasAltitudeOverride = baseAltitudeOverride != null,
+                    altitudeJitterRadiusMeters = draftState.altitudeJitterRadiusMeters ?: snapshot.altitudeJitterRadiusMeters,
+                    altitudeOverrideButtonEnabled =
+                        draftState.altitudeOverrideButtonEnabled ?: snapshot.altitudeOverrideButtonEnabled,
                     compassTrackingEnabled = compass.enabled,
                     isCompassServiceGranted = isServiceGranted,
                     compassRegionCxPct = compass.cx,
@@ -364,6 +374,23 @@ class SettingsViewModel
             mutableDraft.update { it.copy(showRouteJumpButtons = enabled) }
         }
 
+        fun setRealismRealElevationEnabled(enabled: Boolean) {
+            mutableDraft.update { it.copy(realismRealElevationEnabled = enabled) }
+        }
+
+        /** Clears the manual altitude override immediately — a live key, no save step. */
+        fun resetAltitudeOverride() {
+            viewModelScope.launch { settingsRepository.clearBaseAltitudeOverride() }
+        }
+
+        fun setAltitudeJitterRadius(meters: Double) {
+            mutableDraft.update { it.copy(altitudeJitterRadiusMeters = meters) }
+        }
+
+        fun setAltitudeOverrideButtonEnabled(enabled: Boolean) {
+            mutableDraft.update { it.copy(altitudeOverrideButtonEnabled = enabled) }
+        }
+
         fun setTapToWalkOverlayEnabled(enabled: Boolean) {
             mutableDraft.update { it.copy(tapToWalkOverlayEnabled = enabled) }
         }
@@ -456,6 +483,9 @@ class SettingsViewModel
                             hideWidgetOverlay = state.hideWidgetOverlay,
                             hideForegroundNotification = state.hideForegroundNotification,
                             showRouteJumpButtons = state.showRouteJumpButtons,
+                            realismRealElevationEnabled = state.realismRealElevationEnabled,
+                            altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
+                            altitudeOverrideButtonEnabled = state.altitudeOverrideButtonEnabled,
                             roamingDefaults =
                                 d.roamingDefaults
                                     ?: settingsRepository.getRoamingDefaults().first(),
@@ -546,6 +576,9 @@ class SettingsViewModel
                     hideForegroundNotification = state.hideForegroundNotification,
                     showRouteJumpButtons = state.showRouteJumpButtons,
                     bypassMockLocationCheck = settingsRepository.getBypassMockLocationCheck().first(),
+                    realElevationEnabled = state.realismRealElevationEnabled,
+                    altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
+                    altitudeOverrideButtonEnabled = state.altitudeOverrideButtonEnabled,
                 )
             return ExportData(
                 schemaVersion = AppConstants.ExportConstants.SCHEMA_VERSION,
@@ -750,6 +783,9 @@ class SettingsViewModel
                     hideForegroundNotification = data.settings.hideForegroundNotification,
                     showRouteJumpButtons = data.settings.showRouteJumpButtons,
                     bypassMockLocationCheck = data.settings.bypassMockLocationCheck,
+                    realismRealElevationEnabled = data.settings.realElevationEnabled,
+                    altitudeJitterRadiusMeters = data.settings.altitudeJitterRadiusMeters,
+                    altitudeOverrideButtonEnabled = data.settings.altitudeOverrideButtonEnabled,
                     jitterSpeedIdleVariationPct = data.jitterSpeedIdleVariationPct,
                     jitterSpeedMovingVariationPct = data.jitterSpeedMovingVariationPct,
                     hotLocationsEnabled = data.hotLocationsEnabled,

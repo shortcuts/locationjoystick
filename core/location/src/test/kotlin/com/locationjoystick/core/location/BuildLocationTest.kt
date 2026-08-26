@@ -32,6 +32,8 @@ class BuildLocationTest {
         cachedSatelliteCount: Int = 10,
         cachedUsedInFixCount: Int = 8,
         humanAltitudeOffsetMeters: Double = AppConstants.RealismConstants.ALTITUDE_HUMAN_OFFSET_METERS,
+        baseAltitudeMeters: Double = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS,
+        altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
     ) = LocationSnapshot(
         latitude = 48.8566,
         longitude = 2.3522,
@@ -57,6 +59,8 @@ class BuildLocationTest {
         cachedSatelliteCount = cachedSatelliteCount,
         cachedUsedInFixCount = cachedUsedInFixCount,
         humanAltitudeOffsetMeters = humanAltitudeOffsetMeters,
+        baseAltitudeMeters = baseAltitudeMeters,
+        altitudeJitterRadiusMeters = altitudeJitterRadiusMeters,
     )
 
     @Test
@@ -114,6 +118,42 @@ class BuildLocationTest {
                 0.0001,
             )
         }
+    }
+
+    @Test
+    fun `altitude clamp follows a non-default base anchor`() {
+        val random = Random(seed = 99)
+        val base = 500.0
+        var altitude = base
+        val min = base - AppConstants.RealismConstants.ALTITUDE_CLAMP_RADIUS_METERS
+        val max = base + AppConstants.RealismConstants.ALTITUDE_CLAMP_RADIUS_METERS
+        repeat(200) { tick ->
+            val snap = baseSnapshot(altitudeMeters = altitude, altitudeEnabled = true, baseAltitudeMeters = base)
+            val fix = buildLocation(snap, tick.toLong() * 1000, random)
+            val terrainAlt = fix.altitudeMeters - fix.humanAltitudeOffsetMeters
+            assertTrue("Terrain altitude $terrainAlt out of bounds [$min, $max]", terrainAlt in min..max)
+            altitude = terrainAlt
+        }
+    }
+
+    @Test
+    fun `altitude disabled returns base anchor not the hardcoded default`() {
+        val snap = baseSnapshot(altitudeEnabled = false, baseAltitudeMeters = 500.0)
+        val fix = buildLocation(snap, 1000L, Random(1))
+        assertEquals(500.0, fix.altitudeMeters - fix.humanAltitudeOffsetMeters, 0.0001)
+    }
+
+    @Test
+    fun `larger altitude jitter radius produces wider spread`() {
+        val small = baseSnapshot(altitudeEnabled = true, altitudeJitterRadiusMeters = 0.1)
+        val large = baseSnapshot(altitudeEnabled = true, altitudeJitterRadiusMeters = 5.0)
+        val smallSpread =
+            (1..200).map { buildLocation(small, 1000L, Random(it)).altitudeMeters - small.altitudeMeters }
+        val largeSpread =
+            (1..200).map { buildLocation(large, 1000L, Random(it)).altitudeMeters - large.altitudeMeters }
+        val smallVariance = smallSpread.map { it * it }.average()
+        val largeVariance = largeSpread.map { it * it }.average()
+        assertTrue("Larger jitter radius should produce larger variance", largeVariance > smallVariance)
     }
 
     @Test

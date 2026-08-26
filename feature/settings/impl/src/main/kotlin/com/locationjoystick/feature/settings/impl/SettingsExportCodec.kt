@@ -85,6 +85,9 @@ internal object SettingsExportCodec {
         settingsObj.put("hideForegroundNotification", data.settings.hideForegroundNotification)
         settingsObj.put("showRouteJumpButtons", data.settings.showRouteJumpButtons)
         settingsObj.put("bypassMockLocationCheck", data.settings.bypassMockLocationCheck)
+        settingsObj.put("realElevationEnabled", data.settings.realElevationEnabled)
+        settingsObj.put("altitudeJitterRadiusMeters", data.settings.altitudeJitterRadiusMeters)
+        settingsObj.put("altitudeOverrideButtonEnabled", data.settings.altitudeOverrideButtonEnabled)
         val roamingObj = JSONObject()
         roamingObj.put("radiusMeters", data.settings.roamingDefaults.radiusMeters)
         roamingObj.put("distanceMeters", data.settings.roamingDefaults.distanceMeters)
@@ -216,6 +219,11 @@ internal object SettingsExportCodec {
         val hideForegroundNotification = settingsObj.optBoolean("hideForegroundNotification", false)
         val showRouteJumpButtons = settingsObj.optBoolean("showRouteJumpButtons", false)
         val bypassMockLocationCheck = settingsObj.optBoolean("bypassMockLocationCheck", false)
+        val realElevationEnabled =
+            settingsObj.optBoolean("realElevationEnabled", AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT)
+        val altitudeJitterRadiusMeters =
+            settingsObj.optDouble("altitudeJitterRadiusMeters", AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS)
+        val altitudeOverrideButtonEnabled = settingsObj.optBoolean("altitudeOverrideButtonEnabled", false)
         val roamingDefaultsObj = settingsObj.optJSONObject("roamingDefaults")
         val roamingDefaults =
             if (roamingDefaultsObj != null) {
@@ -251,6 +259,9 @@ internal object SettingsExportCodec {
                 showRouteJumpButtons = showRouteJumpButtons,
                 bypassMockLocationCheck = bypassMockLocationCheck,
                 roamingDefaults = roamingDefaults,
+                realElevationEnabled = realElevationEnabled,
+                altitudeJitterRadiusMeters = altitudeJitterRadiusMeters,
+                altitudeOverrideButtonEnabled = altitudeOverrideButtonEnabled,
             )
 
         val speedProfiles = mutableListOf<SpeedProfile>()

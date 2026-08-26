@@ -272,6 +272,24 @@ class SettingsRepository
 
         suspend fun setBypassMockLocationCheck(enabled: Boolean) = dataSource.setBypassMockLocationCheck(enabled)
 
+        fun getRealismRealElevationEnabled(): Flow<Boolean> = dataSource.getRealismRealElevationEnabled()
+
+        suspend fun setRealismRealElevationEnabled(enabled: Boolean) = dataSource.setRealismRealElevationEnabled(enabled)
+
+        fun getBaseAltitudeOverride(): Flow<Double?> = dataSource.getBaseAltitudeOverride()
+
+        suspend fun setBaseAltitudeOverride(meters: Double) = dataSource.setBaseAltitudeOverride(meters)
+
+        suspend fun clearBaseAltitudeOverride() = dataSource.clearBaseAltitudeOverride()
+
+        fun getAltitudeOverrideButtonEnabled(): Flow<Boolean> = dataSource.getAltitudeOverrideButtonEnabled()
+
+        suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) = dataSource.setAltitudeOverrideButtonEnabled(enabled)
+
+        fun getAltitudeJitterRadius(): Flow<Double> = dataSource.getAltitudeJitterRadius()
+
+        suspend fun setAltitudeJitterRadius(meters: Double) = dataSource.setAltitudeJitterRadius(meters)
+
         fun getFloatingMapQuickWalk(): Flow<Boolean> = dataSource.getFloatingMapQuickWalk()
 
         fun getTapToWalkOverlayEnabled(): Flow<Boolean> = dataSource.getTapToWalkOverlayEnabled()

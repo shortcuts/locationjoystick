@@ -364,6 +364,22 @@ fun SettingsRoute(
                     viewModel.setShowRouteJumpButtons(action.enabled)
                 }
 
+                is SettingsAction.SetRealismRealElevationEnabled -> {
+                    viewModel.setRealismRealElevationEnabled(action.enabled)
+                }
+
+                SettingsAction.ResetAltitudeOverride -> {
+                    viewModel.resetAltitudeOverride()
+                }
+
+                is SettingsAction.SetAltitudeJitterRadius -> {
+                    viewModel.setAltitudeJitterRadius(action.meters)
+                }
+
+                is SettingsAction.SetAltitudeOverrideButtonEnabled -> {
+                    viewModel.setAltitudeOverrideButtonEnabled(action.enabled)
+                }
+
                 is SettingsAction.SetTapToWalkOverlayEnabled -> {
                     viewModel.setTapToWalkOverlayEnabled(action.enabled)
                 }

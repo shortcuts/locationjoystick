@@ -109,6 +109,21 @@ class LocationRepositoryTest {
             }
         }
 
+    // setReportedAltitude
+
+    @Test
+    fun `setReportedAltitude emits new altitude via reportedAltitudeMeters`() =
+        runTest {
+            repository.reportedAltitudeMeters.test {
+                assertNull(awaitItem())
+
+                repository.setReportedAltitude(123.4)
+
+                assertEquals(123.4, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
     // updatePosition
 
     @Test

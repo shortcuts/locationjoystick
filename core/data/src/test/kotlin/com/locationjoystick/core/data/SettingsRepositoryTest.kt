@@ -923,6 +923,100 @@ class SettingsRepositoryTest {
             }
         }
 
+    // real elevation / altitude override
+
+    @Test
+    fun `getRealismRealElevationEnabled defaults to true`() =
+        runTest {
+            repository.getRealismRealElevationEnabled().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setRealismRealElevationEnabled persists false`() =
+        runTest {
+            repository.setRealismRealElevationEnabled(false)
+            repository.getRealismRealElevationEnabled().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getBaseAltitudeOverride defaults to null`() =
+        runTest {
+            repository.getBaseAltitudeOverride().test {
+                assertNull(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setBaseAltitudeOverride then getBaseAltitudeOverride round-trips a value`() =
+        runTest {
+            repository.setBaseAltitudeOverride(500.0)
+            repository.getBaseAltitudeOverride().test {
+                assertEquals(500.0, awaitItem()!!, 0.0001)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `clearBaseAltitudeOverride resets to null`() =
+        runTest {
+            repository.setBaseAltitudeOverride(500.0)
+            repository.clearBaseAltitudeOverride()
+            repository.getBaseAltitudeOverride().test {
+                assertNull(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getAltitudeOverrideButtonEnabled defaults to false`() =
+        runTest {
+            repository.getAltitudeOverrideButtonEnabled().test {
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setAltitudeOverrideButtonEnabled persists true`() =
+        runTest {
+            repository.setAltitudeOverrideButtonEnabled(true)
+            repository.getAltitudeOverrideButtonEnabled().test {
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getAltitudeJitterRadius defaults to ALTITUDE_SIGMA_METERS`() =
+        runTest {
+            repository.getAltitudeJitterRadius().test {
+                assertEquals(AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS, awaitItem(), 0.0001)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setAltitudeJitterRadius clamps at 0 and MAX_RADIUS_METERS`() =
+        runTest {
+            repository.setAltitudeJitterRadius(-5.0)
+            repository.getAltitudeJitterRadius().test {
+                assertEquals(0.0, awaitItem(), 0.0001)
+                cancelAndIgnoreRemainingEvents()
+            }
+            repository.setAltitudeJitterRadius(9999.0)
+            repository.getAltitudeJitterRadius().test {
+                assertEquals(AppConstants.JitterConstants.MAX_RADIUS_METERS, awaitItem(), 0.0001)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
     // recent searches
 
     @Test
@@ -1289,6 +1383,42 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setBypassMockLocationCheck(enabled: Boolean) {
         bypassMockLocationCheckFlow.value = enabled
+    }
+
+    private val realismRealElevationEnabledFlow = MutableStateFlow(true)
+
+    override fun getRealismRealElevationEnabled(): Flow<Boolean> = realismRealElevationEnabledFlow
+
+    override suspend fun setRealismRealElevationEnabled(enabled: Boolean) {
+        realismRealElevationEnabledFlow.value = enabled
+    }
+
+    val baseAltitudeOverrideFlow = MutableStateFlow<Double?>(null)
+
+    override fun getBaseAltitudeOverride(): Flow<Double?> = baseAltitudeOverrideFlow
+
+    override suspend fun setBaseAltitudeOverride(meters: Double) {
+        baseAltitudeOverrideFlow.value = meters
+    }
+
+    override suspend fun clearBaseAltitudeOverride() {
+        baseAltitudeOverrideFlow.value = null
+    }
+
+    private val altitudeOverrideButtonEnabledFlow = MutableStateFlow(false)
+
+    override fun getAltitudeOverrideButtonEnabled(): Flow<Boolean> = altitudeOverrideButtonEnabledFlow
+
+    override suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) {
+        altitudeOverrideButtonEnabledFlow.value = enabled
+    }
+
+    private val altitudeJitterRadiusFlow = MutableStateFlow(AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS)
+
+    override fun getAltitudeJitterRadius(): Flow<Double> = altitudeJitterRadiusFlow
+
+    override suspend fun setAltitudeJitterRadius(meters: Double) {
+        altitudeJitterRadiusFlow.value = meters.coerceIn(0.0, AppConstants.JitterConstants.MAX_RADIUS_METERS)
     }
 
     override fun getSelectedHotLocationIds(): Flow<Set<String>> = flowOf(emptySet())

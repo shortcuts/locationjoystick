@@ -203,6 +203,33 @@ interface PreferencesDataSource {
     /** Sets whether the AppOpsManager mock-location check is bypassed. */
     suspend fun setBypassMockLocationCheck(enabled: Boolean)
 
+    /** Gets whether the periodic real-world elevation lookup is enabled. */
+    fun getRealismRealElevationEnabled(): Flow<Boolean>
+
+    /** Sets whether the periodic real-world elevation lookup is enabled. */
+    suspend fun setRealismRealElevationEnabled(enabled: Boolean)
+
+    /** Gets the manually-overridden base altitude (meters), or null if unset. */
+    fun getBaseAltitudeOverride(): Flow<Double?>
+
+    /** Sets the manually-overridden base altitude. */
+    suspend fun setBaseAltitudeOverride(meters: Double)
+
+    /** Clears the manually-overridden base altitude, resuming automatic resolution. */
+    suspend fun clearBaseAltitudeOverride()
+
+    /** Gets whether the floating widget's altitude override button is shown. */
+    fun getAltitudeOverrideButtonEnabled(): Flow<Boolean>
+
+    /** Sets whether the floating widget's altitude override button is shown. */
+    suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean)
+
+    /** Gets the altitude Gaussian-walk jitter radius (meters). */
+    fun getAltitudeJitterRadius(): Flow<Double>
+
+    /** Sets the altitude Gaussian-walk jitter radius. */
+    suspend fun setAltitudeJitterRadius(meters: Double)
+
     /** Gets the list of recently searched locations, newest first. */
     fun getRecentSearches(): Flow<List<RecentSearch>>
 
@@ -337,6 +364,9 @@ data class SettingsSnapshot(
     val hideForegroundNotification: Boolean = false,
     val showRouteJumpButtons: Boolean = false,
     val bypassMockLocationCheck: Boolean = false,
+    val realismRealElevationEnabled: Boolean = AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
+    val altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
+    val altitudeOverrideButtonEnabled: Boolean = false,
 )
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -448,6 +478,10 @@ class AppPreferencesDataSource
             val COMPASS_REGION_CX_PCT = floatPreferencesKey("compass_region_cx_pct")
             val COMPASS_REGION_CY_PCT = floatPreferencesKey("compass_region_cy_pct")
             val COMPASS_REGION_RADIUS_PCT = floatPreferencesKey("compass_region_radius_pct")
+            val REALISM_REAL_ELEVATION_ENABLED = booleanPreferencesKey("realism_real_elevation_enabled")
+            val BASE_ALTITUDE_OVERRIDE_METERS = doublePreferencesKey("base_altitude_override_meters")
+            val ALTITUDE_JITTER_RADIUS_METERS = doublePreferencesKey("altitude_jitter_radius_meters")
+            val ALTITUDE_OVERRIDE_BUTTON_ENABLED = booleanPreferencesKey("altitude_override_button_enabled")
         }
 
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -695,6 +729,38 @@ class AppPreferencesDataSource
 
         override suspend fun setBypassMockLocationCheck(enabled: Boolean) = setPref(Keys.BYPASS_MOCK_LOCATION_CHECK, enabled)
 
+        override fun getRealismRealElevationEnabled(): Flow<Boolean> =
+            pref(Keys.REALISM_REAL_ELEVATION_ENABLED, AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT)
+
+        override suspend fun setRealismRealElevationEnabled(enabled: Boolean) = setPref(Keys.REALISM_REAL_ELEVATION_ENABLED, enabled)
+
+        override fun getBaseAltitudeOverride(): Flow<Double?> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading base altitude override", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> prefs[Keys.BASE_ALTITUDE_OVERRIDE_METERS] }
+
+        override suspend fun setBaseAltitudeOverride(meters: Double) = setPref(Keys.BASE_ALTITUDE_OVERRIDE_METERS, meters)
+
+        override suspend fun clearBaseAltitudeOverride() {
+            dataStore.edit { it.remove(Keys.BASE_ALTITUDE_OVERRIDE_METERS) }
+        }
+
+        override fun getAltitudeOverrideButtonEnabled(): Flow<Boolean> = pref(Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED, false)
+
+        override suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) = setPref(Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED, enabled)
+
+        override fun getAltitudeJitterRadius(): Flow<Double> =
+            pref(Keys.ALTITUDE_JITTER_RADIUS_METERS, DEFAULT_ALTITUDE_JITTER_RADIUS_METERS)
+
+        override suspend fun setAltitudeJitterRadius(meters: Double) =
+            setPref(Keys.ALTITUDE_JITTER_RADIUS_METERS, meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS))
+
         override fun getRecentSearches(): Flow<List<RecentSearch>> =
             dataStore.data
                 .catch { e ->
@@ -828,6 +894,10 @@ class AppPreferencesDataSource
                 prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] = snapshot.hideForegroundNotification
                 prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] = snapshot.showRouteJumpButtons
                 prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] = snapshot.bypassMockLocationCheck
+                prefs[Keys.REALISM_REAL_ELEVATION_ENABLED] = snapshot.realismRealElevationEnabled
+                prefs[Keys.ALTITUDE_JITTER_RADIUS_METERS] =
+                    snapshot.altitudeJitterRadiusMeters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
+                prefs[Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED] = snapshot.altitudeOverrideButtonEnabled
                 prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] =
                     snapshot.jitterSpeedIdleVariationPct.coerceIn(
                         AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
@@ -916,6 +986,12 @@ class AppPreferencesDataSource
                         hideForegroundNotification = prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] ?: false,
                         showRouteJumpButtons = prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] ?: false,
                         bypassMockLocationCheck = prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] ?: false,
+                        realismRealElevationEnabled =
+                            prefs[Keys.REALISM_REAL_ELEVATION_ENABLED]
+                                ?: AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
+                        altitudeJitterRadiusMeters =
+                            prefs[Keys.ALTITUDE_JITTER_RADIUS_METERS] ?: DEFAULT_ALTITUDE_JITTER_RADIUS_METERS,
+                        altitudeOverrideButtonEnabled = prefs[Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED] ?: false,
                         jitterSpeedIdleVariationPct =
                             prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT]
                                 ?: DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,
@@ -978,6 +1054,8 @@ class AppPreferencesDataSource
 
             const val DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT = AppConstants.JitterConstants.SPEED_IDLE_VARIATION_PCT_DEFAULT
             const val DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT = AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT
+
+            const val DEFAULT_ALTITUDE_JITTER_RADIUS_METERS = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS
         }
     }
 

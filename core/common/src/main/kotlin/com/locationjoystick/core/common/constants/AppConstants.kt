@@ -77,6 +77,11 @@ object AppConstants {
         const val ALTITUDE_HUMAN_OFFSET_METERS = 0.8
         const val ALTITUDE_HUMAN_OFFSET_JITTER_PCT = 0.05
         const val ALTITUDE_HUMAN_OFFSET_CLAMP_FACTOR = 0.5
+        const val REAL_ELEVATION_ENABLED_DEFAULT = true
+        const val ELEVATION_FETCH_INTERVAL_MS = 60_000L
+
+        /** ponytail: flat rate, tune or make distance/time-proportional if this ever proves too slow/fast. */
+        const val ALTITUDE_TARGET_STEP_METERS_PER_TICK = 0.5
     }
 
     object RoamingConstants {
@@ -153,6 +158,12 @@ object AppConstants {
         const val CONNECT_TIMEOUT_MS = 5000
         const val READ_TIMEOUT_MS = 5000
         const val RECENT_SEARCHES_MAX_COUNT = 5
+    }
+
+    object ElevationConstants {
+        const val BASE_URL = "https://api.open-meteo.com/v1/elevation"
+        const val CONNECT_TIMEOUT_MS = 5000
+        const val READ_TIMEOUT_MS = 5000
     }
 
     object ExportConstants {

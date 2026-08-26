@@ -83,6 +83,28 @@ button:
   entirely once the device stops being an enabled follower — nothing is left
   on screen for the expand state to affect.
 
+## Altitude Override Button
+
+When enabled (Settings → GPS → "Show altitude override button", `AppSettings.altitudeOverrideButtonEnabled`,
+default `false`), the widget panel shows a terrain-icon button:
+
+- **Shown when**: the setting is enabled.
+- **Tap**: expands an inline decimal text field prefilled with the currently reported altitude
+  (`LocationRepository.reportedAltitudeMeters`, falling back to
+  `AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS` if not currently spoofing), plus a
+  confirm (check) button.
+- **Confirm**: calls `SettingsRepository.setBaseAltitudeOverride(value)` — `MockLocationService`
+  picks it up via its existing reactive collector on `getBaseAltitudeOverride()`, with no new
+  `Intent`/service command needed, then the row collapses.
+- **Effect**: the override becomes the new base altitude the Gaussian walk clamps around,
+  applied instantly (unlike a real-elevation fetch, which converges gradually — see
+  @docs/features/mock-location.md, "Real Elevation Lookup"), and takes priority over both the
+  35 m default and any real-elevation fetch. Setting it also suspends the periodic elevation
+  fetch until cleared via Settings → GPS → "Reset elevation override".
+- **Expansion state ownership**: `FloatingWidgetService.altitudeExpandedFlow`
+  (`MutableStateFlow<Boolean>`), per the "Anti-Patterns to Avoid" rule below — never `remember`
+  in `WidgetPanelContent` directly.
+
 ## Anti-Patterns to Avoid
 
 - Do not store reopen-surviving panel state in a composable `remember`. `WidgetPanelPresenter.showPanel()` builds a fresh `ComposeView` on every open, so `remember` state resets to its initial value each time the panel reopens. Hoist the state to the presenter or service instead (a `StateFlow`), per the fix in PR #40 — see `mapRouteControlsExpanded` in "Floating Map — Route Controls" above for the concrete example.

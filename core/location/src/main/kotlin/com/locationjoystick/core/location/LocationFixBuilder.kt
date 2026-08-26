@@ -40,6 +40,9 @@ import kotlin.random.Random
  *   [AppConstants.RealismConstants.SATELLITE_UPDATE_INTERVAL_MS] ms by captureSnapshot.
  * @property cachedUsedInFixCount Slow-churn in-fix satellite count, updated alongside
  *   [cachedSatelliteCount].
+ * @property baseAltitudeMeters The clamp-center anchor for the altitude Gaussian walk — the
+ *   resolved default/fetched/overridden base altitude, not the hardcoded constant.
+ * @property altitudeJitterRadiusMeters Gaussian sigma for the altitude random walk (user-configurable).
  */
 internal data class LocationSnapshot(
     val latitude: Double,
@@ -66,6 +69,8 @@ internal data class LocationSnapshot(
     val cachedSatelliteCount: Int,
     val cachedUsedInFixCount: Int,
     val humanAltitudeOffsetMeters: Double,
+    val baseAltitudeMeters: Double,
+    val altitudeJitterRadiusMeters: Double,
 )
 
 /**
@@ -150,6 +155,16 @@ internal fun advanceSuspendedPhase(
             current
         }
     }
+}
+
+/** Moves [current] toward [target] by at most [maxStep], reaching it exactly once within range. */
+internal fun stepToward(
+    current: Double,
+    target: Double,
+    maxStep: Double,
+): Double {
+    val delta = target - current
+    return if (kotlin.math.abs(delta) <= maxStep) target else current + maxStep * kotlin.math.sign(delta)
 }
 
 /** Applies a 2-D Gaussian displacement of [radiusMeters] to ([lat], [lon]) using Box-Muller. */
@@ -243,17 +258,15 @@ internal fun buildLocation(
             val u1 = random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
             val u2 = random.nextDouble()
             val mag =
-                AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS *
+                state.altitudeJitterRadiusMeters *
                     kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1)) * kotlin.math.cos(2.0 * kotlin.math.PI * u2)
             (state.altitudeMeters + mag + AppConstants.RealismConstants.ALTITUDE_DRIFT_PER_SECOND_METERS)
                 .coerceIn(
-                    AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS -
-                        AppConstants.RealismConstants.ALTITUDE_CLAMP_RADIUS_METERS,
-                    AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS +
-                        AppConstants.RealismConstants.ALTITUDE_CLAMP_RADIUS_METERS,
+                    state.baseAltitudeMeters - AppConstants.RealismConstants.ALTITUDE_CLAMP_RADIUS_METERS,
+                    state.baseAltitudeMeters + AppConstants.RealismConstants.ALTITUDE_CLAMP_RADIUS_METERS,
                 )
         } else {
-            AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
+            state.baseAltitudeMeters
         }
 
     // Human-hold offset random walk: ±5% of base per tick, clamped to [50%, 150%] of base

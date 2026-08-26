@@ -44,5 +44,9 @@ data class SettingsUiState(
     val hideWidgetOverlay: Boolean = false,
     val hideForegroundNotification: Boolean = false,
     val showRouteJumpButtons: Boolean = false,
+    val realismRealElevationEnabled: Boolean = AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
+    val hasAltitudeOverride: Boolean = false,
+    val altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
+    val altitudeOverrideButtonEnabled: Boolean = false,
     val isDirty: Boolean = false,
 )

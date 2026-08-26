@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -157,6 +158,14 @@ internal fun GpsJitterSection(
             modifier = Modifier.weight(1f),
         )
     }
+    Spacer(modifier = Modifier.height(8.dp))
+    Text("Altitude variation", style = MaterialTheme.typography.labelLarge)
+    Spacer(modifier = Modifier.height(4.dp))
+    JitterInput(
+        value = if (isMph) uiState.altitudeJitterRadiusMeters * 3.28084 else uiState.altitudeJitterRadiusMeters,
+        onValueChange = { onAction(SettingsAction.SetAltitudeJitterRadius(if (isMph) it / 3.28084 else it)) },
+        label = if (isMph) "Altitude wobble (ft)" else "Altitude wobble (m)",
+    )
 }
 
 @Composable
@@ -188,6 +197,35 @@ internal fun GpsRealismSection(
         description =
             "Simulates a plausible altitude with small random drift instead of always reporting 0 m. " +
                 "A flat zero altitude is an obvious signal that the location is synthetic.",
+    )
+    LjCheckboxRow(
+        checked = uiState.realismRealElevationEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetRealismRealElevationEnabled(it)) },
+        title = "Use real-world elevation",
+        description =
+            "Looks up the actual ground elevation at your spoofed location every minute while spoofing, " +
+                "instead of a fixed ~35 m. Requires an internet connection; pauses automatically while an " +
+                "altitude override is active (floating widget), and falls back to the fixed value if the lookup fails.",
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    Button(
+        onClick = { onAction(SettingsAction.ResetAltitudeOverride) },
+        enabled = uiState.hasAltitudeOverride,
+    ) {
+        Text("Reset elevation override")
+    }
+    Text(
+        "Clears a manually-set altitude (floating widget) and lets automatic elevation lookup resume.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    LjCheckboxRow(
+        checked = uiState.altitudeOverrideButtonEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetAltitudeOverrideButtonEnabled(it)) },
+        title = "Show altitude override button",
+        description =
+            "Adds a button to the floating widget for typing in a fixed altitude from anywhere. Off by default.",
     )
     LjCheckboxRow(
         checked = uiState.realismWarmupEnabled,

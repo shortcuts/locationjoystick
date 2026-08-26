@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.CooldownState
@@ -135,6 +136,11 @@ internal fun WidgetPanel(
     isGroupSyncExpanded: Boolean = false,
     onGroupSyncClicked: () -> Unit = {},
     onTeleportToLeaderClicked: () -> Unit = {},
+    isAltitudeOverrideButtonVisible: Boolean = false,
+    isAltitudeExpanded: Boolean = false,
+    altitudePrefillMeters: Double = 0.0,
+    onAltitudeClicked: () -> Unit = {},
+    onConfirmAltitude: (Double) -> Unit = {},
     onDrag: (dx: Float, dy: Float) -> Unit,
 ) {
     Column(horizontalAlignment = Alignment.Start) {
@@ -300,6 +306,48 @@ internal fun WidgetPanel(
                     }
                 }
             }
+            if (isAltitudeOverrideButtonVisible) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    WidgetIconButton(
+                        icon = LjIcons.Terrain,
+                        contentDescription = "Altitude override",
+                        tint = if (isAltitudeExpanded) LjSuccess else MaterialTheme.colorScheme.primary,
+                        onClick = onAltitudeClicked,
+                    )
+                    AnimatedVisibility(
+                        visible = isAltitudeExpanded,
+                        enter = fadeIn(tween(150)),
+                        exit = fadeOut(tween(150)),
+                    ) {
+                        AltitudeOverrideInput(prefillMeters = altitudePrefillMeters, onConfirm = onConfirmAltitude)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AltitudeOverrideInput(
+    prefillMeters: Double,
+    onConfirm: (Double) -> Unit,
+) {
+    // Captured once when this composable enters composition (i.e. on expand), not re-read on
+    // every recomposition — the live altitude changes every tick while spoofing and would
+    // otherwise stomp on what the user is typing.
+    var value by remember { mutableStateOf(prefillMeters.toString()) }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = { value = it },
+            modifier = Modifier.width(100.dp),
+            singleLine = true,
+            label = { Text("Altitude (m)", color = LjText) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { value.toDoubleOrNull()?.let(onConfirm) }),
+        )
+        IconButton(onClick = { value.toDoubleOrNull()?.let(onConfirm) }) {
+            Icon(LjIcons.Check, contentDescription = "Confirm altitude", tint = LjSuccess)
         }
     }
 }

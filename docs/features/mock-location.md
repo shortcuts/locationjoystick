@@ -49,9 +49,32 @@ Defaults: `bearingHoldOnIdle = true`, `altitudeEnabled = true`, `satelliteExtras
 | Setting | `AppSettings` field | Behaviour |
 |---|---|---|
 | Bearing hold | `bearingHoldOnIdle` | `speedMs == 0` → reports `lastNonZeroBearing` not 0° — no compass reset to north. |
-| Altitude drift | `altitudeEnabled` | Gaussian random walk (σ = `RealismConstants.ALTITUDE_SIGMA_METERS`, drift = `ALTITUDE_DRIFT_PER_SECOND_METERS`) clamped within `±ALTITUDE_CLAMP_RADIUS_METERS` of `DEFAULT_ALTITUDE_METERS`. |
+| Altitude drift | `altitudeEnabled` | Gaussian random walk (σ = user-configurable `AppSettings.altitudeJitterRadiusMeters`, Settings → Location Randomness → "Altitude variation", default `RealismConstants.ALTITUDE_SIGMA_METERS`; drift = `ALTITUDE_DRIFT_PER_SECOND_METERS`) clamped within `±ALTITUDE_CLAMP_RADIUS_METERS` of the resolved base altitude (see "Real Elevation Lookup" below) instead of the hardcoded `DEFAULT_ALTITUDE_METERS`. |
 | Warm-up envelope | `warmupEnabled` | Accuracy degrades at start, converges over `RealismConstants.WARMUP_DURATION_SECONDS` (≈ 30 s). `warmupStartMs` set once in `startSpoofing`, never reset on pause/resume. |
 | Satellite extras | `satelliteExtrasEnabled` | Attaches `Bundle` extras with slow-churning total + in-fix satellite counts. Refreshed every `RealismConstants.SATELLITE_UPDATE_INTERVAL_MS`. |
 | Suspended mocking | `suspendedMockingEnabled` | Push/pause cycle: reports normal jittered movement for `RealismConstants.SUSPENDED_PUSH_DURATION_MS`, then a stationary, unjittered fix for `RealismConstants.SUSPENDED_PAUSE_DURATION_MS` + random jitter up to `SUSPENDED_PAUSE_JITTER_MS` — the tick is still pushed to the provider every second so it never goes stale (see the same fix applied to paused route replay in `docs/features/routes.md`). Auto-disabled in `ROUTE_REPLAY` and `WALK_TO` modes. |
 
 All realism tuning values in `AppConstants.RealismConstants`.
+
+## Real Elevation Lookup
+
+`AppSettings.realElevationEnabled` (default `true`) fetches the actual ground elevation at the
+spoofed position from Open-Meteo's keyless elevation endpoint (`ElevationRepository`, `:core:data`)
+instead of anchoring the altitude Gaussian walk to a flat `DEFAULT_ALTITUDE_METERS` (~35 m).
+
+- **Trigger**: fetched on `startSpoofing()`, then re-fetched every
+  `AppConstants.RealismConstants.ELEVATION_FETCH_INTERVAL_MS` (60 s) while spoofing is
+  `RUNNING`/`PAUSED`, checked inline in `MockLocationService.captureSnapshot()`
+  (`maybeFetchElevation()`) — no separate coroutine loop. A fetch already in flight is never
+  duplicated.
+- **Gradual convergence**: a fetched value becomes a *target*
+  (`targetBaseAltitudeMeters`), not an instant reassignment — the effective anchor
+  (`currentBaseAltitudeMeters`, what `buildLocation`'s clamp actually centers on) steps toward it
+  by at most `AppConstants.RealismConstants.ALTITUDE_TARGET_STEP_METERS_PER_TICK` (0.5 m) per
+  tick, so a 100 m elevation change converges over roughly 3.5 minutes instead of jumping.
+- **Failure/disabled**: the target simply doesn't move — the anchor stays wherever it last
+  converged to (or the 35 m default on first failure).
+- **Manual override wins**: see "Altitude Override Button" in @docs/features/widget.md. Setting
+  an override suspends the periodic fetch entirely (checked before every fetch) until Settings →
+  GPS → "Reset elevation override" clears it, at which point the next periodic cycle resumes
+  fetching automatically.

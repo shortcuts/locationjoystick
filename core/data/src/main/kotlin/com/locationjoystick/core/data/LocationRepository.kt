@@ -54,6 +54,15 @@ class LocationRepository
             _currentBearing.value = bearing
         }
 
+        private val _reportedAltitudeMeters = MutableStateFlow<Double?>(null)
+
+        /** Actual altitude being reported this tick — the altitude-override widget button prefills from this. */
+        val reportedAltitudeMeters: StateFlow<Double?> = _reportedAltitudeMeters.asStateFlow()
+
+        fun setReportedAltitude(meters: Double) {
+            _reportedAltitudeMeters.value = meters
+        }
+
         private val _mockLocationState = MutableStateFlow(MockLocationState.IDLE)
         val mockLocationState: StateFlow<MockLocationState> = _mockLocationState.asStateFlow()
 

@@ -123,6 +123,9 @@ class FloatingWidgetService :
     // Group sync button expand/collapse
     private val groupSyncExpandedFlow = MutableStateFlow(false)
 
+    // Altitude override button expand/collapse
+    private val altitudeExpandedFlow = MutableStateFlow(false)
+
     // Master panel expand/collapse
     private val isPanelExpandedFlow = MutableStateFlow(false)
 
@@ -309,6 +312,10 @@ class FloatingWidgetService :
             val isGroupSyncExpanded by groupSyncExpandedFlow.collectAsStateWithLifecycle()
             val hideTeleportFeatures by settingsRepository.getHideTeleportFeatures().collectAsStateWithLifecycle(initialValue = false)
             val showRouteJumpButtons by settingsRepository.getShowRouteJumpButtons().collectAsStateWithLifecycle(initialValue = false)
+            val isAltitudeOverrideButtonVisible by
+                settingsRepository.getAltitudeOverrideButtonEnabled().collectAsStateWithLifecycle(initialValue = false)
+            val isAltitudeExpanded by altitudeExpandedFlow.collectAsStateWithLifecycle()
+            val reportedAltitudeMeters by locationRepository.reportedAltitudeMeters.collectAsStateWithLifecycle(initialValue = null)
 
             LjTheme {
                 WidgetPanel(
@@ -335,6 +342,11 @@ class FloatingWidgetService :
                     isGroupSyncExpanded = isGroupSyncExpanded,
                     onGroupSyncClicked = { groupSyncExpandedFlow.value = !groupSyncExpandedFlow.value },
                     onTeleportToLeaderClicked = { teleportToLeaderNow() },
+                    isAltitudeOverrideButtonVisible = isAltitudeOverrideButtonVisible,
+                    isAltitudeExpanded = isAltitudeExpanded,
+                    altitudePrefillMeters = reportedAltitudeMeters ?: AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS,
+                    onAltitudeClicked = { altitudeExpandedFlow.value = !altitudeExpandedFlow.value },
+                    onConfirmAltitude = { onConfirmAltitude(it) },
                     onToggleMaster = {
                         if (!isPanelExpandedFlow.value) pendingCompletionFlow.value = false
                         isPanelExpandedFlow.value = !isPanelExpandedFlow.value
@@ -497,6 +509,11 @@ class FloatingWidgetService :
                 }
             }
         }
+    }
+
+    private fun onConfirmAltitude(meters: Double) {
+        lifecycleScope.launch { settingsRepository.setBaseAltitudeOverride(meters) }
+        altitudeExpandedFlow.value = false
     }
 
     private fun toggleJoystick() {

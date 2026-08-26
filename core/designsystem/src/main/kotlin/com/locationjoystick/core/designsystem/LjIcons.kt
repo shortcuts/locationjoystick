@@ -49,6 +49,7 @@ import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.SwapVert
+import androidx.compose.material.icons.rounded.Terrain
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Visibility
 
@@ -100,6 +101,7 @@ object LjIcons {
     val SkipPrevious = Icons.Rounded.SkipPrevious
     val Stop = Icons.Rounded.Stop
     val SwapVert = Icons.Rounded.SwapVert
+    val Terrain = Icons.Rounded.Terrain
     val Timer = Icons.Rounded.Timer
     val Undo = Icons.AutoMirrored.Rounded.Undo
     val Visibility = Icons.Rounded.Visibility

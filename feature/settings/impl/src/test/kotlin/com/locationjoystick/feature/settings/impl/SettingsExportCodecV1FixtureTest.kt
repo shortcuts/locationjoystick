@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.settings.impl
 
+import com.locationjoystick.core.common.constants.AppConstants
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -49,6 +50,31 @@ class SettingsExportCodecV1FixtureTest {
         assertEquals(true, parsed.settings.warmupEnabled)
         assertEquals(false, parsed.settings.satelliteExtrasEnabled)
         assertEquals(true, parsed.settings.suspendedMockingEnabled)
+    }
+
+    @Test
+    fun `v1 fixture without altitude fields falls back to defaults`() {
+        val result = SettingsExportCodec.parseExportData(v1Fixture)
+        assertEquals(AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT, result.settings.realElevationEnabled)
+        assertEquals(AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS, result.settings.altitudeJitterRadiusMeters, 0.0001)
+        assertEquals(false, result.settings.altitudeOverrideButtonEnabled)
+    }
+
+    @Test
+    fun `altitude fields round-trip through serialize and parse`() {
+        val original =
+            SettingsExportCodec.parseExportData(v1Fixture).copy(
+                settings =
+                    SettingsExportCodec.parseExportData(v1Fixture).settings.copy(
+                        realElevationEnabled = false,
+                        altitudeJitterRadiusMeters = 1.5,
+                        altitudeOverrideButtonEnabled = true,
+                    ),
+            )
+        val parsed = SettingsExportCodec.parseExportData(SettingsExportCodec.serializeExportData(original))
+        assertEquals(false, parsed.settings.realElevationEnabled)
+        assertEquals(1.5, parsed.settings.altitudeJitterRadiusMeters, 0.0001)
+        assertEquals(true, parsed.settings.altitudeOverrideButtonEnabled)
     }
 
     @Test
