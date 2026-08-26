@@ -264,14 +264,14 @@ class SettingsExportCodecEdgeCaseTest {
     }
 
     @Test
-    fun `empty enabledWidgetFeatures array defaults to AppFeature DEFAULT_WIDGET_ENABLED`() {
+    fun `empty enabledWidgetFeatures array is preserved, not defaulted`() {
         val json =
             """{"schemaVersion":1,"exportedAt":0,"settings":{"speedUnit":"KMH","enabledWidgetFeatures":[]},""" +
                 """"speedProfiles":[],"routes":[],"favoriteLocations":[]}"""
 
         val parsed = SettingsExportCodec.parseExportData(json)
 
-        assertEquals(AppFeature.DEFAULT_WIDGET_ENABLED, parsed.settings.enabledWidgetFeatures)
+        assertEquals(emptySet<AppFeature>(), parsed.settings.enabledWidgetFeatures)
     }
 
     @Test
