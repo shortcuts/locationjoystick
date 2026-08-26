@@ -29,7 +29,7 @@ import com.locationjoystick.core.designsystem.LjText
 
 /** Press feedback shared by every LjButton variant: 0.96 scale, never lower (feels exaggerated below). */
 @Composable
-private fun rememberPressScale(interactionSource: MutableInteractionSource): Float {
+internal fun rememberPressScale(interactionSource: MutableInteractionSource): Float {
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, label = "pressScale")
     return scale
