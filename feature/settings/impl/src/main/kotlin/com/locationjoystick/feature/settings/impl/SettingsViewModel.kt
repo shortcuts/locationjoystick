@@ -132,6 +132,7 @@ class SettingsViewModel
             val realismRealElevationEnabled: Boolean? = null,
             val altitudeJitterRadiusMeters: Double? = null,
             val altitudeOverrideButtonEnabled: Boolean? = null,
+            val debugStatsEnabled: Boolean? = null,
         )
 
         private val mutableDraft = MutableStateFlow(DraftState())
@@ -214,6 +215,7 @@ class SettingsViewModel
                     altitudeJitterRadiusMeters = draftState.altitudeJitterRadiusMeters ?: snapshot.altitudeJitterRadiusMeters,
                     altitudeOverrideButtonEnabled =
                         draftState.altitudeOverrideButtonEnabled ?: snapshot.altitudeOverrideButtonEnabled,
+                    debugStatsEnabled = draftState.debugStatsEnabled ?: snapshot.debugStatsEnabled,
                     compassTrackingEnabled = compass.enabled,
                     isCompassServiceGranted = isServiceGranted,
                     compassRegionCxPct = compass.cx,
@@ -391,6 +393,10 @@ class SettingsViewModel
             mutableDraft.update { it.copy(altitudeOverrideButtonEnabled = enabled) }
         }
 
+        fun setDebugStatsEnabled(enabled: Boolean) {
+            mutableDraft.update { it.copy(debugStatsEnabled = enabled) }
+        }
+
         fun setTapToWalkOverlayEnabled(enabled: Boolean) {
             mutableDraft.update { it.copy(tapToWalkOverlayEnabled = enabled) }
         }
@@ -486,6 +492,7 @@ class SettingsViewModel
                             realismRealElevationEnabled = state.realismRealElevationEnabled,
                             altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
                             altitudeOverrideButtonEnabled = state.altitudeOverrideButtonEnabled,
+                            debugStatsEnabled = state.debugStatsEnabled,
                             roamingDefaults =
                                 d.roamingDefaults
                                     ?: settingsRepository.getRoamingDefaults().first(),
@@ -579,6 +586,7 @@ class SettingsViewModel
                     realElevationEnabled = state.realismRealElevationEnabled,
                     altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
                     altitudeOverrideButtonEnabled = state.altitudeOverrideButtonEnabled,
+                    debugStatsEnabled = state.debugStatsEnabled,
                 )
             return ExportData(
                 schemaVersion = AppConstants.ExportConstants.SCHEMA_VERSION,
@@ -786,6 +794,7 @@ class SettingsViewModel
                     realismRealElevationEnabled = data.settings.realElevationEnabled,
                     altitudeJitterRadiusMeters = data.settings.altitudeJitterRadiusMeters,
                     altitudeOverrideButtonEnabled = data.settings.altitudeOverrideButtonEnabled,
+                    debugStatsEnabled = data.settings.debugStatsEnabled,
                     jitterSpeedIdleVariationPct = data.jitterSpeedIdleVariationPct,
                     jitterSpeedMovingVariationPct = data.jitterSpeedMovingVariationPct,
                     hotLocationsEnabled = data.hotLocationsEnabled,

@@ -1413,6 +1413,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         altitudeOverrideButtonEnabledFlow.value = enabled
     }
 
+    private val debugStatsEnabledFlow = MutableStateFlow(false)
+
+    override fun getDebugStatsEnabled(): Flow<Boolean> = debugStatsEnabledFlow
+
+    override suspend fun setDebugStatsEnabled(enabled: Boolean) {
+        debugStatsEnabledFlow.value = enabled
+    }
+
     private val altitudeJitterRadiusFlow = MutableStateFlow(AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS)
 
     override fun getAltitudeJitterRadius(): Flow<Double> = altitudeJitterRadiusFlow

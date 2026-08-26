@@ -631,6 +631,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) = Unit
 
+    override fun getDebugStatsEnabled(): Flow<Boolean> = flowOf(false)
+
+    override suspend fun setDebugStatsEnabled(enabled: Boolean) = Unit
+
     override fun getAltitudeJitterRadius(): Flow<Double> = flowOf(AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS)
 
     override suspend fun setAltitudeJitterRadius(meters: Double) = Unit

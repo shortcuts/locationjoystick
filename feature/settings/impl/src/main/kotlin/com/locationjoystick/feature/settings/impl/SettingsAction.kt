@@ -151,6 +151,10 @@ internal sealed class SettingsAction {
         val enabled: Boolean,
     ) : SettingsAction()
 
+    data class SetDebugStatsEnabled(
+        val enabled: Boolean,
+    ) : SettingsAction()
+
     data class SetTapToWalkOverlayEnabled(
         val enabled: Boolean,
     ) : SettingsAction()

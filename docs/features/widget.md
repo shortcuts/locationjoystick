@@ -105,6 +105,21 @@ default `false`), the widget panel shows a terrain-icon button:
   (`MutableStateFlow<Boolean>`), per the "Anti-Patterns to Avoid" rule below — never `remember`
   in `WidgetPanelContent` directly.
 
+## Debug Stats
+
+Settings → Menus → Debug → "Debug stats" (`AppSettings.debugStatsEnabled`, DataStore key
+`debug_stats_enabled`, default `false`) shows a live text block in the widget panel while it's
+expanded: coordinates, speed (m/s), altitude, accuracy, bearing, and tick rate (Hz).
+
+- **Source**: `MockLocationService.pushLocationUpdate()` — the single 1 Hz tick every mode routes
+  through (see @docs/features/mock-location.md, "Internal Architecture") — publishes a
+  `LocationRepository.DebugStats` snapshot every tick, unconditionally (cheap: one data class
+  alloc at 1 Hz). Tick rate is derived from the wall-clock delta between ticks, not assumed to be
+  a fixed 1 Hz, so a throttled or delayed loop is visible instead of hidden.
+- **Display gate**: `FloatingWidgetService` only passes the live `DebugStats` through to
+  `WidgetPanel` when the setting is enabled — the collector itself always runs, matching every
+  other reactive widget-panel toggle.
+
 ## Anti-Patterns to Avoid
 
 - Do not store reopen-surviving panel state in a composable `remember`. `WidgetPanelPresenter.showPanel()` builds a fresh `ComposeView` on every open, so `remember` state resets to its initial value each time the panel reopens. Hoist the state to the presenter or service instead (a `StateFlow`), per the fix in PR #40 — see `mapRouteControlsExpanded` in "Floating Map — Route Controls" above for the concrete example.

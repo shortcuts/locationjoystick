@@ -59,6 +59,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.CooldownState
+import com.locationjoystick.core.data.DebugStats
 import com.locationjoystick.core.data.toBadgeText
 import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjIcons
@@ -141,6 +142,7 @@ internal fun WidgetPanel(
     altitudePrefillMeters: Double = 0.0,
     onAltitudeClicked: () -> Unit = {},
     onConfirmAltitude: (Double) -> Unit = {},
+    debugStats: DebugStats? = null,
     onDrag: (dx: Float, dy: Float) -> Unit,
 ) {
     Column(horizontalAlignment = Alignment.Start) {
@@ -323,7 +325,34 @@ internal fun WidgetPanel(
                     }
                 }
             }
+            if (debugStats != null) {
+                DebugStatsPanel(debugStats)
+            }
         }
+    }
+}
+
+@Composable
+private fun DebugStatsPanel(stats: DebugStats) {
+    Column(
+        modifier =
+            Modifier
+                .padding(4.dp)
+                .background(Color.Black.copy(alpha = 0.7f), MaterialTheme.shapes.small)
+                .padding(8.dp),
+    ) {
+        val tickHz = if (stats.tickIntervalMs > 0) 1000f / stats.tickIntervalMs else 0f
+        Text("%.2f, %.6f".format(stats.latitude, stats.longitude), color = LjText, style = MaterialTheme.typography.labelSmall)
+        Text(
+            "speed %.2f m/s · alt %.1f m".format(stats.speedMs, stats.altitudeMeters),
+            color = LjText,
+            style = MaterialTheme.typography.labelSmall,
+        )
+        Text(
+            "acc %.1f m · bearing %.0f° · %.1f Hz".format(stats.accuracyMeters, stats.bearing, tickHz),
+            color = LjText,
+            style = MaterialTheme.typography.labelSmall,
+        )
     }
 }
 

@@ -316,6 +316,8 @@ class FloatingWidgetService :
                 settingsRepository.getAltitudeOverrideButtonEnabled().collectAsStateWithLifecycle(initialValue = false)
             val isAltitudeExpanded by altitudeExpandedFlow.collectAsStateWithLifecycle()
             val reportedAltitudeMeters by locationRepository.reportedAltitudeMeters.collectAsStateWithLifecycle(initialValue = null)
+            val debugStatsEnabled by settingsRepository.getDebugStatsEnabled().collectAsStateWithLifecycle(initialValue = false)
+            val debugStats by locationRepository.debugStats.collectAsStateWithLifecycle(initialValue = null)
 
             LjTheme {
                 WidgetPanel(
@@ -347,6 +349,7 @@ class FloatingWidgetService :
                     altitudePrefillMeters = reportedAltitudeMeters ?: AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS,
                     onAltitudeClicked = { altitudeExpandedFlow.value = !altitudeExpandedFlow.value },
                     onConfirmAltitude = { onConfirmAltitude(it) },
+                    debugStats = if (debugStatsEnabled) debugStats else null,
                     onToggleMaster = {
                         if (!isPanelExpandedFlow.value) pendingCompletionFlow.value = false
                         isPanelExpandedFlow.value = !isPanelExpandedFlow.value

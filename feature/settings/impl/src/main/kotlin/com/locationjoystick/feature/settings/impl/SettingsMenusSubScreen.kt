@@ -132,6 +132,8 @@ internal fun SettingsMenusSubScreen(
                         TapToWalkSection(uiState, onAction)
                         Spacer(Modifier.height(24.dp))
                         PrivacySection(uiState, onAction)
+                        Spacer(Modifier.height(24.dp))
+                        DebugSection(uiState, onAction)
                     }
                 }
             }
@@ -313,6 +315,23 @@ private fun PrivacySection(
         description =
             "Adds Previous waypoint / Next waypoint buttons to route replay controls, " +
                 "for instantly teleporting between waypoints. Off by default.",
+    )
+}
+
+@Composable
+private fun DebugSection(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    Text("Debug", style = MaterialTheme.typography.headlineSmall)
+    Spacer(Modifier.height(4.dp))
+    LjCheckboxRow(
+        checked = uiState.debugStatsEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetDebugStatsEnabled(it)) },
+        title = "Debug stats",
+        description =
+            "Shows live speed, altitude, coordinates, and tick rate in the floating " +
+                "widget panel while spoofing is active.",
     )
 }
 

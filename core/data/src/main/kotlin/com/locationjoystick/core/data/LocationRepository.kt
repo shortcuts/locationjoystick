@@ -19,6 +19,17 @@ import javax.inject.Singleton
 
 private const val TAG = "LocationRepository"
 
+/** Live per-tick snapshot for the debug overlay. [tickIntervalMs] is wall-clock time since the previous tick. */
+data class DebugStats(
+    val latitude: Double,
+    val longitude: Double,
+    val speedMs: Float,
+    val altitudeMeters: Double,
+    val accuracyMeters: Float,
+    val bearing: Float,
+    val tickIntervalMs: Long,
+)
+
 /**
  * In-process state holder for the current spoofed position and mock location state.
  *
@@ -61,6 +72,15 @@ class LocationRepository
 
         fun setReportedAltitude(meters: Double) {
             _reportedAltitudeMeters.value = meters
+        }
+
+        private val _debugStats = MutableStateFlow<DebugStats?>(null)
+
+        /** Live per-tick stats for the debug overlay (Settings → "Debug stats"). Null when never populated. */
+        val debugStats: StateFlow<DebugStats?> = _debugStats.asStateFlow()
+
+        fun setDebugStats(stats: DebugStats) {
+            _debugStats.value = stats
         }
 
         private val _mockLocationState = MutableStateFlow(MockLocationState.IDLE)

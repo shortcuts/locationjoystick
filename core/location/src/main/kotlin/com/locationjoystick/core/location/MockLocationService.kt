@@ -21,6 +21,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.common.util.NetworkUtils
 import com.locationjoystick.core.common.util.NsdCodeManager
+import com.locationjoystick.core.data.DebugStats
 import com.locationjoystick.core.data.ElevationRepository
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.data.LocationRepository
@@ -221,6 +222,9 @@ class MockLocationService : Service() {
 
     /** Timestamp of the last live-position DataStore write; throttles persistLastLocation(). */
     @Volatile private var lastPersistedLocationMs: Long = 0L
+
+    /** Timestamp of the previous tick; used to compute the debug overlay's tick interval. */
+    @Volatile private var lastTickMs: Long = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -1242,6 +1246,19 @@ class MockLocationService : Service() {
             currentAltitudeMeters = fix.altitudeMeters - fix.humanAltitudeOffsetMeters
             humanAltitudeOffsetMeters = fix.humanAltitudeOffsetMeters
             locationRepository.setReportedAltitude(fix.altitudeMeters)
+            val tickIntervalMs = if (lastTickMs == 0L) 0L else nowMs - lastTickMs
+            lastTickMs = nowMs
+            locationRepository.setDebugStats(
+                DebugStats(
+                    latitude = fix.latitude,
+                    longitude = fix.longitude,
+                    speedMs = fix.speedMs,
+                    altitudeMeters = fix.altitudeMeters,
+                    accuracyMeters = fix.accuracyMeters,
+                    bearing = fix.bearing,
+                    tickIntervalMs = tickIntervalMs,
+                ),
+            )
             if (snapshot.speedMs > 0f) lastNonZeroBearing = snapshot.bearing
             if (snapshot.shouldApplyMovingJitter && snapshot.mode != MockMode.TELEPORT) {
                 lastJitterTimestampMs = nowMs

@@ -380,6 +380,10 @@ fun SettingsRoute(
                     viewModel.setAltitudeOverrideButtonEnabled(action.enabled)
                 }
 
+                is SettingsAction.SetDebugStatsEnabled -> {
+                    viewModel.setDebugStatsEnabled(action.enabled)
+                }
+
                 is SettingsAction.SetTapToWalkOverlayEnabled -> {
                     viewModel.setTapToWalkOverlayEnabled(action.enabled)
                 }

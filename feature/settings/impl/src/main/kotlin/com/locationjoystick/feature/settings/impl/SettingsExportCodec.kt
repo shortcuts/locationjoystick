@@ -88,6 +88,7 @@ internal object SettingsExportCodec {
         settingsObj.put("realElevationEnabled", data.settings.realElevationEnabled)
         settingsObj.put("altitudeJitterRadiusMeters", data.settings.altitudeJitterRadiusMeters)
         settingsObj.put("altitudeOverrideButtonEnabled", data.settings.altitudeOverrideButtonEnabled)
+        settingsObj.put("debugStatsEnabled", data.settings.debugStatsEnabled)
         val roamingObj = JSONObject()
         roamingObj.put("radiusMeters", data.settings.roamingDefaults.radiusMeters)
         roamingObj.put("distanceMeters", data.settings.roamingDefaults.distanceMeters)
@@ -224,6 +225,7 @@ internal object SettingsExportCodec {
         val altitudeJitterRadiusMeters =
             settingsObj.optDouble("altitudeJitterRadiusMeters", AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS)
         val altitudeOverrideButtonEnabled = settingsObj.optBoolean("altitudeOverrideButtonEnabled", false)
+        val debugStatsEnabled = settingsObj.optBoolean("debugStatsEnabled", false)
         val roamingDefaultsObj = settingsObj.optJSONObject("roamingDefaults")
         val roamingDefaults =
             if (roamingDefaultsObj != null) {
@@ -262,6 +264,7 @@ internal object SettingsExportCodec {
                 realElevationEnabled = realElevationEnabled,
                 altitudeJitterRadiusMeters = altitudeJitterRadiusMeters,
                 altitudeOverrideButtonEnabled = altitudeOverrideButtonEnabled,
+                debugStatsEnabled = debugStatsEnabled,
             )
 
         val speedProfiles = mutableListOf<SpeedProfile>()

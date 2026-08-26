@@ -24,4 +24,5 @@ data class AppSettings(
     val realElevationEnabled: Boolean = true,
     val altitudeJitterRadiusMeters: Double = 0.25,
     val altitudeOverrideButtonEnabled: Boolean = false,
+    val debugStatsEnabled: Boolean = false,
 )

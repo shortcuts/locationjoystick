@@ -224,6 +224,12 @@ interface PreferencesDataSource {
     /** Sets whether the floating widget's altitude override button is shown. */
     suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean)
 
+    /** Gets whether the widget panel shows live debug stats (speed, altitude, coords, tick rate). */
+    fun getDebugStatsEnabled(): Flow<Boolean>
+
+    /** Sets whether the widget panel shows live debug stats. */
+    suspend fun setDebugStatsEnabled(enabled: Boolean)
+
     /** Gets the altitude Gaussian-walk jitter radius (meters). */
     fun getAltitudeJitterRadius(): Flow<Double>
 
@@ -367,6 +373,7 @@ data class SettingsSnapshot(
     val realismRealElevationEnabled: Boolean = AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
     val altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
     val altitudeOverrideButtonEnabled: Boolean = false,
+    val debugStatsEnabled: Boolean = false,
 )
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -482,6 +489,7 @@ class AppPreferencesDataSource
             val BASE_ALTITUDE_OVERRIDE_METERS = doublePreferencesKey("base_altitude_override_meters")
             val ALTITUDE_JITTER_RADIUS_METERS = doublePreferencesKey("altitude_jitter_radius_meters")
             val ALTITUDE_OVERRIDE_BUTTON_ENABLED = booleanPreferencesKey("altitude_override_button_enabled")
+            val DEBUG_STATS_ENABLED = booleanPreferencesKey("debug_stats_enabled")
         }
 
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
@@ -755,6 +763,10 @@ class AppPreferencesDataSource
 
         override suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) = setPref(Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED, enabled)
 
+        override fun getDebugStatsEnabled(): Flow<Boolean> = pref(Keys.DEBUG_STATS_ENABLED, false)
+
+        override suspend fun setDebugStatsEnabled(enabled: Boolean) = setPref(Keys.DEBUG_STATS_ENABLED, enabled)
+
         override fun getAltitudeJitterRadius(): Flow<Double> =
             pref(Keys.ALTITUDE_JITTER_RADIUS_METERS, DEFAULT_ALTITUDE_JITTER_RADIUS_METERS)
 
@@ -898,6 +910,7 @@ class AppPreferencesDataSource
                 prefs[Keys.ALTITUDE_JITTER_RADIUS_METERS] =
                     snapshot.altitudeJitterRadiusMeters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
                 prefs[Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED] = snapshot.altitudeOverrideButtonEnabled
+                prefs[Keys.DEBUG_STATS_ENABLED] = snapshot.debugStatsEnabled
                 prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] =
                     snapshot.jitterSpeedIdleVariationPct.coerceIn(
                         AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
@@ -992,6 +1005,7 @@ class AppPreferencesDataSource
                         altitudeJitterRadiusMeters =
                             prefs[Keys.ALTITUDE_JITTER_RADIUS_METERS] ?: DEFAULT_ALTITUDE_JITTER_RADIUS_METERS,
                         altitudeOverrideButtonEnabled = prefs[Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED] ?: false,
+                        debugStatsEnabled = prefs[Keys.DEBUG_STATS_ENABLED] ?: false,
                         jitterSpeedIdleVariationPct =
                             prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT]
                                 ?: DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,

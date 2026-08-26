@@ -286,6 +286,10 @@ class SettingsRepository
 
         suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) = dataSource.setAltitudeOverrideButtonEnabled(enabled)
 
+        fun getDebugStatsEnabled(): Flow<Boolean> = dataSource.getDebugStatsEnabled()
+
+        suspend fun setDebugStatsEnabled(enabled: Boolean) = dataSource.setDebugStatsEnabled(enabled)
+
         fun getAltitudeJitterRadius(): Flow<Double> = dataSource.getAltitudeJitterRadius()
 
         suspend fun setAltitudeJitterRadius(meters: Double) = dataSource.setAltitudeJitterRadius(meters)
