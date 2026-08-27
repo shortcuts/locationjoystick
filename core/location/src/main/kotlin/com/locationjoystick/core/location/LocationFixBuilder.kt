@@ -157,16 +157,6 @@ internal fun advanceSuspendedPhase(
     }
 }
 
-/** Moves [current] toward [target] by at most [maxStep], reaching it exactly once within range. */
-internal fun stepToward(
-    current: Double,
-    target: Double,
-    maxStep: Double,
-): Double {
-    val delta = target - current
-    return if (kotlin.math.abs(delta) <= maxStep) target else current + maxStep * kotlin.math.sign(delta)
-}
-
 /** Applies a 2-D Gaussian displacement of [radiusMeters] to ([lat], [lon]) using Box-Muller. */
 internal fun gaussianLatLonOffset(
     lat: Double,

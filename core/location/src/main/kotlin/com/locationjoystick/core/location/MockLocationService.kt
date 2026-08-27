@@ -152,6 +152,8 @@ class MockLocationService : Service() {
 
     private lateinit var overlayNotificationReactor: OverlayNotificationReactor
 
+    internal lateinit var altitudeAnchor: AltitudeAnchorCoordinator
+
     /** Guards concurrent access to updateJob to prevent double-start from rapid state emissions. */
     private val updateJobMutex = Mutex()
 
@@ -193,18 +195,6 @@ class MockLocationService : Service() {
     @Volatile private var currentAltitudeMeters: Double =
         AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
 
-    /** Clamp-center anchor for the altitude Gaussian walk; converges toward [targetBaseAltitudeMeters] each tick. */
-    @Volatile private var currentBaseAltitudeMeters: Double = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
-
-    /** Where [currentBaseAltitudeMeters] is converging to — set by a real-elevation fetch or a manual override. */
-    @Volatile private var targetBaseAltitudeMeters: Double = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
-
-    /** Wall-clock ms of the last real-elevation fetch attempt; gates [maybeFetchElevation]'s interval check. */
-    @Volatile private var lastElevationFetchMs: Long = 0L
-
-    /** Guards against stacking a new elevation fetch while one is still in flight. */
-    @Volatile private var elevationFetchInFlight: Boolean = false
-
     /** Wall-clock ms when startSpoofing() was called; NOT reset on pause/resume. */
     @Volatile private var warmupStartMs: Long = 0L
 
@@ -234,6 +224,12 @@ class MockLocationService : Service() {
                 notificationManager = notificationManager,
                 locationRepository = locationRepository,
                 settingsRepository = settingsRepository,
+            )
+        altitudeAnchor =
+            AltitudeAnchorCoordinator(
+                elevationRepository = elevationRepository,
+                settingsRepository = settingsRepository,
+                locationRepository = locationRepository,
             )
         replayOrchestrator =
             ReplayOrchestrator(
@@ -347,18 +343,8 @@ class MockLocationService : Service() {
             }
         }
         // Applies a manual altitude override (widget button) to a running session immediately —
-        // DataStore write -> Flow emission -> this collector — with no Intent/service command
-        // needed. Skipped when no override exists yet (null -> no-op) so it never fights
-        // startSpoofing()'s own resolution order.
-        serviceScope.launch {
-            settingsRepository.getBaseAltitudeOverride().collect { override ->
-                if (override != null) {
-                    currentBaseAltitudeMeters = override
-                    targetBaseAltitudeMeters = override
-                    locationRepository.setReportedAltitude(override)
-                }
-            }
-        }
+        // see AltitudeAnchorCoordinator.observe().
+        altitudeAnchor.observe(serviceScope)
         // Keeps the foreground notification and widget overlay in sync with live setting
         // changes mid-session (see OverlayNotificationReactor's class doc for why).
         overlayNotificationReactor.observe(serviceScope, _state)
@@ -671,18 +657,12 @@ class MockLocationService : Service() {
         currentBearing = 0.0f
         val now = SystemClock.elapsedRealtime()
         currentAltitudeMeters = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
-        currentBaseAltitudeMeters = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
-        targetBaseAltitudeMeters = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
-        // Resolves async — a manual override is re-applied instantly anyway via the reactive
-        // collector in observeLocationState(), and maybeFetchElevation() re-checks the override
-        // before every fetch, so the sliver of a window before this completes is harmless.
-        serviceScope.launch {
-            settingsRepository.getBaseAltitudeOverride().first()?.let { override ->
-                currentBaseAltitudeMeters = override
-                targetBaseAltitudeMeters = override
-            }
-        }
-        maybeFetchElevation(now, lat, lon)
+        altitudeAnchor.reset()
+        // Resolves async — a manual override is re-applied instantly anyway via the live observe()
+        // collector, and maybeFetchElevation() re-checks the override before every fetch, so the
+        // sliver of a window before this completes is harmless.
+        altitudeAnchor.applyPendingOverride(serviceScope)
+        altitudeAnchor.maybeFetchElevation(serviceScope, now, lat, lon, realism.realElevationEnabled)
         warmupStartMs = now
         suspendedPhase.set(SuspendedPhaseState(isActive = false, startMs = now))
         cachedSatelliteCount =
@@ -1098,30 +1078,6 @@ class MockLocationService : Service() {
     }
 
     /**
-     * Starts an async real-elevation fetch if due: not already in flight, the feature is enabled,
-     * the fetch interval has elapsed, and no manual override is active (checked again inside the
-     * launched coroutine, since the override may have been set since this call started). Shared by
-     * [startSpoofing] and every tick of [captureSnapshot] so "fetch now if due" is one code path.
-     */
-    private fun maybeFetchElevation(
-        nowMs: Long,
-        lat: Double,
-        lon: Double,
-    ) {
-        if (elevationFetchInFlight) return
-        if (!realism.realElevationEnabled) return
-        if (nowMs - lastElevationFetchMs < AppConstants.RealismConstants.ELEVATION_FETCH_INTERVAL_MS) return
-        lastElevationFetchMs = nowMs
-        elevationFetchInFlight = true
-        serviceScope.launch {
-            if (settingsRepository.getBaseAltitudeOverride().first() == null) {
-                elevationRepository.fetchElevationMeters(lat, lon)?.let { targetBaseAltitudeMeters = it }
-            }
-            elevationFetchInFlight = false
-        }
-    }
-
-    /**
      * Freezes all @Volatile fields into an immutable [LocationSnapshot] to eliminate TOCTOU races
      * in the tick loop. Also computes [LocationSnapshot.shouldApplyMovingJitter] and refreshes the
      * slow-churn satellite counts when their interval has elapsed.
@@ -1152,13 +1108,15 @@ class MockLocationService : Service() {
         }
 
         val currentPos = positionRef.get()
-        currentBaseAltitudeMeters =
-            stepToward(
-                currentBaseAltitudeMeters,
-                targetBaseAltitudeMeters,
-                AppConstants.RealismConstants.ALTITUDE_TARGET_STEP_METERS_PER_TICK,
-            )
-        maybeFetchElevation(nowMs, currentPos.latitude, currentPos.longitude)
+        val newBaseAltitudeMeters =
+            altitudeAnchor.stepConverge(AppConstants.RealismConstants.ALTITUDE_TARGET_STEP_METERS_PER_TICK)
+        altitudeAnchor.maybeFetchElevation(
+            serviceScope,
+            nowMs,
+            currentPos.latitude,
+            currentPos.longitude,
+            realism.realElevationEnabled,
+        )
         val speedMs = if (mode == MockMode.FOLLOWER) followerCatchUp.currentSpeedMs() else currentSpeedMs
         val bearing = if (mode == MockMode.FOLLOWER) followerCatchUp.currentBearing() else currentBearing
         return LocationSnapshot(
@@ -1186,7 +1144,7 @@ class MockLocationService : Service() {
             isSuspendedPhase = suspendedPhaseSnapshot.isActive,
             cachedSatelliteCount = cachedSatelliteCount,
             cachedUsedInFixCount = cachedUsedInFixCount,
-            baseAltitudeMeters = currentBaseAltitudeMeters,
+            baseAltitudeMeters = newBaseAltitudeMeters,
             altitudeJitterRadiusMeters = realism.altitudeJitterRadiusMeters,
         )
     }

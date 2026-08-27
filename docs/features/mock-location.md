@@ -64,12 +64,12 @@ instead of anchoring the altitude Gaussian walk to a flat `DEFAULT_ALTITUDE_METE
 
 - **Trigger**: fetched on `startSpoofing()`, then re-fetched every
   `AppConstants.RealismConstants.ELEVATION_FETCH_INTERVAL_MS` (60 s) while spoofing is
-  `RUNNING`/`PAUSED`, checked inline in `MockLocationService.captureSnapshot()`
-  (`maybeFetchElevation()`) — no separate coroutine loop. A fetch already in flight is never
-  duplicated.
+  `RUNNING`/`PAUSED`, checked inline in `MockLocationService.captureSnapshot()` via
+  `AltitudeAnchorCoordinator.maybeFetchElevation()` — no separate coroutine loop. A fetch already
+  in flight is never duplicated.
 - **Gradual convergence**: a fetched value becomes a *target*
   (`targetBaseAltitudeMeters`), not an instant reassignment — the effective anchor
-  (`currentBaseAltitudeMeters`, what `buildLocation`'s clamp actually centers on) steps toward it
+  (owned by `AltitudeAnchorCoordinator`, what `buildLocation`'s clamp actually centers on) steps toward it
   by at most `AppConstants.RealismConstants.ALTITUDE_TARGET_STEP_METERS_PER_TICK` (0.5 m) per
   tick, so a 100 m elevation change converges over roughly 3.5 minutes instead of jumping.
 - **Failure/disabled**: the target simply doesn't move — the anchor stays wherever it last

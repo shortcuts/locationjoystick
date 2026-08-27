@@ -20,6 +20,12 @@ class FollowerExitSpeedResetTest {
             locationRepository = LocationRepository()
             followerSyncClient = mockk(relaxed = true)
             groupRepository = mockk(relaxed = true)
+            altitudeAnchor =
+                AltitudeAnchorCoordinator(
+                    elevationRepository = mockk(relaxed = true),
+                    settingsRepository = mockk(relaxed = true),
+                    locationRepository = locationRepository,
+                )
         }
 
     @Test
