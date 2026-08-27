@@ -32,14 +32,14 @@
 #   --steps 01,03,05     (run steps 1, 3, 5)
 # Seeding (routes, favorites) always runs before the first selected step.
 #
-# Output files (17 canonical PNGs):
+# Output files (18 canonical PNGs):
 #   01_idle, 02_map, 03_routes, 04_favorites, 05_settings,
 #   06_map_routes_sheet, 07_map_favorites_sheet, 08_map_roaming_sheet,
 #   09_route_creator, 10_route_detail, 11_map_picker,
 #   12_qr_share,
 #   13_joystick_overlay, 14_widget_overlay,
 #   15_routes_add_button, 16_favorites_add_button,
-#   17_group_sync
+#   17_group_sync, 18_debug_stats
 
 set -euo pipefail
 
@@ -90,7 +90,7 @@ if [[ -n "$STEPS_FILTER" ]]; then
   done
 else
   # No filter: enable all steps
-  for i in $(seq 1 17); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
+  for i in $(seq 1 18); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
 fi
 
 # Helper to check if a step should run (e.g. should_run_step "16")
@@ -109,6 +109,10 @@ warn() { echo "⚠ $*"; }
 # Dump UI hierarchy to a temp file and return its path.
 ui_dump() {
   local tmp
+  # macOS mktemp only substitutes a trailing XXXXXX — with ".xml" after it, the
+  # whole template is used literally, so a leftover file from an earlier run
+  # (or one this same run failed to clean up) makes every later call collide.
+  rm -f /tmp/uidump.XXXXXX.xml
   tmp=$(mktemp /tmp/uidump.XXXXXX.xml)
   $ADB shell uiautomator dump /sdcard/uidump.xml >/dev/null 2>&1
   $ADB pull /sdcard/uidump.xml "$tmp" >/dev/null 2>&1
@@ -863,6 +867,81 @@ if should_run_step "17"; then
   tap_text_below "Group Sync" "$CARD_Y_MIN"
   wait_s 2 "Group Sync loading"
   screenshot "17_group_sync"
+fi
+
+# ── 18. Debug stats (widget panel) ───────────────────────────────────────────
+
+if should_run_step "18"; then
+  log "=== 18 DEBUG STATS ==="
+  if $AUTO; then
+    go_idle
+    tap_text_below "Settings" "$CARD_Y_MIN"
+    wait_s 2 "Settings loading"
+    tap_text "Menus"
+    wait_s 2 "Menus loading"
+    # Debug stats lives under Privacy, below the fold — scroll down to reveal it.
+    $ADB shell input swipe 540 1800 540 400
+    wait_s 1 "Scrolling to Debug section"
+    # Idempotent: only tap if currently unchecked — the row is a toggle, so
+    # tapping an already-enabled setting (e.g. left on from a prior run) would
+    # disable it instead. The dump is one giant single line, so a line-based
+    # grep -B1 can't isolate the checkbox next to "Debug stats" — walk the
+    # raw text backwards from that label to its nearest preceding checked= instead.
+    dump=$(ui_dump)
+    already_on=$(python3 -c '
+data = open("'"$dump"'").read()
+idx = data.find("text=\"Debug stats\"")
+prefix = data[:idx]
+last = prefix.rfind("checked=\"")
+print(prefix[last+9:last+13] == "true")
+')
+    if [[ "$already_on" == "True" ]]; then
+      log "Debug stats already enabled — skipping toggle tap."
+    else
+      tap_text "Debug stats"
+      wait_s 1 "Enabling debug stats"
+      # This settings page buffers changes behind a Save/Discard banner —
+      # force-stopping via go_idle without saving would discard the toggle.
+      tap_text_exact "Save"
+      wait_s 1 "Saving setting"
+    fi
+    rm -f "$dump"
+    go_idle
+    tap_text_below "Map" "$CARD_Y_MIN"
+    wait_s 3 "Map loading"
+    tap_text "location simulation"
+    wait_s 3 "Starting simulation"
+    $ADB shell am startservice \
+      -n "${PACKAGE}/com.locationjoystick.feature.widget.impl.FloatingWidgetService" 2>/dev/null || true
+    # A freshly-started overlay window reports isReadyForDisplay/isVisible in
+    # dumpsys well before it's actually first in line for touch dispatch — a
+    # Best-effort, same as steps 13/14: overlay touch dispatch is flaky enough
+    # (seen falling through to the map beneath even after an 8s+ settle and a
+    # retry) that this may still need a manual re-run. If so: expand the
+    # widget panel by hand with Debug stats enabled, spoofing active, then
+    #   adb exec-out screencap -p > docs/wiki/screenshots/18_debug_stats.png
+    attempts=0
+    while (( attempts < 3 )); do
+      wait_s 8 "Widget overlay settling"
+      expand_widget_panel
+      dump=$(ui_dump)
+      if grep -q 'Move to this location' "$dump"; then
+        rm -f "$dump"
+        (( ++attempts ))
+        warn "Tap fell through to the map (attempt $attempts/3) — dismissing and retrying."
+        back
+        wait_s 2 "Dismissing map sheet"
+      else
+        rm -f "$dump"
+        break
+      fi
+    done
+    wait_s 2 "Stats populating"
+  else
+    pause_for_user "Enable Settings → Menus → Debug → \"Debug stats\", start spoofing,
+    then expand the floating widget panel so the live stats block is visible."
+  fi
+  screenshot "18_debug_stats"
 fi
 
 # ── Done ─────────────────────────────────────────────

@@ -1,11 +1,11 @@
 ---
 name: screenshots
-description: Refresh all wiki/Play Store gallery screenshots from a connected Android device. Use this skill whenever the user asks to update, regenerate, recapture, or refresh screenshots for the wiki, docs, or Play Store. Also triggers on "run screenshot script", "capture gallery", "update docs screenshots", "screenshot-gallery", or any mention of refreshing the 01_idle through 17_favorites_add_button PNGs. Always use this skill for screenshot-related tasks — don't attempt to run screenshot-gallery.sh manually without it.
+description: Refresh all wiki/Play Store gallery screenshots from a connected Android device. Use this skill whenever the user asks to update, regenerate, recapture, or refresh screenshots for the wiki, docs, or Play Store. Also triggers on "run screenshot script", "capture gallery", "update docs screenshots", "screenshot-gallery", or any mention of refreshing the 01_idle through 18_debug_stats PNGs. Always use this skill for screenshot-related tasks — don't attempt to run screenshot-gallery.sh manually without it.
 ---
 
 # Screenshots Skill
 
-Captures all 17 canonical gallery screenshots from a connected Android device using
+Captures all 18 canonical gallery screenshots from a connected Android device using
 `scripts/screenshot-gallery.sh --auto`, saving them to `docs/wiki/screenshots/`.
 
 In `--auto` mode the script runs fully non-interactively: the agent executes it
@@ -215,11 +215,11 @@ steps 03–10 always show data if selected.
 ## Step 3 — Script output (automatic)
 
 The script automatically:
-1. Captures all 17 canonical screenshots to `docs/wiki/screenshots/`
+1. Captures all 18 canonical screenshots to `docs/wiki/screenshots/`
 2. Generates 1024×500 Play Store variants (named `*_playstore.png`)
 3. Displays a summary table
 
-Expected output files (34 total: 17 source + 17 playstore variants):
+Expected output files (36 total: 18 source + 18 playstore variants):
 ```
 01_idle.png + 01_idle_playstore.png
 02_map.png + 02_map_playstore.png
@@ -233,11 +233,16 @@ Expected output files (34 total: 17 source + 17 playstore variants):
 10_route_detail.png + 10_route_detail_playstore.png
 11_map_picker.png + 11_map_picker_playstore.png
 12_qr_share.png + 12_qr_share_playstore.png
-13_joystick_overlay.png + 13_joystick_overlay_playstore.png
-14_widget_overlay.png + 14_widget_overlay_playstore.png
-15_routes_add_button.png + 15_routes_add_button_playstore.png
-16_favorites_add_button.png + 16_favorites_add_button_playstore.png
+14_joystick_overlay.png + 14_joystick_overlay_playstore.png
+15_widget_overlay.png + 15_widget_overlay_playstore.png
+16_routes_add_button.png + 16_routes_add_button_playstore.png
+17_favorites_add_button.png + 17_favorites_add_button_playstore.png
+17_group_sync.png + 17_group_sync_playstore.png
+18_debug_stats.png + 18_debug_stats_playstore.png
 ```
+(Step numbers in the filenames don't line up 1:1 with the script's own
+`should_run_step` numbers in every case — the script's in-file header comment
+is the source of truth if the two ever drift.)
 
 If any file is missing:
 - **14_joystick_overlay.png**: joystick overlay service failed to start after 3 retries.
@@ -251,6 +256,12 @@ If any file is missing:
 - **16_routes_add_button.png / 17_favorites_add_button.png**: navigation failed.
   Verify routes or favorites screen loaded, re-run step only with
   `adb shell am force-stop com.locationjoystick.app && sleep 1 && adb shell am start -n com.locationjoystick.app/.MainActivity`
+- **18_debug_stats.png**: the widget FAB tap fell through to the map underneath
+  (opens "Move to this location?" instead of the panel) — a known overlay-timing
+  flake, same class as steps 14/15. The script retries up to 3 times with an 8s
+  settle each time; if it still fails, enable Settings → Menus → Debug →
+  "Debug stats", start spoofing, expand the widget panel by hand, then capture with
+  `adb exec-out screencap -p > docs/wiki/screenshots/18_debug_stats.png`
 - **Any other file**: report which step failed and suggest re-running.
 
 ---
