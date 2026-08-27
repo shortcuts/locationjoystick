@@ -224,6 +224,14 @@ class FloatingWidgetService :
                 pendingCompletionFlow.value = true
             }
         }
+        // The FAB overlay window is FLAG_NOT_FOCUSABLE by design (never steal keyboard focus
+        // from the foreground app), but that also blocks the altitude override field from ever
+        // taking IME focus — so no keyboard appears and the field can't actually be typed into.
+        // Borrow focus only while that field is expanded, per the same fix already applied to
+        // the map panel's search field (mapPanelLayoutParams).
+        lifecycleScope.launch {
+            altitudeExpandedFlow.collect { expanded -> setOverlayFocusable(expanded) }
+        }
         lifecycleScope.launch {
             groupRepository.teleportUnavailableEvent.collect {
                 Toast
@@ -517,6 +525,24 @@ class FloatingWidgetService :
     private fun onConfirmAltitude(meters: Double) {
         lifecycleScope.launch { settingsRepository.setBaseAltitudeOverride(meters) }
         altitudeExpandedFlow.value = false
+    }
+
+    private fun setOverlayFocusable(focusable: Boolean) {
+        val params = currentParams ?: return
+        val view = overlayView ?: return
+        params.flags =
+            if (focusable) {
+                params.flags and AndroidWindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()
+            } else {
+                params.flags or AndroidWindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            }
+        if (view.isAttachedToWindow) {
+            try {
+                windowManager.updateViewLayout(view, params)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to update overlay focusability", e)
+            }
+        }
     }
 
     private fun toggleJoystick() {

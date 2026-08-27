@@ -104,6 +104,13 @@ default `false`), the widget panel shows a terrain-icon button:
 - **Expansion state ownership**: `FloatingWidgetService.altitudeExpandedFlow`
   (`MutableStateFlow<Boolean>`), per the "Anti-Patterns to Avoid" rule below — never `remember`
   in `WidgetPanelContent` directly.
+- **Keyboard focus**: the widget's overlay window is `FLAG_NOT_FOCUSABLE` by design (it must
+  never steal keyboard focus from the foreground app — see @docs/features/joystick.md,
+  "Requirements"), which otherwise silently prevents the text field from ever receiving IME
+  focus, so no keyboard appears and the field cannot be typed into. `FloatingWidgetService`
+  clears `FLAG_NOT_FOCUSABLE` on the overlay window (`windowManager.updateViewLayout`) only
+  while `altitudeExpandedFlow` is `true`, restoring it once the row collapses — mirroring the
+  fix already applied to the map panel's search field (`mapPanelLayoutParams`).
 
 ## Debug Stats
 
