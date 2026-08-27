@@ -20,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -53,7 +52,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.AppIcon
+import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.RoamingDefaults
@@ -651,17 +652,8 @@ private fun SettingsHubScreen(
                     tint = MaterialTheme.colorScheme.error,
                 )
             }
-            if (uiState.isDirty) {
-                TextButton(
-                    onClick = { onAction(SettingsAction.DiscardChanges) },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
-                ) { Text("Discard") }
-                TextButton(
-                    onClick = { onAction(SettingsAction.SaveChanges) },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
-                ) { Text("Save") }
-            }
         },
+        floatingActionButton = { SettingsSaveDiscardFab(uiState.isDirty, onAction) },
     ) { paddingValues ->
         Column(
             modifier =
@@ -764,19 +756,29 @@ private fun SettingsDestinationCard(
 }
 
 @Composable
-internal fun SubScreenActions(
+internal fun SettingsSaveDiscardFab(
     isDirty: Boolean,
     onAction: (SettingsAction) -> Unit,
 ) {
-    if (isDirty) {
-        TextButton(
+    if (!isDirty) return
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_SPACING),
+    ) {
+        LjMapIconButton(
+            icon = LjIcons.Close,
+            contentDescription = "Discard changes",
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             onClick = { onAction(SettingsAction.DiscardChanges) },
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
-        ) { Text("Discard") }
-        TextButton(
+        )
+        LjMapIconButton(
+            icon = LjIcons.Check,
+            contentDescription = "Save changes",
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             onClick = { onAction(SettingsAction.SaveChanges) },
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
-        ) { Text("Save") }
+        )
     }
 }
 
