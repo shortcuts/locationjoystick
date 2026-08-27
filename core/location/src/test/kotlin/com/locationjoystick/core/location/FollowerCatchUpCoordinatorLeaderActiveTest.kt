@@ -10,7 +10,7 @@ import org.junit.Test
  * `computeFollowerActiveAction` cases; this test covers the gate that gives each transition
  * exactly one BOOTSTRAP/PAUSE per active/inactive streak.
  */
-class FollowerBootstrapActionTest {
+class FollowerCatchUpCoordinatorLeaderActiveTest {
     @Test
     fun `bootstraps once then no-ops while the leader stays active`() {
         val coordinator = FollowerCatchUpCoordinator()
@@ -18,8 +18,8 @@ class FollowerBootstrapActionTest {
         val first = coordinator.handleLeaderActiveUpdate(leaderActive = true, currentState = MockLocationState.IDLE)
         val second = coordinator.handleLeaderActiveUpdate(leaderActive = true, currentState = MockLocationState.RUNNING)
 
-        assertEquals(FollowerBootstrapAction.BOOTSTRAP, first)
-        assertEquals(FollowerBootstrapAction.NONE, second)
+        assertEquals(FollowerActiveAction.BOOTSTRAP, first)
+        assertEquals(FollowerActiveAction.NO_OP, second)
     }
 
     @Test
@@ -30,8 +30,8 @@ class FollowerBootstrapActionTest {
         val first = coordinator.handleLeaderActiveUpdate(leaderActive = false, currentState = MockLocationState.RUNNING)
         val second = coordinator.handleLeaderActiveUpdate(leaderActive = false, currentState = MockLocationState.IDLE)
 
-        assertEquals(FollowerBootstrapAction.PAUSE, first)
-        assertEquals(FollowerBootstrapAction.NONE, second)
+        assertEquals(FollowerActiveAction.PAUSE, first)
+        assertEquals(FollowerActiveAction.NO_OP, second)
     }
 
     @Test
@@ -42,7 +42,7 @@ class FollowerBootstrapActionTest {
 
         val action = coordinator.handleLeaderActiveUpdate(leaderActive = true, currentState = MockLocationState.IDLE)
 
-        assertEquals(FollowerBootstrapAction.BOOTSTRAP, action)
+        assertEquals(FollowerActiveAction.BOOTSTRAP, action)
     }
 
     @Test
@@ -53,6 +53,6 @@ class FollowerBootstrapActionTest {
         coordinator.clear()
         val action = coordinator.handleLeaderActiveUpdate(leaderActive = true, currentState = MockLocationState.IDLE)
 
-        assertEquals(FollowerBootstrapAction.BOOTSTRAP, action)
+        assertEquals(FollowerActiveAction.BOOTSTRAP, action)
     }
 }

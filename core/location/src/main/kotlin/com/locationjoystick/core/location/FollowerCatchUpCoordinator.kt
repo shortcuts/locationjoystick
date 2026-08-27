@@ -5,10 +5,6 @@ import com.locationjoystick.core.model.MockLocationState
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
-/** Outcome of [FollowerCatchUpCoordinator.handleLeaderActiveUpdate] — the compareAndSet gating
- * has already happened, so the caller can act on the result unconditionally. */
-internal enum class FollowerBootstrapAction { BOOTSTRAP, PAUSE, NONE }
-
 /**
  * Owns the FOLLOWER-mode catch-up target and the speed/bearing it produces, extracted from
  * [MockLocationService], mirroring the `WalkCoordinator` pattern (`:core:data`) used for walk-to:
@@ -87,9 +83,11 @@ internal class FollowerCatchUpCoordinator {
 
     /**
      * Reacts to one leader position update's `active` flag, extracted from
-     * [MockLocationService.enterFollowerMode]'s onPosition callback. Wraps
-     * [computeFollowerActiveAction] with the compareAndSet that gates each action to fire exactly
-     * once per active/inactive streak.
+     * [MockLocationService.enterFollowerMode]'s onPosition callback. Applies
+     * [computeFollowerActiveAction]'s decision via the compareAndSet that gates each action to
+     * fire exactly once per active/inactive streak — a CAS that loses the race (another thread
+     * already flipped [spoofingStarted]) downgrades the outcome to [FollowerActiveAction.NO_OP]
+     * rather than acting on a stale decision.
      *
      * BOOTSTRAP means spoofing wasn't active yet on this device — nothing was being reported to
      * other apps, so snapping straight to the leader's position carries no anti-cheat risk. PAUSE
@@ -99,12 +97,12 @@ internal class FollowerCatchUpCoordinator {
     fun handleLeaderActiveUpdate(
         leaderActive: Boolean,
         currentState: MockLocationState,
-    ): FollowerBootstrapAction =
+    ): FollowerActiveAction =
         when (computeFollowerActiveAction(leaderActive, spoofingStarted.get(), currentState)) {
             FollowerActiveAction.BOOTSTRAP ->
-                if (spoofingStarted.compareAndSet(false, true)) FollowerBootstrapAction.BOOTSTRAP else FollowerBootstrapAction.NONE
+                if (spoofingStarted.compareAndSet(false, true)) FollowerActiveAction.BOOTSTRAP else FollowerActiveAction.NO_OP
             FollowerActiveAction.PAUSE ->
-                if (spoofingStarted.compareAndSet(true, false)) FollowerBootstrapAction.PAUSE else FollowerBootstrapAction.NONE
-            FollowerActiveAction.NO_OP -> FollowerBootstrapAction.NONE
+                if (spoofingStarted.compareAndSet(true, false)) FollowerActiveAction.PAUSE else FollowerActiveAction.NO_OP
+            FollowerActiveAction.NO_OP -> FollowerActiveAction.NO_OP
         }
 }

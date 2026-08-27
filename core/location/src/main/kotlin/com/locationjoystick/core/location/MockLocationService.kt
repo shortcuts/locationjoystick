@@ -831,7 +831,7 @@ class MockLocationService : Service() {
                 followerCatchUp.setTarget(LatLng(lat, lon), bearing)
                 groupRepository.setLeaderPosition(LatLng(lat, lon))
                 when (followerCatchUp.handleLeaderActiveUpdate(active, _state.value)) {
-                    FollowerBootstrapAction.BOOTSTRAP -> {
+                    FollowerActiveAction.BOOTSTRAP -> {
                         serviceScope.launch {
                             startSpoofing(lat, lon)
                             // startSpoofing() unconditionally sets mode to TELEPORT — reassert
@@ -840,11 +840,11 @@ class MockLocationService : Service() {
                         }
                     }
 
-                    FollowerBootstrapAction.PAUSE -> {
+                    FollowerActiveAction.PAUSE -> {
                         serviceScope.launch { pauseFollowerForInactiveLeader() }
                     }
 
-                    FollowerBootstrapAction.NONE -> {
+                    FollowerActiveAction.NO_OP -> {
                         Unit
                     }
                 }
