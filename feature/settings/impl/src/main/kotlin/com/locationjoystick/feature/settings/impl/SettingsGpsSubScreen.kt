@@ -76,7 +76,7 @@ internal fun SettingsGpsSubScreen(
                         Spacer(modifier = Modifier.height(24.dp))
                         GpsJitterSection(uiState, isMph, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
-                        GpsRealismSection(uiState, onAction)
+                        GpsRealismSection(uiState, isMph, onAction)
                         Spacer(modifier = Modifier.height(24.dp))
                         Text("Location Memory", style = MaterialTheme.typography.headlineSmall)
                         Spacer(modifier = Modifier.height(4.dp))

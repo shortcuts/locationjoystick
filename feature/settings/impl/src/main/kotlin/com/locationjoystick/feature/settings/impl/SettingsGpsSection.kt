@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -158,19 +159,12 @@ internal fun GpsJitterSection(
             modifier = Modifier.weight(1f),
         )
     }
-    Spacer(modifier = Modifier.height(8.dp))
-    Text("Altitude variation", style = MaterialTheme.typography.labelLarge)
-    Spacer(modifier = Modifier.height(4.dp))
-    JitterInput(
-        value = if (isMph) uiState.altitudeJitterRadiusMeters * 3.28084 else uiState.altitudeJitterRadiusMeters,
-        onValueChange = { onAction(SettingsAction.SetAltitudeJitterRadius(if (isMph) it / 3.28084 else it)) },
-        label = if (isMph) "Altitude wobble (ft)" else "Altitude wobble (m)",
-    )
 }
 
 @Composable
 internal fun GpsRealismSection(
     uiState: SettingsUiState,
+    isMph: Boolean,
     onAction: (SettingsAction) -> Unit,
 ) {
     Text("GPS Realism", style = MaterialTheme.typography.headlineSmall)
@@ -198,6 +192,15 @@ internal fun GpsRealismSection(
             "Simulates a plausible altitude with small random drift instead of always reporting 0 m. " +
                 "A flat zero altitude is an obvious signal that the location is synthetic.",
     )
+    if (uiState.realismAltitudeEnabled) {
+        JitterInput(
+            value = if (isMph) uiState.altitudeJitterRadiusMeters * 3.28084 else uiState.altitudeJitterRadiusMeters,
+            onValueChange = { onAction(SettingsAction.SetAltitudeJitterRadius(if (isMph) it / 3.28084 else it)) },
+            label = if (isMph) "Vary altitude (ft)" else "Vary altitude (m)",
+            modifier = Modifier.fillMaxWidth().padding(start = 40.dp),
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+    }
     LjCheckboxRow(
         checked = uiState.realismRealElevationEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismRealElevationEnabled(it)) },
