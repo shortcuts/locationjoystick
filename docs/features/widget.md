@@ -85,7 +85,7 @@ button:
 
 ## Altitude Override Button
 
-When enabled (Settings → GPS → "Show altitude override button", `AppSettings.altitudeOverrideButtonEnabled`,
+When enabled (Settings → Menus → Privacy → "Show altitude override button", `AppSettings.altitudeOverrideButtonEnabled`,
 default `false`), the widget panel shows a terrain-icon button:
 
 - **Shown when**: the setting is enabled.

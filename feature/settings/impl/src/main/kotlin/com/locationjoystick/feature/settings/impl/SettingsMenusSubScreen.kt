@@ -316,6 +316,14 @@ private fun PrivacySection(
             "Adds Previous waypoint / Next waypoint buttons to route replay controls, " +
                 "for instantly teleporting between waypoints. Off by default.",
     )
+    Spacer(Modifier.height(8.dp))
+    LjCheckboxRow(
+        checked = uiState.altitudeOverrideButtonEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetAltitudeOverrideButtonEnabled(it)) },
+        title = "Show altitude override button",
+        description =
+            "Adds a button to the floating widget for typing in a fixed altitude from anywhere. Off by default.",
+    )
 }
 
 @Composable

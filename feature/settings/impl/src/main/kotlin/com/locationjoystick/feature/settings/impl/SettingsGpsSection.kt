@@ -224,13 +224,6 @@ internal fun GpsRealismSection(
     )
     Spacer(modifier = Modifier.height(8.dp))
     LjCheckboxRow(
-        checked = uiState.altitudeOverrideButtonEnabled,
-        onCheckedChange = { onAction(SettingsAction.SetAltitudeOverrideButtonEnabled(it)) },
-        title = "Show altitude override button",
-        description =
-            "Adds a button to the floating widget for typing in a fixed altitude from anywhere. Off by default.",
-    )
-    LjCheckboxRow(
         checked = uiState.realismWarmupEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismWarmupEnabled(it)) },
         title = "GPS warm-up simulation",
