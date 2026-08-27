@@ -108,40 +108,53 @@ private fun WidgetIconButton(
     }
 }
 
+internal data class RouteControlsState(
+    val expanded: Boolean,
+    val isActive: Boolean,
+    val isPaused: Boolean,
+    val isPausable: Boolean,
+    val isReplay: Boolean,
+    val hideTeleportFeatures: Boolean,
+    val showRouteJumpButtons: Boolean,
+    val onIconClick: () -> Unit,
+    val onPauseResume: () -> Unit,
+    val onStop: () -> Unit,
+    val onJumpNext: () -> Unit,
+    val onJumpPrevious: () -> Unit,
+)
+
+internal sealed interface WidgetPanelSection {
+    data class TapToWalk(
+        val active: Boolean,
+        val onClick: () -> Unit,
+    ) : WidgetPanelSection
+
+    data class GroupSync(
+        val expanded: Boolean,
+        val onClick: () -> Unit,
+        val onTeleport: () -> Unit,
+    ) : WidgetPanelSection
+
+    data class AltitudeOverride(
+        val expanded: Boolean,
+        val prefillMeters: Double,
+        val onClick: () -> Unit,
+        val onConfirm: (Double) -> Unit,
+    ) : WidgetPanelSection
+}
+
 @Composable
 internal fun WidgetPanel(
     features: List<AppFeature>,
     joystickVisible: Boolean,
     joystickLocked: Boolean,
     activeProfileId: String,
-    isActivityActive: Boolean,
-    isActivityPaused: Boolean,
-    isActivityPausable: Boolean,
-    isRouteReplay: Boolean = false,
-    onJumpToNextWaypoint: () -> Unit = {},
-    onJumpToPreviousWaypoint: () -> Unit = {},
-    hideTeleportFeatures: Boolean = false,
-    showRouteJumpButtons: Boolean = false,
-    routeExpanded: Boolean,
+    routeControls: RouteControlsState,
     isPanelExpanded: Boolean,
     hasPendingCompletion: Boolean,
     onToggleMaster: () -> Unit,
     onFeatureClicked: (AppFeature) -> Unit,
-    onRouteClicked: () -> Unit,
-    onRoutePauseResume: () -> Unit,
-    onRouteStop: () -> Unit,
-    isTapToWalkEnabled: Boolean = false,
-    isTapToWalkActive: Boolean = false,
-    onTapToWalkClicked: () -> Unit = {},
-    isGroupSyncButtonVisible: Boolean = false,
-    isGroupSyncExpanded: Boolean = false,
-    onGroupSyncClicked: () -> Unit = {},
-    onTeleportToLeaderClicked: () -> Unit = {},
-    isAltitudeOverrideButtonVisible: Boolean = false,
-    isAltitudeExpanded: Boolean = false,
-    altitudePrefillMeters: Double = 0.0,
-    onAltitudeClicked: () -> Unit = {},
-    onConfirmAltitude: (Double) -> Unit = {},
+    sections: List<WidgetPanelSection>,
     debugStats: DebugStats? = null,
     onDrag: (dx: Float, dy: Float) -> Unit,
 ) {
@@ -211,50 +224,53 @@ internal fun WidgetPanel(
         if (isPanelExpanded) {
             features.forEach { feature ->
                 if (feature == AppFeature.ROUTES) {
-                    val routeIconTint = if (isActivityActive) LjSuccess else MaterialTheme.colorScheme.primary
+                    val routeIconTint = if (routeControls.isActive) LjSuccess else MaterialTheme.colorScheme.primary
                     // Route icon + active controls in a horizontal row
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         WidgetIconButton(
                             icon = LjIcons.Route,
                             contentDescription = "Routes picker",
                             tint = routeIconTint,
-                            onClick = onRouteClicked,
+                            onClick = routeControls.onIconClick,
                         )
                         // Pause/stop shown to the right when activity active and expanded
                         AnimatedVisibility(
-                            visible = isActivityActive && routeExpanded,
+                            visible = routeControls.isActive && routeControls.expanded,
                             enter = fadeIn(tween(150)),
                             exit = fadeOut(tween(150)),
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (isActivityPausable) {
-                                    val pauseResumeIcon = if (isActivityPaused) LjIcons.PlayArrow else LjIcons.Pause
-                                    val pauseResumeTint = if (isActivityPaused) LjSuccess else LjInactive
+                                if (routeControls.isPausable) {
+                                    val pauseResumeIcon = if (routeControls.isPaused) LjIcons.PlayArrow else LjIcons.Pause
+                                    val pauseResumeTint = if (routeControls.isPaused) LjSuccess else LjInactive
                                     WidgetIconButton(
                                         icon = pauseResumeIcon,
-                                        contentDescription = if (isActivityPaused) "Resume" else "Pause",
+                                        contentDescription = if (routeControls.isPaused) "Resume" else "Pause",
                                         tint = pauseResumeTint,
-                                        onClick = onRoutePauseResume,
+                                        onClick = routeControls.onPauseResume,
                                     )
                                 }
                                 WidgetIconButton(
                                     icon = LjIcons.Stop,
                                     contentDescription = "Stop",
                                     tint = MaterialTheme.colorScheme.error,
-                                    onClick = onRouteStop,
+                                    onClick = routeControls.onStop,
                                 )
-                                if (isRouteReplay && !hideTeleportFeatures && showRouteJumpButtons) {
+                                if (routeControls.isReplay &&
+                                    !routeControls.hideTeleportFeatures &&
+                                    routeControls.showRouteJumpButtons
+                                ) {
                                     WidgetIconButton(
                                         icon = LjIcons.SkipPrevious,
                                         contentDescription = "Previous waypoint",
                                         tint = LjSuccess,
-                                        onClick = onJumpToPreviousWaypoint,
+                                        onClick = routeControls.onJumpPrevious,
                                     )
                                     WidgetIconButton(
                                         icon = LjIcons.SkipNext,
                                         contentDescription = "Next waypoint",
                                         tint = LjSuccess,
-                                        onClick = onJumpToNextWaypoint,
+                                        onClick = routeControls.onJumpNext,
                                     )
                                 }
                             }
@@ -277,51 +293,57 @@ internal fun WidgetPanel(
                     )
                 }
             }
-            if (isTapToWalkEnabled) {
-                val crosshairTint = if (isTapToWalkActive) MaterialTheme.colorScheme.primary else LjInactive
-                WidgetIconButton(
-                    icon = LjIcons.MyLocation,
-                    contentDescription = if (isTapToWalkActive) "Cancel tap-to-walk" else "Tap to walk",
-                    tint = crosshairTint,
-                    onClick = onTapToWalkClicked,
-                )
-            }
-            if (isGroupSyncButtonVisible) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    WidgetIconButton(
-                        icon = LjIcons.Group,
-                        contentDescription = "Group sync",
-                        tint = MaterialTheme.colorScheme.primary,
-                        onClick = onGroupSyncClicked,
-                    )
-                    AnimatedVisibility(
-                        visible = isGroupSyncExpanded,
-                        enter = fadeIn(tween(150)),
-                        exit = fadeOut(tween(150)),
-                    ) {
+            sections.forEach { section ->
+                when (section) {
+                    is WidgetPanelSection.TapToWalk -> {
+                        val crosshairTint = if (section.active) MaterialTheme.colorScheme.primary else LjInactive
                         WidgetIconButton(
                             icon = LjIcons.MyLocation,
-                            contentDescription = "Teleport to leader now",
-                            tint = LjSuccess,
-                            onClick = onTeleportToLeaderClicked,
+                            contentDescription = if (section.active) "Cancel tap-to-walk" else "Tap to walk",
+                            tint = crosshairTint,
+                            onClick = section.onClick,
                         )
                     }
-                }
-            }
-            if (isAltitudeOverrideButtonVisible) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    WidgetIconButton(
-                        icon = LjIcons.Terrain,
-                        contentDescription = "Altitude override",
-                        tint = if (isAltitudeExpanded) LjSuccess else MaterialTheme.colorScheme.primary,
-                        onClick = onAltitudeClicked,
-                    )
-                    AnimatedVisibility(
-                        visible = isAltitudeExpanded,
-                        enter = fadeIn(tween(150)),
-                        exit = fadeOut(tween(150)),
-                    ) {
-                        AltitudeOverrideInput(prefillMeters = altitudePrefillMeters, onConfirm = onConfirmAltitude)
+
+                    is WidgetPanelSection.GroupSync -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            WidgetIconButton(
+                                icon = LjIcons.Group,
+                                contentDescription = "Group sync",
+                                tint = MaterialTheme.colorScheme.primary,
+                                onClick = section.onClick,
+                            )
+                            AnimatedVisibility(
+                                visible = section.expanded,
+                                enter = fadeIn(tween(150)),
+                                exit = fadeOut(tween(150)),
+                            ) {
+                                WidgetIconButton(
+                                    icon = LjIcons.MyLocation,
+                                    contentDescription = "Teleport to leader now",
+                                    tint = LjSuccess,
+                                    onClick = section.onTeleport,
+                                )
+                            }
+                        }
+                    }
+
+                    is WidgetPanelSection.AltitudeOverride -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            WidgetIconButton(
+                                icon = LjIcons.Terrain,
+                                contentDescription = "Altitude override",
+                                tint = if (section.expanded) LjSuccess else MaterialTheme.colorScheme.primary,
+                                onClick = section.onClick,
+                            )
+                            AnimatedVisibility(
+                                visible = section.expanded,
+                                enter = fadeIn(tween(150)),
+                                exit = fadeOut(tween(150)),
+                            ) {
+                                AltitudeOverrideInput(prefillMeters = section.prefillMeters, onConfirm = section.onConfirm)
+                            }
+                        }
                     }
                 }
             }

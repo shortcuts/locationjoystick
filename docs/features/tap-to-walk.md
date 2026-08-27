@@ -34,7 +34,7 @@ Uses `rememberUpdatedState` for both `quickWalk` and `onWalkTo` so the `AndroidV
 
 `TapToWalkOverlay` adds a `TYPE_APPLICATION_OVERLAY` window with `FLAG_NOT_FOCUSABLE` but **without** `FLAG_NOT_TOUCH_MODAL`, so it intercepts all touches on the screen.
 
-`FloatingWidgetService` shows a crosshair button in `WidgetPanel` when `isTapToWalkEnabled` (driven by `getTapToWalkOverlayEnabled()`). Tapping the button calls `onTapToWalkClicked()`, which creates and shows a `TapToWalkOverlay`.
+`FloatingWidgetService` shows a crosshair button in `WidgetPanel` when `getTapToWalkOverlayEnabled()` is true (added to the panel's `sections` list). Tapping the button calls `onTapToWalkClicked()`, which creates and shows a `TapToWalkOverlay`.
 
 The overlay shows:
 - Semi-transparent background (5% black) that captures all taps

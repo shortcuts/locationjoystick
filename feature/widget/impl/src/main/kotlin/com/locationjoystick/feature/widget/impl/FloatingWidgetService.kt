@@ -328,44 +328,64 @@ class FloatingWidgetService :
             val debugStats by locationRepository.debugStats.collectAsStateWithLifecycle(initialValue = null)
 
             LjTheme {
+                val routeControls =
+                    RouteControlsState(
+                        expanded = routeExpanded,
+                        isActive = isActivityActive,
+                        isPaused = isActivityPaused,
+                        isPausable = isActivityPausable,
+                        isReplay = currentMode == MockMode.ROUTE_REPLAY,
+                        hideTeleportFeatures = hideTeleportFeatures,
+                        showRouteJumpButtons = showRouteJumpButtons,
+                        onIconClick = { onRouteIconClicked() },
+                        onPauseResume = { onRoutePauseResumeClicked() },
+                        onStop = { onRouteStopClicked() },
+                        onJumpNext = { mapController.jumpToNextWaypoint() },
+                        onJumpPrevious = { mapController.jumpToPreviousWaypoint() },
+                    )
+
+                val sections =
+                    buildList {
+                        if (isTapToWalkEnabled) {
+                            add(WidgetPanelSection.TapToWalk(active = isTapToWalkActive, onClick = { onTapToWalkClicked() }))
+                        }
+                        if (groupState.role == GroupRole.FOLLOWER && groupState.followerModeEnabled && !hideTeleportFeatures) {
+                            add(
+                                WidgetPanelSection.GroupSync(
+                                    expanded = isGroupSyncExpanded,
+                                    onClick = { groupSyncExpandedFlow.value = !groupSyncExpandedFlow.value },
+                                    onTeleport = { teleportToLeaderNow() },
+                                ),
+                            )
+                        }
+                        if (isAltitudeOverrideButtonVisible) {
+                            add(
+                                WidgetPanelSection.AltitudeOverride(
+                                    expanded = isAltitudeExpanded,
+                                    prefillMeters =
+                                        reportedAltitudeMeters ?: AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS,
+                                    onClick = { altitudeExpandedFlow.value = !altitudeExpandedFlow.value },
+                                    onConfirm = { onConfirmAltitude(it) },
+                                ),
+                            )
+                        }
+                    }
+
                 WidgetPanel(
                     features = features,
                     joystickVisible = joystickVisible,
                     joystickLocked = joystickLocked,
                     activeProfileId = activeProfileId,
-                    isActivityActive = isActivityActive,
-                    isActivityPaused = isActivityPaused,
-                    isActivityPausable = isActivityPausable,
-                    isRouteReplay = currentMode == MockMode.ROUTE_REPLAY,
-                    onJumpToNextWaypoint = { mapController.jumpToNextWaypoint() },
-                    onJumpToPreviousWaypoint = { mapController.jumpToPreviousWaypoint() },
-                    hideTeleportFeatures = hideTeleportFeatures,
-                    showRouteJumpButtons = showRouteJumpButtons,
-                    routeExpanded = routeExpanded,
+                    routeControls = routeControls,
                     isPanelExpanded = isPanelExpanded,
                     hasPendingCompletion = hasPendingCompletion,
-                    isTapToWalkEnabled = isTapToWalkEnabled,
-                    isTapToWalkActive = isTapToWalkActive,
-                    onTapToWalkClicked = { onTapToWalkClicked() },
-                    isGroupSyncButtonVisible =
-                        groupState.role == GroupRole.FOLLOWER && groupState.followerModeEnabled && !hideTeleportFeatures,
-                    isGroupSyncExpanded = isGroupSyncExpanded,
-                    onGroupSyncClicked = { groupSyncExpandedFlow.value = !groupSyncExpandedFlow.value },
-                    onTeleportToLeaderClicked = { teleportToLeaderNow() },
-                    isAltitudeOverrideButtonVisible = isAltitudeOverrideButtonVisible,
-                    isAltitudeExpanded = isAltitudeExpanded,
-                    altitudePrefillMeters = reportedAltitudeMeters ?: AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS,
-                    onAltitudeClicked = { altitudeExpandedFlow.value = !altitudeExpandedFlow.value },
-                    onConfirmAltitude = { onConfirmAltitude(it) },
-                    debugStats = if (debugStatsEnabled) debugStats else null,
                     onToggleMaster = {
                         if (!isPanelExpandedFlow.value) pendingCompletionFlow.value = false
                         isPanelExpandedFlow.value = !isPanelExpandedFlow.value
                     },
                     onFeatureClicked = { feature -> onFeatureButtonClicked(feature) },
-                    onRouteClicked = { onRouteIconClicked() },
-                    onRoutePauseResume = { onRoutePauseResumeClicked() },
-                    onRouteStop = { onRouteStopClicked() },
+                    sections = sections,
+                    debugStats = if (debugStatsEnabled) debugStats else null,
                     onDrag = { dx, dy ->
                         dragOffsetX += dx
                         dragOffsetY += dy
