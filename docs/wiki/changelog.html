@@ -15,25 +15,36 @@
     <h2 id="changelog">Changelog</h2>
     <p>What's new in each release. Download the latest APK from <a href="https://github.com/shortcuts/locationjoystick/releases/latest" target="_blank" rel="noopener">GitHub Releases</a>.</p>
 
-    <h3 id="v0160"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.16.0" target="_blank" rel="noopener">0.16.0</a>, August 25, 2026</h3>
+    <h3 id="v0170"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.17.0" target="_blank" rel="noopener">0.17.0</a>, August 28, 2026</h3>
     <ul>
-      <li>New: lowered the minimum supported Android version, so more phones can now install the app.</li>
-      <li>New: a setting to hide every teleport button throughout the app, leaving only walking and route playback as ways to move.</li>
-      <li>New: a setting to hide the floating widget overlay.</li>
+      <li>New: GPS altitude can now follow real-world elevation automatically, with an adjustable amount of natural variation, plus a quick override button in the floating widget.</li>
       <li>New: a setting to hide the notification icon while spoofing is active.</li>
-      <li>New: buttons to jump straight to the next or previous stop while a route is playing.</li>
       <li>New: an option to walk via roads to a route's starting point before playback begins.</li>
-      <li>New: a route can now be pinned to its own speed, independent of the app's overall speed setting.</li>
-      <li>New: distance and a wait-time hint are now shown when teleporting to the group leader as a follower.</li>
+      <li>New: onboarding's "set as fake GPS app" check can now be bypassed permanently, for setups where spoofing already works despite the check not detecting it.</li>
+      <li>New: an opt-in debug stats panel in the floating widget, showing live coordinates, speed, altitude, accuracy, bearing, and update rate.</li>
+      <li>Settings: the "vary altitude" checkbox and its amount field are now combined into a single control.</li>
       <li>Setup: if the "set as fake GPS app" check doesn't detect your setup, the "Skip" option now explains what it means before you confirm, instead of skipping instantly.</li>
       <li>Fixed the joystick sometimes keeping its last direction after you released or unlocked it.</li>
       <li>Fixed the reported speed not resetting to zero right after a route or walk finished.</li>
       <li>Fixed the travel direction shown during route playback and roaming.</li>
       <li>Fixed the floating widget not disappearing right away when its setting was turned off mid-session.</li>
-      <li>Fixed coordinate and speed fields rejecting a comma as the decimal separator.</li>
+      <li>Fixed coordinate, speed, and roaming distance fields rejecting a comma as the decimal separator.</li>
+      <li>Fixed favorite location coordinates sometimes displaying in the wrong number format depending on your phone's language settings.</li>
       <li>Fixed the hide-notification-icon setting sometimes turning itself back off.</li>
       <li>Fixed a road-following option not applying correctly to newly added route points.</li>
       <li>Fixed your position freezing incorrectly, instead of holding steady, while spoofing was paused.</li>
+      <li>Fixed the altitude override field in the floating widget not accepting keyboard input.</li>
+      <li>Fixed importing a backup with every widget/map feature explicitly turned off reverting to the default set instead of staying empty.</li>
+    </ul>
+
+    <h3 id="v0160"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.16.0" target="_blank" rel="noopener">0.16.0</a>, August 25, 2026</h3>
+    <ul>
+      <li>New: lowered the minimum supported Android version, so more phones can now install the app.</li>
+      <li>New: a setting to hide every teleport button throughout the app, leaving only walking and route playback as ways to move.</li>
+      <li>New: a setting to hide the floating widget overlay.</li>
+      <li>New: buttons to jump straight to the next or previous stop while a route is playing.</li>
+      <li>New: a route can now be pinned to its own speed, independent of the app's overall speed setting.</li>
+      <li>New: distance and a wait-time hint are now shown when teleporting to the group leader as a follower.</li>
       <li>Fixed your last known location only saving when you stopped, instead of throughout the session.</li>
       <li>Fixed a follower's position not saving properly while following a leader.</li>
       <li>Fixed imported favorites losing their category.</li>
