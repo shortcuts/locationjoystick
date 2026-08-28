@@ -68,7 +68,6 @@ internal data class LocationSnapshot(
     val isSuspendedPhase: Boolean,
     val cachedSatelliteCount: Int,
     val cachedUsedInFixCount: Int,
-    val humanAltitudeOffsetMeters: Double,
     val baseAltitudeMeters: Double,
     val altitudeJitterRadiusMeters: Double,
 )
@@ -101,7 +100,6 @@ internal data class LocationFix(
     val speedAccuracyMps: Float,
     val satelliteCount: Int?,
     val usedInFixCount: Int?,
-    val humanAltitudeOffsetMeters: Double,
 )
 
 /**
@@ -157,22 +155,16 @@ internal fun advanceSuspendedPhase(
     }
 }
 
-/** Applies a 2-D Gaussian displacement of [radiusMeters] to ([lat], [lon]) using Box-Muller. */
+/**
+ * Applies a 2-D Gaussian displacement of [radiusMeters] to ([lat], [lon]) using Box-Muller —
+ * the isotropic (no preferred direction) case of [gaussianLatLonOffsetLateral].
+ */
 internal fun gaussianLatLonOffset(
     lat: Double,
     lon: Double,
     radiusMeters: Double,
     random: Random,
-): Pair<Double, Double> {
-    val u1 = random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
-    val u2 = random.nextDouble()
-    val mag = radiusMeters * kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1))
-    val angle = 2.0 * kotlin.math.PI * u2
-    val metersPerDeg = AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
-    val dlat = mag * kotlin.math.cos(angle) / metersPerDeg
-    val dlon = mag * kotlin.math.sin(angle) / (metersPerDeg * kotlin.math.cos(Math.toRadians(lat)))
-    return Pair(lat + dlat, lon + dlon)
-}
+): Pair<Double, Double> = gaussianLatLonOffsetLateral(lat, lon, radiusMeters, 0f, 1.0, random)
 
 /**
  * Bearing-aware position jitter. Applies full Gaussian noise perpendicular to [bearingDeg]
@@ -250,7 +242,7 @@ internal fun buildLocation(
             val mag =
                 state.altitudeJitterRadiusMeters *
                     kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1)) * kotlin.math.cos(2.0 * kotlin.math.PI * u2)
-            (state.altitudeMeters + mag + AppConstants.RealismConstants.ALTITUDE_DRIFT_PER_SECOND_METERS)
+            (state.altitudeMeters + mag)
                 .coerceIn(
                     state.baseAltitudeMeters - AppConstants.RealismConstants.ALTITUDE_CLAMP_RADIUS_METERS,
                     state.baseAltitudeMeters + AppConstants.RealismConstants.ALTITUDE_CLAMP_RADIUS_METERS,
@@ -258,14 +250,6 @@ internal fun buildLocation(
         } else {
             state.baseAltitudeMeters
         }
-
-    // Human-hold offset random walk: ±5% of base per tick, clamped to [50%, 150%] of base
-    val humanBase = AppConstants.RealismConstants.ALTITUDE_HUMAN_OFFSET_METERS
-    val humanStep = humanBase * AppConstants.RealismConstants.ALTITUDE_HUMAN_OFFSET_JITTER_PCT
-    val humanClamp = humanBase * AppConstants.RealismConstants.ALTITUDE_HUMAN_OFFSET_CLAMP_FACTOR
-    val newHumanOffset =
-        (state.humanAltitudeOffsetMeters + (random.nextDouble() * 2.0 - 1.0) * humanStep)
-            .coerceIn(humanBase - humanClamp, humanBase + humanClamp)
 
     // Bearing hold + noise
     val rawBearing =
@@ -361,8 +345,7 @@ internal fun buildLocation(
     return LocationFix(
         latitude = outLat,
         longitude = outLon,
-        altitudeMeters = newAltitude + newHumanOffset,
-        humanAltitudeOffsetMeters = newHumanOffset,
+        altitudeMeters = newAltitude,
         speedMs = outSpeed,
         bearing = outBearing,
         accuracyMeters = outAccuracy,

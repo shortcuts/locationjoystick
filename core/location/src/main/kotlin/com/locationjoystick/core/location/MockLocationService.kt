@@ -182,8 +182,6 @@ class MockLocationService : Service() {
     /** Realism settings observed from [SettingsRepository] and read each tick in [captureSnapshot]. */
     private val realism = RealismSettingsState()
 
-    @Volatile private var humanAltitudeOffsetMeters: Double = AppConstants.RealismConstants.ALTITUDE_HUMAN_OFFSET_METERS
-
     @Volatile private var leaderSharingEnabled: Boolean = false
 
     // Per-tick realism state
@@ -1131,7 +1129,6 @@ class MockLocationService : Service() {
             shouldApplyMovingJitter = shouldApplyMovingJitter,
             shouldApplyIdleJitter = shouldApplyIdleJitter,
             altitudeMeters = currentAltitudeMeters,
-            humanAltitudeOffsetMeters = humanAltitudeOffsetMeters,
             warmupStartMs = warmupStartMs,
             warmupEnabled = realism.warmupEnabled,
             bearingHoldEnabled = realism.bearingHoldEnabled,
@@ -1201,8 +1198,7 @@ class MockLocationService : Service() {
             val nowMs = nowNanos / 1_000_000L
             val snapshot = captureSnapshot(nowMs)
             val fix = buildLocation(snapshot, nowMs, Random.Default)
-            currentAltitudeMeters = fix.altitudeMeters - fix.humanAltitudeOffsetMeters
-            humanAltitudeOffsetMeters = fix.humanAltitudeOffsetMeters
+            currentAltitudeMeters = fix.altitudeMeters
             locationRepository.setReportedAltitude(fix.altitudeMeters)
             val tickIntervalMs = if (lastTickMs == 0L) 0L else nowMs - lastTickMs
             lastTickMs = nowMs

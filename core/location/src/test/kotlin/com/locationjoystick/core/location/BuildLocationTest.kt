@@ -31,7 +31,6 @@ class BuildLocationTest {
         isSuspendedPhase: Boolean = false,
         cachedSatelliteCount: Int = 10,
         cachedUsedInFixCount: Int = 8,
-        humanAltitudeOffsetMeters: Double = AppConstants.RealismConstants.ALTITUDE_HUMAN_OFFSET_METERS,
         baseAltitudeMeters: Double = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS,
         altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
     ) = LocationSnapshot(
@@ -58,7 +57,6 @@ class BuildLocationTest {
         isSuspendedPhase = isSuspendedPhase,
         cachedSatelliteCount = cachedSatelliteCount,
         cachedUsedInFixCount = cachedUsedInFixCount,
-        humanAltitudeOffsetMeters = humanAltitudeOffsetMeters,
         baseAltitudeMeters = baseAltitudeMeters,
         altitudeJitterRadiusMeters = altitudeJitterRadiusMeters,
     )
@@ -97,7 +95,7 @@ class BuildLocationTest {
             val fix = buildLocation(snap, tick.toLong() * 1000, random)
             assertNotNull(fix)
             fix!!
-            val terrainAlt = fix.altitudeMeters - fix.humanAltitudeOffsetMeters
+            val terrainAlt = fix.altitudeMeters
             assertTrue("Terrain altitude $terrainAlt out of bounds [$min, $max]", terrainAlt in min..max)
             altitudes.add(terrainAlt)
             altitude = terrainAlt
@@ -114,7 +112,7 @@ class BuildLocationTest {
             assertNotNull(fix)
             assertEquals(
                 AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS,
-                fix!!.altitudeMeters - fix.humanAltitudeOffsetMeters,
+                fix!!.altitudeMeters,
                 0.0001,
             )
         }
@@ -130,7 +128,7 @@ class BuildLocationTest {
         repeat(200) { tick ->
             val snap = baseSnapshot(altitudeMeters = altitude, altitudeEnabled = true, baseAltitudeMeters = base)
             val fix = buildLocation(snap, tick.toLong() * 1000, random)
-            val terrainAlt = fix.altitudeMeters - fix.humanAltitudeOffsetMeters
+            val terrainAlt = fix.altitudeMeters
             assertTrue("Terrain altitude $terrainAlt out of bounds [$min, $max]", terrainAlt in min..max)
             altitude = terrainAlt
         }
@@ -140,7 +138,7 @@ class BuildLocationTest {
     fun `altitude disabled returns base anchor not the hardcoded default`() {
         val snap = baseSnapshot(altitudeEnabled = false, baseAltitudeMeters = 500.0)
         val fix = buildLocation(snap, 1000L, Random(1))
-        assertEquals(500.0, fix.altitudeMeters - fix.humanAltitudeOffsetMeters, 0.0001)
+        assertEquals(500.0, fix.altitudeMeters, 0.0001)
     }
 
     @Test

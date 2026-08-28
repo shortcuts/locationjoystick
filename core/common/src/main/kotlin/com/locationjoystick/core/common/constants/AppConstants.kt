@@ -52,17 +52,20 @@ object AppConstants {
 
     object RealismConstants {
         const val DEFAULT_ALTITUDE_METERS = 35.0
-        const val ALTITUDE_SIGMA_METERS = 0.25
-        const val ALTITUDE_DRIFT_PER_SECOND_METERS = 0.0
+
+        /** Real phone altitude readings jump several meters tick-to-tick, not sub-meter smooth. */
+        const val ALTITUDE_SIGMA_METERS = 1.5
         const val ALTITUDE_CLAMP_RADIUS_METERS = 25.0
         const val VERTICAL_ACCURACY_METERS = 4.0f
         const val BEARING_ACCURACY_DEGREES = 3.0f
         const val BEARING_NOISE_DEGREES = 5.0f
         const val SPEED_ACCURACY_MPS = 0.3f
-        const val SATELLITES_MIN = 7
-        const val SATELLITES_MAX = 14
-        const val USED_IN_FIX_MIN = 6
-        const val USED_IN_FIX_MAX = 12
+
+        /** Modern multi-GNSS (GPS+GLONASS+Galileo+BeiDou) phones typically see 15-30 visible. */
+        const val SATELLITES_MIN = 15
+        const val SATELLITES_MAX = 30
+        const val USED_IN_FIX_MIN = 10
+        const val USED_IN_FIX_MAX = 20
         const val SATELLITE_UPDATE_INTERVAL_MS = 5_000L
         const val WARMUP_DURATION_SECONDS = 30
         const val WARMUP_INITIAL_ACCURACY_METERS = 50.0f
@@ -74,9 +77,6 @@ object AppConstants {
         const val BEARING_HOLD_ON_IDLE_DEFAULT = true
         const val ALTITUDE_ENABLED_DEFAULT = true
         const val SATELLITE_EXTRAS_ENABLED_DEFAULT = true
-        const val ALTITUDE_HUMAN_OFFSET_METERS = 0.8
-        const val ALTITUDE_HUMAN_OFFSET_JITTER_PCT = 0.05
-        const val ALTITUDE_HUMAN_OFFSET_CLAMP_FACTOR = 0.5
         const val REAL_ELEVATION_ENABLED_DEFAULT = true
         const val ELEVATION_FETCH_INTERVAL_MS = 60_000L
 
