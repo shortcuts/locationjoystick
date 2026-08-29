@@ -400,7 +400,7 @@ show_joystick_via_widget() {
   local wx wy
   read -r wx wy < <(
     $ADB shell dumpsys window windows 2>/dev/null \
-      | perl -lne 'if (/mAttrs=\{(-?\d+),(\d+)\}\(wrapxwrap\).*APPLICATION_OVERLAY/) { print "$1 $2"; last; }'
+      | perl -lne 'if (/mAttrs=\{\((-?\d+),(\d+)\)\(wrapxwrap\).*APPLICATION_OVERLAY/) { print "$1 $2"; last; }'
   ) || true
   if [[ -z "$wx" || -z "$wy" ]]; then
     warn "Widget window not found via dumpsys — using calculated fallback"
@@ -432,7 +432,7 @@ collapse_widget_panel() {
   local wx wy
   read -r wx wy < <(
     $ADB shell dumpsys window windows 2>/dev/null \
-      | perl -lne 'if (/mAttrs=\{(-?\d+),(\d+)\}\(wrapxwrap\).*APPLICATION_OVERLAY/) { print "$1 $2"; last; }'
+      | perl -lne 'if (/mAttrs=\{\((-?\d+),(\d+)\)\(wrapxwrap\).*APPLICATION_OVERLAY/) { print "$1 $2"; last; }'
   ) || true
   [[ -z "$wx" ]] && wx=0
   [[ -z "$wy" ]] && wy=1069
@@ -880,8 +880,16 @@ if should_run_step "18"; then
     tap_text "Menus"
     wait_s 2 "Menus loading"
     # Debug stats lives under Privacy, below the fold — scroll down to reveal it.
-    $ADB shell input swipe 540 1800 540 400
-    wait_s 1 "Scrolling to Debug section"
+    # One fixed-distance swipe isn't always enough (content length varies by
+    # device/font scale), so keep scrolling until the row actually appears.
+    for _ in 1 2 3; do
+      dump=$(ui_dump)
+      found=$(grep -c 'text="Debug stats"' "$dump" || true)
+      rm -f "$dump"
+      (( found > 0 )) && break
+      $ADB shell input swipe 540 1800 540 400
+      wait_s 1 "Scrolling to Debug section"
+    done
     # Idempotent: only tap if currently unchecked — the row is a toggle, so
     # tapping an already-enabled setting (e.g. left on from a prior run) would
     # disable it instead. The dump is one giant single line, so a line-based
