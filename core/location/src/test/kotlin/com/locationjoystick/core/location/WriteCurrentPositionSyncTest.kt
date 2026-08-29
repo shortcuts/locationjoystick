@@ -3,6 +3,7 @@ package com.locationjoystick.core.location
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -16,6 +17,12 @@ class WriteCurrentPositionSyncTest {
     private fun newService(): MockLocationService =
         MockLocationService().apply {
             locationRepository = LocationRepository()
+            altitudeAnchor =
+                AltitudeAnchorCoordinator(
+                    elevationRepository = mockk(relaxed = true),
+                    settingsRepository = mockk(relaxed = true),
+                    locationRepository = locationRepository,
+                )
         }
 
     @Test

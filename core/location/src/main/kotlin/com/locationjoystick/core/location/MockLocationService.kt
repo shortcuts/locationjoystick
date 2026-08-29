@@ -660,7 +660,7 @@ class MockLocationService : Service() {
         // collector, and maybeFetchElevation() re-checks the override before every fetch, so the
         // sliver of a window before this completes is harmless.
         altitudeAnchor.applyPendingOverride(serviceScope)
-        altitudeAnchor.maybeFetchElevation(serviceScope, now, lat, lon, realism.realElevationEnabled)
+        altitudeAnchor.maybeFetchElevation(serviceScope, now, lat, lon, realism.realElevationEnabled, instant = true, force = true)
         warmupStartMs = now
         suspendedPhase.set(SuspendedPhaseState(isActive = false, startMs = now))
         cachedSatelliteCount =
@@ -702,6 +702,18 @@ class MockLocationService : Service() {
     ) {
         if (locationRepository.currentMode.value == MockMode.FOLLOWER) return
         writeCurrentPosition(lat, lon, syncRepository = true)
+        // Teleport (the only caller — see comment below): jump the altitude anchor to the new
+        // position's real elevation immediately instead of leaving it to drift from wherever the
+        // old position's anchor sat (issue #51).
+        altitudeAnchor.maybeFetchElevation(
+            serviceScope,
+            SystemClock.elapsedRealtime(),
+            lat,
+            lon,
+            realism.realElevationEnabled,
+            instant = true,
+            force = true,
+        )
     }
 
     // Callers: JoystickOverlayService (direct call) and the WalkCoordinator position callback

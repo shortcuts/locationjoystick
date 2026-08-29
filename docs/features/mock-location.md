@@ -67,7 +67,16 @@ instead of anchoring the altitude Gaussian walk to a flat `DEFAULT_ALTITUDE_METE
   `RUNNING`/`PAUSED`, checked inline in `MockLocationService.captureSnapshot()` via
   `AltitudeAnchorCoordinator.maybeFetchElevation()` — no separate coroutine loop. A fetch already
   in flight is never duplicated.
-- **Gradual convergence**: a fetched value becomes a *target*
+- **Instant on start and teleport, gradual after**: `startSpoofing()`'s fetch and
+  `MockLocationService.updatePosition()`'s (the sole caller — see `TeleportUseCase`) both pass
+  `instant = true, force = true`, so a successful lookup jumps the anchor straight to the real
+  elevation instead of leaving it to approach tick by tick — nothing has been reported at the new
+  position yet, so there's no jump to smooth over (issue #51). `force` bypasses the 60 s
+  fetch-interval throttle, since that throttle exists to rate-limit repeated lookups at roughly the
+  *same* position, not a lookup for a position that just changed outright. Every later periodic
+  fetch (mid-session drift while stationary or moving) omits both flags and keeps the gradual
+  behavior below.
+- **Gradual convergence (mid-session only)**: a periodic fetched value becomes a *target*
   (`targetBaseAltitudeMeters`), not an instant reassignment — the effective anchor
   (owned by `AltitudeAnchorCoordinator`, what `buildLocation`'s clamp actually centers on) steps toward it
   by at most `AppConstants.RealismConstants.ALTITUDE_TARGET_STEP_METERS_PER_TICK` (0.5 m) per

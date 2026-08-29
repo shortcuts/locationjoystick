@@ -57,6 +57,13 @@ internal class AltitudeAnchorCoordinator(
      * the fetch interval has elapsed, and no manual override is active (checked again inside the
      * launched coroutine, since the override may have been set since this call started). Shared by
      * `startSpoofing()` and every tick's [stepConverge] call so "fetch now if due" is one code path.
+     *
+     * [instant], set by `startSpoofing()`'s and teleport's fetches, jumps [currentBaseAltitudeMeters]
+     * straight to the fetched value instead of leaving it for [stepConverge] to approach gradually
+     * — nothing has been reported at the new position yet at that point, so there's no jump to
+     * smooth over (issue #51). [force] skips the fetch-interval throttle for the same reason a
+     * teleport needs it: the position just changed outright, so "last fetch was under 60s ago" (for
+     * the *old* position) shouldn't block looking up the new one.
      */
     fun maybeFetchElevation(
         scope: CoroutineScope,
@@ -64,16 +71,20 @@ internal class AltitudeAnchorCoordinator(
         lat: Double,
         lon: Double,
         realElevationEnabled: Boolean,
+        instant: Boolean = false,
+        force: Boolean = false,
     ) {
         if (elevationFetchInFlight) return
         if (!realElevationEnabled) return
-        if (nowMs - lastElevationFetchMs < AppConstants.RealismConstants.ELEVATION_FETCH_INTERVAL_MS) return
+        if (!force && nowMs - lastElevationFetchMs < AppConstants.RealismConstants.ELEVATION_FETCH_INTERVAL_MS) return
         lastElevationFetchMs = nowMs
         elevationFetchInFlight = true
         scope.launch {
             if (settingsRepository.getBaseAltitudeOverride().first() == null) {
                 elevationRepository.fetchElevationMeters(lat, lon)?.let {
-                    targetBaseAltitudeMeters = jitterElevationReading(it, Random.Default)
+                    val jittered = jitterElevationReading(it, Random.Default)
+                    targetBaseAltitudeMeters = jittered
+                    if (instant) currentBaseAltitudeMeters = jittered
                 }
             }
             elevationFetchInFlight = false
