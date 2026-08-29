@@ -366,7 +366,7 @@ private fun DebugStatsPanel(stats: DebugStats) {
         val tickHz = if (stats.tickIntervalMs > 0) 1000f / stats.tickIntervalMs else 0f
         Text("%.2f, %.6f".format(stats.latitude, stats.longitude), color = LjText, style = MaterialTheme.typography.labelSmall)
         Text(
-            "speed %.2f m/s · alt %.1f m".format(stats.speedMs, stats.altitudeMeters),
+            "speed %.2f m/s · alt %.2f m".format(stats.speedMs, stats.altitudeMeters),
             color = LjText,
             style = MaterialTheme.typography.labelSmall,
         )
