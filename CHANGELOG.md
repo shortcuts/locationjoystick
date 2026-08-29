@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.18.0](https://github.com/shortcuts/locationjoystick/compare/v0.17.0...v0.18.0) (2026-08-29)
+
+
+### Features
+
+* **wiki:** add SEO metadata, sitemap, and page headings ([8242c77](https://github.com/shortcuts/locationjoystick/commit/8242c7769ba8417e42182ce5d07a3824f418e574))
+
+
+### Bug Fixes
+
+* apply real elevation instantly on spoof start and teleport ([53b2e4d](https://github.com/shortcuts/locationjoystick/commit/53b2e4d32679fd634b203f62aa96ec38cef2b7d4)), closes [#51](https://github.com/shortcuts/locationjoystick/issues/51)
+* jitter fetched elevation off round DEM integers ([c8dca87](https://github.com/shortcuts/locationjoystick/commit/c8dca87f82cad9d76e50bdb6129a459d4243105b)), closes [#52](https://github.com/shortcuts/locationjoystick/issues/52)
+* show 2 decimal places for altitude in debug stats ([8893635](https://github.com/shortcuts/locationjoystick/commit/88936351c3dfdc8a3bd53da75fb2252c528390e8))
+
 ## [0.17.0](https://github.com/shortcuts/locationjoystick/compare/v0.16.0...v0.17.0) (2026-08-29)
 
 
