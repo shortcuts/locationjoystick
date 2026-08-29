@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://shortcuts.github.io/locationjoystick/sitemap.xml

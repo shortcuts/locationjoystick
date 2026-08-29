@@ -83,7 +83,7 @@
   };
   document.head.appendChild(ds);
 
-  document.querySelectorAll('main h2[id], main h3[id]').forEach(function (heading) {
+  document.querySelectorAll('main h1[id], main h2[id], main h3[id]').forEach(function (heading) {
     var btn = document.createElement('button');
     btn.className = 'heading-link';
     btn.type = 'button';

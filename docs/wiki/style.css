@@ -121,7 +121,7 @@ main{
   line-height:1.2;
 }
 
-h2{
+h1,h2{
   font-family:var(--mono);
   font-size:0.67rem;
   font-weight:600;
@@ -131,7 +131,7 @@ h2{
   margin:48px 0 18px;
 }
 
-h2:first-child{margin-top:0}
+h1:first-child,h2:first-child{margin-top:0}
 
 h3{
   font-size:0.88rem;
@@ -142,7 +142,7 @@ h3{
 
 h3:first-child{margin-top:0}
 
-h2,h3{position:relative}
+h1,h2,h3{position:relative}
 
 .heading-link{
   display:inline-flex;
@@ -161,7 +161,7 @@ h2,h3{position:relative}
   transition:opacity 0.1s,color 0.1s;
 }
 
-h2:hover .heading-link,h3:hover .heading-link,.heading-link:focus-visible{opacity:1}
+h1:hover .heading-link,h2:hover .heading-link,h3:hover .heading-link,.heading-link:focus-visible{opacity:1}
 
 .heading-link:hover{color:var(--accent)}
 

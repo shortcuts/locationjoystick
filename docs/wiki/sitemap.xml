@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://shortcuts.github.io/locationjoystick/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://shortcuts.github.io/locationjoystick/map.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://shortcuts.github.io/locationjoystick/routes.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://shortcuts.github.io/locationjoystick/favorites.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://shortcuts.github.io/locationjoystick/share.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://shortcuts.github.io/locationjoystick/group.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://shortcuts.github.io/locationjoystick/tap-to-walk.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://shortcuts.github.io/locationjoystick/settings.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://shortcuts.github.io/locationjoystick/overlays.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://shortcuts.github.io/locationjoystick/troubleshooting.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://shortcuts.github.io/locationjoystick/changelog.html</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://shortcuts.github.io/locationjoystick/privacy.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://shortcuts.github.io/locationjoystick/acknowledgements.html</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
+</urlset>
