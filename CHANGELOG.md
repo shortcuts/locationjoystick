@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.17.0](https://github.com/shortcuts/locationjoystick/compare/v0.16.0...v0.17.0) (2026-08-29)
+
+
+### Features
+
+* **location:** add real elevation, altitude jitter, and widget altitude override ([#50](https://github.com/shortcuts/locationjoystick/issues/50)) ([c9ac578](https://github.com/shortcuts/locationjoystick/commit/c9ac578979bd7b1bb9e96f29dfe32700c48610dd))
+* **routes:** add walk-via-roads-and-start option ([1ef78b1](https://github.com/shortcuts/locationjoystick/commit/1ef78b100ba324eebf1ba2197aa5d409f8235174))
+* **settings:** add option to hide notification icon ([ed15b05](https://github.com/shortcuts/locationjoystick/commit/ed15b0528811fc3054162602e40a3a4ad21eb626))
+* **settings:** add setting to bypass mock-location AppOpsManager check ([6e95676](https://github.com/shortcuts/locationjoystick/commit/6e95676afa98047d0bda924aa7b8dcb1a2943200)), closes [#49](https://github.com/shortcuts/locationjoystick/issues/49)
+* **settings:** merge vary-altitude checkbox and input ([54cc40c](https://github.com/shortcuts/locationjoystick/commit/54cc40c70a51defb4451c6d8e294a1255706b445))
+* **widget:** add opt-in live debug stats to widget panel ([e38f3ae](https://github.com/shortcuts/locationjoystick/commit/e38f3aecacacdfb2df9ab0838a2bd85ad6d06fb6))
+
+
+### Bug Fixes
+
+* **favorites:** accept comma decimal separator in lat/lon inputs ([03c1958](https://github.com/shortcuts/locationjoystick/commit/03c19580e43c2e5ace9eceb17a8e4af789efbcb9))
+* **favorites:** force Locale.US for coordinate formatting ([95a296c](https://github.com/shortcuts/locationjoystick/commit/95a296cb85b06857206824af848a67b0f84ce885))
+* **joystick:** clear motion vector and mode on unlock/release ([b444214](https://github.com/shortcuts/locationjoystick/commit/b44421482bd2c1fdfd7b9418c5d11be61e05e851))
+* **location:** cache hideNotification so onStartCommand won't revert it ([39cbf4e](https://github.com/shortcuts/locationjoystick/commit/39cbf4e4523c80037c831dd58b2507dd543347a3))
+* **location:** collapse dual position writes into one entry point ([d76b027](https://github.com/shortcuts/locationjoystick/commit/d76b02722d69c2594ebfb46450c3826d3e50dc72))
+* **location:** keep pushing frozen fix during suspended-mocking pause ([f4a93f4](https://github.com/shortcuts/locationjoystick/commit/f4a93f493444a95429e66d106bb4ecf110503ec6))
+* **location:** keep pushing frozen position while route replay paused ([2a96c28](https://github.com/shortcuts/locationjoystick/commit/2a96c28a95fa6400a915a1e7e6e567af937cd199))
+* **location:** report travel-direction bearing during replay/roaming ([a721338](https://github.com/shortcuts/locationjoystick/commit/a721338aaf3939426c4a494d632d600537c55a40))
+* **location:** zero currentSpeedMs when replay or walk-to ends ([f13fe47](https://github.com/shortcuts/locationjoystick/commit/f13fe47dc50f2baf0e550337bbbe30d9549587e5))
+* **map:** accept comma decimal separator in roaming sheet inputs ([629039a](https://github.com/shortcuts/locationjoystick/commit/629039a7d848bc3c20ffd674796d78d7a62b35b7))
+* **onboarding:** confirm before skipping mock-location check ([9959ddc](https://github.com/shortcuts/locationjoystick/commit/9959ddcf1bd9074a2d8f1fc619da43f6f6acd05b))
+* **routes:** per-tap road toggle for ephemeral replay waypoints ([7ba2f08](https://github.com/shortcuts/locationjoystick/commit/7ba2f0895aa96b750a7a59f81c4093610b6951a1))
+* screenshots ([cc5bf2f](https://github.com/shortcuts/locationjoystick/commit/cc5bf2f74bbc7d0a467f1d3f89d894791b337626))
+* screenshots ([7d0bd07](https://github.com/shortcuts/locationjoystick/commit/7d0bd072245fc2dc99005670b843ab4d3992bbdc))
+* **settings:** accept comma as decimal separator in numeric inputs ([43f0977](https://github.com/shortcuts/locationjoystick/commit/43f09773ae95002cfcf9087857b7aed53db2aad3))
+* **settings:** keep explicit empty enabledWidgetFeatures on import ([8ba79d2](https://github.com/shortcuts/locationjoystick/commit/8ba79d24eb5a89357c1d47d6bb2f643028e7e556))
+* **smoke-test:** wake screen and dismiss keyguard on every relaunch ([298ccfe](https://github.com/shortcuts/locationjoystick/commit/298ccfe2779a7001ad0e21df15e5e981aa90297f))
+* **test:** disambiguate Start button from top-bar spoof toggle ([557ab2f](https://github.com/shortcuts/locationjoystick/commit/557ab2f0f10c7b21511c8c2fc12c4bd7f2bc76f0))
+* **widget:** make altitude override field focusable ([276e182](https://github.com/shortcuts/locationjoystick/commit/276e182e6d0843a4379355a16c98a0b6ed0afd34))
+* **widget:** react live to hide-widget toggle while spoofing ([69e64ea](https://github.com/shortcuts/locationjoystick/commit/69e64eaf7698c7e5aea19d5313678912d6ee825f))
+
 ## [0.16.0](https://github.com/shortcuts/locationjoystick/compare/v0.15.0...v0.16.0) (2026-08-17)
 
 
