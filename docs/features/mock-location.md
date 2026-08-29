@@ -72,6 +72,11 @@ instead of anchoring the altitude Gaussian walk to a flat `DEFAULT_ALTITUDE_METE
   (owned by `AltitudeAnchorCoordinator`, what `buildLocation`'s clamp actually centers on) steps toward it
   by at most `AppConstants.RealismConstants.ALTITUDE_TARGET_STEP_METERS_PER_TICK` (0.5 m) per
   tick, so a 100 m elevation change converges over roughly 3.5 minutes instead of jumping.
+- **Never a bare integer**: the fetched value (Open-Meteo's DEM data is
+  whole-meter resolution) is perturbed by a small sub-meter random offset
+  (`AppConstants.RealismConstants.ELEVATION_FRACTIONAL_JITTER_METERS`,
+  ±0.49 m) before becoming the convergence target — otherwise the anchor
+  itself would lock onto a flat round number once converged (issue #52).
 - **Failure/disabled**: the target simply doesn't move — the anchor stays wherever it last
   converged to (or the 35 m default on first failure).
 - **Manual override wins**: see "Altitude Override Button" in @docs/features/widget.md. Setting

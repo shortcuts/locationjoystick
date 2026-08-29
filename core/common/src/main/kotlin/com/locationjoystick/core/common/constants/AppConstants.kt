@@ -80,6 +80,9 @@ object AppConstants {
         const val REAL_ELEVATION_ENABLED_DEFAULT = true
         const val ELEVATION_FETCH_INTERVAL_MS = 60_000L
 
+        /** Open-Meteo's DEM elevation is whole-meter; this keeps the convergence anchor off round numbers. */
+        const val ELEVATION_FRACTIONAL_JITTER_METERS = 0.49
+
         /** ponytail: flat rate, tune or make distance/time-proportional if this ever proves too slow/fast. */
         const val ALTITUDE_TARGET_STEP_METERS_PER_TICK = 0.5
     }

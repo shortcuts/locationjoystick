@@ -7,6 +7,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 /**
  * Owns the altitude-anchor convergence state (real-elevation lookup + manual override), extracted
@@ -71,7 +72,9 @@ internal class AltitudeAnchorCoordinator(
         elevationFetchInFlight = true
         scope.launch {
             if (settingsRepository.getBaseAltitudeOverride().first() == null) {
-                elevationRepository.fetchElevationMeters(lat, lon)?.let { targetBaseAltitudeMeters = it }
+                elevationRepository.fetchElevationMeters(lat, lon)?.let {
+                    targetBaseAltitudeMeters = jitterElevationReading(it, Random.Default)
+                }
             }
             elevationFetchInFlight = false
         }
@@ -111,3 +114,14 @@ internal fun stepToward(
     val delta = target - current
     return if (kotlin.math.abs(delta) <= maxStep) target else current + maxStep * kotlin.math.sign(delta)
 }
+
+/** Adds a small random sub-meter offset to a DEM elevation reading so it's never an exact round number. */
+internal fun jitterElevationReading(
+    elevationMeters: Double,
+    random: Random,
+): Double =
+    elevationMeters +
+        random.nextDouble(
+            -AppConstants.RealismConstants.ELEVATION_FRACTIONAL_JITTER_METERS,
+            AppConstants.RealismConstants.ELEVATION_FRACTIONAL_JITTER_METERS,
+        )
