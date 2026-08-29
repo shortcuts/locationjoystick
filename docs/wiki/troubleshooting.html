@@ -65,6 +65,24 @@
       Only one app can act as the mock location provider at a time. Make sure no other mock location app is
       selected in Developer Options.
     </p>
+
+    <h2 id="spoofed-location-resets">Spoofed location jumps back to your real location</h2>
+    <p>
+      This usually means a phone-level location setting is overriding the spoofed position. Check these settings
+      in your phone's <strong>Settings → Location</strong> menu (naming varies by phone brand):
+    </p>
+    <ul>
+      <li><strong>Location Accuracy / Improve Accuracy</strong> — turn this off. It lets your phone blend Wi-Fi
+        and Bluetooth scanning into its location estimate, which can pull the reported position back toward
+        your real one.</li>
+      <li><strong>Google Location Accuracy</strong> or similar Play Services location options — turn these off
+        too, if present.</li>
+      <li>Make sure no other app is also set as a mock location app in Developer Options — see
+        "Another app holds the mock location slot" above.</li>
+    </ul>
+    <p>
+      These are phone settings, not app settings — locationjoystick has no control over them.
+    </p>
   </main>
 
 </div>
