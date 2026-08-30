@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.1](https://github.com/shortcuts/locationjoystick/compare/v0.18.0...v0.18.1) (2026-08-30)
+
+
+### Bug Fixes
+
+* sample altitude jitter fresh from anchor each tick, not as random walk ([6f90a2b](https://github.com/shortcuts/locationjoystick/commit/6f90a2b2bed8abbb1f5a789f6f91330947aeeaac)), closes [#54](https://github.com/shortcuts/locationjoystick/issues/54)
+
 ## [0.18.0](https://github.com/shortcuts/locationjoystick/compare/v0.17.0...v0.18.0) (2026-08-29)
 
 
