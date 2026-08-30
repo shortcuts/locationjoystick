@@ -234,7 +234,9 @@ internal fun buildLocation(
     nowMs: Long,
     random: Random,
 ): LocationFix {
-    // Altitude with Gaussian random walk
+    // Altitude jitter: fresh Gaussian offset from the anchor each tick (not a random walk —
+    // accumulating onto the previous tick's altitude let drift wander far past the configured
+    // radius before the unrelated ALTITUDE_CLAMP_RADIUS_METERS safety clamp kicked in, issue #54).
     val newAltitude =
         if (state.altitudeEnabled) {
             val u1 = random.nextDouble().coerceAtLeast(Double.MIN_VALUE)
@@ -242,7 +244,7 @@ internal fun buildLocation(
             val mag =
                 state.altitudeJitterRadiusMeters *
                     kotlin.math.sqrt(-2.0 * kotlin.math.ln(u1)) * kotlin.math.cos(2.0 * kotlin.math.PI * u2)
-            (state.altitudeMeters + mag)
+            (state.baseAltitudeMeters + mag)
                 .coerceIn(
                     state.baseAltitudeMeters - AppConstants.RealismConstants.ALTITUDE_CLAMP_RADIUS_METERS,
                     state.baseAltitudeMeters + AppConstants.RealismConstants.ALTITUDE_CLAMP_RADIUS_METERS,
