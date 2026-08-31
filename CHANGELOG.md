@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.18.2](https://github.com/shortcuts/locationjoystick/compare/v0.18.1...v0.18.2) (2026-08-31)
+
+
+### Bug Fixes
+
+* decouple idle speed wobble from active profile, make it sparse ([ea3ad03](https://github.com/shortcuts/locationjoystick/commit/ea3ad030a058432bc72dd6565a80ca5355f2c5d3))
+* scale bearing accuracy with movement instead of a static value ([3aad3f3](https://github.com/shortcuts/locationjoystick/commit/3aad3f3a46b3494da1b18f48000a618bf64ecb46))
+* suppress bearing until first movement ([eede1db](https://github.com/shortcuts/locationjoystick/commit/eede1db8ac42f8f5a16d916f5e27aa33ca96bc2d))
+
 ## [0.18.1](https://github.com/shortcuts/locationjoystick/compare/v0.18.0...v0.18.1) (2026-08-30)
 
 
