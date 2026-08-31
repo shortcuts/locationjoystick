@@ -88,7 +88,7 @@ internal data class LocationSnapshot(
  *   first tick with motion in the session (see [LocationSnapshot.hasEverMoved]).
  * @property accuracyMeters Horizontal accuracy, either from the warm-up envelope or perturbed fine accuracy.
  * @property verticalAccuracyMeters Fixed vertical accuracy constant.
- * @property bearingAccuracyDegrees Fixed bearing accuracy constant.
+ * @property bearingAccuracyDegrees Bearing accuracy in degrees — widens near a stop, tightens with speed.
  * @property speedAccuracyMps Fixed speed accuracy constant.
  * @property satelliteCount Total visible satellite count, or null when satellite extras are disabled.
  * @property usedInFixCount Satellites contributing to this fix, or null when satellite extras are disabled.
@@ -227,7 +227,7 @@ internal fun perturbAccuracy(
  * Pure, side-effect-free GPS fix builder. No Android imports; [random] is injectable for testing.
  *
  * Execution order: suspended-phase check → altitude Gaussian walk → bearing hold + noise → speed perturbation
- * → position jitter → warm-up accuracy envelope → accuracy perturbation → satellite extras.
+ * → position jitter → warm-up accuracy envelope → accuracy perturbation → bearing accuracy → satellite extras.
  *
  * @param state Immutable snapshot of all service state for this tick.
  * @param nowMs Elapsed realtime ms at the start of the tick, used for the warm-up curve.
@@ -358,6 +358,29 @@ internal fun buildLocation(
             perturbAccuracy(AppConstants.LocationConstants.LOCATION_ACCURACY_FINE, random)
         }
 
+    // Bearing accuracy: undefined heading near a stop widens toward BEARING_ACCURACY_STOPPED_DEGREES;
+    // moving, it tightens toward BEARING_ACCURACY_MOVING_MIN_DEGREES as speed rises, with noise —
+    // static 3° regardless of motion was unrealistic (issue #56).
+    val outBearingAccuracy =
+        if (outSpeed <= 0.05f) {
+            AppConstants.RealismConstants.BEARING_ACCURACY_STOPPED_DEGREES
+        } else {
+            val speedFactor =
+                (outSpeed / AppConstants.RealismConstants.BEARING_ACCURACY_REFERENCE_SPEED_MPS).coerceIn(0.0, 1.0)
+            val base =
+                AppConstants.RealismConstants.BEARING_ACCURACY_MOVING_MAX_DEGREES -
+                    speedFactor.toFloat() * (
+                        AppConstants.RealismConstants.BEARING_ACCURACY_MOVING_MAX_DEGREES -
+                            AppConstants.RealismConstants.BEARING_ACCURACY_MOVING_MIN_DEGREES
+                    )
+            val noise =
+                (random.nextFloat() - 0.5f) * AppConstants.RealismConstants.BEARING_ACCURACY_MOVING_NOISE_DEGREES
+            (base + noise).coerceIn(
+                AppConstants.RealismConstants.BEARING_ACCURACY_MOVING_MIN_DEGREES,
+                AppConstants.RealismConstants.BEARING_ACCURACY_MOVING_MAX_DEGREES,
+            )
+        }
+
     return LocationFix(
         latitude = outLat,
         longitude = outLon,
@@ -367,7 +390,7 @@ internal fun buildLocation(
         hasBearing = outHasBearing,
         accuracyMeters = outAccuracy,
         verticalAccuracyMeters = AppConstants.RealismConstants.VERTICAL_ACCURACY_METERS,
-        bearingAccuracyDegrees = AppConstants.RealismConstants.BEARING_ACCURACY_DEGREES,
+        bearingAccuracyDegrees = outBearingAccuracy,
         speedAccuracyMps = AppConstants.RealismConstants.SPEED_ACCURACY_MPS,
         satelliteCount = if (state.satelliteExtrasEnabled) state.cachedSatelliteCount else null,
         usedInFixCount = if (state.satelliteExtrasEnabled) state.cachedUsedInFixCount else null,

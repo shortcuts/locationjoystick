@@ -63,7 +63,15 @@ object AppConstants {
         const val ALTITUDE_SIGMA_METERS = 1.5
         const val ALTITUDE_CLAMP_RADIUS_METERS = 25.0
         const val VERTICAL_ACCURACY_METERS = 4.0f
-        const val BEARING_ACCURACY_DEGREES = 3.0f
+
+        /** Real bearing accuracy widens toward this near a full stop, where heading is undefined. */
+        const val BEARING_ACCURACY_STOPPED_DEGREES = 180.0f
+        const val BEARING_ACCURACY_MOVING_MIN_DEGREES = 5.0f
+        const val BEARING_ACCURACY_MOVING_MAX_DEGREES = 50.0f
+        const val BEARING_ACCURACY_MOVING_NOISE_DEGREES = 10.0f
+
+        /** Speed at which moving bearing accuracy reaches its tightest (MIN) value. */
+        const val BEARING_ACCURACY_REFERENCE_SPEED_MPS = ProfileConstants.RUN_SPEED_MPS
         const val BEARING_NOISE_DEGREES = 5.0f
         const val SPEED_ACCURACY_MPS = 0.3f
 

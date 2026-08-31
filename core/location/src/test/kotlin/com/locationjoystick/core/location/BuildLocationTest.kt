@@ -255,6 +255,35 @@ class BuildLocationTest {
     }
 
     @Test
+    fun `bearing accuracy widens to stopped value when stationary`() {
+        val snap = baseSnapshot(speedMs = 0f)
+        val fix = buildLocation(snap, 1000L, Random(1))!!
+        assertEquals(AppConstants.RealismConstants.BEARING_ACCURACY_STOPPED_DEGREES, fix.bearingAccuracyDegrees)
+    }
+
+    @Test
+    fun `bearing accuracy tightens toward min at high speed`() {
+        val snap = baseSnapshot(speedMs = AppConstants.ProfileConstants.RUN_SPEED_MPS.toFloat() * 2f)
+        val results = (1..50).map { buildLocation(snap, 1000L, Random(it))!!.bearingAccuracyDegrees }
+        assertTrue(
+            "High-speed bearing accuracy should stay near MIN",
+            results.all { it <= AppConstants.RealismConstants.BEARING_ACCURACY_MOVING_MIN_DEGREES + 5f },
+        )
+    }
+
+    @Test
+    fun `bearing accuracy stays within moving bounds`() {
+        val snap = baseSnapshot(speedMs = 0.5f)
+        val results = (1..200).map { buildLocation(snap, 1000L, Random(it))!!.bearingAccuracyDegrees }
+        val min = AppConstants.RealismConstants.BEARING_ACCURACY_MOVING_MIN_DEGREES
+        val max = AppConstants.RealismConstants.BEARING_ACCURACY_MOVING_MAX_DEGREES
+        assertTrue(
+            "Moving bearing accuracy should stay within [MIN, MAX]",
+            results.all { it in min..max },
+        )
+    }
+
+    @Test
     fun `sub-accuracy fields are populated`() {
         val snap = baseSnapshot()
         val fix = buildLocation(snap, 1000L, Random(1))
