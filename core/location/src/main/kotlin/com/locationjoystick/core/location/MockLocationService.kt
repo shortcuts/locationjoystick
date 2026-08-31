@@ -189,6 +189,9 @@ class MockLocationService : Service() {
     /** Bearing from the last tick where speedMs > 0; held when the device is stationary. */
     @Volatile private var lastNonZeroBearing: Float = 0f
 
+    /** True once any tick this session reported speedMs > 0 — gates bearing reporting (issue #56). */
+    @Volatile private var hasEverMoved: Boolean = false
+
     /** Seed altitude for the next tick's Gaussian walk; written back from LocationFix.altitudeMeters after each successful tick. */
     @Volatile private var currentAltitudeMeters: Double =
         AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
@@ -653,6 +656,7 @@ class MockLocationService : Service() {
         writeCurrentPosition(lat, lon, syncRepository = true)
         currentSpeedMs = 0.0f
         currentBearing = 0.0f
+        hasEverMoved = false
         val now = SystemClock.elapsedRealtime()
         currentAltitudeMeters = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
         altitudeAnchor.reset()
@@ -1135,6 +1139,7 @@ class MockLocationService : Service() {
             speedMs = speedMs,
             bearing = bearing,
             lastNonZeroBearing = lastNonZeroBearing,
+            hasEverMoved = hasEverMoved,
             mode = mode,
             jitterIdleRadiusMeters = realism.jitterIdleRadiusMeters,
             jitterMovingRadiusMeters = realism.jitterMovingRadiusMeters,
@@ -1173,7 +1178,7 @@ class MockLocationService : Service() {
                 altitude = fix.altitudeMeters
                 accuracy = fix.accuracyMeters
                 speed = fix.speedMs
-                bearing = fix.bearing
+                if (fix.hasBearing) bearing = fix.bearing
                 time = System.currentTimeMillis()
                 elapsedRealtimeNanos = nowNanos
                 verticalAccuracyMeters = fix.verticalAccuracyMeters
@@ -1225,7 +1230,10 @@ class MockLocationService : Service() {
                     tickIntervalMs = tickIntervalMs,
                 ),
             )
-            if (snapshot.speedMs > 0f) lastNonZeroBearing = snapshot.bearing
+            if (snapshot.speedMs > 0f) {
+                lastNonZeroBearing = snapshot.bearing
+                hasEverMoved = true
+            }
             if (snapshot.shouldApplyMovingJitter && snapshot.mode != MockMode.TELEPORT) {
                 lastJitterTimestampMs = nowMs
             }

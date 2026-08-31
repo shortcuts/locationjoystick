@@ -14,6 +14,9 @@ import kotlin.random.Random
  * @property bearing Current heading in degrees; only meaningful when [speedMs] > 0.
  * @property lastNonZeroBearing The most recent bearing from a tick where [speedMs] was non-zero.
  *   Used to hold the displayed heading when the device stops moving.
+ * @property hasEverMoved True once any tick in the current session has reported [speedMs] > 0.
+ *   Real GPS reports no bearing at all before the first fix with motion — [buildLocation] mirrors
+ *   that by leaving [LocationFix.hasBearing] false until this flips true (issue #56).
  * @property mode Active [MockMode] at snapshot time.
  * @property jitterIdleRadiusMeters Gaussian noise radius applied while stationary (TELEPORT mode).
  * @property jitterMovingRadiusMeters Gaussian noise radius applied while moving.
@@ -50,6 +53,7 @@ internal data class LocationSnapshot(
     val speedMs: Float,
     val bearing: Float,
     val lastNonZeroBearing: Float,
+    val hasEverMoved: Boolean,
     val mode: MockMode,
     val jitterIdleRadiusMeters: Double,
     val jitterMovingRadiusMeters: Double,
@@ -81,6 +85,8 @@ internal data class LocationSnapshot(
  * @property altitudeMeters Result of the Gaussian altitude random walk for this tick.
  * @property speedMs Speed in m/s to report to the provider.
  * @property bearing Heading in degrees after bearing-hold logic is applied.
+ * @property hasBearing Whether the provider should report a bearing at all — false before the
+ *   first tick with motion in the session (see [LocationSnapshot.hasEverMoved]).
  * @property accuracyMeters Horizontal accuracy, either from the warm-up envelope or perturbed fine accuracy.
  * @property verticalAccuracyMeters Fixed vertical accuracy constant.
  * @property bearingAccuracyDegrees Fixed bearing accuracy constant.
@@ -94,6 +100,7 @@ internal data class LocationFix(
     val altitudeMeters: Double,
     val speedMs: Float,
     val bearing: Float,
+    val hasBearing: Boolean,
     val accuracyMeters: Float,
     val verticalAccuracyMeters: Float,
     val bearingAccuracyDegrees: Float,
@@ -267,6 +274,7 @@ internal fun buildLocation(
         } else {
             rawBearing
         }
+    val outHasBearing = state.hasEverMoved || state.speedMs > 0f
 
     // Speed perturbation
     val outSpeed =
@@ -350,6 +358,7 @@ internal fun buildLocation(
         altitudeMeters = newAltitude,
         speedMs = outSpeed,
         bearing = outBearing,
+        hasBearing = outHasBearing,
         accuracyMeters = outAccuracy,
         verticalAccuracyMeters = AppConstants.RealismConstants.VERTICAL_ACCURACY_METERS,
         bearingAccuracyDegrees = AppConstants.RealismConstants.BEARING_ACCURACY_DEGREES,

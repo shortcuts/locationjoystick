@@ -15,6 +15,7 @@ class BuildLocationTest {
         speedMs: Float = 0f,
         bearing: Float = 0f,
         lastNonZeroBearing: Float = 0f,
+        hasEverMoved: Boolean = true,
         jitterIdleRadiusMeters: Double = 0.0,
         jitterMovingRadiusMeters: Double = 1.0,
         shouldApplyMovingJitter: Boolean = false,
@@ -39,6 +40,7 @@ class BuildLocationTest {
         speedMs = speedMs,
         bearing = bearing,
         lastNonZeroBearing = lastNonZeroBearing,
+        hasEverMoved = hasEverMoved,
         mode = mode,
         jitterIdleRadiusMeters = jitterIdleRadiusMeters,
         jitterMovingRadiusMeters = jitterMovingRadiusMeters,
@@ -176,6 +178,27 @@ class BuildLocationTest {
         val fix = buildLocation(snap, 1000L, Random(1))
         assertNotNull(fix)
         assertEquals(270f, fix!!.bearing, 5.0f)
+    }
+
+    @Test
+    fun `no bearing reported before first movement`() {
+        val snap = baseSnapshot(speedMs = 0f, hasEverMoved = false)
+        val fix = buildLocation(snap, 1000L, Random(1))
+        assertEquals(false, fix.hasBearing)
+    }
+
+    @Test
+    fun `bearing reported once moving`() {
+        val snap = baseSnapshot(speedMs = 1.5f, hasEverMoved = false)
+        val fix = buildLocation(snap, 1000L, Random(1))
+        assertEquals(true, fix.hasBearing)
+    }
+
+    @Test
+    fun `bearing stays reported after stopping once hasEverMoved`() {
+        val snap = baseSnapshot(speedMs = 0f, hasEverMoved = true)
+        val fix = buildLocation(snap, 1000L, Random(1))
+        assertEquals(true, fix.hasBearing)
     }
 
     @Test
