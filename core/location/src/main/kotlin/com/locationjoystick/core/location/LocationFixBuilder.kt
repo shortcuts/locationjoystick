@@ -32,9 +32,9 @@ import kotlin.random.Random
  * @property bearingHoldEnabled Whether to hold the last non-zero bearing when stationary.
  * @property altitudeEnabled Whether to simulate altitude with a Gaussian random walk.
  * @property satelliteExtrasEnabled Whether to attach satellite count extras to each fix.
- * @property speedIdleVariationPct Percentage of active profile speed to use as range for idle speed variation (0 = off).
+ * @property speedIdleVariationPct Percentage (of [AppConstants.JitterConstants.IDLE_SPEED_WOBBLE_MAX_MPS], not the
+ *   active speed profile — decoupled per issue #56) used as the range for idle speed variation (0 = off).
  * @property speedMovingVariationPct Percentage of current speed to use as symmetric noise for moving speed variation (0 = off).
- * @property activeProfileSpeedMs Active speed profile speed in m/s, used as the scale for idle variation.
  * @property suspendedPhaseStartMs Timestamp of the last phase transition in the push/pause cycle.
  * @property isSuspendedPhase True when currently in the pause window of the push/pause cycle;
  *   [buildLocation] reports a stationary fix (speed `0`, no jitter) for the entire duration of
@@ -67,7 +67,6 @@ internal data class LocationSnapshot(
     val satelliteExtrasEnabled: Boolean,
     val speedIdleVariationPct: Int,
     val speedMovingVariationPct: Int,
-    val activeProfileSpeedMs: Double,
     val suspendedPhaseStartMs: Long,
     val isSuspendedPhase: Boolean,
     val cachedSatelliteCount: Int,
@@ -281,9 +280,16 @@ internal fun buildLocation(
         when {
             state.isSuspendedPhase -> 0f
 
+            // Sparse, small idle wobble — decoupled from the active speed profile (issue #56):
+            // real GPS reports 0.0 m/s on most idle ticks, with only occasional tiny deviations.
             state.speedMs == 0f && state.speedIdleVariationPct > 0 -> {
-                val sigma = state.activeProfileSpeedMs * state.speedIdleVariationPct / 100.0
-                (random.nextDouble() * sigma).toFloat().coerceAtLeast(0.01f)
+                if (random.nextDouble() < AppConstants.JitterConstants.IDLE_SPEED_WOBBLE_PROBABILITY) {
+                    val sigma =
+                        AppConstants.JitterConstants.IDLE_SPEED_WOBBLE_MAX_MPS * state.speedIdleVariationPct / 100.0
+                    (random.nextDouble() * sigma).toFloat().coerceAtLeast(0.01f)
+                } else {
+                    0f
+                }
             }
 
             state.speedMs > 0f && state.speedMovingVariationPct > 0 -> {

@@ -1153,7 +1153,6 @@ class MockLocationService : Service() {
             satelliteExtrasEnabled = realism.satelliteExtrasEnabled,
             speedIdleVariationPct = realism.speedIdleVariationPct,
             speedMovingVariationPct = realism.speedMovingVariationPct,
-            activeProfileSpeedMs = realism.activeProfileSpeedMs,
             suspendedPhaseStartMs = suspendedPhaseSnapshot.startMs,
             isSuspendedPhase = suspendedPhaseSnapshot.isActive,
             cachedSatelliteCount = cachedSatelliteCount,

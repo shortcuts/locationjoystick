@@ -48,6 +48,12 @@ object AppConstants {
         const val SPEED_MOVING_VARIATION_PCT_DEFAULT = 5
         const val SPEED_VARIATION_PCT_MIN = 0
         const val SPEED_VARIATION_PCT_MAX = 50
+
+        /** Real idle GPS noise is well under 0.1 m/s — independent of the active speed profile. */
+        const val IDLE_SPEED_WOBBLE_MAX_MPS = 0.1
+
+        /** Real devices report exactly 0.0 m/s most idle ticks, not a continuous nonzero wobble. */
+        const val IDLE_SPEED_WOBBLE_PROBABILITY = 0.15
     }
 
     object RealismConstants {

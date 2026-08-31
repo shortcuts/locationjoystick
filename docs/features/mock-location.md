@@ -55,6 +55,12 @@ Defaults: `bearingHoldOnIdle = true`, `altitudeEnabled = true`, `satelliteExtras
 | Satellite extras | `satelliteExtrasEnabled` | Attaches `Bundle` extras with slow-churning total + in-fix satellite counts. Refreshed every `RealismConstants.SATELLITE_UPDATE_INTERVAL_MS`. |
 | Suspended mocking | `suspendedMockingEnabled` | Push/pause cycle: reports normal jittered movement for `RealismConstants.SUSPENDED_PUSH_DURATION_MS`, then a stationary, unjittered fix for `RealismConstants.SUSPENDED_PAUSE_DURATION_MS` + random jitter up to `SUSPENDED_PAUSE_JITTER_MS` — the tick is still pushed to the provider every second so it never goes stale (see the same fix applied to paused route replay in `docs/features/routes.md`). Auto-disabled in `ROUTE_REPLAY` and `WALK_TO` modes. |
 
+**Idle speed wobble** (`AppSettings.jitterSpeedIdleVariationPct`, Settings → Location Randomness): scales off
+`AppConstants.JitterConstants.IDLE_SPEED_WOBBLE_MAX_MPS` (0.1 m/s), not the active speed profile — the two were
+previously coupled, so switching profiles silently changed idle noise magnitude (issue #56). Fires on only
+`IDLE_SPEED_WOBBLE_PROBABILITY` (15%) of idle ticks; the rest report exactly `0.0` m/s, matching real GPS
+(previously every idle tick drew a nonzero speed).
+
 All realism tuning values in `AppConstants.RealismConstants`.
 
 ## Real Elevation Lookup

@@ -28,7 +28,6 @@ class BuildLocationTest {
         satelliteExtrasEnabled: Boolean = true,
         speedIdleVariationPct: Int = 0,
         speedMovingVariationPct: Int = 0,
-        activeProfileSpeedMs: Double = AppConstants.ProfileConstants.WALK_SPEED_MPS,
         isSuspendedPhase: Boolean = false,
         cachedSatelliteCount: Int = 10,
         cachedUsedInFixCount: Int = 8,
@@ -54,7 +53,6 @@ class BuildLocationTest {
         satelliteExtrasEnabled = satelliteExtrasEnabled,
         speedIdleVariationPct = speedIdleVariationPct,
         speedMovingVariationPct = speedMovingVariationPct,
-        activeProfileSpeedMs = activeProfileSpeedMs,
         suspendedPhaseStartMs = 0L,
         isSuspendedPhase = isSuspendedPhase,
         cachedSatelliteCount = cachedSatelliteCount,
@@ -391,18 +389,13 @@ class BuildLocationTest {
     }
 
     @Test
-    fun `idle speed variation produces non-zero speed when idle`() {
-        val profileSpeedMs = AppConstants.ProfileConstants.WALK_SPEED_MPS
-        val snap =
-            baseSnapshot(
-                speedMs = 0f,
-                speedIdleVariationPct = 10,
-                activeProfileSpeedMs = profileSpeedMs,
-            )
-        val results = (1..200).map { buildLocation(snap, 1000L, Random(it))!!.speedMs }
-        assertTrue("All idle variation speeds should be > 0", results.all { it > 0f })
-        val maxExpected = profileSpeedMs * 10 / 100.0
-        assertTrue("All idle variation speeds should be <= maxExpected", results.all { it <= maxExpected + 0.001f })
+    fun `idle speed variation is sparse and decoupled from speed profile`() {
+        val snap = baseSnapshot(speedMs = 0f, speedIdleVariationPct = 10)
+        val results = (1..2000).map { buildLocation(snap, 1000L, Random(it))!!.speedMs }
+        assertTrue("Most idle ticks should report exactly 0", results.count { it == 0f } > results.size / 2)
+        assertTrue("Some idle ticks should still wobble", results.any { it > 0f })
+        val maxExpected = AppConstants.JitterConstants.IDLE_SPEED_WOBBLE_MAX_MPS * 10 / 100.0
+        assertTrue("Wobble speeds should be <= maxExpected", results.all { it <= maxExpected + 0.001f })
     }
 
     @Test
