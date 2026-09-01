@@ -238,6 +238,24 @@ class RouteRepository
                         "hot_routes/cph_park.gpx",
                         RouteType.GUIDED,
                     ),
+                    HotRoute(
+                        "Go Stamp Rally: Minato",
+                        "Japan",
+                        "Tokyo",
+                        "hot_routes/tokyo_minato_stamp_rally.gpx",
+                    ),
+                    HotRoute(
+                        "Go Stamp Rally: Koto",
+                        "Japan",
+                        "Tokyo",
+                        "hot_routes/tokyo_koto_stamp_rally.gpx",
+                    ),
+                    HotRoute(
+                        "Go Stamp Rally: Shinagawa",
+                        "Japan",
+                        "Tokyo",
+                        "hot_routes/tokyo_shinagawa_stamp_rally.gpx",
+                    ),
                 )
         }
     }
