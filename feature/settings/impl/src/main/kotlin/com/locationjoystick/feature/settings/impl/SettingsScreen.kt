@@ -289,12 +289,8 @@ fun SettingsRoute(
                     viewModel.setJitterMovingRadius(action.meters)
                 }
 
-                is SettingsAction.SetJitterIntervalSeconds -> {
-                    viewModel.setJitterIntervalSeconds(action.seconds)
-                }
-
-                is SettingsAction.SetJitterIdleIntervalSeconds -> {
-                    viewModel.setJitterIdleIntervalSeconds(action.seconds)
+                is SettingsAction.SetJitterMaxStepMeters -> {
+                    viewModel.setJitterMaxStepMeters(action.meters)
                 }
 
                 is SettingsAction.SetRealismBearingHoldIdle -> {

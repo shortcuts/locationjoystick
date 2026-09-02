@@ -18,12 +18,11 @@ import kotlin.random.Random
  *   Real GPS reports no bearing at all before the first fix with motion — [buildLocation] mirrors
  *   that by leaving [LocationFix.hasBearing] false until this flips true (issue #56).
  * @property mode Active [MockMode] at snapshot time.
- * @property jitterIdleRadiusMeters Gaussian noise radius applied while stationary (TELEPORT mode).
- * @property jitterMovingRadiusMeters Gaussian noise radius applied while moving.
- * @property shouldApplyMovingJitter Pre-computed gate: true when the jitter interval has elapsed.
- *   [buildLocation] uses this directly without any clock arithmetic.
- * @property shouldApplyIdleJitter Pre-computed gate: true when the idle jitter interval has elapsed.
- *   [buildLocation] uses this to gate TELEPORT mode jitter.
+ * @property jitterOffsetNorthM Persistent position-jitter offset (north meters), resolved by
+ *   [PositionJitterCoordinator.step] in captureSnapshot — replaces the old interval-gated Gaussian
+ *   draw (issue #60).
+ * @property jitterOffsetEastM Persistent position-jitter offset (east meters), paired with
+ *   [jitterOffsetNorthM].
  * @property altitudeMeters Seed altitude for the Gaussian random walk this tick; written back from
  *   [LocationFix.altitudeMeters] after each successful tick.
  * @property warmupStartMs Wall-clock ms when startSpoofing was called.
@@ -55,10 +54,8 @@ internal data class LocationSnapshot(
     val lastNonZeroBearing: Float,
     val hasEverMoved: Boolean,
     val mode: MockMode,
-    val jitterIdleRadiusMeters: Double,
-    val jitterMovingRadiusMeters: Double,
-    val shouldApplyMovingJitter: Boolean,
-    val shouldApplyIdleJitter: Boolean,
+    val jitterOffsetNorthM: Double,
+    val jitterOffsetEastM: Double,
     val altitudeMeters: Double,
     val warmupStartMs: Long,
     val warmupEnabled: Boolean,
@@ -203,10 +200,20 @@ internal fun gaussianLatLonOffsetLateral(
     val northOffsetM = gLateral * northLat + gLongitudinal * northFwd
     val eastOffsetM = gLateral * eastLat + gLongitudinal * eastFwd
 
+    return offsetLatLon(lat, lon, northOffsetM, eastOffsetM)
+}
+
+/** Converts a north/east meter offset into a lat/lon delta from ([lat], [lon]). */
+internal fun offsetLatLon(
+    lat: Double,
+    lon: Double,
+    northM: Double,
+    eastM: Double,
+): Pair<Double, Double> {
     val metersPerDeg = AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
     return Pair(
-        lat + northOffsetM / metersPerDeg,
-        lon + eastOffsetM / (metersPerDeg * kotlin.math.cos(Math.toRadians(lat))),
+        lat + northM / metersPerDeg,
+        lon + eastM / (metersPerDeg * kotlin.math.cos(Math.toRadians(lat))),
     )
 }
 
@@ -302,42 +309,13 @@ internal fun buildLocation(
             }
         }
 
-    // Jitter (position)
-    // FOLLOWER with speedMs == 0 is treated like TELEPORT: the position is a placed target,
-    // so idle jitter settings govern. When the leader is moving (speedMs > 0), the follower
-    // falls into the moving branch below and applies lateral jitter using the leader's bearing.
+    // Jitter (position): the persistent offset is already resolved per-tick by
+    // PositionJitterCoordinator.step() in captureSnapshot (issue #60) — buildLocation just adds it.
     val (outLat, outLon) =
-        when {
-            state.isSuspendedPhase -> Pair(state.latitude, state.longitude)
-
-            (
-                state.mode == MockMode.TELEPORT ||
-                    (state.mode == MockMode.FOLLOWER && state.speedMs == 0f)
-            ) &&
-                state.shouldApplyIdleJitter &&
-                state.jitterIdleRadiusMeters > 0.0 -> {
-                gaussianLatLonOffset(state.latitude, state.longitude, state.jitterIdleRadiusMeters, random)
-            }
-
-            state.mode != MockMode.TELEPORT && state.shouldApplyMovingJitter &&
-                state.jitterMovingRadiusMeters > 0.0 -> {
-                if (state.speedMs > 0f) {
-                    gaussianLatLonOffsetLateral(
-                        state.latitude,
-                        state.longitude,
-                        state.jitterMovingRadiusMeters,
-                        state.bearing,
-                        AppConstants.JitterConstants.LONGITUDINAL_JITTER_FRACTION,
-                        random,
-                    )
-                } else {
-                    gaussianLatLonOffset(state.latitude, state.longitude, state.jitterMovingRadiusMeters, random)
-                }
-            }
-
-            else -> {
-                Pair(state.latitude, state.longitude)
-            }
+        if (state.isSuspendedPhase) {
+            Pair(state.latitude, state.longitude)
+        } else {
+            offsetLatLon(state.latitude, state.longitude, state.jitterOffsetNorthM, state.jitterOffsetEastM)
         }
 
     // Accuracy with warm-up envelope

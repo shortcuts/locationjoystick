@@ -155,11 +155,8 @@ class SettingsViewModelDraftTest {
             viewModel.setJitterMovingRadius(5.0)
             assertEquals(5.0, viewModel.uiState.value.jitterMovingRadiusMeters, 0.001)
 
-            viewModel.setJitterIntervalSeconds(10)
-            assertEquals(10, viewModel.uiState.value.jitterIntervalSeconds)
-
-            viewModel.setJitterIdleIntervalSeconds(30)
-            assertEquals(30, viewModel.uiState.value.jitterIdleIntervalSeconds)
+            viewModel.setJitterMaxStepMeters(2.5)
+            assertEquals(2.5, viewModel.uiState.value.jitterMaxStepMeters, 0.001)
         }
 
     @Test

@@ -16,10 +16,8 @@ class BuildLocationTest {
         bearing: Float = 0f,
         lastNonZeroBearing: Float = 0f,
         hasEverMoved: Boolean = true,
-        jitterIdleRadiusMeters: Double = 0.0,
-        jitterMovingRadiusMeters: Double = 1.0,
-        shouldApplyMovingJitter: Boolean = false,
-        shouldApplyIdleJitter: Boolean = true,
+        jitterOffsetNorthM: Double = 0.0,
+        jitterOffsetEastM: Double = 0.0,
         altitudeMeters: Double = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS,
         warmupStartMs: Long = 0L,
         warmupEnabled: Boolean = false,
@@ -41,10 +39,8 @@ class BuildLocationTest {
         lastNonZeroBearing = lastNonZeroBearing,
         hasEverMoved = hasEverMoved,
         mode = mode,
-        jitterIdleRadiusMeters = jitterIdleRadiusMeters,
-        jitterMovingRadiusMeters = jitterMovingRadiusMeters,
-        shouldApplyMovingJitter = shouldApplyMovingJitter,
-        shouldApplyIdleJitter = shouldApplyIdleJitter,
+        jitterOffsetNorthM = jitterOffsetNorthM,
+        jitterOffsetEastM = jitterOffsetEastM,
         altitudeMeters = altitudeMeters,
         warmupStartMs = warmupStartMs,
         warmupEnabled = warmupEnabled,
@@ -68,8 +64,8 @@ class BuildLocationTest {
                 isSuspendedPhase = true,
                 speedMs = 3.0f,
                 mode = MockMode.TELEPORT,
-                shouldApplyIdleJitter = true,
-                jitterIdleRadiusMeters = 5.0,
+                jitterOffsetNorthM = 5.0,
+                jitterOffsetEastM = 5.0,
             )
         val fix = buildLocation(snapshot, 1000L, Random(42))
         assertEquals(0f, fix.speedMs)
@@ -200,8 +196,8 @@ class BuildLocationTest {
     }
 
     @Test
-    fun `idle jitter with radius 0 is bit-identical`() {
-        val snap = baseSnapshot(mode = MockMode.TELEPORT, jitterIdleRadiusMeters = 0.0)
+    fun `zero jitter offset is bit-identical`() {
+        val snap = baseSnapshot(mode = MockMode.TELEPORT, jitterOffsetNorthM = 0.0, jitterOffsetEastM = 0.0)
         repeat(60) { tick ->
             val fix = buildLocation(snap, tick.toLong() * 1000, Random(tick))
             assertNotNull(fix)
@@ -211,20 +207,22 @@ class BuildLocationTest {
     }
 
     @Test
-    fun `idle jitter with radius 2m deviates from center`() {
-        val snap = baseSnapshot(mode = MockMode.TELEPORT, jitterIdleRadiusMeters = 2.0)
-        val deviations =
-            (0 until 60).map { tick ->
-                val fix = buildLocation(snap, tick.toLong() * 1000, Random(tick * 17 + 3))!!
-                val dlat = (fix.latitude - snap.latitude) * AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
-                val dlon =
-                    (fix.longitude - snap.longitude) * AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE *
-                        kotlin.math.cos(Math.toRadians(snap.latitude))
-                kotlin.math.sqrt(dlat * dlat + dlon * dlon)
-            }
-        val meanDeviation = deviations.average()
-        assertTrue("Mean deviation $meanDeviation should be > 0", meanDeviation > 0.0)
-        assertTrue("Mean deviation $meanDeviation should be <= 2 * 2.0m * 2", meanDeviation <= 2 * 2.0 * 2)
+    fun `nonzero jitter offset shifts the fix by exactly that offset`() {
+        val snap = baseSnapshot(mode = MockMode.TELEPORT, jitterOffsetNorthM = 2.0, jitterOffsetEastM = -1.5)
+        val fix = buildLocation(snap, 1000L, Random(7))
+        val (expectedLat, expectedLon) = offsetLatLon(snap.latitude, snap.longitude, 2.0, -1.5)
+        assertEquals(expectedLat, fix.latitude, 1e-9)
+        assertEquals(expectedLon, fix.longitude, 1e-9)
+    }
+
+    @Test
+    fun `jitter offset application is deterministic regardless of random seed`() {
+        val snap = baseSnapshot(mode = MockMode.JOYSTICK, speedMs = 1.4f, jitterOffsetNorthM = 3.0, jitterOffsetEastM = 4.0)
+        val fixes = (1..10).map { buildLocation(snap, 1000L, Random(it)) }
+        val lats = fixes.map { it.latitude }.toSet()
+        val lons = fixes.map { it.longitude }.toSet()
+        assertEquals("Position must not depend on random seed once offset is precomputed", 1, lats.size)
+        assertEquals("Position must not depend on random seed once offset is precomputed", 1, lons.size)
     }
 
     @Test
@@ -320,48 +318,6 @@ class BuildLocationTest {
     }
 
     @Test
-    fun `moving jitter applied when shouldApplyMovingJitter is true and speed is positive`() {
-        val snap =
-            baseSnapshot(
-                mode = MockMode.JOYSTICK,
-                speedMs = 1.4f,
-                jitterMovingRadiusMeters = 5.0,
-                jitterIdleRadiusMeters = 0.0,
-                shouldApplyMovingJitter = true,
-            )
-        val deviations =
-            (1..40).map { seed ->
-                val fix = buildLocation(snap, 1000L, Random(seed))!!
-                val dlat = (fix.latitude - snap.latitude) * AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
-                val dlon =
-                    (fix.longitude - snap.longitude) * AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE *
-                        kotlin.math.cos(Math.toRadians(snap.latitude))
-                kotlin.math.sqrt(dlat * dlat + dlon * dlon)
-            }
-        assertTrue("Moving jitter must produce non-zero deviation", deviations.any { it > 0.0 })
-        assertTrue("Moving jitter deviation must not exceed 2×radius", deviations.all { it <= 2 * 5.0 * 2 })
-    }
-
-    @Test
-    fun `moving jitter not applied when shouldApplyMovingJitter is false`() {
-        val snap =
-            baseSnapshot(
-                mode = MockMode.JOYSTICK,
-                speedMs = 1.4f,
-                jitterMovingRadiusMeters = 5.0,
-                jitterIdleRadiusMeters = 0.0,
-                shouldApplyMovingJitter = false,
-            )
-        val fix = buildLocation(snap, 1000L, Random(1))!!
-        val dlat = (fix.latitude - snap.latitude) * AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
-        val dlon =
-            (fix.longitude - snap.longitude) * AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE *
-                kotlin.math.cos(Math.toRadians(snap.latitude))
-        val deviation = kotlin.math.sqrt(dlat * dlat + dlon * dlon)
-        assertEquals("Moving jitter must not be applied when flag is false", 0.0, deviation, 1e-9)
-    }
-
-    @Test
     fun `warmup accuracy after warmup period varies with random seed`() {
         val warmupStart = 1000L
         // 5 seconds past the end of warmup
@@ -447,55 +403,5 @@ class BuildLocationTest {
         val snap = baseSnapshot(speedMs = 1.5f, speedMovingVariationPct = 0)
         val fix = buildLocation(snap, 1000L, Random(42))!!
         assertEquals(1.5f, fix.speedMs, 0.001f)
-    }
-
-    @Test
-    fun `follower stationary uses idle jitter radius not moving radius`() {
-        // speedMs == 0 + FOLLOWER → idle jitter branch, governed by jitterIdleRadiusMeters
-        val snap =
-            baseSnapshot(
-                mode = MockMode.FOLLOWER,
-                speedMs = 0f,
-                jitterIdleRadiusMeters = 3.0,
-                // moving jitter disabled — ensures idle branch fires
-                jitterMovingRadiusMeters = 0.0,
-                shouldApplyIdleJitter = true,
-                shouldApplyMovingJitter = false,
-            )
-        val deviations =
-            (0 until 60).map { tick ->
-                val fix = buildLocation(snap, tick.toLong() * 1000, Random(tick * 31 + 7))!!
-                val dlat = (fix.latitude - snap.latitude) * AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
-                val dlon =
-                    (fix.longitude - snap.longitude) * AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE *
-                        kotlin.math.cos(Math.toRadians(snap.latitude))
-                kotlin.math.sqrt(dlat * dlat + dlon * dlon)
-            }
-        assertTrue("Stationary follower should deviate via idle jitter", deviations.average() > 0.0)
-    }
-
-    @Test
-    fun `follower moving uses moving jitter`() {
-        // speedMs > 0 + FOLLOWER → moving jitter branch
-        val snap =
-            baseSnapshot(
-                mode = MockMode.FOLLOWER,
-                speedMs = 1.4f,
-                bearing = 90f,
-                jitterIdleRadiusMeters = 0.0,
-                jitterMovingRadiusMeters = 3.0,
-                shouldApplyIdleJitter = false,
-                shouldApplyMovingJitter = true,
-            )
-        val deviations =
-            (0 until 60).map { tick ->
-                val fix = buildLocation(snap, tick.toLong() * 1000, Random(tick * 13 + 5))!!
-                val dlat = (fix.latitude - snap.latitude) * AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE
-                val dlon =
-                    (fix.longitude - snap.longitude) * AppConstants.LocationConstants.METERS_PER_LATITUDE_DEGREE *
-                        kotlin.math.cos(Math.toRadians(snap.latitude))
-                kotlin.math.sqrt(dlat * dlat + dlon * dlon)
-            }
-        assertTrue("Moving follower should deviate via moving jitter", deviations.average() > 0.0)
     }
 }

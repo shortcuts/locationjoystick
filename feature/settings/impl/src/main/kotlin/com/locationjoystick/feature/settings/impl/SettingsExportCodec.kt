@@ -49,8 +49,7 @@ private fun parseAppFeature(raw: String): AppFeature? =
  *   "favoriteLocations": [ ... ],
  *   "jitterIdleRadius": 0.5,
  *   "jitterMovingRadius": 1.5,
- *   "jitterIntervalSeconds": 3,
- *   "jitterIdleIntervalSeconds": 30
+ *   "jitterMaxStepMeters": 1.0
  * }
  * ```
  *
@@ -146,8 +145,7 @@ internal object SettingsExportCodec {
 
         root.put("jitterIdleRadius", data.jitterIdleRadius)
         root.put("jitterMovingRadius", data.jitterMovingRadius)
-        root.put("jitterIntervalSeconds", data.jitterIntervalSeconds)
-        root.put("jitterIdleIntervalSeconds", data.jitterIdleIntervalSeconds)
+        root.put("jitterMaxStepMeters", data.jitterMaxStepMeters)
         root.put("jitterSpeedIdleVariationPct", data.jitterSpeedIdleVariationPct)
         root.put("jitterSpeedMovingVariationPct", data.jitterSpeedMovingVariationPct)
         root.put("hotLocationsEnabled", data.hotLocationsEnabled)
@@ -351,12 +349,8 @@ internal object SettingsExportCodec {
             favoriteLocations = favorites,
             jitterIdleRadius = root.optDouble("jitterIdleRadius", AppConstants.JitterConstants.DEFAULT_IDLE_RADIUS_METERS),
             jitterMovingRadius = root.optDouble("jitterMovingRadius", AppConstants.JitterConstants.DEFAULT_MOVING_RADIUS_METERS),
-            jitterIntervalSeconds = root.optInt("jitterIntervalSeconds", AppConstants.JitterConstants.DEFAULT_MOVING_INTERVAL_SECONDS),
-            jitterIdleIntervalSeconds =
-                root.optInt(
-                    "jitterIdleIntervalSeconds",
-                    AppConstants.JitterConstants.DEFAULT_IDLE_INTERVAL_SECONDS,
-                ),
+            jitterMaxStepMeters =
+                root.optDouble("jitterMaxStepMeters", AppConstants.JitterConstants.DEFAULT_STEP_METERS_PER_TICK),
             jitterSpeedIdleVariationPct =
                 root.optInt(
                     "jitterSpeedIdleVariationPct",

@@ -1,6 +1,8 @@
 package com.locationjoystick.core.location
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.MockLocationState
+import com.locationjoystick.core.model.MockMode
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -183,5 +185,65 @@ class LocationLoopActionTest {
             WidgetOverlayAction.NO_OP,
             computeWidgetOverlayAction(state = MockLocationState.ERROR, hideWidgetOverlay = true),
         )
+    }
+
+    @Test
+    fun `TELEPORT uses idle radius isotropically regardless of speed or bearing`() {
+        val req =
+            resolveJitterStepRequest(MockMode.TELEPORT, speedMs = 0f, bearingDeg = 200f, idleRadiusMeters = 1.0, movingRadiusMeters = 5.0)
+        assertEquals(1.0, req.radiusMeters, 0.0)
+        assertEquals(0f, req.bearingDeg)
+        assertEquals(1.0, req.longitudinalFraction, 0.0)
+    }
+
+    @Test
+    fun `idle FOLLOWER uses idle radius isotropically`() {
+        val req =
+            resolveJitterStepRequest(MockMode.FOLLOWER, speedMs = 0f, bearingDeg = 90f, idleRadiusMeters = 2.0, movingRadiusMeters = 5.0)
+        assertEquals(2.0, req.radiusMeters, 0.0)
+        assertEquals(0f, req.bearingDeg)
+        assertEquals(1.0, req.longitudinalFraction, 0.0)
+    }
+
+    @Test
+    fun `moving FOLLOWER uses moving radius squished along bearing`() {
+        val req =
+            resolveJitterStepRequest(MockMode.FOLLOWER, speedMs = 1.5f, bearingDeg = 90f, idleRadiusMeters = 2.0, movingRadiusMeters = 5.0)
+        assertEquals(5.0, req.radiusMeters, 0.0)
+        assertEquals(90f, req.bearingDeg)
+        assertEquals(AppConstants.JitterConstants.LONGITUDINAL_JITTER_FRACTION, req.longitudinalFraction, 0.0)
+    }
+
+    @Test
+    fun `stationary JOYSTICK uses moving radius isotropically`() {
+        val req =
+            resolveJitterStepRequest(MockMode.JOYSTICK, speedMs = 0f, bearingDeg = 45f, idleRadiusMeters = 2.0, movingRadiusMeters = 5.0)
+        assertEquals(5.0, req.radiusMeters, 0.0)
+        assertEquals(0f, req.bearingDeg)
+        assertEquals(1.0, req.longitudinalFraction, 0.0)
+    }
+
+    @Test
+    fun `moving JOYSTICK uses moving radius squished along bearing`() {
+        val req =
+            resolveJitterStepRequest(MockMode.JOYSTICK, speedMs = 1.5f, bearingDeg = 45f, idleRadiusMeters = 2.0, movingRadiusMeters = 5.0)
+        assertEquals(5.0, req.radiusMeters, 0.0)
+        assertEquals(45f, req.bearingDeg)
+        assertEquals(AppConstants.JitterConstants.LONGITUDINAL_JITTER_FRACTION, req.longitudinalFraction, 0.0)
+    }
+
+    @Test
+    fun `moving ROUTE_REPLAY uses moving radius squished along bearing`() {
+        val req =
+            resolveJitterStepRequest(
+                MockMode.ROUTE_REPLAY,
+                speedMs = 2.0f,
+                bearingDeg = 10f,
+                idleRadiusMeters = 2.0,
+                movingRadiusMeters = 5.0,
+            )
+        assertEquals(5.0, req.radiusMeters, 0.0)
+        assertEquals(10f, req.bearingDeg)
+        assertEquals(AppConstants.JitterConstants.LONGITUDINAL_JITTER_FRACTION, req.longitudinalFraction, 0.0)
     }
 }

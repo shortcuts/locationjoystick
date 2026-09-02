@@ -23,5 +23,5 @@ internal fun minimalExportData(): ExportData =
         favoriteLocations = emptyList(),
         jitterIdleRadius = 0.0,
         jitterMovingRadius = 1.0,
-        jitterIntervalSeconds = 3,
+        jitterMaxStepMeters = 1.0,
     )

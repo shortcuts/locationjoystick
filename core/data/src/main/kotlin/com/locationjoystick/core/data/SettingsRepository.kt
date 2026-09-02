@@ -175,17 +175,13 @@ class SettingsRepository
 
         fun getJitterMovingRadius(): Flow<Double> = dataSource.getJitterMovingRadius()
 
-        fun getJitterIntervalSeconds(): Flow<Int> = dataSource.getJitterIntervalSeconds()
+        fun getJitterMaxStepMeters(): Flow<Double> = dataSource.getJitterMaxStepMeters()
 
         suspend fun setJitterIdleRadius(meters: Double) = dataSource.setJitterIdleRadius(meters)
 
         suspend fun setJitterMovingRadius(meters: Double) = dataSource.setJitterMovingRadius(meters)
 
-        suspend fun setJitterIntervalSeconds(seconds: Int) = dataSource.setJitterIntervalSeconds(seconds)
-
-        fun getJitterIdleIntervalSeconds(): Flow<Int> = dataSource.getJitterIdleIntervalSeconds()
-
-        suspend fun setJitterIdleIntervalSeconds(seconds: Int) = dataSource.setJitterIdleIntervalSeconds(seconds)
+        suspend fun setJitterMaxStepMeters(meters: Double) = dataSource.setJitterMaxStepMeters(meters)
 
         fun getLastTeleportTime(): Flow<Long> = dataSource.getLastTeleportTime()
 

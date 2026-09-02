@@ -201,7 +201,7 @@ class SettingsExportCodecEdgeCaseTest {
     }
 
     @Test
-    fun `missing jitterIntervalSeconds defaults to AppConstants value`() {
+    fun `missing jitterMaxStepMeters defaults to AppConstants value`() {
         val json =
             """{"schemaVersion":1,"exportedAt":0,"settings":{"speedUnit":"KMH","enabledWidgetFeatures":[]},""" +
                 """"speedProfiles":[],"routes":[],"favoriteLocations":[],"jitterIdleRadius":0.5,"jitterMovingRadius":1.0}"""
@@ -209,9 +209,27 @@ class SettingsExportCodecEdgeCaseTest {
         val parsed = SettingsExportCodec.parseExportData(json)
 
         assertEquals(
-            "Missing jitterIntervalSeconds must default to AppConstants.JitterConstants.DEFAULT_MOVING_INTERVAL_SECONDS",
-            AppConstants.JitterConstants.DEFAULT_MOVING_INTERVAL_SECONDS,
-            parsed.jitterIntervalSeconds,
+            "Missing jitterMaxStepMeters must default to AppConstants.JitterConstants.DEFAULT_STEP_METERS_PER_TICK",
+            AppConstants.JitterConstants.DEFAULT_STEP_METERS_PER_TICK,
+            parsed.jitterMaxStepMeters,
+            1e-9,
+        )
+    }
+
+    @Test
+    fun `old exports carrying removed jitterIntervalSeconds fields still decode using new field default`() {
+        val json =
+            """{"schemaVersion":1,"exportedAt":0,"settings":{"speedUnit":"KMH","enabledWidgetFeatures":[]},""" +
+                """"speedProfiles":[],"routes":[],"favoriteLocations":[],"jitterIdleRadius":0.5,"jitterMovingRadius":1.0,""" +
+                """"jitterIntervalSeconds":3,"jitterIdleIntervalSeconds":30}"""
+
+        val parsed = SettingsExportCodec.parseExportData(json)
+
+        assertEquals(
+            "Old exports carrying only the removed interval fields must fall back to the new field's default",
+            AppConstants.JitterConstants.DEFAULT_STEP_METERS_PER_TICK,
+            parsed.jitterMaxStepMeters,
+            1e-9,
         )
     }
 

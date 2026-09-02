@@ -36,11 +36,10 @@ object AppConstants {
         const val DEFAULT_IDLE_RADIUS_METERS = 0.8
         const val DEFAULT_MOVING_RADIUS_METERS = 0.3
         const val MAX_RADIUS_METERS = 50.0
-        const val DEFAULT_MOVING_INTERVAL_SECONDS = 10
         const val LONGITUDINAL_JITTER_FRACTION = 0.2
-        const val DEFAULT_IDLE_INTERVAL_SECONDS = 30
-        const val MIN_INTERVAL_SECONDS = 1
-        const val MAX_INTERVAL_SECONDS = 30
+        const val DEFAULT_STEP_METERS_PER_TICK = 1.0
+        const val MIN_STEP_METERS_PER_TICK = 0.1
+        const val MAX_STEP_METERS_PER_TICK = 5.0
         const val ACCURACY_MIN = 2.0f
         const val ACCURACY_MAX = 5.0f
         const val ACCURACY_PERTURBATION_RANGE = 3.0

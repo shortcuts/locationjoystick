@@ -123,8 +123,8 @@ interface PreferencesDataSource {
     /** Gets the GPS jitter radius when moving (meters). */
     fun getJitterMovingRadius(): Flow<Double>
 
-    /** Gets the GPS jitter update interval (seconds). */
-    fun getJitterIntervalSeconds(): Flow<Int>
+    /** Gets the max distance the jitter offset can move per tick (meters). */
+    fun getJitterMaxStepMeters(): Flow<Double>
 
     /** Sets the GPS jitter radius when idle. */
     suspend fun setJitterIdleRadius(meters: Double)
@@ -132,14 +132,8 @@ interface PreferencesDataSource {
     /** Sets the GPS jitter radius when moving. */
     suspend fun setJitterMovingRadius(meters: Double)
 
-    /** Sets the GPS jitter update interval. */
-    suspend fun setJitterIntervalSeconds(seconds: Int)
-
-    /** Gets the GPS jitter update interval when idle (seconds). */
-    fun getJitterIdleIntervalSeconds(): Flow<Int>
-
-    /** Sets the GPS jitter update interval when idle. */
-    suspend fun setJitterIdleIntervalSeconds(seconds: Int)
+    /** Sets the max distance the jitter offset can move per tick. */
+    suspend fun setJitterMaxStepMeters(meters: Double)
 
     /** Gets the timestamp (epoch ms) of the last teleport action. */
     fun getLastTeleportTime(): Flow<Long>
@@ -347,8 +341,7 @@ data class SettingsSnapshot(
     val mapFollowsLocation: Boolean,
     val jitterIdleRadius: Double,
     val jitterMovingRadius: Double,
-    val jitterIntervalSeconds: Int,
-    val jitterIdleIntervalSeconds: Int,
+    val jitterMaxStepMeters: Double,
     val realismBearingHoldIdle: Boolean,
     val realismAltitudeEnabled: Boolean,
     val realismWarmupEnabled: Boolean,
@@ -452,8 +445,7 @@ class AppPreferencesDataSource
             val LAST_LONGITUDE = doublePreferencesKey("last_longitude")
             val JITTER_IDLE_RADIUS_METERS = doublePreferencesKey("jitter_idle_radius_meters")
             val JITTER_MOVING_RADIUS_METERS = doublePreferencesKey("jitter_moving_radius_meters")
-            val JITTER_INTERVAL_SECONDS = intPreferencesKey("jitter_interval_seconds")
-            val JITTER_IDLE_INTERVAL_SECONDS = intPreferencesKey("jitter_idle_interval_seconds")
+            val JITTER_MAX_STEP_METERS = doublePreferencesKey("jitter_max_step_meters")
             val LAST_TELEPORT_TIME_MS = longPreferencesKey("last_teleport_time_ms")
             val MAP_FOLLOWS_LOCATION = booleanPreferencesKey("map_follows_location")
             val REALISM_BEARING_HOLD_IDLE = booleanPreferencesKey("realism_bearing_hold_idle")
@@ -665,20 +657,14 @@ class AppPreferencesDataSource
         override suspend fun setJitterMovingRadius(meters: Double) =
             setPref(Keys.JITTER_MOVING_RADIUS_METERS, meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS))
 
-        override fun getJitterIntervalSeconds(): Flow<Int> =
+        override fun getJitterMaxStepMeters(): Flow<Double> =
             pref(
-                Keys.JITTER_INTERVAL_SECONDS,
-                DEFAULT_JITTER_INTERVAL_SECONDS,
+                Keys.JITTER_MAX_STEP_METERS,
+                DEFAULT_JITTER_MAX_STEP_METERS,
             )
 
-        override suspend fun setJitterIntervalSeconds(seconds: Int) =
-            setPref(Keys.JITTER_INTERVAL_SECONDS, seconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS))
-
-        override fun getJitterIdleIntervalSeconds(): Flow<Int> =
-            pref(Keys.JITTER_IDLE_INTERVAL_SECONDS, DEFAULT_JITTER_IDLE_INTERVAL_SECONDS)
-
-        override suspend fun setJitterIdleIntervalSeconds(seconds: Int) =
-            setPref(Keys.JITTER_IDLE_INTERVAL_SECONDS, seconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS))
+        override suspend fun setJitterMaxStepMeters(meters: Double) =
+            setPref(Keys.JITTER_MAX_STEP_METERS, meters.coerceIn(MIN_JITTER_STEP_METERS, MAX_JITTER_STEP_METERS))
 
         override fun getLastTeleportTime(): Flow<Long> =
             pref(Keys.LAST_TELEPORT_TIME_MS, AppConstants.DataStoreConstants.DEFAULT_LAST_TELEPORT_TIME_MS)
@@ -892,10 +878,8 @@ class AppPreferencesDataSource
                 prefs[Keys.MAP_FOLLOWS_LOCATION] = snapshot.mapFollowsLocation
                 prefs[Keys.JITTER_IDLE_RADIUS_METERS] = snapshot.jitterIdleRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
                 prefs[Keys.JITTER_MOVING_RADIUS_METERS] = snapshot.jitterMovingRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
-                prefs[Keys.JITTER_INTERVAL_SECONDS] =
-                    snapshot.jitterIntervalSeconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS)
-                prefs[Keys.JITTER_IDLE_INTERVAL_SECONDS] =
-                    snapshot.jitterIdleIntervalSeconds.coerceIn(MIN_JITTER_INTERVAL_SECONDS, MAX_JITTER_INTERVAL_SECONDS)
+                prefs[Keys.JITTER_MAX_STEP_METERS] =
+                    snapshot.jitterMaxStepMeters.coerceIn(MIN_JITTER_STEP_METERS, MAX_JITTER_STEP_METERS)
                 prefs[Keys.REALISM_BEARING_HOLD_IDLE] = snapshot.realismBearingHoldIdle
                 prefs[Keys.REALISM_ALTITUDE_ENABLED] = snapshot.realismAltitudeEnabled
                 prefs[Keys.REALISM_WARMUP_ENABLED] = snapshot.realismWarmupEnabled
@@ -987,8 +971,7 @@ class AppPreferencesDataSource
                         mapFollowsLocation = prefs[Keys.MAP_FOLLOWS_LOCATION] ?: true,
                         jitterIdleRadius = prefs[Keys.JITTER_IDLE_RADIUS_METERS] ?: DEFAULT_JITTER_IDLE_RADIUS_METERS,
                         jitterMovingRadius = prefs[Keys.JITTER_MOVING_RADIUS_METERS] ?: DEFAULT_JITTER_MOVING_RADIUS_METERS,
-                        jitterIntervalSeconds = prefs[Keys.JITTER_INTERVAL_SECONDS] ?: DEFAULT_JITTER_INTERVAL_SECONDS,
-                        jitterIdleIntervalSeconds = prefs[Keys.JITTER_IDLE_INTERVAL_SECONDS] ?: DEFAULT_JITTER_IDLE_INTERVAL_SECONDS,
+                        jitterMaxStepMeters = prefs[Keys.JITTER_MAX_STEP_METERS] ?: DEFAULT_JITTER_MAX_STEP_METERS,
                         realismBearingHoldIdle = prefs[Keys.REALISM_BEARING_HOLD_IDLE] ?: true,
                         realismAltitudeEnabled = prefs[Keys.REALISM_ALTITUDE_ENABLED] ?: true,
                         realismWarmupEnabled = prefs[Keys.REALISM_WARMUP_ENABLED] ?: false,
@@ -1061,10 +1044,9 @@ class AppPreferencesDataSource
             const val DEFAULT_JITTER_IDLE_RADIUS_METERS = AppConstants.JitterConstants.DEFAULT_IDLE_RADIUS_METERS
             const val DEFAULT_JITTER_MOVING_RADIUS_METERS = AppConstants.JitterConstants.DEFAULT_MOVING_RADIUS_METERS
             const val MAX_JITTER_RADIUS_METERS = AppConstants.JitterConstants.MAX_RADIUS_METERS
-            const val DEFAULT_JITTER_INTERVAL_SECONDS = AppConstants.JitterConstants.DEFAULT_MOVING_INTERVAL_SECONDS
-            const val DEFAULT_JITTER_IDLE_INTERVAL_SECONDS = AppConstants.JitterConstants.DEFAULT_IDLE_INTERVAL_SECONDS
-            const val MIN_JITTER_INTERVAL_SECONDS = AppConstants.JitterConstants.MIN_INTERVAL_SECONDS
-            const val MAX_JITTER_INTERVAL_SECONDS = AppConstants.JitterConstants.MAX_INTERVAL_SECONDS
+            const val DEFAULT_JITTER_MAX_STEP_METERS = AppConstants.JitterConstants.DEFAULT_STEP_METERS_PER_TICK
+            const val MIN_JITTER_STEP_METERS = AppConstants.JitterConstants.MIN_STEP_METERS_PER_TICK
+            const val MAX_JITTER_STEP_METERS = AppConstants.JitterConstants.MAX_STEP_METERS_PER_TICK
 
             const val DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT = AppConstants.JitterConstants.SPEED_IDLE_VARIATION_PCT_DEFAULT
             const val DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT = AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT

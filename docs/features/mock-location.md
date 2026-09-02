@@ -63,6 +63,19 @@ previously coupled, so switching profiles silently changed idle noise magnitude 
 `IDLE_SPEED_WOBBLE_PROBABILITY` (15%) of idle ticks; the rest report exactly `0.0` m/s, matching real GPS
 (previously every idle tick drew a nonzero speed).
 
+**Position jitter** (`AppSettings.jitterIdleRadiusMeters`/`jitterMovingRadiusMeters`, Settings →
+Location Randomness → "Wobble when still"/"Wobble while moving"): `PositionJitterCoordinator`
+(`:core:location`) owns a persistent offset that walks toward a fresh randomly-chosen target
+inside the configured radius, stepping at most `AppSettings.jitterMaxStepMeters` (Settings →
+Location Randomness → "Max step per tick", default 1.0 m, range 0.1–5.0 m) per tick — the
+reported position drifts continuously around the real anchor instead of sitting exact between
+fires and teleporting to a random point and back (issue #60, replacing the previous
+interval-gated single Gaussian draw). Runs unconditionally every tick — there is no longer an
+"how often" interval setting. While moving, the target disc is squished along the direction of
+travel (`AppConstants.JitterConstants.LONGITUDINAL_JITTER_FRACTION`), same anisotropy as before.
+Mode/radius selection (`resolveJitterStepRequest`, `LocationLoopPolicy.kt`) lives outside
+`buildLocation`, which now just adds the precomputed offset to the anchor.
+
 All realism tuning values in `AppConstants.RealismConstants`.
 
 ## Real Elevation Lookup

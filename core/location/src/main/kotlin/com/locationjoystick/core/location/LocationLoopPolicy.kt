@@ -1,6 +1,8 @@
 package com.locationjoystick.core.location
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.MockLocationState
+import com.locationjoystick.core.model.MockMode
 
 /** Decision for the IDLE/ERROR branch of [MockLocationService.observeLocationState]. */
 internal enum class IdleOrErrorLoopAction {
@@ -108,4 +110,39 @@ internal fun computeWidgetOverlayAction(
         state == MockLocationState.IDLE || state == MockLocationState.ERROR -> WidgetOverlayAction.NO_OP
         hideWidgetOverlay -> WidgetOverlayAction.STOP
         else -> WidgetOverlayAction.START
+    }
+
+/** Which radius/orientation [PositionJitterCoordinator.step] should use for one tick. */
+internal data class JitterStepRequest(
+    val radiusMeters: Double,
+    val bearingDeg: Float,
+    val longitudinalFraction: Double,
+)
+
+/**
+ * Pure decision for which jitter radius/orientation applies this tick, used by
+ * [MockLocationService.captureSnapshot]. TELEPORT and an idle FOLLOWER (mirroring the leader's
+ * placed-target position) use [idleRadiusMeters], isotropically. Every other mode uses
+ * [movingRadiusMeters] — isotropically while stationary, squished along [bearingDeg] while moving
+ * (mirrors [gaussianLatLonOffsetLateral]'s existing anisotropy).
+ */
+internal fun resolveJitterStepRequest(
+    mode: MockMode,
+    speedMs: Float,
+    bearingDeg: Float,
+    idleRadiusMeters: Double,
+    movingRadiusMeters: Double,
+): JitterStepRequest =
+    when {
+        mode == MockMode.TELEPORT || (mode == MockMode.FOLLOWER && speedMs == 0f) ->
+            JitterStepRequest(idleRadiusMeters, bearingDeg = 0f, longitudinalFraction = 1.0)
+
+        speedMs > 0f ->
+            JitterStepRequest(
+                movingRadiusMeters,
+                bearingDeg,
+                AppConstants.JitterConstants.LONGITUDINAL_JITTER_FRACTION,
+            )
+
+        else -> JitterStepRequest(movingRadiusMeters, bearingDeg = 0f, longitudinalFraction = 1.0)
     }

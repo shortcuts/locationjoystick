@@ -155,7 +155,7 @@ class SettingsExportCodecTest {
         assertEquals(original.favoriteLocations[0].position.latitude, parsed.favoriteLocations[0].position.latitude, 0.0001)
         assertEquals(original.jitterIdleRadius, parsed.jitterIdleRadius, 0.001)
         assertEquals(original.jitterMovingRadius, parsed.jitterMovingRadius, 0.001)
-        assertEquals(original.jitterIntervalSeconds, parsed.jitterIntervalSeconds)
+        assertEquals(original.jitterMaxStepMeters, parsed.jitterMaxStepMeters, 0.001)
     }
 
     @Test

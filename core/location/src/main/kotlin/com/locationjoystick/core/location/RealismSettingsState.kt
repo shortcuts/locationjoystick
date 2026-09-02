@@ -22,10 +22,7 @@ internal class RealismSettingsState {
     @Volatile var jitterMovingRadiusMeters: Double = 1.0
         private set
 
-    @Volatile var jitterIntervalSeconds: Int = AppConstants.JitterConstants.DEFAULT_MOVING_INTERVAL_SECONDS
-        private set
-
-    @Volatile var jitterIdleIntervalSeconds: Int = AppConstants.JitterConstants.DEFAULT_IDLE_INTERVAL_SECONDS
+    @Volatile var jitterMaxStepMeters: Double = AppConstants.JitterConstants.DEFAULT_STEP_METERS_PER_TICK
         private set
 
     @Volatile var bearingHoldEnabled: Boolean = AppConstants.RealismConstants.BEARING_HOLD_ON_IDLE_DEFAULT
@@ -72,8 +69,7 @@ internal class RealismSettingsState {
     ) {
         scope.collectInto(settingsRepository.getJitterIdleRadius()) { jitterIdleRadiusMeters = it }
         scope.collectInto(settingsRepository.getJitterMovingRadius()) { jitterMovingRadiusMeters = it }
-        scope.collectInto(settingsRepository.getJitterIntervalSeconds()) { jitterIntervalSeconds = it }
-        scope.collectInto(settingsRepository.getJitterIdleIntervalSeconds()) { jitterIdleIntervalSeconds = it }
+        scope.collectInto(settingsRepository.getJitterMaxStepMeters()) { jitterMaxStepMeters = it }
         scope.collectInto(settingsRepository.getRealismBearingHoldIdle()) { bearingHoldEnabled = it }
         scope.collectInto(settingsRepository.getRealismAltitudeEnabled()) { altitudeEnabled = it }
         scope.collectInto(settingsRepository.getRealismWarmupEnabled()) { warmupEnabled = it }

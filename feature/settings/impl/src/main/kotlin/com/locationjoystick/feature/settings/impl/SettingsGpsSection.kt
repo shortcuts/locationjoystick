@@ -121,27 +121,19 @@ internal fun GpsJitterSection(
             modifier = Modifier.weight(1f),
         )
         JitterInput(
-            value = uiState.jitterIdleIntervalSeconds,
-            onValueChange = { onAction(SettingsAction.SetJitterIdleIntervalSeconds(it)) },
-            label = "How often when still (sec)",
-            modifier = Modifier.weight(1f),
-        )
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        JitterInput(
             value = if (isMph) uiState.jitterMovingRadiusMeters * 3.28084 else uiState.jitterMovingRadiusMeters,
             onValueChange = { onAction(SettingsAction.SetJitterMovingRadius(if (isMph) it / 3.28084 else it)) },
             label = if (isMph) "Wobble while moving (ft)" else "Wobble while moving (m)",
             modifier = Modifier.weight(1f),
         )
-        JitterInput(
-            value = uiState.jitterIntervalSeconds,
-            onValueChange = { onAction(SettingsAction.SetJitterIntervalSeconds(it)) },
-            label = "How often while moving (sec)",
-            modifier = Modifier.weight(1f),
-        )
     }
+    Spacer(modifier = Modifier.height(8.dp))
+    JitterInput(
+        value = uiState.jitterMaxStepMeters,
+        onValueChange = { onAction(SettingsAction.SetJitterMaxStepMeters(it)) },
+        label = "Max step per tick (m)",
+        modifier = Modifier.fillMaxWidth(),
+    )
     Spacer(modifier = Modifier.height(8.dp))
     Text("Speed variation", style = MaterialTheme.typography.labelLarge)
     Spacer(modifier = Modifier.height(4.dp))

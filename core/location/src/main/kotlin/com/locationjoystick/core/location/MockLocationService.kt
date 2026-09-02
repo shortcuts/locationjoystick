@@ -169,13 +169,11 @@ class MockLocationService : Service() {
 
     internal val followerCatchUp = FollowerCatchUpCoordinator()
 
+    private val positionJitter = PositionJitterCoordinator()
+
     @Volatile private var currentSpeedMs: Float = 0.0f
 
     @Volatile private var currentBearing: Float = 0.0f
-
-    @Volatile private var lastJitterTimestampMs: Long = 0L
-
-    @Volatile private var lastIdleJitterTimestampMs: Long = 0L
 
     @Volatile private var providerAdded = false
 
@@ -660,6 +658,7 @@ class MockLocationService : Service() {
         val now = SystemClock.elapsedRealtime()
         currentAltitudeMeters = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS
         altitudeAnchor.reset()
+        positionJitter.reset()
         // Resolves async — a manual override is re-applied instantly anyway via the live observe()
         // collector, and maybeFetchElevation() re-checks the override before every fetch, so the
         // sliver of a window before this completes is harmless.
@@ -678,8 +677,6 @@ class MockLocationService : Service() {
                 minOf(AppConstants.RealismConstants.USED_IN_FIX_MAX + 1, cachedSatelliteCount + 1),
             )
         lastSatelliteUpdateMs = now
-        lastJitterTimestampMs = now
-        lastIdleJitterTimestampMs = now
         locationRepository.setMockMode(MockMode.TELEPORT)
 
         // Setting state to RUNNING triggers observeLocationState(), which calls
@@ -1093,15 +1090,11 @@ class MockLocationService : Service() {
 
     /**
      * Freezes all @Volatile fields into an immutable [LocationSnapshot] to eliminate TOCTOU races
-     * in the tick loop. Also computes [LocationSnapshot.shouldApplyMovingJitter] and refreshes the
-     * slow-churn satellite counts when their interval has elapsed.
+     * in the tick loop. Also steps [positionJitter] and refreshes the slow-churn satellite counts
+     * when their interval has elapsed.
      */
     internal fun captureSnapshot(nowMs: Long): LocationSnapshot {
         val mode = locationRepository.currentMode.value
-        val jitterIntervalMs = realism.jitterIntervalSeconds * 1000L
-        val shouldApplyMovingJitter = (nowMs - lastJitterTimestampMs) >= jitterIntervalMs
-        val idleJitterIntervalMs = realism.jitterIdleIntervalSeconds * 1000L
-        val shouldApplyIdleJitter = (nowMs - lastIdleJitterTimestampMs) >= idleJitterIntervalMs
         val suspendedPhaseSnapshot = suspendedPhase.get()
 
         // Slow satellite churn
@@ -1133,6 +1126,16 @@ class MockLocationService : Service() {
         )
         val speedMs = if (mode == MockMode.FOLLOWER) followerCatchUp.currentSpeedMs() else currentSpeedMs
         val bearing = if (mode == MockMode.FOLLOWER) followerCatchUp.currentBearing() else currentBearing
+        val jitterReq =
+            resolveJitterStepRequest(mode, speedMs, bearing, realism.jitterIdleRadiusMeters, realism.jitterMovingRadiusMeters)
+        val (jitterOffsetNorthM, jitterOffsetEastM) =
+            positionJitter.step(
+                jitterReq.radiusMeters,
+                realism.jitterMaxStepMeters,
+                jitterReq.bearingDeg,
+                jitterReq.longitudinalFraction,
+                Random.Default,
+            )
         return LocationSnapshot(
             latitude = currentPos.latitude,
             longitude = currentPos.longitude,
@@ -1141,10 +1144,8 @@ class MockLocationService : Service() {
             lastNonZeroBearing = lastNonZeroBearing,
             hasEverMoved = hasEverMoved,
             mode = mode,
-            jitterIdleRadiusMeters = realism.jitterIdleRadiusMeters,
-            jitterMovingRadiusMeters = realism.jitterMovingRadiusMeters,
-            shouldApplyMovingJitter = shouldApplyMovingJitter,
-            shouldApplyIdleJitter = shouldApplyIdleJitter,
+            jitterOffsetNorthM = jitterOffsetNorthM,
+            jitterOffsetEastM = jitterOffsetEastM,
             altitudeMeters = currentAltitudeMeters,
             warmupStartMs = warmupStartMs,
             warmupEnabled = realism.warmupEnabled,
@@ -1233,14 +1234,6 @@ class MockLocationService : Service() {
             if (snapshot.speedMs > 0f) {
                 lastNonZeroBearing = snapshot.bearing
                 hasEverMoved = true
-            }
-            if (snapshot.shouldApplyMovingJitter && snapshot.mode != MockMode.TELEPORT) {
-                lastJitterTimestampMs = nowMs
-            }
-            if (snapshot.shouldApplyIdleJitter &&
-                (snapshot.mode == MockMode.TELEPORT || (snapshot.mode == MockMode.FOLLOWER && snapshot.speedMs == 0f))
-            ) {
-                lastIdleJitterTimestampMs = nowMs
             }
             applyToProvider(fix, nowNanos)
             if (shouldPersistLastLocation(lastPersistedLocationMs, nowMs)) {

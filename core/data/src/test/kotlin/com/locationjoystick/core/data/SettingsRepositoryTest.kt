@@ -582,15 +582,15 @@ class SettingsRepositoryTest {
             }
         }
 
-    // getJitterIntervalSeconds / setJitterIntervalSeconds
+    // getJitterMaxStepMeters / setJitterMaxStepMeters
 
     @Test
-    fun `setJitterIntervalSeconds updates value`() =
+    fun `setJitterMaxStepMeters updates value`() =
         runTest {
-            repository.setJitterIntervalSeconds(10)
+            repository.setJitterMaxStepMeters(2.5)
 
-            repository.getJitterIntervalSeconds().test {
-                assertEquals(10, awaitItem())
+            repository.getJitterMaxStepMeters().test {
+                assertEquals(2.5, awaitItem(), 0.001)
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -659,23 +659,21 @@ class SettingsRepositoryTest {
             }
         }
 
-    // getJitterIdleIntervalSeconds / setJitterIdleIntervalSeconds
-
     @Test
-    fun `getJitterIdleIntervalSeconds returns default`() =
+    fun `getJitterMaxStepMeters returns default`() =
         runTest {
-            repository.getJitterIdleIntervalSeconds().test {
-                assertEquals(AppPreferencesDataSource.DEFAULT_JITTER_IDLE_INTERVAL_SECONDS, awaitItem())
+            repository.getJitterMaxStepMeters().test {
+                assertEquals(AppPreferencesDataSource.DEFAULT_JITTER_MAX_STEP_METERS, awaitItem(), 0.001)
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `setJitterIdleIntervalSeconds persists value`() =
+    fun `setJitterMaxStepMeters clamps to allowed range`() =
         runTest {
-            repository.setJitterIdleIntervalSeconds(8)
-            repository.getJitterIdleIntervalSeconds().test {
-                assertEquals(8, awaitItem())
+            repository.setJitterMaxStepMeters(100.0)
+            repository.getJitterMaxStepMeters().test {
+                assertEquals(AppPreferencesDataSource.MAX_JITTER_STEP_METERS, awaitItem(), 0.001)
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -1111,9 +1109,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     val jitterMovingRadiusFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_JITTER_MOVING_RADIUS_METERS)
 
-    val jitterIntervalSecondsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_JITTER_INTERVAL_SECONDS)
-
-    val jitterIdleIntervalSecondsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_JITTER_IDLE_INTERVAL_SECONDS)
+    val jitterMaxStepMetersFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_JITTER_MAX_STEP_METERS)
 
     val lastTeleportTimeFlow = MutableStateFlow(0L)
 
@@ -1224,14 +1220,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override fun getJitterMovingRadius(): Flow<Double> = jitterMovingRadiusFlow
 
-    override fun getJitterIntervalSeconds(): Flow<Int> = jitterIntervalSecondsFlow
-
-    override fun getJitterIdleIntervalSeconds(): Flow<Int> = jitterIdleIntervalSecondsFlow
-
-    override suspend fun setJitterIdleIntervalSeconds(seconds: Int) {
-        jitterIdleIntervalSecondsFlow.value =
-            seconds.coerceIn(AppPreferencesDataSource.MIN_JITTER_INTERVAL_SECONDS, AppPreferencesDataSource.MAX_JITTER_INTERVAL_SECONDS)
-    }
+    override fun getJitterMaxStepMeters(): Flow<Double> = jitterMaxStepMetersFlow
 
     override suspend fun setJitterIdleRadius(meters: Double) {
         jitterIdleRadiusFlow.value = meters.coerceIn(0.0, AppPreferencesDataSource.MAX_JITTER_RADIUS_METERS)
@@ -1241,9 +1230,9 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         jitterMovingRadiusFlow.value = meters.coerceIn(0.0, AppPreferencesDataSource.MAX_JITTER_RADIUS_METERS)
     }
 
-    override suspend fun setJitterIntervalSeconds(seconds: Int) {
-        jitterIntervalSecondsFlow.value =
-            seconds.coerceIn(AppPreferencesDataSource.MIN_JITTER_INTERVAL_SECONDS, AppPreferencesDataSource.MAX_JITTER_INTERVAL_SECONDS)
+    override suspend fun setJitterMaxStepMeters(meters: Double) {
+        jitterMaxStepMetersFlow.value =
+            meters.coerceIn(AppPreferencesDataSource.MIN_JITTER_STEP_METERS, AppPreferencesDataSource.MAX_JITTER_STEP_METERS)
     }
 
     override fun getLastTeleportTime(): Flow<Long> = lastTeleportTimeFlow
@@ -1504,8 +1493,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
                 mapFollowsLocation = true,
                 jitterIdleRadius = AppPreferencesDataSource.DEFAULT_JITTER_IDLE_RADIUS_METERS,
                 jitterMovingRadius = AppPreferencesDataSource.DEFAULT_JITTER_MOVING_RADIUS_METERS,
-                jitterIntervalSeconds = AppPreferencesDataSource.DEFAULT_JITTER_INTERVAL_SECONDS,
-                jitterIdleIntervalSeconds = AppPreferencesDataSource.DEFAULT_JITTER_IDLE_INTERVAL_SECONDS,
+                jitterMaxStepMeters = AppPreferencesDataSource.DEFAULT_JITTER_MAX_STEP_METERS,
                 realismBearingHoldIdle = true,
                 realismAltitudeEnabled = true,
                 realismWarmupEnabled = false,

@@ -192,4 +192,46 @@ class LocationFixBuilderTest {
         val base = AppConstants.LocationConstants.LOCATION_ACCURACY_FINE
         assertEquals(perturbAccuracy(base, Random(99)), perturbAccuracy(base, Random(99)), 0.0f)
     }
+
+    // -------------------------------------------------------------------------
+    // offsetLatLon
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `offsetLatLon with zero offset returns the same point`() {
+        val (lat, lon) = offsetLatLon(48.8566, 2.3522, northM = 0.0, eastM = 0.0)
+        assertEquals(48.8566, lat, 1e-12)
+        assertEquals(2.3522, lon, 1e-12)
+    }
+
+    @Test
+    fun `offsetLatLon north-only offset increases latitude and leaves longitude unchanged`() {
+        val (lat, lon) = offsetLatLon(10.0, 20.0, northM = 100.0, eastM = 0.0)
+        assertTrue("North offset should increase latitude", lat > 10.0)
+        assertEquals(20.0, lon, 1e-9)
+    }
+
+    @Test
+    fun `offsetLatLon east-only offset increases longitude and leaves latitude unchanged`() {
+        val (lat, lon) = offsetLatLon(10.0, 20.0, northM = 0.0, eastM = 100.0)
+        assertEquals(10.0, lat, 1e-9)
+        assertTrue("East offset should increase longitude", lon > 20.0)
+    }
+
+    @Test
+    fun `offsetLatLon matches gaussianLatLonOffsetLateral for the isotropic bearing-0 case`() {
+        // Isotropic (longitudinalFraction = 1.0, bearingDeg = 0) reduces gaussianLatLonOffsetLateral
+        // to a plain north/east Gaussian displacement — offsetLatLon should reproduce it exactly
+        // given the same underlying north/east meters.
+        val lat = 48.8566
+        val lon = 2.3522
+        val (expectedLat, expectedLon) =
+            gaussianLatLonOffsetLateral(lat, lon, radiusMeters = 5.0, bearingDeg = 0f, longitudinalFraction = 1.0, random = Random(3))
+        // Reconstruct the same north/east displacement offsetLatLon would receive for that call.
+        val northM = (expectedLat - lat) * metersPerDeg
+        val eastM = (expectedLon - lon) * metersPerDeg * cos(Math.toRadians(lat))
+        val (actualLat, actualLon) = offsetLatLon(lat, lon, northM, eastM)
+        assertEquals(expectedLat, actualLat, 1e-9)
+        assertEquals(expectedLon, actualLon, 1e-9)
+    }
 }

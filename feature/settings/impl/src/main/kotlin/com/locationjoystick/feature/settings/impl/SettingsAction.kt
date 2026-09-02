@@ -43,12 +43,8 @@ internal sealed class SettingsAction {
         val meters: Double,
     ) : SettingsAction()
 
-    data class SetJitterIntervalSeconds(
-        val seconds: Int,
-    ) : SettingsAction()
-
-    data class SetJitterIdleIntervalSeconds(
-        val seconds: Int,
+    data class SetJitterMaxStepMeters(
+        val meters: Double,
     ) : SettingsAction()
 
     data class SetRealismBearingHoldIdle(

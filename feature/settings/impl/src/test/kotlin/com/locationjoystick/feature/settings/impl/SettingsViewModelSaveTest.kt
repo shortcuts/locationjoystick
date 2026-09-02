@@ -205,8 +205,7 @@ class SettingsViewModelSaveTest {
                         ),
                     jitterIdleRadius = 2.5,
                     jitterMovingRadius = 4.0,
-                    jitterIntervalSeconds = 15,
-                    jitterIdleIntervalSeconds = 45,
+                    jitterMaxStepMeters = 2.0,
                     jitterSpeedIdleVariationPct = 10,
                     jitterSpeedMovingVariationPct = 20,
                     hotLocationsEnabled = false,
@@ -233,8 +232,7 @@ class SettingsViewModelSaveTest {
             assertTrue(snapshot.hideTeleportFeatures)
             assertEquals(2.5, snapshot.jitterIdleRadius, 0.001)
             assertEquals(4.0, snapshot.jitterMovingRadius, 0.001)
-            assertEquals(15, snapshot.jitterIntervalSeconds)
-            assertEquals(45, snapshot.jitterIdleIntervalSeconds)
+            assertEquals(2.0, snapshot.jitterMaxStepMeters, 0.001)
             assertEquals(10, snapshot.jitterSpeedIdleVariationPct)
             assertEquals(20, snapshot.jitterSpeedMovingVariationPct)
             assertFalse(snapshot.hotLocationsEnabled)
@@ -404,8 +402,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
                 mapFollowsLocation = true,
                 jitterIdleRadius = AppPreferencesDataSource.DEFAULT_JITTER_IDLE_RADIUS_METERS,
                 jitterMovingRadius = AppPreferencesDataSource.DEFAULT_JITTER_MOVING_RADIUS_METERS,
-                jitterIntervalSeconds = AppPreferencesDataSource.DEFAULT_JITTER_INTERVAL_SECONDS,
-                jitterIdleIntervalSeconds = AppPreferencesDataSource.DEFAULT_JITTER_IDLE_INTERVAL_SECONDS,
+                jitterMaxStepMeters = AppPreferencesDataSource.DEFAULT_JITTER_MAX_STEP_METERS,
                 realismBearingHoldIdle = true,
                 realismAltitudeEnabled = true,
                 realismWarmupEnabled = false,
@@ -523,17 +520,13 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getJitterMovingRadius(): Flow<Double> = flowOf(AppPreferencesDataSource.DEFAULT_JITTER_MOVING_RADIUS_METERS)
 
-    override fun getJitterIntervalSeconds(): Flow<Int> = flowOf(AppPreferencesDataSource.DEFAULT_JITTER_INTERVAL_SECONDS)
+    override fun getJitterMaxStepMeters(): Flow<Double> = flowOf(AppPreferencesDataSource.DEFAULT_JITTER_MAX_STEP_METERS)
 
     override suspend fun setJitterIdleRadius(meters: Double) = Unit
 
     override suspend fun setJitterMovingRadius(meters: Double) = Unit
 
-    override suspend fun setJitterIntervalSeconds(seconds: Int) = Unit
-
-    override fun getJitterIdleIntervalSeconds(): Flow<Int> = flowOf(AppPreferencesDataSource.DEFAULT_JITTER_IDLE_INTERVAL_SECONDS)
-
-    override suspend fun setJitterIdleIntervalSeconds(seconds: Int) = Unit
+    override suspend fun setJitterMaxStepMeters(meters: Double) = Unit
 
     override fun getLastTeleportTime(): Flow<Long> = flowOf(0L)
 

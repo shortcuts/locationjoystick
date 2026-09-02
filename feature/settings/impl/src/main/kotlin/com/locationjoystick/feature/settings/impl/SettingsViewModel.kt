@@ -108,8 +108,7 @@ class SettingsViewModel
             val mapFollowsLocation: Boolean? = null,
             val jitterIdleRadius: Double? = null,
             val jitterMovingRadius: Double? = null,
-            val jitterIntervalSeconds: Int? = null,
-            val jitterIdleIntervalSeconds: Int? = null,
+            val jitterMaxStepMeters: Double? = null,
             val roamingDefaults: RoamingDefaults? = null,
             val realismBearingHoldIdle: Boolean? = null,
             val realismAltitudeEnabled: Boolean? = null,
@@ -188,8 +187,7 @@ class SettingsViewModel
                     mapFollowsLocation = draftState.mapFollowsLocation ?: snapshot.mapFollowsLocation,
                     jitterIdleRadiusMeters = draftState.jitterIdleRadius ?: snapshot.jitterIdleRadius,
                     jitterMovingRadiusMeters = draftState.jitterMovingRadius ?: snapshot.jitterMovingRadius,
-                    jitterIntervalSeconds = draftState.jitterIntervalSeconds ?: snapshot.jitterIntervalSeconds,
-                    jitterIdleIntervalSeconds = draftState.jitterIdleIntervalSeconds ?: snapshot.jitterIdleIntervalSeconds,
+                    jitterMaxStepMeters = draftState.jitterMaxStepMeters ?: snapshot.jitterMaxStepMeters,
                     realismBearingHoldIdle = draftState.realismBearingHoldIdle ?: snapshot.realismBearingHoldIdle,
                     realismAltitudeEnabled = draftState.realismAltitudeEnabled ?: snapshot.realismAltitudeEnabled,
                     realismWarmupEnabled = draftState.realismWarmupEnabled ?: snapshot.realismWarmupEnabled,
@@ -276,12 +274,8 @@ class SettingsViewModel
             mutableDraft.update { it.copy(jitterMovingRadius = meters) }
         }
 
-        fun setJitterIntervalSeconds(seconds: Int) {
-            mutableDraft.update { it.copy(jitterIntervalSeconds = seconds) }
-        }
-
-        fun setJitterIdleIntervalSeconds(seconds: Int) {
-            mutableDraft.update { it.copy(jitterIdleIntervalSeconds = seconds) }
+        fun setJitterMaxStepMeters(meters: Double) {
+            mutableDraft.update { it.copy(jitterMaxStepMeters = meters) }
         }
 
         fun updateRoamingDefaults(defaults: RoamingDefaults) {
@@ -469,8 +463,7 @@ class SettingsViewModel
                             mapFollowsLocation = state.mapFollowsLocation,
                             jitterIdleRadius = state.jitterIdleRadiusMeters,
                             jitterMovingRadius = state.jitterMovingRadiusMeters,
-                            jitterIntervalSeconds = state.jitterIntervalSeconds,
-                            jitterIdleIntervalSeconds = state.jitterIdleIntervalSeconds,
+                            jitterMaxStepMeters = state.jitterMaxStepMeters,
                             realismBearingHoldIdle = state.realismBearingHoldIdle,
                             realismAltitudeEnabled = state.realismAltitudeEnabled,
                             realismWarmupEnabled = state.realismWarmupEnabled,
@@ -597,8 +590,7 @@ class SettingsViewModel
                 favoriteLocations = favoriteRepository.getFavorites().first(),
                 jitterIdleRadius = state.jitterIdleRadiusMeters,
                 jitterMovingRadius = state.jitterMovingRadiusMeters,
-                jitterIntervalSeconds = state.jitterIntervalSeconds,
-                jitterIdleIntervalSeconds = state.jitterIdleIntervalSeconds,
+                jitterMaxStepMeters = state.jitterMaxStepMeters,
                 jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
                 jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
                 hotLocationsEnabled = state.hotLocationsEnabled,
@@ -779,8 +771,7 @@ class SettingsViewModel
                     enabledSpeedProfileIds = data.settings.enabledSpeedProfileIds,
                     jitterIdleRadius = data.jitterIdleRadius,
                     jitterMovingRadius = data.jitterMovingRadius,
-                    jitterIntervalSeconds = data.jitterIntervalSeconds,
-                    jitterIdleIntervalSeconds = data.jitterIdleIntervalSeconds,
+                    jitterMaxStepMeters = data.jitterMaxStepMeters,
                     realismBearingHoldIdle = data.settings.bearingHoldOnIdle,
                     realismAltitudeEnabled = data.settings.altitudeEnabled,
                     realismWarmupEnabled = data.settings.warmupEnabled,

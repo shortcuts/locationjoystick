@@ -100,19 +100,14 @@
           <td>The largest random offset while you're standing still. 1 to 3 m looks like a real chip drifting slightly in place.</td>
         </tr>
         <tr>
-          <td>Idle interval</td>
-          <td>Stationary</td>
-          <td>How many seconds pass between new offsets while you're still. A shorter interval makes the trace look jitterier.</td>
-        </tr>
-        <tr>
           <td>Moving radius</td>
           <td>Moving</td>
           <td>The largest random offset while moving. Keep it below the idle radius to avoid unnatural-looking jumps.</td>
         </tr>
         <tr>
-          <td>Moving interval</td>
-          <td>Moving</td>
-          <td>How many seconds pass between new offsets while moving.</td>
+          <td>Max step per tick</td>
+          <td>Always</td>
+          <td>How far the jittered position can move in one second. Higher values look like a faster drift; lower values look like a slow wobble.</td>
         </tr>
         <tr>
           <td>Idle speed variation</td>
