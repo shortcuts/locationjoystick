@@ -90,6 +90,7 @@ internal fun MapFloatingView(
     currentPosition: LatLng?,
     initialPosition: LatLng?,
     walkTarget: LatLng?,
+    walkStart: LatLng?,
     routeWaypoints: List<LatLng>?,
     mockMode: MockMode,
     mockLocationState: MockLocationState,
@@ -136,17 +137,12 @@ internal fun MapFloatingView(
     val context = LocalContext.current
     var roamingPreviewWaypoints by remember { mutableStateOf<List<com.locationjoystick.core.model.LatLng>?>(null) }
     var showRoamingSheet by remember { mutableStateOf(false) }
-    var walkStart by remember { mutableStateOf<LatLng?>(null) }
     var pendingTap by remember { mutableStateOf<LatLng?>(null) }
     val quickWalkState = rememberUpdatedState(quickWalk)
     val onWalkToState = rememberUpdatedState(onWalkTo)
     var showSearch by remember { mutableStateOf(false) }
     var showFavoritesPicker by remember { mutableStateOf(false) }
     val isFollowingCamera = remember { mutableStateOf(true) }
-
-    LaunchedEffect(walkTarget) {
-        walkStart = if (walkTarget != null) currentPosition else null
-    }
 
     val mapView =
         remember(context) {
