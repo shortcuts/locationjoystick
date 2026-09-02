@@ -27,6 +27,28 @@
     <h1 id="troubleshooting">Troubleshooting</h1>
     <p>Common setup problems and how to fix them.</p>
 
+    <h2 id="game-blocks-location">A game shows a location or GPS error and won't let you play</h2>
+    <p>
+      Some GPS-based games actively detect apps like locationjoystick and block play when they find one, showing
+      their own red location or GPS error on screen. This is not a problem with locationjoystick — it's a
+      restriction built into that specific game.
+    </p>
+    <p>
+      These games only allow a spoofing app to work if your phone has been modified at a deeper level than
+      locationjoystick touches: gaining "root" access (full administrator control over the phone) and applying a
+      technique the modding community calls a Smali Patcher or LSPosed setup. locationjoystick doesn't perform
+      this modification and doesn't need it for anything it does on its own — it's a separate, more advanced step
+      some players take specifically to satisfy that one game's checks.
+    </p>
+    <p>
+      If you don't play a game like this, you can ignore this section entirely — everything else in
+      locationjoystick works normally without root. If you do, and want to learn more about the root and
+      Smali Patcher/LSPosed approach, see this
+      <a href="https://www.reddit.com/r/PoGoAndroidSpoofing/s/W1qonlYRuU" target="_blank" rel="noopener">community thread</a>
+      for more context. Modifying your phone this way carries its own risks and is outside the scope of
+      locationjoystick's support.
+    </p>
+
     <h2 id="allow-restricted-settings">Allow restricted settings (Android 12+ installed from a file)</h2>
     <p>
       On Android 12 and later, apps installed directly from a file (like the download from GitHub) are blocked
