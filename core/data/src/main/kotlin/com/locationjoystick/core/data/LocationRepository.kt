@@ -27,6 +27,7 @@ data class DebugStats(
     val altitudeMeters: Double,
     val accuracyMeters: Float,
     val bearing: Float,
+    val hasBearing: Boolean,
     val tickIntervalMs: Long,
 )
 

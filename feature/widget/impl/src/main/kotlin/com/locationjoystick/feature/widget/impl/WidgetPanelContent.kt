@@ -354,6 +354,8 @@ internal fun WidgetPanel(
     }
 }
 
+internal fun formatBearingText(stats: DebugStats): String = if (stats.hasBearing) "%.0f°".format(stats.bearing) else "—"
+
 @Composable
 private fun DebugStatsPanel(stats: DebugStats) {
     Column(
@@ -371,7 +373,7 @@ private fun DebugStatsPanel(stats: DebugStats) {
             style = MaterialTheme.typography.labelSmall,
         )
         Text(
-            "acc %.1f m · bearing %.0f° · %.1f Hz".format(stats.accuracyMeters, stats.bearing, tickHz),
+            "acc %.1f m · bearing %s · %.1f Hz".format(stats.accuracyMeters, formatBearingText(stats), tickHz),
             color = LjText,
             style = MaterialTheme.typography.labelSmall,
         )

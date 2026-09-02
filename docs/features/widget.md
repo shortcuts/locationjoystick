@@ -126,6 +126,9 @@ expanded: coordinates, speed (m/s), altitude, accuracy, bearing, and tick rate (
 - **Display gate**: `FloatingWidgetService` only passes the live `DebugStats` through to
   `WidgetPanel` when the setting is enabled — the collector itself always runs, matching every
   other reactive widget-panel toggle.
+- **Unset bearing**: `DebugStats.hasBearing` mirrors `LocationFix.hasBearing` (see
+  @docs/features/mock-location.md, "No bearing before first move") — before the first tick with
+  motion in the session, the bearing segment reads "—" instead of a misleading "0°" (issue #58).
 
 ## Anti-Patterns to Avoid
 

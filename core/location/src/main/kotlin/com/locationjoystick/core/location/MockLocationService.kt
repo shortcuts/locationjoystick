@@ -1226,6 +1226,7 @@ class MockLocationService : Service() {
                     altitudeMeters = fix.altitudeMeters,
                     accuracyMeters = fix.accuracyMeters,
                     bearing = fix.bearing,
+                    hasBearing = fix.hasBearing,
                     tickIntervalMs = tickIntervalMs,
                 ),
             )
