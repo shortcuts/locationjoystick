@@ -45,4 +45,4 @@ Key files: `:core:data/FavoriteRepository.kt` (list + upsert/remove logic), `:co
 
 **Categories**: each `HotLocation` entry carries `country` and `city` fields, used both for the grouped picker UI in Settings and — since this feature — for the `FavoriteLocation.category` field once added as a favorite (set to `country`, e.g. "Pago Pago" gets category "American Samoa").
 
-The 48 locations live in `FavoriteRepository.HOT_LOCATIONS` as a `List<HotLocation>` (`name`, `lat`, `lon`, `country`, `city`).
+The 62 locations live in `FavoriteRepository.HOT_LOCATIONS` as a `List<HotLocation>` (`name`, `lat`, `lon`, `country`, `city`).
