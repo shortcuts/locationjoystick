@@ -17,6 +17,7 @@ class FormatBearingTextTest {
         bearing = bearing,
         hasBearing = hasBearing,
         tickIntervalMs = 1000L,
+        jitterRadiusMeters = 0.0,
     )
 
     @Test

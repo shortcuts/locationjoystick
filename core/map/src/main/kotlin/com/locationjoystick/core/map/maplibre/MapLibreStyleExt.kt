@@ -6,6 +6,7 @@ import com.locationjoystick.core.designsystem.LjMapColors
 import com.locationjoystick.core.map.geojson.emptyGeoJson
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.FillLayer
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.layers.RasterLayer
@@ -42,6 +43,7 @@ data class LocationLayerSources(
     val endpointsSource: GeoJsonSource,
     val searchMarkerSource: GeoJsonSource? = null,
     val pendingTapSource: GeoJsonSource? = null,
+    val jitterRadiusSource: GeoJsonSource? = null,
 )
 
 /**
@@ -70,6 +72,24 @@ fun Style.addLocationLayers(
         ),
     )
     addLayer(RasterLayer(osmLayerId, osmSourceId))
+
+    val jitterRadiusSrc = GeoJsonSource(MapLibreSourceIds.JITTER_RADIUS, emptyGeoJson())
+    addSource(jitterRadiusSrc)
+    addLayer(
+        FillLayer(MapLibreLayerIds.JITTER_RADIUS_FILL, MapLibreSourceIds.JITTER_RADIUS)
+            .withProperties(
+                PropertyFactory.fillColor(LjMapColors.PositionBlue.toArgb()),
+                PropertyFactory.fillOpacity(AppConstants.MapConstants.JITTER_RADIUS_FILL_OPACITY),
+            ),
+    )
+    addLayer(
+        LineLayer(MapLibreLayerIds.JITTER_RADIUS_OUTLINE, MapLibreSourceIds.JITTER_RADIUS)
+            .withProperties(
+                PropertyFactory.lineColor(LjMapColors.PositionBlue.toArgb()),
+                PropertyFactory.lineOpacity(AppConstants.MapConstants.JITTER_RADIUS_OUTLINE_OPACITY),
+                PropertyFactory.lineWidth(AppConstants.MapConstants.JITTER_RADIUS_OUTLINE_WIDTH),
+            ),
+    )
 
     val tracedSrc = GeoJsonSource(MapLibreSourceIds.TRACE_TRACED, emptyGeoJson())
     addSource(tracedSrc)
@@ -151,6 +171,7 @@ fun Style.addLocationLayers(
         endpointsSource = endpointsSrc,
         searchMarkerSource = searchMarkerSrc,
         pendingTapSource = pendingTapSrc,
+        jitterRadiusSource = jitterRadiusSrc,
     )
 }
 

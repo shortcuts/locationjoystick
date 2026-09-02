@@ -20,7 +20,7 @@ Here's everything included:
 
 | Feature | Description |
 |---------|-------------|
-| **Map** | OpenStreetMap via MapLibre (GPU-accelerated, offline-capable). Tap to walk or teleport. Spoofed position shown as live marker. |
+| **Map** | OpenStreetMap via MapLibre (GPU-accelerated, offline-capable). Tap to walk or teleport. Spoofed position shown as live marker. Optional translucent circle shows the current position-jitter radius when Debug stats is enabled. |
 | **Last Position** | Restores last spoofed location on app restart. No manual re-entry needed. |
 | **Joystick** | Floating overlay stays on top of any app. Drag to move in any direction at chosen speed. Draggable anywhere on screen. |
 | **Speed Profiles** | Slow Walk / Walk / Run / Bike / Drive presets, all user-editable. Anti-cheat warning when speed exceeds threshold. Accessible from floating widget. |

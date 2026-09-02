@@ -165,6 +165,10 @@ object AppConstants {
         const val POSITION_DOT_RADIUS = 12f
         const val ROUTE_POINT_RADIUS = 8f
         const val POINT_STROKE_WIDTH = 2f
+        const val JITTER_RADIUS_CIRCLE_SEGMENTS = 32
+        const val JITTER_RADIUS_FILL_OPACITY = 0.15f
+        const val JITTER_RADIUS_OUTLINE_OPACITY = 0.6f
+        const val JITTER_RADIUS_OUTLINE_WIDTH = 1.5f
     }
 
     object NominatimConstants {

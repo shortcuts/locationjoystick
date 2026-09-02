@@ -128,6 +128,8 @@ class MapViewModel
                                 isRoaming = shared.isRoaming,
                                 isRoamingPaused = shared.isRoamingPaused,
                                 speedUnit = shared.speedUnit,
+                                jitterRadiusMeters = shared.jitterRadiusMeters,
+                                debugStatsEnabled = shared.debugStatsEnabled,
                             )
                         }
                     }

@@ -21,6 +21,7 @@ object MapLibreSourceIds {
     val EPHEMERAL_ROUTE: String = AppConstants.MapConstants.EPHEMERAL_ROUTE_SOURCE_ID
     val EPHEMERAL_ENDPOINTS: String = AppConstants.MapConstants.EPHEMERAL_ENDPOINTS_SOURCE_ID
     const val PENDING_TAP = "pending-tap-source"
+    const val JITTER_RADIUS = "jitter-radius-source"
 }
 
 /**
@@ -41,4 +42,6 @@ object MapLibreLayerIds {
     val EPHEMERAL_ROUTE: String = AppConstants.MapConstants.EPHEMERAL_ROUTE_LAYER_ID
     val EPHEMERAL_ENDPOINTS: String = AppConstants.MapConstants.EPHEMERAL_ENDPOINTS_LAYER_ID
     const val PENDING_TAP = "pending-tap-layer"
+    const val JITTER_RADIUS_FILL = "jitter-radius-fill-layer"
+    const val JITTER_RADIUS_OUTLINE = "jitter-radius-outline-layer"
 }

@@ -74,7 +74,9 @@ interval-gated single Gaussian draw). Runs unconditionally every tick — there 
 "how often" interval setting. While moving, the target disc is squished along the direction of
 travel (`AppConstants.JitterConstants.LONGITUDINAL_JITTER_FRACTION`), same anisotropy as before.
 Mode/radius selection (`resolveJitterStepRequest`, `LocationLoopPolicy.kt`) lives outside
-`buildLocation`, which now just adds the precomputed offset to the anchor.
+`buildLocation`, which now just adds the precomputed offset to the anchor. The resolved radius
+is also published every tick via `DebugStats.jitterRadiusMeters` for the map's jitter-radius
+overlay (@docs/features/map.md).
 
 All realism tuning values in `AppConstants.RealismConstants`.
 

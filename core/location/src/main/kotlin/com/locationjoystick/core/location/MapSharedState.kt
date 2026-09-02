@@ -35,6 +35,8 @@ data class MapSharedState(
     val speedUnit: SpeedUnit = SpeedUnit.KMH,
     val recentSearches: List<RecentSearch> = emptyList(),
     val roamingDefaults: RoamingDefaults = RoamingDefaults(),
+    val jitterRadiusMeters: Double = 0.0,
+    val debugStatsEnabled: Boolean = false,
 )
 
 val MapSharedState.walkTarget: LatLng? get() = (walkMode as? WalkMode.Walking)?.target
@@ -51,5 +53,5 @@ fun MapSharedState.nonPositionKey(): Any =
             Triple(walkMode, routeTrace, routes) to
             Triple(favorites, favoriteCooldownStates, isRoaming),
         Triple(isRoamingPaused, speedUnit, recentSearches),
-        roamingDefaults,
+        Triple(roamingDefaults, jitterRadiusMeters, debugStatsEnabled),
     )

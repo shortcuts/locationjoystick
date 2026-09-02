@@ -100,6 +100,7 @@ class MapController
             observeEphemeralWaypoints()
             observeRoaming()
             observeSpeedUnit()
+            observeJitterRadiusOverlay()
             observeFavoriteCooldowns()
             observeRecentSearches()
             observeRoamingDefaults()
@@ -198,6 +199,19 @@ class MapController
                 settingsRepository.getSpeedUnit().collect { unit ->
                     _state.update { it.copy(speedUnit = unit) }
                 }
+            }
+        }
+
+        private fun observeJitterRadiusOverlay() {
+            appScope.launch {
+                combine(
+                    locationRepository.debugStats,
+                    settingsRepository.getDebugStatsEnabled(),
+                ) { stats, enabled -> (stats?.jitterRadiusMeters ?: 0.0) to enabled }
+                    .distinctUntilChanged()
+                    .collect { (radius, enabled) ->
+                        _state.update { it.copy(jitterRadiusMeters = radius, debugStatsEnabled = enabled) }
+                    }
             }
         }
 

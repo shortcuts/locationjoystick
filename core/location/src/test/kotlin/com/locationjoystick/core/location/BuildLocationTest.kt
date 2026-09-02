@@ -31,6 +31,7 @@ class BuildLocationTest {
         cachedUsedInFixCount: Int = 8,
         baseAltitudeMeters: Double = AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS,
         altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
+        jitterRadiusMeters: Double = 0.0,
     ) = LocationSnapshot(
         latitude = 48.8566,
         longitude = 2.3522,
@@ -55,6 +56,7 @@ class BuildLocationTest {
         cachedUsedInFixCount = cachedUsedInFixCount,
         baseAltitudeMeters = baseAltitudeMeters,
         altitudeJitterRadiusMeters = altitudeJitterRadiusMeters,
+        jitterRadiusMeters = jitterRadiusMeters,
     )
 
     @Test

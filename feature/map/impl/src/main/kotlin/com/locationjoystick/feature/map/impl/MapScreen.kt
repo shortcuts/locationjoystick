@@ -41,6 +41,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.location.rememberSpoofToggleState
+import com.locationjoystick.core.map.geojson.buildCirclePolygonGeoJson
 import com.locationjoystick.core.map.geojson.buildLineGeoJson
 import com.locationjoystick.core.map.geojson.buildMarkerGeoJson
 import com.locationjoystick.core.map.geojson.buildPointsGeoJson
@@ -172,6 +173,7 @@ internal fun MapScreen(
     val ephemeralEndpointsSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val searchMarkerSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val pendingTapMarkerSource = remember { mutableStateOf<GeoJsonSource?>(null) }
+    val jitterRadiusSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val showSearch = remember { mutableStateOf(false) }
     val isFollowingCamera = remember { mutableStateOf(true) }
     val spoofToggle = rememberSpoofToggleState()
@@ -264,6 +266,7 @@ internal fun MapScreen(
                                 endpointsSource.value = layers.endpointsSource
                                 searchMarkerSource.value = layers.searchMarkerSource
                                 pendingTapMarkerSource.value = layers.pendingTapSource
+                                jitterRadiusSource.value = layers.jitterRadiusSource
                                 val ephemeralSrcs = style.addEphemeralRouteLayers()
                                 ephemeralRouteSource.value = ephemeralSrcs.routeSource
                                 ephemeralEndpointsSource.value = ephemeralSrcs.endpointsSource
@@ -313,6 +316,14 @@ internal fun MapScreen(
                     val position = uiState.currentPosition
 
                     src.setGeoJson(buildPositionGeoJson(position))
+
+                    jitterRadiusSource.value?.setGeoJson(
+                        if (uiState.showJitterRadiusOverlay && position != null) {
+                            buildCirclePolygonGeoJson(position, uiState.jitterRadiusMeters)
+                        } else {
+                            emptyGeoJson()
+                        },
+                    )
 
                     pendingTapMarkerSource.value?.setGeoJson(buildPositionGeoJson(uiState.pendingTapPosition))
 

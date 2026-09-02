@@ -29,6 +29,7 @@ data class DebugStats(
     val bearing: Float,
     val hasBearing: Boolean,
     val tickIntervalMs: Long,
+    val jitterRadiusMeters: Double,
 )
 
 /**

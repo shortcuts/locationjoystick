@@ -43,6 +43,8 @@ data class MapUiState(
     val isPendingTapSheetOpen: Boolean = false,
     val hideTeleportFeatures: Boolean = false,
     val showRouteJumpButtons: Boolean = false,
+    val jitterRadiusMeters: Double = 0.0,
+    val debugStatsEnabled: Boolean = false,
 )
 
 // Convenience accessors
@@ -57,3 +59,6 @@ val MapUiState.isSpoofing: Boolean
 
 val MapUiState.isRoutePaused: Boolean
     get() = isRouteReplay && mockLocationState == MockLocationState.PAUSED
+
+val MapUiState.showJitterRadiusOverlay: Boolean
+    get() = debugStatsEnabled && currentPosition != null && jitterRadiusMeters > 0.0

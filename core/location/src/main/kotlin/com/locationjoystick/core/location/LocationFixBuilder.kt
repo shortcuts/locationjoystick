@@ -45,6 +45,10 @@ import kotlin.random.Random
  * @property baseAltitudeMeters The clamp-center anchor for the altitude Gaussian walk — the
  *   resolved default/fetched/overridden base altitude, not the hardcoded constant.
  * @property altitudeJitterRadiusMeters Gaussian sigma for the altitude random walk (user-configurable).
+ * @property jitterRadiusMeters The resolved jitter radius for this tick (idle or moving, from
+ *   `resolveJitterStepRequest`) — carried through only for `DebugStats` publishing; `buildLocation`
+ *   does not read it directly (it reads the already-applied `jitterOffsetNorthM`/`jitterOffsetEastM`
+ *   instead).
  */
 internal data class LocationSnapshot(
     val latitude: Double,
@@ -70,6 +74,7 @@ internal data class LocationSnapshot(
     val cachedUsedInFixCount: Int,
     val baseAltitudeMeters: Double,
     val altitudeJitterRadiusMeters: Double,
+    val jitterRadiusMeters: Double,
 )
 
 /**

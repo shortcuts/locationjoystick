@@ -1,10 +1,12 @@
 package com.locationjoystick.core.map.geojson
 
+import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.model.LatLng
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.abs
 
 class GeoJsonUtilsTest {
     private val empty = """{"type":"FeatureCollection","features":[]}"""
@@ -212,5 +214,52 @@ class GeoJsonUtilsTest {
         // Closest is index 2 (lon 20). Traced = wp0, wp1, wp2, current; must include wp2 not wp3.
         assertTrue(traced.contains("""[20.0,0.0]"""))
         assertFalse(traced.contains("""[30.0,0.0]"""))
+    }
+
+    // -------------------------------------------------------------------------
+    // buildCirclePolygonGeoJson
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `buildCirclePolygonGeoJson with zero radius returns empty`() {
+        assertEquals(empty, buildCirclePolygonGeoJson(LatLng(48.8566, 2.3522), 0.0))
+    }
+
+    @Test
+    fun `buildCirclePolygonGeoJson with negative radius returns empty`() {
+        assertEquals(empty, buildCirclePolygonGeoJson(LatLng(48.8566, 2.3522), -5.0))
+    }
+
+    @Test
+    fun `buildCirclePolygonGeoJson produces a closed ring`() {
+        val result = buildCirclePolygonGeoJson(LatLng(48.8566, 2.3522), 50.0)
+        assertTrue(result.contains(""""type":"Polygon""""))
+        val pairs = extractCoordinatePairs(result)
+        val (firstLon, firstLat) = pairs.first()
+        val (lastLon, lastLat) = pairs.last()
+        assertTrue(abs(firstLon - lastLon) < 1e-6)
+        assertTrue(abs(firstLat - lastLat) < 1e-6)
+    }
+
+    @Test
+    fun `buildCirclePolygonGeoJson points sit at the requested radius`() {
+        val center = LatLng(48.8566, 2.3522)
+        val radiusMeters = 50.0
+        val result = buildCirclePolygonGeoJson(center, radiusMeters)
+        val pairs = extractCoordinatePairs(result)
+        assertTrue(pairs.isNotEmpty())
+        pairs.forEach { (lon, lat) ->
+            val distance = haversineDistance(center.latitude, center.longitude, lat, lon)
+            assertTrue(
+                "expected point at $lat,$lon to be ~$radiusMeters m away, was $distance",
+                abs(distance - radiusMeters) < 0.5,
+            )
+        }
+    }
+
+    private fun extractCoordinatePairs(geoJson: String): List<Pair<Double, Double>> {
+        return Regex("""\[(-?[\d.]+),(-?[\d.]+)]""").findAll(geoJson).map {
+            it.groupValues[1].toDouble() to it.groupValues[2].toDouble()
+        }.toList()
     }
 }

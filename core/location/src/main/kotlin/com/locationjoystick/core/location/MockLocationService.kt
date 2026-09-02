@@ -1160,6 +1160,7 @@ class MockLocationService : Service() {
             cachedUsedInFixCount = cachedUsedInFixCount,
             baseAltitudeMeters = newBaseAltitudeMeters,
             altitudeJitterRadiusMeters = realism.altitudeJitterRadiusMeters,
+            jitterRadiusMeters = jitterReq.radiusMeters,
         )
     }
 
@@ -1229,6 +1230,7 @@ class MockLocationService : Service() {
                     bearing = fix.bearing,
                     hasBearing = fix.hasBearing,
                     tickIntervalMs = tickIntervalMs,
+                    jitterRadiusMeters = snapshot.jitterRadiusMeters,
                 ),
             )
             if (snapshot.speedMs > 0f) {

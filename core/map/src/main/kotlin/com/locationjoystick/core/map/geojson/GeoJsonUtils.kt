@@ -1,5 +1,7 @@
 package com.locationjoystick.core.map.geojson
 
+import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.model.LatLng
 
@@ -77,6 +79,28 @@ fun buildSegmentsGeoJson(segments: List<List<LatLng>>): String {
             """{"type":"Feature","geometry":{"type":"LineString","coordinates":$coordinates},"properties":{}}"""
         }
     return """{"type":"FeatureCollection","features":[${features.joinToString(",")}]}"""
+}
+
+/**
+ * Builds a GeoJSON Polygon approximating a circle of [radiusMeters] around
+ * [center], using [segments] points on the perimeter (real-world meters via
+ * [advancePosition], not screen pixels — see docs/features/map.md, "Jitter
+ * Radius Overlay"). Returns [emptyGeoJson] when [radiusMeters] is not positive.
+ */
+fun buildCirclePolygonGeoJson(
+    center: LatLng,
+    radiusMeters: Double,
+    segments: Int = AppConstants.MapConstants.JITTER_RADIUS_CIRCLE_SEGMENTS,
+): String {
+    if (radiusMeters <= 0.0) return emptyGeoJson()
+    val ring =
+        (0..segments).joinToString(",") { i ->
+            val bearing = 360.0 * i / segments
+            val (lat, lon) = advancePosition(center.latitude, center.longitude, bearing, radiusMeters)
+            "[$lon,$lat]"
+        }
+    val feature = """{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[$ring]]},"properties":{}}"""
+    return """{"type":"FeatureCollection","features":[$feature]}"""
 }
 
 fun buildWaypointsGeoJson(waypoints: List<LatLng>): String {
