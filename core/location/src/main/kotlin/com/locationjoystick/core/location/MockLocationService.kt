@@ -1181,7 +1181,7 @@ class MockLocationService : Service() {
                 time = System.currentTimeMillis()
                 elapsedRealtimeNanos = nowNanos
                 verticalAccuracyMeters = fix.verticalAccuracyMeters
-                bearingAccuracyDegrees = fix.bearingAccuracyDegrees
+                if (fix.hasBearing) bearingAccuracyDegrees = fix.bearingAccuracyDegrees
                 speedAccuracyMetersPerSecond = fix.speedAccuracyMps
                 if (fix.satelliteCount != null && fix.usedInFixCount != null) {
                     val extras = android.os.Bundle()
