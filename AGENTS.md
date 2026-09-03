@@ -41,7 +41,7 @@ Work is NOT complete until affected docs are updated. These files must stay in s
 | `docs/features/export-import.md` | Any change to `ExportData` fields or import/export scope |
 | `README.md` — feature table | Adding or removing a user-visible feature |
 | `docs/wiki/<feature>.html` | Adding or changing any user-visible feature |
-| `docs/wiki/changelog.html` | Any release with user-visible changes |
+| `docs/wiki/changelog.html` + `docs/wiki/changelog/<version>.json` (@docs/features/whats-new.md) | Any release with user-visible changes — write both together: the HTML is the human-readable full changelog, the JSON is the in-app What's New popup's only content source (fetched at runtime, no app code to keep in sync) |
 
 Rules:
 - New feature → create `docs/features/<feature>.md` AND add row to AGENTS.md's Feature Specifications table AND README.md's feature table.
@@ -116,6 +116,7 @@ Rules:
 | Tap to Walk | @docs/features/tap-to-walk.md |
 | Theme | @docs/features/theme.md |
 | Hide Teleport Features | @docs/features/hide-teleport.md |
+| What's New Popup | @docs/features/whats-new.md |
 
 ---
 

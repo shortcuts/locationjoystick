@@ -508,6 +508,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setThemeMode(mode: String) = Unit
 
+    override fun getWhatsNewLastSeenVersion(): Flow<String> = flowOf("")
+
+    override suspend fun setWhatsNewLastSeenVersion(version: String) = Unit
+
     override fun getRememberLastLocation(): Flow<Boolean> = flowOf(false)
 
     override suspend fun setRememberLastLocation(enabled: Boolean) = Unit

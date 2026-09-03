@@ -1101,6 +1101,8 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     val themeModeFlow = MutableStateFlow("DARK")
 
+    val whatsNewLastSeenVersionFlow = MutableStateFlow("")
+
     val rememberLastLocationFlow = MutableStateFlow(false)
 
     val lastLocationFlow = MutableStateFlow<LatLng?>(null)
@@ -1202,6 +1204,12 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setThemeMode(mode: String) {
         themeModeFlow.value = mode
+    }
+
+    override fun getWhatsNewLastSeenVersion(): Flow<String> = whatsNewLastSeenVersionFlow
+
+    override suspend fun setWhatsNewLastSeenVersion(version: String) {
+        whatsNewLastSeenVersionFlow.value = version
     }
 
     override fun getRememberLastLocation(): Flow<Boolean> = rememberLastLocationFlow

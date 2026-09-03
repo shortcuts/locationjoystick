@@ -163,6 +163,10 @@ class SettingsRepository
                 }
             }
 
+        fun getWhatsNewLastSeenVersion(): Flow<String> = dataSource.getWhatsNewLastSeenVersion()
+
+        suspend fun setWhatsNewLastSeenVersion(version: String) = dataSource.setWhatsNewLastSeenVersion(version)
+
         fun getRememberLastLocation(): Flow<Boolean> = dataSource.getRememberLastLocation()
 
         suspend fun setRememberLastLocation(enabled: Boolean) = dataSource.setRememberLastLocation(enabled)

@@ -105,6 +105,12 @@ interface PreferencesDataSource {
     /** Sets the theme mode preference. */
     suspend fun setThemeMode(mode: String)
 
+    /** Gets the app version the user last saw the What's New popup for. */
+    fun getWhatsNewLastSeenVersion(): Flow<String>
+
+    /** Sets the app version the user last saw the What's New popup for. */
+    suspend fun setWhatsNewLastSeenVersion(version: String)
+
     /** Gets whether to remember the last spoofed location. */
     fun getRememberLastLocation(): Flow<Boolean>
 
@@ -440,6 +446,7 @@ class AppPreferencesDataSource
             val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
             val SPEED_UNIT = stringPreferencesKey("speed_unit")
             val THEME_MODE = stringPreferencesKey("theme_mode")
+            val WHATS_NEW_LAST_SEEN_VERSION = stringPreferencesKey("whats_new_last_seen_version")
             val REMEMBER_LAST_LOCATION = booleanPreferencesKey("remember_last_location")
             val LAST_LATITUDE = doublePreferencesKey("last_latitude")
             val LAST_LONGITUDE = doublePreferencesKey("last_longitude")
@@ -611,6 +618,14 @@ class AppPreferencesDataSource
             )
 
         override suspend fun setThemeMode(mode: String) = setPref(Keys.THEME_MODE, mode)
+
+        override fun getWhatsNewLastSeenVersion(): Flow<String> =
+            pref(
+                Keys.WHATS_NEW_LAST_SEEN_VERSION,
+                AppConstants.DataStoreConstants.DEFAULT_WHATS_NEW_LAST_SEEN_VERSION,
+            )
+
+        override suspend fun setWhatsNewLastSeenVersion(version: String) = setPref(Keys.WHATS_NEW_LAST_SEEN_VERSION, version)
 
         override fun getRememberLastLocation(): Flow<Boolean> =
             pref(Keys.REMEMBER_LAST_LOCATION, AppConstants.DataStoreConstants.DEFAULT_REMEMBER_LAST_LOCATION)

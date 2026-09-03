@@ -274,6 +274,7 @@ object AppConstants {
         const val DEFAULT_REMEMBER_LAST_LOCATION = true
         const val DEFAULT_LAST_TELEPORT_TIME_MS = 0L
         const val DEFAULT_THEME_MODE = "DARK"
+        const val DEFAULT_WHATS_NEW_LAST_SEEN_VERSION = ""
         const val KEY_GROUP_ROLE = "group_role"
         const val KEY_GROUP_ID = "group_id"
         const val KEY_GROUP_LEADER_HOST = "group_leader_host"
@@ -332,12 +333,27 @@ object AppConstants {
         const val GITHUB_ISSUES_URL = "https://github.com/shortcuts/locationjoystick/issues/new?template=bug_report.yml"
         const val DOCS_URL = "https://shortcuts.github.io/locationjoystick/"
         const val TROUBLESHOOTING_URL = "https://shortcuts.github.io/locationjoystick/troubleshooting.html"
+        const val CHANGELOG_URL = "https://shortcuts.github.io/locationjoystick/changelog.html"
         const val DEEP_LINK_HOST = "locationjoystick.shrtcts.fr"
 
         fun buildDeepLink(
             lat: Double,
             lon: Double,
         ) = "https://$DEEP_LINK_HOST/?lat=$lat&lon=$lon"
+    }
+
+    /**
+     * Curated "what's new" highlights for the current [AppInfo.VERSION_NAME], shown in the
+     * in-app What's New popup (see docs/features/whats-new.md). Update alongside every release
+     * that has user-visible changes — mirrors the curation already done for docs/wiki/changelog.html.
+     */
+    object WhatsNewConstants {
+        // Per-version JSON, authored alongside docs/wiki/changelog.html — see docs/features/whats-new.md.
+        const val BASE_URL = "https://shortcuts.github.io/locationjoystick/changelog/"
+        const val CONNECT_TIMEOUT_MS = 5000
+        const val READ_TIMEOUT_MS = 5000
+
+        fun buildUrl(version: String) = "$BASE_URL$version.json"
     }
 
     object AnimationConstants {

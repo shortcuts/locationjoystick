@@ -1,0 +1,8 @@
+{
+  "version": "0.18.2",
+  "highlights": [
+    "Bearing now scales with your speed instead of using a fixed accuracy value.",
+    "Idle speed wobble no longer follows the active speed profile.",
+    "Altitude jitter is sampled fresh each tick instead of drifting as a random walk."
+  ]
+}

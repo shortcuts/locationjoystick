@@ -39,6 +39,7 @@ Here's everything included:
 | **Deep Links & Location Sharing** | Share any coordinate or saved favorite as a link. Anyone who taps it on Android with the app installed lands directly on that spot with a confirm sheet (teleport / walk / walk via roads). Also registers as a handler for Google Maps and `geo:` links from other apps. |
 | **Theme** | Light and dark color themes for readability across lighting conditions. Toggle in Settings → Appearance. |
 | **Hide Teleport Features** | Optional toggle (off by default) that hides every teleport button/checkbox app-wide — map, favorites, routes, group sync, and widget — leaving only walking and route replay. |
+| **What's New Popup** | Small dismissible badge, shown app-wide after an update, that opens a modal with the version's highlights and a link to the full changelog. Never blocks the app. |
 
 ---
 

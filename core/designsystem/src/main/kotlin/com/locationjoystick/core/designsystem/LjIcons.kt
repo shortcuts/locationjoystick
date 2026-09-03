@@ -36,6 +36,7 @@ import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.MyLocation
+import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Route
@@ -104,5 +105,6 @@ object LjIcons {
     val Terrain = Icons.Rounded.Terrain
     val Timer = Icons.Rounded.Timer
     val Undo = Icons.AutoMirrored.Rounded.Undo
+    val WhatsNew = Icons.Rounded.NewReleases
     val Visibility = Icons.Rounded.Visibility
 }
