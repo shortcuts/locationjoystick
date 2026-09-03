@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="GPS JoyStick - gpsjoystick@gmail.com - https://www.facebook.com/gpsjoystick"><wpt lat="35.396786343408024" lon="132.7929809694346"><name>Izumo</name><desc/></wpt></gpx>

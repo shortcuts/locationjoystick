@@ -308,6 +308,37 @@ class GpsJoystickMigratorTest {
         assertEquals(null, m.bikeSpeed)
     }
 
+    // ── GPX format (newer GPS Joystick exports) ──────────────────────────────
+
+    @Test
+    fun `issue 63 - bare wpt GPX export imports as a single unnamed route`() {
+        // Reuses the Routes screen's generic GPX import (parseGpxRoutes), which has no concept
+        // of favorites — a bare top-level <wpt> becomes a one-waypoint "Imported Route" (issue #27).
+        val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20260904003942.gpx.txt"))
+        assertTrue(result.isSuccess)
+        val m = result.getOrThrow()
+        assertTrue(m.favorites.isEmpty())
+        assertRoutes(m, expectedCount = 1, totalWaypoints = 1)
+        assertEquals("Imported Route", m.routes[0].name)
+    }
+
+    @Test
+    fun `GPX export with a trk imports as a named route`() {
+        val gpx =
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <gpx version="1.1"><trk><name>Morning walk</name><trkseg>
+            <trkpt lat="35.0" lon="132.0"/><trkpt lat="35.1" lon="132.1"/>
+            </trkseg></trk></gpx>
+            """.trimIndent()
+        val result = GpsJoystickMigrator.parse(gpx.toByteArray())
+        assertTrue(result.isSuccess)
+        val m = result.getOrThrow()
+        assertTrue(m.favorites.isEmpty())
+        assertRoutes(m, expectedCount = 1, totalWaypoints = 2)
+        assertEquals("Morning walk", m.routes[0].name)
+    }
+
     @Test
     fun `GPS Joystick db files do not contain speed profiles`() {
         listOf(

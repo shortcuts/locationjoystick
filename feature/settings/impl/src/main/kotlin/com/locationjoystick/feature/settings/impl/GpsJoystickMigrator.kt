@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.settings.impl
 
 import android.util.Log
+import com.locationjoystick.core.common.util.parseGpxRoutes
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
@@ -67,6 +68,8 @@ internal object GpsJoystickMigrator {
 
     fun parse(bytes: ByteArray): Result<MigrationResult> =
         runCatching {
+            // Newer GPS Joystick versions export GPX instead of the Realm .db format.
+            if (looksLikeGpx(bytes)) return@runCatching parseGpx(bytes)
             if (!hasRealmHeader(bytes)) {
                 return Result.failure(
                     IllegalArgumentException("Not a valid Realm database file (missing T-DB header)"),
@@ -85,6 +88,33 @@ internal object GpsJoystickMigrator {
         }.onFailure { e ->
             Log.e(TAG, "Failed to parse GPS Joystick database", e)
         }
+
+    // -------------------------------------------------------------------------
+    // GPX format (newer GPS Joystick exports)
+    // -------------------------------------------------------------------------
+
+    private fun looksLikeGpx(bytes: ByteArray): Boolean =
+        bytes.copyOfRange(0, minOf(bytes.size, 512)).toString(Charsets.UTF_8).contains("<gpx", ignoreCase = true)
+
+    /** Reuses the same GPX parsing the Routes screen's "Import GPX" uses (see issue #63). */
+    private fun parseGpx(bytes: ByteArray): MigrationResult {
+        val routes =
+            parseGpxRoutes(bytes.toString(Charsets.UTF_8)).map { gpxRoute ->
+                Route(
+                    id = UUID.randomUUID().toString(),
+                    name = gpxRoute.name,
+                    waypoints =
+                        gpxRoute.waypoints.mapIndexed { index, position ->
+                            Waypoint(id = UUID.randomUUID().toString(), position = position, orderIndex = index)
+                        },
+                    isLooping = false,
+                    routeType = RouteType.STRAIGHT,
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis(),
+                )
+            }
+        return MigrationResult(favorites = emptyList(), routes = routes, walkSpeed = null, runSpeed = null, bikeSpeed = null)
+    }
 
     // -------------------------------------------------------------------------
     // Top-level extraction
