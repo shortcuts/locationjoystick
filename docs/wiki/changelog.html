@@ -27,6 +27,25 @@
     <h1 id="changelog">Changelog</h1>
     <p>What's new in each release. Download the latest APK from <a href="https://github.com/shortcuts/locationjoystick/releases/latest" target="_blank" rel="noopener">GitHub Releases</a>.</p>
 
+    <h3 id="v0182"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.18.2" target="_blank" rel="noopener">0.18.2</a>, August 31, 2026</h3>
+    <ul>
+      <li>Fixed the reported direction accuracy staying at a fixed value regardless of how fast you were moving.</li>
+      <li>Fixed idle wobble in reported speed changing whenever you switched speed profiles, instead of staying consistent.</li>
+      <li>Fixed the reported direction of travel showing as 0° before you had actually moved, instead of being left unset.</li>
+    </ul>
+
+    <h3 id="v0181"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.18.1" target="_blank" rel="noopener">0.18.1</a>, August 30, 2026</h3>
+    <ul>
+      <li>Fixed altitude variation drifting further over time instead of staying within its configured range.</li>
+    </ul>
+
+    <h3 id="v0180"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.18.0" target="_blank" rel="noopener">0.18.0</a>, August 30, 2026</h3>
+    <ul>
+      <li>Fixed elevation taking time to catch up instead of updating right away after starting to spoof or teleporting.</li>
+      <li>Fixed the altitude value in debug stats rounding to a whole number instead of showing decimal precision.</li>
+      <li>Fixed altitude variation sometimes landing on suspiciously round numbers instead of natural-looking values.</li>
+    </ul>
+
     <h3 id="v0170"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.17.0" target="_blank" rel="noopener">0.17.0</a>, August 28, 2026</h3>
     <ul>
       <li>New: GPS altitude can now follow real-world elevation automatically, with an adjustable amount of natural variation, plus a quick override button in the floating widget.</li>
