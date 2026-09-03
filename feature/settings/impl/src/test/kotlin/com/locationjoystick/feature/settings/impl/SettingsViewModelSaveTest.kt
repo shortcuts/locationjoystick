@@ -63,8 +63,8 @@ class SettingsViewModelSaveTest {
         val context = RuntimeEnvironment.getApplication()
         fakeDataSource = SaveTestPreferencesDataSource()
         fakeSettingsRepo = SettingsRepository(fakeDataSource)
-        fakeFavoriteRepo = FavoriteRepository(FakeFavoriteDao())
-        fakeRouteRepo = RouteRepository(routeDao = FakeRouteDao(), context = context)
+        fakeFavoriteRepo = FavoriteRepository(FakeFavoriteDao(), ioDispatcher = testDispatcher)
+        fakeRouteRepo = RouteRepository(routeDao = FakeRouteDao(), context = context, ioDispatcher = testDispatcher)
         viewModel =
             SettingsViewModel(
                 settingsRepository = fakeSettingsRepo,
