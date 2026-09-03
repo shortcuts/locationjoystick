@@ -65,14 +65,18 @@ previously coupled, so switching profiles silently changed idle noise magnitude 
 
 **Position jitter** (`AppSettings.jitterIdleRadiusMeters`/`jitterMovingRadiusMeters`, Settings →
 Location Randomness → "Wobble when still"/"Wobble while moving"): `PositionJitterCoordinator`
-(`:core:location`) owns a persistent offset that walks toward a fresh randomly-chosen target
-inside the configured radius, stepping at most `AppSettings.jitterMaxStepMeters` (Settings →
-Location Randomness → "Max step per tick", default 1.0 m, range 0.1–5.0 m) per tick — the
-reported position drifts continuously around the real anchor instead of sitting exact between
-fires and teleporting to a random point and back (issue #60, replacing the previous
-interval-gated single Gaussian draw). Runs unconditionally every tick — there is no longer an
-"how often" interval setting. While moving, the target disc is squished along the direction of
-travel (`AppConstants.JitterConstants.LONGITUDINAL_JITTER_FRACTION`), same anisotropy as before.
+(`:core:location`) owns a persistent offset that wanders inside the configured radius, stepping
+at most `AppSettings.jitterMaxStepMeters` (Settings → Location Randomness → "Max step per tick",
+default 1.0 m, range 0.1–5.0 m) in a fresh random direction every tick, clamped back to the disc
+edge on overshoot — the reported position drifts continuously around the real anchor instead of
+sitting exact between fires and teleporting to a random point and back (issue #60, replacing the
+previous interval-gated single Gaussian draw). An earlier version of this fix picked one distant
+random target per leg and beelined straight to it, which read as a DVD-logo bounce off the
+deviation radius (issue #60 follow-up) — redrawing the heading every tick instead of holding it
+until a target is reached fixes that. Runs unconditionally every tick — there is no longer an
+"how often" interval setting. While moving, the deviation disc is squished into an ellipse along
+the direction of travel (`AppConstants.JitterConstants.LONGITUDINAL_JITTER_FRACTION`), same
+anisotropy as before.
 Mode/radius selection (`resolveJitterStepRequest`, `LocationLoopPolicy.kt`) lives outside
 `buildLocation`, which now just adds the precomputed offset to the anchor. The resolved radius
 is also published every tick via `DebugStats.jitterRadiusMeters` for the map's jitter-radius

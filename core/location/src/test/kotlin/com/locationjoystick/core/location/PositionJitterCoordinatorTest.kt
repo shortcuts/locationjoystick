@@ -7,9 +7,11 @@ import kotlin.math.hypot
 import kotlin.random.Random
 
 /**
- * Regression test for GitHub issue #60: the old interval-gated single Gaussian draw held the
- * anchor exact between fires, then teleported to a random point and back the very next tick.
- * [PositionJitterCoordinator] replaces that with a bounded continuous random walk.
+ * Regression tests for GitHub issue #60. The interval-gated single Gaussian draw held the anchor
+ * exact between fires, then teleported to a random point and back the very next tick; the first
+ * random-walk fix beelined to one distant target per leg, which read as a DVD-logo bounce off the
+ * deviation radius (issue #60 follow-up). [PositionJitterCoordinator] redraws its heading every
+ * tick instead, so it wanders continuously without a persistent direction.
  */
 class PositionJitterCoordinatorTest {
     @Test
@@ -37,7 +39,7 @@ class PositionJitterCoordinatorTest {
     }
 
     @Test
-    fun `single step moves by at most maxStepMeters toward the target`() {
+    fun `single step moves by at most maxStepMeters`() {
         val coordinator = PositionJitterCoordinator()
         val random = Random(7)
         var (prevNorth, prevEast) = coordinator.step(10.0, maxStepMeters = 1.0, bearingDeg = 0f, longitudinalFraction = 1.0, random)
@@ -51,51 +53,54 @@ class PositionJitterCoordinatorTest {
     }
 
     @Test
-    fun `reaching the target snaps exactly then draws a new one`() {
+    fun `reset zeroes offset`() {
         val coordinator = PositionJitterCoordinator()
-        // maxStepMeters larger than radius guarantees the target is reached in one step every time.
-        val (north1, east1) = coordinator.step(2.0, maxStepMeters = 100.0, bearingDeg = 0f, longitudinalFraction = 1.0, Random(1))
-        val (north2, east2) = coordinator.step(2.0, maxStepMeters = 100.0, bearingDeg = 0f, longitudinalFraction = 1.0, Random(2))
-
-        // Both offsets are always exactly at whatever target was drawn (huge maxStep => snap immediately).
-        assertTrue("First offset should be within radius", hypot(north1, east1) <= 2.0 + 1e-9)
-        assertTrue("Second offset should be within radius", hypot(north2, east2) <= 2.0 + 1e-9)
-        assertTrue(
-            "A fresh target should usually differ from the previous one",
-            north1 != north2 || east1 != east2,
-        )
-    }
-
-    @Test
-    fun `reset zeroes offset and target`() {
-        val coordinator = PositionJitterCoordinator()
-        coordinator.step(10.0, maxStepMeters = 100.0, bearingDeg = 0f, longitudinalFraction = 1.0, Random(1))
+        coordinator.step(10.0, maxStepMeters = 5.0, bearingDeg = 0f, longitudinalFraction = 1.0, Random(1))
 
         coordinator.reset()
 
-        // maxStepMeters = 0 proves the offset itself is exactly zero (no room to step toward a leftover target).
+        // maxStepMeters = 0 proves the offset itself is exactly zero (no room to step away from it).
         val (north, east) = coordinator.step(10.0, maxStepMeters = 0.0, bearingDeg = 0f, longitudinalFraction = 1.0, Random(2))
         assertEquals(0.0, north, 0.0)
         assertEquals(0.0, east, 0.0)
     }
 
     @Test
-    fun `randomTargetInDisc isotropic case stays within radius`() {
-        val radius = 5.0
-        (1..500).forEach { seed ->
-            val (north, east) = randomTargetInDisc(radius, bearingDeg = 0f, longitudinalFraction = 1.0, random = Random(seed))
-            val magnitude = hypot(north, east)
-            assertTrue("Magnitude $magnitude should be <= radius $radius", magnitude <= radius + 1e-9)
+    fun `heading is redrawn every tick instead of beelining to a distant target`() {
+        // Large radius, small step: if the coordinator still beelined to one far target (the
+        // DVD-logo bug), every step in this run would point the same direction. With a
+        // per-tick random heading, consecutive step vectors should disagree in direction well
+        // before the disc edge is ever reached.
+        val coordinator = PositionJitterCoordinator()
+        val random = Random(123)
+        val radius = 1000.0
+        var prevNorth = 0.0
+        var prevEast = 0.0
+        var prevDNorth: Double? = null
+        var prevDEast: Double? = null
+        var sawDirectionChange = false
+        repeat(20) {
+            val (north, east) = coordinator.step(radius, maxStepMeters = 1.0, bearingDeg = 0f, longitudinalFraction = 1.0, random)
+            val dNorth = north - prevNorth
+            val dEast = east - prevEast
+            if (prevDNorth != null && (dNorth != prevDNorth || dEast != prevDEast)) sawDirectionChange = true
+            prevDNorth = dNorth
+            prevDEast = dEast
+            prevNorth = north
+            prevEast = east
         }
+        assertTrue("Expected step direction to vary tick-to-tick, not hold a fixed heading", sawDirectionChange)
     }
 
     @Test
-    fun `randomTargetInDisc with longitudinalFraction 0 has no along-bearing component`() {
-        // bearingDeg = 0 (north): with zero longitudinal fraction, the point is purely lateral (east-west),
-        // so the north component must be zero.
-        (1..50).forEach { seed ->
-            val (north, _) = randomTargetInDisc(6.0, bearingDeg = 0f, longitudinalFraction = 0.0, random = Random(seed))
-            assertEquals("North component must be zero for pure lateral jitter (seed $seed)", 0.0, north, 1e-9)
+    fun `longitudinalFraction zero keeps offset purely lateral to bearing`() {
+        // bearingDeg = 0 (north): with zero longitudinal fraction, the offset must stay purely
+        // lateral (east-west), so the north component should never move off zero.
+        val coordinator = PositionJitterCoordinator()
+        val random = Random(9)
+        repeat(200) {
+            val (north, _) = coordinator.step(6.0, maxStepMeters = 1.0, bearingDeg = 0f, longitudinalFraction = 0.0, random)
+            assertEquals("North component must be zero for pure lateral jitter", 0.0, north, 1e-9)
         }
     }
 }
