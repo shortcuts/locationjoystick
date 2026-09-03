@@ -353,7 +353,9 @@ object AppConstants {
         const val CONNECT_TIMEOUT_MS = 5000
         const val READ_TIMEOUT_MS = 5000
 
-        fun buildUrl(version: String) = "$BASE_URL$version.json"
+        // Strips a pre-release suffix (e.g. "0.19.0-alpha1" -> "0.19.0") since changelog JSON
+        // is authored per release version, not per alpha/beta tag.
+        fun buildUrl(version: String) = "$BASE_URL${version.substringBefore("-")}.json"
     }
 
     object AnimationConstants {
