@@ -796,7 +796,7 @@ private fun ImportConfirmDialog(
             Row {
                 TextButton(onClick = onDismiss) { Text("Cancel") }
                 TextButton(onClick = onAdd) { Text("Add") }
-                TextButton(onClick = onReplace) { Text("Replace") }
+                TextButton(onClick = onReplace) { Text("Replace", color = MaterialTheme.colorScheme.error) }
             }
         },
         dismissButton = {},
