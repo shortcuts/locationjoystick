@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.map.impl
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -201,39 +202,47 @@ internal fun PendingTapSheet(
                     }
                     Spacer(Modifier.height(8.dp))
                 }
-                OutlinedButton(
-                    onClick = {
-                        onAction(MapAction.LongPressTapToWalk(position))
-                        onAction(MapAction.ClearPendingTap)
-                    },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text("Walk here")
-                }
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = {
-                        onAction(MapAction.WalkViaRoadsTo(position))
-                        onAction(MapAction.ClearPendingTap)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Walk here via roads")
+                    OutlinedButton(
+                        onClick = {
+                            onAction(MapAction.LongPressTapToWalk(position))
+                            onAction(MapAction.ClearPendingTap)
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text("Walk here")
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            onAction(MapAction.WalkViaRoadsTo(position))
+                            onAction(MapAction.ClearPendingTap)
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text("Walk via roads")
+                    }
                 }
                 if (isWalkActive) {
                     Spacer(Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = { onAction(MapAction.AddEphemeralWaypoint(position, followRoads = false)) },
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text("Add next point")
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = { onAction(MapAction.AddEphemeralWaypoint(position, followRoads = true)) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text("Add next point via roads")
+                        OutlinedButton(
+                            onClick = { onAction(MapAction.AddEphemeralWaypoint(position, followRoads = false)) },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text("Add next point")
+                        }
+                        OutlinedButton(
+                            onClick = { onAction(MapAction.AddEphemeralWaypoint(position, followRoads = true)) },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text("Add next point via roads")
+                        }
                     }
                 }
             }
