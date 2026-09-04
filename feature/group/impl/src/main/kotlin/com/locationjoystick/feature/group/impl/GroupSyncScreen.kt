@@ -3,6 +3,7 @@ package com.locationjoystick.feature.group.impl
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -161,54 +163,58 @@ internal fun GroupSyncScreen(
         onNavigationClick = onOpenDrawer,
         snackbarHost = { SnackbarHost(snackbarHostState) { Snackbar(it) } },
     ) { paddingValues ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Box(
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            contentAlignment = Alignment.TopCenter,
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Column(
+                modifier =
+                    Modifier
+                        .widthIn(max = 600.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Spacer(modifier = Modifier.height(24.dp))
 
-            when (groupState.role) {
-                GroupRole.NONE -> {
-                    NoGroupContent(
-                        isDiscovering = isDiscovering,
-                        onCreateGroup = onCreateGroup,
-                        onJoinViaQr = onJoinViaQr,
-                        onJoinByCode = onJoinByCode,
-                    )
+                when (groupState.role) {
+                    GroupRole.NONE -> {
+                        NoGroupContent(
+                            isDiscovering = isDiscovering,
+                            onCreateGroup = onCreateGroup,
+                            onJoinViaQr = onJoinViaQr,
+                            onJoinByCode = onJoinByCode,
+                        )
+                    }
+
+                    GroupRole.LEADER -> {
+                        LeaderContent(
+                            groupState = groupState,
+                            qrBitmap = qrBitmap,
+                            followerCount = followerCount,
+                            onSetSharingEnabled = onSetSharingEnabled,
+                            onLeaveGroup = onLeaveGroup,
+                            onRegenerateQr = onRegenerateQr,
+                        )
+                    }
+
+                    GroupRole.FOLLOWER -> {
+                        FollowerContent(
+                            groupState = groupState,
+                            followerCount = followerCount,
+                            onSetFollowerModeEnabled = onSetFollowerModeEnabled,
+                            onTeleportToLeaderNow = onTeleportToLeaderNow,
+                            onLeaveGroup = onLeaveGroup,
+                            hideTeleportFeatures = hideTeleportFeatures,
+                            leaderPosition = leaderPosition,
+                            currentPosition = currentPosition,
+                            cooldownState = cooldownState,
+                        )
+                    }
                 }
 
-                GroupRole.LEADER -> {
-                    LeaderContent(
-                        groupState = groupState,
-                        qrBitmap = qrBitmap,
-                        followerCount = followerCount,
-                        onSetSharingEnabled = onSetSharingEnabled,
-                        onLeaveGroup = onLeaveGroup,
-                        onRegenerateQr = onRegenerateQr,
-                    )
-                }
-
-                GroupRole.FOLLOWER -> {
-                    FollowerContent(
-                        groupState = groupState,
-                        followerCount = followerCount,
-                        onSetFollowerModeEnabled = onSetFollowerModeEnabled,
-                        onTeleportToLeaderNow = onTeleportToLeaderNow,
-                        onLeaveGroup = onLeaveGroup,
-                        hideTeleportFeatures = hideTeleportFeatures,
-                        leaderPosition = leaderPosition,
-                        currentPosition = currentPosition,
-                        cooldownState = cooldownState,
-                    )
-                }
+                Spacer(modifier = Modifier.height(24.dp))
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
