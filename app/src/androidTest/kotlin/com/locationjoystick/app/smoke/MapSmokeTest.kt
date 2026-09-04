@@ -23,6 +23,11 @@ class MapSmokeTest : BaseSmokeTest() {
     }
 
     @Test
+    fun map_screen_shows_title() {
+        composeRule.onNodeWithText("Map").assertIsDisplayed()
+    }
+
+    @Test
     fun map_screen_opens_drawer() {
         composeRule.onNodeWithContentDescription("Open navigation menu").performClick()
         composeRule.waitForIdle()

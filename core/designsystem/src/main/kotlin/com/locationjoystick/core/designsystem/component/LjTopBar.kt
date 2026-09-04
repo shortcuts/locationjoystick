@@ -2,11 +2,9 @@ package com.locationjoystick.core.designsystem.component
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -18,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
@@ -42,33 +39,27 @@ fun LjTopBar(
     showSpoofToggle: Boolean = true,
     locationLabel: String? = null,
 ) {
-    Box(modifier = modifier) {
-        CenterAlignedTopAppBar(
-            title = {},
-            navigationIcon = {
-                if (onNavigationClick != null) {
-                    IconButton(onClick = onNavigationClick) {
-                        Icon(
-                            imageVector = navigationIcon,
-                            contentDescription = "Open navigation menu",
-                        )
-                    }
+    CenterAlignedTopAppBar(
+        modifier = modifier,
+        title = {
+            Text(
+                text = title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        navigationIcon = {
+            if (onNavigationClick != null) {
+                IconButton(onClick = onNavigationClick) {
+                    Icon(
+                        imageVector = navigationIcon,
+                        contentDescription = "Open navigation menu",
+                    )
                 }
-            },
-            actions = { actions() },
-            colors =
-                TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface,
-                ),
-        )
-        if (showSpoofToggle) {
-            Box(
-                modifier = Modifier.matchParentSize().windowInsetsPadding(TopAppBarDefaults.windowInsets),
-                contentAlignment = Alignment.Center,
-            ) {
+            }
+        },
+        actions = {
+            if (showSpoofToggle) {
                 TextButton(
                     onClick = onToggleSpoofing,
                     shape = RoundedCornerShape(50),
@@ -116,6 +107,14 @@ fun LjTopBar(
                     )
                 }
             }
-        }
-    }
+            actions()
+        },
+        colors =
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+                navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+            ),
+    )
 }
