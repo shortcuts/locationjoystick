@@ -3,6 +3,7 @@ package com.locationjoystick.core.designsystem.component
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -77,7 +78,7 @@ fun LjTopBar(
                         ),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp),
                     modifier =
-                        Modifier.semantics {
+                        Modifier.defaultMinSize(minHeight = 48.dp).semantics {
                             contentDescription = if (isSpoofing) "Stop location simulation" else "Start location simulation"
                         },
                 ) {
