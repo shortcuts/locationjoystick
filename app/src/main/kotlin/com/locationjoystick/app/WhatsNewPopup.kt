@@ -118,16 +118,21 @@ private fun WhatsNewBadge(
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onPrimary,
         )
-        Icon(
-            imageVector = LjIcons.Close,
-            contentDescription = "Dismiss",
-            tint = MaterialTheme.colorScheme.onPrimary,
+        Box(
+            contentAlignment = Alignment.Center,
             modifier =
                 Modifier
-                    .size(18.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }, onClick = onDismiss),
-        )
+        ) {
+            Icon(
+                imageVector = LjIcons.Close,
+                contentDescription = "Dismiss",
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(18.dp),
+            )
+        }
     }
 }
 
