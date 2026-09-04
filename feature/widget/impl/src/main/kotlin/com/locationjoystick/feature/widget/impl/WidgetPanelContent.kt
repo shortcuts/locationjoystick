@@ -87,23 +87,28 @@ private fun WidgetIconButton(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, label = "widgetButtonPressScale")
+    // 48dp hit box meets the Android minimum touch target while keeping the smaller visual size.
     Box(
         contentAlignment = Alignment.Center,
-        modifier =
-            Modifier
-                .padding(4.dp)
-                .size(UiConstants.FAB_CONTAINER_SIZE)
-                .scale(scale)
-                .background(Color.Black, CircleShape)
-                .clickable(interactionSource = interactionSource, indication = LocalIndication.current, onClick = onClick),
+        modifier = Modifier.padding(4.dp).size(48.dp),
     ) {
-        Crossfade(targetState = icon, animationSpec = tween(150), label = "widgetButtonIcon") { animatedIcon ->
-            Icon(
-                imageVector = animatedIcon,
-                contentDescription = contentDescription,
-                tint = tint,
-                modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
-            )
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier =
+                Modifier
+                    .size(UiConstants.FAB_CONTAINER_SIZE)
+                    .scale(scale)
+                    .background(Color.Black, CircleShape)
+                    .clickable(interactionSource = interactionSource, indication = LocalIndication.current, onClick = onClick),
+        ) {
+            Crossfade(targetState = icon, animationSpec = tween(150), label = "widgetButtonIcon") { animatedIcon ->
+                Icon(
+                    imageVector = animatedIcon,
+                    contentDescription = contentDescription,
+                    tint = tint,
+                    modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
+                )
+            }
         }
     }
 }
