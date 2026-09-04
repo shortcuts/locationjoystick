@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -43,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
@@ -655,61 +660,133 @@ private fun SettingsHubScreen(
         },
         floatingActionButton = { SettingsSaveDiscardFab(uiState.isDirty, onAction) },
     ) { paddingValues ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .verticalScroll(remember { ScrollState(0) })
-                    .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(modifier = Modifier.height(40.dp))
-            AppIcon()
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = "locationjoystick",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "v${AppConstants.AppInfo.VERSION_NAME}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(modifier = Modifier.height(28.dp))
-            SettingsDestinationCard(
-                icon = LjIcons.Speed,
-                title = "Movement & GPS",
-                description = "Speed presets, signal realism, and location randomness for all movement modes.",
-                onClick = { onNavigate(SettingsSection.GPS) },
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            SettingsDestinationCard(
-                icon = LjIcons.Joystick,
-                title = "Menus",
-                description = "Which features appear in the floating widget and map buttons, and how to trigger walks by tapping.",
-                onClick = { onNavigate(SettingsSection.MENUS) },
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            SettingsDestinationCard(
-                icon = LjIcons.Favorite,
-                title = "Favorites & Routes",
-                description = "Curated hot locations and pre-built routes to populate your library.",
-                onClick = { onNavigate(SettingsSection.FAVORITES_ROUTES) },
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            SettingsDestinationCard(
-                icon = LjIcons.Explore,
-                title = "Roaming",
-                description = "Default area, distance, speed, and routing style for random walks.",
-                onClick = { onNavigate(SettingsSection.ROAMING) },
-            )
+        val isWide = LocalConfiguration.current.screenWidthDp >= 600
+        if (isWide) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 24.dp),
+            ) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth().padding(top = 40.dp, bottom = 32.dp),
+                    ) {
+                        AppIcon()
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = "locationjoystick",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "v${AppConstants.AppInfo.VERSION_NAME}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+                item {
+                    SettingsDestinationCard(
+                        icon = LjIcons.Speed,
+                        title = "Movement & GPS",
+                        description = "Speed presets, signal realism, and location randomness for all movement modes.",
+                        onClick = { onNavigate(SettingsSection.GPS) },
+                    )
+                }
+                item {
+                    SettingsDestinationCard(
+                        icon = LjIcons.Joystick,
+                        title = "Menus",
+                        description =
+                            "Which features appear in the floating widget and map buttons, " +
+                                "and how to trigger walks by tapping.",
+                        onClick = { onNavigate(SettingsSection.MENUS) },
+                    )
+                }
+                item {
+                    SettingsDestinationCard(
+                        icon = LjIcons.Favorite,
+                        title = "Favorites & Routes",
+                        description = "Curated hot locations and pre-built routes to populate your library.",
+                        onClick = { onNavigate(SettingsSection.FAVORITES_ROUTES) },
+                    )
+                }
+                item {
+                    SettingsDestinationCard(
+                        icon = LjIcons.Explore,
+                        title = "Roaming",
+                        description = "Default area, distance, speed, and routing style for random walks.",
+                        onClick = { onNavigate(SettingsSection.ROAMING) },
+                    )
+                }
+            }
+        } else {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .verticalScroll(remember { ScrollState(0) })
+                        .padding(horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Spacer(modifier = Modifier.height(40.dp))
+                AppIcon()
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "locationjoystick",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "v${AppConstants.AppInfo.VERSION_NAME}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(modifier = Modifier.height(28.dp))
+                SettingsDestinationCard(
+                    icon = LjIcons.Speed,
+                    title = "Movement & GPS",
+                    description = "Speed presets, signal realism, and location randomness for all movement modes.",
+                    onClick = { onNavigate(SettingsSection.GPS) },
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                SettingsDestinationCard(
+                    icon = LjIcons.Joystick,
+                    title = "Menus",
+                    description = "Which features appear in the floating widget and map buttons, and how to trigger walks by tapping.",
+                    onClick = { onNavigate(SettingsSection.MENUS) },
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                SettingsDestinationCard(
+                    icon = LjIcons.Favorite,
+                    title = "Favorites & Routes",
+                    description = "Curated hot locations and pre-built routes to populate your library.",
+                    onClick = { onNavigate(SettingsSection.FAVORITES_ROUTES) },
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                SettingsDestinationCard(
+                    icon = LjIcons.Explore,
+                    title = "Roaming",
+                    description = "Default area, distance, speed, and routing style for random walks.",
+                    onClick = { onNavigate(SettingsSection.ROAMING) },
+                )
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
     }
 }
