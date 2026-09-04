@@ -225,7 +225,7 @@ internal fun FavoritesScreen(
                     uiState.favorites.isEmpty() -> {
                         EmptyState(
                             icon = LjIcons.LocationOn,
-                            message = "No saved locations yet",
+                            message = "No saved favorites yet",
                             modifier = Modifier.align(Alignment.Center),
                         )
                     }
