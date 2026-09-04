@@ -386,6 +386,18 @@ class BuildLocationTest {
     }
 
     @Test
+    fun `idle speed variation at low pct is not floored to 0_01`() {
+        val snap = baseSnapshot(speedMs = 0f, speedIdleVariationPct = 1)
+        val results = (1..2000).map { buildLocation(snap, 1000L, Random(it))!!.speedMs }
+        val maxExpected = AppConstants.JitterConstants.IDLE_SPEED_WOBBLE_MAX_MPS * 1 / 100.0
+        assertTrue("Wobble speeds should be <= maxExpected", results.all { it <= maxExpected + 0.001f })
+        assertTrue(
+            "Wobble speeds should not be floored to 0.01 at low pct",
+            results.any { it > 0f && it < 0.01f },
+        )
+    }
+
+    @Test
     fun `idle speed variation off produces zero speed when idle`() {
         val snap = baseSnapshot(speedMs = 0f, speedIdleVariationPct = 0)
         val fix = buildLocation(snap, 1000L, Random(42))!!

@@ -298,7 +298,7 @@ internal fun buildLocation(
                 if (random.nextDouble() < AppConstants.JitterConstants.IDLE_SPEED_WOBBLE_PROBABILITY) {
                     val sigma =
                         AppConstants.JitterConstants.IDLE_SPEED_WOBBLE_MAX_MPS * state.speedIdleVariationPct / 100.0
-                    (random.nextDouble() * sigma).toFloat().coerceAtLeast(0.01f)
+                    (random.nextDouble() * sigma).toFloat()
                 } else {
                     0f
                 }
