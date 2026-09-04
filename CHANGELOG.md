@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.19.0](https://github.com/shortcuts/locationjoystick/compare/v0.18.2...v0.19.0) (2026-09-04)
+
+
+### Features
+
+* add Go Stamp Rally hot locations and routes for Tokyo ([904afa7](https://github.com/shortcuts/locationjoystick/commit/904afa7099736b2492cca45bfdd451d6741dc116))
+* **app:** add What's New popup fetched from wiki changelog ([4adae66](https://github.com/shortcuts/locationjoystick/commit/4adae6650154eccc8fa76b98f23763aaf2cf2f2b))
+* **map:** add jitter radius overlay to map screen ([f639ac5](https://github.com/shortcuts/locationjoystick/commit/f639ac5a394cccc389c60bf25634a87788f19727))
+* **mock-location:** make idle wobble frequency configurable ([f311070](https://github.com/shortcuts/locationjoystick/commit/f3110704074eabf9a22fcac833aa71960cd08475))
+
+
+### Bug Fixes
+
+* gate bearingAccuracyDegrees on hasBearing (issue [#58](https://github.com/shortcuts/locationjoystick/issues/58)) ([31e1e05](https://github.com/shortcuts/locationjoystick/commit/31e1e05ebaabda67e83f6ccc2bfcb4ccee8d664f))
+* **gps-joystick-import:** support GPX exports, not just Realm .db ([6ab635a](https://github.com/shortcuts/locationjoystick/commit/6ab635a97ab8702808b66ecb0899edd2f0a836e4)), closes [#63](https://github.com/shortcuts/locationjoystick/issues/63)
+* **mock-location:** redraw jitter heading every tick, not per-target ([74a2b98](https://github.com/shortcuts/locationjoystick/commit/74a2b98b62a0ef2cfffcc1df860a1d206e507758))
+* **mock-location:** remove idle wobble 0.01 m/s floor ([8ec6796](https://github.com/shortcuts/locationjoystick/commit/8ec67968262aaa3c6551fee3778de10a3ed98307))
+* replace interval-gated jitter with persistent offset walk ([e85105d](https://github.com/shortcuts/locationjoystick/commit/e85105d423f9bfa10983a63652cb33cf1ba45edf))
+* **settings-test:** pin test dispatcher on Favorite/RouteRepository in SettingsViewModelSaveTest ([82b1dab](https://github.com/shortcuts/locationjoystick/commit/82b1dabd206967561c5c80adbeb2edf8dd87453f))
+* show unset bearing as — in debug stats overlay ([05f12af](https://github.com/shortcuts/locationjoystick/commit/05f12affffb529cd216b83b7c3ffb6933fcf6c06))
+* **widget:** label debug stats altitude as ellipsoidal ([6be7b23](https://github.com/shortcuts/locationjoystick/commit/6be7b23cba7b1eea76488bbe45d63eb693d1f6b3))
+* **widget:** pass walkStart from MapSharedState to floating map ([8c8447a](https://github.com/shortcuts/locationjoystick/commit/8c8447a1b15b48c93d0c140c58affcd4b6f560ef))
+
 ## [0.18.2](https://github.com/shortcuts/locationjoystick/compare/v0.18.1...v0.18.2) (2026-08-31)
 
 

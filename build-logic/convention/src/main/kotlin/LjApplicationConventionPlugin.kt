@@ -33,7 +33,7 @@ class LjApplicationConventionPlugin : Plugin<Project> {
                 defaultConfig {
                     minSdk = 28
                     targetSdk = 36
-                    val versionName = "0.18.2" // x-release-please-version
+                    val versionName = "0.19.0" // x-release-please-version
                     val (maj, min, pat) = versionName.substringBefore("-").split(".").map { it.toInt() }
                     this.versionName = versionName
                     versionCode = maj * 10000 + min * 100 + pat
