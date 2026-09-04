@@ -266,6 +266,12 @@ interface PreferencesDataSource {
     /** Sets the GPS jitter moving speed variation percentage. */
     suspend fun setJitterSpeedMovingVariationPct(pct: Int)
 
+    /** Gets the GPS jitter idle-wobble firing probability percentage (0-100, chance per tick). */
+    fun getJitterSpeedIdleWobbleProbabilityPct(): Flow<Int>
+
+    /** Sets the GPS jitter idle-wobble firing probability percentage. */
+    suspend fun setJitterSpeedIdleWobbleProbabilityPct(pct: Int)
+
     /** Gets whether hot locations are enabled. */
     fun getHotLocationsEnabled(): Flow<Boolean>
 
@@ -373,6 +379,7 @@ data class SettingsSnapshot(
     val altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
     val altitudeOverrideButtonEnabled: Boolean = false,
     val debugStatsEnabled: Boolean = false,
+    val jitterSpeedIdleWobbleProbabilityPct: Int = AppConstants.JitterConstants.SPEED_IDLE_WOBBLE_PROBABILITY_PCT_DEFAULT,
 )
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
@@ -470,6 +477,8 @@ class AppPreferencesDataSource
             val FAVORITES_SORT_NEWEST_FIRST = booleanPreferencesKey("favorites_sort_newest_first")
             val JITTER_SPEED_IDLE_VARIATION_PCT = intPreferencesKey("jitter_speed_idle_variation_pct")
             val JITTER_SPEED_MOVING_VARIATION_PCT = intPreferencesKey("jitter_speed_moving_variation_pct")
+            val JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT =
+                intPreferencesKey("jitter_speed_idle_wobble_probability_pct")
             val HOT_LOCATIONS_ENABLED = booleanPreferencesKey("hot_locations_enabled")
             val HOT_LOCATION_SELECTED_IDS = stringSetPreferencesKey("hot_location_selected_ids")
             val HOT_ROUTES_ENABLED = booleanPreferencesKey("hot_routes_enabled")
@@ -835,6 +844,18 @@ class AppPreferencesDataSource
                 ),
             )
 
+        override fun getJitterSpeedIdleWobbleProbabilityPct(): Flow<Int> =
+            pref(Keys.JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT, DEFAULT_JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT)
+
+        override suspend fun setJitterSpeedIdleWobbleProbabilityPct(pct: Int) =
+            setPref(
+                Keys.JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT,
+                pct.coerceIn(
+                    AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
+                    AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
+                ),
+            )
+
         override fun getHotLocationsEnabled(): Flow<Boolean> = pref(Keys.HOT_LOCATIONS_ENABLED, false)
 
         override suspend fun setHotLocationsEnabled(enabled: Boolean) = setPref(Keys.HOT_LOCATIONS_ENABLED, enabled)
@@ -917,6 +938,11 @@ class AppPreferencesDataSource
                     )
                 prefs[Keys.JITTER_SPEED_MOVING_VARIATION_PCT] =
                     snapshot.jitterSpeedMovingVariationPct.coerceIn(
+                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
+                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
+                    )
+                prefs[Keys.JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT] =
+                    snapshot.jitterSpeedIdleWobbleProbabilityPct.coerceIn(
                         AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
                         AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
                     )
@@ -1010,6 +1036,9 @@ class AppPreferencesDataSource
                         jitterSpeedMovingVariationPct =
                             prefs[Keys.JITTER_SPEED_MOVING_VARIATION_PCT]
                                 ?: DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT,
+                        jitterSpeedIdleWobbleProbabilityPct =
+                            prefs[Keys.JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT]
+                                ?: DEFAULT_JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT,
                         hotLocationsEnabled = prefs[Keys.HOT_LOCATIONS_ENABLED] ?: false,
                         selectedHotLocationIds = prefs[Keys.HOT_LOCATION_SELECTED_IDS] ?: emptySet(),
                         hotRoutesEnabled = prefs[Keys.HOT_ROUTES_ENABLED] ?: false,
@@ -1065,6 +1094,8 @@ class AppPreferencesDataSource
 
             const val DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT = AppConstants.JitterConstants.SPEED_IDLE_VARIATION_PCT_DEFAULT
             const val DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT = AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT
+            const val DEFAULT_JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT =
+                AppConstants.JitterConstants.SPEED_IDLE_WOBBLE_PROBABILITY_PCT_DEFAULT
 
             const val DEFAULT_ALTITUDE_JITTER_RADIUS_METERS = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS
         }

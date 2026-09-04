@@ -25,6 +25,7 @@ class BuildLocationTest {
         altitudeEnabled: Boolean = true,
         satelliteExtrasEnabled: Boolean = true,
         speedIdleVariationPct: Int = 0,
+        speedIdleWobbleProbabilityPct: Int = AppConstants.JitterConstants.SPEED_IDLE_WOBBLE_PROBABILITY_PCT_DEFAULT,
         speedMovingVariationPct: Int = 0,
         isSuspendedPhase: Boolean = false,
         cachedSatelliteCount: Int = 10,
@@ -49,6 +50,7 @@ class BuildLocationTest {
         altitudeEnabled = altitudeEnabled,
         satelliteExtrasEnabled = satelliteExtrasEnabled,
         speedIdleVariationPct = speedIdleVariationPct,
+        speedIdleWobbleProbabilityPct = speedIdleWobbleProbabilityPct,
         speedMovingVariationPct = speedMovingVariationPct,
         suspendedPhaseStartMs = 0L,
         isSuspendedPhase = isSuspendedPhase,
@@ -402,6 +404,21 @@ class BuildLocationTest {
         val snap = baseSnapshot(speedMs = 0f, speedIdleVariationPct = 0)
         val fix = buildLocation(snap, 1000L, Random(42))!!
         assertEquals(0f, fix.speedMs, 0.001f)
+    }
+
+    @Test
+    fun `idle wobble probability is configurable independent of amount`() {
+        val snap = baseSnapshot(speedMs = 0f, speedIdleVariationPct = 10, speedIdleWobbleProbabilityPct = 50)
+        val results = (1..2000).map { buildLocation(snap, 1000L, Random(it))!!.speedMs }
+        val wobbleRatio = results.count { it > 0f }.toDouble() / results.size
+        assertTrue("Wobble ratio $wobbleRatio should be near 0.5", kotlin.math.abs(wobbleRatio - 0.5) < 0.1)
+    }
+
+    @Test
+    fun `idle wobble probability of zero never wobbles even when amount is nonzero`() {
+        val snap = baseSnapshot(speedMs = 0f, speedIdleVariationPct = 10, speedIdleWobbleProbabilityPct = 0)
+        val results = (1..500).map { buildLocation(snap, 1000L, Random(it))!!.speedMs }
+        assertTrue("No idle ticks should wobble when probability is 0", results.all { it == 0f })
     }
 
     @Test

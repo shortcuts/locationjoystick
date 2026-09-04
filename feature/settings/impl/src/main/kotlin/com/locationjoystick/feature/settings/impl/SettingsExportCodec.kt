@@ -148,6 +148,7 @@ internal object SettingsExportCodec {
         root.put("jitterMaxStepMeters", data.jitterMaxStepMeters)
         root.put("jitterSpeedIdleVariationPct", data.jitterSpeedIdleVariationPct)
         root.put("jitterSpeedMovingVariationPct", data.jitterSpeedMovingVariationPct)
+        root.put("jitterSpeedIdleWobbleProbabilityPct", data.jitterSpeedIdleWobbleProbabilityPct)
         root.put("hotLocationsEnabled", data.hotLocationsEnabled)
         root.put("selectedHotLocationIds", JSONArray(data.selectedHotLocationIds.toList()))
         root.put("hotRoutesEnabled", data.hotRoutesEnabled)
@@ -360,6 +361,11 @@ internal object SettingsExportCodec {
                 root.optInt(
                     "jitterSpeedMovingVariationPct",
                     AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT,
+                ),
+            jitterSpeedIdleWobbleProbabilityPct =
+                root.optInt(
+                    "jitterSpeedIdleWobbleProbabilityPct",
+                    AppConstants.JitterConstants.SPEED_IDLE_WOBBLE_PROBABILITY_PCT_DEFAULT,
                 ),
             hotLocationsEnabled = root.optBoolean("hotLocationsEnabled", false),
             selectedHotLocationIds =

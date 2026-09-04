@@ -59,9 +59,11 @@ Defaults: `bearingHoldOnIdle = true`, `altitudeEnabled = true`, `satelliteExtras
 
 **Idle speed wobble** (`AppSettings.jitterSpeedIdleVariationPct`, Settings → Location Randomness): scales off
 `AppConstants.JitterConstants.IDLE_SPEED_WOBBLE_MAX_MPS` (0.1 m/s), not the active speed profile — the two were
-previously coupled, so switching profiles silently changed idle noise magnitude (issue #56). Fires on only
-`IDLE_SPEED_WOBBLE_PROBABILITY` (15%) of idle ticks; the rest report exactly `0.0` m/s, matching real GPS
-(previously every idle tick drew a nonzero speed).
+previously coupled, so switching profiles silently changed idle noise magnitude (issue #56). Fires on a
+configurable percentage of idle ticks — `jitterSpeedIdleWobbleProbabilityPct` (Settings → Location Randomness
+→ "Idle wobble frequency (%)", default 15%, range 0–50%, same range as the amount setting above) — independent
+of `jitterSpeedIdleVariationPct`, which only controls the wobble's magnitude once it fires; the rest of idle
+ticks report exactly `0.0` m/s, matching real GPS (previously every idle tick drew a nonzero speed).
 
 **Position jitter** (`AppSettings.jitterIdleRadiusMeters`/`jitterMovingRadiusMeters`, Settings →
 Location Randomness → "Wobble when still"/"Wobble while moving"): `PositionJitterCoordinator`

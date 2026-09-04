@@ -151,6 +151,13 @@ internal fun GpsJitterSection(
             modifier = Modifier.weight(1f),
         )
     }
+    Spacer(modifier = Modifier.height(8.dp))
+    JitterInput(
+        value = uiState.jitterSpeedIdleWobbleProbabilityPct,
+        onValueChange = { onAction(SettingsAction.SetJitterSpeedIdleWobbleProbabilityPct(it)) },
+        label = "Idle wobble frequency (%)",
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable

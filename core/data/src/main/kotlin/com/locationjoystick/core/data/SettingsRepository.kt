@@ -248,6 +248,10 @@ class SettingsRepository
 
         suspend fun setJitterSpeedMovingVariationPct(pct: Int) = dataSource.setJitterSpeedMovingVariationPct(pct)
 
+        fun getJitterSpeedIdleWobbleProbabilityPct(): Flow<Int> = dataSource.getJitterSpeedIdleWobbleProbabilityPct()
+
+        suspend fun setJitterSpeedIdleWobbleProbabilityPct(pct: Int) = dataSource.setJitterSpeedIdleWobbleProbabilityPct(pct)
+
         fun getHotLocationsEnabled(): Flow<Boolean> = dataSource.getHotLocationsEnabled()
 
         suspend fun setHotLocationsEnabled(enabled: Boolean) = dataSource.setHotLocationsEnabled(enabled)

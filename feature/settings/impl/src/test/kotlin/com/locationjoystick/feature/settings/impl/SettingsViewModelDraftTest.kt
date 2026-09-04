@@ -209,6 +209,9 @@ class SettingsViewModelDraftTest {
             viewModel.setJitterSpeedMovingVariationPct(25)
             assertEquals(25, viewModel.uiState.value.jitterSpeedMovingVariationPct)
 
+            viewModel.setJitterSpeedIdleWobbleProbabilityPct(30)
+            assertEquals(30, viewModel.uiState.value.jitterSpeedIdleWobbleProbabilityPct)
+
             assertTrue(viewModel.uiState.value.isDirty)
         }
 

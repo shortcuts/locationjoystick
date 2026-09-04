@@ -12,6 +12,7 @@ data class ExportData(
     val jitterMaxStepMeters: Double = 1.0,
     val jitterSpeedIdleVariationPct: Int = 5,
     val jitterSpeedMovingVariationPct: Int = 8,
+    val jitterSpeedIdleWobbleProbabilityPct: Int = 15,
     val hotLocationsEnabled: Boolean = false,
     val selectedHotLocationIds: Set<String> = emptySet(),
     val hotRoutesEnabled: Boolean = false,

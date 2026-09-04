@@ -321,6 +321,10 @@ fun SettingsRoute(
                     viewModel.setJitterSpeedMovingVariationPct(action.pct)
                 }
 
+                is SettingsAction.SetJitterSpeedIdleWobbleProbabilityPct -> {
+                    viewModel.setJitterSpeedIdleWobbleProbabilityPct(action.pct)
+                }
+
                 is SettingsAction.SetHotLocationsEnabled -> {
                     viewModel.setHotLocationsEnabled(action.enabled)
                 }

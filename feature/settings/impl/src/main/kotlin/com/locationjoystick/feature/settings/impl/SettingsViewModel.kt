@@ -117,6 +117,7 @@ class SettingsViewModel
             val realismSuspendedMockingEnabled: Boolean? = null,
             val jitterSpeedIdleVariationPct: Int? = null,
             val jitterSpeedMovingVariationPct: Int? = null,
+            val jitterSpeedIdleWobbleProbabilityPct: Int? = null,
             val hotLocationsEnabled: Boolean? = null,
             val selectedHotLocationIds: Set<String>? = null,
             val hotRoutesEnabled: Boolean? = null,
@@ -195,6 +196,8 @@ class SettingsViewModel
                     realismSuspendedMockingEnabled = draftState.realismSuspendedMockingEnabled ?: snapshot.realismSuspendedMockingEnabled,
                     jitterSpeedIdleVariationPct = draftState.jitterSpeedIdleVariationPct ?: snapshot.jitterSpeedIdleVariationPct,
                     jitterSpeedMovingVariationPct = draftState.jitterSpeedMovingVariationPct ?: snapshot.jitterSpeedMovingVariationPct,
+                    jitterSpeedIdleWobbleProbabilityPct =
+                        draftState.jitterSpeedIdleWobbleProbabilityPct ?: snapshot.jitterSpeedIdleWobbleProbabilityPct,
                     hotLocationsEnabled = draftState.hotLocationsEnabled ?: snapshot.hotLocationsEnabled,
                     selectedHotLocationIds = draftState.selectedHotLocationIds ?: snapshot.selectedHotLocationIds,
                     hotRoutesEnabled = draftState.hotRoutesEnabled ?: snapshot.hotRoutesEnabled,
@@ -308,6 +311,10 @@ class SettingsViewModel
 
         fun setJitterSpeedMovingVariationPct(pct: Int) {
             mutableDraft.update { it.copy(jitterSpeedMovingVariationPct = pct) }
+        }
+
+        fun setJitterSpeedIdleWobbleProbabilityPct(pct: Int) {
+            mutableDraft.update { it.copy(jitterSpeedIdleWobbleProbabilityPct = pct) }
         }
 
         fun setHotLocationsEnabled(enabled: Boolean) {
@@ -471,6 +478,7 @@ class SettingsViewModel
                             realismSuspendedMockingEnabled = state.realismSuspendedMockingEnabled,
                             jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
                             jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
+                            jitterSpeedIdleWobbleProbabilityPct = state.jitterSpeedIdleWobbleProbabilityPct,
                             hotLocationsEnabled = state.hotLocationsEnabled,
                             selectedHotLocationIds = state.selectedHotLocationIds,
                             hotRoutesEnabled = state.hotRoutesEnabled,
@@ -593,6 +601,7 @@ class SettingsViewModel
                 jitterMaxStepMeters = state.jitterMaxStepMeters,
                 jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
                 jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
+                jitterSpeedIdleWobbleProbabilityPct = state.jitterSpeedIdleWobbleProbabilityPct,
                 hotLocationsEnabled = state.hotLocationsEnabled,
                 selectedHotLocationIds = state.selectedHotLocationIds,
                 hotRoutesEnabled = state.hotRoutesEnabled,
@@ -788,6 +797,7 @@ class SettingsViewModel
                     debugStatsEnabled = data.settings.debugStatsEnabled,
                     jitterSpeedIdleVariationPct = data.jitterSpeedIdleVariationPct,
                     jitterSpeedMovingVariationPct = data.jitterSpeedMovingVariationPct,
+                    jitterSpeedIdleWobbleProbabilityPct = data.jitterSpeedIdleWobbleProbabilityPct,
                     hotLocationsEnabled = data.hotLocationsEnabled,
                     selectedHotLocationIds = data.selectedHotLocationIds,
                     hotRoutesEnabled = data.hotRoutesEnabled,

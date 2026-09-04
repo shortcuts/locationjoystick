@@ -208,6 +208,7 @@ class SettingsViewModelSaveTest {
                     jitterMaxStepMeters = 2.0,
                     jitterSpeedIdleVariationPct = 10,
                     jitterSpeedMovingVariationPct = 20,
+                    jitterSpeedIdleWobbleProbabilityPct = 40,
                     hotLocationsEnabled = false,
                 )
 
@@ -235,6 +236,7 @@ class SettingsViewModelSaveTest {
             assertEquals(2.0, snapshot.jitterMaxStepMeters, 0.001)
             assertEquals(10, snapshot.jitterSpeedIdleVariationPct)
             assertEquals(20, snapshot.jitterSpeedMovingVariationPct)
+            assertEquals(40, snapshot.jitterSpeedIdleWobbleProbabilityPct)
             assertFalse(snapshot.hotLocationsEnabled)
             assertEquals(750.0, snapshot.roamingDefaults.radiusMeters, 0.001)
             assertEquals(3000.0, snapshot.roamingDefaults.distanceMeters, 0.001)
@@ -583,6 +585,11 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override suspend fun setJitterSpeedIdleVariationPct(pct: Int) = Unit
 
     override suspend fun setJitterSpeedMovingVariationPct(pct: Int) = Unit
+
+    override fun getJitterSpeedIdleWobbleProbabilityPct(): Flow<Int> =
+        flowOf(AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT)
+
+    override suspend fun setJitterSpeedIdleWobbleProbabilityPct(pct: Int) = Unit
 
     override fun getHotLocationsEnabled(): Flow<Boolean> = flowOf(false)
 

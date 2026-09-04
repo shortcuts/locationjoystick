@@ -660,6 +660,25 @@ class SettingsRepositoryTest {
         }
 
     @Test
+    fun `getJitterSpeedIdleWobbleProbabilityPct returns default`() =
+        runTest {
+            repository.getJitterSpeedIdleWobbleProbabilityPct().test {
+                assertEquals(AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setJitterSpeedIdleWobbleProbabilityPct persists value`() =
+        runTest {
+            repository.setJitterSpeedIdleWobbleProbabilityPct(30)
+            repository.getJitterSpeedIdleWobbleProbabilityPct().test {
+                assertEquals(30, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `getJitterMaxStepMeters returns default`() =
         runTest {
             repository.getJitterMaxStepMeters().test {
@@ -1328,6 +1347,19 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setJitterSpeedMovingVariationPct(pct: Int) {
         jitterSpeedMovingVariationPctFlow.value =
+            pct.coerceIn(
+                AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
+                AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
+            )
+    }
+
+    private val jitterSpeedIdleWobbleProbabilityPctFlow =
+        MutableStateFlow(AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT)
+
+    override fun getJitterSpeedIdleWobbleProbabilityPct(): Flow<Int> = jitterSpeedIdleWobbleProbabilityPctFlow
+
+    override suspend fun setJitterSpeedIdleWobbleProbabilityPct(pct: Int) {
+        jitterSpeedIdleWobbleProbabilityPctFlow.value =
             pct.coerceIn(
                 AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
                 AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,

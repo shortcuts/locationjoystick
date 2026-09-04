@@ -75,6 +75,10 @@ internal sealed class SettingsAction {
         val pct: Int,
     ) : SettingsAction()
 
+    data class SetJitterSpeedIdleWobbleProbabilityPct(
+        val pct: Int,
+    ) : SettingsAction()
+
     data class SetHotLocationsEnabled(
         val enabled: Boolean,
     ) : SettingsAction()

@@ -33,6 +33,8 @@ import kotlin.random.Random
  * @property satelliteExtrasEnabled Whether to attach satellite count extras to each fix.
  * @property speedIdleVariationPct Percentage (of [AppConstants.JitterConstants.IDLE_SPEED_WOBBLE_MAX_MPS], not the
  *   active speed profile — decoupled per issue #56) used as the range for idle speed variation (0 = off).
+ * @property speedIdleWobbleProbabilityPct Percentage chance (0-100) that an idle tick fires a wobble at all —
+ *   independent of speedIdleVariationPct, which only controls the wobble's magnitude when it fires.
  * @property speedMovingVariationPct Percentage of current speed to use as symmetric noise for moving speed variation (0 = off).
  * @property suspendedPhaseStartMs Timestamp of the last phase transition in the push/pause cycle.
  * @property isSuspendedPhase True when currently in the pause window of the push/pause cycle;
@@ -67,6 +69,7 @@ internal data class LocationSnapshot(
     val altitudeEnabled: Boolean,
     val satelliteExtrasEnabled: Boolean,
     val speedIdleVariationPct: Int,
+    val speedIdleWobbleProbabilityPct: Int,
     val speedMovingVariationPct: Int,
     val suspendedPhaseStartMs: Long,
     val isSuspendedPhase: Boolean,
@@ -295,7 +298,7 @@ internal fun buildLocation(
             // Sparse, small idle wobble — decoupled from the active speed profile (issue #56):
             // real GPS reports 0.0 m/s on most idle ticks, with only occasional tiny deviations.
             state.speedMs == 0f && state.speedIdleVariationPct > 0 -> {
-                if (random.nextDouble() < AppConstants.JitterConstants.IDLE_SPEED_WOBBLE_PROBABILITY) {
+                if (random.nextDouble() < state.speedIdleWobbleProbabilityPct / 100.0) {
                     val sigma =
                         AppConstants.JitterConstants.IDLE_SPEED_WOBBLE_MAX_MPS * state.speedIdleVariationPct / 100.0
                     (random.nextDouble() * sigma).toFloat()

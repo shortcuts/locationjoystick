@@ -46,6 +46,10 @@ internal class RealismSettingsState {
     @Volatile var speedIdleVariationPct: Int = AppConstants.JitterConstants.SPEED_IDLE_VARIATION_PCT_DEFAULT
         private set
 
+    @Volatile var speedIdleWobbleProbabilityPct: Int =
+        AppConstants.JitterConstants.SPEED_IDLE_WOBBLE_PROBABILITY_PCT_DEFAULT
+        private set
+
     @Volatile var speedMovingVariationPct: Int = AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT
         private set
 
@@ -77,6 +81,9 @@ internal class RealismSettingsState {
         scope.collectInto(settingsRepository.getRealismSuspendedMockingEnabled()) { suspendedMockingEnabled = it }
         scope.collectInto(settingsRepository.getRememberLastLocation()) { rememberLastLocation = it }
         scope.collectInto(settingsRepository.getJitterSpeedIdleVariationPct()) { speedIdleVariationPct = it }
+        scope.collectInto(settingsRepository.getJitterSpeedIdleWobbleProbabilityPct()) {
+            speedIdleWobbleProbabilityPct = it
+        }
         scope.collectInto(settingsRepository.getJitterSpeedMovingVariationPct()) { speedMovingVariationPct = it }
         scope.collectInto(settingsRepository.getActiveSpeedProfile()) { activeProfileSpeedMs = it.speedMetersPerSecond }
         scope.collectInto(settingsRepository.getRealismRealElevationEnabled()) { realElevationEnabled = it }
