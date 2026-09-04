@@ -122,7 +122,7 @@ fun <T> LjSegmentedControl(
             val isSelected = value == selected
             Button(
                 onClick = { onSelect(value) },
-                modifier = Modifier.padding(horizontal = 2.dp).defaultMinSize(minHeight = 40.dp),
+                modifier = Modifier.padding(horizontal = 2.dp).defaultMinSize(minHeight = 48.dp),
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = if (isSelected) LjAccent else MaterialTheme.colorScheme.surfaceVariant,
