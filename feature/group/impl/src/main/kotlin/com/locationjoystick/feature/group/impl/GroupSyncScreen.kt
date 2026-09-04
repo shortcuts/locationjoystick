@@ -358,7 +358,7 @@ private fun LeaderContent(
             style = MaterialTheme.typography.titleMedium,
         )
 
-        val code = groupState.groupId ?: "—"
+        val code = groupState.groupId ?: "Unknown"
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
             modifier = Modifier.fillMaxWidth(),
@@ -473,7 +473,7 @@ private fun FollowerContent(
         )
 
         Text(
-            text = "Connected to group ${groupState.groupId ?: "—"}",
+            text = "Connected to group ${groupState.groupId ?: "Unknown"}",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
