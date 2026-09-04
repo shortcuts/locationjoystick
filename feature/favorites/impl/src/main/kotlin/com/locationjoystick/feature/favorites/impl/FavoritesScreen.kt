@@ -541,7 +541,7 @@ private fun DeleteConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Delete \"$name\"?") },
-        text = { Text("This action cannot be undone.") },
+        text = { Text("This favorite will be permanently deleted and cannot be undone.") },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text("Delete", color = MaterialTheme.colorScheme.error)
