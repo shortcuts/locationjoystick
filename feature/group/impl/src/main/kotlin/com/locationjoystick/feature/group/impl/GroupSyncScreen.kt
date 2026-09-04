@@ -430,7 +430,7 @@ private fun LeaderContent(
 
         SwitchRow(
             label = "Sharing",
-            description = "sends your location to followers",
+            description = "Sends your location to followers.",
             checked = groupState.sharingEnabled,
             onCheckedChange = onSetSharingEnabled,
         )
@@ -488,7 +488,7 @@ private fun FollowerContent(
 
         SwitchRow(
             label = "Follow leader",
-            description = "walks toward the leader's location",
+            description = "Walks toward the leader's location.",
             checked = groupState.followerModeEnabled,
             onCheckedChange = onSetFollowerModeEnabled,
         )
