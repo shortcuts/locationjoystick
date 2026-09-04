@@ -48,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -407,12 +408,17 @@ private fun LeaderContent(
                         modifier = Modifier.size(200.dp),
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.QrCode, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Text(
-                            text = " Scan to join",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.semantics(mergeDescendants = true) {},
+                        ) {
+                            Icon(Icons.Rounded.QrCode, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Text(
+                                text = " Scan to join",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                         Spacer(modifier = Modifier.weight(1f))
                         IconButton(onClick = onRegenerateQr) {
                             Icon(Icons.Rounded.Refresh, contentDescription = "Regenerate QR")
