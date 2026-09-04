@@ -44,6 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.isValidLatLng
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.toBadgeText
@@ -401,6 +402,9 @@ private fun AddFavoriteSheet(
     var name by remember { mutableStateOf("") }
     var lat by remember { mutableStateOf(initialLat) }
     var lon by remember { mutableStateOf(initialLon) }
+    val latVal = lat.toLocaleDoubleOrNull()
+    val lonVal = lon.toLocaleDoubleOrNull()
+    val isValid = name.isNotEmpty() && isValidLatLng(latVal, lonVal)
 
     Column(
         modifier =
@@ -461,13 +465,8 @@ private fun AddFavoriteSheet(
                 Text("Cancel")
             }
             TextButton(
-                onClick = {
-                    val latVal = lat.toLocaleDoubleOrNull()
-                    val lonVal = lon.toLocaleDoubleOrNull()
-                    if (name.isNotEmpty() && latVal != null && lonVal != null) {
-                        onAdd(name, latVal, lonVal)
-                    }
-                },
+                onClick = { onAdd(name, latVal!!, lonVal!!) },
+                enabled = isValid,
             ) {
                 Text("Save")
             }
@@ -485,6 +484,9 @@ private fun EditFavoriteDialog(
     var name by remember(favorite) { mutableStateOf(favorite.name) }
     var lat by remember(favorite) { mutableStateOf(favorite.position.latitude.toString()) }
     var lon by remember(favorite) { mutableStateOf(favorite.position.longitude.toString()) }
+    val latVal = lat.toLocaleDoubleOrNull()
+    val lonVal = lon.toLocaleDoubleOrNull()
+    val isValid = name.isNotEmpty() && isValidLatLng(latVal, lonVal)
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
@@ -520,13 +522,8 @@ private fun EditFavoriteDialog(
                     Text("Cancel")
                 }
                 TextButton(
-                    onClick = {
-                        val latVal = lat.toLocaleDoubleOrNull()
-                        val lonVal = lon.toLocaleDoubleOrNull()
-                        if (name.isNotEmpty() && latVal != null && lonVal != null) {
-                            onSave(name, latVal, lonVal)
-                        }
-                    },
+                    onClick = { onSave(name, latVal!!, lonVal!!) },
+                    enabled = isValid,
                 ) {
                     Text("Save")
                 }

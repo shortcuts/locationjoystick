@@ -278,9 +278,8 @@ internal fun SaveCurrentLocationDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = {
-                    if (name.isNotBlank()) onSave(name.trim())
-                },
+                onClick = { onSave(name.trim()) },
+                enabled = name.isNotBlank(),
             ) {
                 Text("Save")
             }
