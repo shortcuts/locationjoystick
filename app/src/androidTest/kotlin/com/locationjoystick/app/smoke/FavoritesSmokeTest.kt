@@ -45,7 +45,7 @@ class FavoritesSmokeTest : BaseSmokeTest() {
     fun navigate_to_map_picker() {
         composeRule.onNodeWithContentDescription("Add favorite").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("from map").performClick()
+        composeRule.onNodeWithText("Pick on map").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("Search location").assertIsDisplayed()
     }
@@ -54,9 +54,9 @@ class FavoritesSmokeTest : BaseSmokeTest() {
     fun add_dropdown_shows_all_three_options() {
         composeRule.onNodeWithContentDescription("Add favorite").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("from map").assertIsDisplayed()
-        composeRule.onNodeWithText("from coordinates").assertIsDisplayed()
-        composeRule.onNodeWithText("from current location").assertIsDisplayed()
+        composeRule.onNodeWithText("Pick on map").assertIsDisplayed()
+        composeRule.onNodeWithText("Enter coordinates").assertIsDisplayed()
+        composeRule.onNodeWithText("Use current location").assertIsDisplayed()
     }
 
     @Test
@@ -71,7 +71,7 @@ class FavoritesSmokeTest : BaseSmokeTest() {
     fun navigate_back_from_map_picker() {
         composeRule.onNodeWithContentDescription("Add favorite").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("from map").performClick()
+        composeRule.onNodeWithText("Pick on map").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("Search location").assertIsDisplayed()
         Espresso.pressBack()
@@ -83,7 +83,7 @@ class FavoritesSmokeTest : BaseSmokeTest() {
     fun from_coordinates_dialog_opens() {
         composeRule.onNodeWithContentDescription("Add favorite").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("from coordinates").performClick()
+        composeRule.onNodeWithText("Enter coordinates").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Latitude", substring = true).assertIsDisplayed()
         composeRule.onNodeWithText("Longitude", substring = true).assertIsDisplayed()

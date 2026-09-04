@@ -160,7 +160,7 @@ internal fun FavoritesScreen(
                 onDismissRequest = { showAddMenu = false },
             ) {
                 DropdownMenuItem(
-                    text = { Text("from map") },
+                    text = { Text("Pick on map") },
                     onClick = {
                         onNavigateToMapPicker()
                         showAddMenu = false
@@ -168,7 +168,7 @@ internal fun FavoritesScreen(
                     leadingIcon = { Icon(LjIcons.Map, null) },
                 )
                 DropdownMenuItem(
-                    text = { Text("from coordinates") },
+                    text = { Text("Enter coordinates") },
                     onClick = {
                         prefillLat = ""
                         prefillLon = ""
@@ -178,7 +178,7 @@ internal fun FavoritesScreen(
                     leadingIcon = { Icon(LjIcons.Add, null) },
                 )
                 DropdownMenuItem(
-                    text = { Text("from current location") },
+                    text = { Text("Use current location") },
                     onClick = {
                         val pos = getCurrentPosition()
                         prefillLat = pos?.latitude?.toString() ?: ""
