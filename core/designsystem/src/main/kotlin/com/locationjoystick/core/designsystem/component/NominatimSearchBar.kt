@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
@@ -200,12 +201,12 @@ fun NominatimSearchBar(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .clickable {
+                            .clickable(role = Role.Button) {
                                 onLocationSelected(result.lat, result.lon, result.displayName)
                                 onSearchCommitted?.invoke(result.displayName, result.lat, result.lon)
                                 query = ""
                                 results = emptyList()
-                            }.padding(horizontal = 16.dp, vertical = 12.dp),
+                            }.padding(horizontal = 16.dp, vertical = 14.dp),
                 )
                 HorizontalDivider()
             }
