@@ -544,7 +544,7 @@ private fun DeleteConfirmDialog(
         text = { Text("This action cannot be undone.") },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Delete")
+                Text("Delete", color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {
