@@ -39,7 +39,7 @@ fun LjCheckboxRow(
                 .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Checkbox(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+        Checkbox(checked = checked, onCheckedChange = null, enabled = enabled)
         if (icon != null) {
             Icon(
                 imageVector = icon,
