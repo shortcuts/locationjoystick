@@ -218,6 +218,17 @@ pre code{
 
 .table-wrap:last-child{margin-bottom:0}
 
+blockquote{
+  margin:4px 0 20px;
+  padding:10px 16px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:3px solid var(--accent);
+  border-radius:var(--r);
+}
+
+blockquote p, blockquote em{margin:0}
+
 .option-table{
   width:100%;
   min-width:420px;
