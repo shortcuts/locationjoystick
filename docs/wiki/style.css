@@ -229,6 +229,7 @@ blockquote{
 
 blockquote p, blockquote em{margin:0}
 
+/* Fixed min-width + horizontal scroll keeps multi-column tables readable at their natural width; reflowing into stacked rows would lose column alignment for tables with 3+ columns of prose. */
 .option-table{
   width:100%;
   min-width:420px;
