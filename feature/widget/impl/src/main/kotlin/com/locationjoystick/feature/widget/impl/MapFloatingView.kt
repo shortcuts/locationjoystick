@@ -17,14 +17,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -53,7 +50,10 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
+import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
+import com.locationjoystick.core.designsystem.component.LjOutlinedButton
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.designsystem.component.RoamingSheetContent
 import com.locationjoystick.core.map.geojson.buildLineGeoJson
@@ -646,7 +646,7 @@ private fun BoxScope.TapActionPanel(
             Text("Route in progress", style = MaterialTheme.typography.titleMedium, color = LjText)
             Spacer(Modifier.height(16.dp))
             if (!hideTeleportFeatures) {
-                Button(
+                LjButton(
                     onClick = {
                         onStopRouteAndTeleport(tap)
                         onDismiss()
@@ -655,7 +655,7 @@ private fun BoxScope.TapActionPanel(
                 ) { Text("Stop route and teleport") }
                 Spacer(Modifier.height(8.dp))
             }
-            OutlinedButton(
+            LjOutlinedButton(
                 onClick = {
                     onStopRouteAndWalkTo(tap)
                     onDismiss()
@@ -663,7 +663,7 @@ private fun BoxScope.TapActionPanel(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Stop route and walk here") }
             Spacer(Modifier.height(8.dp))
-            OutlinedButton(
+            LjOutlinedButton(
                 onClick = {
                     onFinishRouteAndWalkTo(tap)
                     onDismiss()
@@ -681,7 +681,7 @@ private fun BoxScope.TapActionPanel(
             )
             Spacer(Modifier.height(16.dp))
             if (!hideTeleportFeatures) {
-                Button(
+                LjButton(
                     onClick = {
                         onTeleport(tap)
                         onDismiss()
@@ -690,7 +690,7 @@ private fun BoxScope.TapActionPanel(
                 ) { Text("Teleport here") }
                 Spacer(Modifier.height(8.dp))
             }
-            OutlinedButton(
+            LjOutlinedButton(
                 onClick = {
                     onWalkTo(tap)
                     onDismiss()
@@ -698,7 +698,7 @@ private fun BoxScope.TapActionPanel(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Walk here") }
             Spacer(Modifier.height(8.dp))
-            OutlinedButton(
+            LjOutlinedButton(
                 onClick = {
                     onWalkViaRoads(tap)
                     onDismiss()
@@ -707,7 +707,7 @@ private fun BoxScope.TapActionPanel(
             ) { Text("Walk here via roads") }
             if (isWalkActive) {
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(
+                LjOutlinedButton(
                     onClick = {
                         onAddEphemeralWaypoint(tap, false)
                         onDismiss()
@@ -715,7 +715,7 @@ private fun BoxScope.TapActionPanel(
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Add next point") }
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(
+                LjOutlinedButton(
                     onClick = {
                         onAddEphemeralWaypoint(tap, true)
                         onDismiss()
@@ -725,7 +725,7 @@ private fun BoxScope.TapActionPanel(
             }
         }
         Spacer(Modifier.height(4.dp))
-        TextButton(
+        LjTextButton(
             onClick = { onDismiss() },
             modifier = Modifier.fillMaxWidth(),
         ) { Text("Do nothing") }
