@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -23,6 +22,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import com.locationjoystick.core.designsystem.component.LjButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -72,7 +72,7 @@ fun QrShareDialog(
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 12.dp),
             )
 
-            Button(
+            LjButton(
                 onClick = {
                     if (bitmap != null) {
                         scope.launch { shareQrBitmap(context, bitmap) }
@@ -83,7 +83,7 @@ fun QrShareDialog(
                 Text("Share")
             }
 
-            Button(
+            LjButton(
                 onClick = onDismiss,
                 modifier = Modifier.align(Alignment.End).padding(top = 8.dp),
             ) {
