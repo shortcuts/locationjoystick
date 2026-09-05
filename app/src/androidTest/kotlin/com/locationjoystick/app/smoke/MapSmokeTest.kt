@@ -1,6 +1,10 @@
 package com.locationjoystick.app.smoke
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.filterToOne
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -24,7 +28,10 @@ class MapSmokeTest : BaseSmokeTest() {
 
     @Test
     fun map_screen_shows_title() {
-        composeRule.onNodeWithText("Map").assertIsDisplayed()
+        composeRule
+            .onAllNodesWithText("Map")
+            .filterToOne(!hasAnyAncestor(hasTestTag("nav_drawer")))
+            .assertIsDisplayed()
     }
 
     @Test
