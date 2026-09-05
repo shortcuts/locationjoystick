@@ -176,6 +176,8 @@ internal class ReplayOrchestrator(
      * repository state, and the test-provider location.
      */
     private fun tickPosition(pos: LatLng) {
+        // Mirrors updatePositionWithVector's gate: rejects a stale tick from a replay whose async cancel hasn't landed yet.
+        if (locationRepository.currentMode.value != MockMode.ROUTE_REPLAY) return
         onPositionChange(pos.latitude, pos.longitude)
         bearingTracker.advance(pos)?.let { locationRepository.setBearingInternal(it) }
         try {

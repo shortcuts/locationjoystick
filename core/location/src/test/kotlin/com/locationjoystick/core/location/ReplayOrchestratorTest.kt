@@ -598,4 +598,47 @@ class ReplayOrchestratorTest {
 
             assertEquals(null, locationRepository.currentBearing.value)
         }
+
+    @Test
+    fun tick_afterModeChangedAwayFromRouteReplay_isIgnored() =
+        runTest {
+            var pushCount = 0
+            var capturedCallback: ((LatLng) -> Unit)? = null
+            val orch =
+                ReplayOrchestrator(
+                    locationRepository = locationRepository,
+                    routeRepository = routeRepository,
+                    roamingRepository = roamingRepository,
+                    routeReplayEngine = routeReplayEngine,
+                    walkToEngine = walkToEngine,
+                    osrmClient = osrmClient,
+                    routingErrorReporter = routingErrorReporter,
+                    scope = kotlinx.coroutines.CoroutineScope(dispatcher),
+                    onStateChange = { },
+                    onPositionChange = { _, _ -> },
+                    onSpeedChange = { },
+                    pushLocationUpdate = { pushCount++ },
+                    startUpdateLoop = { },
+                )
+            every {
+                routeReplayEngine.start(any(), any(), any(), any(), any(), any())
+            } answers {
+                capturedCallback = arg(3)
+            }
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+
+            orch.handleEphemeralStart(listOf(LatLng(0.0, 0.0), LatLng(2.0, 2.0)), 1.4)
+
+            // Simulates a new walk-to superseding this replay before its async ACTION_ROUTE_REPLAY_CANCEL
+            // teardown (handleCancel, dispatched on serviceScope) actually runs — see
+            // "ephemeral-walk-to-path-still-followed-after-starting-new-walk-to".
+            locationRepository.setMockMode(MockMode.WALK_TO)
+            locationRepository.setPositionInternal(LatLng(5.0, 5.0))
+            pushCount = 0
+
+            capturedCallback?.invoke(LatLng(9.0, 9.0))
+
+            assertEquals(LatLng(5.0, 5.0), locationRepository.currentPosition.value)
+            assertEquals(0, pushCount)
+        }
 }
