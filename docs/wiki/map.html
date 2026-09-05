@@ -75,7 +75,7 @@
         </tr>
         <tr>
           <td><strong>Walk here via roads</strong></td>
-          <td>Fetches a real road route and walks it a step at a time at your current speed. If the road route can't be fetched, it quietly falls back to a straight-line walk instead.</td>
+          <td>Fetches a real road route and walks it a step at a time at your current speed. If the road route can't be fetched, that walk <a href="#road-routing-fallback">falls back to a straight line</a> instead.</td>
         </tr>
         <tr>
           <td><strong>Add next point</strong></td>
@@ -88,6 +88,7 @@
       </tbody>
     </table>
     </div>
+    <p id="road-routing-fallback">Any feature that follows real roads — walking via roads, a route's road-snapping, and roaming — fetches the path from an online routing service. If that service can't be reached, the affected stretch quietly falls back to a straight line instead, and movement continues without interruption.</p>
     <p>While a saved route is playing, the sheet shows different choices instead: <strong>Stop route and teleport</strong>, <strong>Stop route and walk here</strong>, and <strong>Finish route and walk here</strong>, which adds the tapped point to the end of the route instead of stopping it.</p>
 
     <h2 id="routes-sheet">Routes sheet</h2>
@@ -126,7 +127,7 @@
       <img class="phone-shot" src="screenshots/08_map_roaming_sheet.png" alt="Map roaming bottom sheet">
       <ul class="section-bullets">
         <li>Set a center point (your current position by default), a radius, and a total distance to cover.</li>
-        <li>Turn on road-following so each leg sticks to real walkable paths. If a road route can't be found, that leg falls back to a straight line.</li>
+        <li>Turn on road-following so each leg sticks to real walkable paths. If a road route can't be found, that leg <a href="#road-routing-fallback">falls back to a straight line</a>.</li>
         <li>Optionally have it walk back to the starting position once the distance is covered.</li>
         <li>Each time it reaches a spot, it picks a new random one within the radius. Spots are chosen at random across the whole circle, not clustered near the center.</li>
         <li>Roaming keeps running in the background, even with the screen off.</li>

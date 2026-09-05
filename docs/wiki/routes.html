@@ -63,7 +63,7 @@
         </tr>
         <tr>
           <td><strong>Guided (road-following)</strong></td>
-          <td>Each stretch between stops is sent to an online road routing service at <a href="https://router.project-osrm.org" target="_blank" rel="noopener">router.project-osrm.org</a>, which sends back a path that follows real roads. The Walk and Run speeds use walking directions; the Bike speed uses cycling directions. If the service can't be reached, that stretch falls back to a straight line. The road path is saved after it's fetched once, so later replays don't need to look it up again.</td>
+          <td>Each stretch between stops is sent to an online road routing service at <a href="https://router.project-osrm.org" target="_blank" rel="noopener">router.project-osrm.org</a>, which sends back a path that follows real roads. The Walk and Run speeds use walking directions; the Bike speed uses cycling directions. If the service can't be reached, that stretch <a href="map.html#road-routing-fallback">falls back to a straight line</a>. The road path is saved after it's fetched once, so later replays don't need to look it up again.</td>
         </tr>
       </tbody>
     </table>
