@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -21,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
+import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import kotlin.math.roundToInt
 
@@ -210,7 +210,7 @@ internal fun GpsRealismSection(
                 "altitude override is active (floating widget), and falls back to the fixed value if the lookup fails.",
     )
     Spacer(modifier = Modifier.height(4.dp))
-    Button(
+    LjButton(
         onClick = { onAction(SettingsAction.ResetAltitudeOverride) },
         enabled = uiState.hasAltitudeOverride,
     ) {
