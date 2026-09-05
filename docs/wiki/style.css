@@ -158,12 +158,14 @@ h1,h2,h3{position:relative}
   cursor:pointer;
   opacity:0;
   vertical-align:middle;
-  transition:opacity 0.1s,color 0.1s;
+  transition:opacity 0.1s,color 0.1s,transform 0.1s;
 }
 
 h1:hover .heading-link,h2:hover .heading-link,h3:hover .heading-link,.heading-link:focus-visible{opacity:1}
 
 .heading-link:hover{color:var(--accent)}
+
+.heading-link:active{transform:scale(0.96)}
 
 .heading-link.copied{opacity:1;color:var(--accent)}
 
@@ -257,6 +259,7 @@ blockquote p, blockquote em{margin:0}
   color:var(--muted);
   vertical-align:top;
   line-height:1.55;
+  transition:background 0.12s;
 }
 
 .option-table tr:first-child td{border-top:none}
@@ -514,10 +517,11 @@ nav a.nav-ext{
     border-radius:6px;
     cursor:pointer;
     color:var(--muted);
-    transition:color 0.1s,border-color 0.1s;
+    transition:color 0.1s,border-color 0.1s,transform 0.1s;
   }
 
   .nav-toggle-btn:hover{color:var(--text);border-color:var(--accent)}
+  .nav-toggle-btn:active{transform:scale(0.96)}
 
   nav{
     display:none;
