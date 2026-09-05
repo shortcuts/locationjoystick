@@ -31,7 +31,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +52,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.LatLng
 
@@ -467,10 +467,10 @@ private fun AddFavoriteSheet(
                         .padding(top = 24.dp),
                 horizontalArrangement = Arrangement.End,
             ) {
-                TextButton(onClick = onDismiss) {
+                LjTextButton(onClick = onDismiss) {
                     Text("Cancel")
                 }
-                TextButton(
+                LjTextButton(
                     onClick = { onAdd(name, latVal!!, lonVal!!) },
                     enabled = isValid,
                 ) {
@@ -525,10 +525,10 @@ private fun EditFavoriteDialog(
             )
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                TextButton(onClick = onDismiss) {
+                LjTextButton(onClick = onDismiss) {
                     Text("Cancel")
                 }
-                TextButton(
+                LjTextButton(
                     onClick = { onSave(name, latVal!!, lonVal!!) },
                     enabled = isValid,
                 ) {
@@ -550,12 +550,12 @@ private fun DeleteConfirmDialog(
         title = { Text("Delete \"$name\"?") },
         text = { Text("This favorite will be permanently deleted and cannot be undone.") },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            LjTextButton(onClick = onConfirm) {
                 Text("Delete", color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            LjTextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
         },
