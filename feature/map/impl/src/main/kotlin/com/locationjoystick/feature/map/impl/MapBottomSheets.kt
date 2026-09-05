@@ -10,15 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +30,9 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
 import com.locationjoystick.core.designsystem.component.FavoritesList
+import com.locationjoystick.core.designsystem.component.LjButton
+import com.locationjoystick.core.designsystem.component.LjOutlinedButton
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.RouteStartSheetContent
 import com.locationjoystick.core.designsystem.component.RoutesPickerList
 import com.locationjoystick.core.model.startWaypoint
@@ -165,7 +165,7 @@ internal fun PendingTapSheet(
                 Text("Route in progress", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(16.dp))
                 if (!hideTeleportFeatures) {
-                    Button(
+                    LjButton(
                         onClick = { onAction(MapAction.StopRouteAndTeleport(position)) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -173,14 +173,14 @@ internal fun PendingTapSheet(
                     }
                     Spacer(Modifier.height(8.dp))
                 }
-                OutlinedButton(
+                LjOutlinedButton(
                     onClick = { onAction(MapAction.StopRouteAndWalkTo(position)) },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text("Stop route and walk here")
                 }
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(
+                LjOutlinedButton(
                     onClick = { onAction(MapAction.FinishRouteAndWalkTo(position)) },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -194,7 +194,7 @@ internal fun PendingTapSheet(
                 )
                 Spacer(Modifier.height(16.dp))
                 if (!hideTeleportFeatures) {
-                    Button(
+                    LjButton(
                         onClick = { onAction(MapAction.ConfirmTeleport(position)) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -206,7 +206,7 @@ internal fun PendingTapSheet(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    OutlinedButton(
+                    LjOutlinedButton(
                         onClick = {
                             onAction(MapAction.LongPressTapToWalk(position))
                             onAction(MapAction.ClearPendingTap)
@@ -215,7 +215,7 @@ internal fun PendingTapSheet(
                     ) {
                         Text("Walk here")
                     }
-                    OutlinedButton(
+                    LjOutlinedButton(
                         onClick = {
                             onAction(MapAction.WalkViaRoadsTo(position))
                             onAction(MapAction.ClearPendingTap)
@@ -231,13 +231,13 @@ internal fun PendingTapSheet(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        OutlinedButton(
+                        LjOutlinedButton(
                             onClick = { onAction(MapAction.AddEphemeralWaypoint(position, followRoads = false)) },
                             modifier = Modifier.weight(1f),
                         ) {
                             Text("Add next point")
                         }
-                        OutlinedButton(
+                        LjOutlinedButton(
                             onClick = { onAction(MapAction.AddEphemeralWaypoint(position, followRoads = true)) },
                             modifier = Modifier.weight(1f),
                         ) {
@@ -248,7 +248,7 @@ internal fun PendingTapSheet(
             }
             if (onShare != null) {
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(
+                LjOutlinedButton(
                     onClick = onShare,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -256,7 +256,7 @@ internal fun PendingTapSheet(
                 }
             }
             Spacer(Modifier.height(4.dp))
-            TextButton(
+            LjTextButton(
                 onClick = { onAction(MapAction.ClearPendingTap) },
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -286,7 +286,7 @@ internal fun SaveCurrentLocationDialog(
             )
         },
         confirmButton = {
-            TextButton(
+            LjTextButton(
                 onClick = { onSave(name.trim()) },
                 enabled = name.isNotBlank(),
             ) {
@@ -294,7 +294,7 @@ internal fun SaveCurrentLocationDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            LjTextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
         },
