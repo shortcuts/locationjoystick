@@ -26,18 +26,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -67,8 +64,11 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
+import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FeatureSurface
 import com.locationjoystick.core.model.SpeedProfile
@@ -263,14 +263,14 @@ private fun TapToWalkSection(
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
+                LjTextButton(onClick = {
                     showWarning = false
                     onAction(SettingsAction.SetFloatingMapQuickWalk(true))
                     onAction(SettingsAction.SetTapToWalkOverlayEnabled(true))
                 }) { Text("Enable anyway") }
             },
             dismissButton = {
-                TextButton(onClick = { showWarning = false }) { Text("Cancel") }
+                LjTextButton(onClick = { showWarning = false }) { Text("Cancel") }
             },
         )
     }
@@ -380,7 +380,7 @@ private fun CompassOrientationSection(
         }
         if (!uiState.isCompassServiceGranted) {
             Spacer(Modifier.width(8.dp))
-            Button(onClick = {
+            LjButton(onClick = {
                 context.startActivity(
                     Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -399,7 +399,7 @@ private fun CompassOrientationSection(
         )
         if (uiState.compassTrackingEnabled) {
             Spacer(Modifier.height(8.dp))
-            OutlinedButton(
+            LjOutlinedButton(
                 onClick = { showCalibration = true },
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -464,8 +464,8 @@ private fun CompassCalibrationDialog(
             )
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                TextButton(onClick = onDismiss) { Text("Cancel") }
-                TextButton(onClick = { onConfirm(currentCx, currentCy, currentRadius) }) { Text("Done") }
+                LjTextButton(onClick = onDismiss) { Text("Cancel") }
+                LjTextButton(onClick = { onConfirm(currentCx, currentCy, currentRadius) }) { Text("Done") }
             }
         }
     }
