@@ -9,7 +9,7 @@ Key files: `:feature:onboarding:impl/OnboardingScreen.kt`, `:feature:onboarding:
 1. Welcome
 2. Grant `ACCESS_FINE_LOCATION`
 3. Grant `SYSTEM_ALERT_WINDOW`
-4. Enable mock location (deep link to Developer Options; "Check again" button re-checks `AppOpsManager`)
+4. Enable mock location (deep link to Developer Options; re-checked automatically on resume — see "Permission Checks" below)
 5. Done → MapScreen
 
 ## Permission Checks
@@ -19,6 +19,12 @@ Key files: `:feature:onboarding:impl/OnboardingScreen.kt`, `:feature:onboarding:
 | `ACCESS_FINE_LOCATION` | `ContextCompat.checkSelfPermission` |
 | `SYSTEM_ALERT_WINDOW` | `Settings.canDrawOverlays(context)` |
 | Mock location | `AppOpsManager.checkOpNoThrow(OPSTR_MOCK_LOCATION)` |
+
+There is no manual "Check again" button. `OnboardingScreen` re-runs
+`viewModel.checkPermissions()` automatically whenever the screen resumes —
+a `DisposableEffect`/`LifecycleEventObserver` on `Lifecycle.Event.ON_RESUME` —
+so returning from Settings or Developer Options re-evaluates every
+permission without user action.
 
 ## Skip Mock-Location Check
 
