@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +38,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.component.LjButton
 import java.util.concurrent.Executors
 import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 
@@ -114,7 +114,7 @@ fun QrScannerScreen(
             verticalArrangement = Arrangement.Center,
         ) {
             Text("Camera permission required to scan QR codes")
-            Button(onClick = onNavigateBack) {
+            LjButton(onClick = onNavigateBack) {
                 Text("Back to Settings")
             }
         }
