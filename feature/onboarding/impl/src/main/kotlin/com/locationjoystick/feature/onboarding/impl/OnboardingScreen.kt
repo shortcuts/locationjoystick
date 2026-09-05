@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -62,6 +61,7 @@ import com.locationjoystick.core.designsystem.LjWarningContainer
 import com.locationjoystick.core.designsystem.component.AppIcon
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.WideContentClamp
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.feature.onboarding.api.ONBOARDING_ROUTE
 
@@ -137,162 +137,154 @@ internal fun OnboardingScreen(
         containerColor = MaterialTheme.colorScheme.background,
         showSpoofToggle = false,
     ) { paddingValues ->
-        Box(
+        WideContentClamp(
             modifier = Modifier.fillMaxSize().padding(paddingValues),
-            contentAlignment = Alignment.TopCenter,
+            contentModifier = Modifier.verticalScroll(remember { ScrollState(0) }).padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier =
-                    Modifier
-                        .widthIn(max = 600.dp)
-                        .verticalScroll(remember { ScrollState(0) })
-                        .padding(horizontal = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            AppIcon()
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Set up locationjoystick",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "v${AppConstants.AppInfo.VERSION_NAME}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Complete the steps below to start simulating your GPS location.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                AppIcon()
-
-                Spacer(modifier = Modifier.height(24.dp))
-
                 Text(
-                    text = "Set up locationjoystick",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center,
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = "v${AppConstants.AppInfo.VERSION_NAME}",
+                    text = "Trouble setting up?",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
+                TextButton(
+                    onClick = {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.AppInfo.DOCS_URL)),
+                        )
+                    },
+                ) {
+                    Text(
+                        text = "Getting Started",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
                 Text(
-                    text = "Complete the steps below to start simulating your GPS location.",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "·",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TextButton(
+                    onClick = {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.AppInfo.TROUBLESHOOTING_URL)),
+                        )
+                    },
+                ) {
+                    Text(
+                        text = "Troubleshooting",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            OnboardingStepCard(
+                title = "Location permission",
+                description = "Required to read your real position for map centering and route recording.",
+                isGranted = uiState.locationPermissionGranted,
+                icon = LjIcons.LocationOn,
+                actionLabel = "Grant Permission",
+                isOptional = false,
+                onAction = { locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) },
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OnboardingStepCard(
+                title = "Display over other apps",
+                description = "Required for the floating joystick and quick-access widget while other apps are open.",
+                isGranted = uiState.overlayPermissionGranted,
+                icon = LjIcons.Layers,
+                actionLabel = "Open Settings",
+                isOptional = false,
+                onAction = {
+                    context.startActivity(
+                        Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:${context.packageName}"),
+                        ),
+                    )
+                },
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OnboardingStepCard(
+                title = "Set as fake GPS app",
+                description =
+                    "In Developer Options, find 'Select mock location app' and choose locationjoystick. " +
+                        "This lets the app replace your real GPS.",
+                isGranted = uiState.mockLocationEnabled,
+                icon = LjIcons.DeveloperMode,
+                actionLabel = "Open Developer Options",
+                isOptional = false,
+                onAction = {
+                    context.startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
+                },
+                extraActionLabel = "Skip",
+                onExtraAction = { showSkipMockLocationDialog = true },
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            LjPrimaryButton(
+                text = "Start using locationjoystick",
+                onClick = onSetupComplete,
+                enabled = uiState.canProceed || uiState.isDebugBuild,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            if (uiState.isDebugBuild && !uiState.canProceed) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Debug build — permissions optional",
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "Trouble setting up?",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    TextButton(
-                        onClick = {
-                            context.startActivity(
-                                Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.AppInfo.DOCS_URL)),
-                            )
-                        },
-                    ) {
-                        Text(
-                            text = "Getting Started",
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    Text(
-                        text = "·",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    TextButton(
-                        onClick = {
-                            context.startActivity(
-                                Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.AppInfo.TROUBLESHOOTING_URL)),
-                            )
-                        },
-                    ) {
-                        Text(
-                            text = "Troubleshooting",
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                OnboardingStepCard(
-                    title = "Location permission",
-                    description = "Required to read your real position for map centering and route recording.",
-                    isGranted = uiState.locationPermissionGranted,
-                    icon = LjIcons.LocationOn,
-                    actionLabel = "Grant Permission",
-                    isOptional = false,
-                    onAction = { locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) },
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OnboardingStepCard(
-                    title = "Display over other apps",
-                    description = "Required for the floating joystick and quick-access widget while other apps are open.",
-                    isGranted = uiState.overlayPermissionGranted,
-                    icon = LjIcons.Layers,
-                    actionLabel = "Open Settings",
-                    isOptional = false,
-                    onAction = {
-                        context.startActivity(
-                            Intent(
-                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                Uri.parse("package:${context.packageName}"),
-                            ),
-                        )
-                    },
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OnboardingStepCard(
-                    title = "Set as fake GPS app",
-                    description =
-                        "In Developer Options, find 'Select mock location app' and choose locationjoystick. " +
-                            "This lets the app replace your real GPS.",
-                    isGranted = uiState.mockLocationEnabled,
-                    icon = LjIcons.DeveloperMode,
-                    actionLabel = "Open Developer Options",
-                    isOptional = false,
-                    onAction = {
-                        context.startActivity(
-                            Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                        )
-                    },
-                    extraActionLabel = "Skip",
-                    onExtraAction = { showSkipMockLocationDialog = true },
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                LjPrimaryButton(
-                    text = "Start using locationjoystick",
-                    onClick = onSetupComplete,
-                    enabled = uiState.canProceed || uiState.isDebugBuild,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                if (uiState.isDebugBuild && !uiState.canProceed) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Debug build — permissions optional",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -53,6 +52,7 @@ import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjTextButton
+import com.locationjoystick.core.designsystem.component.WideContentClamp
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.LatLng
 
@@ -407,75 +407,66 @@ private fun AddFavoriteSheet(
     val lonVal = lon.toLocaleDoubleOrNull()
     val isValid = name.isNotEmpty() && isValidLatLng(latVal, lonVal)
 
-    Box(
+    WideContentClamp(
         modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.TopCenter,
+        contentModifier = Modifier.fillMaxWidth().padding(16.dp).imePadding(),
     ) {
-        Column(
+        Text(
+            "Add Favorite Location",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Name") },
             modifier =
                 Modifier
-                    .widthIn(max = 600.dp)
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .imePadding(),
+                    .padding(top = 16.dp),
+        )
+
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                "Add Favorite Location",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Name") },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
+                value = lat,
+                onValueChange = { lat = it },
+                label = { Text("Latitude") },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             )
+            OutlinedTextField(
+                value = lon,
+                onValueChange = { lon = it },
+                label = { Text("Longitude") },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            )
+        }
 
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                OutlinedTextField(
-                    value = lat,
-                    onValueChange = { lat = it },
-                    label = { Text("Latitude") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                )
-                OutlinedTextField(
-                    value = lon,
-                    onValueChange = { lon = it },
-                    label = { Text("Longitude") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                )
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            LjTextButton(onClick = onDismiss) {
+                Text("Cancel")
             }
-
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 24.dp),
-                horizontalArrangement = Arrangement.End,
+            LjTextButton(
+                onClick = { onAdd(name, latVal!!, lonVal!!) },
+                enabled = isValid,
             ) {
-                LjTextButton(onClick = onDismiss) {
-                    Text("Cancel")
-                }
-                LjTextButton(
-                    onClick = { onAdd(name, latVal!!, lonVal!!) },
-                    enabled = isValid,
-                ) {
-                    Text("Save")
-                }
+                Text("Save")
             }
         }
     }

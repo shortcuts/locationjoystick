@@ -3,7 +3,6 @@ package com.locationjoystick.feature.group.impl
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -61,6 +59,7 @@ import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjTextButton
+import com.locationjoystick.core.designsystem.component.WideContentClamp
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
@@ -163,58 +162,50 @@ internal fun GroupSyncScreen(
         onNavigationClick = onOpenDrawer,
         snackbarHost = { SnackbarHost(snackbarHostState) { Snackbar(it) } },
     ) { paddingValues ->
-        Box(
+        WideContentClamp(
             modifier = Modifier.fillMaxSize().padding(paddingValues),
-            contentAlignment = Alignment.TopCenter,
+            contentModifier = Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier =
-                    Modifier
-                        .widthIn(max = 600.dp)
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-                when (groupState.role) {
-                    GroupRole.NONE -> {
-                        NoGroupContent(
-                            isDiscovering = isDiscovering,
-                            onCreateGroup = onCreateGroup,
-                            onJoinViaQr = onJoinViaQr,
-                            onJoinByCode = onJoinByCode,
-                        )
-                    }
-
-                    GroupRole.LEADER -> {
-                        LeaderContent(
-                            groupState = groupState,
-                            qrBitmap = qrBitmap,
-                            followerCount = followerCount,
-                            onSetSharingEnabled = onSetSharingEnabled,
-                            onLeaveGroup = onLeaveGroup,
-                            onRegenerateQr = onRegenerateQr,
-                        )
-                    }
-
-                    GroupRole.FOLLOWER -> {
-                        FollowerContent(
-                            groupState = groupState,
-                            followerCount = followerCount,
-                            onSetFollowerModeEnabled = onSetFollowerModeEnabled,
-                            onTeleportToLeaderNow = onTeleportToLeaderNow,
-                            onLeaveGroup = onLeaveGroup,
-                            hideTeleportFeatures = hideTeleportFeatures,
-                            leaderPosition = leaderPosition,
-                            currentPosition = currentPosition,
-                            cooldownState = cooldownState,
-                        )
-                    }
+            when (groupState.role) {
+                GroupRole.NONE -> {
+                    NoGroupContent(
+                        isDiscovering = isDiscovering,
+                        onCreateGroup = onCreateGroup,
+                        onJoinViaQr = onJoinViaQr,
+                        onJoinByCode = onJoinByCode,
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                GroupRole.LEADER -> {
+                    LeaderContent(
+                        groupState = groupState,
+                        qrBitmap = qrBitmap,
+                        followerCount = followerCount,
+                        onSetSharingEnabled = onSetSharingEnabled,
+                        onLeaveGroup = onLeaveGroup,
+                        onRegenerateQr = onRegenerateQr,
+                    )
+                }
+
+                GroupRole.FOLLOWER -> {
+                    FollowerContent(
+                        groupState = groupState,
+                        followerCount = followerCount,
+                        onSetFollowerModeEnabled = onSetFollowerModeEnabled,
+                        onTeleportToLeaderNow = onTeleportToLeaderNow,
+                        onLeaveGroup = onLeaveGroup,
+                        hideTeleportFeatures = hideTeleportFeatures,
+                        leaderPosition = leaderPosition,
+                        currentPosition = currentPosition,
+                        cooldownState = cooldownState,
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
