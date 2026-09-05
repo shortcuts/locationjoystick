@@ -31,13 +31,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -69,7 +67,9 @@ import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
 import com.locationjoystick.core.designsystem.component.FavoritesList
+import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.RoutesPickerList
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
@@ -555,14 +555,14 @@ internal fun FavoritesFloatingView(
                         horizontalArrangement = Arrangement.End,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        TextButton(onClick = {
+                        LjTextButton(onClick = {
                             showAddForm = false
                             newFavName = ""
                         }) {
                             Text("Cancel", color = LjText)
                         }
                         Spacer(Modifier.width(8.dp))
-                        Button(
+                        LjButton(
                             onClick = {
                                 if (newFavName.isNotBlank()) {
                                     onAddFromHere(newFavName.trim())
@@ -575,7 +575,7 @@ internal fun FavoritesFloatingView(
                         }
                     }
                 } else {
-                    Button(
+                    LjButton(
                         onClick = { showAddForm = true },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
