@@ -32,14 +32,24 @@
 #   --steps 01,03,05     (run steps 1, 3, 5)
 # Seeding (routes, favorites) always runs before the first selected step.
 #
-# Output files (18 canonical PNGs):
+# Output files (20 canonical PNGs):
 #   01_idle, 02_map, 03_routes, 04_favorites, 05_settings,
 #   06_map_routes_sheet, 07_map_favorites_sheet, 08_map_roaming_sheet,
 #   09_route_creator, 10_route_detail, 11_map_picker,
 #   12_qr_share,
 #   13_joystick_overlay, 14_widget_overlay,
 #   15_routes_add_button, 16_favorites_add_button,
-#   17_group_sync, 18_debug_stats
+#   17_group_sync, 18_debug_stats,
+#   20_tap_to_walk_settings
+#
+# 19_onboarding_mock_location is NOT captured by this script — it's the
+# "Set as fake GPS app" onboarding step, only reachable on a fresh install
+# before onboarding completes, which conflicts with this script's own
+# "app installed and past onboarding" prerequisite above. Recapture manually:
+# reinstall the debug build, launch the app, dismiss the "What's new" badge,
+# then `adb exec-out screencap -p > docs/wiki/screenshots/19_onboarding_mock_location.png`
+# while the "Set as fake GPS app" step (with its Open Developer Options / Skip
+# buttons) is on screen.
 
 set -euo pipefail
 
@@ -90,7 +100,7 @@ if [[ -n "$STEPS_FILTER" ]]; then
   done
 else
   # No filter: enable all steps
-  for i in $(seq 1 18); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
+  for i in $(seq 1 20); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
 fi
 
 # Helper to check if a step should run (e.g. should_run_step "16")
@@ -131,6 +141,25 @@ bounds_of() {
       last;
     }
   ' "$dump" 2>/dev/null
+}
+
+# Tap the toggle switch on the same row as a label (settings rows place the
+# label text and its Switch as separate nodes sharing one y-centre, with the
+# switch always in the fixed right-hand column at x=970 — the label itself is
+# not clickable, so tap_text's own bounds miss the switch entirely).
+tap_switch_for() {
+  local text="$1"
+  local dump centre y
+  dump=$(ui_dump)
+  centre=$(bounds_of "$dump" "$text")
+  rm -f "$dump"
+  if [[ -z "$centre" ]]; then
+    warn "Could not find row \"$text\" — skipping switch tap."
+    return 1
+  fi
+  read -r _ y <<< "$centre"
+  log "Tapping switch for \"$text\" at (970, $y)"
+  $ADB shell input tap 970 "$y"
 }
 
 # Tap a UI element by its visible text or content-desc (case-insensitive substring).
@@ -950,6 +979,37 @@ print(prefix[last+9:last+13] == "true")
     then expand the floating widget panel so the live stats block is visible."
   fi
   screenshot "18_debug_stats"
+fi
+
+# ── 20. Settings → Menus → Tap to Walk section ───────────────────────────────
+
+if should_run_step "20"; then
+  log "=== 20 TAP TO WALK SETTINGS ==="
+  go_idle
+  tap_text_below "Settings" "$CARD_Y_MIN"
+  wait_s 2 "Settings loading"
+  tap_text "Menus"
+  wait_s 2 "Menus loading"
+  $ADB shell input swipe 540 1600 540 400
+  wait_s 1 "Scrolling to Tap to Walk"
+  $ADB shell input swipe 540 1600 540 400
+  wait_s 1 "Scrolling to Tap to Walk"
+  dump=$(ui_dump)
+  already_on=$(python3 -c '
+data = open("'"$dump"'").read()
+idx = data.find("Enable Tap to Walk")
+seg = data[idx:idx+900]
+i = seg.find("checkable=\"true\"")
+print("checked=\"true\"" in seg[i:i+40])
+')
+  rm -f "$dump"
+  if [[ "$already_on" != "True" ]]; then
+    tap_switch_for "Enable Tap to Walk"
+    wait_s 1 "Warning dialog opening"
+    tap_text "Enable anyway"
+    wait_s 1 "Enabling Tap to Walk — Map scale / Compass sections expanding"
+  fi
+  screenshot "20_tap_to_walk_settings"
 fi
 
 # ── Done ─────────────────────────────────────────────
