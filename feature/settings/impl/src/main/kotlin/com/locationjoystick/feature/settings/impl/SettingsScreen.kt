@@ -3,29 +3,14 @@ package com.locationjoystick.feature.settings.impl
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -45,20 +30,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.UiConstants
-import com.locationjoystick.core.designsystem.component.AppIcon
+import com.locationjoystick.core.designsystem.component.DestinationCardSpec
+import com.locationjoystick.core.designsystem.component.DestinationHub
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.location.rememberSpoofToggleState
@@ -660,175 +642,38 @@ private fun SettingsHubScreen(
         },
         floatingActionButton = { SettingsSaveDiscardFab(uiState.isDirty, onAction) },
     ) { paddingValues ->
-        val isWide = LocalConfiguration.current.screenWidthDp >= 600
-        if (isWide) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 24.dp),
-            ) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth().padding(top = 40.dp, bottom = 32.dp),
-                    ) {
-                        AppIcon()
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(
-                            text = "locationjoystick",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            textAlign = TextAlign.Center,
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "v${AppConstants.AppInfo.VERSION_NAME}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
-                item {
-                    SettingsDestinationCard(
+        DestinationHub(
+            paddingValues = paddingValues,
+            cards =
+                listOf(
+                    DestinationCardSpec(
                         icon = LjIcons.Speed,
                         title = "Movement & GPS",
                         description = "Speed presets, signal realism, and location randomness for all movement modes.",
                         onClick = { onNavigate(SettingsSection.GPS) },
-                    )
-                }
-                item {
-                    SettingsDestinationCard(
+                    ),
+                    DestinationCardSpec(
                         icon = LjIcons.Joystick,
                         title = "Menus",
                         description =
                             "Which features appear in the floating widget and map buttons, " +
                                 "and how to trigger walks by tapping.",
                         onClick = { onNavigate(SettingsSection.MENUS) },
-                    )
-                }
-                item {
-                    SettingsDestinationCard(
+                    ),
+                    DestinationCardSpec(
                         icon = LjIcons.Favorite,
                         title = "Favorites & Routes",
                         description = "Curated hot locations and pre-built routes to populate your library.",
                         onClick = { onNavigate(SettingsSection.FAVORITES_ROUTES) },
-                    )
-                }
-                item {
-                    SettingsDestinationCard(
+                    ),
+                    DestinationCardSpec(
                         icon = LjIcons.Explore,
                         title = "Roaming",
                         description = "Default area, distance, speed, and routing style for random walks.",
                         onClick = { onNavigate(SettingsSection.ROAMING) },
-                    )
-                }
-            }
-        } else {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .verticalScroll(remember { ScrollState(0) })
-                        .padding(horizontal = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Spacer(modifier = Modifier.height(40.dp))
-                AppIcon()
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = "locationjoystick",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "v${AppConstants.AppInfo.VERSION_NAME}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(28.dp))
-                SettingsDestinationCard(
-                    icon = LjIcons.Speed,
-                    title = "Movement & GPS",
-                    description = "Speed presets, signal realism, and location randomness for all movement modes.",
-                    onClick = { onNavigate(SettingsSection.GPS) },
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                SettingsDestinationCard(
-                    icon = LjIcons.Joystick,
-                    title = "Menus",
-                    description = "Which features appear in the floating widget and map buttons, and how to trigger walks by tapping.",
-                    onClick = { onNavigate(SettingsSection.MENUS) },
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                SettingsDestinationCard(
-                    icon = LjIcons.Favorite,
-                    title = "Favorites & Routes",
-                    description = "Curated hot locations and pre-built routes to populate your library.",
-                    onClick = { onNavigate(SettingsSection.FAVORITES_ROUTES) },
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                SettingsDestinationCard(
-                    icon = LjIcons.Explore,
-                    title = "Roaming",
-                    description = "Default area, distance, speed, and routing style for random walks.",
-                    onClick = { onNavigate(SettingsSection.ROAMING) },
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun SettingsDestinationCard(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    onClick: () -> Unit,
-) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp),
-                )
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(text = title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                Text(text = description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
+                    ),
+                ),
+        )
     }
 }
 
