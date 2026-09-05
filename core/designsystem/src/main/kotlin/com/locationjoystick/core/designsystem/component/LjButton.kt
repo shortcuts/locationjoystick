@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -40,6 +41,7 @@ fun LjButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    colors: ButtonColors = ButtonDefaults.buttonColors(),
     content: @Composable RowScope.() -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -48,6 +50,7 @@ fun LjButton(
         onClick = onClick,
         modifier = modifier.defaultMinSize(minHeight = 48.dp).scale(scale),
         enabled = enabled,
+        colors = colors,
         interactionSource = interactionSource,
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
         content = content,

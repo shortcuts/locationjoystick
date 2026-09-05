@@ -23,7 +23,6 @@ import androidx.compose.material.icons.rounded.QrCode
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -32,14 +31,12 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -60,7 +57,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.toBadgeText
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
+import com.locationjoystick.core.designsystem.component.LjButton
+import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
@@ -268,7 +268,7 @@ private fun NoGroupContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            OutlinedButton(
+            LjOutlinedButton(
                 onClick = onJoinViaQr,
                 modifier = Modifier.weight(1f),
                 enabled = !isDiscovering,
@@ -277,7 +277,7 @@ private fun NoGroupContent(
                 Spacer(modifier = Modifier.size(6.dp))
                 Text("Scan QR")
             }
-            OutlinedButton(
+            LjOutlinedButton(
                 onClick = { showCodeDialog = true },
                 modifier = Modifier.weight(1f),
                 enabled = !isDiscovering,
@@ -332,7 +332,7 @@ private fun EnterCodeDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            LjTextButton(
                 onClick = { onConfirm(code) },
                 enabled = code.length == 6,
             ) {
@@ -340,7 +340,7 @@ private fun EnterCodeDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            LjTextButton(onClick = onDismiss) { Text("Cancel") }
         },
     )
 }
@@ -443,7 +443,7 @@ private fun LeaderContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
+        LjButton(
             onClick = onLeaveGroup,
             modifier = Modifier.fillMaxWidth(),
             colors =
@@ -509,7 +509,7 @@ private fun FollowerContent(
             leaderPosition?.let { leaderPos ->
                 CooldownAdvisoryBadge(cooldownState.toBadgeText(currentPosition, leaderPos))
             }
-            OutlinedButton(
+            LjOutlinedButton(
                 onClick = onTeleportToLeaderNow,
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -519,7 +519,7 @@ private fun FollowerContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
+        LjButton(
             onClick = onLeaveGroup,
             modifier = Modifier.fillMaxWidth(),
             colors =
