@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.locationjoystick.app.navigation.LjDrawerContent
 import com.locationjoystick.app.navigation.LjNavHost
@@ -134,8 +135,11 @@ fun LjApp(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
-        WhatsNewPopup(
-            modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
-        )
+        val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+        if (currentRoute != ONBOARDING_ROUTE) {
+            WhatsNewPopup(
+                modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
+            )
+        }
     }
 }
