@@ -142,6 +142,23 @@ h3{
 
 h3:first-child{margin-top:0}
 
+h4{
+  font-family:var(--mono);
+  font-size:0.67rem;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:var(--accent);
+  margin:18px 0 6px;
+}
+
+h5{
+  font-size:0.82rem;
+  font-weight:600;
+  color:var(--muted);
+  margin:12px 0 4px;
+}
+
 h1,h2,h3{position:relative}
 
 .heading-link{

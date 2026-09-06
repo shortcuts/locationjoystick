@@ -1,0 +1,9 @@
+{
+  "version": "0.3.0",
+  "date": "2026-06-02",
+  "entries": [
+    { "category": "feat", "scope": "Floating Widget", "summary": "Floating widget favorites now show a play button for one-tap walk actions." },
+    { "category": "feat", "scope": "Roaming Mode", "summary": "The roaming sheet in the floating widget matches the look and layout of the main app." },
+    { "category": "fix", "scope": "Floating Joystick", "summary": "The floating joystick's drag direction, which was reversed. Movement now matches the direction you drag." }
+  ]
+}

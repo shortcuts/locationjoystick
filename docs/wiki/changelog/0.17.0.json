@@ -1,0 +1,24 @@
+{
+  "version": "0.17.0",
+  "date": "2026-08-28",
+  "entries": [
+    { "category": "feat", "scope": "Mock Location Engine + GPS Realism", "summary": "GPS altitude can now follow real-world elevation automatically, with an adjustable amount of natural variation, plus a quick override button in the floating widget." },
+    { "category": "feat", "scope": "Foreground Service", "summary": "A setting to hide the notification icon while spoofing is active." },
+    { "category": "feat", "scope": "Route System", "summary": "An option to walk via roads to a route's starting point before playback begins." },
+    { "category": "feat", "scope": "Onboarding", "summary": "Onboarding's 'set as fake GPS app' check can now be bypassed permanently, for setups where spoofing already works despite the check not detecting it." },
+    { "category": "feat", "scope": "Floating Widget", "summary": "An opt-in debug stats panel in the floating widget, showing live coordinates, speed, altitude, accuracy, bearing, and update rate." },
+    { "category": "feat", "scope": "Mock Location Engine + GPS Realism", "summary": "The 'vary altitude' checkbox and its amount field are now combined into a single control." },
+    { "category": "feat", "scope": "Onboarding", "summary": "If the 'set as fake GPS app' check doesn't detect your setup, the 'Skip' option now explains what it means before you confirm, instead of skipping instantly." },
+    { "category": "fix", "scope": "Floating Joystick", "summary": "The joystick sometimes keeping its last direction after you released or unlocked it." },
+    { "category": "fix", "scope": "Mock Location Engine + GPS Realism", "summary": "The reported speed not resetting to zero right after a route or walk finished." },
+    { "category": "fix", "scope": "Route System", "summary": "The travel direction shown during route playback and roaming." },
+    { "category": "fix", "scope": "Floating Widget", "summary": "The floating widget not disappearing right away when its setting was turned off mid-session." },
+    { "category": "fix", "scope": "General", "summary": "Coordinate, speed, and roaming distance fields rejecting a comma as the decimal separator." },
+    { "category": "fix", "scope": "Favorite Locations", "summary": "Favorite location coordinates sometimes displaying in the wrong number format depending on your phone's language settings." },
+    { "category": "fix", "scope": "Foreground Service", "summary": "The hide-notification-icon setting sometimes turning itself back off." },
+    { "category": "fix", "scope": "Click-to-Move / Teleport", "summary": "A road-following option not applying correctly to newly added route points." },
+    { "category": "fix", "scope": "Mock Location Engine + GPS Realism", "summary": "Your position freezing incorrectly, instead of holding steady, while spoofing was paused." },
+    { "category": "fix", "scope": "Floating Widget", "summary": "The altitude override field in the floating widget not accepting keyboard input." },
+    { "category": "fix", "scope": "Export / Import", "summary": "Importing a backup with every widget/map feature explicitly turned off reverting to the default set instead of staying empty." }
+  ]
+}

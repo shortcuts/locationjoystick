@@ -28,185 +28,429 @@
     <p>What's new in each release. Download the latest APK from <a href="https://github.com/shortcuts/locationjoystick/releases/latest" target="_blank" rel="noopener">GitHub Releases</a>.</p>
 
     <h3 id="v0190"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.19.0" target="_blank" rel="noopener">0.19.0</a>, September 3, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>What&#x27;s New Popup</h5>
     <ul>
-      <li>New: a "What's new" popup now appears after an update, summarizing what changed. Tap it to see details, or dismiss it without opening.</li>
-      <li>Fixed the "What's new" popup not loading its highlights on alpha/beta builds.</li>
+      <li>A &#x27;What&#x27;s new&#x27; popup shows what changed after each update.</li>
+    </ul>
+    <h4>Fixes</h4>
+    <h5>What&#x27;s New Popup</h5>
+    <ul>
+      <li>The popup not loading its highlights on alpha/beta builds.</li>
     </ul>
 
     <h3 id="v0182"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.18.2" target="_blank" rel="noopener">0.18.2</a>, August 31, 2026</h3>
+    <h4>Fixes</h4>
+    <h5>Mock Location Engine + GPS Realism</h5>
     <ul>
-      <li>Fixed the reported direction accuracy staying at a fixed value regardless of how fast you were moving.</li>
-      <li>Fixed idle wobble in reported speed changing whenever you switched speed profiles, instead of staying consistent.</li>
-      <li>Fixed the reported direction of travel showing as 0° before you had actually moved, instead of being left unset.</li>
+      <li>Bearing now scales with your speed instead of using a fixed accuracy value.</li>
+      <li>Idle speed wobble no longer follows the active speed profile.</li>
+      <li>Altitude jitter is sampled fresh each tick instead of drifting as a random walk.</li>
     </ul>
 
     <h3 id="v0181"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.18.1" target="_blank" rel="noopener">0.18.1</a>, August 30, 2026</h3>
+    <h4>Fixes</h4>
+    <h5>Mock Location Engine + GPS Realism</h5>
     <ul>
-      <li>Fixed altitude variation drifting further over time instead of staying within its configured range.</li>
+      <li>Altitude variation drifting further over time instead of staying within its configured range.</li>
     </ul>
 
     <h3 id="v0180"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.18.0" target="_blank" rel="noopener">0.18.0</a>, August 30, 2026</h3>
+    <h4>Fixes</h4>
+    <h5>Floating Widget</h5>
     <ul>
-      <li>Fixed elevation taking time to catch up instead of updating right away after starting to spoof or teleporting.</li>
-      <li>Fixed the altitude value in debug stats rounding to a whole number instead of showing decimal precision.</li>
-      <li>Fixed altitude variation sometimes landing on suspiciously round numbers instead of natural-looking values.</li>
+      <li>The altitude value in debug stats rounding to a whole number instead of showing decimal precision.</li>
+    </ul>
+    <h5>Mock Location Engine + GPS Realism</h5>
+    <ul>
+      <li>Elevation taking time to catch up instead of updating right away after starting to spoof or teleporting.</li>
+      <li>Altitude variation sometimes landing on suspiciously round numbers instead of natural-looking values.</li>
     </ul>
 
     <h3 id="v0170"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.17.0" target="_blank" rel="noopener">0.17.0</a>, August 28, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Floating Widget</h5>
     <ul>
-      <li>New: GPS altitude can now follow real-world elevation automatically, with an adjustable amount of natural variation, plus a quick override button in the floating widget.</li>
-      <li>New: a setting to hide the notification icon while spoofing is active.</li>
-      <li>New: an option to walk via roads to a route's starting point before playback begins.</li>
-      <li>New: onboarding's "set as fake GPS app" check can now be bypassed permanently, for setups where spoofing already works despite the check not detecting it.</li>
-      <li>New: an opt-in debug stats panel in the floating widget, showing live coordinates, speed, altitude, accuracy, bearing, and update rate.</li>
-      <li>Settings: the "vary altitude" checkbox and its amount field are now combined into a single control.</li>
-      <li>Setup: if the "set as fake GPS app" check doesn't detect your setup, the "Skip" option now explains what it means before you confirm, instead of skipping instantly.</li>
-      <li>Fixed the joystick sometimes keeping its last direction after you released or unlocked it.</li>
-      <li>Fixed the reported speed not resetting to zero right after a route or walk finished.</li>
-      <li>Fixed the travel direction shown during route playback and roaming.</li>
-      <li>Fixed the floating widget not disappearing right away when its setting was turned off mid-session.</li>
-      <li>Fixed coordinate, speed, and roaming distance fields rejecting a comma as the decimal separator.</li>
-      <li>Fixed favorite location coordinates sometimes displaying in the wrong number format depending on your phone's language settings.</li>
-      <li>Fixed the hide-notification-icon setting sometimes turning itself back off.</li>
-      <li>Fixed a road-following option not applying correctly to newly added route points.</li>
-      <li>Fixed your position freezing incorrectly, instead of holding steady, while spoofing was paused.</li>
-      <li>Fixed the altitude override field in the floating widget not accepting keyboard input.</li>
-      <li>Fixed importing a backup with every widget/map feature explicitly turned off reverting to the default set instead of staying empty.</li>
+      <li>An opt-in debug stats panel in the floating widget, showing live coordinates, speed, altitude, accuracy, bearing, and update rate.</li>
+    </ul>
+    <h5>Foreground Service</h5>
+    <ul>
+      <li>A setting to hide the notification icon while spoofing is active.</li>
+    </ul>
+    <h5>Mock Location Engine + GPS Realism</h5>
+    <ul>
+      <li>GPS altitude can now follow real-world elevation automatically, with an adjustable amount of natural variation, plus a quick override button in the floating widget.</li>
+      <li>The &#x27;vary altitude&#x27; checkbox and its amount field are now combined into a single control.</li>
+    </ul>
+    <h5>Onboarding</h5>
+    <ul>
+      <li>Onboarding&#x27;s &#x27;set as fake GPS app&#x27; check can now be bypassed permanently, for setups where spoofing already works despite the check not detecting it.</li>
+      <li>If the &#x27;set as fake GPS app&#x27; check doesn&#x27;t detect your setup, the &#x27;Skip&#x27; option now explains what it means before you confirm, instead of skipping instantly.</li>
+    </ul>
+    <h5>Route System</h5>
+    <ul>
+      <li>An option to walk via roads to a route&#x27;s starting point before playback begins.</li>
+    </ul>
+    <h4>Fixes</h4>
+    <h5>Click-to-Move / Teleport</h5>
+    <ul>
+      <li>A road-following option not applying correctly to newly added route points.</li>
+    </ul>
+    <h5>Export / Import</h5>
+    <ul>
+      <li>Importing a backup with every widget/map feature explicitly turned off reverting to the default set instead of staying empty.</li>
+    </ul>
+    <h5>Favorite Locations</h5>
+    <ul>
+      <li>Favorite location coordinates sometimes displaying in the wrong number format depending on your phone&#x27;s language settings.</li>
+    </ul>
+    <h5>Floating Joystick</h5>
+    <ul>
+      <li>The joystick sometimes keeping its last direction after you released or unlocked it.</li>
+    </ul>
+    <h5>Floating Widget</h5>
+    <ul>
+      <li>The floating widget not disappearing right away when its setting was turned off mid-session.</li>
+      <li>The altitude override field in the floating widget not accepting keyboard input.</li>
+    </ul>
+    <h5>Foreground Service</h5>
+    <ul>
+      <li>The hide-notification-icon setting sometimes turning itself back off.</li>
+    </ul>
+    <h5>General</h5>
+    <ul>
+      <li>Coordinate, speed, and roaming distance fields rejecting a comma as the decimal separator.</li>
+    </ul>
+    <h5>Mock Location Engine + GPS Realism</h5>
+    <ul>
+      <li>The reported speed not resetting to zero right after a route or walk finished.</li>
+      <li>Your position freezing incorrectly, instead of holding steady, while spoofing was paused.</li>
+    </ul>
+    <h5>Route System</h5>
+    <ul>
+      <li>The travel direction shown during route playback and roaming.</li>
     </ul>
 
     <h3 id="v0160"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.16.0" target="_blank" rel="noopener">0.16.0</a>, August 25, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Floating Widget</h5>
     <ul>
-      <li>New: lowered the minimum supported Android version, so more phones can now install the app.</li>
-      <li>New: a setting to hide every teleport button throughout the app, leaving only walking and route playback as ways to move.</li>
-      <li>New: a setting to hide the floating widget overlay.</li>
-      <li>New: buttons to jump straight to the next or previous stop while a route is playing.</li>
-      <li>New: a route can now be pinned to its own speed, independent of the app's overall speed setting.</li>
-      <li>New: distance and a wait-time hint are now shown when teleporting to the group leader as a follower.</li>
-      <li>Fixed your last known location only saving when you stopped, instead of throughout the session.</li>
-      <li>Fixed a follower's position not saving properly while following a leader.</li>
-      <li>Fixed imported favorites losing their category.</li>
-      <li>Fixed the floating map's route controls sometimes becoming unreachable after reopening the panel.</li>
-      <li>Fixed some widget and map features going missing after importing settings.</li>
-      <li>Fixed the group leader's stop/start state not always reaching followers.</li>
-      <li>Fixed no message appearing when teleporting to a leader before their position is known.</li>
+      <li>A setting to hide the floating widget overlay.</li>
+    </ul>
+    <h5>General</h5>
+    <ul>
+      <li>Lowered the minimum supported Android version, so more phones can now install the app.</li>
+    </ul>
+    <h5>Group Sync</h5>
+    <ul>
+      <li>Distance and a wait-time hint are now shown when teleporting to the group leader as a follower.</li>
+    </ul>
+    <h5>Hide Teleport Features</h5>
+    <ul>
+      <li>A setting to hide every teleport button throughout the app, leaving only walking and route playback as ways to move.</li>
+    </ul>
+    <h5>Route System</h5>
+    <ul>
+      <li>Buttons to jump straight to the next or previous stop while a route is playing.</li>
+      <li>A route can now be pinned to its own speed, independent of the app&#x27;s overall speed setting.</li>
+    </ul>
+    <h4>Fixes</h4>
+    <h5>Export / Import</h5>
+    <ul>
+      <li>Some widget and map features going missing after importing settings.</li>
+    </ul>
+    <h5>Favorite Locations</h5>
+    <ul>
+      <li>Imported favorites losing their category.</li>
+    </ul>
+    <h5>Floating Widget</h5>
+    <ul>
+      <li>The floating map&#x27;s route controls sometimes becoming unreachable after reopening the panel.</li>
+    </ul>
+    <h5>Group Sync</h5>
+    <ul>
+      <li>A follower&#x27;s position not saving properly while following a leader.</li>
+      <li>The group leader&#x27;s stop/start state not always reaching followers.</li>
+      <li>No message appearing when teleporting to a leader before their position is known.</li>
+    </ul>
+    <h5>Last Remembered Location</h5>
+    <ul>
+      <li>Your last known location only saving when you stopped, instead of throughout the session.</li>
     </ul>
 
     <h3 id="v0140"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.14.0" target="_blank" rel="noopener">0.14.0</a>, July 16, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Export / Import</h5>
     <ul>
-      <li>New: Light mode, a high-contrast light theme option, alongside the existing dark theme.</li>
-      <li>New: "Reset all data" button in Settings, clears all favorites, routes, and settings without needing your phone's own app data reset option.</li>
-      <li>New: two more speed profiles, Slow Walk and Drive.</li>
+      <li>&#x27;Reset all data&#x27; button in Settings, clears all favorites, routes, and settings without needing your phone&#x27;s own app data reset option.</li>
+    </ul>
+    <h5>Favorite Locations</h5>
+    <ul>
       <li>Favorites now has a search bar to filter by name, and hot locations are grouped under category headers.</li>
-      <li>The search bar now accepts raw coordinates (e.g. "35.6762, 139.6503") typed directly, no need to search by name.</li>
-      <li>Group Sync: followers now walk toward the leader's position instead of teleporting instantly, and reconnect more reliably after repeated network hiccups.</li>
-      <li>Fixed a regression that broke importing routes from GPS Joystick.</li>
-      <li>Various fixes to the floating map's route controls and walk/replay handling.</li>
+      <li>The search bar now accepts raw coordinates (e.g. &#x27;35.6762, 139.6503&#x27;) typed directly, no need to search by name.</li>
+    </ul>
+    <h5>Group Sync</h5>
+    <ul>
+      <li>Followers now walk toward the leader&#x27;s position instead of teleporting instantly, and reconnect more reliably after repeated network hiccups.</li>
+    </ul>
+    <h5>Speed Profiles</h5>
+    <ul>
+      <li>Two more speed profiles, Slow Walk and Drive.</li>
+    </ul>
+    <h5>Theme</h5>
+    <ul>
+      <li>Light mode, a high-contrast light theme option, alongside the existing dark theme.</li>
+    </ul>
+    <h4>Fixes</h4>
+    <h5>Export / Import</h5>
+    <ul>
+      <li>A regression that broke importing routes from GPS Joystick.</li>
+    </ul>
+    <h5>Floating Widget</h5>
+    <ul>
+      <li>Various fixes to the floating map&#x27;s route controls and walk/replay handling.</li>
     </ul>
 
     <h3 id="v0130"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.13.0" target="_blank" rel="noopener">0.13.0</a>, July 4, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Export / Import</h5>
     <ul>
-      <li>New: Tap to Walk, quick-walk on the floating map with one tap, plus an optional screen overlay to tap-to-walk over other apps.</li>
-      <li>New: compass-aware tap-to-walk orientation, calibrated for popular AR game maps.</li>
-      <li>The Start/Stop button now shows the name of the location you're spoofing to.</li>
-      <li>Group Sync: followers now reconnect automatically after a disconnect, including after a device or app restart.</li>
       <li>GPX import now works with files that contain only waypoints, without a track or route section.</li>
-      <li>Lowered the minimum speed setting so you can go slower than 0.1 mph.</li>
+    </ul>
+    <h5>Group Sync</h5>
+    <ul>
+      <li>Followers now reconnect automatically after a disconnect, including after a device or app restart.</li>
+    </ul>
+    <h5>Mock Location Engine + GPS Realism</h5>
+    <ul>
+      <li>The Start/Stop button now shows the name of the location you&#x27;re spoofing to.</li>
       <li>Removed the elevation controls feature.</li>
-      <li>Fixed a bug where finishing one walk could wipe the path of a different, newer walk.</li>
+    </ul>
+    <h5>Speed Profiles</h5>
+    <ul>
+      <li>Lowered the minimum speed setting so you can go slower than 0.1 mph.</li>
+    </ul>
+    <h5>Tap to Walk</h5>
+    <ul>
+      <li>Tap to Walk, quick-walk on the floating map with one tap, plus an optional screen overlay to tap-to-walk over other apps.</li>
+      <li>Compass-aware tap-to-walk orientation, calibrated for popular AR game maps.</li>
+    </ul>
+    <h4>Fixes</h4>
+    <h5>Click-to-Move / Teleport</h5>
+    <ul>
+      <li>A bug where finishing one walk could wipe the path of a different, newer walk.</li>
     </ul>
 
     <h3 id="v0120"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.12.0" target="_blank" rel="noopener">0.12.0</a>, June 24, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Click-to-Move / Teleport</h5>
     <ul>
-      <li>Settings → Menus now has one combined "App Features" list with drag-to-reorder, replacing the separate widget and map sections. Toggle each feature for the widget, the map, or both from the same place.</li>
-      <li>Removed the redundant start/stop button from the Map screen. The top bar's start/stop control already works on every screen.</li>
+      <li>&#x27;Walk via roads&#x27; and Roaming now handle a slow or unreliable routing server better, retrying automatically before falling back to a straight line.</li>
+    </ul>
+    <h5>Export / Import</h5>
+    <ul>
+      <li>A file containing multiple tracks or routes now imports each one as its own separate route instead of merging them.</li>
+    </ul>
+    <h5>Floating Widget</h5>
+    <ul>
+      <li>Settings → Menus now has one combined &#x27;App Features&#x27; list with drag-to-reorder, replacing the separate widget and map sections. Toggle each feature for the widget, the map, or both from the same place.</li>
+    </ul>
+    <h5>Group Sync</h5>
+    <ul>
+      <li>Followers can now reconnect automatically after the leader&#x27;s device restarts.</li>
+    </ul>
+    <h5>Mock Location Engine + GPS Realism</h5>
+    <ul>
+      <li>Removed the redundant start/stop button from the Map screen. The top bar&#x27;s start/stop control already works on every screen.</li>
       <li>The top bar start/stop button now stays centered consistently across all screens instead of shifting position.</li>
-      <li>Fixed the start/stop button's accessibility label, which was incorrectly announcing the screen title instead of its action.</li>
-      <li>Group Sync: followers can now reconnect automatically after the leader's device restarts.</li>
-      <li>GPX import: a file containing multiple tracks or routes now imports each one as its own separate route instead of merging them.</li>
-      <li>"Walk via roads" and Roaming now handle a slow or unreliable routing server better, retrying automatically before falling back to a straight line.</li>
+    </ul>
+    <h4>Fixes</h4>
+    <h5>Mock Location Engine + GPS Realism</h5>
+    <ul>
+      <li>The start/stop button&#x27;s accessibility label, which was incorrectly announcing the screen title instead of its action.</li>
     </ul>
 
     <h3 id="v0110"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.11.0" target="_blank" rel="noopener">0.11.0</a>, June 21, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Deep Links &amp; Location Sharing</h5>
     <ul>
-      <li>New: QR transfer now sends your data over a single QR code via local Wi-Fi instead of several scan-in-sequence codes: faster and more reliable, with no size limit. You can also join by typing a 6-character code instead of scanning.</li>
-      <li>The app can now open location links shared from Google Maps, including its Share button and shortened links, and shows an error message if a link can't be opened.</li>
-      <li>Roaming and "walk via roads" now always use walking paths, even when your speed profile is set to Bike.</li>
-      <li>Removed the 54 km/h cap on custom speed profiles.</li>
+      <li>The app can now open location links shared from Google Maps, including its Share button and shortened links, and shows an error message if a link can&#x27;t be opened.</li>
+    </ul>
+    <h5>Group Sync</h5>
+    <ul>
       <li>Group Sync now reconnects properly after the app restarts, and automatically leaves a group if the leader disappears.</li>
+    </ul>
+    <h5>Mock Location Engine + GPS Realism</h5>
+    <ul>
       <li>Redesigned the top bar start/stop button as a compact icon, and fixed a small accuracy issue in joystick movement.</li>
+    </ul>
+    <h5>QR Share / Transfer</h5>
+    <ul>
+      <li>QR transfer now sends your data over a single QR code via local Wi-Fi instead of several scan-in-sequence codes: faster and more reliable, with no size limit. You can also join by typing a 6-character code instead of scanning.</li>
+    </ul>
+    <h5>Roaming Mode</h5>
+    <ul>
+      <li>Roaming and &#x27;walk via roads&#x27; now always use walking paths, even when your speed profile is set to Bike.</li>
+    </ul>
+    <h5>Speed Profiles</h5>
+    <ul>
+      <li>Removed the 54 km/h cap on custom speed profiles.</li>
     </ul>
 
     <h3 id="v0100"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.10.0" target="_blank" rel="noopener">0.10.0</a>, June 18, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>General</h5>
     <ul>
-      <li>New: Group Sync, share your spoofed location across multiple devices on the same Wi-Fi network. One device leads, others follow, using a 6-character code or QR scan to join. No account needed.</li>
-      <li>Each follower now applies its own jitter, so devices in a group don't show identical coordinates.</li>
       <li>Drawer menu items reordered to match the home screen, and the Website link now shows an external-link icon.</li>
+    </ul>
+    <h5>Group Sync</h5>
+    <ul>
+      <li>Group Sync, share your spoofed location across multiple devices on the same Wi-Fi network. One device leads, others follow, using a 6-character code or QR scan to join. No account needed.</li>
+      <li>Each follower now applies its own jitter, so devices in a group don&#x27;t show identical coordinates.</li>
+    </ul>
+    <h5>Route System</h5>
+    <ul>
       <li>Removed outdated Copenhagen hot routes and favorites that no longer apply.</li>
     </ul>
 
     <h3 id="v090"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.9.0" target="_blank" rel="noopener">0.9.0</a>, June 13, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Export / Import</h5>
     <ul>
-      <li>Roaming now plans the entire route before walking starts, so you see the full path on the map upfront.</li>
+      <li>GPX files exported from GPS Joystick (rtept format) can now be imported.</li>
+    </ul>
+    <h5>Favorite Locations</h5>
+    <ul>
+      <li>The map camera now centers on a favorite location even when spoofing is not active.</li>
+    </ul>
+    <h5>Floating Widget</h5>
+    <ul>
       <li>The floating widget map shows route controls (pause and stop) while a route is replaying.</li>
       <li>A red badge appears on the floating widget button when a route or walk finishes naturally.</li>
-      <li>GPX files exported from GPS Joystick (rtept format) can now be imported.</li>
-      <li>The map camera now centers on a favorite location even when spoofing is not active.</li>
+    </ul>
+    <h5>Roaming Mode</h5>
+    <ul>
+      <li>Roaming now plans the entire route before walking starts, so you see the full path on the map upfront.</li>
     </ul>
 
     <h3 id="v080"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.8.0" target="_blank" rel="noopener">0.8.0</a>, June 12, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Click-to-Move / Teleport</h5>
+    <ul>
+      <li>A warning now appears when &#x27;Walk via roads&#x27; falls back to a straight line because the routing service was unavailable.</li>
+    </ul>
+    <h5>Export / Import</h5>
+    <ul>
+      <li>GPX import now accepts files regardless of the file extension shown by your file manager.</li>
+    </ul>
+    <h5>Floating Widget</h5>
+    <ul>
+      <li>The floating widget favorites list now shows the cooldown timer and distance to each location.</li>
+    </ul>
+    <h5>General</h5>
     <ul>
       <li>The app version is now shown on the home, onboarding, and settings screens.</li>
-      <li>The floating widget favorites list now shows the cooldown timer and distance to each location.</li>
-      <li>A warning now appears when "Walk via roads" falls back to a straight line because the routing service was unavailable.</li>
-      <li>Fixed the export and import icons in settings, which were swapped.</li>
-      <li>GPX import now accepts files regardless of the file extension shown by your file manager.</li>
+    </ul>
+    <h4>Fixes</h4>
+    <h5>Export / Import</h5>
+    <ul>
+      <li>The export and import icons in settings, which were swapped.</li>
     </ul>
 
     <h3 id="v070"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.7.0" target="_blank" rel="noopener">0.7.0</a>, June 11, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Route System</h5>
     <ul>
-      <li>Hot routes now include "Via Roads" variants that follow real streets instead of straight lines.</li>
+      <li>Hot routes now include &#x27;Via Roads&#x27; variants that follow real streets instead of straight lines.</li>
       <li>Starting a new route now correctly stops any route that was already running.</li>
     </ul>
 
     <h3 id="v060"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.6.0" target="_blank" rel="noopener">0.6.0</a>, June 11, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Favorite Locations</h5>
     <ul>
       <li>Added Copenhagen hot locations and routes for Go Fest 2026.</li>
+    </ul>
+    <h5>Foreground Service</h5>
+    <ul>
       <li>The persistent notification now has quick-action buttons to pause or stop spoofing without opening the app.</li>
+    </ul>
+    <h5>Map (MapLibre)</h5>
+    <ul>
       <li>Tap any point on the map to see its address (reverse name search).</li>
-      <li>Mock step counter: the app now injects realistic step events alongside GPS spoofing for apps that track steps.</li>
       <li>Map settings (camera follow, last location) moved to a dedicated Map section in Settings.</li>
+    </ul>
+    <h5>Mock Location Engine + GPS Realism</h5>
+    <ul>
+      <li>The app now injects realistic step events alongside GPS spoofing for apps that track steps.</li>
     </ul>
 
     <h3 id="v050"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.5.0" target="_blank" rel="noopener">0.5.0</a>, June 8, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Click-to-Move / Teleport</h5>
+    <ul>
+      <li>&#x27;Walk via roads&#x27; is now available directly in the floating widget map.</li>
+    </ul>
+    <h5>Deep Links &amp; Location Sharing</h5>
+    <ul>
+      <li>The app can now open coordinates sent via &#x27;geo:&#x27; links from other apps and tools.</li>
+    </ul>
+    <h5>Favorite Locations</h5>
     <ul>
       <li>Hot locations are now organized by country and city with checkboxes so you can enable only the places you need.</li>
-      <li>"Walk via roads" is now available directly in the floating widget map.</li>
-      <li>The tap marker stays on the map after you dismiss the action sheet, so you can reposition before acting.</li>
-      <li>The app can now open coordinates sent via <code>geo:</code> links from other apps and tools.</li>
       <li>Added 6 Chicago hot locations and per-location selection.</li>
+    </ul>
+    <h5>Map (MapLibre)</h5>
+    <ul>
+      <li>The tap marker stays on the map after you dismiss the action sheet, so you can reposition before acting.</li>
     </ul>
 
     <h3 id="v040"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.4.0" target="_blank" rel="noopener">0.4.0</a>, June 4, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Click-to-Move / Teleport</h5>
     <ul>
-      <li>Deep link support: share any coordinate as a URL that opens the app and centers the map on that location.</li>
+      <li>&#x27;Add next point&#x27; while walking now uses road-following if the original walk used roads.</li>
+    </ul>
+    <h5>Deep Links &amp; Location Sharing</h5>
+    <ul>
+      <li>Share any coordinate as a URL that opens the app and centers the map on that location.</li>
+    </ul>
+    <h5>Favorite Locations</h5>
+    <ul>
       <li>Hot locations toggle added to the Favorites section in Settings.</li>
-      <li>"Add next point" while walking now uses road-following if the original walk used roads.</li>
     </ul>
 
     <h3 id="v030"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.3.0" target="_blank" rel="noopener">0.3.0</a>, June 2, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>Floating Widget</h5>
     <ul>
       <li>Floating widget favorites now show a play button for one-tap walk actions.</li>
+    </ul>
+    <h5>Roaming Mode</h5>
+    <ul>
       <li>The roaming sheet in the floating widget matches the look and layout of the main app.</li>
-      <li>Fixed the floating joystick's drag direction, which was reversed. Movement now matches the direction you drag.</li>
+    </ul>
+    <h4>Fixes</h4>
+    <h5>Floating Joystick</h5>
+    <ul>
+      <li>The floating joystick&#x27;s drag direction, which was reversed. Movement now matches the direction you drag.</li>
     </ul>
 
     <h3 id="v020"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.2.0" target="_blank" rel="noopener">0.2.0</a>, June 2, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>General</h5>
     <ul>
       <li>The About screen now lists all open-source libraries used in the app.</li>
-      <li>Fixed: teleporting to a favorite now zooms the map to the right level.</li>
+    </ul>
+    <h4>Fixes</h4>
+    <h5>Favorite Locations</h5>
+    <ul>
+      <li>Teleporting to a favorite now zooms the map to the right level.</li>
     </ul>
 
     <h3 id="v010"><a href="https://github.com/shortcuts/locationjoystick/releases/tag/v0.1.0" target="_blank" rel="noopener">0.1.0</a>, June 2, 2026</h3>
+    <h4>New &amp; Improved</h4>
+    <h5>General</h5>
     <ul>
       <li>Initial public release: mock GPS spoofing, floating joystick, saved routes, favorites, automatic roaming, floating widget, QR transfer, backup export/import, and GPS realism settings.</li>
     </ul>

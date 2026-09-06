@@ -1,0 +1,11 @@
+{
+  "version": "0.8.0",
+  "date": "2026-06-12",
+  "entries": [
+    { "category": "feat", "scope": "General", "summary": "The app version is now shown on the home, onboarding, and settings screens." },
+    { "category": "feat", "scope": "Floating Widget", "summary": "The floating widget favorites list now shows the cooldown timer and distance to each location." },
+    { "category": "feat", "scope": "Click-to-Move / Teleport", "summary": "A warning now appears when 'Walk via roads' falls back to a straight line because the routing service was unavailable." },
+    { "category": "fix", "scope": "Export / Import", "summary": "The export and import icons in settings, which were swapped." },
+    { "category": "feat", "scope": "Export / Import", "summary": "GPX import now accepts files regardless of the file extension shown by your file manager." }
+  ]
+}

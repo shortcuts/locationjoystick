@@ -1,0 +1,12 @@
+{
+  "version": "0.11.0",
+  "date": "2026-06-21",
+  "entries": [
+    { "category": "feat", "scope": "QR Share / Transfer", "summary": "QR transfer now sends your data over a single QR code via local Wi-Fi instead of several scan-in-sequence codes: faster and more reliable, with no size limit. You can also join by typing a 6-character code instead of scanning." },
+    { "category": "feat", "scope": "Deep Links & Location Sharing", "summary": "The app can now open location links shared from Google Maps, including its Share button and shortened links, and shows an error message if a link can't be opened." },
+    { "category": "feat", "scope": "Roaming Mode", "summary": "Roaming and 'walk via roads' now always use walking paths, even when your speed profile is set to Bike." },
+    { "category": "feat", "scope": "Speed Profiles", "summary": "Removed the 54 km/h cap on custom speed profiles." },
+    { "category": "feat", "scope": "Group Sync", "summary": "Group Sync now reconnects properly after the app restarts, and automatically leaves a group if the leader disappears." },
+    { "category": "feat", "scope": "Mock Location Engine + GPS Realism", "summary": "Redesigned the top bar start/stop button as a compact icon, and fixed a small accuracy issue in joystick movement." }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "version": "0.16.0",
+  "date": "2026-08-25",
+  "entries": [
+    { "category": "feat", "scope": "General", "summary": "Lowered the minimum supported Android version, so more phones can now install the app." },
+    { "category": "feat", "scope": "Hide Teleport Features", "summary": "A setting to hide every teleport button throughout the app, leaving only walking and route playback as ways to move." },
+    { "category": "feat", "scope": "Floating Widget", "summary": "A setting to hide the floating widget overlay." },
+    { "category": "feat", "scope": "Route System", "summary": "Buttons to jump straight to the next or previous stop while a route is playing." },
+    { "category": "feat", "scope": "Route System", "summary": "A route can now be pinned to its own speed, independent of the app's overall speed setting." },
+    { "category": "feat", "scope": "Group Sync", "summary": "Distance and a wait-time hint are now shown when teleporting to the group leader as a follower." },
+    { "category": "fix", "scope": "Last Remembered Location", "summary": "Your last known location only saving when you stopped, instead of throughout the session." },
+    { "category": "fix", "scope": "Group Sync", "summary": "A follower's position not saving properly while following a leader." },
+    { "category": "fix", "scope": "Favorite Locations", "summary": "Imported favorites losing their category." },
+    { "category": "fix", "scope": "Floating Widget", "summary": "The floating map's route controls sometimes becoming unreachable after reopening the panel." },
+    { "category": "fix", "scope": "Export / Import", "summary": "Some widget and map features going missing after importing settings." },
+    { "category": "fix", "scope": "Group Sync", "summary": "The group leader's stop/start state not always reaching followers." },
+    { "category": "fix", "scope": "Group Sync", "summary": "No message appearing when teleporting to a leader before their position is known." }
+  ]
+}

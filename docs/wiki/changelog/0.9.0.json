@@ -1,0 +1,11 @@
+{
+  "version": "0.9.0",
+  "date": "2026-06-13",
+  "entries": [
+    { "category": "feat", "scope": "Roaming Mode", "summary": "Roaming now plans the entire route before walking starts, so you see the full path on the map upfront." },
+    { "category": "feat", "scope": "Floating Widget", "summary": "The floating widget map shows route controls (pause and stop) while a route is replaying." },
+    { "category": "feat", "scope": "Floating Widget", "summary": "A red badge appears on the floating widget button when a route or walk finishes naturally." },
+    { "category": "feat", "scope": "Export / Import", "summary": "GPX files exported from GPS Joystick (rtept format) can now be imported." },
+    { "category": "feat", "scope": "Favorite Locations", "summary": "The map camera now centers on a favorite location even when spoofing is not active." }
+  ]
+}

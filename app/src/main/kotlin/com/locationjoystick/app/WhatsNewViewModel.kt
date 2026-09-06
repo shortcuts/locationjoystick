@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.data.WhatsNewEntry
 import com.locationjoystick.core.data.WhatsNewRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,10 +20,38 @@ sealed interface WhatsNewLoadState {
     data object Loading : WhatsNewLoadState
 
     data class Loaded(
-        val highlights: List<String>,
+        val groups: List<WhatsNewCategoryGroup>,
     ) : WhatsNewLoadState
 
     data object Failed : WhatsNewLoadState
+}
+
+data class WhatsNewScopeGroup(
+    val scope: String,
+    val entries: List<WhatsNewEntry>,
+)
+
+data class WhatsNewCategoryGroup(
+    val label: String,
+    val scopeGroups: List<WhatsNewScopeGroup>,
+)
+
+/** feat before fix, empty categories omitted; scopes alphabetical within a category. */
+fun groupWhatsNewEntries(entries: List<WhatsNewEntry>): List<WhatsNewCategoryGroup> {
+    val byCategory = entries.groupBy { it.category }
+    return listOf("feat" to "New & Improved", "fix" to "Fixes").mapNotNull { (category, label) ->
+        val inCategory = byCategory[category].orEmpty()
+        if (inCategory.isEmpty()) {
+            null
+        } else {
+            WhatsNewCategoryGroup(
+                label = label,
+                scopeGroups =
+                    inCategory.groupBy { it.scope }.toSortedMap()
+                        .map { (scope, scopeEntries) -> WhatsNewScopeGroup(scope, scopeEntries) },
+            )
+        }
+    }
 }
 
 /** Drives the app-level "What's New" badge (see docs/features/whats-new.md). */
@@ -52,13 +81,13 @@ class WhatsNewViewModel
             }
         }
 
-        fun loadHighlights() {
+        fun loadEntries() {
             _loadState.value = WhatsNewLoadState.Loading
             viewModelScope.launch {
-                val highlights = whatsNewRepository.fetchHighlights(AppConstants.AppInfo.VERSION_NAME)
+                val entries = whatsNewRepository.fetchEntries(AppConstants.AppInfo.VERSION_NAME)
                 _loadState.value =
-                    if (highlights != null) {
-                        WhatsNewLoadState.Loaded(highlights)
+                    if (entries != null) {
+                        WhatsNewLoadState.Loaded(groupWhatsNewEntries(entries))
                     } else {
                         WhatsNewLoadState.Failed
                     }

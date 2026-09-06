@@ -1,0 +1,8 @@
+{
+  "version": "0.2.0",
+  "date": "2026-06-02",
+  "entries": [
+    { "category": "feat", "scope": "General", "summary": "The About screen now lists all open-source libraries used in the app." },
+    { "category": "fix", "scope": "Favorite Locations", "summary": "Teleporting to a favorite now zooms the map to the right level." }
+  ]
+}

@@ -19,7 +19,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -74,7 +76,7 @@ fun WhatsNewPopup(modifier: Modifier = Modifier) {
 
     if (showModal) {
         val loadState by viewModel.loadState.collectAsState()
-        LaunchedEffect(Unit) { viewModel.loadHighlights() }
+        LaunchedEffect(Unit) { viewModel.loadEntries() }
         WhatsNewDialog(
             loadState = loadState,
             onDismiss = { showModal = false },
@@ -157,11 +159,28 @@ private fun WhatsNewDialog(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 is WhatsNewLoadState.Loaded ->
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        loadState.highlights.forEach { highlight ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("•", style = MaterialTheme.typography.bodyMedium)
-                                Text(highlight, style = MaterialTheme.typography.bodyMedium)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.verticalScroll(rememberScrollState()),
+                    ) {
+                        loadState.groups.forEach { categoryGroup ->
+                            Text(
+                                categoryGroup.label,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            categoryGroup.scopeGroups.forEach { scopeGroup ->
+                                Text(
+                                    scopeGroup.scope,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                scopeGroup.entries.forEach { entry ->
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text("•", style = MaterialTheme.typography.bodyMedium)
+                                        Text(entry.summary, style = MaterialTheme.typography.bodyMedium)
+                                    }
+                                }
                             }
                         }
                     }

@@ -1,0 +1,11 @@
+{
+  "version": "0.6.0",
+  "date": "2026-06-11",
+  "entries": [
+    { "category": "feat", "scope": "Favorite Locations", "summary": "Added Copenhagen hot locations and routes for Go Fest 2026." },
+    { "category": "feat", "scope": "Foreground Service", "summary": "The persistent notification now has quick-action buttons to pause or stop spoofing without opening the app." },
+    { "category": "feat", "scope": "Map (MapLibre)", "summary": "Tap any point on the map to see its address (reverse name search)." },
+    { "category": "feat", "scope": "Mock Location Engine + GPS Realism", "summary": "The app now injects realistic step events alongside GPS spoofing for apps that track steps." },
+    { "category": "feat", "scope": "Map (MapLibre)", "summary": "Map settings (camera follow, last location) moved to a dedicated Map section in Settings." }
+  ]
+}

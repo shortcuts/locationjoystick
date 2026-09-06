@@ -1,0 +1,9 @@
+{
+  "version": "0.18.0",
+  "date": "2026-08-30",
+  "entries": [
+    { "category": "fix", "scope": "Mock Location Engine + GPS Realism", "summary": "Elevation taking time to catch up instead of updating right away after starting to spoof or teleporting." },
+    { "category": "fix", "scope": "Floating Widget", "summary": "The altitude value in debug stats rounding to a whole number instead of showing decimal precision." },
+    { "category": "fix", "scope": "Mock Location Engine + GPS Realism", "summary": "Altitude variation sometimes landing on suspiciously round numbers instead of natural-looking values." }
+  ]
+}

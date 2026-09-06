@@ -1,0 +1,8 @@
+{
+  "version": "0.7.0",
+  "date": "2026-06-11",
+  "entries": [
+    { "category": "feat", "scope": "Route System", "summary": "Hot routes now include 'Via Roads' variants that follow real streets instead of straight lines." },
+    { "category": "feat", "scope": "Route System", "summary": "Starting a new route now correctly stops any route that was already running." }
+  ]
+}

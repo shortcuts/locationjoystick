@@ -10,8 +10,15 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** One changelog entry: category is "feat" or "fix", scope matches an AGENTS.md feature area or "General". */
+data class WhatsNewEntry(
+    val category: String,
+    val scope: String,
+    val summary: String,
+)
+
 /**
- * Fetches the current version's "what's new" highlights from the wiki (see
+ * Fetches the current version's "what's new" entries from the wiki (see
  * docs/features/whats-new.md) — the app never carries its own copy, so the in-app popup and
  * the website changelog can never drift apart.
  */
@@ -26,15 +33,20 @@ class WhatsNewRepository
                 .readTimeout(AppConstants.WhatsNewConstants.READ_TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
                 .build()
 
-        suspend fun fetchHighlights(version: String): List<String>? =
+        internal var baseUrl: String = AppConstants.WhatsNewConstants.BASE_URL
+
+        suspend fun fetchEntries(version: String): List<WhatsNewEntry>? =
             withContext(Dispatchers.IO) {
                 runCatching {
-                    val url = AppConstants.WhatsNewConstants.buildUrl(version)
+                    val url = "$baseUrl${version.substringBefore("-")}.json"
                     client.newCall(Request.Builder().url(url).build()).execute().use { resp ->
                         if (!resp.isSuccessful) return@use null
                         val body = resp.body?.string() ?: return@use null
-                        val highlights = JSONObject(body).getJSONArray("highlights")
-                        List(highlights.length()) { i -> highlights.getString(i) }.takeIf { it.isNotEmpty() }
+                        val entriesJson = JSONObject(body).getJSONArray("entries")
+                        List(entriesJson.length()) { i ->
+                            val e = entriesJson.getJSONObject(i)
+                            WhatsNewEntry(e.getString("category"), e.getString("scope"), e.getString("summary"))
+                        }.takeIf { it.isNotEmpty() }
                     }
                 }.getOrNull()
             }

@@ -1,0 +1,10 @@
+{
+  "version": "0.10.0",
+  "date": "2026-06-18",
+  "entries": [
+    { "category": "feat", "scope": "Group Sync", "summary": "Group Sync, share your spoofed location across multiple devices on the same Wi-Fi network. One device leads, others follow, using a 6-character code or QR scan to join. No account needed." },
+    { "category": "feat", "scope": "Group Sync", "summary": "Each follower now applies its own jitter, so devices in a group don't show identical coordinates." },
+    { "category": "feat", "scope": "General", "summary": "Drawer menu items reordered to match the home screen, and the Website link now shows an external-link icon." },
+    { "category": "feat", "scope": "Route System", "summary": "Removed outdated Copenhagen hot routes and favorites that no longer apply." }
+  ]
+}

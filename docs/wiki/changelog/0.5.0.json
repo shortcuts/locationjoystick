@@ -1,0 +1,11 @@
+{
+  "version": "0.5.0",
+  "date": "2026-06-08",
+  "entries": [
+    { "category": "feat", "scope": "Favorite Locations", "summary": "Hot locations are now organized by country and city with checkboxes so you can enable only the places you need." },
+    { "category": "feat", "scope": "Click-to-Move / Teleport", "summary": "'Walk via roads' is now available directly in the floating widget map." },
+    { "category": "feat", "scope": "Map (MapLibre)", "summary": "The tap marker stays on the map after you dismiss the action sheet, so you can reposition before acting." },
+    { "category": "feat", "scope": "Deep Links & Location Sharing", "summary": "The app can now open coordinates sent via 'geo:' links from other apps and tools." },
+    { "category": "feat", "scope": "Favorite Locations", "summary": "Added 6 Chicago hot locations and per-location selection." }
+  ]
+}

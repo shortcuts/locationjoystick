@@ -1,0 +1,7 @@
+{
+  "version": "0.1.0",
+  "date": "2026-06-02",
+  "entries": [
+    { "category": "feat", "scope": "General", "summary": "Initial public release: mock GPS spoofing, floating joystick, saved routes, favorites, automatic roaming, floating widget, QR transfer, backup export/import, and GPS realism settings." }
+  ]
+}

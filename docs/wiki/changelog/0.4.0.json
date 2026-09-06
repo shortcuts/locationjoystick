@@ -1,0 +1,9 @@
+{
+  "version": "0.4.0",
+  "date": "2026-06-04",
+  "entries": [
+    { "category": "feat", "scope": "Deep Links & Location Sharing", "summary": "Share any coordinate as a URL that opens the app and centers the map on that location." },
+    { "category": "feat", "scope": "Favorite Locations", "summary": "Hot locations toggle added to the Favorites section in Settings." },
+    { "category": "feat", "scope": "Click-to-Move / Teleport", "summary": "'Add next point' while walking now uses road-following if the original walk used roads." }
+  ]
+}

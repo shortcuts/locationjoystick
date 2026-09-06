@@ -1,0 +1,13 @@
+{
+  "version": "0.12.0",
+  "date": "2026-06-24",
+  "entries": [
+    { "category": "feat", "scope": "Floating Widget", "summary": "Settings → Menus now has one combined 'App Features' list with drag-to-reorder, replacing the separate widget and map sections. Toggle each feature for the widget, the map, or both from the same place." },
+    { "category": "feat", "scope": "Mock Location Engine + GPS Realism", "summary": "Removed the redundant start/stop button from the Map screen. The top bar's start/stop control already works on every screen." },
+    { "category": "feat", "scope": "Mock Location Engine + GPS Realism", "summary": "The top bar start/stop button now stays centered consistently across all screens instead of shifting position." },
+    { "category": "fix", "scope": "Mock Location Engine + GPS Realism", "summary": "The start/stop button's accessibility label, which was incorrectly announcing the screen title instead of its action." },
+    { "category": "feat", "scope": "Group Sync", "summary": "Followers can now reconnect automatically after the leader's device restarts." },
+    { "category": "feat", "scope": "Export / Import", "summary": "A file containing multiple tracks or routes now imports each one as its own separate route instead of merging them." },
+    { "category": "feat", "scope": "Click-to-Move / Teleport", "summary": "'Walk via roads' and Roaming now handle a slow or unreliable routing server better, retrying automatically before falling back to a straight line." }
+  ]
+}

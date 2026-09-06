@@ -1,0 +1,14 @@
+{
+  "version": "0.14.0",
+  "date": "2026-07-16",
+  "entries": [
+    { "category": "feat", "scope": "Theme", "summary": "Light mode, a high-contrast light theme option, alongside the existing dark theme." },
+    { "category": "feat", "scope": "Export / Import", "summary": "'Reset all data' button in Settings, clears all favorites, routes, and settings without needing your phone's own app data reset option." },
+    { "category": "feat", "scope": "Speed Profiles", "summary": "Two more speed profiles, Slow Walk and Drive." },
+    { "category": "feat", "scope": "Favorite Locations", "summary": "Favorites now has a search bar to filter by name, and hot locations are grouped under category headers." },
+    { "category": "feat", "scope": "Favorite Locations", "summary": "The search bar now accepts raw coordinates (e.g. '35.6762, 139.6503') typed directly, no need to search by name." },
+    { "category": "feat", "scope": "Group Sync", "summary": "Followers now walk toward the leader's position instead of teleporting instantly, and reconnect more reliably after repeated network hiccups." },
+    { "category": "fix", "scope": "Export / Import", "summary": "A regression that broke importing routes from GPS Joystick." },
+    { "category": "fix", "scope": "Floating Widget", "summary": "Various fixes to the floating map's route controls and walk/replay handling." }
+  ]
+}

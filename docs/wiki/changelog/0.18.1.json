@@ -1,0 +1,7 @@
+{
+  "version": "0.18.1",
+  "date": "2026-08-30",
+  "entries": [
+    { "category": "fix", "scope": "Mock Location Engine + GPS Realism", "summary": "Altitude variation drifting further over time instead of staying within its configured range." }
+  ]
+}

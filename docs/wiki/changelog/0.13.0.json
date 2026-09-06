@@ -1,0 +1,14 @@
+{
+  "version": "0.13.0",
+  "date": "2026-07-04",
+  "entries": [
+    { "category": "feat", "scope": "Tap to Walk", "summary": "Tap to Walk, quick-walk on the floating map with one tap, plus an optional screen overlay to tap-to-walk over other apps." },
+    { "category": "feat", "scope": "Tap to Walk", "summary": "Compass-aware tap-to-walk orientation, calibrated for popular AR game maps." },
+    { "category": "feat", "scope": "Mock Location Engine + GPS Realism", "summary": "The Start/Stop button now shows the name of the location you're spoofing to." },
+    { "category": "feat", "scope": "Group Sync", "summary": "Followers now reconnect automatically after a disconnect, including after a device or app restart." },
+    { "category": "feat", "scope": "Export / Import", "summary": "GPX import now works with files that contain only waypoints, without a track or route section." },
+    { "category": "feat", "scope": "Speed Profiles", "summary": "Lowered the minimum speed setting so you can go slower than 0.1 mph." },
+    { "category": "feat", "scope": "Mock Location Engine + GPS Realism", "summary": "Removed the elevation controls feature." },
+    { "category": "fix", "scope": "Click-to-Move / Teleport", "summary": "A bug where finishing one walk could wipe the path of a different, newer walk." }
+  ]
+}
