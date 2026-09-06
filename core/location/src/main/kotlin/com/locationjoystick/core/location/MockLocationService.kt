@@ -341,6 +341,9 @@ class MockLocationService : Service() {
                 if (bearing != null) currentBearing = bearing
             }
         }
+        serviceScope.launch {
+            locationRepository.walkTarget.collect { target -> onWalkTargetChanged(target) }
+        }
         // Applies a manual altitude override (widget button) to a running session immediately —
         // see AltitudeAnchorCoordinator.observe().
         altitudeAnchor.observe(serviceScope)
@@ -740,6 +743,14 @@ class MockLocationService : Service() {
     fun clearMotionVector() {
         currentSpeedMs = 0.0f
         currentBearing = 0.0f
+    }
+
+    // WalkCoordinator's own arrival zero-tick reaches this service through an Intent
+    // (updatePositionWithVector), which can be delivered after setMockMode() has already
+    // flipped mode away from WALK_TO and gets silently rejected (issue #64). Reacting to
+    // LocationRepository.walkTarget directly, in-process, sidesteps that race entirely.
+    internal fun onWalkTargetChanged(target: LatLng?) {
+        if (target == null) clearMotionVector()
     }
 
     fun stopSpoofing() {
