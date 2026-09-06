@@ -11,13 +11,13 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjError
 import com.locationjoystick.core.designsystem.LjIcons
@@ -46,11 +47,12 @@ fun LjTopBar(
     showSpoofToggle: Boolean = true,
     locationLabel: String? = null,
 ) {
-    CenterAlignedTopAppBar(
+    TopAppBar(
         modifier = modifier,
         title = {
             Text(
                 text = title,
+                style = MaterialTheme.typography.titleSmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -127,5 +129,16 @@ fun LjTopBar(
                 navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
                 actionIconContentColor = MaterialTheme.colorScheme.onSurface,
             ),
+    )
+}
+
+@Preview
+@Composable
+private fun LjTopBarPreview() {
+    LjTopBar(
+        title = "Map",
+        isSpoofing = false,
+        onToggleSpoofing = {},
+        onNavigationClick = {},
     )
 }
