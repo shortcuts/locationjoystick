@@ -1,0 +1,20 @@
+{
+  "version": "0.20.0",
+  "date": "2026-09-06",
+  "entries": [
+    { "category": "feat", "scope": "General", "summary": "Settings now shows two columns on tablets, matching the home screen's layout." },
+    { "category": "fix", "scope": "Route System", "summary": "Starting a walk right after canceling a route replay could briefly snap your position back to the old route." },
+    { "category": "fix", "scope": "General", "summary": "Long blocks of text no longer stretch edge-to-edge on tablets and foldables." },
+    { "category": "fix", "scope": "Route System", "summary": "The delete confirmation for a route now names the route being deleted." },
+    { "category": "fix", "scope": "Favorite Locations", "summary": "The delete confirmation for a favorite now names the favorite being deleted." },
+    { "category": "fix", "scope": "Group Sync", "summary": "A missing value now shows 'Unknown' instead of a dash that looked like a separator." },
+    { "category": "fix", "scope": "Group Sync", "summary": "Switch descriptions on the Group Sync screen now read as complete sentences." },
+    { "category": "fix", "scope": "Favorite Locations", "summary": "Menu options for adding a favorite now use consistent, readable labels." },
+    { "category": "fix", "scope": "Favorite Locations", "summary": "The empty-favorites message is now the same everywhere it appears." },
+    { "category": "fix", "scope": "Map (MapLibre)", "summary": "The map's hint text no longer wraps awkwardly on narrow screens." },
+    { "category": "fix", "scope": "Mock Location Engine + GPS Realism", "summary": "Long-pressing the start/stop bar now shows the full location name when it's too long to fit." },
+    { "category": "fix", "scope": "Group Sync", "summary": "Screen readers now announce the QR code button as one item instead of two." },
+    { "category": "fix", "scope": "General", "summary": "Fixed a checkbox that could be focused twice by screen readers." },
+    { "category": "fix", "scope": "Map (MapLibre)", "summary": "Search result rows are now easier to tap." }
+  ]
+}
