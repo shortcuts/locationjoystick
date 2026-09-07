@@ -14,8 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,7 +25,6 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,6 +44,7 @@ import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.Route
@@ -187,22 +187,29 @@ fun RouteDetailScreen(
         bottomBar = bottomBar,
         actions = {
             if (route != null && editedName != route!!.name) {
-                TextButton(
-                    onClick = { editedName = route!!.name },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
-                ) { Text("Discard") }
-                TextButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            if (route?.waypoints?.isEmpty() == true) {
-                                viewModel.deleteRoute()
-                            } else if (editedName.isNotBlank()) {
-                                viewModel.renameRoute(editedName)
+                LjOverflowMenu { dismiss ->
+                    DropdownMenuItem(
+                        text = { Text("Discard") },
+                        onClick = {
+                            dismiss()
+                            editedName = route!!.name
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Save") },
+                        onClick = {
+                            dismiss()
+                            coroutineScope.launch {
+                                if (route?.waypoints?.isEmpty() == true) {
+                                    viewModel.deleteRoute()
+                                } else if (editedName.isNotBlank()) {
+                                    viewModel.renameRoute(editedName)
+                                }
+                                onNavigateBack()
                             }
-                            onNavigateBack()
-                        }
-                    },
-                ) { Text("Save") }
+                        },
+                    )
+                }
             }
         },
     ) { paddingValues ->

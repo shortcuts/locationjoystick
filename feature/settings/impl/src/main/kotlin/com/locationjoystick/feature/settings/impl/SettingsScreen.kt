@@ -4,17 +4,14 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
@@ -42,6 +39,7 @@ import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.DestinationCardSpec
 import com.locationjoystick.core.designsystem.component.DestinationHub
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
+import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.RoamingDefaults
@@ -567,76 +565,63 @@ private fun SettingsHubScreen(
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
         actions = {
-            var showDownloadMenu by remember { mutableStateOf(false) }
-            Box {
-                IconButton(onClick = { showDownloadMenu = true }) {
-                    Icon(LjIcons.FileUpload, contentDescription = "Export")
-                }
-                DropdownMenu(expanded = showDownloadMenu, onDismissRequest = { showDownloadMenu = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Export via QR code") },
-                        onClick = {
-                            showDownloadMenu = false
-                            onAction(SettingsAction.QrShare)
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Export settings") },
-                        onClick = {
-                            showDownloadMenu = false
-                            onAction(SettingsAction.Export)
-                        },
-                    )
-                }
-            }
-            var showUploadMenu by remember { mutableStateOf(false) }
-            Box {
-                IconButton(onClick = { showUploadMenu = true }) {
-                    Icon(LjIcons.FileDownload, contentDescription = "Import")
-                }
-                DropdownMenu(expanded = showUploadMenu, onDismissRequest = { showUploadMenu = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Import from QR code") },
-                        onClick = {
-                            showUploadMenu = false
-                            onAction(SettingsAction.QrScan)
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Import via code") },
-                        onClick = {
-                            showUploadMenu = false
-                            onAction(SettingsAction.QrEnterCode)
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Import from file") },
-                        onClick = {
-                            showUploadMenu = false
-                            onAction(SettingsAction.Import)
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Import from GPS Joystick") },
-                        onClick = {
-                            showUploadMenu = false
-                            onAction(SettingsAction.ImportGpsJoystick)
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Import from YAMLA") },
-                        onClick = {
-                            showUploadMenu = false
-                            onAction(SettingsAction.ImportYamla)
-                        },
-                    )
-                }
-            }
-            IconButton(onClick = { onAction(SettingsAction.ResetAllData) }) {
-                Icon(
-                    LjIcons.Delete,
-                    contentDescription = "Reset all data",
-                    tint = MaterialTheme.colorScheme.error,
+            LjOverflowMenu { dismiss ->
+                DropdownMenuItem(
+                    text = { Text("Export via QR code") },
+                    onClick = {
+                        dismiss()
+                        onAction(SettingsAction.QrShare)
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Export settings") },
+                    onClick = {
+                        dismiss()
+                        onAction(SettingsAction.Export)
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Import from QR code") },
+                    onClick = {
+                        dismiss()
+                        onAction(SettingsAction.QrScan)
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Import via code") },
+                    onClick = {
+                        dismiss()
+                        onAction(SettingsAction.QrEnterCode)
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Import from file") },
+                    onClick = {
+                        dismiss()
+                        onAction(SettingsAction.Import)
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Import from GPS Joystick") },
+                    onClick = {
+                        dismiss()
+                        onAction(SettingsAction.ImportGpsJoystick)
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Import from YAMLA") },
+                    onClick = {
+                        dismiss()
+                        onAction(SettingsAction.ImportYamla)
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Reset all data", color = MaterialTheme.colorScheme.error) },
+                    leadingIcon = { Icon(LjIcons.Delete, null, tint = MaterialTheme.colorScheme.error) },
+                    onClick = {
+                        dismiss()
+                        onAction(SettingsAction.ResetAllData)
+                    },
                 )
             }
         },

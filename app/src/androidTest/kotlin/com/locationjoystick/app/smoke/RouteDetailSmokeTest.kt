@@ -64,7 +64,7 @@ class RouteDetailSmokeTest : BaseSmokeTest() {
     fun navigate_back_from_detail() {
         Espresso.pressBack()
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("Add route").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
     }
 
     @Test

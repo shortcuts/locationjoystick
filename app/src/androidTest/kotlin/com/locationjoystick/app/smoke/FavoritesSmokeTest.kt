@@ -33,7 +33,7 @@ class FavoritesSmokeTest : BaseSmokeTest() {
 
     @Test
     fun favorites_screen_loads() {
-        composeRule.onNodeWithContentDescription("Add favorite").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
     }
 
     @Test
@@ -43,7 +43,7 @@ class FavoritesSmokeTest : BaseSmokeTest() {
 
     @Test
     fun navigate_to_map_picker() {
-        composeRule.onNodeWithContentDescription("Add favorite").performClick()
+        composeRule.onNodeWithContentDescription("More actions").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Pick on map").performClick()
         composeRule.waitForIdle()
@@ -52,7 +52,7 @@ class FavoritesSmokeTest : BaseSmokeTest() {
 
     @Test
     fun add_dropdown_shows_all_three_options() {
-        composeRule.onNodeWithContentDescription("Add favorite").performClick()
+        composeRule.onNodeWithContentDescription("More actions").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Pick on map").assertIsDisplayed()
         composeRule.onNodeWithText("Enter coordinates").assertIsDisplayed()
@@ -69,19 +69,19 @@ class FavoritesSmokeTest : BaseSmokeTest() {
 
     @Test
     fun navigate_back_from_map_picker() {
-        composeRule.onNodeWithContentDescription("Add favorite").performClick()
+        composeRule.onNodeWithContentDescription("More actions").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Pick on map").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("Search location").assertIsDisplayed()
         Espresso.pressBack()
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("Add favorite").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
     }
 
     @Test
     fun from_coordinates_dialog_opens() {
-        composeRule.onNodeWithContentDescription("Add favorite").performClick()
+        composeRule.onNodeWithContentDescription("More actions").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Enter coordinates").performClick()
         composeRule.waitForIdle()

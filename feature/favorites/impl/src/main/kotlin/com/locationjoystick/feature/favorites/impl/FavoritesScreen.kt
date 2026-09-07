@@ -50,6 +50,7 @@ import com.locationjoystick.core.data.toBadgeText
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.WideContentClamp
@@ -138,7 +139,6 @@ internal fun FavoritesScreen(
     var prefillLon by remember { mutableStateOf("") }
     var editingFavorite by remember { mutableStateOf<com.locationjoystick.core.model.FavoriteLocation?>(null) }
 
-    var showAddMenu by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
     LjScaffold(
@@ -150,21 +150,20 @@ internal fun FavoritesScreen(
         bottomBar = bottomBar,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         actions = {
-            IconButton(onClick = onToggleSort) {
-                Icon(LjIcons.SwapVert, contentDescription = "Sort")
-            }
-            IconButton(onClick = { showAddMenu = !showAddMenu }) {
-                Icon(LjIcons.Add, contentDescription = "Add favorite")
-            }
-            DropdownMenu(
-                expanded = showAddMenu,
-                onDismissRequest = { showAddMenu = false },
-            ) {
+            LjOverflowMenu { dismiss ->
+                DropdownMenuItem(
+                    text = { Text("Sort") },
+                    onClick = {
+                        dismiss()
+                        onToggleSort()
+                    },
+                    leadingIcon = { Icon(LjIcons.SwapVert, null) },
+                )
                 DropdownMenuItem(
                     text = { Text("Pick on map") },
                     onClick = {
+                        dismiss()
                         onNavigateToMapPicker()
-                        showAddMenu = false
                     },
                     leadingIcon = { Icon(LjIcons.Map, null) },
                 )
@@ -174,7 +173,7 @@ internal fun FavoritesScreen(
                         prefillLat = ""
                         prefillLon = ""
                         showAddSheet = true
-                        showAddMenu = false
+                        dismiss()
                     },
                     leadingIcon = { Icon(LjIcons.Add, null) },
                 )
@@ -185,7 +184,7 @@ internal fun FavoritesScreen(
                         prefillLat = pos?.latitude?.toString() ?: ""
                         prefillLon = pos?.longitude?.toString() ?: ""
                         showAddSheet = true
-                        showAddMenu = false
+                        dismiss()
                     },
                     leadingIcon = { Icon(LjIcons.LocationOn, null) },
                 )

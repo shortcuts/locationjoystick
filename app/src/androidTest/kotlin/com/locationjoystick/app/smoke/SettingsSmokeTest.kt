@@ -35,7 +35,7 @@ class SettingsSmokeTest : BaseSmokeTest() {
 
     @Test
     fun export_button_no_crash() {
-        composeRule.onNodeWithContentDescription("Export").performClick()
+        composeRule.onNodeWithContentDescription("More actions").performClick()
         composeRule.waitForIdle()
     }
 

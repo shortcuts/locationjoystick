@@ -53,13 +53,13 @@ class IdleSmokeTest : BaseSmokeTest() {
     @Test
     fun navigate_to_routes_via_card() {
         composeRule.navigateFromIdle("Routes")
-        composeRule.onNodeWithContentDescription("Add route").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
     }
 
     @Test
     fun navigate_to_favorites_via_card() {
         composeRule.navigateFromIdle("Favorites")
-        composeRule.onNodeWithContentDescription("Add favorite").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
     }
 
     @Test
@@ -83,12 +83,12 @@ class IdleSmokeTest : BaseSmokeTest() {
     @Test
     fun navigate_to_routes_via_drawer() {
         composeRule.navigateViaDrawer("Routes")
-        composeRule.onNodeWithContentDescription("Add route").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
     }
 
     @Test
     fun navigate_to_favorites_via_drawer() {
         composeRule.navigateViaDrawer("Favorites")
-        composeRule.onNodeWithContentDescription("Add favorite").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
     }
 }

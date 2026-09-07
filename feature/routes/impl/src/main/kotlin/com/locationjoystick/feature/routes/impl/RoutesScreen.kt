@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.LoadingIndicator
@@ -138,7 +139,6 @@ internal fun RoutesScreen(
     bottomBar: @Composable () -> Unit = {},
 ) {
     var deletingRoute by remember { mutableStateOf<com.locationjoystick.core.model.Route?>(null) }
-    var showAddMenu by remember { mutableStateOf(false) }
 
     LjScaffold(
         title = "Routes",
@@ -149,37 +149,36 @@ internal fun RoutesScreen(
         bottomBar = bottomBar,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         actions = {
-            IconButton(onClick = onToggleSort) {
-                Icon(LjIcons.SwapVert, contentDescription = "Sort")
-            }
-            IconButton(onClick = { showAddMenu = !showAddMenu }) {
-                Icon(LjIcons.Add, contentDescription = "Add route")
-            }
-            DropdownMenu(
-                expanded = showAddMenu,
-                onDismissRequest = { showAddMenu = false },
-            ) {
+            LjOverflowMenu { dismiss ->
+                DropdownMenuItem(
+                    text = { Text("Sort") },
+                    onClick = {
+                        dismiss()
+                        onToggleSort()
+                    },
+                    leadingIcon = { Icon(LjIcons.SwapVert, null) },
+                )
                 DropdownMenuItem(
                     text = { Text("Draw on map") },
                     onClick = {
+                        dismiss()
                         onNavigateToCreate(RouteType.STRAIGHT)
-                        showAddMenu = false
                     },
                     leadingIcon = { Icon(LjIcons.Map, null) },
                 )
                 DropdownMenuItem(
                     text = { Text("Draw on map (follow roads)") },
                     onClick = {
+                        dismiss()
                         onNavigateToCreate(RouteType.GUIDED)
-                        showAddMenu = false
                     },
                     leadingIcon = { Icon(LjIcons.Map, null) },
                 )
                 DropdownMenuItem(
                     text = { Text("Import GPX file") },
                     onClick = {
+                        dismiss()
                         onImportGpx()
-                        showAddMenu = false
                     },
                     leadingIcon = { Icon(LjIcons.Add, null) },
                 )

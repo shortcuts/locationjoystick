@@ -58,7 +58,7 @@ class MainActivityIntentTest {
             )
         }
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("Add favorite").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
     }
 
     @Test
@@ -70,7 +70,7 @@ class MainActivityIntentTest {
             )
         }
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("Add route").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
     }
 
     @Test
