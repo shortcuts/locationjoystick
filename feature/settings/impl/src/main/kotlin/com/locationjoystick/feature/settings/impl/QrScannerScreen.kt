@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +40,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.LjButton
+import com.locationjoystick.core.designsystem.component.LoadingIndicator
 import java.util.concurrent.Executors
 import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 
@@ -187,15 +189,22 @@ fun QrScannerScreen(
                 } else {
                     "Point camera at QR code"
                 }
-            Text(
-                label,
+            Column(
                 modifier =
                     Modifier
                         .background(Color.Black.copy(alpha = 0.7f), MaterialTheme.shapes.extraSmall)
                         .padding(8.dp),
-                color = Color.White,
-                style = MaterialTheme.typography.labelSmall,
-            )
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    label,
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+                if (isFetching) {
+                    LoadingIndicator(modifier = Modifier.padding(top = 4.dp).size(20.dp), size = 16.dp)
+                }
+            }
         }
 
         IconButton(

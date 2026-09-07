@@ -190,10 +190,12 @@ fun SettingsRoute(
     }
 
     val exportSession = qrExportSession
-    if (showQrShare && exportSession != null) {
+    val isPreparingQrExport by viewModel.isPreparingQrExport.collectAsStateWithLifecycle()
+    if (showQrShare) {
         QrShareDialog(
-            qrText = exportSession.qrText,
-            code = exportSession.code,
+            qrText = exportSession?.qrText,
+            code = exportSession?.code,
+            isPreparing = isPreparingQrExport,
             onDismiss = {
                 viewModel.stopQrExport()
                 showQrShare = false
@@ -410,6 +412,7 @@ fun SettingsRoute(
                 }
 
                 SettingsAction.QrShare -> {
+                    showQrShare = true
                     viewModel.prepareQrExport()
                 }
 

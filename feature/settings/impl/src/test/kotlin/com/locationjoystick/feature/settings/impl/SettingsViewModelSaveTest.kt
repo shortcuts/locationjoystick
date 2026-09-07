@@ -297,6 +297,20 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
+    fun `prepareQrExport flips isPreparingQrExport true then false around the async setup`() =
+        runTest(testDispatcher) {
+            viewModel.isPreparingQrExport.test {
+                assertFalse(awaitItem())
+
+                viewModel.prepareQrExport()
+
+                assertTrue(awaitItem())
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `onQrScanned with malformed url emits error feedback`() =
         runTest(testDispatcher) {
             viewModel.userFeedback.test {

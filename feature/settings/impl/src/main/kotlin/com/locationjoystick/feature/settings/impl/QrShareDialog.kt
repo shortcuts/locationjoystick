@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.locationjoystick.core.designsystem.component.LjButton
+import com.locationjoystick.core.designsystem.component.LoadingIndicator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,14 +36,15 @@ private const val TAG = "QrShareDialog"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QrShareDialog(
-    qrText: String,
-    code: String,
+    qrText: String?,
+    code: String?,
+    isPreparing: Boolean,
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val bitmap = remember(qrText) { QrEncoder.encodeToQr(qrText) }
+    val bitmap = remember(qrText) { qrText?.let { QrEncoder.encodeToQr(it) } }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
@@ -50,6 +53,16 @@ fun QrShareDialog(
                     .fillMaxWidth()
                     .padding(16.dp),
         ) {
+            if (isPreparing || qrText == null || code == null) {
+                Text(
+                    "Starting local export server…",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+                LoadingIndicator(modifier = Modifier.fillMaxWidth().height(120.dp))
+                return@Column
+            }
+
             Text(
                 "Scan this on the other device — both must be on the same Wi-Fi network",
                 style = MaterialTheme.typography.bodySmall,

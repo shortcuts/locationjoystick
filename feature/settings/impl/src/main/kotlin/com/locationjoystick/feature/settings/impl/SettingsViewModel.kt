@@ -87,6 +87,9 @@ class SettingsViewModel
         private val _qrImportFetching = MutableStateFlow(false)
         val qrImportFetching: StateFlow<Boolean> = _qrImportFetching.asStateFlow()
 
+        private val _isPreparingQrExport = MutableStateFlow(false)
+        val isPreparingQrExport: StateFlow<Boolean> = _isPreparingQrExport.asStateFlow()
+
         /** [qrText] renders as the QR; [code] is the same session typeable manually on the other device. */
         internal data class QrExportSession(
             val qrText: String,
@@ -650,6 +653,7 @@ class SettingsViewModel
          * code + typeable code for the same session. Call [stopQrExport] when the share dialog closes.
          */
         fun prepareQrExport() {
+            _isPreparingQrExport.value = true
             viewModelScope.launch(Dispatchers.IO) {
                 try {
                     val json = SettingsExportCodec.serializeExportData(buildCurrentExportData())
@@ -663,6 +667,8 @@ class SettingsViewModel
                 } catch (e: Exception) {
                     Log.e(TAG, "QR export preparation failed", e)
                     userFeedback.emit(UserFeedback("Failed to prepare QR export — ensure Wi-Fi is connected", isError = true))
+                } finally {
+                    _isPreparingQrExport.value = false
                 }
             }
         }
