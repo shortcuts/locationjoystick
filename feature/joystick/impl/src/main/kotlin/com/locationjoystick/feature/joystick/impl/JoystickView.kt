@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.joystick.impl
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
@@ -10,6 +11,7 @@ import android.os.Build
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.OvershootInterpolator
 import androidx.compose.ui.graphics.toArgb
 import com.locationjoystick.core.designsystem.LjAccent
 import kotlin.math.atan2
@@ -38,6 +40,9 @@ class JoystickView
 
             /** Fraction of view width/height used for the drag handle hit area (top-left corner). */
             private const val DRAG_HANDLE_FRACTION = 0.28f
+
+            private const val SNAP_BACK_DURATION_MS = 180L
+            private const val SNAP_BACK_OVERSHOOT_TENSION = 1.5f
         }
 
         var onInputChanged: ((JoystickInput) -> Unit)? = null
@@ -139,6 +144,8 @@ class JoystickView
 
         /** Which pointer is controlling the drag handle (-1 = none). */
         private var dragPointerId = -1
+
+        private var snapBackAnimator: ValueAnimator? = null
 
         override fun onSizeChanged(
             w: Int,
@@ -273,6 +280,9 @@ class JoystickView
             x: Float,
             y: Float,
         ): Boolean {
+            snapBackAnimator?.cancel()
+            snapBackAnimator = null
+
             val dx = x - centerX
             val dy = y - centerY
             val distance = hypot(dx, dy)
@@ -299,12 +309,35 @@ class JoystickView
 
         private fun handleJoystickUp(): Boolean {
             if (shouldResetOnRelease?.invoke() != false) {
-                knobOffsetX = 0f
-                knobOffsetY = 0f
+                animateKnobToCenter()
                 onInputChanged?.invoke(JoystickInput(angleDegrees = 0f, force = 0f))
             }
             onReleased?.invoke()
             invalidate()
             return true
+        }
+
+        private fun animateKnobToCenter() {
+            val startX = knobOffsetX
+            val startY = knobOffsetY
+            snapBackAnimator?.cancel()
+            snapBackAnimator =
+                ValueAnimator.ofFloat(1f, 0f).apply {
+                    duration = SNAP_BACK_DURATION_MS
+                    interpolator = OvershootInterpolator(SNAP_BACK_OVERSHOOT_TENSION)
+                    addUpdateListener {
+                        val fraction = it.animatedValue as Float
+                        knobOffsetX = startX * fraction
+                        knobOffsetY = startY * fraction
+                        invalidate()
+                    }
+                    start()
+                }
+        }
+
+        override fun onDetachedFromWindow() {
+            snapBackAnimator?.cancel()
+            snapBackAnimator = null
+            super.onDetachedFromWindow()
         }
     }
