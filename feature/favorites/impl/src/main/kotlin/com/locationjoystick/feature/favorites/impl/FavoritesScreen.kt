@@ -53,6 +53,7 @@ import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjListItemCardSkeletonList
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
+import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.WideContentClamp
@@ -393,13 +394,20 @@ private fun FavoriteCard(
                         },
                         leadingIcon = { Icon(LjIcons.Share, null) },
                     )
+                    LjOverflowMenuSectionLabel("Danger")
                     DropdownMenuItem(
-                        text = { Text("Delete") },
+                        text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
                         onClick = {
                             onDelete(favorite)
                             menuExpanded = false
                         },
-                        leadingIcon = { Icon(LjIcons.Delete, null) },
+                        leadingIcon = {
+                            Icon(
+                                LjIcons.Delete,
+                                null,
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        },
                     )
                 }
             }

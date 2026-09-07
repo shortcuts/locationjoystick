@@ -42,6 +42,7 @@ import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjListItemCardSkeletonList
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
+import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.RouteStartSheetContent
 import com.locationjoystick.core.location.rememberSpoofToggleState
@@ -371,13 +372,20 @@ private fun RouteCard(
                         },
                         leadingIcon = { Icon(LjIcons.FileDownload, contentDescription = null) },
                     )
+                    LjOverflowMenuSectionLabel("Danger")
                     DropdownMenuItem(
-                        text = { Text("Delete") },
+                        text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
                         onClick = {
                             menuExpanded = false
                             onDeleteRoute(route)
                         },
-                        leadingIcon = { Icon(LjIcons.Delete, contentDescription = null) },
+                        leadingIcon = {
+                            Icon(
+                                LjIcons.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        },
                     )
                 }
             }
