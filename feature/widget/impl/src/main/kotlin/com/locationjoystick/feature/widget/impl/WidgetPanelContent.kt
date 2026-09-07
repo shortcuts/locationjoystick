@@ -46,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -367,6 +368,7 @@ private fun DebugStatsPanel(stats: DebugStats) {
         modifier =
             Modifier
                 .padding(4.dp)
+                .shadow(elevation = 8.dp, shape = MaterialTheme.shapes.small)
                 .background(Color.Black.copy(alpha = 0.7f), MaterialTheme.shapes.small)
                 .padding(8.dp),
     ) {
@@ -430,6 +432,7 @@ private fun FloatingPickerShell(
                 Modifier
                     .fillMaxSize()
                     .padding(16.dp)
+                    .shadow(elevation = 8.dp, shape = MaterialTheme.shapes.medium)
                     .background(LjBg, MaterialTheme.shapes.medium)
                     .clickable { /* consume touches inside panel */ },
         ) {
