@@ -15,6 +15,9 @@
     { "category": "fix", "scope": "Mock Location Engine + GPS Realism", "summary": "Long-pressing the start/stop bar now shows the full location name when it's too long to fit." },
     { "category": "fix", "scope": "Group Sync", "summary": "Screen readers now announce the QR code button as one item instead of two." },
     { "category": "fix", "scope": "General", "summary": "Fixed a checkbox that could be focused twice by screen readers." },
-    { "category": "fix", "scope": "Map (MapLibre)", "summary": "Search result rows are now easier to tap." }
+    { "category": "fix", "scope": "Map (MapLibre)", "summary": "Search result rows are now easier to tap." },
+    { "category": "feat", "scope": "General", "summary": "Redesigned the top bar: the title now sits at the start, the start/stop button is centered, and each screen's extra actions are tucked into a single 'More actions' menu." },
+    { "category": "fix", "scope": "What's New Popup", "summary": "The 'What's new' badge no longer appears during onboarding, before you've reached the main app." },
+    { "category": "fix", "scope": "Click-to-Move / Teleport", "summary": "Fixed a bug where your reported speed could stay stuck at a nonzero value after a walk finished." }
   ]
 }
