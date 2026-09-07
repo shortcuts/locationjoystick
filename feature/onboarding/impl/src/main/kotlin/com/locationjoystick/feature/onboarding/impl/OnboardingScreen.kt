@@ -31,7 +31,6 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -223,7 +222,6 @@ internal fun OnboardingScreen(
                 isGranted = uiState.locationPermissionGranted,
                 icon = LjIcons.LocationOn,
                 actionLabel = "Grant Permission",
-                isOptional = false,
                 onAction = { locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) },
             )
 
@@ -235,7 +233,6 @@ internal fun OnboardingScreen(
                 isGranted = uiState.overlayPermissionGranted,
                 icon = LjIcons.Layers,
                 actionLabel = "Open Settings",
-                isOptional = false,
                 onAction = {
                     context.startActivity(
                         Intent(
@@ -256,7 +253,6 @@ internal fun OnboardingScreen(
                 isGranted = uiState.mockLocationEnabled,
                 icon = LjIcons.DeveloperMode,
                 actionLabel = "Open Developer Options",
-                isOptional = false,
                 onAction = {
                     context.startActivity(
                         Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
@@ -336,7 +332,6 @@ private fun OnboardingStepCard(
     isGranted: Boolean,
     icon: ImageVector,
     actionLabel: String,
-    isOptional: Boolean,
     modifier: Modifier = Modifier,
     extraActionLabel: String? = null,
     onAction: () -> Unit,
@@ -389,29 +384,12 @@ private fun OnboardingStepCard(
                     }
                 }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
-                ) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    if (isOptional) {
-                        SuggestionChip(
-                            onClick = {},
-                            label = {
-                                Text(
-                                    text = "Optional",
-                                    style = MaterialTheme.typography.labelSmall,
-                                )
-                            },
-                        )
-                    }
-                }
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
