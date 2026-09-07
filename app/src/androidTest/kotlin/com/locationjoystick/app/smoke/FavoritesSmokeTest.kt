@@ -43,19 +43,19 @@ class FavoritesSmokeTest : BaseSmokeTest() {
 
     @Test
     fun navigate_to_map_picker() {
-        composeRule.onNodeWithContentDescription("More actions").performClick()
+        composeRule.onNodeWithContentDescription("Add favorite").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Pick on map").performClick()
+        composeRule.onNodeWithText("From map").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("Search location").assertIsDisplayed()
     }
 
     @Test
-    fun add_dropdown_shows_all_three_options() {
-        composeRule.onNodeWithContentDescription("More actions").performClick()
+    fun add_sheet_shows_all_three_options() {
+        composeRule.onNodeWithContentDescription("Add favorite").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Pick on map").assertIsDisplayed()
-        composeRule.onNodeWithText("Enter coordinates").assertIsDisplayed()
+        composeRule.onNodeWithText("From map").assertIsDisplayed()
+        composeRule.onNodeWithText("From coordinates").assertIsDisplayed()
         composeRule.onNodeWithText("Use current location").assertIsDisplayed()
     }
 
@@ -69,9 +69,9 @@ class FavoritesSmokeTest : BaseSmokeTest() {
 
     @Test
     fun navigate_back_from_map_picker() {
-        composeRule.onNodeWithContentDescription("More actions").performClick()
+        composeRule.onNodeWithContentDescription("Add favorite").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Pick on map").performClick()
+        composeRule.onNodeWithText("From map").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("Search location").assertIsDisplayed()
         Espresso.pressBack()
@@ -81,9 +81,9 @@ class FavoritesSmokeTest : BaseSmokeTest() {
 
     @Test
     fun from_coordinates_dialog_opens() {
-        composeRule.onNodeWithContentDescription("More actions").performClick()
+        composeRule.onNodeWithContentDescription("Add favorite").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Enter coordinates").performClick()
+        composeRule.onNodeWithText("From coordinates").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Latitude", substring = true).assertIsDisplayed()
         composeRule.onNodeWithText("Longitude", substring = true).assertIsDisplayed()

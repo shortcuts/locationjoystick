@@ -19,6 +19,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +48,7 @@ import com.locationjoystick.core.data.toBadgeText
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.LjActionSheetRow
 import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
@@ -134,6 +136,8 @@ internal fun FavoritesScreen(
     bottomBar: @Composable () -> Unit = {},
 ) {
     var showAddSheet by remember { mutableStateOf(false) }
+    // Hoisted here (not local to the sheet) so the empty-state CTA task can also flip it, with no new plumbing.
+    var showAddOptionsSheet by remember { mutableStateOf(false) }
     var prefillLat by remember { mutableStateOf("") }
     var prefillLon by remember { mutableStateOf("") }
     var editingFavorite by remember { mutableStateOf<com.locationjoystick.core.model.FavoriteLocation?>(null) }
@@ -158,35 +162,11 @@ internal fun FavoritesScreen(
                     },
                     leadingIcon = { Icon(LjIcons.SwapVert, null) },
                 )
-                DropdownMenuItem(
-                    text = { Text("Pick on map") },
-                    onClick = {
-                        dismiss()
-                        onNavigateToMapPicker()
-                    },
-                    leadingIcon = { Icon(LjIcons.Map, null) },
-                )
-                DropdownMenuItem(
-                    text = { Text("Enter coordinates") },
-                    onClick = {
-                        prefillLat = ""
-                        prefillLon = ""
-                        showAddSheet = true
-                        dismiss()
-                    },
-                    leadingIcon = { Icon(LjIcons.Add, null) },
-                )
-                DropdownMenuItem(
-                    text = { Text("Use current location") },
-                    onClick = {
-                        val pos = getCurrentPosition()
-                        prefillLat = pos?.latitude?.toString() ?: ""
-                        prefillLon = pos?.longitude?.toString() ?: ""
-                        showAddSheet = true
-                        dismiss()
-                    },
-                    leadingIcon = { Icon(LjIcons.LocationOn, null) },
-                )
+            }
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showAddOptionsSheet = true }) {
+                Icon(LjIcons.Add, contentDescription = "Add favorite")
             }
         },
     ) { scaffoldPadding ->
@@ -294,6 +274,48 @@ internal fun FavoritesScreen(
                     showAddSheet = false
                 },
             )
+        }
+    }
+
+    if (showAddOptionsSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showAddOptionsSheet = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Text("Add a favorite", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(12.dp))
+                LjActionSheetRow(
+                    icon = LjIcons.Map,
+                    title = "From map",
+                    onClick = {
+                        showAddOptionsSheet = false
+                        onNavigateToMapPicker()
+                    },
+                )
+                LjActionSheetRow(
+                    icon = LjIcons.Add,
+                    title = "From coordinates",
+                    onClick = {
+                        showAddOptionsSheet = false
+                        prefillLat = ""
+                        prefillLon = ""
+                        showAddSheet = true
+                    },
+                )
+                LjActionSheetRow(
+                    icon = LjIcons.LocationOn,
+                    title = "Use current location",
+                    onClick = {
+                        showAddOptionsSheet = false
+                        val pos = getCurrentPosition()
+                        prefillLat = pos?.latitude?.toString() ?: ""
+                        prefillLon = pos?.longitude?.toString() ?: ""
+                        showAddSheet = true
+                    },
+                )
+                Spacer(Modifier.height(8.dp))
+            }
         }
     }
 

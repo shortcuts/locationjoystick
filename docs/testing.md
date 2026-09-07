@@ -33,8 +33,8 @@ Covers every nav path in `LjNavHost`:
 |------|----------------|
 | `IdleSmokeTest` | Idle loads; drawer open/close; all 4 cards navigate; Map + Settings + Routes + Favorites via drawer |
 | `MapSmokeTest` | Map loads (top-bar start/stop control visible); hamburger opens drawer; all 4 always-visible FABs present (favorites, routes, roaming, search) |
-| `FavoritesSmokeTest` | Favorites loads; seeded item visible; "Add favorite" → from map reaches MapPicker (checks search FAB); back from MapPicker returns to Favorites; from coordinates sheet opens; item menu shows Edit/Delete |
-| `RoutesSmokeTest` | Routes loads ("Add route" FAB visible); seeded route visible (waitUntil async); start route dialog shows Loop/Reverse/Return/Walk+Teleport; overflow menu shows Edit/Export/Delete |
+| `FavoritesSmokeTest` | Favorites loads; seeded item visible; "Add favorite" FAB opens add-favorite sheet showing From map / From coordinates / Use current location; "From map" reaches MapPicker (checks search FAB) and back returns to Favorites; "From coordinates" opens the coordinates dialog; item menu shows Edit/Delete |
+| `RoutesSmokeTest` | Routes loads ("Add route" FAB visible); FAB opens add-route sheet showing Draw on map / Draw on map (follow roads) / Import GPX file; seeded route visible (waitUntil async); start route dialog shows Loop/Reverse/Return/Walk+Teleport; route card overflow menu shows Edit/Export/Delete |
 | `RouteCreatorSmokeTest` | Creator loads via "Add route" → "from map"; search/undo/favorites FABs visible; back returns to Routes |
 | `RouteDetailSmokeTest` | Detail loads via overflow "Menu" → Edit (waitUntil route visible); back returns to Routes; delete button, name field, waypoint list visible |
 | `SettingsSmokeTest` | Settings loads; speed unit toggle; export/import icon buttons visible; export dropdown shows QR + file options; import dropdown shows QR + file + GPS Joystick + YAMLA; all section headers visible |

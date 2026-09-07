@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.LjActionSheetRow
 import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
@@ -115,6 +117,7 @@ private fun RoutesScreenPreview() {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun RoutesScreen(
     uiState: RoutesUiState,
@@ -139,6 +142,9 @@ internal fun RoutesScreen(
 ) {
     var deletingRoute by remember { mutableStateOf<com.locationjoystick.core.model.Route?>(null) }
 
+    // Hoisted here (not local to the sheet) so the empty-state CTA task can also flip it, with no new plumbing.
+    var showAddOptionsSheet by remember { mutableStateOf(false) }
+
     LjScaffold(
         title = "Routes",
         isSpoofing = isSpoofing,
@@ -157,30 +163,11 @@ internal fun RoutesScreen(
                     },
                     leadingIcon = { Icon(LjIcons.SwapVert, null) },
                 )
-                DropdownMenuItem(
-                    text = { Text("Draw on map") },
-                    onClick = {
-                        dismiss()
-                        onNavigateToCreate(RouteType.STRAIGHT)
-                    },
-                    leadingIcon = { Icon(LjIcons.Map, null) },
-                )
-                DropdownMenuItem(
-                    text = { Text("Draw on map (follow roads)") },
-                    onClick = {
-                        dismiss()
-                        onNavigateToCreate(RouteType.GUIDED)
-                    },
-                    leadingIcon = { Icon(LjIcons.Map, null) },
-                )
-                DropdownMenuItem(
-                    text = { Text("Import GPX file") },
-                    onClick = {
-                        dismiss()
-                        onImportGpx()
-                    },
-                    leadingIcon = { Icon(LjIcons.Add, null) },
-                )
+            }
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showAddOptionsSheet = true }) {
+                Icon(LjIcons.Add, contentDescription = "Add route")
             }
         },
     ) { paddingValues ->
@@ -244,6 +231,43 @@ internal fun RoutesScreen(
                 deletingRoute = null
             },
         )
+    }
+
+    if (showAddOptionsSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showAddOptionsSheet = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Text("Add a route", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(12.dp))
+                LjActionSheetRow(
+                    icon = LjIcons.Map,
+                    title = "Draw on map",
+                    onClick = {
+                        showAddOptionsSheet = false
+                        onNavigateToCreate(RouteType.STRAIGHT)
+                    },
+                )
+                LjActionSheetRow(
+                    icon = LjIcons.Map,
+                    title = "Draw on map (follow roads)",
+                    onClick = {
+                        showAddOptionsSheet = false
+                        onNavigateToCreate(RouteType.GUIDED)
+                    },
+                )
+                LjActionSheetRow(
+                    icon = LjIcons.FileDownload,
+                    title = "Import GPX file",
+                    onClick = {
+                        showAddOptionsSheet = false
+                        onImportGpx()
+                    },
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+        }
     }
 }
 

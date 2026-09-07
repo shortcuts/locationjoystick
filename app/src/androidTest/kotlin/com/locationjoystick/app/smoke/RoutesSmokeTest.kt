@@ -50,6 +50,16 @@ class RoutesSmokeTest : BaseSmokeTest() {
     @Test
     fun routes_screen_loads() {
         composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Add route").assertIsDisplayed()
+    }
+
+    @Test
+    fun add_route_sheet_shows_all_options() {
+        composeRule.onNodeWithContentDescription("Add route").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Draw on map").assertIsDisplayed()
+        composeRule.onNodeWithText("Draw on map (follow roads)").assertIsDisplayed()
+        composeRule.onNodeWithText("Import GPX file").assertIsDisplayed()
     }
 
     @Test
