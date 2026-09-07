@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,6 +54,7 @@ import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjTextButton
+import com.locationjoystick.core.designsystem.component.LoadingIndicator
 import com.locationjoystick.core.designsystem.component.WideContentClamp
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.LatLng
@@ -199,7 +199,7 @@ internal fun FavoritesScreen(
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
                     uiState.isLoading -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        LoadingIndicator()
                     }
 
                     uiState.favorites.isEmpty() -> {
