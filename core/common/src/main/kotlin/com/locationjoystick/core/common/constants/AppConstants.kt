@@ -332,9 +332,9 @@ object AppConstants {
     object AppInfo {
         const val VERSION_NAME = "0.19.0" // x-release-please-version
         const val GITHUB_ISSUES_URL = "https://github.com/shortcuts/locationjoystick/issues/new?template=bug_report.yml"
-        const val DOCS_URL = "https://shortcuts.github.io/locationjoystick/"
-        const val TROUBLESHOOTING_URL = "https://shortcuts.github.io/locationjoystick/troubleshooting.html"
-        const val CHANGELOG_URL = "https://shortcuts.github.io/locationjoystick/changelog.html"
+        const val DOCS_URL = "https://locationjoystick.shrtcts.fr/"
+        const val TROUBLESHOOTING_URL = "https://locationjoystick.shrtcts.fr/troubleshooting.html"
+        const val CHANGELOG_URL = "https://locationjoystick.shrtcts.fr/changelog.html"
         const val DEEP_LINK_HOST = "locationjoystick.shrtcts.fr"
 
         fun buildDeepLink(
@@ -350,7 +350,7 @@ object AppConstants {
      */
     object WhatsNewConstants {
         // Per-version JSON, authored alongside docs/wiki/changelog.html — see docs/features/whats-new.md.
-        const val BASE_URL = "https://shortcuts.github.io/locationjoystick/changelog/"
+        const val BASE_URL = "https://locationjoystick.shrtcts.fr/changelog/"
         const val CONNECT_TIMEOUT_MS = 5000
         const val READ_TIMEOUT_MS = 5000
 
