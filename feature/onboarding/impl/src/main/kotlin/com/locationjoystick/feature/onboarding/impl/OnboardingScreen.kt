@@ -6,9 +6,11 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -373,12 +375,18 @@ private fun OnboardingStepCard(
                             .background(statusContainerColor),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        imageVector = if (isGranted) LjIcons.CheckCircle else icon,
-                        contentDescription = null,
-                        tint = statusColor,
-                        modifier = Modifier.size(24.dp),
-                    )
+                    Crossfade(
+                        targetState = isGranted,
+                        animationSpec = tween(150),
+                        label = "stepCardIcon",
+                    ) { granted ->
+                        Icon(
+                            imageVector = if (granted) LjIcons.CheckCircle else icon,
+                            contentDescription = null,
+                            tint = statusColor,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
                 }
 
                 Row(
