@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import java.util.Locale
@@ -48,7 +49,7 @@ fun FavoritesList(
     modifier: Modifier = Modifier,
     onSaveCurrentLocation: (() -> Unit)? = null,
     cooldownBadgeText: ((FavoriteLocation) -> String)? = null,
-    contentPadding: PaddingValues = PaddingValues(16.dp),
+    contentPadding: PaddingValues = PaddingValues(LjSpacing.md),
     rowBackground: Color = MaterialTheme.colorScheme.surfaceVariant,
     textColor: Color = Color.Unspecified,
 ) {
@@ -78,7 +79,7 @@ fun FavoritesList(
                 "No saved favorites yet",
                 style = MaterialTheme.typography.bodyMedium,
                 color = textColor,
-                modifier = Modifier.padding(top = 16.dp),
+                modifier = Modifier.padding(top = LjSpacing.md),
             )
         } else {
             LazyColumn(
@@ -86,8 +87,8 @@ fun FavoritesList(
                     Modifier
                         .fillMaxWidth()
                         .padding(top = 12.dp),
-                contentPadding = PaddingValues(vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(vertical = LjSpacing.xs),
+                verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
             ) {
                 items(items = favorites, key = { it.id }) { favorite ->
                     Column(

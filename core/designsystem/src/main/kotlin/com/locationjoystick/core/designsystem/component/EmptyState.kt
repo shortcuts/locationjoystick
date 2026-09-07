@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.designsystem.LjSpacing
 
 @Composable
 fun EmptyState(
@@ -29,7 +30,7 @@ fun EmptyState(
         modifier =
             modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(LjSpacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -40,7 +41,7 @@ fun EmptyState(
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.md))
         }
         Text(
             text = message,
@@ -49,7 +50,7 @@ fun EmptyState(
             textAlign = TextAlign.Center,
         )
         if (description != null) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.sm))
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodyMedium,
@@ -58,7 +59,7 @@ fun EmptyState(
             )
         }
         if (action != null) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.lg))
             action()
         }
     }

@@ -11,7 +11,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.model.FavoriteLocation
 
 /**
@@ -38,14 +38,14 @@ fun FavoriteTargetDetail(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(LjSpacing.md),
     ) {
         Text(favorite.name, style = MaterialTheme.typography.headlineSmall, color = textColor)
         Text(
             formatLatLng(favorite.position.latitude, favorite.position.longitude),
             style = MaterialTheme.typography.bodyMedium,
             color = textColor,
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(top = LjSpacing.xs),
         )
 
         if (!hideTeleportFeatures) {
@@ -54,7 +54,7 @@ fun FavoriteTargetDetail(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp),
+                        .padding(top = LjSpacing.md),
             ) {
                 Text("Set location", color = textColor)
             }
@@ -64,7 +64,7 @@ fun FavoriteTargetDetail(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp),
+                    .padding(top = LjSpacing.sm),
         ) {
             Text("Walk to location", color = textColor)
         }
@@ -73,14 +73,14 @@ fun FavoriteTargetDetail(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp),
+                    .padding(top = LjSpacing.sm),
         ) {
             Text("Walk via roads", color = textColor)
         }
         if (showDismissButton) {
             TextButton(
                 onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = LjSpacing.sm),
             ) {
                 Text("Do nothing", color = textColor)
             }

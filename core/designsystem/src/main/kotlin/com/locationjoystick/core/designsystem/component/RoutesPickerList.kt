@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.model.Route
 
 /**
@@ -34,7 +35,7 @@ fun RoutesPickerList(
     onSelect: (Route) -> Unit,
     modifier: Modifier = Modifier,
     title: String? = null,
-    contentPadding: PaddingValues = PaddingValues(16.dp),
+    contentPadding: PaddingValues = PaddingValues(LjSpacing.md),
     rowBackground: Color = MaterialTheme.colorScheme.surfaceVariant,
     textColor: Color = Color.Unspecified,
 ) {
@@ -47,13 +48,13 @@ fun RoutesPickerList(
                 "No routes saved",
                 style = MaterialTheme.typography.bodyMedium,
                 color = textColor,
-                modifier = Modifier.padding(top = 16.dp),
+                modifier = Modifier.padding(top = LjSpacing.md),
             )
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().padding(top = if (title != null) 12.dp else 0.dp),
-                contentPadding = PaddingValues(vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(vertical = LjSpacing.xs),
+                verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
             ) {
                 items(routes, key = { it.id }) { route ->
                     Row(

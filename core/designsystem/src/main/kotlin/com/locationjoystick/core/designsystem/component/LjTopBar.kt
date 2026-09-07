@@ -41,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjError
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjSuccess
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,7 +66,7 @@ fun LjTopBar(
                 Modifier
                     .fillMaxWidth()
                     .windowInsetsPadding(TopAppBarDefaults.windowInsets)
-                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                    .padding(horizontal = LjSpacing.xs, vertical = LjSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Start column: hamburger + title, left-aligned.
@@ -113,7 +114,7 @@ fun LjTopBar(
                                         Toast.makeText(context, locationLabel, Toast.LENGTH_SHORT).show()
                                     }
                                 },
-                            ).padding(horizontal = 8.dp, vertical = 3.dp),
+                            ).padding(horizontal = LjSpacing.sm, vertical = 3.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Crossfade(
@@ -183,7 +184,7 @@ fun LjOverflowMenuSectionLabel(
 ) {
     if (showDivider) {
         HorizontalDivider(
-            modifier = Modifier.padding(vertical = 4.dp),
+            modifier = Modifier.padding(vertical = LjSpacing.xs),
             color = MaterialTheme.colorScheme.outlineVariant,
         )
     }
@@ -191,7 +192,7 @@ fun LjOverflowMenuSectionLabel(
         text = text.uppercase(),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier.padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
     )
 }
 

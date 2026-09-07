@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.designsystem.LjSpacing
 
 /** One card in a [DestinationHub] list — icon, title, description, and its own tap target. */
 data class DestinationCardSpec(
@@ -61,9 +62,9 @@ fun DestinationCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(LjSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(LjSpacing.md),
         ) {
             Box(
                 modifier =
@@ -110,12 +111,12 @@ fun DestinationHub(
             modifier = modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 24.dp),
+            contentPadding = PaddingValues(bottom = LjSpacing.lg),
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth().padding(top = 40.dp, bottom = 32.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 40.dp, bottom = LjSpacing.xl),
                 ) {
                     DestinationHubHeaderText()
                 }
@@ -143,7 +144,7 @@ fun DestinationHub(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.lg))
         }
     }
 }
@@ -151,14 +152,14 @@ fun DestinationHub(
 @Composable
 private fun DestinationHubHeaderText() {
     AppIcon()
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.lg))
     Text(
         text = "locationjoystick",
         style = MaterialTheme.typography.headlineSmall,
         color = MaterialTheme.colorScheme.onBackground,
         textAlign = TextAlign.Center,
     )
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
     Text(
         text = "v${AppConstants.AppInfo.VERSION_NAME}",
         style = MaterialTheme.typography.bodySmall,

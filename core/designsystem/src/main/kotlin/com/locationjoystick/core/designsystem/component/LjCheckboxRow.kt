@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.designsystem.LjSpacing
 
 @Composable
 fun LjCheckboxRow(
@@ -36,7 +37,7 @@ fun LjCheckboxRow(
             modifier
                 .fillMaxWidth()
                 .clickable(enabled = enabled) { onCheckedChange(!checked) }
-                .padding(vertical = 4.dp),
+                .padding(vertical = LjSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(checked = checked, onCheckedChange = null, enabled = enabled)
@@ -52,9 +53,9 @@ fun LjCheckboxRow(
                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     },
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(LjSpacing.xs))
         }
-        Column(modifier = Modifier.padding(start = 8.dp)) {
+        Column(modifier = Modifier.padding(start = LjSpacing.sm)) {
             Text(
                 text = title,
                 color =

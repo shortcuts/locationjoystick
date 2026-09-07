@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjAccent
 import com.locationjoystick.core.designsystem.LjBg
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjText
 
 /** Press feedback shared by every LjButton variant: 0.96 scale, never lower (feels exaggerated below). */
@@ -52,7 +53,7 @@ fun LjButton(
         enabled = enabled,
         colors = colors,
         interactionSource = interactionSource,
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+        contentPadding = PaddingValues(horizontal = LjSpacing.lg, vertical = 12.dp),
         content = content,
     )
 }
@@ -71,7 +72,7 @@ fun LjOutlinedButton(
         modifier = modifier.defaultMinSize(minHeight = 48.dp).scale(scale),
         enabled = enabled,
         interactionSource = interactionSource,
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+        contentPadding = PaddingValues(horizontal = LjSpacing.lg, vertical = 12.dp),
         content = content,
     )
 }
@@ -131,7 +132,7 @@ fun <T> LjSegmentedControl(
                         containerColor = if (isSelected) LjAccent else MaterialTheme.colorScheme.surfaceVariant,
                         contentColor = if (isSelected) LjBg else LjText,
                     ),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = LjSpacing.sm),
             ) {
                 Text(label, style = MaterialTheme.typography.labelMedium)
             }

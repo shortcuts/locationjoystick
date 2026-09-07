@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.parseRawLatLng
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.model.RecentSearch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -148,7 +149,7 @@ fun NominatimSearchBar(
                     text = "Recent",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                    modifier = Modifier.padding(horizontal = LjSpacing.md, vertical = 6.dp),
                 )
                 recentSearches.forEach { recent ->
                     Row(
@@ -160,7 +161,7 @@ fun NominatimSearchBar(
                                     onLocationSelected(recent.lat, recent.lon, recent.displayName)
                                     onSearchCommitted?.invoke(recent.displayName, recent.lat, recent.lon)
                                     query = ""
-                                }.padding(horizontal = 16.dp, vertical = 12.dp),
+                                }.padding(horizontal = LjSpacing.md, vertical = 12.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.History,
@@ -188,7 +189,7 @@ fun NominatimSearchBar(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                            .padding(horizontal = LjSpacing.md, vertical = 12.dp),
                 )
             }
             results.forEach { result ->
@@ -206,7 +207,7 @@ fun NominatimSearchBar(
                                 onSearchCommitted?.invoke(result.displayName, result.lat, result.lon)
                                 query = ""
                                 results = emptyList()
-                            }.padding(horizontal = 16.dp, vertical = 14.dp),
+                            }.padding(horizontal = LjSpacing.md, vertical = 14.dp),
                 )
                 HorizontalDivider()
             }

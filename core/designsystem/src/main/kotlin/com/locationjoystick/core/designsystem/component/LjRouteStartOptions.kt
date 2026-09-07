@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.designsystem.LjSpacing
 
 @Composable
 fun LjRouteStartOptions(
@@ -64,7 +65,7 @@ fun LjRouteStartOptions(
             }
         }
         Spacer(Modifier.height(20.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm)) {
             OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
                 Text("Cancel", color = textColor)
             }

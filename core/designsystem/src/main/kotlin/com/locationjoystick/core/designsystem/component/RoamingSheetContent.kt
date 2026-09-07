@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
@@ -84,12 +85,12 @@ fun RoamingSheetContent(
             Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 24.dp),
+                .padding(horizontal = LjSpacing.md)
+                .padding(bottom = LjSpacing.lg),
     ) {
         Text("Roaming", style = MaterialTheme.typography.headlineSmall, color = LjText)
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(LjSpacing.sm))
 
         // "View on map" always visible; greyed out when no preview
         LjTextButton(
@@ -127,7 +128,7 @@ fun RoamingSheetContent(
                 label = { Text(if (isMph) "Radius (mi)" else "Radius (m)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
-                modifier = Modifier.weight(1f).padding(end = 4.dp),
+                modifier = Modifier.weight(1f).padding(end = LjSpacing.xs),
             )
             OutlinedTextField(
                 value = distanceText,
@@ -149,7 +150,7 @@ fun RoamingSheetContent(
                 label = { Text(if (isMph) "Distance (mi)" else "Distance (m)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
-                modifier = Modifier.weight(1f).padding(start = 4.dp),
+                modifier = Modifier.weight(1f).padding(start = LjSpacing.xs),
             )
         }
 
@@ -157,7 +158,7 @@ fun RoamingSheetContent(
 
         // Speed profile selector
         Text("Speed profile", style = MaterialTheme.typography.labelLarge, color = LjText)
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(LjSpacing.xs))
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             SPEED_PROFILES.forEachIndexed { index, id ->
                 SegmentedButton(
@@ -170,7 +171,7 @@ fun RoamingSheetContent(
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(LjSpacing.sm))
 
         // Follow roads + Return to start side by side
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -196,14 +197,14 @@ fun RoamingSheetContent(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(LjSpacing.md))
 
         // Generate + Start side by side
         Row(modifier = Modifier.fillMaxWidth()) {
             LjOutlinedButton(
                 onClick = onGenerate,
                 enabled = hasCurrentPosition && !isPreviewLoading,
-                modifier = Modifier.weight(1f).padding(end = 4.dp),
+                modifier = Modifier.weight(1f).padding(end = LjSpacing.xs),
             ) {
                 if (isPreviewLoading) {
                     CircularProgressIndicator(
@@ -217,7 +218,7 @@ fun RoamingSheetContent(
             LjButton(
                 onClick = onStart,
                 enabled = hasCurrentPosition && isSpoofingActive && !isPreviewLoading,
-                modifier = Modifier.weight(1f).padding(start = 4.dp),
+                modifier = Modifier.weight(1f).padding(start = LjSpacing.xs),
             ) {
                 Text("Start")
             }
@@ -228,7 +229,7 @@ fun RoamingSheetContent(
                 "Start location spoofing first to enable roaming",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
+                modifier = Modifier.padding(top = LjSpacing.xs),
             )
         }
     }
