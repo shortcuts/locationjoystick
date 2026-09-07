@@ -12,6 +12,7 @@ import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.datastore.toAppFeature
+import com.locationjoystick.core.location.CompassHeadingSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
@@ -75,6 +76,7 @@ class SettingsViewModelSaveTest {
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
+                compassHeadingSource = CompassHeadingSource(),
                 context = context,
             )
     }
@@ -678,18 +680,6 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getCompassTrackingEnabled(): Flow<Boolean> = flowOf(false)
 
     override suspend fun setCompassTrackingEnabled(enabled: Boolean) = Unit
-
-    override fun getCompassRegionCxPct(): Flow<Float> = flowOf(AppConstants.CompassTrackingConstants.DEFAULT_REGION_CX_PCT)
-
-    override suspend fun setCompassRegionCxPct(cx: Float) = Unit
-
-    override fun getCompassRegionCyPct(): Flow<Float> = flowOf(AppConstants.CompassTrackingConstants.DEFAULT_REGION_CY_PCT)
-
-    override suspend fun setCompassRegionCyPct(cy: Float) = Unit
-
-    override fun getCompassRegionRadiusPct(): Flow<Float> = flowOf(AppConstants.CompassTrackingConstants.DEFAULT_REGION_RADIUS_PCT)
-
-    override suspend fun setCompassRegionRadiusPct(radius: Float) = Unit
 
     var clearAllExceptOnboardingCallCount = 0
 

@@ -16,6 +16,7 @@ import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.datastore.SettingsSnapshot
+import com.locationjoystick.core.location.CompassHeadingSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
@@ -52,6 +53,7 @@ class SettingsViewModel
         private val exportSyncServer: ExportSyncServer,
         private val exportSyncClient: ExportSyncClient,
         private val nsdCodeManager: NsdCodeManager,
+        private val compassHeadingSource: CompassHeadingSource,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
         companion object {
@@ -155,29 +157,14 @@ class SettingsViewModel
                     initialValue = RoamingDefaults(),
                 )
 
-        private data class CompassPrefsState(
-            val enabled: Boolean = false,
-            val cx: Float = AppConstants.CompassTrackingConstants.DEFAULT_REGION_CX_PCT,
-            val cy: Float = AppConstants.CompassTrackingConstants.DEFAULT_REGION_CY_PCT,
-            val radius: Float = AppConstants.CompassTrackingConstants.DEFAULT_REGION_RADIUS_PCT,
-        )
-
-        private val compassPrefsFlow =
-            combine(
-                settingsRepository.getCompassTrackingEnabled(),
-                settingsRepository.getCompassRegionCxPct(),
-                settingsRepository.getCompassRegionCyPct(),
-                settingsRepository.getCompassRegionRadiusPct(),
-            ) { enabled, cx, cy, radius -> CompassPrefsState(enabled, cx, cy, radius) }
-
         val uiState: StateFlow<SettingsUiState> =
             combine(
                 combine(snapshotFlow, draftStateFlow) { snapshot, draft -> Pair(snapshot, draft) },
-                compassPrefsFlow,
+                settingsRepository.getCompassTrackingEnabled(),
                 compassServiceGranted,
                 settingsRepository.getThemeMode(),
                 settingsRepository.getBaseAltitudeOverride(),
-            ) { (snapshot, draftState), compass, isServiceGranted, themeMode, baseAltitudeOverride ->
+            ) { (snapshot, draftState), compassTrackingEnabled, isServiceGranted, themeMode, baseAltitudeOverride ->
                 val isDirty = draftState != DraftState()
                 SettingsUiState(
                     isLoading = false,
@@ -220,11 +207,8 @@ class SettingsViewModel
                     altitudeOverrideButtonEnabled =
                         draftState.altitudeOverrideButtonEnabled ?: snapshot.altitudeOverrideButtonEnabled,
                     debugStatsEnabled = draftState.debugStatsEnabled ?: snapshot.debugStatsEnabled,
-                    compassTrackingEnabled = compass.enabled,
+                    compassTrackingEnabled = compassTrackingEnabled,
                     isCompassServiceGranted = isServiceGranted,
-                    compassRegionCxPct = compass.cx,
-                    compassRegionCyPct = compass.cy,
-                    compassRegionRadiusPct = compass.radius,
                     themeMode = themeMode,
                     isDirty = isDirty,
                 )
@@ -417,17 +401,8 @@ class SettingsViewModel
             viewModelScope.launch { settingsRepository.setThemeMode(mode) }
         }
 
-        fun setCompassRegion(
-            cx: Float,
-            cy: Float,
-            radius: Float,
-        ) {
-            viewModelScope.launch {
-                settingsRepository.setCompassRegionCxPct(cx)
-                settingsRepository.setCompassRegionCyPct(cy)
-                settingsRepository.setCompassRegionRadiusPct(radius)
-            }
-        }
+        /** Runs actual detection so the user can verify the auto-located compass works on their device. */
+        suspend fun testCompassDetection(): Float? = compassHeadingSource.captureHeading()
 
         fun checkCompassServiceGranted() {
             val am = context.getSystemService(AccessibilityManager::class.java)

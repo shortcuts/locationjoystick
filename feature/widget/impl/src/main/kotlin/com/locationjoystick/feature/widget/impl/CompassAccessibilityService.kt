@@ -29,56 +29,156 @@ class CompassAccessibilityService :
         fun isSupported(sdkInt: Int = Build.VERSION.SDK_INT): Boolean = sdkInt >= Build.VERSION_CODES.R
 
         /**
-         * Detects the angle of the red north arrow inside a circular region of [bitmap].
+         * Auto-locates the compass needle icon in [bitmap] and returns the clockwise angle from
+         * screen-up to the direction it points (radians), or null if no matching icon is found.
          *
-         * [cxPct], [cyPct] are the center as fractions of bitmap width/height.
-         * [radiusPct] is the radius as a fraction of min(width, height).
+         * No user calibration: searches a fixed top-right region
+         * (`AppConstants.CompassTrackingConstants.SEARCH_X_MIN_PCT`/`SEARCH_Y_MAX_PCT`) — where
+         * every tested AR/GPS-spoofing game places its compass — for a small, compact red blob
+         * (the needle's colored half) sized like an icon rather than a stray red pixel or a large
+         * red UI element (a gym marker, a raid egg) elsewhere on screen. Connected-component
+         * labelling groups red pixels into blobs; only blobs whose bounding box falls within
+         * `MIN_ICON_FRACTION`–`MAX_ICON_FRACTION` of the screen's short side, and whose pixel
+         * count clears `MIN_RED_PIXELS`, are considered — this is what makes detection immune to
+         * unrelated red clutter nearby, unlike a plain "reddest pixel in a big circle" scan.
          *
-         * Returns clockwise angle from screen-up to the centroid of red pixels (radians),
-         * or null if fewer than [AppConstants.CompassTrackingConstants.MIN_RED_PIXELS] red pixels found.
+         * The needle's pivot is approximated as the bottom-center of the winning blob's bounding
+         * box (empirically where the icon's rotation center sits, right at the base of the
+         * colored half — see `docs/features/tap-to-walk.md`), and the angle is measured from that
+         * pivot to the blob's centroid — self-calibrating every call, no stored region needed.
          */
-        fun detectNorthAngle(
-            bitmap: Bitmap,
-            cxPct: Float,
-            cyPct: Float,
-            radiusPct: Float,
-        ): Float? {
+        fun detectNorthAngle(bitmap: Bitmap): Float? {
             val soft =
                 if (bitmap.config == Bitmap.Config.HARDWARE) {
                     bitmap.copy(Bitmap.Config.ARGB_8888, false)
                 } else {
                     bitmap
                 }
-            val cx = (cxPct * soft.width).toInt()
-            val cy = (cyPct * soft.height).toInt()
-            val radius = (radiusPct * minOf(soft.width, soft.height)).toInt()
+            val width = soft.width
+            val height = soft.height
+            val searchX = (AppConstants.CompassTrackingConstants.SEARCH_X_MIN_PCT * width).toInt()
+            val searchW = width - searchX
+            val searchH = (AppConstants.CompassTrackingConstants.SEARCH_Y_MAX_PCT * height).toInt()
+            if (searchW <= 0 || searchH <= 0) {
+                if (soft !== bitmap) soft.recycle()
+                return null
+            }
+
+            val pixels = IntArray(searchW * searchH)
+            soft.getPixels(pixels, 0, searchW, searchX, 0, searchW, searchH)
+            if (soft !== bitmap) soft.recycle()
+
+            val isRed = BooleanArray(pixels.size)
             val hsv = FloatArray(3)
-            var sumDx = 0.0
-            var sumDy = 0.0
-            var redCount = 0
-            for (dy in -radius..radius) {
-                for (dx in -radius..radius) {
-                    if (dx * dx + dy * dy > radius * radius) continue
-                    val px = cx + dx
-                    val py = cy + dy
-                    if (px < 0 || px >= soft.width || py < 0 || py >= soft.height) continue
-                    Color.colorToHSV(soft.getPixel(px, py), hsv)
-                    val hue = hsv[0]
-                    val sat = hsv[1]
-                    val value = hsv[2]
-                    val isRed = (hue < 15f || hue > 345f) && sat > 0.5f && value > 0.3f
-                    if (isRed) {
-                        sumDx += dx
-                        sumDy += dy
-                        redCount++
+            for (i in pixels.indices) {
+                Color.colorToHSV(pixels[i], hsv)
+                isRed[i] = (hsv[0] < 15f || hsv[0] > 345f) && hsv[1] > 0.5f && hsv[2] > 0.3f
+            }
+
+            val shortSide = minOf(width, height)
+            val minDim = (AppConstants.CompassTrackingConstants.MIN_ICON_FRACTION * shortSide).toInt().coerceAtLeast(4)
+            val maxDim = (AppConstants.CompassTrackingConstants.MAX_ICON_FRACTION * shortSide).toInt()
+
+            val blob = findBestIconBlob(isRed, searchW, searchH, minDim, maxDim) ?: return null
+
+            val pivotX = (blob.minX + blob.maxX) / 2.0
+            val pivotY = blob.maxY.toDouble()
+            val dx = blob.centroidX - pivotX
+            val dy = blob.centroidY - pivotY
+            return atan2(dx, -dy).toFloat()
+        }
+
+        private class IconBlob(
+            val centroidX: Double,
+            val centroidY: Double,
+            val minX: Int,
+            val maxX: Int,
+            val maxY: Int,
+            val count: Int,
+        )
+
+        /** 4-connected component search over [isRed], keeping only the largest icon-sized blob. */
+        private fun findBestIconBlob(
+            isRed: BooleanArray,
+            w: Int,
+            h: Int,
+            minDim: Int,
+            maxDim: Int,
+        ): IconBlob? {
+            val visited = BooleanArray(isRed.size)
+            val queueX = IntArray(isRed.size)
+            val queueY = IntArray(isRed.size)
+            var best: IconBlob? = null
+
+            for (sy in 0 until h) {
+                for (sx in 0 until w) {
+                    val startIdx = sy * w + sx
+                    if (!isRed[startIdx] || visited[startIdx]) continue
+
+                    var head = 0
+                    var tail = 0
+                    queueX[tail] = sx
+                    queueY[tail] = sy
+                    tail++
+                    visited[startIdx] = true
+                    var minX = sx
+                    var maxX = sx
+                    var minY = sy
+                    var maxY = sy
+                    var sumX = 0.0
+                    var sumY = 0.0
+                    var count = 0
+
+                    while (head < tail) {
+                        val cx = queueX[head]
+                        val cy = queueY[head]
+                        head++
+                        count++
+                        sumX += cx
+                        sumY += cy
+                        if (cx < minX) minX = cx
+                        if (cx > maxX) maxX = cx
+                        if (cy < minY) minY = cy
+                        if (cy > maxY) maxY = cy
+
+                        if (cx > 0) enqueueIfRed(cx - 1, cy, w, isRed, visited, queueX, queueY, tail)?.let { tail = it }
+                        if (cx < w - 1) enqueueIfRed(cx + 1, cy, w, isRed, visited, queueX, queueY, tail)?.let { tail = it }
+                        if (cy > 0) enqueueIfRed(cx, cy - 1, w, isRed, visited, queueX, queueY, tail)?.let { tail = it }
+                        if (cy < h - 1) enqueueIfRed(cx, cy + 1, w, isRed, visited, queueX, queueY, tail)?.let { tail = it }
+                    }
+
+                    val bboxW = maxX - minX + 1
+                    val bboxH = maxY - minY + 1
+                    if (bboxW in minDim..maxDim &&
+                        bboxH in minDim..maxDim &&
+                        count >= AppConstants.CompassTrackingConstants.MIN_RED_PIXELS
+                    ) {
+                        val current = best
+                        if (current == null || count > current.count) {
+                            best = IconBlob(sumX / count, sumY / count, minX, maxX, maxY, count)
+                        }
                     }
                 }
             }
-            if (soft !== bitmap) soft.recycle()
-            if (redCount < AppConstants.CompassTrackingConstants.MIN_RED_PIXELS) return null
-            val centroidDx = sumDx / redCount
-            val centroidDy = sumDy / redCount
-            return atan2(centroidDx, -centroidDy).toFloat()
+            return best
+        }
+
+        private fun enqueueIfRed(
+            nx: Int,
+            ny: Int,
+            w: Int,
+            isRed: BooleanArray,
+            visited: BooleanArray,
+            queueX: IntArray,
+            queueY: IntArray,
+            tail: Int,
+        ): Int? {
+            val idx = ny * w + nx
+            if (!isRed[idx] || visited[idx]) return null
+            visited[idx] = true
+            queueX[tail] = nx
+            queueY[tail] = ny
+            return tail + 1
         }
     }
 
@@ -104,46 +204,43 @@ class CompassAccessibilityService :
 
     override fun onInterrupt() = Unit
 
-    override suspend fun captureHeading(
-        cx: Float,
-        cy: Float,
-        radius: Float,
-    ): Float? {
+    override suspend fun captureHeading(): Float? {
+        val bitmap = takeScreenshotBitmap() ?: return null
+        val result = detectNorthAngle(bitmap)
+        bitmap.recycle()
+        return result
+    }
+
+    private suspend fun takeScreenshotBitmap(): Bitmap? {
         // Unreachable in practice — onServiceConnected() never binds below API 30 — but
         // takeScreenshot() itself requires API 30, so lint needs an inline SDK_INT check here
         // too (it doesn't trace version guards through a delegated boolean function).
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
-        val bitmap =
-            suspendCancellableCoroutine<Bitmap?> { cont ->
-                try {
-                    takeScreenshot(
-                        Display.DEFAULT_DISPLAY,
-                        mainExecutor,
-                        object : TakeScreenshotCallback {
-                            override fun onSuccess(screenshot: ScreenshotResult) {
-                                val bmp =
-                                    screenshot.hardwareBuffer?.let {
-                                        Bitmap.wrapHardwareBuffer(it, null)
-                                    }
-                                screenshot.hardwareBuffer?.close()
-                                cont.resume(bmp)
-                            }
+        return suspendCancellableCoroutine { cont ->
+            try {
+                takeScreenshot(
+                    Display.DEFAULT_DISPLAY,
+                    mainExecutor,
+                    object : TakeScreenshotCallback {
+                        override fun onSuccess(screenshot: ScreenshotResult) {
+                            val bmp =
+                                screenshot.hardwareBuffer?.let {
+                                    Bitmap.wrapHardwareBuffer(it, null)
+                                }
+                            screenshot.hardwareBuffer?.close()
+                            cont.resume(bmp)
+                        }
 
-                            override fun onFailure(errorCode: Int) {
-                                Log.w(TAG, "takeScreenshot failed with code $errorCode")
-                                cont.resume(null)
-                            }
-                        },
-                    )
-                } catch (e: Exception) {
-                    Log.e(TAG, "takeScreenshot threw", e)
-                    cont.resume(null)
-                }
+                        override fun onFailure(errorCode: Int) {
+                            Log.w(TAG, "takeScreenshot failed with code $errorCode")
+                            cont.resume(null)
+                        }
+                    },
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "takeScreenshot threw", e)
+                cont.resume(null)
             }
-        return bitmap?.let { bmp ->
-            val result = detectNorthAngle(bmp, cx, cy, radius)
-            bmp.recycle()
-            result
         }
     }
 }

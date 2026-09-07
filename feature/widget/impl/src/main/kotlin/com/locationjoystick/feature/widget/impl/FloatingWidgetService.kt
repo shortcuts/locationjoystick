@@ -135,9 +135,6 @@ class FloatingWidgetService :
     private val isTapToWalkActiveFlow = MutableStateFlow(false)
     private lateinit var tapToWalkScaleMpx: StateFlow<Double>
     private lateinit var compassTrackingEnabled: StateFlow<Boolean>
-    private lateinit var compassRegionCx: StateFlow<Float>
-    private lateinit var compassRegionCy: StateFlow<Float>
-    private lateinit var compassRegionRadius: StateFlow<Float>
     private var tapToWalkOverlay: TapToWalkOverlay? = null
 
     // Drag position — class-level so onConfigurationChanged can read them after rotation.
@@ -186,18 +183,6 @@ class FloatingWidgetService :
             settingsRepository
                 .getCompassTrackingEnabled()
                 .stateIn(lifecycleScope, SharingStarted.Eagerly, false)
-        compassRegionCx =
-            settingsRepository
-                .getCompassRegionCxPct()
-                .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.CompassTrackingConstants.DEFAULT_REGION_CX_PCT)
-        compassRegionCy =
-            settingsRepository
-                .getCompassRegionCyPct()
-                .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.CompassTrackingConstants.DEFAULT_REGION_CY_PCT)
-        compassRegionRadius =
-            settingsRepository
-                .getCompassRegionRadiusPct()
-                .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.CompassTrackingConstants.DEFAULT_REGION_RADIUS_PCT)
         serviceBinder.bind()
         lifecycleScope.launch {
             settingsRepository.getActiveSpeedProfile().collect { profile ->
@@ -446,13 +431,7 @@ class FloatingWidgetService :
                     onDismissed = { isTapToWalkActiveFlow.value = false },
                     getHeadingAsync =
                         if (compassTrackingEnabled.value) {
-                            {
-                                compassHeadingSource.captureHeading(
-                                    cx = compassRegionCx.value,
-                                    cy = compassRegionCy.value,
-                                    radius = compassRegionRadius.value,
-                                )
-                            }
+                            { compassHeadingSource.captureHeading() }
                         } else {
                             null
                         },

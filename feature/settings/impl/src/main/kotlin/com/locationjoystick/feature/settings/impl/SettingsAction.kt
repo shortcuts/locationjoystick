@@ -167,12 +167,6 @@ internal sealed class SettingsAction {
         val enabled: Boolean,
     ) : SettingsAction()
 
-    data class SetCompassRegion(
-        val cx: Float,
-        val cy: Float,
-        val radius: Float,
-    ) : SettingsAction()
-
     data class SetThemeMode(
         val mode: ThemeMode,
     ) : SettingsAction()

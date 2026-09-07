@@ -7,6 +7,7 @@ import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.location.CompassHeadingSource
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import com.locationjoystick.core.testing.FakeRouteDao
@@ -56,6 +57,7 @@ class SpeedProfileInputTest {
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
+                compassHeadingSource = CompassHeadingSource(),
                 context = context,
             )
     }

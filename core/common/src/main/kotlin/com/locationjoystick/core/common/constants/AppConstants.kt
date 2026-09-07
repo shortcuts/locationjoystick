@@ -399,9 +399,16 @@ object AppConstants {
     }
 
     object CompassTrackingConstants {
-        const val DEFAULT_REGION_CX_PCT = 0.92f
-        const val DEFAULT_REGION_CY_PCT = 0.11f
-        const val DEFAULT_REGION_RADIUS_PCT = 0.08f
+        // Fixed search window — every tested AR/GPS-spoofing game places its compass top-right,
+        // so this needs no per-user calibration. Covers the right 45% / top 35% of the screen.
+        const val SEARCH_X_MIN_PCT = 0.55f
+        const val SEARCH_Y_MAX_PCT = 0.35f
+
+        // Icon-sized blob bounds, as a fraction of the screen's short side — rejects both stray
+        // noise pixels (too small) and unrelated large red UI elements like a gym marker or raid
+        // egg (too big), instead of trusting every red pixel in a wide region.
+        const val MIN_ICON_FRACTION = 0.008f
+        const val MAX_ICON_FRACTION = 0.06f
         const val MIN_RED_PIXELS = 20
     }
 

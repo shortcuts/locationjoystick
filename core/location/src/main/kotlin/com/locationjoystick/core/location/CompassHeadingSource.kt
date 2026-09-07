@@ -24,18 +24,10 @@ class CompassHeadingSource
 
         val isAvailable: Boolean get() = service != null
 
-        suspend fun captureHeading(
-            cx: Float,
-            cy: Float,
-            radius: Float,
-        ): Float? = service?.captureHeading(cx, cy, radius)
+        suspend fun captureHeading(): Float? = service?.captureHeading()
     }
 
 /** Minimal interface exposed by CompassAccessibilityService to avoid a circular module dependency. */
 interface CompassAccessibilityServiceBridge {
-    suspend fun captureHeading(
-        cx: Float,
-        cy: Float,
-        radius: Float,
-    ): Float?
+    suspend fun captureHeading(): Float?
 }

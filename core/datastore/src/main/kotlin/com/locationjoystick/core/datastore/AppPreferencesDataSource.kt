@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -311,24 +310,6 @@ interface PreferencesDataSource {
     /** Sets whether compass-aware tap-to-walk is enabled. */
     suspend fun setCompassTrackingEnabled(enabled: Boolean)
 
-    /** Gets the horizontal center of the compass detection region (0–1 fraction of screen width). */
-    fun getCompassRegionCxPct(): Flow<Float>
-
-    /** Sets the horizontal center of the compass detection region. */
-    suspend fun setCompassRegionCxPct(value: Float)
-
-    /** Gets the vertical center of the compass detection region (0–1 fraction of screen height). */
-    fun getCompassRegionCyPct(): Flow<Float>
-
-    /** Sets the vertical center of the compass detection region. */
-    suspend fun setCompassRegionCyPct(value: Float)
-
-    /** Gets the radius of the compass detection region (fraction of min screen dimension). */
-    fun getCompassRegionRadiusPct(): Flow<Float>
-
-    /** Sets the radius of the compass detection region. */
-    suspend fun setCompassRegionRadiusPct(value: Float)
-
     /** Returns all settings needed by the settings UI in a single DataStore scan. */
     fun getSettingsSnapshot(): Flow<SettingsSnapshot>
 
@@ -490,9 +471,6 @@ class AppPreferencesDataSource
             val TAP_TO_WALK_OVERLAY_ENABLED = booleanPreferencesKey("tap_to_walk_overlay_enabled")
             val TAP_TO_WALK_SCALE_MPX = doublePreferencesKey("tap_to_walk_scale_mpx")
             val COMPASS_TRACKING_ENABLED = booleanPreferencesKey("compass_tracking_enabled")
-            val COMPASS_REGION_CX_PCT = floatPreferencesKey("compass_region_cx_pct")
-            val COMPASS_REGION_CY_PCT = floatPreferencesKey("compass_region_cy_pct")
-            val COMPASS_REGION_RADIUS_PCT = floatPreferencesKey("compass_region_radius_pct")
             val REALISM_REAL_ELEVATION_ENABLED = booleanPreferencesKey("realism_real_elevation_enabled")
             val BASE_ALTITUDE_OVERRIDE_METERS = doublePreferencesKey("base_altitude_override_meters")
             val ALTITUDE_JITTER_RADIUS_METERS = doublePreferencesKey("altitude_jitter_radius_meters")
@@ -882,21 +860,6 @@ class AppPreferencesDataSource
         override fun getCompassTrackingEnabled(): Flow<Boolean> = pref(Keys.COMPASS_TRACKING_ENABLED, false)
 
         override suspend fun setCompassTrackingEnabled(enabled: Boolean) = setPref(Keys.COMPASS_TRACKING_ENABLED, enabled)
-
-        override fun getCompassRegionCxPct(): Flow<Float> =
-            pref(Keys.COMPASS_REGION_CX_PCT, AppConstants.CompassTrackingConstants.DEFAULT_REGION_CX_PCT)
-
-        override suspend fun setCompassRegionCxPct(value: Float) = setPref(Keys.COMPASS_REGION_CX_PCT, value.coerceIn(0f, 1f))
-
-        override fun getCompassRegionCyPct(): Flow<Float> =
-            pref(Keys.COMPASS_REGION_CY_PCT, AppConstants.CompassTrackingConstants.DEFAULT_REGION_CY_PCT)
-
-        override suspend fun setCompassRegionCyPct(value: Float) = setPref(Keys.COMPASS_REGION_CY_PCT, value.coerceIn(0f, 1f))
-
-        override fun getCompassRegionRadiusPct(): Flow<Float> =
-            pref(Keys.COMPASS_REGION_RADIUS_PCT, AppConstants.CompassTrackingConstants.DEFAULT_REGION_RADIUS_PCT)
-
-        override suspend fun setCompassRegionRadiusPct(value: Float) = setPref(Keys.COMPASS_REGION_RADIUS_PCT, value.coerceIn(0.02f, 0.2f))
 
         override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
             dataStore.edit { prefs ->

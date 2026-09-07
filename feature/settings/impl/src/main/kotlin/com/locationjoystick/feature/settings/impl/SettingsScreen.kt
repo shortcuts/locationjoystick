@@ -235,6 +235,7 @@ fun SettingsRoute(
         onToggleSpoofing = spoofToggle.onToggle,
         locationLabel = spoofToggle.locationLabel,
         onCheckCompassService = { viewModel.checkCompassServiceGranted() },
+        onTestCompassDetection = { viewModel.testCompassDetection() },
         onAction = { action ->
             when (action) {
                 is SettingsAction.SetSpeed -> {
@@ -385,10 +386,6 @@ fun SettingsRoute(
                     viewModel.setCompassTrackingEnabled(action.enabled)
                 }
 
-                is SettingsAction.SetCompassRegion -> {
-                    viewModel.setCompassRegion(action.cx, action.cy, action.radius)
-                }
-
                 is SettingsAction.SetThemeMode -> {
                     viewModel.setThemeMode(action.mode)
                 }
@@ -465,6 +462,7 @@ internal fun SettingsScreen(
     locationLabel: String? = null,
     onAction: (SettingsAction) -> Unit,
     onCheckCompassService: () -> Unit = {},
+    onTestCompassDetection: suspend () -> Float? = { null },
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
 ) {
@@ -512,6 +510,7 @@ internal fun SettingsScreen(
                 locationLabel = locationLabel,
                 onAction = onAction,
                 onCheckCompassService = onCheckCompassService,
+                onTestCompassDetection = onTestCompassDetection,
                 bottomBar = bottomBar,
                 snackbarHost = snackbarHost,
             )

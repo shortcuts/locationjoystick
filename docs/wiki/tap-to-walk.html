@@ -76,6 +76,11 @@
       zoomed in the game is. Zooming the game map out usually gives more accurate results,
       since small positioning errors matter less at that scale.
     </p>
+    <p>
+      Instead of guessing, tap <strong>Measure scale from screen</strong> to set it directly:
+      an overlay appears over your game, tap two landmarks you know the real-world distance
+      between, type that distance in meters, then tap Apply.
+    </p>
 
     <h3 id="warning">Important note</h3>
     <p>
@@ -91,8 +96,10 @@
     <h2 id="compass-orientation">Compass orientation</h2>
     <p>
       When this is on, locationjoystick takes a screenshot the moment you open the tap-to-walk
-      overlay and looks for the red north arrow in the compass. It uses the arrow's direction
+      overlay and automatically finds your game's compass icon in the top-right corner of the
+      screen — the same spot Pokémon GO and similar games put theirs. It uses the icon's direction
       to rotate the walk target so it lands in the right place even when the game map is turned.
+      There's nothing to set up or position by hand — just turn it on.
     </p>
 
     <h3 id="compass-setup">Setup</h3>
@@ -106,12 +113,12 @@
       <li>Turn on <strong>Detect compass orientation</strong>.</li>
     </ol>
 
-    <h3 id="compass-region">Compass region</h3>
+    <h3 id="compass-verify">Verifying it works on your device</h3>
     <p>
-      By default the app looks for the compass in the top-right corner of the screen. If the
-      game you use puts its compass somewhere else, expand <strong>Compass region
-      (advanced)</strong> in Settings and adjust the horizontal position, vertical position, and
-      radius sliders to match where the compass sits.
+      Switch to your game so its compass is visible in the top-right corner, then switch back to
+      locationjoystick and tap <strong>Test</strong>. The app briefly minimizes itself to capture
+      your game's screen, then returns and shows the detected direction — or a message telling you
+      to make sure the compass is visible if nothing was found.
     </p>
 
     <h3 id="compass-warning">Important note</h3>

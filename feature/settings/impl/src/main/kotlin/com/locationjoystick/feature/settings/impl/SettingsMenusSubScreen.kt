@@ -1,54 +1,51 @@
 package com.locationjoystick.feature.settings.impl
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -56,13 +53,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.savedstate.SavedStateRegistryOwner
+import androidx.savedstate.compose.LocalSavedStateRegistryOwner
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.isOverlayPermissionGranted
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
@@ -73,7 +75,10 @@ import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FeatureSurface
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.ThemeMode
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 @Composable
 internal fun SettingsMenusSubScreen(
@@ -85,6 +90,7 @@ internal fun SettingsMenusSubScreen(
     locationLabel: String? = null,
     onAction: (SettingsAction) -> Unit,
     onCheckCompassService: () -> Unit = {},
+    onTestCompassDetection: suspend () -> Float? = { null },
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
@@ -129,7 +135,7 @@ internal fun SettingsMenusSubScreen(
                         Spacer(Modifier.height(24.dp))
                         SpeedCycleSection(uiState, onAction)
                         Spacer(Modifier.height(24.dp))
-                        TapToWalkSection(uiState, onAction)
+                        TapToWalkSection(uiState, onAction, onTestCompassDetection)
                         Spacer(Modifier.height(24.dp))
                         PrivacySection(uiState, onAction)
                         Spacer(Modifier.height(24.dp))
@@ -176,26 +182,15 @@ private fun ThemeSection(
 private fun TapToWalkSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
+    onTestCompassDetection: suspend () -> Float? = { null },
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val savedStateRegistryOwner = LocalSavedStateRegistryOwner.current
     var showWarning by rememberSaveable { mutableStateOf(false) }
     val enabled = uiState.floatingMapQuickWalk || uiState.tapToWalkOverlayEnabled
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text("Tap to Walk", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.width(8.dp))
-        Box(
-            modifier =
-                Modifier
-                    .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(4.dp))
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
-        ) {
-            Text(
-                "BETA",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-        }
-    }
+    Text("Tap to Walk", style = MaterialTheme.typography.headlineSmall)
     Spacer(Modifier.height(4.dp))
     Text(
         "Walk to a location by tapping it — no confirmation needed.",
@@ -246,10 +241,26 @@ private fun TapToWalkSection(
             valueRange = AppConstants.TapToWalkConstants.MIN_SCALE_MPX.toFloat()..AppConstants.TapToWalkConstants.MAX_SCALE_MPX.toFloat(),
             modifier = Modifier.fillMaxWidth(),
         )
+        Spacer(Modifier.height(4.dp))
+        LjOutlinedButton(
+            onClick = {
+                startCalibrationOverlay(context, lifecycleOwner, savedStateRegistryOwner) { dismiss ->
+                    ScaleCalibrationOverlayContent(
+                        onApply = { scaleMpx -> onAction(SettingsAction.SetTapToWalkScaleMpx(scaleMpx)) },
+                        dismiss = dismiss,
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Icon(LjIcons.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Measure scale from screen")
+        }
         // takeScreenshot(int, Executor, TakeScreenshotCallback) requires API 30 — no fallback exists.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Spacer(Modifier.height(16.dp))
-            CompassOrientationSection(uiState, onAction)
+            CompassOrientationSection(uiState, onAction, onTestCompassDetection)
         }
     }
     if (showWarning) {
@@ -347,15 +358,19 @@ private fun DebugSection(
 private fun CompassOrientationSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
+    onTestCompassDetection: suspend () -> Float? = { null },
 ) {
     val context = LocalContext.current
-    var showCalibration by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    var testResult by remember { mutableStateOf<String?>(null) }
+    var isTesting by remember { mutableStateOf(false) }
 
     Text("Compass orientation", style = MaterialTheme.typography.headlineSmall)
     Spacer(Modifier.height(4.dp))
     Text(
-        "When enabled, the app detects the map's north direction before each walk to correct the target position. " +
-            "Requires an Accessibility Service. Note: some games detect accessibility services.",
+        "When enabled, the app detects your game's compass (top-right corner, like Pokémon GO's) before each walk " +
+            "to correct the target position — no setup needed. Requires an Accessibility Service. Note: some games " +
+            "detect accessibility services.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -393,132 +408,195 @@ private fun CompassOrientationSection(
         Spacer(Modifier.height(8.dp))
         LjCheckboxRow(
             checked = uiState.compassTrackingEnabled,
-            onCheckedChange = { onAction(SettingsAction.SetCompassTrackingEnabled(it)) },
+            onCheckedChange = {
+                onAction(SettingsAction.SetCompassTrackingEnabled(it))
+                testResult = null
+            },
             title = "Detect compass orientation",
-            description = "Reads the red north arrow before each walk to correct the target position.",
+            description = "Auto-locates the compass icon — no manual calibration.",
         )
         if (uiState.compassTrackingEnabled) {
             Spacer(Modifier.height(8.dp))
-            LjOutlinedButton(
-                onClick = { showCalibration = true },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(LjIcons.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Calibrate compass region")
-            }
-        }
-    }
-    if (showCalibration) {
-        CompassCalibrationDialog(
-            cx = uiState.compassRegionCxPct,
-            cy = uiState.compassRegionCyPct,
-            radius = uiState.compassRegionRadiusPct,
-            onConfirm = { cx, cy, radius ->
-                onAction(SettingsAction.SetCompassRegion(cx, cy, radius))
-                showCalibration = false
-            },
-            onDismiss = { showCalibration = false },
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun CompassCalibrationDialog(
-    cx: Float,
-    cy: Float,
-    radius: Float,
-    onConfirm: (Float, Float, Float) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var currentCx by remember { mutableFloatStateOf(cx) }
-    var currentCy by remember { mutableFloatStateOf(cy) }
-    var currentRadius by remember { mutableFloatStateOf(radius) }
-
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(Modifier.fillMaxWidth().padding(16.dp)) {
-            Text("Calibrate compass region", style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(12.dp))
             Text(
-                "Drag the circle over where the compass appears on your game screen.",
+                "To verify it works on your device: switch to your game so its compass is visible " +
+                    "(top-right corner), then switch back here and tap Test — the app briefly minimizes " +
+                    "itself to capture your game's screen, then returns.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(12.dp))
-            PhoneScreenPreview(
-                cx = currentCx,
-                cy = currentCy,
-                radius = currentRadius,
-                onPositionChange = { newCx, newCy ->
-                    currentCx = newCx
-                    currentCy = newCy
-                },
-            )
             Spacer(Modifier.height(8.dp))
-            Text("Circle size", style = MaterialTheme.typography.bodySmall)
-            Slider(
-                value = currentRadius,
-                onValueChange = { currentRadius = it },
-                valueRange = 0.02f..0.2f,
-            )
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                LjTextButton(onClick = onDismiss) { Text("Cancel") }
-                LjTextButton(onClick = { onConfirm(currentCx, currentCy, currentRadius) }) { Text("Done") }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LjOutlinedButton(
+                    onClick = {
+                        isTesting = true
+                        testResult = null
+                        scope.launch {
+                            // Detection reads whatever is CURRENTLY on screen — if our own Settings UI is
+                            // in front, that's what gets captured, not the game behind it. Briefly send
+                            // ourselves to the back (revealing the game, which is directly behind us in
+                            // the task stack per the instructions above) before capturing, then return.
+                            (context as? Activity)?.moveTaskToBack(true)
+                            delay(700)
+                            val angle = onTestCompassDetection()
+                            context.packageManager.getLaunchIntentForPackage(context.packageName)?.let {
+                                it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(it)
+                            }
+                            testResult =
+                                if (angle != null) {
+                                    "Detected — north is ${Math.toDegrees(angle.toDouble()).roundToInt()}° from up"
+                                } else {
+                                    "Not detected — make sure your game's compass is visible top-right"
+                                }
+                            isTesting = false
+                        }
+                    },
+                    enabled = !isTesting,
+                ) { Text(if (isTesting) "Testing…" else "Test") }
+                if (testResult != null) {
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        testResult!!,
+                        style = MaterialTheme.typography.bodySmall,
+                        color =
+                            if (testResult!!.startsWith("Detected")) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.error
+                            },
+                    )
+                }
             }
         }
     }
 }
 
-@Composable
-private fun PhoneScreenPreview(
-    cx: Float,
-    cy: Float,
-    radius: Float,
-    onPositionChange: (Float, Float) -> Unit,
+/**
+ * Opens a full-screen system overlay for calibration, so it draws on top of whatever app the user
+ * switches to (a game left running) instead of only working inside Settings. Falls back to
+ * requesting SYSTEM_ALERT_WINDOW if not yet granted — the same permission joystick/widget need.
+ */
+private fun startCalibrationOverlay(
+    context: Context,
+    lifecycleOwner: LifecycleOwner,
+    savedStateRegistryOwner: SavedStateRegistryOwner,
+    content: @Composable (dismiss: () -> Unit) -> Unit,
 ) {
-    val circleColor = MaterialTheme.colorScheme.primary
-    val bgColor = MaterialTheme.colorScheme.surfaceVariant
-    Canvas(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .aspectRatio(9f / 16f)
-                .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
-                .clip(RoundedCornerShape(8.dp))
-                .background(bgColor)
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        onPositionChange(
-                            (down.position.x / size.width).coerceIn(0f, 1f),
-                            (down.position.y / size.height).coerceIn(0f, 1f),
-                        )
-                        drag(down.id) { change ->
-                            change.consume()
-                            onPositionChange(
-                                (change.position.x / size.width).coerceIn(0f, 1f),
-                                (change.position.y / size.height).coerceIn(0f, 1f),
-                            )
-                        }
+    if (!isOverlayPermissionGranted(context)) {
+        context.startActivity(
+            Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:${context.packageName}"),
+            ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
+        )
+        return
+    }
+    val overlay =
+        CalibrationOverlay(context.applicationContext, lifecycleOwner, savedStateRegistryOwner) { dismiss ->
+            content(dismiss)
+        }
+    overlay.show()
+}
+
+/**
+ * Derives m/px from a known real-world distance between two tapped points on the live screen,
+ * instead of the user guessing-and-checking against the manual slider. Points are tapped directly
+ * in full-screen overlay coordinates, so no scale-up from a shrunk preview is needed.
+ */
+@Composable
+private fun ScaleCalibrationOverlayContent(
+    onApply: (Double) -> Unit,
+    dismiss: () -> Unit,
+) {
+    var pointA by remember { mutableStateOf<Offset?>(null) }
+    var pointB by remember { mutableStateOf<Offset?>(null) }
+    var distanceText by remember { mutableStateOf("") }
+
+    val pixelDistance =
+        if (pointA != null && pointB != null) {
+            val dx = pointA!!.x - pointB!!.x
+            val dy = pointA!!.y - pointB!!.y
+            sqrt(dx * dx + dy * dy)
+        } else {
+            null
+        }
+    val distanceMeters = distanceText.toDoubleOrNull()
+    val computedScale =
+        if (pixelDistance != null && pixelDistance > 0f && distanceMeters != null && distanceMeters > 0.0) {
+            distanceMeters / pixelDistance
+        } else {
+            null
+        }
+
+    Box(
+        Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    if (pointA == null || pointB != null) {
+                        pointA = down.position
+                        pointB = null
+                    } else {
+                        pointB = down.position
                     }
-                },
+                }
+            },
     ) {
-        val circleCx = cx * size.width
-        val circleCy = cy * size.height
-        val circleRadius = radius * size.minDimension
-        drawCircle(
-            color = circleColor.copy(alpha = 0.25f),
-            center = Offset(circleCx, circleCy),
-            radius = circleRadius,
+        Canvas(Modifier.fillMaxSize()) {
+            listOfNotNull(pointA, pointB).forEach { p ->
+                drawCircle(color = Color.Red, center = p, radius = 10.dp.toPx())
+            }
+            if (pointA != null && pointB != null) {
+                drawLine(Color.Red, pointA!!, pointB!!, strokeWidth = 3.dp.toPx())
+            }
+        }
+        Text(
+            "Tap two landmarks on your game, then enter the real-world distance below",
+            color = Color.White,
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 48.dp)
+                    .background(Color.Black.copy(alpha = 0.7f), MaterialTheme.shapes.small)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
         )
-        drawCircle(
-            color = circleColor,
-            center = Offset(circleCx, circleCy),
-            radius = circleRadius,
-            style = Stroke(width = 2.dp.toPx()),
-        )
+        Column(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(Color.Black.copy(alpha = 0.85f))
+                    .padding(16.dp),
+        ) {
+            OutlinedTextField(
+                value = distanceText,
+                onValueChange = { distanceText = it },
+                label = { Text("Real-world distance (meters)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                computedScale?.let { "Computed scale: %.3f m/px".format(it) }
+                    ?: "Tap two points and enter a distance to compute the scale.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White,
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                LjTextButton(onClick = dismiss) { Text("Cancel") }
+                LjTextButton(
+                    onClick = {
+                        computedScale
+                            ?.coerceIn(AppConstants.TapToWalkConstants.MIN_SCALE_MPX, AppConstants.TapToWalkConstants.MAX_SCALE_MPX)
+                            ?.let(onApply)
+                        dismiss()
+                    },
+                    enabled = computedScale != null,
+                ) { Text("Apply") }
+            }
+        }
     }
 }
 

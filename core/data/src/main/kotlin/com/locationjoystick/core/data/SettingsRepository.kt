@@ -308,18 +308,6 @@ class SettingsRepository
 
         suspend fun setCompassTrackingEnabled(enabled: Boolean) = dataSource.setCompassTrackingEnabled(enabled)
 
-        fun getCompassRegionCxPct(): Flow<Float> = dataSource.getCompassRegionCxPct()
-
-        suspend fun setCompassRegionCxPct(value: Float) = dataSource.setCompassRegionCxPct(value)
-
-        fun getCompassRegionCyPct(): Flow<Float> = dataSource.getCompassRegionCyPct()
-
-        suspend fun setCompassRegionCyPct(value: Float) = dataSource.setCompassRegionCyPct(value)
-
-        fun getCompassRegionRadiusPct(): Flow<Float> = dataSource.getCompassRegionRadiusPct()
-
-        suspend fun setCompassRegionRadiusPct(value: Float) = dataSource.setCompassRegionRadiusPct(value)
-
         fun getSettingsSnapshot(): Flow<SettingsSnapshot> = dataSource.getSettingsSnapshot()
 
         suspend fun applySnapshot(snapshot: SettingsSnapshot) = dataSource.applySnapshot(snapshot)

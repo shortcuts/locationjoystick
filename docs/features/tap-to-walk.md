@@ -2,7 +2,7 @@
 
 Two shortcuts for triggering walk-to without a confirmation sheet, useful when you want to act quickly inside another app.
 
-Key files: `:feature:widget:impl/MapFloatingView.kt`, `:feature:widget:impl/TapToWalkOverlay.kt`, `:feature:widget:impl/FloatingWidgetService.kt`, `:feature:settings:impl/SettingsScreen.kt`
+Key files: `:feature:widget:impl/MapFloatingView.kt`, `:feature:widget:impl/TapToWalkOverlay.kt`, `:feature:widget:impl/FloatingWidgetService.kt`, `:feature:settings:impl/SettingsScreen.kt`, `:feature:settings:impl/CalibrationOverlay.kt`
 
 ## Settings
 
@@ -14,13 +14,30 @@ Both features live in Settings → Menus → Tap to Walk.
 | `TAP_TO_WALK_OVERLAY_ENABLED` | Boolean | `false` | Show crosshair button in widget panel |
 | `TAP_TO_WALK_SCALE_MPX` | Double | `0.23` | Meters per pixel for pixel→GPS conversion (calibrated for a fully zoomed-out AR game map) |
 | `COMPASS_TRACKING_ENABLED` | Boolean | `false` | Capture compass heading before each tap |
-| `COMPASS_REGION_CX_PCT` | Float | `0.88` | Compass region center X (0–1 fraction of screen width) |
-| `COMPASS_REGION_CY_PCT` | Float | `0.09` | Compass region center Y (0–1 fraction of screen height) |
-| `COMPASS_REGION_RADIUS_PCT` | Float | `0.06` | Compass region radius (fraction of min screen dimension) |
 
 Scale is clamped to `AppConstants.TapToWalkConstants.MIN_SCALE_MPX`–`MAX_SCALE_MPX` (0.01–1.0 m/px) in `applySnapshot()`.
 
-Compass prefs are live-persisted (written directly to DataStore, not through the save/discard draft).
+`COMPASS_TRACKING_ENABLED` is live-persisted (written directly to DataStore, not through the
+save/discard draft). There is no compass-region setting — see "Compass Orientation" below;
+detection auto-locates the icon fresh on every call, so nothing needs to be stored.
+
+### Scale Calibration Tool
+
+The pixel scale is calibrated as a system overlay drawn directly on top of whatever app is in the
+foreground — a game left running underneath — instead of a mockup inside Settings, so the user
+taps landmarks against the real thing. `CalibrationOverlay` (`:feature:settings:impl`) is a
+standalone `TYPE_APPLICATION_OVERLAY` + `ComposeView` window, the same WindowManager pattern
+`TapToWalkOverlay` uses (duplicated rather than shared — Settings has no existing dependency on
+`:feature:widget:impl`). Requires `SYSTEM_ALERT_WINDOW` (same permission joystick/widget already
+need); `startCalibrationOverlay()` requests it via `ACTION_MANAGE_OVERLAY_PERMISSION` if not yet
+granted, instead of showing the tool.
+
+Settings → "Measure scale from screen": the overlay appears full-screen and stays on top when the
+user switches to their game (independent of which app is foregrounded, like the joystick/widget
+overlays already are while playing). Tap two landmarks directly on the live game, then enter the
+real-world distance between them in meters; `metersPerPixel = distance / pixelDistance` is computed
+and applied on **Apply**. Taps land in real full-screen pixel coordinates (the overlay is
+`MATCH_PARENT`), so no preview-to-screenshot scale-up step is needed.
 
 ## Tier 1 — Floating Map Quick Walk
 
@@ -65,13 +82,20 @@ where θ = `northAngleRad` (clockwise from screen-up to geographic north).
 
 ## Compass Orientation
 
-When enabled, `TapToWalkOverlay` takes a screenshot immediately after `show()` and detects the red north arrow in the configured region. The heading is available by the time the user taps (1.5 s budget; falls back to north-up if not ready).
+When enabled, `TapToWalkOverlay` takes a screenshot immediately after `show()` and auto-locates the
+game's compass needle icon to detect its heading. The heading is available by the time the user
+taps (1.5 s budget; falls back to north-up if not ready). **No manual calibration**: an earlier
+version asked the user to drag a circle onto the compass and store its position/radius — that
+required precise calibration to avoid picking up unrelated red UI elements (a gym marker, a raid
+egg) nearby, and a bad calibration made detection "confused" (issue reported after that version
+shipped). Detection now re-locates the icon fresh on every call instead, immune to nearby clutter
+by construction — see below.
 
 Key files: `:core:location/CompassHeadingSource.kt`, `:feature:widget:impl/CompassAccessibilityService.kt`
 
 ### CompassHeadingSource
 
-`@Singleton` bridge owned by `:core:location`. `CompassAccessibilityService` calls `bind(this)` on connect and `unbind()` on disconnect. `FloatingWidgetService` calls `captureHeading(cx, cy, radius)` which delegates to the live service.
+`@Singleton` bridge owned by `:core:location`. `CompassAccessibilityService` calls `bind(this)` on connect and `unbind()` on disconnect. `FloatingWidgetService` calls `captureHeading()` which delegates to the live service; `SettingsViewModel.testCompassDetection()` calls the same method for the Settings screen's Test button (see "Verifying On-Device" below).
 
 ### CompassAccessibilityService
 
@@ -79,9 +103,38 @@ Key files: `:core:location/CompassHeadingSource.kt`, `:feature:widget:impl/Compa
 
 `captureHeading()` calls `takeScreenshot(Display.DEFAULT_DISPLAY, ...)` via `suspendCancellableCoroutine`, then calls `detectNorthAngle()` on the result.
 
-`detectNorthAngle()` is a `companion object` pure function: iterates pixels in a circle, filters red (HSV hue < 15° or > 345°, sat > 0.5, val > 0.3), computes centroid offset, returns `atan2(centroidDx, −centroidDy)`.
+`detectNorthAngle(bitmap)` is a `companion object` pure function, no calibration input:
+
+1. Bulk-reads (`Bitmap.getPixels`, not per-pixel `getPixel` — much faster) a fixed search window —
+   the right `SEARCH_X_MIN_PCT` (55%) / top `SEARCH_Y_MAX_PCT` (35%) of the screen
+   (`AppConstants.CompassTrackingConstants`) — where every tested AR/GPS-spoofing game places its
+   compass (confirmed against Pokémon GO on-device).
+2. Filters pixels by the same red-hue test as before (HSV hue < 15° or > 345°, sat > 0.5, val > 0.3).
+3. Runs 4-connected-component labelling (`findBestIconBlob`, BFS-based) over the red mask, keeping
+   only blobs whose bounding box falls within `MIN_ICON_FRACTION`–`MAX_ICON_FRACTION` (0.8%–6%) of
+   the screen's short side and whose pixel count clears `MIN_RED_PIXELS` (20) — this is what makes
+   detection immune to a stray red pixel (too small) or an unrelated large red UI element like a
+   gym marker or raid egg (too big) landing in the search window, unlike scanning a big fixed
+   circle for the reddest pixel. The largest surviving blob wins.
+4. The needle's pivot is approximated as the bottom-center of the winning blob's bounding box —
+   empirically where the icon's rotation center sits, right at the base of its colored half (the
+   red top sits directly above the icon's grey center dot in every game tested). The angle is
+   `atan2(centroid.x - pivot.x, -(centroid.y - pivot.y))`, i.e. clockwise from screen-up to the
+   centroid-from-pivot direction — self-calibrating every call, nothing stored between calls.
 
 Hardware bitmaps are copied to `ARGB_8888` before pixel access and recycled after use.
+
+### Verifying On-Device
+
+Settings → Menus → Tap to Walk → "Compass orientation" → **Test** button lets the user confirm
+detection works on their device/game without leaving Settings mid-session: switch to the game so
+its compass is visible, switch back to Settings, tap Test. Since `captureHeading()` screenshots
+whatever is *currently on screen* — which would otherwise be the Settings UI itself, not the game
+behind it — the Test button briefly calls `Activity.moveTaskToBack(true)` (revealing the game,
+which sits directly behind Settings in the task stack after that switch sequence), waits 700 ms for
+the reveal to render, captures, then relaunches the app's own task
+(`FLAG_ACTIVITY_REORDER_TO_FRONT`) to return. Reports "Detected — north is N° from up" or "Not
+detected — make sure your game's compass is visible top-right".
 
 ### Anti-cheat caveat
 
