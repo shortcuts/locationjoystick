@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -48,6 +47,7 @@ import com.locationjoystick.core.data.toBadgeText
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
@@ -311,8 +311,9 @@ internal fun FavoritesScreen(
     uiState.pendingDeleteId?.let { favoriteId ->
         val favorite = uiState.favorites.find { it.id == favoriteId }
         if (favorite != null) {
-            DeleteConfirmDialog(
+            LjDeleteConfirmDialog(
                 name = favorite.name,
+                itemType = "favorite",
                 onDismiss = { onSetPendingDeleteId(null) },
                 onConfirm = {
                     onConfirmDelete()
@@ -521,27 +522,4 @@ private fun EditFavoriteDialog(
             }
         }
     }
-}
-
-@Composable
-private fun DeleteConfirmDialog(
-    name: String,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Delete \"$name\"?") },
-        text = { Text("This favorite will be permanently deleted and cannot be undone.") },
-        confirmButton = {
-            LjTextButton(onClick = onConfirm) {
-                Text("Delete", color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = {
-            LjTextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
 }

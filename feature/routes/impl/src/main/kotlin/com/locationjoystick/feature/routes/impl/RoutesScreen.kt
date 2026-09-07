@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,10 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
-import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.LoadingIndicator
 import com.locationjoystick.core.designsystem.component.RouteStartSheetContent
 import com.locationjoystick.core.location.rememberSpoofToggleState
@@ -236,8 +235,9 @@ internal fun RoutesScreen(
     }
 
     deletingRoute?.let { route ->
-        DeleteConfirmDialog(
+        LjDeleteConfirmDialog(
             name = route.name,
+            itemType = "route",
             onDismiss = { deletingRoute = null },
             onConfirm = {
                 onDeleteRoute(route.id)
@@ -382,27 +382,4 @@ private fun RouteCard(
             }
         }
     }
-}
-
-@Composable
-private fun DeleteConfirmDialog(
-    name: String,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Delete \"$name\"?") },
-        text = { Text("This route will be permanently deleted and cannot be undone.") },
-        confirmButton = {
-            LjTextButton(onClick = onConfirm) {
-                Text("Delete", color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = {
-            LjTextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
 }
