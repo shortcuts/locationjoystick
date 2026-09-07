@@ -1,10 +1,9 @@
 package com.locationjoystick.feature.routes.impl
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjTextButton
@@ -208,6 +208,7 @@ internal fun RoutesScreen(
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         items(
                             items = uiState.routes,
@@ -286,29 +287,9 @@ private fun RouteCard(
             }
         }
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small),
-    ) {
-        // Single row: name + distance + play/controls + 3-dot menu
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(start = 12.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                val label = if (distanceText.isNotEmpty()) "${route.name} — $distanceText" else route.name
-                Text(label, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    "${route.waypoints.size} waypoints",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
+    LjListItemCard(
+        modifier = modifier,
+        trailing = {
             when {
                 isPlaying -> {
                     IconButton(onClick = onPauseReplay) {
@@ -368,7 +349,14 @@ private fun RouteCard(
                     )
                 }
             }
-        }
+        },
+    ) {
+        val label = if (distanceText.isNotEmpty()) "${route.name} — $distanceText" else route.name
+        Text(label, style = MaterialTheme.typography.titleMedium)
+        Text(
+            "${route.waypoints.size} waypoints",
+            style = MaterialTheme.typography.bodySmall,
+        )
     }
 
     if (showStartDialog) {

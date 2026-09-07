@@ -1,8 +1,6 @@
 package com.locationjoystick.feature.favorites.impl
 
 import android.content.Intent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +48,7 @@ import com.locationjoystick.core.data.toBadgeText
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjTextButton
@@ -337,58 +336,53 @@ private fun FavoriteCard(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
-                .clickable { onRowClick(favorite) }
-                .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    LjListItemCard(
+        modifier = modifier,
+        onClick = { onRowClick(favorite) },
+        trailing = {
+            Box {
+                IconButton(onClick = { menuExpanded = true }) {
+                    Icon(LjIcons.MoreVert, contentDescription = "More options")
+                }
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Edit") },
+                        onClick = {
+                            onEdit(favorite)
+                            menuExpanded = false
+                        },
+                        leadingIcon = { Icon(LjIcons.Edit, null) },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Share") },
+                        onClick = {
+                            onShare(favorite)
+                            menuExpanded = false
+                        },
+                        leadingIcon = { Icon(LjIcons.Share, null) },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Delete") },
+                        onClick = {
+                            onDelete(favorite)
+                            menuExpanded = false
+                        },
+                        leadingIcon = { Icon(LjIcons.Delete, null) },
+                    )
+                }
+            }
+        },
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(favorite.name, style = MaterialTheme.typography.titleMedium)
-            Text(
-                "${String.format("%.4f", favorite.position.latitude)}, ${String.format("%.4f", favorite.position.longitude)}",
-                style = MaterialTheme.typography.bodySmall,
-            )
-            Spacer(Modifier.height(6.dp))
-            CooldownAdvisoryBadge(cooldownState.toBadgeText(currentPosition, favorite.position))
-        }
-        Box {
-            IconButton(onClick = { menuExpanded = true }) {
-                Icon(LjIcons.MoreVert, contentDescription = "More options")
-            }
-            DropdownMenu(
-                expanded = menuExpanded,
-                onDismissRequest = { menuExpanded = false },
-            ) {
-                DropdownMenuItem(
-                    text = { Text("Edit") },
-                    onClick = {
-                        onEdit(favorite)
-                        menuExpanded = false
-                    },
-                    leadingIcon = { Icon(LjIcons.Edit, null) },
-                )
-                DropdownMenuItem(
-                    text = { Text("Share") },
-                    onClick = {
-                        onShare(favorite)
-                        menuExpanded = false
-                    },
-                    leadingIcon = { Icon(LjIcons.Share, null) },
-                )
-                DropdownMenuItem(
-                    text = { Text("Delete") },
-                    onClick = {
-                        onDelete(favorite)
-                        menuExpanded = false
-                    },
-                    leadingIcon = { Icon(LjIcons.Delete, null) },
-                )
-            }
-        }
+        Text(favorite.name, style = MaterialTheme.typography.titleMedium)
+        Text(
+            "${String.format("%.4f", favorite.position.latitude)}, ${String.format("%.4f", favorite.position.longitude)}",
+            style = MaterialTheme.typography.bodySmall,
+        )
+        Spacer(Modifier.height(6.dp))
+        CooldownAdvisoryBadge(cooldownState.toBadgeText(currentPosition, favorite.position))
     }
 }
 
