@@ -1,6 +1,9 @@
 package com.locationjoystick.core.designsystem.component
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -124,13 +127,23 @@ fun <T> LjSegmentedControl(
     Row(modifier = modifier.horizontalScroll(rememberScrollState())) {
         options.forEach { (value, label) ->
             val isSelected = value == selected
+            val containerColor by animateColorAsState(
+                targetValue = if (isSelected) LjAccent else MaterialTheme.colorScheme.surfaceVariant,
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                label = "segmentedControlContainerColor",
+            )
+            val contentColor by animateColorAsState(
+                targetValue = if (isSelected) LjBg else LjText,
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                label = "segmentedControlContentColor",
+            )
             Button(
                 onClick = { onSelect(value) },
                 modifier = Modifier.padding(horizontal = 2.dp).defaultMinSize(minHeight = 48.dp),
                 colors =
                     ButtonDefaults.buttonColors(
-                        containerColor = if (isSelected) LjAccent else MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = if (isSelected) LjBg else LjText,
+                        containerColor = containerColor,
+                        contentColor = contentColor,
                     ),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = LjSpacing.sm),
             ) {
