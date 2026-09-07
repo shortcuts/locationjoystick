@@ -1,5 +1,7 @@
 package com.locationjoystick.feature.routes.impl
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -323,29 +325,32 @@ private fun RouteCard(
     LjListItemCard(
         modifier = modifier,
         trailing = {
-            when {
-                isPlaying -> {
-                    IconButton(onClick = onPauseReplay) {
-                        Icon(LjIcons.Pause, contentDescription = "Pause")
-                    }
-                    IconButton(onClick = onStopReplay) {
-                        Icon(LjIcons.Stop, contentDescription = "Stop")
+            val primaryDescription =
+                when {
+                    isPlaying -> "Pause"
+                    isPaused -> "Resume"
+                    else -> "Start route"
+                }
+            val primaryOnClick =
+                when {
+                    isPlaying -> onPauseReplay
+                    isPaused -> onResumeReplay
+                    else -> {
+                        { showStartDialog = true }
                     }
                 }
-
-                isPaused -> {
-                    IconButton(onClick = onResumeReplay) {
-                        Icon(LjIcons.PlayArrow, contentDescription = "Resume")
-                    }
-                    IconButton(onClick = onStopReplay) {
-                        Icon(LjIcons.Stop, contentDescription = "Stop")
-                    }
+            IconButton(onClick = primaryOnClick) {
+                Crossfade(
+                    targetState = if (isPlaying) LjIcons.Pause else LjIcons.PlayArrow,
+                    animationSpec = tween(150),
+                    label = "routeCardPrimaryIcon",
+                ) { icon ->
+                    Icon(icon, contentDescription = primaryDescription)
                 }
-
-                else -> {
-                    IconButton(onClick = { showStartDialog = true }) {
-                        Icon(LjIcons.PlayArrow, contentDescription = "Start route")
-                    }
+            }
+            if (isPlaying || isPaused) {
+                IconButton(onClick = onStopReplay) {
+                    Icon(LjIcons.Stop, contentDescription = "Stop")
                 }
             }
             Box {
