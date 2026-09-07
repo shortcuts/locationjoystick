@@ -51,10 +51,10 @@ import com.locationjoystick.core.designsystem.component.LjActionSheetRow
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjListItemCard
+import com.locationjoystick.core.designsystem.component.LjListItemCardSkeletonList
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjTextButton
-import com.locationjoystick.core.designsystem.component.LoadingIndicator
 import com.locationjoystick.core.designsystem.component.WideContentClamp
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.LatLng
@@ -199,7 +199,7 @@ internal fun FavoritesScreen(
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
                     uiState.isLoading -> {
-                        LoadingIndicator()
+                        LjListItemCardSkeletonList(trailingIconCount = 1)
                     }
 
                     uiState.favorites.isEmpty() -> {
