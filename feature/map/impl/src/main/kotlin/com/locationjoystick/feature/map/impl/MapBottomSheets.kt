@@ -76,13 +76,14 @@ internal fun RoutesPickerSheet(
                     },
                     onStart = { loop, reverse, returnToLocation, followRoads ->
                         onAction(MapAction.StartRouteReplay(routeId, loop, reverse, returnToLocation, followRoads))
-                        selectedRouteId = null
+                        if (!followRoads) selectedRouteId = null
                     },
                     onCancel = {
                         selectedRouteId = null
                         onAction(MapAction.CloseRoutesSheet)
                     },
                     hideTeleport = uiState.hideTeleportFeatures,
+                    isRoadRouteFetchInFlight = uiState.isRoadRouteFetchInFlight,
                 )
             }
         } else {

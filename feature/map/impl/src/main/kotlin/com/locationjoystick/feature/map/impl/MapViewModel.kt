@@ -317,7 +317,9 @@ class MapViewModel
                         action.isReturnToLocation,
                         action.followRoadsToStart,
                     )
-                    _uiState.update { it.copy(showRoutesSheet = false) }
+                    if (!action.followRoadsToStart) {
+                        _uiState.update { it.copy(showRoutesSheet = false) }
+                    }
                 }
 
                 MapAction.PauseRouteReplay -> {

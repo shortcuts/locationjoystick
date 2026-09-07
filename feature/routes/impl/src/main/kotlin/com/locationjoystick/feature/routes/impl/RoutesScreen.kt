@@ -219,6 +219,7 @@ internal fun RoutesScreen(
                                 onResumeReplay = onResumeReplay,
                                 onStopReplay = onStopReplay,
                                 hideTeleportFeatures = uiState.hideTeleportFeatures,
+                                isRoadRouteFetchInFlight = uiState.isRoadRouteFetchInFlight,
                             )
                         }
                     }
@@ -292,6 +293,7 @@ private fun RouteCard(
     onStopReplay: () -> Unit,
     modifier: Modifier = Modifier,
     hideTeleportFeatures: Boolean = false,
+    isRoadRouteFetchInFlight: Boolean = false,
 ) {
     val isActiveRoute = playbackState.activeRouteId == route.id
     val isPlaying = isActiveRoute && playbackState.isPlaying
@@ -404,10 +406,11 @@ private fun RouteCard(
                     },
                     onStart = { loop, reverse, returnToLocation, followRoads ->
                         onStartReplay(route, loop, reverse, returnToLocation, followRoads)
-                        showStartDialog = false
+                        if (!followRoads) showStartDialog = false
                     },
                     onCancel = { showStartDialog = false },
                     hideTeleport = hideTeleportFeatures,
+                    isRoadRouteFetchInFlight = isRoadRouteFetchInFlight,
                 )
             }
         }

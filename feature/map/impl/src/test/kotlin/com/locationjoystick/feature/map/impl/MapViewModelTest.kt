@@ -726,6 +726,27 @@ class MapViewModelTest {
         }
 
     @Test
+    fun `StartRouteReplay with followRoadsToStart keeps routes sheet open`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoutesSheet)
+            assertEquals(true, viewModel.uiState.value.showRoutesSheet)
+
+            viewModel.onAction(
+                MapAction.StartRouteReplay(
+                    routeId = "route-1",
+                    isLooping = false,
+                    isReverse = false,
+                    isReturnToLocation = false,
+                    followRoadsToStart = true,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify { startRouteReplayUseCase.execute("route-1", false, false, false, true) }
+            assertEquals(true, viewModel.uiState.value.showRoutesSheet)
+        }
+
+    @Test
     fun `ConfirmTeleport from routes sheet calls mapController teleportTo and keeps routes sheet open`() =
         runTest {
             viewModel.onAction(MapAction.OpenRoutesSheet)

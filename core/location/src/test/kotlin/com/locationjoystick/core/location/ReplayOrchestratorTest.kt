@@ -380,6 +380,60 @@ class ReplayOrchestratorTest {
         }
 
     @Test
+    fun handleStart_followRoadsToStart_setsRoadRouteFetchInFlight_duringOsrmResolution() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val route =
+                com.locationjoystick.core.model.Route(
+                    id = "route-1",
+                    name = "R",
+                    waypoints =
+                        listOf(
+                            com.locationjoystick.core.model.Waypoint("w1", LatLng(2.0, 2.0), 0),
+                            com.locationjoystick.core.model.Waypoint("w2", LatLng(3.0, 3.0), 1),
+                        ),
+                )
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
+            coEvery {
+                osrmClient.resolveRoute(any(), LatLng(2.0, 2.0), LatLng(3.0, 3.0), true, any())
+            } coAnswers {
+                assertTrue(locationRepository.isRoadRouteFetchInFlight.value)
+                listOf(LatLng(2.0, 2.0), LatLng(3.0, 3.0))
+            }
+            coEvery {
+                osrmClient.resolveRoute(any(), LatLng(0.0, 0.0), LatLng(2.0, 2.0), true, any())
+            } coAnswers {
+                assertTrue(locationRepository.isRoadRouteFetchInFlight.value)
+                listOf(LatLng(0.0, 0.0), LatLng(2.0, 2.0))
+            }
+
+            orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4, followRoadsToStart = true)
+
+            assertFalse(locationRepository.isRoadRouteFetchInFlight.value)
+        }
+
+    @Test
+    fun handleStart_followRoadsToStartFalse_neverSetsRoadRouteFetchInFlight() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val route =
+                com.locationjoystick.core.model.Route(
+                    id = "route-1",
+                    name = "R",
+                    waypoints =
+                        listOf(
+                            com.locationjoystick.core.model.Waypoint("w1", LatLng(2.0, 2.0), 0),
+                            com.locationjoystick.core.model.Waypoint("w2", LatLng(3.0, 3.0), 1),
+                        ),
+                )
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
+
+            orchestrator.handleStart("route-1", isBackward = false, speedMs = 1.4, followRoadsToStart = false)
+
+            assertFalse(locationRepository.isRoadRouteFetchInFlight.value)
+        }
+
+    @Test
     fun handleStart_onComplete_zeroesSpeed() =
         runTest {
             locationRepository.setPositionInternal(LatLng(0.0, 0.0))

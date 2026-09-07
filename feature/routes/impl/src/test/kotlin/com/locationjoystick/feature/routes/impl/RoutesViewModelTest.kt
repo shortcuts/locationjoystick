@@ -100,6 +100,17 @@ class RoutesViewModelUiStateTest {
         }
 
     @Test
+    fun uiState_reflects_isRoadRouteFetchInFlight() =
+        runTest {
+            viewModel.uiState.test {
+                assertFalse(awaitItem().isRoadRouteFetchInFlight)
+                locationRepository.setRoadRouteFetchInFlight(true)
+                assertTrue(awaitItem().isRoadRouteFetchInFlight)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun toggleSort_calls_settings_repository() =
         runTest {
             viewModel.toggleSort()

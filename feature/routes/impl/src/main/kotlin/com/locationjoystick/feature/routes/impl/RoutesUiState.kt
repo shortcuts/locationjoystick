@@ -7,4 +7,5 @@ data class RoutesUiState(
     val isLoading: Boolean = false,
     val sortNewestFirst: Boolean = true,
     val hideTeleportFeatures: Boolean = false,
+    val isRoadRouteFetchInFlight: Boolean = false,
 )

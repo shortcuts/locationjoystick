@@ -82,6 +82,9 @@ button and, at the bottom, **Cancel** / **Start**.
   current position to the first waypoint, then begins replay honoring
   Loop/Reverse/Return to location and Follow roads for the between-waypoint
   legs too.
+- While a road-following start's OSRM fetch is in flight, the Start button shows a spinner and is
+  disabled; the sheet stays open and closes automatically once the fetch resolves — the same
+  loading treatment "Walk via roads" / "Add next point via roads" already use elsewhere.
 
 Implemented via a `followRoadsToStart: Boolean` flag (name unchanged, scope
 widened) threaded through `StartRouteReplayUseCase` / `RoutesViewModel.startReplay()`

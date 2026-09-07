@@ -53,7 +53,8 @@ class RoutesViewModel
                 routeRepository.getRoutes(),
                 settingsRepository.getRoutesSortNewestFirst(),
                 settingsRepository.getHideTeleportFeatures(),
-            ) { routes, sortNewestFirst, hideTeleportFeatures ->
+                locationRepository.isRoadRouteFetchInFlight,
+            ) { routes, sortNewestFirst, hideTeleportFeatures, isRoadRouteFetchInFlight ->
                 val sorted =
                     if (sortNewestFirst) {
                         routes.sortedByDescending { it.createdAt }
@@ -65,6 +66,7 @@ class RoutesViewModel
                     isLoading = false,
                     sortNewestFirst = sortNewestFirst,
                     hideTeleportFeatures = hideTeleportFeatures,
+                    isRoadRouteFetchInFlight = isRoadRouteFetchInFlight,
                 )
             }.stateIn(
                 scope = viewModelScope,

@@ -73,30 +73,35 @@ internal class ReplayOrchestrator(
                 if (route.waypoints.size < 2) return@launch
                 val latLngs = (if (isBackward) route.waypoints.reversed() else route.waypoints).map { it.position }
                 val isLooping = isLoopingOverride ?: route.isLooping
-                val (replayWaypoints, boundaryIndices) =
-                    if (followRoadsToStart) expandWaypointsForFollowRoads(latLngs) else latLngs to null
+                try {
+                    if (followRoadsToStart) locationRepository.setRoadRouteFetchInFlight(true)
+                    val (replayWaypoints, boundaryIndices) =
+                        if (followRoadsToStart) expandWaypointsForFollowRoads(latLngs) else latLngs to null
 
-                startReplayWithWaypoints(
-                    waypoints = replayWaypoints,
-                    speedMs = speedMs,
-                    isLooping = isLooping,
-                    followRoadsToStart = followRoadsToStart,
-                    boundaryIndices = boundaryIndices,
-                    persistMetadata = {
-                        locationRepository.setActiveRouteId(routeId)
-                        locationRepository.setIsReplayBackward(isBackward)
-                        locationRepository.setRouteWaypoints(replayWaypoints)
-                    },
-                    onComplete = {
-                        locationRepository.setRouteWaypoints(null)
-                        locationRepository.setActiveRouteId(null)
-                        if (returnPosition != null) {
-                            walkToPosition(returnPosition, speedMs)
-                        }
-                        finishReplay()
-                        locationRepository.emitCompletion("Route complete")
-                    },
-                )
+                    startReplayWithWaypoints(
+                        waypoints = replayWaypoints,
+                        speedMs = speedMs,
+                        isLooping = isLooping,
+                        followRoadsToStart = followRoadsToStart,
+                        boundaryIndices = boundaryIndices,
+                        persistMetadata = {
+                            locationRepository.setActiveRouteId(routeId)
+                            locationRepository.setIsReplayBackward(isBackward)
+                            locationRepository.setRouteWaypoints(replayWaypoints)
+                        },
+                        onComplete = {
+                            locationRepository.setRouteWaypoints(null)
+                            locationRepository.setActiveRouteId(null)
+                            if (returnPosition != null) {
+                                walkToPosition(returnPosition, speedMs)
+                            }
+                            finishReplay()
+                            locationRepository.emitCompletion("Route complete")
+                        },
+                    )
+                } finally {
+                    if (followRoadsToStart) locationRepository.setRoadRouteFetchInFlight(false)
+                }
             }
     }
 
@@ -332,6 +337,9 @@ internal class ReplayOrchestrator(
                 followRoads = true,
                 onFallback = ::reportWalkToStartFallback,
             )
+        // Clear now — the walk itself can run far longer than the OSRM time budget and must not
+        // keep the UI showing a loading state.
+        locationRepository.setRoadRouteFetchInFlight(false)
         for (i in 0 until legs.size - 1) {
             walkToEngine.walkToOnce(legs[i], legs[i + 1], speedMs, ::tickPosition)
         }
