@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjActionSheetRow
+import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
@@ -187,6 +188,11 @@ internal fun RoutesScreen(
                         icon = LjIcons.PlayArrow,
                         message = "No routes yet",
                         modifier = Modifier.align(Alignment.Center),
+                        action = {
+                            LjButton(onClick = { showAddOptionsSheet = true }) {
+                                Text("Draw a route")
+                            }
+                        },
                     )
                 }
 

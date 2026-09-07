@@ -49,6 +49,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjActionSheetRow
+import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
@@ -206,6 +207,11 @@ internal fun FavoritesScreen(
                             icon = LjIcons.LocationOn,
                             message = "No saved favorites yet",
                             modifier = Modifier.align(Alignment.Center),
+                            action = {
+                                LjButton(onClick = { showAddOptionsSheet = true }) {
+                                    Text("Add a favorite")
+                                }
+                            },
                         )
                     }
 
