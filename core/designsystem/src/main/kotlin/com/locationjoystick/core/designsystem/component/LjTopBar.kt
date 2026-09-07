@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -90,7 +89,7 @@ fun LjTopBar(
                 )
             }
 
-            // Middle column: state pill, always centered.
+            // Middle column: state indicator, always centered.
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center,
@@ -98,10 +97,8 @@ fun LjTopBar(
                 if (showSpoofToggle) {
                     val context = LocalContext.current
                     val interactionSource = remember { MutableInteractionSource() }
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = if (isSpoofing) LjError.copy(alpha = 0.25f) else LjSuccess.copy(alpha = 0.25f),
-                        contentColor = if (isSpoofing) LjError else LjSuccess,
+                    val tint = if (isSpoofing) LjError else LjSuccess
+                    Row(
                         modifier =
                             Modifier.defaultMinSize(minHeight = 44.dp).semantics {
                                 contentDescription = if (isSpoofing) "Stop location simulation" else "Start location simulation"
@@ -114,37 +111,35 @@ fun LjTopBar(
                                         Toast.makeText(context, locationLabel, Toast.LENGTH_SHORT).show()
                                     }
                                 },
-                            ),
+                            ).padding(horizontal = 8.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Crossfade(
-                                targetState = isSpoofing,
-                                animationSpec = tween(150),
-                                label = "spoofToggleIcon",
-                            ) { spoofing ->
-                                Icon(
-                                    imageVector = if (spoofing) LjIcons.Stop else LjIcons.PlayArrow,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(12.dp).padding(end = 3.dp),
-                                )
-                            }
-                            Text(
-                                text =
-                                    if (isSpoofing) {
-                                        "Stop"
-                                    } else if (locationLabel != null) {
-                                        "Start · $locationLabel"
-                                    } else {
-                                        "Start"
-                                    },
-                                style = MaterialTheme.typography.labelSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                        Crossfade(
+                            targetState = isSpoofing,
+                            animationSpec = tween(150),
+                            label = "spoofToggleIcon",
+                        ) { spoofing ->
+                            Icon(
+                                imageVector = if (spoofing) LjIcons.Stop else LjIcons.PlayArrow,
+                                contentDescription = null,
+                                tint = tint,
+                                modifier = Modifier.size(12.dp).padding(end = 3.dp),
                             )
                         }
+                        Text(
+                            text =
+                                if (isSpoofing) {
+                                    "Stop"
+                                } else if (locationLabel != null) {
+                                    "Start · $locationLabel"
+                                } else {
+                                    "Start"
+                                },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = tint,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                 }
             }
