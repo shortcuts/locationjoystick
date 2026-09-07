@@ -14,9 +14,10 @@ The QR code does not carry the export data itself — it carries connection info
    - Starts `ExportSyncServer` (a `ServerSocket(0)`-bound local HTTP server, OS-assigned port), which serves that JSON at `GET /export?token=CODE`.
    - Registers the code for NSD discovery via `NsdCodeManager.startAdvertising(code, port)`.
    - Builds `locationjoystick://export?host=HOST&port=PORT&token=CODE` (HOST resolved via `NetworkUtils.getLocalIpAddress()`) and renders it as a QR code via `QrEncoder`. `QrShareDialog` displays the code alongside the QR for manual entry.
+   - `QrShareDialog` opens immediately and shows a "Starting local export server…" message with a loading indicator (`SettingsViewModel.isPreparingQrExport`) until the server/NSD setup above finishes and the QR/code are ready.
    - Both the HTTP server and NSD advertising only run while `QrShareDialog` is open — dismissing it calls `SettingsViewModel.stopQrExport()`.
 2. **Receiver** has two options, both ending in the same fetch:
-   - **Scan**: taps "Import from QR code", scans the code. `QrScannerScreen` decodes the raw URL via `ZxingImageAnalyzer` and passes it to `SettingsViewModel.onQrScanned`, which parses `host`/`port`/`token` from the URL.
+   - **Scan**: taps "Import from QR code", scans the code. `QrScannerScreen` decodes the raw URL via `ZxingImageAnalyzer` and passes it to `SettingsViewModel.onQrScanned`, which parses `host`/`port`/`token` from the URL. While the resulting fetch (below) is in flight, `QrScannerScreen` shows a loading indicator under its status label (`SettingsViewModel.qrImportFetching`).
    - **Type code**: taps "Import via code", enters the 6-character code. `SettingsViewModel.onExportCodeEntered` resolves it to a host:port via `NsdCodeManager.discoverByCode`.
    - Either path then fetches the export JSON over HTTP via `ExportSyncClient`, parses it via `SettingsExportCodec.parseExportData`, and surfaces the standard Add/Replace `ImportConfirmDialog`.
 
