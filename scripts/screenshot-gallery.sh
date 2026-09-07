@@ -816,10 +816,21 @@ if should_run_step "12"; then
   go_idle
   tap_text_below "Settings" "$CARD_Y_MIN"
   wait_s 2 "Settings loading"
-  tap_text "Export"
-  wait_s 1 "Export menu opening"
-  tap_text "QR"
+  # Export/Import actions live behind the "More actions" overflow menu, not
+  # standalone top-bar buttons.
+  tap_text "More actions"
+  wait_s 1 "Overflow menu opening"
+  tap_text "Export via QR code"
   wait_s 2 "QR share dialog opening"
+  # Dialog opens on a loading state ("Starting local export server…") until the
+  # local HTTP server + NSD advertising are up — poll until the QR image replaces it.
+  for _ in 1 2 3 4 5; do
+    dump=$(ui_dump)
+    ready=$(grep -c 'Export QR code' "$dump" || true)
+    rm -f "$dump"
+    (( ready > 0 )) && break
+    wait_s 1 "Waiting for QR server to start"
+  done
   screenshot "12_qr_share"
   back
   wait_s 1 "Dismissing QR dialog"
@@ -937,9 +948,10 @@ print(prefix[last+9:last+13] == "true")
     else
       tap_text "Debug stats"
       wait_s 1 "Enabling debug stats"
-      # This settings page buffers changes behind a Save/Discard banner —
-      # force-stopping via go_idle without saving would discard the toggle.
-      tap_text_exact "Save"
+      # This settings page buffers changes behind a Save/Discard FAB (check icon,
+      # content-desc "Save changes") — force-stopping via go_idle without saving
+      # would discard the toggle.
+      tap_text "Save changes"
       wait_s 1 "Saving setting"
     fi
     rm -f "$dump"
