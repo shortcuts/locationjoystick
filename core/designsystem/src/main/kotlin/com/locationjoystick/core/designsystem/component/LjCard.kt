@@ -1,5 +1,6 @@
 package com.locationjoystick.core.designsystem.component
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Card
@@ -15,6 +16,7 @@ import androidx.compose.ui.unit.dp
 fun LjCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    interactionSource: MutableInteractionSource? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (onClick != null) {
@@ -22,6 +24,7 @@ fun LjCard(
             onClick = onClick,
             modifier = modifier,
             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+            interactionSource = interactionSource,
             content = content,
         )
     } else {

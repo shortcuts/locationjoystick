@@ -1,5 +1,6 @@
 package com.locationjoystick.core.designsystem.component
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -7,8 +8,10 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
 
 /**
@@ -24,9 +27,12 @@ fun LjListItemCard(
     trailing: @Composable RowScope.() -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val scale = if (onClick != null) rememberPressScale(interactionSource) else 1f
     LjCard(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().scale(scale),
         onClick = onClick,
+        interactionSource = interactionSource,
     ) {
         Row(
             modifier =
