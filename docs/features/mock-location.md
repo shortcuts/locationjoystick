@@ -6,7 +6,7 @@ Key files: `:core:location/MockLocationService.kt`, `:core:data/LocationReposito
 
 ## Global Start/Stop Control
 
-Every screen's top bar (`LjTopBar`/`LjScaffold`, `:core:designsystem`) shows a full-text toggle button — `> start` / `|| stop` — in the title slot, driving spoofing from anywhere in the app, not just the Map screen.
+Every screen's top bar (`LjTopBar`/`LjScaffold`, `:core:designsystem`) shows a full-text toggle button — `> start` / `|| stop` — as a pill centered in the bar's middle column, driving spoofing from anywhere in the app, not just the Map screen. `LjTopBar` lays out a 3-equal-width-column `Row` (start: nav icon + title, middle: the pill, end: actions), so the pill sits at the true bar center regardless of title or action width.
 
 Backed by `MapController.isSpoofing` (`StateFlow<Boolean>`, derived from `LocationRepository.mockLocationState != IDLE`) and `MapController.toggleSpoofing()` (`:core:location`). Each screen obtains these via the shared `SpoofToggleViewModel` (`hiltViewModel()`), a thin wrapper so feature ViewModels don't need their own `MapController` dependency just for this control.
 
