@@ -29,6 +29,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -215,6 +216,31 @@ internal fun OnboardingScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            val grantedStepCount =
+                listOf(
+                    uiState.locationPermissionGranted,
+                    uiState.overlayPermissionGranted,
+                    uiState.mockLocationEnabled,
+                ).count { it }
+
+            Text(
+                text = "Step ${grantedStepCount.coerceAtMost(2) + 1} of 3",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            LinearProgressIndicator(
+                progress = { grantedStepCount / 3f },
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             OnboardingStepCard(
                 title = "Location permission",

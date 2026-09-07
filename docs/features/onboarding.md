@@ -12,6 +12,9 @@ Key files: `:feature:onboarding:impl/OnboardingScreen.kt`, `:feature:onboarding:
 4. Enable mock location (deep link to Developer Options; re-checked automatically on resume — see "Permission Checks" below)
 5. Done → MapScreen
 
+A "Step X of 3" label and progress bar sit above the three permission cards, computed from how
+many of them are currently granted — steps 2–4 above, not Welcome/Done.
+
 ## Permission Checks
 
 | Permission | Check method |
