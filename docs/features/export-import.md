@@ -16,13 +16,27 @@ Each entry in `routes` includes the optional `speedProfileId` field (`Route.spee
 
 Schema version: `AppConstants.ExportConstants.SCHEMA_VERSION`.
 
+## Settings Screen Entry Point
+
+All export/import/reset actions live behind a single "More actions" overflow menu
+(`LjOverflowMenu`, `:core:designsystem/LjTopBar.kt`) in the top bar of `SettingsHubScreen`,
+grouped into three labeled sections (`LjOverflowMenuSectionLabel`): **Export**, **Import**,
+**Danger**. There are no standalone Export/Import icon buttons.
+
 ## Export Flow
+
+Overflow menu → Export section → "Export settings":
 
 1. Serialize via `kotlinx.serialization`.
 2. Write to `getExternalFilesDir(null)`.
 3. Share via `FileProvider` + `Intent.ACTION_SEND`.
 
+"Export via QR code" (same section) instead starts the local QR transfer server — see
+@docs/features/qr-transfer.md.
+
 ## Import Flow
+
+Overflow menu → Import section → "Import from file":
 
 1. File picker (`OpenDocument`, MIME `AppConstants.ExportConstants.MIME_TYPE`).
 2. Parse + validate `schemaVersion` is between 1 and `AppConstants.ExportConstants.SCHEMA_VERSION`, inclusive.
@@ -31,6 +45,9 @@ Schema version: `AppConstants.ExportConstants.SCHEMA_VERSION`.
 5. Insert new data.
 
 All I/O runs on `Dispatchers.IO`.
+
+"Import from QR code" and "Import via code" (same section) instead fetch the export over the
+local network — see @docs/features/qr-transfer.md.
 
 ## GPX Import (Routes only)
 
@@ -46,7 +63,7 @@ Key function: `parseGpxRoutes` in `:feature:routes:impl/RoutesViewModel.kt`.
 
 ## Third-Party Imports
 
-Settings screen → Import icon → dropdown menu offers:
+Settings screen → "More actions" overflow menu → Import section offers:
 
 - **Import from GPS Joystick** — imports routes from GPS Joystick app format.
 - **Import from YAMLA** — imports routes from YAMLA JSON format.
@@ -55,7 +72,7 @@ All imported routes are saved as `RouteType.STRAIGHT` segments.
 
 ## Reset All Data
 
-Settings screen → "Reset all data" icon button (next to Export/Import) → confirmation dialog → clears everything without needing Android's system-level "Clear data & cache".
+Settings screen → "More actions" overflow menu → Danger section → "Reset all data" → confirmation dialog → clears everything without needing Android's system-level "Clear data & cache".
 
 - Clears all routes (`RouteRepository.deleteAllRoutes()`) and all favorites (`FavoriteRepository.deleteAllFavorites()`).
 - Clears all DataStore preferences via `SettingsRepository.resetAllData()` → `PreferencesDataSource.clearAllExceptOnboarding()`.

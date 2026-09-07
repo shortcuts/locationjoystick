@@ -37,7 +37,7 @@ Covers every nav path in `LjNavHost`:
 | `RoutesSmokeTest` | Routes loads ("Add route" FAB visible); FAB opens add-route sheet showing Draw on map / Draw on map (follow roads) / Import GPX file; seeded route visible (waitUntil async); start route dialog shows Loop/Reverse/Return/Walk+Teleport; route card overflow menu shows Edit/Export/Delete |
 | `RouteCreatorSmokeTest` | Creator loads via "Add route" → "from map"; search/undo/favorites FABs visible; back returns to Routes |
 | `RouteDetailSmokeTest` | Detail loads via overflow "Menu" → Edit (waitUntil route visible); back returns to Routes; delete button, name field, waypoint list visible |
-| `SettingsSmokeTest` | Settings loads; speed unit toggle; export/import icon buttons visible; export dropdown shows QR + file options; import dropdown shows QR + file + GPS Joystick + YAMLA; all section headers visible |
+| `SettingsSmokeTest` | Settings loads; speed unit toggle; "More actions" overflow menu opens without crash; all section headers visible |
 
 Helpers in `SmokeTestHelpers.kt`: `waitForIdleScreen()`, `openDrawer()`, `navigateViaDrawer()`, `navigateFromIdle()`.
 
