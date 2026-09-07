@@ -22,15 +22,18 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -253,5 +256,176 @@ class MapControllerTest {
                 mapController.sharedState.value.walkMode == WalkMode.Idle,
             )
             assertNull("walkTarget should be cleared after arrival", locationRepository.walkTarget.value)
+        }
+
+    @Test
+    fun `walkViaRoads flips isRoadRouteFetchInFlight true during OSRM fetch and false after success`() =
+        runTest {
+            val locationRepository = LocationRepository()
+            val settingsRepository =
+                mockk<SettingsRepository>(relaxed = true) {
+                    every { getActiveSpeedProfile() } returns flowOf(walkProfile)
+                    every { getRoutesSortNewestFirst() } returns flowOf(true)
+                    every { getFavoritesSortNewestFirst() } returns flowOf(true)
+                    every { getSpeedUnit() } returns flowOf(SpeedUnit.KMH)
+                    every { getRecentSearches() } returns flowOf(emptyList())
+                    every { getRoamingDefaults() } returns flowOf(RoamingDefaults())
+                    every { getSettingsSnapshot() } returns emptyFlow()
+                    every { getRememberLastLocation() } returns flowOf(false)
+                }
+            val fetchGate = CompletableDeferred<Unit>()
+            val osrmClient =
+                mockk<OsrmClient>(relaxed = true).also {
+                    coEvery { it.getRoute(any(), any()) } coAnswers {
+                        fetchGate.await()
+                        Result.success(secondArg<List<LatLng>>())
+                    }
+                }
+            val walkToEngine = WalkToEngine(settingsRepository, locationRepository)
+            val walkCoordinator = WalkCoordinator(locationRepository, walkToEngine)
+            val routingErrorReporter = RoutingErrorReporter()
+            val ephemeralController =
+                EphemeralReplayController(
+                    locationRepository,
+                    settingsRepository,
+                    walkCoordinator,
+                    osrmClient,
+                    routingErrorReporter,
+                )
+
+            val context = mockk<Context>(relaxed = true)
+            val isRoaming = MutableStateFlow(false)
+            val isRoamingPaused = MutableStateFlow(false)
+            val roamingRepository =
+                mockk<RoamingRepository>(relaxed = true) {
+                    every { this@mockk.isRoaming } returns isRoaming
+                    every { this@mockk.isRoamingPaused } returns isRoamingPaused
+                }
+            val routeRepository = mockk<RouteRepository>(relaxed = true) { every { getRoutes() } returns emptyFlow() }
+            val favoriteRepository =
+                mockk<FavoriteRepository>(relaxed = true) { every { getFavorites() } returns flowOf(emptyList()) }
+            val teleportUseCase =
+                mockk<TeleportUseCase>(relaxed = true) { every { cooldownsFor(any()) } returns emptyFlow() }
+            val startRouteReplayUseCase = mockk<StartRouteReplayUseCase>(relaxed = true)
+
+            val mapController =
+                MapController(
+                    context = context,
+                    locationRepository = locationRepository,
+                    routeRepository = routeRepository,
+                    favoriteRepository = favoriteRepository,
+                    settingsRepository = settingsRepository,
+                    roamingRepository = roamingRepository,
+                    walkCoordinator = walkCoordinator,
+                    teleportUseCase = teleportUseCase,
+                    startRouteReplayUseCase = startRouteReplayUseCase,
+                    ephemeralReplayController = ephemeralController,
+                    osrmClient = osrmClient,
+                    routingErrorReporter = routingErrorReporter,
+                    appScope = backgroundScope,
+                )
+
+            val start = LatLng(48.8566, 2.3522)
+            val target = LatLng(48.856604498, 2.3522)
+            locationRepository.setPositionInternal(start)
+
+            assertFalse(
+                "flag should be false before any fetch starts",
+                locationRepository.isRoadRouteFetchInFlight.value,
+            )
+
+            mapController.walkViaRoads(target)
+            // runCurrent(), not advanceUntilIdle(): backgroundScope's queued work isn't picked up
+            // by advanceUntilIdle() in this project's resolved coroutines-test version.
+            runCurrent()
+
+            assertTrue(
+                "flag should be true while the OSRM fetch is in flight",
+                locationRepository.isRoadRouteFetchInFlight.value,
+            )
+
+            fetchGate.complete(Unit)
+            runCurrent()
+
+            assertFalse(
+                "flag should be false again once the fetch completes",
+                locationRepository.isRoadRouteFetchInFlight.value,
+            )
+        }
+
+    @Test
+    fun `walkViaRoads clears isRoadRouteFetchInFlight even when the OSRM fetch fails`() =
+        runTest {
+            val locationRepository = LocationRepository()
+            val settingsRepository =
+                mockk<SettingsRepository>(relaxed = true) {
+                    every { getActiveSpeedProfile() } returns flowOf(walkProfile)
+                    every { getRoutesSortNewestFirst() } returns flowOf(true)
+                    every { getFavoritesSortNewestFirst() } returns flowOf(true)
+                    every { getSpeedUnit() } returns flowOf(SpeedUnit.KMH)
+                    every { getRecentSearches() } returns flowOf(emptyList())
+                    every { getRoamingDefaults() } returns flowOf(RoamingDefaults())
+                    every { getSettingsSnapshot() } returns emptyFlow()
+                    every { getRememberLastLocation() } returns flowOf(false)
+                }
+            val osrmClient =
+                mockk<OsrmClient>(relaxed = true).also {
+                    coEvery { it.getRoute(any(), any()) } returns Result.failure(RuntimeException("boom"))
+                }
+            val walkToEngine = WalkToEngine(settingsRepository, locationRepository)
+            val walkCoordinator = WalkCoordinator(locationRepository, walkToEngine)
+            val routingErrorReporter = RoutingErrorReporter()
+            val ephemeralController =
+                EphemeralReplayController(
+                    locationRepository,
+                    settingsRepository,
+                    walkCoordinator,
+                    osrmClient,
+                    routingErrorReporter,
+                )
+
+            val context = mockk<Context>(relaxed = true)
+            val isRoaming = MutableStateFlow(false)
+            val isRoamingPaused = MutableStateFlow(false)
+            val roamingRepository =
+                mockk<RoamingRepository>(relaxed = true) {
+                    every { this@mockk.isRoaming } returns isRoaming
+                    every { this@mockk.isRoamingPaused } returns isRoamingPaused
+                }
+            val routeRepository = mockk<RouteRepository>(relaxed = true) { every { getRoutes() } returns emptyFlow() }
+            val favoriteRepository =
+                mockk<FavoriteRepository>(relaxed = true) { every { getFavorites() } returns flowOf(emptyList()) }
+            val teleportUseCase =
+                mockk<TeleportUseCase>(relaxed = true) { every { cooldownsFor(any()) } returns emptyFlow() }
+            val startRouteReplayUseCase = mockk<StartRouteReplayUseCase>(relaxed = true)
+
+            val mapController =
+                MapController(
+                    context = context,
+                    locationRepository = locationRepository,
+                    routeRepository = routeRepository,
+                    favoriteRepository = favoriteRepository,
+                    settingsRepository = settingsRepository,
+                    roamingRepository = roamingRepository,
+                    walkCoordinator = walkCoordinator,
+                    teleportUseCase = teleportUseCase,
+                    startRouteReplayUseCase = startRouteReplayUseCase,
+                    ephemeralReplayController = ephemeralController,
+                    osrmClient = osrmClient,
+                    routingErrorReporter = routingErrorReporter,
+                    appScope = backgroundScope,
+                )
+
+            val start = LatLng(48.8566, 2.3522)
+            val target = LatLng(48.8567, 2.3523)
+            locationRepository.setPositionInternal(start)
+
+            mapController.walkViaRoads(target)
+            runCurrent()
+
+            assertFalse(
+                "flag should be reset to false even after a failed OSRM fetch",
+                locationRepository.isRoadRouteFetchInFlight.value,
+            )
         }
 }

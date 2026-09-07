@@ -45,6 +45,7 @@ data class MapUiState(
     val showRouteJumpButtons: Boolean = false,
     val jitterRadiusMeters: Double = 0.0,
     val debugStatsEnabled: Boolean = false,
+    val isRoadRouteFetchInFlight: Boolean = false,
 )
 
 // Convenience accessors

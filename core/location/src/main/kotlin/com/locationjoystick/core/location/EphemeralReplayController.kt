@@ -89,31 +89,36 @@ class EphemeralReplayController
                     // the first leg means the whole chain stays road-following.
                     val initial =
                         if (followRoads) {
-                            val (toTarget, toNewPoint) =
-                                coroutineScope {
-                                    val a =
-                                        async {
-                                            osrmClient.resolveRoute(
-                                                OsrmClient.PROFILE_FOOT,
-                                                startPos,
-                                                walkTarget,
-                                                followRoads = true,
-                                                onFallback = ::reportFallback,
-                                            )
-                                        }
-                                    val b =
-                                        async {
-                                            osrmClient.resolveRoute(
-                                                OsrmClient.PROFILE_FOOT,
-                                                walkTarget,
-                                                newPoint,
-                                                followRoads = true,
-                                                onFallback = ::reportFallback,
-                                            )
-                                        }
-                                    a.await() to b.await()
-                                }
-                            toTarget + toNewPoint.drop(1) // walkTarget is last of toTarget, first of toNewPoint
+                            locationRepository.setRoadRouteFetchInFlight(true)
+                            try {
+                                val (toTarget, toNewPoint) =
+                                    coroutineScope {
+                                        val a =
+                                            async {
+                                                osrmClient.resolveRoute(
+                                                    OsrmClient.PROFILE_FOOT,
+                                                    startPos,
+                                                    walkTarget,
+                                                    followRoads = true,
+                                                    onFallback = ::reportFallback,
+                                                )
+                                            }
+                                        val b =
+                                            async {
+                                                osrmClient.resolveRoute(
+                                                    OsrmClient.PROFILE_FOOT,
+                                                    walkTarget,
+                                                    newPoint,
+                                                    followRoads = true,
+                                                    onFallback = ::reportFallback,
+                                                )
+                                            }
+                                        a.await() to b.await()
+                                    }
+                                toTarget + toNewPoint.drop(1) // walkTarget is last of toTarget, first of toNewPoint
+                            } finally {
+                                locationRepository.setRoadRouteFetchInFlight(false)
+                            }
                         } else {
                             listOf(startPos) + osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, walkTarget, newPoint, followRoads = false)
                         }
@@ -126,16 +131,21 @@ class EphemeralReplayController
                 ) {
                     val appendSegment =
                         if (followRoads && currentWaypoints.isNotEmpty()) {
-                            val from = currentWaypoints.last()
-                            osrmClient
-                                .resolveRoute(
-                                    OsrmClient.PROFILE_FOOT,
-                                    from,
-                                    newPoint,
-                                    followRoads = true,
-                                    onFallback = ::reportFallback,
-                                )
-                                .drop(1) // first point is `from`, already in the route
+                            locationRepository.setRoadRouteFetchInFlight(true)
+                            try {
+                                val from = currentWaypoints.last()
+                                osrmClient
+                                    .resolveRoute(
+                                        OsrmClient.PROFILE_FOOT,
+                                        from,
+                                        newPoint,
+                                        followRoads = true,
+                                        onFallback = ::reportFallback,
+                                    )
+                                    .drop(1) // first point is `from`, already in the route
+                            } finally {
+                                locationRepository.setRoadRouteFetchInFlight(false)
+                            }
                         } else {
                             listOf(newPoint)
                         }

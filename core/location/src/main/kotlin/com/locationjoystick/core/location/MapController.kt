@@ -99,6 +99,7 @@ class MapController
             observeRouteWaypoints()
             observeEphemeralWaypoints()
             observeRoaming()
+            observeRoadRouteFetchInFlight()
             observeSpeedUnit()
             observeJitterRadiusOverlay()
             observeFavoriteCooldowns()
@@ -181,6 +182,14 @@ class MapController
                             }
                         }
                     }
+                }
+            }
+        }
+
+        private fun observeRoadRouteFetchInFlight() {
+            appScope.launch {
+                locationRepository.isRoadRouteFetchInFlight.collect { inFlight ->
+                    _state.update { it.copy(isRoadRouteFetchInFlight = inFlight) }
                 }
             }
         }
@@ -367,7 +376,13 @@ class MapController
                         walkTo(position)
                         return@launch
                     }
-                    val routeResult = osrmClient.getRoute(OsrmClient.PROFILE_FOOT, listOf(current, position))
+                    val routeResult =
+                        try {
+                            locationRepository.setRoadRouteFetchInFlight(true)
+                            osrmClient.getRoute(OsrmClient.PROFILE_FOOT, listOf(current, position))
+                        } finally {
+                            locationRepository.setRoadRouteFetchInFlight(false)
+                        }
                     val waypoints = routeResult.getOrNull()
                     if (waypoints.isNullOrEmpty()) {
                         val reason = routeResult.exceptionOrNull()?.let(::classifyOsrmFailure)

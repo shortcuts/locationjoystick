@@ -3,7 +3,9 @@ package com.locationjoystick.core.designsystem.component
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -11,6 +13,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.model.FavoriteLocation
 
@@ -33,6 +36,7 @@ fun FavoriteTargetDetail(
     hideTeleportFeatures: Boolean = false,
     showDismissButton: Boolean = true,
     textColor: Color = Color.Unspecified,
+    isRoadRouteFetchInFlight: Boolean = false,
 ) {
     Column(
         modifier =
@@ -70,12 +74,17 @@ fun FavoriteTargetDetail(
         }
         OutlinedButton(
             onClick = onGoToLocationViaRoads,
+            enabled = !isRoadRouteFetchInFlight,
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(top = LjSpacing.sm),
         ) {
-            Text("Walk via roads", color = textColor)
+            if (isRoadRouteFetchInFlight) {
+                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+            } else {
+                Text("Walk via roads", color = textColor)
+            }
         }
         if (showDismissButton) {
             TextButton(

@@ -130,6 +130,7 @@ class MapViewModel
                                 speedUnit = shared.speedUnit,
                                 jitterRadiusMeters = shared.jitterRadiusMeters,
                                 debugStatsEnabled = shared.debugStatsEnabled,
+                                isRoadRouteFetchInFlight = shared.isRoadRouteFetchInFlight,
                             )
                         }
                     }

@@ -56,6 +56,7 @@ class WidgetPanelPresenterTest {
                 every { isWalkPaused } returns MutableStateFlow(false)
                 every { currentMode } returns currentModeFlow
                 every { routeWaypoints } returns MutableStateFlow(null)
+                every { isRoadRouteFetchInFlight } returns MutableStateFlow(false)
             }
         val routeRepository = mockk<RouteRepository>(relaxed = true) { every { getRoutes() } returns flowOf(emptyList()) }
         val favoriteRepository =

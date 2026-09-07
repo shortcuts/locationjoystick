@@ -459,6 +459,7 @@ internal fun MapScreen(
                 context.startActivity(Intent.createChooser(shareIntent, null))
             },
             hideTeleportFeatures = uiState.hideTeleportFeatures,
+            isRoadRouteFetchInFlight = uiState.isRoadRouteFetchInFlight,
         )
     }
 

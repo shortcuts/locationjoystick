@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -17,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -129,6 +132,7 @@ internal fun FavoritesPickerSheet(
                 onGoToLocationViaRoads = { onAction(MapAction.WalkViaRoadsTo(target.position)) },
                 onDismiss = { onAction(MapAction.CloseFavoritesPicker) },
                 hideTeleportFeatures = uiState.hideTeleportFeatures,
+                isRoadRouteFetchInFlight = uiState.isRoadRouteFetchInFlight,
             )
         }
     }
@@ -155,7 +159,16 @@ internal fun PendingTapSheet(
     isEphemeralReplay: Boolean = false,
     onShare: (() -> Unit)? = null,
     hideTeleportFeatures: Boolean = false,
+    isRoadRouteFetchInFlight: Boolean = false,
 ) {
+    var isAwaitingRoadWalk by remember { mutableStateOf(false) }
+    LaunchedEffect(isRoadRouteFetchInFlight) {
+        if (isAwaitingRoadWalk && !isRoadRouteFetchInFlight) {
+            onAction(MapAction.ClearPendingTap)
+            isAwaitingRoadWalk = false
+        }
+    }
+
     ModalBottomSheet(
         onDismissRequest = { onAction(MapAction.ClearPendingTap) },
         containerColor = MaterialTheme.colorScheme.surface,
@@ -217,12 +230,17 @@ internal fun PendingTapSheet(
                     }
                     LjOutlinedButton(
                         onClick = {
+                            isAwaitingRoadWalk = true
                             onAction(MapAction.WalkViaRoadsTo(position))
-                            onAction(MapAction.ClearPendingTap)
                         },
+                        enabled = !isRoadRouteFetchInFlight,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("Walk via roads")
+                        if (isRoadRouteFetchInFlight) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text("Walk via roads")
+                        }
                     }
                 }
                 if (isWalkActive) {
@@ -239,9 +257,14 @@ internal fun PendingTapSheet(
                         }
                         LjOutlinedButton(
                             onClick = { onAction(MapAction.AddEphemeralWaypoint(position, followRoads = true)) },
+                            enabled = !isRoadRouteFetchInFlight,
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("Add next point via roads")
+                            if (isRoadRouteFetchInFlight) {
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            } else {
+                                Text("Add next point via roads")
+                            }
                         }
                     }
                 }

@@ -106,6 +106,20 @@ class LocationRepository
         private val _routeWaypoints = MutableStateFlow<List<LatLng>?>(null)
         val routeWaypoints: StateFlow<List<LatLng>?> = _routeWaypoints.asStateFlow()
 
+        private val _isRoadRouteFetchInFlight = MutableStateFlow(false)
+
+        /**
+         * True while an OSRM road-following fetch is in flight for a movement action initiated from
+         * the UI (walk-via-roads, add-next-point-via-roads, and — once wired by its own backlog task —
+         * route replay's Follow-roads start). Lets any surface show a loading/disabled state instead of
+         * going silent for up to [AppConstants.OsrmConstants.TOTAL_TIME_BUDGET_MS].
+         */
+        val isRoadRouteFetchInFlight: StateFlow<Boolean> = _isRoadRouteFetchInFlight.asStateFlow()
+
+        fun setRoadRouteFetchInFlight(inFlight: Boolean) {
+            _isRoadRouteFetchInFlight.value = inFlight
+        }
+
         private val _currentMode = MutableStateFlow(MockMode.TELEPORT)
         val currentMode: StateFlow<MockMode> = _currentMode.asStateFlow()
 
