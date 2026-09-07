@@ -40,6 +40,7 @@ import com.locationjoystick.core.designsystem.component.DestinationCardSpec
 import com.locationjoystick.core.designsystem.component.DestinationHub
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
+import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.RoamingDefaults
@@ -566,6 +567,7 @@ private fun SettingsHubScreen(
         snackbarHost = snackbarHost,
         actions = {
             LjOverflowMenu { dismiss ->
+                LjOverflowMenuSectionLabel("Export", showDivider = false)
                 DropdownMenuItem(
                     text = { Text("Export via QR code") },
                     onClick = {
@@ -580,6 +582,7 @@ private fun SettingsHubScreen(
                         onAction(SettingsAction.Export)
                     },
                 )
+                LjOverflowMenuSectionLabel("Import")
                 DropdownMenuItem(
                     text = { Text("Import from QR code") },
                     onClick = {
@@ -615,6 +618,7 @@ private fun SettingsHubScreen(
                         onAction(SettingsAction.ImportYamla)
                     },
                 )
+                LjOverflowMenuSectionLabel("Danger")
                 DropdownMenuItem(
                     text = { Text("Reset all data", color = MaterialTheme.colorScheme.error) },
                     leadingIcon = { Icon(LjIcons.Delete, null, tint = MaterialTheme.colorScheme.error) },

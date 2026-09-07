@@ -8,6 +8,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -169,6 +171,30 @@ fun LjOverflowMenu(content: @Composable ColumnScope.(dismiss: () -> Unit) -> Uni
     }
 }
 
+/**
+ * Section label + divider for grouping items inside [LjOverflowMenu]'s dropdown content.
+ * Renders a divider above the label except for the first group in a menu — pass
+ * [showDivider] = false for that one.
+ */
+@Composable
+fun LjOverflowMenuSectionLabel(
+    text: String,
+    showDivider: Boolean = true,
+) {
+    if (showDivider) {
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 4.dp),
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
+    }
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    )
+}
+
 @Preview
 @Composable
 private fun LjTopBarPreview() {
@@ -178,4 +204,16 @@ private fun LjTopBarPreview() {
         onToggleSpoofing = {},
         onNavigationClick = {},
     )
+}
+
+@Preview
+@Composable
+private fun LjOverflowMenuSectionLabelPreview() {
+    Surface {
+        Column {
+            LjOverflowMenuSectionLabel("Export", showDivider = false)
+            LjOverflowMenuSectionLabel("Import")
+            LjOverflowMenuSectionLabel("Danger")
+        }
+    }
 }
