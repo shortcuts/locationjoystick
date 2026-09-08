@@ -310,6 +310,12 @@ interface PreferencesDataSource {
     /** Sets whether compass-aware tap-to-walk is enabled. */
     suspend fun setCompassTrackingEnabled(enabled: Boolean)
 
+    /** Gets the package name of the app the compass test button switches to. Empty if unset. */
+    fun getCompassTestTargetPackage(): Flow<String>
+
+    /** Sets the package name of the app the compass test button switches to. */
+    suspend fun setCompassTestTargetPackage(packageName: String)
+
     /** Returns all settings needed by the settings UI in a single DataStore scan. */
     fun getSettingsSnapshot(): Flow<SettingsSnapshot>
 
@@ -471,6 +477,7 @@ class AppPreferencesDataSource
             val TAP_TO_WALK_OVERLAY_ENABLED = booleanPreferencesKey("tap_to_walk_overlay_enabled")
             val TAP_TO_WALK_SCALE_MPX = doublePreferencesKey("tap_to_walk_scale_mpx")
             val COMPASS_TRACKING_ENABLED = booleanPreferencesKey("compass_tracking_enabled")
+            val COMPASS_TEST_TARGET_PACKAGE = stringPreferencesKey("compass_test_target_package")
             val REALISM_REAL_ELEVATION_ENABLED = booleanPreferencesKey("realism_real_elevation_enabled")
             val BASE_ALTITUDE_OVERRIDE_METERS = doublePreferencesKey("base_altitude_override_meters")
             val ALTITUDE_JITTER_RADIUS_METERS = doublePreferencesKey("altitude_jitter_radius_meters")
@@ -860,6 +867,10 @@ class AppPreferencesDataSource
         override fun getCompassTrackingEnabled(): Flow<Boolean> = pref(Keys.COMPASS_TRACKING_ENABLED, false)
 
         override suspend fun setCompassTrackingEnabled(enabled: Boolean) = setPref(Keys.COMPASS_TRACKING_ENABLED, enabled)
+
+        override fun getCompassTestTargetPackage(): Flow<String> = pref(Keys.COMPASS_TEST_TARGET_PACKAGE, "")
+
+        override suspend fun setCompassTestTargetPackage(packageName: String) = setPref(Keys.COMPASS_TEST_TARGET_PACKAGE, packageName)
 
         override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
             dataStore.edit { prefs ->

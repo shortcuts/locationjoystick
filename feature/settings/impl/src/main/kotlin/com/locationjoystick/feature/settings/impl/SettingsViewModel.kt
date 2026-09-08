@@ -2,6 +2,7 @@ package com.locationjoystick.feature.settings.impl
 
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.view.accessibility.AccessibilityManager
@@ -40,6 +41,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+
+internal data class InstalledApp(
+    val packageName: String,
+    val label: String,
+)
 
 @HiltViewModel
 class SettingsViewModel
@@ -160,11 +166,20 @@ class SettingsViewModel
         val uiState: StateFlow<SettingsUiState> =
             combine(
                 combine(snapshotFlow, draftStateFlow) { snapshot, draft -> Pair(snapshot, draft) },
-                settingsRepository.getCompassTrackingEnabled(),
+                combine(
+                    settingsRepository.getCompassTrackingEnabled(),
+                    settingsRepository.getCompassTestTargetPackage(),
+                ) { enabled, targetPackage -> Pair(enabled, targetPackage) },
                 compassServiceGranted,
                 settingsRepository.getThemeMode(),
                 settingsRepository.getBaseAltitudeOverride(),
-            ) { (snapshot, draftState), compassTrackingEnabled, isServiceGranted, themeMode, baseAltitudeOverride ->
+            ) {
+                    (snapshot, draftState),
+                    (compassTrackingEnabled, compassTestTargetPackage),
+                    isServiceGranted,
+                    themeMode,
+                    baseAltitudeOverride,
+                ->
                 val isDirty = draftState != DraftState()
                 SettingsUiState(
                     isLoading = false,
@@ -208,6 +223,7 @@ class SettingsViewModel
                         draftState.altitudeOverrideButtonEnabled ?: snapshot.altitudeOverrideButtonEnabled,
                     debugStatsEnabled = draftState.debugStatsEnabled ?: snapshot.debugStatsEnabled,
                     compassTrackingEnabled = compassTrackingEnabled,
+                    compassTestTargetPackage = compassTestTargetPackage,
                     isCompassServiceGranted = isServiceGranted,
                     themeMode = themeMode,
                     isDirty = isDirty,
@@ -395,6 +411,22 @@ class SettingsViewModel
 
         fun setCompassTrackingEnabled(enabled: Boolean) {
             viewModelScope.launch { settingsRepository.setCompassTrackingEnabled(enabled) }
+        }
+
+        fun setCompassTestTargetPackage(packageName: String) {
+            viewModelScope.launch { settingsRepository.setCompassTestTargetPackage(packageName) }
+        }
+
+        /** Launchable apps for the compass-test app picker, queried once on first access. */
+        internal val launchableApps: List<InstalledApp> by lazy {
+            val pm = context.packageManager
+            val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+            pm
+                .queryIntentActivities(launcherIntent, 0)
+                .filter { it.activityInfo.packageName != context.packageName }
+                .map { InstalledApp(it.activityInfo.packageName, it.loadLabel(pm).toString()) }
+                .distinctBy { it.packageName }
+                .sortedBy { it.label.lowercase() }
         }
 
         fun setThemeMode(mode: ThemeMode) {

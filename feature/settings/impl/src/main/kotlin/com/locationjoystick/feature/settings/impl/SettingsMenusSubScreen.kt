@@ -21,6 +21,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -76,6 +78,7 @@ internal fun SettingsMenusSubScreen(
     onAction: (SettingsAction) -> Unit,
     onCheckCompassService: () -> Unit = {},
     onTestCompassDetection: suspend () -> Float? = { null },
+    launchableApps: List<InstalledApp> = emptyList(),
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
@@ -120,7 +123,7 @@ internal fun SettingsMenusSubScreen(
                         Spacer(Modifier.height(24.dp))
                         SpeedCycleSection(uiState, onAction)
                         Spacer(Modifier.height(24.dp))
-                        TapToWalkSection(uiState, onAction, onTestCompassDetection)
+                        TapToWalkSection(uiState, onAction, onTestCompassDetection, launchableApps)
                         Spacer(Modifier.height(24.dp))
                         PrivacySection(uiState, onAction)
                         Spacer(Modifier.height(24.dp))
@@ -168,6 +171,7 @@ private fun TapToWalkSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
     onTestCompassDetection: suspend () -> Float? = { null },
+    launchableApps: List<InstalledApp> = emptyList(),
 ) {
     var showWarning by rememberSaveable { mutableStateOf(false) }
     val enabled = uiState.floatingMapQuickWalk || uiState.tapToWalkOverlayEnabled
@@ -227,7 +231,7 @@ private fun TapToWalkSection(
         // takeScreenshot(int, Executor, TakeScreenshotCallback) requires API 30 — no fallback exists.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Spacer(Modifier.height(16.dp))
-            CompassOrientationSection(uiState, onAction, onTestCompassDetection)
+            CompassOrientationSection(uiState, onAction, onTestCompassDetection, launchableApps)
         }
     }
     if (showWarning) {
@@ -326,11 +330,14 @@ private fun CompassOrientationSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
     onTestCompassDetection: suspend () -> Float? = { null },
+    launchableApps: List<InstalledApp> = emptyList(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var testResult by remember { mutableStateOf<String?>(null) }
     var isTesting by remember { mutableStateOf(false) }
+    var appPickerExpanded by remember { mutableStateOf(false) }
+    val selectedApp = launchableApps.find { it.packageName == uiState.compassTestTargetPackage }
 
     Text("Compass orientation", style = MaterialTheme.typography.headlineSmall)
     Spacer(Modifier.height(4.dp))
@@ -384,10 +391,32 @@ private fun CompassOrientationSection(
         )
         if (uiState.compassTrackingEnabled) {
             Spacer(Modifier.height(8.dp))
+            Text("Game app", style = MaterialTheme.typography.bodyLarge)
+            Spacer(Modifier.height(4.dp))
+            Box {
+                LjOutlinedButton(onClick = { appPickerExpanded = true }) {
+                    Text(selectedApp?.label ?: "Select app…")
+                }
+                DropdownMenu(expanded = appPickerExpanded, onDismissRequest = { appPickerExpanded = false }) {
+                    launchableApps.forEach { app ->
+                        DropdownMenuItem(
+                            text = { Text(app.label) },
+                            onClick = {
+                                onAction(SettingsAction.SetCompassTestTargetPackage(app.packageName))
+                                appPickerExpanded = false
+                            },
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
             Text(
-                "To verify it works on your device: switch to your game so its compass is visible " +
-                    "(top-right corner), then switch back here and tap Test — the app briefly minimizes " +
-                    "itself to capture your game's screen, then returns.",
+                if (selectedApp != null) {
+                    "Tap Test to switch to ${selectedApp.label}, capture its compass, and return here."
+                } else {
+                    "Select the game above, or switch to it yourself first — then tap Test. " +
+                        "The app briefly minimizes itself to capture whatever's on screen, then returns."
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -398,11 +427,15 @@ private fun CompassOrientationSection(
                         isTesting = true
                         testResult = null
                         scope.launch {
-                            // Detection reads whatever is CURRENTLY on screen — if our own Settings UI is
-                            // in front, that's what gets captured, not the game behind it. Briefly send
-                            // ourselves to the back (revealing the game, which is directly behind us in
-                            // the task stack per the instructions above) before capturing, then return.
-                            (context as? Activity)?.moveTaskToBack(true)
+                            // Detection reads whatever is CURRENTLY on screen. With a selected app we launch
+                            // it directly; otherwise fall back to the old behavior — send ourselves to the
+                            // back, revealing whatever the user switched to themselves beforehand.
+                            val targetIntent = selectedApp?.let { context.packageManager.getLaunchIntentForPackage(it.packageName) }
+                            if (targetIntent != null) {
+                                context.startActivity(targetIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                            } else {
+                                (context as? Activity)?.moveTaskToBack(true)
+                            }
                             delay(700)
                             val angle = onTestCompassDetection()
                             context.packageManager.getLaunchIntentForPackage(context.packageName)?.let {

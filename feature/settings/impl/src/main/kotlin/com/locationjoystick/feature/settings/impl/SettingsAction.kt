@@ -167,6 +167,10 @@ internal sealed class SettingsAction {
         val enabled: Boolean,
     ) : SettingsAction()
 
+    data class SetCompassTestTargetPackage(
+        val packageName: String,
+    ) : SettingsAction()
+
     data class SetThemeMode(
         val mode: ThemeMode,
     ) : SettingsAction()

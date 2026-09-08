@@ -308,6 +308,10 @@ class SettingsRepository
 
         suspend fun setCompassTrackingEnabled(enabled: Boolean) = dataSource.setCompassTrackingEnabled(enabled)
 
+        fun getCompassTestTargetPackage(): Flow<String> = dataSource.getCompassTestTargetPackage()
+
+        suspend fun setCompassTestTargetPackage(packageName: String) = dataSource.setCompassTestTargetPackage(packageName)
+
         fun getSettingsSnapshot(): Flow<SettingsSnapshot> = dataSource.getSettingsSnapshot()
 
         suspend fun applySnapshot(snapshot: SettingsSnapshot) = dataSource.applySnapshot(snapshot)

@@ -14,6 +14,7 @@ Both features live in Settings → Menus → Tap to Walk.
 | `TAP_TO_WALK_OVERLAY_ENABLED` | Boolean | `false` | Show crosshair button in widget panel |
 | `TAP_TO_WALK_SCALE_MPX` | Double | `0.23` | Meters per pixel for pixel→GPS conversion (calibrated for a fully zoomed-out AR game map) |
 | `COMPASS_TRACKING_ENABLED` | Boolean | `false` | Capture compass heading before each tap |
+| `COMPASS_TEST_TARGET_PACKAGE` | String | `""` | Package the "Compass orientation" Test button switches to automatically. Empty = manual switch |
 
 Scale is clamped to `AppConstants.TapToWalkConstants.MIN_SCALE_MPX`–`MAX_SCALE_MPX` (0.01–1.0 m/px) in `applySnapshot()`.
 
@@ -127,14 +128,24 @@ Hardware bitmaps are copied to `ARGB_8888` before pixel access and recycled afte
 ### Verifying On-Device
 
 Settings → Menus → Tap to Walk → "Compass orientation" → **Test** button lets the user confirm
-detection works on their device/game without leaving Settings mid-session: switch to the game so
-its compass is visible, switch back to Settings, tap Test. Since `captureHeading()` screenshots
-whatever is *currently on screen* — which would otherwise be the Settings UI itself, not the game
-behind it — the Test button briefly calls `Activity.moveTaskToBack(true)` (revealing the game,
-which sits directly behind Settings in the task stack after that switch sequence), waits 700 ms for
-the reveal to render, captures, then relaunches the app's own task
+detection works on their device/game without leaving Settings mid-session.
+
+A "Game app" picker (`SettingsViewModel.launchableApps`, queried once via
+`PackageManager.queryIntentActivities` on `ACTION_MAIN`/`CATEGORY_LAUNCHER`, excluding this app)
+lets the user select their game once — persisted live as `COMPASS_TEST_TARGET_PACKAGE`. With an
+app selected, tapping Test launches it directly (`getLaunchIntentForPackage` +
+`FLAG_ACTIVITY_NEW_TASK`) instead of relying on the user having switched to it themselves.
+
+Since `captureHeading()` screenshots whatever is *currently on screen* — which would otherwise be
+the Settings UI itself, not the game behind it — the Test button waits 700 ms after switching for
+the game to render, captures, then relaunches the app's own task
 (`FLAG_ACTIVITY_REORDER_TO_FRONT`) to return. Reports "Detected — north is N° from up" or "Not
 detected — make sure your game's compass is visible top-right".
+
+**No app selected (picker left on "Select app…")**: falls back to the original flow — the user
+switches to the game themselves, switches back to Settings, then taps Test, which briefly calls
+`Activity.moveTaskToBack(true)` (revealing the game, which sits directly behind Settings in the
+task stack after that switch sequence) instead of launching an intent.
 
 ### Anti-cheat caveat
 
