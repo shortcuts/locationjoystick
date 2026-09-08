@@ -32,7 +32,7 @@
 #   --steps 01,03,05     (run steps 1, 3, 5)
 # Seeding (routes, favorites) always runs before the first selected step.
 #
-# Output files (20 canonical PNGs):
+# Output files (21 canonical PNGs):
 #   01_idle, 02_map, 03_routes, 04_favorites, 05_settings,
 #   06_map_routes_sheet, 07_map_favorites_sheet, 08_map_roaming_sheet,
 #   09_route_creator, 10_route_detail, 11_map_picker,
@@ -40,7 +40,7 @@
 #   13_joystick_overlay, 14_widget_overlay,
 #   15_routes_add_button, 16_favorites_add_button,
 #   17_group_sync, 18_debug_stats,
-#   20_tap_to_walk_settings
+#   20_tap_to_walk_settings, 21_compass_orientation
 #
 # 19_onboarding_mock_location is NOT captured by this script — it's the
 # "Set as fake GPS app" onboarding step, only reachable on a fresh install
@@ -1022,6 +1022,29 @@ print("checked=\"true\"" in seg[i:i+40])
     wait_s 1 "Enabling Tap to Walk — Map scale / Compass sections expanding"
   fi
   screenshot "20_tap_to_walk_settings"
+fi
+
+# ── 21. Settings → Menus → Compass orientation section ──────────────────────
+# CompassOrientationSection renders below the Map scale slider (API 30+ only)
+# — off-screen in step 20's screenshot. Scroll further to capture the Game
+# app picker + Test button on their own.
+
+if should_run_step "21"; then
+  log "=== 21 COMPASS ORIENTATION ==="
+  go_idle
+  tap_text_below "Settings" "$CARD_Y_MIN"
+  wait_s 2 "Settings loading"
+  tap_text "Menus"
+  wait_s 2 "Menus loading"
+  for _ in 1 2 3; do
+    dump=$(ui_dump)
+    found=$(grep -c 'text="Compass orientation"' "$dump" || true)
+    rm -f "$dump"
+    (( found > 0 )) && break
+    $ADB shell input swipe 540 1600 540 400
+    wait_s 1 "Scrolling to Compass orientation"
+  done
+  screenshot "21_compass_orientation"
 fi
 
 # ── Done ─────────────────────────────────────────────

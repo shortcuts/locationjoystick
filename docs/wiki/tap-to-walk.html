@@ -43,6 +43,14 @@
       </ul>
     </div>
 
+    <div class="feature-section" id="compass-orientation-settings">
+      <img class="phone-shot" src="screenshots/21_compass_orientation.png" alt="Compass orientation settings">
+      <ul class="section-bullets">
+        <li>Pick your game from the <strong>Game app</strong> list, then tap
+          <strong>Test</strong> to confirm detection works on your device.</li>
+      </ul>
+    </div>
+
     <h2 id="floating-map-quick-walk">Floating map quick walk</h2>
     <p>
       When this is turned on, tapping anywhere on the floating map starts walking to that spot
@@ -95,11 +103,11 @@
 
     <h2 id="compass-orientation">Compass orientation</h2>
     <p>
-      When this is on, locationjoystick takes a screenshot the moment you open the tap-to-walk
-      overlay and automatically finds your game's compass icon in the top-right corner of the
-      screen — the same spot most AR/GPS games put theirs. It uses the icon's direction
-      to rotate the walk target so it lands in the right place even when the game map is turned.
-      There's nothing to set up or position by hand — just turn it on.
+      locationjoystick takes a screenshot the moment you open the tap-to-walk overlay and
+      automatically finds your game's compass icon in the top-right corner of the screen — the
+      same spot most AR/GPS games put theirs. It uses the icon's direction to rotate the walk
+      target so it lands in the right place even when the game map is turned. There's no switch
+      for this — it runs automatically whenever the accessibility service below is turned on.
     </p>
 
     <h3 id="compass-setup">Setup</h3>
@@ -109,8 +117,8 @@
       <li>Under <strong>Compass orientation</strong>, tap <strong>Open Settings</strong> to open
           Android's accessibility settings.</li>
       <li>Find <strong>locationjoystick compass</strong> in the list and turn it on.</li>
-      <li>Return to locationjoystick. The status updates to <em>Enabled</em>.</li>
-      <li>Turn on <strong>Detect compass orientation</strong>.</li>
+      <li>Return to locationjoystick. The status updates to <em>Enabled</em>, and compass
+          detection is now active — no further switch to flip.</li>
     </ol>
 
     <h3 id="compass-verify">Verifying it works on your device</h3>
@@ -127,9 +135,8 @@
     <h3 id="compass-warning">Important note</h3>
     <p>
       Some apps can notice when this kind of background helper is active. If the game you use
-      checks for this and limits features when it finds one, turn off
-      <strong>Detect compass orientation</strong>, or disable the locationjoystick compass entry
-      in your phone's accessibility settings.
+      checks for this and limits features when it finds one, disable the locationjoystick
+      compass entry in your phone's accessibility settings — there is no separate in-app switch.
     </p>
   </main>
 
