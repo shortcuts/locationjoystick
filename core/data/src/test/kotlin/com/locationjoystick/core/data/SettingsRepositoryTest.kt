@@ -1480,6 +1480,10 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setCompassTrackingEnabled(enabled: Boolean) = Unit
 
+    override fun getCompassTestTargetPackage(): Flow<String> = flowOf("")
+
+    override suspend fun setCompassTestTargetPackage(packageName: String) = Unit
+
     val recentSearchesFlow = MutableStateFlow<List<RecentSearch>>(emptyList())
 
     override fun getRecentSearches(): Flow<List<RecentSearch>> = recentSearchesFlow

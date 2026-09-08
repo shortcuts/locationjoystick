@@ -15,6 +15,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 
 @AndroidEntryPoint
 class CompassAccessibilityService :
@@ -42,10 +44,12 @@ class CompassAccessibilityService :
          * count clears `MIN_RED_PIXELS`, are considered — this is what makes detection immune to
          * unrelated red clutter nearby, unlike a plain "reddest pixel in a big circle" scan.
          *
-         * The needle's pivot is approximated as the bottom-center of the winning blob's bounding
-         * box (empirically where the icon's rotation center sits, right at the base of the
-         * colored half — see `docs/features/tap-to-walk.md`), and the angle is measured from that
-         * pivot to the blob's centroid — self-calibrating every call, no stored region needed.
+         * The pointing direction is the blob's own principal axis (PCA on the red pixel
+         * coordinates), signed by third-moment skew so it points from the wide/pivot end toward
+         * the tapered tip — not a "bottom-center of the bounding box" approximation, which only
+         * held when the needle pointed straight up and drifted further off the true angle the
+         * more the needle rotated (see `docs/features/tap-to-walk.md`). Self-calibrating every
+         * call, no stored region needed.
          */
         fun detectNorthAngle(bitmap: Bitmap): Float? {
             val soft =
@@ -81,18 +85,42 @@ class CompassAccessibilityService :
 
             val blob = findBestIconBlob(isRed, searchW, searchH, minDim, maxDim) ?: return null
 
-            val pivotX = (blob.minX + blob.maxX) / 2.0
-            val pivotY = blob.maxY.toDouble()
-            val dx = blob.centroidX - pivotX
-            val dy = blob.centroidY - pivotY
-            return atan2(dx, -dy).toFloat()
+            // Principal axis of the blob's own pixel distribution — rotation-invariant, unlike
+            // deriving a pivot from the bounding box.
+            val varX = blob.sumXX / blob.count - blob.centroidX * blob.centroidX
+            val varY = blob.sumYY / blob.count - blob.centroidY * blob.centroidY
+            val covXY = blob.sumXY / blob.count - blob.centroidX * blob.centroidY
+            val theta = 0.5 * atan2(2 * covXY, varX - varY)
+            var ax = cos(theta)
+            var ay = sin(theta)
+
+            // Sign the axis toward the tapered tip: a teardrop/kite needle has more mass at its
+            // wide (pivot) end, so the third moment along the tip-ward direction is positive.
+            var m3 = 0.0
+            for (y in blob.minY..blob.maxY) {
+                for (x in blob.minX..blob.maxX) {
+                    if (isRed[y * searchW + x]) {
+                        val proj = (x - blob.centroidX) * ax + (y - blob.centroidY) * ay
+                        m3 += proj * proj * proj
+                    }
+                }
+            }
+            if (m3 < 0) {
+                ax = -ax
+                ay = -ay
+            }
+            return atan2(ax, -ay).toFloat()
         }
 
         private class IconBlob(
             val centroidX: Double,
             val centroidY: Double,
+            val sumXX: Double,
+            val sumYY: Double,
+            val sumXY: Double,
             val minX: Int,
             val maxX: Int,
+            val minY: Int,
             val maxY: Int,
             val count: Int,
         )
@@ -127,6 +155,9 @@ class CompassAccessibilityService :
                     var maxY = sy
                     var sumX = 0.0
                     var sumY = 0.0
+                    var sumXX = 0.0
+                    var sumYY = 0.0
+                    var sumXY = 0.0
                     var count = 0
 
                     while (head < tail) {
@@ -136,6 +167,9 @@ class CompassAccessibilityService :
                         count++
                         sumX += cx
                         sumY += cy
+                        sumXX += cx.toDouble() * cx
+                        sumYY += cy.toDouble() * cy
+                        sumXY += cx.toDouble() * cy
                         if (cx < minX) minX = cx
                         if (cx > maxX) maxX = cx
                         if (cy < minY) minY = cy
@@ -155,7 +189,19 @@ class CompassAccessibilityService :
                     ) {
                         val current = best
                         if (current == null || count > current.count) {
-                            best = IconBlob(sumX / count, sumY / count, minX, maxX, maxY, count)
+                            best =
+                                IconBlob(
+                                    sumX / count,
+                                    sumY / count,
+                                    sumXX,
+                                    sumYY,
+                                    sumXY,
+                                    minX,
+                                    maxX,
+                                    minY,
+                                    maxY,
+                                    count,
+                                )
                         }
                     }
                 }

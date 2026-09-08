@@ -681,6 +681,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setCompassTrackingEnabled(enabled: Boolean) = Unit
 
+    override fun getCompassTestTargetPackage(): Flow<String> = flowOf("")
+
+    override suspend fun setCompassTestTargetPackage(packageName: String) = Unit
+
     var clearAllExceptOnboardingCallCount = 0
 
     override suspend fun clearAllExceptOnboarding() {
