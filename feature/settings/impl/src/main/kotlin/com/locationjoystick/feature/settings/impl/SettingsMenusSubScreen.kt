@@ -386,110 +386,98 @@ private fun CompassOrientationSection(
     }
     if (uiState.isCompassServiceGranted) {
         Spacer(Modifier.height(8.dp))
-        LjCheckboxRow(
-            checked = uiState.compassTrackingEnabled,
-            onCheckedChange = {
-                onAction(SettingsAction.SetCompassTrackingEnabled(it))
-                testResult = null
-            },
-            title = "Detect compass orientation",
-            description = "Auto-locates the compass icon — no manual calibration.",
-        )
-        if (uiState.compassTrackingEnabled) {
-            Spacer(Modifier.height(8.dp))
-            Text("Game app", style = MaterialTheme.typography.bodyLarge)
-            Spacer(Modifier.height(4.dp))
-            Box(modifier = Modifier.fillMaxWidth()) {
-                val chevronRotation by animateFloatAsState(
-                    targetValue = if (appPickerExpanded) 180f else 0f,
-                    label = "gameAppChevronRotation",
+        Text("Game app", style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.height(4.dp))
+        Box(modifier = Modifier.fillMaxWidth()) {
+            val chevronRotation by animateFloatAsState(
+                targetValue = if (appPickerExpanded) 180f else 0f,
+                label = "gameAppChevronRotation",
+            )
+            LjOutlinedButton(onClick = { appPickerExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    selectedApp?.label ?: "Select app…",
+                    modifier = Modifier.weight(1f),
+                    color =
+                        if (selectedApp != null) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                 )
-                LjOutlinedButton(onClick = { appPickerExpanded = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        selectedApp?.label ?: "Select app…",
-                        modifier = Modifier.weight(1f),
-                        color =
-                            if (selectedApp != null) {
-                                MaterialTheme.colorScheme.onSurface
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
+                Icon(
+                    LjIcons.ArrowDropDown,
+                    contentDescription = null,
+                    modifier = Modifier.graphicsLayer { rotationZ = chevronRotation },
+                )
+            }
+            DropdownMenu(expanded = appPickerExpanded, onDismissRequest = { appPickerExpanded = false }) {
+                launchableApps.forEach { app ->
+                    DropdownMenuItem(
+                        text = { Text(app.label) },
+                        onClick = {
+                            onAction(SettingsAction.SetCompassTestTargetPackage(app.packageName))
+                            appPickerExpanded = false
+                        },
                     )
-                    Icon(
-                        LjIcons.ArrowDropDown,
-                        contentDescription = null,
-                        modifier = Modifier.graphicsLayer { rotationZ = chevronRotation },
-                    )
-                }
-                DropdownMenu(expanded = appPickerExpanded, onDismissRequest = { appPickerExpanded = false }) {
-                    launchableApps.forEach { app ->
-                        DropdownMenuItem(
-                            text = { Text(app.label) },
-                            onClick = {
-                                onAction(SettingsAction.SetCompassTestTargetPackage(app.packageName))
-                                appPickerExpanded = false
-                            },
-                        )
-                    }
                 }
             }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                if (selectedApp != null) {
-                    "Tap Test to switch to ${selectedApp.label}, capture its compass, and return here."
-                } else {
-                    "Select the game above, or switch to it yourself first — then tap Test. " +
-                        "The app briefly minimizes itself to capture whatever's on screen, then returns."
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                LjOutlinedButton(
-                    onClick = {
-                        isTesting = true
-                        testResult = null
-                        scope.launch {
-                            // Detection reads whatever is CURRENTLY on screen. With a selected app we launch
-                            // it directly; otherwise fall back to the old behavior — send ourselves to the
-                            // back, revealing whatever the user switched to themselves beforehand.
-                            val targetIntent = selectedApp?.let { context.packageManager.getLaunchIntentForPackage(it.packageName) }
-                            if (targetIntent != null) {
-                                context.startActivity(targetIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                            } else {
-                                (context as? Activity)?.moveTaskToBack(true)
-                            }
-                            delay(700)
-                            val angle = onTestCompassDetection()
-                            context.packageManager.getLaunchIntentForPackage(context.packageName)?.let {
-                                it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(it)
-                            }
-                            testResult =
-                                if (angle != null) {
-                                    "Detected — north is ${Math.toDegrees(angle.toDouble()).roundToInt()}° from up"
-                                } else {
-                                    "Not detected — make sure your game's compass is visible top-right"
-                                }
-                            isTesting = false
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            if (selectedApp != null) {
+                "Tap Test to switch to ${selectedApp.label}, capture its compass, and return here."
+            } else {
+                "Select the game above, or switch to it yourself first — then tap Test. " +
+                    "The app briefly minimizes itself to capture whatever's on screen, then returns."
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            LjOutlinedButton(
+                onClick = {
+                    isTesting = true
+                    testResult = null
+                    scope.launch {
+                        // Detection reads whatever is CURRENTLY on screen. With a selected app we launch
+                        // it directly; otherwise fall back to the old behavior — send ourselves to the
+                        // back, revealing whatever the user switched to themselves beforehand.
+                        val targetIntent = selectedApp?.let { context.packageManager.getLaunchIntentForPackage(it.packageName) }
+                        if (targetIntent != null) {
+                            context.startActivity(targetIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        } else {
+                            (context as? Activity)?.moveTaskToBack(true)
                         }
-                    },
-                    enabled = !isTesting,
-                ) { Text(if (isTesting) "Testing…" else "Test") }
-                if (testResult != null) {
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        testResult!!,
-                        style = MaterialTheme.typography.bodySmall,
-                        color =
-                            if (testResult!!.startsWith("Detected")) {
-                                MaterialTheme.colorScheme.primary
+                        delay(700)
+                        val angle = onTestCompassDetection()
+                        context.packageManager.getLaunchIntentForPackage(context.packageName)?.let {
+                            it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_NEW_TASK)
+                            context.startActivity(it)
+                        }
+                        testResult =
+                            if (angle != null) {
+                                "Detected — north is ${Math.toDegrees(angle.toDouble()).roundToInt()}° from up"
                             } else {
-                                MaterialTheme.colorScheme.error
-                            },
-                    )
-                }
+                                "Not detected — make sure your game's compass is visible top-right"
+                            }
+                        isTesting = false
+                    }
+                },
+                enabled = !isTesting,
+            ) { Text(if (isTesting) "Testing…" else "Test") }
+            if (testResult != null) {
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    testResult!!,
+                    style = MaterialTheme.typography.bodySmall,
+                    color =
+                        if (testResult!!.startsWith("Detected")) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        },
+                )
             }
         }
     }

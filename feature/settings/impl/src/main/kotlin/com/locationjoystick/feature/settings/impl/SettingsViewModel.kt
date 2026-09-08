@@ -166,16 +166,13 @@ class SettingsViewModel
         val uiState: StateFlow<SettingsUiState> =
             combine(
                 combine(snapshotFlow, draftStateFlow) { snapshot, draft -> Pair(snapshot, draft) },
-                combine(
-                    settingsRepository.getCompassTrackingEnabled(),
-                    settingsRepository.getCompassTestTargetPackage(),
-                ) { enabled, targetPackage -> Pair(enabled, targetPackage) },
+                settingsRepository.getCompassTestTargetPackage(),
                 compassServiceGranted,
                 settingsRepository.getThemeMode(),
                 settingsRepository.getBaseAltitudeOverride(),
             ) {
                     (snapshot, draftState),
-                    (compassTrackingEnabled, compassTestTargetPackage),
+                    compassTestTargetPackage,
                     isServiceGranted,
                     themeMode,
                     baseAltitudeOverride,
@@ -222,7 +219,6 @@ class SettingsViewModel
                     altitudeOverrideButtonEnabled =
                         draftState.altitudeOverrideButtonEnabled ?: snapshot.altitudeOverrideButtonEnabled,
                     debugStatsEnabled = draftState.debugStatsEnabled ?: snapshot.debugStatsEnabled,
-                    compassTrackingEnabled = compassTrackingEnabled,
                     compassTestTargetPackage = compassTestTargetPackage,
                     isCompassServiceGranted = isServiceGranted,
                     themeMode = themeMode,
@@ -407,10 +403,6 @@ class SettingsViewModel
 
         fun setTapToWalkScaleMpx(scale: Double) {
             mutableDraft.update { it.copy(tapToWalkScaleMpx = scale) }
-        }
-
-        fun setCompassTrackingEnabled(enabled: Boolean) {
-            viewModelScope.launch { settingsRepository.setCompassTrackingEnabled(enabled) }
         }
 
         fun setCompassTestTargetPackage(packageName: String) {

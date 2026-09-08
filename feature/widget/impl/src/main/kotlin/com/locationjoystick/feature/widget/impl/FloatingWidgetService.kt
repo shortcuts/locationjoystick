@@ -134,7 +134,6 @@ class FloatingWidgetService :
 
     private val isTapToWalkActiveFlow = MutableStateFlow(false)
     private lateinit var tapToWalkScaleMpx: StateFlow<Double>
-    private lateinit var compassTrackingEnabled: StateFlow<Boolean>
     private var tapToWalkOverlay: TapToWalkOverlay? = null
 
     // Drag position — class-level so onConfigurationChanged can read them after rotation.
@@ -179,10 +178,6 @@ class FloatingWidgetService :
             settingsRepository
                 .getTapToWalkScaleMpx()
                 .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
-        compassTrackingEnabled =
-            settingsRepository
-                .getCompassTrackingEnabled()
-                .stateIn(lifecycleScope, SharingStarted.Eagerly, false)
         serviceBinder.bind()
         lifecycleScope.launch {
             settingsRepository.getActiveSpeedProfile().collect { profile ->
@@ -429,12 +424,7 @@ class FloatingWidgetService :
                     getPosition = { mapController.sharedState.value.currentPosition },
                     getScaleMpx = { tapToWalkScaleMpx.value },
                     onDismissed = { isTapToWalkActiveFlow.value = false },
-                    getHeadingAsync =
-                        if (compassTrackingEnabled.value) {
-                            { compassHeadingSource.captureHeading() }
-                        } else {
-                            null
-                        },
+                    getHeadingAsync = { compassHeadingSource.captureHeading() },
                 )
             tapToWalkOverlay = overlay
             isTapToWalkActiveFlow.value = true

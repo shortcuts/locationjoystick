@@ -304,10 +304,6 @@ class SettingsRepository
 
         fun getTapToWalkScaleMpx(): Flow<Double> = dataSource.getTapToWalkScaleMpx()
 
-        fun getCompassTrackingEnabled(): Flow<Boolean> = dataSource.getCompassTrackingEnabled()
-
-        suspend fun setCompassTrackingEnabled(enabled: Boolean) = dataSource.setCompassTrackingEnabled(enabled)
-
         fun getCompassTestTargetPackage(): Flow<String> = dataSource.getCompassTestTargetPackage()
 
         suspend fun setCompassTestTargetPackage(packageName: String) = dataSource.setCompassTestTargetPackage(packageName)

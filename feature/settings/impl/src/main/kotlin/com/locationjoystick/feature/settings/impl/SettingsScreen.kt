@@ -383,10 +383,6 @@ fun SettingsRoute(
                     viewModel.setTapToWalkScaleMpx(action.scale)
                 }
 
-                is SettingsAction.SetCompassTrackingEnabled -> {
-                    viewModel.setCompassTrackingEnabled(action.enabled)
-                }
-
                 is SettingsAction.SetCompassTestTargetPackage -> {
                     viewModel.setCompassTestTargetPackage(action.packageName)
                 }

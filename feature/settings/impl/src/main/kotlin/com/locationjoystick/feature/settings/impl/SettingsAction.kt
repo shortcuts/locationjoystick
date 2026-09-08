@@ -163,10 +163,6 @@ internal sealed class SettingsAction {
         val scale: Double,
     ) : SettingsAction()
 
-    data class SetCompassTrackingEnabled(
-        val enabled: Boolean,
-    ) : SettingsAction()
-
     data class SetCompassTestTargetPackage(
         val packageName: String,
     ) : SettingsAction()

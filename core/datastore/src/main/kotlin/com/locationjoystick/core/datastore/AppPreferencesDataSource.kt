@@ -304,12 +304,6 @@ interface PreferencesDataSource {
     /** Gets the scale factor (meters per pixel) for the tap-to-walk overlay coordinate conversion. */
     fun getTapToWalkScaleMpx(): Flow<Double>
 
-    /** Gets whether compass-aware tap-to-walk is enabled. */
-    fun getCompassTrackingEnabled(): Flow<Boolean>
-
-    /** Sets whether compass-aware tap-to-walk is enabled. */
-    suspend fun setCompassTrackingEnabled(enabled: Boolean)
-
     /** Gets the package name of the app the compass test button switches to. Empty if unset. */
     fun getCompassTestTargetPackage(): Flow<String>
 
@@ -476,7 +470,6 @@ class AppPreferencesDataSource
             val FLOATING_MAP_QUICK_WALK = booleanPreferencesKey("floating_map_quick_walk")
             val TAP_TO_WALK_OVERLAY_ENABLED = booleanPreferencesKey("tap_to_walk_overlay_enabled")
             val TAP_TO_WALK_SCALE_MPX = doublePreferencesKey("tap_to_walk_scale_mpx")
-            val COMPASS_TRACKING_ENABLED = booleanPreferencesKey("compass_tracking_enabled")
             val COMPASS_TEST_TARGET_PACKAGE = stringPreferencesKey("compass_test_target_package")
             val REALISM_REAL_ELEVATION_ENABLED = booleanPreferencesKey("realism_real_elevation_enabled")
             val BASE_ALTITUDE_OVERRIDE_METERS = doublePreferencesKey("base_altitude_override_meters")
@@ -863,10 +856,6 @@ class AppPreferencesDataSource
 
         override fun getTapToWalkScaleMpx(): Flow<Double> =
             pref(Keys.TAP_TO_WALK_SCALE_MPX, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
-
-        override fun getCompassTrackingEnabled(): Flow<Boolean> = pref(Keys.COMPASS_TRACKING_ENABLED, false)
-
-        override suspend fun setCompassTrackingEnabled(enabled: Boolean) = setPref(Keys.COMPASS_TRACKING_ENABLED, enabled)
 
         override fun getCompassTestTargetPackage(): Flow<String> = pref(Keys.COMPASS_TEST_TARGET_PACKAGE, "")
 

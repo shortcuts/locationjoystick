@@ -1476,10 +1476,6 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override fun getTapToWalkScaleMpx(): Flow<Double> = flowOf(AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
 
-    override fun getCompassTrackingEnabled(): Flow<Boolean> = flowOf(false)
-
-    override suspend fun setCompassTrackingEnabled(enabled: Boolean) = Unit
-
     override fun getCompassTestTargetPackage(): Flow<String> = flowOf("")
 
     override suspend fun setCompassTestTargetPackage(packageName: String) = Unit

@@ -9,21 +9,20 @@ Key files: `:feature:widget:impl/MapFloatingView.kt`, `:feature:widget:impl/TapT
 Tier 1's toggle lives in Settings → Menus → Privacy, next to "Hide teleport features" — it moved
 there because Floating Map Quick Walk is its own standalone feature, not part of the Tap to Walk
 umbrella (see @docs/features/hide-teleport.md; it is not one of the features that toggle hides).
-Tier 2 and compass tracking stay in Settings → Menus → Tap to Walk.
+Tier 2 stays in Settings → Menus → Tap to Walk. Compass tracking has no toggle — it is always
+on whenever the accessibility service is granted (see "Compass Orientation" below).
 
 | DataStore key | Type | Default | Description |
 |---|---|---|---|
 | `FLOATING_MAP_QUICK_WALK` | Boolean | `false` | Skip confirmation sheet on floating map taps (Settings → Menus → Privacy) |
 | `TAP_TO_WALK_OVERLAY_ENABLED` | Boolean | `false` | Show crosshair button in widget panel |
 | `TAP_TO_WALK_SCALE_MPX` | Double | `0.23` | Meters per pixel for pixel→GPS conversion (calibrated for a fully zoomed-out AR game map) |
-| `COMPASS_TRACKING_ENABLED` | Boolean | `false` | Capture compass heading before each tap |
 | `COMPASS_TEST_TARGET_PACKAGE` | String | `""` | Package the "Compass orientation" Test button switches to automatically. Empty = manual switch |
 
 Scale is clamped to `AppConstants.TapToWalkConstants.MIN_SCALE_MPX`–`MAX_SCALE_MPX` (0.01–1.0 m/px) in `applySnapshot()`.
 
-`COMPASS_TRACKING_ENABLED` is live-persisted (written directly to DataStore, not through the
-save/discard draft). There is no compass-region setting — see "Compass Orientation" below;
-detection auto-locates the icon fresh on every call, so nothing needs to be stored.
+There is no compass-region setting — see "Compass Orientation" below; detection auto-locates the
+icon fresh on every call, so nothing needs to be stored.
 
 ### Map Scale
 
@@ -152,7 +151,7 @@ task stack after that switch sequence) instead of launching an intent.
 
 ### Anti-cheat caveat
 
-Accessibility services running in the background are detectable by some games. The Settings UI discloses this. Disable compass tracking if the game penalises it.
+Accessibility services running in the background are detectable by some games. The Settings UI discloses this. Turn off the accessibility service in system Accessibility Settings if the game penalises it — there is no separate in-app toggle.
 
 ### Requires
 
@@ -176,4 +175,3 @@ User must confirm "Enable anyway" or cancel. Cancel leaves the toggle off. State
 - Do not persist `isTapToWalkActive` in DataStore — it is transient session state in `MutableStateFlow`.
 - Do not block the tap callback waiting for heading — pre-capture in `show()` with a timeout instead.
 - Do not call `getPixel` on a hardware bitmap — copy to `ARGB_8888` first via `bitmap.copy(Bitmap.Config.ARGB_8888, false)`.
-- Do not add `COMPASS_TRACKING_ENABLED` to `SettingsSnapshot` / `applySnapshot` — it is live-persisted, not save/discard.

@@ -34,7 +34,6 @@ data class SettingsUiState(
     val floatingMapQuickWalk: Boolean = false,
     val tapToWalkOverlayEnabled: Boolean = false,
     val tapToWalkScaleMpx: Double = AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX,
-    val compassTrackingEnabled: Boolean = false,
     val compassTestTargetPackage: String = "",
     val isCompassServiceGranted: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.DARK,
