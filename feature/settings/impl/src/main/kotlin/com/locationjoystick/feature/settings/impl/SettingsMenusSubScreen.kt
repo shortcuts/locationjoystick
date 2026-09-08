@@ -1,16 +1,10 @@
 package com.locationjoystick.feature.settings.impl
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,14 +17,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -44,7 +36,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -53,18 +44,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.savedstate.SavedStateRegistryOwner
-import androidx.savedstate.compose.LocalSavedStateRegistryOwner
 import com.locationjoystick.core.common.constants.AppConstants
-import com.locationjoystick.core.common.util.isOverlayPermissionGranted
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
@@ -78,7 +64,6 @@ import com.locationjoystick.core.model.ThemeMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-import kotlin.math.sqrt
 
 @Composable
 internal fun SettingsMenusSubScreen(
@@ -184,9 +169,6 @@ private fun TapToWalkSection(
     onAction: (SettingsAction) -> Unit,
     onTestCompassDetection: suspend () -> Float? = { null },
 ) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val savedStateRegistryOwner = LocalSavedStateRegistryOwner.current
     var showWarning by rememberSaveable { mutableStateOf(false) }
     val enabled = uiState.floatingMapQuickWalk || uiState.tapToWalkOverlayEnabled
 
@@ -222,7 +204,8 @@ private fun TapToWalkSection(
     if (enabled) {
         Spacer(Modifier.height(12.dp))
         Text(
-            "Map scale (%.2f m/px) — zoom the game fully out for best accuracy".format(uiState.tapToWalkScaleMpx),
+            "Map scale (%.2f m/px) — the default works for most players; zoom the game fully out and adjust here only if it's off"
+                .format(uiState.tapToWalkScaleMpx),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -241,22 +224,6 @@ private fun TapToWalkSection(
             valueRange = AppConstants.TapToWalkConstants.MIN_SCALE_MPX.toFloat()..AppConstants.TapToWalkConstants.MAX_SCALE_MPX.toFloat(),
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(4.dp))
-        LjOutlinedButton(
-            onClick = {
-                startCalibrationOverlay(context, lifecycleOwner, savedStateRegistryOwner) { dismiss ->
-                    ScaleCalibrationOverlayContent(
-                        onApply = { scaleMpx -> onAction(SettingsAction.SetTapToWalkScaleMpx(scaleMpx)) },
-                        dismiss = dismiss,
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Icon(LjIcons.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("Measure scale from screen")
-        }
         // takeScreenshot(int, Executor, TakeScreenshotCallback) requires API 30 — no fallback exists.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Spacer(Modifier.height(16.dp))
@@ -466,135 +433,6 @@ private fun CompassOrientationSection(
                             },
                     )
                 }
-            }
-        }
-    }
-}
-
-/**
- * Opens a full-screen system overlay for calibration, so it draws on top of whatever app the user
- * switches to (a game left running) instead of only working inside Settings. Falls back to
- * requesting SYSTEM_ALERT_WINDOW if not yet granted — the same permission joystick/widget need.
- */
-private fun startCalibrationOverlay(
-    context: Context,
-    lifecycleOwner: LifecycleOwner,
-    savedStateRegistryOwner: SavedStateRegistryOwner,
-    content: @Composable (dismiss: () -> Unit) -> Unit,
-) {
-    if (!isOverlayPermissionGranted(context)) {
-        context.startActivity(
-            Intent(
-                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:${context.packageName}"),
-            ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
-        )
-        return
-    }
-    val overlay =
-        CalibrationOverlay(context.applicationContext, lifecycleOwner, savedStateRegistryOwner) { dismiss ->
-            content(dismiss)
-        }
-    overlay.show()
-}
-
-/**
- * Derives m/px from a known real-world distance between two tapped points on the live screen,
- * instead of the user guessing-and-checking against the manual slider. Points are tapped directly
- * in full-screen overlay coordinates, so no scale-up from a shrunk preview is needed.
- */
-@Composable
-private fun ScaleCalibrationOverlayContent(
-    onApply: (Double) -> Unit,
-    dismiss: () -> Unit,
-) {
-    var pointA by remember { mutableStateOf<Offset?>(null) }
-    var pointB by remember { mutableStateOf<Offset?>(null) }
-    var distanceText by remember { mutableStateOf("") }
-
-    val pixelDistance =
-        if (pointA != null && pointB != null) {
-            val dx = pointA!!.x - pointB!!.x
-            val dy = pointA!!.y - pointB!!.y
-            sqrt(dx * dx + dy * dy)
-        } else {
-            null
-        }
-    val distanceMeters = distanceText.toDoubleOrNull()
-    val computedScale =
-        if (pixelDistance != null && pixelDistance > 0f && distanceMeters != null && distanceMeters > 0.0) {
-            distanceMeters / pixelDistance
-        } else {
-            null
-        }
-
-    Box(
-        Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    val down = awaitFirstDown()
-                    if (pointA == null || pointB != null) {
-                        pointA = down.position
-                        pointB = null
-                    } else {
-                        pointB = down.position
-                    }
-                }
-            },
-    ) {
-        Canvas(Modifier.fillMaxSize()) {
-            listOfNotNull(pointA, pointB).forEach { p ->
-                drawCircle(color = Color.Red, center = p, radius = 10.dp.toPx())
-            }
-            if (pointA != null && pointB != null) {
-                drawLine(Color.Red, pointA!!, pointB!!, strokeWidth = 3.dp.toPx())
-            }
-        }
-        Text(
-            "Tap two landmarks on your game, then enter the real-world distance below",
-            color = Color.White,
-            modifier =
-                Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 48.dp)
-                    .background(Color.Black.copy(alpha = 0.7f), MaterialTheme.shapes.small)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-        )
-        Column(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.85f))
-                    .padding(16.dp),
-        ) {
-            OutlinedTextField(
-                value = distanceText,
-                onValueChange = { distanceText = it },
-                label = { Text("Real-world distance (meters)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                computedScale?.let { "Computed scale: %.3f m/px".format(it) }
-                    ?: "Tap two points and enter a distance to compute the scale.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.White,
-            )
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                LjTextButton(onClick = dismiss) { Text("Cancel") }
-                LjTextButton(
-                    onClick = {
-                        computedScale
-                            ?.coerceIn(AppConstants.TapToWalkConstants.MIN_SCALE_MPX, AppConstants.TapToWalkConstants.MAX_SCALE_MPX)
-                            ?.let(onApply)
-                        dismiss()
-                    },
-                    enabled = computedScale != null,
-                ) { Text("Apply") }
             }
         }
     }

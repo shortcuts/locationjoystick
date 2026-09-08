@@ -2,7 +2,7 @@
 
 Two shortcuts for triggering walk-to without a confirmation sheet, useful when you want to act quickly inside another app.
 
-Key files: `:feature:widget:impl/MapFloatingView.kt`, `:feature:widget:impl/TapToWalkOverlay.kt`, `:feature:widget:impl/FloatingWidgetService.kt`, `:feature:settings:impl/SettingsScreen.kt`, `:feature:settings:impl/CalibrationOverlay.kt`
+Key files: `:feature:widget:impl/MapFloatingView.kt`, `:feature:widget:impl/TapToWalkOverlay.kt`, `:feature:widget:impl/FloatingWidgetService.kt`, `:feature:settings:impl/SettingsScreen.kt`
 
 ## Settings
 
@@ -21,23 +21,23 @@ Scale is clamped to `AppConstants.TapToWalkConstants.MIN_SCALE_MPX`–`MAX_SCALE
 save/discard draft). There is no compass-region setting — see "Compass Orientation" below;
 detection auto-locates the icon fresh on every call, so nothing needs to be stored.
 
-### Scale Calibration Tool
+### Map Scale
 
-The pixel scale is calibrated as a system overlay drawn directly on top of whatever app is in the
-foreground — a game left running underneath — instead of a mockup inside Settings, so the user
-taps landmarks against the real thing. `CalibrationOverlay` (`:feature:settings:impl`) is a
-standalone `TYPE_APPLICATION_OVERLAY` + `ComposeView` window, the same WindowManager pattern
-`TapToWalkOverlay` uses (duplicated rather than shared — Settings has no existing dependency on
-`:feature:widget:impl`). Requires `SYSTEM_ALERT_WINDOW` (same permission joystick/widget already
-need); `startCalibrationOverlay()` requests it via `ACTION_MANAGE_OVERLAY_PERMISSION` if not yet
-granted, instead of showing the tool.
+Settings → Menus → Tap to Walk shows a "Map scale (m/px)" slider, prefilled
+with `AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX` (0.23 m/px) —
+empirically calibrated against a fully-zoomed-out AR game map and accurate
+for most players out of the box, with no setup step required. Players whose
+game's zoom differs (or who play a different AR/GPS game) can drag the
+slider to correct the scale; the label reminds them to zoom their game
+fully out first, since accuracy depends on the scale setting matching the
+game's actual zoom level. Range: `MIN_SCALE_MPX`–`MAX_SCALE_MPX` (0.01–1.0
+m/px).
 
-Settings → "Measure scale from screen": the overlay appears full-screen and stays on top when the
-user switches to their game (independent of which app is foregrounded, like the joystick/widget
-overlays already are while playing). Tap two landmarks directly on the live game, then enter the
-real-world distance between them in meters; `metersPerPixel = distance / pixelDistance` is computed
-and applied on **Apply**. Taps land in real full-screen pixel coordinates (the overlay is
-`MATCH_PARENT`), so no preview-to-screenshot scale-up step is needed.
+An earlier version required tapping two landmarks on the live game and
+typing the real-world distance between them to compute the scale — removed
+because it asked most players (who don't know the exact distance between
+two arbitrary map landmarks) for information they don't have. The
+already-accurate default plus a manual slider replaces it.
 
 ## Tier 1 — Floating Map Quick Walk
 
