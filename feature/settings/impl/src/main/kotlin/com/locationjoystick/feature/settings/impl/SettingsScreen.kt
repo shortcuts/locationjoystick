@@ -3,6 +3,12 @@ package com.locationjoystick.feature.settings.impl
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -35,10 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.DestinationCardSpec
 import com.locationjoystick.core.designsystem.component.DestinationHub
-import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjScaffold
@@ -69,6 +74,7 @@ private sealed class PendingImport {
 fun SettingsRoute(
     viewModel: SettingsViewModel,
     onOpenDrawer: () -> Unit = {},
+    onNavigateUp: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -237,6 +243,7 @@ fun SettingsRoute(
         onCheckCompassService = { viewModel.checkCompassServiceGranted() },
         onTestCompassDetection = { viewModel.testCompassDetection() },
         launchableApps = viewModel.launchableApps,
+        onNavigateUp = onNavigateUp,
         onAction = { action ->
             when (action) {
                 is SettingsAction.SetSpeed -> {
@@ -450,6 +457,14 @@ private fun SettingsScreenPreview() {
     )
 }
 
+private sealed class PendingUnsavedIntent {
+    object BackToHub : PendingUnsavedIntent()
+
+    object ExitSettings : PendingUnsavedIntent()
+
+    object StartSpoofing : PendingUnsavedIntent()
+}
+
 @Composable
 internal fun SettingsScreen(
     uiState: SettingsUiState,
@@ -465,13 +480,62 @@ internal fun SettingsScreen(
     onCheckCompassService: () -> Unit = {},
     onTestCompassDetection: suspend () -> Float? = { null },
     launchableApps: List<InstalledApp> = emptyList(),
+    onNavigateUp: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
 ) {
     var currentSection by remember { mutableStateOf<SettingsSection?>(null) }
+    var pendingUnsavedIntent by remember { mutableStateOf<PendingUnsavedIntent?>(null) }
 
-    BackHandler(enabled = currentSection != null) {
-        currentSection = null
+    val guardedBack = {
+        if (uiState.isDirty) {
+            pendingUnsavedIntent = if (currentSection == null) PendingUnsavedIntent.ExitSettings else PendingUnsavedIntent.BackToHub
+        } else if (currentSection == null) {
+            onNavigateUp()
+        } else {
+            currentSection = null
+        }
+    }
+    val guardedToggleSpoofing = {
+        if (uiState.isDirty && !isSpoofing) {
+            pendingUnsavedIntent = PendingUnsavedIntent.StartSpoofing
+        } else {
+            onToggleSpoofing()
+        }
+    }
+
+    BackHandler(onBack = guardedBack)
+
+    pendingUnsavedIntent?.let { intent ->
+        val message =
+            when (intent) {
+                PendingUnsavedIntent.BackToHub, PendingUnsavedIntent.ExitSettings ->
+                    "You have unsaved settings changes. Save them before leaving?"
+                PendingUnsavedIntent.StartSpoofing ->
+                    "You have unsaved settings changes. Save them before starting location spoofing?"
+            }
+        UnsavedChangesConfirmDialog(
+            message = message,
+            onSave = {
+                onAction(SettingsAction.SaveChanges)
+                pendingUnsavedIntent = null
+                when (intent) {
+                    PendingUnsavedIntent.BackToHub -> currentSection = null
+                    PendingUnsavedIntent.ExitSettings -> onNavigateUp()
+                    PendingUnsavedIntent.StartSpoofing -> onToggleSpoofing()
+                }
+            },
+            onDiscard = {
+                onAction(SettingsAction.DiscardChanges)
+                pendingUnsavedIntent = null
+                when (intent) {
+                    PendingUnsavedIntent.BackToHub -> currentSection = null
+                    PendingUnsavedIntent.ExitSettings -> onNavigateUp()
+                    PendingUnsavedIntent.StartSpoofing -> onToggleSpoofing()
+                }
+            },
+            onDismiss = { pendingUnsavedIntent = null },
+        )
     }
 
     when (currentSection) {
@@ -481,7 +545,7 @@ internal fun SettingsScreen(
                 onOpenDrawer = onOpenDrawer,
                 onNavigate = { currentSection = it },
                 isSpoofing = isSpoofing,
-                onToggleSpoofing = onToggleSpoofing,
+                onToggleSpoofing = guardedToggleSpoofing,
                 locationLabel = locationLabel,
                 onAction = onAction,
                 bottomBar = bottomBar,
@@ -492,9 +556,9 @@ internal fun SettingsScreen(
         SettingsSection.GPS -> {
             SettingsGpsSubScreen(
                 uiState = uiState,
-                onNavigateBack = { currentSection = null },
+                onNavigateBack = guardedBack,
                 isSpoofing = isSpoofing,
-                onToggleSpoofing = onToggleSpoofing,
+                onToggleSpoofing = guardedToggleSpoofing,
                 locationLabel = locationLabel,
                 onAction = onAction,
                 bottomBar = bottomBar,
@@ -506,9 +570,9 @@ internal fun SettingsScreen(
             SettingsMenusSubScreen(
                 uiState = uiState,
                 isRooted = isRooted,
-                onNavigateBack = { currentSection = null },
+                onNavigateBack = guardedBack,
                 isSpoofing = isSpoofing,
-                onToggleSpoofing = onToggleSpoofing,
+                onToggleSpoofing = guardedToggleSpoofing,
                 locationLabel = locationLabel,
                 onAction = onAction,
                 onCheckCompassService = onCheckCompassService,
@@ -524,9 +588,9 @@ internal fun SettingsScreen(
                 uiState = uiState,
                 hotLocationTree = hotLocationTree,
                 hotRouteTree = hotRouteTree,
-                onNavigateBack = { currentSection = null },
+                onNavigateBack = guardedBack,
                 isSpoofing = isSpoofing,
-                onToggleSpoofing = onToggleSpoofing,
+                onToggleSpoofing = guardedToggleSpoofing,
                 locationLabel = locationLabel,
                 onAction = onAction,
                 bottomBar = bottomBar,
@@ -538,9 +602,9 @@ internal fun SettingsScreen(
             SettingsRoamingSubScreen(
                 uiState = uiState,
                 roamingDefaults = roamingDefaults,
-                onNavigateBack = { currentSection = null },
+                onNavigateBack = guardedBack,
                 isSpoofing = isSpoofing,
-                onToggleSpoofing = onToggleSpoofing,
+                onToggleSpoofing = guardedToggleSpoofing,
                 locationLabel = locationLabel,
                 onAction = onAction,
                 bottomBar = bottomBar,
@@ -676,26 +740,56 @@ internal fun SettingsSaveDiscardFab(
     isDirty: Boolean,
     onAction: (SettingsAction) -> Unit,
 ) {
-    if (!isDirty) return
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_SPACING),
+    // Labeled + widely spaced (vs. the old adjacent icon-only pair) so the pending-save
+    // state reads clearly and Save/Discard aren't easy to mis-tap for each other.
+    AnimatedVisibility(
+        visible = isDirty,
+        enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 3 },
+        exit = fadeOut(tween(150)) + slideOutVertically(tween(150)) { it / 6 },
     ) {
-        LjMapIconButton(
-            icon = LjIcons.Close,
-            contentDescription = "Discard changes",
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            onClick = { onAction(SettingsAction.DiscardChanges) },
-        )
-        LjMapIconButton(
-            icon = LjIcons.Check,
-            contentDescription = "Save changes",
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            onClick = { onAction(SettingsAction.SaveChanges) },
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            ExtendedFloatingActionButton(
+                onClick = { onAction(SettingsAction.DiscardChanges) },
+                icon = { Icon(LjIcons.Close, contentDescription = null) },
+                text = { Text("Discard") },
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            ExtendedFloatingActionButton(
+                onClick = { onAction(SettingsAction.SaveChanges) },
+                icon = { Icon(LjIcons.Check, contentDescription = null) },
+                text = { Text("Save") },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            )
+        }
     }
+}
+
+@Composable
+private fun UnsavedChangesConfirmDialog(
+    message: String,
+    onSave: () -> Unit,
+    onDiscard: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Save changes?") },
+        text = { Text(message) },
+        confirmButton = {
+            TextButton(onClick = onSave) { Text("Save") }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(onClick = onDiscard) { Text("Discard", color = MaterialTheme.colorScheme.error) }
+            }
+        },
+    )
 }
 
 @Composable

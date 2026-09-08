@@ -273,6 +273,7 @@ fun LjNavHost(
         ) {
             SettingsRoute(
                 onOpenDrawer = onOpenDrawer,
+                onNavigateUp = { navController.navigateUp() },
                 viewModel = hiltViewModel(),
             )
         }
