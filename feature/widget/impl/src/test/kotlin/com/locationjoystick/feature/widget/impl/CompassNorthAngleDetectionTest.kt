@@ -21,9 +21,10 @@ import kotlin.math.abs
  * Expected angles are the algorithm's own output at capture time (golden values) — this guards
  * against future regressions changing detection behavior, not against a hand-computed ground
  * truth heading.
+ *
+ * Robolectric's default SDK shadow predates Bitmap.Config.HARDWARE (added API 26) — pin to a
+ * modern API so the shadow bitmap actually has the field detectNorthAngle checks for.
  */
-// Robolectric's default SDK shadow predates Bitmap.Config.HARDWARE (added API 26) — pin to a
-// modern API so the shadow bitmap actually has the field detectNorthAngle checks for.
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class CompassNorthAngleDetectionTest {

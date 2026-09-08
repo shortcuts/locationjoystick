@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
@@ -398,9 +399,27 @@ private fun CompassOrientationSection(
             Spacer(Modifier.height(8.dp))
             Text("Game app", style = MaterialTheme.typography.bodyLarge)
             Spacer(Modifier.height(4.dp))
-            Box {
-                LjOutlinedButton(onClick = { appPickerExpanded = true }) {
-                    Text(selectedApp?.label ?: "Select app…")
+            Box(modifier = Modifier.fillMaxWidth()) {
+                val chevronRotation by animateFloatAsState(
+                    targetValue = if (appPickerExpanded) 180f else 0f,
+                    label = "gameAppChevronRotation",
+                )
+                LjOutlinedButton(onClick = { appPickerExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        selectedApp?.label ?: "Select app…",
+                        modifier = Modifier.weight(1f),
+                        color =
+                            if (selectedApp != null) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                    )
+                    Icon(
+                        LjIcons.ArrowDropDown,
+                        contentDescription = null,
+                        modifier = Modifier.graphicsLayer { rotationZ = chevronRotation },
+                    )
                 }
                 DropdownMenu(expanded = appPickerExpanded, onDismissRequest = { appPickerExpanded = false }) {
                     launchableApps.forEach { app ->

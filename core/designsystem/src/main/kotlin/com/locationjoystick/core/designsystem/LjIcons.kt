@@ -8,6 +8,7 @@ import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Close
@@ -57,6 +58,7 @@ import androidx.compose.material.icons.rounded.Visibility
 object LjIcons {
     val Add = Icons.Rounded.Add
     val ArrowBack = Icons.AutoMirrored.Rounded.ArrowBack
+    val ArrowDropDown = Icons.Rounded.ArrowDropDown
     val Check = Icons.Rounded.Check
     val CheckCircle = Icons.Rounded.CheckCircle
     val Close = Icons.Rounded.Close
