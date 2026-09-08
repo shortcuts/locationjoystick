@@ -12,7 +12,7 @@ import org.robolectric.annotation.Config
 import kotlin.math.abs
 
 /**
- * Regression coverage for [CompassAccessibilityService.detectNorthAngle] against real Pokémon GO
+ * Regression coverage for [CompassAccessibilityService.detectNorthAngle] against real AR/GPS game
  * screenshots (captured on-device, camera rotated via swipe between shots — see
  * docs/features/tap-to-walk.md, "Compass Orientation"). A synthetic red square can't stand in for
  * this: the blob-shape/PCA/skew logic only proves itself against the actual needle icon rendered

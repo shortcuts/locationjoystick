@@ -109,7 +109,7 @@ Key files: `:core:location/CompassHeadingSource.kt`, `:feature:widget:impl/Compa
 1. Bulk-reads (`Bitmap.getPixels`, not per-pixel `getPixel` — much faster) a fixed search window —
    the right `SEARCH_X_MIN_PCT` (55%) / top `SEARCH_Y_MAX_PCT` (35%) of the screen
    (`AppConstants.CompassTrackingConstants`) — where every tested AR/GPS-spoofing game places its
-   compass (confirmed against Pokémon GO on-device).
+   compass (confirmed on-device against a popular AR/GPS-spoofing game).
 2. Filters pixels by the same red-hue test as before (HSV hue < 15° or > 345°, sat > 0.5, val > 0.3).
 3. Runs 4-connected-component labelling (`findBestIconBlob`, BFS-based) over the red mask, keeping
    only blobs whose bounding box falls within `MIN_ICON_FRACTION`–`MAX_ICON_FRACTION` (0.8%–6%) of

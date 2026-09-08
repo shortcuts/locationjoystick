@@ -342,7 +342,7 @@ private fun CompassOrientationSection(
     Text("Compass orientation", style = MaterialTheme.typography.headlineSmall)
     Spacer(Modifier.height(4.dp))
     Text(
-        "When enabled, the app detects your game's compass (top-right corner, like Pokémon GO's) before each walk " +
+        "When enabled, the app detects your game's compass (top-right corner, like most AR/GPS games) before each walk " +
             "to correct the target position — no setup needed. Requires an Accessibility Service. Note: some games " +
             "detect accessibility services.",
         style = MaterialTheme.typography.bodySmall,
