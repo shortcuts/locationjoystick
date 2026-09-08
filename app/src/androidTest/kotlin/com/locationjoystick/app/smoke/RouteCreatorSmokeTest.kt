@@ -16,7 +16,7 @@ class RouteCreatorSmokeTest : BaseSmokeTest() {
         super.setup()
         composeRule.waitForIdleScreen()
         composeRule.navigateFromIdle("Routes")
-        composeRule.onNodeWithContentDescription("More actions").performClick()
+        composeRule.onNodeWithContentDescription("Add route").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Draw on map").performClick()
         composeRule.waitForIdle()
@@ -31,7 +31,7 @@ class RouteCreatorSmokeTest : BaseSmokeTest() {
     fun navigate_back_from_creator() {
         Espresso.pressBack()
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Add route").assertIsDisplayed()
     }
 
     @Test
