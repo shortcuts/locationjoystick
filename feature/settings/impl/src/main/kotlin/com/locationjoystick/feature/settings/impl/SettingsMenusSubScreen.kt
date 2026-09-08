@@ -174,7 +174,7 @@ private fun TapToWalkSection(
     launchableApps: List<InstalledApp> = emptyList(),
 ) {
     var showWarning by rememberSaveable { mutableStateOf(false) }
-    val enabled = uiState.floatingMapQuickWalk || uiState.tapToWalkOverlayEnabled
+    val enabled = uiState.tapToWalkOverlayEnabled
 
     Text("Tap to Walk", style = MaterialTheme.typography.headlineSmall)
     Spacer(Modifier.height(4.dp))
@@ -199,7 +199,6 @@ private fun TapToWalkSection(
                 if (on) {
                     showWarning = true
                 } else {
-                    onAction(SettingsAction.SetFloatingMapQuickWalk(false))
                     onAction(SettingsAction.SetTapToWalkOverlayEnabled(false))
                 }
             },
@@ -247,7 +246,6 @@ private fun TapToWalkSection(
             confirmButton = {
                 LjTextButton(onClick = {
                     showWarning = false
-                    onAction(SettingsAction.SetFloatingMapQuickWalk(true))
                     onAction(SettingsAction.SetTapToWalkOverlayEnabled(true))
                 }) { Text("Enable anyway") }
             },
@@ -272,6 +270,13 @@ private fun PrivacySection(
         description =
             "Removes every teleport option across the app — map, favorites, " +
                 "routes, group sync, and the widget. Only walking and route replay remain available.",
+    )
+    Spacer(Modifier.height(8.dp))
+    LjCheckboxRow(
+        checked = uiState.floatingMapQuickWalk,
+        onCheckedChange = { onAction(SettingsAction.SetFloatingMapQuickWalk(it)) },
+        title = "Floating map quick walk",
+        description = "Skips the confirmation sheet on floating-map taps and walks there directly.",
     )
     Spacer(Modifier.height(8.dp))
     LjCheckboxRow(
