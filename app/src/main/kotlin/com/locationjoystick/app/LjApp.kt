@@ -136,7 +136,7 @@ fun LjApp(
             modifier = Modifier.align(Alignment.BottomCenter),
         )
         val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-        if (currentRoute != ONBOARDING_ROUTE) {
+        if (currentRoute == IDLE_ROUTE) {
             WhatsNewPopup(
                 modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
             )

@@ -7,12 +7,13 @@ Key files: `:app/WhatsNewPopup.kt`, `:app/WhatsNewViewModel.kt`, `:core:data/Wha
 
 ## Behaviour
 
-- A pill badge ("What's new") appears bottom-start on every screen except onboarding
-  (`LjApp.kt`'s root `Box`, same overlay layer as the global snackbar) whenever
-  `AppConstants.AppInfo.VERSION_NAME` differs from the last version the user acknowledged. This
-  check is local (DataStore vs. a compile-time constant) — the badge itself needs no network and
-  appears offline. Hidden while `navController`'s current route is `ONBOARDING_ROUTE` — the user
-  hasn't reached the main app yet, so nothing should compete with the onboarding flow.
+- A pill badge ("What's new") appears bottom-start only on the home screen (`IdleScreen`, the
+  main hub post-onboarding — `LjApp.kt`'s root `Box`, same overlay layer as the global snackbar)
+  whenever `AppConstants.AppInfo.VERSION_NAME` differs from the last version the user
+  acknowledged. This check is local (DataStore vs. a compile-time constant) — the badge itself
+  needs no network and appears offline. Shown only while `navController`'s current route is
+  `IDLE_ROUTE`, so it doesn't compete for attention on every other screen (issue raised: "it
+  should only appear on the home page menu to avoid being intrusive").
 - **Tap the badge**: marks the current version seen, opens a modal, and fetches
   `AppConstants.WhatsNewConstants.buildUrl(VERSION_NAME)` (`WhatsNewRepository`) — the same
   per-version JSON file the website is built from (see "Single Source of Truth" below). Shows a
