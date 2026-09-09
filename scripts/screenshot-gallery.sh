@@ -919,10 +919,10 @@ if should_run_step "18"; then
     wait_s 2 "Settings loading"
     tap_text "Menus"
     wait_s 2 "Menus loading"
-    # Debug stats lives under Privacy, below the fold — scroll down to reveal it.
-    # One fixed-distance swipe isn't always enough (content length varies by
-    # device/font scale), so keep scrolling until the row actually appears.
-    for _ in 1 2 3; do
+    # Debug section is last on the Menus page, well below the fold (Theme,
+    # App Features, Speed Cycle, Tap to Walk, Privacy all come first) — keep
+    # scrolling until the row actually appears.
+    for _ in 1 2 3 4 5 6 7; do
       dump=$(ui_dump)
       found=$(grep -c 'text="Debug stats"' "$dump" || true)
       rm -f "$dump"
@@ -947,11 +947,15 @@ print(prefix[last+9:last+13] == "true")
       log "Debug stats already enabled — skipping toggle tap."
     else
       tap_text "Debug stats"
-      wait_s 1 "Enabling debug stats"
+      wait_s 2 "Enabling debug stats"
       # This settings page buffers changes behind a Save/Discard FAB (check icon,
-      # content-desc "Save changes") — force-stopping via go_idle without saving
-      # would discard the toggle.
-      tap_text "Save changes"
+      # labeled "Save") — force-stopping via go_idle without saving would
+      # discard the toggle. Retry: the FAB's enter animation (fadeIn+slideIn,
+      # 200ms) plus recomposition can lag past a single wait on a slow device.
+      for _ in 1 2 3; do
+        tap_text "Save" && break
+        wait_s 1 "Waiting for Save FAB"
+      done
       wait_s 1 "Saving setting"
     fi
     rm -f "$dump"
