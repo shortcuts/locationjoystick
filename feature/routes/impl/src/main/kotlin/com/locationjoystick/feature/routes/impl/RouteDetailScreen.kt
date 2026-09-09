@@ -3,9 +3,10 @@ package com.locationjoystick.feature.routes.impl
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -44,6 +46,7 @@ import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.location.rememberSpoofToggleState
@@ -218,10 +221,9 @@ fun RouteDetailScreen(
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else {
                 LazyColumn(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    contentPadding = PaddingValues(vertical = 16.dp),
                 ) {
                     // Editable name field
                     item {
@@ -239,7 +241,7 @@ fun RouteDetailScreen(
                                     "Name cannot be empty",
                                     color = MaterialTheme.colorScheme.error,
                                     style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.padding(top = 4.dp),
+                                    modifier = Modifier.padding(top = 4.dp, start = 4.dp),
                                 )
                             }
                         }
@@ -247,15 +249,20 @@ fun RouteDetailScreen(
 
                     // Speed profile selection
                     item {
-                        Column(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 "Speed profile",
                                 style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
-                            Spacer(Modifier.height(4.dp))
+                            Spacer(Modifier.height(8.dp))
+                            // Segmented row is wrapped in a scrollable Row *without* fillMaxWidth —
+                            // combining fillMaxWidth with horizontalScroll forces the row's
+                            // constrained width onto its children instead of letting them size
+                            // naturally, which squeezed/clipped the buttons instead of scrolling.
                             SingleChoiceSegmentedButtonRow(
-                                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                modifier = Modifier.horizontalScroll(rememberScrollState()),
                             ) {
                                 val options = listOf<SpeedProfile?>(null) + speedProfiles
                                 options.forEachIndexed { index, profile ->
@@ -271,31 +278,40 @@ fun RouteDetailScreen(
                         }
                     }
 
+                    item {
+                        Text(
+                            "Waypoints",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+
                     // Numbered waypoints
                     items(route!!.waypoints, key = { it.id }) { waypoint ->
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 12.dp, top = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                        LjListItemCard(
+                            trailing = {
+                                IconButton(onClick = { viewModel.removeWaypoint(waypoint.id) }) {
+                                    Icon(
+                                        LjIcons.Delete,
+                                        contentDescription = "Remove waypoint",
+                                        tint = MaterialTheme.colorScheme.error,
+                                    )
+                                }
+                            },
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    "Waypoint ${waypoint.orderIndex + 1}",
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                                Text(
-                                    "${String.format("%.4f", waypoint.position.latitude)}, " +
-                                        "${String.format("%.4f", waypoint.position.longitude)}",
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                            }
-                            IconButton(onClick = { viewModel.removeWaypoint(waypoint.id) }) {
-                                Icon(LjIcons.Delete, contentDescription = "Remove waypoint")
-                            }
+                            Text(
+                                "Waypoint ${waypoint.orderIndex + 1}",
+                                color = MaterialTheme.colorScheme.onSurface,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            Text(
+                                "${String.format("%.4f", waypoint.position.latitude)}, " +
+                                    "${String.format("%.4f", waypoint.position.longitude)}",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
                         }
                     }
                 }
