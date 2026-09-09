@@ -5,26 +5,30 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.locationjoystick.core.designsystem.component.LjButton
-import com.locationjoystick.core.designsystem.component.LoadingIndicator
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -32,8 +36,8 @@ import java.io.File
 import java.io.FileOutputStream
 
 private const val TAG = "QrShareDialog"
+private val QR_IMAGE_SIZE = 220.dp
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QrShareDialog(
     qrText: String?,
@@ -45,65 +49,72 @@ fun QrShareDialog(
     val context = LocalContext.current
 
     val bitmap = remember(qrText) { qrText?.let { QrEncoder.encodeToQr(it) } }
+    val ready = !isPreparing && qrText != null && code != null
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-        ) {
-            if (isPreparing || qrText == null || code == null) {
-                Text(
-                    "Starting local export server…",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                )
-                LoadingIndicator(modifier = Modifier.fillMaxWidth().height(120.dp))
-                return@Column
-            }
-
-            Text(
-                "Scan this on the other device — both must be on the same Wi-Fi network",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(bottom = 8.dp),
-            )
-
-            if (bitmap != null) {
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "Export QR code",
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f),
-                )
-            } else {
-                Text("Failed to encode QR")
-            }
-
-            Text(
-                "Or enter code: $code",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 12.dp),
-            )
-
-            LjButton(
-                onClick = {
-                    if (bitmap != null) {
-                        scope.launch { shareQrBitmap(context, bitmap) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Export via QR code") },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                if (!ready) {
+                    Text(
+                        "Starting local export server…",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                    )
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(QR_IMAGE_SIZE),
+                    ) {
+                        CircularProgressIndicator()
                     }
-                },
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 16.dp),
+                    return@Column
+                }
+
+                Text(
+                    "Scan this on the other device — both must be on the same Wi-Fi network",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                )
+
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Export QR code",
+                        modifier =
+                            Modifier
+                                .size(QR_IMAGE_SIZE)
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
+                    )
+                } else {
+                    Text("Failed to encode QR")
+                }
+
+                Text(
+                    "Or enter code: $code",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
+        },
+        confirmButton = {
+            LjButton(
+                enabled = ready && bitmap != null,
+                onClick = { if (bitmap != null) scope.launch { shareQrBitmap(context, bitmap) } },
             ) {
                 Text("Share")
             }
-
-            LjButton(
-                onClick = onDismiss,
-                modifier = Modifier.align(Alignment.End).padding(top = 8.dp),
-            ) {
+        },
+        dismissButton = {
+            LjTextButton(onClick = onDismiss) {
                 Text("Done")
             }
-        }
-    }
+        },
+    )
 }
 
 private suspend fun shareQrBitmap(
