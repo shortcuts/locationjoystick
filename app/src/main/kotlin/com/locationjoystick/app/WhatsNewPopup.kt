@@ -99,7 +99,7 @@ private fun WhatsNewBadge(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
         modifier =
             Modifier
                 .scale(scale)
@@ -107,24 +107,26 @@ private fun WhatsNewBadge(
                 .background(MaterialTheme.colorScheme.primary)
                 .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
                 .semantics { contentDescription = "What's new in this version" }
-                .padding(start = 14.dp, top = 10.dp, bottom = 10.dp, end = 10.dp),
+                .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 8.dp),
     ) {
         Icon(
             imageVector = LjIcons.WhatsNew,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onPrimary,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(16.dp),
         )
         Text(
             text = "What's new",
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onPrimary,
         )
         Box(
             contentAlignment = Alignment.Center,
             modifier =
                 Modifier
-                    .size(48.dp)
+                    // ponytail: 32dp trades below Material's 48dp full touch-target guidance for a
+                    // visibly smaller pill; still clears WCAG 2.5.8's 24dp AA minimum for a secondary action.
+                    .size(32.dp)
                     .clip(CircleShape)
                     .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }, onClick = onDismiss),
         ) {
@@ -132,7 +134,7 @@ private fun WhatsNewBadge(
                 imageVector = LjIcons.Close,
                 contentDescription = "Dismiss",
                 tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(16.dp),
             )
         }
     }
