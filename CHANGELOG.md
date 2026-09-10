@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.1](https://github.com/shortcuts/locationjoystick/compare/v0.20.0...v0.20.1) (2026-09-10)
+
+
+### Bug Fixes
+
+* **routes:** let speed profile changes override a pinned route mid-replay ([ad081f6](https://github.com/shortcuts/locationjoystick/commit/ad081f61bdd298c5c15bd6425792ed923dfbbf51)), closes [#68](https://github.com/shortcuts/locationjoystick/issues/68)
+
 ## [0.20.0](https://github.com/shortcuts/locationjoystick/compare/v0.19.0...v0.20.0) (2026-09-09)
 
 
