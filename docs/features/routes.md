@@ -32,7 +32,7 @@ Routes can also be imported from GPX files via the Routes screen overflow menu �
 
 ### Per-Route Speed Profile
 
-A route may pin a speed profile via the Route Detail (edit) screen — a segmented control below the name field, showing "None" plus all 5 presets. Default: `null` ("None"), meaning replay uses whatever speed profile is currently active globally (today's behavior). When a route pins a profile, replay uses that profile's speed for the entire session — it stays locked even if the globally active profile changes mid-replay (e.g. via the widget's Speed Cycle button). Resolved via `SettingsRepository.getRouteSpeedMs(route.speedProfileId)`.
+A route may pin a speed profile via the Route Detail (edit) screen — a segmented control below the name field, showing "None" plus all 5 presets. Default: `null` ("None"), meaning replay starts at whatever speed profile is currently active globally. When a route pins a profile, replay starts at that profile's speed instead. Either way, this only seeds the replay's starting speed (resolved via `SettingsRepository.getRouteSpeedMs(route.speedProfileId)` in `StartRouteReplayUseCase`) — the user can still change speed mid-replay via the widget's Speed Cycle button (or Settings → GPS) like any other movement mode; a pin does not lock the speed for the session.
 
 ### Next / Previous Waypoint (Teleport)
 

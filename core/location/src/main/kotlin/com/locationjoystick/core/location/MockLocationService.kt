@@ -354,27 +354,15 @@ class MockLocationService : Service() {
         realism.observe(serviceScope, settingsRepository)
         // Propagate live speed-profile changes (e.g. widget Speed Cycle) into an active route
         // replay or roaming walk — both engines otherwise freeze speedMs at the value passed
-        // to start().
+        // to start(). A route's pinned speed profile (routes.md, "Per-Route Speed Profile")
+        // only seeds the speed a replay starts at (StartRouteReplayUseCase) — the user can
+        // still override it live from the widget at any point, same as an unpinned route.
         serviceScope.launch {
             settingsRepository.getActiveSpeedProfile().collect { profile ->
                 when (locationRepository.currentMode.value) {
-                    MockMode.ROUTE_REPLAY -> {
-                        val activeRouteId = locationRepository.activeRouteId.value
-                        val isSpeedLocked =
-                            activeRouteId != null &&
-                                routeRepository.getRouteWithWaypoints(activeRouteId).first()?.speedProfileId != null
-                        if (!isSpeedLocked) {
-                            replayOrchestrator.updateSpeed(profile.speedMetersPerSecond)
-                        }
-                    }
-
-                    MockMode.ROAMING -> {
-                        roamingRepository.updateSpeed(profile.speedMetersPerSecond)
-                    }
-
-                    else -> {
-                        Unit
-                    }
+                    MockMode.ROUTE_REPLAY -> replayOrchestrator.updateSpeed(profile.speedMetersPerSecond)
+                    MockMode.ROAMING -> roamingRepository.updateSpeed(profile.speedMetersPerSecond)
+                    else -> Unit
                 }
             }
         }
