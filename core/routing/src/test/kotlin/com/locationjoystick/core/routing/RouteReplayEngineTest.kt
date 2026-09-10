@@ -153,6 +153,31 @@ class RouteReplayEngineTest {
     }
 
     @Test
+    fun `updateSpeed mid-replay changes advance distance on next tick (regression, no speed lock)`() {
+        // Route replay must always honor a live speed-profile change (e.g. widget Speed
+        // Cycle), even for a route started at a slow speed — there is no "locked" mode
+        // that ignores updateSpeed (issue #68).
+        val positions = mutableListOf<LatLng>()
+        engine.start(
+            waypoints = listOf(LatLng(0.0, 0.0), LatLng(10.0, 10.0)),
+            speedMs = 0.1, // near-stationary start speed
+            onPositionUpdate = { pos -> positions.add(pos) },
+            onComplete = {},
+        )
+        Thread.sleep(1500)
+        val distanceBeforeSpeedUp = positions.last().latitude
+        engine.updateSpeed(5.0) // widget Speed Cycle bump, mid-replay
+        Thread.sleep(1500)
+        kotlinx.coroutines.runBlocking { engine.stop() }
+        val distanceAfterSpeedUp = positions.last().latitude - distanceBeforeSpeedUp
+        assertTrue(
+            "post-updateSpeed advance ($distanceAfterSpeedUp) should be far larger than " +
+                "pre-updateSpeed advance ($distanceBeforeSpeedUp) — speed change must take effect",
+            distanceAfterSpeedUp > distanceBeforeSpeedUp * 10,
+        )
+    }
+
+    @Test
     fun `stop after start halts position updates`() {
         val updateCount = AtomicInteger(0)
         engine.start(
