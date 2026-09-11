@@ -78,8 +78,8 @@ class MapController
         @param:ApplicationScope private val appScope: CoroutineScope,
     ) {
         @Suppress("ktlint:standard:property-naming")
-        private val _state = MutableStateFlow(MapSharedState())
-        val sharedState: StateFlow<MapSharedState> = _state.asStateFlow()
+        private val _sharedState = MutableStateFlow(MapSharedState())
+        val sharedState: StateFlow<MapSharedState> = _sharedState.asStateFlow()
 
         val completionMessages = locationRepository.completionEvents
 
@@ -122,7 +122,7 @@ class MapController
                 ) { position, state, walkPaused, mode ->
                     LocationStateSnapshot(position, state, walkPaused, mode)
                 }.collect { snap ->
-                    _state.update {
+                    _sharedState.update {
                         it.copy(
                             currentPosition = snap.position,
                             mockLocationState = snap.state,
@@ -140,7 +140,7 @@ class MapController
                     routeRepository.getRoutes(),
                     settingsRepository.getRoutesSortNewestFirst(),
                 ) { routes, newestFirst -> routes.sortedByAge(newestFirst) }
-                    .collect { sorted -> _state.update { it.copy(routes = sorted) } }
+                    .collect { sorted -> _sharedState.update { it.copy(routes = sorted) } }
             }
         }
 
@@ -150,7 +150,7 @@ class MapController
                     favoriteRepository.getFavorites(),
                     settingsRepository.getFavoritesSortNewestFirst(),
                 ) { favorites, newestFirst -> favorites.sortedByAge(newestFirst) }
-                    .collect { sorted -> _state.update { it.copy(favorites = sorted) } }
+                    .collect { sorted -> _sharedState.update { it.copy(favorites = sorted) } }
             }
         }
 
@@ -158,7 +158,7 @@ class MapController
             appScope.launch {
                 locationRepository.routeWaypoints.collect { waypoints ->
                     if (waypoints != null) ephemeralReplayController.clearPendingWaypoints()
-                    _state.update { it.copy(routeTrace = waypoints) }
+                    _sharedState.update { it.copy(routeTrace = waypoints) }
                 }
             }
         }
@@ -166,7 +166,7 @@ class MapController
         private fun observeEphemeralWaypoints() {
             appScope.launch {
                 ephemeralReplayController.pendingWaypoints.collect { waypoints ->
-                    _state.update { current ->
+                    _sharedState.update { current ->
                         when {
                             waypoints.isNotEmpty() && current.ephemeralWaypoints != waypoints -> {
                                 val followRoads = (current.walkMode as? WalkMode.EphemeralReplay)?.followRoads ?: false
@@ -189,7 +189,7 @@ class MapController
         private fun observeRoadRouteFetchInFlight() {
             appScope.launch {
                 locationRepository.isRoadRouteFetchInFlight.collect { inFlight ->
-                    _state.update { it.copy(isRoadRouteFetchInFlight = inFlight) }
+                    _sharedState.update { it.copy(isRoadRouteFetchInFlight = inFlight) }
                 }
             }
         }
@@ -198,7 +198,7 @@ class MapController
             appScope.launch {
                 combine(roamingRepository.isRoaming, roamingRepository.isRoamingPaused) { r, p -> r to p }
                     .collect { (roaming, paused) ->
-                        _state.update { it.copy(isRoaming = roaming, isRoamingPaused = paused) }
+                        _sharedState.update { it.copy(isRoaming = roaming, isRoamingPaused = paused) }
                     }
             }
         }
@@ -206,7 +206,7 @@ class MapController
         private fun observeSpeedUnit() {
             appScope.launch {
                 settingsRepository.getSpeedUnit().collect { unit ->
-                    _state.update { it.copy(speedUnit = unit) }
+                    _sharedState.update { it.copy(speedUnit = unit) }
                 }
             }
         }
@@ -219,7 +219,7 @@ class MapController
                 ) { stats, enabled -> (stats?.jitterRadiusMeters ?: 0.0) to enabled }
                     .distinctUntilChanged()
                     .collect { (radius, enabled) ->
-                        _state.update { it.copy(jitterRadiusMeters = radius, debugStatsEnabled = enabled) }
+                        _sharedState.update { it.copy(jitterRadiusMeters = radius, debugStatsEnabled = enabled) }
                     }
             }
         }
@@ -227,7 +227,7 @@ class MapController
         private fun observeFavoriteCooldowns() {
             appScope.launch {
                 teleportUseCase.cooldownsFor(favoriteRepository.getFavorites()).collect { states ->
-                    _state.update { it.copy(favoriteCooldownStates = states) }
+                    _sharedState.update { it.copy(favoriteCooldownStates = states) }
                 }
             }
         }
@@ -235,7 +235,7 @@ class MapController
         private fun observeRecentSearches() {
             appScope.launch {
                 settingsRepository.getRecentSearches().collect { searches ->
-                    _state.update { it.copy(recentSearches = searches) }
+                    _sharedState.update { it.copy(recentSearches = searches) }
                 }
             }
         }
@@ -243,7 +243,7 @@ class MapController
         private fun observeRoamingDefaults() {
             appScope.launch {
                 settingsRepository.getRoamingDefaults().collect { defaults ->
-                    _state.update { it.copy(roamingDefaults = defaults) }
+                    _sharedState.update { it.copy(roamingDefaults = defaults) }
                 }
             }
         }
@@ -254,7 +254,7 @@ class MapController
                     .getMapFeatureOrder()
                     .distinctUntilChanged()
                     .collect { order ->
-                        _state.update { it.copy(mapFeatureOrder = order) }
+                        _sharedState.update { it.copy(mapFeatureOrder = order) }
                     }
             }
             appScope.launch {
@@ -262,7 +262,7 @@ class MapController
                     .getEnabledMapFeatures()
                     .distinctUntilChanged()
                     .collect { enabled ->
-                        _state.update { it.copy(enabledMapFeatures = enabled) }
+                        _sharedState.update { it.copy(enabledMapFeatures = enabled) }
                     }
             }
         }
@@ -277,11 +277,11 @@ class MapController
                         when (prev) {
                             MockMode.WALK_TO -> {
                                 locationRepository.setRouteWaypoints(null)
-                                _state.update { it.copy(walkMode = WalkMode.Idle) }
+                                _sharedState.update { it.copy(walkMode = WalkMode.Idle) }
                             }
 
                             MockMode.ROUTE_REPLAY -> {
-                                if (_state.value.walkMode is WalkMode.EphemeralReplay) {
+                                if (_sharedState.value.walkMode is WalkMode.EphemeralReplay) {
                                     ephemeralReplayController.clearPendingWaypoints()
                                 }
                             }
@@ -323,7 +323,7 @@ class MapController
         fun stopSpoofing() {
             ContextCompat.startForegroundService(context, MockLocationIntentBuilder.stopSpoofing(context))
             ephemeralReplayController.clearPendingWaypoints()
-            _state.update { it.copy(walkMode = WalkMode.Idle, routeTrace = null) }
+            _sharedState.update { it.copy(walkMode = WalkMode.Idle, routeTrace = null) }
         }
 
         fun toggleSpoofing() {
@@ -338,16 +338,16 @@ class MapController
             pendingRoadWalkJob?.cancel()
             pendingRoadWalkJob = null
             walkCoordinator.cancel()
-            if (_state.value.ephemeralWaypoints.isNotEmpty()) {
+            if (_sharedState.value.ephemeralWaypoints.isNotEmpty()) {
                 context.startService(MockLocationIntentBuilder.cancelRouteReplay(context))
                 ephemeralReplayController.clearPendingWaypoints()
-                _state.update { it.copy(walkMode = WalkMode.Idle) }
+                _sharedState.update { it.copy(walkMode = WalkMode.Idle) }
             }
         }
 
         fun walkTo(position: LatLng) {
             cancelAnyActiveMovement()
-            _state.update {
+            _sharedState.update {
                 it.copy(
                     walkMode = WalkMode.Walking(target = position, start = it.currentPosition),
                     routeTrace = null,
@@ -393,7 +393,7 @@ class MapController
                         return@launch
                     }
                     locationRepository.setRouteWaypoints(waypoints)
-                    _state.update {
+                    _sharedState.update {
                         it.copy(walkMode = WalkMode.Walking(target = position, start = it.currentPosition, isViaRoads = true))
                     }
                     walkCoordinator.startWalkAlongRoute(waypoints, appScope) { newPos, speedMs, bearing ->
@@ -416,18 +416,18 @@ class MapController
             pendingRoadWalkJob?.cancel()
             pendingRoadWalkJob = null
             walkCoordinator.cancel()
-            if (_state.value.ephemeralWaypoints.isNotEmpty()) {
+            if (_sharedState.value.ephemeralWaypoints.isNotEmpty()) {
                 context.startService(MockLocationIntentBuilder.cancelRouteReplay(context))
             }
             ephemeralReplayController.clearPendingWaypoints()
-            _state.update { it.copy(walkMode = WalkMode.Idle, isWalkPaused = false, routeTrace = null) }
+            _sharedState.update { it.copy(walkMode = WalkMode.Idle, isWalkPaused = false, routeTrace = null) }
         }
 
         fun addEphemeralWaypoint(
             position: LatLng,
             followRoads: Boolean = false,
         ) {
-            val current = _state.value
+            val current = _sharedState.value
             appScope.launch {
                 ephemeralReplayController.addWaypoint(
                     newPoint = position,
@@ -438,7 +438,7 @@ class MapController
                     context = context,
                     launchIntent = { context.startService(it) },
                 ) ?: return@launch
-                _state.update {
+                _sharedState.update {
                     it.copy(
                         walkMode =
                             WalkMode.EphemeralReplay(
@@ -530,7 +530,7 @@ class MapController
         }
 
         fun saveCurrentLocation(name: String) {
-            val position = _state.value.currentPosition ?: return
+            val position = _sharedState.value.currentPosition ?: return
             appScope.launch {
                 try {
                     favoriteRepository.addFavorite(

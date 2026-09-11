@@ -47,7 +47,9 @@ fun groupWhatsNewEntries(entries: List<WhatsNewEntry>): List<WhatsNewCategoryGro
             WhatsNewCategoryGroup(
                 label = label,
                 scopeGroups =
-                    inCategory.groupBy { it.scope }.toSortedMap()
+                    inCategory
+                        .groupBy { it.scope }
+                        .toSortedMap()
                         .map { (scope, scopeEntries) -> WhatsNewScopeGroup(scope, scopeEntries) },
             )
         }
@@ -63,7 +65,8 @@ class WhatsNewViewModel
         private val whatsNewRepository: WhatsNewRepository,
     ) : ViewModel() {
         val hasUnseenUpdate: StateFlow<Boolean> =
-            settingsRepository.getWhatsNewLastSeenVersion()
+            settingsRepository
+                .getWhatsNewLastSeenVersion()
                 .map { it != AppConstants.AppInfo.VERSION_NAME }
                 .stateIn(
                     scope = viewModelScope,

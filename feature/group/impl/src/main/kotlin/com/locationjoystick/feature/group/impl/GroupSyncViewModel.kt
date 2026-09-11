@@ -137,8 +137,11 @@ class GroupSyncViewModel
                     // NSD runs again with more time elapsed and the leader is reachable.
                     // Check group existence immediately on entering the screen instead of waiting
                     // for the next poll tick, so a stale/gone group is surfaced right away.
-                    if (state.role == GroupRole.FOLLOWER && !followerExistenceChecked &&
-                        host != null && port != null && id != null
+                    if (state.role == GroupRole.FOLLOWER &&
+                        !followerExistenceChecked &&
+                        host != null &&
+                        port != null &&
+                        id != null
                     ) {
                         followerExistenceChecked = true
                         if (!followerSyncClient.checkGroupExists(host, port, id)) {
@@ -154,8 +157,11 @@ class GroupSyncViewModel
                             return@collect
                         }
                     }
-                    if (state.role == GroupRole.LEADER && _qrBitmap.value == null &&
-                        host != null && port != null && id != null
+                    if (state.role == GroupRole.LEADER &&
+                        _qrBitmap.value == null &&
+                        host != null &&
+                        port != null &&
+                        id != null
                     ) {
                         generateQrCode(host, port, id)
                     }

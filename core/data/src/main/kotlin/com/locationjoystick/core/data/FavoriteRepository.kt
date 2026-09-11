@@ -38,8 +38,7 @@ class FavoriteRepository
         private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     ) {
         fun getFavorites(): Flow<List<FavoriteLocation>> =
-            favoriteDao.getAll().map {
-                    list ->
+            favoriteDao.getAll().map { list ->
                 list.map { it.toDomain() }
             }
 

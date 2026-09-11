@@ -171,11 +171,11 @@ class SettingsViewModel
                 settingsRepository.getThemeMode(),
                 settingsRepository.getBaseAltitudeOverride(),
             ) {
-                    (snapshot, draftState),
-                    compassTestTargetPackage,
-                    isServiceGranted,
-                    themeMode,
-                    baseAltitudeOverride,
+                (snapshot, draftState),
+                compassTestTargetPackage,
+                isServiceGranted,
+                themeMode,
+                baseAltitudeOverride,
                 ->
                 val isDirty = draftState != DraftState()
                 SettingsUiState(

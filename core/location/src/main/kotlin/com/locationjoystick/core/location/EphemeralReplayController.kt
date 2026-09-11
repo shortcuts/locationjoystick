@@ -141,8 +141,7 @@ class EphemeralReplayController
                                         newPoint,
                                         followRoads = true,
                                         onFallback = ::reportFallback,
-                                    )
-                                    .drop(1) // first point is `from`, already in the route
+                                    ).drop(1) // first point is `from`, already in the route
                             } finally {
                                 locationRepository.setRoadRouteFetchInFlight(false)
                             }
