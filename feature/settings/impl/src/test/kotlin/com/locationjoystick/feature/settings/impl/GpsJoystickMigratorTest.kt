@@ -4,6 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 /**
  * Unit tests for [GpsJoystickMigrator] using anonymized real .db fixtures.
@@ -79,6 +82,169 @@ class GpsJoystickMigratorTest {
     @Test
     fun `returns failure on non-realm bytes`() {
         assertTrue(GpsJoystickMigrator.parse("{}".toByteArray()).isFailure)
+    }
+
+    // ── synthetic structural fixtures (malformed input) ──────────────────────
+    //
+    // The structural parser walks live byte offsets through the file (array headers,
+    // refs, cluster trees) rather than scanning for known-shape blocks, so a corrupt or
+    // unexpected structure — a table that doesn't exist yet, a ref pointing past EOF, a
+    // cluster whose root is unreachable — must degrade to an empty/partial result rather
+    // than throw. These build a minimal valid Realm structural layout by hand (bottom-up,
+    // since offsets are only known once each block is emitted) and then corrupt one part
+    // of it per test.
+
+    /** Minimal builder for the byte-level Realm array format `parseArrayHeader` decodes. */
+    private class RealmBuilder {
+        private val buf = ByteArrayOutputStream()
+
+        /** Appends [block] and returns its byte offset in the eventual file (header excluded). */
+        private fun emit(block: ByteArray): Int {
+            val offset = buf.size()
+            buf.write(block)
+            return offset
+        }
+
+        private fun header(
+            hasRefs: Boolean,
+            widthIdx: Int,
+            size: Int,
+        ): ByteArray {
+            val flags = (widthIdx and 7) or (if (hasRefs) 0x40 else 0)
+            return byteArrayOf(
+                0x41,
+                0x41,
+                0x41,
+                0x41,
+                flags.toByte(),
+                (size ushr 16).toByte(),
+                (size ushr 8).toByte(),
+                size.toByte(),
+            )
+        }
+
+        /** A ref/int array (widthScheme=1, elemBytes=width=8 → widthIdx 4). */
+        fun refArray(refs: List<Long>): Int {
+            val body = ByteArray(refs.size * 8)
+            refs.forEachIndexed { i, r -> for (b in 0 until 8) body[i * 8 + b] = ((r ushr (b * 8)) and 0xff).toByte() }
+            return emit(header(hasRefs = true, widthIdx = 4, size = refs.size) + body)
+        }
+
+        fun doublesArray(values: List<Double>): Int {
+            val body = ByteBuffer.allocate(values.size * 8).order(ByteOrder.LITTLE_ENDIAN)
+            values.forEach { body.putDouble(it) }
+            return emit(header(hasRefs = false, widthIdx = 4, size = values.size) + body.array())
+        }
+
+        /** ArrayStringShort: each entry padded to [slotWidth] bytes, last byte = pad count. */
+        fun stringArrayShort(
+            names: List<String>,
+            slotWidth: Int = 32,
+        ): Int {
+            val body = ByteArray(names.size * slotWidth)
+            names.forEachIndexed { i, name ->
+                val nb = name.toByteArray(Charsets.UTF_8)
+                check(nb.size < slotWidth) { "'$name' too long for slotWidth=$slotWidth" }
+                System.arraycopy(nb, 0, body, i * slotWidth, nb.size)
+                body[i * slotWidth + slotWidth - 1] = (slotWidth - 1 - nb.size).toByte()
+            }
+            val widthIdx = intArrayOf(0, 1, 2, 4, 8, 16, 32, 64).indexOf(slotWidth)
+            return emit(header(hasRefs = false, widthIdx = widthIdx, size = names.size) + body)
+        }
+
+        /** Prepends the 24-byte Realm file header with `topRef` pointing at [rootRef]. */
+        fun build(rootRef: Int): ByteArray {
+            val header = ByteArray(24)
+            for (b in 0 until 8) header[b] = ((rootRef.toLong() ushr (b * 8)) and 0xff).toByte()
+            header[16] = 'T'.code.toByte()
+            header[17] = '-'.code.toByte()
+            header[18] = 'D'.code.toByte()
+            header[19] = 'B'.code.toByte()
+            return header + buf.toByteArray()
+        }
+    }
+
+    /** Builds a single-table, non-cluster (pre-Cluster) `class_PlaceLocationData` table. */
+    private fun buildFavoritesRealm(
+        columnNames: List<String>,
+        columnValueRefs: (RealmBuilder) -> List<Int>,
+    ): ByteArray {
+        val b = RealmBuilder()
+        val colNamesRef = b.stringArrayShort(columnNames)
+        val specRef = b.refArray(listOf(0L, colNamesRef.toLong()))
+        val colsRef = b.refArray(columnValueRefs(b).map { it.toLong() })
+        val tableRef = b.refArray(listOf(specRef.toLong(), colsRef.toLong()))
+        val schemaRef = b.stringArrayShort(listOf("class_PlaceLocationData"))
+        val tablesRef = b.refArray(listOf(tableRef.toLong()))
+        val rootRef = b.refArray(listOf(schemaRef.toLong(), tablesRef.toLong()))
+        return b.build(rootRef)
+    }
+
+    @Test
+    fun `valid header with no tables returns empty migration`() {
+        val b = RealmBuilder()
+        val schemaRef = b.stringArrayShort(emptyList())
+        val tablesRef = b.refArray(emptyList())
+        val rootRef = b.refArray(listOf(schemaRef.toLong(), tablesRef.toLong()))
+        val result = GpsJoystickMigrator.parse(b.build(rootRef))
+        assertTrue(result.isSuccess)
+        val m = result.getOrThrow()
+        assertTrue(m.favorites.isEmpty())
+        assertTrue(m.routes.isEmpty())
+    }
+
+    @Test
+    fun `table ref pointing past EOF is skipped, not crashed on`() {
+        val b = RealmBuilder()
+        val schemaRef = b.stringArrayShort(listOf("class_PlaceLocationData"))
+        val tablesRef = b.refArray(listOf(999_999_999L))
+        val rootRef = b.refArray(listOf(schemaRef.toLong(), tablesRef.toLong()))
+        val result = GpsJoystickMigrator.parse(b.build(rootRef))
+        assertTrue(result.isSuccess)
+        assertTrue(result.getOrThrow().favorites.isEmpty())
+    }
+
+    @Test
+    fun `unreachable cluster root yields no favorites, not a crash`() {
+        val b = RealmBuilder()
+        val colNamesRef = b.stringArrayShort(listOf("name", "latitude", "longitude"))
+        val specRef = b.refArray(listOf(0L, colNamesRef.toLong()))
+        // size 3 → isCluster=true; clusterRoot (index 2) points past EOF.
+        val tableRef = b.refArray(listOf(specRef.toLong(), 0L, 999_999_999L))
+        val schemaRef = b.stringArrayShort(listOf("class_PlaceLocationData"))
+        val tablesRef = b.refArray(listOf(tableRef.toLong()))
+        val rootRef = b.refArray(listOf(schemaRef.toLong(), tablesRef.toLong()))
+        val result = GpsJoystickMigrator.parse(b.build(rootRef))
+        assertTrue(result.isSuccess)
+        assertTrue(result.getOrThrow().favorites.isEmpty())
+    }
+
+    @Test
+    fun `table missing the latitude column degrades to zero favorites`() {
+        // Spec declares only "name" and "longitude" — no "latitude" — matching a real column
+        // dropped from an older/newer GPS Joystick schema variant.
+        val bytes =
+            buildFavoritesRealm(columnNames = listOf("name", "longitude")) { b ->
+                listOf(b.stringArrayShort(listOf("Home")), b.doublesArray(listOf(2.3522)))
+            }
+        val result = GpsJoystickMigrator.parse(bytes)
+        assertTrue(result.isSuccess)
+        assertTrue(result.getOrThrow().favorites.isEmpty())
+    }
+
+    @Test
+    fun `truncated structural file degrades gracefully instead of throwing`() {
+        val bytes =
+            buildFavoritesRealm(columnNames = listOf("name", "latitude", "longitude")) { b ->
+                listOf(
+                    b.stringArrayShort(listOf("Home")),
+                    b.doublesArray(listOf(48.8566)),
+                    b.doublesArray(listOf(2.3522)),
+                )
+            }
+        val result = GpsJoystickMigrator.parse(bytes.copyOfRange(0, bytes.size / 2))
+        assertTrue(result.isSuccess)
+        assertTrue(result.getOrThrow().favorites.isEmpty())
     }
 
     // ── per-fixture tests ─────────────────────────────────────────────────────

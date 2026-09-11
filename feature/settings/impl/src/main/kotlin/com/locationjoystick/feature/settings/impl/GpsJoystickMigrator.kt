@@ -128,31 +128,10 @@ internal object GpsJoystickMigrator {
                 val sortIdx = info.columnNames.indexOf("sortOrder")
                 val slotOffset = if (info.isCluster) 1 else 0
 
-                val names = mutableListOf<String>()
-                val lats = mutableListOf<Double>()
-                val lons = mutableListOf<Double>()
-                val sortOrders = mutableListOf<Int>()
-
-                for (leaf in info.leaves) {
-                    val lHdr = parseArrayHeader(bytes, leaf) ?: continue
-                    val lEb = lHdr.elemBytes
-                    if (namesIdx != -1) {
-                        val ref = readRef(bytes, leaf + 8, namesIdx + slotOffset, lEb).toInt()
-                        names.addAll(readStrings(bytes, ref))
-                    }
-                    if (latIdx != -1) {
-                        val ref = readRef(bytes, leaf + 8, latIdx + slotOffset, lEb).toInt()
-                        lats.addAll(readDoubles(bytes, ref))
-                    }
-                    if (lonIdx != -1) {
-                        val ref = readRef(bytes, leaf + 8, lonIdx + slotOffset, lEb).toInt()
-                        lons.addAll(readDoubles(bytes, ref))
-                    }
-                    if (sortIdx != -1) {
-                        val ref = readRef(bytes, leaf + 8, sortIdx + slotOffset, lEb).toInt()
-                        sortOrders.addAll(readIntArray(bytes, ref))
-                    }
-                }
+                val names = readColumn(bytes, info.leaves, namesIdx, slotOffset, ::readStrings)
+                val lats = readColumn(bytes, info.leaves, latIdx, slotOffset, ::readDoubles)
+                val lons = readColumn(bytes, info.leaves, lonIdx, slotOffset, ::readDoubles)
+                val sortOrders = readColumn(bytes, info.leaves, sortIdx, slotOffset) { b, o -> readIntArray(b, o) }
 
                 val baseTime = System.currentTimeMillis()
                 val count = minOf(lats.size, lons.size)
@@ -178,24 +157,14 @@ internal object GpsJoystickMigrator {
         val coordRef = tableRefs["class_CoordinateData"] ?: 0
         if (routeRef > 0 && coordRef > 0) {
             val cInfo = getTableInfo(bytes, coordRef)
-            val allLats = mutableListOf<Double>()
-            val allLons = mutableListOf<Double>()
+            var allLats = emptyList<Double>()
+            var allLons = emptyList<Double>()
             if (cInfo != null) {
                 val latIdx = cInfo.columnNames.indexOf("latitude")
                 val lonIdx = cInfo.columnNames.indexOf("longitude")
                 val slotOffset = if (cInfo.isCluster) 1 else 0
-                for (leaf in cInfo.leaves) {
-                    val lHdr = parseArrayHeader(bytes, leaf) ?: continue
-                    val lEb = lHdr.elemBytes
-                    if (latIdx != -1) {
-                        val ref = readRef(bytes, leaf + 8, latIdx + slotOffset, lEb).toInt()
-                        allLats.addAll(readDoubles(bytes, ref))
-                    }
-                    if (lonIdx != -1) {
-                        val ref = readRef(bytes, leaf + 8, lonIdx + slotOffset, lEb).toInt()
-                        allLons.addAll(readDoubles(bytes, ref))
-                    }
-                }
+                allLats = readColumn(bytes, cInfo.leaves, latIdx, slotOffset, ::readDoubles)
+                allLons = readColumn(bytes, cInfo.leaves, lonIdx, slotOffset, ::readDoubles)
             }
 
             val rInfo = getTableInfo(bytes, routeRef)
@@ -209,20 +178,8 @@ internal object GpsJoystickMigrator {
                 for (leaf in rInfo.leaves) {
                     val lHdr = parseArrayHeader(bytes, leaf) ?: continue
                     val lEb = lHdr.elemBytes
-                    val rNames =
-                        if (nameIdx != -1) {
-                            val ref = readRef(bytes, leaf + 8, nameIdx + slotOffset, lEb).toInt()
-                            readStrings(bytes, ref)
-                        } else {
-                            emptyList()
-                        }
-                    val rSortOrders =
-                        if (sortIdx != -1) {
-                            val ref = readRef(bytes, leaf + 8, sortIdx + slotOffset, lEb).toInt()
-                            readIntArray(bytes, ref)
-                        } else {
-                            emptyList()
-                        }
+                    val rNames = readLeafColumn(bytes, leaf, lEb, nameIdx, slotOffset, ::readStrings)
+                    val rSortOrders = readLeafColumn(bytes, leaf, lEb, sortIdx, slotOffset) { b, o -> readIntArray(b, o) }
 
                     if (coordsIdx != -1) {
                         val coordsRef = readRef(bytes, leaf + 8, coordsIdx + slotOffset, lEb).toInt()
@@ -273,6 +230,37 @@ internal object GpsJoystickMigrator {
             runSpeed = null,
             bikeSpeed = null,
         )
+    }
+
+    /** Reads one column's value array for a single leaf, or `emptyList()` if the column is absent. */
+    private fun <T> readLeafColumn(
+        bytes: ByteArray,
+        leaf: Int,
+        leafElemBytes: Int,
+        colIdx: Int,
+        slotOffset: Int,
+        reader: (ByteArray, Int) -> List<T>,
+    ): List<T> {
+        if (colIdx == -1) return emptyList()
+        val ref = readRef(bytes, leaf + 8, colIdx + slotOffset, leafElemBytes).toInt()
+        return reader(bytes, ref)
+    }
+
+    /** Reads one column's value array across every leaf of a table, concatenated in leaf order. */
+    private fun <T> readColumn(
+        bytes: ByteArray,
+        leaves: List<Int>,
+        colIdx: Int,
+        slotOffset: Int,
+        reader: (ByteArray, Int) -> List<T>,
+    ): List<T> {
+        if (colIdx == -1) return emptyList()
+        val result = mutableListOf<T>()
+        for (leaf in leaves) {
+            val lHdr = parseArrayHeader(bytes, leaf) ?: continue
+            result.addAll(readLeafColumn(bytes, leaf, lHdr.elemBytes, colIdx, slotOffset, reader))
+        }
+        return result
     }
 
     private data class TableInfo(
@@ -478,6 +466,7 @@ internal object GpsJoystickMigrator {
             for (end in offsets) {
                 if (end < prev || prev >= blobSize) {
                     result.add("")
+                    prev = end
                     continue
                 }
                 val sliceEnd = minOf(end, blobSize)
