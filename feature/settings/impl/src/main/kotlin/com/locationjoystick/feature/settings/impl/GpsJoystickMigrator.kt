@@ -14,77 +14,34 @@ import java.util.UUID
 /**
  * Parses a GPS Joystick Realm/TightDB binary export (.db) without a Realm SDK dependency.
  *
- * Extracts favorites (class_PlaceLocationData) and routes (class_RouteData +
- * class_CoordinateData). Speed profiles are not present in GPS Joystick exports.
+ * Traverses Realm's B-tree and Group table directory to extract:
+ * - Favorites: `class_PlaceLocationData` (name, latitude, longitude)
+ * - Routes: `class_RouteData` (name, coordinates LinkList) + `class_CoordinateData` (latitude, longitude)
  *
- * ## Binary format notes
- *
- * - `T-DB` magic at byte offset 16.
- * - Double arrays: 8-byte header `41 41 41 41 0C xx xx <count>` followed by `count` little-endian
- *   doubles.  Count is stored in byte 7 (the 8th byte) of the header.
- * - String arrays: 8-byte header `41 41 41 41 0D xx xx <count>` followed by `count`
- *   null-terminated UTF-8 strings, each entry padded to a 16-byte boundary.
- *
- * ## Parsing strategy
- *
- * 1. Scan for string arrays (0x0D type).  Filter out schema arrays (column-name tables).
- * 2. Scan for double arrays (0x0C type).  Find consecutive same-count pairs whose values are
- *    all plausible geographic coordinates (abs ≤ 180, non-zero).
- * 3. Assign coord pairs: if two pairs exist the larger is routes, the smaller is favorites.
- *    If only one pair exists and a matching-count string array is present → favorites only;
- *    otherwise → routes only.
- * 4. Match string arrays to favorites/routes by count.
- * 5. Fall back to `Favorite N` / `Route N` default names when named arrays are absent.
+ * Supports both pre-Cluster (format <= 9) and modern Cluster (format >= 10) Realm formats.
+ * Speed profiles are not present in GPS Joystick exports.
  */
 internal object GpsJoystickMigrator {
     private const val TAG = "GpsJoystickMigrator"
 
-    private val REALM_HEADER = "T-DB".toByteArray(Charsets.US_ASCII)
-    private const val REALM_HEADER_OFFSET = 16
-    private const val ARRAY_HEADER_SIZE = 8
-
-    // 5-byte prefixes that identify Realm array headers.
-    private val DOUBLE_ARRAY_PREFIX = byteArrayOf(0x41, 0x41, 0x41, 0x41, 0x0c.toByte())
-    private val STRING_ARRAY_PREFIX = byteArrayOf(0x41, 0x41, 0x41, 0x41, 0x0d.toByte())
-
-    /** Column names present in Realm schema tables — used to skip metadata arrays. */
-    private val SCHEMA_NAMES =
-        setOf(
-            "id",
-            "name",
-            "latitude",
-            "longitude",
-            "altitude",
-            "coordinates",
-            "typeId",
-            "address",
-            "sortOrder",
-            "pk_table",
-            "pk_property",
-            "parentFolderId",
-            "type",
-            "folderId",
-        )
+    private val WIDTH_TABLE = intArrayOf(0, 1, 2, 4, 8, 16, 32, 64)
 
     fun parse(bytes: ByteArray): Result<MigrationResult> =
         runCatching {
             // Newer GPS Joystick versions export GPX instead of the Realm .db format.
             if (looksLikeGpx(bytes)) return@runCatching parseGpx(bytes)
-            if (!hasRealmHeader(bytes)) {
+            val isRealm =
+                bytes.size >= 20 &&
+                    bytes[16] == 'T'.code.toByte() &&
+                    bytes[17] == '-'.code.toByte() &&
+                    bytes[18] == 'D'.code.toByte() &&
+                    bytes[19] == 'B'.code.toByte()
+            if (!isRealm) {
                 return Result.failure(
                     IllegalArgumentException("Not a valid Realm database file (missing T-DB header)"),
                 )
             }
-            val dataStringArrays = findDataStringArrays(bytes)
-            val coordPairs = findCoordPairs(bytes)
-            val (favorites, routes) = extractFavoritesAndRoutes(bytes, dataStringArrays, coordPairs)
-            MigrationResult(
-                favorites = favorites,
-                routes = routes,
-                walkSpeed = null,
-                runSpeed = null,
-                bikeSpeed = null,
-            )
+            parseRealm(bytes)
         }.onFailure { e ->
             Log.e(TAG, "Failed to parse GPS Joystick database", e)
         }
@@ -117,254 +74,452 @@ internal object GpsJoystickMigrator {
     }
 
     // -------------------------------------------------------------------------
-    // Top-level extraction
+    // Structural Realm parser
     // -------------------------------------------------------------------------
 
-    private data class CoordPair(
-        val lats: List<Double>,
-        val lons: List<Double>,
-    ) {
-        val count: Int get() = lats.size
-    }
-
-    private fun extractFavoritesAndRoutes(
-        bytes: ByteArray,
-        dataArrays: List<List<String>>,
-        coordPairs: List<CoordPair>,
-    ): Pair<List<FavoriteLocation>, List<Route>> {
-        if (coordPairs.isEmpty()) return emptyList<FavoriteLocation>() to emptyList()
-
-        val favPair: CoordPair?
-        val routePair: CoordPair?
-
-        if (coordPairs.size >= 2) {
-            val sorted = coordPairs.sortedBy { it.count }
-            favPair = sorted.first()
-            routePair = sorted.last()
-        } else {
-            val pair = coordPairs.first()
-            val hasMatchingNameArray = dataArrays.any { it.size == pair.count }
-            if (hasMatchingNameArray) {
-                favPair = pair
-                routePair = null
-            } else {
-                favPair = null
-                routePair = pair
-            }
+    private fun parseRealm(bytes: ByteArray): MigrationResult {
+        val topRef0 = readLongLE(bytes, 0)
+        val topRef1 = readLongLE(bytes, 8)
+        val flags = bytes[23].toInt() and 0xff
+        val active = flags and 1
+        var topRef = if (active == 1) topRef1 else topRef0
+        if (topRef == -1L && bytes.size >= 40) {
+            // Streaming form footer (last 16 bytes: 8 bytes top_ref + 8 bytes magic)
+            topRef = readLongLE(bytes, bytes.size - 16)
+        }
+        if (topRef <= 0 || topRef + 8 > bytes.size) {
+            return MigrationResult(emptyList(), emptyList(), null, null, null)
         }
 
-        val favCount = favPair?.count ?: 0
-        val routeTotal = routePair?.count ?: 0
-
-        // Find the name array that matches fav count
-        val favNameArray = dataArrays.firstOrNull { it.size == favCount && favCount > 0 }
-
-        // Find route name array: a data array whose count ≠ favCount
-        val routeNameArray =
-            if (routePair != null) {
-                val candidates = dataArrays.filter { it.size != favCount }
-                // Prefer a candidate whose count evenly divides route total
-                candidates.firstOrNull { routeTotal % it.size == 0 } ?: candidates.lastOrNull()
-            } else {
-                null
-            }
-
-        val favorites = buildFavorites(favPair, favNameArray)
-        val routes = buildRoutes(routePair, routeNameArray)
-        return favorites to routes
-    }
-
-    // -------------------------------------------------------------------------
-    // Favorites
-    // -------------------------------------------------------------------------
-
-    private fun buildFavorites(
-        pair: CoordPair?,
-        nameArray: List<String>?,
-    ): List<FavoriteLocation> {
-        if (pair == null || pair.count == 0) return emptyList()
-        return (0 until pair.count).map { i ->
-            FavoriteLocation(
-                id = UUID.randomUUID().toString(),
-                name = nameArray?.getOrNull(i) ?: "Favorite ${i + 1}",
-                position = LatLng(latitude = pair.lats[i], longitude = pair.lons[i]),
-                createdAt = System.currentTimeMillis(),
-            )
+        val rootHdr =
+            parseArrayHeader(bytes, topRef.toInt())
+                ?: return MigrationResult(emptyList(), emptyList(), null, null, null)
+        if (!rootHdr.hasRefs || rootHdr.size < 2) {
+            return MigrationResult(emptyList(), emptyList(), null, null, null)
         }
-    }
+        val eb = rootHdr.elemBytes
+        val schemaRef = readRef(bytes, topRef.toInt() + 8, 0, eb).toInt()
+        val tablesRef = readRef(bytes, topRef.toInt() + 8, 1, eb).toInt()
 
-    // -------------------------------------------------------------------------
-    // Routes
-    // -------------------------------------------------------------------------
-
-    private fun buildRoutes(
-        pair: CoordPair?,
-        nameArray: List<String>?,
-    ): List<Route> {
-        if (pair == null || pair.count < 1) return emptyList()
-        val totalWaypoints = pair.count
-        // Fall back to a single unnamed route when the waypoint count is less than the
-        // number of named routes (can happen with partial/corrupt exports).
-        val routeCount = if (nameArray != null && totalWaypoints >= nameArray.size) nameArray.size else 1
-        val base = totalWaypoints / routeCount
-
-        return (0 until routeCount).map { ri ->
-            val start = ri * base
-            val end = if (ri == routeCount - 1) totalWaypoints else start + base
-            val waypoints =
-                (start until end).mapIndexed { wi, idx ->
-                    Waypoint(
-                        id = UUID.randomUUID().toString(),
-                        position = LatLng(latitude = pair.lats[idx], longitude = pair.lons[idx]),
-                        orderIndex = wi,
-                    )
-                }
-            Route(
-                id = UUID.randomUUID().toString(),
-                name = nameArray?.getOrNull(ri) ?: "Route ${ri + 1}",
-                waypoints = waypoints,
-                isLooping = false,
-                routeType = RouteType.STRAIGHT,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis(),
-            )
+        val schema = readStrings(bytes, schemaRef)
+        val trHdr =
+            parseArrayHeader(bytes, tablesRef)
+                ?: return MigrationResult(emptyList(), emptyList(), null, null, null)
+        if (!trHdr.hasRefs) {
+            return MigrationResult(emptyList(), emptyList(), null, null, null)
         }
-    }
+        val trEb = trHdr.elemBytes
 
-    // -------------------------------------------------------------------------
-    // String array scanning
-    // -------------------------------------------------------------------------
+        val tableRefs = mutableMapOf<String, Int>()
+        for (i in 0 until trHdr.size) {
+            val name = schema.getOrNull(i) ?: "table_$i"
+            tableRefs[name] = readRef(bytes, tablesRef + 8, i, trEb).toInt()
+        }
 
-    /**
-     * Scans the file for Realm string arrays (0x0D type) and returns only those that
-     * are not schema/column-name tables.
-     */
-    private fun findDataStringArrays(bytes: ByteArray): List<List<String>> {
-        val result = mutableListOf<List<String>>()
-        var pos = 0
-        while (pos <= bytes.size - ARRAY_HEADER_SIZE) {
-            if (prefixAt(bytes, pos, STRING_ARRAY_PREFIX)) {
-                val count = bytes[pos + 7].toInt() and 0xff
-                if (count > 0) {
-                    val strings = readStringArray(bytes, pos + ARRAY_HEADER_SIZE, count)
-                    // Only treat as a schema/column-name table if every entry is a known column
-                    // name — a single coincidental match (e.g. a favorite literally named
-                    // "address") must not discard the whole array of real names.
-                    if (strings.size == count && !strings.all { it in SCHEMA_NAMES }) {
-                        result.add(strings)
+        // 1. Favorites (class_PlaceLocationData)
+        val favorites = mutableListOf<FavoriteLocation>()
+        val favRef = tableRefs["class_PlaceLocationData"] ?: 0
+        if (favRef > 0) {
+            val info = getTableInfo(bytes, favRef)
+            if (info != null) {
+                val namesIdx = info.columnNames.indexOf("name")
+                val latIdx = info.columnNames.indexOf("latitude")
+                val lonIdx = info.columnNames.indexOf("longitude")
+                val sortIdx = info.columnNames.indexOf("sortOrder")
+                val slotOffset = if (info.isCluster) 1 else 0
+
+                val names = mutableListOf<String>()
+                val lats = mutableListOf<Double>()
+                val lons = mutableListOf<Double>()
+                val sortOrders = mutableListOf<Int>()
+
+                for (leaf in info.leaves) {
+                    val lHdr = parseArrayHeader(bytes, leaf) ?: continue
+                    val lEb = lHdr.elemBytes
+                    if (namesIdx != -1) {
+                        val ref = readRef(bytes, leaf + 8, namesIdx + slotOffset, lEb).toInt()
+                        names.addAll(readStrings(bytes, ref))
+                    }
+                    if (latIdx != -1) {
+                        val ref = readRef(bytes, leaf + 8, latIdx + slotOffset, lEb).toInt()
+                        lats.addAll(readDoubles(bytes, ref))
+                    }
+                    if (lonIdx != -1) {
+                        val ref = readRef(bytes, leaf + 8, lonIdx + slotOffset, lEb).toInt()
+                        lons.addAll(readDoubles(bytes, ref))
+                    }
+                    if (sortIdx != -1) {
+                        val ref = readRef(bytes, leaf + 8, sortIdx + slotOffset, lEb).toInt()
+                        sortOrders.addAll(readIntArray(bytes, ref))
                     }
                 }
-                pos += ARRAY_HEADER_SIZE
-            } else {
-                pos++
-            }
-        }
-        return result
-    }
 
-    /**
-     * Reads [count] null-terminated UTF-8 strings starting at [dataStart].
-     * Each string occupies a 16-byte-aligned slot within the array body.
-     */
-    private fun readStringArray(
-        bytes: ByteArray,
-        dataStart: Int,
-        count: Int,
-    ): List<String> {
-        val strings = mutableListOf<String>()
-        var pos = dataStart
-        repeat(count) {
-            val nullPos = bytes.indexOf(0.toByte(), pos)
-            if (nullPos == -1 || nullPos >= bytes.size) return strings
-            val s = bytes.copyOfRange(pos, nullPos).toString(Charsets.UTF_8)
-            strings.add(s)
-            val consumed = nullPos - dataStart + 1 // bytes consumed since array start
-            val rem = consumed % 16
-            pos = dataStart + consumed + if (rem == 0) 0 else 16 - rem
-        }
-        return strings
-    }
-
-    private fun ByteArray.indexOf(
-        value: Byte,
-        fromIndex: Int,
-    ): Int {
-        for (i in fromIndex until size) if (this[i] == value) return i
-        return -1
-    }
-
-    // -------------------------------------------------------------------------
-    // Double array scanning
-    // -------------------------------------------------------------------------
-
-    /**
-     * Scans for consecutive same-count double array pairs whose values are all plausible
-     * geographic coordinates (|v| ≤ 180, non-zero, finite).
-     */
-    private fun findCoordPairs(bytes: ByteArray): List<CoordPair> {
-        val coordBlocks =
-            findDoubleArrayBlocks(bytes)
-                .filter { block -> block.isNotEmpty() && block.all { v -> v.isFinite() && v != 0.0 && Math.abs(v) <= 180.0 } }
-
-        val pairs = mutableListOf<CoordPair>()
-        var i = 0
-        while (i < coordBlocks.size - 1) {
-            val a = coordBlocks[i]
-            val b = coordBlocks[i + 1]
-            if (a.size == b.size) {
-                pairs.add(CoordPair(lats = a, lons = b))
-                i += 2
-            } else {
-                i++
-            }
-        }
-        return pairs
-    }
-
-    private fun findDoubleArrayBlocks(bytes: ByteArray): List<List<Double>> {
-        val result = mutableListOf<List<Double>>()
-        var pos = 0
-        while (pos <= bytes.size - ARRAY_HEADER_SIZE) {
-            if (prefixAt(bytes, pos, DOUBLE_ARRAY_PREFIX)) {
-                val count = bytes[pos + 7].toInt() and 0xff
-                if (count > 0) {
-                    val doubles = readDoubles(bytes, pos + ARRAY_HEADER_SIZE, count)
-                    if (doubles.size == count) result.add(doubles)
+                val baseTime = System.currentTimeMillis()
+                val count = minOf(lats.size, lons.size)
+                for (i in 0 until count) {
+                    val name = names.getOrNull(i)?.takeIf { it.isNotBlank() } ?: "Favorite ${i + 1}"
+                    val sortOrder = sortOrders.getOrNull(i)
+                    val order = if (sortOrder != null && sortOrder >= 0) sortOrder else i
+                    favorites.add(
+                        FavoriteLocation(
+                            id = UUID.randomUUID().toString(),
+                            name = name,
+                            position = LatLng(latitude = lats[i], longitude = lons[i]),
+                            createdAt = baseTime + order * 1000L,
+                        ),
+                    )
                 }
-                pos += ARRAY_HEADER_SIZE
+            }
+        }
+
+        // 2. Routes (class_RouteData + class_CoordinateData)
+        val routes = mutableListOf<Route>()
+        val routeRef = tableRefs["class_RouteData"] ?: 0
+        val coordRef = tableRefs["class_CoordinateData"] ?: 0
+        if (routeRef > 0 && coordRef > 0) {
+            val cInfo = getTableInfo(bytes, coordRef)
+            val allLats = mutableListOf<Double>()
+            val allLons = mutableListOf<Double>()
+            if (cInfo != null) {
+                val latIdx = cInfo.columnNames.indexOf("latitude")
+                val lonIdx = cInfo.columnNames.indexOf("longitude")
+                val slotOffset = if (cInfo.isCluster) 1 else 0
+                for (leaf in cInfo.leaves) {
+                    val lHdr = parseArrayHeader(bytes, leaf) ?: continue
+                    val lEb = lHdr.elemBytes
+                    if (latIdx != -1) {
+                        val ref = readRef(bytes, leaf + 8, latIdx + slotOffset, lEb).toInt()
+                        allLats.addAll(readDoubles(bytes, ref))
+                    }
+                    if (lonIdx != -1) {
+                        val ref = readRef(bytes, leaf + 8, lonIdx + slotOffset, lEb).toInt()
+                        allLons.addAll(readDoubles(bytes, ref))
+                    }
+                }
+            }
+
+            val rInfo = getTableInfo(bytes, routeRef)
+            if (rInfo != null) {
+                val nameIdx = rInfo.columnNames.indexOf("name")
+                val coordsIdx = rInfo.columnNames.indexOf("coordinates")
+                val sortIdx = rInfo.columnNames.indexOf("sortOrder")
+                val slotOffset = if (rInfo.isCluster) 1 else 0
+                val baseTime = System.currentTimeMillis()
+
+                for (leaf in rInfo.leaves) {
+                    val lHdr = parseArrayHeader(bytes, leaf) ?: continue
+                    val lEb = lHdr.elemBytes
+                    val rNames =
+                        if (nameIdx != -1) {
+                            val ref = readRef(bytes, leaf + 8, nameIdx + slotOffset, lEb).toInt()
+                            readStrings(bytes, ref)
+                        } else {
+                            emptyList()
+                        }
+                    val rSortOrders =
+                        if (sortIdx != -1) {
+                            val ref = readRef(bytes, leaf + 8, sortIdx + slotOffset, lEb).toInt()
+                            readIntArray(bytes, ref)
+                        } else {
+                            emptyList()
+                        }
+
+                    if (coordsIdx != -1) {
+                        val coordsRef = readRef(bytes, leaf + 8, coordsIdx + slotOffset, lEb).toInt()
+                        val crHdr = parseArrayHeader(bytes, coordsRef)
+                        if (crHdr != null && crHdr.hasRefs) {
+                            val crEb = crHdr.elemBytes
+                            for (ri in 0 until crHdr.size) {
+                                val rName = rNames.getOrNull(ri)?.takeIf { it.isNotBlank() } ?: "Route ${ri + 1}"
+                                val sortOrder = rSortOrders.getOrNull(ri)
+                                val order = if (sortOrder != null && sortOrder >= 0) sortOrder else routes.size
+                                val linkRef = readRef(bytes, coordsRef + 8, ri, crEb).toInt()
+                                val indices = if (linkRef > 0) readUintArray(bytes, linkRef) else emptyList()
+                                val waypoints =
+                                    indices.mapIndexedNotNull { wi, idx ->
+                                        if (idx in allLats.indices && idx in allLons.indices) {
+                                            Waypoint(
+                                                id = UUID.randomUUID().toString(),
+                                                position = LatLng(latitude = allLats[idx], longitude = allLons[idx]),
+                                                orderIndex = wi,
+                                            )
+                                        } else {
+                                            null
+                                        }
+                                    }
+                                val routeTime = baseTime + order * 1000L
+                                routes.add(
+                                    Route(
+                                        id = UUID.randomUUID().toString(),
+                                        name = rName,
+                                        waypoints = waypoints,
+                                        isLooping = false,
+                                        routeType = RouteType.STRAIGHT,
+                                        createdAt = routeTime,
+                                        updatedAt = routeTime,
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return MigrationResult(
+            favorites = favorites,
+            routes = routes,
+            walkSpeed = null,
+            runSpeed = null,
+            bikeSpeed = null,
+        )
+    }
+
+    private data class TableInfo(
+        val columnNames: List<String>,
+        val isCluster: Boolean,
+        val leaves: List<Int>,
+    )
+
+    private fun getTableInfo(
+        bytes: ByteArray,
+        tableRef: Int,
+    ): TableInfo? {
+        if (tableRef <= 0 || tableRef + 8 > bytes.size) return null
+        val tHdr = parseArrayHeader(bytes, tableRef) ?: return null
+        if (!tHdr.hasRefs || tHdr.size < 2) return null
+        val tEb = tHdr.elemBytes
+        val specRef = readRef(bytes, tableRef + 8, 0, tEb).toInt()
+        val sHdr = parseArrayHeader(bytes, specRef) ?: return null
+        if (!sHdr.hasRefs || sHdr.size < 2) return null
+        val sEb = sHdr.elemBytes
+        val namesRef = readRef(bytes, specRef + 8, 1, sEb).toInt()
+        val colNames = readStrings(bytes, namesRef)
+
+        val isCluster = tHdr.size >= 3
+        val leaves =
+            if (isCluster) {
+                val clusterRoot = readRef(bytes, tableRef + 8, 2, tEb).toInt()
+                walkClusterLeaves(bytes, clusterRoot)
             } else {
-                pos++
+                val colsRef = readRef(bytes, tableRef + 8, 1, tEb).toInt()
+                listOf(colsRef)
+            }
+
+        return TableInfo(columnNames = colNames, isCluster = isCluster, leaves = leaves)
+    }
+
+    private fun walkClusterLeaves(
+        bytes: ByteArray,
+        rootRef: Int,
+    ): List<Int> {
+        if (rootRef <= 0 || rootRef + 8 > bytes.size) return emptyList()
+        val hdr = parseArrayHeader(bytes, rootRef) ?: return emptyList()
+        if (!hdr.hasRefs) return emptyList()
+        val isInner = (hdr.flags and 0x80) != 0
+        if (!isInner) return listOf(rootRef)
+        val eb = hdr.elemBytes
+        if (eb < 1) return emptyList()
+        val leaves = mutableListOf<Int>()
+        for (i in 3 until hdr.size) {
+            val childRef = readRef(bytes, rootRef + 8, i, eb).toInt()
+            if (childRef > 0) {
+                leaves.addAll(walkClusterLeaves(bytes, childRef))
+            }
+        }
+        return leaves
+    }
+
+    // -------------------------------------------------------------------------
+    // Low-level Realm binary decoders
+    // -------------------------------------------------------------------------
+
+    private data class ArrayHeader(
+        val flags: Int,
+        val size: Int,
+        val width: Int,
+        val widthScheme: Int,
+        val elemBytes: Int,
+        val hasRefs: Boolean,
+    )
+
+    private fun parseArrayHeader(
+        bytes: ByteArray,
+        offset: Int,
+    ): ArrayHeader? {
+        if (offset < 0 || offset + 8 > bytes.size) return null
+        if (bytes[offset] != 0x41.toByte() ||
+            bytes[offset + 1] != 0x41.toByte() ||
+            bytes[offset + 2] != 0x41.toByte() ||
+            bytes[offset + 3] != 0x41.toByte()
+        ) {
+            return null
+        }
+        val flags = bytes[offset + 4].toInt() and 0xff
+        val size = readSize(bytes, offset + 5)
+        val widthScheme = (flags ushr 3) and 3
+        val widthNdx = flags and 7
+        val width = if (widthNdx in WIDTH_TABLE.indices) WIDTH_TABLE[widthNdx] else 0
+        val elemBytes =
+            when (widthScheme) {
+                0 -> if (width >= 8) width / 8 else 0
+                1 -> width
+                else -> 0
+            }
+        val hasRefs = (flags and 0x40) != 0
+        return ArrayHeader(flags, size, width, widthScheme, elemBytes, hasRefs)
+    }
+
+    private fun readRef(
+        bytes: ByteArray,
+        payloadStart: Int,
+        index: Int,
+        elemBytes: Int,
+    ): Long {
+        val off = payloadStart + index * elemBytes
+        if (elemBytes < 1 || off < 0 || off + elemBytes > bytes.size) return -1L
+        var value = 0L
+        for (b in 0 until elemBytes) {
+            value = value or ((bytes[off + b].toLong() and 0xffL) shl (b * 8))
+        }
+        return value
+    }
+
+    private fun readUintArray(
+        bytes: ByteArray,
+        offset: Int,
+    ): List<Int> = readIntArray(bytes, offset, signed = false)
+
+    private fun readIntArray(
+        bytes: ByteArray,
+        offset: Int,
+        signed: Boolean = true,
+    ): List<Int> {
+        val hdr = parseArrayHeader(bytes, offset) ?: return emptyList()
+        val count = hdr.size
+        val width = hdr.width
+        if (count <= 0) return emptyList()
+        if (width <= 0) return List(count) { 0 }
+        val payloadStart = offset + 8
+        val result = ArrayList<Int>(count)
+        val signBit = if (signed && width in 1..64) 1L shl (width - 1) else 0L
+        if (hdr.widthScheme == 0) {
+            val mask = if (width >= 64) -1L else (1L shl width) - 1L
+            for (i in 0 until count) {
+                val bitOffset = i * width
+                val byteOffset = payloadStart + (bitOffset / 8)
+                val eb = (bitOffset % 8 + width + 7) / 8
+                if (byteOffset + eb > bytes.size) break
+                var v = 0L
+                for (b in 0 until eb) {
+                    v = v or ((bytes[byteOffset + b].toLong() and 0xffL) shl (b * 8))
+                }
+                var value = (v ushr (bitOffset % 8)) and mask
+                if (width >= 8 && signBit != 0L && value >= signBit) {
+                    value -= (1L shl width)
+                }
+                result.add(value.toInt())
+            }
+        } else if (hdr.widthScheme == 1) {
+            val bitWidth = width * 8
+            val mask = if (bitWidth >= 64) -1L else (1L shl bitWidth) - 1L
+            val sb = if (signed && bitWidth in 8..64) 1L shl (bitWidth - 1) else 0L
+            for (i in 0 until count) {
+                val byteOffset = payloadStart + i * width
+                if (byteOffset + width > bytes.size) break
+                var v = 0L
+                for (b in 0 until width) {
+                    v = v or ((bytes[byteOffset + b].toLong() and 0xffL) shl (b * 8))
+                }
+                var value = v and mask
+                if (sb != 0L && value >= sb) {
+                    value -= (1L shl bitWidth)
+                }
+                result.add(value.toInt())
             }
         }
         return result
+    }
+
+    private fun readStrings(
+        bytes: ByteArray,
+        offset: Int,
+    ): List<String> {
+        val hdr = parseArrayHeader(bytes, offset) ?: return emptyList()
+        // 1. ArrayStringShort (0x0D inline string array: !hasRefs)
+        if (!hdr.hasRefs) {
+            val width = hdr.width
+            val count = hdr.size
+            if (width <= 0) return List(count) { "" }
+            val payloadStart = offset + 8
+            val result = ArrayList<String>(count)
+            for (i in 0 until count) {
+                val entryStart = payloadStart + i * width
+                if (entryStart + width > bytes.size) break
+                val pad = bytes[entryStart + width - 1].toInt() and 0xff
+                val len = maxOf(0, width - 1 - pad)
+                result.add(String(bytes, entryStart, len, Charsets.UTF_8))
+            }
+            return result
+        }
+        // 2. ArraySmallBlobs / ArrayStringLong (hasRefs, size 2 or 3)
+        if (hdr.hasRefs && hdr.size in 2..3) {
+            val eb = hdr.elemBytes
+            val offsetsRef = readRef(bytes, offset + 8, 0, eb).toInt()
+            val blobRef = readRef(bytes, offset + 8, 1, eb).toInt()
+            if (offsetsRef <= 0 || blobRef <= 0) return emptyList()
+            val offsets = readUintArray(bytes, offsetsRef)
+            val bHdr = parseArrayHeader(bytes, blobRef) ?: return emptyList()
+            val blobSize = bHdr.size
+            val blobStart = blobRef + 8
+            if (blobStart + blobSize > bytes.size) return emptyList()
+            val result = ArrayList<String>(offsets.size)
+            var prev = 0
+            for (end in offsets) {
+                if (end < prev || prev >= blobSize) {
+                    result.add("")
+                    continue
+                }
+                val sliceEnd = minOf(end, blobSize)
+                var len = sliceEnd - prev
+                if (len > 0 && bytes[blobStart + prev + len - 1] == 0.toByte()) {
+                    len--
+                }
+                result.add(if (len > 0) String(bytes, blobStart + prev, len, Charsets.UTF_8) else "")
+                prev = end
+            }
+            return result
+        }
+        return emptyList()
     }
 
     private fun readDoubles(
         bytes: ByteArray,
-        dataStart: Int,
-        count: Int,
+        offset: Int,
     ): List<Double> {
-        val end = dataStart + count * 8
-        if (end > bytes.size) return emptyList()
-        val buf = ByteBuffer.wrap(bytes, dataStart, count * 8).order(ByteOrder.LITTLE_ENDIAN)
+        val hdr = parseArrayHeader(bytes, offset) ?: return emptyList()
+        val count = hdr.size
+        val payloadStart = offset + 8
+        if (payloadStart + count * 8 > bytes.size) return emptyList()
+        val buf = ByteBuffer.wrap(bytes, payloadStart, count * 8).order(ByteOrder.LITTLE_ENDIAN)
         return (0 until count).map { buf.double }
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
-    private fun hasRealmHeader(bytes: ByteArray): Boolean {
-        if (bytes.size < REALM_HEADER_OFFSET + REALM_HEADER.size) return false
-        return REALM_HEADER.indices.all { i -> bytes[REALM_HEADER_OFFSET + i] == REALM_HEADER[i] }
-    }
-
-    private fun prefixAt(
+    private fun readSize(
         bytes: ByteArray,
         offset: Int,
-        prefix: ByteArray,
-    ): Boolean {
-        if (offset + prefix.size > bytes.size) return false
-        return prefix.indices.all { i -> bytes[offset + i] == prefix[i] }
+    ): Int {
+        if (offset < 0 || offset + 3 > bytes.size) return 0
+        return ((bytes[offset].toInt() and 0xff) shl 16) or
+            ((bytes[offset + 1].toInt() and 0xff) shl 8) or
+            (bytes[offset + 2].toInt() and 0xff)
+    }
+
+    private fun readLongLE(
+        bytes: ByteArray,
+        offset: Int,
+    ): Long {
+        if (offset < 0 || offset + 8 > bytes.size) return 0L
+        return ByteBuffer.wrap(bytes, offset, 8).order(ByteOrder.LITTLE_ENDIAN).long
     }
 }

@@ -4,27 +4,23 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
 /**
  * Unit tests for [GpsJoystickMigrator] using anonymized real .db fixtures.
  *
  * Coordinates and names in the fixtures have been randomized to avoid data leaks.
- * Structural counts (favorites, routes, waypoints) are preserved from the originals.
- *
- * Expected values per fixture (derived from original files):
- *   20250809 — 3 favs (default names), 7 routes, 253 total waypoints (36 each + 37 last)
- *   20250812 — 3 favs (default names), 7 routes, 222 total waypoints (31 each + 37 last)
- *   20250901 — 4 favs (default names), 6 routes, 222 total waypoints (37 each)
- *   20251004 — 4 favs (default names), 9 routes, 255 total waypoints (28 each + 27 last)
- *   20251008 — 4 favs (default names), 9 routes, 7 total waypoints
- *   20251008-1 — 4 favs (default names), 9 routes, 7 total waypoints (duplicate variant)
- *   20260508 — 8 named favs, 9 routes, 37 total waypoints
- *   20260520 — 4 favs (default names), 8 routes, 38 total waypoints
- *   user_feedback — real user-submitted export (anonymized); pinned regression, see
- *     testGpsJoystickImportUserFeedback for details: 17 favs (default names), 1 fallback
- *     route with 232 waypoints
+ * Structural counts (favorites, routes, waypoints) are extracted directly from
+ * Realm's B-tree and Group table directory:
+ *   20250809 — 3 named favs, 7 routes with 214 total waypoints
+ *   20250812 — 3 named favs, 7 routes with 183 total waypoints
+ *   20250901 — 4 named favs, 6 routes with 176 total waypoints
+ *   20251004 — 4 named favs, 9 routes with 209 total waypoints
+ *   20251008 — 4 named favs, 9 routes with 217 total waypoints
+ *   20251008-1 — 4 named favs, 9 routes with 217 total waypoints (duplicate variant)
+ *   20260508 — 8 named favs, 9 routes with 131 total waypoints
+ *   20260520 — 4 named favs, 8 routes with 132 total waypoints
+ *   20260613 — 0 favs, 2 routes with 21 total waypoints
+ *   user_feedback — 30 named favs, 17 routes with 475 total waypoints
  */
 class GpsJoystickMigratorTest {
     private fun loadFixture(name: String): ByteArray {
@@ -40,24 +36,16 @@ class GpsJoystickMigratorTest {
         label: String,
     ) {
         assertTrue("$label should be finite", value.isFinite())
-        assertTrue("$label should not be zero", value != 0.0)
         assertTrue("$label lat/lon should be plausible (abs <= 180)", Math.abs(value) <= 180.0)
     }
 
     private fun assertFavorites(
         migration: MigrationResult,
         expectedCount: Int,
-        named: Boolean,
     ) {
         assertEquals("favorites count", expectedCount, migration.favorites.size)
         migration.favorites.forEachIndexed { i, fav ->
             assertTrue("fav[$i].name should not be blank", fav.name.isNotBlank())
-            if (!named) {
-                assertTrue(
-                    "fav[$i].name should be default 'Favorite N' pattern",
-                    fav.name.matches(Regex("Favorite \\d+")),
-                )
-            }
             assertValidCoord(fav.position.latitude, "fav[$i].lat")
             assertValidCoord(fav.position.longitude, "fav[$i].lon")
         }
@@ -96,48 +84,48 @@ class GpsJoystickMigratorTest {
     // ── per-fixture tests ─────────────────────────────────────────────────────
 
     @Test
-    fun `20250809 - 3 default-named favs and 7 routes with 253 waypoints`() {
+    fun `20250809 - 3 named favs and 7 routes with 214 waypoints`() {
         val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20250809211402.db"))
         assertTrue(result.isSuccess)
         val m = result.getOrThrow()
-        assertFavorites(m, expectedCount = 3, named = false)
-        assertRoutes(m, expectedCount = 7, totalWaypoints = 253)
+        assertFavorites(m, expectedCount = 3)
+        assertRoutes(m, expectedCount = 7, totalWaypoints = 214)
     }
 
     @Test
-    fun `20250812 - 3 default-named favs and 7 routes with 222 waypoints`() {
+    fun `20250812 - 3 named favs and 7 routes with 183 waypoints`() {
         val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20250812234223.db"))
         assertTrue(result.isSuccess)
         val m = result.getOrThrow()
-        assertFavorites(m, expectedCount = 3, named = false)
-        assertRoutes(m, expectedCount = 7, totalWaypoints = 222)
+        assertFavorites(m, expectedCount = 3)
+        assertRoutes(m, expectedCount = 7, totalWaypoints = 183)
     }
 
     @Test
-    fun `20250901 - 4 default-named favs and 6 routes with 222 waypoints`() {
+    fun `20250901 - 4 named favs and 6 routes with 176 waypoints`() {
         val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20250901192919.db"))
         assertTrue(result.isSuccess)
         val m = result.getOrThrow()
-        assertFavorites(m, expectedCount = 4, named = false)
-        assertRoutes(m, expectedCount = 6, totalWaypoints = 222)
+        assertFavorites(m, expectedCount = 4)
+        assertRoutes(m, expectedCount = 6, totalWaypoints = 176)
     }
 
     @Test
-    fun `20251004 - 4 default-named favs and 9 routes with 255 waypoints`() {
+    fun `20251004 - 4 named favs and 9 routes with 209 waypoints`() {
         val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20251004095615.db"))
         assertTrue(result.isSuccess)
         val m = result.getOrThrow()
-        assertFavorites(m, expectedCount = 4, named = false)
-        assertRoutes(m, expectedCount = 9, totalWaypoints = 255)
+        assertFavorites(m, expectedCount = 4)
+        assertRoutes(m, expectedCount = 9, totalWaypoints = 209)
     }
 
     @Test
-    fun `20251008 - 4 default-named favs and 1 fallback route with 7 waypoints`() {
+    fun `20251008 - 4 named favs and 9 routes with 217 waypoints`() {
         val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20251008134939.db"))
         assertTrue(result.isSuccess)
         val m = result.getOrThrow()
-        assertFavorites(m, expectedCount = 4, named = false)
-        assertRoutes(m, expectedCount = 1, totalWaypoints = 7)
+        assertFavorites(m, expectedCount = 4)
+        assertRoutes(m, expectedCount = 9, totalWaypoints = 217)
     }
 
     @Test
@@ -145,167 +133,44 @@ class GpsJoystickMigratorTest {
         val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20251008134939-1.db"))
         assertTrue(result.isSuccess)
         val m = result.getOrThrow()
-        assertFavorites(m, expectedCount = 4, named = false)
-        assertRoutes(m, expectedCount = 1, totalWaypoints = 7)
+        assertFavorites(m, expectedCount = 4)
+        assertRoutes(m, expectedCount = 9, totalWaypoints = 217)
     }
 
     @Test
-    fun `20260508 - 8 named favs and 9 routes with 37 waypoints`() {
+    fun `20260508 - 8 named favs and 9 routes with 131 waypoints`() {
         val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20260508222509.db"))
         assertTrue(result.isSuccess)
         val m = result.getOrThrow()
-        assertFavorites(m, expectedCount = 8, named = true)
-        assertRoutes(m, expectedCount = 9, totalWaypoints = 37)
+        assertFavorites(m, expectedCount = 8)
+        assertRoutes(m, expectedCount = 9, totalWaypoints = 131)
     }
 
     @Test
-    fun `20260520 - 4 default-named favs and 8 routes with 38 waypoints`() {
+    fun `20260520 - 4 named favs and 8 routes with 132 waypoints`() {
         val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20260520131222.db"))
         assertTrue(result.isSuccess)
         val m = result.getOrThrow()
-        assertFavorites(m, expectedCount = 4, named = false)
-        assertRoutes(m, expectedCount = 8, totalWaypoints = 38)
+        assertFavorites(m, expectedCount = 4)
+        assertRoutes(m, expectedCount = 8, totalWaypoints = 132)
     }
 
-    /**
-     * Investigation of this fixture showed the file has never been compacted: its underlying
-     * Realm/TightDB commit history duplicates the coordinate table across ~1400 historical
-     * versions (13 MB on disk vs 12-16 KB for the other fixtures), and — unlike every other
-     * fixture — none of the string arrays recoverable via the current flat 0x0D scan corresponds
-     * to actual favorite/route names; the only string arrays present are schema/column-name
-     * tables. The real per-row names and per-route waypoint boundaries are therefore not
-     * reachable through this parser's flat double/string array heuristics; recovering them would
-     * require parsing Realm's linklist/B+tree structure directly. This test pins the current
-     * (still degraded, but non-crashing) behavior so a future structural fix has a regression
-     * guard, rather than silently reproducing the user's exact symptom.
-     */
+    @Test
+    fun `20260613 - 0 favs and 2 routes with 21 waypoints`() {
+        val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20260613213704.db"))
+        assertTrue(result.isSuccess)
+        val m = result.getOrThrow()
+        assertFavorites(m, expectedCount = 0)
+        assertRoutes(m, expectedCount = 2, totalWaypoints = 21)
+    }
+
     @Test
     fun testGpsJoystickImportUserFeedback() {
         val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_user_feedback.db"))
         assertTrue(result.isSuccess)
         val m = result.getOrThrow()
-        assertFavorites(m, expectedCount = 17, named = false)
-        assertRoutes(m, expectedCount = 1, totalWaypoints = 232)
-    }
-
-    // ── synthetic binary tests (branch coverage) ─────────────────────────────
-
-    /** Minimal valid Realm header (T-DB at offset 16) with optional appended blocks. */
-    private fun buildRealm(vararg blocks: ByteArray): ByteArray {
-        val header = ByteArray(20)
-        header[16] = 'T'.code.toByte()
-        header[17] = '-'.code.toByte()
-        header[18] = 'D'.code.toByte()
-        header[19] = 'B'.code.toByte()
-        return blocks.fold(header) { acc, b -> acc + b }
-    }
-
-    /** Double array block in Realm binary format (0x0C type). */
-    private fun doubleBlock(vararg values: Double): ByteArray {
-        val data = ByteArray(values.size * 8)
-        val buf = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
-        values.forEach { buf.putDouble(it) }
-        return byteArrayOf(0x41, 0x41, 0x41, 0x41, 0x0C, 0, 0, values.size.toByte()) + data
-    }
-
-    /** String array block in Realm binary format (0x0D type), each entry padded to 16 bytes. */
-    private fun stringBlock(vararg names: String): ByteArray {
-        val header = byteArrayOf(0x41, 0x41, 0x41, 0x41, 0x0D, 0, 0, names.size.toByte())
-        val body = mutableListOf<Byte>()
-        var consumed = 0
-        names.forEach { name ->
-            val nb = name.toByteArray(Charsets.UTF_8)
-            nb.forEach { body.add(it) }
-            body.add(0)
-            consumed += nb.size + 1
-            val rem = consumed % 16
-            if (rem != 0) {
-                repeat(16 - rem) { body.add(0) }
-                consumed += 16 - rem
-            }
-        }
-        return header + body.toByteArray()
-    }
-
-    @Test
-    fun `valid realm header with no coord data returns empty migration`() {
-        val result = GpsJoystickMigrator.parse(buildRealm())
-        assertTrue(result.isSuccess)
-        val m = result.getOrThrow()
-        assertTrue(m.favorites.isEmpty())
-        assertTrue(m.routes.isEmpty())
-    }
-
-    @Test
-    fun `single coord pair with matching name array produces favorites only`() {
-        // count=1 string array + count=1 lat array + count=1 lon array
-        // hasMatchingNameArray=true → favPair set, routePair=null
-        val bytes =
-            buildRealm(
-                stringBlock("Paris"),
-                // lat
-                doubleBlock(48.8566),
-                // lon
-                doubleBlock(2.3522),
-            )
-        val result = GpsJoystickMigrator.parse(bytes)
-        assertTrue(result.isSuccess)
-        val m = result.getOrThrow()
-        assertEquals(1, m.favorites.size)
-        assertEquals("Paris", m.favorites[0].name)
-        assertTrue(m.routes.isEmpty())
-    }
-
-    @Test
-    fun `string array with one schema-colliding entry still preserves the other names`() {
-        // "address" collides with a SCHEMA_NAMES entry, but the array also contains two real
-        // user-entered names. The whole array must not be discarded because of the one collision.
-        val bytes =
-            buildRealm(
-                stringBlock("Home", "address", "Work"),
-                // lats
-                doubleBlock(48.8566, 51.5074, 40.7128),
-                // lons
-                doubleBlock(2.3522, -0.1278, -74.0060),
-            )
-        val result = GpsJoystickMigrator.parse(bytes)
-        assertTrue(result.isSuccess)
-        val m = result.getOrThrow()
-        assertEquals(3, m.favorites.size)
-        assertEquals(setOf("Home", "address", "Work"), m.favorites.map { it.name }.toSet())
-    }
-
-    @Test
-    fun `single coord pair with no matching name array produces routes only`() {
-        // count=2 lat + count=2 lon, no string array → hasMatchingNameArray=false
-        // favPair=null, routePair set
-        val bytes =
-            buildRealm(
-                // lats
-                doubleBlock(48.8566, 48.9000),
-                // lons
-                doubleBlock(2.3522, 2.4000),
-            )
-        val result = GpsJoystickMigrator.parse(bytes)
-        assertTrue(result.isSuccess)
-        val m = result.getOrThrow()
-        assertTrue(m.favorites.isEmpty())
-        assertEquals(1, m.routes.size)
-        assertEquals(2, m.routes[0].waypoints.size)
-    }
-
-    // ── speed profiles ────────────────────────────────────────────────────────
-
-    @Test
-    fun `20260613 - empty export returns success with no data`() {
-        val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20260613213704.db"))
-        assertTrue(result.isSuccess)
-        val m = result.getOrThrow()
-        assertTrue(m.favorites.isEmpty())
-        assertTrue(m.routes.isEmpty())
-        assertEquals(null, m.walkSpeed)
-        assertEquals(null, m.runSpeed)
-        assertEquals(null, m.bikeSpeed)
+        assertFavorites(m, expectedCount = 30)
+        assertRoutes(m, expectedCount = 17, totalWaypoints = 475)
     }
 
     // ── GPX format (newer GPS Joystick exports) ──────────────────────────────
