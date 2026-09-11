@@ -104,6 +104,13 @@
       this list until you grant the "Allow restricted settings" permission above, or until after a restart.
       If the app still won't show up, try reinstalling it, then restart once more before checking again.
     </p>
+    <p>
+      If you installed the app inside a separate work profile (for example, using an app-sandboxing tool
+      like Shelter), the list will show "None" even though the app is installed. Android keeps the mock
+      location app selection separate for each profile, so you must open Developer Options from inside
+      that same profile and pick the app from there. Installing in one profile and selecting it from
+      another isn't possible — this is a restriction in Android itself, not something the app can change.
+    </p>
 
     <h2 id="mock-location-not-detected">Mock location not detected</h2>
     <p>Some phones need a restart after you change the Developer Options setting. Try restarting, then tap Check again.</p>
