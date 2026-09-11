@@ -234,14 +234,9 @@ class GpsJoystickMigratorTest {
 
     @Test
     fun `truncated structural file degrades gracefully instead of throwing`() {
-        val bytes =
-            buildFavoritesRealm(columnNames = listOf("name", "latitude", "longitude")) { b ->
-                listOf(
-                    b.stringArrayShort(listOf("Home")),
-                    b.doublesArray(listOf(48.8566)),
-                    b.doublesArray(listOf(2.3522)),
-                )
-            }
+        // Truncates a real (cluster-format) fixture rather than a synthetic one — this is the
+        // format real GPS Joystick exports actually use, so it's the more representative case.
+        val bytes = loadFixture("gpsjoystick_20260613213704.db")
         val result = GpsJoystickMigrator.parse(bytes.copyOfRange(0, bytes.size / 2))
         assertTrue(result.isSuccess)
         assertTrue(result.getOrThrow().favorites.isEmpty())
