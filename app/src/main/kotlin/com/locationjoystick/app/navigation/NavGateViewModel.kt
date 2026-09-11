@@ -9,7 +9,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-/** Exposes the mock-location bypass setting so [LjNavHost] can pick the right start destination. */
+/**
+ * Exposes the mock-location bypass setting and the onboarding-complete flag so [LjNavHost] can
+ * pick the right start destination.
+ */
 @HiltViewModel
 class NavGateViewModel
     @Inject
@@ -18,6 +21,13 @@ class NavGateViewModel
     ) : ViewModel() {
         val bypassMockLocationCheck: StateFlow<Boolean> =
             settingsRepository.getBypassMockLocationCheck().stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = false,
+            )
+
+        val onboardingComplete: StateFlow<Boolean> =
+            settingsRepository.getOnboardingComplete().stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = false,

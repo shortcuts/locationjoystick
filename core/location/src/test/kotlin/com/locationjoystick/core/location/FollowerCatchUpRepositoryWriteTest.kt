@@ -42,6 +42,11 @@ class FollowerCatchUpRepositoryWriteTest {
 
         service.advanceFollowerCatchUp()
 
-        assertEquals(0.0, service.locationRepository.currentPosition.value!!.latitude, 0.0)
+        assertEquals(
+            0.0,
+            service.locationRepository.currentPosition.value!!
+                .latitude,
+            0.0,
+        )
     }
 }

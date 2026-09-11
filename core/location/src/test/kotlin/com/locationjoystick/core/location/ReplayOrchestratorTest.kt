@@ -297,7 +297,9 @@ class ReplayOrchestratorTest {
     @Test
     fun handleJumpToNextWaypoint_pushesReturnedPositionImmediately() {
         locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-        val target = com.locationjoystick.core.model.LatLng(1.0, 2.0)
+        val target =
+            com.locationjoystick.core.model
+                .LatLng(1.0, 2.0)
         every { routeReplayEngine.jumpToNextWaypoint(any(), any()) } returns target
 
         orchestrator.handleJumpToNextWaypoint()
@@ -361,8 +363,10 @@ class ReplayOrchestratorTest {
                     name = "R",
                     waypoints =
                         listOf(
-                            com.locationjoystick.core.model.Waypoint("w1", LatLng(2.0, 2.0), 0),
-                            com.locationjoystick.core.model.Waypoint("w2", LatLng(3.0, 3.0), 1),
+                            com.locationjoystick.core.model
+                                .Waypoint("w1", LatLng(2.0, 2.0), 0),
+                            com.locationjoystick.core.model
+                                .Waypoint("w2", LatLng(3.0, 3.0), 1),
                         ),
                 )
             coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
@@ -389,8 +393,10 @@ class ReplayOrchestratorTest {
                     name = "R",
                     waypoints =
                         listOf(
-                            com.locationjoystick.core.model.Waypoint("w1", LatLng(2.0, 2.0), 0),
-                            com.locationjoystick.core.model.Waypoint("w2", LatLng(3.0, 3.0), 1),
+                            com.locationjoystick.core.model
+                                .Waypoint("w1", LatLng(2.0, 2.0), 0),
+                            com.locationjoystick.core.model
+                                .Waypoint("w2", LatLng(3.0, 3.0), 1),
                         ),
                 )
             coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
@@ -422,8 +428,10 @@ class ReplayOrchestratorTest {
                     name = "R",
                     waypoints =
                         listOf(
-                            com.locationjoystick.core.model.Waypoint("w1", LatLng(2.0, 2.0), 0),
-                            com.locationjoystick.core.model.Waypoint("w2", LatLng(3.0, 3.0), 1),
+                            com.locationjoystick.core.model
+                                .Waypoint("w1", LatLng(2.0, 2.0), 0),
+                            com.locationjoystick.core.model
+                                .Waypoint("w2", LatLng(3.0, 3.0), 1),
                         ),
                 )
             coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
@@ -443,8 +451,10 @@ class ReplayOrchestratorTest {
                     name = "R",
                     waypoints =
                         listOf(
-                            com.locationjoystick.core.model.Waypoint("w1", LatLng(2.0, 2.0), 0),
-                            com.locationjoystick.core.model.Waypoint("w2", LatLng(3.0, 3.0), 1),
+                            com.locationjoystick.core.model
+                                .Waypoint("w1", LatLng(2.0, 2.0), 0),
+                            com.locationjoystick.core.model
+                                .Waypoint("w2", LatLng(3.0, 3.0), 1),
                         ),
                 )
             coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
@@ -470,8 +480,10 @@ class ReplayOrchestratorTest {
                     name = "R",
                     waypoints =
                         listOf(
-                            com.locationjoystick.core.model.Waypoint("w1", LatLng(2.0, 2.0), 0),
-                            com.locationjoystick.core.model.Waypoint("w2", LatLng(3.0, 3.0), 1),
+                            com.locationjoystick.core.model
+                                .Waypoint("w1", LatLng(2.0, 2.0), 0),
+                            com.locationjoystick.core.model
+                                .Waypoint("w2", LatLng(3.0, 3.0), 1),
                         ),
                 )
             coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
@@ -494,9 +506,12 @@ class ReplayOrchestratorTest {
                     name = "R",
                     waypoints =
                         listOf(
-                            com.locationjoystick.core.model.Waypoint("w1", w1, 0),
-                            com.locationjoystick.core.model.Waypoint("w2", w2, 1),
-                            com.locationjoystick.core.model.Waypoint("w3", w3, 2),
+                            com.locationjoystick.core.model
+                                .Waypoint("w1", w1, 0),
+                            com.locationjoystick.core.model
+                                .Waypoint("w2", w2, 1),
+                            com.locationjoystick.core.model
+                                .Waypoint("w3", w3, 2),
                         ),
                 )
             coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
@@ -537,9 +552,12 @@ class ReplayOrchestratorTest {
                     name = "R",
                     waypoints =
                         listOf(
-                            com.locationjoystick.core.model.Waypoint("w1", w1, 0),
-                            com.locationjoystick.core.model.Waypoint("w2", w2, 1),
-                            com.locationjoystick.core.model.Waypoint("w3", w3, 2),
+                            com.locationjoystick.core.model
+                                .Waypoint("w1", w1, 0),
+                            com.locationjoystick.core.model
+                                .Waypoint("w2", w2, 1),
+                            com.locationjoystick.core.model
+                                .Waypoint("w3", w3, 2),
                         ),
                 )
             coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
@@ -570,8 +588,10 @@ class ReplayOrchestratorTest {
                     name = "R",
                     waypoints =
                         listOf(
-                            com.locationjoystick.core.model.Waypoint("w1", w1, 0),
-                            com.locationjoystick.core.model.Waypoint("w2", w2, 1),
+                            com.locationjoystick.core.model
+                                .Waypoint("w1", w1, 0),
+                            com.locationjoystick.core.model
+                                .Waypoint("w2", w2, 1),
                         ),
                 )
             coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
@@ -594,9 +614,12 @@ class ReplayOrchestratorTest {
                     name = "R",
                     waypoints =
                         listOf(
-                            com.locationjoystick.core.model.Waypoint("w1", w1, 0),
-                            com.locationjoystick.core.model.Waypoint("w2", w2, 1),
-                            com.locationjoystick.core.model.Waypoint("w3", w3, 2),
+                            com.locationjoystick.core.model
+                                .Waypoint("w1", w1, 0),
+                            com.locationjoystick.core.model
+                                .Waypoint("w2", w2, 1),
+                            com.locationjoystick.core.model
+                                .Waypoint("w3", w3, 2),
                         ),
                 )
             coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)

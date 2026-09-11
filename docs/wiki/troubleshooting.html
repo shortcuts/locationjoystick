@@ -60,6 +60,20 @@
       locationjoystick's support.
     </p>
 
+    <h2 id="location-error-12">"Failed to detect location (12)" or "location error 12"</h2>
+    <p>
+      This message comes from the game itself, not from locationjoystick. It means the game checked
+      your phone's reported location, found the marker every mock location app leaves on it, and
+      refused to continue.
+    </p>
+    <p>
+      This is the same restriction described in "A game shows a location or GPS error and won't let
+      you play" above — see that section for what it takes to get past a game this strict.
+      locationjoystick doesn't include a way to hide that marker on its own, and has no plans to add
+      one. Getting past this specific check depends entirely on the root and modding approach
+      described above, not on anything inside this app.
+    </p>
+
     <h2 id="allow-restricted-settings">Allow restricted settings (Android 12+ installed from a file)</h2>
     <p>
       On Android 12 and later, apps installed directly from a file (like the download from GitHub) are blocked
@@ -90,6 +104,13 @@
       this list until you grant the "Allow restricted settings" permission above, or until after a restart.
       If the app still won't show up, try reinstalling it, then restart once more before checking again.
     </p>
+    <p>
+      If you installed the app inside a separate work profile (for example, using an app-sandboxing tool
+      like Shelter), the list will show "None" even though the app is installed. Android keeps the mock
+      location app selection separate for each profile, so you must open Developer Options from inside
+      that same profile and pick the app from there. Installing in one profile and selecting it from
+      another isn't possible — this is a restriction in Android itself, not something the app can change.
+    </p>
 
     <h2 id="mock-location-not-detected">Mock location not detected</h2>
     <p>Some phones need a restart after you change the Developer Options setting. Try restarting, then tap Check again.</p>
@@ -113,20 +134,38 @@
 
     <h2 id="spoofed-location-resets">Spoofed location jumps back to your real location</h2>
     <p>
-      This usually means a phone-level location setting is overriding the spoofed position. Check these settings
-      in your phone's <strong>Settings → Location</strong> menu (naming varies by phone brand):
+      This happens when another part of your phone keeps refreshing its own idea of where you really are, and
+      that refreshed position briefly overrides the spoofed one. Turning on "Location Accuracy" is the most
+      common trigger, but a few other settings can cause the same jump — sometimes right back to the spoof a
+      moment later, which looks like teleporting back and forth. locationjoystick has no control over any of
+      these phone-level settings; fixing this means changing them yourself. The steps below are all reversible.
     </p>
-    <ul>
-      <li><strong>Location Accuracy / Improve Accuracy</strong> — turn this off. It lets your phone blend Wi-Fi
-        and Bluetooth scanning into its location estimate, which can pull the reported position back toward
-        your real one.</li>
-      <li><strong>Google Location Accuracy</strong> or similar Play Services location options — turn these off
-        too, if present.</li>
+    <p>Go through these one at a time and test after each — you may not need all of them:</p>
+    <ol>
+      <li>Open <strong>Settings → Apps</strong>, find <strong>Google Play Services</strong>, open
+        <strong>Storage</strong>, and tap <strong>Clear cache</strong>. Then open the <strong>⋮</strong>
+        (three-dot) menu on the app info screen and tap <strong>Uninstall updates</strong>. This resets it to
+        the version that came with your phone, which stops it from quietly re-checking your real position as
+        often.</li>
+      <li>While still on the Google Play Services app info screen, open <strong>Permissions → Location</strong>
+        and set it to <strong>Don't allow</strong>.</li>
+      <li>Open <strong>Settings → Location</strong> and change the location mode to <strong>GPS only</strong>
+        (sometimes called <strong>Device only</strong>) instead of <strong>High accuracy</strong>. High
+        accuracy mode blends in Wi-Fi and network signals, which is what pulls the reported position back
+        toward your real one.</li>
+      <li>In that same Location menu, look for <strong>Wi-Fi scanning</strong> and <strong>Bluetooth
+        scanning</strong> (often under an "Improve Accuracy" heading) and turn both off.</li>
+      <li>Turn off <strong>Location History</strong>, <strong>Location Sharing</strong>, and
+        <strong>Find My Device</strong> in your Google account settings. Each of these periodically records
+        your real position in the background, independent of whichever app is asking for it.</li>
       <li>Make sure no other app is also set as a mock location app in Developer Options — see
         "Another app holds the mock location slot" above.</li>
-    </ul>
+    </ol>
     <p>
-      locationjoystick has no control over these phone settings.
+      <strong>To get your real location back later</strong> (for example, to use another app normally): stop
+      spoofing in locationjoystick, then reverse the settings above that you changed — in particular, switch
+      the location mode back to <strong>High accuracy</strong>. Restart the app you want to use afterward, so
+      it picks up your real position instead of a cached spoofed one.
     </p>
   </main>
 

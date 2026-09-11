@@ -257,9 +257,10 @@ class GeoJsonUtilsTest {
         }
     }
 
-    private fun extractCoordinatePairs(geoJson: String): List<Pair<Double, Double>> {
-        return Regex("""\[(-?[\d.]+),(-?[\d.]+)]""").findAll(geoJson).map {
-            it.groupValues[1].toDouble() to it.groupValues[2].toDouble()
-        }.toList()
-    }
+    private fun extractCoordinatePairs(geoJson: String): List<Pair<Double, Double>> =
+        Regex("""\[(-?[\d.]+),(-?[\d.]+)]""")
+            .findAll(geoJson)
+            .map {
+                it.groupValues[1].toDouble() to it.groupValues[2].toDouble()
+            }.toList()
 }

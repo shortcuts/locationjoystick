@@ -173,6 +173,15 @@ internal fun OnboardingScreen(
                 textAlign = TextAlign.Center,
             )
 
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "No account or login needed — everything stays on your device.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
@@ -275,7 +284,9 @@ internal fun OnboardingScreen(
                 title = "Set as fake GPS app",
                 description =
                     "In Developer Options, find 'Select mock location app' and choose locationjoystick. " +
-                        "This lets the app replace your real GPS.",
+                        "This lets the app replace your real GPS. If you installed the app inside a " +
+                        "work profile (e.g. via Shelter), pick it from Developer Options in that same " +
+                        "profile — Android won't let a different profile select it.",
                 isGranted = uiState.mockLocationEnabled,
                 icon = LjIcons.DeveloperMode,
                 actionLabel = "Open Developer Options",

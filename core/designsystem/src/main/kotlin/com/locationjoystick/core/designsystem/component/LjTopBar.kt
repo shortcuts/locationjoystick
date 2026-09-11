@@ -103,18 +103,20 @@ fun LjTopBar(
                     val tint = if (isSpoofing) LjError else LjSuccess
                     Row(
                         modifier =
-                            Modifier.defaultMinSize(minHeight = 44.dp).semantics {
-                                contentDescription = if (isSpoofing) "Stop location simulation" else "Start location simulation"
-                            }.combinedClickable(
-                                interactionSource = interactionSource,
-                                indication = LocalIndication.current,
-                                onClick = onToggleSpoofing,
-                                onLongClick = {
-                                    if (!isSpoofing && locationLabel != null) {
-                                        Toast.makeText(context, locationLabel, Toast.LENGTH_SHORT).show()
-                                    }
-                                },
-                            ).padding(horizontal = LjSpacing.sm, vertical = 3.dp),
+                            Modifier
+                                .defaultMinSize(minHeight = 44.dp)
+                                .semantics {
+                                    contentDescription = if (isSpoofing) "Stop location simulation" else "Start location simulation"
+                                }.combinedClickable(
+                                    interactionSource = interactionSource,
+                                    indication = LocalIndication.current,
+                                    onClick = onToggleSpoofing,
+                                    onLongClick = {
+                                        if (!isSpoofing && locationLabel != null) {
+                                            Toast.makeText(context, locationLabel, Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                ).padding(horizontal = LjSpacing.sm, vertical = 3.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Crossfade(

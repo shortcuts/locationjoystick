@@ -140,9 +140,10 @@ class RouteRepository
 
         suspend fun upsertHotRoutes(
             selectedIds: Set<String> =
-                HOT_ROUTES.map {
-                    idForRoute(it.name, it.city)
-                }.toSet(),
+                HOT_ROUTES
+                    .map {
+                        idForRoute(it.name, it.city)
+                    }.toSet(),
         ): Result<Unit> =
             withContext(ioDispatcher) {
                 runCatching {

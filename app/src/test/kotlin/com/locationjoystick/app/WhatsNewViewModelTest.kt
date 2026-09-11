@@ -48,7 +48,12 @@ class WhatsNewViewModelTest {
         val groups = groupWhatsNewEntries(entries)
         assertEquals(
             listOf("first", "second"),
-            groups.single().scopeGroups.single().entries.map { it.summary },
+            groups
+                .single()
+                .scopeGroups
+                .single()
+                .entries
+                .map { it.summary },
         )
     }
 }

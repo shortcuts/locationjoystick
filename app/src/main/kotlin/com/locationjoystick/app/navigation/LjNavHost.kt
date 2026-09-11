@@ -65,7 +65,7 @@ private fun fadeOutScale(): ExitTransition =
             animationSpec = spring(dampingRatio = 0.85f, stiffness = 400f),
         )
 
-private fun allPermissionsGranted(
+private fun corePermissionsGranted(
     context: Context,
     bypassMockLocationCheck: Boolean,
 ): Boolean {
@@ -74,10 +74,25 @@ private fun allPermissionsGranted(
             context,
             Manifest.permission.ACCESS_FINE_LOCATION,
         ) == PackageManager.PERMISSION_GRANTED
-    return locationGranted &&
-        isOverlayPermissionGranted(context) &&
-        (bypassMockLocationCheck || isMockLocationEnabled(context))
+    return locationGranted && (bypassMockLocationCheck || isMockLocationEnabled(context))
 }
+
+private fun allPermissionsGranted(
+    context: Context,
+    bypassMockLocationCheck: Boolean,
+): Boolean = corePermissionsGranted(context, bypassMockLocationCheck) && isOverlayPermissionGranted(context)
+
+/**
+ * A returning user (already completed onboarding once) only needs the core permissions to
+ * reach the app — losing the overlay permission afterward disables joystick/widget overlays
+ * gracefully (see MockLocationService's canDrawOverlays gate) rather than forcing a full
+ * onboarding restart. A first-time user still needs every permission, overlay included.
+ */
+internal fun isNavGateReachable(
+    onboardingComplete: Boolean,
+    coreGranted: Boolean,
+    overlayGranted: Boolean,
+): Boolean = coreGranted && (onboardingComplete || overlayGranted)
 
 @Composable
 fun LjNavHost(
@@ -95,8 +110,15 @@ fun LjNavHost(
     if (startDestination == ONBOARDING_ROUTE) {
         val navGateViewModel: NavGateViewModel = hiltViewModel()
         val bypassMockLocationCheck by navGateViewModel.bypassMockLocationCheck.collectAsStateWithLifecycle()
-        LaunchedEffect(bypassMockLocationCheck) {
-            if (bypassMockLocationCheck && allPermissionsGranted(context, bypassMockLocationCheck = true)) {
+        val onboardingComplete by navGateViewModel.onboardingComplete.collectAsStateWithLifecycle()
+        LaunchedEffect(bypassMockLocationCheck, onboardingComplete) {
+            val reachable =
+                isNavGateReachable(
+                    onboardingComplete = onboardingComplete,
+                    coreGranted = corePermissionsGranted(context, bypassMockLocationCheck),
+                    overlayGranted = isOverlayPermissionGranted(context),
+                )
+            if (reachable) {
                 navController.navigate(IDLE_ROUTE) {
                     popUpTo(ONBOARDING_ROUTE) { inclusive = true }
                 }

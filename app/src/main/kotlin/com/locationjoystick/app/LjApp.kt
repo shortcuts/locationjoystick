@@ -135,7 +135,12 @@ fun LjApp(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
-        val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+        val currentRoute =
+            navController
+                .currentBackStackEntryAsState()
+                .value
+                ?.destination
+                ?.route
         if (currentRoute == IDLE_ROUTE) {
             WhatsNewPopup(
                 modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
