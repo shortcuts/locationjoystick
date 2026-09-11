@@ -90,6 +90,33 @@ class LocationLoopActionTest {
         assertEquals(PausedLoopAction.KEEP_ALIVE, action)
     }
 
+    // Pins the fix for "route replay silently stalling": a redundant RUNNING transition while
+    // ROUTE_REPLAY is active (e.g. a re-post unrelated to the replay reaching observeLocationState
+    // again) must never start the idle loop, which would race ReplayOrchestrator's own ticks.
+    @Test
+    fun `RUNNING in ROUTE_REPLAY stops the idle loop even when no job is active`() {
+        val action = computeRunningLoopAction(mode = MockMode.ROUTE_REPLAY, hasActiveUpdateJob = false)
+        assertEquals(RunningLoopAction.STOP_IDLE_LOOP_FOR_REPLAY, action)
+    }
+
+    @Test
+    fun `RUNNING in ROUTE_REPLAY stops the idle loop when a job is active from a prior pause`() {
+        val action = computeRunningLoopAction(mode = MockMode.ROUTE_REPLAY, hasActiveUpdateJob = true)
+        assertEquals(RunningLoopAction.STOP_IDLE_LOOP_FOR_REPLAY, action)
+    }
+
+    @Test
+    fun `RUNNING outside ROUTE_REPLAY starts the idle loop when none is active`() {
+        val action = computeRunningLoopAction(mode = MockMode.JOYSTICK, hasActiveUpdateJob = false)
+        assertEquals(RunningLoopAction.START_IDLE_LOOP, action)
+    }
+
+    @Test
+    fun `RUNNING outside ROUTE_REPLAY is a no-op when the idle loop is already active`() {
+        val action = computeRunningLoopAction(mode = MockMode.JOYSTICK, hasActiveUpdateJob = true)
+        assertEquals(RunningLoopAction.NO_OP, action)
+    }
+
     @Test
     fun `follower not yet spoofing bootstraps when leader is active`() {
         val action =

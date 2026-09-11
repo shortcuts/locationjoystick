@@ -25,6 +25,18 @@ internal enum class PausedLoopAction {
     KEEP_ALIVE,
 }
 
+/** Decision for the RUNNING branch of [MockLocationService.observeLocationState]. */
+internal enum class RunningLoopAction {
+    /** Route replay drives its own ticks — stop the idle loop (e.g. left alive from a pause). */
+    STOP_IDLE_LOOP_FOR_REPLAY,
+
+    /** Idle loop isn't running yet — set up the test provider and start it. */
+    START_IDLE_LOOP,
+
+    /** Idle loop already running, or replay owns ticking — nothing to do. */
+    NO_OP,
+}
+
 /**
  * Pure decision for the IDLE/ERROR branch of [MockLocationService.observeLocationState].
  *
@@ -56,6 +68,25 @@ internal fun computeIdleOrErrorLoopAction(
  */
 internal fun computePausedLoopAction(hasActiveUpdateJob: Boolean): PausedLoopAction =
     if (hasActiveUpdateJob) PausedLoopAction.KEEP_ALIVE else PausedLoopAction.START_UP
+
+/**
+ * Pure decision for the RUNNING branch of [MockLocationService.observeLocationState].
+ *
+ * Route replay drives its own position ticks via [MockLocationService]'s `pushLocationUpdate`
+ * callback wired through `ReplayOrchestrator` — it must never be raced by the generic idle
+ * update loop. A RUNNING transition while already in `ROUTE_REPLAY` mode (e.g. a redundant
+ * transition from something unrelated re-observing the same state) must only ever stop the idle
+ * loop, never start it — regardless of [hasActiveUpdateJob].
+ */
+internal fun computeRunningLoopAction(
+    mode: MockMode,
+    hasActiveUpdateJob: Boolean,
+): RunningLoopAction =
+    when {
+        mode == MockMode.ROUTE_REPLAY -> RunningLoopAction.STOP_IDLE_LOOP_FOR_REPLAY
+        !hasActiveUpdateJob -> RunningLoopAction.START_IDLE_LOOP
+        else -> RunningLoopAction.NO_OP
+    }
 
 /** Decision for a follower's reaction to a leader position update, in [MockLocationService.enterFollowerMode]. */
 internal enum class FollowerActiveAction {

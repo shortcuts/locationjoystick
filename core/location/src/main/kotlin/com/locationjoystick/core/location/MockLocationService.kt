@@ -263,15 +263,23 @@ class MockLocationService : Service() {
                             // callback. If the idle loop was kept alive to push the frozen position
                             // while PAUSED, stop it here so a resumed replay doesn't double-push.
                             val mode = locationRepository.currentMode.value
-                            if (mode == MockMode.ROUTE_REPLAY) {
-                                updateJob?.cancel()
-                                updateJob = null
-                                setupTestProvider()
-                                Log.i(TAG, "State changed to RUNNING (route replay) - stopped idle loop")
-                            } else if (updateJob == null) {
-                                setupTestProvider()
-                                startUpdateLoop()
-                                Log.i(TAG, "State changed to RUNNING - started update loop")
+                            when (computeRunningLoopAction(mode, updateJob != null)) {
+                                RunningLoopAction.STOP_IDLE_LOOP_FOR_REPLAY -> {
+                                    updateJob?.cancel()
+                                    updateJob = null
+                                    setupTestProvider()
+                                    Log.i(TAG, "State changed to RUNNING (route replay) - stopped idle loop")
+                                }
+
+                                RunningLoopAction.START_IDLE_LOOP -> {
+                                    setupTestProvider()
+                                    startUpdateLoop()
+                                    Log.i(TAG, "State changed to RUNNING - started update loop")
+                                }
+
+                                RunningLoopAction.NO_OP -> {
+                                    Unit
+                                }
                             }
                         }
                         if (Settings.canDrawOverlays(this@MockLocationService)) {
