@@ -173,6 +173,15 @@ internal fun OnboardingScreen(
                 textAlign = TextAlign.Center,
             )
 
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "No account or login needed — everything stays on your device.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
