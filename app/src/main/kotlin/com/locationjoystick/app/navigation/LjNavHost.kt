@@ -77,11 +77,6 @@ private fun corePermissionsGranted(
     return locationGranted && (bypassMockLocationCheck || isMockLocationEnabled(context))
 }
 
-private fun allPermissionsGranted(
-    context: Context,
-    bypassMockLocationCheck: Boolean,
-): Boolean = corePermissionsGranted(context, bypassMockLocationCheck) && isOverlayPermissionGranted(context)
-
 /**
  * A returning user (already completed onboarding once) only needs the core permissions to
  * reach the app — losing the overlay permission afterward disables joystick/widget overlays
@@ -104,7 +99,13 @@ fun LjNavHost(
     // later and, if it flips this decision, corrects it via the LaunchedEffect below.
     val startDestination =
         remember {
-            if (allPermissionsGranted(context, bypassMockLocationCheck = false)) IDLE_ROUTE else ONBOARDING_ROUTE
+            if (corePermissionsGranted(context, bypassMockLocationCheck = false) &&
+                isOverlayPermissionGranted(context)
+            ) {
+                IDLE_ROUTE
+            } else {
+                ONBOARDING_ROUTE
+            }
         }
 
     if (startDestination == ONBOARDING_ROUTE) {

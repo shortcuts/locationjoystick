@@ -28,7 +28,7 @@ class HiltTestRunner : AndroidJUnitRunner() {
                 "rm -rf /data/data/${targetContext.packageName}/files/datastore/",
             ).close()
 
-        // Grant all permissions so allPermissionsGranted() returns true and the app
+        // Grant all permissions so LjNavHost's start-destination check passes and the app
         // starts directly on IdleScreen instead of OnboardingScreen.
         val pkg = targetContext.packageName
         uiAutomation.executeShellCommand("pm grant $pkg ${Manifest.permission.ACCESS_FINE_LOCATION}").close()
