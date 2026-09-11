@@ -160,7 +160,8 @@ class RouteReplayEngineTest {
         val positions = mutableListOf<LatLng>()
         engine.start(
             waypoints = listOf(LatLng(0.0, 0.0), LatLng(10.0, 10.0)),
-            speedMs = 0.1, // near-stationary start speed
+            // near-stationary start speed
+            speedMs = 0.1,
             onPositionUpdate = { pos -> positions.add(pos) },
             onComplete = {},
         )
