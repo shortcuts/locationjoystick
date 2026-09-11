@@ -60,6 +60,20 @@
       locationjoystick's support.
     </p>
 
+    <h2 id="location-error-12">"Failed to detect location (12)" or "location error 12"</h2>
+    <p>
+      This message comes from the game itself, not from locationjoystick. It means the game checked
+      your phone's reported location, found the marker every mock location app leaves on it, and
+      refused to continue.
+    </p>
+    <p>
+      This is the same restriction described in "A game shows a location or GPS error and won't let
+      you play" above — see that section for what it takes to get past a game this strict.
+      locationjoystick doesn't include a way to hide that marker on its own, and has no plans to add
+      one. Getting past this specific check depends entirely on the root and modding approach
+      described above, not on anything inside this app.
+    </p>
+
     <h2 id="allow-restricted-settings">Allow restricted settings (Android 12+ installed from a file)</h2>
     <p>
       On Android 12 and later, apps installed directly from a file (like the download from GitHub) are blocked
