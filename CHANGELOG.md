@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.21.0](https://github.com/shortcuts/locationjoystick/compare/v0.20.1...v0.21.0) (2026-09-12)
+
+
+### Features
+
+* **onboarding:** note no account or login is required ([476683b](https://github.com/shortcuts/locationjoystick/commit/476683bef7e69576b65295e75dcf7978f2c45bb3))
+
+
+### Bug Fixes
+
+* **designsystem:** apply safe-drawing insets by default in LjScaffold ([73b901e](https://github.com/shortcuts/locationjoystick/commit/73b901efc6a2f813624b35dc51ecb3c61a5127cf))
+* **onboarding:** don't require overlay permission for returning users ([3d1a44a](https://github.com/shortcuts/locationjoystick/commit/3d1a44ac57e238c3521a5e4b834d2a7553ec20ea))
+* **settings:** fix string-blob offset desync and dedupe leaf-column reads ([c17038b](https://github.com/shortcuts/locationjoystick/commit/c17038be1da03064d3a82afc9f5ba1d19a643a24))
+* **settings:** parse Realm database structurally for favorites and routes migration ([2e94243](https://github.com/shortcuts/locationjoystick/commit/2e94243eae8cc50a61a567faec038cde58eb5b7c))
+
 ## [0.20.1](https://github.com/shortcuts/locationjoystick/compare/v0.20.0...v0.20.1) (2026-09-10)
 
 
