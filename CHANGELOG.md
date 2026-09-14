@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.21.0](https://github.com/shortcuts/locationjoystick/compare/v0.20.1...v0.21.0) (2026-09-14)
+
+
+### Features
+
+* **i18n:** externalize hardcoded Compose UI strings to strings.xml ([170269e](https://github.com/shortcuts/locationjoystick/commit/170269ea51d38dbc876d211d71bee63650c77d14)), closes [#73](https://github.com/shortcuts/locationjoystick/issues/73)
+* **onboarding:** note no account or login is required ([476683b](https://github.com/shortcuts/locationjoystick/commit/476683bef7e69576b65295e75dcf7978f2c45bb3))
+* **routes:** add teleport route type with wait-and-jump waypoints ([6e58e1c](https://github.com/shortcuts/locationjoystick/commit/6e58e1c4d40f1e3482bc653ee9572e7b5e085794)), closes [#72](https://github.com/shortcuts/locationjoystick/issues/72)
+* **routes:** bulk wait-time edit and randomized order for teleport routes ([696afd9](https://github.com/shortcuts/locationjoystick/commit/696afd9a0fca86555840f035ebe6a815aef871d5))
+* **routes:** dropdown speed picker + teleport waypoint wait editing ([bc228cb](https://github.com/shortcuts/locationjoystick/commit/bc228cb16d8e6840589a752f972716b87f0d48d4))
+
+
+### Bug Fixes
+
+* **designsystem:** apply safe-drawing insets by default in LjScaffold ([73b901e](https://github.com/shortcuts/locationjoystick/commit/73b901efc6a2f813624b35dc51ecb3c61a5127cf))
+* **onboarding:** don't require overlay permission for returning users ([3d1a44a](https://github.com/shortcuts/locationjoystick/commit/3d1a44ac57e238c3521a5e4b834d2a7553ec20ea))
+* **roaming:** propagate roaming speed to MockLocationService ([0082143](https://github.com/shortcuts/locationjoystick/commit/00821431c54417b3a7fabc9e13921c3b1b5f1b67)), closes [#74](https://github.com/shortcuts/locationjoystick/issues/74)
+* **routes:** force full expansion for start-route bottom sheets ([cfc79fe](https://github.com/shortcuts/locationjoystick/commit/cfc79fe0f4dc95dabc042bc0c9018784d3fde1c7))
+* **routes:** stop search result tap from auto-adding waypoint ([bca7e31](https://github.com/shortcuts/locationjoystick/commit/bca7e3146d80086e794d16ae73307b1bfcbbeddf))
+* **routing:** consume full tick budget across dense waypoints ([bce39d3](https://github.com/shortcuts/locationjoystick/commit/bce39d3f7e6398f8ce65e713f7754c09366e48f2)), closes [#75](https://github.com/shortcuts/locationjoystick/issues/75)
+* **settings:** fix string-blob offset desync and dedupe leaf-column reads ([c17038b](https://github.com/shortcuts/locationjoystick/commit/c17038be1da03064d3a82afc9f5ba1d19a643a24))
+* **settings:** parse Realm database structurally for favorites and routes migration ([2e94243](https://github.com/shortcuts/locationjoystick/commit/2e94243eae8cc50a61a567faec038cde58eb5b7c))
+* **tap-to-walk:** show accessibility disclosure before opening accessibility settings ([30bdae9](https://github.com/shortcuts/locationjoystick/commit/30bdae9e310a342e5073ad5464a4ab49d68155a3))
+* **whats-new:** backfill missing changelog JSONs, guard release CI ([cc136cc](https://github.com/shortcuts/locationjoystick/commit/cc136cce5a119d4bd5847b1698b540c55efda6e3))
+* **wiki:** correct changelog domain to locationjoystick.shrtcts.fr ([e5cdd9a](https://github.com/shortcuts/locationjoystick/commit/e5cdd9a61c52d0ed049e3430b51a202ba31f16c4))
+
 ## [0.20.1](https://github.com/shortcuts/locationjoystick/compare/v0.20.0...v0.20.1) (2026-09-10)
 
 
