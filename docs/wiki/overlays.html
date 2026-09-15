@@ -36,11 +36,11 @@
     <div class="feature-section" id="joystick-overlay">
       <img class="phone-shot" src="screenshots/14_joystick_overlay.png" alt="Floating joystick overlay">
       <ul class="section-bullets">
-        <li>Drag the center dial in any direction to move at your current speed setting (Walk, Run, or Bike).</li>
-        <li>Let go to stop moving. Your position stays at that last point until you drag again.</li>
+        <li>Drag the center dial in any direction to move at your current speed setting (Walk, Bike, or Drive). The pad is a frosted light circle with a medium gray ring so it still shows over a bright map or game, and the stick has a slightly darker gray edge so it stands out from the pad.</li>
+        <li>Let go to stop moving. The stick springs back to the center. Your position stays at that last point until you drag again.</li>
         <li>Drag the outer ring to reposition the joystick anywhere on screen.</li>
         <li>Turning on lock mode keeps the joystick moving in the same direction after you let go, so the device keeps traveling in a straight line without you touching the screen. Turn lock on or off from the floating widget's lock button or from the joystick itself. While locked, tap the center dial to unlock it.</li>
-        <li>The joystick moves at whichever speed setting is currently active. Switch settings using the floating widget's speed cycle button without lifting your finger off the joystick.</li>
+        <li>The joystick moves at whichever speed setting is currently active. Switch settings using the floating widget's speed cycle button without lifting your finger off the joystick. While a route is playing, or while roaming is running, dragging the joystick does nothing. You can still show it with the eye button, or show and lock it, from the widget; those buttons fade so you can tell they will not steer until you pause, but they stay visible against the dark circle. Pause the route or the roam and the joystick can steer again; resume a paused route jumps to the next stop.</li>
       </ul>
     </div>
 
@@ -55,9 +55,14 @@
       <img class="phone-shot" src="screenshots/15_widget_overlay.png" alt="Floating widget overlay">
       <ul class="section-bullets">
         <li>Tap the button again to collapse the panel back down to a single button when you don't need it, and tap once more to expand it again.</li>
+        <li>Press and hold the app icon to open Pause and Stop beside it. Pause turns off location spoofing but leaves the widget on screen. The other widget buttons fade and do nothing until spoofing is on again. Pause turns into Start so you can turn spoofing back on from the widget. Stop ends spoofing and removes the widget, including after Pause, the same as Stop at the top of the app. A short tap still expands or collapses the panel. Drag still moves the widget.</li>
+        <li>Lists and route options follow Light mode or Dark mode from Settings → Appearance. The round buttons stay dark with bright icons so they stay visible over other apps. Expanded widget buttons line up under the app icon and sit slightly closer together while keeping separate touch areas.</li>
+        <li>When you start a route, Loop, Planting, Reverse, Return to location, Follow roads, and Teleport between waypoints sit close together so Start stays on screen on a phone. Loop is on when the sheet opens. Planting sits under Loop. Teleport between waypoints includes a delay box (8 seconds by default) and is hidden when jump-to-location options are turned off in Settings. Playback waits at the first stop before the first jump, then at each later stop. Previous stop and Next stop jump one stop at a time; with Teleport between waypoints on, you wait at that stop for the same delay, then playback continues.</li>
         <li>Drag the button to any edge of the screen to keep it out of your way.</li>
         <li>Which controls appear, and in what order, is set in Settings → Menus → App Features. Changes take effect the next time you open the widget.</li>
-        <li>The widget always reflects what's currently happening, so if a route is playing, its pause and stop controls show up live right inside the widget.</li>
+        <li>The widget always reflects what's currently happening, so if a route is playing, its pause and stop controls show up live right inside the widget, and a count like <code>3/12</code> appears at the bottom of the button list to show which stop you're on.</li>
+        <li>When those extra route buttons are open, they stay next to the route button and move with the widget when you drag it. You can still tap the app underneath in the empty space above and below them. Only the buttons themselves block taps.</li>
+        <li>Press and hold the paste-coordinates button to show a Capture shortcut beside it. The shortcut stays lined up with the paste button and opens the Capture page in the main app. A short tap still opens the paste box.</li>
         <li>Don't want the widget button on screen at all? Turn on "Hide floating widget" in Settings → Menus → Privacy. Your other overlays and settings keep working as normal.</li>
       </ul>
     </div>
@@ -69,27 +74,35 @@
       <tbody>
         <tr>
           <td><strong>Map shortcut</strong></td>
-          <td>Opens a compact map that floats above other apps, filling the screen. Lets you walk to a point, teleport, or start roaming without switching back to the main app.</td>
+          <td>Opens a small movable map above the game so you can see both maps together. Taps outside the map go to the game. Use the expand button for the previous full-screen size, or shrink it again without losing your map position. You can walk, teleport, paste coordinates, or start roaming from it. Its N-arrow keeps north at the top by default; turn it off to rotate normally. Collecting map links uses the <a href="capture-coordinates.html">Capture page</a>.</td>
         </tr>
         <tr>
           <td><strong>Show / hide joystick</strong></td>
-          <td>Turns the floating joystick on or off. You need to start the joystick from the main app first: this button only shows or hides it, it doesn't start it from scratch.</td>
+          <td>Shows or hides the floating joystick on its own. You do not need to tap lock first. While a route is playing or roaming is running, the button fades but still shows or hides the joystick; dragging it will not steer until you pause.</td>
         </tr>
         <tr>
           <td><strong>Lock joystick</strong></td>
-          <td>Holds the current joystick direction after you release your finger, so your position keeps advancing. Useful for walking in a straight line hands-free. Tap again to unlock.</td>
+          <td>Shows the floating joystick if it is hidden, then holds the current joystick direction after you release your finger, so your position keeps advancing. Useful for walking in a straight line hands-free. Tap again to unlock. While a route is playing or roaming is running, the button fades but still shows and locks the joystick; it will not steer until you pause.</td>
         </tr>
         <tr>
           <td><strong>Routes picker</strong></td>
-          <td>Lists your saved routes. Tap one to start it, loop it, reverse it, or have it return to the start. While a route is running, it expands to show pause and stop controls.</td>
+          <td>Lists your saved routes. Sort by name or saved order, then tap one to start, rename, share, or delete it. Loop, reverse, return-to-start, and Teleport between waypoints are on the same start panel. Sharing closes the widget panel before the phone's share sheet opens. While a route is running, the control expands to show pause, stop, and Previous / Next stop. Tap search to filter the list; closing it clears the search.</td>
         </tr>
         <tr>
           <td><strong>Favorites picker</strong></td>
-          <td>Lists your saved favorites with one-tap teleport and walk shortcuts. You can also save your current spoofed position as a new favorite right from here.</td>
+          <td>Lists your saved favorites with name and saved-order sorting, teleport and walk shortcuts, plus Rename and Delete on each favorite's detail. Teleporting ends a running or paused route or roam first. You can also save your current spoofed position as a new favorite. A share button sends your current location and closes this list before the share sheet opens. Tap search to filter the list; closing it clears the search.</td>
+        </tr>
+        <tr>
+          <td><strong>Paste coordinates</strong></td>
+          <td>Opens a compact box at the bottom of the screen to paste latitude and longitude such as <code>11.0127769, 79.48065</code> or <code>37°34'11.4"N 127°00'17.9"E</code>. Unrecognized headings and notes are ignored, including unrelated numbers on those lines. You can still use the app above the box, or shrink it to a bar while you switch apps to copy more points. One valid point offers Teleport, Walk, and Walk via roads. Two or more points switch automatically to route actions and Start route. Save first as favorite and Save route remain separate. If you paused spoofing, Start again before a paste action will move GPS. On by default.</td>
+        </tr>
+        <tr>
+          <td><strong>Roaming</strong></td>
+          <td>Opens Walk around the block and Planting so you can start roaming without opening the main app. On by default, including after an update from an older version. Turning it off in Settings still sticks. While roaming is already running, tap it for pause and stop.</td>
         </tr>
         <tr>
           <td><strong>Speed cycle</strong></td>
-          <td>Cycles through the Slow Walk, Walk, Run, Bike, and Drive speed settings with a single tap. The icon changes to show which one is active, and the new speed applies right away to the joystick, walk-to, and roaming.</td>
+          <td>Cycles through the Slow Walk, Walk, Run, Bike, and Drive speed settings with a single tap. The icon changes to show which one is active, and the new speed applies right away to the joystick, walk-to, roaming, and a route that's already playing.</td>
         </tr>
       </tbody>
     </table>

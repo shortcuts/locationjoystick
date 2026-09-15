@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Capture coordinates — locationjoystick</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <meta name="description" content="Collect map links from other apps into a list, then save them as a route, without opening Google Maps.">
+  <link rel="canonical" href="https://shortcuts.github.io/locationjoystick/capture-coordinates.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="locationjoystick">
+  <meta property="og:title" content="Capture coordinates — locationjoystick">
+  <meta property="og:description" content="Collect map links from other apps into a list, then save them as a route, without opening Google Maps.">
+  <meta property="og:url" content="https://shortcuts.github.io/locationjoystick/capture-coordinates.html">
+  <meta property="og:image" content="https://shortcuts.github.io/locationjoystick/screenshots/01_idle_playstore.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Capture coordinates — locationjoystick">
+  <meta name="twitter:description" content="Collect map links from other apps into a list, then save them as a route, without opening Google Maps.">
+  <meta name="twitter:image" content="https://shortcuts.github.io/locationjoystick/screenshots/01_idle_playstore.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4">
+</head>
+<body>
+<div class="layout">
+
+  <main>
+    <h1 id="capture-coordinates">Capture coordinates</h1>
+    <p>
+      Capture coordinates collects map links from other apps into a list on this device,
+      then lets you save that list as a route. The floating widget is not required.
+      With Capture mode turned on, opening a map link keeps you in the app you
+      were using instead of opening Google Maps.
+    </p>
+
+    <h2 id="open-the-page">Open Capture</h2>
+    <p>
+      Open <strong>Capture</strong> from the Home screen or the side menu, next to Map, Routes,
+      and Favorites. The page stays open when you leave for Android settings or another app
+      and come back. You can also press and hold the floating widget's paste button, then tap
+      the Capture shortcut that appears beside it.
+    </p>
+
+    <h2 id="turn-capture-on">Set up Capture</h2>
+    <p>
+      The Capture page lists five short steps. Orange underlined words open the matching
+      Android setting. Come back here when you are done — this page stays open.
+    </p>
+    <ul class="section-bullets">
+      <li><strong>Turn on Capture mode</strong>, then choose <strong>List</strong> to add each location, <strong>Jump</strong> to move there immediately, or both. If the list already has points when you turn the mode on, choose <strong>Clear</strong> (the main action) to start fresh or <strong>Keep</strong> to continue.</li>
+      <li><strong>Set this app as default browser</strong> — tap <strong>default browser</strong>, then choose this app as the Browser app. (A system popup that only says "set as default browser" often does nothing on Samsung phones.) A green check appears after this app is the default browser.</li>
+      <li><strong>Turn off Google Maps supported links</strong> — tap <strong>Google Maps supported links</strong> and turn off opening supported links. If Maps keeps that on, Google Maps links go straight to Maps and this app never sees them. Use the same link later if you want to turn that setting back on.</li>
+      <li><strong>Turn on supported links for this app</strong> — tap <strong>supported links for this app</strong> and allow this app to open those links. Use the same link later to turn that off.</li>
+      <li><strong>When you are done, restore default browser</strong> — tap <strong>restore default browser</strong> and pick your usual browser again, then reverse steps 3 and 4. This app cannot switch Chrome back by itself. While Capture is off, step 5 is highlighted in green so it is easy to find.</li>
+    </ul>
+    <p>
+      With Capture mode off—or with both List and Jump unchecked—links pass through without being
+      collected or changing your location. Tap the short <strong>Pass-through</strong> row to choose
+      an installed browser. Google Maps links are sent to the Google Maps app first while Capture
+      mode is off, even if its supported-links switch is off; if Maps is unavailable, they use your
+      chosen browser.
+    </p>
+    <p>
+      The browser list refreshes when you return from Android settings. It continues to show your
+      installed browsers even while this app is selected as the default browser.
+    </p>
+    <p>
+      When Capture mode and List or Jump are on and this app is the default browser, a <strong>Ready</strong> line
+      appears and says whether a Google Maps link will be added, jumped to, or both.
+    </p>
+
+    <h2 id="collect-and-save">Collect and save</h2>
+    <p>
+      With the settings above in place, tap a map link in another app.
+      List adds the point without moving, Jump moves there without adding, and using both does
+      both immediately. A short message confirms what happened and the other app stays on screen.
+      Open Capture later to see the list. Use <strong>Copy</strong>,
+      <strong>Last</strong> (removes the most recent point), or <strong>Clear</strong> on
+      the row above the route name. Enter a route name and tap <strong>Save as route</strong> when
+      you have at least two points. The new route appears under Routes.
+    </p>
+    <p>
+      The on-screen list stays in the order you captured the points, inside an orange box,
+      so <strong>Last</strong> always drops the most recent one. <strong>Optimize proximity</strong>
+      is on by default when you copy or save — the same option as when you paste coordinates
+      into a route. It reorders the points so each stop is near the previous one. Choose
+      <strong>Keep original</strong> if you want the capture order instead.
+    </p>
+    <p>
+      The same link tapped twice in a row is not added twice. A later repeat of an earlier
+      point is kept, so a loop in the list is allowed.
+    </p>
+  </main>
+
+</div>
+<script src="wiki-init.js"></script>
+</body>
+</html>

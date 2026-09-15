@@ -281,17 +281,18 @@ class SettingsViewModelSaveTest {
     fun `saveChanges with hotLocationsEnabled false removes hot favorites`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
-            // First upsert hot locations
-            viewModel.setHotLocationsEnabled(true)
-            viewModel.saveChanges()
-            val afterUpsert = fakeFavoriteRepo.getFavorites().first()
-            assertTrue("Precondition: hot favorites upserted", afterUpsert.isNotEmpty())
-
-            // Now disable and save — should remove them
-            viewModel.setHotLocationsEnabled(false)
             viewModel.userFeedback.test {
+                viewModel.setHotLocationsEnabled(true)
                 viewModel.saveChanges()
-                awaitItem()
+                val upsertFeedback = awaitItem()
+                assertFalse(upsertFeedback.isError)
+                val afterUpsert = fakeFavoriteRepo.getFavorites().first()
+                assertTrue("Precondition: hot favorites upserted", afterUpsert.isNotEmpty())
+
+                viewModel.setHotLocationsEnabled(false)
+                viewModel.saveChanges()
+                val removeFeedback = awaitItem()
+                assertFalse(removeFeedback.isError)
                 cancelAndIgnoreRemainingEvents()
             }
             val afterRemove = fakeFavoriteRepo.getFavorites().first().filter { it.id.startsWith("hot_") }

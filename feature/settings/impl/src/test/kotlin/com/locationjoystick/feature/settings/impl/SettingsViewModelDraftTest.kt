@@ -196,8 +196,8 @@ class SettingsViewModelDraftTest {
     fun `setShowRouteJumpButtons marks dirty`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
-            viewModel.setShowRouteJumpButtons(true)
-            assertTrue(viewModel.uiState.value.showRouteJumpButtons)
+            viewModel.setShowRouteJumpButtons(false)
+            assertFalse(viewModel.uiState.value.showRouteJumpButtons)
             assertTrue(viewModel.uiState.value.isDirty)
         }
 

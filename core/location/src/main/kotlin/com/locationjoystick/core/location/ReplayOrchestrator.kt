@@ -2,7 +2,12 @@ package com.locationjoystick.core.location
 
 import android.content.Context
 import android.util.Log
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.BearingTracker
+import com.locationjoystick.core.common.util.buildPlantingReplayPath
+import com.locationjoystick.core.common.util.plantingRings
+import com.locationjoystick.core.common.util.stitchRingsWithConnectorsAndBoundaries
+import com.locationjoystick.core.common.util.stitchRingsWithoutConnectors
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
@@ -22,17 +27,27 @@ import com.locationjoystick.core.routing.osrmFailureMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val TAG = "ReplayOrchestrator"
 
 /**
  * Owns all route-replay and walk-to orchestration logic extracted from [MockLocationService].
  *
- * `followRoadsToStart` governs both the pre-replay walk from the current position to the
- * route's first waypoint AND every leg between the route's own saved waypoints during
- * replay (see [expandWaypointsForFollowRoads]) — not just the pre-replay walk.
+ * `followRoadsToStart` governs every leg between the route's own saved waypoints during
+ * replay (see [expandWaypointsForFollowRoads]). When planting is on, those legs are
+ * replaced by geometric circles around each saved stop ([expandWaypointsForPlanting]);
+ * Follow roads then only applies to the connectors between rings. When teleport-between-waypoints
+ * is also on, those connectors are skipped: each circle is walked fully, then replay hops to
+ * the start of the next circle (the same snap as skip-to-next-stop). Planting always
+ * loops (last ring back to the first ring's start) until the user stops replay.
+ * The pre-replay
+ * approach to the first waypoint is separate: [teleportToStart] snaps
+ * there instantly; when false, the same flag also chooses a road-following walk vs a
+ * straight walk.
  *
  * Communicates back to the service via lambdas:
  * - [onStateChange]: writes into the service's `_state` MutableStateFlow
@@ -69,7 +84,21 @@ internal class ReplayOrchestrator(
      */
     @Volatile private var activeReplayer: RouteReplayer = routeReplayEngine
 
+    private val startGeneration = AtomicInteger(0)
+
     private val bearingTracker = BearingTracker()
+
+    /**
+     * Cancels an in-flight [handleStart] / [handleEphemeralStart] immediately.
+     *
+     * Must run on the service's `onStartCommand` thread *before* `ACTION_UPDATE_POSITION`.
+     * Follow-roads planning does not set [MockMode.ROUTE_REPLAY] until OSRM returns; a late
+     * start would snap GPS back to the route after the user already teleported.
+     */
+    fun abortInFlightStart() {
+        startGeneration.incrementAndGet()
+        activeReplayJob?.cancel()
+    }
 
     fun handleStart(
         routeId: String,
@@ -78,17 +107,24 @@ internal class ReplayOrchestrator(
         isLoopingOverride: Boolean? = null,
         returnPosition: LatLng? = null,
         followRoadsToStart: Boolean = false,
+        teleportToStart: Boolean = false,
+        isPlanting: Boolean = false,
+        teleportBetweenWaypoints: Boolean = false,
+        teleportBetweenDelaySeconds: Int = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
     ) {
         val previous = activeReplayJob
+        val generation = startGeneration.get()
         activeReplayJob =
             scope.launch {
                 previous?.cancelAndJoin()
+                if (!isCurrentStart(generation)) return@launch
                 routeReplayEngine.stop()
                 teleportRouteEngine.stop()
                 val route = routeRepository.getRouteWithWaypoints(routeId).first() ?: return@launch
-                if (route.waypoints.size < 2) return@launch
+                if (!isCurrentStart(generation)) return@launch
+                if (!isPlanting && route.waypoints.size < 2) return@launch
                 val orderedWaypoints = if (isBackward) route.waypoints.reversed() else route.waypoints
-                val isLooping = isLoopingOverride ?: route.isLooping
+                val isLooping = isPlanting || (isLoopingOverride ?: route.isLooping)
 
                 if (route.routeType == RouteType.TELEPORT) {
                     activeReplayer = teleportRouteEngine
@@ -107,9 +143,19 @@ internal class ReplayOrchestrator(
                 try {
                     if (followRoadsToStart) locationRepository.setRoadRouteFetchInFlight(true)
                     val (replayWaypoints, boundaryIndices) =
-                        if (followRoadsToStart) expandWaypointsForFollowRoads(latLngs) else latLngs to null
+                        when {
+                            isPlanting -> expandWaypointsForPlanting(latLngs, followRoadsToStart, teleportBetweenWaypoints)
+                            teleportBetweenWaypoints -> latLngs to null
+                            followRoadsToStart -> expandWaypointsForFollowRoads(latLngs)
+                            else -> latLngs to null
+                        }
 
+                    if (!isCurrentStart(generation)) return@launch
                     startReplayWithWaypoints(
+                        generation = generation,
+                        teleportToStart = teleportToStart,
+                        teleportBetweenWaypoints = teleportBetweenWaypoints,
+                        teleportBetweenDelaySeconds = teleportBetweenDelaySeconds,
                         waypoints = replayWaypoints,
                         speedMs = speedMs,
                         isLooping = isLooping,
@@ -156,19 +202,32 @@ internal class ReplayOrchestrator(
         speedMs: Double,
     ) {
         val previous = activeReplayJob
+        val generation = startGeneration.get()
         activeReplayJob =
             scope.launch {
                 previous?.cancelAndJoin()
+                if (!isCurrentStart(generation)) return@launch
                 routeReplayEngine.stop()
                 // Ephemeral (walk-here) replay has no persisted route, so it's never TELEPORT type.
                 activeReplayer = routeReplayEngine
                 startReplayWithWaypoints(
+                    generation = generation,
                     waypoints = waypoints,
                     speedMs = speedMs,
                     isLooping = false,
                     persistMetadata = null,
                 )
             }
+    }
+
+    private fun CoroutineScope.isCurrentStart(generation: Int): Boolean {
+        ensureActive()
+        return generation == startGeneration.get()
+    }
+
+    private suspend fun isStartStillCurrent(generation: Int): Boolean {
+        kotlin.coroutines.coroutineContext.ensureActive()
+        return generation == startGeneration.get()
     }
 
     /**
@@ -185,22 +244,29 @@ internal class ReplayOrchestrator(
         activeReplayer.pause()
         onStateChange(MockLocationState.PAUSED)
         locationRepository.pauseSpoofing()
+        publishProgress()
         Log.i(TAG, "Replay paused")
     }
 
     fun handleResume(speedMs: Double) {
         onStateChange(MockLocationState.RUNNING)
         locationRepository.startSpoofing()
+        locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+        if (activeReplayer === routeReplayEngine) {
+            routeReplayEngine
+                .jumpToNextWaypoint(::tickPosition) {
+                    finishReplay()
+                    locationRepository.emitCompletion("Route complete")
+                }?.let(::tickPosition)
+        }
         activeReplayer.resume(
             onPositionUpdate = ::tickPosition,
             onComplete = {
-                // Matches startReplayWithWaypoints' default onComplete (used when a replay finishes
-                // without ever being paused) — a natural completion must not force IDLE/stopSpoofing.
-                // Forcing IDLE here previously killed a group-sync leader's broadcast on completion.
                 finishReplay()
                 locationRepository.emitCompletion("Route complete")
             },
         )
+        publishProgress()
         Log.i(TAG, "Replay resumed at ${speedMs}m/s")
     }
 
@@ -236,15 +302,18 @@ internal class ReplayOrchestrator(
         try {
             locationRepository.setPositionInternal(pos)
             pushLocationUpdate()
+            publishProgress()
         } catch (e: Exception) {
             Log.e(TAG, "Position update failed", e)
         }
     }
 
     suspend fun handleStop() {
+        abortInFlightStart()
         activeReplayJob?.cancelAndJoin()
         activeReplayJob = null
         locationRepository.setRouteWaypoints(null)
+        locationRepository.setRouteProgress(null)
         activeReplayer.stop()
         resetModeIfStillReplaying()
         locationRepository.setActiveRouteId(null)
@@ -255,9 +324,11 @@ internal class ReplayOrchestrator(
     }
 
     suspend fun handleCancel() {
+        abortInFlightStart()
         activeReplayJob?.cancelAndJoin()
         activeReplayJob = null
         locationRepository.setRouteWaypoints(null)
+        locationRepository.setRouteProgress(null)
         activeReplayer.stop()
         resetModeIfStillReplaying()
         locationRepository.setActiveRouteId(null)
@@ -281,6 +352,7 @@ internal class ReplayOrchestrator(
     /** Shared teardown for a completed/reset replay: clear route waypoints, zero speed, go idle. */
     private fun finishReplay() {
         locationRepository.setRouteWaypoints(null)
+        locationRepository.setRouteProgress(null)
         onSpeedChange(0f)
         locationRepository.setMockMode(MockMode.TELEPORT)
         activeReplayer = routeReplayEngine
@@ -298,7 +370,7 @@ internal class ReplayOrchestrator(
         reportedSpeedMs: Float,
         persistMetadata: (suspend () -> Unit)?,
         walkToStart: (suspend () -> Unit)?,
-        startEngine: () -> Unit,
+        startEngine: suspend () -> Unit,
     ) {
         if (locationRepository.currentMode.value == MockMode.ROAMING) roamingRepository.stopRoaming()
         if (waypointCount < 2) return
@@ -318,33 +390,54 @@ internal class ReplayOrchestrator(
         startEngine()
     }
 
+    private fun publishProgress() {
+        locationRepository.setRouteProgress(routeReplayEngine.currentProgress())
+    }
+
     /**
      * Shared engine for both named-route and ephemeral replay.
      *
      * @param waypoints Ordered list of positions to replay (≥2).
      * @param speedMs Playback speed in m/s.
      * @param isLooping Whether to loop at the end.
+     * @param followRoadsToStart When true, between-waypoint legs are already expanded;
+     *   if [teleportToStart] is false, the walk to the first waypoint also follows roads.
+     * @param teleportToStart When true, snap to the first waypoint instead of walking there.
      * @param persistMetadata If non-null, invoked before replay starts to persist route metadata.
      * @param onComplete Invoked on the service scope when the replay engine signals completion.
      */
     private suspend fun startReplayWithWaypoints(
+        generation: Int,
         waypoints: List<LatLng>,
         speedMs: Double,
         isLooping: Boolean,
         followRoadsToStart: Boolean = false,
+        teleportToStart: Boolean = false,
         boundaryIndices: List<Int>? = null,
+        teleportBetweenWaypoints: Boolean = false,
+        teleportBetweenDelaySeconds: Int = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
         persistMetadata: (suspend () -> Unit)? = null,
         onComplete: suspend () -> Unit = {
             finishReplay()
             locationRepository.emitCompletion("Route complete")
         },
     ) {
+        if (!isStartStillCurrent(generation)) return
         startReplaySetup(
             waypointCount = waypoints.size,
             reportedSpeedMs = speedMs.toFloat(),
             persistMetadata = persistMetadata,
-            walkToStart = { walkToPosition(waypoints.first(), speedMs, followRoadsToStart) },
-            startEngine = {
+            walkToStart = {
+                if (isStartStillCurrent(generation)) {
+                    if (teleportToStart) {
+                        tickPosition(waypoints.first())
+                    } else {
+                        walkToPosition(waypoints.first(), speedMs, followRoadsToStart)
+                    }
+                }
+            },
+            startEngine = startEngine@{
+                if (!isStartStillCurrent(generation)) return@startEngine
                 routeReplayEngine.start(
                     waypoints = waypoints,
                     speedMs = speedMs,
@@ -352,7 +445,10 @@ internal class ReplayOrchestrator(
                     onPositionUpdate = ::tickPosition,
                     onComplete = { scope.launch { onComplete() } },
                     boundaryIndices = boundaryIndices,
+                    teleportBetweenWaypoints = teleportBetweenWaypoints,
+                    teleportBetweenDelaySeconds = teleportBetweenDelaySeconds,
                 )
+                publishProgress()
                 // If pause was requested during walk-to-start (before engine launched),
                 // ensure the engine is paused now that it has been initialized.
                 if (locationRepository.mockLocationState.value == MockLocationState.PAUSED) routeReplayEngine.pause()
@@ -430,6 +526,41 @@ internal class ReplayOrchestrator(
         }
         routingErrorReporter.reportRoadFollowingFallbacks(fallbackCount, waypoints.size - 1)
         return expanded to boundaryIndices
+    }
+
+    /**
+     * Builds a replay path of closed circles around each saved stop, without writing those
+     * vertices back to the route. Circles stay geometric; when [followRoads] is true, only
+     * the connectors between rings are resolved via OSRM (foot profile), matching paste
+     * planting's "via roads" travel. When [teleportBetweenWaypoints] is true, connectors
+     * are omitted: each ring is walked, then replay hops to the next ring start.
+     */
+    private suspend fun expandWaypointsForPlanting(
+        centers: List<LatLng>,
+        followRoads: Boolean,
+        teleportBetweenWaypoints: Boolean = false,
+    ): Pair<List<LatLng>, List<Int>> {
+        val radius = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS
+        if (teleportBetweenWaypoints) {
+            return stitchRingsWithoutConnectors(plantingRings(centers, radius))
+        }
+        if (!followRoads) return buildPlantingReplayPath(centers, radius)
+        val rings = plantingRings(centers, radius)
+        if (rings.isEmpty()) return emptyList<LatLng>() to emptyList()
+        if (rings.size == 1) return rings[0] to listOf(0)
+        var fallbackCount = 0
+        val connectors =
+            rings.zipWithNext { from, to ->
+                osrmClient.resolveRoute(
+                    OsrmClient.PROFILE_FOOT,
+                    from.last(),
+                    to.first(),
+                    followRoads = true,
+                    onFallback = { fallbackCount++ },
+                )
+            }
+        routingErrorReporter.reportRoadFollowingFallbacks(fallbackCount, connectors.size)
+        return stitchRingsWithConnectorsAndBoundaries(rings, connectors)
     }
 
     private suspend fun walkToPosition(

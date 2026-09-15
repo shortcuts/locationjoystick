@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.map.impl
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.location.WalkMode
 import com.locationjoystick.core.model.AppFeature
@@ -8,6 +9,7 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.Route
+import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.SpeedUnit
 
 data class MapUiState(
@@ -27,6 +29,12 @@ data class MapUiState(
     val isRouteReplay: Boolean = false,
     val showRoutesSheet: Boolean = false,
     val isRouteControlsExpanded: Boolean = false,
+    val showPasteCoordinatesSheet: Boolean = false,
+    val pasteSheetTitle: String = "Paste coordinates",
+    val pasteInitialText: String = "",
+    val pasteInitialRouteName: String = "",
+    val pasteFormNonce: Int = 0,
+    val showCaptureCoordinatesSheet: Boolean = false,
     val showRoamingSheet: Boolean = false,
     val roamingDraft: RoamingDefaults? = null,
     val isRoaming: Boolean = false,
@@ -42,10 +50,11 @@ data class MapUiState(
     val favoriteCooldownStates: Map<String, CooldownState> = emptyMap(),
     val isPendingTapSheetOpen: Boolean = false,
     val hideTeleportFeatures: Boolean = false,
-    val showRouteJumpButtons: Boolean = false,
+    val showRouteJumpButtons: Boolean = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
     val jitterRadiusMeters: Double = 0.0,
     val debugStatsEnabled: Boolean = false,
     val isRoadRouteFetchInFlight: Boolean = false,
+    val routeProgress: RouteProgress? = null,
 )
 
 // Convenience accessors

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+* Coordinate paste and link capture with independent list/jump actions and browser forwarding.
+* Real-GPS map recentering and a compact movable widget map with north lock.
+* Search, four-way sorting, and widget management/sharing for favorites and routes.
+* Planting paths, spiral roaming, optional waypoint hops, GPX opening, and route progress.
+
+### Bug Fixes
+
+* Map tile loading and overlay rendering, widget parking, and offline release notes.
+
 ## [0.21.0](https://github.com/shortcuts/locationjoystick/compare/v0.20.1...v0.21.0) (2026-09-14)
 
 

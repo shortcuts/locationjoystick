@@ -5,6 +5,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.RouteProgress
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -251,5 +252,14 @@ class LocationRepository
 
         fun setRouteWaypoints(waypoints: List<LatLng>?) {
             _routeWaypoints.value = waypoints
+        }
+
+        private val _routeProgress = MutableStateFlow<RouteProgress?>(null)
+
+        /** Named-stop progress while a route replay is loaded. Null when no replay is active. */
+        val routeProgress: StateFlow<RouteProgress?> = _routeProgress.asStateFlow()
+
+        fun setRouteProgress(progress: RouteProgress?) {
+            _routeProgress.value = progress
         }
     }

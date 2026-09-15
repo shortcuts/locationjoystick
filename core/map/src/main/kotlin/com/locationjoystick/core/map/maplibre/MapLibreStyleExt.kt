@@ -14,21 +14,58 @@ import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.style.sources.RasterSource
 import org.maplibre.android.style.sources.TileSet
 
+private fun osmTileSet(maxZoom: Float) =
+    TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
+        this.maxZoom = maxZoom
+    }
+
+private fun osmRasterLayer(
+    layerId: String,
+    sourceId: String,
+) = RasterLayer(layerId, sourceId).withProperties(
+    PropertyFactory.rasterFadeDuration(0f),
+)
+
+/**
+ * Preview (low-zoom, overzooms) under detail (z15–19). A teleport to an uncached area
+ * can paint a few z12 tiles immediately; the detail layer fills in on top.
+ */
+fun Style.addOsmRasterStack(
+    detailSourceId: String = MapLibreSourceIds.OSM,
+    detailLayerId: String = MapLibreLayerIds.OSM,
+    previewSourceId: String = MapLibreSourceIds.OSM_PREVIEW,
+    previewLayerId: String = MapLibreLayerIds.OSM_PREVIEW,
+) {
+    addSource(
+        RasterSource(previewSourceId, osmTileSet(AppConstants.MapConstants.OSM_PREVIEW_MAX_ZOOM), 256),
+    )
+    addLayer(osmRasterLayer(previewLayerId, previewSourceId))
+    addSource(
+        RasterSource(detailSourceId, osmTileSet(AppConstants.MapConstants.OSM_MAX_ZOOM), 256),
+    )
+    addLayer(osmRasterLayer(detailLayerId, detailSourceId))
+}
+
 /**
  * Adds the OSM raster tile layer to the style.
  */
 fun Style.Builder.addOsmRasterLayer(): Style.Builder {
     withSource(
         RasterSource(
-            MapLibreSourceIds.OSM,
-            TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
-                maxZoom =
-                    AppConstants.MapConstants.OSM_MAX_ZOOM
-            },
+            MapLibreSourceIds.OSM_PREVIEW,
+            osmTileSet(AppConstants.MapConstants.OSM_PREVIEW_MAX_ZOOM),
             256,
         ),
     )
-    withLayer(RasterLayer(MapLibreLayerIds.OSM, MapLibreSourceIds.OSM))
+    withLayer(osmRasterLayer(MapLibreLayerIds.OSM_PREVIEW, MapLibreSourceIds.OSM_PREVIEW))
+    withSource(
+        RasterSource(
+            MapLibreSourceIds.OSM,
+            osmTileSet(AppConstants.MapConstants.OSM_MAX_ZOOM),
+            256,
+        ),
+    )
+    withLayer(osmRasterLayer(MapLibreLayerIds.OSM, MapLibreSourceIds.OSM))
     return this
 }
 
@@ -59,19 +96,17 @@ data class LocationLayerSources(
 fun Style.addLocationLayers(
     osmSourceId: String = MapLibreSourceIds.OSM,
     osmLayerId: String = MapLibreLayerIds.OSM,
+    osmPreviewSourceId: String = MapLibreSourceIds.OSM_PREVIEW,
+    osmPreviewLayerId: String = MapLibreLayerIds.OSM_PREVIEW,
     lineWidth: Float = 4f,
     includeSearchMarker: Boolean = false,
 ): LocationLayerSources {
-    addSource(
-        RasterSource(
-            osmSourceId,
-            TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
-                maxZoom = AppConstants.MapConstants.OSM_MAX_ZOOM
-            },
-            256,
-        ),
+    addOsmRasterStack(
+        detailSourceId = osmSourceId,
+        detailLayerId = osmLayerId,
+        previewSourceId = osmPreviewSourceId,
+        previewLayerId = osmPreviewLayerId,
     )
-    addLayer(RasterLayer(osmLayerId, osmSourceId))
 
     val jitterRadiusSrc = GeoJsonSource(MapLibreSourceIds.JITTER_RADIUS, emptyGeoJson())
     addSource(jitterRadiusSrc)
@@ -189,16 +224,7 @@ data class PickerLayerSources(
  * @param currentPosGeoJson If non-null, a blue dot is added at that GeoJSON position.
  */
 fun Style.addPickerLayers(currentPosGeoJson: String? = null): PickerLayerSources {
-    addSource(
-        RasterSource(
-            MapLibreSourceIds.OSM,
-            TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
-                maxZoom = AppConstants.MapConstants.OSM_MAX_ZOOM
-            },
-            256,
-        ),
-    )
-    addLayer(RasterLayer(MapLibreLayerIds.OSM, MapLibreSourceIds.OSM))
+    addOsmRasterStack()
 
     var currentPosSrc: GeoJsonSource? = null
     if (currentPosGeoJson != null) {
@@ -249,16 +275,7 @@ data class CreatorLayerSources(
  * @param currentPosGeoJson If non-null, a blue dot is added at that GeoJSON position.
  */
 fun Style.addCreatorLayers(currentPosGeoJson: String? = null): CreatorLayerSources {
-    addSource(
-        RasterSource(
-            MapLibreSourceIds.OSM,
-            TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
-                maxZoom = AppConstants.MapConstants.OSM_MAX_ZOOM
-            },
-            256,
-        ),
-    )
-    addLayer(RasterLayer(MapLibreLayerIds.OSM, MapLibreSourceIds.OSM))
+    addOsmRasterStack()
 
     var currentPosSrc: GeoJsonSource? = null
     if (currentPosGeoJson != null) {

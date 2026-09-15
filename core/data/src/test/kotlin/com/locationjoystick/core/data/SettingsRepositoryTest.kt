@@ -276,6 +276,66 @@ class SettingsRepositoryTest {
             }
         }
 
+    @Test
+    fun `activateSessionSpeed switches active profile and returns that speed`() =
+        runTest {
+            fakeDataSource.speedProfilesFlow.value =
+                SpeedProfilePreferences(
+                    walkSpeedMs = 1.4,
+                    runSpeedMs = 3.0,
+                    bikeSpeedMs = 5.0,
+                    activeProfileId = "walk",
+                )
+
+            val speedMs = repository.activateSessionSpeed("bike")
+
+            assertEquals(5.0, speedMs, 0.001)
+            repository.getActiveSpeedProfile().test {
+                assertEquals("bike", awaitItem().id)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `activateSessionSpeed with null keeps the current active profile`() =
+        runTest {
+            fakeDataSource.speedProfilesFlow.value =
+                SpeedProfilePreferences(
+                    walkSpeedMs = 1.4,
+                    runSpeedMs = 3.0,
+                    bikeSpeedMs = 5.0,
+                    activeProfileId = "run",
+                )
+
+            val speedMs = repository.activateSessionSpeed(null)
+
+            assertEquals(3.0, speedMs, 0.001)
+            repository.getActiveSpeedProfile().test {
+                assertEquals("run", awaitItem().id)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `activateSessionSpeed with unknown id keeps the current active profile`() =
+        runTest {
+            fakeDataSource.speedProfilesFlow.value =
+                SpeedProfilePreferences(
+                    walkSpeedMs = 1.4,
+                    runSpeedMs = 3.0,
+                    bikeSpeedMs = 5.0,
+                    activeProfileId = "run",
+                )
+
+            val speedMs = repository.activateSessionSpeed("does-not-exist")
+
+            assertEquals(3.0, speedMs, 0.001)
+            repository.getActiveSpeedProfile().test {
+                assertEquals("run", awaitItem().id)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
     // getWidgetFeatures
 
     @Test
@@ -607,6 +667,7 @@ class SettingsRepositoryTest {
                     speedProfileId = "bike",
                     followRoads = false,
                     returnToInitialLocation = false,
+                    plantingSpeedProfileId = "run",
                 )
             repository.updateRoamingDefaults(newDefaults)
 
@@ -615,6 +676,7 @@ class SettingsRepositoryTest {
                 assertEquals(750.0, actual.radiusMeters, 0.001)
                 assertEquals(2000.0, actual.distanceMeters, 0.001)
                 assertEquals("bike", actual.speedProfileId)
+                assertEquals("run", actual.plantingSpeedProfileId)
                 assertFalse(actual.followRoads)
                 assertFalse(actual.returnToInitialLocation)
                 cancelAndIgnoreRemainingEvents()
@@ -922,20 +984,20 @@ class SettingsRepositoryTest {
     // route jump buttons
 
     @Test
-    fun `getShowRouteJumpButtons returns false by default`() =
+    fun `getShowRouteJumpButtons returns true by default`() =
         runTest {
             repository.getShowRouteJumpButtons().test {
-                assertFalse(awaitItem())
+                assertTrue(awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `setShowRouteJumpButtons persists true`() =
+    fun `setShowRouteJumpButtons persists false`() =
         runTest {
-            repository.setShowRouteJumpButtons(true)
+            repository.setShowRouteJumpButtons(false)
             repository.getShowRouteJumpButtons().test {
-                assertTrue(awaitItem())
+                assertFalse(awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -1398,7 +1460,8 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         hideForegroundNotificationFlow.value = enabled
     }
 
-    private val showRouteJumpButtonsFlow = MutableStateFlow(false)
+    private val showRouteJumpButtonsFlow =
+        MutableStateFlow(AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT)
 
     override fun getShowRouteJumpButtons(): Flow<Boolean> = showRouteJumpButtonsFlow
 

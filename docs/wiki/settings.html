@@ -35,7 +35,7 @@
         <li>Movement & GPS lets you edit the Slow Walk, Walk, Run, Bike, and Drive speed presets used by the joystick, routes, and roaming, and turn GPS realism features on or off one by one: bearing hold, altitude drift, warm-up, satellite count, and signal dropouts.</li>
         <li>Menus lets you choose which features appear in the floating widget and on the map, and drag to reorder them.</li>
         <li>Favorites & Routes lets you turn on curated locations and routes for quick access.</li>
-        <li>Roaming lets you set the default area, distance, speed, road-following, and auto-return behavior for roaming sessions.</li>
+        <li>Roaming lets you set defaults for Walk around the block (area, distance, speed, road-following, auto-return) and for Planting (starting and ending radius, Bike by default, infinite loop or number of loops).</li>
       </ul>
     </div>
 
@@ -43,7 +43,7 @@
     <p>This screen combines speed settings with GPS realism controls. Set your movement speeds here, and adjust how the simulated signal behaves.</p>
 
     <h3 id="speed-profiles-list">Speed profiles</h3>
-    <p>Five presets control movement speed for the joystick, route playback, and roaming. Edit any of them, and the change applies right away. A <strong>km/h ↔ mph</strong> switch at the top converts every speed shown in the app at once.</p>
+    <p>Five presets control movement speed for the joystick, route playback, and roaming. Edit any of them, and the change applies right away, including during a playing route or roam. A <strong>km/h ↔ mph</strong> switch at the top converts every speed shown in the app at once.</p>
 
     <div class="table-wrap">
     <table class="option-table">
@@ -56,8 +56,8 @@
         </tr>
         <tr>
           <td>Walk</td>
-          <td class="default-cell">2.0 km/h</td>
-          <td>Regular walking pace</td>
+          <td class="default-cell">10.0 km/h</td>
+          <td>Brisk walking</td>
         </tr>
         <tr>
           <td>Run</td>
@@ -66,12 +66,12 @@
         </tr>
         <tr>
           <td>Bike</td>
-          <td class="default-cell">15.0 km/h</td>
+          <td class="default-cell">18.5 km/h</td>
           <td>Cycling, follows bike lanes when road-following is on</td>
         </tr>
         <tr>
           <td>Drive</td>
-          <td class="default-cell">54.0 km/h</td>
+          <td class="default-cell">60.0 km/h</td>
           <td>Driving, well above the anti-cheat threshold below</td>
         </tr>
       </tbody>
@@ -80,7 +80,7 @@
 
     <p>There's no upper limit, so you can type any speed you want. The only floor is <strong>0.04 km/h</strong>: anything entered below that gets raised to it automatically, since a true zero would mean the simulated device never moves at all.</p>
 
-    <p>Each profile also has a checkbox that controls whether the widget's <a href="#menus">Speed cycle</a> button includes it. <strong>Walk, Run, and Bike</strong> are on by default, while Slow Walk and Drive are off unless you turn them on. This only affects cycling: all five speeds stay editable here no matter what.</p>
+    <p>Each profile also has a checkbox that controls whether the widget's <a href="#menus">Speed cycle</a> button includes it. <strong>Walk, Bike, and Drive</strong> are on by default, while Slow Walk and Run are off unless you turn them on. This only affects cycling: all five speeds stay editable here no matter what.</p>
 
     <h2 id="anti-cheat-warning">Anti-cheat warning</h2>
     <p>Set any profile above <strong>28.8 km/h (17.9 mph)</strong> and a warning appears inline below that field:</p>
@@ -198,7 +198,7 @@
     <h2 id="menus">Menus</h2>
 
     <h3 id="appearance">Appearance</h3>
-    <p>A <strong>Light mode</strong> switch lets you flip the whole app to a bright, high-contrast look instead of the default dark orange-on-black theme, handy for reading the screen outdoors in bright sunlight. The change applies immediately, everywhere in the app.</p>
+    <p>A <strong>Light mode</strong> switch lets you flip the whole app to a bright, high-contrast look instead of the default dark orange-on-black theme, handy for reading the screen outdoors in bright sunlight. The change applies immediately in the app and in the floating widget's lists and route options. The small round buttons that sit over other apps stay dark with bright icons so they stay easy to see either way. Loop, reverse, return, follow roads, and planting stay readable in both looks.</p>
 
     <p>This is where you choose which quick-access features appear in the floating widget and on the map screen, and in what order. Each feature has its own checkbox for the widget and for the map, so you can turn either on independently, plus a drag handle on the left so you can reorder the whole list. Both surfaces follow the same order, so reordering once keeps everything consistent between them.</p>
 
@@ -214,12 +214,12 @@
         <tr>
           <td><strong>Show/hide joystick</strong></td>
           <td>👁</td>
-          <td>Only available in the widget. Turns the floating joystick on or off without opening the app. The joystick needs to already be running from the main screen.</td>
+          <td>Only available in the widget. Shows or hides the floating joystick on its own, without needing lock. While a route is playing or roaming is running, the button fades but still shows or hides the joystick.</td>
         </tr>
         <tr>
           <td><strong>Lock joystick</strong></td>
           <td>🔒</td>
-          <td>Only available in the widget. Holds the joystick's direction after you let go, so the simulated device keeps moving without you touching the screen. Tap again to unlock.</td>
+          <td>Only available in the widget. Shows the joystick if it is hidden, then holds the joystick's direction after you let go, so the simulated device keeps moving without you touching the screen. Tap again to unlock. While a route is playing or roaming is running, the button fades but still shows and locks the joystick.</td>
         </tr>
         <tr>
           <td><strong>Favorites</strong></td>
@@ -234,7 +234,7 @@
         <tr>
           <td><strong>Roaming</strong></td>
           <td>🧭</td>
-          <td>Only available on the map. Opens the roaming setup screen so you can configure and start a random walk.</td>
+          <td>Available in both the widget and the map. Opens Walk around the block and Planting so you can start a random walk or a spiral around where you are now. On by default in both places, including after an update from an older version.</td>
         </tr>
         <tr>
           <td><strong>Search</strong></td>
@@ -242,9 +242,19 @@
           <td>Only available on the map. Opens the search bar so you can find and jump to a place by name.</td>
         </tr>
         <tr>
+          <td><strong>Paste coordinates</strong></td>
+          <td>📋</td>
+          <td>Available on the map and the floating widget. Opens a box to paste coordinates such as <code>11.0127769, 79.48065</code> or <code>37°34'11.4"N 127°00'17.9"E</code>. The box grows up to 10 lines, then scrolls, with the edges fading so you can tell there is more; Select all and Clear all sit under it. Teleport, walk, or save the first point as a favorite. With two or more points you can save a named route or start playing them, including loop, reverse, return, follow roads, and planting. On the widget the box sits at the bottom so you can switch apps to copy more points, and you can shrink it to a bar. On by default, including after an update from an older version.</td>
+        </tr>
+        <tr>
+          <td><strong>Capture coordinates</strong></td>
+          <td>📍+</td>
+          <td>Opens from Home or the side menu. Collect map links from other apps into a list, then save them as a route. Capture itself is off until you turn it on there. The floating widget is not required.</td>
+        </tr>
+        <tr>
           <td><strong>Speed cycle</strong></td>
           <td>⚡</td>
-          <td>Only available in the widget. Cycles through your enabled speed profiles with a single tap; you choose which ones below. The icon changes to show the active profile.</td>
+          <td>Only available in the widget. Cycles through your enabled speed profiles with a single tap; you choose which ones below. The icon changes to show the active profile. After a route or roam has started, this button takes over from the speed that session began with.</td>
         </tr>
       </tbody>
     </table>
@@ -252,13 +262,13 @@
     <p>Starting and stopping location simulation is always available from the bar at the top of every screen, so it isn't one of the configurable features above.</p>
 
     <h3 id="hide-teleport">Hide teleport features</h3>
-    <p>A single switch that removes every "jump straight to a location" option across the app — on the map, in favorites, when starting a route, in Group Sync, and in the floating widget. Turn it on if you only want to move around by walking. It's off by default.</p>
+    <p>A single switch that removes every "jump straight to a location" option across the app — on the map, in favorites, when starting a route (including Teleport between waypoints), in Group Sync, in the paste box, and in the floating widget. Starting a saved route or starting pasted points then walks to the first stop instead of jumping there. Turn it on if you only want to move around by walking. It's off by default.</p>
 
     <h3 id="hide-notification">Hide notification icon</h3>
     <p>Removes the status bar icon for the "Mock location active" notification while spoofing runs. Android requires the notification to keep existing — this just tucks it into the notification shade instead of showing it persistently. Off by default.</p>
 
     <h3 id="route-jump-buttons">Show route jump buttons</h3>
-    <p>Adds "Previous stop" and "Next stop" buttons while a saved route is playing, letting you jump straight to the next or previous stop instead of walking the distance between them. Off by default, and hidden entirely when Hide teleport features is on.</p>
+    <p>Adds "Previous stop" and "Next stop" buttons while a saved route is playing, letting you jump straight to the next or previous stop instead of walking the distance between them. With Teleport between waypoints on, you land on that one stop and wait there for the same delay as the automatic jumps, then playback continues. On by default, and hidden entirely when Hide teleport features is on.</p>
 
     <h3 id="debug-stats">Debug stats</h3>
     <div class="feature-section" id="debug-stats-shot">
@@ -286,31 +296,47 @@
     </div>
 
     <h2 id="roaming">Roaming</h2>
-    <p>Set the default area, distance, speed, road-following, and auto-return behavior for roaming sessions.</p>
+    <p>Set defaults for Walk around the block and Planting. Only one of those modes can run at a time.</p>
 
     <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Option</th><th>Description</th></tr></thead>
       <tbody>
         <tr>
-          <td><strong>Radius</strong></td>
+          <td><strong>Walk around the block — Radius</strong></td>
           <td>The farthest distance from the starting point that random waypoints can land. Larger values spread movement further from the center.</td>
         </tr>
         <tr>
-          <td><strong>Route distance</strong></td>
+          <td><strong>Walk around the block — Route distance</strong></td>
           <td>The total distance to walk before the roaming session ends. It stops once the distance walked adds up to this value.</td>
         </tr>
         <tr>
-          <td><strong>Speed profile</strong></td>
-          <td>Which speed preset, Walk, Run, or Bike, is used for roaming movement. Bike also switches to the cycling option for road-following routes.</td>
+          <td><strong>Walk around the block — Speed</strong></td>
+          <td>Which speed preset Walk around the block starts at. Walk, Run, and Bike are available from the roaming sheet; Settings also keeps Slow Walk and Drive. Default Walk. After roaming starts, changing speed in the app or on the widget takes over.</td>
         </tr>
         <tr>
           <td><strong>Follow roads</strong></td>
-          <td>Routes each leg through a road-mapping service so movement follows real walkable paths instead of straight lines. <a href="map.html#road-routing-fallback">Falls back to a straight line</a> if that service isn't available.</td>
+          <td>Walk around the block only. Routes each leg through a road-mapping service so movement follows real walkable paths instead of straight lines. Falls back to a straight line if that service isn't available.</td>
         </tr>
         <tr>
           <td><strong>Return to start</strong></td>
-          <td>After the main roaming loop completes, the simulated device walks back to the original starting position.</td>
+          <td>Walk around the block only. After the main roaming loop completes, the simulated device walks back to the original starting position.</td>
+        </tr>
+        <tr>
+          <td><strong>Planting — Starting radius</strong></td>
+          <td>How close in the spiral starts, in meters. Default 5 m.</td>
+        </tr>
+        <tr>
+          <td><strong>Planting — Ending radius</strong></td>
+          <td>How far out the spiral opens before it tightens back in, in meters. Default 39 m.</td>
+        </tr>
+        <tr>
+          <td><strong>Planting — Speed</strong></td>
+          <td>Which speed preset Planting starts at. Walk, Run, or Bike. Default Bike, independently of Walk around the block. After it starts, changing speed in the app or on the widget takes over.</td>
+        </tr>
+        <tr>
+          <td><strong>Planting — Infinite loop</strong></td>
+          <td>Keeps expanding and contracting until you stop roaming. Turn this off to set a number of loops instead. One loop is one full expand and contract.</td>
         </tr>
       </tbody>
     </table>
@@ -387,7 +413,7 @@
         </tr>
         <tr>
           <td><strong>Import from GPS Joystick</strong></td>
-          <td>Migrates routes and favorites from a GPS Joystick export file. Imported routes are saved as straight-line segments.</td>
+          <td>Choose a GPX file exported from GPS Joystick. Named saved places become favorites, and each route is imported as straight-line segments. Routes with thousands of points are skipped, and a message tells you how many. Database backup files from that app are not used — export GPX instead.</td>
         </tr>
         <tr>
           <td><strong>Import from YAMLA</strong></td>

@@ -2,8 +2,14 @@ package com.locationjoystick.feature.map.impl
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.formatCapturedPointsForClipboard
+import com.locationjoystick.core.common.util.parsePastedCoordinates
+import com.locationjoystick.core.data.CaptureCoordinatesRepository
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.DeepLinkRepository
+import com.locationjoystick.core.data.GpxOpenRepository
+import com.locationjoystick.core.data.RealLocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
@@ -18,10 +24,12 @@ import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.toConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -44,8 +52,11 @@ class MapViewModel
         private val mapController: MapController,
         private val roamingRepository: RoamingRepository,
         private val deepLinkRepository: DeepLinkRepository,
+        private val gpxOpenRepository: GpxOpenRepository,
         private val teleportUseCase: TeleportUseCase,
         private val settingsRepository: SettingsRepository,
+        private val captureCoordinatesRepository: CaptureCoordinatesRepository,
+        private val realLocationRepository: RealLocationRepository,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MapUiState())
         val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
@@ -63,12 +74,24 @@ class MapViewModel
 
         val completionMessages: SharedFlow<String> = mapController.completionMessages
         val routingErrors: SharedFlow<String> = mapController.routingErrors
+        private val _cameraMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        val cameraMessages: SharedFlow<String> = _cameraMessages.asSharedFlow()
 
         init {
             observeSharedState()
             observeCooldownForPendingTap()
             observeDeepLinkCoords()
+            observeGpxOpen()
             observeMapFabFeatures()
+            observeCaptureHelperOpen()
+        }
+
+        private fun observeCaptureHelperOpen() {
+            viewModelScope.launch {
+                captureCoordinatesRepository.helperOpen.collect { open ->
+                    _uiState.update { it.copy(showCaptureCoordinatesSheet = open) }
+                }
+            }
         }
 
         private fun observeMapFabFeatures() {
@@ -131,6 +154,7 @@ class MapViewModel
                                 jitterRadiusMeters = shared.jitterRadiusMeters,
                                 debugStatsEnabled = shared.debugStatsEnabled,
                                 isRoadRouteFetchInFlight = shared.isRoadRouteFetchInFlight,
+                                routeProgress = shared.routeProgress,
                             )
                         }
                     }
@@ -153,14 +177,40 @@ class MapViewModel
         private fun observeDeepLinkCoords() {
             viewModelScope.launch {
                 deepLinkRepository.pendingCoords.collect { coords ->
+                    pinCoordinateTarget(coords)
+                    deepLinkRepository.consume()
+                }
+            }
+        }
+
+        private fun observeGpxOpen() {
+            viewModelScope.launch {
+                gpxOpenRepository.pending.collect { pending ->
                     _uiState.update {
                         it.copy(
-                            pendingTapPosition = coords,
-                            pendingCameraTarget = coords,
-                            isPendingTapSheetOpen = true,
+                            showPasteCoordinatesSheet = true,
+                            pasteSheetTitle = "Open GPX",
+                            pasteInitialText = formatCapturedPointsForClipboard(pending.points),
+                            pasteInitialRouteName = pending.suggestedName,
+                            pasteFormNonce = it.pasteFormNonce + 1,
                         )
                     }
-                    deepLinkRepository.consume()
+                }
+            }
+        }
+
+        private fun hidePasteCoordinatesSheet(resetForm: Boolean = false) {
+            gpxOpenRepository.consume()
+            _uiState.update {
+                if (resetForm) {
+                    it.copy(
+                        showPasteCoordinatesSheet = false,
+                        pasteSheetTitle = "Paste coordinates",
+                        pasteInitialText = "",
+                        pasteInitialRouteName = "",
+                    )
+                } else {
+                    it.copy(showPasteCoordinatesSheet = false)
                 }
             }
         }
@@ -257,17 +307,40 @@ class MapViewModel
                             isRoamingSheetMinimized = false,
                         )
                     }
+                    hidePasteCoordinatesSheet()
                 }
 
                 // Camera
                 MapAction.RecenterCamera -> {
-                    _uiState.update {
-                        it.copy(
-                            isUserPanning = false,
-                            pendingCameraTarget = it.currentPosition,
-                            pendingTapPosition = null,
-                            isPendingTapSheetOpen = false,
-                        )
+                    val state = _uiState.value.mockLocationState
+                    if (state != com.locationjoystick.core.model.MockLocationState.IDLE &&
+                        state != com.locationjoystick.core.model.MockLocationState.ERROR
+                    ) {
+                        _uiState.update {
+                            it.copy(
+                                isUserPanning = false,
+                                pendingCameraTarget = it.currentPosition,
+                                pendingTapPosition = null,
+                                isPendingTapSheetOpen = false,
+                            )
+                        }
+                    } else {
+                        viewModelScope.launch {
+                            realLocationRepository
+                                .getCurrentPosition()
+                                .onSuccess { position ->
+                                    _uiState.update {
+                                        it.copy(
+                                            isUserPanning = true,
+                                            pendingCameraTarget = position,
+                                            pendingTapPosition = null,
+                                            isPendingTapSheetOpen = false,
+                                        )
+                                    }
+                                }.onFailure { error ->
+                                    _cameraMessages.emit(error.message ?: "Couldn't get the phone's GPS location")
+                                }
+                        }
                     }
                 }
 
@@ -316,6 +389,9 @@ class MapViewModel
                         action.isReverse,
                         action.isReturnToLocation,
                         action.followRoadsToStart,
+                        action.isPlanting,
+                        action.teleportBetweenWaypoints,
+                        action.teleportBetweenDelaySeconds,
                     )
                     if (!action.followRoadsToStart) {
                         _uiState.update { it.copy(showRoutesSheet = false) }
@@ -394,12 +470,42 @@ class MapViewModel
                     _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(speedProfileId = action.id)) }
                 }
 
+                is MapAction.SelectPlantingSpeedProfile -> {
+                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingSpeedProfileId = action.id)) }
+                }
+
                 is MapAction.ToggleRoamingFollowRoads -> {
                     _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(followRoads = action.enabled)) }
                 }
 
                 is MapAction.ToggleRoamingReturnToStart -> {
                     _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(returnToInitialLocation = action.enabled)) }
+                }
+
+                is MapAction.UpdateRoamingKind -> {
+                    _uiState.update { s ->
+                        val sameKind = s.roamingDraft?.kind == action.kind
+                        s.copy(
+                            roamingDraft = s.roamingDraft?.copy(kind = action.kind),
+                            roamingPreviewWaypoints = if (sameKind) s.roamingPreviewWaypoints else null,
+                        )
+                    }
+                }
+
+                is MapAction.UpdatePlantingStartRadius -> {
+                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingStartRadiusMeters = action.meters)) }
+                }
+
+                is MapAction.UpdatePlantingEndRadius -> {
+                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingEndRadiusMeters = action.meters)) }
+                }
+
+                is MapAction.TogglePlantingInfiniteLoops -> {
+                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingInfiniteLoops = action.enabled)) }
+                }
+
+                is MapAction.UpdatePlantingLoopCount -> {
+                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingLoopCount = action.count)) }
                 }
 
                 MapAction.StartRoaming -> {
@@ -425,6 +531,41 @@ class MapViewModel
                 MapAction.ToggleRoamingControls -> {
                     _uiState.update { it.copy(isRoamingControlsExpanded = !it.isRoamingControlsExpanded) }
                 }
+
+                MapAction.OpenPasteCoordinates -> {
+                    gpxOpenRepository.consume()
+                    _uiState.update {
+                        it.copy(
+                            showPasteCoordinatesSheet = true,
+                            pasteSheetTitle = "Paste coordinates",
+                            pasteInitialText = "",
+                            pasteInitialRouteName = "",
+                            pasteFormNonce = it.pasteFormNonce + 1,
+                        )
+                    }
+                }
+
+                MapAction.ClosePasteCoordinates -> {
+                    hidePasteCoordinatesSheet(resetForm = true)
+                }
+
+                MapAction.OpenCaptureCoordinates -> {
+                    hidePasteCoordinatesSheet()
+                    viewModelScope.launch { captureCoordinatesRepository.setHelperOpen(true) }
+                }
+
+                MapAction.CloseCaptureCoordinates -> {
+                    viewModelScope.launch { captureCoordinatesRepository.setHelperOpen(false) }
+                }
+
+                is MapAction.PinCoordinateTarget -> {
+                    pinCoordinateTarget(action.position)
+                }
+
+                is MapAction.SaveFavoriteAt -> {
+                    mapController.saveFavorite(action.name, action.position)
+                    hidePasteCoordinatesSheet()
+                }
             }
         }
 
@@ -434,6 +575,85 @@ class MapViewModel
             lon: Double,
         ) {
             mapController.addRecentSearch(displayName, lat, lon)
+        }
+
+        fun parsePastedCoordinate(text: String): LatLng? = parsePastedCoordinates(text).firstOrNull()
+
+        fun applyPastedCoordinates(text: String): Boolean {
+            val point = parsePastedCoordinate(text) ?: return false
+            pinCoordinateTarget(point)
+            return true
+        }
+
+        fun teleportFromPastedCoordinates(point: LatLng) {
+            onAction(MapAction.ConfirmTeleport(point))
+            hidePasteCoordinatesSheet()
+        }
+
+        fun walkFromPastedCoordinates(
+            point: LatLng,
+            viaRoads: Boolean,
+        ) {
+            if (viaRoads) {
+                onAction(MapAction.WalkViaRoadsTo(point))
+            } else {
+                onAction(MapAction.LongPressTapToWalk(point))
+            }
+            hidePasteCoordinatesSheet()
+        }
+
+        fun savePastedFavorite(
+            name: String,
+            point: LatLng,
+        ) {
+            mapController.saveFavorite(name, point)
+            hidePasteCoordinatesSheet()
+        }
+
+        fun savePastedRoute(
+            name: String,
+            points: List<LatLng>,
+        ) {
+            if (name.isBlank() || points.size < 2) return
+            mapController.savePastedRoute(name, points)
+            hidePasteCoordinatesSheet()
+        }
+
+        fun startPastedRoute(
+            points: List<LatLng>,
+            loop: Boolean,
+            reverse: Boolean,
+            returnToLocation: Boolean,
+            followRoads: Boolean,
+            planting: Boolean,
+            teleportBetweenWaypoints: Boolean = false,
+            teleportBetweenDelaySeconds: Int = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
+        ) {
+            if (points.size < 2) return
+            mapController.startPastedRouteReplay(
+                points = points,
+                isLooping = loop,
+                isReverse = reverse,
+                isReturnToLocation = returnToLocation,
+                followRoadsToStart = followRoads,
+                isPlanting = planting,
+                teleportBetweenWaypoints = teleportBetweenWaypoints,
+                teleportBetweenDelaySeconds = teleportBetweenDelaySeconds,
+            )
+            hidePasteCoordinatesSheet()
+        }
+
+        private fun pinCoordinateTarget(coords: LatLng) {
+            gpxOpenRepository.consume()
+            _uiState.update {
+                it.copy(
+                    pendingTapPosition = coords,
+                    pendingCameraTarget = coords,
+                    isPendingTapSheetOpen = true,
+                    showPasteCoordinatesSheet = false,
+                    roamingPreviewWaypoints = null,
+                )
+            }
         }
 
         private fun handleTapToTeleport(position: LatLng) {

@@ -610,6 +610,8 @@ class SettingsViewModel
                 selectedHotRouteIds = state.selectedHotRouteIds,
                 routesSortNewestFirst = settingsRepository.getRoutesSortNewestFirst().first(),
                 favoritesSortNewestFirst = settingsRepository.getFavoritesSortNewestFirst().first(),
+                routesSortMode = settingsRepository.getRoutesSortMode().first(),
+                favoritesSortMode = settingsRepository.getFavoritesSortMode().first(),
             )
         }
 
@@ -822,6 +824,8 @@ class SettingsViewModel
             }
             settingsRepository.setRoutesSortNewestFirst(data.routesSortNewestFirst)
             settingsRepository.setFavoritesSortNewestFirst(data.favoritesSortNewestFirst)
+            settingsRepository.setRoutesSortMode(data.routesSortMode)
+            settingsRepository.setFavoritesSortMode(data.favoritesSortMode)
         }
 
         fun importFromGpsJoystick(
@@ -839,7 +843,13 @@ class SettingsViewModel
                     val result = GpsJoystickMigrator.parse(bytes)
                     if (result.isFailure) {
                         Log.e(TAG, "GPS Joystick import failed: ${result.exceptionOrNull()?.message}")
-                        userFeedback.emit(UserFeedback("Failed to import from GPS Joystick", isError = true))
+                        val hint = result.exceptionOrNull()?.message
+                        userFeedback.emit(
+                            UserFeedback(
+                                if (hint != null && hint.contains("GPX")) hint else "Failed to import from GPS Joystick",
+                                isError = true,
+                            ),
+                        )
                         return@launch
                     }
                     val migration = result.getOrNull() ?: return@launch
@@ -858,10 +868,12 @@ class SettingsViewModel
                         }
                         migration.routes.forEach { routeRepository.insertRoute(it).getOrNull() }
                     }
-                    Log.i(TAG, "GPS Joystick import complete: ${migration.favorites.size} favorites, ${migration.routes.size} routes")
-                    userFeedback.emit(
-                        UserFeedback("Imported ${migration.favorites.size} favorites, ${migration.routes.size} routes from GPS Joystick"),
+                    Log.i(
+                        TAG,
+                        "GPS Joystick import complete: ${migration.favorites.size} favorites, " +
+                            "${migration.routes.size} routes, skipped ${migration.skippedOversizedRouteCount}",
                     )
+                    userFeedback.emit(UserFeedback(migration.toImportMessage()))
                 } catch (e: Exception) {
                     Log.e(TAG, "GPS Joystick import failed", e)
                     userFeedback.emit(UserFeedback("Failed to import from GPS Joystick", isError = true))

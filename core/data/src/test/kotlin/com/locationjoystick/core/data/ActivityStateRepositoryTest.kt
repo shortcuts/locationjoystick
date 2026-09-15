@@ -105,7 +105,7 @@ class ActivityStateRepositoryTest {
 
     private fun makeRepo(
         locationRepo: LocationRepository = LocationRepository(),
-        roamingRepo: RoamingRepository = RoamingRepository(mockk(relaxed = true), LocationRepository()),
+        roamingRepo: RoamingRepository = RoamingRepository(mockk(relaxed = true), LocationRepository(), mockk(relaxed = true)),
     ) = ActivityStateRepository(locationRepo, roamingRepo)
 
     @Test
@@ -160,7 +160,7 @@ class ActivityStateRepositoryTest {
         runTest {
             val locationRepo = LocationRepository()
             locationRepo.setMockMode(MockMode.ROAMING)
-            val roamingRepo = RoamingRepository(mockk(relaxed = true), LocationRepository())
+            val roamingRepo = RoamingRepository(mockk(relaxed = true), LocationRepository(), mockk(relaxed = true))
             roamingRepo.pauseRoaming()
             val repo = ActivityStateRepository(locationRepo, roamingRepo)
             assertTrue(repo.isActivityPaused.first())
@@ -171,7 +171,7 @@ class ActivityStateRepositoryTest {
         runTest {
             val locationRepo = LocationRepository()
             locationRepo.setMockMode(MockMode.TELEPORT)
-            val roamingRepo = RoamingRepository(mockk(relaxed = true), LocationRepository())
+            val roamingRepo = RoamingRepository(mockk(relaxed = true), LocationRepository(), mockk(relaxed = true))
             roamingRepo.pauseRoaming()
             val repo = ActivityStateRepository(locationRepo, roamingRepo)
             assertFalse(repo.isActivityPaused.first())

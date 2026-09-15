@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_roaming_sub_screen_walk_around_the_block">"Walk around the block"</string>
+    <string name="settings_roaming_sub_screen_picks_random_spots_within_a_radius_and_walks_between_them">"Picks random spots within a radius and walks between them."</string>
+    <string name="settings_roaming_sub_screen_planting">"Planting"</string>
+    <string name="settings_roaming_sub_screen_walks_a_spiral_around_the_current_point_opening_out_to_the_e">"Walks a spiral around the current point, opening out to the ending radius then tightening back in. "</string>
+    <string name="settings_roaming_sub_screen_starting_radius_m">"Starting radius (m)"</string>
+    <string name="settings_roaming_sub_screen_ending_radius_m">"Ending radius (m)"</string>
+    <string name="settings_roaming_sub_screen_speed_profile">"Speed profile"</string>
+    <string name="settings_roaming_sub_screen_infinite_loop">"Infinite loop"</string>
+    <string name="settings_roaming_sub_screen_keeps_expanding_and_contracting_until_you_stop_roaming">"Keeps expanding and contracting until you stop roaming."</string>
+    <string name="settings_roaming_sub_screen_number_of_loops">"Number of loops"</string>
+    <string name="settings_spiral_description">Walks a spiral around the current point, opening out to the outer radius and returning to the inner radius. One loop is one full expand and contract.</string>
+    <string name="menus_paste_coordinates">"Paste coordinates"</string>
+    <string name="menus_paste_latitude_and_longitude_to_teleport_walk_or_save_as_a_f">"Paste latitude and longitude to teleport, walk, or save as a favorite."</string>
+    <string name="menus_capture_coordinates">"Capture coordinates"</string>
+    <string name="menus_collect_map_links_from_other_apps_into_a_list_then_save_them">"Collect map links from other apps into a list, then save them as a route."</string>
+</resources>

@@ -20,6 +20,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,6 +34,7 @@ import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.R
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.matchesSearch
 import java.util.Locale
 
 /**
@@ -42,6 +47,9 @@ import java.util.Locale
  * @param onSaveCurrentLocation Optional: when non-null, an Add icon button is shown in the header.
  * @param cooldownBadgeText Optional: returns the full badge text for each favorite (e.g.
  *   "Suggested wait: 5m 30s · 2.3 km teleport" or "1.2 km away"). When non-null, a badge is shown.
+ * @param enableSearch When true, shows a search field and filters locally. Query is `remember`d
+ *   (not saveable) so dismissing the host panel starts from the full list.
+ * @param filterQuery Used only when [enableSearch] is false — parent-owned filter (widget picker).
  */
 @Composable
 fun FavoritesList(
@@ -54,7 +62,13 @@ fun FavoritesList(
     contentPadding: PaddingValues = PaddingValues(LjSpacing.md),
     rowBackground: Color = MaterialTheme.colorScheme.surfaceVariant,
     textColor: Color = Color.Unspecified,
+    enableSearch: Boolean = true,
+    filterQuery: String = "",
 ) {
+    var internalQuery by remember { mutableStateOf("") }
+    val query = if (enableSearch) internalQuery else filterQuery
+    val filtered = remember(favorites, query) { favorites.filter { it.matchesSearch(query) } }
+
     Column(
         modifier =
             modifier
@@ -76,12 +90,29 @@ fun FavoritesList(
             }
         }
 
+        if (enableSearch && favorites.isNotEmpty()) {
+            ListSearchField(
+                query = internalQuery,
+                onQueryChange = { internalQuery = it },
+                label = stringResource(R.string.favorites_list_search_favorites),
+                textColor = textColor,
+                modifier = Modifier.padding(top = if (title != null) 8.dp else 0.dp),
+            )
+        }
+
         if (favorites.isEmpty()) {
             Text(
                 stringResource(R.string.favorites_list_no_saved_favorites_yet),
                 style = MaterialTheme.typography.bodyMedium,
                 color = textColor,
                 modifier = Modifier.padding(top = LjSpacing.md),
+            )
+        } else if (filtered.isEmpty()) {
+            Text(
+                stringResource(R.string.favorites_list_no_favorites_match_your_search),
+                style = MaterialTheme.typography.bodyMedium,
+                color = textColor,
+                modifier = Modifier.padding(top = 16.dp),
             )
         } else {
             LazyColumn(
@@ -92,7 +123,7 @@ fun FavoritesList(
                 contentPadding = PaddingValues(vertical = LjSpacing.xs),
                 verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
             ) {
-                items(items = favorites, key = { it.id }) { favorite ->
+                items(items = filtered, key = { it.id }) { favorite ->
                     Column(
                         modifier =
                             Modifier
@@ -150,7 +181,7 @@ fun CooldownAdvisoryBadge(
 @Composable
 private fun FavoritesListEmptyPreview() {
     FavoritesList(
-        title = "Favorites",
+        title = stringResource(R.string.favorites_list_favorites),
         favorites = emptyList(),
         onSelect = {},
     )
@@ -160,7 +191,7 @@ private fun FavoritesListEmptyPreview() {
 @Composable
 private fun FavoritesListWithItemsPreview() {
     FavoritesList(
-        title = "Favorites",
+        title = stringResource(R.string.favorites_list_favorites),
         favorites =
             listOf(
                 FavoriteLocation(

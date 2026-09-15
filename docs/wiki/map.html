@@ -33,6 +33,9 @@
     <p>
       Map imagery loads from <a href="https://tile.openstreetmap.org" target="_blank" rel="noopener">tile.openstreetmap.org</a> as you pan and zoom. Once an area has
       loaded, it's stored on your device, so it still works the next time you're offline.
+      After a long jump to a new place, a wider view of the area shows first, then sharper
+      streets fill in. Street-level close-up still takes a moment; the map should not sit
+      blank while that happens.
     </p>
 
     <div class="feature-section" id="map-main">
@@ -40,8 +43,9 @@
       <ul class="section-bullets">
         <li>Long-press anywhere on the map to open a sheet with "Walk here" or "Teleport here".</li>
         <li>Tap the start button to begin from the current map position.</li>
-        <li>Use the re-center button to snap the camera back to your position after you've panned away.</li>
+        <li>Use the center button after you've panned away. While spoofing is on, it returns to your spoofed position. While spoofing is off, it centers on the phone's real GPS without changing your saved spoofed position.</li>
         <li>Tap the search button to find a location by name and jump the map there.</li>
+        <li>Tap the paste button to enter coordinates such as <code>11.0127769, 79.48065</code> or <code>37°34'11.4"N 127°00'17.9"E</code>, then teleport, walk, or save that spot as a favorite.</li>
       </ul>
     </div>
 
@@ -56,7 +60,30 @@
     <ul class="section-bullets">
       <li>Recent searches are saved on your device and shown as suggestions before you start typing.</li>
       <li>Picking a search result does not move your location. Long-press the marker to walk or teleport there.</li>
-      <li>Typing coordinates directly, such as <code>35.6762, 139.6503</code>, jumps straight to that point instead of running a search. It's a quick way to enter an exact spot.</li>
+      <li>Typing coordinates directly, such as <code>35.6762, 139.6503</code> or
+          <code>37°34'11.4"N 127°00'17.9"E</code>, jumps straight to that point instead of running a search. It's a quick way to enter an exact spot.</li>
+    </ul>
+
+    <h2 id="paste-coordinates">Paste coordinates</h2>
+    <p>
+      Tap the paste button (clipboard icon) in the column of buttons on the map to open a box
+      where you can paste or type coordinates. Decimal degrees with a comma work, for
+      example <code>11.0127769, 79.48065</code>. Degrees, minutes, and seconds with N/S and E/W
+      also work, for example <code>37°34'11.4"N 127°00'17.9"E</code>. You can paste one point or a list.
+    </p>
+    <ul class="section-bullets">
+      <li>Tap the clipboard icon in the box to paste from your clipboard. If the box already has coordinates, the new copy is added on a new line instead of replacing what is there.</li>
+      <li>Headings and notes can stay in the pasted text. Lines the app does not recognize are ignored as a whole, so unrelated numbers in a note are not used as coordinates.</li>
+      <li>The box grows up to 10 lines, then scrolls inside the box. The top and bottom edges fade so you can tell there is more. <strong>Select all</strong> and <strong>Clear all</strong> sit close under it, side by side, with full-size tap areas.</li>
+      <li>With exactly one valid point, <strong>Teleport</strong>, <strong>Walk</strong>, and <strong>Walk via roads</strong> sit on one row. Teleport jumps immediately and does not need a network. Walk via roads needs a network; if that fails, the app walks in a straight line instead.</li>
+      <li>With two or more valid points, the single-location buttons are replaced by route actions. The point count says <strong>Route actions</strong>, and the main button says <strong>Start route</strong>.</li>
+      <li><strong>Save favorite</strong> keeps the first point. With a list, it says <strong>Save first as favorite</strong> so this is clear. The app asks for a name, then adds it to Favorites.</li>
+      <li><strong>Save route</strong> sits beside Save favorite. It needs at least two valid points. The app asks for a name and keeps that route in your list. Later pastes do not overwrite a route you saved this way, even if you reuse a name.</li>
+      <li>With two or more points, <strong>Loop</strong>, <strong>Planting</strong>, <strong>Reverse</strong>, <strong>Return to location</strong>, <strong>Follow roads</strong>, and <strong>Teleport between waypoints</strong> become available, plus <strong>Start</strong>. Those options follow the same rules as when you start a saved route: Loop is on when the sheet opens; Planting turns Loop on and turns Return off; Loop and Return cannot both be on. Teleport between waypoints waits at the first stop, then jumps to the next and waits again — 8 seconds unless you change the delay box next to the checkbox; with Planting it walks each circle then jumps to the next. It is hidden when jump-to-location options are turned off in Settings. Until there are two points, those controls stay faded and do nothing.</li>
+      <li>Tap <strong>Start route</strong> to play the pasted points as a real route, without needing to save first. The next time you paste and start another route, that temporary route is replaced. If you want to keep a copy, use Save route. Playing this route is the same as playing any saved route: the joystick and roaming wait until you pause.</li>
+      <li>If the text has no valid coordinates, nothing moves and the box says none were found.</li>
+      <li>You can hide or show this button in Settings → Menus → App Features, for the map and for the floating widget. It is on by default, including after you update from an older version. It is also available on the compact map that opens from the floating widget.</li>
+      <li>Opening a GPX file from Files, Downloads, Share, or a chat app uses this same box. The title says Open GPX, the path is already filled, and Save route suggests the original file name when the file has no name of its own. Chat apps may send the file as a generic document; this app still appears for those. It does not appear for photos or app installer files. If the app is already open, the sheet still appears. If the file is not a GPX, a short message says it could not be opened.</li>
     </ul>
 
     <h2 id="click-to-move">Tap to move</h2>
@@ -67,7 +94,7 @@
       <tbody>
         <tr>
           <td><strong>Teleport here</strong></td>
-          <td>Your position jumps straight to the tapped point on the next update. There's no walking animation in between.</td>
+          <td>Your position jumps straight to the tapped point immediately. There's no walking animation in between. If a route or roam was running, paused, or still fetching roads for a start, that session ends first so the jump is not overwritten. Teleport does not need a network. If you paused spoofing, tap Start before teleport will move GPS.</td>
         </tr>
         <tr>
           <td><strong>Walk here</strong></td>
@@ -98,8 +125,9 @@
       <img class="phone-shot" src="screenshots/06_map_routes_sheet.png" alt="Map routes bottom sheet">
       <ul class="section-bullets">
         <li>Tap a route to preview its path on the map.</li>
-        <li>Start, loop, or reverse the route without leaving the map screen.</li>
-        <li>While a route is running, you can watch your marker move along the path on the map.</li>
+        <li>Start, loop, or reverse the route without leaving the map screen. Start jumps to the first stop, then plays the route. Loop is on when the start sheet opens. Teleport between waypoints waits at the first stop, then jumps to the next and waits again — 8 seconds unless you change the delay box.</li>
+        <li>While a route is running, you can watch your marker move along the path on the map. Previous stop and Next stop jump one stop at a time. With Teleport between waypoints on, you wait at that stop for the same delay, then playback continues.</li>
+        <li>A count like <code>3/12</code> appears at the bottom of the button column on the right, showing which stop you're on.</li>
       </ul>
     </div>
 
@@ -109,7 +137,8 @@
     <div class="feature-section" id="map-favorites-sheet">
       <img class="phone-shot" src="screenshots/07_map_favorites_sheet.png" alt="Map favorites bottom sheet">
       <ul class="section-bullets">
-        <li>Tap a favorite to open its detail panel with three ways to get there: <strong>Set location</strong> (teleport), <strong>Walk to location</strong> (straight line), and <strong>Walk via roads</strong> (follows real roads).</li>
+        <li>Tap a favorite to open its detail panel with three ways to get there: <strong>Set location</strong> (teleport — this also ends a running or paused route or roam), <strong>Walk to location</strong> (straight line), and <strong>Walk via roads</strong> (follows real roads).</li>
+        <li>Type in the search box at the top of the sheet to filter favorites by name or area. Closing the sheet clears the search.</li>
         <li>Each saved favorite shows its name and how far it is from where you are now.</li>
         <li>That distance is measured as a straight line, not the distance you'd actually travel by road.</li>
         <li>Tap <strong>Save current location</strong> to add where you are right now as a new favorite, without leaving this sheet.</li>
@@ -118,19 +147,17 @@
 
     <h2 id="roaming-sheet">Roaming sheet</h2>
     <p>
-      Set up automatic roaming and locationjoystick picks random spots within an area and walks
-      between them on its own. This is handy for apps that expect you to keep moving without
-      you having to steer it yourself.
+      Set up automatic roaming so locationjoystick keeps moving without you steering.
+      There are two modes, and only one can run at a time.
     </p>
 
     <div class="feature-section" id="map-roaming-sheet">
       <img class="phone-shot" src="screenshots/08_map_roaming_sheet.png" alt="Map roaming bottom sheet">
       <ul class="section-bullets">
-        <li>Set a center point (your current position by default), a radius, and a total distance to cover.</li>
-        <li>Turn on road-following so each leg sticks to real walkable paths. If a road route can't be found, that leg <a href="#road-routing-fallback">falls back to a straight line</a>.</li>
-        <li>Optionally have it walk back to the starting position once the distance is covered.</li>
-        <li>Each time it reaches a spot, it picks a new random one within the radius. Spots are chosen at random across the whole circle, not clustered near the center.</li>
-        <li>Roaming keeps running in the background, even with the screen off.</li>
+        <li><strong>Walk around the block</strong> picks random spots within a radius and walks between them. Set the radius and total distance, choose Walk, Run, or Bike, optionally follow roads, and optionally walk back to the start when the distance is covered.</li>
+        <li><strong>Planting</strong> walks a spiral around where you are now. It starts at the inner radius (5 m by default), opens out to the outer radius (39 m by default), then tightens back in. One loop is one full expand and contract. You can run it forever or for a set number of loops. Planting starts at Bike, independently of the Walk around the block speed; you can still pick Walk, Run, or Bike before you start. This is not the same as walking circles around stops on a saved route.</li>
+        <li>Generate shows the path on the map before you start. Roaming keeps running in the background, even with the screen off. After a roam starts, changing speed in the app or with the widget speed button takes over from the speed you picked here.</li>
+        <li>A playing route always wins. Start roaming is disabled until you pause or stop that route. After you pause, Start is available again and the paused route ends when roaming begins. The roaming button fades while a route is playing, but stays visible against its background.</li>
       </ul>
     </div>
 

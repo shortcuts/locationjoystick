@@ -7,6 +7,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import io.mockk.coVerify
 import io.mockk.every
@@ -39,7 +40,7 @@ class FavoritesViewModelTest {
         Dispatchers.setMain(testDispatcher)
         fakeFavoriteDao = FakeFavoriteDao()
         favoriteRepository = FavoriteRepository(fakeFavoriteDao, testDispatcher)
-        every { settingsRepository.getFavoritesSortNewestFirst() } returns flowOf(true)
+        every { settingsRepository.getFavoritesSortMode() } returns flowOf(SavedItemSortMode.NEWEST_FIRST)
         every { settingsRepository.getLastTeleportTime() } returns flowOf(0L)
         every { settingsRepository.getLastLocation() } returns flowOf(null)
         every { settingsRepository.getRecentSearches() } returns flowOf(emptyList())
@@ -79,7 +80,7 @@ class FavoritesViewModelTest {
     @Test
     fun uiState_sorts_oldest_first_when_sort_flag_false() =
         runTest {
-            every { settingsRepository.getFavoritesSortNewestFirst() } returns flowOf(false)
+            every { settingsRepository.getFavoritesSortMode() } returns flowOf(SavedItemSortMode.OLDEST_FIRST)
             val vm = FavoritesViewModel(favoriteRepository, locationRepository, settingsRepository, teleportUseCase)
             favoriteRepository.addFavorite("id1", "Old", LatLng(0.0, 0.0), createdAt = 1000L)
             favoriteRepository.addFavorite("id2", "New", LatLng(1.0, 1.0), createdAt = 2000L)
@@ -92,10 +93,24 @@ class FavoritesViewModelTest {
         }
 
     @Test
-    fun toggleSort_flips_sort_order() =
+    fun setSortMode_saves_selection() =
         runTest {
-            viewModel.toggleSort()
-            coVerify { settingsRepository.setFavoritesSortNewestFirst(false) }
+            viewModel.setSortMode(SavedItemSortMode.NAME_ASCENDING)
+            coVerify { settingsRepository.setFavoritesSortMode(SavedItemSortMode.NAME_ASCENDING) }
+        }
+
+    @Test
+    fun uiState_sorts_names_z_to_a() =
+        runTest {
+            every { settingsRepository.getFavoritesSortMode() } returns flowOf(SavedItemSortMode.NAME_DESCENDING)
+            val vm = FavoritesViewModel(favoriteRepository, locationRepository, settingsRepository, teleportUseCase)
+            favoriteRepository.addFavorite("id1", "Alpha", LatLng(0.0, 0.0), 1000L)
+            favoriteRepository.addFavorite("id2", "Zulu", LatLng(1.0, 1.0), 2000L)
+
+            vm.uiState.test {
+                assertEquals(listOf("Zulu", "Alpha"), awaitItem().favorites.map { it.name })
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     @Test
@@ -144,6 +159,67 @@ class FavoritesViewModelTest {
                 val state = awaitItem()
                 assertEquals(1, state.favorites.size)
                 assertEquals("Paris", state.favorites[0].name)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun addFavoriteFromPaste_parses_comma_separated_decimal_degrees() =
+        runTest {
+            val saved = viewModel.addFavoriteFromPaste("Thanjavur", "11.0127769, 79.48065")
+
+            assertEquals(true, saved)
+            viewModel.uiState.test {
+                val state = awaitItem()
+                assertEquals(1, state.favorites.size)
+                assertEquals("Thanjavur", state.favorites[0].name)
+                assertEquals(11.0127769, state.favorites[0].position.latitude, 1e-9)
+                assertEquals(79.48065, state.favorites[0].position.longitude, 1e-9)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun addFavoriteFromPaste_rejects_invalid_text() =
+        runTest {
+            val saved = viewModel.addFavoriteFromPaste("Nowhere", "not a coordinate")
+
+            assertEquals(false, saved)
+            viewModel.uiState.test {
+                assertEquals(0, awaitItem().favorites.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun addFavoriteFromPaste_uses_first_valid_pair() =
+        runTest {
+            val saved =
+                viewModel.addFavoriteFromPaste(
+                    "First",
+                    "11.0127769, 79.48065\n48.8566, 2.3522",
+                )
+
+            assertEquals(true, saved)
+            viewModel.uiState.test {
+                val state = awaitItem()
+                assertEquals(1, state.favorites.size)
+                assertEquals(11.0127769, state.favorites[0].position.latitude, 1e-9)
+                assertEquals(79.48065, state.favorites[0].position.longitude, 1e-9)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun addFavoriteFromPaste_honors_swap_lat_lon() =
+        runTest {
+            val saved = viewModel.addFavoriteFromPaste("Swapped", "139.77, 35.68", swapLatLon = true)
+
+            assertEquals(true, saved)
+            viewModel.uiState.test {
+                val state = awaitItem()
+                assertEquals(35.68, state.favorites[0].position.latitude, 1e-9)
+                assertEquals(139.77, state.favorites[0].position.longitude, 1e-9)
                 cancelAndIgnoreRemainingEvents()
             }
         }

@@ -18,18 +18,19 @@ Key files: `:feature:settings:impl/SettingsScreen.kt`, `:core:data/SettingsRepos
 
 - Stored in DataStore.
 - UI: scrollable segmented control (roaming default) and individually labeled speed inputs (Settings screen).
-- Changes take effect immediately on the next tick.
+- Starting a saved route or roam switches the active profile to that session's chosen speed (route pin, walk-around `speedProfileId`, or planting `plantingSpeedProfileId`, default Bike).
+- After start, widget Speed Cycle and Settings speed changes apply on the next tick to joystick, walk-to, route replay, and roaming. They do not rewrite the route pin or roaming defaults.
 - Widget's Speed Cycle feature cycles through the user's **enabled** profiles in preset order via `SettingsRepository.getEnabledSpeedProfiles()`.
 
 ## Enabled Speed Profiles (Speed Cycle)
 
 Settings → Menus → "Speed Cycle" lets the user choose which of the five presets the widget's Speed Cycle button cycles through — useful since most users only need a subset.
 
-- Default enabled: Walk, Run, Bike. Slow Walk and Drive are opt-in.
+- Default enabled: Walk, Bike, Drive. Slow Walk and Run are opt-in.
 - Stored as `AppSettings.enabledSpeedProfileIds` (`Set<String>` of profile IDs), DataStore key `enabled_speed_profile_ids`.
 - Editing speed *values* (Settings → GPS) always shows and edits all 5 profiles regardless of enablement — this toggle only affects which profiles are cycled through, not which can be edited.
 - If the enabled set is ever empty, `SettingsRepository.getEnabledSpeedProfiles()` falls back to all 5 profiles so cycling never breaks. The Settings UI itself also blocks unchecking the last enabled profile.
-- Round-trips through export/import via `AppSettings.enabledSpeedProfileIds`; old exports without the field default to Walk/Run/Bike.
+- Round-trips through export/import via `AppSettings.enabledSpeedProfileIds`; old exports without the field default to Walk/Bike/Drive.
 
 ## Constraints
 

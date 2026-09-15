@@ -4,11 +4,14 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.core.model.RoamingKind
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.Waypoint
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -303,5 +306,50 @@ class SettingsExportCodecEdgeCaseTest {
 
         assertEquals(1, parsed.settings.enabledWidgetFeatures.size)
         assertTrue(parsed.settings.enabledWidgetFeatures.contains(AppFeature.JOYSTICK_TOGGLE))
+    }
+
+    @Test
+    fun `missing planting roaming fields default cleanly`() {
+        val json =
+            """{"schemaVersion":1,"exportedAt":0,""" +
+                """"settings":{"speedUnit":"KMH","roamingDefaults":{"radiusMeters":2000,"distanceMeters":1000,""" +
+                """"speedProfileId":"walk","followRoads":true,"returnToInitialLocation":true}},""" +
+                """"speedProfiles":[],"routes":[],"favoriteLocations":[]}"""
+
+        val parsed = SettingsExportCodec.parseExportData(json)
+        val roaming = parsed.settings.roamingDefaults
+        assertEquals(RoamingKind.WALK_AROUND, roaming.kind)
+        assertEquals(5.0, roaming.plantingStartRadiusMeters, 0.001)
+        assertEquals(39.0, roaming.plantingEndRadiusMeters, 0.001)
+        assertTrue(roaming.plantingInfiniteLoops)
+        assertEquals(1, roaming.plantingLoopCount)
+        assertEquals("bike", roaming.plantingSpeedProfileId)
+    }
+
+    @Test
+    fun `planting roaming fields round trip`() {
+        val data =
+            baseData().copy(
+                settings =
+                    baseData().settings.copy(
+                        roamingDefaults =
+                            RoamingDefaults(
+                                kind = RoamingKind.PLANTING,
+                                plantingStartRadiusMeters = 7.0,
+                                plantingEndRadiusMeters = 42.0,
+                                plantingInfiniteLoops = false,
+                                plantingLoopCount = 4,
+                                plantingSpeedProfileId = "run",
+                            ),
+                    ),
+            )
+        val parsed = SettingsExportCodec.parseExportData(SettingsExportCodec.serializeExportData(data))
+        val roaming = parsed.settings.roamingDefaults
+        assertEquals(RoamingKind.PLANTING, roaming.kind)
+        assertEquals(7.0, roaming.plantingStartRadiusMeters, 0.001)
+        assertEquals(42.0, roaming.plantingEndRadiusMeters, 0.001)
+        assertFalse(roaming.plantingInfiniteLoops)
+        assertEquals(4, roaming.plantingLoopCount)
+        assertEquals("run", roaming.plantingSpeedProfileId)
     }
 }

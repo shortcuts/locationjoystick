@@ -18,13 +18,15 @@ Key files: `:core:location/MockLocationService.kt`
 
 ## Service Interface
 
-`MockLocationService` exposes `StateFlow<SpoofState>`. Commands: `startSpoofing`, `updatePosition`, `stopSpoofing`.
+`MockLocationService` exposes `StateFlow<SpoofState>`. Commands: `startSpoofing`, `updatePosition`, `stopSpoofing`, `parkSpoofingKeepWidget` (mock GPS off, widget stays; see @docs/features/widget.md, "Pause vs Stop").
 
 Clients bind via `LocalBinder` inner class + `ServiceConnection`. Unbind in `onDestroy`/`onCleared`.
 
 ## Wakelock Handling
 
-To keep route replay and walk-to advancing reliably when the screen locks (workaround for Doze/Adaptive Battery throttling on some devices), the service holds a `PARTIAL_WAKE_LOCK` while spoofing is active (`state != IDLE`). Acquired in `startSpoofing()`, released in `stopSpoofing()` and `onDestroy()`.
+To keep route replay and walk-to advancing reliably when the screen locks (workaround for Doze/Adaptive Battery throttling on some devices), the service holds a `PARTIAL_WAKE_LOCK` while spoofing is active (`state != IDLE`). Acquired in `startSpoofing()`, released in `stopSpoofing()`, `parkSpoofingKeepWidget()`, and `onDestroy()`.
+
+Park leaves the foreground service running (no `stopSelf()`) so Start from the widget does not race a dead FGS. `START_STICKY` with a null intent stays parked when `keep_widget_on_idle` is set, instead of resuming spoofing at the remembered location.
 
 ## Hiding the Notification Icon
 

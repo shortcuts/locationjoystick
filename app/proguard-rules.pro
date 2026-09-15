@@ -82,6 +82,16 @@
 -keepclassmembers class org.maplibre.android.style.** { *; }
 -keepclassmembers class org.maplibre.android.geometry.** { *; }
 -keepclassmembers class org.maplibre.android.location.** { *; }
+# Tile HTTP client swap (OSM blocks generic UAs). Keep the static client field
+# HttpRequestUtil.setOkHttpClient writes so R8 cannot unlink it from executeRequest,
+# and keep this app's installer so the swap cannot be DCE'd.
+-keep class org.maplibre.android.module.http.HttpRequestUtil { *; }
+-keep class org.maplibre.android.module.http.HttpRequestImpl { *; }
+-keepclassmembers class org.maplibre.android.module.http.HttpRequestImpl {
+    static java.lang.String userAgentString;
+    static okhttp3.Call$Factory client;
+}
+-keep class com.locationjoystick.core.map.maplibre.** { *; }
 # Keep JNI method names
 -keepclasseswithmembernames class * {
     native <methods>;

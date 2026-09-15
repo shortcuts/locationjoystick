@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="favorites_screen_share_current_location">"Share current location"</string>
+    <string name="favorites_screen_paste_coordinates">"Paste coordinates"</string>
+    <string name="favorites_screen_copy_coordinates">"Copy coordinates"</string>
+    <string name="favorites_screen_send_as_message">"Send as message"</string>
+    <string name="favorites_screen_save">"Save"</string>
+    <string name="favorites_screen_name">"Name"</string>
+    <string name="favorites_screen_coordinates">"Coordinates"</string>
+    <string name="favorites_screen_paste_from_clipboard">"Paste from clipboard"</string>
+    <string name="favorites_screen_cancel">"Cancel"</string>
+    <string name="map_picker_screen_search_location">"Search location"</string>
+    <string name="map_picker_screen_save_location">"Save location"</string>
+    <string name="favorite_coordinate_example" translatable="false">11.0127769, 79.48065</string>
+    <string name="favorites_no_saved_locations_yet">"No saved locations yet"</string>
+    <string name="favorites_add_a_favorite">"Add a favorite"</string>
+    <string name="favorites_no_favorites_match_your_search">"No favorites match your search"</string>
+    <string name="favorites_danger">"Danger"</string>
+    <string name="favorites_decimal_or_degrees_with_n_s_and_e_w">"Decimal, or degrees with N/S and E/W"</string>
+    <string name="favorites_no_coordinates">"No valid coordinates"</string>
+</resources>

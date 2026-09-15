@@ -2,12 +2,16 @@ package com.locationjoystick.core.routing
 
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.hopLingerDurationMs
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.RouteProgress
+import com.locationjoystick.core.model.computeRouteProgress
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.coroutineContext
 
 private const val TAG = "RouteReplayEngine"
 
@@ -72,6 +76,23 @@ class RouteReplayEngine
         @Volatile private var boundaryIndices: List<Int> = emptyList()
 
         /**
+         * When true, hop to each named-stop / planting-ring boundary instead of interpolating
+         * the connector. Planting still walks each circle; the hop is the skip-to-next-stop.
+         */
+        @Volatile private var teleportBetweenWaypoints: Boolean = false
+
+        @Volatile private var teleportBetweenDelaySeconds: Int =
+            AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS
+
+        /**
+         * Linger at the current stop before the next automatic hop. Set on hop-mode [start]
+         * so playback waits at the first stop, and after a user Next/Previous jump so the
+         * automatic hop does not fire immediately — Next would skip two stops (20/31 → 22/31)
+         * and Previous would hop back to the stop the user just left (looks like a no-op).
+         */
+        @Volatile private var lingerBeforeNextHop: Boolean = false
+
+        /**
          * Starts a new route replay from the first waypoint.
          *
          * @param waypoints List of waypoints in order
@@ -82,6 +103,9 @@ class RouteReplayEngine
          * @param boundaryIndices Indices of the route's real named stops within [waypoints].
          *   Defaults to every index (identity) when null — the pre-existing behavior for
          *   callers that never expand the waypoint list.
+         * @param teleportBetweenWaypoints When true, hop to each named-stop / next-ring
+         *   boundary instead of walking the connector. Forced off by hide-teleport at start.
+         * @param teleportBetweenDelaySeconds Seconds to linger at each hopped stop (default 8).
          */
         fun start(
             waypoints: List<LatLng>,
@@ -90,15 +114,25 @@ class RouteReplayEngine
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
             boundaryIndices: List<Int>? = null,
+            teleportBetweenWaypoints: Boolean = false,
+            teleportBetweenDelaySeconds: Int = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
         ) {
             savedWaypointsRef.set(waypoints)
             savedSpeedMs = speedMs
             this.isLooping = isLooping
             this.boundaryIndices = boundaryIndices ?: waypoints.indices.toList()
+            this.teleportBetweenWaypoints = teleportBetweenWaypoints
+            this.teleportBetweenDelaySeconds = teleportBetweenDelaySeconds
+            lingerBeforeNextHop = teleportBetweenWaypoints
             resumePosition = waypoints.firstOrNull()
             resumeWaypointIndex = 1
             launchReplay(onPositionUpdate, onComplete)
-            Log.i(TAG, "Replay started: ${waypoints.size} waypoints at ${speedMs}m/s looping=$isLooping")
+            Log.i(
+                TAG,
+                "Replay started: ${waypoints.size} waypoints at ${speedMs}m/s " +
+                    "looping=$isLooping teleportBetween=$teleportBetweenWaypoints " +
+                    "delay=${this.teleportBetweenDelaySeconds}s",
+            )
         }
 
         /**
@@ -134,6 +168,10 @@ class RouteReplayEngine
             savedWaypointsRef.set(emptyList())
             resumePosition = null
             resumeWaypointIndex = 1
+            lingerBeforeNextHop = false
+            boundaryIndices = emptyList()
+            teleportBetweenWaypoints = false
+            teleportBetweenDelaySeconds = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS
             Log.i(TAG, "Replay stopped")
         }
 
@@ -146,6 +184,9 @@ class RouteReplayEngine
             savedSpeedMs = speedMs
             return speedMs.toFloat()
         }
+
+        /** Named-stop progress for the active replay, or null when no replay is loaded. */
+        fun currentProgress(): RouteProgress? = computeRouteProgress(resumeWaypointIndex, boundaryIndices)
 
         /**
          * Appends a waypoint to the current replay (used for recording).
@@ -180,6 +221,7 @@ class RouteReplayEngine
             jobController.cancel()
             resumePosition = waypoints[clamped]
             resumeWaypointIndex = clamped + 1
+            lingerBeforeNextHop = teleportBetweenWaypoints
             if (wasRunning) {
                 launchReplay(onPositionUpdate, onComplete)
             }
@@ -238,13 +280,63 @@ class RouteReplayEngine
             jobController.launch {
                 while (isActive) {
                     val waypoints = savedWaypointsRef.get()
+                    val boundaries = boundaryIndices
+                    if (lingerBeforeNextHop) {
+                        lingerBeforeNextHop = false
+                        lingerAfterHop(position, onPositionUpdate)
+                        if (!isActive) return@launch
+                        continue
+                    }
+                    if (shouldTeleportToTargetWaypoint(teleportBetweenWaypoints, index, boundaries) &&
+                        index in waypoints.indices
+                    ) {
+                        position = waypoints[index]
+                        index += 1
+                        resumePosition = position
+                        resumeWaypointIndex = index
+                        try {
+                            onPositionUpdate(position)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "onPositionUpdate failed", e)
+                        }
+                        lingerAfterHop(position, onPositionUpdate)
+                        if (index >= waypoints.size) {
+                            if (isLooping) {
+                                position = waypoints.first()
+                                index = 1
+                                resumePosition = position
+                                resumeWaypointIndex = index
+                                try {
+                                    onPositionUpdate(position)
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "onPositionUpdate failed", e)
+                                }
+                                lingerAfterHop(position, onPositionUpdate)
+                            } else {
+                                if (isActive) {
+                                    try {
+                                        onComplete()
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "onComplete failed", e)
+                                    }
+                                }
+                                break
+                            }
+                        }
+                        continue
+                    }
                     val result =
-                        routeInterpolator.interpolateAlongRoute(
-                            waypoints = waypoints,
-                            currentPosition = position,
-                            currentWaypointIndex = index.coerceAtMost(waypoints.size - 1),
-                            speedMs = savedSpeedMs,
-                            deltaTimeMs = AppConstants.LocationConstants.UPDATE_INTERVAL_MS,
+                        snapCarryIfCrossingBoundary(
+                            routeInterpolator.interpolateAlongRoute(
+                                waypoints = waypoints,
+                                currentPosition = position,
+                                currentWaypointIndex = index.coerceAtMost(waypoints.size - 1),
+                                speedMs = savedSpeedMs,
+                                deltaTimeMs = AppConstants.LocationConstants.UPDATE_INTERVAL_MS,
+                            ),
+                            waypoints,
+                            teleportBetweenWaypoints,
+                            boundaries,
                         )
                     position = result.position
                     index = result.nextWaypointIndex
@@ -273,6 +365,28 @@ class RouteReplayEngine
                         }
                     }
                     delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
+                }
+            }
+        }
+
+        /**
+         * Stay at [position] for [teleportBetweenDelaySeconds], still emitting GPS ticks so
+         * the mock provider does not go stale. Pause/jump cancel this via [isActive].
+         */
+        private suspend fun lingerAfterHop(
+            position: LatLng,
+            onPositionUpdate: (LatLng) -> Unit,
+        ) {
+            val lingerMs = hopLingerDurationMs(teleportBetweenDelaySeconds)
+            var waited = 0L
+            while (coroutineContext.isActive && waited < lingerMs) {
+                delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
+                waited += AppConstants.LocationConstants.UPDATE_INTERVAL_MS
+                if (!coroutineContext.isActive || waited >= lingerMs) return
+                try {
+                    onPositionUpdate(position)
+                } catch (e: Exception) {
+                    Log.e(TAG, "onPositionUpdate failed", e)
                 }
             }
         }

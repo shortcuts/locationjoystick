@@ -3,6 +3,7 @@ package com.locationjoystick.feature.widget.impl
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -31,12 +33,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -49,14 +52,15 @@ import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSuccess
-import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
+import com.locationjoystick.core.designsystem.component.PasteCoordinatesForm
 import com.locationjoystick.core.designsystem.component.RoamingSheetContent
+import com.locationjoystick.core.designsystem.component.RouteProgressBadgeInMapFabSlot
 import com.locationjoystick.core.map.geojson.buildLineGeoJson
 import com.locationjoystick.core.map.geojson.buildPointsGeoJson
 import com.locationjoystick.core.map.geojson.buildPositionGeoJson
@@ -66,29 +70,38 @@ import com.locationjoystick.core.map.maplibre.MapLibreLayerIds
 import com.locationjoystick.core.map.maplibre.MapLibreSourceIds
 import com.locationjoystick.core.map.maplibre.addEphemeralRouteLayers
 import com.locationjoystick.core.map.maplibre.addLocationLayers
+import com.locationjoystick.core.map.maplibre.followOrSnapTo
+import com.locationjoystick.core.map.maplibre.rememberMapView
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RecentSearch
+import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.core.model.RouteProgress
+import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.isRoutePlaying
+import com.locationjoystick.core.model.toConfig
 import com.locationjoystick.feature.widget.impl.R
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.maps.MapLibreMap
-import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.sources.GeoJsonSource
+import kotlin.math.roundToInt
 import org.maplibre.android.geometry.LatLng as MapLatLng
 
 @Composable
 internal fun MapFloatingView(
+    compact: Boolean,
+    onToggleExpanded: () -> Unit,
+    onMoveCompact: (Int, Int) -> Unit,
     currentPosition: LatLng?,
     initialPosition: LatLng?,
     walkTarget: LatLng?,
@@ -102,7 +115,7 @@ internal fun MapFloatingView(
     speedUnit: SpeedUnit,
     onResumeRoaming: () -> Unit,
     onPauseRoaming: () -> Unit,
-    onGeneratePreviewRoute: suspend (center: LatLng, radiusMeters: Double, followRoads: Boolean, speedProfileId: String) -> List<LatLng>?,
+    onGeneratePreviewRoute: suspend (RoamingConfig) -> List<LatLng>?,
     onTeleport: (LatLng) -> Unit,
     onWalkTo: (LatLng) -> Unit,
     onWalkViaRoads: (LatLng) -> Unit,
@@ -127,30 +140,64 @@ internal fun MapFloatingView(
     onSearchCommitted: ((String, Double, Double) -> Unit)? = null,
     cooldownForPosition: ((LatLng) -> Flow<CooldownState>)? = null,
     onSaveCurrentLocation: ((String) -> Unit)? = null,
+    onRenameFavorite: (FavoriteLocation, String) -> Unit = { _, _ -> },
+    onDeleteFavorite: (FavoriteLocation) -> Unit = {},
+    onSaveFavorite: ((name: String, position: LatLng) -> Unit)? = null,
+    onSavePastedRoute: ((name: String, points: List<LatLng>) -> Unit)? = null,
+    onStartPastedRoute: (
+        (
+            points: List<LatLng>,
+            loop: Boolean,
+            reverse: Boolean,
+            returnToLocation: Boolean,
+            followRoads: Boolean,
+            planting: Boolean,
+            teleportBetweenWaypoints: Boolean,
+            teleportBetweenDelaySeconds: Int,
+        ) -> Unit
+    )? = null,
     quickWalk: Boolean = false,
     hideTeleportFeatures: Boolean = false,
-    showRouteJumpButtons: Boolean = false,
+    showRouteJumpButtons: Boolean = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
+    routeProgress: RouteProgress? = null,
+    captureEnabled: Boolean = false,
+    capturedPoints: List<LatLng> = emptyList(),
+    captureRouteName: String = "",
+    captureSaved: Boolean = false,
+    captureSaveError: String? = null,
+    onCaptureEnabledChange: (Boolean) -> Unit = {},
+    onCaptureRouteNameChange: (String) -> Unit = {},
+    onSaveCapturedRoute: () -> Unit = {},
+    captureOptimizeProximity: Boolean = true,
+    onCaptureOptimizeProximityChange: (Boolean) -> Unit = {},
+    onClearCapturedPoints: () -> Unit = {},
+    onRemoveLastCaptured: () -> Unit = {},
+    onRememberPreviousBrowser: (String) -> Unit = {},
+    favoritesSortMode: SavedItemSortMode = SavedItemSortMode.NEWEST_FIRST,
+    onFavoritesSortModeSelected: (SavedItemSortMode) -> Unit = {},
 ) {
+    val saveFavoriteAt = onSaveFavorite
+    val savePastedRoute = onSavePastedRoute
+    val startPastedRoute = onStartPastedRoute
     val isRoaming = mockMode == MockMode.ROAMING
     val isRouteReplay = mockMode == MockMode.ROUTE_REPLAY
+    val routePlaying = isRoutePlaying(mockMode, mockLocationState)
     val isRoutePaused = isRouteReplay && mockLocationState == MockLocationState.PAUSED
     val isEphemeralReplayActive = ephemeralWaypoints?.isNotEmpty() == true
     val isWalkActive = walkTarget != null || isRouteReplay || isEphemeralReplayActive
-    val context = LocalContext.current
     var roamingPreviewWaypoints by remember { mutableStateOf<List<com.locationjoystick.core.model.LatLng>?>(null) }
     var showRoamingSheet by remember { mutableStateOf(false) }
     var pendingTap by remember { mutableStateOf<LatLng?>(null) }
     val quickWalkState = rememberUpdatedState(quickWalk)
     val onWalkToState = rememberUpdatedState(onWalkTo)
     var showSearch by remember { mutableStateOf(false) }
+    var showPasteCoordinates by remember { mutableStateOf(false) }
     var showFavoritesPicker by remember { mutableStateOf(false) }
     val isFollowingCamera = remember { mutableStateOf(true) }
+    var northLocked by rememberSaveable { mutableStateOf(true) }
+    val lastFollowedPosition = remember { mutableStateOf<LatLng?>(null) }
 
-    val mapView =
-        remember(context) {
-            MapLibre.getInstance(context)
-            MapView(context)
-        }
+    val mapView = rememberMapView(overlay = true)
     val mapRef = remember { mutableStateOf<MapLibreMap?>(null) }
     val positionSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val tracedSource = remember { mutableStateOf<GeoJsonSource?>(null) }
@@ -159,6 +206,18 @@ internal fun MapFloatingView(
     val ephemeralRouteSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val ephemeralEndpointsSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val pendingTapSource = remember { mutableStateOf<GeoJsonSource?>(null) }
+
+    LaunchedEffect(northLocked) {
+        val map = mapRef.value ?: return@LaunchedEffect
+        map.uiSettings.isRotateGesturesEnabled = !northLocked
+        if (northLocked) {
+            map.animateCamera(
+                CameraUpdateFactory.newCameraPosition(
+                    CameraPosition.Builder(map.cameraPosition).bearing(0.0).build(),
+                ),
+            )
+        }
+    }
 
     LaunchedEffect(roamingPreviewWaypoints) {
         val src = ephemeralRouteSource.value ?: return@LaunchedEffect
@@ -196,15 +255,16 @@ internal fun MapFloatingView(
         }
     }
 
-    // Dark backdrop (visual only — X button is the close mechanism, map touches must pass through)
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f)))
+    // In compact mode the actual overlay window is small, so everything outside these bounds
+    // remains touchable in the app underneath.
+    if (!compact) Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f)))
 
     Box(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(16.dp)
-                .background(LjBg, MaterialTheme.shapes.medium)
+                .padding(if (compact) 4.dp else 16.dp)
+                .background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
                 .clip(MaterialTheme.shapes.medium),
     ) {
         AndroidView(
@@ -215,6 +275,7 @@ internal fun MapFloatingView(
                         map.uiSettings.isAttributionEnabled = false
                         map.uiSettings.isLogoEnabled = false
                         map.uiSettings.isScrollGesturesEnabled = true
+                        map.uiSettings.isRotateGesturesEnabled = !northLocked
                         map.cameraPosition =
                             CameraPosition
                                 .Builder()
@@ -232,6 +293,8 @@ internal fun MapFloatingView(
                                 style.addLocationLayers(
                                     osmSourceId = MapLibreSourceIds.PANEL_OSM,
                                     osmLayerId = MapLibreLayerIds.PANEL_OSM,
+                                    osmPreviewSourceId = MapLibreSourceIds.PANEL_OSM_PREVIEW,
+                                    osmPreviewLayerId = MapLibreLayerIds.PANEL_OSM_PREVIEW,
                                     lineWidth = 3f,
                                 )
                             positionSource.value = layers.positionSource
@@ -305,10 +368,9 @@ internal fun MapFloatingView(
                 pendingTapSource.value?.setGeoJson(buildPositionGeoJson(pendingTap))
 
                 if (isFollowingCamera.value && position != null) {
-                    mapRef.value?.animateCamera(
-                        CameraUpdateFactory.newLatLng(MapLatLng(position.latitude, position.longitude)),
-                        500,
-                    )
+                    val previous = lastFollowedPosition.value
+                    lastFollowedPosition.value = position
+                    mapRef.value?.followOrSnapTo(previous, position)
                 }
             },
             modifier = Modifier.fillMaxSize(),
@@ -318,9 +380,10 @@ internal fun MapFloatingView(
             NominatimSearchBar(
                 onLocationSelected = { lat, lon, _ ->
                     val position = LatLng(latitude = lat, longitude = lon)
-                    mapRef.value?.animateCamera(
+                    isFollowingCamera.value = false
+                    lastFollowedPosition.value = position
+                    mapRef.value?.moveCamera(
                         CameraUpdateFactory.newLatLngZoom(MapLatLng(lat, lon), AppConstants.MapConstants.DEFAULT_ZOOM),
-                        500,
                     )
                     showSearch = false
                     pendingTap = position
@@ -334,16 +397,51 @@ internal fun MapFloatingView(
             )
         }
 
-        // Close button — top-right corner
-        IconButton(
-            onClick = onDismiss,
+        if (compact) {
+            IconButton(
+                onClick = {},
+                modifier =
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .padding(8.dp)
+                        .background(MaterialTheme.colorScheme.background, CircleShape)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                onMoveCompact(dragAmount.x.roundToInt(), dragAmount.y.roundToInt())
+                            }
+                        },
+            ) {
+                Icon(
+                    LjIcons.DragHandle,
+                    contentDescription = stringResource(R.string.map_floating_view_move_map),
+                    tint = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+        }
+
+        // Size and close controls — top-right corner
+        Row(
             modifier =
                 Modifier
                     .align(Alignment.TopEnd)
                     .padding(8.dp)
-                    .background(LjBg, CircleShape),
+                    .background(MaterialTheme.colorScheme.background, CircleShape),
         ) {
-            Icon(LjIcons.Close, contentDescription = stringResource(R.string.map_floating_close_cd), tint = LjText)
+            IconButton(onClick = onToggleExpanded) {
+                Icon(
+                    if (compact) LjIcons.Fullscreen else LjIcons.FullscreenExit,
+                    contentDescription = if (compact) "Expand map" else "Shrink map",
+                    tint = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    LjIcons.Close,
+                    contentDescription = stringResource(R.string.map_floating_view_close),
+                    tint = MaterialTheme.colorScheme.onBackground,
+                )
+            }
         }
 
         // FAB column — bottom-right, mirrors main map layout
@@ -355,21 +453,30 @@ internal fun MapFloatingView(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.End,
         ) {
+            LjMapIconButton(
+                icon = LjIcons.NorthUp,
+                contentDescription = if (northLocked) "Unlock map rotation" else "Lock north at top",
+                containerColor =
+                    if (northLocked) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor =
+                    if (northLocked) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onTertiaryContainer,
+                onClick = { northLocked = !northLocked },
+            )
             if (!isFollowingCamera.value) {
                 LjMapIconButton(
                     icon = LjIcons.MyLocation,
-                    contentDescription = "Re-center on location",
+                    contentDescription = stringResource(R.string.map_floating_view_re_center_on_location),
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                     onClick = {
                         isFollowingCamera.value = true
                         if (currentPosition != null) {
-                            mapRef.value?.animateCamera(
+                            lastFollowedPosition.value = currentPosition
+                            mapRef.value?.moveCamera(
                                 CameraUpdateFactory.newLatLngZoom(
                                     MapLatLng(currentPosition.latitude, currentPosition.longitude),
                                     AppConstants.MapConstants.DEFAULT_ZOOM,
                                 ),
-                                500,
                             )
                         }
                     },
@@ -377,7 +484,7 @@ internal fun MapFloatingView(
             }
             LjMapIconButton(
                 icon = LjIcons.Favorite,
-                contentDescription = "Open favorites",
+                contentDescription = stringResource(R.string.map_floating_view_open_favorites),
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 onClick = { showFavoritesPicker = true },
@@ -391,7 +498,7 @@ internal fun MapFloatingView(
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             LjMapIconButton(
                                 icon = LjIcons.Stop,
-                                contentDescription = "Stop route",
+                                contentDescription = stringResource(R.string.map_floating_view_stop_route),
                                 containerColor = MaterialTheme.colorScheme.error,
                                 contentColor = MaterialTheme.colorScheme.onError,
                                 onClick = {
@@ -409,14 +516,14 @@ internal fun MapFloatingView(
                             if (!hideTeleportFeatures && showRouteJumpButtons) {
                                 LjMapIconButton(
                                     icon = LjIcons.SkipPrevious,
-                                    contentDescription = "Previous waypoint",
+                                    contentDescription = stringResource(R.string.map_floating_view_previous_waypoint),
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                     contentColor = LjSuccess,
                                     onClick = onJumpToPreviousWaypoint,
                                 )
                                 LjMapIconButton(
                                     icon = LjIcons.SkipNext,
-                                    contentDescription = "Next waypoint",
+                                    contentDescription = stringResource(R.string.map_floating_view_next_waypoint),
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                     contentColor = LjSuccess,
                                     onClick = onJumpToNextWaypoint,
@@ -444,7 +551,7 @@ internal fun MapFloatingView(
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         LjMapIconButton(
                             icon = LjIcons.Stop,
-                            contentDescription = "Stop roaming",
+                            contentDescription = stringResource(R.string.map_floating_view_stop_roaming),
                             containerColor = MaterialTheme.colorScheme.error,
                             contentColor = MaterialTheme.colorScheme.onError,
                             onClick = { onStopRoaming() },
@@ -460,18 +567,87 @@ internal fun MapFloatingView(
                 }
                 LjMapIconButton(
                     icon = LjIcons.Explore,
-                    contentDescription = if (isRoaming) "Roaming active" else "Start roaming",
-                    containerColor = if (isRoaming) LjSuccess else MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = if (isRoaming) LjBg else MaterialTheme.colorScheme.onTertiaryContainer,
+                    contentDescription =
+                        when {
+                            isRoaming -> "Roaming active"
+                            routePlaying -> "Roaming ignored — a route is playing"
+                            else -> "Start roaming"
+                        },
+                    containerColor =
+                        when {
+                            isRoaming -> LjSuccess
+                            else -> MaterialTheme.colorScheme.tertiaryContainer
+                        },
+                    contentColor =
+                        when {
+                            isRoaming -> LjBg
+                            routePlaying -> MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.22f)
+                            else -> MaterialTheme.colorScheme.onTertiaryContainer
+                        },
                     onClick = { if (!isRoaming) showRoamingSheet = true },
                 )
             }
             LjMapIconButton(
                 icon = LjIcons.Search,
-                contentDescription = "Search location",
+                contentDescription = stringResource(R.string.map_floating_view_search_location),
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                onClick = { showSearch = !showSearch },
+                onClick = {
+                    showPasteCoordinates = false
+                    showSearch = !showSearch
+                },
+            )
+            if (AppFeature.PASTE_COORDINATES in enabledMapFabFeatures) {
+                LjMapIconButton(
+                    icon = LjIcons.ContentPaste,
+                    contentDescription = stringResource(R.string.map_floating_view_paste_coordinates),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    onClick = {
+                        showSearch = false
+                        showPasteCoordinates = !showPasteCoordinates
+                    },
+                )
+            }
+            val progress = routeProgress
+            if (isRouteReplay && progress != null) {
+                RouteProgressBadgeInMapFabSlot(
+                    label = progress.label,
+                    contentDescription = "Stop ${progress.current} of ${progress.total}",
+                )
+            }
+        }
+
+        if (showPasteCoordinates) {
+            OverlayPasteCoordinatesSheet(
+                onDismiss = { showPasteCoordinates = false },
+                onTeleport = onTeleport,
+                onWalk = onWalkTo,
+                onWalkViaRoads = onWalkViaRoads,
+                onSaveFavorite = { name, point -> saveFavoriteAt?.invoke(name, point) },
+                onSaveRoute = { name, points -> savePastedRoute?.invoke(name, points) },
+                onStartRoute = {
+                    points,
+                    loop,
+                    reverse,
+                    returnToLocation,
+                    followRoads,
+                    planting,
+                    teleportBetweenWaypoints,
+                    delaySeconds,
+                    ->
+                    startPastedRoute?.invoke(
+                        points,
+                        loop,
+                        reverse,
+                        returnToLocation,
+                        followRoads,
+                        planting,
+                        teleportBetweenWaypoints,
+                        delaySeconds,
+                    )
+                },
+                hideTeleportFeatures = hideTeleportFeatures,
             )
         }
 
@@ -481,6 +657,7 @@ internal fun MapFloatingView(
                 roamingDefaults = roamingDefaults,
                 speedUnit = speedUnit,
                 mockLocationState = mockLocationState,
+                routePlaying = routePlaying,
                 hasPreview = roamingPreviewWaypoints != null,
                 onGeneratePreviewRoute = onGeneratePreviewRoute,
                 onPreviewGenerated = { roamingPreviewWaypoints = it },
@@ -522,7 +699,9 @@ internal fun MapFloatingView(
         if (showFavoritesPicker) {
             FavoritesFloatingView(
                 favorites = favorites,
+                currentPosition = currentPosition,
                 onDismiss = { showFavoritesPicker = false },
+                onShareOpened = onDismiss,
                 onTeleport = { fav ->
                     onTeleport(fav.position)
                     onDismiss()
@@ -536,7 +715,11 @@ internal fun MapFloatingView(
                     onDismiss()
                 },
                 onAddFromHere = onSaveCurrentLocation,
+                onRename = onRenameFavorite,
+                onDelete = onDeleteFavorite,
                 hideTeleport = hideTeleportFeatures,
+                sortMode = favoritesSortMode,
+                onSortModeSelected = onFavoritesSortModeSelected,
             )
         }
     }
@@ -548,13 +731,13 @@ private fun BoxScope.OverlayRoamingSheet(
     roamingDefaults: RoamingDefaults,
     speedUnit: SpeedUnit,
     mockLocationState: MockLocationState,
+    routePlaying: Boolean,
     hasPreview: Boolean,
-    onGeneratePreviewRoute: suspend (center: LatLng, radiusMeters: Double, followRoads: Boolean, speedProfileId: String) -> List<LatLng>?,
+    onGeneratePreviewRoute: suspend (RoamingConfig) -> List<LatLng>?,
     onPreviewGenerated: (List<LatLng>?) -> Unit,
     onStart: (RoamingDefaults) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val isSpoofing = mockLocationState == MockLocationState.RUNNING
     var draft by remember(roamingDefaults) { mutableStateOf(roamingDefaults) }
     var isPreviewLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -568,7 +751,7 @@ private fun BoxScope.OverlayRoamingSheet(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .fillMaxHeight(0.8f)
-                .background(LjBg, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                 .clickable {},
     ) {
         // Drag handle — matches ModalBottomSheet visual
@@ -584,31 +767,93 @@ private fun BoxScope.OverlayRoamingSheet(
                         RoundedCornerShape(2.dp),
                     ),
         )
-        CompositionLocalProvider(LocalContentColor provides LjText) {
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
             Column(modifier = Modifier.fillMaxSize().padding(top = 28.dp)) {
                 RoamingSheetContent(
                     draft = draft,
                     speedUnit = speedUnit,
                     hasCurrentPosition = currentPosition != null,
-                    isSpoofingActive = isSpoofing,
+                    isSpoofingActive =
+                        mockLocationState == MockLocationState.RUNNING ||
+                            mockLocationState == MockLocationState.PAUSED,
                     hasPreview = hasPreview,
                     isPreviewLoading = isPreviewLoading,
+                    routePlaying = routePlaying,
                     onDraftChange = { draft = it },
-                    onGenerate = {
+                    onGenerate = { kind ->
+                        val next = draft.copy(kind = kind)
+                        draft = next
                         scope.launch {
                             val pos = currentPosition ?: return@launch
                             isPreviewLoading = true
                             try {
-                                onPreviewGenerated(
-                                    onGeneratePreviewRoute(pos, draft.radiusMeters, draft.followRoads, draft.speedProfileId),
-                                )
+                                onPreviewGenerated(onGeneratePreviewRoute(next.toConfig(pos)))
                             } finally {
                                 isPreviewLoading = false
                             }
                         }
                     },
-                    onStart = { onStart(draft) },
+                    onStart = { kind -> onStart(draft.copy(kind = kind)) },
                     onViewOnMap = { onDismiss() },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.OverlayPasteCoordinatesSheet(
+    onDismiss: () -> Unit,
+    onTeleport: (LatLng) -> Unit,
+    onWalk: (LatLng) -> Unit,
+    onWalkViaRoads: (LatLng) -> Unit,
+    onSaveFavorite: (name: String, position: LatLng) -> Unit,
+    onSaveRoute: (name: String, points: List<LatLng>) -> Unit,
+    onStartRoute: (
+        points: List<LatLng>,
+        loop: Boolean,
+        reverse: Boolean,
+        returnToLocation: Boolean,
+        followRoads: Boolean,
+        planting: Boolean,
+        teleportBetweenWaypoints: Boolean,
+        teleportBetweenDelaySeconds: Int,
+    ) -> Unit,
+    hideTeleportFeatures: Boolean = false,
+) {
+    Box(modifier = Modifier.fillMaxSize().clickable { onDismiss() })
+    Box(
+        modifier =
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .clickable {}
+                .imePadding(),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp)
+                    .width(32.dp)
+                    .height(4.dp)
+                    .background(
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                        RoundedCornerShape(2.dp),
+                    ),
+        )
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+            Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                PasteCoordinatesForm(
+                    onDismiss = onDismiss,
+                    onTeleport = onTeleport,
+                    onWalk = onWalk,
+                    onWalkViaRoads = onWalkViaRoads,
+                    onSaveFavorite = onSaveFavorite,
+                    onSaveRoute = onSaveRoute,
+                    onStartRoute = onStartRoute,
+                    hideTeleportFeatures = hideTeleportFeatures,
                 )
             }
         }
@@ -640,12 +885,12 @@ private fun BoxScope.TapActionPanel(
             Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(LjBg)
+                .background(MaterialTheme.colorScheme.surface)
                 .clickable {}
                 .padding(16.dp),
     ) {
         if (isRouteReplay && !isEphemeralReplay) {
-            Text(stringResource(R.string.map_floating_route_in_progress), style = MaterialTheme.typography.titleMedium, color = LjText)
+            Text(stringResource(R.string.map_floating_route_in_progress), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(16.dp))
             if (!hideTeleportFeatures) {
                 LjButton(
@@ -673,7 +918,7 @@ private fun BoxScope.TapActionPanel(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.map_floating_finish_route_and_walk_here)) }
         } else {
-            Text(stringResource(R.string.map_floating_move_to_this_location), style = MaterialTheme.typography.titleMedium, color = LjText)
+            Text(stringResource(R.string.map_floating_move_to_this_location), style = MaterialTheme.typography.titleMedium)
             val cooldownState by remember(tap) {
                 cooldownForPosition?.invoke(tap) ?: flowOf(CooldownState.Ready)
             }.collectAsStateWithLifecycle(initialValue = CooldownState.Ready)

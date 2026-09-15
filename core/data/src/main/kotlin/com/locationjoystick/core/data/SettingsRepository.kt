@@ -14,6 +14,7 @@ import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -75,6 +76,22 @@ class SettingsRepository
                     ?.let { id -> profiles.find { it.id == id }?.speedMetersPerSecond }
                     ?: active.speedMetersPerSecond
             }
+
+        /**
+         * Makes [profileId] the global active speed when it is a known preset, and returns
+         * the speed this session should start at. A null or unknown id leaves the active
+         * profile unchanged and returns that profile's speed. Later widget/app speed
+         * changes override through [getActiveSpeedProfile] collectors.
+         */
+        suspend fun activateSessionSpeed(profileId: String?): Double {
+            val profiles = getSpeedProfiles().first()
+            val active = getActiveSpeedProfile().first()
+            val chosen = profileId?.let { id -> profiles.find { it.id == id } }
+            if (chosen != null && chosen.id != active.id) {
+                setActiveProfileId(chosen.id)
+            }
+            return chosen?.speedMetersPerSecond ?: active.speedMetersPerSecond
+        }
 
         fun getFeatureOrder(): Flow<List<AppFeature>> = dataSource.getFeatureOrder()
 
@@ -231,6 +248,14 @@ class SettingsRepository
             dataSource.setFavoritesSortNewestFirst(
                 newestFirst,
             )
+
+        fun getRoutesSortMode() = dataSource.getRoutesSortMode()
+
+        suspend fun setRoutesSortMode(mode: com.locationjoystick.core.model.SavedItemSortMode) = dataSource.setRoutesSortMode(mode)
+
+        fun getFavoritesSortMode() = dataSource.getFavoritesSortMode()
+
+        suspend fun setFavoritesSortMode(mode: com.locationjoystick.core.model.SavedItemSortMode) = dataSource.setFavoritesSortMode(mode)
 
         fun getRecentSearches(): Flow<List<RecentSearch>> = dataSource.getRecentSearches()
 

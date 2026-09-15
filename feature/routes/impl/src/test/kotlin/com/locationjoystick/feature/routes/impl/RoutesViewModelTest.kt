@@ -2,23 +2,24 @@ package com.locationjoystick.feature.routes.impl
 
 import android.content.Context
 import app.cash.turbine.test
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.parseGpxRoutes
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
+import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
+import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.Waypoint
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -37,18 +38,27 @@ class RoutesViewModelUiStateTest {
     private val locationRepository = LocationRepository()
     private val settingsRepository: SettingsRepository = mockk(relaxed = true)
     private val teleportUseCase: TeleportUseCase = mockk(relaxed = true)
+    private val startRouteReplayUseCase: StartRouteReplayUseCase = mockk(relaxed = true)
     private val context: Context = mockk(relaxed = true)
     private val routesFlow = MutableStateFlow<List<Route>>(emptyList())
-    private val sortFlow = MutableStateFlow(true)
+    private val sortFlow = MutableStateFlow(SavedItemSortMode.NEWEST_FIRST)
     private lateinit var viewModel: RoutesViewModel
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         every { routeRepository.getRoutes() } returns routesFlow
-        every { settingsRepository.getRoutesSortNewestFirst() } returns sortFlow
+        every { settingsRepository.getRoutesSortMode() } returns sortFlow
         every { settingsRepository.getHideTeleportFeatures() } returns MutableStateFlow(false)
-        viewModel = RoutesViewModel(routeRepository, locationRepository, settingsRepository, teleportUseCase, context)
+        viewModel =
+            RoutesViewModel(
+                routeRepository,
+                locationRepository,
+                settingsRepository,
+                teleportUseCase,
+                startRouteReplayUseCase,
+                context,
+            )
     }
 
     @After
@@ -85,7 +95,7 @@ class RoutesViewModelUiStateTest {
     @Test
     fun uiState_sorts_routes_oldest_first_when_flag_false() =
         runTest {
-            sortFlow.value = false
+            sortFlow.value = SavedItemSortMode.OLDEST_FIRST
             routesFlow.value =
                 listOf(
                     route("id2", "New Route", createdAt = 2000L),
@@ -113,8 +123,20 @@ class RoutesViewModelUiStateTest {
     @Test
     fun toggleSort_calls_settings_repository() =
         runTest {
-            viewModel.toggleSort()
-            coVerify { settingsRepository.setRoutesSortNewestFirst(false) }
+            viewModel.setSortMode(SavedItemSortMode.NAME_ASCENDING)
+            coVerify { settingsRepository.setRoutesSortMode(SavedItemSortMode.NAME_ASCENDING) }
+        }
+
+    @Test
+    fun uiState_sorts_routes_by_name() =
+        runTest {
+            sortFlow.value = SavedItemSortMode.NAME_DESCENDING
+            routesFlow.value = listOf(route("id1", "Alpha", 1000L), route("id2", "Zulu", 2000L))
+
+            viewModel.uiState.test {
+                assertEquals(listOf("Zulu", "Alpha"), awaitItem().routes.map { it.name })
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     @Test
@@ -138,15 +160,30 @@ class RoutesViewModelUiStateTest {
         }
 
     @Test
-    fun startReplay_uses_route_own_speed_profile_over_active_profile() =
+    fun startReplay_delegates_to_startRouteReplayUseCase() =
         runTest {
-            every { settingsRepository.getRouteSpeedMs("bike") } returns flowOf(5.0)
-
             val routeWithProfile = route("r1", "Bike Route", createdAt = 1000L).copy(speedProfileId = "bike")
-            viewModel.startReplay(routeWithProfile)
+            viewModel.startReplay(
+                routeWithProfile,
+                isLooping = true,
+                isReverse = true,
+                followRoadsToStart = true,
+                isPlanting = true,
+                teleportBetweenWaypoints = true,
+            )
 
-            verify { settingsRepository.getRouteSpeedMs("bike") }
-            verify(exactly = 0) { settingsRepository.getActiveSpeedProfile() }
+            coVerify {
+                startRouteReplayUseCase.execute(
+                    routeId = "r1",
+                    isLooping = true,
+                    isReverse = true,
+                    isReturnToLocation = false,
+                    followRoadsToStart = true,
+                    isPlanting = true,
+                    teleportBetweenWaypoints = true,
+                    teleportBetweenDelaySeconds = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
+                )
+            }
         }
 
     @Test
@@ -269,7 +306,7 @@ class RoutesViewModelTest {
 
     @Test
     fun testParseGpxRoutes_bareWptNoTrkOrRte_parsesAsSingleRoute() {
-        // github.com/shortcuts/locationjoystick/issues/27 — some GPX generators (e.g. pokedex100)
+        // Some GPX generators
         // emit bare top-level <wpt> points with no <trk>/<rte> wrapper.
         val gpxContent =
             """

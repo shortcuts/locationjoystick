@@ -6,8 +6,10 @@ import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
+import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.Waypoint
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -66,6 +68,36 @@ private fun fullExportData(): ExportData =
 
 @RunWith(RobolectricTestRunner::class)
 class SettingsExportCodecTest {
+    @Test
+    fun `round-trip preserves route and favorite sort modes`() {
+        val original =
+            minimalExportData().copy(
+                routesSortMode = SavedItemSortMode.NAME_DESCENDING,
+                favoritesSortMode = SavedItemSortMode.OLDEST_FIRST,
+            )
+
+        val parsed = SettingsExportCodec.parseExportData(SettingsExportCodec.serializeExportData(original))
+
+        assertEquals(SavedItemSortMode.NAME_DESCENDING, parsed.routesSortMode)
+        assertEquals(SavedItemSortMode.OLDEST_FIRST, parsed.favoritesSortMode)
+    }
+
+    @Test
+    fun `legacy sort booleans migrate to saved-time modes`() {
+        val json =
+            JSONObject(SettingsExportCodec.serializeExportData(minimalExportData()))
+                .apply {
+                    remove("routesSortMode")
+                    remove("favoritesSortMode")
+                    put("routesSortNewestFirst", false)
+                }.toString()
+
+        val parsed = SettingsExportCodec.parseExportData(json)
+
+        assertEquals(SavedItemSortMode.OLDEST_FIRST, parsed.routesSortMode)
+        assertEquals(SavedItemSortMode.NEWEST_FIRST, parsed.favoritesSortMode)
+    }
+
     @Test
     fun `serialize produces compact JSON with no newlines or indentation`() {
         val json = SettingsExportCodec.serializeExportData(minimalExportData())
@@ -219,13 +251,13 @@ class SettingsExportCodecTest {
     }
 
     @Test
-    fun `parse defaults missing showRouteJumpButtons to false`() {
+    fun `parse defaults missing showRouteJumpButtons to true`() {
         @Suppress("ktlint:standard:max-line-length") // JSON string literal cannot be split without changing its value
         val json = """{"schemaVersion":1,"exportedAt":0,"settings":{"speedUnit":"KMH","enabledWidgetFeatures":[]},"speedProfiles":[],"routes":[],"favoriteLocations":[],"jitterIdleRadius":0.0,"jitterMovingRadius":1.0,"jitterIntervalSeconds":3}"""
 
         val parsed = SettingsExportCodec.parseExportData(json)
 
-        assertEquals(false, parsed.settings.showRouteJumpButtons)
+        assertEquals(true, parsed.settings.showRouteJumpButtons)
     }
 
     @Test

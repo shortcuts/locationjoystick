@@ -601,6 +601,22 @@ private fun featureMeta(feature: AppFeature): FeatureMeta =
             )
         }
 
+        AppFeature.PASTE_COORDINATES -> {
+            FeatureMeta(
+                stringResource(R.string.menus_paste_coordinates),
+                stringResource(R.string.menus_paste_latitude_and_longitude_to_teleport_walk_or_save_as_a_f),
+                LjIcons.ContentPaste,
+            )
+        }
+
+        AppFeature.CAPTURE_COORDINATES -> {
+            FeatureMeta(
+                stringResource(R.string.menus_capture_coordinates),
+                stringResource(R.string.menus_collect_map_links_from_other_apps_into_a_list_then_save_them),
+                LjIcons.AddLocationAlt,
+            )
+        }
+
         AppFeature.SPEED_CYCLE -> {
             FeatureMeta(
                 stringResource(R.string.settings_menus_feature_speed_cycle),

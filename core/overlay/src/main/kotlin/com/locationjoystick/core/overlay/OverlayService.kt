@@ -52,23 +52,12 @@ abstract class OverlayService : Service() {
         flags: Int,
         startId: Int,
     ): Int {
-        if (overlayView == null) {
-            val view = createOverlayView()
-            try {
-                val params = getWindowManagerParams(view)
-                overlayView = view
-                currentParams = params
-                if (showOverlayOnStart()) {
-                    windowManager.addView(view, params)
-                    Log.d(tag, "Overlay view added to WindowManager")
-                } else {
-                    Log.d(tag, "Overlay view created but not shown (showOverlayOnStart=false)")
-                }
-            } catch (e: Exception) {
-                Log.e(tag, "Failed to add overlay view to WindowManager", e)
-            }
+        ensureOverlayCreated()
+        if (showOverlayOnStart()) {
+            showOverlay()
+        } else {
+            Log.d(tag, "Overlay view created but not shown (showOverlayOnStart=false)")
         }
-
         return START_STICKY
     }
 
@@ -152,7 +141,27 @@ abstract class OverlayService : Service() {
         }
     }
 
+    /**
+     * Creates the overlay view if this service was bound without [onStartCommand]
+     * (BIND_AUTO_CREATE). Joystick starts hidden and is shown later from the widget eye/lock.
+     */
+    private fun ensureOverlayCreated() {
+        if (overlayView != null) return
+        try {
+            val view = createOverlayView()
+            val params = getWindowManagerParams(view)
+            overlayView = view
+            currentParams = params
+            Log.d(tag, "Overlay view created")
+        } catch (e: Exception) {
+            overlayView = null
+            currentParams = null
+            Log.e(tag, "Failed to create overlay view", e)
+        }
+    }
+
     fun showOverlay() {
+        ensureOverlayCreated()
         val view = overlayView ?: return
         val params = currentParams ?: return
 

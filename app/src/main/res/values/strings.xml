@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">locationjoystick</string>
-    <string name="accessibility_service_label">locationjoystick compass</string>
+    <string name="app_name">locationjoystick (f)</string>
+    <string name="accessibility_service_label">locationjoystick (f) compass</string>
     <string name="accessibility_service_description">Used only by the optional Tap to Walk compass feature, when you enable it in Settings. Reads the on-screen compass direction so your taps map to the correct real-world direction. Not an accessibility tool for users with disabilities.</string>
     <string name="app_couldn_t_open_that_link">"Couldn't open that link"</string>
     <string name="drawer_close_menu_cd">"Close menu"</string>
@@ -35,4 +35,6 @@
     <string name="whats_new_bullet">"•"</string>
     <string name="whats_new_got_it">"Got it"</string>
     <string name="whats_new_view_full_changelog">"View full changelog"</string>
+    <string name="drawer_capture">Capture</string>
+    <string name="idle_capture_description">Collect map links, then save them as a route.</string>
 </resources>

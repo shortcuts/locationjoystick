@@ -59,6 +59,7 @@ class RoutesSmokeTest : BaseSmokeTest() {
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Draw on map").assertIsDisplayed()
         composeRule.onNodeWithText("Draw on map (follow roads)").assertIsDisplayed()
+        composeRule.onNodeWithText("Paste coordinates").assertIsDisplayed()
         composeRule.onNodeWithText("Import GPX file").assertIsDisplayed()
     }
 
@@ -75,9 +76,12 @@ class RoutesSmokeTest : BaseSmokeTest() {
         composeRule.onNodeWithContentDescription("Start route").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Loop").assertIsDisplayed()
+        composeRule.onNodeWithText("Planting").assertIsDisplayed()
         composeRule.onNodeWithText("Reverse").assertIsDisplayed()
         composeRule.onNodeWithText("Return to location").assertIsDisplayed()
         composeRule.onNodeWithText("Follow roads").assertIsDisplayed()
+        composeRule.onNodeWithText("Teleport between waypoints").assertIsDisplayed()
+        composeRule.onNodeWithText("delay (s)").assertIsDisplayed()
         composeRule.onNodeWithText("Teleport").assertIsDisplayed()
         composeRule.onNodeWithText("Cancel").assertIsDisplayed()
         // "Start" also matches the top bar's global spoof toggle, so exclude it by its contentDescription.

@@ -1,15 +1,18 @@
 package com.locationjoystick.feature.settings.impl
 
 import android.util.Log
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.parseGpxRoutes
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.Waypoint
+import org.w3c.dom.Element
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID
+import javax.xml.parsers.DocumentBuilderFactory
 
 /**
  * Parses a GPS Joystick Realm/TightDB binary export (.db) without a Realm SDK dependency.
@@ -56,8 +59,31 @@ internal object GpsJoystickMigrator {
 
     /** Reuses the same GPX parsing the Routes screen's "Import GPX" uses (see issue #63). */
     private fun parseGpx(bytes: ByteArray): MigrationResult {
+        val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(bytes.inputStream())
+        val pointNodes = document.documentElement.getElementsByTagName("wpt")
+        val favorites =
+            (0 until pointNodes.length).mapNotNull { index ->
+                val point = pointNodes.item(index) as? Element ?: return@mapNotNull null
+                val latitude = point.getAttribute("lat").toDoubleOrNull() ?: return@mapNotNull null
+                val longitude = point.getAttribute("lon").toDoubleOrNull() ?: return@mapNotNull null
+                val name =
+                    point
+                        .getElementsByTagName("name")
+                        .item(0)
+                        ?.textContent
+                        ?.takeIf { it.isNotBlank() } ?: "Favorite ${index + 1}"
+                FavoriteLocation(
+                    id = UUID.randomUUID().toString(),
+                    name = name,
+                    position = LatLng(latitude, longitude),
+                    createdAt = System.currentTimeMillis(),
+                )
+            }
+        val (importable, oversized) =
+            parseGpxRoutes(bytes.toString(Charsets.UTF_8))
+                .partition { it.waypoints.size <= AppConstants.ExportConstants.MAX_GPX_ROUTE_WAYPOINTS }
         val routes =
-            parseGpxRoutes(bytes.toString(Charsets.UTF_8)).map { gpxRoute ->
+            importable.map { gpxRoute ->
                 Route(
                     id = UUID.randomUUID().toString(),
                     name = gpxRoute.name,
@@ -71,7 +97,7 @@ internal object GpsJoystickMigrator {
                     updatedAt = System.currentTimeMillis(),
                 )
             }
-        return MigrationResult(favorites = emptyList(), routes = routes, walkSpeed = null, runSpeed = null, bikeSpeed = null)
+        return MigrationResult(favorites = favorites, routes = routes, skippedOversizedRouteCount = oversized.size)
     }
 
     // -------------------------------------------------------------------------

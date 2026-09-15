@@ -9,6 +9,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.component.RoamingSheetContent
+import com.locationjoystick.core.designsystem.component.rememberLjSheetState
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
 
@@ -21,6 +22,7 @@ fun RoamingSheet(
     speedUnit: SpeedUnit = SpeedUnit.KMH,
     hasPreview: Boolean = false,
     isPreviewLoading: Boolean = false,
+    routePlaying: Boolean = false,
     onAction: (MapAction) -> Unit,
     onGeneratePreview: () -> Unit = {},
     onMinimize: () -> Unit = {},
@@ -28,6 +30,7 @@ fun RoamingSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = { if (hasPreview) onMinimize() else onDismiss() },
+        sheetState = rememberLjSheetState(),
         modifier = Modifier.fillMaxHeight(0.8f),
     ) {
         RoamingSheetContent(
@@ -37,7 +40,11 @@ fun RoamingSheet(
             isSpoofingActive = isSpoofingActive,
             hasPreview = hasPreview,
             isPreviewLoading = isPreviewLoading,
+            routePlaying = routePlaying,
             onDraftChange = { updated ->
+                if (updated.kind != draft.kind) {
+                    onAction(MapAction.UpdateRoamingKind(updated.kind))
+                }
                 if (updated.radiusMeters != draft.radiusMeters) {
                     onAction(MapAction.UpdateRoamingRadius(updated.radiusMeters))
                 }
@@ -47,15 +54,36 @@ fun RoamingSheet(
                 if (updated.speedProfileId != draft.speedProfileId) {
                     onAction(MapAction.SelectRoamingSpeedProfile(updated.speedProfileId))
                 }
+                if (updated.plantingSpeedProfileId != draft.plantingSpeedProfileId) {
+                    onAction(MapAction.SelectPlantingSpeedProfile(updated.plantingSpeedProfileId))
+                }
                 if (updated.followRoads != draft.followRoads) {
                     onAction(MapAction.ToggleRoamingFollowRoads(updated.followRoads))
                 }
                 if (updated.returnToInitialLocation != draft.returnToInitialLocation) {
                     onAction(MapAction.ToggleRoamingReturnToStart(updated.returnToInitialLocation))
                 }
+                if (updated.plantingStartRadiusMeters != draft.plantingStartRadiusMeters) {
+                    onAction(MapAction.UpdatePlantingStartRadius(updated.plantingStartRadiusMeters))
+                }
+                if (updated.plantingEndRadiusMeters != draft.plantingEndRadiusMeters) {
+                    onAction(MapAction.UpdatePlantingEndRadius(updated.plantingEndRadiusMeters))
+                }
+                if (updated.plantingInfiniteLoops != draft.plantingInfiniteLoops) {
+                    onAction(MapAction.TogglePlantingInfiniteLoops(updated.plantingInfiniteLoops))
+                }
+                if (updated.plantingLoopCount != draft.plantingLoopCount) {
+                    onAction(MapAction.UpdatePlantingLoopCount(updated.plantingLoopCount))
+                }
             },
-            onGenerate = onGeneratePreview,
-            onStart = { onAction(MapAction.StartRoaming) },
+            onGenerate = { kind ->
+                onAction(MapAction.UpdateRoamingKind(kind))
+                onGeneratePreview()
+            },
+            onStart = { kind ->
+                onAction(MapAction.UpdateRoamingKind(kind))
+                onAction(MapAction.StartRoaming)
+            },
             onViewOnMap = onMinimize,
         )
     }

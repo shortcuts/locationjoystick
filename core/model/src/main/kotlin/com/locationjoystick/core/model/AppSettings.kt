@@ -2,7 +2,7 @@ package com.locationjoystick.core.model
 
 data class AppSettings(
     val activeSpeedProfileId: String = "walk",
-    val enabledSpeedProfileIds: Set<String> = setOf("walk", "run", "bike"),
+    val enabledSpeedProfileIds: Set<String> = setOf("walk", "bike", "drive"),
     val joystickStyle: JoystickStyle = JoystickStyle.FLOATING,
     val featureOrder: List<AppFeature> = AppFeature.DEFAULT_ORDER,
     val enabledWidgetFeatures: Set<AppFeature> = AppFeature.DEFAULT_WIDGET_ENABLED,
@@ -19,7 +19,7 @@ data class AppSettings(
     val hideTeleportFeatures: Boolean = false,
     val hideWidgetOverlay: Boolean = false,
     val hideForegroundNotification: Boolean = false,
-    val showRouteJumpButtons: Boolean = false,
+    val showRouteJumpButtons: Boolean = true,
     val bypassMockLocationCheck: Boolean = false,
     val realElevationEnabled: Boolean = true,
     val altitudeJitterRadiusMeters: Double = 0.25,

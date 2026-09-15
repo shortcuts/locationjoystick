@@ -1,9 +1,13 @@
 package com.locationjoystick.feature.map.impl
 
 import android.content.Context
+import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.data.CaptureCoordinatesRepository
 import com.locationjoystick.core.data.DeepLinkRepository
 import com.locationjoystick.core.data.FavoriteRepository
+import com.locationjoystick.core.data.GpxOpenRepository
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.RealLocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -17,9 +21,11 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.Route
+import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.RoutingErrorReporter
+import com.locationjoystick.core.testing.FakePreferencesDataStore
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -38,8 +44,10 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -59,6 +67,9 @@ class MapViewModelTest {
     private lateinit var ephemeralReplayController: EphemeralReplayController
     private lateinit var osrmClient: OsrmClient
     private lateinit var deepLinkRepository: DeepLinkRepository
+    private lateinit var gpxOpenRepository: GpxOpenRepository
+    private lateinit var captureCoordinatesRepository: CaptureCoordinatesRepository
+    private lateinit var realLocationRepository: RealLocationRepository
     private lateinit var mapController: MapController
     private lateinit var viewModel: MapViewModel
 
@@ -82,6 +93,10 @@ class MapViewModelTest {
         ephemeralReplayController = mockk(relaxed = true)
         osrmClient = mockk(relaxed = true)
         deepLinkRepository = mockk(relaxed = true)
+        gpxOpenRepository = GpxOpenRepository()
+        captureCoordinatesRepository = CaptureCoordinatesRepository(FakePreferencesDataStore())
+        realLocationRepository = mockk(relaxed = true)
+        coEvery { realLocationRepository.getCurrentPosition() } returns Result.failure(IllegalStateException("No GPS"))
 
         every { locationRepository.currentPosition } returns MutableStateFlow(null)
         every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.IDLE)
@@ -90,6 +105,7 @@ class MapViewModelTest {
         every { locationRepository.currentMode } returns MutableStateFlow(MockMode.JOYSTICK)
         every { locationRepository.routeWaypoints } returns MutableStateFlow(null)
         every { locationRepository.isRoadRouteFetchInFlight } returns MutableStateFlow(false)
+        every { locationRepository.routeProgress } returns MutableStateFlow<RouteProgress?>(null)
         every { ephemeralReplayController.pendingWaypoints } returns pendingWaypointsFlow
         every { routeRepository.getRoutes() } returns flowOf(emptyList<Route>())
         every { favoriteRepository.getFavorites() } returns flowOf(emptyList<FavoriteLocation>())
@@ -134,8 +150,11 @@ class MapViewModelTest {
             mapController = mapController,
             roamingRepository = roamingRepository,
             deepLinkRepository = deepLinkRepository,
+            gpxOpenRepository = gpxOpenRepository,
             teleportUseCase = teleportUseCase,
             settingsRepository = settingsRepository,
+            captureCoordinatesRepository = captureCoordinatesRepository,
+            realLocationRepository = realLocationRepository,
         )
     }
 
@@ -641,6 +660,16 @@ class MapViewModelTest {
             viewModel.onAction(MapAction.OpenRoamingSheet)
             assertEquals(true, viewModel.uiState.value.showRoamingSheet)
             assertNotNull(viewModel.uiState.value.roamingDraft)
+            assertEquals(
+                "bike",
+                viewModel.uiState.value.roamingDraft
+                    ?.plantingSpeedProfileId,
+            )
+            assertEquals(
+                "walk",
+                viewModel.uiState.value.roamingDraft
+                    ?.speedProfileId,
+            )
         }
 
     @Test
@@ -662,11 +691,32 @@ class MapViewModelTest {
         }
 
     @Test
-    fun `RecenterCamera clears isUserPanning`() =
+    fun `RecenterCamera while spoofing clears isUserPanning`() =
         runTest {
+            every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.RUNNING)
+            viewModel = createViewModel()
+            advanceUntilIdle()
             viewModel.onAction(MapAction.UserStartedPanning)
             viewModel.onAction(MapAction.RecenterCamera)
             assertEquals(false, viewModel.uiState.value.isUserPanning)
+        }
+
+    @Test
+    fun `RecenterCamera while stopped targets real GPS without replacing mock position`() =
+        runTest {
+            val cachedMock = LatLng(1.0, 2.0)
+            val realGps = LatLng(51.5, -0.1)
+            every { locationRepository.currentPosition } returns MutableStateFlow(cachedMock)
+            coEvery { realLocationRepository.getCurrentPosition() } returns Result.success(realGps)
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.onAction(MapAction.RecenterCamera)
+            advanceUntilIdle()
+
+            assertEquals(realGps, viewModel.uiState.value.pendingCameraTarget)
+            assertEquals(cachedMock, viewModel.uiState.value.currentPosition)
+            assertEquals(true, viewModel.uiState.value.isUserPanning)
         }
 
     @Test
@@ -838,6 +888,43 @@ class MapViewModelTest {
         }
 
     @Test
+    fun `UpdateRoamingKind switches to planting and clears preview`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoamingSheet)
+            viewModel.onAction(MapAction.UpdateRoamingKind(com.locationjoystick.core.model.RoamingKind.PLANTING))
+            assertEquals(
+                com.locationjoystick.core.model.RoamingKind.PLANTING,
+                viewModel.uiState.value.roamingDraft
+                    ?.kind,
+            )
+            assertEquals(null, viewModel.uiState.value.roamingPreviewWaypoints)
+        }
+
+    @Test
+    fun `SelectPlantingSpeedProfile updates draft plantingSpeedProfileId`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoamingSheet)
+            viewModel.onAction(MapAction.SelectPlantingSpeedProfile("run"))
+            assertEquals(
+                "run",
+                viewModel.uiState.value.roamingDraft
+                    ?.plantingSpeedProfileId,
+            )
+        }
+
+    @Test
+    fun `UpdatePlantingStartRadius updates draft`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenRoamingSheet)
+            viewModel.onAction(MapAction.UpdatePlantingStartRadius(8.0))
+            assertEquals(
+                8.0,
+                viewModel.uiState.value.roamingDraft
+                    ?.plantingStartRadiusMeters,
+            )
+        }
+
+    @Test
     fun `MinimizeRoamingSheet sets isRoamingSheetMinimized true`() =
         runTest {
             viewModel.onAction(MapAction.OpenRoamingSheet)
@@ -929,5 +1016,332 @@ class MapViewModelTest {
 
             assertEquals(false, viewModel.uiState.value.showRoamingSheet)
             assertNull(viewModel.uiState.value.roamingDraft)
+        }
+
+    @Test
+    fun `OpenPasteCoordinates sets showPasteCoordinatesSheet true`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenPasteCoordinates)
+            assertEquals(true, viewModel.uiState.value.showPasteCoordinatesSheet)
+        }
+
+    @Test
+    fun `ClosePasteCoordinates sets showPasteCoordinatesSheet false`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenPasteCoordinates)
+            viewModel.onAction(MapAction.ClosePasteCoordinates)
+            assertEquals(false, viewModel.uiState.value.showPasteCoordinatesSheet)
+        }
+
+    @Test
+    fun `pending GPX open fills the paste sheet with points and filename`() =
+        runTest {
+            viewModel = createViewModel()
+            gpxOpenRepository.setPending(
+                listOf(LatLng(1.25, 2.5), LatLng(3.0, 4.0)),
+                "morning ride",
+            )
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertTrue(state.showPasteCoordinatesSheet)
+            assertEquals("Open GPX", state.pasteSheetTitle)
+            assertEquals("morning ride", state.pasteInitialRouteName)
+            assertTrue(state.pasteInitialText.contains("1.250000, 2.500000"))
+            assertTrue(state.pasteFormNonce > 0)
+        }
+
+    @Test
+    fun `pending GPX open is still delivered to a second map ViewModel`() =
+        runTest {
+            viewModel = createViewModel()
+            gpxOpenRepository.setPending(
+                listOf(LatLng(1.25, 2.5), LatLng(3.0, 4.0)),
+                "morning ride",
+            )
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.showPasteCoordinatesSheet)
+
+            val second = createViewModel()
+            advanceUntilIdle()
+
+            assertTrue(second.uiState.value.showPasteCoordinatesSheet)
+            assertEquals("Open GPX", second.uiState.value.pasteSheetTitle)
+            assertEquals("morning ride", second.uiState.value.pasteInitialRouteName)
+        }
+
+    @Test
+    fun `ClosePasteCoordinates consumes pending GPX so a later map does not reopen it`() =
+        runTest {
+            viewModel = createViewModel()
+            gpxOpenRepository.setPending(
+                listOf(LatLng(1.25, 2.5)),
+                "morning ride",
+            )
+            advanceUntilIdle()
+            viewModel.onAction(MapAction.ClosePasteCoordinates)
+            advanceUntilIdle()
+
+            val second = createViewModel()
+            advanceUntilIdle()
+            assertEquals(false, second.uiState.value.showPasteCoordinatesSheet)
+        }
+
+    @Test
+    fun `second GPX open with the same points refreshes the paste sheet`() =
+        runTest {
+            viewModel = createViewModel()
+            val points = listOf(LatLng(1.25, 2.5), LatLng(3.0, 4.0))
+            gpxOpenRepository.setPending(points, "morning ride")
+            advanceUntilIdle()
+            val nonce = viewModel.uiState.value.pasteFormNonce
+
+            gpxOpenRepository.setPending(points, "morning ride")
+            advanceUntilIdle()
+
+            assertTrue(viewModel.uiState.value.showPasteCoordinatesSheet)
+            assertTrue(viewModel.uiState.value.pasteFormNonce > nonce)
+        }
+
+    @Test
+    fun `teleportFromPastedCoordinates consumes pending GPX`() =
+        runTest {
+            viewModel = createViewModel()
+            gpxOpenRepository.setPending(listOf(LatLng(1.25, 2.5)), "morning ride")
+            advanceUntilIdle()
+            viewModel.teleportFromPastedCoordinates(LatLng(1.25, 2.5))
+            advanceUntilIdle()
+
+            val second = createViewModel()
+            advanceUntilIdle()
+            assertEquals(false, second.uiState.value.showPasteCoordinatesSheet)
+        }
+
+    @Test
+    fun `OpenCaptureCoordinates sets showCaptureCoordinatesSheet true and closes paste`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenPasteCoordinates)
+            viewModel.onAction(MapAction.OpenCaptureCoordinates)
+            advanceUntilIdle()
+            assertEquals(true, viewModel.uiState.value.showCaptureCoordinatesSheet)
+            assertEquals(false, viewModel.uiState.value.showPasteCoordinatesSheet)
+        }
+
+    @Test
+    fun `CloseCaptureCoordinates sets showCaptureCoordinatesSheet false`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenCaptureCoordinates)
+            advanceUntilIdle()
+            viewModel.onAction(MapAction.CloseCaptureCoordinates)
+            advanceUntilIdle()
+            assertEquals(false, viewModel.uiState.value.showCaptureCoordinatesSheet)
+        }
+
+    @Test
+    fun `PinCoordinateTarget pins point opens confirm sheet and closes paste`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenPasteCoordinates)
+            val position = LatLng(11.0127769, 79.48065)
+
+            viewModel.onAction(MapAction.PinCoordinateTarget(position))
+
+            assertEquals(position, viewModel.uiState.value.pendingTapPosition)
+            assertEquals(position, viewModel.uiState.value.pendingCameraTarget)
+            assertEquals(true, viewModel.uiState.value.isPendingTapSheetOpen)
+            assertEquals(false, viewModel.uiState.value.showPasteCoordinatesSheet)
+        }
+
+    @Test
+    fun `applyPastedCoordinates valid text pins first pair`() =
+        runTest {
+            val saved = viewModel.applyPastedCoordinates("11.0127769, 79.48065")
+
+            assertTrue(saved)
+            val pending = viewModel.uiState.value.pendingTapPosition
+            org.junit.Assert.assertNotNull(pending)
+            assertEquals(11.0127769, pending!!.latitude, 1e-9)
+            assertEquals(79.48065, pending.longitude, 1e-9)
+            assertEquals(true, viewModel.uiState.value.isPendingTapSheetOpen)
+        }
+
+    @Test
+    fun `applyPastedCoordinates invalid text does not move`() =
+        runTest {
+            val saved = viewModel.applyPastedCoordinates("not a coordinate")
+
+            assertFalse(saved)
+            assertNull(viewModel.uiState.value.pendingTapPosition)
+            assertEquals(false, viewModel.uiState.value.isPendingTapSheetOpen)
+        }
+
+    @Test
+    fun `applyPastedCoordinates uses first valid pair`() =
+        runTest {
+            val saved =
+                viewModel.applyPastedCoordinates(
+                    "hello\n11.0127769, 79.48065\n48.8566, 2.3522",
+                )
+
+            assertTrue(saved)
+            val pending = viewModel.uiState.value.pendingTapPosition
+            org.junit.Assert.assertNotNull(pending)
+            assertEquals(11.0127769, pending!!.latitude, 1e-9)
+            assertEquals(79.48065, pending.longitude, 1e-9)
+        }
+
+    @Test
+    fun `teleportFromPastedCoordinates teleports first point and closes paste without pinning`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenPasteCoordinates)
+            val point = LatLng(11.0127769, 79.48065)
+
+            viewModel.teleportFromPastedCoordinates(point)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(false, viewModel.uiState.value.showPasteCoordinatesSheet)
+            assertNull(viewModel.uiState.value.pendingTapPosition)
+            assertEquals(false, viewModel.uiState.value.isPendingTapSheetOpen)
+            coVerify { teleportUseCase.execute(point) }
+        }
+
+    @Test
+    fun `walkFromPastedCoordinates starts walk and closes paste without pinning`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenPasteCoordinates)
+            val point = LatLng(11.0127769, 79.48065)
+
+            viewModel.walkFromPastedCoordinates(point, viaRoads = false)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(false, viewModel.uiState.value.showPasteCoordinatesSheet)
+            assertNull(viewModel.uiState.value.pendingTapPosition)
+            assertEquals(false, viewModel.uiState.value.isPendingTapSheetOpen)
+            verify { walkCoordinator.startWalk(eq(point), any(), any()) }
+        }
+
+    @Test
+    fun `walkFromPastedCoordinates via roads closes paste without pinning`() =
+        runTest {
+            viewModel.onAction(MapAction.OpenPasteCoordinates)
+            val point = LatLng(11.0127769, 79.48065)
+
+            viewModel.walkFromPastedCoordinates(point, viaRoads = true)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(false, viewModel.uiState.value.showPasteCoordinatesSheet)
+            assertNull(viewModel.uiState.value.pendingTapPosition)
+            assertEquals(false, viewModel.uiState.value.isPendingTapSheetOpen)
+        }
+
+    @Test
+    fun `savePastedFavorite saves named favorite`() =
+        runTest {
+            coEvery { favoriteRepository.addFavorite(any(), any(), any(), any()) } returns Result.success(Unit)
+            viewModel.onAction(MapAction.OpenPasteCoordinates)
+            val point = LatLng(11.0127769, 79.48065)
+
+            viewModel.savePastedFavorite("Thanjavur", point)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(false, viewModel.uiState.value.showPasteCoordinatesSheet)
+            assertNull(viewModel.uiState.value.pendingTapPosition)
+            coVerify {
+                favoriteRepository.addFavorite(
+                    any(),
+                    eq("Thanjavur"),
+                    eq(point),
+                    any(),
+                )
+            }
+        }
+
+    @Test
+    fun `savePastedRoute writes a named uuid route and closes paste`() =
+        runTest {
+            val points = listOf(LatLng(11.0, 79.0), LatLng(12.0, 80.0))
+            val saved =
+                Route(
+                    id = "uuid-1",
+                    name = "Saved Route 1",
+                    waypoints = emptyList(),
+                )
+            coEvery { routeRepository.insertNamedPastedRoute("Saved Route 1", points) } returns Result.success(saved)
+            viewModel.onAction(MapAction.OpenPasteCoordinates)
+
+            viewModel.savePastedRoute("Saved Route 1", points)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(false, viewModel.uiState.value.showPasteCoordinatesSheet)
+            coVerify { routeRepository.insertNamedPastedRoute("Saved Route 1", points) }
+            coVerify(exactly = 0) { routeRepository.upsertPasteTempRoute(any()) }
+        }
+
+    @Test
+    fun `startPastedRoute upserts reserved temp id then starts replay`() =
+        runTest {
+            val points = listOf(LatLng(11.0, 79.0), LatLng(12.0, 80.0))
+            val temp =
+                Route(
+                    id = AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID,
+                    name = AppConstants.RouteConstants.PASTE_TEMP_ROUTE_NAME,
+                    waypoints = emptyList(),
+                )
+            coEvery { routeRepository.upsertPasteTempRoute(points) } returns Result.success(temp)
+            viewModel.onAction(MapAction.OpenPasteCoordinates)
+
+            viewModel.startPastedRoute(
+                points = points,
+                loop = true,
+                reverse = false,
+                returnToLocation = false,
+                followRoads = true,
+                planting = false,
+                teleportBetweenWaypoints = true,
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(false, viewModel.uiState.value.showPasteCoordinatesSheet)
+            coVerify { routeRepository.upsertPasteTempRoute(points) }
+            coVerify {
+                startRouteReplayUseCase.execute(
+                    routeId = AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID,
+                    isLooping = true,
+                    isReverse = false,
+                    isReturnToLocation = false,
+                    followRoadsToStart = true,
+                    isPlanting = false,
+                    teleportBetweenWaypoints = true,
+                    teleportBetweenDelaySeconds = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
+                )
+            }
+        }
+
+    @Test
+    fun `startPastedRoute ignores a single point`() =
+        runTest {
+            viewModel.startPastedRoute(
+                points = listOf(LatLng(11.0, 79.0)),
+                loop = false,
+                reverse = false,
+                returnToLocation = false,
+                followRoads = false,
+                planting = false,
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 0) { routeRepository.upsertPasteTempRoute(any()) }
+            coVerify(exactly = 0) { startRouteReplayUseCase.execute(any(), any(), any(), any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `SaveFavoriteAt persists given position`() =
+        runTest {
+            coEvery { favoriteRepository.addFavorite(any(), any(), any(), any()) } returns Result.success(Unit)
+            val position = LatLng(48.8566, 2.3522)
+
+            viewModel.onAction(MapAction.SaveFavoriteAt("Paris", position))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify { favoriteRepository.addFavorite(any(), eq("Paris"), eq(position), any()) }
         }
 }

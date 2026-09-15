@@ -9,10 +9,10 @@ data class SpeedProfile(
         // Cannot use AppConstants — core:model is a pure JVM module with no core:common dependency.
         // Keep in sync with AppConstants.ProfileConstants.
         const val SLOW_WALK_SPEED_MPS = 0.3 // ~1.1 km/h
-        const val WALK_SPEED_MPS = 0.5556 // 2 km/h
+        const val WALK_SPEED_MPS = 10.0 / 3.6 // 10 km/h
         const val RUN_SPEED_MPS = 2.2222 // 8 km/h
-        const val BIKE_SPEED_MPS = 4.1667 // 15 km/h
-        const val DRIVE_SPEED_MPS = 15.0 // 54 km/h
+        const val BIKE_SPEED_MPS = 18.5 / 3.6 // 18.5 km/h
+        const val DRIVE_SPEED_MPS = 60.0 / 3.6 // 60 km/h
 
         fun defaultProfiles(): List<SpeedProfile> =
             listOf(

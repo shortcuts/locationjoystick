@@ -35,6 +35,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.feature.favorites.api.FAVORITES_ROUTE
 import com.locationjoystick.feature.favorites.api.MAP_PICKER_ROUTE
 import com.locationjoystick.feature.group.api.GROUP_ROUTE
+import com.locationjoystick.feature.map.api.CAPTURE_ROUTE
 import com.locationjoystick.feature.map.api.MAP_ROUTE
 import com.locationjoystick.feature.routes.api.ROUTES_ROUTE
 import com.locationjoystick.feature.settings.api.SETTINGS_ROUTE
@@ -104,6 +105,19 @@ fun LjDrawerContent(
             selected = currentRoute == FAVORITES_ROUTE || currentRoute == MAP_PICKER_ROUTE,
             onClick = {
                 navController.navigate(FAVORITES_ROUTE) {
+                    popUpTo(IDLE_ROUTE) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+                scope.launch { drawerState.close() }
+            },
+        )
+        NavigationDrawerItem(
+            icon = { Icon(LjIcons.AddLocationAlt, stringResource(R.string.drawer_capture)) },
+            label = { Text(stringResource(R.string.lj_drawer_content_capture)) },
+            selected = currentRoute == CAPTURE_ROUTE,
+            onClick = {
+                navController.navigate(CAPTURE_ROUTE) {
                     popUpTo(IDLE_ROUTE) { saveState = true }
                     launchSingleTop = true
                     restoreState = true

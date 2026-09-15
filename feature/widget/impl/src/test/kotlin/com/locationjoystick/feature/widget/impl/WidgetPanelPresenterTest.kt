@@ -15,6 +15,7 @@ import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.RoutingErrorReporter
 import io.mockk.every
@@ -57,6 +58,7 @@ class WidgetPanelPresenterTest {
                 every { currentMode } returns currentModeFlow
                 every { routeWaypoints } returns MutableStateFlow(null)
                 every { isRoadRouteFetchInFlight } returns MutableStateFlow(false)
+                every { routeProgress } returns MutableStateFlow<RouteProgress?>(null)
             }
         val routeRepository = mockk<RouteRepository>(relaxed = true) { every { getRoutes() } returns flowOf(emptyList()) }
         val favoriteRepository =
@@ -66,6 +68,8 @@ class WidgetPanelPresenterTest {
                 every { getActiveSpeedProfile() } returns flowOf(mockk(relaxed = true))
                 every { getRoutesSortNewestFirst() } returns flowOf(true)
                 every { getFavoritesSortNewestFirst() } returns flowOf(true)
+                every { getRoutesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
+                every { getFavoritesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
                 every { getSpeedUnit() } returns flowOf(mockk(relaxed = true))
                 every { getRecentSearches() } returns flowOf(emptyList())
                 every { getRememberLastLocation() } returns flowOf(false)
@@ -110,6 +114,9 @@ class WidgetPanelPresenterTest {
                 mapController = mapController,
                 callbacks = mockk(relaxed = true),
                 settingsRepository = settingsRepository,
+                captureRepository = mockk(relaxed = true),
+                favoriteRepository = favoriteRepository,
+                routeRepository = mockk(relaxed = true),
             )
     }
 

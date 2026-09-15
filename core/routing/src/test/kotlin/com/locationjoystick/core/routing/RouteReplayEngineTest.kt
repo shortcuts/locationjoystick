@@ -286,4 +286,90 @@ class RouteReplayEngineTest {
             updateCount.get() >= 2,
         )
     }
+
+    @Test
+    fun `teleport between waypoints lingers at start before first hop`() {
+        val start = LatLng(0.0, 0.0)
+        val mid = LatLng(1.0, 0.0)
+        val end = LatLng(2.0, 0.0)
+        val positions = mutableListOf<LatLng>()
+        engine.start(
+            waypoints = listOf(start, mid, end),
+            speedMs = 1.4,
+            onPositionUpdate = { pos -> positions.add(pos) },
+            onComplete = {},
+            teleportBetweenWaypoints = true,
+            teleportBetweenDelaySeconds = 2,
+        )
+        Thread.sleep(500)
+        assertEquals(
+            "must stay on stop 1 during the opening linger",
+            1,
+            engine.currentProgress()!!.current,
+        )
+        assertFalse("must not hop to stop 2 before the delay elapses", positions.contains(mid))
+        Thread.sleep(2200)
+        assertEquals(
+            "must hop to stop 2 after lingering at the start",
+            2,
+            engine.currentProgress()!!.current,
+        )
+        assertTrue("should have hopped to the second stop", positions.contains(mid))
+        assertFalse("must still linger at stop 2 before hopping to the end", positions.contains(end))
+        kotlinx.coroutines.runBlocking { engine.stop() }
+    }
+
+    @Test
+    fun `teleport between waypoints hops named stops then completes`() {
+        val start = LatLng(0.0, 0.0)
+        val mid = LatLng(1.0, 0.0)
+        val end = LatLng(2.0, 0.0)
+        val positions = mutableListOf<LatLng>()
+        val latch = CountDownLatch(1)
+        engine.start(
+            waypoints = listOf(start, mid, end),
+            speedMs = 1.4,
+            onPositionUpdate = { pos -> positions.add(pos) },
+            onComplete = { latch.countDown() },
+            teleportBetweenWaypoints = true,
+            teleportBetweenDelaySeconds = 0,
+        )
+        assertFalse(
+            "must linger at least one GPS tick per hop before complete",
+            latch.await(500, TimeUnit.MILLISECONDS),
+        )
+        assertTrue("hop replay should finish within 5 s", latch.await(5, TimeUnit.SECONDS))
+        kotlinx.coroutines.runBlocking { engine.stop() }
+        assertTrue("should hop to each later stop", positions.contains(mid) && positions.contains(end))
+        assertTrue(
+            "must not interpolate toward a far stop",
+            positions.all { it == start || it == mid || it == end },
+        )
+    }
+
+    @Test
+    fun `teleport between planting rings walks a vertex then hops at the boundary`() {
+        val ringStart = LatLng(0.0, 0.0)
+        val ringVertex = LatLng(0.0000001, 0.0)
+        val nextRing = LatLng(1.0, 0.0)
+        val positions = mutableListOf<LatLng>()
+        val latch = CountDownLatch(1)
+        engine.start(
+            waypoints = listOf(ringStart, ringVertex, nextRing),
+            speedMs = 999.0,
+            onPositionUpdate = { pos -> positions.add(pos) },
+            onComplete = { latch.countDown() },
+            boundaryIndices = listOf(0, 2),
+            teleportBetweenWaypoints = true,
+            teleportBetweenDelaySeconds = 0,
+        )
+        assertTrue("planting hop should finish within 5 s", latch.await(5, TimeUnit.SECONDS))
+        kotlinx.coroutines.runBlocking { engine.stop() }
+        assertTrue("should visit the ring-exit vertex", positions.any { it == ringVertex })
+        assertEquals(nextRing, positions.last())
+        assertTrue(
+            "leftover carry must not walk toward the next ring before the hop",
+            positions.none { it.latitude > 0.001 && it.latitude < 0.9 },
+        )
+    }
 }

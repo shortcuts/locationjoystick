@@ -41,7 +41,9 @@ interface RouteDao {
         waypoints: List<WaypointEntity>,
     ) {
         deleteWaypointsByRouteId(routeId)
-        insertWaypoints(waypoints)
+        // Room binds every column of every row in one INSERT; stay under SQLite's
+        // ~999 variable limit (5 columns × 99 rows).
+        waypoints.chunked(99).forEach { insertWaypoints(it) }
     }
 
     @Delete
@@ -104,7 +106,7 @@ interface RouteDao {
     ) {
         for ((route, waypoints) in toInsert) {
             insert(route)
-            insertWaypoints(waypoints)
+            waypoints.chunked(99).forEach { insertWaypoints(it) }
         }
         for ((route, waypoints) in toUpdate) {
             update(route)

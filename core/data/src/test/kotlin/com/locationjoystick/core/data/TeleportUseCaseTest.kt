@@ -1,19 +1,55 @@
 package com.locationjoystick.core.data
 
+import android.content.Context
+import android.content.Intent
 import app.cash.turbine.test
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.routing.RouteReplayEngine
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TeleportUseCaseTest {
-    private val settingsRepository = mockk<SettingsRepository>()
-    private val useCase = TeleportUseCase(mockk(relaxed = true), settingsRepository)
+    private val settingsRepository = mockk<SettingsRepository>(relaxed = true)
+    private val locationRepository = LocationRepository()
+    private val roamingRepository = mockk<RoamingRepository>(relaxed = true)
+    private val routeReplayEngine = mockk<RouteReplayEngine>(relaxed = true)
+    private val walkCoordinator = mockk<WalkCoordinator>(relaxed = true)
+    private val startedIntents = mutableListOf<Intent>()
+    private val context =
+        mockk<Context>(relaxed = true) {
+            every { startService(any()) } answers {
+                startedIntents.add(firstArg())
+                mockk()
+            }
+            every { startForegroundService(any()) } answers {
+                startedIntents.add(firstArg())
+                mockk()
+            }
+        }
+    private val useCase =
+        TeleportUseCase(
+            context,
+            settingsRepository,
+            locationRepository,
+            roamingRepository,
+            routeReplayEngine,
+            walkCoordinator,
+        )
+
+    init {
+        every { roamingRepository.isRoaming } returns MutableStateFlow(false)
+    }
 
     @Test
     fun `cooldownFor emits Ready when no teleport has occurred`() =
@@ -104,5 +140,79 @@ class TeleportUseCaseTest {
                 assertTrue(map.containsKey("fav-far"))
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+
+    @Test
+    fun `execute stops a route session before jumping`() =
+        runTest {
+            every { roamingRepository.isRoaming } returns MutableStateFlow(false)
+            locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+            locationRepository.setActiveRouteId("route-1")
+            val target = LatLng(10.0, 20.0)
+
+            useCase.execute(target)
+
+            coVerify { routeReplayEngine.stop() }
+            verify { walkCoordinator.cancel() }
+            assertEquals(MockMode.TELEPORT, locationRepository.currentMode.value)
+            assertNull(locationRepository.activeRouteId.value)
+            assertNull(locationRepository.routeProgress.value)
+            coVerify(exactly = 0) { roamingRepository.stopRoaming() }
+        }
+
+    @Test
+    fun `execute stops roaming before jumping`() =
+        runTest {
+            every { roamingRepository.isRoaming } returns MutableStateFlow(true)
+            locationRepository.setMockMode(MockMode.ROAMING)
+            val target = LatLng(10.0, 20.0)
+
+            useCase.execute(target)
+
+            coVerify { roamingRepository.stopRoaming() }
+            verify { walkCoordinator.cancel() }
+            coVerify(exactly = 0) { routeReplayEngine.stop() }
+        }
+
+    @Test
+    fun `execute skip movement reset when resetMovement is false`() =
+        runTest {
+            every { roamingRepository.isRoaming } returns MutableStateFlow(true)
+            locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+            locationRepository.setActiveRouteId("route-1")
+
+            useCase.execute(LatLng(10.0, 20.0), resetMovement = false)
+
+            coVerify(exactly = 0) { roamingRepository.stopRoaming() }
+            coVerify(exactly = 0) { routeReplayEngine.stop() }
+            verify(exactly = 0) { walkCoordinator.cancel() }
+            assertEquals(MockMode.ROUTE_REPLAY, locationRepository.currentMode.value)
+            assertEquals("route-1", locationRepository.activeRouteId.value)
+        }
+
+    @Test
+    fun `execute aborts in-flight replay even when mode is not ROUTE_REPLAY`() =
+        runTest {
+            every { roamingRepository.isRoaming } returns MutableStateFlow(false)
+            locationRepository.setMockMode(MockMode.TELEPORT)
+            startedIntents.clear()
+
+            useCase.execute(LatLng(10.0, 20.0))
+
+            // Stub android.jar Intents do not retain action/extras; count is the signal.
+            // STOP is first, UPDATE is second (see resetActiveRouteAndRoaming).
+            assertEquals(2, startedIntents.size)
+        }
+
+    @Test
+    fun `execute skip movement reset does not send STOP`() =
+        runTest {
+            every { roamingRepository.isRoaming } returns MutableStateFlow(false)
+            locationRepository.setMockMode(MockMode.TELEPORT)
+            startedIntents.clear()
+
+            useCase.execute(LatLng(10.0, 20.0), resetMovement = false)
+
+            assertEquals(1, startedIntents.size)
         }
 }
