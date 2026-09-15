@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="group_qr_scanner_point_at_the_leader_s_group">"对准组长显示的群组二维码"</string>
+    <string name="group_qr_scanner_camera_permission_required_to_scan_qr">"扫描二维码需要相机权限。"</string>
+    <string name="group_qr_scanner_back_cd">"返回"</string>
+    <string name="group_sync_group_sync">"群组同步"</string>
+    <string name="group_sync_sync_your_fake_location_across_multiple">"在同一 Wi-Fi 网络下，把你的模拟位置同步到多台设备。无需账号。"</string>
+    <string name="group_sync_create_group_i_m_the_leader">"创建群组 — 我是组长"</string>
+    <string name="group_sync_or_join_an_existing_group">"— 或加入已有群组 —"</string>
+    <string name="group_sync_scan_qr">"扫描二维码"</string>
+    <string name="group_sync_enter_code">"输入代码"</string>
+    <string name="group_sync_enter_group_code">"输入群组代码"</string>
+    <string name="group_sync_ask_the_leader_for_their_6">"请向组长索取 6 位群组代码。"</string>
+    <string name="group_sync_code">"代码"</string>
+    <string name="group_sync_join">"加入"</string>
+    <string name="group_sync_cancel">"取消"</string>
+    <string name="group_sync_role_leader">"角色：组长"</string>
+    <string name="group_sync_group_code">"群组代码"</string>
+    <string name="group_sync_followers_can_scan_the_qr_or">"成员可扫描二维码或输入此代码"</string>
+    <string name="group_sync_group_invite_qr_code_cd">"群组邀请二维码"</string>
+    <string name="group_sync_scan_to_join">"扫码加入"</string>
+    <string name="group_sync_regenerate_qr_cd">"重新生成二维码"</string>
+    <string name="group_sync_leave_group">"退出群组"</string>
+    <string name="group_sync_role_follower">"角色：成员"</string>
+    <string name="group_sync_follower_mode_resumes_when_you_open">"设备重启后，重新打开应用即可恢复成员模式。"</string>
+    <string name="group_sync_teleport_to_leader_now">"立即瞬移到组长位置"</string>
+    <string name="group_sync_leave_group_2">"退出群组"</string>
+    <string name="group_sync_leader_position_not_yet_known">"尚未获取组长位置 — 请稍后再试"</string>
+    <string name="group_sync_disconnected_from_group">"已断开与群组的连接 — 无法再联系到组长"</string>
+    <string name="group_sync_code_must_be_characters">"代码必须为 %1$d 位字符"</string>
+    <string name="group_sync_no_group_found_for_code">"未找到代码为 %1$s 的群组"</string>
+    <string name="group_sync_invalid_group_qr_code">"无效的群组二维码"</string>
+    <string name="group_sync_unknown">"未知"</string>
+    <string name="group_sync_sharing">"共享中"</string>
+    <string name="group_sync_sends_your_location_to_followers">"将你的位置发送给成员。"</string>
+    <string name="group_sync_follow_leader">"跟随组长"</string>
+    <string name="group_sync_walks_toward_the_leaders_location">"朝组长的位置行走。"</string>
+    <string name="group_sync_connected_to_group">"已连接到群组 %1$s"</string>
+    <plurals name="group_sync_followers_connected">
+        <item quantity="other">"%1$d 名成员已连接"</item>
+    </plurals>
+    <plurals name="group_sync_followers_in_group">
+        <item quantity="other">"%1$d 名成员在此群组中"</item>
+    </plurals>
+</resources>

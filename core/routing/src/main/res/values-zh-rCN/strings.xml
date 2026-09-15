@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="osrm_failure_timeout">"路线服务器超时"</string>
+    <string name="osrm_failure_server_error">"路线服务器不可用"</string>
+    <string name="osrm_failure_rate_limited">"路线服务器请求过于频繁"</string>
+    <string name="osrm_failure_no_route_found">"未找到道路路线"</string>
+    <string name="osrm_failure_network_unavailable">"无网络连接"</string>
+    <string name="osrm_failure_unknown">"道路路线不可用"</string>
+    <string name="routing_road_following_partial_fallback">"沿道路行走部分不可用 — %2$d 段路段中有 %1$d 段改用直线路径"</string>
+</resources>
