@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.22.0](https://github.com/shortcuts/locationjoystick/compare/v0.21.0...v0.22.0) (2026-09-15)
+
+
+### Features
+
+* **i18n:** add language picker to onboarding and Settings ([3ed6314](https://github.com/shortcuts/locationjoystick/commit/3ed63148846b9e0e493a541670e7c43e26f94a83))
+* **i18n:** add Simplified Chinese translation ([b6d71cd](https://github.com/shortcuts/locationjoystick/commit/b6d71cde8c171efe8407fc90d3d0fc46fef5036f))
+* **i18n:** replace language picker row with top-right EN/CN dropdown ([b8a3364](https://github.com/shortcuts/locationjoystick/commit/b8a33640afc4ae82e0cdf2d27dd725db5f5194ad))
+* **lint:** extend HardcodedComposeStringDetector to branch/semantics/generic cases ([c1bed5c](https://github.com/shortcuts/locationjoystick/commit/c1bed5cd707c246a663ab677cacc59cb64c754ad))
+
+
+### Bug Fixes
+
+* **build:** disable AAB language splits so in-app language choice works on Play builds ([a7bbdf3](https://github.com/shortcuts/locationjoystick/commit/a7bbdf35e746200e16619a9c2ca3783a5469d9a2))
+* **i18n:** apply chosen locale to overlays and notification on API 28-32 ([4a7edd1](https://github.com/shortcuts/locationjoystick/commit/4a7edd1ea7e4f3ca4a08491e992683ca86aa977c))
+* **i18n:** dedupe string keys added in PR [#77](https://github.com/shortcuts/locationjoystick/issues/77) ([8caf803](https://github.com/shortcuts/locationjoystick/commit/8caf8034d2394c617df603d76518a8ba9cc492f3))
+* **i18n:** externalize leftover elvis-fallback strings ([ae2bc4b](https://github.com/shortcuts/locationjoystick/commit/ae2bc4b34c8b28cd7502368af1f2a833acd67bac))
+* **i18n:** externalize user-facing strings the compose detector misses ([c17d42d](https://github.com/shortcuts/locationjoystick/commit/c17d42d349e5999ce41c1f98d464234b459348b8))
+* **i18n:** extract remaining hardcoded strings to strings.xml ([359df1a](https://github.com/shortcuts/locationjoystick/commit/359df1a76dd0884ebcde306f60e730f08fb87c8d))
+* **i18n:** generate localeConfig so Android 13+ lists app languages ([43d22d6](https://github.com/shortcuts/locationjoystick/commit/43d22d6d0143d9e16772a1a2367c5e382700620e))
+* **i18n:** localize speed profile names from one shared helper ([959b284](https://github.com/shortcuts/locationjoystick/commit/959b28443522a5403dbe95f644f064ad950b6350))
+* **i18n:** use per-type full-sentence strings in LjDeleteConfirmDialog ([95e1717](https://github.com/shortcuts/locationjoystick/commit/95e1717398c1ef6ad1dd32c919064bda9b865caf))
+* onboarding screenshot ([070fade](https://github.com/shortcuts/locationjoystick/commit/070fade368e73bf827c62b30bee386c1fa223754))
+* onboarding strings ([b1cf621](https://github.com/shortcuts/locationjoystick/commit/b1cf6214a0e98cdf4b8189dabad10c4d9047266c))
+* **screenshot-gallery:** non-local loop var clobbered seeded route/favorite data ([5e5cf2a](https://github.com/shortcuts/locationjoystick/commit/5e5cf2abdf08b16c5e9612146368a21df3236940))
+
 ## [0.21.0](https://github.com/shortcuts/locationjoystick/compare/v0.20.1...v0.21.0) (2026-09-14)
 
 
