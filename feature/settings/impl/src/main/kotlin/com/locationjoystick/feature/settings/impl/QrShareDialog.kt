@@ -98,7 +98,7 @@ fun QrShareDialog(
                 }
 
                 Text(
-                    "Or enter code: $code",
+                    stringResource(R.string.qr_share_or_enter_code, code),
                     style = MaterialTheme.typography.titleMedium,
                 )
             }

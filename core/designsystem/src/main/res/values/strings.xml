@@ -12,6 +12,8 @@
     <string name="delete_confirm_dialog_message">"This %1$s will be permanently deleted and cannot be undone."</string>
     <string name="delete_confirm_dialog_delete">"Delete"</string>
     <string name="delete_confirm_dialog_cancel">"Cancel"</string>
+    <string name="delete_confirm_dialog_item_favorite">"favorite"</string>
+    <string name="delete_confirm_dialog_item_route">"route"</string>
     <string name="route_start_options_loop">"Loop"</string>
     <string name="route_start_options_reverse">"Reverse"</string>
     <string name="route_start_options_return_to_location">"Return to location"</string>
@@ -45,4 +47,9 @@
     <string name="theme_preview_mock_location_active">"Mock Location Active"</string>
     <string name="theme_preview_48_8566_n_2_3522_e">"48.8566° N, 2.3522° E"</string>
     <string name="theme_preview_stop">"Stop"</string>
+    <string name="top_bar_stop">"Stop"</string>
+    <string name="top_bar_start">"Start"</string>
+    <string name="top_bar_start_with_location">"Start · %1$s"</string>
+    <string name="top_bar_stop_simulation_cd">"Stop location simulation"</string>
+    <string name="top_bar_start_simulation_cd">"Start location simulation"</string>
 </resources>

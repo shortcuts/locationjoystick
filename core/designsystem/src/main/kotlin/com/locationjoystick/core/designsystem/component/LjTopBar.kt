@@ -103,12 +103,24 @@ fun LjTopBar(
                     val context = LocalContext.current
                     val interactionSource = remember { MutableInteractionSource() }
                     val tint = if (isSpoofing) LjError else LjSuccess
+                    val spoofToggleCd =
+                        if (isSpoofing) {
+                            stringResource(R.string.top_bar_stop_simulation_cd)
+                        } else {
+                            stringResource(R.string.top_bar_start_simulation_cd)
+                        }
+                    val spoofToggleLabel =
+                        when {
+                            isSpoofing -> stringResource(R.string.top_bar_stop)
+                            locationLabel != null -> stringResource(R.string.top_bar_start_with_location, locationLabel)
+                            else -> stringResource(R.string.top_bar_start)
+                        }
                     Row(
                         modifier =
                             Modifier
                                 .defaultMinSize(minHeight = 44.dp)
                                 .semantics {
-                                    contentDescription = if (isSpoofing) "Stop location simulation" else "Start location simulation"
+                                    contentDescription = spoofToggleCd
                                 }.combinedClickable(
                                     interactionSource = interactionSource,
                                     indication = LocalIndication.current,
@@ -134,14 +146,7 @@ fun LjTopBar(
                             )
                         }
                         Text(
-                            text =
-                                if (isSpoofing) {
-                                    "Stop"
-                                } else if (locationLabel != null) {
-                                    "Start · $locationLabel"
-                                } else {
-                                    "Start"
-                                },
+                            text = spoofToggleLabel,
                             style = MaterialTheme.typography.labelSmall,
                             color = tint,
                             maxLines = 1,

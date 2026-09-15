@@ -47,6 +47,7 @@ import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.toBadgeText
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
+import com.locationjoystick.core.designsystem.component.DeleteItemType
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjActionSheetRow
 import com.locationjoystick.core.designsystem.component.LjButton
@@ -344,7 +345,7 @@ internal fun FavoritesScreen(
         if (favorite != null) {
             LjDeleteConfirmDialog(
                 name = favorite.name,
-                itemType = "favorite",
+                itemType = DeleteItemType.FAVORITE,
                 onDismiss = { onSetPendingDeleteId(null) },
                 onConfirm = {
                     onConfirmDelete()

@@ -98,6 +98,7 @@ private fun WhatsNewBadge(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, label = "whatsNewBadgeScale")
+    val badgeDescription = stringResource(R.string.whats_new_popup_cd)
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -108,7 +109,7 @@ private fun WhatsNewBadge(
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary)
                 .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
-                .semantics { contentDescription = "What's new in this version" }
+                .semantics { contentDescription = badgeDescription }
                 .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 8.dp),
     ) {
         Icon(

@@ -39,6 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.component.DeleteItemType
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjActionSheetRow
 import com.locationjoystick.core.designsystem.component.LjButton
@@ -237,7 +238,7 @@ internal fun RoutesScreen(
     deletingRoute?.let { route ->
         LjDeleteConfirmDialog(
             name = route.name,
-            itemType = "route",
+            itemType = DeleteItemType.ROUTE,
             onDismiss = { deletingRoute = null },
             onConfirm = {
                 onDeleteRoute(route.id)
@@ -338,9 +339,9 @@ private fun RouteCard(
         trailing = {
             val primaryDescription =
                 when {
-                    isPlaying -> "Pause"
-                    isPaused -> "Resume"
-                    else -> "Start route"
+                    isPlaying -> stringResource(R.string.routes_screen_pause)
+                    isPaused -> stringResource(R.string.routes_screen_resume)
+                    else -> stringResource(R.string.routes_screen_start_route)
                 }
             val primaryOnClick =
                 when {

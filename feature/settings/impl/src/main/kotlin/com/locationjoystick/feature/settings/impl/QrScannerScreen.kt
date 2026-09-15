@@ -187,9 +187,9 @@ fun QrScannerScreen(
         ) {
             val label =
                 if (isFetching) {
-                    "Connecting to sender — make sure both devices are on the same Wi-Fi"
+                    stringResource(R.string.qr_scanner_connecting_to_sender)
                 } else {
-                    "Point camera at QR code"
+                    stringResource(R.string.qr_scanner_point_camera_at_qr)
                 }
             Column(
                 modifier =

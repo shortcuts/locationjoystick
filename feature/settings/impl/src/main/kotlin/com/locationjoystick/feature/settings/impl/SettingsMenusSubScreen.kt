@@ -725,7 +725,7 @@ private fun SpeedCycleSection(
             val checked = profile.id in uiState.enabledSpeedProfileIds
             LjCheckboxRow(
                 checked = checked,
-                title = profile.name,
+                title = speedProfileLabel(profile),
                 onCheckedChange = { isChecked ->
                     val updated = uiState.enabledSpeedProfileIds.toMutableSet()
                     if (isChecked) updated.add(profile.id) else updated.remove(profile.id)

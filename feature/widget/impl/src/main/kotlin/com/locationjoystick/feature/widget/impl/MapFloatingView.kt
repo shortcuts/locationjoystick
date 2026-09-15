@@ -358,7 +358,7 @@ internal fun MapFloatingView(
             if (!isFollowingCamera.value) {
                 LjMapIconButton(
                     icon = LjIcons.MyLocation,
-                    contentDescription = "Re-center on location",
+                    contentDescription = stringResource(R.string.overlay_recenter_cd),
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                     onClick = {
@@ -377,7 +377,7 @@ internal fun MapFloatingView(
             }
             LjMapIconButton(
                 icon = LjIcons.Favorite,
-                contentDescription = "Open favorites",
+                contentDescription = stringResource(R.string.overlay_open_favorites_cd),
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 onClick = { showFavoritesPicker = true },
@@ -391,7 +391,7 @@ internal fun MapFloatingView(
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             LjMapIconButton(
                                 icon = LjIcons.Stop,
-                                contentDescription = "Stop route",
+                                contentDescription = stringResource(R.string.overlay_stop_route_cd),
                                 containerColor = MaterialTheme.colorScheme.error,
                                 contentColor = MaterialTheme.colorScheme.onError,
                                 onClick = {
@@ -401,7 +401,12 @@ internal fun MapFloatingView(
                             )
                             LjMapIconButton(
                                 icon = if (isRoutePaused) LjIcons.PlayArrow else LjIcons.Pause,
-                                contentDescription = if (isRoutePaused) "Resume route" else "Pause route",
+                                contentDescription =
+                                    if (isRoutePaused) {
+                                        stringResource(R.string.overlay_resume_route_cd)
+                                    } else {
+                                        stringResource(R.string.overlay_pause_route_cd)
+                                    },
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                 onClick = { if (isRoutePaused) onResumeRouteReplay() else onPauseRouteReplay() },
@@ -409,14 +414,14 @@ internal fun MapFloatingView(
                             if (!hideTeleportFeatures && showRouteJumpButtons) {
                                 LjMapIconButton(
                                     icon = LjIcons.SkipPrevious,
-                                    contentDescription = "Previous waypoint",
+                                    contentDescription = stringResource(R.string.overlay_previous_waypoint_cd),
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                     contentColor = LjSuccess,
                                     onClick = onJumpToPreviousWaypoint,
                                 )
                                 LjMapIconButton(
                                     icon = LjIcons.SkipNext,
-                                    contentDescription = "Next waypoint",
+                                    contentDescription = stringResource(R.string.overlay_next_waypoint_cd),
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                     contentColor = LjSuccess,
                                     onClick = onJumpToNextWaypoint,
@@ -426,7 +431,12 @@ internal fun MapFloatingView(
                     }
                     LjMapIconButton(
                         icon = LjIcons.Route,
-                        contentDescription = if (isRouteReplay) "Route active" else "Open routes",
+                        contentDescription =
+                            if (isRouteReplay) {
+                                stringResource(R.string.overlay_route_active_cd)
+                            } else {
+                                stringResource(R.string.overlay_open_routes_cd)
+                            },
                         containerColor = if (isRouteReplay) LjSuccess else MaterialTheme.colorScheme.primaryContainer,
                         contentColor = if (isRouteReplay) LjBg else MaterialTheme.colorScheme.onPrimaryContainer,
                         onClick = {
@@ -444,14 +454,19 @@ internal fun MapFloatingView(
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         LjMapIconButton(
                             icon = LjIcons.Stop,
-                            contentDescription = "Stop roaming",
+                            contentDescription = stringResource(R.string.overlay_stop_roaming_cd),
                             containerColor = MaterialTheme.colorScheme.error,
                             contentColor = MaterialTheme.colorScheme.onError,
                             onClick = { onStopRoaming() },
                         )
                         LjMapIconButton(
                             icon = if (isRoamingPaused) LjIcons.PlayArrow else LjIcons.Pause,
-                            contentDescription = if (isRoamingPaused) "Resume roaming" else "Pause roaming",
+                            contentDescription =
+                                if (isRoamingPaused) {
+                                    stringResource(R.string.overlay_resume_roaming_cd)
+                                } else {
+                                    stringResource(R.string.overlay_pause_roaming_cd)
+                                },
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             onClick = { if (isRoamingPaused) onResumeRoaming() else onPauseRoaming() },
@@ -460,7 +475,12 @@ internal fun MapFloatingView(
                 }
                 LjMapIconButton(
                     icon = LjIcons.Explore,
-                    contentDescription = if (isRoaming) "Roaming active" else "Start roaming",
+                    contentDescription =
+                        if (isRoaming) {
+                            stringResource(R.string.overlay_roaming_active_cd)
+                        } else {
+                            stringResource(R.string.overlay_start_roaming_cd)
+                        },
                     containerColor = if (isRoaming) LjSuccess else MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = if (isRoaming) LjBg else MaterialTheme.colorScheme.onTertiaryContainer,
                     onClick = { if (!isRoaming) showRoamingSheet = true },
@@ -468,7 +488,7 @@ internal fun MapFloatingView(
             }
             LjMapIconButton(
                 icon = LjIcons.Search,
-                contentDescription = "Search location",
+                contentDescription = stringResource(R.string.overlay_search_location_cd),
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 onClick = { showSearch = !showSearch },

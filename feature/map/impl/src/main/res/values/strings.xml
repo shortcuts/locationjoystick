@@ -20,4 +20,27 @@
     <string name="map_sheet_name">"Name"</string>
     <string name="map_sheet_save">"Save"</string>
     <string name="map_sheet_cancel">"Cancel"</string>
+    <string name="map_hint_long_press_to_walk">"Long-press to walk"</string>
+    <string name="map_hint_tap_to_teleport_long_press">"Tap to teleport · Long-press to walk"</string>
+    <string name="map_fab_recenter_cd">"Re-center on location"</string>
+    <string name="map_fab_stop_walk_cd">"Stop walk"</string>
+    <string name="map_fab_walk_in_progress_cd">"Walk in progress, tap for controls"</string>
+    <string name="map_fab_open_favorites_cd">"Open favorites"</string>
+    <string name="map_fab_stop_route_cd">"Stop route"</string>
+    <string name="map_fab_previous_waypoint_cd">"Previous waypoint"</string>
+    <string name="map_fab_next_waypoint_cd">"Next waypoint"</string>
+    <string name="map_fab_stop_roaming_cd">"Stop roaming"</string>
+    <string name="map_fab_search_location_cd">"Search location"</string>
+    <string name="map_fab_clear_map_cd">"Clear map"</string>
+    <string name="map_fab_resume_walk_cd">"Resume walk"</string>
+    <string name="map_fab_pause_walk_cd">"Pause walk"</string>
+    <string name="map_fab_route_active_cd">"Route active"</string>
+    <string name="map_fab_open_routes_cd">"Open routes"</string>
+    <string name="map_fab_resume_route_cd">"Resume route"</string>
+    <string name="map_fab_pause_route_cd">"Pause route"</string>
+    <string name="map_fab_resume_roaming_cd">"Resume roaming"</string>
+    <string name="map_fab_pause_roaming_cd">"Pause roaming"</string>
+    <string name="map_fab_roaming_active_cd">"Roaming active"</string>
+    <string name="map_fab_expand_roaming_sheet_cd">"Expand roaming sheet"</string>
+    <string name="map_fab_start_roaming_cd">"Start roaming"</string>
 </resources>

@@ -35,4 +35,5 @@
     <string name="whats_new_bullet">"•"</string>
     <string name="whats_new_got_it">"Got it"</string>
     <string name="whats_new_view_full_changelog">"View full changelog"</string>
+    <string name="whats_new_popup_cd">"What's new in this version"</string>
 </resources>

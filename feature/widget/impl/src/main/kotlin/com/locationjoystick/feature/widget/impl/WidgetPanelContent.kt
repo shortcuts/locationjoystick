@@ -208,7 +208,12 @@ internal fun WidgetPanel(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_app_launcher),
-                    contentDescription = if (isPanelExpanded) "Collapse widget" else "Expand widget",
+                    contentDescription =
+                        if (isPanelExpanded) {
+                            stringResource(R.string.widget_panel_collapse_cd)
+                        } else {
+                            stringResource(R.string.widget_panel_expand_cd)
+                        },
                     modifier = Modifier.fillMaxSize().clip(CircleShape),
                 )
             }
@@ -237,7 +242,7 @@ internal fun WidgetPanel(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         WidgetIconButton(
                             icon = LjIcons.Route,
-                            contentDescription = "Routes picker",
+                            contentDescription = stringResource(R.string.widget_panel_routes_picker_cd),
                             tint = routeIconTint,
                             onClick = routeControls.onIconClick,
                         )
@@ -253,14 +258,19 @@ internal fun WidgetPanel(
                                     val pauseResumeTint = if (routeControls.isPaused) LjSuccess else LjInactive
                                     WidgetIconButton(
                                         icon = pauseResumeIcon,
-                                        contentDescription = if (routeControls.isPaused) "Resume" else "Pause",
+                                        contentDescription =
+                                            if (routeControls.isPaused) {
+                                                stringResource(R.string.widget_panel_resume_cd)
+                                            } else {
+                                                stringResource(R.string.widget_panel_pause_cd)
+                                            },
                                         tint = pauseResumeTint,
                                         onClick = routeControls.onPauseResume,
                                     )
                                 }
                                 WidgetIconButton(
                                     icon = LjIcons.Stop,
-                                    contentDescription = "Stop",
+                                    contentDescription = stringResource(R.string.widget_panel_stop_cd),
                                     tint = MaterialTheme.colorScheme.error,
                                     onClick = routeControls.onStop,
                                 )
@@ -270,13 +280,13 @@ internal fun WidgetPanel(
                                 ) {
                                     WidgetIconButton(
                                         icon = LjIcons.SkipPrevious,
-                                        contentDescription = "Previous waypoint",
+                                        contentDescription = stringResource(R.string.overlay_previous_waypoint_cd),
                                         tint = LjSuccess,
                                         onClick = routeControls.onJumpPrevious,
                                     )
                                     WidgetIconButton(
                                         icon = LjIcons.SkipNext,
-                                        contentDescription = "Next waypoint",
+                                        contentDescription = stringResource(R.string.overlay_next_waypoint_cd),
                                         tint = LjSuccess,
                                         onClick = routeControls.onJumpNext,
                                     )
@@ -307,7 +317,12 @@ internal fun WidgetPanel(
                         val crosshairTint = if (section.active) MaterialTheme.colorScheme.primary else LjInactive
                         WidgetIconButton(
                             icon = LjIcons.MyLocation,
-                            contentDescription = if (section.active) "Cancel tap-to-walk" else "Tap to walk",
+                            contentDescription =
+                                if (section.active) {
+                                    stringResource(R.string.widget_panel_cancel_tap_to_walk_cd)
+                                } else {
+                                    stringResource(R.string.widget_panel_tap_to_walk_cd)
+                                },
                             tint = crosshairTint,
                             onClick = section.onClick,
                         )
@@ -317,7 +332,7 @@ internal fun WidgetPanel(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             WidgetIconButton(
                                 icon = LjIcons.Group,
-                                contentDescription = "Group sync",
+                                contentDescription = stringResource(R.string.widget_panel_group_sync_cd),
                                 tint = MaterialTheme.colorScheme.primary,
                                 onClick = section.onClick,
                             )
@@ -328,7 +343,7 @@ internal fun WidgetPanel(
                             ) {
                                 WidgetIconButton(
                                     icon = LjIcons.MyLocation,
-                                    contentDescription = "Teleport to leader now",
+                                    contentDescription = stringResource(R.string.widget_panel_teleport_to_leader_cd),
                                     tint = LjSuccess,
                                     onClick = section.onTeleport,
                                 )
@@ -340,7 +355,7 @@ internal fun WidgetPanel(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             WidgetIconButton(
                                 icon = LjIcons.Terrain,
-                                contentDescription = "Altitude override",
+                                contentDescription = stringResource(R.string.widget_panel_altitude_override_cd),
                                 tint = if (section.expanded) LjSuccess else MaterialTheme.colorScheme.primary,
                                 onClick = section.onClick,
                             )
@@ -611,7 +626,12 @@ internal fun RoutesFloatingView(
     var selectedRouteId by remember { mutableStateOf<String?>(null) }
 
     FloatingPickerShell(
-        title = if (selectedRouteId != null) routes.find { it.id == selectedRouteId }?.name ?: "Routes" else "Routes",
+        title =
+            if (selectedRouteId != null) {
+                routes.find { it.id == selectedRouteId }?.name ?: stringResource(R.string.widget_panel_routes_title)
+            } else {
+                stringResource(R.string.widget_panel_routes_title)
+            },
         onDismiss = onDismiss,
         hasBack = selectedRouteId != null,
         onBack = { selectedRouteId = null },
@@ -711,13 +731,14 @@ private fun featureIconAndState(
         }
     }
 
+@Composable
 private fun AppFeature.toContentDescription(): String =
     when (this) {
-        AppFeature.JOYSTICK_TOGGLE -> "Show/hide joystick"
-        AppFeature.JOYSTICK_LOCK -> "Lock joystick position"
-        AppFeature.ROUTES -> "Routes picker"
-        AppFeature.FAVORITES -> "Favorites picker"
-        AppFeature.SPEED_CYCLE -> "Speed cycle"
-        AppFeature.MAP_FLOATING -> "Open map"
+        AppFeature.JOYSTICK_TOGGLE -> stringResource(R.string.widget_feature_show_hide_joystick_cd)
+        AppFeature.JOYSTICK_LOCK -> stringResource(R.string.widget_feature_lock_joystick_cd)
+        AppFeature.ROUTES -> stringResource(R.string.widget_feature_routes_cd)
+        AppFeature.FAVORITES -> stringResource(R.string.widget_feature_favorites_cd)
+        AppFeature.SPEED_CYCLE -> stringResource(R.string.widget_feature_speed_cycle_cd)
+        AppFeature.MAP_FLOATING -> stringResource(R.string.widget_feature_open_map_cd)
         AppFeature.ROAMING, AppFeature.SEARCH -> error("$this is map-only and never appears in the widget panel")
     }

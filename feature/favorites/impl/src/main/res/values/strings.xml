@@ -26,4 +26,6 @@
     <string name="favorites_screen_longitude_2">"Longitude"</string>
     <string name="map_picker_pick_location">"Pick Location"</string>
     <string name="map_picker_save_location">"Save location"</string>
+    <string name="map_picker_search_location_cd">"Search location"</string>
+    <string name="map_picker_save_location_cd">"Save location"</string>
 </resources>

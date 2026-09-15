@@ -138,7 +138,7 @@ private fun SpeedProfilesSection(
     profiles.forEachIndexed { index, profile ->
         val speedMs = uiState.speeds.getValue(profile.id)
         SpeedProfileInput(
-            label = profile.name,
+            label = speedProfileLabel(profile),
             displaySpeed = convertMsToDisplay(speedMs, uiState.speedUnit),
             onSpeedChange = { onAction(SettingsAction.SetSpeed(profile.id, it)) },
             unit =

@@ -192,4 +192,16 @@
     <string name="settings_ask_the_sender_for_their_6">"Ask the sender for their 6-character code shown in the QR share dialog."</string>
     <string name="settings_code">"Code"</string>
     <string name="settings_import">"Import"</string>
+    <string name="settings_unsaved_changes_leave">"You have unsaved settings changes. Save them before leaving?"</string>
+    <string name="settings_unsaved_changes_start_spoofing">"You have unsaved settings changes. Save them before starting location spoofing?"</string>
+    <string name="qr_scanner_connecting_to_sender">"Connecting to sender — make sure both devices are on the same Wi-Fi"</string>
+    <string name="qr_scanner_point_camera_at_qr">"Point camera at QR code"</string>
+    <string name="qr_share_or_enter_code">"Or enter code: %1$s"</string>
+    <string name="hot_item_tree_collapse_cd">"Collapse"</string>
+    <string name="hot_item_tree_expand_cd">"Expand"</string>
+    <string name="speed_profile_slow_walk">"Slow Walk"</string>
+    <string name="speed_profile_walk">"Walk"</string>
+    <string name="speed_profile_run">"Run"</string>
+    <string name="speed_profile_bike">"Bike"</string>
+    <string name="speed_profile_drive">"Drive"</string>
 </resources>

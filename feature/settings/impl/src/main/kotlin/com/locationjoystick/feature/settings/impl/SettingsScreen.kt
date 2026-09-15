@@ -513,9 +513,9 @@ internal fun SettingsScreen(
         val message =
             when (intent) {
                 PendingUnsavedIntent.BackToHub, PendingUnsavedIntent.ExitSettings ->
-                    "You have unsaved settings changes. Save them before leaving?"
+                    stringResource(R.string.settings_unsaved_changes_leave)
                 PendingUnsavedIntent.StartSpoofing ->
-                    "You have unsaved settings changes. Save them before starting location spoofing?"
+                    stringResource(R.string.settings_unsaved_changes_start_spoofing)
             }
         UnsavedChangesConfirmDialog(
             message = message,
