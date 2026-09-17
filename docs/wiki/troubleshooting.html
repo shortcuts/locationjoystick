@@ -30,146 +30,102 @@
     <div class="feature-section" id="setup-screen">
       <img class="phone-shot" src="screenshots/19_onboarding_mock_location.png" alt="Set as fake GPS app setup step">
       <ul class="section-bullets">
-        <li>The setup screen walks you through granting each permission locationjoystick needs.</li>
-        <li>If the "Set as fake GPS app" check won't pass even though spoofing works, use the
-          <strong>Skip</strong> option next to it — see "Mock location not detected" below.</li>
-        <li>The <strong>Troubleshooting</strong> link at the top of this screen brings you back to
-          this page at any point during setup.</li>
+        <li>The setup screen grants each permission the app needs, one step at a time.</li>
+        <li>If "Set as fake GPS app" won't pass but spoofing works, tap <strong>Skip</strong> next to it.</li>
+        <li>The <strong>Troubleshooting</strong> link at the top of that screen opens this page.</li>
       </ul>
     </div>
 
-    <h2 id="game-blocks-location">A game shows a location or GPS error and won't let you play</h2>
-    <p>
-      Some GPS-based games actively detect apps like locationjoystick and block play when they find one, showing
-      their own red location or GPS error on screen. This is not a problem with locationjoystick — it's a
-      restriction built into that specific game.
-    </p>
-    <p>
-      These games only allow a spoofing app to work if your phone has been modified at a deeper level than
-      locationjoystick touches: gaining "root" access (full administrator control over the phone) and applying a
-      technique the modding community calls a Smali Patcher or LSPosed setup. locationjoystick doesn't perform
-      this modification and doesn't need it for anything it does on its own — it's a separate, more advanced step
-      some players take specifically to satisfy that one game's checks.
-    </p>
-    <p>
-      If you don't play a game like this, you can ignore this section entirely — everything else in
-      locationjoystick works normally without root. If you do, and want to learn more about the root and
-      Smali Patcher/LSPosed approach, see this
-      <a href="https://www.reddit.com/r/PoGoAndroidSpoofing/s/W1qonlYRuU" target="_blank" rel="noopener">community thread</a>
-      for more context. Modifying your phone this way carries its own risks and is outside the scope of
-      locationjoystick's support.
-    </p>
+    <h2 id="grant-location-all-the-time">App shows "GPS signal not detected" or asks for location again</h2>
+    <p>Some apps need the strongest location permission. Grant it by hand:</p>
+    <ol>
+      <li>Open the <strong>Settings</strong> app.</li>
+      <li>Tap <strong>Apps</strong>, then tap the app that shows the error.</li>
+      <li>Tap <strong>Permissions</strong>, then <strong>Location</strong>.</li>
+      <li>Select <strong>Allow all the time</strong>.</li>
+      <li>Restart that app.</li>
+    </ol>
+    <p><strong>Allow only while using the app</strong> and <strong>Ask every time</strong> are not enough for these apps.</p>
 
-    <h2 id="location-error-12">"Failed to detect location (12)" or "location error 12"</h2>
-    <p>
-      <strong>Note:</strong> Certain apps will throw errors like GPS Signal Not Detected if you don't grant them max location permission <strong>`Allow all the time`</strong>  by directly going into app permission settings. these apps won't work with <strong>`Allow only while using the app`</strong>  or <strong>`Ask every time`</strong> .
-    </p>
-    <p>
-      This message comes from the game itself, not from locationjoystick. It means the game checked
-      your phone's reported location, found the marker every mock location app leaves on it, and
-      refused to continue.
-    </p>
-    <p>
-      This is the same restriction described in "A game shows a location or GPS error and won't let
-      you play" above — see that section for what it takes to get past a game this strict.
-      locationjoystick doesn't include a way to hide that marker on its own, and has no plans to add
-      one. Getting past this specific check depends entirely on the root and modding approach
-      described above, not on anything inside this app.
-    </p>
+    <h2 id="game-blocks-location">A game shows a location or GPS error and won't let you play</h2>
+    <p>Covers "Failed to detect location (12)", "location error 12", and similar red GPS errors.</p>
+    <ul>
+      <li>The error comes from the game, not from locationjoystick.</li>
+      <li>The game found the marker that every mock location app leaves on the reported position.</li>
+      <li>locationjoystick cannot hide that marker, and will not add a way to hide it.</li>
+      <li>Players who get past this check root the phone and use a Smali Patcher or LSPosed setup. That is a separate, advanced modification.</li>
+      <li>Read this <a href="https://www.reddit.com/r/PoGoAndroidSpoofing/s/W1qonlYRuU" target="_blank" rel="noopener">community thread</a> for that approach. Rooting carries its own risks and is outside locationjoystick support.</li>
+      <li>If you do not play a game like this, ignore this section. Everything else works without root.</li>
+    </ul>
 
     <h2 id="allow-restricted-settings">Allow restricted settings (Android 12+ installed from a file)</h2>
-    <p>
-      On Android 12 and later, apps installed directly from a file (like the download from GitHub) are blocked
-      from using certain settings, including the overlay permission, until you allow them by hand.
-      This step is <strong>not</strong> needed if you installed from the Play Store.
-    </p>
-    <p>To allow restricted settings:</p>
+    <p>Android 12 and later block the overlay permission for apps installed from a file. Skip this section if you installed from the Play Store.</p>
     <ol>
-      <li>Open the <strong>Settings</strong> app on your phone.</li>
-      <li>Go to <strong>Apps</strong> (sometimes called "Application Manager").</li>
-      <li>Scroll down and tap <strong>locationjoystick</strong>.</li>
-      <li>Tap the <strong>⋮</strong> (three-dot menu) in the top-right corner of the app info screen.</li>
+      <li>Open the <strong>Settings</strong> app.</li>
+      <li>Tap <strong>Apps</strong> (sometimes "Application Manager").</li>
+      <li>Tap <strong>locationjoystick</strong>.</li>
+      <li>Tap the <strong>⋮</strong> menu, top-right.</li>
       <li>Tap <strong>Allow restricted settings</strong>.</li>
-      <li>Return to locationjoystick and go through setup again.</li>
+      <li>Return to locationjoystick and run setup again.</li>
     </ol>
-    <p>
-      If you don't see the three-dot menu, your phone or Android version probably doesn't need this step.
-      Skip it and keep going with setup as normal.
-    </p>
+    <p>No <strong>⋮</strong> menu means your phone does not need this step.</p>
 
     <h2 id="app-missing-from-list">App missing from the "Select mock location app" list</h2>
-    <p>
-      Open the app at least once before checking the list. A freshly installed app won't show up until it's been
-      launched. After that, turn Developer Options off and back on, or restart your phone, so the list refreshes.
-    </p>
-    <p>
-      On some phones (MIUI, ColorOS, and other custom Android versions), newly installed apps stay hidden from
-      this list until you grant the "Allow restricted settings" permission above, or until after a restart.
-      If the app still won't show up, try reinstalling it, then restart once more before checking again.
-    </p>
-    <p>
-      If you installed the app inside a separate work profile (for example, using an app-sandboxing tool
-      like Shelter), the list will show "None" even though the app is installed. Android keeps the mock
-      location app selection separate for each profile, so you must open Developer Options from inside
-      that same profile and pick the app from there. Installing in one profile and selecting it from
-      another isn't possible — this is a restriction in Android itself, not something the app can change.
-    </p>
+    <ul>
+      <li>Open locationjoystick once. A freshly installed app never appears in the list.</li>
+      <li>Turn Developer Options off and back on, or restart the phone, to refresh the list.</li>
+      <li>On MIUI, ColorOS, and other custom Android versions, grant "Allow restricted settings" above first.</li>
+      <li>Still missing: reinstall the app, then restart the phone again.</li>
+      <li>Installed in a work profile (for example with Shelter): open Developer Options inside that same profile. Android keeps the selection per profile, so a cross-profile pick is impossible.</li>
+    </ul>
 
     <h2 id="mock-location-not-detected">Mock location not detected</h2>
-    <p>Some phones need a restart after you change the Developer Options setting. Try restarting, then tap Check again.</p>
-    <p>
-      If the check still fails and you're sure spoofing works anyway (this can happen with some modified
-      mock-location apps), tap <strong>Skip</strong> next to the check during setup, then confirm on the warning
-      dialog. Only use this if you've already confirmed spoofing is working.
-    </p>
+    <ul>
+      <li>Restart the phone after you change the Developer Options setting.</li>
+      <li>Check works but spoofing already works: tap <strong>Skip</strong> next to the check during setup, then confirm the warning.</li>
+      <li>Use <strong>Skip</strong> only after you confirm spoofing works.</li>
+    </ul>
 
     <h2 id="overlay-permission-resets">Overlay permission resets on restart</h2>
-    <p>
-      This is a known issue on some custom Android versions (MIUI, ColorOS). Grant the permission again after
-      each restart, or check your phone's autostart settings.
-    </p>
+    <ul>
+      <li>Known issue on MIUI and ColorOS.</li>
+      <li>Grant the permission again after each restart, or allow locationjoystick in your phone's autostart settings.</li>
+    </ul>
 
     <h2 id="another-app-holds-slot">Another app holds the mock location slot</h2>
-    <p>
-      Only one app can act as the mock location provider at a time. Make sure no other mock location app is
-      selected in Developer Options.
-    </p>
+    <p>Only one app can be the mock location provider. Check which app holds it:</p>
+    <ol>
+      <li>Open the <strong>Settings</strong> app.</li>
+      <li>Tap <strong>System</strong>, then <strong>Developer options</strong>. On Samsung, Developer options sits at the bottom of the main Settings list.</li>
+      <li>Scroll to the <strong>Debugging</strong> group and tap <strong>Select mock location app</strong>.</li>
+      <li>Read which app is selected. Anything other than <strong>locationjoystick</strong> blocks it.</li>
+      <li>Tap <strong>locationjoystick</strong> in the list.</li>
+      <li>Return to locationjoystick and start spoofing again.</li>
+    </ol>
+    <p>Notes:</p>
+    <ul>
+      <li>No <strong>Developer options</strong> entry: open <strong>Settings → About phone</strong> and tap <strong>Build number</strong> seven times to unlock it.</li>
+      <li>locationjoystick missing from the list: see "App missing from the 'Select mock location app' list" above.</li>
+      <li>Selecting locationjoystick clears the other app automatically. You do not need to uninstall it, but leave it closed while you spoof.</li>
+    </ul>
 
     <h2 id="spoofed-location-resets">Spoofed location jumps back to your real location</h2>
-    <p>
-      This happens when another part of your phone keeps refreshing its own idea of where you really are, and
-      that refreshed position briefly overrides the spoofed one. Turning on "Location Accuracy" is the most
-      common trigger, but a few other settings can cause the same jump — sometimes right back to the spoof a
-      moment later, which looks like teleporting back and forth. locationjoystick has no control over any of
-      these phone-level settings; fixing this means changing them yourself. The steps below are all reversible.
-    </p>
-    <p>Go through these one at a time and test after each — you may not need all of them:</p>
+    <p>Another part of your phone keeps refreshing your real position, which overrides the spoof. locationjoystick cannot change these phone-level settings. Every step below is reversible.</p>
+    <p>Do one step, then test:</p>
     <ol>
-      <li>Open <strong>Settings → Apps</strong>, find <strong>Google Play Services</strong>, open
-        <strong>Storage</strong>, and tap <strong>Clear cache</strong>. Then open the <strong>⋮</strong>
-        (three-dot) menu on the app info screen and tap <strong>Uninstall updates</strong>. This resets it to
-        the version that came with your phone, which stops it from quietly re-checking your real position as
-        often.</li>
-      <li>While still on the Google Play Services app info screen, open <strong>Permissions → Location</strong>
-        and set it to <strong>Don't allow</strong>.</li>
-      <li>Open <strong>Settings → Location</strong> and change the location mode to <strong>GPS only</strong>
-        (sometimes called <strong>Device only</strong>) instead of <strong>High accuracy</strong>. High
-        accuracy mode blends in Wi-Fi and network signals, which is what pulls the reported position back
-        toward your real one.</li>
-      <li>In that same Location menu, look for <strong>Wi-Fi scanning</strong> and <strong>Bluetooth
-        scanning</strong> (often under an "Improve Accuracy" heading) and turn both off.</li>
-      <li>Turn off <strong>Location History</strong>, <strong>Location Sharing</strong>, and
-        <strong>Find My Device</strong> in your Google account settings. Each of these periodically records
-        your real position in the background, independent of whichever app is asking for it.</li>
-      <li>Make sure no other app is also set as a mock location app in Developer Options — see
-        "Another app holds the mock location slot" above.</li>
+      <li>Open <strong>Settings → Apps → Google Play Services → Storage</strong> and tap <strong>Clear cache</strong>. Then open the <strong>⋮</strong> menu and tap <strong>Uninstall updates</strong>.</li>
+      <li>On the same screen, open <strong>Permissions → Location</strong> and set <strong>Don't allow</strong>.</li>
+      <li>Open <strong>Settings → Location</strong> and set the mode to <strong>GPS only</strong> (sometimes "Device only") instead of <strong>High accuracy</strong>.</li>
+      <li>In the same menu, turn off <strong>Wi-Fi scanning</strong> and <strong>Bluetooth scanning</strong> (often under "Improve Accuracy").</li>
+      <li>In your Google account settings, turn off <strong>Location History</strong>, <strong>Location Sharing</strong>, and <strong>Find My Device</strong>.</li>
+      <li>Confirm no other app holds the mock location slot — see the section above.</li>
     </ol>
-    <p>
-      <strong>To get your real location back later</strong> (for example, to use another app normally): stop
-      spoofing in locationjoystick, then reverse the settings above that you changed — in particular, switch
-      the location mode back to <strong>High accuracy</strong>. Restart the app you want to use afterward, so
-      it picks up your real position instead of a cached spoofed one.
-    </p>
+    <p><strong>To get your real location back:</strong></p>
+    <ol>
+      <li>Stop spoofing in locationjoystick.</li>
+      <li>Reverse the steps above that you changed. Set the location mode back to <strong>High accuracy</strong>.</li>
+      <li>Restart the app you want to use, so it drops the cached spoofed position.</li>
+    </ol>
   </main>
 
 </div>
