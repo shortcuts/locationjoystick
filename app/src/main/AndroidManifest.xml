@@ -15,9 +15,18 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- API 30+ package visibility: without this, queryIntentActivities only sees
-         system/installer apps, not other games (issue: compass test app picker missing games). -->
     <queries>
+        <package android:name="com.android.chrome" />
+        <package android:name="com.google.android.apps.maps" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.APP_BROWSER" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
@@ -63,21 +72,84 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="maps.google.com" />
-                <data android:scheme="http" android:host="maps.google.com" />
-                <data android:scheme="https" android:host="www.google.com" android:pathPrefix="/maps" />
-                <data android:scheme="http" android:host="www.google.com" android:pathPrefix="/maps" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="google.navigation" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="application/gpx+xml" />
+                <data android:mimeType="application/gpx" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/xml" />
+                <data android:mimeType="text/xml" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" android:host="*" android:pathPattern=".*\\.gpx" />
+                <data android:scheme="content" android:host="*" android:pathPattern=".*\\..*\\.gpx" />
+                <data android:scheme="content" android:host="*" android:pathPattern=".*\\..*\\..*\\.gpx" />
+                <data android:scheme="content" android:host="*" android:pathPattern=".*\\..*\\..*\\..*\\.gpx" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.gpx" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\..*\\.gpx" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\..*\\..*\\.gpx" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\..*\\..*\\..*\\.gpx" />
+            </intent-filter>
+            <!-- Chat apps such as LINE often VIEW a GPX as application/octet-stream (or XML)
+                 with no .gpx in the path. Do not register */* or a scheme-only content/file
+                 filter: those match photos (image/*) and APKs (vnd.android.package-archive).
+                 MacroDroid appears for LINE GPX without those catch-alls. DEFAULT only; do
+                 not add BROWSABLE or VIEW text/plain (those catch maps URL shares). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:mimeType="application/octet-stream" />
+                <data android:scheme="file" android:mimeType="application/octet-stream" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/gpx+xml" />
+                <data android:mimeType="application/gpx" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/xml" />
+                <data android:mimeType="text/xml" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".LinkInterceptorActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:launchMode="singleInstance"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Locationjoystick.Transparent">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="maps.google.com" />
+                <data android:scheme="http" android:host="maps.google.com" />
+                <data android:scheme="https" android:host="www.google.com" android:pathPrefix="/maps" />
+                <data android:scheme="http" android:host="www.google.com" android:pathPrefix="/maps" />
             </intent-filter>
         </activity>
 

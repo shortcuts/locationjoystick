@@ -18,6 +18,7 @@ internal fun IdleScreen(
     onNavigateToMap: () -> Unit,
     onNavigateToRoutes: () -> Unit,
     onNavigateToFavorites: () -> Unit,
+    onNavigateToCapture: () -> Unit = {},
     onNavigateToSettings: () -> Unit,
     onNavigateToGroup: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
@@ -54,6 +55,12 @@ internal fun IdleScreen(
                         stringResource(R.string.drawer_favorites),
                         stringResource(R.string.idle_favorites_description),
                         onNavigateToFavorites,
+                    ),
+                    DestinationCardSpec(
+                        LjIcons.AddLocationAlt,
+                        stringResource(R.string.drawer_capture),
+                        stringResource(R.string.idle_capture_description),
+                        onNavigateToCapture,
                     ),
                     DestinationCardSpec(
                         LjIcons.Share,

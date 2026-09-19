@@ -2,6 +2,7 @@
   var NAV_ITEMS = [
     { href: 'index.html', label: 'Getting Started' },
     { href: 'map.html', label: 'Map' },
+    { href: 'capture-coordinates.html', label: 'Capture coordinates' },
     { href: 'routes.html', label: 'Routes' },
     { href: 'favorites.html', label: 'Favorites' },
     { href: 'share.html', label: 'Share &amp; Deep Links' },

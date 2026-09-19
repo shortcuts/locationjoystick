@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
@@ -92,6 +93,15 @@ private fun RoamingSection(
     Spacer(modifier = Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_roaming_default_settings_used_when_starting_a),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text(stringResource(R.string.settings_roaming_sub_screen_walk_around_the_block), style = MaterialTheme.typography.titleMedium)
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        stringResource(R.string.settings_roaming_sub_screen_picks_random_spots_within_a_radius_and_walks_between_them),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -186,4 +196,118 @@ private fun RoamingSection(
         title = stringResource(R.string.settings_roaming_return_to_start),
         description = stringResource(R.string.settings_roaming_return_to_start_desc),
     )
+
+    Spacer(modifier = Modifier.height(24.dp))
+    Text(stringResource(R.string.settings_roaming_sub_screen_planting), style = MaterialTheme.typography.titleMedium)
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        stringResource(R.string.settings_spiral_description),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+
+    var startRadiusText by remember {
+        mutableStateOf(roamingDefaults.plantingStartRadiusMeters.toInt().toString())
+    }
+    OutlinedTextField(
+        value = startRadiusText,
+        onValueChange = { text ->
+            startRadiusText = text
+            text.toLocaleDoubleOrNull()?.let { v ->
+                onAction(
+                    SettingsAction.UpdateRoamingDefaults(
+                        roamingDefaults.copy(
+                            plantingStartRadiusMeters =
+                                v.coerceIn(
+                                    AppConstants.RoamingConstants.ROAMING_MIN_RADIUS_METERS,
+                                    AppConstants.RoamingConstants.PLANTING_MAX_RADIUS_METERS,
+                                ),
+                        ),
+                    ),
+                )
+            }
+        },
+        label = { Text(stringResource(R.string.settings_roaming_sub_screen_starting_radius_m)) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    Spacer(modifier = Modifier.height(4.dp))
+
+    var endRadiusText by remember {
+        mutableStateOf(roamingDefaults.plantingEndRadiusMeters.toInt().toString())
+    }
+    OutlinedTextField(
+        value = endRadiusText,
+        onValueChange = { text ->
+            endRadiusText = text
+            text.toLocaleDoubleOrNull()?.let { v ->
+                onAction(
+                    SettingsAction.UpdateRoamingDefaults(
+                        roamingDefaults.copy(
+                            plantingEndRadiusMeters =
+                                v.coerceIn(
+                                    AppConstants.RoamingConstants.ROAMING_MIN_RADIUS_METERS,
+                                    AppConstants.RoamingConstants.PLANTING_MAX_RADIUS_METERS,
+                                ),
+                        ),
+                    ),
+                )
+            }
+        },
+        label = { Text(stringResource(R.string.settings_roaming_sub_screen_ending_radius_m)) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(stringResource(R.string.settings_roaming_sub_screen_speed_profile), style = MaterialTheme.typography.labelLarge)
+    Spacer(modifier = Modifier.height(4.dp))
+    LjSegmentedControl(
+        options =
+            listOf(
+                AppConstants.ProfileConstants.PROFILE_ID_WALK,
+                AppConstants.ProfileConstants.PROFILE_ID_RUN,
+                AppConstants.ProfileConstants.PROFILE_ID_BIKE,
+            ).map { it to speedProfileLabel(it) },
+        selected = roamingDefaults.plantingSpeedProfileId,
+        onSelect = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(plantingSpeedProfileId = it))) },
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    LjCheckboxRow(
+        checked = roamingDefaults.plantingInfiniteLoops,
+        onCheckedChange = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(plantingInfiniteLoops = it))) },
+        title = stringResource(R.string.settings_roaming_sub_screen_infinite_loop),
+        description = stringResource(R.string.settings_roaming_sub_screen_keeps_expanding_and_contracting_until_you_stop_roaming),
+    )
+
+    if (!roamingDefaults.plantingInfiniteLoops) {
+        var loopCountText by remember {
+            mutableStateOf(roamingDefaults.plantingLoopCount.toString())
+        }
+        OutlinedTextField(
+            value = loopCountText,
+            onValueChange = { text ->
+                loopCountText = text
+                text.toIntOrNull()?.let { count ->
+                    onAction(
+                        SettingsAction.UpdateRoamingDefaults(
+                            roamingDefaults.copy(
+                                plantingLoopCount =
+                                    count.coerceIn(1, AppConstants.RoamingConstants.PLANTING_MAX_LOOP_COUNT),
+                            ),
+                        ),
+                    )
+                }
+            },
+            label = { Text(stringResource(R.string.settings_roaming_sub_screen_number_of_loops)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }

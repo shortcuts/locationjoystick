@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capture_browser_intents_couldnt_open_setting">"Couldn\'t open that Android setting"</string>
+    <string name="share_coordinates_no_current_location">"No current location"</string>
+</resources>

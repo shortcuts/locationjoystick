@@ -46,6 +46,7 @@
     <string name="overlay_pause_roaming_cd">"暂停漫游"</string>
     <string name="overlay_start_roaming_cd">"开始漫游"</string>
     <string name="overlay_roaming_active_cd">"漫游进行中"</string>
+    <string name="overlay_roaming_ignored_route_playing_cd">"漫游已忽略 — 路线正在进行"</string>
     <string name="widget_panel_tap_to_walk_cd">"点击行走"</string>
     <string name="widget_panel_group_sync_cd">"群组同步"</string>
     <string name="widget_panel_teleport_to_leader_cd">"立即瞬移到组长位置"</string>

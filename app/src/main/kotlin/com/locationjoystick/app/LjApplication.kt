@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Intent
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.location.MockLocationService
+import com.locationjoystick.core.map.maplibre.MapTileHttp
 import com.locationjoystick.core.model.GroupRole
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -11,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import org.maplibre.android.MapLibre
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -23,7 +23,7 @@ class LjApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        MapLibre.getInstance(this)
+        MapTileHttp.install(this)
         resumeActiveGroupRole()
     }
 

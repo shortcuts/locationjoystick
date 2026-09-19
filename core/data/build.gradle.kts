@@ -5,6 +5,12 @@ plugins {
 
 android {
     namespace = "com.locationjoystick.core.data"
+    sourceSets {
+        getByName("main") {
+            // Pack the shared changelog entries for offline use.
+            assets.srcDir(rootProject.layout.projectDirectory.dir("docs/wiki/changelog"))
+        }
+    }
     testOptions {
         unitTests.isReturnDefaultValues = true
     }

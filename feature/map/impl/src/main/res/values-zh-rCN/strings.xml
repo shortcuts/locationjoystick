@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="map_screen_title">"地图"</string>
+    <string name="map_paste_sheet_title_gpx">"打开 GPX"</string>
     <string name="map_bottom_sheets_routes">"路线"</string>
     <string name="map_bottom_sheets_start_route">"开始路线"</string>
     <string name="map_bottom_sheets_favorites">"收藏"</string>
@@ -24,7 +25,9 @@
     <string name="map_sheet_cancel">"取消"</string>
     <string name="map_hint_long_press_to_walk">"长按即可行走"</string>
     <string name="map_hint_tap_to_teleport_long_press">"点击瞬移 · 长按行走"</string>
-    <string name="map_fab_recenter_cd">"回到当前位置"</string>
+    <string name="map_fab_recenter_gps_cd">"回到手机 GPS 位置"</string>
+    <string name="map_recenter_gps_fallback_error">"无法获取手机的 GPS 位置"</string>
+    <string name="map_fab_recenter_mock_cd">"回到模拟位置"</string>
     <string name="map_fab_stop_walk_cd">"停止行走"</string>
     <string name="map_fab_walk_in_progress_cd">"正在行走，点击查看控制项"</string>
     <string name="map_fab_open_favorites_cd">"打开收藏"</string>
@@ -45,4 +48,5 @@
     <string name="map_fab_roaming_active_cd">"漫游进行中"</string>
     <string name="map_fab_expand_roaming_sheet_cd">"展开漫游面板"</string>
     <string name="map_fab_start_roaming_cd">"开始漫游"</string>
+    <string name="map_fab_roaming_ignored_route_playing_cd">"漫游已忽略 — 路线正在进行"</string>
 </resources>

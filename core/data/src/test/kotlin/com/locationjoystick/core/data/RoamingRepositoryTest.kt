@@ -2,10 +2,13 @@ package com.locationjoystick.core.data
 
 import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.routing.RoamingEngine
+import com.locationjoystick.core.routing.RouteReplayEngine
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
@@ -22,14 +25,16 @@ import org.junit.Test
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class RoamingRepositoryTest {
     private lateinit var fakeRoamingEngine: RoamingEngine
+    private lateinit var fakeRouteReplayEngine: RouteReplayEngine
     private lateinit var fakeLocationRepository: LocationRepository
     private lateinit var repository: RoamingRepository
 
     @Before
     fun setUp() {
         fakeRoamingEngine = mockk(relaxed = true)
+        fakeRouteReplayEngine = mockk(relaxed = true)
         fakeLocationRepository = LocationRepository()
-        repository = RoamingRepository(fakeRoamingEngine, fakeLocationRepository)
+        repository = RoamingRepository(fakeRoamingEngine, fakeLocationRepository, fakeRouteReplayEngine)
     }
 
     // isRoaming
@@ -59,6 +64,44 @@ class RoamingRepositoryTest {
             repository.stopRoaming()
 
             assertFalse(repository.isRoaming.first())
+        }
+
+    @Test
+    fun `startRoaming is a no-op while a route is playing`() =
+        runTest {
+            fakeLocationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+            fakeLocationRepository.startSpoofing()
+            val config = createDefaultConfig()
+
+            val started = repository.startRoaming(config, speedMs = 1.4)
+
+            assertFalse(started)
+            assertFalse(repository.isRoaming.first())
+            assertEquals(MockMode.ROUTE_REPLAY, fakeLocationRepository.currentMode.first())
+            verify(exactly = 0) { fakeRoamingEngine.startRoaming(any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { fakeRouteReplayEngine.stop() }
+        }
+
+    @Test
+    fun `startRoaming stops a paused route then starts roaming`() =
+        runTest {
+            fakeLocationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+            fakeLocationRepository.startSpoofing()
+            fakeLocationRepository.pauseSpoofing()
+            fakeLocationRepository.setActiveRouteId("route-1")
+            fakeLocationRepository.setRouteWaypoints(listOf(LatLng(1.0, 2.0), LatLng(3.0, 4.0)))
+            val config = createDefaultConfig()
+
+            val started = repository.startRoaming(config, speedMs = 1.4)
+
+            assertTrue(started)
+            coVerify(exactly = 1) { fakeRouteReplayEngine.stop() }
+            verify(exactly = 1) { fakeRoamingEngine.startRoaming(any(), any(), any(), any(), any()) }
+            assertEquals(MockMode.ROAMING, fakeLocationRepository.currentMode.first())
+            assertEquals(MockLocationState.RUNNING, fakeLocationRepository.mockLocationState.first())
+            assertEquals(null, fakeLocationRepository.activeRouteId.first())
+            assertEquals(null, fakeLocationRepository.routeWaypoints.first())
+            repository.stopRoaming()
         }
 
     // startRoaming

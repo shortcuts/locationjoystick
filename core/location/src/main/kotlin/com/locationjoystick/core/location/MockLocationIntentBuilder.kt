@@ -2,6 +2,7 @@ package com.locationjoystick.core.location
 
 import android.content.Context
 import android.content.Intent
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.model.LatLng
 
@@ -46,12 +47,21 @@ object MockLocationIntentBuilder {
             action = MockLocationService.ACTION_STOP
         }
 
+    fun parkSpoofingKeepWidget(context: Context): Intent =
+        Intent(context, MockLocationService::class.java).apply {
+            action = MockLocationService.ACTION_PARK_KEEP_WIDGET
+        }
+
     fun startRouteReplay(
         context: Context,
         routeId: String,
         speedMs: Double,
         isBackward: Boolean = false,
         followRoadsToStart: Boolean = false,
+        teleportToStart: Boolean = true,
+        isPlanting: Boolean = false,
+        teleportBetweenWaypoints: Boolean = false,
+        teleportBetweenDelaySeconds: Int = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
     ): Intent =
         Intent(context, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_ROUTE_REPLAY_START
@@ -59,6 +69,10 @@ object MockLocationIntentBuilder {
             putExtra(MockLocationService.EXTRA_IS_BACKWARD, isBackward)
             putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
             putExtra(MockLocationService.EXTRA_FOLLOW_ROADS_TO_START, followRoadsToStart)
+            putExtra(MockLocationService.EXTRA_TELEPORT_TO_START, teleportToStart)
+            putExtra(MockLocationService.EXTRA_IS_PLANTING, isPlanting)
+            putExtra(MockLocationService.EXTRA_TELEPORT_BETWEEN_WAYPOINTS, teleportBetweenWaypoints)
+            putExtra(MockLocationService.EXTRA_TELEPORT_BETWEEN_DELAY_SECONDS, teleportBetweenDelaySeconds)
         }
 
     fun cancelRouteReplay(context: Context): Intent =

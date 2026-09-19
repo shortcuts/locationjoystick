@@ -60,7 +60,8 @@ class RoamingEngineTest {
     fun `randomPointInRadius distribution is roughly uniform`() {
         val center = LatLng(0.0, 0.0)
         val radiusMeters = 1000.0
-        val points = (1..100).map { engine.randomPointInRadius(center, radiusMeters) }
+        val sampleCount = 400
+        val points = (1..sampleCount).map { engine.randomPointInRadius(center, radiusMeters) }
 
         // Check points spread across quadrants
         val ne = points.count { it.latitude > 0.0 && it.longitude > 0.0 }
@@ -68,12 +69,14 @@ class RoamingEngineTest {
         val se = points.count { it.latitude < 0.0 && it.longitude > 0.0 }
         val sw = points.count { it.latitude < 0.0 && it.longitude < 0.0 }
 
-        // Each quadrant should have ~25 points. Bound is ~3.5 std devs (Binomial(100, 0.25),
-        // sigma=4.33) to keep false-failure rate negligible under random sampling.
-        assertTrue("NE quadrant should have ~25 points, got $ne", ne in 10..40)
-        assertTrue("NW quadrant should have ~25 points, got $nw", nw in 10..40)
-        assertTrue("SE quadrant should have ~25 points, got $se", se in 10..40)
-        assertTrue("SW quadrant should have ~25 points, got $sw", sw in 10..40)
+        // Each quadrant should have ~sampleCount/4 points. 10%–40% of n is ~6.9 std devs
+        // (Binomial(400, 0.25), sigma≈8.66) so CI noise does not fail a working sampler.
+        val minCount = sampleCount / 10
+        val maxCount = sampleCount * 2 / 5
+        assertTrue("NE quadrant should have ~100 points, got $ne", ne in minCount..maxCount)
+        assertTrue("NW quadrant should have ~100 points, got $nw", nw in minCount..maxCount)
+        assertTrue("SE quadrant should have ~100 points, got $se", se in minCount..maxCount)
+        assertTrue("SW quadrant should have ~100 points, got $sw", sw in minCount..maxCount)
     }
 
     @Test

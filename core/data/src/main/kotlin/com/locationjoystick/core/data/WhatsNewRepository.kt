@@ -1,53 +1,44 @@
 package com.locationjoystick.core.data
 
+import android.content.Context
 import com.locationjoystick.core.common.constants.AppConstants
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import org.json.JSONObject
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** One changelog entry: category is "feat" or "fix", scope matches an AGENTS.md feature area or "General". */
+/** A user-facing entry in the shared, versioned changelog. */
 data class WhatsNewEntry(
     val category: String,
     val scope: String,
     val summary: String,
 )
 
-/**
- * Fetches the current version's "what's new" entries from the wiki (see
- * docs/features/whats-new.md) — the app never carries its own copy, so the in-app popup and
- * the website changelog can never drift apart.
- */
+/** Reads the same authored JSON used to generate the wiki, packaged for offline use. */
 @Singleton
 class WhatsNewRepository
     @Inject
-    constructor() {
-        internal var client: OkHttpClient =
-            OkHttpClient
-                .Builder()
-                .connectTimeout(AppConstants.WhatsNewConstants.CONNECT_TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
-                .readTimeout(AppConstants.WhatsNewConstants.READ_TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
-                .build()
-
-        internal var baseUrl: String = AppConstants.WhatsNewConstants.BASE_URL
-
+    constructor(
+        @param:ApplicationContext private val context: Context,
+    ) {
         suspend fun fetchEntries(version: String): List<WhatsNewEntry>? =
             withContext(Dispatchers.IO) {
                 runCatching {
-                    val url = "$baseUrl${version.substringBefore("-")}.json"
-                    client.newCall(Request.Builder().url(url).build()).execute().use { resp ->
-                        if (!resp.isSuccessful) return@use null
-                        val body = resp.body?.string() ?: return@use null
-                        val entriesJson = JSONObject(body).getJSONArray("entries")
-                        List(entriesJson.length()) { i ->
-                            val e = entriesJson.getJSONObject(i)
-                            WhatsNewEntry(e.getString("category"), e.getString("scope"), e.getString("summary"))
-                        }.takeIf { it.isNotEmpty() }
-                    }
+                    context.assets
+                        .open(AppConstants.WhatsNewConstants.assetFileName(version))
+                        .bufferedReader()
+                        .use { parseWhatsNewEntries(it.readText()) }
                 }.getOrNull()
             }
     }
+
+internal fun parseWhatsNewEntries(body: String): List<WhatsNewEntry>? =
+    runCatching {
+        val entries = JSONObject(body).getJSONArray("entries")
+        List(entries.length()) { i ->
+            val entry = entries.getJSONObject(i)
+            WhatsNewEntry(entry.getString("category"), entry.getString("scope"), entry.getString("summary"))
+        }.takeIf { it.isNotEmpty() }
+    }.getOrNull()

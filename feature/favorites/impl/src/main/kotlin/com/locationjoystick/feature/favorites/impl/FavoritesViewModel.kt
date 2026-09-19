@@ -2,6 +2,7 @@ package com.locationjoystick.feature.favorites.impl
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.locationjoystick.core.common.util.parsePastedCoordinates
 import com.locationjoystick.core.common.util.tickerFlow
 import com.locationjoystick.core.data.CooldownEngine
 import com.locationjoystick.core.data.CooldownState
@@ -11,6 +12,8 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.RecentSearch
+import com.locationjoystick.core.model.SavedItemSortMode
+import com.locationjoystick.core.model.sortedBySavedItemMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,20 +38,14 @@ class FavoritesViewModel
             combine(
                 favoriteRepository.getFavorites(),
                 pendingDeleteIdFlow,
-                settingsRepository.getFavoritesSortNewestFirst(),
+                settingsRepository.getFavoritesSortMode(),
                 settingsRepository.getHideTeleportFeatures(),
-            ) { favorites, pendingDeleteId, sortNewestFirst, hideTeleportFeatures ->
-                val sorted =
-                    if (sortNewestFirst) {
-                        favorites.sortedByDescending { it.createdAt }
-                    } else {
-                        favorites.sortedBy { it.createdAt }
-                    }
+            ) { favorites, pendingDeleteId, sortMode, hideTeleportFeatures ->
                 FavoritesUiState(
-                    favorites = sorted,
+                    favorites = favorites.sortedBySavedItemMode(sortMode) { it.name },
                     isLoading = false,
                     pendingDeleteId = pendingDeleteId,
-                    sortNewestFirst = sortNewestFirst,
+                    sortMode = sortMode,
                     hideTeleportFeatures = hideTeleportFeatures,
                 )
             }.stateIn(
@@ -81,9 +78,9 @@ class FavoritesViewModel
                 initialValue = emptyMap(),
             )
 
-        fun toggleSort() {
+        fun setSortMode(mode: SavedItemSortMode) {
             viewModelScope.launch {
-                settingsRepository.setFavoritesSortNewestFirst(!uiState.value.sortNewestFirst)
+                settingsRepository.setFavoritesSortMode(mode)
             }
         }
 
@@ -137,6 +134,22 @@ class FavoritesViewModel
                     createdAt = System.currentTimeMillis(),
                 )
             }
+        }
+
+        /**
+         * Parses pasted decimal-degree text the same way route paste does, then saves the first
+         * valid pair as a favorite.
+         *
+         * @return true if a coordinate was parsed and save was started
+         */
+        fun addFavoriteFromPaste(
+            name: String,
+            pasteText: String,
+            swapLatLon: Boolean = false,
+        ): Boolean {
+            val point = parsePastedCoordinates(pasteText, swapLatLon).firstOrNull() ?: return false
+            addFavorite(name, point.latitude, point.longitude)
+            return true
         }
 
         fun updateFavorite(

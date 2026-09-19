@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import com.locationjoystick.app.MainActivity
 import com.locationjoystick.core.common.constants.AppConstants
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -71,6 +72,19 @@ class MainActivityIntentTest {
         }
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
+    }
+
+    @Test
+    fun intent_navigate_to_capture_lands_on_capture_screen() {
+        composeRule.activityRule.scenario.onActivity { activity ->
+            activity.handleIntent(
+                Intent(activity, MainActivity::class.java)
+                    .putExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_CAPTURE, true),
+            )
+        }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Open navigation menu").assertIsDisplayed()
+        composeRule.onNodeWithText("Capture").assertIsDisplayed()
     }
 
     @Test

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lj_drawer_content_capture">"采集"</string>
+    <string name="app_gpx_open_failed">无法打开该 GPX 文件</string>
+    <string name="link_interceptor_captured">"已采集 %1$s"</string>
+    <string name="link_interceptor_jumped_to">"已跳转至 %1$s"</string>
+    <string name="link_interceptor_captured_and_jumped_to">"已采集并跳转至 %1$s"</string>
+</resources>

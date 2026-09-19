@@ -11,6 +11,7 @@ android {
         buildConfig = true
     }
     defaultConfig {
+        applicationId = "com.locationjoystick.app"
         testInstrumentationRunner = "com.locationjoystick.app.HiltTestRunner"
     }
     androidResources {
@@ -33,6 +34,7 @@ dependencies {
     implementation(project(":core:datastore"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:location"))
+    implementation(project(":core:map"))
     implementation(project(":core:model"))
     implementation(project(":core:overlay"))
     implementation(project(":core:routing"))

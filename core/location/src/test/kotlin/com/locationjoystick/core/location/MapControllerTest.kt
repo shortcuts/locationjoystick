@@ -76,8 +76,8 @@ class MapControllerTest {
             val settingsRepository =
                 mockk<SettingsRepository>(relaxed = true) {
                     every { getActiveSpeedProfile() } returns flowOf(walkProfile)
-                    every { getRoutesSortNewestFirst() } returns flowOf(true)
-                    every { getFavoritesSortNewestFirst() } returns flowOf(true)
+                    every { getRoutesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
+                    every { getFavoritesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
                     every { getSpeedUnit() } returns flowOf(SpeedUnit.KMH)
                     every { getRecentSearches() } returns flowOf(emptyList())
                     every { getRoamingDefaults() } returns flowOf(RoamingDefaults())
@@ -170,8 +170,8 @@ class MapControllerTest {
             val settingsRepository =
                 mockk<SettingsRepository>(relaxed = true) {
                     every { getActiveSpeedProfile() } returns flowOf(walkProfile)
-                    every { getRoutesSortNewestFirst() } returns flowOf(true)
-                    every { getFavoritesSortNewestFirst() } returns flowOf(true)
+                    every { getRoutesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
+                    every { getFavoritesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
                     every { getSpeedUnit() } returns flowOf(SpeedUnit.KMH)
                     every { getRecentSearches() } returns flowOf(emptyList())
                     every { getRoamingDefaults() } returns flowOf(RoamingDefaults())

@@ -25,6 +25,9 @@
     <string name="settings_hub_favorites_and_routes_desc">"Curated hot locations and pre-built routes to populate your library."</string>
     <string name="settings_hub_roaming">"Roaming"</string>
     <string name="settings_hub_roaming_desc">"Default area, distance, speed, and routing style for random walks."</string>
+    <string name="settings_hub_capture">"Capture"</string>
+    <string name="settings_hub_capture_desc">"Set this app as your default browser so map links from other apps open here instead of Google Maps."</string>
+    <string name="settings_capture_sub_screen_title">"Capture"</string>
     <string name="settings_favorites_routes_title">"Favorites &amp; Routes"</string>
     <string name="settings_favorites_routes_favorites">"Favorites"</string>
     <string name="settings_favorites_routes_options_for_the_favorites_list">"Options for the favorites list."</string>

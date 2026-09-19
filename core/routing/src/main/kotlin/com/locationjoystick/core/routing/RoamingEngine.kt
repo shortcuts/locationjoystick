@@ -2,9 +2,11 @@ package com.locationjoystick.core.routing
 
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.buildPlantingSpiralLoop
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RoamingConfig
+import com.locationjoystick.core.model.RoamingKind
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -72,7 +74,18 @@ class RoamingEngine
          * completes immediately with no movement.
          */
         suspend fun planRoute(config: RoamingConfig): List<LatLng> =
-            if (config.useRoadSnapping) planRoadFollowingRoute(config) else planStraightLineRoute(config)
+            when (config.kind) {
+                RoamingKind.PLANTING -> planPlantingSpiral(config)
+                RoamingKind.WALK_AROUND ->
+                    if (config.useRoadSnapping) planRoadFollowingRoute(config) else planStraightLineRoute(config)
+            }
+
+        private fun planPlantingSpiral(config: RoamingConfig): List<LatLng> =
+            buildPlantingSpiralLoop(
+                center = config.centerPosition,
+                startRadiusMeters = config.plantingStartRadiusMeters,
+                endRadiusMeters = config.plantingEndRadiusMeters,
+            )
 
         private fun planStraightLineRoute(config: RoamingConfig): List<LatLng> {
             if (config.distanceMeters <= 0.0) return listOf(config.centerPosition)
@@ -187,7 +200,22 @@ class RoamingEngine
                     onRouteUpdate(route)
 
                     if (route.size >= 2) {
-                        walkRouteSegment(route, route.first(), onPositionUpdate)
+                        if (config.kind == RoamingKind.PLANTING) {
+                            val loops =
+                                if (config.plantingInfiniteLoops) {
+                                    Int.MAX_VALUE
+                                } else {
+                                    config.plantingLoopCount.coerceAtLeast(1)
+                                }
+                            var current = route.first()
+                            var loopIndex = 0
+                            while (loopIndex < loops && currentCoroutineContext().isActive) {
+                                current = walkRouteSegment(route, current, onPositionUpdate)
+                                loopIndex++
+                            }
+                        } else {
+                            walkRouteSegment(route, route.first(), onPositionUpdate)
+                        }
                     }
 
                     onRouteUpdate(emptyList())
@@ -204,9 +232,10 @@ class RoamingEngine
             onTick: () -> Unit = {},
         ): LatLng {
             var currentPosition = startPosition
-            // startPosition is route[0] (the caller's only call site passes route.first()) —
-            // target waypoint 1 (the first one ahead), matching RouteReplayEngine's
-            // resumeWaypointIndex convention. Targeting index 0 snaps instantly and wastes a tick.
+            // startPosition is route[0] on the initial call, or the prior loop's landing spot on
+            // each planting repeat — either way it's already "here", so target waypoint 1 (the
+            // first one ahead), matching RouteReplayEngine's resumeWaypointIndex convention.
+            // Targeting index 0 snaps instantly and wastes a tick.
             var waypointIndex = 1
             while (currentCoroutineContext().isActive) {
                 while (isPaused && currentCoroutineContext().isActive) {

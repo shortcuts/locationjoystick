@@ -1,7 +1,9 @@
 package com.locationjoystick.feature.map.impl
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.RoamingKind
 
 sealed interface MapAction {
     data class TapToTeleport(
@@ -12,7 +14,9 @@ sealed interface MapAction {
         val position: LatLng,
     ) : MapAction
 
-    data object RecenterCamera : MapAction
+    data class RecenterCamera(
+        val fallbackPosition: LatLng? = null,
+    ) : MapAction
 
     data object UserStartedPanning : MapAction
 
@@ -80,12 +84,36 @@ sealed interface MapAction {
         val id: String,
     ) : MapAction
 
+    data class SelectPlantingSpeedProfile(
+        val id: String,
+    ) : MapAction
+
     data class ToggleRoamingFollowRoads(
         val enabled: Boolean,
     ) : MapAction
 
     data class ToggleRoamingReturnToStart(
         val enabled: Boolean,
+    ) : MapAction
+
+    data class UpdateRoamingKind(
+        val kind: RoamingKind,
+    ) : MapAction
+
+    data class UpdatePlantingStartRadius(
+        val meters: Double,
+    ) : MapAction
+
+    data class UpdatePlantingEndRadius(
+        val meters: Double,
+    ) : MapAction
+
+    data class TogglePlantingInfiniteLoops(
+        val enabled: Boolean,
+    ) : MapAction
+
+    data class UpdatePlantingLoopCount(
+        val count: Int,
     ) : MapAction
 
     data object StartRoaming : MapAction
@@ -123,6 +151,9 @@ sealed interface MapAction {
         val isReverse: Boolean = false,
         val isReturnToLocation: Boolean = false,
         val followRoadsToStart: Boolean = false,
+        val isPlanting: Boolean = false,
+        val teleportBetweenWaypoints: Boolean = false,
+        val teleportBetweenDelaySeconds: Int = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
     ) : MapAction
 
     data object PauseRouteReplay : MapAction
@@ -142,4 +173,21 @@ sealed interface MapAction {
     data object ToggleWalkControls : MapAction
 
     data object ClearPinnedPoint : MapAction
+
+    data object OpenPasteCoordinates : MapAction
+
+    data object ClosePasteCoordinates : MapAction
+
+    data object OpenCaptureCoordinates : MapAction
+
+    data object CloseCaptureCoordinates : MapAction
+
+    data class PinCoordinateTarget(
+        val position: LatLng,
+    ) : MapAction
+
+    data class SaveFavoriteAt(
+        val name: String,
+        val position: LatLng,
+    ) : MapAction
 }

@@ -23,6 +23,7 @@ import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.common.util.LocaleContextWrapper
 import com.locationjoystick.core.common.util.NetworkUtils
 import com.locationjoystick.core.common.util.NsdCodeManager
+import com.locationjoystick.core.common.util.clampTeleportBetweenDelaySeconds
 import com.locationjoystick.core.data.DebugStats
 import com.locationjoystick.core.data.ElevationRepository
 import com.locationjoystick.core.data.GroupRepository
@@ -73,6 +74,7 @@ class MockLocationService : Service() {
 
         const val ACTION_START = AppConstants.ServiceConstants.ACTION_START
         const val ACTION_STOP = AppConstants.ServiceConstants.ACTION_STOP
+        const val ACTION_PARK_KEEP_WIDGET = AppConstants.ServiceConstants.ACTION_PARK_KEEP_WIDGET
         const val ACTION_UPDATE_POSITION = AppConstants.ServiceConstants.ACTION_UPDATE_POSITION
         const val ACTION_ROUTE_REPLAY_START = AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_START
         const val ACTION_ROUTE_REPLAY_PAUSE = AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_PAUSE
@@ -96,6 +98,10 @@ class MockLocationService : Service() {
         const val EXTRA_RETURN_LAT = AppConstants.ServiceConstants.EXTRA_RETURN_LAT
         const val EXTRA_RETURN_LON = AppConstants.ServiceConstants.EXTRA_RETURN_LON
         const val EXTRA_FOLLOW_ROADS_TO_START = AppConstants.ServiceConstants.EXTRA_FOLLOW_ROADS_TO_START
+        const val EXTRA_TELEPORT_TO_START = AppConstants.ServiceConstants.EXTRA_TELEPORT_TO_START
+        const val EXTRA_IS_PLANTING = AppConstants.ServiceConstants.EXTRA_IS_PLANTING
+        const val EXTRA_TELEPORT_BETWEEN_WAYPOINTS = AppConstants.ServiceConstants.EXTRA_TELEPORT_BETWEEN_WAYPOINTS
+        const val EXTRA_TELEPORT_BETWEEN_DELAY_SECONDS = AppConstants.ServiceConstants.EXTRA_TELEPORT_BETWEEN_DELAY_SECONDS
     }
 
     inner class LocalBinder : Binder() {
@@ -325,9 +331,12 @@ class MockLocationService : Service() {
                                 }
                             }
                         }
-                        stopService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))
-                        stopService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
-                        Log.i(TAG, "Overlay services stopped")
+                        stopOverlayServices(
+                            computeOverlayStopAction(
+                                OverlayStopTrigger.STATE_IDLE,
+                                settingsRepository.getKeepWidgetOnIdle().first(),
+                            ),
+                        )
                     }
 
                     MockLocationState.PAUSED -> {
@@ -494,9 +503,22 @@ class MockLocationService : Service() {
             }
 
             null -> {
-                // Service restarted by OS (START_STICKY). Resume leader/follower mode first if active,
-                // else fall through to remembered-location logic.
+                // Service restarted by OS (START_STICKY). A parked widget must not resume mock GPS.
                 serviceScope.launch {
+                    when (computeStickyNullIntentAction(settingsRepository.getKeepWidgetOnIdle().first())) {
+                        StickyNullIntentAction.KEEP_PARKED -> {
+                            Log.i(TAG, "OS restart: parked — keeping widget, not resuming spoofing")
+                            val hideWidget = settingsRepository.getHideWidgetOverlay().first()
+                            if (Settings.canDrawOverlays(this@MockLocationService) && !hideWidget) {
+                                startService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
+                            }
+                            return@launch
+                        }
+
+                        StickyNullIntentAction.RESUME_SESSION -> {
+                            Unit
+                        }
+                    }
                     val groupState = groupRepository.groupState.first()
                     if (groupState.role == GroupRole.LEADER) {
                         val id = groupState.groupId ?: return@launch
@@ -533,6 +555,10 @@ class MockLocationService : Service() {
                 return START_NOT_STICKY
             }
 
+            ACTION_PARK_KEEP_WIDGET -> {
+                parkSpoofingKeepWidget()
+            }
+
             ACTION_UPDATE_POSITION -> {
                 val currentPos = positionRef.get()
                 val lat = intent.getDoubleExtra(ServiceConstants.EXTRA_LAT, currentPos.latitude)
@@ -543,6 +569,9 @@ class MockLocationService : Service() {
                     updatePositionWithVector(lat, lon, speedMs, bearing)
                 } else {
                     updatePosition(lat, lon)
+                    if (shouldPushImmediateLocationUpdate(speedMs, locationRepository.currentMode.value)) {
+                        pushLocationUpdate()
+                    }
                 }
             }
 
@@ -576,7 +605,29 @@ class MockLocationService : Service() {
                     val returnPosition =
                         if (!returnLat.isNaN() && !returnLon.isNaN()) LatLng(returnLat, returnLon) else null
                     val followRoadsToStart = intent.getBooleanExtra(EXTRA_FOLLOW_ROADS_TO_START, false)
-                    handleReplayStart(routeId, isBackward, speedMs, isLoopingOverride, returnPosition, followRoadsToStart)
+                    val teleportToStart = intent.getBooleanExtra(EXTRA_TELEPORT_TO_START, true)
+                    val isPlanting = intent.getBooleanExtra(EXTRA_IS_PLANTING, false)
+                    val teleportBetweenWaypoints =
+                        intent.getBooleanExtra(EXTRA_TELEPORT_BETWEEN_WAYPOINTS, false) && teleportToStart
+                    val teleportBetweenDelaySeconds =
+                        clampTeleportBetweenDelaySeconds(
+                            intent.getIntExtra(
+                                EXTRA_TELEPORT_BETWEEN_DELAY_SECONDS,
+                                AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
+                            ),
+                        )
+                    handleReplayStart(
+                        routeId,
+                        isBackward,
+                        speedMs,
+                        isLoopingOverride,
+                        returnPosition,
+                        followRoadsToStart,
+                        teleportToStart,
+                        isPlanting,
+                        teleportBetweenWaypoints,
+                        teleportBetweenDelaySeconds,
+                    )
                 }
             }
 
@@ -594,10 +645,12 @@ class MockLocationService : Service() {
             }
 
             ACTION_ROUTE_REPLAY_STOP -> {
+                replayOrchestrator.abortInFlightStart()
                 serviceScope.launch { handleReplayStop() }
             }
 
             ACTION_ROUTE_REPLAY_CANCEL -> {
+                replayOrchestrator.abortInFlightStart()
                 serviceScope.launch { handleReplayCancel() }
             }
 
@@ -661,6 +714,7 @@ class MockLocationService : Service() {
             Log.i(TAG, "Spoofing already running; ignoring duplicate startSpoofing()")
             return
         }
+        serviceScope.launch { settingsRepository.setKeepWidgetOnIdle(false) }
         // Reset ERROR state so a retry attempt can proceed cleanly.
         if (_state.value == MockLocationState.ERROR) {
             Log.i(TAG, "Clearing ERROR state before retry")
@@ -735,8 +789,8 @@ class MockLocationService : Service() {
 
     // Callers: JoystickOverlayService (direct call) and the WalkCoordinator position callback
     // (ACTION_UPDATE_POSITION intent) — both self-report their own mode (JOYSTICK / WALK_TO).
-    // Every other mode's engine (ReplayOrchestrator, RoamingEngine, follower sync) owns position
-    // updates for its own tick and must not have them overwritten by a stale/racing call here.
+    // A playing route, running roam, or follower owns the tick. Paused route and paused roam
+    // yield so the joystick can steer without stealing mode; resume still snaps to the next stop.
     fun updatePositionWithVector(
         lat: Double,
         lon: Double,
@@ -744,7 +798,9 @@ class MockLocationService : Service() {
         bearing: Float,
     ) {
         val mode = locationRepository.currentMode.value
-        if (mode != MockMode.JOYSTICK && mode != MockMode.WALK_TO) return
+        val mockState = locationRepository.mockLocationState.value
+        val isRoamingPaused = mode == MockMode.ROAMING && roamingRepository.isRoamingPaused.value
+        if (!shouldApplyUpdatePositionWithVector(mode, mockState, isRoamingPaused)) return
         writeCurrentPosition(lat, lon)
         currentSpeedMs = speedMs
         currentBearing = bearing
@@ -767,6 +823,41 @@ class MockLocationService : Service() {
     }
 
     fun stopSpoofing() {
+        serviceScope.launch { settingsRepository.setKeepWidgetOnIdle(false) }
+        // Already IDLE after Pause: the IDLE collector will not fire again, so Stop must
+        // close the widget here. Also unbinds the widget's AUTO_CREATE hold on this service.
+        stopOverlayServices(
+            computeOverlayStopAction(OverlayStopTrigger.FULL_STOP, keepWidgetOverlay = false),
+        )
+        tearDownSpoofing(stopService = true)
+    }
+
+    /**
+     * Same mock-GPS teardown as [stopSpoofing] (test provider, loop, wakelock, route/roam), but
+     * the floating widget stays on screen. Joystick overlay still stops.
+     */
+    fun parkSpoofingKeepWidget() {
+        serviceScope.launch { settingsRepository.setKeepWidgetOnIdle(true) }
+        serviceScope.launch { replayOrchestrator.handleStop() }
+        tearDownSpoofing(stopService = false)
+        Log.i(TAG, "Spoofing parked; widget overlay kept")
+    }
+
+    private fun stopOverlayServices(action: IdleOverlayStopAction) {
+        stopService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))
+        when (action) {
+            IdleOverlayStopAction.STOP_JOYSTICK_AND_WIDGET -> {
+                stopService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
+                Log.i(TAG, "Overlay services stopped")
+            }
+
+            IdleOverlayStopAction.STOP_JOYSTICK_ONLY -> {
+                Log.i(TAG, "Joystick overlay stopped; widget kept after pause")
+            }
+        }
+    }
+
+    private fun tearDownSpoofing(stopService: Boolean) {
         // Cancel immediately (idempotent); null assignment deferred under mutex so the
         // RUNNING observer can't start a new loop between our cancel and the null write.
         updateJob?.cancel()
@@ -783,8 +874,10 @@ class MockLocationService : Service() {
         locationRepository.setMockMode(MockMode.TELEPORT)
         locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
-        stopSelf()
-        Log.i(TAG, "Spoofing stopped")
+        if (stopService) {
+            stopSelf()
+            Log.i(TAG, "Spoofing stopped")
+        }
     }
 
     /**
@@ -987,7 +1080,22 @@ class MockLocationService : Service() {
         isLoopingOverride: Boolean? = null,
         returnPosition: LatLng? = null,
         followRoadsToStart: Boolean = false,
-    ) = replayOrchestrator.handleStart(routeId, isBackward, speedMs, isLoopingOverride, returnPosition, followRoadsToStart)
+        teleportToStart: Boolean = true,
+        isPlanting: Boolean = false,
+        teleportBetweenWaypoints: Boolean = false,
+        teleportBetweenDelaySeconds: Int = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
+    ) = replayOrchestrator.handleStart(
+        routeId,
+        isBackward,
+        speedMs,
+        isLoopingOverride,
+        returnPosition,
+        followRoadsToStart,
+        teleportToStart,
+        isPlanting,
+        teleportBetweenWaypoints,
+        teleportBetweenDelaySeconds,
+    )
 
     private fun handleEphemeralReplayStart(
         waypoints: List<LatLng>,

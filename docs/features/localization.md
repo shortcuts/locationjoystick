@@ -16,12 +16,12 @@ Key files: `core/common/util/LocaleContextWrapper.kt`, `core/common/constants/Ap
 
 ## Resource Layout
 
-There is no single central `strings.xml`. Every module that has its own Compose UI strings owns
-its own `res/values/strings.xml` (English, source of truth) plus a sibling
-`res/values-<qualifier>/strings.xml` per supported locale, with identical keys:
-`app`, `core/designsystem`, `core/location`, `core/routing`, `feature/favorites/impl`,
-`feature/group/impl`, `feature/map/impl`, `feature/onboarding/impl`, `feature/routes/impl`,
-`feature/settings/impl`, `feature/widget/impl`.
+There is no single central `strings.xml`. Every module that has its own user-facing strings
+(Compose UI or `Context.getString()` call sites) owns its own `res/values/strings.xml` (English,
+source of truth) plus a sibling `res/values-<qualifier>/strings.xml` per supported locale, with
+identical keys: `app`, `core/common`, `core/designsystem`, `core/location`, `core/routing`,
+`feature/favorites/impl`, `feature/group/impl`, `feature/map/impl`, `feature/onboarding/impl`,
+`feature/routes/impl`, `feature/settings/impl`, `feature/widget/impl`.
 
 ## Selecting a Display Language
 

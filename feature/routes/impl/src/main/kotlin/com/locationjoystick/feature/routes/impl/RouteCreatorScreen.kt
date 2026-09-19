@@ -44,22 +44,22 @@ import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
+import com.locationjoystick.core.designsystem.component.rememberLjSheetState
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.map.geojson.buildPositionGeoJson
 import com.locationjoystick.core.map.geojson.buildSegmentsGeoJson
 import com.locationjoystick.core.map.geojson.buildWaypointsGeoJson
 import com.locationjoystick.core.map.maplibre.addCreatorLayers
+import com.locationjoystick.core.map.maplibre.rememberMapView
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.overlay.OverlayService
 import com.locationjoystick.feature.routes.impl.R
-import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.maps.MapLibreMap
-import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.geometry.LatLng as MapLatLng
@@ -135,11 +135,7 @@ internal fun RouteCreatorScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val mapView =
-        remember {
-            MapLibre.getInstance(context)
-            MapView(context)
-        }
+    val mapView = rememberMapView()
     val mapRef = remember { mutableStateOf<MapLibreMap?>(null) }
     val segmentsSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val waypointsSource = remember { mutableStateOf<GeoJsonSource?>(null) }
@@ -208,11 +204,10 @@ internal fun RouteCreatorScreen(
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                         contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                         onClick = {
-                            mapRef.value?.animateCamera(
+                            mapRef.value?.moveCamera(
                                 CameraUpdateFactory.newLatLng(
                                     MapLatLng(currentPosition.latitude, currentPosition.longitude),
                                 ),
-                                500,
                             )
                         },
                     )
@@ -260,8 +255,7 @@ internal fun RouteCreatorScreen(
                     .padding(bottom = paddingValues.calculateBottomPadding()),
         ) {
             AndroidView(
-                factory = { ctx ->
-                    MapLibre.getInstance(ctx)
+                factory = { _ ->
                     mapView.apply {
                         getMapAsync { map ->
                             mapRef.value = map
@@ -322,9 +316,8 @@ internal fun RouteCreatorScreen(
                         // matching the long-press/tap-to-add flow (issue: auto-added a waypoint on search).
                         showSearch = false
                         val map = mapRef.value ?: return@NominatimSearchBar
-                        map.animateCamera(
+                        map.moveCamera(
                             CameraUpdateFactory.newLatLngZoom(MapLatLng(lat, lon), AppConstants.MapConstants.DEFAULT_ZOOM),
-                            500,
                         )
                     },
                     recentSearches = recentSearches,
@@ -357,9 +350,8 @@ internal fun RouteCreatorScreen(
             favorites = favorites,
             onSelect = { position ->
                 showFavoritesSheet = false
-                mapRef.value?.animateCamera(
+                mapRef.value?.moveCamera(
                     CameraUpdateFactory.newLatLng(MapLatLng(position.latitude, position.longitude)),
-                    500,
                 )
             },
             onDismiss = { showFavoritesSheet = false },
@@ -384,7 +376,7 @@ private fun CreatorFavoritesSheet(
     onSelect: (LatLng) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberLjSheetState()) {
         FavoritesList(
             title = stringResource(R.string.route_creator_jump_to_favorite),
             favorites = favorites,

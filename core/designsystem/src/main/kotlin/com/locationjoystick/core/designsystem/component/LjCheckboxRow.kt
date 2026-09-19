@@ -31,6 +31,7 @@ fun LjCheckboxRow(
     textColor: Color = Color.Unspecified,
     descriptionColor: Color? = null,
     icon: ImageVector? = null,
+    trailing: @Composable (() -> Unit)? = null,
 ) {
     Row(
         modifier =
@@ -55,7 +56,7 @@ fun LjCheckboxRow(
             )
             Spacer(modifier = Modifier.width(LjSpacing.xs))
         }
-        Column(modifier = Modifier.padding(start = LjSpacing.sm)) {
+        Column(modifier = Modifier.weight(1f).padding(start = LjSpacing.sm)) {
             Text(
                 text = title,
                 color =
@@ -73,5 +74,6 @@ fun LjCheckboxRow(
                 )
             }
         }
+        trailing?.invoke()
     }
 }

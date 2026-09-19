@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paste_coordinates_screen_paste_coordinates">"粘贴坐标"</string>
+    <string name="paste_coordinates_screen_coordinates">"坐标"</string>
+    <string name="paste_coordinates_screen_paste_coordinates_here_one_per_line">"在此粘贴坐标，每行一个…\n"</string>
+    <string name="paste_coordinates_screen_swap_lat_lon_order">"交换经纬度顺序"</string>
+    <string name="paste_coordinates_screen_use_this_when_the_first_number_is_longitude">"当第一个数字是经度时使用此选项"</string>
+    <string name="paste_coordinates_screen_paste_from_clipboard">"从剪贴板粘贴"</string>
+    <string name="paste_coordinates_screen_load_points">"加载点位"</string>
+    <string name="paste_coordinates_screen_point_order">"点位顺序"</string>
+    <string name="paste_coordinates_screen_build_mode">"构建模式"</string>
+    <string name="paste_coordinates_screen_circle_radius_meters">"圆圈半径（米）"</string>
+    <string name="paste_coordinates_screen_default_35_m_circles_stay_geometric_only_travel_between_them">"默认 35 米。圆圈保持几何形状，只有圆圈之间的移动才能沿道路进行。"</string>
+    <string name="paste_coordinates_screen_between_circles">"圆圈之间"</string>
+    <string name="paste_coordinates_screen_save_route">"保存路线"</string>
+    <string name="paste_coordinates_screen_route_name">"路线名称"</string>
+    <string name="paste_coordinates_screen_save">"保存"</string>
+    <string name="paste_coordinates_screen_cancel">"取消"</string>
+    <string name="routes_screen_add_route">"添加路线"</string>
+    <string name="routes_screen_search_routes">"搜索路线"</string>
+    <string name="routes_screen_paste_coordinates">"粘贴坐标"</string>
+    <string name="routes_screen_share">"分享"</string>
+    <string name="routes_share_title">"分享 %1$s"</string>
+    <string name="routes_screen_copy">"复制"</string>
+    <string name="routes_screen_send_as_message">"以消息发送"</string>
+    <string name="routes_screen_close">"关闭"</string>
+    <string name="routes_no_routes_yet">"暂无路线"</string>
+    <string name="routes_add_a_route">"添加一条路线"</string>
+    <string name="routes_no_routes_match_your_search">"没有匹配的路线"</string>
+    <string name="routes_copied_coordinates">"已复制坐标"</string>
+    <string name="paste_keep_original">保留原始顺序</string>
+    <string name="paste_optimize_proximity">优化路径顺序</string>
+    <string name="paste_as_is">原样</string>
+    <string name="paste_walkable_path">可行走路径</string>
+    <string name="paste_planting_mode">种植模式</string>
+    <string name="paste_straight">直线</string>
+    <string name="paste_via_roads">沿道路</string>
+    <string name="paste_building">构建中…</string>
+    <string name="paste_build_preview">构建预览</string>
+    <string name="paste_save_route">保存路线</string>
+    <string name="paste_empty_clipboard">剪贴板为空。</string>
+    <plurals name="paste_coordinates_screen_points_loaded">
+        <item quantity="other">"已加载 %1$d 个点位"</item>
+    </plurals>
+    <plurals name="paste_coordinates_screen_waypoints_summary">
+        <item quantity="other">"%1$d 个途经点 · %2$s"</item>
+    </plurals>
+</resources>

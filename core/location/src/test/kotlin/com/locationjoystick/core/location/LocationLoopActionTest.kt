@@ -173,6 +173,45 @@ class LocationLoopActionTest {
     }
 
     @Test
+    fun `idle overlay stop keeps the widget when parked`() {
+        assertEquals(IdleOverlayStopAction.STOP_JOYSTICK_ONLY, computeIdleOverlayStopAction(keepWidgetOverlay = true))
+    }
+
+    @Test
+    fun `idle overlay stop tears down both overlays when not parked`() {
+        assertEquals(
+            IdleOverlayStopAction.STOP_JOYSTICK_AND_WIDGET,
+            computeIdleOverlayStopAction(keepWidgetOverlay = false),
+        )
+    }
+
+    @Test
+    fun `full stop after park still tears down the widget`() {
+        assertEquals(
+            IdleOverlayStopAction.STOP_JOYSTICK_AND_WIDGET,
+            computeOverlayStopAction(OverlayStopTrigger.FULL_STOP, keepWidgetOverlay = true),
+        )
+    }
+
+    @Test
+    fun `idle collector after park keeps the widget`() {
+        assertEquals(
+            IdleOverlayStopAction.STOP_JOYSTICK_ONLY,
+            computeOverlayStopAction(OverlayStopTrigger.STATE_IDLE, keepWidgetOverlay = true),
+        )
+    }
+
+    @Test
+    fun `sticky restart stays parked instead of resuming spoofing`() {
+        assertEquals(StickyNullIntentAction.KEEP_PARKED, computeStickyNullIntentAction(keepWidgetOnIdle = true))
+    }
+
+    @Test
+    fun `sticky restart resumes the session when not parked`() {
+        assertEquals(StickyNullIntentAction.RESUME_SESSION, computeStickyNullIntentAction(keepWidgetOnIdle = false))
+    }
+
+    @Test
     fun `widget overlay starts while running and not hidden`() {
         val action = computeWidgetOverlayAction(state = MockLocationState.RUNNING, hideWidgetOverlay = false)
         assertEquals(WidgetOverlayAction.START, action)
@@ -272,5 +311,58 @@ class LocationLoopActionTest {
         assertEquals(5.0, req.radiusMeters, 0.0)
         assertEquals(10f, req.bearingDeg)
         assertEquals(AppConstants.JitterConstants.LONGITUDINAL_JITTER_FRACTION, req.longitudinalFraction, 0.0)
+    }
+
+    @Test
+    fun `updatePositionWithVector applies for joystick and walk-to`() {
+        assertEquals(true, shouldApplyUpdatePositionWithVector(MockMode.JOYSTICK, MockLocationState.RUNNING))
+        assertEquals(true, shouldApplyUpdatePositionWithVector(MockMode.WALK_TO, MockLocationState.RUNNING))
+    }
+
+    @Test
+    fun `updatePositionWithVector is a no-op while route replay is running`() {
+        assertEquals(false, shouldApplyUpdatePositionWithVector(MockMode.ROUTE_REPLAY, MockLocationState.RUNNING))
+    }
+
+    @Test
+    fun `updatePositionWithVector applies while route replay is paused`() {
+        assertEquals(true, shouldApplyUpdatePositionWithVector(MockMode.ROUTE_REPLAY, MockLocationState.PAUSED))
+    }
+
+    @Test
+    fun `updatePositionWithVector applies while roaming is paused`() {
+        assertEquals(
+            true,
+            shouldApplyUpdatePositionWithVector(
+                MockMode.ROAMING,
+                MockLocationState.RUNNING,
+                isRoamingPaused = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `updatePositionWithVector is a no-op for running roam follower and teleport`() {
+        assertEquals(false, shouldApplyUpdatePositionWithVector(MockMode.ROAMING, MockLocationState.RUNNING))
+        assertEquals(false, shouldApplyUpdatePositionWithVector(MockMode.FOLLOWER, MockLocationState.RUNNING))
+        assertEquals(false, shouldApplyUpdatePositionWithVector(MockMode.TELEPORT, MockLocationState.RUNNING))
+    }
+
+    @Test
+    fun `teleport extras push a GPS fix immediately`() {
+        assertEquals(true, shouldPushImmediateLocationUpdate(speedMs = 0f, MockMode.TELEPORT))
+        assertEquals(true, shouldPushImmediateLocationUpdate(speedMs = 0f, MockMode.WALK_TO))
+        assertEquals(true, shouldPushImmediateLocationUpdate(speedMs = 0f, MockMode.ROUTE_REPLAY))
+    }
+
+    @Test
+    fun `walk and joystick extras do not push immediately`() {
+        assertEquals(false, shouldPushImmediateLocationUpdate(speedMs = 1.4f, MockMode.WALK_TO))
+        assertEquals(false, shouldPushImmediateLocationUpdate(speedMs = 1.4f, MockMode.JOYSTICK))
+    }
+
+    @Test
+    fun `follower never gets an immediate teleport push`() {
+        assertEquals(false, shouldPushImmediateLocationUpdate(speedMs = 0f, MockMode.FOLLOWER))
     }
 }

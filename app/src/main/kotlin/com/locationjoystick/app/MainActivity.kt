@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.OpenableColumns
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,16 +18,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.LocaleContextWrapper
+import com.locationjoystick.core.common.util.loadGpxForOpen
 import com.locationjoystick.core.data.DeepLinkRepository
 import com.locationjoystick.core.data.GoogleMapsShortLinkResolver
+import com.locationjoystick.core.data.GpxOpenRepository
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.model.ThemeMode
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
+
+private const val TAG = "MainActivity"
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -34,6 +42,8 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var groupRepository: GroupRepository
 
     @Inject lateinit var shortLinkResolver: GoogleMapsShortLinkResolver
+
+    @Inject lateinit var gpxOpenRepository: GpxOpenRepository
 
     companion object {
         const val ACTION_MOVE_TO_BACK = "com.locationjoystick.app.ACTION_MOVE_TO_BACK"
@@ -47,8 +57,12 @@ class MainActivity : ComponentActivity() {
     internal val navigateToFavoritesFlow = navigateToFavoritesMutableFlow.asSharedFlow()
     private val navigateToRoutesMutableFlow = MutableSharedFlow<Unit>(replay = 1)
     internal val navigateToRoutesFlow = navigateToRoutesMutableFlow.asSharedFlow()
+    private val navigateToCaptureMutableFlow = MutableSharedFlow<Unit>(replay = 1)
+    internal val navigateToCaptureFlow = navigateToCaptureMutableFlow.asSharedFlow()
     private val deepLinkFailedMutableFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     internal val deepLinkFailedFlow = deepLinkFailedMutableFlow.asSharedFlow()
+    private val gpxOpenFailedMutableFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    internal val gpxOpenFailedFlow = gpxOpenFailedMutableFlow.asSharedFlow()
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleContextWrapper.wrap(newBase))
@@ -80,7 +94,9 @@ class MainActivity : ComponentActivity() {
                     navigateToRouteCreatorFlow = navigateToRouteCreatorFlow,
                     navigateToFavoritesFlow = navigateToFavoritesFlow,
                     navigateToRoutesFlow = navigateToRoutesFlow,
+                    navigateToCaptureFlow = navigateToCaptureFlow,
                     deepLinkFailedFlow = deepLinkFailedFlow,
+                    gpxOpenFailedFlow = gpxOpenFailedFlow,
                 )
             }
         }
@@ -107,8 +123,15 @@ class MainActivity : ComponentActivity() {
         if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_ROUTES, false) == true) {
             navigateToRoutesMutableFlow.tryEmit(Unit)
         }
+        if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_CAPTURE, false) == true) {
+            navigateToCaptureMutableFlow.tryEmit(Unit)
+        }
         if (intent?.action == ACTION_MOVE_TO_BACK) {
             moveTaskToBack(true)
+        }
+        if (intent != null && shouldTryOpenAsGpx(intent)) {
+            handleGpxIntent(intent)
+            return
         }
         if (intent?.action == Intent.ACTION_VIEW) {
             val groupInvite = parseGroupInvite(intent)
@@ -127,6 +150,52 @@ class MainActivity : ComponentActivity() {
                 deepLinkFailedMutableFlow.tryEmit(Unit)
             }
         }
+    }
+
+    private fun handleGpxIntent(intent: Intent) {
+        val uri = gpxUriFromIntent(intent)
+        if (uri == null) {
+            gpxOpenFailedMutableFlow.tryEmit(Unit)
+            return
+        }
+        lifecycleScope.launch {
+            try {
+                val (content, displayName) =
+                    withContext(Dispatchers.IO) {
+                        readGpxContent(uri) to queryDisplayName(uri)
+                    }
+                val route = loadGpxForOpen(content, displayName)
+                gpxOpenRepository.setPending(route.waypoints, route.name)
+                navigateToMapMutableFlow.tryEmit(Unit)
+            } catch (e: Exception) {
+                Log.e(TAG, "GPX open failed", e)
+                gpxOpenFailedMutableFlow.tryEmit(Unit)
+            }
+        }
+    }
+
+    private fun queryDisplayName(uri: android.net.Uri): String? {
+        contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (index >= 0) return cursor.getString(index)
+            }
+        }
+        return uri.lastPathSegment
+    }
+
+    private fun readGpxContent(uri: android.net.Uri): String {
+        val descriptor = contentResolver.openAssetFileDescriptor(uri, "r")
+        val fileSize = descriptor?.use { it.length }
+        if (fileSize != null && fileSize > AppConstants.ExportConstants.MAX_GPX_IMPORT_SIZE_BYTES) {
+            throw IllegalArgumentException(
+                "GPX file is too large (${fileSize / 1024 / 1024} MB). Maximum allowed is " +
+                    "${AppConstants.ExportConstants.MAX_GPX_IMPORT_SIZE_BYTES / 1024 / 1024} MB.",
+            )
+        }
+        return contentResolver.openInputStream(uri)?.use { stream ->
+            stream.bufferedReader().readText()
+        } ?: throw IllegalArgumentException("Cannot read GPX file")
     }
 
     private fun handleSharedUrl(url: String) {

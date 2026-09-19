@@ -2,6 +2,7 @@ package com.locationjoystick.core.data
 
 import android.content.Context
 import android.util.Log
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.database.dao.RouteDao
 import com.locationjoystick.core.database.entities.RouteEntity
 import com.locationjoystick.core.database.entities.WaypointEntity
@@ -10,6 +11,7 @@ import com.locationjoystick.core.database.entities.toEntity
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
+import com.locationjoystick.core.model.Waypoint
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +20,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -52,13 +55,72 @@ class RouteRepository
         suspend fun insertRoute(route: Route): Result<Unit> =
             withContext(ioDispatcher) {
                 runCatching {
-                    val waypointEntities = route.waypoints.map { it.toEntity(route.id) }
-                    routeDao.insert(route.toEntity())
-                    routeDao.replaceWaypoints(route.id, waypointEntities)
+                    writeRoute(route)
                 }.onFailure { e ->
                     Log.e(TAG, "Failed to insert route: ${route.id}", e)
                 }
             }
+
+        /**
+         * Overwrites the single reserved paste-play route ([AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID]).
+         * Later Start pastes replace this id only. A UUID save, even one named
+         * [AppConstants.RouteConstants.PASTE_TEMP_ROUTE_NAME], is never matched or overwritten.
+         */
+        suspend fun upsertPasteTempRoute(points: List<LatLng>): Result<Route> =
+            withContext(ioDispatcher) {
+                runCatching {
+                    require(points.size >= 2) { "Need at least 2 points to start a pasted route" }
+                    val existing = routeDao.getById(AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID)
+                    val now = System.currentTimeMillis()
+                    val route =
+                        routeFromPoints(
+                            id = AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID,
+                            name = AppConstants.RouteConstants.PASTE_TEMP_ROUTE_NAME,
+                            points = points,
+                            nowMs = now,
+                            createdAt = existing?.createdAt ?: now,
+                        )
+                    writeRoute(route)
+                    route
+                }.onFailure { e ->
+                    Log.e(TAG, "Failed to upsert paste temp route", e)
+                }
+            }
+
+        /**
+         * Inserts a new UUID route from pasted points. Never writes
+         * [AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID]. Waypoints are cloned with new ids.
+         */
+        suspend fun insertNamedPastedRoute(
+            name: String,
+            points: List<LatLng>,
+        ): Result<Route> =
+            withContext(ioDispatcher) {
+                runCatching {
+                    val trimmed = name.trim()
+                    require(trimmed.isNotEmpty()) { "Route name is required" }
+                    require(points.size >= 2) { "Need at least 2 points to save a pasted route" }
+                    val now = System.currentTimeMillis()
+                    val route =
+                        routeFromPoints(
+                            id = UUID.randomUUID().toString(),
+                            name = trimmed,
+                            points = points,
+                            nowMs = now,
+                            createdAt = now,
+                        )
+                    writeRoute(route)
+                    route
+                }.onFailure { e ->
+                    Log.e(TAG, "Failed to insert named pasted route", e)
+                }
+            }
+
+        private suspend fun writeRoute(route: Route) {
+            val waypointEntities = route.waypoints.map { it.toEntity(route.id) }
+            routeDao.insert(route.toEntity())
+            routeDao.replaceWaypoints(route.id, waypointEntities)
+        }
 
         suspend fun updateRoute(route: Route): Result<Unit> =
             withContext(ioDispatcher) {
@@ -243,6 +305,32 @@ class RouteRepository
                     routeDao.deleteHotRoutes()
                 }.onFailure { e -> Log.e(TAG, "Failed to remove hot routes", e) }
             }
+
+        private fun routeFromPoints(
+            id: String,
+            name: String,
+            points: List<LatLng>,
+            nowMs: Long,
+            createdAt: Long,
+        ): Route {
+            val waypoints =
+                points.mapIndexed { index, latLng ->
+                    Waypoint(
+                        id = UUID.randomUUID().toString(),
+                        position = latLng,
+                        orderIndex = index,
+                    )
+                }
+            return Route(
+                id = id,
+                name = name,
+                waypoints = waypoints,
+                isLooping = false,
+                routeType = RouteType.STRAIGHT,
+                createdAt = createdAt,
+                updatedAt = nowMs,
+            )
+        }
 
         companion object {
             private const val HOT_ROUTE_ID_PREFIX = "hot_route_"

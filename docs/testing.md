@@ -2,7 +2,7 @@
 
 ## Coverage
 
-Coverage via [kotlinx-kover](https://github.com/Kotlin/kotlinx-kover) (v0.8.3). All modules use convention plugins. Root aggregates into merged report.
+Coverage via [kotlinx-kover](https://github.com/Kotlin/kotlinx-kover) (v0.9.9). All modules use convention plugins. Root aggregates into merged report.
 
 ```bash
 make coverage        # generate HTML + XML reports
@@ -31,13 +31,14 @@ Covers every nav path in `LjNavHost`:
 
 | File | What it asserts |
 |------|----------------|
-| `IdleSmokeTest` | Idle loads; drawer open/close; all 4 cards navigate; Map + Settings + Routes + Favorites via drawer |
-| `MapSmokeTest` | Map loads (top-bar start/stop control visible); hamburger opens drawer; all 4 always-visible FABs present (favorites, routes, roaming, search) |
-| `FavoritesSmokeTest` | Favorites loads; seeded item visible; "Add favorite" FAB opens add-favorite sheet showing From map / From coordinates / Use current location; "From map" reaches MapPicker (checks search FAB) and back returns to Favorites; "From coordinates" opens the coordinates dialog; item menu shows Edit/Delete |
-| `RoutesSmokeTest` | Routes loads ("Add route" FAB visible); FAB opens add-route sheet showing Draw on map / Draw on map (follow roads) / Import GPX file; seeded route visible (waitUntil async); start route dialog shows Loop/Reverse/Return/Walk+Teleport; route card overflow menu shows Edit/Export/Delete |
+| `IdleSmokeTest` | Idle loads; drawer open/close; cards navigate; Map + Settings + Routes + Favorites + Capture via drawer |
+| `MapSmokeTest` | Map loads (top-bar start/stop control visible); hamburger opens drawer; all 5 always-visible FABs present (favorites, routes, roaming, search, paste coordinates) |
+| `FavoritesSmokeTest` | Favorites loads; seeded item visible; "Add favorite" FAB opens add-favorite sheet showing From map / From coordinates / Paste coordinates / Use current location; "From map" reaches MapPicker (checks search FAB) and back returns to Favorites; "From coordinates" opens the coordinates dialog; paste coordinates sheet shows Name + Coordinates; item menu shows Edit/Delete |
+| `RoutesSmokeTest` | Routes loads ("Add route" FAB visible); FAB opens add-route sheet showing Draw on map / Draw on map (follow roads) / Paste coordinates / Import GPX file; seeded route visible (waitUntil async); start route dialog shows Loop/Planting/Reverse/Return/Follow roads/Teleport between waypoints (delay field)/Teleport/Start; route card overflow menu shows Edit/Export/Delete |
 | `RouteCreatorSmokeTest` | Creator loads via "Add route" → "from map"; search/undo/favorites FABs visible; back returns to Routes |
+| `PasteCoordinatesSmokeTest` | Paste coordinates loads via "Add route" → "Paste coordinates"; coordinate field and Planting mode visible; back returns to Routes |
 | `RouteDetailSmokeTest` | Detail loads via overflow "Menu" → Edit (waitUntil route visible); back returns to Routes; delete button, name field, waypoint list visible |
-| `SettingsSmokeTest` | Settings loads; speed unit toggle; "More actions" overflow menu opens without crash; all section headers visible |
+| `SettingsSmokeTest` | Settings loads; speed unit toggle; "More actions" overflow menu opens without crash; all section headers visible; Roaming sub-screen shows planting defaults (starting radius) |
 
 Helpers in `SmokeTestHelpers.kt`: `waitForIdleScreen()`, `openDrawer()`, `navigateViaDrawer()`, `navigateFromIdle()`.
 
@@ -49,6 +50,7 @@ Helpers in `SmokeTestHelpers.kt`: `waitForIdleScreen()`, `openDrawer()`, `naviga
 - Bearing: known lat/lon pairs → expected bearing
 - `randomPointInRadius`: output always within radius
 - Export/import: round-trip full `ExportData` through JSON
+- OSM tile HTTP: required recipe @docs/features/map-tiles.md (`MapTileUserAgentTest`)
 
 Shared utils in `:core:testing`.
 

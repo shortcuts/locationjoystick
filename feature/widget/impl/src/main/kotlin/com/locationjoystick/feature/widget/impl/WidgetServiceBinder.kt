@@ -19,7 +19,10 @@ import kotlinx.coroutines.launch
  * Binds to two services:
  * - [MockLocationService] (via [OverlayServiceHelper.bindTrackedService] — torn down by
  *   [OverlayServiceHelper.cleanupOverlayBindings])
- * - [JoystickOverlayService] (direct bind/unbind)
+ * - [JoystickOverlayService] (direct bind/unbind, only while spoofing is active)
+ *
+ * Joystick bind uses [Context.BIND_AUTO_CREATE]. The host must [unbindJoystick] before mock GPS
+ * goes idle; otherwise a parked widget would restart the joystick overlay.
  *
  * The bound services are exposed as nullable properties. The host service calls [bind] from
  * `onCreate` and [unbind] from `onDestroy`.
@@ -83,20 +86,28 @@ internal class WidgetServiceBinder(
 
     fun bind() {
         overlayHelper.bindTrackedService(context, Intent(context, MockLocationService::class.java), mockLocationServiceConnection)
-        val joystickIntent =
-            Intent().apply {
-                setClassName(context.packageName, "com.locationjoystick.feature.joystick.impl.JoystickOverlayService")
-            }
+    }
+
+    fun bindJoystick() {
+        if (joystickBound) return
+        val joystickIntent = Intent(context, JoystickOverlayService::class.java)
         joystickBound = context.bindService(joystickIntent, joystickConnection, Context.BIND_AUTO_CREATE)
     }
 
-    fun unbind() {
-        if (joystickBound) {
-            try {
-                context.unbindService(joystickConnection)
-            } catch (e: IllegalArgumentException) {
-                Log.e(TAG, "Joystick service was not bound when attempting to unbind", e)
-            }
+    fun unbindJoystick() {
+        if (!joystickBound) return
+        try {
+            context.unbindService(joystickConnection)
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "Joystick service was not bound when attempting to unbind", e)
         }
+        joystickBound = false
+        joystickService = null
+        joystickVisibleFlow.value = false
+        joystickLockedFlow.value = false
+    }
+
+    fun unbind() {
+        unbindJoystick()
     }
 }

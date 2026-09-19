@@ -6,6 +6,7 @@ android {
     namespace = "com.locationjoystick.feature.settings.impl"
     testOptions {
         unitTests.isReturnDefaultValues = true
+        unitTests.isIncludeAndroidResources = true
     }
 }
 

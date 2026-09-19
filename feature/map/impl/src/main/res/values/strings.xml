@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="map_screen_title">"Map"</string>
+    <string name="map_paste_sheet_title_gpx">"Open GPX"</string>
     <string name="map_bottom_sheets_routes">"Routes"</string>
     <string name="map_bottom_sheets_start_route">"Start route"</string>
     <string name="map_bottom_sheets_favorites">"Favorites"</string>
@@ -24,7 +25,9 @@
     <string name="map_sheet_cancel">"Cancel"</string>
     <string name="map_hint_long_press_to_walk">"Long-press to walk"</string>
     <string name="map_hint_tap_to_teleport_long_press">"Tap to teleport · Long-press to walk"</string>
-    <string name="map_fab_recenter_cd">"Re-center on location"</string>
+    <string name="map_fab_recenter_gps_cd">"Center on phone GPS"</string>
+    <string name="map_recenter_gps_fallback_error">"Couldn't get the phone's GPS location"</string>
+    <string name="map_fab_recenter_mock_cd">"Re-center on mock location"</string>
     <string name="map_fab_stop_walk_cd">"Stop walk"</string>
     <string name="map_fab_walk_in_progress_cd">"Walk in progress, tap for controls"</string>
     <string name="map_fab_open_favorites_cd">"Open favorites"</string>
@@ -45,4 +48,5 @@
     <string name="map_fab_roaming_active_cd">"Roaming active"</string>
     <string name="map_fab_expand_roaming_sheet_cd">"Expand roaming sheet"</string>
     <string name="map_fab_start_roaming_cd">"Start roaming"</string>
+    <string name="map_fab_roaming_ignored_route_playing_cd">"Roaming ignored — a route is playing"</string>
 </resources>

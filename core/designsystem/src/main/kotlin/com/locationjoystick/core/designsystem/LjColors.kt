@@ -17,6 +17,10 @@ val LjInactive = Color(0xFF757575)
 val LjWarning = Color(0xFFF59E0B)
 val LjWarningContainer = Color(0xFF451A03)
 
+// Unchecked checkboxes / field outlines on dark surfaces. Must stay lighter than LjSurface
+// (#252530) or Material3 outlineVariant is nearly invisible.
+val LjDarkOutlineVariant = Color(0xFF8A8490)
+
 // Light theme — high-contrast variant for sunny/outdoor readability.
 val LjLightBg = Color(0xFFFAF7F5)
 val LjLightSurface = Color(0xFFFFFFFF)
@@ -59,7 +63,7 @@ val LjDarkColorScheme =
         surfaceVariant = LjSurfaceVariant,
         onSurfaceVariant = LjTextSecondary,
         outline = LjAccent,
-        outlineVariant = Color(0xFF3A3A48),
+        outlineVariant = LjDarkOutlineVariant,
         inverseSurface = LjText,
         inverseOnSurface = LjBg,
         inversePrimary = LjAccent,

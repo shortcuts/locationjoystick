@@ -11,6 +11,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -27,10 +28,12 @@ import com.locationjoystick.app.navigation.LjDrawerContent
 import com.locationjoystick.app.navigation.LjNavHost
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.feature.favorites.api.FAVORITES_ROUTE
+import com.locationjoystick.feature.map.api.CAPTURE_ROUTE
 import com.locationjoystick.feature.map.api.MAP_ROUTE
 import com.locationjoystick.feature.onboarding.api.ONBOARDING_ROUTE
 import com.locationjoystick.feature.routes.api.ROUTES_ROUTE
 import com.locationjoystick.feature.routes.api.ROUTE_CREATOR_ROUTE
+import com.locationjoystick.feature.routes.api.ROUTE_PASTE_CREATOR_ROUTE
 import com.locationjoystick.feature.settings.api.SETTINGS_ROUTE
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -42,7 +45,9 @@ fun LjApp(
     navigateToRouteCreatorFlow: Flow<Unit> = emptyFlow(),
     navigateToFavoritesFlow: Flow<Unit> = emptyFlow(),
     navigateToRoutesFlow: Flow<Unit> = emptyFlow(),
+    navigateToCaptureFlow: Flow<Unit> = emptyFlow(),
     deepLinkFailedFlow: Flow<Unit> = emptyFlow(),
+    gpxOpenFailedFlow: Flow<Unit> = emptyFlow(),
 ) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -50,10 +55,17 @@ fun LjApp(
     val lifecycleOwner = LocalLifecycleOwner.current
     val snackbarHostState = remember { SnackbarHostState() }
     val couldNotOpenLinkMessage = stringResource(R.string.app_couldn_t_open_that_link)
+    val couldNotOpenGpxMessage = stringResource(R.string.app_gpx_open_failed)
 
     LaunchedEffect(Unit) {
         deepLinkFailedFlow.collect {
             snackbarHostState.showSnackbar(couldNotOpenLinkMessage)
+        }
+    }
+
+    LaunchedEffect(gpxOpenFailedFlow, couldNotOpenGpxMessage) {
+        gpxOpenFailedFlow.collect {
+            snackbarHostState.showSnackbar(couldNotOpenGpxMessage)
         }
     }
 
@@ -97,6 +109,16 @@ fun LjApp(
                 }
             }
         }
+        launch {
+            navigateToCaptureFlow.collect {
+                drawerState.close()
+                navController.navigate(CAPTURE_ROUTE) {
+                    launchSingleTop = true
+                    popUpTo(IDLE_ROUTE) { saveState = true }
+                    restoreState = true
+                }
+            }
+        }
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -104,10 +126,7 @@ fun LjApp(
             LifecycleEventObserver { _, event ->
                 if (event == Lifecycle.Event.ON_STOP) {
                     val current = navController.currentDestination?.route
-                    // Skip redirect for screens that may launch sub-activities (file pickers, etc.)
-                    val skipRedirect =
-                        current == IDLE_ROUTE || current == ONBOARDING_ROUTE || current == SETTINGS_ROUTE
-                    if (!skipRedirect) {
+                    if (!shouldSkipIdleRedirect(current)) {
                         navController.navigate(IDLE_ROUTE) {
                             popUpTo(IDLE_ROUTE) { inclusive = false }
                         }
@@ -151,3 +170,19 @@ fun LjApp(
         }
     }
 }
+
+/**
+ * Destinations that must stay on screen when the activity stops (app switch, recents).
+ *
+ * Idle/onboarding are already the hub. Settings launches SAF file pickers. Paste coordinates
+ * (routes), Favorites (paste/from-coordinates sheets), and Capture (Android default-app
+ * settings) are in-progress editors: users leave the app then return. Other MapLibre-heavy
+ * screens still dump to Idle so the map is unloaded while backgrounded.
+ */
+internal fun shouldSkipIdleRedirect(route: String?): Boolean =
+    route == IDLE_ROUTE ||
+        route == ONBOARDING_ROUTE ||
+        route == SETTINGS_ROUTE ||
+        route == ROUTE_PASTE_CREATOR_ROUTE ||
+        route == FAVORITES_ROUTE ||
+        route == CAPTURE_ROUTE
