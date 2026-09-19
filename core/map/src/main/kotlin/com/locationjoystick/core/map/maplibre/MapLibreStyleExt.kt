@@ -4,6 +4,8 @@ import androidx.compose.ui.graphics.toArgb
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjMapColors
 import com.locationjoystick.core.map.geojson.emptyGeoJson
+import com.locationjoystick.core.model.MapTileSource
+import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.FillLayer
@@ -14,20 +16,50 @@ import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.style.sources.RasterSource
 import org.maplibre.android.style.sources.TileSet
 
-/**
- * Adds the OSM raster tile layer to the style.
- */
-fun Style.Builder.addOsmRasterLayer(): Style.Builder {
-    withSource(
-        RasterSource(
-            MapLibreSourceIds.OSM,
-            TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
-                maxZoom =
-                    AppConstants.MapConstants.OSM_MAX_ZOOM
-            },
-            256,
-        ),
+private const val RASTER_TILE_SIZE_PX = 256
+
+/** Builds the MapLibre [RasterSource] for [tileSource] under [sourceId]. */
+private fun rasterSource(
+    tileSource: MapTileSource,
+    sourceId: String,
+): RasterSource =
+    RasterSource(
+        sourceId,
+        TileSet(AppConstants.MapConstants.TILESET_VERSION, *tileSource.tileUrlTemplates.toTypedArray()).apply {
+            minZoom = tileSource.minZoom
+            maxZoom = tileSource.maxZoom
+        },
+        RASTER_TILE_SIZE_PX,
     )
+
+/**
+ * Clamps the camera to the zoom range [tileSource] actually serves. Call whenever the style is
+ * (re)applied — MapLibre snaps an out-of-range camera back into bounds immediately, so switching
+ * providers never leaves the user staring at blank tiles.
+ */
+fun MapLibreMap.applyZoomBounds(tileSource: MapTileSource) {
+    setMinZoomPreference(tileSource.minZoom.toDouble())
+    setMaxZoomPreference(tileSource.maxZoom.toDouble())
+}
+
+/**
+ * Adds the base-map raster tiles for [tileSource] as the bottom-most layer.
+ *
+ * Anything drawn on top of these tiles must be projected into [MapTileSource.coordinateSystem]
+ * first — see `MapProjection` in `core/map/projection`.
+ */
+fun Style.addRasterTiles(
+    tileSource: MapTileSource,
+    sourceId: String = MapLibreSourceIds.OSM,
+    layerId: String = MapLibreLayerIds.OSM,
+) {
+    addSource(rasterSource(tileSource, sourceId))
+    addLayer(RasterLayer(layerId, sourceId))
+}
+
+/** [Style.Builder] variant of [Style.addRasterTiles]. */
+fun Style.Builder.addRasterTiles(tileSource: MapTileSource): Style.Builder {
+    withSource(rasterSource(tileSource, MapLibreSourceIds.OSM))
     withLayer(RasterLayer(MapLibreLayerIds.OSM, MapLibreSourceIds.OSM))
     return this
 }
@@ -47,9 +79,10 @@ data class LocationLayerSources(
 )
 
 /**
- * Adds OSM raster tile layer, position dot, walk-trace, walk-remaining, walk-endpoints,
+ * Adds base-map raster tiles, position dot, walk-trace, walk-remaining, walk-endpoints,
  * and optionally a search-marker circle layer.
  *
+ * @param tileSource  Base-map provider (see [MapTileSource]); defaults to OSM.
  * @param osmSourceId Raster source ID — use [MapLibreSourceIds.PANEL_OSM] for the widget overlay
  *                    to avoid colliding with the main map.
  * @param osmLayerId  Raster layer ID — use [MapLibreLayerIds.PANEL_OSM] for the widget overlay.
@@ -57,21 +90,13 @@ data class LocationLayerSources(
  * @param includeSearchMarker When true, adds a search-result marker layer and returns its source.
  */
 fun Style.addLocationLayers(
+    tileSource: MapTileSource = MapTileSource.DEFAULT,
     osmSourceId: String = MapLibreSourceIds.OSM,
     osmLayerId: String = MapLibreLayerIds.OSM,
     lineWidth: Float = 4f,
     includeSearchMarker: Boolean = false,
 ): LocationLayerSources {
-    addSource(
-        RasterSource(
-            osmSourceId,
-            TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
-                maxZoom = AppConstants.MapConstants.OSM_MAX_ZOOM
-            },
-            256,
-        ),
-    )
-    addLayer(RasterLayer(osmLayerId, osmSourceId))
+    addRasterTiles(tileSource, osmSourceId, osmLayerId)
 
     val jitterRadiusSrc = GeoJsonSource(MapLibreSourceIds.JITTER_RADIUS, emptyGeoJson())
     addSource(jitterRadiusSrc)
@@ -184,21 +209,16 @@ data class PickerLayerSources(
 )
 
 /**
- * Adds OSM tiles, optional current-position dot, and a tap-marker layer (MapPickerScreen).
+ * Adds base-map tiles, optional current-position dot, and a tap-marker layer (MapPickerScreen).
  *
+ * @param tileSource Base-map provider (see [MapTileSource]); defaults to OSM.
  * @param currentPosGeoJson If non-null, a blue dot is added at that GeoJSON position.
  */
-fun Style.addPickerLayers(currentPosGeoJson: String? = null): PickerLayerSources {
-    addSource(
-        RasterSource(
-            MapLibreSourceIds.OSM,
-            TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
-                maxZoom = AppConstants.MapConstants.OSM_MAX_ZOOM
-            },
-            256,
-        ),
-    )
-    addLayer(RasterLayer(MapLibreLayerIds.OSM, MapLibreSourceIds.OSM))
+fun Style.addPickerLayers(
+    tileSource: MapTileSource = MapTileSource.DEFAULT,
+    currentPosGeoJson: String? = null,
+): PickerLayerSources {
+    addRasterTiles(tileSource)
 
     var currentPosSrc: GeoJsonSource? = null
     if (currentPosGeoJson != null) {
@@ -243,22 +263,17 @@ data class CreatorLayerSources(
 )
 
 /**
- * Adds OSM tiles, optional current-position dot, route segment lines, and waypoint circles
+ * Adds base-map tiles, optional current-position dot, route segment lines, and waypoint circles
  * (RouteCreatorScreen).
  *
+ * @param tileSource Base-map provider (see [MapTileSource]); defaults to OSM.
  * @param currentPosGeoJson If non-null, a blue dot is added at that GeoJSON position.
  */
-fun Style.addCreatorLayers(currentPosGeoJson: String? = null): CreatorLayerSources {
-    addSource(
-        RasterSource(
-            MapLibreSourceIds.OSM,
-            TileSet(AppConstants.MapConstants.TILESET_VERSION, AppConstants.MapConstants.OSM_TILE_URL).apply {
-                maxZoom = AppConstants.MapConstants.OSM_MAX_ZOOM
-            },
-            256,
-        ),
-    )
-    addLayer(RasterLayer(MapLibreLayerIds.OSM, MapLibreSourceIds.OSM))
+fun Style.addCreatorLayers(
+    tileSource: MapTileSource = MapTileSource.DEFAULT,
+    currentPosGeoJson: String? = null,
+): CreatorLayerSources {
+    addRasterTiles(tileSource)
 
     var currentPosSrc: GeoJsonSource? = null
     if (currentPosGeoJson != null) {

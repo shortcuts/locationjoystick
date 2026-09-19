@@ -313,7 +313,9 @@ class MapController
                 val startPos =
                     locationRepository.currentPosition.value
                         ?: settingsRepository.getLastLocation().first()
-                        ?: LatLng(AppConstants.MapConstants.DEFAULT_LAT, AppConstants.MapConstants.DEFAULT_LON)
+                        // No position at all yet: start where the map opens, so the first fix is
+                        // inside the selected tile provider's coverage (Beijing for Amap, Paris for OSM).
+                        ?: settingsRepository.getMapTileSource().first().defaultCenter
                 ContextCompat.startForegroundService(
                     context,
                     MockLocationIntentBuilder.startSpoofing(context, startPos.latitude, startPos.longitude),

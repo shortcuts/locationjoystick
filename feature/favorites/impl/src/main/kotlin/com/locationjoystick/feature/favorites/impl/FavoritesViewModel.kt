@@ -10,6 +10,7 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,6 +62,11 @@ class FavoritesViewModel
             settingsRepository
                 .getRecentSearches()
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+        val mapTileSource: StateFlow<MapTileSource> =
+            settingsRepository
+                .getMapTileSource()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapTileSource.DEFAULT)
 
         val currentPosition: com.locationjoystick.core.model.LatLng?
             get() = locationRepository.currentPosition.value

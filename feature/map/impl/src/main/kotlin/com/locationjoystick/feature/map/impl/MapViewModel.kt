@@ -100,6 +100,12 @@ class MapViewModel
                         }
                     }
             }
+            viewModelScope.launch {
+                settingsRepository
+                    .getMapTileSource()
+                    .distinctUntilChanged()
+                    .collect { source -> _uiState.update { it.copy(mapTileSource = source) } }
+            }
         }
 
         private fun observeSharedState() {

@@ -151,9 +151,9 @@ object AppConstants {
         const val DEFAULT_LAT = 48.8566
         const val DEFAULT_LON = 2.3522
         const val DEFAULT_ZOOM = 15.0
-        const val OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+
+        /** Tile URLs and max zoom per provider live on `MapTileSource` (`:core:model`). */
         const val TILESET_VERSION = "2.2.0"
-        const val OSM_MAX_ZOOM = 19f
         const val EMPTY_MAP_STYLE_URI = "asset://empty.json"
         const val OSM_SOURCE_ID = "osm-source"
         const val OSM_LAYER_ID = "osm-layer"

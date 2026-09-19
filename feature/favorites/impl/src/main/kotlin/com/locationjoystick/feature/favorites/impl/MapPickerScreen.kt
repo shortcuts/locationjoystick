@@ -41,6 +41,11 @@ import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.map.geojson.buildMarkerGeoJson
 import com.locationjoystick.core.map.maplibre.addPickerLayers
+import com.locationjoystick.core.map.maplibre.applyZoomBounds
+import com.locationjoystick.core.map.projection.projection
+import com.locationjoystick.core.map.ui.MapAttribution
+import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.overlay.OverlayService
 import com.locationjoystick.feature.favorites.impl.R
@@ -66,6 +71,7 @@ fun MapPickerRoute(
     recentSearches: List<RecentSearch> = emptyList(),
     onSearchCommitted: ((String, Double, Double) -> Unit)? = null,
     bottomBar: @Composable () -> Unit = {},
+    tileSource: MapTileSource = MapTileSource.DEFAULT,
 ) {
     MapPickerScreen(
         initialPosition = initialPosition,
@@ -74,6 +80,7 @@ fun MapPickerRoute(
         recentSearches = recentSearches,
         onSearchCommitted = onSearchCommitted,
         bottomBar = bottomBar,
+        tileSource = tileSource,
     )
 }
 
@@ -96,9 +103,21 @@ internal fun MapPickerScreen(
     onLocationPicked: (name: String, lat: Double, lon: Double) -> Unit,
     onBack: () -> Unit,
     bottomBar: @Composable () -> Unit = {},
+    tileSource: MapTileSource = MapTileSource.DEFAULT,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Selected/persisted positions are WGS-84; only the MapLibre drawing/tap boundary is projected.
+    val proj = tileSource.projection
+    val appliedTileSource = remember { mutableStateOf<MapTileSource?>(null) }
+
+    fun LatLng.toMapLatLng(): MapLatLng = proj.toMap(this).let { MapLatLng(it.latitude, it.longitude) }
+
+    fun markerGeoJson(
+        lat: Double,
+        lon: Double,
+    ): String = proj.toMap(LatLng(lat, lon)).let { buildMarkerGeoJson(it.latitude, it.longitude) }
 
     val mapView =
         remember {
@@ -114,6 +133,29 @@ internal fun MapPickerScreen(
     val spoofToggle = rememberSpoofToggleState()
 
     val effectivePosition = { selectedPosition.value ?: initialPosition?.let { it.latitude to it.longitude } }
+
+    val applyStyle: (MapLibreMap) -> Unit = { map ->
+        appliedTileSource.value = tileSource
+        map.applyZoomBounds(tileSource)
+        map.setStyle(Style.Builder().fromUri(AppConstants.MapConstants.EMPTY_MAP_STYLE_URI)) { style ->
+            val layers =
+                style.addPickerLayers(
+                    tileSource = tileSource,
+                    currentPosGeoJson = effectivePosition()?.let { (lat, lon) -> markerGeoJson(lat, lon) },
+                )
+            markerSource.value = layers.markerSource
+        }
+    }
+
+    LaunchedEffect(tileSource) {
+        val map = mapRef.value ?: return@LaunchedEffect
+        val previous = appliedTileSource.value ?: return@LaunchedEffect
+        if (previous == tileSource) return@LaunchedEffect
+        val prevProj = previous.projection
+        val centerWgs = map.cameraPosition.target?.let { prevProj.fromMap(LatLng(it.latitude, it.longitude)) }
+        applyStyle(map)
+        if (centerWgs != null) map.moveCamera(CameraUpdateFactory.newLatLng(centerWgs.toMapLatLng()))
+    }
 
     LaunchedEffect(showNameDialog) {
         context.sendBroadcast(
@@ -230,28 +272,20 @@ internal fun MapPickerScreen(
                                 CameraPosition
                                     .Builder()
                                     .target(
-                                        if (initialPosition != null) {
-                                            MapLatLng(initialPosition.latitude, initialPosition.longitude)
-                                        } else {
-                                            MapLatLng(AppConstants.MapConstants.DEFAULT_LAT, AppConstants.MapConstants.DEFAULT_LON)
-                                        },
+                                        (
+                                            initialPosition
+                                                ?: tileSource.defaultCenter
+                                        ).toMapLatLng(),
                                     ).zoom(AppConstants.MapConstants.DEFAULT_ZOOM)
                                     .build()
 
-                            map.setStyle(Style.Builder().fromUri(AppConstants.MapConstants.EMPTY_MAP_STYLE_URI)) { style ->
-                                val layers =
-                                    style.addPickerLayers(
-                                        currentPosGeoJson =
-                                            initialPosition?.let {
-                                                buildMarkerGeoJson(it.latitude, it.longitude)
-                                            },
-                                    )
-                                markerSource.value = layers.markerSource
-                            }
+                            applyStyle(map)
 
                             map.addOnMapClickListener { latLng ->
-                                selectedPosition.value = latLng.latitude to latLng.longitude
+                                val wgs = proj.fromMap(LatLng(latLng.latitude, latLng.longitude))
+                                selectedPosition.value = wgs.latitude to wgs.longitude
                                 val src = markerSource.value ?: return@addOnMapClickListener true
+                                // Marker is drawn where the user tapped (already in map CRS).
                                 src.setGeoJson(buildMarkerGeoJson(latLng.latitude, latLng.longitude))
                                 true
                             }
@@ -262,6 +296,11 @@ internal fun MapPickerScreen(
                 modifier = Modifier.fillMaxSize(),
             )
 
+            MapAttribution(
+                tileSource = tileSource,
+                modifier = Modifier.align(Alignment.BottomStart).padding(4.dp),
+            )
+
             // Search bar — top overlay, shown when toggled
             if (showSearchBar) {
                 NominatimSearchBar(
@@ -270,11 +309,11 @@ internal fun MapPickerScreen(
                         showSearchBar = false
                         val map = mapRef.value ?: return@NominatimSearchBar
                         map.animateCamera(
-                            CameraUpdateFactory.newLatLngZoom(MapLatLng(lat, lon), AppConstants.MapConstants.DEFAULT_ZOOM),
+                            CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon).toMapLatLng(), AppConstants.MapConstants.DEFAULT_ZOOM),
                             500,
                         )
                         val src = markerSource.value ?: return@NominatimSearchBar
-                        src.setGeoJson(buildMarkerGeoJson(lat, lon))
+                        src.setGeoJson(markerGeoJson(lat, lon))
                     },
                     recentSearches = recentSearches,
                     onSearchCommitted = onSearchCommitted,

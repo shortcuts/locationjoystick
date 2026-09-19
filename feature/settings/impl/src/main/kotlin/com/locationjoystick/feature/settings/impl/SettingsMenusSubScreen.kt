@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -43,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -57,6 +59,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjLanguageDropdown
@@ -67,6 +70,7 @@ import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppLanguage
 import com.locationjoystick.core.model.FeatureSurface
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.feature.settings.impl.R
@@ -133,6 +137,8 @@ internal fun SettingsMenusSubScreen(
                     ) {
                         ThemeSection(uiState, onAction)
                         Spacer(Modifier.height(24.dp))
+                        MapSourceSection(uiState, onAction)
+                        Spacer(Modifier.height(24.dp))
                         AppFeaturesSection(uiState, isRooted, onAction)
                         Spacer(Modifier.height(24.dp))
                         SpeedCycleSection(uiState, onAction)
@@ -148,6 +154,101 @@ internal fun SettingsMenusSubScreen(
         }
     }
 }
+
+@Composable
+private fun MapSourceSection(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    Text(stringResource(R.string.settings_menus_map_section), style = MaterialTheme.typography.headlineSmall)
+    Spacer(Modifier.height(4.dp))
+    Text(
+        stringResource(R.string.settings_menus_map_source_desc),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(8.dp))
+    Text(stringResource(R.string.settings_menus_map_source), style = MaterialTheme.typography.bodyLarge)
+    Spacer(Modifier.height(4.dp))
+    var sourcePickerExpanded by remember { mutableStateOf(false) }
+    var sourcePickerWidth by remember { mutableStateOf(0) }
+    val density = LocalDensity.current
+    Box(modifier = Modifier.fillMaxWidth()) {
+        val chevronRotation by animateFloatAsState(
+            targetValue = if (sourcePickerExpanded) 180f else 0f,
+            label = "mapSourceChevronRotation",
+        )
+        LjOutlinedButton(
+            onClick = { sourcePickerExpanded = true },
+            modifier = Modifier.fillMaxWidth().onSizeChanged { sourcePickerWidth = it.width },
+        ) {
+            Text(
+                mapTileSourceLabel(uiState.mapTileSource),
+                modifier = Modifier.weight(1f),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Icon(
+                LjIcons.ArrowDropDown,
+                contentDescription = null,
+                modifier = Modifier.graphicsLayer { rotationZ = chevronRotation },
+            )
+        }
+        // Same width as the button and the same horizontal padding as LjOutlinedButton's content,
+        // so item labels line up with the selected label and the check sits under the chevron.
+        DropdownMenu(
+            expanded = sourcePickerExpanded,
+            onDismissRequest = { sourcePickerExpanded = false },
+            modifier = Modifier.width(with(density) { sourcePickerWidth.toDp() }),
+        ) {
+            MapTileSource.entries.forEach { source ->
+                val isSelected = source == uiState.mapTileSource
+                DropdownMenuItem(
+                    text = { Text(mapTileSourceLabel(source)) },
+                    trailingIcon = {
+                        if (isSelected) {
+                            Icon(
+                                LjIcons.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    },
+                    contentPadding = PaddingValues(horizontal = LjSpacing.lg),
+                    onClick = {
+                        onAction(SettingsAction.SetMapTileSource(source))
+                        sourcePickerExpanded = false
+                    },
+                )
+            }
+        }
+    }
+    if (uiState.mapTileSource == MapTileSource.AMAP) {
+        Spacer(Modifier.height(8.dp))
+        Text(
+            stringResource(R.string.settings_menus_map_source_amap_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** "Provider — default start city", e.g. "OpenStreetMap — Paris, France". */
+@Composable
+private fun mapTileSourceLabel(source: MapTileSource): String =
+    when (source) {
+        MapTileSource.OSM ->
+            stringResource(
+                R.string.settings_menus_map_source_item,
+                stringResource(R.string.settings_menus_map_source_osm),
+                stringResource(R.string.settings_menus_map_source_osm_default_city),
+            )
+        MapTileSource.AMAP ->
+            stringResource(
+                R.string.settings_menus_map_source_item,
+                stringResource(R.string.settings_menus_map_source_amap),
+                stringResource(R.string.settings_menus_map_source_amap_default_city),
+            )
+    }
 
 @Composable
 private fun ThemeSection(

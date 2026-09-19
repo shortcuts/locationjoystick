@@ -79,6 +79,15 @@
     <string name="settings_menus_appearance">"Appearance"</string>
     <string name="settings_menus_switch_to_a_light_theme_for">"Switch to a light theme for better readability in bright/sunny conditions."</string>
     <string name="settings_menus_light_mode">"Light mode"</string>
+    <string name="settings_menus_map_section">"Map"</string>
+    <string name="settings_menus_map_source_desc">"Choose which map tiles are shown on the map screen, floating map, favorites picker and route creator. Your saved locations and mock GPS position are unaffected."</string>
+    <string name="settings_menus_map_source">"Map source"</string>
+    <string name="settings_menus_map_source_osm">"OpenStreetMap"</string>
+    <string name="settings_menus_map_source_amap">"Amap (高德)"</string>
+    <string name="settings_menus_map_source_item">"%1$s — %2$s"</string>
+    <string name="settings_menus_map_source_osm_default_city">"Paris, France"</string>
+    <string name="settings_menus_map_source_amap_default_city">"Beijing, China"</string>
+    <string name="settings_menus_map_source_amap_note">"Amap tiles use the GCJ-02 coordinate system. Positions are converted automatically so markers, routes and taps line up; all data is still stored in WGS-84."</string>
     <string name="settings_menus_tap_to_walk">"Tap to Walk"</string>
     <string name="settings_menus_walk_to_a_location_by_tapping">"Walk to a location by tapping it — no confirmation needed."</string>
     <string name="settings_menus_menus">"Menus"</string>

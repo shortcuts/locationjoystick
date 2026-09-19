@@ -14,6 +14,7 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
@@ -151,6 +152,12 @@ interface PreferencesDataSource {
 
     /** Sets whether the map camera should follow the spoofed location marker. */
     suspend fun setMapFollowsLocation(enabled: Boolean)
+
+    /** Gets the raster base-map provider name (see `MapTileSource`). */
+    fun getMapTileSource(): Flow<String>
+
+    /** Sets the raster base-map provider name. */
+    suspend fun setMapTileSource(name: String)
 
     fun getRealismBearingHoldIdle(): Flow<Boolean>
 
@@ -332,6 +339,7 @@ data class SettingsSnapshot(
     val enabledMapFeatures: Set<AppFeature>,
     val rememberLastLocation: Boolean,
     val mapFollowsLocation: Boolean,
+    val mapTileSource: MapTileSource = MapTileSource.DEFAULT,
     val jitterIdleRadius: Double,
     val jitterMovingRadius: Double,
     val jitterMaxStepMeters: Double,
@@ -434,6 +442,7 @@ class AppPreferencesDataSource
             val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
             val SPEED_UNIT = stringPreferencesKey("speed_unit")
             val THEME_MODE = stringPreferencesKey("theme_mode")
+            val MAP_TILE_SOURCE = stringPreferencesKey("map_tile_source")
             val WHATS_NEW_LAST_SEEN_VERSION = stringPreferencesKey("whats_new_last_seen_version")
             val REMEMBER_LAST_LOCATION = booleanPreferencesKey("remember_last_location")
             val LAST_LATITUDE = doublePreferencesKey("last_latitude")
@@ -677,6 +686,10 @@ class AppPreferencesDataSource
 
         override suspend fun setMapFollowsLocation(enabled: Boolean) = setPref(Keys.MAP_FOLLOWS_LOCATION, enabled)
 
+        override fun getMapTileSource(): Flow<String> = pref(Keys.MAP_TILE_SOURCE, MapTileSource.DEFAULT.name)
+
+        override suspend fun setMapTileSource(name: String) = setPref(Keys.MAP_TILE_SOURCE, name)
+
         override fun getRealismBearingHoldIdle(): Flow<Boolean> = pref(Keys.REALISM_BEARING_HOLD_IDLE, true)
 
         override fun getRealismAltitudeEnabled(): Flow<Boolean> = pref(Keys.REALISM_ALTITUDE_ENABLED, true)
@@ -875,6 +888,7 @@ class AppPreferencesDataSource
                 prefs[Keys.ENABLED_SPEED_PROFILE_IDS] = snapshot.enabledSpeedProfileIds
                 prefs[Keys.REMEMBER_LAST_LOCATION] = snapshot.rememberLastLocation
                 prefs[Keys.MAP_FOLLOWS_LOCATION] = snapshot.mapFollowsLocation
+                prefs[Keys.MAP_TILE_SOURCE] = snapshot.mapTileSource.name
                 prefs[Keys.JITTER_IDLE_RADIUS_METERS] = snapshot.jitterIdleRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
                 prefs[Keys.JITTER_MOVING_RADIUS_METERS] = snapshot.jitterMovingRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
                 prefs[Keys.JITTER_MAX_STEP_METERS] =
@@ -973,6 +987,7 @@ class AppPreferencesDataSource
                             prefs[Keys.REMEMBER_LAST_LOCATION]
                                 ?: AppConstants.DataStoreConstants.DEFAULT_REMEMBER_LAST_LOCATION,
                         mapFollowsLocation = prefs[Keys.MAP_FOLLOWS_LOCATION] ?: true,
+                        mapTileSource = MapTileSource.fromName(prefs[Keys.MAP_TILE_SOURCE]),
                         jitterIdleRadius = prefs[Keys.JITTER_IDLE_RADIUS_METERS] ?: DEFAULT_JITTER_IDLE_RADIUS_METERS,
                         jitterMovingRadius = prefs[Keys.JITTER_MOVING_RADIUS_METERS] ?: DEFAULT_JITTER_MOVING_RADIUS_METERS,
                         jitterMaxStepMeters = prefs[Keys.JITTER_MAX_STEP_METERS] ?: DEFAULT_JITTER_MAX_STEP_METERS,

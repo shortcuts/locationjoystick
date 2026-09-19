@@ -7,6 +7,7 @@ import com.locationjoystick.core.datastore.toAppFeature
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FeatureSurface
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
@@ -194,6 +195,10 @@ class SettingsRepository
         fun getMapFollowsLocation(): Flow<Boolean> = dataSource.getMapFollowsLocation()
 
         suspend fun setMapFollowsLocation(enabled: Boolean) = dataSource.setMapFollowsLocation(enabled)
+
+        fun getMapTileSource(): Flow<MapTileSource> = dataSource.getMapTileSource().map { MapTileSource.fromName(it) }
+
+        suspend fun setMapTileSource(source: MapTileSource) = dataSource.setMapTileSource(source.name)
 
         fun getRealismBearingHoldIdle(): Flow<Boolean> = dataSource.getRealismBearingHoldIdle()
 

@@ -17,6 +17,7 @@ import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.Route
@@ -557,6 +558,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getMapFollowsLocation(): Flow<Boolean> = flowOf(true)
 
     override suspend fun setMapFollowsLocation(enabled: Boolean) = Unit
+
+    override fun getMapTileSource(): Flow<String> = flowOf(MapTileSource.DEFAULT.name)
+
+    override suspend fun setMapTileSource(name: String) = Unit
 
     override fun getRealismBearingHoldIdle(): Flow<Boolean> = flowOf(true)
 

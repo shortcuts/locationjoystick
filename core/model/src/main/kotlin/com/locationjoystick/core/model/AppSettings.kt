@@ -8,6 +8,7 @@ data class AppSettings(
     val enabledWidgetFeatures: Set<AppFeature> = AppFeature.DEFAULT_WIDGET_ENABLED,
     val enabledMapFeatures: Set<AppFeature> = AppFeature.DEFAULT_MAP_ENABLED,
     val mapFollowsLocation: Boolean = true,
+    val mapTileSource: MapTileSource = MapTileSource.DEFAULT,
     val useRoadSnappingByDefault: Boolean = false,
     val speedUnit: SpeedUnit = SpeedUnit.KMH,
     val roamingDefaults: RoamingDefaults = RoamingDefaults(),

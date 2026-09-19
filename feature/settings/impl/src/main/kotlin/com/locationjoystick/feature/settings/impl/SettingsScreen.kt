@@ -284,6 +284,10 @@ fun SettingsRoute(
                     viewModel.setMapFollowsLocation(action.enabled)
                 }
 
+                is SettingsAction.SetMapTileSource -> {
+                    viewModel.setMapTileSource(action.source)
+                }
+
                 is SettingsAction.SetJitterIdleRadius -> {
                     viewModel.setJitterIdleRadius(action.meters)
                 }

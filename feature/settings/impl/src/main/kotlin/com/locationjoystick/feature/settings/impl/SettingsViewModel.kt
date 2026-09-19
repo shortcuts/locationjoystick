@@ -22,6 +22,7 @@ import com.locationjoystick.core.location.CompassHeadingSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
@@ -126,6 +127,7 @@ class SettingsViewModel
             val mapFeatures: Set<AppFeature>? = null,
             val rememberLastLocation: Boolean? = null,
             val mapFollowsLocation: Boolean? = null,
+            val mapTileSource: MapTileSource? = null,
             val jitterIdleRadius: Double? = null,
             val jitterMovingRadius: Double? = null,
             val jitterMaxStepMeters: Double? = null,
@@ -197,6 +199,7 @@ class SettingsViewModel
                     enabledMapFeatures = draftState.mapFeatures ?: snapshot.enabledMapFeatures,
                     rememberLastLocation = draftState.rememberLastLocation ?: snapshot.rememberLastLocation,
                     mapFollowsLocation = draftState.mapFollowsLocation ?: snapshot.mapFollowsLocation,
+                    mapTileSource = draftState.mapTileSource ?: snapshot.mapTileSource,
                     jitterIdleRadiusMeters = draftState.jitterIdleRadius ?: snapshot.jitterIdleRadius,
                     jitterMovingRadiusMeters = draftState.jitterMovingRadius ?: snapshot.jitterMovingRadius,
                     jitterMaxStepMeters = draftState.jitterMaxStepMeters ?: snapshot.jitterMaxStepMeters,
@@ -275,6 +278,10 @@ class SettingsViewModel
 
         fun setMapFollowsLocation(enabled: Boolean) {
             mutableDraft.update { it.copy(mapFollowsLocation = enabled) }
+        }
+
+        fun setMapTileSource(source: MapTileSource) {
+            mutableDraft.update { it.copy(mapTileSource = source) }
         }
 
         fun setJitterIdleRadius(meters: Double) {
@@ -479,6 +486,7 @@ class SettingsViewModel
                             enabledSpeedProfileIds = state.enabledSpeedProfileIds,
                             rememberLastLocation = state.rememberLastLocation,
                             mapFollowsLocation = state.mapFollowsLocation,
+                            mapTileSource = state.mapTileSource,
                             jitterIdleRadius = state.jitterIdleRadiusMeters,
                             jitterMovingRadius = state.jitterMovingRadiusMeters,
                             jitterMaxStepMeters = state.jitterMaxStepMeters,
@@ -581,6 +589,7 @@ class SettingsViewModel
             val settings =
                 AppSettings(
                     speedUnit = state.speedUnit,
+                    mapTileSource = state.mapTileSource,
                     featureOrder = state.featureOrder,
                     enabledWidgetFeatures = state.enabledWidgetFeatures,
                     enabledMapFeatures = state.enabledMapFeatures,
@@ -788,6 +797,7 @@ class SettingsViewModel
                     bikeSpeedMs = profileById["bike"]?.speedMetersPerSecond ?: currentSnapshot.bikeSpeedMs,
                     driveSpeedMs = profileById["drive"]?.speedMetersPerSecond ?: currentSnapshot.driveSpeedMs,
                     speedUnit = data.settings.speedUnit,
+                    mapTileSource = data.settings.mapTileSource,
                     featureOrder = data.settings.featureOrder,
                     enabledWidgetFeatures = data.settings.enabledWidgetFeatures,
                     enabledMapFeatures = data.settings.enabledMapFeatures,

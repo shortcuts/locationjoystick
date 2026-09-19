@@ -49,8 +49,12 @@ import com.locationjoystick.core.map.geojson.buildPositionGeoJson
 import com.locationjoystick.core.map.geojson.buildSegmentsGeoJson
 import com.locationjoystick.core.map.geojson.buildWaypointsGeoJson
 import com.locationjoystick.core.map.maplibre.addCreatorLayers
+import com.locationjoystick.core.map.maplibre.applyZoomBounds
+import com.locationjoystick.core.map.projection.projection
+import com.locationjoystick.core.map.ui.MapAttribution
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.overlay.OverlayService
@@ -76,6 +80,7 @@ fun RouteCreatorRoute(
     val favorites by viewModel.favorites.collectAsStateWithLifecycle()
     val livePosition by viewModel.livePosition.collectAsStateWithLifecycle()
     val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
+    val tileSource by viewModel.mapTileSource.collectAsStateWithLifecycle()
 
     RouteCreatorScreen(
         state = state,
@@ -84,6 +89,7 @@ fun RouteCreatorRoute(
         favorites = favorites,
         currentPosition = livePosition,
         recentSearches = recentSearches,
+        tileSource = tileSource,
         onAddWaypoint = viewModel::addWaypoint,
         onUndo = viewModel::undoLastWaypoint,
         onSaveRoute = { name ->
@@ -131,9 +137,16 @@ internal fun RouteCreatorScreen(
     onToggleSpoofing: () -> Unit = {},
     locationLabel: String? = null,
     bottomBar: @Composable () -> Unit = {},
+    tileSource: MapTileSource = MapTileSource.DEFAULT,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    // WGS-84 <-> map-tile CRS boundary; persisted route data always stays WGS-84.
+    val proj = tileSource.projection
+    val appliedTileSource = remember { mutableStateOf<MapTileSource?>(null) }
+
+    fun LatLng.toMapLatLng(): MapLatLng = proj.toMap(this).let { MapLatLng(it.latitude, it.longitude) }
 
     val mapView =
         remember {
@@ -148,6 +161,32 @@ internal fun RouteCreatorScreen(
     var showSearch by remember { mutableStateOf(false) }
     var showFavoritesSheet by remember { mutableStateOf(false) }
     var pendingWaitPrompt by remember { mutableStateOf<LatLng?>(null) }
+
+    val applyStyle: (MapLibreMap) -> Unit = { map ->
+        appliedTileSource.value = tileSource
+        map.applyZoomBounds(tileSource)
+        map.setStyle(Style.Builder().fromUri(AppConstants.MapConstants.EMPTY_MAP_STYLE_URI)) { style ->
+            val layers =
+                style.addCreatorLayers(
+                    tileSource = tileSource,
+                    currentPosGeoJson = initialPosition?.let { buildPositionGeoJson(proj.toMap(it)) },
+                )
+            segmentsSource.value = layers.segmentsSource
+            waypointsSource.value = layers.waypointsSource
+            segmentsSource.value?.setGeoJson(buildSegmentsGeoJson(state.segments.map(proj::toMap)))
+            waypointsSource.value?.setGeoJson(buildWaypointsGeoJson(proj.toMap(state.waypoints)))
+        }
+    }
+
+    LaunchedEffect(tileSource) {
+        val map = mapRef.value ?: return@LaunchedEffect
+        val previous = appliedTileSource.value ?: return@LaunchedEffect
+        if (previous == tileSource) return@LaunchedEffect
+        val prevProj = previous.projection
+        val centerWgs = map.cameraPosition.target?.let { prevProj.fromMap(LatLng(it.latitude, it.longitude)) }
+        applyStyle(map)
+        if (centerWgs != null) map.moveCamera(CameraUpdateFactory.newLatLng(centerWgs.toMapLatLng()))
+    }
 
     LaunchedEffect(showSaveDialog) {
         context.sendBroadcast(
@@ -210,7 +249,7 @@ internal fun RouteCreatorScreen(
                         onClick = {
                             mapRef.value?.animateCamera(
                                 CameraUpdateFactory.newLatLng(
-                                    MapLatLng(currentPosition.latitude, currentPosition.longitude),
+                                    currentPosition.toMapLatLng(),
                                 ),
                                 500,
                             )
@@ -271,25 +310,17 @@ internal fun RouteCreatorScreen(
                                 CameraPosition
                                     .Builder()
                                     .target(
-                                        if (initialPosition != null) {
-                                            MapLatLng(initialPosition.latitude, initialPosition.longitude)
-                                        } else {
-                                            MapLatLng(AppConstants.MapConstants.DEFAULT_LAT, AppConstants.MapConstants.DEFAULT_LON)
-                                        },
+                                        (
+                                            initialPosition
+                                                ?: tileSource.defaultCenter
+                                        ).toMapLatLng(),
                                     ).zoom(AppConstants.MapConstants.DEFAULT_ZOOM)
                                     .build()
 
-                            map.setStyle(Style.Builder().fromUri(AppConstants.MapConstants.EMPTY_MAP_STYLE_URI)) { style ->
-                                val layers =
-                                    style.addCreatorLayers(
-                                        currentPosGeoJson = initialPosition?.let { buildPositionGeoJson(it) },
-                                    )
-                                segmentsSource.value = layers.segmentsSource
-                                waypointsSource.value = layers.waypointsSource
-                            }
+                            applyStyle(map)
 
                             map.addOnMapClickListener { latLng ->
-                                val position = LatLng(latLng.latitude, latLng.longitude)
+                                val position = proj.fromMap(LatLng(latLng.latitude, latLng.longitude))
                                 if (routeType == RouteType.TELEPORT) {
                                     pendingWaitPrompt = position
                                 } else {
@@ -304,10 +335,15 @@ internal fun RouteCreatorScreen(
                     val segSrc = segmentsSource.value ?: return@AndroidView
                     val wpSrc = waypointsSource.value ?: return@AndroidView
 
-                    segSrc.setGeoJson(buildSegmentsGeoJson(state.segments))
-                    wpSrc.setGeoJson(buildWaypointsGeoJson(state.waypoints))
+                    segSrc.setGeoJson(buildSegmentsGeoJson(state.segments.map(proj::toMap)))
+                    wpSrc.setGeoJson(buildWaypointsGeoJson(proj.toMap(state.waypoints)))
                 },
                 modifier = Modifier.fillMaxSize(),
+            )
+
+            MapAttribution(
+                tileSource = tileSource,
+                modifier = Modifier.align(Alignment.BottomStart).padding(4.dp),
             )
 
             if (state.isLoadingSegment) {
@@ -323,7 +359,7 @@ internal fun RouteCreatorScreen(
                         showSearch = false
                         val map = mapRef.value ?: return@NominatimSearchBar
                         map.animateCamera(
-                            CameraUpdateFactory.newLatLngZoom(MapLatLng(lat, lon), AppConstants.MapConstants.DEFAULT_ZOOM),
+                            CameraUpdateFactory.newLatLngZoom(LatLng(lat, lon).toMapLatLng(), AppConstants.MapConstants.DEFAULT_ZOOM),
                             500,
                         )
                     },
@@ -358,7 +394,7 @@ internal fun RouteCreatorScreen(
             onSelect = { position ->
                 showFavoritesSheet = false
                 mapRef.value?.animateCamera(
-                    CameraUpdateFactory.newLatLng(MapLatLng(position.latitude, position.longitude)),
+                    CameraUpdateFactory.newLatLng(position.toMapLatLng()),
                     500,
                 )
             },

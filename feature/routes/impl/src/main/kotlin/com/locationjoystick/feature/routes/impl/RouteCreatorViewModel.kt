@@ -11,6 +11,7 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
@@ -77,6 +78,11 @@ class RouteCreatorViewModel
             settingsRepository
                 .getRecentSearches()
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+        val mapTileSource: StateFlow<MapTileSource> =
+            settingsRepository
+                .getMapTileSource()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapTileSource.DEFAULT)
 
         fun addRecentSearch(
             displayName: String,

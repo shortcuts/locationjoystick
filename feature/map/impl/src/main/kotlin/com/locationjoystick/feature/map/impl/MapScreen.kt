@@ -52,6 +52,11 @@ import com.locationjoystick.core.map.geojson.buildRouteTraceGeoJson
 import com.locationjoystick.core.map.geojson.emptyGeoJson
 import com.locationjoystick.core.map.maplibre.addEphemeralRouteLayers
 import com.locationjoystick.core.map.maplibre.addLocationLayers
+import com.locationjoystick.core.map.maplibre.applyZoomBounds
+import com.locationjoystick.core.map.projection.projection
+import com.locationjoystick.core.map.ui.MapAttribution
+import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.feature.map.api.MAP_ROUTE
 import com.locationjoystick.feature.map.impl.R
@@ -181,6 +186,32 @@ internal fun MapScreen(
     val isFollowingCamera = remember { mutableStateOf(true) }
     val spoofToggle = rememberSpoofToggleState()
 
+    // Base-map provider + the WGS-84 <-> map-datum projection that goes with it. Everything drawn
+    // on or read back from the MapLibre map passes through `proj`; the app's own state stays WGS-84.
+    val tileSource = uiState.mapTileSource
+    val proj = tileSource.projection
+    val appliedTileSource = remember { mutableStateOf<MapTileSource?>(null) }
+
+    fun LatLng.toMapLatLng(): MapLatLng = proj.toMap(this).let { MapLatLng(it.latitude, it.longitude) }
+
+    val applyStyle: (MapLibreMap) -> Unit = { map ->
+        appliedTileSource.value = tileSource
+        map.applyZoomBounds(tileSource)
+        map.setStyle(Style.Builder().fromUri(AppConstants.MapConstants.EMPTY_MAP_STYLE_URI)) { style ->
+            val layers = style.addLocationLayers(tileSource = tileSource, includeSearchMarker = true)
+            positionSource.value = layers.positionSource
+            tracedSource.value = layers.tracedSource
+            remainingSource.value = layers.remainingSource
+            endpointsSource.value = layers.endpointsSource
+            searchMarkerSource.value = layers.searchMarkerSource
+            pendingTapMarkerSource.value = layers.pendingTapSource
+            jitterRadiusSource.value = layers.jitterRadiusSource
+            val ephemeralSrcs = style.addEphemeralRouteLayers()
+            ephemeralRouteSource.value = ephemeralSrcs.routeSource
+            ephemeralEndpointsSource.value = ephemeralSrcs.endpointsSource
+        }
+    }
+
     LaunchedEffect(uiState.isUserPanning) {
         if (!uiState.isUserPanning) isFollowingCamera.value = true
     }
@@ -210,10 +241,22 @@ internal fun MapScreen(
         // Use closer zoom for favorite teleports (street-level), default zoom for other cases
         val zoom = if (uiState.favoriteTarget != null) 18.0 else AppConstants.MapConstants.DEFAULT_ZOOM
         mapRef.value?.animateCamera(
-            CameraUpdateFactory.newLatLngZoom(MapLatLng(target.latitude, target.longitude), zoom),
+            CameraUpdateFactory.newLatLngZoom(target.toMapLatLng(), zoom),
             500,
         )
         onAction(MapAction.CameraTargetConsumed)
+    }
+
+    // Re-create the style when the user switches base map in Settings. The camera is re-anchored
+    // on the same WGS-84 point so the view does not visibly jump by the datum offset.
+    LaunchedEffect(tileSource) {
+        val map = mapRef.value ?: return@LaunchedEffect
+        val previous = appliedTileSource.value ?: return@LaunchedEffect
+        if (previous == tileSource) return@LaunchedEffect
+        val prevProj = previous.projection
+        val centerWgs = map.cameraPosition.target?.let { prevProj.fromMap(LatLng(it.latitude, it.longitude)) }
+        applyStyle(map)
+        if (centerWgs != null) map.moveCamera(CameraUpdateFactory.newLatLng(centerWgs.toMapLatLng()))
     }
 
     LjScaffold(
@@ -253,49 +296,22 @@ internal fun MapScreen(
                                 CameraPosition
                                     .Builder()
                                     .target(
-                                        if (initialPosition != null) {
-                                            MapLatLng(initialPosition.latitude, initialPosition.longitude)
-                                        } else {
-                                            MapLatLng(AppConstants.MapConstants.DEFAULT_LAT, AppConstants.MapConstants.DEFAULT_LON)
-                                        },
+                                        (
+                                            initialPosition
+                                                ?: tileSource.defaultCenter
+                                        ).toMapLatLng(),
                                     ).zoom(AppConstants.MapConstants.DEFAULT_ZOOM)
                                     .build()
 
-                            map.setStyle(Style.Builder().fromUri("asset://empty.json")) { style ->
-                                val layers = style.addLocationLayers(includeSearchMarker = true)
-                                positionSource.value = layers.positionSource
-                                tracedSource.value = layers.tracedSource
-                                remainingSource.value = layers.remainingSource
-                                endpointsSource.value = layers.endpointsSource
-                                searchMarkerSource.value = layers.searchMarkerSource
-                                pendingTapMarkerSource.value = layers.pendingTapSource
-                                jitterRadiusSource.value = layers.jitterRadiusSource
-                                val ephemeralSrcs = style.addEphemeralRouteLayers()
-                                ephemeralRouteSource.value = ephemeralSrcs.routeSource
-                                ephemeralEndpointsSource.value = ephemeralSrcs.endpointsSource
-                            }
+                            applyStyle(map)
 
                             map.addOnMapClickListener { latLng ->
-                                onAction(
-                                    MapAction.TapToTeleport(
-                                        com.locationjoystick.core.model.LatLng(
-                                            latitude = latLng.latitude,
-                                            longitude = latLng.longitude,
-                                        ),
-                                    ),
-                                )
+                                onAction(MapAction.TapToTeleport(proj.fromMap(LatLng(latLng.latitude, latLng.longitude))))
                                 true
                             }
 
                             map.addOnMapLongClickListener { latLng ->
-                                onAction(
-                                    MapAction.LongPressTapToWalk(
-                                        com.locationjoystick.core.model.LatLng(
-                                            latitude = latLng.latitude,
-                                            longitude = latLng.longitude,
-                                        ),
-                                    ),
-                                )
+                                onAction(MapAction.LongPressTapToWalk(proj.fromMap(LatLng(latLng.latitude, latLng.longitude))))
                                 true
                             }
 
@@ -317,30 +333,32 @@ internal fun MapScreen(
                     val ephemeralRouteSrc = ephemeralRouteSource.value ?: return@AndroidView
                     val ephemeralEndpointsSrc = ephemeralEndpointsSource.value ?: return@AndroidView
                     val position = uiState.currentPosition
+                    val mapPosition = position?.let(proj::toMap)
 
-                    src.setGeoJson(buildPositionGeoJson(position))
+                    src.setGeoJson(buildPositionGeoJson(mapPosition))
 
                     jitterRadiusSource.value?.setGeoJson(
-                        if (uiState.showJitterRadiusOverlay && position != null) {
-                            buildCirclePolygonGeoJson(position, uiState.jitterRadiusMeters)
+                        if (uiState.showJitterRadiusOverlay && mapPosition != null) {
+                            buildCirclePolygonGeoJson(mapPosition, uiState.jitterRadiusMeters)
                         } else {
                             emptyGeoJson()
                         },
                     )
 
-                    pendingTapMarkerSource.value?.setGeoJson(buildPositionGeoJson(uiState.pendingTapPosition))
+                    pendingTapMarkerSource.value?.setGeoJson(buildPositionGeoJson(uiState.pendingTapPosition?.let(proj::toMap)))
 
                     val traceWaypoints =
                         uiState.routeTrace
                             ?: uiState.ephemeralWaypoints.takeIf { it.size >= 2 }
-                    if (traceWaypoints != null && position != null) {
-                        val (tracedGeoJson, remainingGeoJson) = buildRouteTraceGeoJson(traceWaypoints, position)
+                    if (traceWaypoints != null && mapPosition != null) {
+                        val mapWaypoints = proj.toMap(traceWaypoints)
+                        val (tracedGeoJson, remainingGeoJson) = buildRouteTraceGeoJson(mapWaypoints, mapPosition)
                         tracedSrc.setGeoJson(tracedGeoJson)
                         remainingSrc.setGeoJson(remainingGeoJson)
-                        endpointsSrc.setGeoJson(buildPointsGeoJson(traceWaypoints))
-                    } else if (uiState.walkStart != null && uiState.walkTarget != null && position != null) {
-                        val walkPoints = listOfNotNull(uiState.walkStart, uiState.walkTarget)
-                        val (tracedGeoJson, remainingGeoJson) = buildRouteTraceGeoJson(walkPoints, position)
+                        endpointsSrc.setGeoJson(buildPointsGeoJson(mapWaypoints))
+                    } else if (uiState.walkStart != null && uiState.walkTarget != null && mapPosition != null) {
+                        val walkPoints = proj.toMap(listOfNotNull(uiState.walkStart, uiState.walkTarget))
+                        val (tracedGeoJson, remainingGeoJson) = buildRouteTraceGeoJson(walkPoints, mapPosition)
                         tracedSrc.setGeoJson(tracedGeoJson)
                         remainingSrc.setGeoJson(remainingGeoJson)
                         endpointsSrc.setGeoJson(buildPointsGeoJson(walkPoints))
@@ -358,8 +376,9 @@ internal fun MapScreen(
                             uiState.ephemeralWaypoints
                         }
                     if (displayWaypoints.size >= 2) {
-                        ephemeralRouteSrc.setGeoJson(buildLineGeoJson(displayWaypoints))
-                        ephemeralEndpointsSrc.setGeoJson(buildPointsGeoJson(displayWaypoints))
+                        val mapDisplayWaypoints = proj.toMap(displayWaypoints)
+                        ephemeralRouteSrc.setGeoJson(buildLineGeoJson(mapDisplayWaypoints))
+                        ephemeralEndpointsSrc.setGeoJson(buildPointsGeoJson(mapDisplayWaypoints))
                     } else {
                         ephemeralRouteSrc.setGeoJson(emptyGeoJson())
                         ephemeralEndpointsSrc.setGeoJson(emptyGeoJson())
@@ -367,14 +386,17 @@ internal fun MapScreen(
 
                     if (isFollowingCamera.value && position != null) {
                         map.animateCamera(
-                            CameraUpdateFactory.newLatLng(
-                                MapLatLng(position.latitude, position.longitude),
-                            ),
+                            CameraUpdateFactory.newLatLng(position.toMapLatLng()),
                             500,
                         )
                     }
                 },
                 modifier = Modifier.fillMaxSize(),
+            )
+
+            MapAttribution(
+                tileSource = tileSource,
+                modifier = Modifier.align(Alignment.BottomStart).padding(4.dp),
             )
 
             if (uiState.walkTarget == null && !uiState.isRouteReplay && !uiState.isRoaming) {
@@ -405,14 +427,13 @@ internal fun MapScreen(
             if (showSearch.value) {
                 NominatimSearchBar(
                     onLocationSelected = { lat, lon, _ ->
-                        val position =
-                            com.locationjoystick.core.model
-                                .LatLng(latitude = lat, longitude = lon)
+                        val position = LatLng(latitude = lat, longitude = lon)
+                        val mapPos = proj.toMap(position)
                         mapRef.value?.animateCamera(
-                            CameraUpdateFactory.newLatLngZoom(MapLatLng(lat, lon), AppConstants.MapConstants.DEFAULT_ZOOM),
+                            CameraUpdateFactory.newLatLngZoom(position.toMapLatLng(), AppConstants.MapConstants.DEFAULT_ZOOM),
                             500,
                         )
-                        searchMarkerSource.value?.setGeoJson(buildMarkerGeoJson(lat, lon))
+                        searchMarkerSource.value?.setGeoJson(buildMarkerGeoJson(mapPos.latitude, mapPos.longitude))
                         showSearch.value = false
                         onAction(MapAction.TapToTeleport(position))
                     },

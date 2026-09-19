@@ -18,6 +18,7 @@ import com.locationjoystick.core.location.walkStart
 import com.locationjoystick.core.location.walkTarget
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingDefaults
 import kotlinx.coroutines.CoroutineScope
@@ -239,6 +240,7 @@ internal class WidgetPanelPresenter(
             val quickWalk by settingsRepository.getFloatingMapQuickWalk().collectAsStateWithLifecycle(initialValue = false)
             val hideTeleportFeatures by settingsRepository.getHideTeleportFeatures().collectAsStateWithLifecycle(initialValue = false)
             val showRouteJumpButtons by settingsRepository.getShowRouteJumpButtons().collectAsStateWithLifecycle(initialValue = false)
+            val mapTileSource by settingsRepository.getMapTileSource().collectAsStateWithLifecycle(initialValue = MapTileSource.DEFAULT)
             val routeControlsExpanded by mapRouteControlsExpanded.collectAsStateWithLifecycle()
             MapFloatingView(
                 currentPosition = shared.currentPosition,
@@ -292,6 +294,7 @@ internal class WidgetPanelPresenter(
                 quickWalk = quickWalk,
                 hideTeleportFeatures = hideTeleportFeatures,
                 showRouteJumpButtons = showRouteJumpButtons,
+                tileSource = mapTileSource,
             )
         }
     }

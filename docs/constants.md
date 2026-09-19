@@ -13,7 +13,7 @@ All constants → `:core:common/constants/AppConstants.kt`.
 | `PedometerConstants` | Max walking speed, stride base, stride speed factor, stride jitter percentage |
 | `RoamingConstants` | Default radius/distance, speed profile IDs, arrival threshold, road-snapping defaults |
 | `OsrmConstants` | Demo + FOSSGIS base URLs, ladder backoffs, time budgets, bisection thresholds |
-| `MapConstants` | Default coordinates, zoom, tile URL, map source/layer IDs |
+| `MapConstants` | Default coordinates, zoom, empty style URI, tileset version (tile URLs live on the `MapTileSource` enum) |
 | `NominatimConstants` | Search endpoint |
 | `ExportConstants` | Schema version, MIME type, GPX version/creator, max GPX import size |
 | `CooldownConstants` | Walk-to and teleport cooldown durations |

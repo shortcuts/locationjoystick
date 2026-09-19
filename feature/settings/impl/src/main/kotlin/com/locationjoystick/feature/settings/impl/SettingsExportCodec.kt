@@ -6,6 +6,7 @@ import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
@@ -80,6 +81,7 @@ internal object SettingsExportCodec {
         settingsObj.put("realismSatelliteExtrasEnabled", data.settings.satelliteExtrasEnabled)
         settingsObj.put("realismSuspendedMockingEnabled", data.settings.suspendedMockingEnabled)
         settingsObj.put("hideTeleportFeatures", data.settings.hideTeleportFeatures)
+        settingsObj.put("mapTileSource", data.settings.mapTileSource.name)
         settingsObj.put("hideWidgetOverlay", data.settings.hideWidgetOverlay)
         settingsObj.put("hideForegroundNotification", data.settings.hideForegroundNotification)
         settingsObj.put("showRouteJumpButtons", data.settings.showRouteJumpButtons)
@@ -217,6 +219,7 @@ internal object SettingsExportCodec {
                 AppConstants.RealismConstants.SUSPENDED_MOCKING_ENABLED_DEFAULT,
             )
         val hideTeleportFeatures = settingsObj.optBoolean("hideTeleportFeatures", false)
+        val mapTileSource = MapTileSource.fromName(settingsObj.optString("mapTileSource", null))
         val hideWidgetOverlay = settingsObj.optBoolean("hideWidgetOverlay", false)
         val hideForegroundNotification = settingsObj.optBoolean("hideForegroundNotification", false)
         val showRouteJumpButtons = settingsObj.optBoolean("showRouteJumpButtons", false)
@@ -257,6 +260,7 @@ internal object SettingsExportCodec {
                 satelliteExtrasEnabled = satelliteExtrasEnabled,
                 suspendedMockingEnabled = suspendedMockingEnabled,
                 hideTeleportFeatures = hideTeleportFeatures,
+                mapTileSource = mapTileSource,
                 hideWidgetOverlay = hideWidgetOverlay,
                 hideForegroundNotification = hideForegroundNotification,
                 showRouteJumpButtons = showRouteJumpButtons,

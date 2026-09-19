@@ -79,6 +79,15 @@
     <string name="settings_menus_appearance">"外观"</string>
     <string name="settings_menus_switch_to_a_light_theme_for">"切换到浅色主题，便于在强光或阳光直射下看清屏幕。"</string>
     <string name="settings_menus_light_mode">"浅色模式"</string>
+    <string name="settings_menus_map_section">"地图"</string>
+    <string name="settings_menus_map_source_desc">"选择地图页面、悬浮地图、收藏选点和路线创建器使用的地图瓦片。已保存的位置和模拟 GPS 坐标不受影响。"</string>
+    <string name="settings_menus_map_source">"地图源"</string>
+    <string name="settings_menus_map_source_osm">"OpenStreetMap"</string>
+    <string name="settings_menus_map_source_amap">"高德地图"</string>
+    <string name="settings_menus_map_source_item">"%1$s — %2$s"</string>
+    <string name="settings_menus_map_source_osm_default_city">"法国巴黎"</string>
+    <string name="settings_menus_map_source_amap_default_city">"中国北京"</string>
+    <string name="settings_menus_map_source_amap_note">"高德瓦片使用 GCJ-02 坐标系。应用会自动换算坐标，确保标记、路线与点击位置对齐；所有数据仍以 WGS-84 保存。"</string>
     <string name="settings_menus_tap_to_walk">"点击行走"</string>
     <string name="settings_menus_walk_to_a_location_by_tapping">"点击某个位置即可走向它 — 无需确认。"</string>
     <string name="settings_menus_menus">"菜单"</string>
