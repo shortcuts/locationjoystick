@@ -87,4 +87,5 @@ private fun appLanguageShortLabel(language: AppLanguage): String =
         AppLanguage.SYSTEM_DEFAULT -> stringResource(R.string.language_system_default)
         AppLanguage.ENGLISH -> stringResource(R.string.language_short_english)
         AppLanguage.CHINESE_SIMPLIFIED -> stringResource(R.string.language_short_chinese)
+        AppLanguage.CHINESE_TRADITIONAL -> stringResource(R.string.language_short_traditional_chinese)
     }

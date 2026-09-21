@@ -29,7 +29,7 @@ All in `:core:model`. Pure Kotlin — no Android, no Room. Room entities in `:co
 | `MapTileSource` | enum: `OSM`, `AMAP` — carries `tileUrlTemplates`, `minZoom`/`maxZoom`, `clampCamera: Boolean`, `coordinateSystem: MapCoordinateSystem`, `defaultCenter: LatLng`; `DEFAULT = OSM`, lenient `fromName()` (see @docs/features/map.md, "Map source") |
 | `MapCoordinateSystem` | enum: `WGS84`, `GCJ02` — datum a tile provider renders in; drives the presentation-edge projection in `:core:map` |
 | `ThemeMode` | enum: `DARK`, `LIGHT` |
-| `AppLanguage` | enum (each carries `languageTag: String?`): `SYSTEM_DEFAULT`, `ENGLISH`, `CHINESE_SIMPLIFIED` |
+| `AppLanguage` | enum (each carries `languageTag: String?`): `SYSTEM_DEFAULT`, `ENGLISH`, `CHINESE_SIMPLIFIED`, `CHINESE_TRADITIONAL` |
 | `GroupRole` | enum: `NONE`, `LEADER`, `FOLLOWER` |
 | `GroupState` | `role: GroupRole`, `groupId: String?`, `leaderHost: String?`, `leaderPort: Int?`, `followerModeEnabled: Boolean`, `sharingEnabled: Boolean`, `followLeaderTeleports: Boolean` (default `true`) |
 | `SyncPositionUpdate` | `timestamp: Long`, `latitude: Double`, `longitude: Double`, `speedMs: Float`, `bearing: Float`, `seq: Long`, `active: Boolean`, `teleportSeq: Long` (default `0`) |

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="favorites_screen_title">"收藏"</string>
+    <string name="favorites_screen_no_saved_favorites_yet">"尚無收藏"</string>
+    <string name="favorites_screen_no_favorites_match_search">"沒有相符的收藏"</string>
+    <string name="favorites_screen_from_map">"從地圖選取"</string>
+    <string name="favorites_screen_from_coordinates">"輸入座標"</string>
+    <string name="favorites_screen_use_current_location">"使用目前位置"</string>
+    <string name="favorites_screen_sort">"排序"</string>
+    <string name="favorites_screen_add_favorite_cd">"新增收藏"</string>
+    <string name="favorites_screen_search_favorites">"搜尋收藏"</string>
+    <string name="favorites_screen_add_a_favorite">"新增收藏"</string>
+    <string name="favorites_screen_add_a_favorite_2">"新增收藏"</string>
+    <string name="favorites_screen_more_options_cd">"更多選項"</string>
+    <string name="favorites_screen_edit">"編輯"</string>
+    <string name="favorites_screen_share">"分享"</string>
+    <string name="favorites_screen_delete">"刪除"</string>
+    <string name="favorites_screen_danger">"危險操作"</string>
+    <string name="favorites_screen_add_favorite_location">"新增收藏位置"</string>
+    <string name="common_name">"名稱"</string>
+    <string name="favorites_screen_latitude">"緯度"</string>
+    <string name="favorites_screen_longitude">"經度"</string>
+    <string name="common_cancel">"取消"</string>
+    <string name="common_save">"儲存"</string>
+    <string name="favorites_screen_edit_favorite">"編輯收藏"</string>
+    <string name="favorites_screen_latitude_2">"緯度"</string>
+    <string name="favorites_screen_longitude_2">"經度"</string>
+    <string name="map_picker_pick_location">"選取位置"</string>
+    <string name="map_picker_save_location">"儲存位置"</string>
+    <string name="map_picker_search_location_cd">"搜尋位置"</string>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="osrm_failure_timeout">"路線伺服器逾時"</string>
+    <string name="osrm_failure_server_error">"路線伺服器不可用"</string>
+    <string name="osrm_failure_rate_limited">"路線伺服器請求過於頻繁"</string>
+    <string name="osrm_failure_no_route_found">"未找到道路路線"</string>
+    <string name="osrm_failure_network_unavailable">"無網路連線"</string>
+    <string name="osrm_failure_unknown">"道路路線不可用"</string>
+    <string name="routing_road_following_partial_fallback">"沿道路行走部分不可用 — %2$d 個路段中有 %1$d 個改用直線路徑"</string>
+</resources>
