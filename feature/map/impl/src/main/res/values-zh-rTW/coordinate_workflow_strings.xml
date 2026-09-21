@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capture_coordinates_screen_capture">"擷取"</string>
+    <string name="map_fab_column_paste_coordinates">"貼上座標"</string>
+    <string name="capture_invalid_route">需要名稱和至少 2 個點。</string>
+    <string name="capture_browser_automatic">自動</string>
+    <string name="capture_menu_setup_guide">設定指南</string>
+    <string name="capture_menu_restore_default_browser">還原預設瀏覽器</string>
+    <string name="capture_restore_dialog_title">還原預設瀏覽器？</string>
+    <string name="capture_restore_dialog_checkbox">我了解這會關閉擷取功能，且需要在 Android 設定中把預設瀏覽器改回來。</string>
+    <string name="capture_restore_dialog_confirm">還原</string>
+    <string name="capture_restore_dialog_cancel">取消</string>
+</resources>

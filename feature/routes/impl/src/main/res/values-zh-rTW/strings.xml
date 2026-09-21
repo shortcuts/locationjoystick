@@ -54,4 +54,10 @@
     <string name="route_creator_center_on_location_cd">"定位至目前位置"</string>
     <string name="route_creator_pick_from_favorites_cd">"從收藏中選取"</string>
     <string name="route_creator_undo_last_waypoint_cd">"復原上一個途經點"</string>
+    <string name="route_creator_skipped_oversized_one">"已略過 %1$d 條因過大而無法匯入的路線"</string>
+    <string name="route_creator_skipped_oversized_other">"已略過 %1$d 條因過大而無法匯入的路線"</string>
+    <string name="route_paste_no_valid_coordinates">"在文字中找不到有效座標"</string>
+    <string name="route_paste_need_one_point_planting">"種植模式至少需要 1 個點"</string>
+    <string name="route_paste_need_two_points">"此模式至少需要 2 個點"</string>
+    <string name="route_paste_could_not_build_route">"無法根據這些點建立路線"</string>
 </resources>

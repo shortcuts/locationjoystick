@@ -42,4 +42,6 @@
     <plurals name="group_sync_followers_in_group">
         <item quantity="other">"%1$d 名成員在此群組中"</item>
     </plurals>
+    <string name="group_sync_follow_leader_teleports">"跟隨隊長瞬移"</string>
+    <string name="group_sync_follow_leader_teleports_description">"隊長瞬移時，你也會直接跳轉過去。關閉後，你將步行前往。"</string>
 </resources>

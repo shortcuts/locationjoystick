@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="favorites_screen_share_current_location">"分享目前位置"</string>
+    <string name="favorites_screen_paste_coordinates">"貼上座標"</string>
+    <string name="favorites_screen_copy_coordinates">"複製座標"</string>
+    <string name="favorites_screen_copied_coordinates">"已複製 %1$s"</string>
+    <string name="favorites_screen_send_as_message">"以訊息傳送"</string>
+    <string name="favorites_screen_save">"儲存"</string>
+    <string name="favorites_screen_name">"名稱"</string>
+    <string name="favorites_screen_coordinates">"座標"</string>
+    <string name="favorites_screen_paste_from_clipboard">"從剪貼簿貼上"</string>
+    <string name="favorites_screen_cancel">"取消"</string>
+    <string name="favorite_coordinate_example" translatable="false">11.0127769, 79.48065</string>
+    <string name="favorites_no_saved_locations_yet">"尚未儲存任何位置"</string>
+    <string name="favorites_add_a_favorite">"新增收藏"</string>
+    <string name="favorites_no_favorites_match_your_search">"沒有相符的收藏"</string>
+    <string name="favorites_decimal_or_degrees_with_n_s_and_e_w">"十進位座標，或帶 N/S 和 E/W 的度數"</string>
+    <string name="favorites_no_coordinates">"沒有有效座標"</string>
+</resources>

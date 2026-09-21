@@ -57,4 +57,5 @@
     <string name="widget_feature_favorites_cd">"收藏選取"</string>
     <string name="widget_feature_speed_cycle_cd">"速度切換"</string>
     <string name="widget_feature_open_map_cd">"開啟地圖"</string>
+    <string name="overlay_roaming_ignored_route_playing_cd">"漫遊已忽略 — 路線正在進行"</string>
 </resources>

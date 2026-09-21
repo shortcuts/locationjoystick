@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paste_coordinates_screen_paste_coordinates">"貼上座標"</string>
+    <string name="paste_coordinates_screen_coordinates">"座標"</string>
+    <string name="paste_coordinates_screen_paste_coordinates_here_one_per_line">"在此貼上座標，每行一個…\n"</string>
+    <string name="paste_coordinates_screen_swap_lat_lon_order">"交換經緯度順序"</string>
+    <string name="paste_coordinates_screen_use_this_when_the_first_number_is_longitude">"當第一個數字是經度時使用此選項"</string>
+    <string name="paste_coordinates_screen_paste_from_clipboard">"從剪貼簿貼上"</string>
+    <string name="paste_coordinates_screen_load_points">"載入點位"</string>
+    <string name="paste_coordinates_screen_point_order">"點位順序"</string>
+    <string name="paste_coordinates_screen_build_mode">"建立模式"</string>
+    <string name="paste_coordinates_screen_circle_radius_meters">"圓圈半徑（公尺）"</string>
+    <string name="paste_coordinates_screen_default_35_m_circles_stay_geometric_only_travel_between_them">"預設 35 公尺。圓圈保持幾何形狀，只有圓圈之間的移動才能沿道路進行。"</string>
+    <string name="paste_coordinates_screen_between_circles">"圓圈之間"</string>
+    <string name="paste_coordinates_screen_save_route">"儲存路線"</string>
+    <string name="paste_coordinates_screen_route_name">"路線名稱"</string>
+    <string name="paste_coordinates_screen_save">"儲存"</string>
+    <string name="paste_coordinates_screen_cancel">"取消"</string>
+    <string name="routes_screen_add_route">"新增路線"</string>
+    <string name="routes_screen_search_routes">"搜尋路線"</string>
+    <string name="routes_screen_paste_coordinates">"貼上座標"</string>
+    <string name="routes_screen_share">"分享"</string>
+    <string name="routes_share_title">"分享 %1$s"</string>
+    <string name="routes_screen_copy">"複製"</string>
+    <string name="routes_screen_send_as_message">"以訊息傳送"</string>
+    <string name="routes_screen_close">"關閉"</string>
+    <string name="routes_no_routes_yet">"尚無路線"</string>
+    <string name="routes_add_a_route">"新增一條路線"</string>
+    <string name="routes_no_routes_match_your_search">"沒有相符的路線"</string>
+    <string name="routes_copied_coordinates">"已複製座標"</string>
+    <string name="paste_keep_original">保留原始順序</string>
+    <string name="paste_optimize_proximity">最佳化路徑順序</string>
+    <string name="paste_as_is">原樣</string>
+    <string name="paste_walkable_path">可步行路徑</string>
+    <string name="paste_planting_mode">種植模式</string>
+    <string name="paste_straight">直線</string>
+    <string name="paste_via_roads">沿道路</string>
+    <string name="paste_building">建立中…</string>
+    <string name="paste_build_preview">建立預覽</string>
+    <string name="paste_save_route">儲存路線</string>
+    <string name="paste_empty_clipboard">剪貼簿是空的。</string>
+    <plurals name="paste_coordinates_screen_points_loaded">
+        <item quantity="other">"已載入 %1$d 個點位"</item>
+    </plurals>
+    <plurals name="paste_coordinates_screen_waypoints_summary">
+        <item quantity="other">"%1$d 個途經點 · %2$s"</item>
+    </plurals>
+</resources>

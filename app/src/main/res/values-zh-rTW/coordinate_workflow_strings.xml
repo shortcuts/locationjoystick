@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lj_drawer_content_capture">"擷取"</string>
+    <string name="app_gpx_open_failed">無法開啟該 GPX 檔案</string>
+    <string name="link_interceptor_captured">"已擷取 %1$s"</string>
+    <string name="link_interceptor_jumped_to">"已跳轉至 %1$s"</string>
+    <string name="link_interceptor_captured_and_jumped_to">"已擷取並跳轉至 %1$s"</string>
+</resources>

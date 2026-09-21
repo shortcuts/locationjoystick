@@ -194,4 +194,13 @@
     <string name="qr_share_or_enter_code">"或輸入代碼：%1$s"</string>
     <string name="hot_item_tree_collapse_cd">"摺疊"</string>
     <string name="hot_item_tree_expand_cd">"展開"</string>
+    <string name="settings_menus_map_section">"地圖"</string>
+    <string name="settings_menus_map_source_desc">"選擇地圖頁面、懸浮地圖、收藏選點和路線建立器使用的地圖圖磚。已儲存的位置和模擬 GPS 座標不受影響。"</string>
+    <string name="settings_menus_map_source">"地圖來源"</string>
+    <string name="settings_menus_map_source_osm">"OpenStreetMap"</string>
+    <string name="settings_menus_map_source_amap">"高德地圖"</string>
+    <string name="settings_menus_map_source_item">"%1$s — %2$s"</string>
+    <string name="settings_menus_map_source_osm_default_city">"法國巴黎"</string>
+    <string name="settings_menus_map_source_amap_default_city">"中國北京"</string>
+    <string name="settings_menus_map_source_amap_note">"高德圖磚使用 GCJ-02 座標系。應用程式會自動換算座標，確保標記、路線與點擊位置對齊；所有資料仍以 WGS-84 儲存。"</string>
 </resources>
