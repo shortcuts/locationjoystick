@@ -249,12 +249,8 @@ class FloatingWidgetService :
             }
         }
         lifecycleScope.launch {
-            locationRepository.isActivityActive.collect { active ->
-                if (!active) panelExpand.collapse(PanelExpandKey.ROUTE)
-            }
-        }
-        lifecycleScope.launch {
             locationRepository.currentMode.collect { mode ->
+                if (!routeControlsActive(mode)) panelExpand.collapse(PanelExpandKey.ROUTE)
                 if (mode != MockMode.ROAMING) panelExpand.collapse(PanelExpandKey.ROAMING)
             }
         }
@@ -354,8 +350,6 @@ class FloatingWidgetService :
             val joystickVisible by joystickVisibleFlow.collectAsStateWithLifecycle()
             val joystickLocked by joystickLockedFlow.collectAsStateWithLifecycle()
             val activeProfileId by activeProfileIdFlow.collectAsStateWithLifecycle()
-            val isActivityActive by locationRepository.isActivityActive.collectAsStateWithLifecycle(initialValue = false)
-            val isActivityPausable by locationRepository.isActivityPausable.collectAsStateWithLifecycle(initialValue = false)
             val currentMode by locationRepository.currentMode.collectAsStateWithLifecycle(initialValue = MockMode.TELEPORT)
             val mockLocationState by locationRepository.mockLocationState.collectAsStateWithLifecycle(
                 initialValue = MockLocationState.IDLE,
@@ -390,9 +384,9 @@ class FloatingWidgetService :
                 val routeControls =
                     RouteControlsState(
                         expanded = routeExpanded,
-                        isActive = isActivityActive,
+                        isActive = routeControlsActive(currentMode),
                         isPaused = isActivityPaused,
-                        isPausable = isActivityPausable,
+                        isPausable = routeControlsActive(currentMode),
                         isReplay = currentMode == MockMode.ROUTE_REPLAY,
                         hideTeleportFeatures = hideTeleportFeatures,
                         showRouteJumpButtons = showRouteJumpButtons,
@@ -631,11 +625,7 @@ class FloatingWidgetService :
     private fun onRouteIconClicked() {
         if (!isSpoofingActive()) return
         val mode = mapController.sharedState.value.mockMode
-        val isActive =
-            mode == MockMode.ROUTE_REPLAY ||
-                mode == MockMode.ROAMING ||
-                mode == MockMode.WALK_TO
-        if (isActive) {
+        if (routeControlsActive(mode)) {
             panelExpand.toggle(PanelExpandKey.ROUTE)
         } else {
             panelPresenter.showRoutesFloatingView()
@@ -656,14 +646,6 @@ class FloatingWidgetService :
                 }
             }
 
-            MockMode.ROAMING -> {
-                if (mapController.sharedState.value.isRoamingPaused) {
-                    mapController.resumeRoaming()
-                } else {
-                    mapController.pauseRoaming()
-                }
-            }
-
             else -> {
                 Unit
             }
@@ -673,7 +655,6 @@ class FloatingWidgetService :
     private fun onRouteStopClicked() {
         panelExpand.collapse(PanelExpandKey.ROUTE)
         when (mapController.sharedState.value.mockMode) {
-            MockMode.ROAMING -> mapController.stopRoaming()
             MockMode.WALK_TO -> mapController.stopWalk()
             else -> mapController.stopRouteReplay()
         }

@@ -21,6 +21,7 @@
     { "category": "fix", "scope": "Map", "summary": "Fixed a rare crash when coming back to the app with a map open." },
     { "category": "fix", "scope": "Map", "summary": "Tapping the center-on-map button repeatedly no longer lags." },
     { "category": "feat", "scope": "Theme", "summary": "Cards and sheets have a flatter, rounder look with clearer surface colors." },
-    { "category": "feat", "scope": "Localization", "summary": "Added Traditional Chinese (繁體中文) as a display language." }
+    { "category": "feat", "scope": "Localization", "summary": "Added Traditional Chinese (繁體中文) as a display language." },
+    { "category": "fix", "scope": "Floating Widget", "summary": "While roaming, the widget's route button no longer turns green too; each button now lights up only for its own session." }
   ]
 }

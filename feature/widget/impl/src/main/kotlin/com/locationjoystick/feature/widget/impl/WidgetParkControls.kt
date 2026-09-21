@@ -1,5 +1,7 @@
 package com.locationjoystick.feature.widget.impl
 
+import com.locationjoystick.core.model.MockMode
+
 /** Long-press popup next to the widget app icon. */
 internal enum class WidgetMasterPopupMode {
     /** Spoofing is on: Pause parks mock GPS and keeps the widget; Stop tears everything down. */
@@ -20,3 +22,6 @@ internal fun widgetControlsEnabled(spoofingActive: Boolean): Boolean = spoofingA
 
 /** Stop on the long-press popup is never faded or ignored, including while parked. */
 internal fun widgetStopEnabled(): Boolean = true
+
+/** Route icon (green, pause/stop popup) is for route replay or walk-to, never roaming; roaming has its own icon. */
+internal fun routeControlsActive(mode: MockMode): Boolean = mode == MockMode.ROUTE_REPLAY || mode == MockMode.WALK_TO

@@ -121,6 +121,8 @@ does not affect the others.
 | Widget panel row | `:feature:widget:impl/WidgetPanelContent.kt`, `FloatingWidgetService.kt` | `FloatingWidgetService.routeExpandedFlow` (`MutableStateFlow<Boolean>`) |
 | Floating map (in-widget) | `:feature:widget:impl/MapFloatingView.kt`, `WidgetPanelPresenter.kt` | `WidgetPanelPresenter.mapRouteControlsExpanded` (`MutableStateFlow<Boolean>`) — see below |
 
+In the widget icon column the route icon is active (green, pause/stop popup) only for route replay and walk-to, and the roaming icon only for roaming — roaming never lights the route icon (`routeControlsActive`, `WidgetParkControls.kt`), matching the floating map. While roaming, tapping the route icon opens the routes picker.
+
 While a route replay is active, a `current/total` progress chip is pinned at the **bottom** of the widget panel icon list (after configurable features and extra sections, before debug stats) and at the bottom of the floating-map FAB column. Same `LocationRepository.routeProgress` source as the main map FAB column (@docs/features/routes.md, "Route progress"). Previous / Next on these surfaces use `RouteReplayEngine.jumpToNextWaypoint` / `jumpToPreviousWaypoint`; when Teleport between waypoints is on, the engine lingers at the jumped stop before the next automatic hop (@docs/features/routes.md, "Next / Previous Waypoint").
 
 ## Expanded-control hit testing
