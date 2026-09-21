@@ -457,7 +457,7 @@ object AppConstants {
     }
 
     object AppInfo {
-        const val VERSION_NAME = "0.22.0" // x-release-please-version
+        const val VERSION_NAME = "0.23.0" // x-release-please-version
         const val GITHUB_REPO_SLUG = "shortcuts/locationjoystick"
         const val GITHUB_ISSUES_URL = "https://github.com/$GITHUB_REPO_SLUG/issues/new?template=bug_report.yml"
         const val DOCS_URL = "https://locationjoystick.shrtcts.fr/"
