@@ -15,7 +15,7 @@ Key files: `:feature:onboarding:impl/OnboardingScreen.kt`, `:feature:onboarding:
 A "Step X of 3" label and progress bar sit above the three permission cards, computed from how
 many of them are currently granted — steps 2–4 above, not Welcome/Done.
 
-An optional "Language" row (System default / English / 简体中文) sits in the header, above the
+An optional language dropdown (EN / CN / TW / System default) sits in the header, above the
 "Step X of 3" label — it is not one of the numbered/counted steps and can be left alone. See
 @docs/features/localization.md.
 
