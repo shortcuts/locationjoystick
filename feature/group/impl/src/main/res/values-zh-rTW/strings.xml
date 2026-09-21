@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="group_qr_scanner_point_at_the_leader_s_group">"對準隊長顯示的群組 QR 碼"</string>
+    <string name="group_qr_scanner_camera_permission_required_to_scan_qr">"掃描 QR 碼需要相機權限。"</string>
+    <string name="group_qr_scanner_back_cd">"返回"</string>
+    <string name="group_sync_group_sync">"群組同步"</string>
+    <string name="group_sync_sync_your_fake_location_across_multiple">"在同一 Wi-Fi 網路下，將你的模擬位置同步至多台裝置。無需帳號。"</string>
+    <string name="group_sync_create_group_i_m_the_leader">"建立群組 — 我是隊長"</string>
+    <string name="group_sync_or_join_an_existing_group">"— 或加入現有群組 —"</string>
+    <string name="group_sync_scan_qr">"掃描 QR 碼"</string>
+    <string name="group_sync_enter_code">"輸入代碼"</string>
+    <string name="group_sync_enter_group_code">"輸入群組代碼"</string>
+    <string name="group_sync_ask_the_leader_for_their_6">"請向隊長索取 6 位群組代碼。"</string>
+    <string name="group_sync_code">"代碼"</string>
+    <string name="group_sync_join">"加入"</string>
+    <string name="group_sync_cancel">"取消"</string>
+    <string name="group_sync_role_leader">"角色：隊長"</string>
+    <string name="group_sync_group_code">"群組代碼"</string>
+    <string name="group_sync_followers_can_scan_the_qr_or">"成員可掃描 QR 碼或輸入此代碼"</string>
+    <string name="group_sync_group_invite_qr_code_cd">"群組邀請 QR 碼"</string>
+    <string name="group_sync_scan_to_join">"掃碼加入"</string>
+    <string name="group_sync_regenerate_qr_cd">"重新產生 QR 碼"</string>
+    <string name="group_sync_leave_group">"退出群組"</string>
+    <string name="group_sync_role_follower">"角色：成員"</string>
+    <string name="group_sync_follower_mode_resumes_when_you_open">"裝置重新啟動後，重新開啟應用程式即可恢復成員模式。"</string>
+    <string name="group_sync_teleport_to_leader_now">"立即瞬移至隊長位置"</string>
+    <string name="group_sync_leave_group_2">"退出群組"</string>
+    <string name="group_sync_leader_position_not_yet_known">"尚未取得隊長位置 — 請稍後再試"</string>
+    <string name="group_sync_disconnected_from_group">"已中斷與群組的連線 — 無法再聯繫到隊長"</string>
+    <string name="group_sync_code_must_be_characters">"代碼必須為 %1$d 個字元"</string>
+    <string name="group_sync_no_group_found_for_code">"未找到代碼為 %1$s 的群組"</string>
+    <string name="group_sync_invalid_group_qr_code">"無效的群組 QR 碼"</string>
+    <string name="group_sync_unknown">"未知"</string>
+    <string name="group_sync_sharing">"分享中"</string>
+    <string name="group_sync_sends_your_location_to_followers">"將你的位置傳送給成員。"</string>
+    <string name="group_sync_follow_leader">"跟隨隊長"</string>
+    <string name="group_sync_walks_toward_the_leaders_location">"朝隊長的位置行走。"</string>
+    <string name="group_sync_connected_to_group">"已連線至群組 %1$s"</string>
+    <plurals name="group_sync_followers_connected">
+        <item quantity="other">"%1$d 名成員已連線"</item>
+    </plurals>
+    <plurals name="group_sync_followers_in_group">
+        <item quantity="other">"%1$d 名成員在此群組中"</item>
+    </plurals>
+</resources>

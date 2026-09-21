@@ -55,5 +55,6 @@
     <string name="language_system_default">"System default"</string>
     <string name="language_short_english">"EN"</string>
     <string name="language_short_chinese">"CN"</string>
+    <string name="language_short_traditional_chinese">"TW"</string>
     <string name="language_dropdown_cd">"Change language"</string>
 </resources>

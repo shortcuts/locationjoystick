@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_set_up_locationjoystick">"設定 locationjoystick"</string>
+    <string name="onboarding_complete_the_steps_below_to_start">"完成以下步驟即可開始使用。"</string>
+    <string name="onboarding_trouble_setting_up">"設定遇到問題？"</string>
+    <string name="onboarding_getting_started">"新手教學"</string>
+    <string name="onboarding_separator_dot">"·"</string>
+    <string name="onboarding_troubleshooting">"疑難排解"</string>
+    <string name="onboarding_debug_build_permissions_optional">"偵錯版本 — 權限選用"</string>
+    <string name="onboarding_skip_this_check">"跳過此項檢查？"</string>
+    <string name="onboarding_most_devices_need_locationjoystick_set_a">"大多數裝置需要將 locationjoystick 設為模擬位置應用程式，模擬定位才能生效。僅在已確認其他方式也能模擬定位時才跳過 — 例如使用了 Android 無法識別的客製系統。"</string>
+    <string name="onboarding_version">"v%1$s"</string>
+    <string name="onboarding_skip_anyway">"仍然跳過"</string>
+    <string name="onboarding_cancel">"取消"</string>
+    <string name="onboarding_step_x_of_3">"第 %1$d 步，共 3 步"</string>
+    <string name="onboarding_location_permission">"位置權限"</string>
+    <string name="onboarding_location_permission_desc">"用於讀取你的真實位置，以便地圖置中顯示和錄製路線。"</string>
+    <string name="onboarding_grant_permission">"授予權限"</string>
+    <string name="onboarding_display_over_other_apps">"顯示在其他應用程式上層"</string>
+    <string name="onboarding_display_over_other_apps_desc">"用於在開啟其他應用程式時顯示浮動搖桿與快捷懸浮窗。"</string>
+    <string name="onboarding_open_settings">"開啟設定"</string>
+    <string name="onboarding_set_as_fake_gps_app">"設為模擬位置應用程式"</string>
+    <string name="onboarding_set_as_fake_gps_app_desc">"在開發人員選項中找到「選取模擬位置資訊應用程式」，然後選取 locationjoystick。如果你是在工作資料夾中安裝應用程式（例如透過 Shelter 安裝），請在同一資料夾中開啟開發人員選項 — Android 不允許由其他設定檔代為選取。"</string>
+    <string name="onboarding_open_developer_options">"開啟開發人員選項"</string>
+    <string name="onboarding_skip">"跳過"</string>
+    <string name="onboarding_start_using_locationjoystick">"開始使用 locationjoystick"</string>
+</resources>

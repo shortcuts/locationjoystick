@@ -13,6 +13,7 @@ Key files: `core/common/util/LocaleContextWrapper.kt`, `core/common/constants/Ap
 |---|---|
 | English (default/source) | `values/` |
 | Simplified Chinese | `values-zh-rCN/` |
+| Traditional Chinese | `values-zh-rTW/` |
 
 ## Resource Layout
 
@@ -37,7 +38,7 @@ its own `res/values/strings.xml` (English, source of truth) plus a sibling
 - **In-app language picker**: a compact top-right dropdown switcher (`LjLanguageDropdown`,
   `:core:designsystem`) sits in the top bar's `actions` slot in two places — onboarding's header
   (optional, skippable, does not count toward "Step X of 3") and the Settings → Menus screen's top
-  bar. Choices are "EN" / "CN" / "System default" (abbreviated language codes, spelled-out
+  bar. Choices are "EN" / "CN" / "TW" / "System default" (abbreviated language codes, spelled-out
   fallback option). Selecting a language calls
   `LocaleContextWrapper.setLanguage()` (`:core:common`) — on API 33+, the platform's own
   `LocaleManager.setApplicationLocales`; on API 28-32, writes `LocaleConstants.KEY_LANGUAGE_TAG`

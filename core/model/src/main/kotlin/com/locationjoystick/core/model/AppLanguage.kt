@@ -10,6 +10,7 @@ enum class AppLanguage(
     SYSTEM_DEFAULT(null),
     ENGLISH("en"),
     CHINESE_SIMPLIFIED("zh-CN"),
+    CHINESE_TRADITIONAL("zh-TW"),
     ;
 
     companion object {

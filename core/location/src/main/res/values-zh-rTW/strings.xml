@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_name_active">"模擬定位"</string>
+    <string name="notification_channel_desc_active">"模擬位置執行期間顯示"</string>
+    <string name="notification_channel_name_active_minimized">"模擬定位（已最小化）"</string>
+    <string name="notification_channel_desc_active_minimized">"模擬位置執行期間顯示 — 已從狀態列隱藏"</string>
+    <string name="notification_channel_name_permission_error">"權限錯誤"</string>
+    <string name="notification_channel_desc_permission_error">"缺少必要權限時顯示"</string>
+    <string name="notification_title_permission_error">"缺少權限"</string>
+    <string name="notification_text_permission_error">"請開啟應用程式並完成設定，然後開始模擬定位。"</string>
+    <string name="notification_title_active">"模擬定位已啟用"</string>
+    <string name="notification_text_active">"locationjoystick 正在模擬你的 GPS 位置"</string>
+    <string name="notification_action_stop">"停止"</string>
+    <string name="notification_action_map">"地圖"</string>
+    <string name="notification_action_favorites">"收藏"</string>
+    <string name="notification_action_pause">"暫停"</string>
+    <string name="notification_action_resume">"繼續"</string>
+    <string name="walk_to_start_fallback_message">"%1$s — 改為直線走向路線起點"</string>
+    <string name="walk_via_roads_fallback_message">"%1$s — 改為直線行走"</string>
+    <string name="ephemeral_replay_fallback_message">"%1$s — 部分路段改為直線行走"</string>
+</resources>

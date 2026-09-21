@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">"locationjoystick"</string>
+    <string name="accessibility_service_label">"locationjoystick 羅盤"</string>
+    <string name="accessibility_service_description">"僅供選用的「點擊行走」羅盤功能使用，且需要你在設定中啟用。該功能會讀取螢幕上的羅盤方向，使點擊對應到正確的實際方向。本服務不是面向身心障礙使用者的協助工具。"</string>
+    <string name="app_couldn_t_open_that_link">"無法開啟該連結"</string>
+    <string name="drawer_close_menu_cd">"關閉選單"</string>
+    <string name="drawer_home_cd">"首頁"</string>
+    <string name="drawer_home">"首頁"</string>
+    <string name="drawer_map_cd">"地圖"</string>
+    <string name="drawer_map">"地圖"</string>
+    <string name="drawer_routes_cd">"路線"</string>
+    <string name="drawer_routes">"路線"</string>
+    <string name="drawer_favorites_cd">"收藏"</string>
+    <string name="drawer_favorites">"收藏"</string>
+    <string name="drawer_group_sync_cd">"群組同步"</string>
+    <string name="drawer_group_sync">"群組同步"</string>
+    <string name="drawer_settings_cd">"設定"</string>
+    <string name="drawer_settings">"設定"</string>
+    <string name="drawer_website_cd">"官方網站"</string>
+    <string name="drawer_website">"官方網站"</string>
+    <string name="drawer_discord_cd">"Discord"</string>
+    <string name="drawer_discord">"Discord"</string>
+    <string name="idle_map_description">"模擬你的 GPS 位置，並在地圖上控制移動。"</string>
+    <string name="idle_routes_description">"重播已儲存的路線。"</string>
+    <string name="idle_favorites_description">"瞬移或步行至已儲存的位置。"</string>
+    <string name="idle_group_sync_description">"在同一 Wi-Fi 下將你的位置同步至其他裝置。"</string>
+    <string name="idle_settings_description">"配置 locationjoystick 與模擬定位選項。"</string>
+    <string name="whats_new_new_and_improved">"新增與改善"</string>
+    <string name="whats_new_fixes">"修正"</string>
+    <string name="whats_new_what_s_new">"最新功能"</string>
+    <string name="whats_new_what_s_new_in_version">"v%1$s 最新功能"</string>
+    <string name="whats_new_dismiss_cd">"關閉"</string>
+    <string name="whats_new_couldn_t_load_what_s_new">"無法載入最新功能。請檢查網路連線，或線上查看完整更新日誌。"</string>
+    <string name="whats_new_bullet">"•"</string>
+    <string name="whats_new_got_it">"瞭解"</string>
+    <string name="whats_new_view_full_changelog">"查看完整更新日誌"</string>
+    <string name="whats_new_popup_cd">"此版本的最新功能"</string>
+</resources>

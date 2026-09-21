@@ -15,6 +15,11 @@ class AppLanguageTest {
     }
 
     @Test
+    fun `fromTag zh-TW returns CHINESE_TRADITIONAL`() {
+        assertEquals(AppLanguage.CHINESE_TRADITIONAL, AppLanguage.fromTag("zh-TW"))
+    }
+
+    @Test
     fun `fromTag null returns SYSTEM_DEFAULT`() {
         assertEquals(AppLanguage.SYSTEM_DEFAULT, AppLanguage.fromTag(null))
     }

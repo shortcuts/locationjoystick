@@ -23,7 +23,7 @@ All in `:core:model`. Pure Kotlin — no Android, no Room. Room entities in `:co
 | `JoystickStyle` | enum: `FLOATING`, `FIXED` |
 | `SpeedUnit` | enum: `KMH`, `MPH` |
 | `ThemeMode` | enum: `DARK`, `LIGHT` |
-| `AppLanguage` | enum (each carries `languageTag: String?`): `SYSTEM_DEFAULT`, `ENGLISH`, `CHINESE_SIMPLIFIED` |
+| `AppLanguage` | enum (each carries `languageTag: String?`): `SYSTEM_DEFAULT`, `ENGLISH`, `CHINESE_SIMPLIFIED`, `CHINESE_TRADITIONAL` |
 | `GroupRole` | enum: `NONE`, `LEADER`, `FOLLOWER` |
 | `GroupState` | `role: GroupRole`, `groupId: String?`, `leaderHost: String?`, `leaderPort: Int?`, `followerModeEnabled: Boolean`, `sharingEnabled: Boolean` |
 | `SyncPositionUpdate` | `timestamp: Long`, `latitude: Double`, `longitude: Double`, `speedMs: Float`, `bearing: Float`, `seq: Long`, `active: Boolean` |
