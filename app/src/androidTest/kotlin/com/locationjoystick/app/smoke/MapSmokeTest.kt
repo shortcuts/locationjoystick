@@ -72,7 +72,7 @@ class MapSmokeTest : BaseSmokeTest() {
     }
 
     @Test
-    fun map_paste_coordinates_fab_is_displayed() {
-        composeRule.onNodeWithContentDescription("Paste coordinates").assertIsDisplayed()
+    fun map_paste_coordinates_fab_is_hidden_by_default() {
+        composeRule.onNodeWithContentDescription("Paste coordinates").assertDoesNotExist()
     }
 }

@@ -99,10 +99,10 @@ class AppPreferencesDataSourceTest {
         }
 
     @Test
-    fun `mergeNewDefaultMapFeatures adds paste on upgrade from legacy defaults`() {
+    fun `mergeNewDefaultMapFeatures does not add paste on upgrade from legacy defaults`() {
         val stored = LEGACY_MAP_FAB_SEEN_DEFAULTS
         val merged = mergeNewDefaultMapFeatures(stored, seenDefaults = null)
-        assertTrue(merged.contains("paste_coordinates"))
+        assertFalse(merged.contains("paste_coordinates"))
         assertTrue(merged.containsAll(stored))
     }
 
@@ -133,16 +133,16 @@ class AppPreferencesDataSourceTest {
     }
 
     @Test
-    fun `map FAB items default includes paste coordinates`() =
+    fun `map FAB items default excludes paste coordinates`() =
         runTest {
             val items = dataSource.getMapItems().first()
-            assertTrue(items.contains("paste_coordinates"))
+            assertFalse(items.contains("paste_coordinates"))
             assertTrue(items.contains("capture_coordinates"))
             assertTrue(items.containsAll(LEGACY_MAP_FAB_SEEN_DEFAULTS))
         }
 
     @Test
-    fun `legacy map FAB store gains paste coordinates on upgrade`() =
+    fun `legacy map FAB store does not gain paste coordinates on upgrade`() =
         runTest {
             fakeDataStore.updateData { prefs ->
                 val mutable = prefs.toMutablePreferences()
@@ -150,7 +150,7 @@ class AppPreferencesDataSourceTest {
                 mutable
             }
             val items = dataSource.getMapItems().first()
-            assertTrue(items.contains("paste_coordinates"))
+            assertFalse(items.contains("paste_coordinates"))
             assertTrue(items.contains("capture_coordinates"))
             assertTrue(items.contains("search"))
         }
@@ -165,7 +165,7 @@ class AppPreferencesDataSourceTest {
         }
 
     @Test
-    fun `legacy widget store gains paste coordinates on upgrade`() =
+    fun `legacy widget store does not gain paste coordinates on upgrade`() =
         runTest {
             fakeDataStore.updateData { prefs ->
                 val mutable = prefs.toMutablePreferences()
@@ -173,7 +173,7 @@ class AppPreferencesDataSourceTest {
                 mutable
             }
             val items = dataSource.getWidgetItems().first()
-            assertTrue(items.contains("paste_coordinates"))
+            assertFalse(items.contains("paste_coordinates"))
             assertTrue(items.contains("favorites"))
             assertTrue(items.contains("roaming"))
         }
@@ -188,7 +188,7 @@ class AppPreferencesDataSourceTest {
             }
             val items = dataSource.getWidgetItems().first()
             assertTrue(items.contains("roaming"))
-            assertTrue(items.contains("paste_coordinates"))
+            assertFalse(items.contains("paste_coordinates"))
         }
 
     @Test
@@ -243,5 +243,26 @@ class AppPreferencesDataSourceTest {
             val items = dataSource.getWidgetItems().first()
             assertFalse(items.contains("paste_coordinates"))
             assertEquals(LEGACY_WIDGET_SEEN_DEFAULTS, items)
+        }
+
+    @Test
+    fun `fresh store has no paste coordinates on widget or map`() =
+        runTest {
+            assertFalse(dataSource.getWidgetItems().first().contains("paste_coordinates"))
+            assertFalse(dataSource.getMapItems().first().contains("paste_coordinates"))
+        }
+
+    @Test
+    fun `persisted paste coordinates stays enabled on widget`() =
+        runTest {
+            dataSource.setWidgetItems(AppFeature.DEFAULT_WIDGET_ENABLED.map { it.name.lowercase() }.toSet() + "paste_coordinates")
+            assertTrue(dataSource.getWidgetItems().first().contains("paste_coordinates"))
+        }
+
+    @Test
+    fun `persisted paste coordinates stays enabled on map`() =
+        runTest {
+            dataSource.setMapItems(AppFeature.DEFAULT_MAP_ENABLED.map { it.name.lowercase() }.toSet() + "paste_coordinates")
+            assertTrue(dataSource.getMapItems().first().contains("paste_coordinates"))
         }
 }

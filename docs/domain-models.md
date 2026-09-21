@@ -21,7 +21,7 @@ All in `:core:model`. Pure Kotlin — no Android, no Room. Room entities in `:co
 | `MockLocationState` | enum: `IDLE`, `RUNNING`, `PAUSED`, `ERROR` |
 | `RouteReplayMode` | enum: `ONE_WAY`, `RETURN_TO_LOCATION`, `LOOP`, `LOOP_REVERSE` |
 | `RecentSearch` | `displayName: String`, `lat: Double`, `lon: Double` |
-| `AppFeature` | enum (default order shared across widget + map): `MAP_FLOATING`, `JOYSTICK_TOGGLE`, `JOYSTICK_LOCK`, `FAVORITES`, `ROUTES`, `ROAMING`, `SEARCH`, `PASTE_COORDINATES`, `CAPTURE_COORDINATES`, `SPEED_CYCLE`. Each value declares its eligible `FeatureSurface`s (`WIDGET`, `MAP`, or both). `PASTE_COORDINATES` and `ROAMING` are on both WIDGET and MAP and included in `DEFAULT_MAP_ENABLED` and `DEFAULT_WIDGET_ENABLED`. `CAPTURE_COORDINATES` is MAP-only and included in `DEFAULT_MAP_ENABLED`. |
+| `AppFeature` | enum (default order shared across widget + map): `MAP_FLOATING`, `JOYSTICK_TOGGLE`, `JOYSTICK_LOCK`, `FAVORITES`, `ROUTES`, `ROAMING`, `SEARCH`, `PASTE_COORDINATES`, `CAPTURE_COORDINATES`, `SPEED_CYCLE`. Each value declares its eligible `FeatureSurface`s (`WIDGET`, `MAP`, or both). `PASTE_COORDINATES` and `ROAMING` are on both WIDGET and MAP; `ROAMING` is in `DEFAULT_MAP_ENABLED` and `DEFAULT_WIDGET_ENABLED`, `PASTE_COORDINATES` is in neither (off by default). `CAPTURE_COORDINATES` is MAP-only and included in `DEFAULT_MAP_ENABLED`. |
 | `RouteProgress` | `current: Int`, `total: Int` — 1-based named-stop progress while a route is playing (`label` is `current/total`). |
 | `FeatureSurface` | enum: `WIDGET`, `MAP` |
 | `JoystickStyle` | enum: `FLOATING`, `FIXED` |

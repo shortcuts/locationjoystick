@@ -32,7 +32,7 @@ Covers every nav path in `LjNavHost`:
 | File | What it asserts |
 |------|----------------|
 | `IdleSmokeTest` | Idle loads; drawer open/close; cards navigate; Map + Settings + Routes + Favorites + Capture via drawer |
-| `MapSmokeTest` | Map loads (top-bar start/stop control visible); hamburger opens drawer; all 5 always-visible FABs present (favorites, routes, roaming, search, paste coordinates) |
+| `MapSmokeTest` | Map loads (top-bar start/stop control visible); hamburger opens drawer; the 4 default FABs present (favorites, routes, roaming, search); paste coordinates FAB hidden by default |
 | `FavoritesSmokeTest` | Favorites loads; seeded item visible; "Add favorite" FAB opens add-favorite sheet showing From map / From coordinates / Paste coordinates / Use current location; "From map" reaches MapPicker (checks search FAB) and back returns to Favorites; "From coordinates" opens the coordinates dialog; paste coordinates sheet shows Name + Coordinates; item menu shows Edit/Delete |
 | `RoutesSmokeTest` | Routes loads ("Add route" FAB visible); FAB opens add-route sheet showing Draw on map / Draw on map (follow roads) / Paste coordinates / Import GPX file; seeded route visible (waitUntil async); start route dialog shows Loop/Planting/Reverse/Return/Follow roads/Teleport between waypoints (delay field)/Teleport/Start; route card overflow menu shows Edit/Export/Delete |
 | `RouteCreatorSmokeTest` | Creator loads via "Add route" → "from map"; search/undo/favorites FABs visible; back returns to Routes |
