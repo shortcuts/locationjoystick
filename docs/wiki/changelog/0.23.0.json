@@ -2,6 +2,11 @@
   "version": "0.23.0",
   "date": "2026-09-19",
   "entries": [
+    { "category": "feat", "scope": "Route System", "summary": "Paste coordinates: paste a list of coordinates copied from Maps, Notes or a chat. Teleport or walk to one point, or turn several points into a route you can play right away or save. Available from the map, the floating widget and the Routes menu." },
+    { "category": "feat", "scope": "Route System", "summary": "Open GPX files straight from Files, Downloads or a chat app using Open with or Share. The track loads on the map, ready to play or save as a route." },
+    { "category": "feat", "scope": "Capture Coordinates", "summary": "Capture: when you tap a map link in another app, this app can save the location to a list, teleport there at once, or both. Save the list as a route when you are done." },
+    { "category": "feat", "scope": "Roaming Mode", "summary": "Added Planting: walk a spiral that grows and shrinks around your position, once or on repeat. Routes can also walk a circle around each stop." },
+    { "category": "feat", "scope": "Tap to Walk", "summary": "Tap to Walk is out of beta. Compass detection is now automatic, with nothing to calibrate, and the default map scale works out of the box." },
     { "category": "feat", "scope": "Map", "summary": "Added a Map source switch in Settings → Menus to show Amap (高德) tiles instead of OpenStreetMap on every map, with automatic GCJ-02 conversion so markers, routes and taps stay accurate; saved data remains in standard GPS coordinates." },
     { "category": "feat", "scope": "General", "summary": "The app now opens on the Map while spoofing is on, and on Home while it's off." },
     { "category": "feat", "scope": "Group Sync", "summary": "When the group leader teleports, followers now jump there too. Turn off Follow leader teleports to walk instead." },
