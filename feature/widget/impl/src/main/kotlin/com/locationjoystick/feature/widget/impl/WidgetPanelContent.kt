@@ -170,12 +170,6 @@ internal sealed interface WidgetPanelSection {
         val onClick: () -> Unit,
     ) : WidgetPanelSection
 
-    data class GroupSync(
-        val expanded: Boolean,
-        val onClick: () -> Unit,
-        val onTeleport: () -> Unit,
-    ) : WidgetPanelSection
-
     data class AltitudeOverride(
         val expanded: Boolean,
         val prefillMeters: Double,
@@ -496,27 +490,6 @@ internal fun WidgetPanel(
                             enabled = controlsEnabled,
                             onClick = section.onClick,
                         )
-                    }
-
-                    is WidgetPanelSection.GroupSync -> {
-                        Box {
-                            WidgetIconButton(
-                                icon = LjIcons.Group,
-                                contentDescription = stringResource(R.string.widget_panel_group_sync_cd),
-                                tint = MaterialTheme.colorScheme.primary,
-                                enabled = controlsEnabled,
-                                onClick = section.onClick,
-                            )
-                            WidgetSidePopup(visible = section.expanded) {
-                                WidgetIconButton(
-                                    icon = LjIcons.MyLocation,
-                                    contentDescription = stringResource(R.string.widget_panel_teleport_to_leader_cd),
-                                    tint = LjSuccess,
-                                    enabled = controlsEnabled,
-                                    onClick = section.onTeleport,
-                                )
-                            }
-                        }
                     }
 
                     is WidgetPanelSection.AltitudeOverride -> {

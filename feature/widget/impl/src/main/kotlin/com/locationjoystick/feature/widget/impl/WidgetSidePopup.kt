@@ -15,7 +15,7 @@ import androidx.compose.ui.window.PopupProperties
 /**
  * Places [content] in a WRAP_CONTENT child window beside the caller.
  *
- * Expanding route / group / altitude controls inside the widget [Column] would otherwise
+ * Expanding route / roaming / altitude controls inside the widget [Column] would otherwise
  * widen the TYPE_APPLICATION_OVERLAY hit rectangle, so empty map above and below the
  * extra buttons ate taps meant for the app underneath.
  *

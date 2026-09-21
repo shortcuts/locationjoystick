@@ -128,7 +128,7 @@ While a route replay is active, a `current/total` progress chip is pinned at the
 ## Expanded-control hit testing
 
 The compact widget overlay is `WRAP_CONTENT`. Putting extra buttons in a `Row` beside the
-route / group / altitude icon widens the whole `Column`, so the transparent rectangle
+route / roaming / altitude icon widens the whole `Column`, so the transparent rectangle
 above and below that row still captures touches (`FLAG_NOT_TOUCH_MODAL` only passes
 events *outside* the window). `WidgetSidePopup` draws those extra controls in a
 `TYPE_APPLICATION_SUB_PANEL` child window attached to the overlay's `windowToken`,
@@ -172,27 +172,6 @@ bearing after unlock. The lock is local UI state for that floating-map instance.
 own center (my-location) button centers on the current spoofed position while spoofing is active;
 when idle with no current position, it falls back to the last position the floating map's camera
 was moved to (a tap-to-pin, route jump, etc.) instead of doing nothing.
-
-## Group Sync Button
-
-When the device is a Group Sync follower with follower mode enabled
-(`GroupRepository.groupState`), the widget panel shows a group-sync icon
-button:
-
-- **Shown when**: `groupState.role == GroupRole.FOLLOWER && groupState.followerModeEnabled`.
-- **Hidden**: for `GroupRole.LEADER` and `GroupRole.NONE`.
-- **Expand control**: tapping the icon expands one inline button to the right —
-  **Teleport to leader now** — which sends `ACTION_FOLLOWER_TELEPORT` to
-  `MockLocationService`, the same action the Group Sync screen's own
-  "Teleport to leader now" button sends (see @docs/features/group-sync.md).
-  If a cooldown advisory applies (same distance-tiered `CooldownEngine` used
-  elsewhere), `FloatingWidgetService` shows it as a one-shot Toast after
-  tapping — the teleport still goes through, the Toast is advisory only. The
-  icon-only row has no room for the persistent badge the Group Sync screen
-  shows.
-- **Auto-collapse**: the button (and its inline teleport action) disappears
-  entirely once the device stops being an enabled follower — nothing is left
-  on screen for the expand state to affect.
 
 ## Altitude Override Button
 

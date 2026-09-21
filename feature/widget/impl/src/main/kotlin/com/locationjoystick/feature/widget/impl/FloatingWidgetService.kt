@@ -20,10 +20,7 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.ActivityStateRepository
 import com.locationjoystick.core.data.CaptureCoordinatesRepository
-import com.locationjoystick.core.data.CooldownEngine
-import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.FavoriteRepository
-import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -33,8 +30,6 @@ import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
-import com.locationjoystick.core.model.GroupRole
-import com.locationjoystick.core.model.GroupState
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -55,14 +50,13 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.view.WindowManager as AndroidWindowManager
 
 /** Keys for the panel's independent expand/collapse StateFlows, held by [PanelExpandFlows]. */
-private enum class PanelExpandKey { ROUTE, ROAMING, PASTE_CAPTURE, GROUP_SYNC, ALTITUDE }
+private enum class PanelExpandKey { ROUTE, ROAMING, PASTE_CAPTURE, ALTITUDE }
 
 /**
  * Holds one collapsed/expanded [MutableStateFlow] per [PanelExpandKey], replacing five
@@ -141,8 +135,6 @@ class FloatingWidgetService :
 
     @Inject lateinit var compassHeadingSource: CompassHeadingSource
 
-    @Inject lateinit var groupRepository: GroupRepository
-
     @Inject lateinit var captureCoordinatesRepository: CaptureCoordinatesRepository
 
     @Inject lateinit var favoriteRepository: FavoriteRepository
@@ -160,7 +152,7 @@ class FloatingWidgetService :
     private val stopPopupVisibleFlow = MutableStateFlow(false)
 
     // One expand/collapse StateFlow per panel section (route, roaming, paste/capture,
-    // group sync, altitude override), keyed by PanelExpandKey.
+    // altitude override), keyed by PanelExpandKey.
     private val panelExpand = PanelExpandFlows()
 
     // Master panel expand/collapse
@@ -273,16 +265,6 @@ class FloatingWidgetService :
             panelExpand.flow(PanelExpandKey.ALTITUDE).collect { expanded -> setOverlayFocusable(expanded) }
         }
         lifecycleScope.launch {
-            groupRepository.teleportUnavailableEvent.collect {
-                Toast
-                    .makeText(
-                        this@FloatingWidgetService,
-                        getString(R.string.widget_panel_leader_position_not_yet_known),
-                        Toast.LENGTH_SHORT,
-                    ).show()
-            }
-        }
-        lifecycleScope.launch {
             settingsRepository.getTapToWalkOverlayEnabled().collect { enabled ->
                 if (!enabled) dismissTapToWalkOverlay()
             }
@@ -363,8 +345,6 @@ class FloatingWidgetService :
             val hasPendingCompletion by pendingCompletionFlow.collectAsStateWithLifecycle()
             val isTapToWalkEnabled by settingsRepository.getTapToWalkOverlayEnabled().collectAsStateWithLifecycle(initialValue = false)
             val isTapToWalkActive by isTapToWalkActiveFlow.collectAsStateWithLifecycle()
-            val groupState by groupRepository.groupState.collectAsStateWithLifecycle(initialValue = GroupState())
-            val isGroupSyncExpanded by panelExpand.flow(PanelExpandKey.GROUP_SYNC).collectAsStateWithLifecycle()
             val hideTeleportFeatures by settingsRepository.getHideTeleportFeatures().collectAsStateWithLifecycle(initialValue = false)
             val showRouteJumpButtons by settingsRepository.getShowRouteJumpButtons().collectAsStateWithLifecycle(
                 initialValue = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
@@ -442,15 +422,6 @@ class FloatingWidgetService :
                     buildList {
                         if (isTapToWalkEnabled) {
                             add(WidgetPanelSection.TapToWalk(active = isTapToWalkActive, onClick = { onTapToWalkClicked() }))
-                        }
-                        if (groupState.role == GroupRole.FOLLOWER && groupState.followerModeEnabled && !hideTeleportFeatures) {
-                            add(
-                                WidgetPanelSection.GroupSync(
-                                    expanded = isGroupSyncExpanded,
-                                    onClick = { panelExpand.toggle(PanelExpandKey.GROUP_SYNC) },
-                                    onTeleport = { teleportToLeaderNow() },
-                                ),
-                            )
                         }
                         if (isAltitudeOverrideButtonVisible) {
                             add(
@@ -657,33 +628,6 @@ class FloatingWidgetService :
         when (mapController.sharedState.value.mockMode) {
             MockMode.WALK_TO -> mapController.stopWalk()
             else -> mapController.stopRouteReplay()
-        }
-    }
-
-    private fun teleportToLeaderNow() {
-        val intent =
-            Intent(this, MockLocationService::class.java).apply {
-                action = AppConstants.ServiceConstants.ACTION_FOLLOWER_TELEPORT
-            }
-        startService(intent)
-        // Advisory only — same cooldown clock as everywhere else, doesn't block the teleport
-        // itself. The icon-only panel row has no room for a persistent badge like the Group
-        // Sync screen's, so a warning here is a one-shot Toast instead.
-        lifecycleScope.launch {
-            val leaderPos = groupRepository.leaderPosition.value
-            val currentPos = locationRepository.currentPosition.value
-            if (leaderPos != null && currentPos != null) {
-                val teleportTime = settingsRepository.getLastTeleportTime().first()
-                val state = CooldownEngine.computeState(teleportTime, currentPos, leaderPos)
-                if (state is CooldownState.Cooling) {
-                    Toast
-                        .makeText(
-                            this@FloatingWidgetService,
-                            getString(R.string.widget_panel_suggested_wait, state.toAdvisoryLabel()),
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                }
-            }
         }
     }
 

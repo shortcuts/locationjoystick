@@ -20,7 +20,7 @@ Key files: `:core:model/AppSettings.kt`, `:core:data/SettingsRepository.kt`, `:c
     **Start** also walks to the first waypoint instead
     of teleporting there, and teleport-between is forced off even if an intent
     extra is true.
-  - Group Sync "Teleport to leader now" button (Group Sync screen and widget panel), and the "Follow leader teleports" toggle (the follower always walks).
+  - Group Sync "Teleport to leader now" button (Group Sync screen), and the "Follow leader teleports" toggle (the follower always walks).
   - Widget favorites-panel "Teleport" button.
   - Paste-coordinates **Teleport** on the map FAB, floating map, and widget paste box (`PasteCoordinatesForm`). **Start** on that same form still walks to the first stop when hide-teleport is on (`StartRouteReplayUseCase`).
   - Route replay "Previous waypoint" / "Next waypoint" buttons (main map

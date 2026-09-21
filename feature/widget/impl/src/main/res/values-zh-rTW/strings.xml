@@ -23,8 +23,6 @@
     <string name="widget_panel_cancel">"取消"</string>
     <string name="widget_panel_save">"儲存"</string>
     <string name="widget_panel_add_from_current_location">"從目前位置新增"</string>
-    <string name="widget_panel_leader_position_not_yet_known">"尚未取得隊長位置 — 請稍後再試"</string>
-    <string name="widget_panel_suggested_wait">"建議等待：%1$s"</string>
     <string name="widget_panel_collapse_cd">"收起浮動小工具"</string>
     <string name="widget_panel_expand_cd">"展開浮動小工具"</string>
     <string name="widget_panel_resume_cd">"繼續"</string>
@@ -47,8 +45,6 @@
     <string name="overlay_start_roaming_cd">"開始漫遊"</string>
     <string name="overlay_roaming_active_cd">"漫遊進行中"</string>
     <string name="widget_panel_tap_to_walk_cd">"點擊行走"</string>
-    <string name="widget_panel_group_sync_cd">"群組同步"</string>
-    <string name="widget_panel_teleport_to_leader_cd">"立即瞬移至隊長位置"</string>
     <string name="widget_panel_altitude_override_cd">"海拔覆蓋"</string>
     <string name="widget_panel_routes_title">"路線"</string>
     <string name="widget_panel_favorites_title">"收藏"</string>
