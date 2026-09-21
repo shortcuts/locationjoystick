@@ -15,11 +15,15 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.location.MockLocationService
+import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.Route
+import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.RouteType
+import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.Waypoint
+import com.locationjoystick.core.model.sortedBySavedItemMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -46,25 +50,20 @@ class RoutesViewModel
         private val locationRepository: LocationRepository,
         private val settingsRepository: SettingsRepository,
         private val teleportUseCase: TeleportUseCase,
+        private val startRouteReplayUseCase: StartRouteReplayUseCase,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
         val uiState: StateFlow<RoutesUiState> =
             combine(
                 routeRepository.getRoutes(),
-                settingsRepository.getRoutesSortNewestFirst(),
+                settingsRepository.getRoutesSortMode(),
                 settingsRepository.getHideTeleportFeatures(),
                 locationRepository.isRoadRouteFetchInFlight,
-            ) { routes, sortNewestFirst, hideTeleportFeatures, isRoadRouteFetchInFlight ->
-                val sorted =
-                    if (sortNewestFirst) {
-                        routes.sortedByDescending { it.createdAt }
-                    } else {
-                        routes.sortedBy { it.createdAt }
-                    }
+            ) { routes, sortMode, hideTeleportFeatures, isRoadRouteFetchInFlight ->
                 RoutesUiState(
-                    routes = sorted,
+                    routes = routes.sortedBySavedItemMode(sortMode) { it.name },
                     isLoading = false,
-                    sortNewestFirst = sortNewestFirst,
+                    sortMode = sortMode,
                     hideTeleportFeatures = hideTeleportFeatures,
                     isRoadRouteFetchInFlight = isRoadRouteFetchInFlight,
                 )
@@ -99,9 +98,9 @@ class RoutesViewModel
                 initialValue = RoutePlaybackState(),
             )
 
-        fun toggleSort() {
+        fun setSortMode(mode: SavedItemSortMode) {
             viewModelScope.launch {
-                settingsRepository.setRoutesSortNewestFirst(!uiState.value.sortNewestFirst)
+                settingsRepository.setRoutesSortMode(mode)
             }
         }
 
@@ -125,29 +124,10 @@ class RoutesViewModel
 
         fun startReplay(
             route: Route,
-            isLooping: Boolean = false,
-            isReverse: Boolean = false,
-            isReturnToLocation: Boolean = false,
-            followRoadsToStart: Boolean = false,
+            config: RouteStartConfig = RouteStartConfig(),
         ) {
             viewModelScope.launch {
-                val speedMs = settingsRepository.getRouteSpeedMs(route.speedProfileId).first()
-                val returnPosition = if (isReturnToLocation) locationRepository.currentPosition.value else null
-
-                context.startService(
-                    Intent(context, MockLocationService::class.java).apply {
-                        action = MockLocationService.ACTION_ROUTE_REPLAY_START
-                        putExtra(MockLocationService.EXTRA_ROUTE_ID, route.id)
-                        putExtra(MockLocationService.EXTRA_IS_BACKWARD, isReverse)
-                        putExtra(MockLocationService.EXTRA_IS_LOOPING, isLooping)
-                        putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
-                        putExtra(MockLocationService.EXTRA_FOLLOW_ROADS_TO_START, followRoadsToStart)
-                        if (returnPosition != null) {
-                            putExtra(MockLocationService.EXTRA_RETURN_LAT, returnPosition.latitude)
-                            putExtra(MockLocationService.EXTRA_RETURN_LON, returnPosition.longitude)
-                        }
-                    },
-                )
+                startRouteReplayUseCase.execute(routeId = route.id, config = config)
             }
         }
 
@@ -240,16 +220,10 @@ class RoutesViewModel
         ) {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
-                    val routes = importRoutesFromGpx(uri)
-                    routes.forEach { routeRepository.insertRoute(it) }
+                    val outcome = importRoutesFromGpx(uri)
+                    outcome.routes.forEach { routeRepository.insertRoute(it) }
                     withContext(Dispatchers.Main) {
-                        val message =
-                            if (routes.size == 1) {
-                                context.getString(R.string.route_creator_route_imported, routes.first().name)
-                            } else {
-                                context.getString(R.string.route_creator_routes_imported, routes.size)
-                            }
-                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, buildGpxImportMessage(context, outcome), Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "GPX import failed", e)
@@ -266,30 +240,40 @@ class RoutesViewModel
         }
 
         /** One [Route] per `<trk>`/`<rte>` element in the GPX file — a file may describe multiple routes. */
-        private suspend fun importRoutesFromGpx(uri: Uri): List<Route> =
+        private suspend fun importRoutesFromGpx(uri: Uri): GpxImportOutcome =
             withContext(Dispatchers.IO) {
                 val gpxContent = readGpxContent(uri)
                 val gpxRoutes = parseGpxRoutes(gpxContent)
                 if (gpxRoutes.isEmpty()) throw IllegalArgumentException("No routes found in GPX file")
-                gpxRoutes.map { gpxRoute ->
-                    val waypoints =
-                        gpxRoute.waypoints.mapIndexed { index, latLng ->
-                            Waypoint(
-                                id = UUID.randomUUID().toString(),
-                                position = latLng,
-                                orderIndex = index,
-                            )
-                        }
-                    Route(
-                        id = UUID.randomUUID().toString(),
-                        name = gpxRoute.name,
-                        waypoints = waypoints,
-                        isLooping = false,
-                        routeType = RouteType.STRAIGHT,
-                        createdAt = System.currentTimeMillis(),
-                        updatedAt = System.currentTimeMillis(),
+                val (importable, oversized) =
+                    gpxRoutes.partition { it.waypoints.size <= AppConstants.ExportConstants.MAX_GPX_ROUTE_WAYPOINTS }
+                if (importable.isEmpty()) {
+                    val maxPoints = AppConstants.ExportConstants.MAX_GPX_ROUTE_WAYPOINTS
+                    throw IllegalArgumentException(
+                        "Every route in this file has more than $maxPoints points and was skipped",
                     )
                 }
+                val routes =
+                    importable.map { gpxRoute ->
+                        val waypoints =
+                            gpxRoute.waypoints.mapIndexed { index, latLng ->
+                                Waypoint(
+                                    id = UUID.randomUUID().toString(),
+                                    position = latLng,
+                                    orderIndex = index,
+                                )
+                            }
+                        Route(
+                            id = UUID.randomUUID().toString(),
+                            name = gpxRoute.name,
+                            waypoints = waypoints,
+                            isLooping = false,
+                            routeType = RouteType.STRAIGHT,
+                            createdAt = System.currentTimeMillis(),
+                            updatedAt = System.currentTimeMillis(),
+                        )
+                    }
+                GpxImportOutcome(routes, oversized.size)
             }
 
         internal suspend fun readGpxContent(uri: Uri): String =
@@ -307,3 +291,28 @@ class RoutesViewModel
                 } ?: throw IllegalArgumentException("Cannot read GPX file")
             }
     }
+
+internal data class GpxImportOutcome(
+    val routes: List<Route>,
+    val skippedOversized: Int,
+)
+
+internal fun buildGpxImportMessage(
+    context: Context,
+    outcome: GpxImportOutcome,
+): String {
+    val base =
+        if (outcome.routes.size == 1) {
+            context.getString(R.string.route_creator_route_imported, outcome.routes.first().name)
+        } else {
+            context.getString(R.string.route_creator_routes_imported, outcome.routes.size)
+        }
+    if (outcome.skippedOversized <= 0) return base
+    val skippedRes =
+        if (outcome.skippedOversized == 1) {
+            R.string.route_creator_skipped_oversized_one
+        } else {
+            R.string.route_creator_skipped_oversized_other
+        }
+    return "$base. ${context.getString(skippedRes, outcome.skippedOversized)}"
+}

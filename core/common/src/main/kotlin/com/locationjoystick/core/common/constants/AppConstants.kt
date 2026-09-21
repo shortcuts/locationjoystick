@@ -29,6 +29,7 @@ object AppConstants {
         const val MAX_SPEED_MS = 15.0
         const val ANTI_CHEAT_WARNING_THRESHOLD_MS = 8.0
         const val DEFAULT_SPEED_UNIT = "KMH"
+        const val SHOW_ROUTE_JUMP_BUTTONS_DEFAULT = false
         val DEFAULT_ENABLED_SPEED_PROFILE_IDS = setOf(PROFILE_ID_WALK, PROFILE_ID_RUN, PROFILE_ID_BIKE)
     }
 
@@ -101,6 +102,12 @@ object AppConstants {
         const val ALTITUDE_TARGET_STEP_METERS_PER_TICK = 0.5
     }
 
+    /** Shared geometry values for both roaming and route planting circles. */
+    object PlantingConstants {
+        const val MAX_RADIUS_METERS = 200.0
+        const val CHORD_METERS = 8.0
+    }
+
     object RoamingConstants {
         const val DEFAULT_RADIUS_METERS = 2000.0
         const val OSRM_PROFILE_FOOT = "foot"
@@ -115,6 +122,17 @@ object AppConstants {
         const val DISTANCE_MAX_METERS = 50_000.0
         const val WAYPOINTS_PER_1000M = 30
         const val MAX_OSRM_PLANNING_CALLS = 50
+        const val PLANTING_START_RADIUS_METERS = 5.0
+        const val PLANTING_END_RADIUS_METERS = 39.0
+        const val ROAMING_MIN_RADIUS_METERS = 1.0
+        val PLANTING_MAX_RADIUS_METERS = PlantingConstants.MAX_RADIUS_METERS
+        const val PLANTING_PITCH_METERS = 5.0
+        val PLANTING_CHORD_METERS = PlantingConstants.CHORD_METERS
+        const val PLANTING_MIN_REVOLUTIONS = 2
+        const val PLANTING_DEFAULT_LOOP_COUNT = 1
+        const val PLANTING_MAX_LOOP_COUNT = 99
+        const val PLANTING_INFINITE_LOOPS_DEFAULT = true
+        const val PLANTING_DEFAULT_SPEED_PROFILE_ID = ProfileConstants.PROFILE_ID_BIKE
     }
 
     object OsrmConstants {
@@ -145,20 +163,70 @@ object AppConstants {
         const val BISECTION_MIN_DISTANCE_METERS = 2_500.0
         const val BISECTION_MAX_DEPTH = 5
         const val BISECTION_TIME_BUDGET_MS = 2_000L
+
+        /** In-memory route cache capacity (LRU). */
+        const val CACHE_MAX_ENTRIES = 64
+
+        /** A cached route is served without a request for this long; after that only if the ladder fails. */
+        const val CACHE_TTL_MS = 3_600_000L
+
+        /** Waypoints are rounded to 1/scale degrees (5 decimals, ~1 m) to build the cache key. */
+        const val CACHE_COORD_SCALE = 100_000.0
+
+        /** Cooldown after an HTTP 429 with no numeric `Retry-After`, applied to the whole host. */
+        const val COOLDOWN_RATE_LIMITED_MS = 60_000L
+
+        /** Cooldown after an HTTP 5xx, applied to that backend base URL only. */
+        const val COOLDOWN_SERVER_ERROR_MS = 30_000L
+
+        /** Upper bound on any cooldown so a hostile `Retry-After` cannot disable routing. */
+        const val COOLDOWN_MAX_MS = 300_000L
+
+        /** SharedPreferences file persisting per-backend cooldown expiry (epoch ms). */
+        const val COOLDOWN_PREFS_NAME = "osrm_cooldowns"
     }
 
     object MapConstants {
         const val DEFAULT_LAT = 48.8566
         const val DEFAULT_LON = 2.3522
         const val DEFAULT_ZOOM = 15.0
+
+        /** Street-level camera when jumping to a favorite. Preview tiles cover the wait for z18. */
+        const val FAVORITE_CAMERA_ZOOM = 18.0
         const val OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        const val TILE_USER_AGENT_APP = "locationjoystick"
+
+        /** Marker file in cacheDir; bump the suffix to wipe MapLibre's HTTP cache once more. */
+        const val OSM_TILE_CACHE_BUST_MARKER = "osm_ua_cache_bust_4"
+
+        /**
+         * OkHttp per-host limit. MapLibre's default client uses 20 (native
+         * `http_file_source` cap). OkHttp's own default is 5 — too slow for raster tiles.
+         */
+        const val OSM_MAX_REQUESTS_PER_HOST = 20
+
+        /** MapLibre ambient (tile) cache cap. Default is 50 MB; larger keeps panning/reloads off OSM's servers. */
+        const val OSM_AMBIENT_CACHE_MAX_BYTES = 200L * 1024 * 1024
         const val TILESET_VERSION = "2.2.0"
         const val OSM_MAX_ZOOM = 19f
+
+        /**
+         * Low-zoom raster under the detail layer. A teleport to an uncached area can paint
+         * a few z12 tiles immediately while z15–19 fill in. Same OSM URL / OkHttp client.
+         */
+        const val OSM_PREVIEW_MAX_ZOOM = 12f
+
+        /** Instant camera jump when the spoofed position moves farther than this (teleport). */
+        const val SNAP_CAMERA_DISTANCE_METERS = 2_000.0
         const val EMPTY_MAP_STYLE_URI = "asset://empty.json"
         const val OSM_SOURCE_ID = "osm-source"
         const val OSM_LAYER_ID = "osm-layer"
+        const val OSM_PREVIEW_SOURCE_ID = "osm-preview-source"
+        const val OSM_PREVIEW_LAYER_ID = "osm-preview-layer"
         const val PANEL_OSM_SOURCE_ID = "panel-osm-source"
         const val PANEL_OSM_LAYER_ID = "panel-osm-layer"
+        const val PANEL_OSM_PREVIEW_SOURCE_ID = "panel-osm-preview-source"
+        const val PANEL_OSM_PREVIEW_LAYER_ID = "panel-osm-preview-layer"
         const val EPHEMERAL_ROUTE_SOURCE_ID = "ephemeral-route-source"
         const val EPHEMERAL_ROUTE_LAYER_ID = "ephemeral-route-layer"
         const val EPHEMERAL_ENDPOINTS_SOURCE_ID = "ephemeral-endpoints-source"
@@ -179,12 +247,27 @@ object AppConstants {
         const val CONNECT_TIMEOUT_MS = 5000
         const val READ_TIMEOUT_MS = 5000
         const val RECENT_SEARCHES_MAX_COUNT = 5
+
+        /** Minimum gap between search request starts (Nominatim usage policy: 1 request/second). */
+        const val MIN_REQUEST_INTERVAL_MS = 1_100L
+
+        /** In-memory search cache capacity (LRU). */
+        const val CACHE_MAX_ENTRIES = 32
+
+        /** A cached search is served without a request for this long; after that only if the request fails. */
+        const val CACHE_TTL_MS = 86_400_000L
     }
 
     object ElevationConstants {
         const val BASE_URL = "https://api.open-meteo.com/v1/elevation"
         const val CONNECT_TIMEOUT_MS = 5000
         const val READ_TIMEOUT_MS = 5000
+
+        /** In-memory elevation cache capacity (LRU, no TTL: ground elevation is static). */
+        const val CACHE_MAX_ENTRIES = 64
+
+        /** Lookups are rounded to 1/scale degrees (3 decimals, ~111 m cell) to build the cache key. */
+        const val CACHE_COORD_SCALE = 1_000.0
     }
 
     object ExportConstants {
@@ -196,6 +279,9 @@ object AppConstants {
 
         /** Maximum GPX file size accepted for import (10 MB). Larger files are rejected to prevent OOM. */
         const val MAX_GPX_IMPORT_SIZE_BYTES = 10 * 1024 * 1024L
+
+        /** GPS Joystick (and similar) tracks larger than this are skipped with a notice instead of imported. */
+        const val MAX_GPX_ROUTE_WAYPOINTS = 2_000
     }
 
     object NotificationConstants {
@@ -215,6 +301,7 @@ object AppConstants {
         const val WIDGET_SERVICE_CLASS = "com.locationjoystick.feature.widget.impl.FloatingWidgetService"
         const val ACTION_START = "com.locationjoystick.core.location.ACTION_START"
         const val ACTION_STOP = "com.locationjoystick.core.location.ACTION_STOP"
+        const val ACTION_PARK_KEEP_WIDGET = "com.locationjoystick.core.location.ACTION_PARK_KEEP_WIDGET"
         const val ACTION_UPDATE_POSITION = "com.locationjoystick.core.location.ACTION_UPDATE_POSITION"
         const val ACTION_ROUTE_REPLAY_START = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_START"
         const val ACTION_ROUTE_REPLAY_PAUSE = "com.locationjoystick.core.location.ACTION_ROUTE_REPLAY_PAUSE"
@@ -228,6 +315,7 @@ object AppConstants {
         const val EXTRA_IS_BACKWARD = "extra_is_backward"
         const val EXTRA_SPEED_MS = "extra_speed_ms"
         const val EXTRA_BEARING = "extra_bearing"
+        const val EXTRA_IS_TELEPORT = "extra_is_teleport"
         const val EXTRA_WAYPOINT_LAT = "extra_waypoint_lat"
         const val EXTRA_WAYPOINT_LON = "extra_waypoint_lon"
         const val EXTRA_LAT = "lat"
@@ -237,6 +325,10 @@ object AppConstants {
         const val EXTRA_RETURN_LAT = "extra_return_lat"
         const val EXTRA_RETURN_LON = "extra_return_lon"
         const val EXTRA_FOLLOW_ROADS_TO_START = "extra_follow_roads_to_start"
+        const val EXTRA_TELEPORT_TO_START = "extra_teleport_to_start"
+        const val EXTRA_IS_PLANTING = "extra_is_planting"
+        const val EXTRA_TELEPORT_BETWEEN_WAYPOINTS = "extra_teleport_between_waypoints"
+        const val EXTRA_TELEPORT_BETWEEN_DELAY_SECONDS = "extra_teleport_between_delay_seconds"
 
         /** Compact encoding of ephemeral waypoints: "lat,lon;lat,lon;...". Replaces the old parallel DoubleArray extras. */
         const val EXTRA_EPHEMERAL_WAYPOINTS = "extra_ephemeral_waypoints"
@@ -244,6 +336,7 @@ object AppConstants {
         const val EXTRA_NAVIGATE_TO_FAVORITES = "navigate_to_favorites"
         const val EXTRA_NAVIGATE_TO_ROUTES = "navigate_to_routes"
         const val EXTRA_NAVIGATE_TO_ROUTE_CREATOR = "navigate_to_route_creator"
+        const val EXTRA_NAVIGATE_TO_CAPTURE = "navigate_to_capture"
         const val ACTION_ENTER_FOLLOWER = "com.locationjoystick.core.location.ACTION_ENTER_FOLLOWER"
         const val ACTION_EXIT_FOLLOWER = "com.locationjoystick.core.location.ACTION_EXIT_FOLLOWER"
         const val ACTION_FOLLOWER_TELEPORT = "com.locationjoystick.core.location.ACTION_FOLLOWER_TELEPORT"
@@ -264,12 +357,23 @@ object AppConstants {
         const val DEFAULT_LAST_TELEPORT_TIME_MS = 0L
         const val DEFAULT_THEME_MODE = "DARK"
         const val DEFAULT_WHATS_NEW_LAST_SEEN_VERSION = ""
+        const val DEFAULT_UPDATE_CHECK_LAST_CHECKED_AT_MS = 0L
+        const val DEFAULT_UPDATE_CHECK_LATEST_VERSION = ""
+        const val DEFAULT_UPDATE_CHECK_DISMISSED_VERSION = ""
         const val KEY_GROUP_ROLE = "group_role"
         const val KEY_GROUP_ID = "group_id"
         const val KEY_GROUP_LEADER_HOST = "group_leader_host"
         const val KEY_GROUP_LEADER_PORT = "group_leader_port"
         const val KEY_GROUP_FOLLOWER_MODE_ENABLED = "group_follower_mode_enabled"
+        const val KEY_GROUP_FOLLOW_LEADER_TELEPORTS = "group_follow_leader_teleports"
         const val KEY_GROUP_SHARING_ENABLED = "group_sharing_enabled"
+        const val KEY_CAPTURE_MODE_ENABLED = "capture_coordinates_mode_enabled"
+        const val KEY_CAPTURE_ENABLED = "capture_coordinates_enabled"
+        const val KEY_CAPTURE_JUMP_ENABLED = "capture_coordinates_jump_enabled"
+        const val KEY_CAPTURE_POINTS = "capture_coordinates_points"
+        const val KEY_CAPTURE_PREVIOUS_BROWSER = "capture_coordinates_previous_browser"
+        const val KEY_CAPTURE_SETUP_RESET = "capture_coordinates_setup_reset"
+        const val KEY_CAPTURE_HELPER_OPEN = "capture_coordinates_helper_open"
     }
 
     object CooldownConstants {
@@ -306,24 +410,59 @@ object AppConstants {
         const val KNOB_RADIUS_FRACTION = 0.25f
         const val DEADZONE_FRACTION = 0.15f
         const val DRAG_HANDLE_FRACTION = 0.28f
-        const val OUTER_ALPHA = 80
+
+        /** Outer disc fill. High enough to read on light apps, still see-through on dark ones. */
+        const val OUTER_ALPHA = 128
+        const val OUTER_BORDER_ALPHA = 190
+        const val KNOB_ALPHA = 255
+        const val KNOB_EDGE_ALPHA = 140
+
+        /** Stick ring, packed RGB. */
+        const val KNOB_EDGE_RGB = 0x303036
+
+        /** Outer disc ring. Same gray family as [KNOB_EDGE_RGB], slightly lighter for white apps. */
+        const val OUTER_BORDER_RGB = 0x686870
     }
 
     object RouteConstants {
         const val WAYPOINT_SNAP_THRESHOLD_METERS = 1.0
         const val MIN_TELEPORT_WAIT_SECONDS = 1
         const val DEFAULT_TELEPORT_WAIT_SECONDS = 5
+        const val PLANTING_DEFAULT_RADIUS_METERS = 35.0
+        const val ROUTE_MIN_RADIUS_METERS = 5.0
+        val PLANTING_MAX_RADIUS_METERS = PlantingConstants.MAX_RADIUS_METERS
+        val PLANTING_CHORD_METERS = PlantingConstants.CHORD_METERS
+        const val PLANTING_MIN_VERTICES = 8
+        const val PLANTING_MAX_VERTICES = 48
+
+        /** Linger at each hopped stop before the next hop or planting ring. */
+        const val TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS = 8
+        const val TELEPORT_BETWEEN_MIN_DELAY_SECONDS = 0
+        const val TELEPORT_BETWEEN_MAX_DELAY_SECONDS = 600
+
+        /** Reserved Room id for map/widget paste Start without Save route. Not a `hot_route_` id. */
+        const val PASTE_TEMP_ROUTE_ID = "paste_temp_route"
+
+        /** Display name of [PASTE_TEMP_ROUTE_ID]. Named UUID saves are never matched by this title. */
+        const val PASTE_TEMP_ROUTE_NAME = "Temp Route from Paste"
     }
 
     object DatabaseConstants {
         const val DATABASE_NAME = "locationjoystick.db"
     }
 
+    object TopBarConstants {
+        /** Place-name suffix on the idle Start control. Extra characters are dropped. */
+        const val LOCATION_LABEL_MAX_CHARS = 18
+    }
+
     object AppInfo {
         const val VERSION_NAME = "0.22.0" // x-release-please-version
-        const val GITHUB_ISSUES_URL = "https://github.com/shortcuts/locationjoystick/issues/new?template=bug_report.yml"
+        const val GITHUB_REPO_SLUG = "shortcuts/locationjoystick"
+        const val GITHUB_ISSUES_URL = "https://github.com/$GITHUB_REPO_SLUG/issues/new?template=bug_report.yml"
         const val DOCS_URL = "https://locationjoystick.shrtcts.fr/"
         const val TROUBLESHOOTING_URL = "https://locationjoystick.shrtcts.fr/troubleshooting.html"
+        const val CAPTURE_GUIDE_URL = "https://locationjoystick.shrtcts.fr/capture-coordinates.html"
         const val CHANGELOG_URL = "https://locationjoystick.shrtcts.fr/changelog.html"
         const val DEEP_LINK_HOST = "locationjoystick.shrtcts.fr"
 
@@ -331,6 +470,19 @@ object AppConstants {
             lat: Double,
             lon: Double,
         ) = "https://$DEEP_LINK_HOST/?lat=$lat&lon=$lon"
+    }
+
+    /** Home-screen "new version available" badge (see docs/features/update-check.md). */
+    object UpdateCheckConstants {
+        const val GITHUB_API_URL = "https://api.github.com/repos/${AppInfo.GITHUB_REPO_SLUG}/releases/latest"
+        const val CONNECT_TIMEOUT_MS = 5000
+        const val READ_TIMEOUT_MS = 5000
+        const val CHECK_INTERVAL_MS = 24L * 60 * 60 * 1000
+
+        fun userAgent() = "locationjoystick/${AppInfo.VERSION_NAME}"
+
+        // GitHub's release-tag URL has a fixed shape, so it is derived from the cached version.
+        fun releaseUrl(version: String) = "https://github.com/${AppInfo.GITHUB_REPO_SLUG}/releases/tag/v$version"
     }
 
     /**
@@ -347,6 +499,10 @@ object AppConstants {
         // Strips a pre-release suffix (e.g. "0.19.0-alpha1" -> "0.19.0") since changelog JSON
         // is authored per release version, not per alpha/beta tag.
         fun buildUrl(version: String) = "$BASE_URL${version.substringBefore("-")}.json"
+
+        // Packed into the APK for offline release highlights.
+        // Strips a pre-release suffix (e.g. "0.20.0-alpha1" -> "0.20.0.json").
+        fun assetFileName(version: String) = "${version.substringBefore("-")}.json"
     }
 
     object AnimationConstants {

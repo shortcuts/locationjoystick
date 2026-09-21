@@ -603,4 +603,11 @@ class GeoUtilsTest {
         val result = parseRawLatLng("  35.6762 , 139.6503  ")
         assertEquals(LatLng(35.6762, 139.6503), result)
     }
+
+    @Test
+    fun `parseRawLatLng parses google maps dms pair`() {
+        val result = parseRawLatLng("""37°34'11.4"N 127°00'17.9"E""")
+        assertEquals(37.569833333, result!!.latitude, 1e-6)
+        assertEquals(127.004972222, result.longitude, 1e-6)
+    }
 }

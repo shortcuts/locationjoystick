@@ -105,4 +105,11 @@ class SettingsSmokeTest : BaseSmokeTest() {
             ).performScrollTo()
             .assertIsDisplayed()
     }
+
+    @Test
+    fun settings_shows_planting_defaults() {
+        composeRule.onNodeWithText("Roaming").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Starting radius (m)").performScrollTo().assertIsDisplayed()
+    }
 }

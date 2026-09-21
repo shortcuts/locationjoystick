@@ -27,4 +27,6 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
+    testImplementation(libs.orgjson)
+    testImplementation(project(":core:testing"))
 }

@@ -2,6 +2,7 @@ package com.locationjoystick.core.data
 
 import android.content.Context
 import app.cash.turbine.test
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
@@ -503,6 +504,103 @@ class RouteRepositoryTest {
             repository.getRouteWithWaypoints("loop-1").test {
                 val result = awaitItem()
                 assertTrue(result!!.isLooping)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `upsertPasteTempRoute replaces the reserved id only`() =
+        runTest {
+            val first =
+                listOf(
+                    LatLng(1.0, 2.0),
+                    LatLng(3.0, 4.0),
+                )
+            val second =
+                listOf(
+                    LatLng(10.0, 20.0),
+                    LatLng(30.0, 40.0),
+                    LatLng(50.0, 60.0),
+                )
+
+            val firstResult = repository.upsertPasteTempRoute(first)
+            val secondResult = repository.upsertPasteTempRoute(second)
+
+            assertTrue(firstResult.isSuccess)
+            assertTrue(secondResult.isSuccess)
+            assertEquals(AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID, firstResult.getOrThrow().id)
+            assertEquals(AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID, secondResult.getOrThrow().id)
+            assertEquals(AppConstants.RouteConstants.PASTE_TEMP_ROUTE_NAME, secondResult.getOrThrow().name)
+
+            repository.getRoutes().test {
+                val routes = awaitItem()
+                assertEquals(1, routes.size)
+                assertEquals(AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID, routes[0].id)
+                assertEquals(3, routes[0].waypoints.size)
+                assertEquals(LatLng(10.0, 20.0), routes[0].waypoints[0].position)
+                assertEquals(LatLng(50.0, 60.0), routes[0].waypoints[2].position)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `insertNamedPastedRoute uses a new uuid that later temp upsert does not overwrite`() =
+        runTest {
+            val savedPoints =
+                listOf(
+                    LatLng(11.0, 12.0),
+                    LatLng(13.0, 14.0),
+                )
+            val saved =
+                repository.insertNamedPastedRoute("Saved Route 1", savedPoints).getOrThrow()
+            assertTrue(saved.id != AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID)
+            assertTrue(!saved.id.startsWith("hot_route_"))
+
+            repository.upsertPasteTempRoute(
+                listOf(LatLng(21.0, 22.0), LatLng(23.0, 24.0)),
+            )
+
+            repository.getRoutes().test {
+                val routes = awaitItem()
+                assertEquals(2, routes.size)
+                val named = routes.first { it.id == saved.id }
+                assertEquals("Saved Route 1", named.name)
+                assertEquals(LatLng(11.0, 12.0), named.waypoints[0].position)
+                val temp = routes.first { it.id == AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID }
+                assertEquals(AppConstants.RouteConstants.PASTE_TEMP_ROUTE_NAME, temp.name)
+                assertEquals(LatLng(21.0, 22.0), temp.waypoints[0].position)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `uuid route named like the temp title is not overwritten by paste temp upsert`() =
+        runTest {
+            val collidingName = AppConstants.RouteConstants.PASTE_TEMP_ROUTE_NAME
+            val saved =
+                repository
+                    .insertNamedPastedRoute(
+                        collidingName,
+                        listOf(LatLng(1.0, 1.0), LatLng(2.0, 2.0)),
+                    ).getOrThrow()
+
+            repository.upsertPasteTempRoute(
+                listOf(LatLng(9.0, 9.0), LatLng(8.0, 8.0)),
+            )
+
+            repository.getRouteWithWaypoints(saved.id).test {
+                val named = awaitItem()
+                assertNotNull(named)
+                assertEquals(collidingName, named!!.name)
+                assertEquals(LatLng(1.0, 1.0), named.waypoints[0].position)
+                assertTrue(named.id != AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID)
+                cancelAndIgnoreRemainingEvents()
+            }
+            repository.getRouteWithWaypoints(AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID).test {
+                val temp = awaitItem()
+                assertNotNull(temp)
+                assertEquals(collidingName, temp!!.name)
+                assertEquals(LatLng(9.0, 9.0), temp.waypoints[0].position)
                 cancelAndIgnoreRemainingEvents()
             }
         }

@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.favorites.impl
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,21 +28,26 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.formatCapturedPoint
 import com.locationjoystick.core.common.util.isValidLatLng
+import com.locationjoystick.core.common.util.shareCurrentLocationCoordinates
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.toBadgeText
@@ -49,19 +55,25 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.DeleteItemType
 import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.ListSearchField
 import com.locationjoystick.core.designsystem.component.LjActionSheetRow
-import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjListItemCardSkeletonList
-import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
+import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjTextButton
+import com.locationjoystick.core.designsystem.component.SavedItemSortMenu
 import com.locationjoystick.core.designsystem.component.WideContentClamp
+import com.locationjoystick.core.designsystem.component.readPlainText
+import com.locationjoystick.core.designsystem.component.rememberLjSheetState
+import com.locationjoystick.core.designsystem.component.writePlainText
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.matchesSearch
 import com.locationjoystick.feature.favorites.impl.R
+import kotlinx.coroutines.launch
 
 @Composable
 fun FavoritesRoute(
@@ -73,7 +85,6 @@ fun FavoritesRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cooldownStates by viewModel.cooldownStates.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
     val spoofToggle = rememberSpoofToggleState()
 
     FavoritesScreen(
@@ -84,22 +95,14 @@ fun FavoritesRoute(
         onSetPendingDeleteId = viewModel::setPendingDeleteId,
         onConfirmDelete = viewModel::confirmDelete,
         onAddFavorite = viewModel::addFavorite,
+        onAddFavoriteFromPaste = { name, pasteText -> viewModel.addFavoriteFromPaste(name, pasteText) },
         onUpdateFavorite = viewModel::updateFavorite,
         onNavigateToMapPicker = onNavigateToMapPicker,
         onOpenDrawer = onOpenDrawer,
         isSpoofing = spoofToggle.isSpoofing,
         onToggleSpoofing = spoofToggle.onToggle,
         locationLabel = spoofToggle.locationLabel,
-        onToggleSort = viewModel::toggleSort,
-        onShare = { fav ->
-            val url = AppConstants.AppInfo.buildDeepLink(fav.position.latitude, fav.position.longitude)
-            val shareIntent =
-                Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, url)
-                }
-            context.startActivity(Intent.createChooser(shareIntent, null))
-        },
+        onSortModeSelected = viewModel::setSortMode,
         getCurrentPosition = { viewModel.currentPosition },
         bottomBar = bottomBar,
     )
@@ -115,6 +118,7 @@ private fun FavoritesScreenPreview() {
         onSetPendingDeleteId = {},
         onConfirmDelete = {},
         onAddFavorite = { _, _, _ -> },
+        onAddFavoriteFromPaste = { _, _ -> false },
         onUpdateFavorite = { _, _, _, _ -> },
     )
 }
@@ -128,6 +132,7 @@ internal fun FavoritesScreen(
     onSetPendingDeleteId: (String?) -> Unit,
     onConfirmDelete: () -> Unit,
     onAddFavorite: (String, Double, Double) -> Unit,
+    onAddFavoriteFromPaste: (String, String) -> Boolean = { _, _ -> false },
     onUpdateFavorite: (String, String, Double, Double) -> Unit,
     cooldownStates: Map<String, CooldownState> = emptyMap(),
     onNavigateToMapPicker: () -> Unit = {},
@@ -135,14 +140,13 @@ internal fun FavoritesScreen(
     isSpoofing: Boolean = false,
     onToggleSpoofing: () -> Unit = {},
     locationLabel: String? = null,
-    onToggleSort: () -> Unit = {},
-    onShare: (com.locationjoystick.core.model.FavoriteLocation) -> Unit = {},
+    onSortModeSelected: (com.locationjoystick.core.model.SavedItemSortMode) -> Unit = {},
     getCurrentPosition: () -> com.locationjoystick.core.model.LatLng? = { null },
     bottomBar: @Composable () -> Unit = {},
 ) {
     var showAddSheet by remember { mutableStateOf(false) }
-    // Hoisted here (not local to the sheet) so the empty-state CTA task can also flip it, with no new plumbing.
     var showAddOptionsSheet by remember { mutableStateOf(false) }
+    var showPasteSheet by rememberSaveable { mutableStateOf(false) }
     var prefillLat by remember { mutableStateOf("") }
     var prefillLon by remember { mutableStateOf("") }
     var editingFavorite by remember { mutableStateOf<com.locationjoystick.core.model.FavoriteLocation?>(null) }
@@ -158,15 +162,12 @@ internal fun FavoritesScreen(
         bottomBar = bottomBar,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         actions = {
-            LjOverflowMenu { dismiss ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.favorites_screen_sort)) },
-                    onClick = {
-                        dismiss()
-                        onToggleSort()
-                    },
-                    leadingIcon = { Icon(LjIcons.SwapVert, null) },
-                )
+            val context = LocalContext.current
+            SavedItemSortMenu(selected = uiState.sortMode, onSelected = onSortModeSelected)
+            IconButton(
+                onClick = { shareCurrentLocationCoordinates(context, getCurrentPosition()) },
+            ) {
+                Icon(LjIcons.Share, contentDescription = stringResource(R.string.favorites_screen_share_current_location))
             }
         },
         floatingActionButton = {
@@ -181,86 +182,83 @@ internal fun FavoritesScreen(
                     .fillMaxSize()
                     .padding(scaffoldPadding),
         ) {
-            if (uiState.favorites.isNotEmpty()) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text(stringResource(R.string.favorites_screen_search_favorites)) },
-                    leadingIcon = { Icon(LjIcons.Search, contentDescription = null) },
-                    singleLine = true,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-            }
-
-            val filteredFavorites =
-                remember(uiState.favorites, searchQuery) {
-                    uiState.favorites.filter { it.name.contains(searchQuery, ignoreCase = true) }
+            WideContentClamp(modifier = Modifier.fillMaxSize()) {
+                if (uiState.favorites.isNotEmpty()) {
+                    ListSearchField(
+                        query = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        label = stringResource(R.string.favorites_screen_search_favorites),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
                 }
 
-            Box(modifier = Modifier.fillMaxSize()) {
-                when {
-                    uiState.isLoading -> {
-                        LjListItemCardSkeletonList(trailingIconCount = 1)
+                val filteredFavorites =
+                    remember(uiState.favorites, searchQuery) {
+                        uiState.favorites.filter { it.matchesSearch(searchQuery) }
                     }
 
-                    uiState.favorites.isEmpty() -> {
-                        EmptyState(
-                            icon = LjIcons.LocationOn,
-                            message = stringResource(R.string.favorites_screen_no_saved_favorites_yet),
-                            modifier = Modifier.align(Alignment.Center),
-                            action = {
-                                LjButton(onClick = { showAddOptionsSheet = true }) {
-                                    Text(stringResource(R.string.favorites_screen_add_a_favorite))
-                                }
-                            },
-                        )
-                    }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when {
+                        uiState.isLoading -> {
+                            LjListItemCardSkeletonList()
+                        }
 
-                    filteredFavorites.isEmpty() -> {
-                        EmptyState(
-                            icon = LjIcons.Search,
-                            message = stringResource(R.string.favorites_screen_no_favorites_match_search),
-                            modifier = Modifier.align(Alignment.Center),
-                        )
-                    }
+                        uiState.favorites.isEmpty() -> {
+                            EmptyState(
+                                icon = LjIcons.LocationOn,
+                                message = stringResource(R.string.favorites_no_saved_locations_yet),
+                                modifier = Modifier.align(Alignment.Center),
+                                action = {
+                                    LjPrimaryButton(
+                                        text = stringResource(R.string.favorites_add_a_favorite),
+                                        onClick = { showAddOptionsSheet = true },
+                                    )
+                                },
+                            )
+                        }
 
-                    else -> {
-                        val grouped = remember(filteredFavorites) { filteredFavorites.groupBy { it.category } }
-                        val orderedKeys =
-                            remember(grouped) { grouped.keys.sortedWith(compareBy({ it == null }, { it ?: "" })) }
+                        filteredFavorites.isEmpty() -> {
+                            EmptyState(
+                                icon = LjIcons.Search,
+                                message = stringResource(R.string.favorites_no_favorites_match_your_search),
+                                modifier = Modifier.align(Alignment.Center),
+                            )
+                        }
 
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            orderedKeys.forEach { category ->
-                                if (category != null) {
-                                    item(key = "header_$category") {
-                                        Text(
-                                            text = category,
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = MaterialTheme.colorScheme.primary,
+                        else -> {
+                            val grouped = remember(filteredFavorites) { filteredFavorites.groupBy { it.category } }
+                            val orderedKeys =
+                                remember(grouped) { grouped.keys.sortedWith(compareBy({ it == null }, { it ?: "" })) }
+
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                orderedKeys.forEach { category ->
+                                    if (category != null) {
+                                        item(key = "header_$category") {
+                                            Text(
+                                                text = category,
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = MaterialTheme.colorScheme.primary,
+                                            )
+                                        }
+                                    }
+                                    items(
+                                        items = grouped.getValue(category),
+                                        key = { it.id },
+                                    ) { favorite ->
+                                        FavoriteCard(
+                                            modifier = Modifier.animateItem(),
+                                            favorite = favorite,
+                                            cooldownState = cooldownStates[favorite.id] ?: CooldownState.Ready,
+                                            currentPosition = getCurrentPosition(),
+                                            onRowClick = { onTeleport(favorite) },
+                                            onEdit = { editingFavorite = it },
+                                            onDelete = { onSetPendingDeleteId(it.id) },
                                         )
                                     }
-                                }
-                                items(
-                                    items = grouped.getValue(category),
-                                    key = { it.id },
-                                ) { favorite ->
-                                    FavoriteCard(
-                                        modifier = Modifier.animateItem(),
-                                        favorite = favorite,
-                                        cooldownState = cooldownStates[favorite.id] ?: CooldownState.Ready,
-                                        currentPosition = getCurrentPosition(),
-                                        onRowClick = { onTeleport(favorite) },
-                                        onEdit = { editingFavorite = it },
-                                        onDelete = { onSetPendingDeleteId(it.id) },
-                                        onShare = onShare,
-                                    )
                                 }
                             }
                         }
@@ -270,30 +268,14 @@ internal fun FavoritesScreen(
         }
     }
 
-    if (showAddSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showAddSheet = false },
-            containerColor = MaterialTheme.colorScheme.surface,
-        ) {
-            AddFavoriteSheet(
-                initialLat = prefillLat,
-                initialLon = prefillLon,
-                onDismiss = { showAddSheet = false },
-                onAdd = { name, lat, lon ->
-                    onAddFavorite(name, lat, lon)
-                    showAddSheet = false
-                },
-            )
-        }
-    }
-
     if (showAddOptionsSheet) {
         ModalBottomSheet(
             onDismissRequest = { showAddOptionsSheet = false },
+            sheetState = rememberLjSheetState(),
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                Text(stringResource(R.string.favorites_screen_add_a_favorite_2), style = MaterialTheme.typography.headlineSmall)
+                Text(stringResource(R.string.favorites_screen_add_a_favorite), style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(12.dp))
                 LjActionSheetRow(
                     icon = LjIcons.Map,
@@ -314,6 +296,14 @@ internal fun FavoritesScreen(
                     },
                 )
                 LjActionSheetRow(
+                    icon = LjIcons.ContentPaste,
+                    title = stringResource(R.string.favorites_screen_paste_coordinates),
+                    onClick = {
+                        showAddOptionsSheet = false
+                        showPasteSheet = true
+                    },
+                )
+                LjActionSheetRow(
                     icon = LjIcons.LocationOn,
                     title = stringResource(R.string.favorites_screen_use_current_location),
                     onClick = {
@@ -326,6 +316,44 @@ internal fun FavoritesScreen(
                 )
                 Spacer(Modifier.height(8.dp))
             }
+        }
+    }
+
+    if (showAddSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showAddSheet = false },
+            sheetState = rememberLjSheetState(),
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            AddFavoriteSheet(
+                initialLat = prefillLat,
+                initialLon = prefillLon,
+                onDismiss = { showAddSheet = false },
+                onAdd = { name, lat, lon ->
+                    onAddFavorite(name, lat, lon)
+                    showAddSheet = false
+                },
+            )
+        }
+    }
+
+    if (showPasteSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showPasteSheet = false },
+            sheetState = rememberLjSheetState(),
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            PasteFavoriteSheet(
+                onDismiss = { showPasteSheet = false },
+                onAdd = { name, pasteText ->
+                    if (onAddFavoriteFromPaste(name, pasteText)) {
+                        showPasteSheet = false
+                        true
+                    } else {
+                        false
+                    }
+                },
+            )
         }
     }
 
@@ -364,10 +392,14 @@ private fun FavoriteCard(
     onRowClick: (com.locationjoystick.core.model.FavoriteLocation) -> Unit,
     onEdit: (com.locationjoystick.core.model.FavoriteLocation) -> Unit,
     onDelete: (com.locationjoystick.core.model.FavoriteLocation) -> Unit,
-    onShare: (com.locationjoystick.core.model.FavoriteLocation) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    val coordText = formatCapturedPoint(favorite.position)
+    val copiedCoordinatesMessage = stringResource(R.string.favorites_screen_copied_coordinates, coordText)
 
     LjListItemCard(
         modifier = modifier,
@@ -390,9 +422,23 @@ private fun FavoriteCard(
                         leadingIcon = { Icon(LjIcons.Edit, null) },
                     )
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.favorites_screen_share)) },
+                        text = { Text(stringResource(R.string.favorites_screen_copy_coordinates)) },
                         onClick = {
-                            onShare(favorite)
+                            scope.launch { clipboard.writePlainText(coordText) }
+                            Toast.makeText(context, copiedCoordinatesMessage, Toast.LENGTH_SHORT).show()
+                            menuExpanded = false
+                        },
+                        leadingIcon = { Icon(LjIcons.ContentCopy, null) },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.favorites_screen_send_as_message)) },
+                        onClick = {
+                            val shareIntent =
+                                Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, coordText)
+                                }
+                            context.startActivity(Intent.createChooser(shareIntent, null))
                             menuExpanded = false
                         },
                         leadingIcon = { Icon(LjIcons.Share, null) },
@@ -495,9 +541,110 @@ private fun AddFavoriteSheet(
             LjTextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.common_cancel))
             }
-            LjTextButton(
+            TextButton(
                 onClick = { onAdd(name, latVal!!, lonVal!!) },
                 enabled = isValid,
+            ) {
+                Text(stringResource(R.string.favorites_screen_save))
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PasteFavoriteSheetPreview() {
+    PasteFavoriteSheet(
+        onDismiss = {},
+        onAdd = { _, _ -> true },
+    )
+}
+
+@Composable
+private fun PasteFavoriteSheet(
+    onDismiss: () -> Unit,
+    onAdd: (String, String) -> Boolean,
+) {
+    var name by rememberSaveable { mutableStateOf("") }
+    val invalidMessage = stringResource(R.string.favorites_no_coordinates)
+    var pasteText by rememberSaveable { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .imePadding(),
+    ) {
+        Text(
+            stringResource(R.string.favorites_screen_add_favorite_location),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text(stringResource(R.string.favorites_screen_name)) },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+        )
+
+        OutlinedTextField(
+            value = pasteText,
+            onValueChange = {
+                pasteText = it
+                error = null
+            },
+            label = { Text(stringResource(R.string.favorites_screen_coordinates)) },
+            placeholder = { Text(stringResource(R.string.favorite_coordinate_example)) },
+            supportingText = {
+                Text(error ?: stringResource(R.string.favorites_decimal_or_degrees_with_n_s_and_e_w))
+            },
+            isError = error != null,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+            trailingIcon = {
+                IconButton(
+                    onClick = {
+                        scope.launch {
+                            val text = clipboard.readPlainText()
+                            if (!text.isNullOrBlank()) {
+                                pasteText = text
+                                error = null
+                            }
+                        }
+                    },
+                ) {
+                    Icon(LjIcons.ContentPaste, contentDescription = stringResource(R.string.favorites_screen_paste_from_clipboard))
+                }
+            },
+        )
+
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.favorites_screen_cancel))
+            }
+            TextButton(
+                onClick = {
+                    if (!onAdd(name, pasteText)) {
+                        error = invalidMessage
+                    }
+                },
+                enabled = name.isNotEmpty() && pasteText.isNotBlank(),
             ) {
                 Text(stringResource(R.string.common_save))
             }
@@ -519,7 +666,7 @@ private fun EditFavoriteDialog(
     val lonVal = lon.toLocaleDoubleOrNull()
     val isValid = name.isNotEmpty() && isValidLatLng(latVal, lonVal)
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberLjSheetState()) {
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
             Text(stringResource(R.string.favorites_screen_edit_favorite), style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(12.dp))

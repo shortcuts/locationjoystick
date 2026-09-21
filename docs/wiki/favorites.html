@@ -34,18 +34,26 @@
     <div class="feature-section" id="favorites-list">
       <img class="phone-shot" src="screenshots/04_favorites.png" alt="Favorites screen">
       <ul class="section-bullets">
-        <li>Tap a favorite to walk there (straight line or via roads) or teleport there right away.</li>
-        <li>Long-press a favorite to rename or delete it.</li>
-        <li>Add a favorite by typing in coordinates directly, or by picking a point on the map.</li>
+        <li>Tap a favorite to walk there (straight line or via roads) or teleport there right away. Teleporting ends a running or paused route or roam first, then jumps.</li>
+        <li>The share button next to Sort opens the share sheet with your current location as comma-separated decimal degrees, such as <code>11.012777, 79.480650</code>. If there is no current location yet, a short message says so. The floating widget's favorites list has the same share button to the left of search. Tapping share there closes the list so you can pick an app.</li>
+        <li>Sort favorites A–Z, Z–A, newest saved, or oldest saved. Your choice also applies to favorite lists opened from the floating widget.</li>
+        <li>The three-dot menu on a favorite lets you edit it, copy its coordinates, send them as a message, or delete it. Copy and send use the same <code>lat, lon</code> text you can paste back in later — not a web link.</li>
+        <li>Add a favorite by typing in coordinates, pasting a lat/lon pair, or by picking a point on the map.</li>
       </ul>
     </div>
 
     <h2 id="search-and-categories">Search and categories</h2>
     <p>
-      A search box at the top of the Favorites screen finds locations by name as you type.
+      A search box at the top of the Favorites screen finds locations by name or area as you type.
       Locations that belong to a named area, such as the curated spots described below,
       are grouped together under that area's name, which makes a long list easier to browse.
       Locations without an area are shown on their own at the bottom.
+      The same search is on the map's favorites sheet. From the floating widget, tap the search
+      icon next to the close button to open a search box over the list. A share button sits to
+      the left of search and sends your current location the same way as on the Favorites screen.
+      Tapping share closes the list so you can pick an app. Closing the list (or hiding search)
+      clears what you typed, so the next time you open it you see every favorite again. Open a
+      favorite's widget detail to rename or delete it without returning to the main app.
     </p>
 
     <h2 id="how-to-add-a-favorite">How to add a favorite</h2>
@@ -55,7 +63,8 @@
       <img class="phone-shot" src="screenshots/17_favorites_add_button.png" alt="Favorites screen with add button visible">
       <ul class="section-bullets">
         <li>The button opens a menu with every way to add a favorite.</li>
-        <li>Choose "From coordinates" to type a location in by hand, "From map" to pick a point on the map, or "Use current location" to save where you are right now.</li>
+        <li>Choose "From coordinates" to type latitude and longitude in separate boxes, "Paste coordinates" to paste a pair such as <code>11.0127769, 79.48065</code> or <code>37°34'11.4"N 127°00'17.9"E</code>, "From map" to pick a point on the map, or "Use current location" to save where you are right now. On the map screen, the paste button can also save a pasted pair as a favorite after you enter a name.</li>
+        <li>Paste coordinates asks for a name and the coordinate text. If you leave the app to copy the numbers from somewhere else, the form stays open until you save or cancel.</li>
       </ul>
     </div>
 

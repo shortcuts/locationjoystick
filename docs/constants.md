@@ -7,15 +7,16 @@ All constants → `:core:common/constants/AppConstants.kt`.
 | Object | Contents |
 |--------|----------|
 | `LocationConstants` | Update interval, earth radius, walk threshold |
-| `ProfileConstants` | Slow Walk/Walk/Run/Bike/Drive speed presets, min/max speed, anti-cheat threshold |
+| `ProfileConstants` | Slow Walk/Walk/Run/Bike/Drive speed presets, enabled speed-cycle set, route-jump default, min/max speed, anti-cheat threshold |
 | `JitterConstants` | Accuracy min/max, jitter radii, max step per tick, speed variation percentages |
 | `RealismConstants` | Altitude sigma/drift/clamp, warmup duration, satellite interval, suspended push/pause durations, pedometer mocking enabled default |
 | `PedometerConstants` | Max walking speed, stride base, stride speed factor, stride jitter percentage |
-| `RoamingConstants` | Default radius/distance, speed profile IDs, arrival threshold, road-snapping defaults |
-| `OsrmConstants` | Demo + FOSSGIS base URLs, ladder backoffs, time budgets, bisection thresholds |
-| `MapConstants` | Default coordinates, zoom, tile URL, map source/layer IDs |
-| `NominatimConstants` | Search endpoint |
-| `ExportConstants` | Schema version, MIME type, GPX version/creator, max GPX import size |
+| `RoamingConstants` | Default radius/distance, planting start/end radius, planting default speed (Bike), spiral pitch/chord, loop defaults, speed profile IDs, arrival threshold, road-snapping defaults |
+| `OsrmConstants` | Demo + FOSSGIS base URLs, ladder backoffs, time budgets, bisection thresholds, route cache size/TTL/coordinate scale, cooldown durations and cap, cooldown prefs file name |
+| `MapConstants` | Default coordinates, zoom, favorite street-level zoom, tile URL, OSM User-Agent app name, OSM cache-bust marker, OSM OkHttp per-host limit, ambient tile cache max bytes, preview max zoom, camera snap distance, map source/layer IDs (including preview) |
+| `NominatimConstants` | Search + reverse endpoints, debounce, timeouts, min request interval, search cache size/TTL |
+| `ElevationConstants` | Open-Meteo endpoint, timeouts, elevation cache size and coordinate scale |
+| `ExportConstants` | Schema version, MIME type, GPX version/creator, max GPX import size, max GPX route waypoint count |
 | `CooldownConstants` | Walk-to and teleport cooldown durations |
 | `UnitConversionConstants` | Speed/distance unit conversion factors |
 | `MapColorConstants` | Map active button color, route colors |
@@ -24,11 +25,14 @@ All constants → `:core:common/constants/AppConstants.kt`.
 | `NotificationConstants` | Channel IDs |
 | `ServiceConstants` | Service action strings |
 | `DataStoreConstants` | DataStore preference keys |
-| `JoystickConstants` | Joystick sizing/sensitivity |
+| `JoystickConstants` | Joystick sizing/sensitivity and overlay fill/knob alphas |
 | `WidgetConstants` | Widget sizing |
-| `RouteConstants` | Route-related defaults |
+| `RouteConstants` | Route-related defaults, planting circle radius/vertex clamps, reserved paste-play route id/name |
 | `DatabaseConstants` | DB name, version |
-| `AppInfo` | GitHub repo URL, issues URL, privacy policy URL |
+| `TopBarConstants` | Max characters for the idle Start place-name suffix |
+| `AppInfo` | Version name, fork changelog/releases URL, upstream issues/docs/troubleshooting URLs, Capture setup guide URL (`CAPTURE_GUIDE_URL`) |
+| `UpdateCheckConstants` | GitHub API URL, connect/read timeouts, check interval, release-tag URL builder |
+| `WhatsNewConstants` | APK asset file name for the per-version changelog JSON |
 | `FollowerRestorationConstants` | Follower boot restoration retry delay, max delay, max attempts, jitter range |
 
 ## Rules

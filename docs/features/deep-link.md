@@ -23,12 +23,9 @@ Both formats are parsed identically. HTTPS is preferred for general sharing. The
 
 ## Generating Share Links (UI)
 
-Two entry points:
+Map long-press → **Share this location** fires the system share sheet with the formatted URL as plain text.
 
-1. **Favorites** — tap ⋮ → **Share** on any saved favorite.
-2. **Map long-press** — tap any location → bottom sheet → **Share this location**.
-
-Both fire the system share sheet with the formatted URL as plain text.
+Favorites no longer generate that URL. The favorite overflow menu copies decimal-degree coordinates to the clipboard (**Copy coordinates**) or sends the same text through the system share sheet (**Send as message**).
 
 ## Receiving Links
 
@@ -64,6 +61,11 @@ Rules:
 
 The app also registers itself as a candidate handler for location links coming from other apps (e.g. a "view on map" button for a point of interest). This lets a user pick locationjoystick from Android's chooser, or set it as the default handler for these link types, to redirect a third-party app's "open in Maps" action straight into a teleport/walk confirmation instead of opening Google Maps.
 
+These intent filters live on `LinkInterceptorActivity` (not `MainActivity`) so capture
+mode can `finish()` without bringing the map to the front. `geo:` and `google.navigation:`
+stay on `MainActivity`. Maps web links that should pin (capture off, app picked from the
+chooser) are handed to `MainActivity` explicitly.
+
 Supported formats (all parsed by `parseDeepLinkCoords`):
 
 | Format | Example |
@@ -78,7 +80,9 @@ Supported formats (all parsed by `parseDeepLinkCoords`):
 
 These intent filters are **not** `autoVerify` — we don't control those domains, so Android shows a disambiguation chooser rather than auto-opening. `www.google.com` is scoped to `pathPrefix="/maps"` so other Google links (search, etc.) aren't intercepted.
 
-Apps that launch Maps via an **explicit intent** (`setPackage`/`setClassName` targeting `com.google.android.apps.maps` directly) bypass intent-filter resolution entirely — there is no fix for this case, since Android never runs the resolver for explicit intents.
+Implicit `ACTION_VIEW` intents for Google Maps web URLs are intercepted when this app is the default browser and Maps' "Open supported links" is off. Explicit intents targeting the Maps package bypass interception. See @docs/features/capture-coordinates.md.
+
+Apps that launch Maps via an **explicit** intent (`setPackage`/`setClassName` targeting `com.google.android.apps.maps` directly) still bypass intent-filter resolution — there is no fix for that case.
 
 ### Google Maps "Share" Button
 
@@ -102,6 +106,6 @@ The shared text usually contains a shortened link (`https://goo.gl/maps/...` or 
 |-------|--------|
 | Entry | `MainActivity.handleIntent` → `parseDeepLinkCoords` (in `DeepLinkParser.kt`) |
 | Channel | `DeepLinkRepository` — `SharedFlow(replay=1)`; `consume()` calls `resetReplayCache()` to clear after delivery |
-| Consumer | `MapViewModel.observeDeepLinkCoords` — sets `pendingTapPosition` + `pendingCameraTarget` |
+| Consumer | `MapViewModel.observeDeepLinkCoords` — pins via `pinCoordinateTarget` (`pendingTapPosition` + `pendingCameraTarget` + confirm sheet), the same path as map paste-coordinates |
 | URL builder | `AppConstants.AppInfo.buildDeepLink(lat, lon)` |
 | Manifest | Intent filters on `MainActivity`: HTTPS own domain (`autoVerify`) + custom scheme + `geo:` + Google Maps hosts + `google.navigation:` + `ACTION_SEND` text/plain |

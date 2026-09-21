@@ -6,6 +6,9 @@ import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.routing.RouteReplayEngine
+import com.locationjoystick.core.routing.TeleportRouteEngine
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -35,26 +38,81 @@ class TeleportUseCase
     constructor(
         @param:ApplicationContext private val context: Context,
         private val settingsRepository: SettingsRepository,
+        private val locationRepository: LocationRepository,
+        private val roamingRepository: RoamingRepository,
+        private val routeReplayEngine: RouteReplayEngine,
+        private val teleportRouteEngine: TeleportRouteEngine,
+        private val walkCoordinator: WalkCoordinator,
     ) {
         /**
          * Fires the teleport intent, persists the new position, and records the timestamp.
+         *
+         * When [resetMovement] is true (the default for user-initiated jumps from the map,
+         * a favorite, or pasted coordinates), any walk, roam, or route session is cleared
+         * first so the replay/roam engine cannot overwrite the new position on the next tick.
+         * Follow-roads route starts that have not set ROUTE_REPLAY yet are aborted via
+         * ACTION_ROUTE_REPLAY_STOP as well, so a late routing result cannot snap GPS back.
+         * Pass false when the jump is only a prelude to starting a saved route.
          */
-        suspend fun execute(position: LatLng) {
+        suspend fun execute(
+            position: LatLng,
+            resetMovement: Boolean = true,
+        ) {
             try {
+                if (resetMovement) {
+                    resetActiveRouteAndRoaming()
+                }
                 val intent =
                     Intent().apply {
                         setClassName(context, AppConstants.ServiceConstants.MOCK_LOCATION_SERVICE_CLASS)
                         action = AppConstants.ServiceConstants.ACTION_UPDATE_POSITION
                         putExtra(AppConstants.ServiceConstants.EXTRA_LAT, position.latitude)
                         putExtra(AppConstants.ServiceConstants.EXTRA_LON, position.longitude)
+                        putExtra(AppConstants.ServiceConstants.EXTRA_IS_TELEPORT, true)
                     }
-                context.startService(intent)
+                startMockLocationService(intent)
                 settingsRepository.setLastLocation(position)
                 settingsRepository.setLastTeleportTime(System.currentTimeMillis())
                 Log.d(TAG, "Teleport to ${position.latitude}, ${position.longitude}")
             } catch (e: Exception) {
                 Log.e(TAG, "Teleport failed", e)
             }
+        }
+
+        private fun startMockLocationService(intent: Intent) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                @Suppress("DEPRECATION")
+                context.startService(intent)
+            }
+        }
+
+        private suspend fun resetActiveRouteAndRoaming() {
+            walkCoordinator.cancel()
+            if (locationRepository.currentMode.value == MockMode.ROAMING || roamingRepository.isRoaming.value) {
+                roamingRepository.stopRoaming()
+            }
+            // Always abort replay, even when mode is not yet ROUTE_REPLAY: Follow-roads
+            // planning sets that mode only after OSRM returns, and a late start would
+            // overwrite this teleport. STOP is a no-op when nothing is playing.
+            // Both engines are stopped here: TELEPORT-type routes tick via the separate
+            // teleportRouteEngine, not routeReplayEngine, so awaiting only one leaves the
+            // other free to overwrite this position before the async STOP intent lands.
+            if (locationRepository.currentMode.value == MockMode.ROUTE_REPLAY) {
+                routeReplayEngine.stop()
+                teleportRouteEngine.stop()
+                locationRepository.setRouteWaypoints(null)
+                locationRepository.setRouteProgress(null)
+                locationRepository.setActiveRouteId(null)
+            }
+            locationRepository.setMockMode(MockMode.TELEPORT)
+            val stopReplay =
+                Intent().apply {
+                    setClassName(context, AppConstants.ServiceConstants.MOCK_LOCATION_SERVICE_CLASS)
+                    action = AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_STOP
+                }
+            startMockLocationService(stopReplay)
         }
 
         /**

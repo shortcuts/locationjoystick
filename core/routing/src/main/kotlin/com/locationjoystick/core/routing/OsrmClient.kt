@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.AppJson
+import com.locationjoystick.core.common.util.TtlLruCache
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.common.util.interpolatePosition
 import com.locationjoystick.core.model.LatLng
@@ -47,6 +48,8 @@ private inline fun <T> runCatchingCancellable(block: () -> T): Result<T> =
 private const val TAG = "OsrmClient"
 private const val NO_SEGMENT = "NoSegment"
 private const val HTTP_TOO_MANY_REQUESTS = 429
+private const val HTTP_SERVER_ERROR = 500
+private const val HTTP_UNAVAILABLE = 503
 
 // ---------------------------------------------------------------------------
 // Response data classes (kotlinx.serialization)
@@ -268,6 +271,8 @@ private suspend fun <T> Call.await(parse: (Response) -> T): T =
 class OsrmClient
     internal constructor(
         private val backends: List<OsrmBackend>,
+        private val cooldowns: BackendCooldowns? = null,
+        nowMs: () -> Long = System::currentTimeMillis,
     ) {
         companion object {
             const val PROFILE_FOOT = AppConstants.RoamingConstants.OSRM_PROFILE_FOOT
@@ -279,6 +284,16 @@ class OsrmClient
         internal constructor(baseUrl: String) : this(
             listOf(OsrmBackend(singleGraph = false) { baseUrl.trimEnd('/') }),
         )
+
+        internal constructor(cooldowns: BackendCooldowns) : this(listOf(FossgisBackend, DemoBackend), cooldowns)
+
+        /** Successful ladder results only — never a bisected or straight-line-patched route. Not persisted. */
+        private val routeCache =
+            TtlLruCache<String, OsrmRoute>(
+                AppConstants.OsrmConstants.CACHE_MAX_ENTRIES,
+                AppConstants.OsrmConstants.CACHE_TTL_MS,
+                nowMs,
+            )
 
         private val okHttpClient: OkHttpClient =
             OkHttpClient
@@ -325,10 +340,19 @@ class OsrmClient
             waypoints: List<LatLng>,
         ): Result<OsrmRoute> =
             withContext(Dispatchers.IO) {
+                val scale = AppConstants.OsrmConstants.CACHE_COORD_SCALE
+                val cacheKey =
+                    profile + "|" +
+                        waypoints.joinToString(";") { "${Math.round(it.latitude * scale)},${Math.round(it.longitude * scale)}" }
+                routeCache.getFresh(cacheKey)?.let { return@withContext Result.success(it) }
                 val ladderResult =
                     withTimeoutOrNull(AppConstants.OsrmConstants.TOTAL_TIME_BUDGET_MS) {
                         runLadder(profile, waypoints)
                     } ?: Result.failure(SocketTimeoutException("OSRM total time budget exceeded"))
+                ladderResult.onSuccess { routeCache.put(cacheKey, it) }
+                if (ladderResult.isFailure) {
+                    routeCache.getStale(cacheKey)?.let { return@withContext Result.success(it) }
+                }
                 ladderResult
                     .recoverCatching { e ->
                         bisectIfEligible(profile, waypoints, e)
@@ -348,8 +372,12 @@ class OsrmClient
          */
         private fun ladderSlots(profile: String): List<LadderSlot> {
             val escalation = PROFILE_ESCALATION.dropWhile { it != profile }.ifEmpty { listOf(profile) }
-            return backends.flatMap { backend -> escalation.map { LadderSlot(backend, it) } }
+            return backends
+                .flatMap { backend -> escalation.map { LadderSlot(backend, it) } }
+                .filterNot { isCoolingDown(it) }
         }
+
+        private fun isCoolingDown(slot: LadderSlot): Boolean = cooldowns?.isCoolingDown(slot.backend.baseUrlFor(slot.profile)) == true
 
         /**
          * Walks [ladderSlots] until one succeeds. Any failure — transient or NoRoute — advances to
@@ -364,6 +392,7 @@ class OsrmClient
             waypoints: List<LatLng>,
         ): Result<OsrmRoute> {
             val slots = ladderSlots(profile)
+            if (slots.isEmpty()) return Result.failure(OsrmHttpException(HTTP_UNAVAILABLE, "OSRM backends cooling down"))
             var points = waypoints
             var snappedToRoad = false
             var lastError: Throwable? = null
@@ -385,6 +414,8 @@ class OsrmClient
                 if (slot.backend.singleGraph && !isRetryable(reason)) {
                     while (index < slots.size && slots[index].backend === slot.backend) index++
                 }
+                // A failure may have just cooled the next slot's backend: skip it rather than wait for nothing.
+                while (index < slots.size && isCoolingDown(slots[index])) index++
                 if (index < slots.size) {
                     delay(backoffFor(reason, waits))
                     waits++
@@ -510,27 +541,31 @@ class OsrmClient
             profile: String,
             waypoints: List<LatLng>,
         ): List<LatLng> =
-            waypoints.map { point ->
-                runCatchingCancellable {
-                    val coordinate = "${point.longitude},${point.latitude}"
-                    val url = "${backends.first().baseUrlFor(profile)}/nearest/v1/$profile/$coordinate"
-                    val request =
-                        okhttp3.Request
-                            .Builder()
-                            .url(url)
-                            .build()
-                    okHttpClient.newCall(request).await { response ->
-                        val body = response.body?.string() ?: error("OSRM nearest response body is null")
-                        val parsed = AppJson.decodeFromString<OsrmNearestResponse>(body)
-                        if (!response.isSuccessful || parsed.code != "Ok") error("OSRM nearest returned ${parsed.code}")
-                        val location =
-                            parsed.waypoints?.firstOrNull()?.location
-                                ?: error("OSRM nearest returned no waypoints")
-                        LatLng(latitude = location[1], longitude = location[0])
+            if (cooldowns?.isCoolingDown(backends.first().baseUrlFor(profile)) == true) {
+                waypoints
+            } else {
+                waypoints.map { point ->
+                    runCatchingCancellable {
+                        val coordinate = "${point.longitude},${point.latitude}"
+                        val url = "${backends.first().baseUrlFor(profile)}/nearest/v1/$profile/$coordinate"
+                        val request =
+                            okhttp3.Request
+                                .Builder()
+                                .url(url)
+                                .build()
+                        okHttpClient.newCall(request).await { response ->
+                            val body = response.body?.string() ?: error("OSRM nearest response body is null")
+                            val parsed = AppJson.decodeFromString<OsrmNearestResponse>(body)
+                            if (!response.isSuccessful || parsed.code != "Ok") error("OSRM nearest returned ${parsed.code}")
+                            val location =
+                                parsed.waypoints?.firstOrNull()?.location
+                                    ?: error("OSRM nearest returned no waypoints")
+                            LatLng(latitude = location[1], longitude = location[0])
+                        }
+                    }.getOrElse { e ->
+                        Log.w(TAG, "OSRM nearest snap failed for $point, using original point", e)
+                        point
                     }
-                }.getOrElse { e ->
-                    Log.w(TAG, "OSRM nearest snap failed for $point, using original point", e)
-                    point
                 }
             }
 
@@ -542,11 +577,15 @@ class OsrmClient
             runCatchingCancellable {
                 require(waypoints.size >= 2) { "At least 2 waypoints required" }
 
+                val baseUrl = backend.baseUrlFor(profile)
+                if (cooldowns?.isCoolingDown(baseUrl) == true) {
+                    throw OsrmHttpException(HTTP_UNAVAILABLE, "OSRM backend cooling down")
+                }
                 val coordinates = waypoints.joinToString(";") { "${it.longitude},${it.latitude}" }
                 val overview = AppConstants.OsrmConstants.OVERVIEW
                 val geometries = AppConstants.OsrmConstants.GEOMETRIES
                 val url =
-                    "${backend.baseUrlFor(profile)}/route/v1/$profile/$coordinates?overview=$overview&geometries=$geometries"
+                    "$baseUrl/route/v1/$profile/$coordinates?overview=$overview&geometries=$geometries"
                 val request =
                     okhttp3.Request
                         .Builder()
@@ -555,6 +594,11 @@ class OsrmClient
                 okHttpClient.newCall(request).await { response ->
                     if (!response.isSuccessful) {
                         val retryAfterMs = if (response.code == HTTP_TOO_MANY_REQUESTS) parseRetryAfterMs(response) else null
+                        if (response.code == HTTP_TOO_MANY_REQUESTS) {
+                            cooldowns?.recordRateLimited(baseUrl, retryAfterMs)
+                        } else if (response.code >= HTTP_SERVER_ERROR) {
+                            cooldowns?.recordServerError(baseUrl)
+                        }
                         throw OsrmHttpException(response.code, "OSRM HTTP ${response.code}: ${response.message}", retryAfterMs)
                     }
 

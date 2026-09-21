@@ -30,6 +30,7 @@ data class FollowerPositionUpdate(
     val speedMs: Float,
     val bearing: Float,
     val active: Boolean,
+    val teleportSeq: Long = 0L,
 )
 
 @Singleton
@@ -93,7 +94,8 @@ class FollowerSyncClient
                                         val nowMs = System.currentTimeMillis()
                                         val stale =
                                             nowMs - update.timestamp > AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS
-                                        if (!stale && update.seq > lastSeq) {
+                                        // An inactive leader's last record keeps its old timestamp forever — never drop the pause as stale.
+                                        if ((!stale || !update.active) && update.seq > lastSeq) {
                                             lastSeq = update.seq
                                             onPosition(
                                                 FollowerPositionUpdate(
@@ -102,6 +104,7 @@ class FollowerSyncClient
                                                     speedMs = update.speedMs,
                                                     bearing = update.bearing,
                                                     active = update.active,
+                                                    teleportSeq = update.teleportSeq,
                                                 ),
                                             )
                                         }
@@ -201,6 +204,8 @@ class FollowerSyncClient
                     bearing = obj.optDouble("bearing", 0.0).toFloat(),
                     seq = obj.getLong("seq"),
                     active = obj.optBoolean("active", true),
+                    // Old leaders omit it: 0 forever, so the follower never sees a change and just walks.
+                    teleportSeq = obj.optLong("teleportSeq", 0L),
                 )
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to parse position JSON", e)

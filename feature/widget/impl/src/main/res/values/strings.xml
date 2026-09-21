@@ -46,6 +46,7 @@
     <string name="overlay_pause_roaming_cd">"Pause roaming"</string>
     <string name="overlay_start_roaming_cd">"Start roaming"</string>
     <string name="overlay_roaming_active_cd">"Roaming active"</string>
+    <string name="overlay_roaming_ignored_route_playing_cd">"Roaming ignored — a route is playing"</string>
     <string name="widget_panel_tap_to_walk_cd">"Tap to walk"</string>
     <string name="widget_panel_group_sync_cd">"Group sync"</string>
     <string name="widget_panel_teleport_to_leader_cd">"Teleport to leader now"</string>

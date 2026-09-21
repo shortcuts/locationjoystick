@@ -46,6 +46,8 @@
     <string name="route_creator_route_imported">"已导入路线：%1$s"</string>
     <string name="route_creator_routes_imported">"已导入 %1$d 条路线"</string>
     <string name="route_creator_import_failed">"导入失败：%1$s"</string>
+    <string name="route_creator_skipped_oversized_one">"已跳过 %1$d 条因过大而无法导入的路线"</string>
+    <string name="route_creator_skipped_oversized_other">"已跳过 %1$d 条因过大而无法导入的路线"</string>
     <string name="route_creator_share_gpx">"分享 GPX"</string>
     <string name="route_creator_export_failed">"导出失败：%1$s"</string>
     <string name="routes_screen_pause">"暂停"</string>
@@ -54,4 +56,8 @@
     <string name="route_creator_center_on_location_cd">"定位到当前位置"</string>
     <string name="route_creator_pick_from_favorites_cd">"从收藏中选取"</string>
     <string name="route_creator_undo_last_waypoint_cd">"撤销上一个途经点"</string>
+    <string name="route_paste_no_valid_coordinates">"未在文本中找到有效坐标"</string>
+    <string name="route_paste_need_one_point_planting">"种植模式至少需要 1 个点"</string>
+    <string name="route_paste_need_two_points">"此模式至少需要 2 个点"</string>
+    <string name="route_paste_could_not_build_route">"无法根据这些点构建路线"</string>
 </resources>

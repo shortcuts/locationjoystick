@@ -426,4 +426,38 @@ class GroupSyncViewModelTest {
                 assertTrue("Expected Cooling, was $state", state is CooldownState.Cooling)
             }
         }
+
+    private fun followerEnabledState() =
+        GroupState(
+            role = GroupRole.FOLLOWER,
+            groupId = "g",
+            leaderHost = "h",
+            leaderPort = 7,
+            followerModeEnabled = true,
+        )
+
+    @Test
+    fun `joining a group with follow on starts following`() =
+        runTest {
+            coEvery { followerSyncClient.checkGroupExists(any(), any(), any()) } returns true
+            coEvery { groupNsdManager.discoverByCode("g") } returns ("h" to 7)
+
+            groupStateFlow.value = followerEnabledState()
+
+            coVerify { groupRepository.setFollowerModeEnabled(true) }
+            verify { context.startService(any()) }
+        }
+
+    @Test
+    fun `rejoining after leaving starts following again`() =
+        runTest {
+            coEvery { followerSyncClient.checkGroupExists(any(), any(), any()) } returns true
+            coEvery { groupNsdManager.discoverByCode("g") } returns ("h" to 7)
+
+            groupStateFlow.value = followerEnabledState()
+            groupStateFlow.value = GroupState()
+            groupStateFlow.value = followerEnabledState()
+
+            verify(exactly = 2) { context.startService(any()) }
+        }
 }

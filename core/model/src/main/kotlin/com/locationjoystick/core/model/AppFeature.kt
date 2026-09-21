@@ -20,8 +20,10 @@ enum class AppFeature(
     JOYSTICK_LOCK(setOf(FeatureSurface.WIDGET)),
     FAVORITES(setOf(FeatureSurface.WIDGET, FeatureSurface.MAP)),
     ROUTES(setOf(FeatureSurface.WIDGET, FeatureSurface.MAP)),
-    ROAMING(setOf(FeatureSurface.MAP)),
+    ROAMING(setOf(FeatureSurface.WIDGET, FeatureSurface.MAP)),
     SEARCH(setOf(FeatureSurface.MAP)),
+    PASTE_COORDINATES(setOf(FeatureSurface.WIDGET, FeatureSurface.MAP)),
+    CAPTURE_COORDINATES(setOf(FeatureSurface.MAP)),
     SPEED_CYCLE(setOf(FeatureSurface.WIDGET)),
     ;
 
@@ -29,7 +31,8 @@ enum class AppFeature(
         val DEFAULT_ORDER: List<AppFeature> = entries.toList()
         val DEFAULT_MAP_ORDER: List<AppFeature> = DEFAULT_ORDER.filter { FeatureSurface.MAP in it.surfaces }
         val DEFAULT_WIDGET_ENABLED: Set<AppFeature> =
-            setOf(MAP_FLOATING, JOYSTICK_TOGGLE, JOYSTICK_LOCK, ROUTES, FAVORITES, SPEED_CYCLE)
-        val DEFAULT_MAP_ENABLED: Set<AppFeature> = setOf(FAVORITES, ROUTES, ROAMING, SEARCH)
+            setOf(MAP_FLOATING, JOYSTICK_TOGGLE, JOYSTICK_LOCK, ROUTES, FAVORITES, ROAMING, PASTE_COORDINATES, SPEED_CYCLE)
+        val DEFAULT_MAP_ENABLED: Set<AppFeature> =
+            setOf(FAVORITES, ROUTES, ROAMING, SEARCH, PASTE_COORDINATES, CAPTURE_COORDINATES)
     }
 }

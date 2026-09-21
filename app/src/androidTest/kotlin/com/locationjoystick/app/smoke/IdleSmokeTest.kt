@@ -28,7 +28,7 @@ class IdleSmokeTest : BaseSmokeTest() {
     @Test
     fun drawer_opens_and_shows_items() {
         composeRule.openDrawer()
-        listOf("Map", "Routes", "Favorites", "Settings").forEach { label ->
+        listOf("Map", "Routes", "Favorites", "Capture", "Settings").forEach { label ->
             composeRule
                 .onAllNodesWithText(label)
                 .filterToOne(hasAnyAncestor(hasTestTag("nav_drawer")))
@@ -53,13 +53,22 @@ class IdleSmokeTest : BaseSmokeTest() {
     @Test
     fun navigate_to_routes_via_card() {
         composeRule.navigateFromIdle("Routes")
-        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Add route").assertIsDisplayed()
     }
 
     @Test
     fun navigate_to_favorites_via_card() {
         composeRule.navigateFromIdle("Favorites")
-        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Add favorite").assertIsDisplayed()
+    }
+
+    @Test
+    fun navigate_to_capture_via_card() {
+        composeRule.navigateFromIdle("Capture")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Default browser").assertIsDisplayed()
+        composeRule.onNodeWithText("Setup guide").assertExists()
+        composeRule.onNodeWithText("Capture mode").assertDoesNotExist()
     }
 
     @Test
@@ -83,12 +92,19 @@ class IdleSmokeTest : BaseSmokeTest() {
     @Test
     fun navigate_to_routes_via_drawer() {
         composeRule.navigateViaDrawer("Routes")
-        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Add route").assertIsDisplayed()
     }
 
     @Test
     fun navigate_to_favorites_via_drawer() {
         composeRule.navigateViaDrawer("Favorites")
-        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Add favorite").assertIsDisplayed()
+    }
+
+    @Test
+    fun navigate_to_capture_via_drawer() {
+        composeRule.navigateViaDrawer("Capture")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Default browser").assertIsDisplayed()
     }
 }

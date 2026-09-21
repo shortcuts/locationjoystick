@@ -2,7 +2,7 @@
 
 Light and dark color themes, for readability across lighting conditions (e.g. direct sunlight).
 
-Key files: `:core:designsystem/LjColors.kt`, `:core:designsystem/LjTheme.kt`, `:core:datastore/AppPreferencesDataSource.kt`, `:core:data/SettingsRepository.kt`, `:app/ThemeViewModel.kt`, `:app/MainActivity.kt`
+Key files: `:core:designsystem/LjColors.kt`, `:core:designsystem/LjTheme.kt`, `:core:designsystem/LjShapes.kt`, `:core:designsystem/LjTypography.kt`, `:core:designsystem/component/LjCard.kt`, `:core:designsystem/component/LjMapIconButton.kt`, `:core:designsystem/component/LjCheckboxRow.kt`, `:core:datastore/AppPreferencesDataSource.kt`, `:core:data/SettingsRepository.kt`, `:app/ThemeViewModel.kt`, `:app/MainActivity.kt`, `:feature:widget:impl/FloatingWidgetService.kt`, `:feature:widget:impl/WidgetPanelPresenter.kt`
 
 ## Modes
 
@@ -19,6 +19,18 @@ Settings → Menus → "Appearance" → **Light mode** switch.
 ## Application
 
 `MainActivity` collects `ThemeViewModel.themeMode` (`@HiltViewModel`, wraps `SettingsRepository.getThemeMode()`) and passes `darkTheme = themeMode == ThemeMode.DARK` to the root `LjTheme` composable, so the whole Compose tree recomposes with the new `ColorScheme` as soon as the preference changes.
+
+Overlay panels (`FloatingWidgetService`, `WidgetPanelPresenter`) collect the same `getThemeMode()` flow and pass it into `LjTheme`, so routes / favorites / paste / roaming sheets match the in-app Appearance switch. The round widget icon column stays black with bright icons so it remains visible over other apps in both modes.
+
+Unchecked checkboxes and outlined fields in dark mode use `LjDarkOutlineVariant` (`#8A8490`) plus `ljCheckboxColors()` (`uncheckedColor = onSurface`) so Loop / Planting / Reverse / Return / Follow roads / Teleport between waypoints stay visible on `LjSurface`. Filled Start / Teleport buttons inherit `onPrimary` / outline colours — hosts must not paint those labels with `LjText`.
+
+## Surfaces, shapes and type
+
+- Both color schemes set the `surfaceContainer*` tokens explicitly. Unset, Material falls back to its baseline (purple-tinted) palette for sheets and cards. Sheets use `surfaceContainerLow`, one step above the background; cards use `surfaceVariant`, one step above the sheet.
+- `LjCard` is flat (no elevation) on `surfaceVariant`.
+- Corner radii scale: 6 / 12 / 20 / 28 / 32 dp (`LjShapes`).
+- `LjTypography` uses bolder titles and headlines with slightly tighter letter spacing; body and label sizes stay the same or shrink.
+- Map chrome floats: `LjMapIconButton` and the map hint pill carry a 4 dp shadow.
 
 ## Edge Cases
 

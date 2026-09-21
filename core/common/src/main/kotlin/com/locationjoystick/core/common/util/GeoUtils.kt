@@ -208,10 +208,12 @@ fun snapBearingToCardinal(
 private val RAW_LAT_LNG_REGEX = Regex("""^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$""")
 
 /**
- * Parses a raw "lat,lon" or "lat, lon" string typed/pasted by the user.
+ * Parses a raw "lat,lon" / "lat, lon" decimal pair or one Google-style DMS pair
+ * (`37°34'11.4"N 127°00'17.9"E`) typed/pasted by the user.
  * @return the parsed [LatLng], or null if [query] isn't a valid coordinate pair
  */
 fun parseRawLatLng(query: String): LatLng? {
+    parseDmsCoordinatePair(query.trim())?.let { return it }
     val match = RAW_LAT_LNG_REGEX.matchEntire(query) ?: return null
     val lat = match.groupValues[1].toDoubleOrNull() ?: return null
     val lon = match.groupValues[2].toDoubleOrNull() ?: return null

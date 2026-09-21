@@ -113,6 +113,11 @@ class GroupSyncViewModel
                 var followerExistenceChecked = false
                 groupRepository.groupState.collect { state ->
                     _groupState.value = state
+                    if (state.role != GroupRole.FOLLOWER) {
+                        // Leaving the group must re-arm the one-shot follower checks below so a rejoin starts following.
+                        followerRestoreSent = false
+                        followerExistenceChecked = false
+                    }
                     val host = state.leaderHost
                     val port = state.leaderPort
                     val id = state.groupId
@@ -231,6 +236,11 @@ class GroupSyncViewModel
                 _qrBitmap.value = null
                 Log.i(TAG, "Joined group ${invite.groupId} at ${invite.host}:${invite.port}")
             }
+        }
+
+        fun setFollowLeaderTeleports(enabled: Boolean) {
+            if (_groupState.value.role != GroupRole.FOLLOWER) return
+            viewModelScope.launch { groupRepository.setFollowLeaderTeleports(enabled) }
         }
 
         fun setFollowerModeEnabled(enabled: Boolean) {

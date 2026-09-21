@@ -16,6 +16,8 @@ import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.core.model.RoamingKind
+import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import kotlinx.coroutines.flow.Flow
@@ -104,11 +106,32 @@ interface PreferencesDataSource {
     /** Sets the theme mode preference. */
     suspend fun setThemeMode(mode: String)
 
+    /** Gets whether the widget overlay should stay parked (mock GPS off) across a service restart. */
+    fun getKeepWidgetOnIdle(): Flow<Boolean>
+
+    /** Sets whether the widget overlay should stay parked across a service restart. */
+    suspend fun setKeepWidgetOnIdle(enabled: Boolean)
+
     /** Gets the app version the user last saw the What's New popup for. */
     fun getWhatsNewLastSeenVersion(): Flow<String>
 
     /** Sets the app version the user last saw the What's New popup for. */
     suspend fun setWhatsNewLastSeenVersion(version: String)
+
+    /** Gets when the app last asked GitHub for the latest release (epoch ms). */
+    fun getUpdateCheckLastCheckedAtMs(): Flow<Long>
+
+    suspend fun setUpdateCheckLastCheckedAtMs(timestampMs: Long)
+
+    /** Gets the latest release version last seen on GitHub (no "v" prefix), empty if never fetched. */
+    fun getUpdateCheckCachedLatestVersion(): Flow<String>
+
+    suspend fun setUpdateCheckCachedLatestVersion(version: String)
+
+    /** Gets the release version whose "update available" badge the user already dismissed or opened. */
+    fun getUpdateCheckDismissedVersion(): Flow<String>
+
+    suspend fun setUpdateCheckDismissedVersion(version: String)
 
     /** Gets whether to remember the last spoofed location. */
     fun getRememberLastLocation(): Flow<Boolean>
@@ -253,6 +276,16 @@ interface PreferencesDataSource {
 
     suspend fun setFavoritesSortNewestFirst(newestFirst: Boolean)
 
+    fun getRoutesSortMode(): Flow<SavedItemSortMode> =
+        getRoutesSortNewestFirst().map { if (it) SavedItemSortMode.NEWEST_FIRST else SavedItemSortMode.OLDEST_FIRST }
+
+    suspend fun setRoutesSortMode(mode: SavedItemSortMode) = setRoutesSortNewestFirst(mode != SavedItemSortMode.OLDEST_FIRST)
+
+    fun getFavoritesSortMode(): Flow<SavedItemSortMode> =
+        getFavoritesSortNewestFirst().map { if (it) SavedItemSortMode.NEWEST_FIRST else SavedItemSortMode.OLDEST_FIRST }
+
+    suspend fun setFavoritesSortMode(mode: SavedItemSortMode) = setFavoritesSortNewestFirst(mode != SavedItemSortMode.OLDEST_FIRST)
+
     /** Gets the GPS jitter idle speed variation percentage (0 = off). */
     fun getJitterSpeedIdleVariationPct(): Flow<Int>
 
@@ -354,7 +387,7 @@ data class SettingsSnapshot(
     val hideTeleportFeatures: Boolean = false,
     val hideWidgetOverlay: Boolean = false,
     val hideForegroundNotification: Boolean = false,
-    val showRouteJumpButtons: Boolean = false,
+    val showRouteJumpButtons: Boolean = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
     val bypassMockLocationCheck: Boolean = false,
     val realismRealElevationEnabled: Boolean = AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
     val altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
@@ -409,6 +442,58 @@ fun parseFeatureOrder(raw: String?): List<AppFeature> {
     return raw.split(",").mapNotNull { it.toAppFeature() }.withMissingEntriesAppended()
 }
 
+/**
+ * Map FAB names that were in [AppFeature.DEFAULT_MAP_ENABLED] before
+ * [AppFeature.PASTE_COORDINATES]. Used when `map_fab_seen_defaults` is absent so an
+ * in-place upgrade gets new default-on FABs without re-enabling buttons the user
+ * already turned off.
+ */
+val LEGACY_MAP_FAB_SEEN_DEFAULTS: Set<String> = setOf("favorites", "routes", "roaming", "search")
+
+/**
+ * Widget items in [AppFeature.DEFAULT_WIDGET_ENABLED] before [AppFeature.PASTE_COORDINATES]
+ * and before [AppFeature.ROAMING] was eligible on the widget (it was map-only until 0.20.5).
+ * Used when `widget_seen_defaults` is absent so an in-place upgrade gets those default-on
+ * buttons without re-enabling buttons the user already turned off.
+ */
+val LEGACY_WIDGET_SEEN_DEFAULTS: Set<String> =
+    setOf("map_floating", "joystick_toggle", "joystick_lock", "routes", "favorites", "speed_cycle")
+
+/**
+ * Widget defaults after paste landed and before roaming was added to the widget.
+ * An install that saved Settings in that window has this in `widget_seen_defaults`;
+ * roaming is still unseen, so [mergeNewDefaultWidgetFeatures] turns it on once.
+ * If `widget_seen_defaults` already contains `roaming`, the user ran a build where
+ * the widget button was a default and then turned it off — leave it off.
+ */
+val WIDGET_PRE_ROAMING_SEEN_DEFAULTS: Set<String> = LEGACY_WIDGET_SEEN_DEFAULTS + "paste_coordinates"
+
+/**
+ * Union any [currentDefaults] that were introduced after [seenDefaults] into [stored].
+ * A null [seenDefaults] means this install has never recorded the default set (pre-migration
+ * DataStore), so [legacySeenDefaults] stands in.
+ */
+fun mergeNewDefaultFeatures(
+    stored: Set<String>,
+    seenDefaults: Set<String>?,
+    currentDefaults: Set<String>,
+    legacySeenDefaults: Set<String>,
+): Set<String> = stored + (currentDefaults - (seenDefaults ?: legacySeenDefaults))
+
+fun mergeNewDefaultMapFeatures(
+    stored: Set<String>,
+    seenDefaults: Set<String>?,
+    currentDefaults: Set<String> = AppFeature.DEFAULT_MAP_ENABLED.map { it.name.lowercase() }.toSet(),
+    legacySeenDefaults: Set<String> = LEGACY_MAP_FAB_SEEN_DEFAULTS,
+): Set<String> = mergeNewDefaultFeatures(stored, seenDefaults, currentDefaults, legacySeenDefaults)
+
+fun mergeNewDefaultWidgetFeatures(
+    stored: Set<String>,
+    seenDefaults: Set<String>?,
+    currentDefaults: Set<String> = AppFeature.DEFAULT_WIDGET_ENABLED.map { it.name.lowercase() }.toSet(),
+    legacySeenDefaults: Set<String> = LEGACY_WIDGET_SEEN_DEFAULTS,
+): Set<String> = mergeNewDefaultFeatures(stored, seenDefaults, currentDefaults, legacySeenDefaults)
+
 fun List<AppFeature>.serializeFeatureOrder(): String = joinToString(",") { it.name.lowercase() }
 
 @Singleton
@@ -425,16 +510,27 @@ class AppPreferencesDataSource
             val DRIVE_SPEED_MS = doublePreferencesKey("drive_speed_ms")
             val ACTIVE_PROFILE_ID = stringPreferencesKey("active_profile_id")
             val WIDGET_ITEMS = stringSetPreferencesKey("widget_items")
+            val WIDGET_SEEN_DEFAULTS = stringSetPreferencesKey("widget_seen_defaults")
             val ROAMING_RADIUS_METERS = doublePreferencesKey("roaming_radius_meters")
             val ROAMING_DISTANCE_METERS = doublePreferencesKey("roaming_distance_meters")
             val ROAMING_ROAD_FOLLOWING = booleanPreferencesKey("roaming_road_following")
             val ROAMING_TRANSPORT_MODE = stringPreferencesKey("roaming_transport_mode")
             val ROAMING_RETURN_TO_START = booleanPreferencesKey("roaming_return_to_start")
             val ROAMING_SPEED_PROFILE_ID = stringPreferencesKey("roaming_speed_profile_id")
+            val ROAMING_KIND = stringPreferencesKey("roaming_kind")
+            val ROAMING_PLANTING_START_RADIUS_METERS = doublePreferencesKey("roaming_planting_start_radius_meters")
+            val ROAMING_PLANTING_END_RADIUS_METERS = doublePreferencesKey("roaming_planting_end_radius_meters")
+            val ROAMING_PLANTING_INFINITE_LOOPS = booleanPreferencesKey("roaming_planting_infinite_loops")
+            val ROAMING_PLANTING_LOOP_COUNT = intPreferencesKey("roaming_planting_loop_count")
+            val ROAMING_PLANTING_SPEED_PROFILE_ID = stringPreferencesKey("roaming_planting_speed_profile_id")
             val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
             val SPEED_UNIT = stringPreferencesKey("speed_unit")
             val THEME_MODE = stringPreferencesKey("theme_mode")
+            val KEEP_WIDGET_ON_IDLE = booleanPreferencesKey("keep_widget_on_idle")
             val WHATS_NEW_LAST_SEEN_VERSION = stringPreferencesKey("whats_new_last_seen_version")
+            val UPDATE_CHECK_LAST_CHECKED_AT_MS = longPreferencesKey("update_check_last_checked_at_ms")
+            val UPDATE_CHECK_CACHED_LATEST_VERSION = stringPreferencesKey("update_check_cached_latest_version")
+            val UPDATE_CHECK_DISMISSED_VERSION = stringPreferencesKey("update_check_dismissed_version")
             val REMEMBER_LAST_LOCATION = booleanPreferencesKey("remember_last_location")
             val LAST_LATITUDE = doublePreferencesKey("last_latitude")
             val LAST_LONGITUDE = doublePreferencesKey("last_longitude")
@@ -456,6 +552,8 @@ class AppPreferencesDataSource
             val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
             val ROUTES_SORT_NEWEST_FIRST = booleanPreferencesKey("routes_sort_newest_first")
             val FAVORITES_SORT_NEWEST_FIRST = booleanPreferencesKey("favorites_sort_newest_first")
+            val ROUTES_SORT_MODE = stringPreferencesKey("routes_sort_mode")
+            val FAVORITES_SORT_MODE = stringPreferencesKey("favorites_sort_mode")
             val JITTER_SPEED_IDLE_VARIATION_PCT = intPreferencesKey("jitter_speed_idle_variation_pct")
             val JITTER_SPEED_MOVING_VARIATION_PCT = intPreferencesKey("jitter_speed_moving_variation_pct")
             val JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT =
@@ -465,6 +563,7 @@ class AppPreferencesDataSource
             val HOT_ROUTES_ENABLED = booleanPreferencesKey("hot_routes_enabled")
             val HOT_ROUTE_SELECTED_IDS = stringSetPreferencesKey("hot_route_selected_ids")
             val MAP_FAB_ITEMS = stringSetPreferencesKey("map_fab_items")
+            val MAP_FAB_SEEN_DEFAULTS = stringSetPreferencesKey("map_fab_seen_defaults")
             val FEATURE_ORDER = stringPreferencesKey("feature_order")
             val ENABLED_SPEED_PROFILE_IDS = stringSetPreferencesKey("enabled_speed_profile_ids")
             val FLOATING_MAP_QUICK_WALK = booleanPreferencesKey("floating_map_quick_walk")
@@ -531,13 +630,51 @@ class AppPreferencesDataSource
                     }
                 }.map { prefs -> prefs[key] ?: default }
 
-        override fun getWidgetItems(): Flow<Set<String>> = pref(Keys.WIDGET_ITEMS, DEFAULT_WIDGET_ITEMS)
+        override fun getWidgetItems(): Flow<Set<String>> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading widget items", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> resolveWidgetItems(prefs) }
 
-        override suspend fun setWidgetItems(items: Set<String>) = setPref(Keys.WIDGET_ITEMS, items)
+        override suspend fun setWidgetItems(items: Set<String>) {
+            dataStore.edit { prefs ->
+                prefs[Keys.WIDGET_ITEMS] = items
+                prefs[Keys.WIDGET_SEEN_DEFAULTS] = DEFAULT_WIDGET_ITEMS
+            }
+        }
 
-        override fun getMapItems(): Flow<Set<String>> = pref(Keys.MAP_FAB_ITEMS, DEFAULT_MAP_FAB_ITEMS)
+        private fun resolveWidgetItems(prefs: Preferences): Set<String> {
+            val stored = prefs[Keys.WIDGET_ITEMS] ?: DEFAULT_WIDGET_ITEMS
+            return mergeNewDefaultWidgetFeatures(stored, prefs[Keys.WIDGET_SEEN_DEFAULTS])
+        }
 
-        override suspend fun setMapItems(items: Set<String>) = setPref(Keys.MAP_FAB_ITEMS, items)
+        override fun getMapItems(): Flow<Set<String>> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading map FAB items", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs -> resolveMapFabItems(prefs) }
+
+        override suspend fun setMapItems(items: Set<String>) {
+            dataStore.edit { prefs ->
+                prefs[Keys.MAP_FAB_ITEMS] = items
+                prefs[Keys.MAP_FAB_SEEN_DEFAULTS] = DEFAULT_MAP_FAB_ITEMS
+            }
+        }
+
+        private fun resolveMapFabItems(prefs: Preferences): Set<String> {
+            val stored = prefs[Keys.MAP_FAB_ITEMS] ?: DEFAULT_MAP_FAB_ITEMS
+            return mergeNewDefaultMapFeatures(stored, prefs[Keys.MAP_FAB_SEEN_DEFAULTS])
+        }
 
         override fun getFeatureOrder(): Flow<List<AppFeature>> =
             dataStore.data
@@ -566,24 +703,10 @@ class AppPreferencesDataSource
                     } else {
                         throw e
                     }
-                }.map { prefs ->
-                    RoamingDefaults(
-                        radiusMeters = prefs[Keys.ROAMING_RADIUS_METERS] ?: DEFAULT_ROAMING_RADIUS_METERS,
-                        distanceMeters = prefs[Keys.ROAMING_DISTANCE_METERS] ?: DEFAULT_ROAMING_DISTANCE_METERS,
-                        speedProfileId = prefs[Keys.ROAMING_SPEED_PROFILE_ID] ?: DEFAULT_ROAMING_SPEED_PROFILE_ID,
-                        followRoads = prefs[Keys.ROAMING_ROAD_FOLLOWING] ?: DEFAULT_ROAMING_FOLLOW_ROADS,
-                        returnToInitialLocation = prefs[Keys.ROAMING_RETURN_TO_START] ?: DEFAULT_ROAMING_RETURN_TO_START,
-                    )
-                }
+                }.map { prefs -> prefs.toRoamingDefaults() }
 
         override suspend fun updateRoamingDefaults(defaults: RoamingDefaults) {
-            dataStore.edit { prefs ->
-                prefs[Keys.ROAMING_RADIUS_METERS] = defaults.radiusMeters
-                prefs[Keys.ROAMING_DISTANCE_METERS] = defaults.distanceMeters
-                prefs[Keys.ROAMING_SPEED_PROFILE_ID] = defaults.speedProfileId
-                prefs[Keys.ROAMING_ROAD_FOLLOWING] = defaults.followRoads
-                prefs[Keys.ROAMING_RETURN_TO_START] = defaults.returnToInitialLocation
-            }
+            dataStore.edit { prefs -> prefs.writeRoamingDefaults(defaults) }
         }
 
         override fun getOnboardingComplete(): Flow<Boolean> = pref(Keys.ONBOARDING_COMPLETE, false)
@@ -606,6 +729,10 @@ class AppPreferencesDataSource
 
         override suspend fun setThemeMode(mode: String) = setPref(Keys.THEME_MODE, mode)
 
+        override fun getKeepWidgetOnIdle(): Flow<Boolean> = pref(Keys.KEEP_WIDGET_ON_IDLE, false)
+
+        override suspend fun setKeepWidgetOnIdle(enabled: Boolean) = setPref(Keys.KEEP_WIDGET_ON_IDLE, enabled)
+
         override fun getWhatsNewLastSeenVersion(): Flow<String> =
             pref(
                 Keys.WHATS_NEW_LAST_SEEN_VERSION,
@@ -613,6 +740,30 @@ class AppPreferencesDataSource
             )
 
         override suspend fun setWhatsNewLastSeenVersion(version: String) = setPref(Keys.WHATS_NEW_LAST_SEEN_VERSION, version)
+
+        override fun getUpdateCheckLastCheckedAtMs(): Flow<Long> =
+            pref(
+                Keys.UPDATE_CHECK_LAST_CHECKED_AT_MS,
+                AppConstants.DataStoreConstants.DEFAULT_UPDATE_CHECK_LAST_CHECKED_AT_MS,
+            )
+
+        override suspend fun setUpdateCheckLastCheckedAtMs(timestampMs: Long) = setPref(Keys.UPDATE_CHECK_LAST_CHECKED_AT_MS, timestampMs)
+
+        override fun getUpdateCheckCachedLatestVersion(): Flow<String> =
+            pref(
+                Keys.UPDATE_CHECK_CACHED_LATEST_VERSION,
+                AppConstants.DataStoreConstants.DEFAULT_UPDATE_CHECK_LATEST_VERSION,
+            )
+
+        override suspend fun setUpdateCheckCachedLatestVersion(version: String) = setPref(Keys.UPDATE_CHECK_CACHED_LATEST_VERSION, version)
+
+        override fun getUpdateCheckDismissedVersion(): Flow<String> =
+            pref(
+                Keys.UPDATE_CHECK_DISMISSED_VERSION,
+                AppConstants.DataStoreConstants.DEFAULT_UPDATE_CHECK_DISMISSED_VERSION,
+            )
+
+        override suspend fun setUpdateCheckDismissedVersion(version: String) = setPref(Keys.UPDATE_CHECK_DISMISSED_VERSION, version)
 
         override fun getRememberLastLocation(): Flow<Boolean> =
             pref(Keys.REMEMBER_LAST_LOCATION, AppConstants.DataStoreConstants.DEFAULT_REMEMBER_LAST_LOCATION)
@@ -717,7 +868,8 @@ class AppPreferencesDataSource
 
         override suspend fun setHideForegroundNotification(enabled: Boolean) = setPref(Keys.HIDE_FOREGROUND_NOTIFICATION, enabled)
 
-        override fun getShowRouteJumpButtons(): Flow<Boolean> = pref(Keys.SHOW_ROUTE_JUMP_BUTTONS, false)
+        override fun getShowRouteJumpButtons(): Flow<Boolean> =
+            pref(Keys.SHOW_ROUTE_JUMP_BUTTONS, AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT)
 
         override suspend fun setShowRouteJumpButtons(enabled: Boolean) = setPref(Keys.SHOW_ROUTE_JUMP_BUTTONS, enabled)
 
@@ -798,6 +950,40 @@ class AppPreferencesDataSource
 
         override suspend fun setFavoritesSortNewestFirst(newestFirst: Boolean) = setPref(Keys.FAVORITES_SORT_NEWEST_FIRST, newestFirst)
 
+        override fun getRoutesSortMode(): Flow<SavedItemSortMode> =
+            dataStore.data.map { prefs ->
+                prefs[Keys.ROUTES_SORT_MODE]?.let(::savedItemSortModeOrNull)
+                    ?: if (prefs[Keys.ROUTES_SORT_NEWEST_FIRST] != false) {
+                        SavedItemSortMode.NEWEST_FIRST
+                    } else {
+                        SavedItemSortMode.OLDEST_FIRST
+                    }
+            }
+
+        override suspend fun setRoutesSortMode(mode: SavedItemSortMode) {
+            dataStore.edit { prefs ->
+                prefs[Keys.ROUTES_SORT_MODE] = mode.name
+                prefs[Keys.ROUTES_SORT_NEWEST_FIRST] = mode != SavedItemSortMode.OLDEST_FIRST
+            }
+        }
+
+        override fun getFavoritesSortMode(): Flow<SavedItemSortMode> =
+            dataStore.data.map { prefs ->
+                prefs[Keys.FAVORITES_SORT_MODE]?.let(::savedItemSortModeOrNull)
+                    ?: if (prefs[Keys.FAVORITES_SORT_NEWEST_FIRST] != false) {
+                        SavedItemSortMode.NEWEST_FIRST
+                    } else {
+                        SavedItemSortMode.OLDEST_FIRST
+                    }
+            }
+
+        override suspend fun setFavoritesSortMode(mode: SavedItemSortMode) {
+            dataStore.edit { prefs ->
+                prefs[Keys.FAVORITES_SORT_MODE] = mode.name
+                prefs[Keys.FAVORITES_SORT_NEWEST_FIRST] = mode != SavedItemSortMode.OLDEST_FIRST
+            }
+        }
+
         override fun getJitterSpeedIdleVariationPct(): Flow<Int> =
             pref(Keys.JITTER_SPEED_IDLE_VARIATION_PCT, DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT)
 
@@ -870,7 +1056,9 @@ class AppPreferencesDataSource
                 prefs[Keys.DRIVE_SPEED_MS] = snapshot.driveSpeedMs.coerceAtLeast(MIN_SPEED_MS)
                 prefs[Keys.SPEED_UNIT] = snapshot.speedUnit.name
                 prefs[Keys.WIDGET_ITEMS] = snapshot.enabledWidgetFeatures.map { it.name.lowercase() }.toSet()
+                prefs[Keys.WIDGET_SEEN_DEFAULTS] = DEFAULT_WIDGET_ITEMS
                 prefs[Keys.MAP_FAB_ITEMS] = snapshot.enabledMapFeatures.map { it.name.lowercase() }.toSet()
+                prefs[Keys.MAP_FAB_SEEN_DEFAULTS] = DEFAULT_MAP_FAB_ITEMS
                 prefs[Keys.FEATURE_ORDER] = snapshot.featureOrder.serializeFeatureOrder()
                 prefs[Keys.ENABLED_SPEED_PROFILE_IDS] = snapshot.enabledSpeedProfileIds
                 prefs[Keys.REMEMBER_LAST_LOCATION] = snapshot.rememberLastLocation
@@ -920,11 +1108,7 @@ class AppPreferencesDataSource
                         AppConstants.TapToWalkConstants.MIN_SCALE_MPX,
                         AppConstants.TapToWalkConstants.MAX_SCALE_MPX,
                     )
-                prefs[Keys.ROAMING_RADIUS_METERS] = snapshot.roamingDefaults.radiusMeters
-                prefs[Keys.ROAMING_DISTANCE_METERS] = snapshot.roamingDefaults.distanceMeters
-                prefs[Keys.ROAMING_SPEED_PROFILE_ID] = snapshot.roamingDefaults.speedProfileId
-                prefs[Keys.ROAMING_ROAD_FOLLOWING] = snapshot.roamingDefaults.followRoads
-                prefs[Keys.ROAMING_RETURN_TO_START] = snapshot.roamingDefaults.returnToInitialLocation
+                prefs.writeRoamingDefaults(snapshot.roamingDefaults)
             }
         }
 
@@ -955,8 +1139,8 @@ class AppPreferencesDataSource
                         } catch (_: IllegalArgumentException) {
                             SpeedUnit.KMH
                         }
-                    val widgetItems = prefs[Keys.WIDGET_ITEMS] ?: DEFAULT_WIDGET_ITEMS
-                    val mapItems = prefs[Keys.MAP_FAB_ITEMS] ?: DEFAULT_MAP_FAB_ITEMS
+                    val widgetItems = resolveWidgetItems(prefs)
+                    val mapItems = resolveMapFabItems(prefs)
                     SettingsSnapshot(
                         slowWalkSpeedMs = prefs[Keys.SLOW_WALK_SPEED_MS] ?: DEFAULT_SLOW_WALK_SPEED_MS,
                         walkSpeedMs = prefs[Keys.WALK_SPEED_MS] ?: DEFAULT_WALK_SPEED_MS,
@@ -984,7 +1168,9 @@ class AppPreferencesDataSource
                         hideTeleportFeatures = prefs[Keys.HIDE_TELEPORT_FEATURES] ?: false,
                         hideWidgetOverlay = prefs[Keys.HIDE_WIDGET_OVERLAY] ?: false,
                         hideForegroundNotification = prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] ?: false,
-                        showRouteJumpButtons = prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] ?: false,
+                        showRouteJumpButtons =
+                            prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS]
+                                ?: AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
                         bypassMockLocationCheck = prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] ?: false,
                         realismRealElevationEnabled =
                             prefs[Keys.REALISM_REAL_ELEVATION_ENABLED]
@@ -1006,14 +1192,7 @@ class AppPreferencesDataSource
                         selectedHotLocationIds = prefs[Keys.HOT_LOCATION_SELECTED_IDS] ?: emptySet(),
                         hotRoutesEnabled = prefs[Keys.HOT_ROUTES_ENABLED] ?: false,
                         selectedHotRouteIds = prefs[Keys.HOT_ROUTE_SELECTED_IDS] ?: emptySet(),
-                        roamingDefaults =
-                            RoamingDefaults(
-                                radiusMeters = prefs[Keys.ROAMING_RADIUS_METERS] ?: DEFAULT_ROAMING_RADIUS_METERS,
-                                distanceMeters = prefs[Keys.ROAMING_DISTANCE_METERS] ?: DEFAULT_ROAMING_DISTANCE_METERS,
-                                speedProfileId = prefs[Keys.ROAMING_SPEED_PROFILE_ID] ?: DEFAULT_ROAMING_SPEED_PROFILE_ID,
-                                followRoads = prefs[Keys.ROAMING_ROAD_FOLLOWING] ?: DEFAULT_ROAMING_FOLLOW_ROADS,
-                                returnToInitialLocation = prefs[Keys.ROAMING_RETURN_TO_START] ?: DEFAULT_ROAMING_RETURN_TO_START,
-                            ),
+                        roamingDefaults = prefs.toRoamingDefaults(),
                         floatingMapQuickWalk = prefs[Keys.FLOATING_MAP_QUICK_WALK] ?: false,
                         tapToWalkOverlayEnabled = prefs[Keys.TAP_TO_WALK_OVERLAY_ENABLED] ?: false,
                         tapToWalkScaleMpx =
@@ -1021,6 +1200,40 @@ class AppPreferencesDataSource
                                 ?: AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX,
                     )
                 }
+
+        private fun Preferences.toRoamingDefaults(): RoamingDefaults =
+            RoamingDefaults(
+                radiusMeters = this[Keys.ROAMING_RADIUS_METERS] ?: DEFAULT_ROAMING_RADIUS_METERS,
+                distanceMeters = this[Keys.ROAMING_DISTANCE_METERS] ?: DEFAULT_ROAMING_DISTANCE_METERS,
+                speedProfileId = this[Keys.ROAMING_SPEED_PROFILE_ID] ?: DEFAULT_ROAMING_SPEED_PROFILE_ID,
+                followRoads = this[Keys.ROAMING_ROAD_FOLLOWING] ?: DEFAULT_ROAMING_FOLLOW_ROADS,
+                returnToInitialLocation = this[Keys.ROAMING_RETURN_TO_START] ?: DEFAULT_ROAMING_RETURN_TO_START,
+                kind = RoamingKind.parse(this[Keys.ROAMING_KIND] ?: DEFAULT_ROAMING_KIND),
+                plantingStartRadiusMeters =
+                    this[Keys.ROAMING_PLANTING_START_RADIUS_METERS] ?: DEFAULT_ROAMING_PLANTING_START_RADIUS_METERS,
+                plantingEndRadiusMeters =
+                    this[Keys.ROAMING_PLANTING_END_RADIUS_METERS] ?: DEFAULT_ROAMING_PLANTING_END_RADIUS_METERS,
+                plantingInfiniteLoops =
+                    this[Keys.ROAMING_PLANTING_INFINITE_LOOPS] ?: DEFAULT_ROAMING_PLANTING_INFINITE_LOOPS,
+                plantingLoopCount =
+                    this[Keys.ROAMING_PLANTING_LOOP_COUNT] ?: DEFAULT_ROAMING_PLANTING_LOOP_COUNT,
+                plantingSpeedProfileId =
+                    this[Keys.ROAMING_PLANTING_SPEED_PROFILE_ID] ?: DEFAULT_ROAMING_PLANTING_SPEED_PROFILE_ID,
+            )
+
+        private fun androidx.datastore.preferences.core.MutablePreferences.writeRoamingDefaults(defaults: RoamingDefaults) {
+            this[Keys.ROAMING_RADIUS_METERS] = defaults.radiusMeters
+            this[Keys.ROAMING_DISTANCE_METERS] = defaults.distanceMeters
+            this[Keys.ROAMING_SPEED_PROFILE_ID] = defaults.speedProfileId
+            this[Keys.ROAMING_ROAD_FOLLOWING] = defaults.followRoads
+            this[Keys.ROAMING_RETURN_TO_START] = defaults.returnToInitialLocation
+            this[Keys.ROAMING_KIND] = defaults.kind.name
+            this[Keys.ROAMING_PLANTING_START_RADIUS_METERS] = defaults.plantingStartRadiusMeters
+            this[Keys.ROAMING_PLANTING_END_RADIUS_METERS] = defaults.plantingEndRadiusMeters
+            this[Keys.ROAMING_PLANTING_INFINITE_LOOPS] = defaults.plantingInfiniteLoops
+            this[Keys.ROAMING_PLANTING_LOOP_COUNT] = defaults.plantingLoopCount
+            this[Keys.ROAMING_PLANTING_SPEED_PROFILE_ID] = defaults.plantingSpeedProfileId
+        }
 
         companion object {
             const val DATASTORE_FILE_NAME = AppConstants.DataStoreConstants.FILE_NAME
@@ -1047,6 +1260,17 @@ class AppPreferencesDataSource
             const val DEFAULT_ROAMING_SPEED_PROFILE_ID = AppConstants.ProfileConstants.DEFAULT_ACTIVE_PROFILE_ID
             const val DEFAULT_ROAMING_FOLLOW_ROADS = AppConstants.RoamingConstants.DEFAULT_FOLLOW_ROADS
             const val DEFAULT_ROAMING_RETURN_TO_START = AppConstants.RoamingConstants.DEFAULT_RETURN_TO_START
+            const val DEFAULT_ROAMING_KIND = "WALK_AROUND"
+            const val DEFAULT_ROAMING_PLANTING_START_RADIUS_METERS =
+                AppConstants.RoamingConstants.PLANTING_START_RADIUS_METERS
+            const val DEFAULT_ROAMING_PLANTING_END_RADIUS_METERS =
+                AppConstants.RoamingConstants.PLANTING_END_RADIUS_METERS
+            const val DEFAULT_ROAMING_PLANTING_INFINITE_LOOPS =
+                AppConstants.RoamingConstants.PLANTING_INFINITE_LOOPS_DEFAULT
+            const val DEFAULT_ROAMING_PLANTING_LOOP_COUNT =
+                AppConstants.RoamingConstants.PLANTING_DEFAULT_LOOP_COUNT
+            const val DEFAULT_ROAMING_PLANTING_SPEED_PROFILE_ID =
+                AppConstants.RoamingConstants.PLANTING_DEFAULT_SPEED_PROFILE_ID
 
             const val DEFAULT_JITTER_IDLE_RADIUS_METERS = AppConstants.JitterConstants.DEFAULT_IDLE_RADIUS_METERS
             const val DEFAULT_JITTER_MOVING_RADIUS_METERS = AppConstants.JitterConstants.DEFAULT_MOVING_RADIUS_METERS
@@ -1065,6 +1289,8 @@ class AppPreferencesDataSource
     }
 
 private const val TAG = "AppPreferencesDataSource"
+
+private fun savedItemSortModeOrNull(raw: String): SavedItemSortMode? = runCatching { SavedItemSortMode.valueOf(raw) }.getOrNull()
 
 private fun serializeRecentSearches(searches: List<RecentSearch>): String {
     val array = JSONArray()

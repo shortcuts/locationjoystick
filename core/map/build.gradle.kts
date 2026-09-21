@@ -5,6 +5,10 @@ plugins {
 
 android {
     namespace = "com.locationjoystick.core.map"
+
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 dependencies {
@@ -12,6 +16,7 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:model"))
     api(libs.maplibre.android.sdk)
+    implementation(libs.okhttp)
     implementation(libs.androidx.compose.ui)
     implementation(libs.bundles.lifecycle)
 

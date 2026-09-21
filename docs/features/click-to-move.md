@@ -2,6 +2,10 @@
 
 Long-press map → bottom sheet with "Walk here" or "Teleport here".
 
+Tapping the map while spoofing and opening a deep link pin a `LatLng` (`pendingTapPosition` + `isPendingTapSheetOpen`) and show this same confirm sheet. The map's paste-coordinates sheet does not pin: Teleport / Walk / Walk via roads under the paste field run those actions directly on the **first** valid pair (`parsePastedCoordinates`). Extra points do not change those three. A future "open location in Maps" intent should skip the paste field and pin a `LatLng` the same way as a deep link.
+
+With two or more valid points, the same sheet can **Save route** (new UUID, cloned waypoints) or **Start** a named `ROUTE_REPLAY` via a reserved Room row (`paste_temp_route` / "Temp Route from Paste") — see @docs/features/routes.md, "Paste coordinates (map and widget)". Start is real route replay, not ephemeral "Add next point". Teleport is hidden when `hideTeleportFeatures` is on; Start still walks to the first stop (`StartRouteReplayUseCase`).
+
 Key files: `:feature:map:impl/MapViewModel.kt`, `:core:location/EphemeralReplayController.kt`, `:core:data/WalkCoordinator.kt`
 
 ## Walk Here
@@ -13,7 +17,9 @@ Key files: `:feature:map:impl/MapViewModel.kt`, `:core:location/EphemeralReplayC
 ## Teleport
 
 - Sets position directly.
-- Pushes one update.
+- Pushes one GPS update immediately (does not wait for the 1 Hz loop). Does not need a network.
+- User-initiated jumps (`TeleportUseCase.execute`, default `resetMovement = true`) stop any walk, roam, or route session first so the engine cannot overwrite the new position. That includes an in-flight Follow-roads route start: mode is still TELEPORT until OSRM returns, so STOP is sent even when `currentMode` is not yet `ROUTE_REPLAY`, and `ReplayOrchestrator.abortInFlightStart()` cancels the planning job before the teleport intent is applied. Favorite, map, and pasted-coordinate teleports all go through this path. Starting a saved route teleports to the first stop with `resetMovement = false` so the replay that follows is not cancelled.
+- Parked spoofing (widget long-press Pause: mock GPS IDLE, widget still shown) does **not** resume on teleport. Feature buttons stay faded until Start. That is intentional — teleport is not a substitute for Start.
 
 ## Walk via Roads
 

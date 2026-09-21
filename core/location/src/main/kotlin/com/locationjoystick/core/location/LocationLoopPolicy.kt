@@ -88,6 +88,37 @@ internal fun computeRunningLoopAction(
         else -> RunningLoopAction.NO_OP
     }
 
+/**
+ * Whether [MockLocationService.updatePositionWithVector] should write this tick.
+ *
+ * Joystick and walk-to self-report their mode and own the tick. A playing route or
+ * running roam owns the tick instead. A paused route or paused roam yields so the
+ * joystick can steer without stealing [MockMode].
+ */
+internal fun shouldApplyUpdatePositionWithVector(
+    mode: MockMode,
+    mockLocationState: MockLocationState,
+    isRoamingPaused: Boolean = false,
+): Boolean =
+    when (mode) {
+        MockMode.JOYSTICK, MockMode.WALK_TO -> true
+        MockMode.ROUTE_REPLAY -> mockLocationState == MockLocationState.PAUSED
+        MockMode.ROAMING -> isRoamingPaused
+        else -> false
+    }
+
+/**
+ * Whether [MockLocationService] should push a test-provider fix immediately for this
+ * [ACTION_UPDATE_POSITION][com.locationjoystick.core.common.constants.AppConstants.ServiceConstants.ACTION_UPDATE_POSITION].
+ *
+ * Walk/joystick ticks (`speedMs > 0`) ride the 1 Hz loop. A teleport (`speedMs == 0`) must
+ * push now so Maps and other consumers do not wait up to a second. Follower owns GPS.
+ */
+internal fun shouldPushImmediateLocationUpdate(
+    speedMs: Float,
+    mode: MockMode,
+): Boolean = speedMs <= 0f && mode != MockMode.FOLLOWER
+
 /** Decision for a follower's reaction to a leader position update, in [MockLocationService.enterFollowerMode]. */
 internal enum class FollowerActiveAction {
     /** Leader is active and the follower isn't spoofing yet — snap straight to its position. */
@@ -117,6 +148,13 @@ internal fun computeFollowerActiveAction(
         else -> FollowerActiveAction.NO_OP
     }
 
+/** A follower snaps (instead of walking) to a leader teleport only when it follows teleports and teleporting is not hidden. */
+internal fun shouldSnapToLeader(
+    leaderTeleported: Boolean,
+    followTeleports: Boolean,
+    hideTeleportFeatures: Boolean,
+): Boolean = leaderTeleported && followTeleports && !hideTeleportFeatures
+
 /** Decision for the "Hide floating widget" live-toggle collector in [MockLocationService.observeLocationState]. */
 internal enum class WidgetOverlayAction {
     /** Start (or leave running) the widget overlay service. */
@@ -128,6 +166,46 @@ internal enum class WidgetOverlayAction {
     /** Not currently spoofing — leave the overlay service untouched either way. */
     NO_OP,
 }
+
+/** Which overlays to tear down when spoofing goes IDLE or ERROR. */
+internal enum class IdleOverlayStopAction {
+    /** Stop both the joystick overlay and the floating widget. */
+    STOP_JOYSTICK_AND_WIDGET,
+
+    /** Park: mock GPS is off, but the widget stays so the user can Start again. */
+    STOP_JOYSTICK_ONLY,
+}
+
+/**
+ * Pure decision for which overlays to tear down when spoofing goes IDLE/ERROR.
+ *
+ * [keepWidgetOverlay] is set by a widget long-press Pause: the mock test provider still stops,
+ * the joystick overlay still stops, and the widget FAB stays on screen.
+ */
+internal fun computeIdleOverlayStopAction(keepWidgetOverlay: Boolean): IdleOverlayStopAction =
+    if (keepWidgetOverlay) IdleOverlayStopAction.STOP_JOYSTICK_ONLY else IdleOverlayStopAction.STOP_JOYSTICK_AND_WIDGET
+
+/** Why overlays are being torn down — the IDLE collector vs an explicit full Stop. */
+internal enum class OverlayStopTrigger {
+    /** [MockLocationService] observed IDLE/ERROR. StateFlow will not re-emit if already IDLE. */
+    STATE_IDLE,
+
+    /** User tapped Stop (widget, notification, or app). Always close the widget. */
+    FULL_STOP,
+}
+
+/**
+ * Full Stop always removes the widget, even right after Pause (state is already IDLE, so
+ * [computeIdleOverlayStopAction] is not observed again).
+ */
+internal fun computeOverlayStopAction(
+    trigger: OverlayStopTrigger,
+    keepWidgetOverlay: Boolean,
+): IdleOverlayStopAction =
+    when (trigger) {
+        OverlayStopTrigger.FULL_STOP -> IdleOverlayStopAction.STOP_JOYSTICK_AND_WIDGET
+        OverlayStopTrigger.STATE_IDLE -> computeIdleOverlayStopAction(keepWidgetOverlay)
+    }
 
 /**
  * Pure decision for whether the widget overlay service should be started or stopped when the

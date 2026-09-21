@@ -40,6 +40,7 @@ fun LjMapIconButton(
             onClick = onClick,
             shape = CircleShape,
             color = containerColor,
+            shadowElevation = 4.dp,
             interactionSource = interactionSource,
             modifier = Modifier.size(UiConstants.FAB_CONTAINER_SIZE).scale(scale),
         ) {

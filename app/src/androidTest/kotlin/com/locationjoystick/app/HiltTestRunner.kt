@@ -18,9 +18,7 @@ class HiltTestRunner : AndroidJUnitRunner() {
         // Wake screen and dismiss keyguard so activities can reach RESUMED state.
         uiAutomation.executeShellCommand("input keyevent KEYCODE_WAKEUP").close()
         uiAutomation.executeShellCommand("wm dismiss-keyguard").close()
-        androidx.test.InstrumentationRegistry
-            .getInstrumentation()
-            .waitForIdleSync()
+        waitForIdleSync()
 
         // Reset DataStore so settings start fresh.
         uiAutomation

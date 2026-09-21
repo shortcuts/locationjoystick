@@ -217,4 +217,27 @@ class RoamingWaypointPlannerTest {
 
             assertNull(received.firstOrNull())
         }
+
+    @Test
+    fun `planRoute planting returns a closed spiral around center`() =
+        runBlocking {
+            val config =
+                RoamingConfig(
+                    centerPosition = center,
+                    radiusMeters = 500.0,
+                    distanceMeters = 1000.0,
+                    kind = com.locationjoystick.core.model.RoamingKind.PLANTING,
+                    plantingStartRadiusMeters = 5.0,
+                    plantingEndRadiusMeters = 39.0,
+                    useRoadSnapping = true,
+                )
+            val route = engine.planRoute(config)
+
+            coVerify(exactly = 0) { mockOsrmClient.getRouteWithDistance(any(), any()) }
+            assertTrue(route.size >= 4)
+            assertTrue(center.distanceTo(route.first()) < 6.0)
+            assertTrue(route.first().distanceTo(route.last()) < 1.0)
+            val peak = route.maxOf { center.distanceTo(it) }
+            assertTrue("peak $peak should near 39m", peak in 35.0..42.0)
+        }
 }

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_viewmodel_settings_saved">"设置已保存"</string>
+    <string name="settings_viewmodel_failed_to_save_settings">"保存设置失败"</string>
+    <string name="settings_viewmodel_all_data_reset">"所有数据已重置"</string>
+    <string name="settings_viewmodel_failed_to_reset_data">"重置数据失败"</string>
+    <string name="settings_viewmodel_export_complete">"导出完成"</string>
+    <string name="settings_viewmodel_failed_to_export">"导出失败"</string>
+    <string name="settings_viewmodel_failed_to_import_empty_file">"导入失败：文件为空"</string>
+    <string name="settings_viewmodel_import_complete">"导入完成"</string>
+    <string name="settings_viewmodel_failed_to_import">"导入失败"</string>
+    <string name="settings_viewmodel_failed_to_prepare_qr_export">"准备二维码导出失败 — 请确保已连接 Wi-Fi"</string>
+    <string name="settings_viewmodel_invalid_qr_code">"无效的二维码 — 不是 Location Joystick 导出文件"</string>
+    <string name="settings_viewmodel_code_must_be_n_characters">"代码必须为 %1$d 个字符"</string>
+    <string name="settings_viewmodel_no_sender_found_for_code">"未找到代码为 %1$s 的发送方"</string>
+    <string name="settings_viewmodel_failed_to_fetch_export">"获取导出数据失败 — 请确保两台设备在同一 Wi-Fi 下"</string>
+    <string name="settings_viewmodel_failed_to_import_from_gps_joystick">"从 GPS Joystick 导入失败"</string>
+    <string name="settings_viewmodel_failed_to_import_from_yamla">"从 YAMLA 导入失败"</string>
+    <string name="settings_viewmodel_imported_favorites_from_yamla">"已从 YAMLA 导入 %1$d 个收藏"</string>
+    <string name="settings_viewmodel_imported_favorites_from_yamla_speeds_updated">"已从 YAMLA 导入 %1$d 个收藏，速度已更新"</string>
+    <string name="settings_migration_imported_gps_joystick">"已从 GPS Joystick 导入 %1$d 个收藏、%2$d 条路线"</string>
+    <plurals name="settings_migration_skipped_oversized">
+        <item quantity="other">已跳过 %1$d 条因过大无法导入的路线</item>
+    </plurals>
+    <string name="settings_roaming_sub_screen_walk_around_the_block">"绕街区行走"</string>
+    <string name="settings_roaming_sub_screen_picks_random_spots_within_a_radius_and_walks_between_them">"在半径范围内随机选取地点并在它们之间行走。"</string>
+    <string name="settings_roaming_sub_screen_planting">"种植"</string>
+    <string name="settings_roaming_sub_screen_starting_radius_m">"起始半径（米）"</string>
+    <string name="settings_roaming_sub_screen_ending_radius_m">"结束半径（米）"</string>
+    <string name="settings_roaming_sub_screen_speed_profile">"速度档位"</string>
+    <string name="settings_roaming_sub_screen_infinite_loop">"无限循环"</string>
+    <string name="settings_roaming_sub_screen_keeps_expanding_and_contracting_until_you_stop_roaming">"持续展开与收拢，直到你停止漫游。"</string>
+    <string name="settings_roaming_sub_screen_number_of_loops">"循环次数"</string>
+    <string name="settings_spiral_description">从当前位置绕出螺旋形路径，向外展开到外半径后再收拢回内半径。一圈即为一次完整的展开与收拢。</string>
+    <string name="menus_paste_coordinates">"粘贴坐标"</string>
+    <string name="menus_paste_latitude_and_longitude_to_teleport_walk_or_save_as_a_f">"粘贴经纬度以瞬移、行走或保存为收藏。"</string>
+    <string name="menus_capture_coordinates">"采集坐标"</string>
+    <string name="menus_collect_map_links_from_other_apps_into_a_list_then_save_them">"从其他应用收集地图链接到列表中，然后保存为路线。"</string>
+</resources>

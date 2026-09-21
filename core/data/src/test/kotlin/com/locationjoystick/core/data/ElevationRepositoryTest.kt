@@ -59,4 +59,24 @@ class ElevationRepositoryTest {
             val result = repository.fetchElevationMeters(52.52, 13.41)
             assertNull(result)
         }
+
+    @Test
+    fun `nearby lookups in the same cell make one request`() =
+        runTest {
+            server.enqueue(MockResponse().setResponseCode(200).setBody("""{"elevation":[38.0]}"""))
+            repository.fetchElevationMeters(52.5201, 13.4101)
+            val second = repository.fetchElevationMeters(52.5204, 13.4104)
+            assertEquals(38.0, second!!, 0.0001)
+            assertEquals(1, server.requestCount)
+        }
+
+    @Test
+    fun `failed lookup is not cached`() =
+        runTest {
+            server.enqueue(MockResponse().setResponseCode(500))
+            server.enqueue(MockResponse().setResponseCode(200).setBody("""{"elevation":[38.0]}"""))
+            assertNull(repository.fetchElevationMeters(52.52, 13.41))
+            assertEquals(38.0, repository.fetchElevationMeters(52.52, 13.41)!!, 0.0001)
+            assertEquals(2, server.requestCount)
+        }
 }

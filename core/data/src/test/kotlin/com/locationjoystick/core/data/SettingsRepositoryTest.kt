@@ -276,6 +276,66 @@ class SettingsRepositoryTest {
             }
         }
 
+    @Test
+    fun `activateSessionSpeed switches active profile and returns that speed`() =
+        runTest {
+            fakeDataSource.speedProfilesFlow.value =
+                SpeedProfilePreferences(
+                    walkSpeedMs = 1.4,
+                    runSpeedMs = 3.0,
+                    bikeSpeedMs = 5.0,
+                    activeProfileId = "walk",
+                )
+
+            val speedMs = repository.activateSessionSpeed("bike")
+
+            assertEquals(5.0, speedMs, 0.001)
+            repository.getActiveSpeedProfile().test {
+                assertEquals("bike", awaitItem().id)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `activateSessionSpeed with null keeps the current active profile`() =
+        runTest {
+            fakeDataSource.speedProfilesFlow.value =
+                SpeedProfilePreferences(
+                    walkSpeedMs = 1.4,
+                    runSpeedMs = 3.0,
+                    bikeSpeedMs = 5.0,
+                    activeProfileId = "run",
+                )
+
+            val speedMs = repository.activateSessionSpeed(null)
+
+            assertEquals(3.0, speedMs, 0.001)
+            repository.getActiveSpeedProfile().test {
+                assertEquals("run", awaitItem().id)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `activateSessionSpeed with unknown id keeps the current active profile`() =
+        runTest {
+            fakeDataSource.speedProfilesFlow.value =
+                SpeedProfilePreferences(
+                    walkSpeedMs = 1.4,
+                    runSpeedMs = 3.0,
+                    bikeSpeedMs = 5.0,
+                    activeProfileId = "run",
+                )
+
+            val speedMs = repository.activateSessionSpeed("does-not-exist")
+
+            assertEquals(3.0, speedMs, 0.001)
+            repository.getActiveSpeedProfile().test {
+                assertEquals("run", awaitItem().id)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
     // getWidgetFeatures
 
     @Test
@@ -607,6 +667,7 @@ class SettingsRepositoryTest {
                     speedProfileId = "bike",
                     followRoads = false,
                     returnToInitialLocation = false,
+                    plantingSpeedProfileId = "run",
                 )
             repository.updateRoamingDefaults(newDefaults)
 
@@ -615,6 +676,7 @@ class SettingsRepositoryTest {
                 assertEquals(750.0, actual.radiusMeters, 0.001)
                 assertEquals(2000.0, actual.distanceMeters, 0.001)
                 assertEquals("bike", actual.speedProfileId)
+                assertEquals("run", actual.plantingSpeedProfileId)
                 assertFalse(actual.followRoads)
                 assertFalse(actual.returnToInitialLocation)
                 cancelAndIgnoreRemainingEvents()
@@ -1121,6 +1183,9 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
     val themeModeFlow = MutableStateFlow("DARK")
 
     val whatsNewLastSeenVersionFlow = MutableStateFlow("")
+    val updateCheckLastCheckedAtMsFlow = MutableStateFlow(0L)
+    val updateCheckCachedLatestVersionFlow = MutableStateFlow("")
+    val updateCheckDismissedVersionFlow = MutableStateFlow("")
 
     val rememberLastLocationFlow = MutableStateFlow(false)
 
@@ -1229,6 +1294,24 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setWhatsNewLastSeenVersion(version: String) {
         whatsNewLastSeenVersionFlow.value = version
+    }
+
+    override fun getUpdateCheckLastCheckedAtMs(): Flow<Long> = updateCheckLastCheckedAtMsFlow
+
+    override suspend fun setUpdateCheckLastCheckedAtMs(timestampMs: Long) {
+        updateCheckLastCheckedAtMsFlow.value = timestampMs
+    }
+
+    override fun getUpdateCheckCachedLatestVersion(): Flow<String> = updateCheckCachedLatestVersionFlow
+
+    override suspend fun setUpdateCheckCachedLatestVersion(version: String) {
+        updateCheckCachedLatestVersionFlow.value = version
+    }
+
+    override fun getUpdateCheckDismissedVersion(): Flow<String> = updateCheckDismissedVersionFlow
+
+    override suspend fun setUpdateCheckDismissedVersion(version: String) {
+        updateCheckDismissedVersionFlow.value = version
     }
 
     override fun getRememberLastLocation(): Flow<Boolean> = rememberLastLocationFlow
@@ -1390,6 +1473,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         hideWidgetOverlayFlow.value = enabled
     }
 
+    private val keepWidgetOnIdleFlow = MutableStateFlow(false)
+
+    override fun getKeepWidgetOnIdle(): Flow<Boolean> = keepWidgetOnIdleFlow
+
+    override suspend fun setKeepWidgetOnIdle(enabled: Boolean) {
+        keepWidgetOnIdleFlow.value = enabled
+    }
+
     private val hideForegroundNotificationFlow = MutableStateFlow(false)
 
     override fun getHideForegroundNotification(): Flow<Boolean> = hideForegroundNotificationFlow
@@ -1398,7 +1489,8 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         hideForegroundNotificationFlow.value = enabled
     }
 
-    private val showRouteJumpButtonsFlow = MutableStateFlow(false)
+    private val showRouteJumpButtonsFlow =
+        MutableStateFlow(AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT)
 
     override fun getShowRouteJumpButtons(): Flow<Boolean> = showRouteJumpButtonsFlow
 

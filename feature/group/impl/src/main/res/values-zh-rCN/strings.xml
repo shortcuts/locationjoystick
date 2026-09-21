@@ -34,6 +34,8 @@
     <string name="group_sync_sharing">"共享中"</string>
     <string name="group_sync_sends_your_location_to_followers">"将你的位置发送给成员。"</string>
     <string name="group_sync_follow_leader">"跟随组长"</string>
+    <string name="group_sync_follow_leader_teleports">"跟随组长传送"</string>
+    <string name="group_sync_follow_leader_teleports_description">"组长传送时，你也会直接跳转过去。关闭后，你将步行前往。"</string>
     <string name="group_sync_walks_toward_the_leaders_location">"朝组长的位置行走。"</string>
     <string name="group_sync_connected_to_group">"已连接到群组 %1$s"</string>
     <plurals name="group_sync_followers_connected">

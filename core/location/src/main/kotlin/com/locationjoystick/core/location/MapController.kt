@@ -8,6 +8,7 @@ import com.locationjoystick.core.common.di.ApplicationScope
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.RealLocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -18,7 +19,11 @@ import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.model.RoamingDefaults
-import com.locationjoystick.core.model.sortedByAge
+import com.locationjoystick.core.model.RouteProgress
+import com.locationjoystick.core.model.RouteStartConfig
+import com.locationjoystick.core.model.isRoutePlaying
+import com.locationjoystick.core.model.sortedBySavedItemMode
+import com.locationjoystick.core.model.speedProfileIdForKind
 import com.locationjoystick.core.model.toConfig
 import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.OsrmFailureReason
@@ -28,6 +33,7 @@ import com.locationjoystick.core.routing.osrmFailureMessage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -51,6 +57,7 @@ private data class LocationStateSnapshot(
     val state: MockLocationState,
     val walkPaused: Boolean,
     val mode: MockMode,
+    val routeProgress: RouteProgress?,
 )
 
 /**
@@ -72,6 +79,7 @@ class MapController
         private val roamingRepository: RoamingRepository,
         private val walkCoordinator: WalkCoordinator,
         private val teleportUseCase: TeleportUseCase,
+        private val realLocationRepository: RealLocationRepository,
         private val startRouteReplayUseCase: StartRouteReplayUseCase,
         private val ephemeralReplayController: EphemeralReplayController,
         private val osrmClient: OsrmClient,
@@ -92,6 +100,7 @@ class MapController
         val routingErrors: SharedFlow<String> = routingErrorReporter.errors
 
         private var pendingRoadWalkJob: Job? = null
+        private var restoreJob: Job? = null
 
         init {
             observeLocationState()
@@ -120,8 +129,9 @@ class MapController
                     locationRepository.mockLocationState,
                     locationRepository.isWalkPaused,
                     locationRepository.currentMode,
-                ) { position, state, walkPaused, mode ->
-                    LocationStateSnapshot(position, state, walkPaused, mode)
+                    locationRepository.routeProgress,
+                ) { position, state, walkPaused, mode, progress ->
+                    LocationStateSnapshot(position, state, walkPaused, mode, progress)
                 }.collect { snap ->
                     _sharedState.update {
                         it.copy(
@@ -129,6 +139,7 @@ class MapController
                             mockLocationState = snap.state,
                             isWalkPaused = snap.walkPaused,
                             mockMode = snap.mode,
+                            routeProgress = snap.routeProgress,
                         )
                     }
                 }
@@ -139,8 +150,8 @@ class MapController
             appScope.launch {
                 combine(
                     routeRepository.getRoutes(),
-                    settingsRepository.getRoutesSortNewestFirst(),
-                ) { routes, newestFirst -> routes.sortedByAge(newestFirst) }
+                    settingsRepository.getRoutesSortMode(),
+                ) { routes, sortMode -> routes.sortedBySavedItemMode(sortMode) { it.name } }
                     .collect { sorted -> _sharedState.update { it.copy(routes = sorted) } }
             }
         }
@@ -149,8 +160,8 @@ class MapController
             appScope.launch {
                 combine(
                     favoriteRepository.getFavorites(),
-                    settingsRepository.getFavoritesSortNewestFirst(),
-                ) { favorites, newestFirst -> favorites.sortedByAge(newestFirst) }
+                    settingsRepository.getFavoritesSortMode(),
+                ) { favorites, sortMode -> favorites.sortedBySavedItemMode(sortMode) { it.name } }
                     .collect { sorted -> _sharedState.update { it.copy(favorites = sorted) } }
             }
         }
@@ -294,16 +305,46 @@ class MapController
             }
         }
 
-        private fun restoreLastLocationIfNeeded() {
-            appScope.launch {
-                if (locationRepository.currentPosition.value == null) {
-                    val remember = settingsRepository.getRememberLastLocation().first()
-                    if (remember) {
-                        val last = settingsRepository.getLastLocation().first()
-                        if (last != null) locationRepository.setPositionInternal(last)
+        /**
+         * Resolves the initial map position on startup:
+         * 1. Uses the remembered last location if enabled.
+         * 2. Falls back to the real device location (last-known fix, then a fresh fix), excluding mock
+         *    providers, only when location permission is granted.
+         * 3. Falls back to the app default location when permission is granted but no fix arrives, so the
+         *    map always shows a point.
+         *
+         * Single-flight: a call while a previous restore is still running is a no-op. A restore that ran
+         * without permission leaves the position unset so the next call retries.
+         */
+        @Synchronized
+        fun restoreLastLocationIfNeeded() {
+            if (restoreJob?.isActive == true) return
+            restoreJob =
+                appScope.launch {
+                    if (locationRepository.currentPosition.value == null) {
+                        val remember = settingsRepository.getRememberLastLocation().first()
+                        val savedLocation = if (remember) settingsRepository.getLastLocation().first() else null
+                        val known = savedLocation ?: realLocationRepository.lastKnownRealPosition()
+                        val initialPos =
+                            known
+                                ?: if (realLocationRepository.hasFinePermission()) {
+                                    LatLng(AppConstants.MapConstants.DEFAULT_LAT, AppConstants.MapConstants.DEFAULT_LON)
+                                } else {
+                                    null
+                                }
+                        if (initialPos == null) return@launch
+                        locationRepository.setPositionInternal(initialPos)
+                        if (known == null) {
+                            // The default shows at once; the slow fresh fix then moves the map, unless the user
+                            // already moved the position (teleport, start) while it was pending.
+                            realLocationRepository.getCurrentPosition().getOrNull()?.let { fix ->
+                                if (locationRepository.currentPosition.value == initialPos) {
+                                    locationRepository.setPositionInternal(fix)
+                                }
+                            }
+                        }
                     }
                 }
-            }
         }
 
         // ── Actions ──────────────────────────────────────────────────────────────
@@ -327,11 +368,23 @@ class MapController
             _sharedState.update { it.copy(walkMode = WalkMode.Idle, routeTrace = null) }
         }
 
+        /**
+         * Stops mock GPS the same way as [stopSpoofing], but leaves the floating widget on screen.
+         * Joystick overlay still closes. Next Start (widget or app) resumes spoofing.
+         */
+        fun parkSpoofingKeepWidget() {
+            cancelAnyActiveMovement()
+            ContextCompat.startForegroundService(context, MockLocationIntentBuilder.parkSpoofingKeepWidget(context))
+            ephemeralReplayController.clearPendingWaypoints()
+            _sharedState.update { it.copy(walkMode = WalkMode.Idle, routeTrace = null) }
+        }
+
         fun toggleSpoofing() {
             if (isSpoofing.value) stopSpoofing() else startSpoofing()
         }
 
         fun teleportTo(position: LatLng) {
+            cancelAnyActiveMovement()
             appScope.launch { teleportUseCase.execute(position) }
         }
 
@@ -384,6 +437,7 @@ class MapController
                         } finally {
                             locationRepository.setRoadRouteFetchInFlight(false)
                         }
+                    ensureActive()
                     val waypoints = routeResult.getOrNull()
                     if (waypoints.isNullOrEmpty()) {
                         val reason = routeResult.exceptionOrNull()?.let(::classifyOsrmFailure)
@@ -457,18 +511,37 @@ class MapController
 
         fun startRouteReplay(
             routeId: String,
-            isLooping: Boolean = false,
-            isReverse: Boolean = false,
-            isReturnToLocation: Boolean = false,
-            followRoadsToStart: Boolean = false,
+            config: RouteStartConfig = RouteStartConfig(),
         ) {
             appScope.launch {
+                startRouteReplayUseCase.execute(routeId = routeId, config = config)
+            }
+        }
+
+        fun savePastedRoute(
+            name: String,
+            points: List<LatLng>,
+        ) {
+            appScope.launch {
+                routeRepository.insertNamedPastedRoute(name, points).onFailure { e ->
+                    Log.e(TAG, "Failed to save pasted route", e)
+                }
+            }
+        }
+
+        fun startPastedRouteReplay(
+            points: List<LatLng>,
+            config: RouteStartConfig = RouteStartConfig(),
+        ) {
+            appScope.launch {
+                val result = routeRepository.upsertPasteTempRoute(points)
+                result.exceptionOrNull()?.let { e ->
+                    Log.e(TAG, "Failed to upsert paste temp route", e)
+                    return@launch
+                }
                 startRouteReplayUseCase.execute(
-                    routeId = routeId,
-                    isLooping = isLooping,
-                    isReverse = isReverse,
-                    isReturnToLocation = isReturnToLocation,
-                    followRoadsToStart = followRoadsToStart,
+                    routeId = AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID,
+                    config = config,
                 )
             }
         }
@@ -506,15 +579,21 @@ class MapController
             plannedWaypoints: List<LatLng>? = null,
         ) {
             appScope.launch {
-                val speedMs =
-                    settingsRepository
-                        .getSpeedProfiles()
-                        .first()
-                        .firstOrNull { it.id == draft.speedProfileId }
-                        ?.speedMetersPerSecond
-                        ?: settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+                val mode = locationRepository.currentMode.value
+                val state = locationRepository.mockLocationState.value
+                if (isRoutePlaying(mode, state)) return@launch
+                pendingRoadWalkJob?.cancel()
+                pendingRoadWalkJob = null
+                walkCoordinator.cancel()
+                val wasReplay = mode == MockMode.ROUTE_REPLAY
+                val speedMs = settingsRepository.activateSessionSpeed(draft.speedProfileIdForKind())
                 val config = draft.toConfig(position).copy(plannedWaypoints = plannedWaypoints)
-                roamingRepository.startRoaming(config, speedMs)
+                val started = roamingRepository.startRoaming(config, speedMs)
+                if (started && wasReplay) {
+                    ephemeralReplayController.clearPendingWaypoints()
+                    _sharedState.update { it.copy(walkMode = WalkMode.Idle) }
+                    context.startService(MockLocationIntentBuilder.cancelRouteReplay(context))
+                }
             }
         }
 
@@ -530,8 +609,10 @@ class MapController
             roamingRepository.resumeRoaming()
         }
 
-        fun saveCurrentLocation(name: String) {
-            val position = _sharedState.value.currentPosition ?: return
+        fun saveFavorite(
+            name: String,
+            position: LatLng,
+        ) {
             appScope.launch {
                 try {
                     favoriteRepository.addFavorite(
@@ -544,9 +625,14 @@ class MapController
                         createdAt = System.currentTimeMillis(),
                     )
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to save current location", e)
+                    Log.e(TAG, "Failed to save favorite", e)
                 }
             }
+        }
+
+        fun saveCurrentLocation(name: String) {
+            val position = _sharedState.value.currentPosition ?: return
+            saveFavorite(name, position)
         }
 
         fun addRecentSearch(
@@ -558,21 +644,7 @@ class MapController
         }
 
         /** Generates a roaming preview route, usable from any surface. */
-        suspend fun generateRoamingPreview(
-            center: LatLng,
-            radiusMeters: Double,
-            followRoads: Boolean,
-            speedProfileId: String,
-        ): List<LatLng>? =
-            roamingRepository.planRoute(
-                RoamingConfig(
-                    centerPosition = center,
-                    radiusMeters = radiusMeters,
-                    distanceMeters = AppConstants.RoamingConstants.DEFAULT_DISTANCE_METERS,
-                    speedProfileId = speedProfileId,
-                    useRoadSnapping = followRoads,
-                ),
-            )
+        suspend fun generateRoamingPreview(config: RoamingConfig): List<LatLng>? = roamingRepository.planRoute(config)
 
         /** Per-position cooldown state flow, usable from any surface. */
         fun cooldownForPosition(pos: LatLng): Flow<CooldownState> = teleportUseCase.cooldownFor(pos)

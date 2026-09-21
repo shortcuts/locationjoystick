@@ -19,10 +19,13 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.ActivityStateRepository
+import com.locationjoystick.core.data.CaptureCoordinatesRepository
 import com.locationjoystick.core.data.CooldownEngine
 import com.locationjoystick.core.data.CooldownState
+import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.location.CompassHeadingSource
@@ -36,6 +39,10 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.core.model.RouteStartConfig
+import com.locationjoystick.core.model.ThemeMode
+import com.locationjoystick.core.model.isRoutePlaying
+import com.locationjoystick.core.model.shouldIgnoreJoystickInput
 import com.locationjoystick.core.overlay.OverlayService
 import com.locationjoystick.core.overlay.OverlayServiceHelper
 import com.locationjoystick.feature.joystick.impl.JoystickOverlayService
@@ -53,6 +60,33 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.view.WindowManager as AndroidWindowManager
+
+/** Keys for the panel's independent expand/collapse StateFlows, held by [PanelExpandFlows]. */
+private enum class PanelExpandKey { ROUTE, ROAMING, PASTE_CAPTURE, GROUP_SYNC, ALTITUDE }
+
+/**
+ * Holds one collapsed/expanded [MutableStateFlow] per [PanelExpandKey], replacing five
+ * near-identical fields that each tracked one panel section's expand state independently.
+ */
+private class PanelExpandFlows {
+    private val flows: Map<PanelExpandKey, MutableStateFlow<Boolean>> =
+        PanelExpandKey.entries.associateWith { MutableStateFlow(false) }
+
+    fun flow(key: PanelExpandKey): StateFlow<Boolean> = flows.getValue(key)
+
+    fun toggle(key: PanelExpandKey) {
+        val f = flows.getValue(key)
+        f.value = !f.value
+    }
+
+    fun collapse(key: PanelExpandKey) {
+        flows.getValue(key).value = false
+    }
+
+    fun collapseAll() {
+        flows.values.forEach { it.value = false }
+    }
+}
 
 /**
  * Floating widget overlay service.
@@ -109,6 +143,12 @@ class FloatingWidgetService :
 
     @Inject lateinit var groupRepository: GroupRepository
 
+    @Inject lateinit var captureCoordinatesRepository: CaptureCoordinatesRepository
+
+    @Inject lateinit var favoriteRepository: FavoriteRepository
+
+    @Inject lateinit var routeRepository: RouteRepository
+
     private var composeView: ComposeView? = null
 
     // Joystick state
@@ -117,14 +157,11 @@ class FloatingWidgetService :
     private val activeProfileIdFlow = MutableStateFlow("walk")
     private val profilesFlow = MutableStateFlow<List<com.locationjoystick.core.model.SpeedProfile>>(emptyList())
 
-    // Activity state — driven entirely by locationRepository.currentMode via isActivityActive/isActivityPausable
-    private val routeExpandedFlow = MutableStateFlow(false)
+    private val stopPopupVisibleFlow = MutableStateFlow(false)
 
-    // Group sync button expand/collapse
-    private val groupSyncExpandedFlow = MutableStateFlow(false)
-
-    // Altitude override button expand/collapse
-    private val altitudeExpandedFlow = MutableStateFlow(false)
+    // One expand/collapse StateFlow per panel section (route, roaming, paste/capture,
+    // group sync, altitude override), keyed by PanelExpandKey.
+    private val panelExpand = PanelExpandFlows()
 
     // Master panel expand/collapse
     private val isPanelExpandedFlow = MutableStateFlow(false)
@@ -173,12 +210,34 @@ class FloatingWidgetService :
                 mapController = mapController,
                 callbacks = panelCallbacks,
                 settingsRepository = settingsRepository,
+                captureRepository = captureCoordinatesRepository,
+                favoriteRepository = favoriteRepository,
+                routeRepository = routeRepository,
             )
         tapToWalkScaleMpx =
             settingsRepository
                 .getTapToWalkScaleMpx()
                 .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
         serviceBinder.bind()
+        if (isSpoofingActive()) {
+            serviceBinder.bindJoystick()
+        }
+        lifecycleScope.launch {
+            locationRepository.mockLocationState.collect { state ->
+                when (state) {
+                    MockLocationState.IDLE, MockLocationState.ERROR -> {
+                        serviceBinder.unbindJoystick()
+                        panelPresenter.hidePanelView()
+                        dismissTapToWalkOverlay()
+                        panelExpand.collapseAll()
+                    }
+
+                    MockLocationState.RUNNING, MockLocationState.PAUSED -> {
+                        serviceBinder.bindJoystick()
+                    }
+                }
+            }
+        }
         lifecycleScope.launch {
             settingsRepository.getActiveSpeedProfile().collect { profile ->
                 activeProfileIdFlow.value = profile.id
@@ -191,7 +250,12 @@ class FloatingWidgetService :
         }
         lifecycleScope.launch {
             locationRepository.isActivityActive.collect { active ->
-                if (!active) routeExpandedFlow.value = false
+                if (!active) panelExpand.collapse(PanelExpandKey.ROUTE)
+            }
+        }
+        lifecycleScope.launch {
+            locationRepository.currentMode.collect { mode ->
+                if (mode != MockMode.ROAMING) panelExpand.collapse(PanelExpandKey.ROAMING)
             }
         }
         lifecycleScope.launch {
@@ -210,7 +274,7 @@ class FloatingWidgetService :
         // Borrow focus only while that field is expanded, per the same fix already applied to
         // the map panel's search field (mapPanelLayoutParams).
         lifecycleScope.launch {
-            altitudeExpandedFlow.collect { expanded -> setOverlayFocusable(expanded) }
+            panelExpand.flow(PanelExpandKey.ALTITUDE).collect { expanded -> setOverlayFocusable(expanded) }
         }
         lifecycleScope.launch {
             groupRepository.teleportUnavailableEvent.collect {
@@ -293,24 +357,36 @@ class FloatingWidgetService :
             val isActivityActive by locationRepository.isActivityActive.collectAsStateWithLifecycle(initialValue = false)
             val isActivityPausable by locationRepository.isActivityPausable.collectAsStateWithLifecycle(initialValue = false)
             val currentMode by locationRepository.currentMode.collectAsStateWithLifecycle(initialValue = MockMode.TELEPORT)
+            val mockLocationState by locationRepository.mockLocationState.collectAsStateWithLifecycle(
+                initialValue = MockLocationState.IDLE,
+            )
             val isActivityPaused by activityStateRepository.isActivityPaused.collectAsStateWithLifecycle(initialValue = false)
-            val routeExpanded by routeExpandedFlow.collectAsStateWithLifecycle()
+            val routeExpanded by panelExpand.flow(PanelExpandKey.ROUTE).collectAsStateWithLifecycle()
+            val roamingExpanded by panelExpand.flow(PanelExpandKey.ROAMING).collectAsStateWithLifecycle()
+            val stopPopupVisible by stopPopupVisibleFlow.collectAsStateWithLifecycle()
+            val pasteCaptureExpanded by panelExpand.flow(PanelExpandKey.PASTE_CAPTURE).collectAsStateWithLifecycle()
             val isPanelExpanded by isPanelExpandedFlow.collectAsStateWithLifecycle()
             val hasPendingCompletion by pendingCompletionFlow.collectAsStateWithLifecycle()
             val isTapToWalkEnabled by settingsRepository.getTapToWalkOverlayEnabled().collectAsStateWithLifecycle(initialValue = false)
             val isTapToWalkActive by isTapToWalkActiveFlow.collectAsStateWithLifecycle()
             val groupState by groupRepository.groupState.collectAsStateWithLifecycle(initialValue = GroupState())
-            val isGroupSyncExpanded by groupSyncExpandedFlow.collectAsStateWithLifecycle()
+            val isGroupSyncExpanded by panelExpand.flow(PanelExpandKey.GROUP_SYNC).collectAsStateWithLifecycle()
             val hideTeleportFeatures by settingsRepository.getHideTeleportFeatures().collectAsStateWithLifecycle(initialValue = false)
-            val showRouteJumpButtons by settingsRepository.getShowRouteJumpButtons().collectAsStateWithLifecycle(initialValue = false)
+            val showRouteJumpButtons by settingsRepository.getShowRouteJumpButtons().collectAsStateWithLifecycle(
+                initialValue = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
+            )
             val isAltitudeOverrideButtonVisible by
                 settingsRepository.getAltitudeOverrideButtonEnabled().collectAsStateWithLifecycle(initialValue = false)
-            val isAltitudeExpanded by altitudeExpandedFlow.collectAsStateWithLifecycle()
+            val isAltitudeExpanded by panelExpand.flow(PanelExpandKey.ALTITUDE).collectAsStateWithLifecycle()
             val reportedAltitudeMeters by locationRepository.reportedAltitudeMeters.collectAsStateWithLifecycle(initialValue = null)
             val debugStatsEnabled by settingsRepository.getDebugStatsEnabled().collectAsStateWithLifecycle(initialValue = false)
             val debugStats by locationRepository.debugStats.collectAsStateWithLifecycle(initialValue = null)
+            val routeProgress by locationRepository.routeProgress.collectAsStateWithLifecycle(initialValue = null)
 
-            LjTheme {
+            val themeMode by settingsRepository.getThemeMode().collectAsStateWithLifecycle(
+                initialValue = ThemeMode.DARK,
+            )
+            LjTheme(darkTheme = themeMode == ThemeMode.DARK) {
                 val routeControls =
                     RouteControlsState(
                         expanded = routeExpanded,
@@ -327,6 +403,47 @@ class FloatingWidgetService :
                         onJumpPrevious = { mapController.jumpToPreviousWaypoint() },
                     )
 
+                val roamingControls =
+                    RoamingControlsState(
+                        expanded = roamingExpanded,
+                        isActive = currentMode == MockMode.ROAMING,
+                        isPaused = isActivityPaused,
+                        onIconClick = { onRoamingIconClicked() },
+                        onPauseResume = { onRoamingPauseResumeClicked() },
+                        onStop = { onRoamingStopClicked() },
+                    )
+
+                val masterToggle =
+                    MasterToggleState(
+                        spoofingActive = mockLocationState != MockLocationState.IDLE,
+                        stopPopupVisible = stopPopupVisible,
+                        onToggle = {
+                            stopPopupVisibleFlow.value = false
+                            if (!isPanelExpandedFlow.value) pendingCompletionFlow.value = false
+                            isPanelExpandedFlow.value = !isPanelExpandedFlow.value
+                        },
+                        onLongPress = { stopPopupVisibleFlow.value = !stopPopupVisibleFlow.value },
+                        onPark = { parkSpoofingKeepWidget() },
+                        onStart = {
+                            stopPopupVisibleFlow.value = false
+                            mapController.startSpoofing()
+                        },
+                        onStop = {
+                            stopPopupVisibleFlow.value = false
+                            mapController.stopSpoofing()
+                            // Close immediately. After Pause the mock service is already IDLE, so
+                            // its overlay collector will not run again; Stop still must dismiss us.
+                            stopSelf()
+                        },
+                    )
+
+                val pasteCapture =
+                    PasteCaptureState(
+                        expanded = pasteCaptureExpanded,
+                        onLongPress = { panelExpand.toggle(PanelExpandKey.PASTE_CAPTURE) },
+                        onCaptureShortcut = { openCaptureScreen() },
+                    )
+
                 val sections =
                     buildList {
                         if (isTapToWalkEnabled) {
@@ -336,7 +453,7 @@ class FloatingWidgetService :
                             add(
                                 WidgetPanelSection.GroupSync(
                                     expanded = isGroupSyncExpanded,
-                                    onClick = { groupSyncExpandedFlow.value = !groupSyncExpandedFlow.value },
+                                    onClick = { panelExpand.toggle(PanelExpandKey.GROUP_SYNC) },
                                     onTeleport = { teleportToLeaderNow() },
                                 ),
                             )
@@ -347,7 +464,7 @@ class FloatingWidgetService :
                                     expanded = isAltitudeExpanded,
                                     prefillMeters =
                                         reportedAltitudeMeters ?: AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS,
-                                    onClick = { altitudeExpandedFlow.value = !altitudeExpandedFlow.value },
+                                    onClick = { panelExpand.toggle(PanelExpandKey.ALTITUDE) },
                                     onConfirm = { onConfirmAltitude(it) },
                                 ),
                             )
@@ -360,15 +477,22 @@ class FloatingWidgetService :
                     joystickLocked = joystickLocked,
                     activeProfileId = activeProfileId,
                     routeControls = routeControls,
+                    roamingControls = roamingControls,
+                    joystickInputIgnored =
+                        shouldIgnoreJoystickInput(
+                            currentMode,
+                            mockLocationState,
+                            isRoamingPaused = currentMode == MockMode.ROAMING && isActivityPaused,
+                        ),
+                    roamingStartIgnored = isRoutePlaying(currentMode, mockLocationState),
                     isPanelExpanded = isPanelExpanded,
                     hasPendingCompletion = hasPendingCompletion,
-                    onToggleMaster = {
-                        if (!isPanelExpandedFlow.value) pendingCompletionFlow.value = false
-                        isPanelExpandedFlow.value = !isPanelExpandedFlow.value
-                    },
+                    masterToggle = masterToggle,
                     onFeatureClicked = { feature -> onFeatureButtonClicked(feature) },
+                    pasteCapture = pasteCapture,
                     sections = sections,
                     debugStats = if (debugStatsEnabled) debugStats else null,
+                    routeProgress = routeProgress,
                     onDrag = { dx, dy ->
                         dragOffsetX += dx
                         dragOffsetY += dy
@@ -381,7 +505,23 @@ class FloatingWidgetService :
         return view
     }
 
+    private fun parkSpoofingKeepWidget() {
+        // Unbind before the mock-GPS service stops the joystick, otherwise BIND_AUTO_CREATE
+        // would restart the overlay while the widget stays on screen.
+        serviceBinder.unbindJoystick()
+        panelPresenter.hidePanelView()
+        dismissTapToWalkOverlay()
+        mapController.parkSpoofingKeepWidget()
+    }
+
+    private fun isSpoofingActive(): Boolean {
+        val state = locationRepository.mockLocationState.value
+        return state != MockLocationState.IDLE && state != MockLocationState.ERROR
+    }
+
     private fun onFeatureButtonClicked(feature: AppFeature) {
+        if (!isSpoofingActive()) return
+        panelExpand.collapse(PanelExpandKey.PASTE_CAPTURE)
         when (feature) {
             AppFeature.JOYSTICK_TOGGLE -> {
                 toggleJoystick()
@@ -407,13 +547,61 @@ class FloatingWidgetService :
                 panelPresenter.showMapFloatingView()
             }
 
-            AppFeature.ROAMING, AppFeature.SEARCH -> {
+            AppFeature.PASTE_COORDINATES -> {
+                panelPresenter.showPasteCoordinatesFloatingView()
+            }
+
+            AppFeature.ROAMING -> {
+                onRoamingIconClicked()
+            }
+
+            AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES -> {
                 Unit
             }
         }
     }
 
+    private fun openCaptureScreen() {
+        panelExpand.collapse(PanelExpandKey.PASTE_CAPTURE)
+        isPanelExpandedFlow.value = false
+        panelPresenter.hidePanelView()
+        try {
+            startActivity(
+                Intent().apply {
+                    setClassName(packageName, "com.locationjoystick.app.MainActivity")
+                    putExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_CAPTURE, true)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                },
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open Capture", e)
+        }
+    }
+
+    private fun onRoamingIconClicked() {
+        if (!isSpoofingActive()) return
+        if (mapController.sharedState.value.mockMode == MockMode.ROAMING) {
+            panelExpand.toggle(PanelExpandKey.ROAMING)
+        } else {
+            panelPresenter.showRoamingFloatingView()
+        }
+    }
+
+    private fun onRoamingPauseResumeClicked() {
+        if (mapController.sharedState.value.isRoamingPaused) {
+            mapController.resumeRoaming()
+        } else {
+            mapController.pauseRoaming()
+        }
+    }
+
+    private fun onRoamingStopClicked() {
+        panelExpand.collapse(PanelExpandKey.ROAMING)
+        mapController.stopRoaming()
+    }
+
     private fun onTapToWalkClicked() {
+        if (!isSpoofingActive()) return
         if (tapToWalkOverlay?.isShowing() == true) {
             dismissTapToWalkOverlay()
         } else {
@@ -441,13 +629,14 @@ class FloatingWidgetService :
     }
 
     private fun onRouteIconClicked() {
+        if (!isSpoofingActive()) return
         val mode = mapController.sharedState.value.mockMode
         val isActive =
             mode == MockMode.ROUTE_REPLAY ||
                 mode == MockMode.ROAMING ||
                 mode == MockMode.WALK_TO
         if (isActive) {
-            routeExpandedFlow.value = !routeExpandedFlow.value
+            panelExpand.toggle(PanelExpandKey.ROUTE)
         } else {
             panelPresenter.showRoutesFloatingView()
         }
@@ -482,7 +671,7 @@ class FloatingWidgetService :
     }
 
     private fun onRouteStopClicked() {
-        routeExpandedFlow.value = false
+        panelExpand.collapse(PanelExpandKey.ROUTE)
         when (mapController.sharedState.value.mockMode) {
             MockMode.ROAMING -> mapController.stopRoaming()
             MockMode.WALK_TO -> mapController.stopWalk()
@@ -519,7 +708,7 @@ class FloatingWidgetService :
 
     private fun onConfirmAltitude(meters: Double) {
         lifecycleScope.launch { settingsRepository.setBaseAltitudeOverride(meters) }
-        altitudeExpandedFlow.value = false
+        panelExpand.collapse(PanelExpandKey.ALTITUDE)
     }
 
     private fun setOverlayFocusable(focusable: Boolean) {
@@ -541,16 +730,35 @@ class FloatingWidgetService :
     }
 
     private fun toggleJoystick() {
-        val svc =
-            joystickService ?: run {
-                Log.w(TAG, "Cannot toggle joystick: service not bound")
-                return
-            }
+        val svc = joystickService
+        if (svc == null) {
+            Log.w(TAG, "Joystick overlay not bound — starting it shown")
+            startJoystickOverlayShown()
+            return
+        }
         try {
-            svc.toggleOverlay()
-            Log.d(TAG, "Toggled joystick overlay visibility")
+            if (widgetJoystickEyeShowsOverlay(svc.isOverlayVisible)) {
+                svc.showJoystick()
+            } else {
+                svc.hideJoystick()
+            }
+            joystickVisibleFlow.value = svc.isOverlayVisible
+            Log.d(TAG, "Toggled joystick overlay visibility to: ${svc.isOverlayVisible}")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to toggle joystick overlay", e)
+        }
+    }
+
+    private fun startJoystickOverlayShown() {
+        val intent =
+            Intent().apply {
+                setClassName(packageName, AppConstants.ServiceConstants.JOYSTICK_SERVICE_CLASS)
+                putExtra(AppConstants.ServiceConstants.EXTRA_SHOW_OVERLAY, true)
+            }
+        try {
+            startService(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start joystick overlay", e)
         }
     }
 
@@ -558,15 +766,19 @@ class FloatingWidgetService :
         val svc = joystickService
         if (svc != null) {
             try {
-                val newLocked = !svc.isLocked.value
-                svc.setIsLocked(newLocked)
-                joystickLockedFlow.value = newLocked
-                Log.d(TAG, "Toggled joystick lock to: $newLocked")
+                val result = widgetJoystickLockResult(svc.isOverlayVisible, svc.isLocked.value)
+                if (result.showOverlay) {
+                    svc.showJoystick()
+                }
+                svc.setIsLocked(result.locked)
+                joystickLockedFlow.value = result.locked
+                Log.d(TAG, "Toggled joystick lock to: ${result.locked}")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to toggle lock", e)
             }
         } else {
-            Log.w(TAG, "Cannot toggle joystick lock: service not bound")
+            Log.w(TAG, "Joystick overlay not bound — starting it shown")
+            startJoystickOverlayShown()
         }
     }
 
@@ -596,17 +808,8 @@ class FloatingWidgetService :
 
             override fun startRouteReplayWithMode(
                 routeId: String,
-                isLooping: Boolean,
-                isReverse: Boolean,
-                isReturnToLocation: Boolean,
-                followRoadsToStart: Boolean,
-            ) = mapController.startRouteReplay(
-                routeId,
-                isLooping,
-                isReverse,
-                isReturnToLocation,
-                followRoadsToStart,
-            )
+                config: RouteStartConfig,
+            ) = mapController.startRouteReplay(routeId, config)
 
             override fun teleport(pos: LatLng) = mapController.teleportTo(pos)
 
@@ -641,6 +844,11 @@ class FloatingWidgetService :
             }
 
             override fun saveCurrentLocation(name: String) = mapController.saveCurrentLocation(name)
+
+            override fun saveFavorite(
+                name: String,
+                position: LatLng,
+            ) = mapController.saveFavorite(name, position)
 
             override fun moveAppToBack() = this@FloatingWidgetService.moveAppToBack()
         }

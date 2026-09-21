@@ -27,10 +27,10 @@ val LjTypography =
         displaySmall =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 36.sp,
-                lineHeight = 44.sp,
-                letterSpacing = 0.sp,
+                fontWeight = FontWeight.Bold,
+                fontSize = 32.sp,
+                lineHeight = 40.sp,
+                letterSpacing = (-0.4).sp,
             ),
         headlineLarge =
             TextStyle(
@@ -43,42 +43,42 @@ val LjTypography =
         headlineMedium =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 28.sp,
-                lineHeight = 36.sp,
-                letterSpacing = 0.sp,
+                fontWeight = FontWeight.Bold,
+                fontSize = 26.sp,
+                lineHeight = 32.sp,
+                letterSpacing = (-0.3).sp,
             ),
         headlineSmall =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 24.sp,
-                lineHeight = 32.sp,
-                letterSpacing = 0.sp,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                lineHeight = 28.sp,
+                letterSpacing = (-0.2).sp,
             ),
         titleLarge =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 22.sp,
-                lineHeight = 28.sp,
-                letterSpacing = 0.sp,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                lineHeight = 26.sp,
+                letterSpacing = (-0.2).sp,
             ),
         titleMedium =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
-                lineHeight = 24.sp,
-                letterSpacing = 0.15.sp,
+                lineHeight = 22.sp,
+                letterSpacing = 0.sp,
             ),
         titleSmall =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
-                letterSpacing = 0.1.sp,
+                letterSpacing = 0.sp,
             ),
         bodyLarge =
             TextStyle(
@@ -86,7 +86,7 @@ val LjTypography =
                 fontWeight = FontWeight.Normal,
                 fontSize = 16.sp,
                 lineHeight = 24.sp,
-                letterSpacing = 0.5.sp,
+                letterSpacing = 0.1.sp,
             ),
         bodyMedium =
             TextStyle(
@@ -94,7 +94,7 @@ val LjTypography =
                 fontWeight = FontWeight.Normal,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
-                letterSpacing = 0.25.sp,
+                letterSpacing = 0.sp,
             ),
         bodySmall =
             TextStyle(
@@ -102,12 +102,12 @@ val LjTypography =
                 fontWeight = FontWeight.Normal,
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
-                letterSpacing = 0.4.sp,
+                letterSpacing = 0.1.sp,
             ),
         labelLarge =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 letterSpacing = 0.1.sp,
@@ -115,10 +115,10 @@ val LjTypography =
         labelMedium =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
-                letterSpacing = 0.5.sp,
+                letterSpacing = 0.2.sp,
             ),
         labelSmall =
             TextStyle(
@@ -126,6 +126,6 @@ val LjTypography =
                 fontWeight = FontWeight.Medium,
                 fontSize = 11.sp,
                 lineHeight = 16.sp,
-                letterSpacing = 0.5.sp,
+                letterSpacing = 0.3.sp,
             ),
     )

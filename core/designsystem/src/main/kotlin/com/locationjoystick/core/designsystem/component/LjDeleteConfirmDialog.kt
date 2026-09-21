@@ -14,7 +14,7 @@ import com.locationjoystick.core.designsystem.R
  * template, since some languages change more than the noun depending on the item type.
  */
 enum class DeleteItemType(
-    @StringRes val messageRes: Int,
+    @param:StringRes val messageRes: Int,
 ) {
     FAVORITE(R.string.delete_confirm_dialog_message_favorite),
     ROUTE(R.string.delete_confirm_dialog_message_route),

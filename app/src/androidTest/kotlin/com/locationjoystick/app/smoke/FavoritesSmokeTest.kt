@@ -33,7 +33,7 @@ class FavoritesSmokeTest : BaseSmokeTest() {
 
     @Test
     fun favorites_screen_loads() {
-        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Add favorite").assertIsDisplayed()
     }
 
     @Test
@@ -51,11 +51,12 @@ class FavoritesSmokeTest : BaseSmokeTest() {
     }
 
     @Test
-    fun add_sheet_shows_all_three_options() {
+    fun add_sheet_shows_all_options() {
         composeRule.onNodeWithContentDescription("Add favorite").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("From map").assertIsDisplayed()
         composeRule.onNodeWithText("From coordinates").assertIsDisplayed()
+        composeRule.onNodeWithText("Paste coordinates").assertIsDisplayed()
         composeRule.onNodeWithText("Use current location").assertIsDisplayed()
     }
 
@@ -76,7 +77,7 @@ class FavoritesSmokeTest : BaseSmokeTest() {
         composeRule.onNodeWithContentDescription("Search location").assertIsDisplayed()
         Espresso.pressBack()
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("More actions").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Add favorite").assertIsDisplayed()
     }
 
     @Test
@@ -87,5 +88,15 @@ class FavoritesSmokeTest : BaseSmokeTest() {
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Latitude", substring = true).assertIsDisplayed()
         composeRule.onNodeWithText("Longitude", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun paste_coordinates_sheet_opens_with_name_and_coordinates() {
+        composeRule.onNodeWithContentDescription("Add favorite").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Paste coordinates").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Name", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Coordinates", substring = true).assertIsDisplayed()
     }
 }

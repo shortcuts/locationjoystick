@@ -1,5 +1,6 @@
 package com.locationjoystick.core.routing
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
@@ -684,6 +685,54 @@ class OsrmClientTest {
                 )
 
             assertTrue("Expected failure when routes is null", result.isFailure)
+        }
+
+    // Caching and cooldown
+
+    private val okBody =
+        """{"code":"Ok","routes":[{"geometry":{"type":"LineString","coordinates":[[2.35,48.85],[2.36,48.86]]},""" +
+            """"distance":1.0,"duration":1.0}]}"""
+    private val cachePoints = listOf(LatLng(48.8566, 2.3522), LatLng(48.8600, 2.3560))
+
+    private fun clientWith(
+        cooldowns: BackendCooldowns? = null,
+        nowMs: () -> Long = System::currentTimeMillis,
+    ) = OsrmClient(
+        listOf(OsrmBackend(singleGraph = false) { server.url("/").toString().trimEnd('/') }),
+        cooldowns,
+        nowMs,
+    )
+
+    @Test
+    fun `repeated identical getRoute is served from cache`() =
+        runTest {
+            server.enqueue(MockResponse().setResponseCode(200).setBody(okBody))
+            assertTrue(testClient.getRoute("foot", cachePoints).isSuccess)
+            assertTrue(testClient.getRoute("foot", cachePoints).isSuccess)
+            assertEquals(1, server.requestCount)
+        }
+
+    @Test
+    fun `expired cache entry is served stale when the ladder fails`() =
+        runTest {
+            var now = 0L
+            val c = clientWith(nowMs = { now })
+            server.enqueue(MockResponse().setResponseCode(200).setBody(okBody))
+            assertTrue(c.getRoute("foot", cachePoints).isSuccess)
+            now += AppConstants.OsrmConstants.CACHE_TTL_MS + 1
+            repeat(3) { server.enqueue(MockResponse().setResponseCode(500)) }
+            assertTrue(c.getRoute("foot", cachePoints).isSuccess)
+        }
+
+    @Test
+    fun `429 cools the backend so later calls make no request`() =
+        runTest {
+            val c = clientWith(BackendCooldowns())
+            server.enqueue(MockResponse().setResponseCode(429).setHeader("Retry-After", "60"))
+            assertTrue(c.getRoute("foot", cachePoints).isFailure)
+            val after = server.requestCount
+            assertTrue(c.getRoute("foot", listOf(LatLng(10.0, 10.0), LatLng(10.001, 10.001))).isFailure)
+            assertEquals(after, server.requestCount)
         }
 
     // PROFILE_FOOT constant

@@ -5,6 +5,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.RouteProgress
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -452,6 +453,38 @@ class LocationRepositoryTest {
                 assertEquals(waypoints, awaitItem())
 
                 repository.setRouteWaypoints(null)
+
+                assertNull(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // setRouteProgress
+
+    @Test
+    fun `setRouteProgress emits progress`() =
+        runTest {
+            val progress = RouteProgress(current = 2, total = 10)
+
+            repository.routeProgress.test {
+                assertNull(awaitItem())
+
+                repository.setRouteProgress(progress)
+
+                assertEquals(progress, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `setRouteProgress with null clears progress`() =
+        runTest {
+            repository.setRouteProgress(RouteProgress(1, 5))
+
+            repository.routeProgress.test {
+                assertEquals(RouteProgress(1, 5), awaitItem())
+
+                repository.setRouteProgress(null)
 
                 assertNull(awaitItem())
                 cancelAndIgnoreRemainingEvents()

@@ -3,6 +3,7 @@ package com.locationjoystick.core.location
 import android.content.Context
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.RealLocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -66,8 +67,8 @@ class MapControllerWalkCancellationTest {
             val settingsRepository =
                 mockk<SettingsRepository>(relaxed = true) {
                     every { getActiveSpeedProfile() } returns flowOf(walkProfile)
-                    every { getRoutesSortNewestFirst() } returns flowOf(true)
-                    every { getFavoritesSortNewestFirst() } returns flowOf(true)
+                    every { getRoutesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
+                    every { getFavoritesSortMode() } returns flowOf(com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST)
                     every { getSpeedUnit() } returns flowOf(SpeedUnit.KMH)
                     every { getRecentSearches() } returns flowOf(emptyList())
                     every { getRoamingDefaults() } returns flowOf(RoamingDefaults())
@@ -119,6 +120,11 @@ class MapControllerWalkCancellationTest {
                     roamingRepository = roamingRepository,
                     walkCoordinator = walkCoordinator,
                     teleportUseCase = teleportUseCase,
+                    realLocationRepository =
+                        mockk<RealLocationRepository> {
+                            every { lastKnownRealPosition() } returns null
+                            every { hasFinePermission() } returns false
+                        },
                     startRouteReplayUseCase = startRouteReplayUseCase,
                     ephemeralReplayController = ephemeralController,
                     osrmClient = osrmClient,

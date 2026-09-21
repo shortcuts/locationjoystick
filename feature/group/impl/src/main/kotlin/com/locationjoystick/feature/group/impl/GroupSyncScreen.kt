@@ -121,6 +121,7 @@ fun GroupSyncRoute(
             onJoinViaQr = { showQrScanner = true },
             onJoinByCode = viewModel::joinByCode,
             onSetFollowerModeEnabled = viewModel::setFollowerModeEnabled,
+            onSetFollowLeaderTeleports = viewModel::setFollowLeaderTeleports,
             onSetSharingEnabled = viewModel::setSharingEnabled,
             onTeleportToLeaderNow = viewModel::teleportToLeaderNow,
             onLeaveGroup = viewModel::leaveGroup,
@@ -148,6 +149,7 @@ internal fun GroupSyncScreen(
     onJoinViaQr: () -> Unit,
     onJoinByCode: (String) -> Unit,
     onSetFollowerModeEnabled: (Boolean) -> Unit,
+    onSetFollowLeaderTeleports: (Boolean) -> Unit,
     onSetSharingEnabled: (Boolean) -> Unit,
     onTeleportToLeaderNow: () -> Unit,
     onLeaveGroup: () -> Unit,
@@ -198,6 +200,7 @@ internal fun GroupSyncScreen(
                         groupState = groupState,
                         followerCount = followerCount,
                         onSetFollowerModeEnabled = onSetFollowerModeEnabled,
+                        onSetFollowLeaderTeleports = onSetFollowLeaderTeleports,
                         onTeleportToLeaderNow = onTeleportToLeaderNow,
                         onLeaveGroup = onLeaveGroup,
                         hideTeleportFeatures = hideTeleportFeatures,
@@ -455,6 +458,7 @@ private fun FollowerContent(
     groupState: GroupState,
     followerCount: Int,
     onSetFollowerModeEnabled: (Boolean) -> Unit,
+    onSetFollowLeaderTeleports: (Boolean) -> Unit,
     onTeleportToLeaderNow: () -> Unit,
     onLeaveGroup: () -> Unit,
     hideTeleportFeatures: Boolean = false,
@@ -496,6 +500,15 @@ private fun FollowerContent(
             checked = groupState.followerModeEnabled,
             onCheckedChange = onSetFollowerModeEnabled,
         )
+
+        if (!hideTeleportFeatures) {
+            SwitchRow(
+                label = stringResource(R.string.group_sync_follow_leader_teleports),
+                description = stringResource(R.string.group_sync_follow_leader_teleports_description),
+                checked = groupState.followLeaderTeleports,
+                onCheckedChange = onSetFollowLeaderTeleports,
+            )
+        }
 
         Text(
             text = stringResource(R.string.group_sync_follower_mode_resumes_when_you_open),

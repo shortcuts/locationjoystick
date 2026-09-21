@@ -10,6 +10,7 @@ import com.locationjoystick.core.database.dao.FavoriteDao
 import com.locationjoystick.core.database.dao.RouteDao
 import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.routing.RoamingEngine
+import com.locationjoystick.core.routing.RouteReplayEngine
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -44,5 +45,6 @@ object DataModule {
     fun provideRoamingRepository(
         roamingEngine: RoamingEngine,
         locationRepository: LocationRepository,
-    ): RoamingRepository = RoamingRepository(roamingEngine, locationRepository)
+        routeReplayEngine: RouteReplayEngine,
+    ): RoamingRepository = RoamingRepository(roamingEngine, locationRepository, routeReplayEngine)
 }

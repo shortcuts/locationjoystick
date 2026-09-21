@@ -6,32 +6,40 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.parseTeleportBetweenDelaySeconds
 
 /**
- * Bundles the loop/reverse/returnToLocation/followRoads state a "start route" sheet needs plus its
- * wiring to [LjRouteStartOptions] — duplicated identically across every surface that offers this
- * sheet before this extraction (map long-press sheet, Routes screen).
- *
- * While `followRoads` is checked, tapping Start fires [onStart] but keeps the sheet open with a
- * loading Start button until [isRoadRouteFetchInFlight] flips back to false — the OSRM fetch for
- * the road-following start happens in `ReplayOrchestrator` (service-owned), so nothing else tells
- * the sheet when it's done. [onCancel] is reused to dismiss once the fetch resolves, since both
- * call sites' `onCancel` already just closes the sheet with no other side effect.
+ * Shared route options, including planting and optional hops between stops.
+ * Road-following starts keep their loading state until route planning finishes.
  */
 @Composable
 fun RouteStartSheetContent(
     key: Any?,
     onTeleport: (reverse: Boolean) -> Unit,
-    onStart: (loop: Boolean, reverse: Boolean, returnToLocation: Boolean, followRoads: Boolean) -> Unit,
+    onStart: (
+        loop: Boolean,
+        reverse: Boolean,
+        returnToLocation: Boolean,
+        followRoads: Boolean,
+        planting: Boolean,
+        teleportBetweenWaypoints: Boolean,
+        teleportBetweenDelaySeconds: Int,
+    ) -> Unit,
     onCancel: () -> Unit,
     hideTeleport: Boolean = false,
     isTeleportRoute: Boolean = false,
     isRoadRouteFetchInFlight: Boolean = false,
 ) {
-    var loop by remember(key) { mutableStateOf(false) }
+    var loop by remember(key) { mutableStateOf(true) }
     var reverse by remember(key) { mutableStateOf(false) }
     var returnToLocation by remember(key) { mutableStateOf(false) }
     var followRoads by remember(key) { mutableStateOf(false) }
+    var planting by remember(key) { mutableStateOf(false) }
+    var teleportBetweenWaypoints by remember(key) { mutableStateOf(false) }
+    var teleportBetweenDelaySecondsText by remember(key) {
+        mutableStateOf(AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS.toString())
+    }
     var isAwaitingRoadStart by remember(key) { mutableStateOf(false) }
 
     LaunchedEffect(isRoadRouteFetchInFlight) {
@@ -49,12 +57,29 @@ fun RouteStartSheetContent(
         onReturnToLocationChange = { returnToLocation = it },
         followRoads = followRoads,
         onFollowRoadsChange = { followRoads = it },
+        planting = planting,
+        onPlantingChange = {
+            planting = it
+            if (it) returnToLocation = false
+        },
+        teleportBetweenWaypoints = teleportBetweenWaypoints && !hideTeleport,
+        onTeleportBetweenWaypointsChange = { teleportBetweenWaypoints = it },
+        teleportBetweenDelaySecondsText = teleportBetweenDelaySecondsText,
+        onTeleportBetweenDelaySecondsTextChange = { teleportBetweenDelaySecondsText = it },
         onTeleport = { onTeleport(reverse) },
         onCancel = onCancel,
         onStart = {
             val effectiveFollowRoads = followRoads && !isTeleportRoute
             if (effectiveFollowRoads) isAwaitingRoadStart = true
-            onStart(loop, reverse, returnToLocation && !loop, effectiveFollowRoads)
+            onStart(
+                loop || planting,
+                reverse,
+                returnToLocation && !loop && !planting,
+                effectiveFollowRoads,
+                planting && !isTeleportRoute,
+                teleportBetweenWaypoints && !hideTeleport && !isTeleportRoute,
+                parseTeleportBetweenDelaySeconds(teleportBetweenDelaySecondsText),
+            )
         },
         hideTeleport = hideTeleport,
         isTeleportRoute = isTeleportRoute,

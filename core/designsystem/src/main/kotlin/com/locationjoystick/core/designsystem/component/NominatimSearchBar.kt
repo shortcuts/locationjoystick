@@ -34,6 +34,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.NominatimResult
+import com.locationjoystick.core.common.util.NominatimSearchClient
 import com.locationjoystick.core.common.util.parseRawLatLng
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.R
@@ -79,40 +81,8 @@ fun NominatimSearchBar(
         }
         delay(AppConstants.NominatimConstants.SEARCH_DEBOUNCE_MS)
         isLoading = true
-        withContext(Dispatchers.IO) {
-            try {
-                val encoded = URLEncoder.encode(query, "UTF-8")
-                val url = URL("${AppConstants.NominatimConstants.SEARCH_URL}?q=$encoded&format=json&limit=5")
-                val conn = url.openConnection() as HttpURLConnection
-                conn.setRequestProperty("User-Agent", "locationjoystick/1.0")
-                conn.connectTimeout = AppConstants.NominatimConstants.CONNECT_TIMEOUT_MS
-                conn.readTimeout = AppConstants.NominatimConstants.READ_TIMEOUT_MS
-                try {
-                    val responseText = conn.inputStream.bufferedReader().readText()
-                    val array = JSONArray(responseText)
-                    val parsed =
-                        (0 until minOf(array.length(), 5)).mapNotNull { i ->
-                            try {
-                                val obj = array.getJSONObject(i)
-                                NominatimResult(
-                                    lat = obj.getDouble("lat"),
-                                    lon = obj.getDouble("lon"),
-                                    displayName = obj.getString("display_name"),
-                                )
-                            } catch (e: Exception) {
-                                null
-                            }
-                        }
-                    results = parsed
-                } finally {
-                    conn.disconnect()
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Search failed", e)
-                results = emptyList()
-            }
-            isLoading = false
-        }
+        results = nominatimSearch.search(query) ?: emptyList()
+        isLoading = false
     }
 
     val showRecent = query.isEmpty() && recentSearches.isNotEmpty()
@@ -217,8 +187,38 @@ fun NominatimSearchBar(
     }
 }
 
-private data class NominatimResult(
-    val lat: Double,
-    val lon: Double,
-    val displayName: String,
-)
+/** Process-wide so every search bar shares one cache and one 1 request/second spacing. */
+private val nominatimSearch = NominatimSearchClient(::fetchNominatim)
+
+private suspend fun fetchNominatim(query: String): List<NominatimResult> =
+    withContext(Dispatchers.IO) {
+        try {
+            val encoded = URLEncoder.encode(query, "UTF-8")
+            val url = URL("${AppConstants.NominatimConstants.SEARCH_URL}?q=$encoded&format=json&limit=5")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.setRequestProperty("User-Agent", "locationjoystick/1.0")
+            conn.connectTimeout = AppConstants.NominatimConstants.CONNECT_TIMEOUT_MS
+            conn.readTimeout = AppConstants.NominatimConstants.READ_TIMEOUT_MS
+            try {
+                val responseText = conn.inputStream.bufferedReader().readText()
+                val array = JSONArray(responseText)
+                (0 until minOf(array.length(), 5)).mapNotNull { i ->
+                    try {
+                        val obj = array.getJSONObject(i)
+                        NominatimResult(
+                            lat = obj.getDouble("lat"),
+                            lon = obj.getDouble("lon"),
+                            displayName = obj.getString("display_name"),
+                        )
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+            } finally {
+                conn.disconnect()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Search failed", e)
+            throw e
+        }
+    }

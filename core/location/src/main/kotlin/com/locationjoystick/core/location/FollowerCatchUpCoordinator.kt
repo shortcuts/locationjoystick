@@ -20,6 +20,11 @@ internal class FollowerCatchUpCoordinator {
      * streak, mirroring the AtomicBoolean previously scoped to the enterFollowerMode() call site. */
     private val spoofingStarted = AtomicBoolean(false)
 
+    private val lastTeleportSeq = AtomicReference<Long?>(null)
+
+    /** Set when the leader paused (stopped spoofing); consumed by the next BOOTSTRAP to treat stop-move-start as a teleport. */
+    private val pausedByLeader = AtomicBoolean(false)
+
     @Volatile private var speedMs: Float = 0f
 
     @Volatile private var bearing: Float = 0f
@@ -39,13 +44,32 @@ internal class FollowerCatchUpCoordinator {
         this.leaderBearing = leaderBearing
     }
 
+    /** Drops only the target (leader went inactive) — leaves the bootstrap gate and speed/bearing alone. */
+    fun clearTarget() {
+        target.set(null)
+    }
+
     fun clear() {
         target.set(null)
         speedMs = 0f
         bearing = 0f
         leaderBearing = 0f
         spoofingStarted.set(false)
+        lastTeleportSeq.set(null)
+        pausedByLeader.set(false)
     }
+
+    /**
+     * True when the leader's teleport counter changed since the last call. The first value only
+     * sets the baseline (join/reconnect is never a teleport); `!=` not `>` since a leader restart resets it to 0.
+     */
+    fun observeTeleportSeq(seq: Long): Boolean {
+        val prev = lastTeleportSeq.getAndSet(seq)
+        return prev != null && prev != seq
+    }
+
+    /** True once if the leader paused since the last call. */
+    fun consumePausedByLeader(): Boolean = pausedByLeader.getAndSet(false)
 
     /** Last-known leader position, or null if no position has been received (or FOLLOWER mode is inactive). */
     fun currentTarget(): LatLng? = target.get()
@@ -102,7 +126,12 @@ internal class FollowerCatchUpCoordinator {
             FollowerActiveAction.BOOTSTRAP ->
                 if (spoofingStarted.compareAndSet(false, true)) FollowerActiveAction.BOOTSTRAP else FollowerActiveAction.NO_OP
             FollowerActiveAction.PAUSE ->
-                if (spoofingStarted.compareAndSet(true, false)) FollowerActiveAction.PAUSE else FollowerActiveAction.NO_OP
+                if (spoofingStarted.compareAndSet(true, false)) {
+                    pausedByLeader.set(true)
+                    FollowerActiveAction.PAUSE
+                } else {
+                    FollowerActiveAction.NO_OP
+                }
             FollowerActiveAction.NO_OP -> FollowerActiveAction.NO_OP
         }
 }

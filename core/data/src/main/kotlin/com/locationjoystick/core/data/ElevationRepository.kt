@@ -1,6 +1,7 @@
 package com.locationjoystick.core.data
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.TtlLruCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -25,13 +26,18 @@ class ElevationRepository
                 .readTimeout(AppConstants.ElevationConstants.READ_TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
                 .build()
 
+        private val cache = TtlLruCache<Pair<Long, Long>, Double>(AppConstants.ElevationConstants.CACHE_MAX_ENTRIES)
+
         internal var baseUrl: String = AppConstants.ElevationConstants.BASE_URL
 
         suspend fun fetchElevationMeters(
             lat: Double,
             lon: Double,
-        ): Double? =
-            withContext(Dispatchers.IO) {
+        ): Double? {
+            val scale = AppConstants.ElevationConstants.CACHE_COORD_SCALE
+            val key = Math.round(lat * scale) to Math.round(lon * scale)
+            cache.getFresh(key)?.let { return it }
+            return withContext(Dispatchers.IO) {
                 runCatching {
                     val url = "$baseUrl?latitude=$lat&longitude=$lon"
                     client.newCall(Request.Builder().url(url).build()).execute().use { resp ->
@@ -39,6 +45,7 @@ class ElevationRepository
                         val body = resp.body?.string() ?: return@use null
                         JSONObject(body).getJSONArray("elevation").optDouble(0).takeUnless { it.isNaN() }
                     }
-                }.getOrNull()
+                }.getOrNull()?.also { cache.put(key, it) }
             }
+        }
     }

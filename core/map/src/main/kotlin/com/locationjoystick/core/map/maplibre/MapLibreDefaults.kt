@@ -8,7 +8,9 @@ import com.locationjoystick.core.common.constants.AppConstants
  */
 object MapLibreSourceIds {
     val OSM: String = AppConstants.MapConstants.OSM_SOURCE_ID
+    val OSM_PREVIEW: String = AppConstants.MapConstants.OSM_PREVIEW_SOURCE_ID
     val PANEL_OSM: String = AppConstants.MapConstants.PANEL_OSM_SOURCE_ID
+    val PANEL_OSM_PREVIEW: String = AppConstants.MapConstants.PANEL_OSM_PREVIEW_SOURCE_ID
     const val POSITION = "position-source"
     const val TRACE_TRACED = "traced-source"
     const val TRACE_REMAINING = "remaining-source"
@@ -29,7 +31,9 @@ object MapLibreSourceIds {
  */
 object MapLibreLayerIds {
     val OSM: String = AppConstants.MapConstants.OSM_LAYER_ID
+    val OSM_PREVIEW: String = AppConstants.MapConstants.OSM_PREVIEW_LAYER_ID
     val PANEL_OSM: String = AppConstants.MapConstants.PANEL_OSM_LAYER_ID
+    val PANEL_OSM_PREVIEW: String = AppConstants.MapConstants.PANEL_OSM_PREVIEW_LAYER_ID
     const val POSITION = "position-layer"
     const val TRACE_TRACED = "traced-layer"
     const val TRACE_REMAINING = "remaining-layer"

@@ -36,4 +36,9 @@
     <string name="whats_new_got_it">"知道了"</string>
     <string name="whats_new_view_full_changelog">"查看完整更新日志"</string>
     <string name="whats_new_popup_cd">"本版本的更新内容"</string>
+    <string name="drawer_capture">"采集"</string>
+    <string name="idle_capture_description">"收集地图链接，然后将它们保存为路线。"</string>
+    <string name="update_available_cd">"有新版本：v%1$s"</string>
+    <string name="update_available_label">"v%1$s 可更新"</string>
+    <string name="update_available_dismiss_cd">"关闭"</string>
 </resources>

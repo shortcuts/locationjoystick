@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.toBadgeText
 import com.locationjoystick.core.designsystem.LjIcons
@@ -38,8 +39,12 @@ import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjTextButton
+import com.locationjoystick.core.designsystem.component.PasteCoordinatesForm
 import com.locationjoystick.core.designsystem.component.RouteStartSheetContent
 import com.locationjoystick.core.designsystem.component.RoutesPickerList
+import com.locationjoystick.core.designsystem.component.rememberLjSheetState
+import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.startWaypoint
 import com.locationjoystick.feature.map.impl.R
@@ -63,24 +68,43 @@ internal fun RoutesPickerSheet(
         val routeId = selectedRouteId
         if (routeId != null) {
             val route = uiState.routes.find { it.id == routeId }
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { selectedRouteId = null }) {
                         Icon(LjIcons.ArrowBack, contentDescription = stringResource(R.string.map_sheet_back_cd))
                     }
                     Text(
                         text = route?.name ?: stringResource(R.string.map_bottom_sheets_start_route),
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.titleLarge,
                     )
                 }
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(8.dp))
                 RouteStartSheetContent(
                     key = routeId,
                     onTeleport = { reverse ->
                         route?.startWaypoint(reverse)?.let { onAction(MapAction.ConfirmTeleport(it.position)) }
                     },
-                    onStart = { loop, reverse, returnToLocation, followRoads ->
-                        onAction(MapAction.StartRouteReplay(routeId, loop, reverse, returnToLocation, followRoads))
+                    onStart = {
+                        loop,
+                        reverse,
+                        returnToLocation,
+                        followRoads,
+                        planting,
+                        teleportBetweenWaypoints,
+                        delaySeconds,
+                        ->
+                        onAction(
+                            MapAction.StartRouteReplay(
+                                routeId,
+                                loop,
+                                reverse,
+                                returnToLocation,
+                                followRoads,
+                                planting,
+                                teleportBetweenWaypoints,
+                                delaySeconds,
+                            ),
+                        )
                         if (!followRoads) selectedRouteId = null
                     },
                     onCancel = {
@@ -112,6 +136,7 @@ internal fun FavoritesPickerSheet(
 
     ModalBottomSheet(
         onDismissRequest = { onAction(MapAction.CloseFavoritesPicker) },
+        sheetState = rememberLjSheetState(),
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         val target = uiState.favoriteTarget
@@ -157,6 +182,47 @@ internal fun FavoritesPickerSheet(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+internal fun PasteCoordinatesSheet(
+    onDismiss: () -> Unit,
+    onTeleport: (LatLng) -> Unit,
+    onWalk: (LatLng) -> Unit,
+    onWalkViaRoads: (LatLng) -> Unit,
+    onSaveFavorite: (name: String, position: LatLng) -> Unit,
+    onSaveRoute: (name: String, points: List<LatLng>) -> Unit,
+    onStartRoute: (points: List<LatLng>, config: RouteStartConfig) -> Unit,
+    hideTeleportFeatures: Boolean = false,
+    title: String? = null,
+    initialText: String = "",
+    initialRouteName: String = "",
+) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    ModalBottomSheet(
+        onDismissRequest = {
+            if (shouldHonorPasteSheetDismiss(lifecycleOwner.lifecycle.currentState)) {
+                onDismiss()
+            }
+        },
+        sheetState = rememberLjSheetState(),
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        PasteCoordinatesForm(
+            onDismiss = onDismiss,
+            onTeleport = onTeleport,
+            onWalk = onWalk,
+            onWalkViaRoads = onWalkViaRoads,
+            onSaveFavorite = onSaveFavorite,
+            onSaveRoute = onSaveRoute,
+            onStartRoute = onStartRoute,
+            hideTeleportFeatures = hideTeleportFeatures,
+            title = title,
+            initialText = initialText,
+            initialRouteName = initialRouteName,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 internal fun PendingTapSheet(
     position: com.locationjoystick.core.model.LatLng,
     isRouteReplay: Boolean,
@@ -178,9 +244,10 @@ internal fun PendingTapSheet(
 
     ModalBottomSheet(
         onDismissRequest = { onAction(MapAction.ClearPendingTap) },
+        sheetState = rememberLjSheetState(),
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp)) {
             if (isRouteReplay && !isEphemeralReplay) {
                 Text(stringResource(R.string.map_sheet_route_in_progress), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(16.dp))
@@ -213,7 +280,7 @@ internal fun PendingTapSheet(
                     (cooldownState as? CooldownState.Cooling)?.toAdvisoryLabel()
                         ?: stringResource(R.string.map_sheet_no_wait_needed),
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(8.dp))
                 if (!hideTeleportFeatures) {
                     LjButton(
                         onClick = { onAction(MapAction.ConfirmTeleport(position)) },

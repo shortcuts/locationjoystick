@@ -1,5 +1,6 @@
 package com.locationjoystick.core.designsystem.component
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,11 +31,13 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.R
 import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.core.model.RoamingKind
 import com.locationjoystick.core.model.SpeedUnit
 import kotlin.math.roundToInt
 
@@ -54,9 +57,11 @@ fun RoamingSheetContent(
     isSpoofingActive: Boolean,
     hasPreview: Boolean,
     isPreviewLoading: Boolean = false,
+    showViewOnMap: Boolean = true,
+    routePlaying: Boolean = false,
     onDraftChange: (RoamingDefaults) -> Unit,
-    onGenerate: () -> Unit,
-    onStart: () -> Unit,
+    onGenerate: (RoamingKind) -> Unit,
+    onStart: (RoamingKind) -> Unit,
     onViewOnMap: () -> Unit,
 ) {
     val isMph = speedUnit == SpeedUnit.MPH
@@ -81,6 +86,16 @@ fun RoamingSheetContent(
         )
     }
 
+    var startRadiusText by remember {
+        mutableStateOf(draft.plantingStartRadiusMeters.roundToInt().toString())
+    }
+    var endRadiusText by remember {
+        mutableStateOf(draft.plantingEndRadiusMeters.roundToInt().toString())
+    }
+    var loopCountText by remember {
+        mutableStateOf(draft.plantingLoopCount.toString())
+    }
+
     Column(
         modifier =
             Modifier
@@ -89,165 +104,314 @@ fun RoamingSheetContent(
                 .padding(horizontal = LjSpacing.md)
                 .padding(bottom = LjSpacing.lg),
     ) {
-        Text(stringResource(R.string.roaming_sheet_roaming), style = MaterialTheme.typography.headlineSmall, color = LjText)
-
-        Spacer(Modifier.height(LjSpacing.sm))
-
-        // "View on map" always visible; greyed out when no preview
-        LjTextButton(
-            onClick = onViewOnMap,
-            enabled = hasPreview,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .then(if (!hasPreview) Modifier.alpha(0.4f) else Modifier),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.roaming_sheet_view_on_map))
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        // Radius + Route distance side by side
-        Row(modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
-                value = radiusText,
-                onValueChange = { text ->
-                    radiusText = text
-                    text.toLocaleDoubleOrNull()?.let { v ->
-                        val meters = if (isMph) v * 1609.344 else v
-                        onDraftChange(
-                            draft.copy(
-                                radiusMeters =
-                                    meters.coerceIn(
-                                        RADIUS_MIN_METERS,
-                                        RADIUS_MAX_METERS,
-                                    ),
-                            ),
-                        )
-                    }
+            Text(stringResource(R.string.roaming_sheet_roaming), style = MaterialTheme.typography.headlineSmall, color = LjText)
+            LjTextButton(
+                onClick = {
+                    val nextKind = if (draft.kind == RoamingKind.PLANTING) RoamingKind.WALK_AROUND else RoamingKind.PLANTING
+                    onDraftChange(draft.copy(kind = nextKind))
                 },
-                label = {
-                    Text(
-                        if (isMph) {
-                            stringResource(R.string.roaming_sheet_radius_mi)
-                        } else {
-                            stringResource(R.string.roaming_sheet_radius_m)
-                        },
-                    )
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                modifier = Modifier.weight(1f).padding(end = LjSpacing.xs),
-            )
-            OutlinedTextField(
-                value = distanceText,
-                onValueChange = { text ->
-                    distanceText = text
-                    text.toLocaleDoubleOrNull()?.let { v ->
-                        val meters = if (isMph) v * 1609.344 else v
-                        onDraftChange(
-                            draft.copy(
-                                distanceMeters =
-                                    meters.coerceIn(
-                                        DISTANCE_MIN_METERS,
-                                        DISTANCE_MAX_METERS,
-                                    ),
-                            ),
-                        )
-                    }
-                },
-                label = {
-                    Text(
-                        if (isMph) {
-                            stringResource(R.string.roaming_sheet_distance_mi)
-                        } else {
-                            stringResource(R.string.roaming_sheet_distance_m)
-                        },
-                    )
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                modifier = Modifier.weight(1f).padding(start = LjSpacing.xs),
-            )
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        // Speed profile selector
-        Text(stringResource(R.string.roaming_sheet_speed_profile), style = MaterialTheme.typography.labelLarge, color = LjText)
-        Spacer(Modifier.height(LjSpacing.xs))
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            SPEED_PROFILES.forEachIndexed { index, id ->
-                SegmentedButton(
-                    selected = draft.speedProfileId == id,
-                    onClick = { onDraftChange(draft.copy(speedProfileId = id)) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = SPEED_PROFILES.size),
-                ) {
-                    Text(speedProfileLabel(id))
-                }
+            ) {
+                Text(
+                    if (draft.kind == RoamingKind.PLANTING) {
+                        stringResource(R.string.roaming_sheet_content_walk_around)
+                    } else {
+                        stringResource(R.string.roaming_sheet_content_planting_mode)
+                    },
+                )
             }
         }
 
         Spacer(Modifier.height(LjSpacing.sm))
 
-        // Follow roads + Return to start side by side
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f),
+        if (showViewOnMap) {
+            LjTextButton(
+                onClick = onViewOnMap,
+                enabled = hasPreview,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .then(if (!hasPreview) Modifier.alpha(0.4f) else Modifier),
             ) {
-                Checkbox(
-                    checked = draft.followRoads,
-                    onCheckedChange = { onDraftChange(draft.copy(followRoads = it)) },
-                )
-                Text(stringResource(R.string.roaming_sheet_follow_roads), style = MaterialTheme.typography.bodyMedium, color = LjText)
+                Text(stringResource(R.string.roaming_sheet_view_on_map))
             }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f),
-            ) {
-                Checkbox(
-                    checked = draft.returnToInitialLocation,
-                    onCheckedChange = { onDraftChange(draft.copy(returnToInitialLocation = it)) },
-                )
-                Text(stringResource(R.string.roaming_sheet_return_to_start), style = MaterialTheme.typography.bodyMedium, color = LjText)
-            }
+            Spacer(Modifier.height(12.dp))
         }
 
-        Spacer(Modifier.height(LjSpacing.md))
+        Spacer(Modifier.height(12.dp))
 
-        // Generate + Start side by side
-        Row(modifier = Modifier.fillMaxWidth()) {
-            LjOutlinedButton(
-                onClick = onGenerate,
-                enabled = hasCurrentPosition && !isPreviewLoading,
-                modifier = Modifier.weight(1f).padding(end = LjSpacing.xs),
-            ) {
-                if (isPreviewLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
+        if (draft.kind == RoamingKind.WALK_AROUND) {
+            Text(stringResource(R.string.roaming_sheet_content_walk_around_the_block), style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = radiusText,
+                    onValueChange = { text ->
+                        radiusText = text
+                        text.toLocaleDoubleOrNull()?.let { v ->
+                            val meters = if (isMph) v * 1609.344 else v
+                            onDraftChange(
+                                draft.copy(
+                                    radiusMeters = meters.coerceIn(RADIUS_MIN_METERS, RADIUS_MAX_METERS),
+                                ),
+                            )
+                        }
+                    },
+                    label = {
+                        Text(
+                            if (isMph) {
+                                stringResource(R.string.roaming_sheet_radius_mi)
+                            } else {
+                                stringResource(R.string.roaming_sheet_radius_m)
+                            },
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.weight(1f).padding(end = LjSpacing.xs),
+                )
+                OutlinedTextField(
+                    value = distanceText,
+                    onValueChange = { text ->
+                        distanceText = text
+                        text.toLocaleDoubleOrNull()?.let { v ->
+                            val meters = if (isMph) v * 1609.344 else v
+                            onDraftChange(
+                                draft.copy(
+                                    distanceMeters = meters.coerceIn(DISTANCE_MIN_METERS, DISTANCE_MAX_METERS),
+                                ),
+                            )
+                        }
+                    },
+                    label = {
+                        Text(
+                            if (isMph) {
+                                stringResource(R.string.roaming_sheet_distance_mi)
+                            } else {
+                                stringResource(R.string.roaming_sheet_distance_m)
+                            },
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.weight(1f).padding(start = LjSpacing.xs),
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+            RoamingSpeedProfileRow(
+                selectedId = draft.speedProfileId,
+                onSelect = { onDraftChange(draft.copy(speedProfileId = it)) },
+            )
+            Spacer(Modifier.height(8.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Checkbox(
+                        checked = draft.followRoads,
+                        onCheckedChange = { onDraftChange(draft.copy(followRoads = it)) },
                     )
-                } else {
-                    Text(stringResource(R.string.roaming_sheet_generate))
+                    Text(stringResource(R.string.roaming_sheet_follow_roads), style = MaterialTheme.typography.bodyMedium, color = LjText)
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Checkbox(
+                        checked = draft.returnToInitialLocation,
+                        onCheckedChange = { onDraftChange(draft.copy(returnToInitialLocation = it)) },
+                    )
+                    Text(stringResource(R.string.roaming_sheet_return_to_start), style = MaterialTheme.typography.bodyMedium)
                 }
             }
-            LjButton(
-                onClick = onStart,
-                enabled = hasCurrentPosition && isSpoofingActive && !isPreviewLoading,
-                modifier = Modifier.weight(1f).padding(start = LjSpacing.xs),
+        } else {
+            Text(stringResource(R.string.roaming_sheet_content_planting), style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                stringResource(R.string.roaming_spiral_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = startRadiusText,
+                    onValueChange = { text ->
+                        startRadiusText = text
+                        text.toLocaleDoubleOrNull()?.let { v ->
+                            onDraftChange(
+                                draft.copy(
+                                    plantingStartRadiusMeters =
+                                        v.coerceIn(
+                                            AppConstants.RoamingConstants.ROAMING_MIN_RADIUS_METERS,
+                                            AppConstants.RoamingConstants.PLANTING_MAX_RADIUS_METERS,
+                                        ),
+                                ),
+                            )
+                        }
+                    },
+                    label = { Text(stringResource(R.string.roaming_sheet_content_starting_radius_m)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.weight(1f).padding(end = 4.dp),
+                )
+                OutlinedTextField(
+                    value = endRadiusText,
+                    onValueChange = { text ->
+                        endRadiusText = text
+                        text.toLocaleDoubleOrNull()?.let { v ->
+                            onDraftChange(
+                                draft.copy(
+                                    plantingEndRadiusMeters =
+                                        v.coerceIn(
+                                            AppConstants.RoamingConstants.ROAMING_MIN_RADIUS_METERS,
+                                            AppConstants.RoamingConstants.PLANTING_MAX_RADIUS_METERS,
+                                        ),
+                                ),
+                            )
+                        }
+                    },
+                    label = { Text(stringResource(R.string.roaming_sheet_content_ending_radius_m)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.weight(1f).padding(start = 4.dp),
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+            RoamingSpeedProfileRow(
+                selectedId = draft.plantingSpeedProfileId,
+                onSelect = { onDraftChange(draft.copy(plantingSpeedProfileId = it)) },
+            )
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(stringResource(R.string.common_start))
+                Checkbox(
+                    checked = draft.plantingInfiniteLoops,
+                    onCheckedChange = { onDraftChange(draft.copy(plantingInfiniteLoops = it)) },
+                )
+                Text(stringResource(R.string.roaming_sheet_content_infinite_loop), style = MaterialTheme.typography.bodyMedium)
+            }
+
+            if (!draft.plantingInfiniteLoops) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = loopCountText,
+                    onValueChange = { text ->
+                        loopCountText = text
+                        text.toIntOrNull()?.let { count ->
+                            onDraftChange(
+                                draft.copy(
+                                    plantingLoopCount =
+                                        count.coerceIn(
+                                            1,
+                                            AppConstants.RoamingConstants.PLANTING_MAX_LOOP_COUNT,
+                                        ),
+                                ),
+                            )
+                        }
+                    },
+                    label = { Text(stringResource(R.string.roaming_sheet_content_number_of_loops)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
 
-        if (!hasCurrentPosition || !isSpoofingActive) {
+        Spacer(Modifier.height(12.dp))
+        RoamingGenerateStartRow(
+            kind = draft.kind,
+            hasCurrentPosition = hasCurrentPosition,
+            isSpoofingActive = isSpoofingActive,
+            isPreviewLoading = isPreviewLoading,
+            routePlaying = routePlaying,
+            onGenerate = onGenerate,
+            onStart = onStart,
+        )
+
+        if (routePlaying) {
+            Text(
+                stringResource(R.string.roaming_sheet_content_pause_or_stop_the_playing_route_first_to_start_roaming),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        } else if (!hasCurrentPosition || !isSpoofingActive) {
             Text(
                 stringResource(R.string.roaming_sheet_start_location_spoofing_first_to_enable),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = LjSpacing.xs),
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RoamingSpeedProfileRow(
+    selectedId: String,
+    onSelect: (String) -> Unit,
+) {
+    Text(stringResource(R.string.roaming_sheet_content_speed_profile), style = MaterialTheme.typography.labelLarge)
+    Spacer(Modifier.height(4.dp))
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        SPEED_PROFILES.forEachIndexed { index, id ->
+            SegmentedButton(
+                selected = selectedId == id,
+                onClick = { onSelect(id) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = SPEED_PROFILES.size),
+            ) {
+                Text(speedProfileLabel(id))
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoamingGenerateStartRow(
+    kind: RoamingKind,
+    hasCurrentPosition: Boolean,
+    isSpoofingActive: Boolean,
+    isPreviewLoading: Boolean,
+    routePlaying: Boolean,
+    onGenerate: (RoamingKind) -> Unit,
+    onStart: (RoamingKind) -> Unit,
+) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        LjOutlinedButton(
+            onClick = { onGenerate(kind) },
+            enabled = hasCurrentPosition && !isPreviewLoading,
+            modifier = Modifier.weight(1f).padding(end = 4.dp),
+        ) {
+            if (isPreviewLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                Text(stringResource(R.string.roaming_sheet_generate))
+            }
+        }
+        LjButton(
+            onClick = { onStart(kind) },
+            enabled = hasCurrentPosition && isSpoofingActive && !isPreviewLoading && !routePlaying,
+            modifier = Modifier.weight(1f).padding(start = 4.dp),
+        ) {
+            Text(stringResource(R.string.common_start))
         }
     }
 }

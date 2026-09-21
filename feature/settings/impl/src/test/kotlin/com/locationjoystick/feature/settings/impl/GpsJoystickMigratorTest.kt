@@ -26,6 +26,18 @@ import java.nio.ByteOrder
  *   user_feedback — 30 named favs, 17 routes with 475 total waypoints
  */
 class GpsJoystickMigratorTest {
+    @Test
+    fun `GPX import preserves named favorites and distinct routes`() {
+        val gpx = """<gpx>
+            <wpt lat="12.0" lon="34.0"><name>Saved point</name></wpt>
+            <rte><name>First route</name><rtept lat="1.0" lon="2.0"/><rtept lat="3.0" lon="4.0"/></rte>
+            <trk><name>Second route</name><trkseg><trkpt lat="5.0" lon="6.0"/></trkseg></trk>
+        </gpx>"""
+        val result = GpsJoystickMigrator.parse(gpx.toByteArray()).getOrThrow()
+        assertEquals("Saved point", result.favorites.single().name)
+        assertEquals(setOf("First route", "Second route"), result.routes.map { it.name }.toSet())
+    }
+
     private fun loadFixture(name: String): ByteArray {
         val stream = javaClass.classLoader?.getResourceAsStream(name)
         assertNotNull("Test fixture not found: $name", stream)
@@ -337,13 +349,11 @@ class GpsJoystickMigratorTest {
     // ── GPX format (newer GPS Joystick exports) ──────────────────────────────
 
     @Test
-    fun `issue 63 - bare wpt GPX export imports as a single unnamed route`() {
-        // Reuses the Routes screen's generic GPX import (parseGpxRoutes), which has no concept
-        // of favorites — a bare top-level <wpt> becomes a one-waypoint "Imported Route" (issue #27).
+    fun `bare wpt GPX imports a favorite and retains the single-route fallback`() {
         val result = GpsJoystickMigrator.parse(loadFixture("gpsjoystick_20260904003942.gpx.txt"))
         assertTrue(result.isSuccess)
         val m = result.getOrThrow()
-        assertTrue(m.favorites.isEmpty())
+        assertEquals(1, m.favorites.size)
         assertRoutes(m, expectedCount = 1, totalWaypoints = 1)
         assertEquals("Imported Route", m.routes[0].name)
     }

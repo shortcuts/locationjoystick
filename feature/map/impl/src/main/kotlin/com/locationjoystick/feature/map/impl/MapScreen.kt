@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -22,11 +23,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,14 +54,17 @@ import com.locationjoystick.core.map.geojson.buildRouteTraceGeoJson
 import com.locationjoystick.core.map.geojson.emptyGeoJson
 import com.locationjoystick.core.map.maplibre.addEphemeralRouteLayers
 import com.locationjoystick.core.map.maplibre.addLocationLayers
+import com.locationjoystick.core.map.maplibre.followOrSnapTo
+import com.locationjoystick.core.map.maplibre.rememberMapView
+import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.RecentSearch
+import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.feature.map.api.MAP_ROUTE
 import com.locationjoystick.feature.map.impl.R
-import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.maps.MapLibreMap
-import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.android.geometry.LatLng as MapLatLng
@@ -140,6 +145,12 @@ fun MapRoute(
         onOpenDrawer = onOpenDrawer,
         onAction = viewModel::onAction,
         onSearchCommitted = viewModel::addRecentSearch,
+        onTeleportPastedCoordinates = viewModel::teleportFromPastedCoordinates,
+        onWalkPastedCoordinates = { viewModel.walkFromPastedCoordinates(it, viaRoads = false) },
+        onWalkViaRoadsPastedCoordinates = { viewModel.walkFromPastedCoordinates(it, viaRoads = true) },
+        onSavePastedFavorite = viewModel::savePastedFavorite,
+        onSavePastedRoute = viewModel::savePastedRoute,
+        onStartPastedRoute = viewModel::startPastedRoute,
         onNavigateToRoutes = onNavigateToRoutes,
         bottomBar = bottomBar,
         snackbarHostState = snackbarHostState,
@@ -153,6 +164,12 @@ internal fun MapScreen(
     onAction: (MapAction) -> Unit,
     recentSearches: List<RecentSearch> = emptyList(),
     onSearchCommitted: ((String, Double, Double) -> Unit)? = null,
+    onTeleportPastedCoordinates: (LatLng) -> Unit = {},
+    onWalkPastedCoordinates: (LatLng) -> Unit = {},
+    onWalkViaRoadsPastedCoordinates: (LatLng) -> Unit = {},
+    onSavePastedFavorite: (String, LatLng) -> Unit = { _, _ -> },
+    onSavePastedRoute: (String, List<LatLng>) -> Unit = { _, _ -> },
+    onStartPastedRoute: (List<LatLng>, RouteStartConfig) -> Unit = { _, _ -> },
     onNavigateToRoutes: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
@@ -162,11 +179,7 @@ internal fun MapScreen(
 
     val initialPosition = remember { uiState.currentPosition }
 
-    val mapView =
-        remember {
-            MapLibre.getInstance(context)
-            MapView(context)
-        }
+    val mapView = rememberMapView()
     val mapRef = remember { mutableStateOf<MapLibreMap?>(null) }
     val positionSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val tracedSource = remember { mutableStateOf<GeoJsonSource?>(null) }
@@ -179,10 +192,11 @@ internal fun MapScreen(
     val jitterRadiusSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val showSearch = remember { mutableStateOf(false) }
     val isFollowingCamera = remember { mutableStateOf(true) }
+    val lastFollowedPosition = remember { mutableStateOf<com.locationjoystick.core.model.LatLng?>(null) }
     val spoofToggle = rememberSpoofToggleState()
 
     LaunchedEffect(uiState.isUserPanning) {
-        if (!uiState.isUserPanning) isFollowingCamera.value = true
+        isFollowingCamera.value = !uiState.isUserPanning
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -191,7 +205,9 @@ internal fun MapScreen(
         val observer =
             LifecycleEventObserver { _, event ->
                 when (event) {
-                    Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                    Lifecycle.Event.ON_RESUME -> {
+                        mapView.onResume()
+                    }
                     Lifecycle.Event.ON_PAUSE -> mapView.onPause()
                     else -> Unit
                 }
@@ -205,14 +221,25 @@ internal fun MapScreen(
         }
     }
 
+    LaunchedEffect(uiState.showPasteCoordinatesSheet) {
+        if (uiState.showPasteCoordinatesSheet) showSearch.value = false
+    }
+
     LaunchedEffect(uiState.pendingCameraTarget) {
         val target = uiState.pendingCameraTarget ?: return@LaunchedEffect
-        // Use closer zoom for favorite teleports (street-level), default zoom for other cases
-        val zoom = if (uiState.favoriteTarget != null) 18.0 else AppConstants.MapConstants.DEFAULT_ZOOM
-        mapRef.value?.animateCamera(
-            CameraUpdateFactory.newLatLngZoom(MapLatLng(target.latitude, target.longitude), zoom),
-            500,
+        val zoom =
+            if (uiState.favoriteTarget != null) {
+                AppConstants.MapConstants.FAVORITE_CAMERA_ZOOM
+            } else {
+                AppConstants.MapConstants.DEFAULT_ZOOM
+            }
+        mapRef.value?.moveCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                MapLatLng(target.latitude, target.longitude),
+                zoom,
+            ),
         )
+        lastFollowedPosition.value = target
         onAction(MapAction.CameraTargetConsumed)
     }
 
@@ -230,6 +257,7 @@ internal fun MapScreen(
             MapFabColumn(
                 uiState = uiState,
                 isFollowingCamera = isFollowingCamera.value,
+                lastFollowedPosition = lastFollowedPosition.value,
                 onAction = onAction,
                 onToggleSearch = { showSearch.value = !showSearch.value },
             )
@@ -366,12 +394,9 @@ internal fun MapScreen(
                     }
 
                     if (isFollowingCamera.value && position != null) {
-                        map.animateCamera(
-                            CameraUpdateFactory.newLatLng(
-                                MapLatLng(position.latitude, position.longitude),
-                            ),
-                            500,
-                        )
+                        val previous = lastFollowedPosition.value
+                        lastFollowedPosition.value = position
+                        map.followOrSnapTo(previous, position)
                     }
                 },
                 modifier = Modifier.fillMaxSize(),
@@ -389,16 +414,17 @@ internal fun MapScreen(
                         ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier =
                         Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = 12.dp)
+                            .padding(bottom = 12.dp, start = 16.dp, end = 16.dp)
+                            .shadow(4.dp, CircleShape)
                             .background(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-                                MaterialTheme.shapes.small,
-                            ).padding(horizontal = 10.dp, vertical = 4.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                                CircleShape,
+                            ).padding(horizontal = 14.dp, vertical = 6.dp),
                 )
             }
 
@@ -408,9 +434,9 @@ internal fun MapScreen(
                         val position =
                             com.locationjoystick.core.model
                                 .LatLng(latitude = lat, longitude = lon)
-                        mapRef.value?.animateCamera(
+                        lastFollowedPosition.value = position
+                        mapRef.value?.moveCamera(
                             CameraUpdateFactory.newLatLngZoom(MapLatLng(lat, lon), AppConstants.MapConstants.DEFAULT_ZOOM),
-                            500,
                         )
                         searchMarkerSource.value?.setGeoJson(buildMarkerGeoJson(lat, lon))
                         showSearch.value = false
@@ -445,6 +471,28 @@ internal fun MapScreen(
         )
     }
 
+    if (uiState.showPasteCoordinatesSheet) {
+        key(uiState.pasteFormNonce) {
+            PasteCoordinatesSheet(
+                onDismiss = { onAction(MapAction.ClosePasteCoordinates) },
+                onTeleport = onTeleportPastedCoordinates,
+                onWalk = onWalkPastedCoordinates,
+                onWalkViaRoads = onWalkViaRoadsPastedCoordinates,
+                onSaveFavorite = onSavePastedFavorite,
+                onSaveRoute = onSavePastedRoute,
+                onStartRoute = onStartPastedRoute,
+                hideTeleportFeatures = uiState.hideTeleportFeatures,
+                title =
+                    when (uiState.pasteSheetTitle) {
+                        PasteSheetTitle.GPX -> stringResource(R.string.map_paste_sheet_title_gpx)
+                        PasteSheetTitle.DEFAULT -> null
+                    },
+                initialText = uiState.pasteInitialText,
+                initialRouteName = uiState.pasteInitialRouteName,
+            )
+        }
+    }
+
     DisposableEffect(Unit) {
         onDispose { onAction(MapAction.ClearPinnedPoint) }
     }
@@ -477,10 +525,13 @@ internal fun MapScreen(
         RoamingSheet(
             draft = roamingDraft,
             hasCurrentPosition = uiState.currentPosition != null,
-            isSpoofingActive = uiState.isSpoofing,
+            isSpoofingActive =
+                uiState.mockLocationState == MockLocationState.RUNNING ||
+                    uiState.mockLocationState == MockLocationState.PAUSED,
             speedUnit = uiState.speedUnit,
             hasPreview = uiState.roamingPreviewWaypoints != null,
             isPreviewLoading = uiState.isRoamingPreviewLoading,
+            routePlaying = uiState.isRouteReplay && uiState.mockLocationState == MockLocationState.RUNNING,
             onAction = onAction,
             onGeneratePreview = { onAction(MapAction.GenerateRoamingPreview) },
             onMinimize = { onAction(MapAction.MinimizeRoamingSheet) },

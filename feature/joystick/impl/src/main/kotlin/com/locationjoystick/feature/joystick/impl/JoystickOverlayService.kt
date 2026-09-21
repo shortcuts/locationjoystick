@@ -13,11 +13,13 @@ import android.view.WindowManager
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.SpeedProfile
+import com.locationjoystick.core.model.shouldIgnoreJoystickInput
 import com.locationjoystick.core.overlay.OverlayService
 import com.locationjoystick.core.overlay.OverlayServiceHelper
 import dagger.hilt.android.AndroidEntryPoint
@@ -31,8 +33,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.cos
 import kotlin.math.sin
@@ -46,6 +51,9 @@ private const val TAG = "JoystickOverlayService"
 // Modes where another engine owns position updates for its own tick — a joystick drag must not
 // steal mode or overwrite position while one of these is active.
 private val ENGINE_OWNED_MODES = setOf(MockMode.ROUTE_REPLAY, MockMode.ROAMING, MockMode.WALK_TO, MockMode.FOLLOWER)
+
+/** True when releasing the stick must not reset [MockMode] — the engine still owns the session. */
+internal fun shouldPreserveEngineMode(mode: MockMode): Boolean = mode in ENGINE_OWNED_MODES
 
 /**
  * Converts a screen angle (0=east, CCW positive) to a geographic bearing in degrees (0=north, CW positive).
@@ -79,6 +87,9 @@ class JoystickOverlayService : OverlayService() {
 
     @Inject
     lateinit var settingsRepository: SettingsRepository
+
+    @Inject
+    lateinit var roamingRepository: RoamingRepository
 
     private val exceptionHandler =
         CoroutineExceptionHandler { _, throwable ->
@@ -137,6 +148,19 @@ class JoystickOverlayService : OverlayService() {
                 _cachedProfile.value = profile
             }
         }
+        serviceScope.launch {
+            combine(
+                locationRepository.currentMode,
+                locationRepository.mockLocationState,
+                roamingRepository.isRoamingPaused,
+            ) { mode, state, roamPaused -> shouldIgnoreJoystickInput(mode, state, roamPaused) }
+                .distinctUntilChanged()
+                .collect { ignored ->
+                    withContext(Dispatchers.Main) {
+                        (overlayView as? JoystickView)?.inputIgnored = ignored
+                    }
+                }
+        }
     }
 
     /** Joystick starts hidden; user enables it via the floating widget. */
@@ -149,7 +173,7 @@ class JoystickOverlayService : OverlayService() {
     ): Int {
         val result = super.onStartCommand(intent, flags, startId)
         if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_SHOW_OVERLAY, false) == true) {
-            showOverlay()
+            showJoystick()
         }
         return result
     }
@@ -173,22 +197,29 @@ class JoystickOverlayService : OverlayService() {
         if (!value) {
             movementJob?.cancel()
             movementJob = null
-            if (locationRepository.currentMode.value !in ENGINE_OWNED_MODES) {
+            if (!shouldPreserveEngineMode(locationRepository.currentMode.value)) {
                 locationRepository.setMockMode(MockMode.TELEPORT)
-                mockLocationService?.clearMotionVector()
             }
+            mockLocationService?.clearMotionVector()
         }
         Log.d(TAG, "Joystick locked: $value")
     }
 
+    fun showJoystick() {
+        showOverlay()
+        _isVisible.value = overlayView?.isAttachedToWindow == true
+    }
+
+    fun hideJoystick() {
+        hideOverlay()
+        _isVisible.value = false
+    }
+
     fun toggleOverlay() {
-        val view = overlayView
-        if (view != null && view.isAttachedToWindow) {
-            hideOverlay()
-            _isVisible.value = false
+        if (isOverlayVisible) {
+            hideJoystick()
         } else {
-            showOverlay()
-            _isVisible.value = true
+            showJoystick()
         }
     }
 
@@ -196,6 +227,12 @@ class JoystickOverlayService : OverlayService() {
         val view = JoystickView(this)
 
         view.isLocked = _isLocked.value
+        view.inputIgnored =
+            shouldIgnoreJoystickInput(
+                locationRepository.currentMode.value,
+                locationRepository.mockLocationState.value,
+                roamingRepository.isRoamingPaused.value,
+            )
 
         view.onInputChanged = { input ->
             lastInput = input
@@ -214,7 +251,9 @@ class JoystickOverlayService : OverlayService() {
             } else {
                 movementJob?.cancel()
                 movementJob = null
-                locationRepository.setMockMode(MockMode.TELEPORT)
+                if (!shouldPreserveEngineMode(locationRepository.currentMode.value)) {
+                    locationRepository.setMockMode(MockMode.TELEPORT)
+                }
                 mockLocationService?.clearMotionVector()
                 Log.d(TAG, "Joystick released — movement stopped")
             }
@@ -278,10 +317,14 @@ class JoystickOverlayService : OverlayService() {
     private suspend fun applyJoystickInput(input: JoystickInput) {
         val currentPos = locationRepository.currentPosition.value ?: return
         val speedMs = _cachedProfile.value?.speedMetersPerSecond ?: return
+        val mode = locationRepository.currentMode.value
+        val mockState = locationRepository.mockLocationState.value
         // Don't let a stray drag tick steal mode from an engine (route replay, roaming, walk-to,
         // follower sync) that's independently advancing position this same tick.
-        if (locationRepository.currentMode.value in ENGINE_OWNED_MODES) return
-        locationRepository.setMockMode(MockMode.JOYSTICK)
+        if (shouldIgnoreJoystickInput(mode, mockState, roamingRepository.isRoamingPaused.value)) return
+        if (!shouldPreserveEngineMode(mode)) {
+            locationRepository.setMockMode(MockMode.JOYSTICK)
+        }
 
         val bearingDeg = angleToBearing(input.angleDegrees)
         val nextPos = computeJoystickStep(currentPos, input.angleDegrees, input.force, speedMs, AppConstants.JoystickConstants.STEP_SECONDS)

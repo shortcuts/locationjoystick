@@ -179,8 +179,20 @@ class ModelDomainTest {
         assertEquals(500.0, defaults.radiusMeters, 0.001)
         assertEquals(1000.0, defaults.distanceMeters, 0.001)
         assertEquals("walk", defaults.speedProfileId)
+        assertEquals("bike", defaults.plantingSpeedProfileId)
         assertTrue(defaults.followRoads)
         assertFalse(defaults.returnToInitialLocation)
+    }
+
+    @Test
+    fun `RoamingDefaults planting speed defaults to bike`() {
+        assertEquals("bike", RoamingDefaults().plantingSpeedProfileId)
+        assertEquals("walk", RoamingDefaults().speedProfileId)
+        assertEquals("walk", RoamingDefaults().speedProfileIdForKind())
+        assertEquals(
+            "bike",
+            RoamingDefaults(kind = RoamingKind.PLANTING).speedProfileIdForKind(),
+        )
     }
 
     // AppSettings
@@ -285,8 +297,19 @@ class ModelDomainTest {
         assertTrue(features.contains("FAVORITES"))
         assertTrue(features.contains("ROAMING"))
         assertTrue(features.contains("SEARCH"))
+        assertTrue(features.contains("PASTE_COORDINATES"))
+        assertTrue(features.contains("CAPTURE_COORDINATES"))
         assertTrue(features.contains("SPEED_CYCLE"))
         assertTrue(features.contains("MAP_FLOATING"))
+        assertEquals(setOf(FeatureSurface.WIDGET, FeatureSurface.MAP), AppFeature.PASTE_COORDINATES.surfaces)
+        assertEquals(setOf(FeatureSurface.WIDGET, FeatureSurface.MAP), AppFeature.ROAMING.surfaces)
+        assertEquals(setOf(FeatureSurface.MAP), AppFeature.CAPTURE_COORDINATES.surfaces)
+        assertTrue(AppFeature.DEFAULT_MAP_ENABLED.contains(AppFeature.PASTE_COORDINATES))
+        assertTrue(AppFeature.DEFAULT_MAP_ENABLED.contains(AppFeature.CAPTURE_COORDINATES))
+        assertTrue(AppFeature.DEFAULT_WIDGET_ENABLED.contains(AppFeature.PASTE_COORDINATES))
+        assertTrue(AppFeature.DEFAULT_WIDGET_ENABLED.contains(AppFeature.ROAMING))
+        assertFalse(AppFeature.DEFAULT_WIDGET_ENABLED.contains(AppFeature.CAPTURE_COORDINATES))
+        assertTrue(AppFeature.DEFAULT_MAP_ENABLED.contains(AppFeature.SEARCH))
     }
 
     // SpeedProfile custom instance
@@ -340,6 +363,46 @@ class ModelDomainTest {
         assertEquals("bike", config.speedProfileId)
         assertFalse(config.useRoadSnapping)
         assertTrue(config.returnToInitialLocation)
+        assertEquals(RoamingKind.WALK_AROUND, config.kind)
+    }
+
+    @Test
+    fun `toConfig copies planting fields`() {
+        val center = LatLng(35.6762, 139.6503)
+        val defaults =
+            RoamingDefaults(
+                kind = RoamingKind.PLANTING,
+                plantingStartRadiusMeters = 6.0,
+                plantingEndRadiusMeters = 40.0,
+                plantingInfiniteLoops = false,
+                plantingLoopCount = 3,
+            )
+        val config = defaults.toConfig(center)
+        assertEquals(RoamingKind.PLANTING, config.kind)
+        assertEquals(6.0, config.plantingStartRadiusMeters, 0.001)
+        assertEquals(40.0, config.plantingEndRadiusMeters, 0.001)
+        assertFalse(config.plantingInfiniteLoops)
+        assertEquals(3, config.plantingLoopCount)
+        assertEquals("bike", config.speedProfileId)
+    }
+
+    @Test
+    fun `toConfig planting uses plantingSpeedProfileId not walk-around speed`() {
+        val defaults =
+            RoamingDefaults(
+                kind = RoamingKind.PLANTING,
+                speedProfileId = "walk",
+                plantingSpeedProfileId = "run",
+            )
+        val config = defaults.toConfig(LatLng(0.0, 0.0))
+        assertEquals("run", config.speedProfileId)
+    }
+
+    @Test
+    fun `RoamingKind parse falls back to walk around`() {
+        assertEquals(RoamingKind.PLANTING, RoamingKind.parse("PLANTING"))
+        assertEquals(RoamingKind.WALK_AROUND, RoamingKind.parse(null))
+        assertEquals(RoamingKind.WALK_AROUND, RoamingKind.parse("nope"))
     }
 
     // sortedByAge

@@ -136,4 +136,116 @@ class RouteReplayEngineJumpTest {
         assertTrue("should have more positions after jump", positions.size > countAfterJump)
         kotlinx.coroutines.runBlocking { engine.stop() }
     }
+
+    @Test
+    fun `currentProgress at start is 1 of N named stops`() {
+        engine.start(waypoints = waypoints, speedMs = 1.4, onPositionUpdate = {}, onComplete = {})
+        engine.pause()
+
+        val progress = engine.currentProgress()
+        assertEquals(1, progress!!.current)
+        assertEquals(4, progress.total)
+        assertEquals("1/4", progress.label)
+
+        kotlinx.coroutines.runBlocking { engine.stop() }
+    }
+
+    @Test
+    fun `currentProgress after jumpToNextWaypoint is 2 of N`() {
+        engine.start(waypoints = waypoints, speedMs = 1.4, onPositionUpdate = {}, onComplete = {})
+        engine.pause()
+        engine.jumpToNextWaypoint(onPositionUpdate = {}, onComplete = {})
+
+        val progress = engine.currentProgress()
+        assertEquals(2, progress!!.current)
+        assertEquals(4, progress.total)
+
+        kotlinx.coroutines.runBlocking { engine.stop() }
+    }
+
+    @Test
+    fun `currentProgress uses named-stop boundaries on a road-expanded path`() {
+        val expanded =
+            listOf(
+                a,
+                LatLng(0.0002, 0.0),
+                b,
+                LatLng(0.0012, 0.0),
+                LatLng(0.0015, 0.0),
+                c,
+                LatLng(0.0025, 0.0),
+                d,
+            )
+        engine.start(
+            waypoints = expanded,
+            speedMs = 1.4,
+            onPositionUpdate = {},
+            onComplete = {},
+            boundaryIndices = listOf(0, 2, 5, 7),
+        )
+        engine.pause()
+
+        assertEquals(1, engine.currentProgress()!!.current)
+        assertEquals(4, engine.currentProgress()!!.total)
+
+        engine.jumpToNextWaypoint(onPositionUpdate = {}, onComplete = {})
+        assertEquals(2, engine.currentProgress()!!.current)
+
+        kotlinx.coroutines.runBlocking { engine.stop() }
+        assertNull(engine.currentProgress())
+    }
+
+    @Test
+    fun `jumpToNextWaypoint during hop linger stays on the next stop instead of hopping twice`() {
+        engine.start(
+            waypoints = waypoints,
+            speedMs = 1.4,
+            onPositionUpdate = {},
+            onComplete = {},
+            teleportBetweenWaypoints = true,
+            teleportBetweenDelaySeconds = 0,
+        )
+        Thread.sleep(200)
+        assertEquals("should linger at stop 1 before the first automatic hop", 1, engine.currentProgress()!!.current)
+        Thread.sleep(1500)
+        assertEquals("should be lingering at stop 2 after the first hop", 2, engine.currentProgress()!!.current)
+
+        val target = engine.jumpToNextWaypoint(onPositionUpdate = {}, onComplete = {})
+        assertEquals(c, target)
+        Thread.sleep(300)
+
+        assertEquals(
+            "next should land on stop 3 and linger; hopping again would show 4/4",
+            3,
+            engine.currentProgress()!!.current,
+        )
+        kotlinx.coroutines.runBlocking { engine.stop() }
+    }
+
+    @Test
+    fun `jumpToPreviousWaypoint during hop linger stays on the previous stop instead of hopping forward`() {
+        engine.start(
+            waypoints = waypoints,
+            speedMs = 1.4,
+            onPositionUpdate = {},
+            onComplete = {},
+            teleportBetweenWaypoints = true,
+            teleportBetweenDelaySeconds = 0,
+        )
+        Thread.sleep(200)
+        assertEquals("should linger at stop 1 before the first automatic hop", 1, engine.currentProgress()!!.current)
+        Thread.sleep(1500)
+        assertEquals("should be lingering at stop 2 after the first hop", 2, engine.currentProgress()!!.current)
+
+        val target = engine.jumpToPreviousWaypoint(onPositionUpdate = {}, onComplete = {})
+        assertEquals(a, target)
+        Thread.sleep(300)
+
+        assertEquals(
+            "previous should land on stop 1 and linger; hopping forward would show 2/4 again",
+            1,
+            engine.currentProgress()!!.current,
+        )
+        kotlinx.coroutines.runBlocking { engine.stop() }
+    }
 }

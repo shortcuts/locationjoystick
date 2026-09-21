@@ -5,12 +5,10 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 
 @Composable
 fun LjCard(
@@ -20,17 +18,17 @@ fun LjCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (onClick != null) {
-        ElevatedCard(
+        Card(
             onClick = onClick,
             modifier = modifier,
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             interactionSource = interactionSource,
             content = content,
         )
     } else {
-        ElevatedCard(
+        Card(
             modifier = modifier,
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             content = content,
         )
     }

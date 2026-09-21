@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_viewmodel_settings_saved">"Settings saved"</string>
+    <string name="settings_viewmodel_failed_to_save_settings">"Failed to save settings"</string>
+    <string name="settings_viewmodel_all_data_reset">"All data reset"</string>
+    <string name="settings_viewmodel_failed_to_reset_data">"Failed to reset data"</string>
+    <string name="settings_viewmodel_export_complete">"Export complete"</string>
+    <string name="settings_viewmodel_failed_to_export">"Failed to export"</string>
+    <string name="settings_viewmodel_failed_to_import_empty_file">"Failed to import: empty file"</string>
+    <string name="settings_viewmodel_import_complete">"Import complete"</string>
+    <string name="settings_viewmodel_failed_to_import">"Failed to import"</string>
+    <string name="settings_viewmodel_failed_to_prepare_qr_export">"Failed to prepare QR export — ensure Wi-Fi is connected"</string>
+    <string name="settings_viewmodel_invalid_qr_code">"Invalid QR code — not a Location Joystick export"</string>
+    <string name="settings_viewmodel_code_must_be_n_characters">"Code must be %1$d characters"</string>
+    <string name="settings_viewmodel_no_sender_found_for_code">"No sender found for code %1$s"</string>
+    <string name="settings_viewmodel_failed_to_fetch_export">"Failed to fetch export — ensure both devices are on the same Wi-Fi"</string>
+    <string name="settings_viewmodel_failed_to_import_from_gps_joystick">"Failed to import from GPS Joystick"</string>
+    <string name="settings_viewmodel_failed_to_import_from_yamla">"Failed to import from YAMLA"</string>
+    <string name="settings_viewmodel_imported_favorites_from_yamla">"Imported %1$d favorites from YAMLA"</string>
+    <string name="settings_viewmodel_imported_favorites_from_yamla_speeds_updated">"Imported %1$d favorites from YAMLA, speeds updated"</string>
+    <string name="settings_migration_imported_gps_joystick">"Imported %1$d favorites, %2$d routes from GPS Joystick"</string>
+    <plurals name="settings_migration_skipped_oversized">
+        <item quantity="one">Skipped %1$d route that was too large to import</item>
+        <item quantity="other">Skipped %1$d routes that were too large to import</item>
+    </plurals>
+    <string name="settings_roaming_sub_screen_walk_around_the_block">"Walk around the block"</string>
+    <string name="settings_roaming_sub_screen_picks_random_spots_within_a_radius_and_walks_between_them">"Picks random spots within a radius and walks between them."</string>
+    <string name="settings_roaming_sub_screen_planting">"Planting"</string>
+    <string name="settings_roaming_sub_screen_starting_radius_m">"Starting radius (m)"</string>
+    <string name="settings_roaming_sub_screen_ending_radius_m">"Ending radius (m)"</string>
+    <string name="settings_roaming_sub_screen_speed_profile">"Speed profile"</string>
+    <string name="settings_roaming_sub_screen_infinite_loop">"Infinite loop"</string>
+    <string name="settings_roaming_sub_screen_keeps_expanding_and_contracting_until_you_stop_roaming">"Keeps expanding and contracting until you stop roaming."</string>
+    <string name="settings_roaming_sub_screen_number_of_loops">"Number of loops"</string>
+    <string name="settings_spiral_description">Walks a spiral around the current point, opening out to the outer radius and returning to the inner radius. One loop is one full expand and contract.</string>
+    <string name="menus_paste_coordinates">"Paste coordinates"</string>
+    <string name="menus_paste_latitude_and_longitude_to_teleport_walk_or_save_as_a_f">"Paste latitude and longitude to teleport, walk, or save as a favorite."</string>
+    <string name="menus_capture_coordinates">"Capture coordinates"</string>
+    <string name="menus_collect_map_links_from_other_apps_into_a_list_then_save_them">"Collect map links from other apps into a list, then save them as a route."</string>
+</resources>

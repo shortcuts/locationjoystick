@@ -14,12 +14,18 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
+import com.locationjoystick.core.designsystem.component.RouteProgressBadgeInMapFabSlot
+import com.locationjoystick.core.designsystem.component.routeProgressStopContentDescription
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MockLocationState
+import com.locationjoystick.feature.map.impl.R
 
 @Composable
 internal fun MapFabColumn(
     uiState: MapUiState,
     isFollowingCamera: Boolean,
+    lastFollowedPosition: LatLng?,
     onAction: (MapAction) -> Unit,
     onToggleSearch: () -> Unit,
 ) {
@@ -27,15 +33,22 @@ internal fun MapFabColumn(
         verticalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4),
         horizontalAlignment = Alignment.End,
     ) {
-        if (!isFollowingCamera) {
-            LjMapIconButton(
-                icon = LjIcons.MyLocation,
-                contentDescription = stringResource(R.string.map_fab_recenter_cd),
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                onClick = { onAction(MapAction.RecenterCamera) },
-            )
-        }
+        LjMapIconButton(
+            icon = LjIcons.MyLocation,
+            contentDescription =
+                if (
+                    uiState.mockLocationState == MockLocationState.IDLE ||
+                    uiState.mockLocationState == MockLocationState.ERROR
+                ) {
+                    stringResource(R.string.map_fab_recenter_gps_cd)
+                } else {
+                    stringResource(R.string.map_fab_recenter_mock_cd)
+                },
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor =
+                if (isFollowingCamera) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimaryContainer,
+            onClick = { onAction(MapAction.RecenterCamera(lastFollowedPosition)) },
+        )
 
         if (uiState.walkTarget != null) {
             Row(
@@ -180,6 +193,8 @@ internal fun MapFabColumn(
 
                 // Roaming — collapsible: compass icon always, pause/resume+stop expand to the left when roaming active
                 AppFeature.ROAMING -> {
+                    val routePlaying =
+                        uiState.isRouteReplay && uiState.mockLocationState == MockLocationState.RUNNING
                     if (enabled || uiState.isRoaming || uiState.isRoamingSheetMinimized) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -221,6 +236,7 @@ internal fun MapFabColumn(
                                 contentDescription =
                                     when {
                                         uiState.isRoaming -> stringResource(R.string.map_fab_roaming_active_cd)
+                                        routePlaying -> stringResource(R.string.map_fab_roaming_ignored_route_playing_cd)
                                         uiState.isRoamingSheetMinimized ->
                                             stringResource(R.string.map_fab_expand_roaming_sheet_cd)
                                         else -> stringResource(R.string.map_fab_start_roaming_cd)
@@ -234,6 +250,7 @@ internal fun MapFabColumn(
                                 contentColor =
                                     when {
                                         uiState.isRoaming -> LjSuccess
+                                        routePlaying -> MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.22f)
                                         uiState.isRoamingSheetMinimized -> MaterialTheme.colorScheme.onTertiary
                                         else -> MaterialTheme.colorScheme.onPrimaryContainer
                                     },
@@ -261,6 +278,18 @@ internal fun MapFabColumn(
                     }
                 }
 
+                AppFeature.PASTE_COORDINATES -> {
+                    if (enabled) {
+                        LjMapIconButton(
+                            icon = LjIcons.ContentPaste,
+                            contentDescription = stringResource(R.string.map_fab_column_paste_coordinates),
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            onClick = { onAction(MapAction.OpenPasteCoordinates) },
+                        )
+                    }
+                }
+
                 else -> {
                     Unit
                 }
@@ -283,6 +312,14 @@ internal fun MapFabColumn(
                 containerColor = MaterialTheme.colorScheme.errorContainer,
                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
                 onClick = { onAction(MapAction.ClearMap) },
+            )
+        }
+
+        val progress = uiState.routeProgress
+        if (uiState.isRouteReplay && progress != null) {
+            RouteProgressBadgeInMapFabSlot(
+                label = progress.label,
+                contentDescription = routeProgressStopContentDescription(progress.current, progress.total),
             )
         }
     }

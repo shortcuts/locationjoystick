@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="capture_browser_intents_couldnt_open_setting">"无法打开该 Android 设置页面"</string>
+    <string name="share_coordinates_no_current_location">"没有当前位置"</string>
+</resources>

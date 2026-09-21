@@ -23,7 +23,7 @@ internal enum class NotificationAction {
 }
 
 internal data class ActionSpec(
-    @StringRes val labelRes: Int,
+    @param:StringRes val labelRes: Int,
     val action: NotificationAction,
 )
 

@@ -11,73 +11,59 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
-import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.DebugStats
-import com.locationjoystick.core.data.toBadgeText
-import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.LjInactive
 import com.locationjoystick.core.designsystem.LjSuccess
-import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.UiConstants
-import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
-import com.locationjoystick.core.designsystem.component.FavoritesList
-import com.locationjoystick.core.designsystem.component.LjButton
-import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
-import com.locationjoystick.core.designsystem.component.LjTextButton
-import com.locationjoystick.core.designsystem.component.RoutesPickerList
+import com.locationjoystick.core.designsystem.component.RouteProgressBadge
+import com.locationjoystick.core.designsystem.component.routeProgressStopContentDescription
 import com.locationjoystick.core.model.AppFeature
-import com.locationjoystick.core.model.FavoriteLocation
-import com.locationjoystick.core.model.LatLng
-import com.locationjoystick.core.model.startWaypoint
+import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.feature.widget.impl.R
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+/** Tint for ignored joystick/roam icons: faded vs orange, still readable on the black circle. */
+private val WidgetIgnoredTint = Color.White.copy(alpha = 0.42f)
+
+/** Tint for inactive widget chrome icons. Mid-grey on the black circle is too close to the fill. */
+private val WidgetInactiveTint = Color.White.copy(alpha = 0.82f)
+private val WidgetColumnWidth = 50.dp
+private val WidgetButtonSlotHeight = 52.dp
+private val WidgetTouchTargetSize = 48.dp
 
 /** Shared circular icon button for the widget panel: press scale + icon crossfade on state change. */
 @Composable
@@ -86,31 +72,53 @@ private fun WidgetIconButton(
     contentDescription: String,
     tint: Color,
     onClick: () -> Unit,
+    enabled: Boolean = true,
+    onLongClick: (() -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, label = "widgetButtonPressScale")
-    // 48dp hit box meets the Android minimum touch target while keeping the smaller visual size.
+    val scale by animateFloatAsState(
+        if (isPressed) 0.96f else 1f,
+        label = "widgetButtonPressScale",
+    )
+    val iconTint = if (enabled) tint else WidgetIgnoredTint
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.padding(4.dp).size(48.dp),
+        modifier = Modifier.width(WidgetColumnWidth).height(WidgetButtonSlotHeight),
     ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier =
                 Modifier
-                    .size(UiConstants.FAB_CONTAINER_SIZE)
-                    .scale(scale)
-                    .background(Color.Black, CircleShape)
-                    .clickable(interactionSource = interactionSource, indication = LocalIndication.current, onClick = onClick),
+                    .size(WidgetTouchTargetSize)
+                    .combinedClickable(
+                        enabled = enabled,
+                        interactionSource = interactionSource,
+                        indication = LocalIndication.current,
+                        onClick = onClick,
+                        onLongClick = onLongClick,
+                    ),
         ) {
-            Crossfade(targetState = icon, animationSpec = tween(150), label = "widgetButtonIcon") { animatedIcon ->
-                Icon(
-                    imageVector = animatedIcon,
-                    contentDescription = contentDescription,
-                    tint = tint,
-                    modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
-                )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier =
+                    Modifier
+                        .size(UiConstants.FAB_CONTAINER_SIZE)
+                        .scale(scale)
+                        .background(Color.Black, CircleShape),
+            ) {
+                Crossfade(
+                    targetState = icon,
+                    animationSpec = tween(150),
+                    label = "widgetButtonIcon",
+                ) { animatedIcon ->
+                    Icon(
+                        imageVector = animatedIcon,
+                        contentDescription = contentDescription,
+                        tint = iconTint,
+                        modifier = Modifier.size(UiConstants.FAB_ICON_SIZE),
+                    )
+                }
             }
         }
     }
@@ -129,6 +137,31 @@ internal data class RouteControlsState(
     val onStop: () -> Unit,
     val onJumpNext: () -> Unit,
     val onJumpPrevious: () -> Unit,
+)
+
+internal data class RoamingControlsState(
+    val expanded: Boolean,
+    val isActive: Boolean,
+    val isPaused: Boolean,
+    val onIconClick: () -> Unit,
+    val onPauseResume: () -> Unit,
+    val onStop: () -> Unit,
+)
+
+internal data class MasterToggleState(
+    val spoofingActive: Boolean,
+    val stopPopupVisible: Boolean,
+    val onToggle: () -> Unit,
+    val onLongPress: () -> Unit,
+    val onPark: () -> Unit,
+    val onStart: () -> Unit,
+    val onStop: () -> Unit,
+)
+
+internal data class PasteCaptureState(
+    val expanded: Boolean,
+    val onLongPress: () -> Unit,
+    val onCaptureShortcut: () -> Unit,
 )
 
 internal sealed interface WidgetPanelSection {
@@ -158,39 +191,54 @@ internal fun WidgetPanel(
     joystickLocked: Boolean,
     activeProfileId: String,
     routeControls: RouteControlsState,
+    roamingControls: RoamingControlsState,
+    joystickInputIgnored: Boolean = false,
+    roamingStartIgnored: Boolean = false,
     isPanelExpanded: Boolean,
     hasPendingCompletion: Boolean,
-    onToggleMaster: () -> Unit,
+    masterToggle: MasterToggleState,
     onFeatureClicked: (AppFeature) -> Unit,
+    pasteCapture: PasteCaptureState,
     sections: List<WidgetPanelSection>,
     debugStats: DebugStats? = null,
+    routeProgress: RouteProgress? = null,
     onDrag: (dx: Float, dy: Float) -> Unit,
 ) {
     Column(horizontalAlignment = Alignment.Start) {
         // Master toggle icon — always visible; drag to reposition, tap to toggle panel
-        Box {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier =
-                    Modifier
-                        .padding(4.dp)
-                        .size(UiConstants.FAB_CONTAINER_SIZE)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape)
-                        .pointerInput(Unit) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    awaitFirstDown(requireUnconsumed = false)
-                                    var isDragging = false
-                                    var accumulatedDistance = 0f
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier =
+                Modifier
+                    .width(WidgetColumnWidth)
+                    .height(WidgetButtonSlotHeight)
+                    .pointerInput(Unit) {
+                        coroutineScope {
+                            val jobScope = this
+                            awaitEachGesture {
+                                awaitFirstDown(requireUnconsumed = false)
+                                var isDragging = false
+                                var longPressFired = false
+                                var accumulatedDistance = 0f
+                                val longPressJob =
+                                    jobScope.launch {
+                                        delay(viewConfiguration.longPressTimeoutMillis.toLong())
+                                        if (!isDragging) {
+                                            longPressFired = true
+                                            masterToggle.onLongPress()
+                                        }
+                                    }
+                                try {
                                     do {
                                         val event = awaitPointerEvent()
                                         val drag = event.changes.firstOrNull() ?: break
                                         val delta = drag.position - drag.previousPosition
-                                        if (delta != androidx.compose.ui.geometry.Offset.Zero) {
+                                        if (delta != Offset.Zero) {
                                             if (!isDragging) {
                                                 accumulatedDistance += delta.getDistance()
                                                 if (accumulatedDistance > viewConfiguration.touchSlop) {
                                                     isDragging = true
+                                                    longPressJob.cancel()
                                                 }
                                             }
                                             if (isDragging) {
@@ -199,12 +247,22 @@ internal fun WidgetPanel(
                                             drag.consume()
                                         }
                                     } while (event.changes.any { it.pressed })
-                                    if (!isDragging) {
-                                        onToggleMaster()
-                                    }
+                                } finally {
+                                    longPressJob.cancel()
+                                }
+                                if (!isDragging && !longPressFired) {
+                                    masterToggle.onToggle()
                                 }
                             }
-                        },
+                        }
+                    },
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier =
+                    Modifier
+                        .size(UiConstants.FAB_CONTAINER_SIZE)
+                        .background(MaterialTheme.colorScheme.primary, CircleShape),
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_app_launcher),
@@ -214,6 +272,36 @@ internal fun WidgetPanel(
                         ),
                     modifier = Modifier.fillMaxSize().clip(CircleShape),
                 )
+            }
+            WidgetSidePopup(visible = masterToggle.stopPopupVisible) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    when (widgetMasterPopupMode(masterToggle.spoofingActive)) {
+                        WidgetMasterPopupMode.PAUSE_AND_STOP -> {
+                            WidgetIconButton(
+                                icon = LjIcons.Pause,
+                                contentDescription = stringResource(R.string.widget_panel_content_pause_spoofing),
+                                tint = WidgetInactiveTint,
+                                onClick = masterToggle.onPark,
+                            )
+                        }
+
+                        WidgetMasterPopupMode.START_AND_STOP -> {
+                            WidgetIconButton(
+                                icon = LjIcons.PlayArrow,
+                                contentDescription = stringResource(R.string.widget_panel_content_start_spoofing),
+                                tint = LjSuccess,
+                                onClick = masterToggle.onStart,
+                            )
+                        }
+                    }
+                    WidgetIconButton(
+                        icon = LjIcons.Stop,
+                        contentDescription = stringResource(R.string.widget_panel_content_stop_spoofing),
+                        tint = MaterialTheme.colorScheme.error,
+                        enabled = widgetStopEnabled(),
+                        onClick = masterToggle.onStop,
+                    )
+                }
             }
             Box(modifier = Modifier.align(Alignment.TopEnd)) {
                 androidx.compose.animation.AnimatedVisibility(
@@ -233,27 +321,23 @@ internal fun WidgetPanel(
 
         // Feature icons — only shown when panel expanded
         if (isPanelExpanded) {
+            val controlsEnabled = widgetControlsEnabled(masterToggle.spoofingActive)
             features.forEach { feature ->
                 if (feature == AppFeature.ROUTES) {
                     val routeIconTint = if (routeControls.isActive) LjSuccess else MaterialTheme.colorScheme.primary
-                    // Route icon + active controls in a horizontal row
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box {
                         WidgetIconButton(
                             icon = LjIcons.Route,
                             contentDescription = stringResource(R.string.widget_panel_routes_picker_cd),
                             tint = routeIconTint,
+                            enabled = controlsEnabled,
                             onClick = routeControls.onIconClick,
                         )
-                        // Pause/stop shown to the right when activity active and expanded
-                        AnimatedVisibility(
-                            visible = routeControls.isActive && routeControls.expanded,
-                            enter = fadeIn(tween(150)),
-                            exit = fadeOut(tween(150)),
-                        ) {
+                        WidgetSidePopup(visible = routeControls.isActive && routeControls.expanded) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (routeControls.isPausable) {
                                     val pauseResumeIcon = if (routeControls.isPaused) LjIcons.PlayArrow else LjIcons.Pause
-                                    val pauseResumeTint = if (routeControls.isPaused) LjSuccess else LjInactive
+                                    val pauseResumeTint = if (routeControls.isPaused) LjSuccess else WidgetInactiveTint
                                     WidgetIconButton(
                                         icon = pauseResumeIcon,
                                         contentDescription =
@@ -265,6 +349,7 @@ internal fun WidgetPanel(
                                                 },
                                             ),
                                         tint = pauseResumeTint,
+                                        enabled = controlsEnabled,
                                         onClick = routeControls.onPauseResume,
                                     )
                                 }
@@ -272,6 +357,7 @@ internal fun WidgetPanel(
                                     icon = LjIcons.Stop,
                                     contentDescription = stringResource(R.string.widget_panel_stop_cd),
                                     tint = MaterialTheme.colorScheme.error,
+                                    enabled = controlsEnabled,
                                     onClick = routeControls.onStop,
                                 )
                                 if (routeControls.isReplay &&
@@ -282,15 +368,67 @@ internal fun WidgetPanel(
                                         icon = LjIcons.SkipPrevious,
                                         contentDescription = stringResource(R.string.overlay_previous_waypoint_cd),
                                         tint = LjSuccess,
+                                        enabled = controlsEnabled,
                                         onClick = routeControls.onJumpPrevious,
                                     )
                                     WidgetIconButton(
                                         icon = LjIcons.SkipNext,
                                         contentDescription = stringResource(R.string.overlay_next_waypoint_cd),
                                         tint = LjSuccess,
+                                        enabled = controlsEnabled,
                                         onClick = routeControls.onJumpNext,
                                     )
                                 }
+                            }
+                        }
+                    }
+                } else if (feature == AppFeature.ROAMING) {
+                    val roamingTint =
+                        when {
+                            roamingControls.isActive -> LjSuccess
+                            roamingStartIgnored -> WidgetIgnoredTint
+                            else -> MaterialTheme.colorScheme.primary
+                        }
+                    Box {
+                        WidgetIconButton(
+                            icon = LjIcons.Explore,
+                            contentDescription =
+                                if (roamingStartIgnored) {
+                                    stringResource(
+                                        R.string.widget_roaming_ignored_a_route_is_playing,
+                                    )
+                                } else {
+                                    stringResource(R.string.widget_roaming)
+                                },
+                            tint = roamingTint,
+                            enabled = controlsEnabled,
+                            onClick = roamingControls.onIconClick,
+                        )
+                        WidgetSidePopup(visible = roamingControls.isActive && roamingControls.expanded) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                val pauseResumeIcon = if (roamingControls.isPaused) LjIcons.PlayArrow else LjIcons.Pause
+                                val pauseResumeTint = if (roamingControls.isPaused) LjSuccess else WidgetInactiveTint
+                                WidgetIconButton(
+                                    icon = pauseResumeIcon,
+                                    contentDescription =
+                                        if (roamingControls.isPaused) {
+                                            stringResource(
+                                                R.string.widget_resume_roaming,
+                                            )
+                                        } else {
+                                            stringResource(R.string.widget_pause_roaming)
+                                        },
+                                    tint = pauseResumeTint,
+                                    enabled = controlsEnabled,
+                                    onClick = roamingControls.onPauseResume,
+                                )
+                                WidgetIconButton(
+                                    icon = LjIcons.Stop,
+                                    contentDescription = stringResource(R.string.widget_panel_content_stop_roaming),
+                                    tint = MaterialTheme.colorScheme.error,
+                                    enabled = controlsEnabled,
+                                    onClick = roamingControls.onStop,
+                                )
                             }
                         }
                     }
@@ -302,19 +440,48 @@ internal fun WidgetPanel(
                             joystickLocked,
                             activeProfileId,
                         )
-                    val iconTint = if (active) MaterialTheme.colorScheme.primary else LjInactive
-                    WidgetIconButton(
-                        icon = icon,
-                        contentDescription = feature.toContentDescription(),
-                        tint = iconTint,
-                        onClick = { onFeatureClicked(feature) },
-                    )
+                    val iconTint =
+                        when {
+                            (feature == AppFeature.JOYSTICK_TOGGLE || feature == AppFeature.JOYSTICK_LOCK) &&
+                                joystickInputIgnored -> WidgetIgnoredTint
+                            active -> MaterialTheme.colorScheme.primary
+                            else -> WidgetInactiveTint
+                        }
+                    Box {
+                        WidgetIconButton(
+                            icon = icon,
+                            contentDescription =
+                                if (joystickInputIgnored &&
+                                    (feature == AppFeature.JOYSTICK_TOGGLE || feature == AppFeature.JOYSTICK_LOCK)
+                                ) {
+                                    "${feature.toContentDescription()} — won't move while a route or roam is playing"
+                                } else {
+                                    feature.toContentDescription()
+                                },
+                            tint = iconTint,
+                            enabled = controlsEnabled,
+                            // While spoofing, joystick show/lock still launch the overlay; movement no-ops.
+                            onClick = { onFeatureClicked(feature) },
+                            onLongClick = if (feature == AppFeature.PASTE_COORDINATES) pasteCapture.onLongPress else null,
+                        )
+                        if (feature == AppFeature.PASTE_COORDINATES) {
+                            WidgetSidePopup(visible = pasteCapture.expanded) {
+                                WidgetIconButton(
+                                    icon = LjIcons.AddLocationAlt,
+                                    contentDescription = stringResource(R.string.widget_panel_content_open_capture),
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    enabled = controlsEnabled,
+                                    onClick = pasteCapture.onCaptureShortcut,
+                                )
+                            }
+                        }
+                    }
                 }
             }
             sections.forEach { section ->
                 when (section) {
                     is WidgetPanelSection.TapToWalk -> {
-                        val crosshairTint = if (section.active) MaterialTheme.colorScheme.primary else LjInactive
+                        val crosshairTint = if (section.active) MaterialTheme.colorScheme.primary else WidgetInactiveTint
                         WidgetIconButton(
                             icon = LjIcons.MyLocation,
                             contentDescription =
@@ -326,27 +493,26 @@ internal fun WidgetPanel(
                                     },
                                 ),
                             tint = crosshairTint,
+                            enabled = controlsEnabled,
                             onClick = section.onClick,
                         )
                     }
 
                     is WidgetPanelSection.GroupSync -> {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box {
                             WidgetIconButton(
                                 icon = LjIcons.Group,
                                 contentDescription = stringResource(R.string.widget_panel_group_sync_cd),
                                 tint = MaterialTheme.colorScheme.primary,
+                                enabled = controlsEnabled,
                                 onClick = section.onClick,
                             )
-                            AnimatedVisibility(
-                                visible = section.expanded,
-                                enter = fadeIn(tween(150)),
-                                exit = fadeOut(tween(150)),
-                            ) {
+                            WidgetSidePopup(visible = section.expanded) {
                                 WidgetIconButton(
                                     icon = LjIcons.MyLocation,
                                     contentDescription = stringResource(R.string.widget_panel_teleport_to_leader_cd),
                                     tint = LjSuccess,
+                                    enabled = controlsEnabled,
                                     onClick = section.onTeleport,
                                 )
                             }
@@ -354,330 +520,33 @@ internal fun WidgetPanel(
                     }
 
                     is WidgetPanelSection.AltitudeOverride -> {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box {
                             WidgetIconButton(
                                 icon = LjIcons.Terrain,
                                 contentDescription = stringResource(R.string.widget_panel_altitude_override_cd),
                                 tint = if (section.expanded) LjSuccess else MaterialTheme.colorScheme.primary,
+                                enabled = controlsEnabled,
                                 onClick = section.onClick,
                             )
-                            AnimatedVisibility(
-                                visible = section.expanded,
-                                enter = fadeIn(tween(150)),
-                                exit = fadeOut(tween(150)),
-                            ) {
+                            WidgetSidePopup(visible = section.expanded, focusable = true) {
                                 AltitudeOverrideInput(prefillMeters = section.prefillMeters, onConfirm = section.onConfirm)
                             }
                         }
                     }
                 }
             }
-            if (debugStats != null) {
+            val progress = routeProgress
+            if (controlsEnabled && routeControls.isReplay && progress != null) {
+                RouteProgressBadge(
+                    label = progress.label,
+                    contentDescription = routeProgressStopContentDescription(progress.current, progress.total),
+                    // Same 4.dp inset as WidgetIconButton so the chip's left edge matches the icon column.
+                    modifier = Modifier.padding(4.dp),
+                )
+            }
+            if (controlsEnabled && debugStats != null) {
                 DebugStatsPanel(debugStats)
             }
-        }
-    }
-}
-
-internal fun formatBearingText(stats: DebugStats): String = if (stats.hasBearing) "%.0f°".format(stats.bearing) else "—"
-
-@Composable
-private fun DebugStatsPanel(stats: DebugStats) {
-    Column(
-        modifier =
-            Modifier
-                .padding(4.dp)
-                .shadow(elevation = 8.dp, shape = MaterialTheme.shapes.small)
-                .background(Color.Black.copy(alpha = 0.7f), MaterialTheme.shapes.small)
-                .padding(8.dp),
-    ) {
-        val tickHz = if (stats.tickIntervalMs > 0) 1000f / stats.tickIntervalMs else 0f
-        Text("%.2f, %.6f".format(stats.latitude, stats.longitude), color = LjText, style = MaterialTheme.typography.labelSmall)
-        Text(
-            "speed %.2f m/s · alt (ellipsoidal) %.2f m".format(stats.speedMs, stats.altitudeMeters),
-            color = LjText,
-            style = MaterialTheme.typography.labelSmall,
-        )
-        Text(
-            "acc %.1f m · bearing %s · %.1f Hz".format(stats.accuracyMeters, formatBearingText(stats), tickHz),
-            color = LjText,
-            style = MaterialTheme.typography.labelSmall,
-        )
-    }
-}
-
-@Composable
-private fun AltitudeOverrideInput(
-    prefillMeters: Double,
-    onConfirm: (Double) -> Unit,
-) {
-    // Captured once when this composable enters composition (i.e. on expand), not re-read on
-    // every recomposition — the live altitude changes every tick while spoofing and would
-    // otherwise stomp on what the user is typing.
-    var value by remember { mutableStateOf(prefillMeters.toString()) }
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = { value = it },
-            modifier = Modifier.width(100.dp),
-            singleLine = true,
-            label = { Text(stringResource(R.string.widget_panel_altitude_m), color = LjText) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { value.toDoubleOrNull()?.let(onConfirm) }),
-        )
-        IconButton(onClick = { value.toDoubleOrNull()?.let(onConfirm) }) {
-            Icon(LjIcons.Check, contentDescription = stringResource(R.string.widget_panel_confirm_altitude_cd), tint = LjSuccess)
-        }
-    }
-}
-
-@Composable
-private fun FloatingPickerShell(
-    title: String,
-    onDismiss: () -> Unit,
-    hasBack: Boolean,
-    onBack: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.7f))
-                .clickable { if (hasBack) onBack() else onDismiss() },
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-                    .shadow(elevation = 8.dp, shape = MaterialTheme.shapes.medium)
-                    .background(LjBg, MaterialTheme.shapes.medium)
-                    .clickable { /* consume touches inside panel */ },
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (hasBack) {
-                        IconButton(onClick = onBack) {
-                            Icon(LjIcons.ArrowBack, contentDescription = stringResource(R.string.widget_panel_back_cd), tint = LjText)
-                        }
-                    }
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = LjText,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (!hasBack) {
-                        IconButton(onClick = onDismiss) {
-                            Icon(LjIcons.Close, contentDescription = stringResource(R.string.widget_panel_close_cd), tint = LjText)
-                        }
-                    }
-                }
-                Spacer(Modifier.height(12.dp))
-                content()
-            }
-        }
-    }
-}
-
-@Composable
-internal fun FavoritesFloatingView(
-    favorites: List<FavoriteLocation>,
-    onDismiss: () -> Unit,
-    onTeleport: (FavoriteLocation) -> Unit,
-    onWalk: (FavoriteLocation) -> Unit,
-    onWalkViaRoads: (FavoriteLocation) -> Unit,
-    cooldownStates: Map<String, CooldownState> = emptyMap(),
-    currentPosition: LatLng? = null,
-    onAddFromHere: ((name: String) -> Unit)? = null,
-    hideTeleport: Boolean = false,
-) {
-    var showAddForm by remember { mutableStateOf(false) }
-    var newFavName by remember { mutableStateOf("") }
-    var selectedFavorite by remember { mutableStateOf<FavoriteLocation?>(null) }
-
-    FloatingPickerShell(
-        title = selectedFavorite?.name ?: stringResource(R.string.widget_panel_favorites_title),
-        onDismiss = onDismiss,
-        hasBack = selectedFavorite != null,
-        onBack = { selectedFavorite = null },
-    ) {
-        val selected = selectedFavorite
-        if (selected != null) {
-            FavoriteTargetDetail(
-                favorite = selected,
-                onSetLocation = {
-                    onTeleport(selected)
-                    selectedFavorite = null
-                    onDismiss()
-                },
-                onGoToLocation = {
-                    onWalk(selected)
-                    selectedFavorite = null
-                    onDismiss()
-                },
-                onGoToLocationViaRoads = {
-                    onWalkViaRoads(selected)
-                    selectedFavorite = null
-                    onDismiss()
-                },
-                onDismiss = { selectedFavorite = null },
-                hideTeleportFeatures = hideTeleport,
-                showDismissButton = false,
-                textColor = LjText,
-            )
-        } else {
-            FavoritesList(
-                title = null,
-                favorites = favorites,
-                onSelect = { selectedFavorite = it },
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(0.dp),
-                rowBackground = Color.White.copy(alpha = 0.12f),
-                textColor = LjText,
-                cooldownBadgeText = { fav ->
-                    (cooldownStates[fav.id] ?: CooldownState.Ready).toBadgeText(currentPosition, fav.position)
-                },
-            )
-            if (onAddFromHere != null) {
-                Spacer(Modifier.height(12.dp))
-                if (showAddForm) {
-                    val focusRequester = remember { FocusRequester() }
-                    LaunchedEffect(Unit) { focusRequester.requestFocus() }
-                    OutlinedTextField(
-                        value = newFavName,
-                        onValueChange = { newFavName = it },
-                        label = { Text(stringResource(R.string.widget_panel_name), color = LjText) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions =
-                            KeyboardActions(
-                                onDone = {
-                                    if (newFavName.isNotBlank()) {
-                                        onAddFromHere(newFavName.trim())
-                                        newFavName = ""
-                                        showAddForm = false
-                                    }
-                                },
-                            ),
-                        modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        LjTextButton(onClick = {
-                            showAddForm = false
-                            newFavName = ""
-                        }) {
-                            Text(stringResource(R.string.widget_panel_cancel), color = LjText)
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        LjButton(
-                            onClick = {
-                                if (newFavName.isNotBlank()) {
-                                    onAddFromHere(newFavName.trim())
-                                    newFavName = ""
-                                    showAddForm = false
-                                }
-                            },
-                        ) {
-                            Text(stringResource(R.string.widget_panel_save))
-                        }
-                    }
-                } else {
-                    LjButton(
-                        onClick = { showAddForm = true },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Icon(LjIcons.Add, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.widget_panel_add_from_current_location))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-internal fun RoutesFloatingView(
-    routes: List<com.locationjoystick.core.model.Route>,
-    onDismiss: () -> Unit,
-    onStartRoute: (
-        routeId: String,
-        isLooping: Boolean,
-        isReverse: Boolean,
-        isReturnToLocation: Boolean,
-        followRoadsToStart: Boolean,
-    ) -> Unit,
-    onTeleport: (LatLng) -> Unit,
-    hideTeleport: Boolean = false,
-) {
-    var selectedRouteId by remember { mutableStateOf<String?>(null) }
-
-    FloatingPickerShell(
-        title =
-            selectedRouteId?.let { id -> routes.find { it.id == id }?.name }
-                ?: stringResource(R.string.widget_panel_routes_title),
-        onDismiss = onDismiss,
-        hasBack = selectedRouteId != null,
-        onBack = { selectedRouteId = null },
-    ) {
-        if (selectedRouteId != null) {
-            val routeId = selectedRouteId!!
-            val route = routes.find { it.id == routeId }
-            val isTeleportRoute = route?.routeType == com.locationjoystick.core.model.RouteType.TELEPORT
-            var loop by remember(routeId) { mutableStateOf(false) }
-            var reverse by remember(routeId) { mutableStateOf(false) }
-            var returnToLocation by remember(routeId) { mutableStateOf(false) }
-            var followRoads by remember(routeId) { mutableStateOf(false) }
-
-            LjRouteStartOptions(
-                loop = loop,
-                onLoopChange = { loop = it },
-                reverse = reverse,
-                onReverseChange = { reverse = it },
-                returnToLocation = returnToLocation,
-                onReturnToLocationChange = { returnToLocation = it },
-                followRoads = followRoads,
-                onFollowRoadsChange = { followRoads = it },
-                onTeleport = {
-                    route?.startWaypoint(reverse)?.let { onTeleport(it.position) }
-                },
-                onCancel = {
-                    selectedRouteId = null
-                    onDismiss()
-                },
-                onStart = {
-                    onStartRoute(routeId, loop, reverse, returnToLocation && !loop, followRoads && !isTeleportRoute)
-                    selectedRouteId = null
-                    onDismiss()
-                },
-                hideTeleport = hideTeleport,
-                isTeleportRoute = isTeleportRoute,
-                textColor = LjText,
-            )
-        } else {
-            RoutesPickerList(
-                routes = routes,
-                onSelect = { selectedRouteId = it.id },
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(0.dp),
-                rowBackground = Color.White.copy(alpha = 0.12f),
-                textColor = LjText,
-            )
         }
     }
 }
@@ -725,7 +594,15 @@ private fun featureIconAndState(
             Pair(LjIcons.LocationOn, true)
         }
 
-        AppFeature.ROAMING, AppFeature.SEARCH -> {
+        AppFeature.PASTE_COORDINATES -> {
+            Pair(LjIcons.ContentPaste, true)
+        }
+
+        AppFeature.ROAMING -> {
+            Pair(LjIcons.Explore, true)
+        }
+
+        AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES -> {
             error("$feature is map-only and never appears in the widget panel")
         }
     }
@@ -739,5 +616,9 @@ private fun AppFeature.toContentDescription(): String =
         AppFeature.FAVORITES -> stringResource(R.string.widget_feature_favorites_cd)
         AppFeature.SPEED_CYCLE -> stringResource(R.string.widget_feature_speed_cycle_cd)
         AppFeature.MAP_FLOATING -> stringResource(R.string.widget_feature_open_map_cd)
-        AppFeature.ROAMING, AppFeature.SEARCH -> error("$this is map-only and never appears in the widget panel")
+        AppFeature.PASTE_COORDINATES -> stringResource(R.string.widget_paste_coordinates)
+        AppFeature.ROAMING, AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES ->
+            error(
+                "$this is map-only and never appears in the widget panel",
+            )
     }

@@ -18,7 +18,7 @@ import javax.inject.Singleton
 class RoutingErrorReporter
     @Inject
     constructor(
-        @ApplicationContext private val context: Context,
+        @param:ApplicationContext private val context: Context,
     ) {
         private val _errors = MutableSharedFlow<String>(extraBufferCapacity = 1)
         val errors: SharedFlow<String> = _errors.asSharedFlow()

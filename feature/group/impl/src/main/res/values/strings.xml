@@ -34,6 +34,8 @@
     <string name="group_sync_sharing">"Sharing"</string>
     <string name="group_sync_sends_your_location_to_followers">"Sends your location to followers."</string>
     <string name="group_sync_follow_leader">"Follow leader"</string>
+    <string name="group_sync_follow_leader_teleports">"Follow leader teleports"</string>
+    <string name="group_sync_follow_leader_teleports_description">"When the leader teleports, you jump there too. Off: you walk there."</string>
     <string name="group_sync_walks_toward_the_leaders_location">"Walks toward the leader's location."</string>
     <string name="group_sync_connected_to_group">"Connected to group %1$s"</string>
     <plurals name="group_sync_followers_connected">

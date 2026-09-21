@@ -8,11 +8,14 @@ Key files: `:core:location/MockLocationService.kt`, `:core:data/LocationReposito
 
 Every screen's top bar (`LjTopBar`/`LjScaffold`, `:core:designsystem`) shows a full-text toggle button — `> start` / `|| stop` — as a pill centered in the bar's middle column, driving spoofing from anywhere in the app, not just the Map screen. `LjTopBar` lays out a 3-equal-width-column `Row` (start: nav icon + title, middle: the pill, end: actions), so the pill sits at the true bar center regardless of title or action width.
 
+When spoofing is off and a reverse-geocoded place is known, the control reads `Start · <place>` (for example `Start · Paris, France`). The place is clipped to `AppConstants.TopBarConstants.LOCATION_LABEL_MAX_CHARS` and the button is padded clear of the menu and action icons so a long name cannot overlap them. While running, the control shows only `Stop`. The control uses an immediate `Modifier.clickable` — do not attach long-press (`combinedClickable`). Compose waits for the long-press timeout before firing click, so a firm first press shows a toast of the place name and never starts spoofing. The place is already on the button; a long-press toast is redundant.
+
 Backed by `MapController.isSpoofing` (`StateFlow<Boolean>`, derived from `LocationRepository.mockLocationState != IDLE`) and `MapController.toggleSpoofing()` (`:core:location`). Each screen obtains these via the shared `SpoofToggleViewModel` (`hiltViewModel()`), a thin wrapper so feature ViewModels don't need their own `MapController` dependency just for this control.
 
 ## Core Mechanics
 
 - Update rate: `AppConstants.LocationConstants.UPDATE_INTERVAL_MS` (1 Hz, real GPS cadence)
+- Teleport (`ACTION_UPDATE_POSITION` with `speedMs == 0`) also pushes one test-provider fix immediately so Maps does not wait for the next tick. Walk/joystick ticks (`speedMs > 0`) stay on the 1 Hz loop.
 - On stop: call `locationManager.removeTestProvider`. Failure = ghost provider, breaks real GPS until reboot.
 
 ## Edge Cases
@@ -116,6 +119,9 @@ instead of anchoring the altitude Gaussian walk to a flat `DEFAULT_ALTITUDE_METE
   (`AppConstants.RealismConstants.ELEVATION_FRACTIONAL_JITTER_METERS`,
   ±0.49 m) before becoming the convergence target — otherwise the anchor
   itself would lock onto a flat round number once converged (issue #52).
+- **Cache**: `ElevationRepository` keeps an in-memory LRU (`ElevationConstants.CACHE_MAX_ENTRIES`, 64)
+  keyed by a ~111 m cell (lat/lon rounded to 3 decimals, `CACHE_COORD_SCALE`), matching the 90 m DEM. No TTL —
+  ground elevation is static — and process lifetime only. A failed fetch is never cached.
 - **Failure/disabled**: the target simply doesn't move — the anchor stays wherever it last
   converged to (or the 35 m default on first failure).
 - **Manual override wins**: see "Altitude Override Button" in @docs/features/widget.md. Setting

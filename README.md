@@ -25,6 +25,11 @@ Full setup guide with screenshots: **[locationjoystick.shrtcts.fr](https://locat
 
 See the **[wiki](https://locationjoystick.shrtcts.fr/)** for every feature: the map, joystick, routes, roaming, favorites, the floating widget, group sync, and more.
 
+- Paste coordinates as a single location or a complete route, and capture locations from shared map links.
+- Search and sort saved favorites and routes; rename, delete, and share them from the widget too.
+- Use a compact movable widget map with north lock, or expand it for more space.
+- Preview planting circles and spiral roaming, with optional jumps between route stops.
+
 ## Community
 
 Join the **[Discord server](https://discord.gg/r9DRnkwbMf)** for help, feature requests, and updates.

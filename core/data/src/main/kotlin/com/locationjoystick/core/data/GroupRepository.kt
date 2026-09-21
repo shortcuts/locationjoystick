@@ -35,6 +35,8 @@ class GroupRepository
             val GROUP_LEADER_PORT = intPreferencesKey(AppConstants.DataStoreConstants.KEY_GROUP_LEADER_PORT)
             val GROUP_FOLLOWER_MODE_ENABLED =
                 booleanPreferencesKey(AppConstants.DataStoreConstants.KEY_GROUP_FOLLOWER_MODE_ENABLED)
+            val GROUP_FOLLOW_LEADER_TELEPORTS =
+                booleanPreferencesKey(AppConstants.DataStoreConstants.KEY_GROUP_FOLLOW_LEADER_TELEPORTS)
             val GROUP_SHARING_ENABLED = booleanPreferencesKey(AppConstants.DataStoreConstants.KEY_GROUP_SHARING_ENABLED)
         }
 
@@ -54,6 +56,7 @@ class GroupRepository
                     leaderPort = prefs[Keys.GROUP_LEADER_PORT],
                     followerModeEnabled = prefs[Keys.GROUP_FOLLOWER_MODE_ENABLED] ?: false,
                     sharingEnabled = prefs[Keys.GROUP_SHARING_ENABLED] ?: false,
+                    followLeaderTeleports = prefs[Keys.GROUP_FOLLOW_LEADER_TELEPORTS] ?: true,
                 )
             }
 
@@ -78,13 +81,17 @@ class GroupRepository
                 prefs[Keys.GROUP_ID] = invite.groupId
                 prefs[Keys.GROUP_LEADER_HOST] = invite.host
                 prefs[Keys.GROUP_LEADER_PORT] = invite.port
-                prefs[Keys.GROUP_FOLLOWER_MODE_ENABLED] = false
+                prefs[Keys.GROUP_FOLLOWER_MODE_ENABLED] = true
                 prefs[Keys.GROUP_SHARING_ENABLED] = false
             }
         }
 
         suspend fun setFollowerModeEnabled(enabled: Boolean) {
             dataStore.edit { prefs -> prefs[Keys.GROUP_FOLLOWER_MODE_ENABLED] = enabled }
+        }
+
+        suspend fun setFollowLeaderTeleports(enabled: Boolean) {
+            dataStore.edit { prefs -> prefs[Keys.GROUP_FOLLOW_LEADER_TELEPORTS] = enabled }
         }
 
         suspend fun setSharingEnabled(enabled: Boolean) {
@@ -107,6 +114,7 @@ class GroupRepository
                 prefs.remove(Keys.GROUP_LEADER_PORT)
                 prefs.remove(Keys.GROUP_FOLLOWER_MODE_ENABLED)
                 prefs.remove(Keys.GROUP_SHARING_ENABLED)
+                prefs.remove(Keys.GROUP_FOLLOW_LEADER_TELEPORTS)
             }
             _leaderPosition.value = null
         }

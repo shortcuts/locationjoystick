@@ -315,4 +315,46 @@ class RoamingEngineStartRoamingTest {
         val pos = receivedValidCoords.get()
         assertNotNull("should receive valid coordinates", pos)
     }
+
+    @Test
+    fun `startRoaming planting finite loops completes`() {
+        val start = LatLng(0.0, 0.0)
+        val nearby = LatLng(0.00001, 0.0)
+        val config =
+            RoamingConfig(
+                centerPosition = start,
+                radiusMeters = 100.0,
+                distanceMeters = 50.0,
+                kind = com.locationjoystick.core.model.RoamingKind.PLANTING,
+                plantingStartRadiusMeters = 5.0,
+                plantingEndRadiusMeters = 8.0,
+                plantingInfiniteLoops = false,
+                plantingLoopCount = 1,
+                useRoadSnapping = false,
+                plannedWaypoints = listOf(start, nearby, start),
+            )
+        val job = engine.startRoaming(config, 50.0) {}
+        Thread.sleep(4_000)
+        assertTrue("finite planting loop should complete, was active=${job.isActive}", job.isCompleted)
+    }
+
+    @Test
+    fun `startRoaming planting infinite loops stays active until stopped`() {
+        val config =
+            RoamingConfig(
+                centerPosition = LatLng(0.0, 0.0),
+                radiusMeters = 100.0,
+                distanceMeters = 50.0,
+                kind = com.locationjoystick.core.model.RoamingKind.PLANTING,
+                plantingStartRadiusMeters = 5.0,
+                plantingEndRadiusMeters = 8.0,
+                plantingInfiniteLoops = true,
+                useRoadSnapping = false,
+            )
+        val job = engine.startRoaming(config, 50.0) {}
+        Thread.sleep(500)
+        assertFalse("infinite planting should still be running", job.isCompleted)
+        kotlinx.coroutines.runBlocking { engine.stopRoaming() }
+        assertTrue(job.isCancelled || job.isCompleted)
+    }
 }

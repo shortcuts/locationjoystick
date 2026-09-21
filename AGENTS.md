@@ -102,6 +102,7 @@ Rules:
 | Foreground Service | @docs/features/foreground-service.md |
 | Floating Joystick | @docs/features/joystick.md |
 | Map (MapLibre) | @docs/features/map.md |
+| Map tiles (OSM HTTP) | @docs/features/map-tiles.md |
 | Route System | @docs/features/routes.md |
 | Favorite Locations | @docs/features/favorites.md |
 | Speed Profiles | @docs/features/speed-profiles.md |
@@ -111,6 +112,7 @@ Rules:
 | Export / Import | @docs/features/export-import.md |
 | QR Share / Transfer | @docs/features/qr-transfer.md |
 | Deep Links & Location Sharing | @docs/features/deep-link.md |
+| Capture Coordinates | @docs/features/capture-coordinates.md |
 | Last Remembered Location | @docs/features/last-location.md |
 | Onboarding | @docs/features/onboarding.md |
 | Group Sync | @docs/features/group-sync.md |
@@ -118,6 +120,7 @@ Rules:
 | Theme | @docs/features/theme.md |
 | Hide Teleport Features | @docs/features/hide-teleport.md |
 | What's New Popup | @docs/features/whats-new.md |
+| Update Available Check | @docs/features/update-check.md |
 | Localization | @docs/features/localization.md |
 
 ---
@@ -132,7 +135,7 @@ Rules:
 
 | Service | Module | Type | Purpose |
 |---------|--------|------|---------|
-| `MockLocationService` | `:core:location` | ForegroundService | Owns `LocationManager` test provider. Exposes `StateFlow<SpoofState>`. Commands: `startSpoofing`, `updatePosition`, `stopSpoofing`. Suspended-phase state held in `AtomicReference<SuspendedPhaseState>`; transitions via `advanceSuspendedPhase()` pure function (testable independently). |
+| `MockLocationService` | `:core:location` | ForegroundService | Owns `LocationManager` test provider. Exposes `StateFlow<SpoofState>`. Commands: `startSpoofing`, `updatePosition`, `stopSpoofing`, `parkSpoofingKeepWidget` (IDLE while retaining the floating widget). Suspended-phase state held in `AtomicReference<SuspendedPhaseState>`; transitions via `advanceSuspendedPhase()` pure function (testable independently). |
 | `JoystickOverlayService` | `:feature:joystick:impl` | Service | Extends `OverlayService`. Manages `WindowManager` overlay. Reads joystick input → `LocationRepository.updatePosition()`. |
 | `FloatingWidgetService` | `:feature:widget:impl` | Service | Manages widget overlay. Binds to `MockLocationService`. |
 | `RoamingEngine` | `:core:routing` | Class (not service) | Instantiated by `MockLocationService`. Owns OSRM client + random waypoint picker. Runs on service scope. |
@@ -145,6 +148,10 @@ Rules:
 | `WalkCoordinator` | `:core:data` | Class (`@Singleton`) | Thin facade over `WalkToEngine`. Cancels any in-flight walk before starting a new one, forwards position ticks to `LocationRepository`, clears `walkTarget` on arrival or cancellation. |
 | `ActivityStateRepository` | `:core:data` | Repository (`@Singleton`) | Single source of truth for unified pause state across all movement modes. Exposes `isActivityPaused: Flow<Boolean>` combining walk-to, route replay, and roaming pause. Prefer over manually combining individual flows from `LocationRepository` and `RoamingRepository`. |
 | `TeleportUseCase` | `:core:data` | Class (`@Singleton`) | Single entry point for all teleport operations — fires the update-position intent to `MockLocationService`, persists last location + last teleport time. Injected by both `MapViewModel` and `FavoritesViewModel` so every teleport path shares the same persistence and cooldown logic (`cooldownFor`/`cooldownsFor`). |
+| `CaptureCoordinatesRepository` | `:core:data` | Repository (`@Singleton`) | Owns Capture mode, List/Jump actions, captured points, and the pass-through browser choice. DataStore-only; intercepts use `TeleportUseCase` for jumps. |
+| `RealLocationRepository` | `:core:data` | Repository (`@Singleton`) | Obtains a real GPS fix without changing the mock-position cache or cooldown. Supplies the newest non-mock last-known fix (`lastKnownRealPosition()`) that `MapController` uses to seed the initial map position when nothing is remembered. |
+| `GpxOpenRepository` | `:core:data` | Repository (`@Singleton`) | Buffers externally opened GPX files until the map paste sheet consumes them. |
+| `UpdateCheckRepository` | `:core:data` | Repository (`@Singleton`) | Fetches the latest GitHub release tag (api.github.com) for the home-screen "update available" badge; gated by a 24h cache, no toggle. |
 | `StartRouteReplayUseCase` | `:core:location` | Class (`@Singleton`) | Starts a route replay: resolves the route's speed profile, optionally teleports to the start waypoint first (via `TeleportUseCase`), then sends the start-replay intent to `MockLocationService`. Dedupes route-replay-start logic previously duplicated in `MapViewModel` and `FloatingWidgetService`. |
 
 ---
@@ -158,6 +165,8 @@ Rules:
 ## Technical Constraints
 
 → See @docs/technical-constraints.md
+
+Before changing maps, read @docs/features/map-tiles.md. Initialize MapLibre through `MapTileHttp.install`, construct maps through `createMapView`/`rememberMapView`, retain tile-client concurrency and R8 rules, and use `rememberMapView(overlay = true)` for overlay maps.
 
 ---
 

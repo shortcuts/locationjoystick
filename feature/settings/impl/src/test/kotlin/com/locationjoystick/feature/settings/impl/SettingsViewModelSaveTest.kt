@@ -281,17 +281,18 @@ class SettingsViewModelSaveTest {
     fun `saveChanges with hotLocationsEnabled false removes hot favorites`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
-            // First upsert hot locations
-            viewModel.setHotLocationsEnabled(true)
-            viewModel.saveChanges()
-            val afterUpsert = fakeFavoriteRepo.getFavorites().first()
-            assertTrue("Precondition: hot favorites upserted", afterUpsert.isNotEmpty())
-
-            // Now disable and save — should remove them
-            viewModel.setHotLocationsEnabled(false)
             viewModel.userFeedback.test {
+                viewModel.setHotLocationsEnabled(true)
                 viewModel.saveChanges()
-                awaitItem()
+                val upsertFeedback = awaitItem()
+                assertFalse(upsertFeedback.isError)
+                val afterUpsert = fakeFavoriteRepo.getFavorites().first()
+                assertTrue("Precondition: hot favorites upserted", afterUpsert.isNotEmpty())
+
+                viewModel.setHotLocationsEnabled(false)
+                viewModel.saveChanges()
+                val removeFeedback = awaitItem()
+                assertFalse(removeFeedback.isError)
                 cancelAndIgnoreRemainingEvents()
             }
             val afterRemove = fakeFavoriteRepo.getFavorites().first().filter { it.id.startsWith("hot_") }
@@ -619,6 +620,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setHideWidgetOverlay(enabled: Boolean) = Unit
 
+    override fun getKeepWidgetOnIdle(): Flow<Boolean> = flowOf(false)
+
+    override suspend fun setKeepWidgetOnIdle(enabled: Boolean) = Unit
+
     override fun getHideForegroundNotification(): Flow<Boolean> = flowOf(false)
 
     override suspend fun setHideForegroundNotification(enabled: Boolean) = Unit
@@ -686,4 +691,16 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override suspend fun clearAllExceptOnboarding() {
         clearAllExceptOnboardingCallCount++
     }
+
+    override fun getUpdateCheckLastCheckedAtMs(): Flow<Long> = flowOf(0L)
+
+    override suspend fun setUpdateCheckLastCheckedAtMs(timestampMs: Long) = Unit
+
+    override fun getUpdateCheckCachedLatestVersion(): Flow<String> = flowOf("")
+
+    override suspend fun setUpdateCheckCachedLatestVersion(version: String) = Unit
+
+    override fun getUpdateCheckDismissedVersion(): Flow<String> = flowOf("")
+
+    override suspend fun setUpdateCheckDismissedVersion(version: String) = Unit
 }

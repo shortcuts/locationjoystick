@@ -62,6 +62,26 @@ class LeaderSyncServerTest {
     }
 
     @Test
+    fun `pushed teleportSeq is served`() {
+        val port = server.start("gid")
+        server.push(
+            SyncPositionUpdate(
+                timestamp = 1000L,
+                latitude = 1.5,
+                longitude = 2.5,
+                speedMs = 0f,
+                bearing = 0f,
+                seq = 0,
+                teleportSeq = 3L,
+            ),
+        )
+        val conn = URL("http://localhost:$port/position?token=gid").openConnection() as HttpURLConnection
+        val body = conn.inputStream.bufferedReader().readText()
+        conn.disconnect()
+        assertTrue(body.contains("\"teleportSeq\":3"))
+    }
+
+    @Test
     fun `pushed inactive update reports active false`() {
         val port = server.start("gid")
         server.push(

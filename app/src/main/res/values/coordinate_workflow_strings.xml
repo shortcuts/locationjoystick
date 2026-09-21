@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lj_drawer_content_capture">"Capture"</string>
+    <string name="app_gpx_open_failed">Couldn\'t open that GPX file</string>
+    <string name="link_interceptor_captured">"Captured %1$s"</string>
+    <string name="link_interceptor_jumped_to">"Jumped to %1$s"</string>
+    <string name="link_interceptor_captured_and_jumped_to">"Captured and jumped to %1$s"</string>
+</resources>

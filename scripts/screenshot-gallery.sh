@@ -33,7 +33,7 @@
 #   --steps 01,03,05     (run steps 1, 3, 5)
 # Seeding (routes, favorites) always runs before the first selected step.
 #
-# Output files (21 canonical PNGs):
+# Output files (24 canonical PNGs):
 #   01_idle, 02_map, 03_routes, 04_favorites, 05_settings,
 #   06_map_routes_sheet, 07_map_favorites_sheet, 08_map_roaming_sheet,
 #   09_route_creator, 10_route_detail, 11_map_picker,
@@ -42,7 +42,8 @@
 #   15_routes_add_button, 16_favorites_add_button,
 #   17_group_sync, 18_debug_stats,
 #   19_onboarding_mock_location,
-#   20_tap_to_walk_settings, 21_compass_orientation
+#   20_tap_to_walk_settings, 21_compass_orientation,
+#   22_capture_coordinates, 23_map_paste_coordinates, 24_roaming_planting
 #
 # 19_onboarding_mock_location ("Set as fake GPS app" onboarding step) is only
 # captured on a genuinely fresh install — it's taken mid-onboarding, before
@@ -100,7 +101,7 @@ if [[ -n "$STEPS_FILTER" ]]; then
   done
 else
   # No filter: enable all steps
-  for i in $(seq 1 20); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
+  for i in $(seq 1 24); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
 fi
 
 # Helper to check if a step should run (e.g. should_run_step "16")
@@ -1248,6 +1249,54 @@ if should_run_step "21"; then
     wait_s 1 "Scrolling to Compass orientation"
   done
   screenshot "21_compass_orientation"
+fi
+
+# ── 22. Capture coordinates screen ───────────────────────────────────────────
+
+if should_run_step "22"; then
+  log "=== 22 CAPTURE COORDINATES ==="
+  go_idle
+  tap_text_below "Capture" "$CARD_Y_MIN"
+  wait_s 2 "Capture loading"
+  screenshot "22_capture_coordinates"
+fi
+
+# ── 23. Map → Paste coordinates sheet (two points → route actions) ───────────
+
+if should_run_step "23"; then
+  log "=== 23 MAP PASTE COORDINATES ==="
+  go_idle
+  tap_text_below "Map" "$CARD_Y_MIN"
+  wait_s 3 "Map loading"
+  tap_text "Paste coordinates"
+  wait_s 2 "Paste sheet opening"
+  tap_edit_field 0
+  $ADB shell input text "35.6762,%s139.6503"
+  $ADB shell input keyevent KEYCODE_ENTER
+  $ADB shell input text "35.6895,%s139.6917"
+  wait_s 1 "Parsing pasted points"
+  # Keyboard covers the route options; hide it before capturing.
+  back
+  wait_s 1 "Dismissing keyboard"
+  screenshot "23_map_paste_coordinates"
+  back
+  wait_s 1 "Dismissing sheet"
+fi
+
+# ── 24. Map → Roaming sheet, Planting mode ───────────────────────────────────
+
+if should_run_step "24"; then
+  log "=== 24 ROAMING PLANTING ==="
+  go_idle
+  tap_text_below "Map" "$CARD_Y_MIN"
+  wait_s 3 "Map loading"
+  tap_text "start roaming"
+  wait_s 2 "Roaming sheet opening"
+  tap_text_exact "Planting mode"
+  wait_s 1 "Switching to Planting"
+  screenshot "24_roaming_planting"
+  back
+  wait_s 1 "Dismissing sheet"
 fi
 
 # ── Done ─────────────────────────────────────────────

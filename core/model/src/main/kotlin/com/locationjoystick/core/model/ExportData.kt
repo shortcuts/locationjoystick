@@ -19,4 +19,6 @@ data class ExportData(
     val selectedHotRouteIds: Set<String> = emptySet(),
     val routesSortNewestFirst: Boolean = true,
     val favoritesSortNewestFirst: Boolean = true,
+    val routesSortMode: SavedItemSortMode = SavedItemSortMode.NEWEST_FIRST,
+    val favoritesSortMode: SavedItemSortMode = SavedItemSortMode.NEWEST_FIRST,
 )

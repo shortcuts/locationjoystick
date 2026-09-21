@@ -9,6 +9,7 @@ data class GroupState(
     val leaderPort: Int? = null,
     val followerModeEnabled: Boolean = false,
     val sharingEnabled: Boolean = false,
+    val followLeaderTeleports: Boolean = true,
 )
 
 data class SyncPositionUpdate(
@@ -19,6 +20,7 @@ data class SyncPositionUpdate(
     val bearing: Float,
     val seq: Long,
     val active: Boolean = true,
+    val teleportSeq: Long = 0L,
 )
 
 data class GroupInvite(

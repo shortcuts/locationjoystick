@@ -35,6 +35,7 @@ import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SyncPositionUpdate
 import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.RouteReplayEngine
@@ -58,6 +59,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import kotlin.random.Random
@@ -73,6 +75,7 @@ class MockLocationService : Service() {
 
         const val ACTION_START = AppConstants.ServiceConstants.ACTION_START
         const val ACTION_STOP = AppConstants.ServiceConstants.ACTION_STOP
+        const val ACTION_PARK_KEEP_WIDGET = AppConstants.ServiceConstants.ACTION_PARK_KEEP_WIDGET
         const val ACTION_UPDATE_POSITION = AppConstants.ServiceConstants.ACTION_UPDATE_POSITION
         const val ACTION_ROUTE_REPLAY_START = AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_START
         const val ACTION_ROUTE_REPLAY_PAUSE = AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_PAUSE
@@ -96,6 +99,10 @@ class MockLocationService : Service() {
         const val EXTRA_RETURN_LAT = AppConstants.ServiceConstants.EXTRA_RETURN_LAT
         const val EXTRA_RETURN_LON = AppConstants.ServiceConstants.EXTRA_RETURN_LON
         const val EXTRA_FOLLOW_ROADS_TO_START = AppConstants.ServiceConstants.EXTRA_FOLLOW_ROADS_TO_START
+        const val EXTRA_TELEPORT_TO_START = AppConstants.ServiceConstants.EXTRA_TELEPORT_TO_START
+        const val EXTRA_IS_PLANTING = AppConstants.ServiceConstants.EXTRA_IS_PLANTING
+        const val EXTRA_TELEPORT_BETWEEN_WAYPOINTS = AppConstants.ServiceConstants.EXTRA_TELEPORT_BETWEEN_WAYPOINTS
+        const val EXTRA_TELEPORT_BETWEEN_DELAY_SECONDS = AppConstants.ServiceConstants.EXTRA_TELEPORT_BETWEEN_DELAY_SECONDS
     }
 
     inner class LocalBinder : Binder() {
@@ -186,6 +193,17 @@ class MockLocationService : Service() {
     private val realism = RealismSettingsState()
 
     @Volatile private var leaderSharingEnabled: Boolean = false
+
+    /** Role, not the Sharing toggle: the toggle must not decide whether Stop keeps the sync server alive. */
+    @Volatile internal var isGroupLeader: Boolean = false
+
+    /** Leader side: bumped on every explicit teleport (see EXTRA_IS_TELEPORT) and pushed to followers. */
+    private val teleportSeq = AtomicLong(0L)
+
+    // Follower-side cache of the toggle and the hide-teleport setting; read from the poll thread.
+    @Volatile private var followLeaderTeleports: Boolean = true
+
+    @Volatile private var hideTeleportFeatures: Boolean = false
 
     // Per-tick realism state
 
@@ -325,9 +343,12 @@ class MockLocationService : Service() {
                                 }
                             }
                         }
-                        stopService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))
-                        stopService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
-                        Log.i(TAG, "Overlay services stopped")
+                        stopOverlayServices(
+                            computeOverlayStopAction(
+                                OverlayStopTrigger.STATE_IDLE,
+                                settingsRepository.getKeepWidgetOnIdle().first(),
+                            ),
+                        )
                     }
 
                     MockLocationState.PAUSED -> {
@@ -471,6 +492,12 @@ class MockLocationService : Service() {
                 val lat = intent.getDoubleExtra(ServiceConstants.EXTRA_LAT, AppConstants.MapConstants.DEFAULT_LAT)
                 val lon = intent.getDoubleExtra(ServiceConstants.EXTRA_LON, AppConstants.MapConstants.DEFAULT_LON)
                 startSpoofing(lat, lon)
+                // Safety net: a leader whose service was destroyed (OS kill) must serve followers again.
+                serviceScope.launch {
+                    val gs = groupRepository.groupState.first()
+                    val id = gs.groupId
+                    if (gs.role == GroupRole.LEADER && id != null && !leaderSyncServer.isRunning) enterLeaderMode(id)
+                }
             }
 
             ACTION_ENTER_FOLLOWER -> {
@@ -494,9 +521,16 @@ class MockLocationService : Service() {
             }
 
             null -> {
-                // Service restarted by OS (START_STICKY). Resume leader/follower mode first if active,
-                // else fall through to remembered-location logic.
+                // Service restarted by OS (START_STICKY). A parked widget must not resume mock GPS.
                 serviceScope.launch {
+                    if (settingsRepository.getKeepWidgetOnIdle().first()) {
+                        Log.i(TAG, "OS restart: parked — keeping widget, not resuming spoofing")
+                        val hideWidget = settingsRepository.getHideWidgetOverlay().first()
+                        if (Settings.canDrawOverlays(this@MockLocationService) && !hideWidget) {
+                            startService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
+                        }
+                        return@launch
+                    }
                     val groupState = groupRepository.groupState.first()
                     if (groupState.role == GroupRole.LEADER) {
                         val id = groupState.groupId ?: return@launch
@@ -528,9 +562,16 @@ class MockLocationService : Service() {
             }
 
             ACTION_STOP -> {
+                val stopService = shouldStopServiceOnStop()
                 stopSpoofing()
-                stopSelf()
-                return START_NOT_STICKY
+                if (stopService) {
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
+            }
+
+            ACTION_PARK_KEEP_WIDGET -> {
+                parkSpoofingKeepWidget()
             }
 
             ACTION_UPDATE_POSITION -> {
@@ -542,7 +583,10 @@ class MockLocationService : Service() {
                 if (speedMs > 0f) {
                     updatePositionWithVector(lat, lon, speedMs, bearing)
                 } else {
-                    updatePosition(lat, lon)
+                    updatePosition(lat, lon, intent.getBooleanExtra(ServiceConstants.EXTRA_IS_TELEPORT, false))
+                    if (shouldPushImmediateLocationUpdate(speedMs, locationRepository.currentMode.value)) {
+                        pushLocationUpdate()
+                    }
                 }
             }
 
@@ -568,15 +612,7 @@ class MockLocationService : Service() {
                     handleEphemeralReplayStart(waypoints, speedMs)
                 } else {
                     val routeId = intent.getStringExtra(EXTRA_ROUTE_ID) ?: return START_STICKY
-                    val isBackward = intent.getBooleanExtra(EXTRA_IS_BACKWARD, false)
-                    val isLoopingOverride =
-                        if (intent.hasExtra(EXTRA_IS_LOOPING)) intent.getBooleanExtra(EXTRA_IS_LOOPING, false) else null
-                    val returnLat = intent.getDoubleExtra(EXTRA_RETURN_LAT, Double.NaN)
-                    val returnLon = intent.getDoubleExtra(EXTRA_RETURN_LON, Double.NaN)
-                    val returnPosition =
-                        if (!returnLat.isNaN() && !returnLon.isNaN()) LatLng(returnLat, returnLon) else null
-                    val followRoadsToStart = intent.getBooleanExtra(EXTRA_FOLLOW_ROADS_TO_START, false)
-                    handleReplayStart(routeId, isBackward, speedMs, isLoopingOverride, returnPosition, followRoadsToStart)
+                    handleReplayStart(routeId, speedMs, intent.toRouteStartConfig(), intent.returnPositionOrNull())
                 }
             }
 
@@ -594,10 +630,12 @@ class MockLocationService : Service() {
             }
 
             ACTION_ROUTE_REPLAY_STOP -> {
+                replayOrchestrator.abortInFlightStart()
                 serviceScope.launch { handleReplayStop() }
             }
 
             ACTION_ROUTE_REPLAY_CANCEL -> {
+                replayOrchestrator.abortInFlightStart()
                 serviceScope.launch { handleReplayCancel() }
             }
 
@@ -661,6 +699,7 @@ class MockLocationService : Service() {
             Log.i(TAG, "Spoofing already running; ignoring duplicate startSpoofing()")
             return
         }
+        serviceScope.launch { settingsRepository.setKeepWidgetOnIdle(false) }
         // Reset ERROR state so a retry attempt can proceed cleanly.
         if (_state.value == MockLocationState.ERROR) {
             Log.i(TAG, "Clearing ERROR state before retry")
@@ -716,8 +755,10 @@ class MockLocationService : Service() {
     fun updatePosition(
         lat: Double,
         lon: Double,
+        isTeleport: Boolean = false,
     ) {
         if (locationRepository.currentMode.value == MockMode.FOLLOWER) return
+        if (isTeleport) teleportSeq.incrementAndGet()
         writeCurrentPosition(lat, lon, syncRepository = true)
         // Teleport (the only caller — see comment below): jump the altitude anchor to the new
         // position's real elevation immediately instead of leaving it to drift from wherever the
@@ -735,8 +776,8 @@ class MockLocationService : Service() {
 
     // Callers: JoystickOverlayService (direct call) and the WalkCoordinator position callback
     // (ACTION_UPDATE_POSITION intent) — both self-report their own mode (JOYSTICK / WALK_TO).
-    // Every other mode's engine (ReplayOrchestrator, RoamingEngine, follower sync) owns position
-    // updates for its own tick and must not have them overwritten by a stale/racing call here.
+    // A playing route, running roam, or follower owns the tick. Paused route and paused roam
+    // yield so the joystick can steer without stealing mode; resume still snaps to the next stop.
     fun updatePositionWithVector(
         lat: Double,
         lon: Double,
@@ -744,7 +785,9 @@ class MockLocationService : Service() {
         bearing: Float,
     ) {
         val mode = locationRepository.currentMode.value
-        if (mode != MockMode.JOYSTICK && mode != MockMode.WALK_TO) return
+        val mockState = locationRepository.mockLocationState.value
+        val isRoamingPaused = mode == MockMode.ROAMING && roamingRepository.isRoamingPaused.value
+        if (!shouldApplyUpdatePositionWithVector(mode, mockState, isRoamingPaused)) return
         writeCurrentPosition(lat, lon)
         currentSpeedMs = speedMs
         currentBearing = bearing
@@ -767,6 +810,63 @@ class MockLocationService : Service() {
     }
 
     fun stopSpoofing() {
+        serviceScope.launch { settingsRepository.setKeepWidgetOnIdle(false) }
+        // Already IDLE after Pause: the IDLE collector will not fire again, so Stop must
+        // close the widget here. Also unbinds the widget's AUTO_CREATE hold on this service.
+        stopOverlayServices(
+            computeOverlayStopAction(OverlayStopTrigger.FULL_STOP, keepWidgetOverlay = false),
+        )
+        tearDownSpoofing(stopService = shouldStopServiceOnStop())
+    }
+
+    /** A group leader's Stop keeps the service (and its sync server) alive so followers can pause and resume. */
+    internal fun shouldStopServiceOnStop(): Boolean = !isGroupLeader
+
+    /** Tells followers the leader went inactive — the loop that normally reports it is cancelled by teardown. */
+    internal fun pushInactiveToFollowersIfLeader() {
+        if (shouldStopServiceOnStop() || !leaderSyncServer.isRunning) return
+        val pos = positionRef.get()
+        leaderSyncServer.push(
+            SyncPositionUpdate(
+                timestamp = System.currentTimeMillis(),
+                latitude = pos.latitude,
+                longitude = pos.longitude,
+                speedMs = 0f,
+                bearing = currentBearing,
+                seq = 0,
+                active = false,
+                teleportSeq = teleportSeq.get(),
+            ),
+        )
+    }
+
+    /**
+     * Same mock-GPS teardown as [stopSpoofing] (test provider, loop, wakelock, route/roam), but
+     * the floating widget stays on screen. Joystick overlay still stops.
+     */
+    fun parkSpoofingKeepWidget() {
+        serviceScope.launch { settingsRepository.setKeepWidgetOnIdle(true) }
+        serviceScope.launch { replayOrchestrator.handleStop() }
+        tearDownSpoofing(stopService = false)
+        Log.i(TAG, "Spoofing parked; widget overlay kept")
+    }
+
+    private fun stopOverlayServices(action: IdleOverlayStopAction) {
+        stopService(Intent().setClassName(packageName, JOYSTICK_SERVICE_CLASS))
+        when (action) {
+            IdleOverlayStopAction.STOP_JOYSTICK_AND_WIDGET -> {
+                stopService(Intent().setClassName(packageName, WIDGET_SERVICE_CLASS))
+                Log.i(TAG, "Overlay services stopped")
+            }
+
+            IdleOverlayStopAction.STOP_JOYSTICK_ONLY -> {
+                Log.i(TAG, "Joystick overlay stopped; widget kept after pause")
+            }
+        }
+    }
+
+    private fun tearDownSpoofing(stopService: Boolean) {
+        pushInactiveToFollowersIfLeader()
         // Cancel immediately (idempotent); null assignment deferred under mutex so the
         // RUNNING observer can't start a new loop between our cancel and the null write.
         updateJob?.cancel()
@@ -783,8 +883,10 @@ class MockLocationService : Service() {
         locationRepository.setMockMode(MockMode.TELEPORT)
         locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
-        stopSelf()
-        Log.i(TAG, "Spoofing stopped")
+        if (stopService) {
+            stopSelf()
+            Log.i(TAG, "Spoofing stopped")
+        }
     }
 
     /**
@@ -843,12 +945,23 @@ class MockLocationService : Service() {
                 },
             ) { update ->
                 val (lat, lon, _, bearing, active) = update
-                followerCatchUp.setTarget(LatLng(lat, lon), bearing)
-                groupRepository.setLeaderPosition(LatLng(lat, lon))
+                val leaderTeleported = followerCatchUp.observeTeleportSeq(update.teleportSeq)
+                // An inactive leader's position is stale: keep no target so Teleport to leader
+                // reports "position not yet known" instead of silently moving nowhere.
+                if (active) {
+                    followerCatchUp.setTarget(LatLng(lat, lon), bearing)
+                    groupRepository.setLeaderPosition(LatLng(lat, lon))
+                }
                 when (followerCatchUp.handleLeaderActiveUpdate(active, _state.value)) {
                     FollowerActiveAction.BOOTSTRAP -> {
+                        // Leader stop, move, start again counts as a teleport; the very first bootstrap
+                        // (nothing reported yet) always snaps.
+                        val resumed = followerCatchUp.consumePausedByLeader()
+                        val snapNow = !resumed || shouldSnapToLeader(true, followLeaderTeleports, hideTeleportFeatures)
+                        val startAt = if (snapNow) LatLng(lat, lon) else positionRef.get()
                         serviceScope.launch {
-                            startSpoofing(lat, lon)
+                            startSpoofing(startAt.latitude, startAt.longitude)
+                            if (resumed && snapNow) settingsRepository.setLastTeleportTime(System.currentTimeMillis())
                             // startSpoofing() unconditionally sets mode to TELEPORT — reassert
                             // FOLLOWER so advanceFollowerCatchUp() doesn't no-op on later ticks.
                             locationRepository.setMockMode(MockMode.FOLLOWER)
@@ -856,11 +969,15 @@ class MockLocationService : Service() {
                     }
 
                     FollowerActiveAction.PAUSE -> {
+                        followerCatchUp.clearTarget()
+                        groupRepository.setLeaderPosition(null)
                         serviceScope.launch { pauseFollowerForInactiveLeader() }
                     }
 
                     FollowerActiveAction.NO_OP -> {
-                        Unit
+                        if (shouldSnapToLeader(leaderTeleported, followLeaderTeleports, hideTeleportFeatures)) {
+                            snapToLeader(LatLng(lat, lon))
+                        }
                     }
                 }
             }
@@ -885,6 +1002,10 @@ class MockLocationService : Service() {
                 groupRepository.emitTeleportUnavailable()
                 return
             }
+        snapToLeader(target)
+    }
+
+    private fun snapToLeader(target: LatLng) {
         writeCurrentPosition(target.latitude, target.longitude, syncRepository = true)
         followerCatchUp.markArrived()
         // Shares the same cooldown clock as every other teleport (Favorites, map long-press) —
@@ -975,19 +1096,20 @@ class MockLocationService : Service() {
     private fun observeGroupState() {
         serviceScope.launch {
             groupRepository.groupState.collect { state ->
-                leaderSharingEnabled = state.role == GroupRole.LEADER && state.sharingEnabled
+                isGroupLeader = state.role == GroupRole.LEADER
+                leaderSharingEnabled = isGroupLeader && state.sharingEnabled
+                followLeaderTeleports = state.followLeaderTeleports
             }
         }
+        serviceScope.launch { settingsRepository.getHideTeleportFeatures().collect { hideTeleportFeatures = it } }
     }
 
     private fun handleReplayStart(
         routeId: String,
-        isBackward: Boolean,
         speedMs: Double,
-        isLoopingOverride: Boolean? = null,
-        returnPosition: LatLng? = null,
-        followRoadsToStart: Boolean = false,
-    ) = replayOrchestrator.handleStart(routeId, isBackward, speedMs, isLoopingOverride, returnPosition, followRoadsToStart)
+        config: RouteStartConfig,
+        returnPosition: LatLng?,
+    ) = replayOrchestrator.handleStart(routeId, speedMs, config, returnPosition)
 
     private fun handleEphemeralReplayStart(
         waypoints: List<LatLng>,
@@ -1278,6 +1400,7 @@ class MockLocationService : Service() {
                         bearing = fix.bearing,
                         seq = 0,
                         active = _state.value != MockLocationState.IDLE && _state.value != MockLocationState.ERROR,
+                        teleportSeq = teleportSeq.get(),
                     ),
                 )
             }
