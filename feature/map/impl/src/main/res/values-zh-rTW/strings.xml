@@ -24,7 +24,8 @@
     <string name="map_sheet_cancel">"取消"</string>
     <string name="map_hint_long_press_to_walk">"長按即可行走"</string>
     <string name="map_hint_tap_to_teleport_long_press">"點擊瞬移 · 長按行走"</string>
-    <string name="map_fab_recenter_cd">"回到目前位置"</string>
+    <string name="map_fab_recenter_gps_cd">"回到手機 GPS 位置"</string>
+    <string name="map_fab_recenter_mock_cd">"回到模擬位置"</string>
     <string name="map_fab_stop_walk_cd">"停止行走"</string>
     <string name="map_fab_walk_in_progress_cd">"正在行走，點擊查看控制項"</string>
     <string name="map_fab_open_favorites_cd">"開啟收藏"</string>
