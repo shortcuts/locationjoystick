@@ -109,14 +109,13 @@ object AppConstants {
     }
 
     object RoamingConstants {
-        const val DEFAULT_RADIUS_METERS = 2000.0
+        const val DEFAULT_RADIUS_METERS = 500.0
         const val OSRM_PROFILE_FOOT = "foot"
         const val OSRM_PROFILE_BIKE = "bike"
         const val OSRM_PROFILE_DRIVING = "driving"
         const val DEFAULT_DISTANCE_METERS = 1_000.0
         const val DEFAULT_FOLLOW_ROADS = true
         const val DEFAULT_RETURN_TO_START = true
-        const val RADIUS_MIN_METERS = 1_000.0
         const val RADIUS_MAX_METERS = 100_000.0
         const val DISTANCE_MIN_METERS = 50.0
         const val DISTANCE_MAX_METERS = 50_000.0

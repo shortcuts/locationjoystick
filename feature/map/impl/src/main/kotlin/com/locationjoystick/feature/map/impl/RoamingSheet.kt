@@ -95,7 +95,7 @@ private fun RoamingSheetPreview() {
         RoamingSheet(
             draft =
                 RoamingDefaults(
-                    radiusMeters = 5_000.0,
+                    radiusMeters = 500.0,
                     distanceMeters = 1_000.0,
                     speedProfileId = AppConstants.ProfileConstants.PROFILE_ID_WALK,
                     followRoads = true,

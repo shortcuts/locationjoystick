@@ -43,8 +43,6 @@ import kotlin.math.roundToInt
 
 private val SPEED_PROFILES = listOf("walk", "run", "bike")
 
-private const val RADIUS_MIN_METERS = 1_000.0
-private const val RADIUS_MAX_METERS = 100_000.0
 private const val DISTANCE_MIN_METERS = 50.0
 private const val DISTANCE_MAX_METERS = 50_000.0
 
@@ -157,7 +155,11 @@ fun RoamingSheetContent(
                             val meters = if (isMph) v * 1609.344 else v
                             onDraftChange(
                                 draft.copy(
-                                    radiusMeters = meters.coerceIn(RADIUS_MIN_METERS, RADIUS_MAX_METERS),
+                                    radiusMeters =
+                                        meters.coerceIn(
+                                            AppConstants.RoamingConstants.ROAMING_MIN_RADIUS_METERS,
+                                            AppConstants.RoamingConstants.RADIUS_MAX_METERS,
+                                        ),
                                 ),
                             )
                         }

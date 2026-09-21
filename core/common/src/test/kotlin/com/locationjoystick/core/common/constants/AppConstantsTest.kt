@@ -92,6 +92,14 @@ class AppConstantsTest {
     }
 
     @Test
+    fun `default roaming radius is within the allowed range`() {
+        assertTrue(
+            AppConstants.RoamingConstants.DEFAULT_RADIUS_METERS in
+                AppConstants.RoamingConstants.ROAMING_MIN_RADIUS_METERS..AppConstants.RoamingConstants.RADIUS_MAX_METERS,
+        )
+    }
+
+    @Test
     fun `paste temp route id is reserved and not a hot route prefix`() {
         assertEquals("paste_temp_route", AppConstants.RouteConstants.PASTE_TEMP_ROUTE_ID)
         assertEquals("Temp Route from Paste", AppConstants.RouteConstants.PASTE_TEMP_ROUTE_NAME)
