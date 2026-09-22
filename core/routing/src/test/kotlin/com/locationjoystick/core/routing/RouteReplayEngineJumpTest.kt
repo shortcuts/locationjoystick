@@ -6,6 +6,12 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+// start() dispatches the replay tick loop onto Dispatchers.Default; pausing immediately after
+// races whether that first tick has run yet, which flaked on CI (0.23.0 release build) though
+// never locally. Waiting it out makes pause() land after the tick deterministically instead of
+// racing it — the tick's tiny move never crosses a waypoint boundary, so assertions are unaffected.
+private const val SETTLE_MS = 50L
+
 class RouteReplayEngineJumpTest {
     private val engine = RouteReplayEngine(RouteInterpolator())
 
@@ -18,6 +24,7 @@ class RouteReplayEngineJumpTest {
     @Test
     fun `jumpToNextWaypoint after start returns the second waypoint`() {
         engine.start(waypoints = waypoints, speedMs = 1.4, onPositionUpdate = {}, onComplete = {})
+        Thread.sleep(SETTLE_MS)
         engine.pause()
 
         val target = engine.jumpToNextWaypoint(onPositionUpdate = {}, onComplete = {})
@@ -29,6 +36,7 @@ class RouteReplayEngineJumpTest {
     @Test
     fun `jumpToNextWaypoint twice returns the third waypoint`() {
         engine.start(waypoints = waypoints, speedMs = 1.4, onPositionUpdate = {}, onComplete = {})
+        Thread.sleep(SETTLE_MS)
         engine.pause()
 
         engine.jumpToNextWaypoint(onPositionUpdate = {}, onComplete = {})
@@ -41,6 +49,7 @@ class RouteReplayEngineJumpTest {
     @Test
     fun `jumpToNextWaypoint at the last waypoint is a no-op`() {
         engine.start(waypoints = waypoints, speedMs = 1.4, onPositionUpdate = {}, onComplete = {})
+        Thread.sleep(SETTLE_MS)
         engine.pause()
 
         repeat(3) { engine.jumpToNextWaypoint(onPositionUpdate = {}, onComplete = {}) }
@@ -53,6 +62,7 @@ class RouteReplayEngineJumpTest {
     @Test
     fun `jumpToPreviousWaypoint at the first waypoint is a no-op`() {
         engine.start(waypoints = waypoints, speedMs = 1.4, onPositionUpdate = {}, onComplete = {})
+        Thread.sleep(SETTLE_MS)
         engine.pause()
 
         val target = engine.jumpToPreviousWaypoint(onPositionUpdate = {}, onComplete = {})
@@ -64,6 +74,7 @@ class RouteReplayEngineJumpTest {
     @Test
     fun `jumpToPreviousWaypoint after reaching the end walks back through every waypoint`() {
         engine.start(waypoints = waypoints, speedMs = 1.4, onPositionUpdate = {}, onComplete = {})
+        Thread.sleep(SETTLE_MS)
         engine.pause()
         repeat(3) { engine.jumpToNextWaypoint(onPositionUpdate = {}, onComplete = {}) }
 
@@ -108,6 +119,7 @@ class RouteReplayEngineJumpTest {
             onComplete = {},
             boundaryIndices = boundaries,
         )
+        Thread.sleep(SETTLE_MS)
         engine.pause()
 
         val next = engine.jumpToNextWaypoint(onPositionUpdate = {}, onComplete = {})
@@ -140,6 +152,7 @@ class RouteReplayEngineJumpTest {
     @Test
     fun `currentProgress at start is 1 of N named stops`() {
         engine.start(waypoints = waypoints, speedMs = 1.4, onPositionUpdate = {}, onComplete = {})
+        Thread.sleep(SETTLE_MS)
         engine.pause()
 
         val progress = engine.currentProgress()
@@ -153,6 +166,7 @@ class RouteReplayEngineJumpTest {
     @Test
     fun `currentProgress after jumpToNextWaypoint is 2 of N`() {
         engine.start(waypoints = waypoints, speedMs = 1.4, onPositionUpdate = {}, onComplete = {})
+        Thread.sleep(SETTLE_MS)
         engine.pause()
         engine.jumpToNextWaypoint(onPositionUpdate = {}, onComplete = {})
 
@@ -183,6 +197,7 @@ class RouteReplayEngineJumpTest {
             onComplete = {},
             boundaryIndices = listOf(0, 2, 5, 7),
         )
+        Thread.sleep(SETTLE_MS)
         engine.pause()
 
         assertEquals(1, engine.currentProgress()!!.current)
