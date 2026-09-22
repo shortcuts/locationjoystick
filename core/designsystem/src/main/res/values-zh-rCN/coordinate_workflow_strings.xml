@@ -74,8 +74,8 @@
     <string name="capture_optimize_order">"优化路径顺序"</string>
     <string name="capture_saved">"路线已保存。"</string>
     <string name="capture_need_points">"至少需要 2 个点才能保存为路线。"</string>
-    <string name="capture_passthrough_label">"放行：%1$s"</string>
-    <string name="capture_setup_form_pass_through_browser">"放行浏览器"</string>
+    <string name="capture_passthrough_label">"其他链接打开方式：%1$s"</string>
+    <string name="capture_setup_form_pass_through_browser">"用于打开其他链接的浏览器"</string>
     <string name="capture_setup_form_cancel">"取消"</string>
     <string name="capture_previous_points">"此前采集的位置：%1$d 个。"</string>
     <string name="capture_point_count">"已采集位置：%1$d 个"</string>

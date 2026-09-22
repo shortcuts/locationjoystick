@@ -74,8 +74,8 @@
     <string name="capture_optimize_order">"最佳化路徑順序"</string>
     <string name="capture_saved">"路線已儲存。"</string>
     <string name="capture_need_points">"至少需要 2 個點才能儲存為路線。"</string>
-    <string name="capture_passthrough_label">"放行：%1$s"</string>
-    <string name="capture_setup_form_pass_through_browser">"放行瀏覽器"</string>
+    <string name="capture_passthrough_label">"其他連結開啟方式：%1$s"</string>
+    <string name="capture_setup_form_pass_through_browser">"用來開啟其他連結的瀏覽器"</string>
     <string name="capture_setup_form_cancel">"取消"</string>
     <string name="capture_previous_points">"先前擷取的位置：%1$d 個。"</string>
     <string name="capture_point_count">"已擷取位置：%1$d 個"</string>
