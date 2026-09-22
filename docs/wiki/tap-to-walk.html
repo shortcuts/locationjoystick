@@ -53,20 +53,16 @@
 
     <h2 id="floating-map-quick-walk">Floating map quick walk</h2>
     <p>
-      When this is turned on, tapping anywhere on the floating map starts walking to that spot
-      right away. It skips the popup that normally asks which action to take, so the walk
-      begins immediately.
-    </p>
-    <p>
-      Useful when you already know where you want to go and don't need to choose between
-      Walk, Teleport, or Walk via roads every time.
+      When this is turned on, tapping anywhere on the floating map walks to that spot right
+      away — it skips the popup that normally asks whether to walk, teleport, or take roads.
+      Useful once you already know where you're going.
     </p>
 
     <h2 id="screen-overlay">Screen tap-to-walk overlay</h2>
     <p>
-      This adds a crosshair button to the floating widget panel. Tap it once, and a clear
-      layer appears over whatever app you're currently using. Your very next tap anywhere on
-      the screen becomes your walk destination, and the layer then disappears on its own.
+      This adds a crosshair button to the floating widget panel. Tap it once to place a
+      clear layer over whatever app you're using — your next tap anywhere on screen
+      becomes your walk destination, and the layer then disappears on its own.
     </p>
     <p>
       To cancel without walking anywhere, tap the close button in the bottom-right corner.
@@ -74,20 +70,15 @@
 
     <h3 id="scale-setting">Scale setting</h3>
     <p>
-      The overlay turns the spot you tapped on screen into a real-world location using the
-      <strong>Scale</strong> value, shown in meters per pixel. A higher number means each pixel
-      on screen stands for more real-world distance, which helps when the game map is zoomed
-      out. A lower number works better for zoomed-in maps where precision matters.
+      The overlay turns your tap into a real-world location using the
+      <strong>Scale</strong> value, in meters per pixel. A higher number covers more
+      real-world distance per pixel, which suits a zoomed-out game map; a lower number
+      suits a zoomed-in one.
     </p>
     <p>
-      If your taps are landing too far from where you meant, adjust the scale to match how
-      zoomed in the game is. Zooming the game map out usually gives more accurate results,
-      since small positioning errors matter less at that scale.
-    </p>
-    <p>
-      Instead of guessing, tap <strong>Measure scale from screen</strong> to set it directly:
-      an overlay appears over your game, tap two landmarks you know the real-world distance
-      between, type that distance in meters, then tap Apply.
+      If your taps land too far from where you meant, adjust the scale to match how
+      zoomed in the game is — zooming out usually gives more accurate results, since
+      small positioning errors matter less at that scale.
     </p>
 
     <h3 id="warning">Important note</h3>
@@ -103,11 +94,11 @@
 
     <h2 id="compass-orientation">Compass orientation</h2>
     <p>
-      locationjoystick takes a screenshot the moment you open the tap-to-walk overlay and
-      automatically finds your game's compass icon in the top-right corner of the screen — the
-      same spot most AR/GPS games put theirs. It uses the icon's direction to rotate the walk
-      target so it lands in the right place even when the game map is turned. There's no switch
-      for this — it runs automatically whenever the accessibility service below is turned on.
+      locationjoystick screenshots the tap-to-walk overlay the moment it opens and
+      automatically finds your game's compass icon in its usual top-right spot. It uses
+      the icon's direction to rotate the walk target so it lands correctly even when the
+      game map is turned. There's no switch for this — it runs automatically once the
+      accessibility service below is turned on.
     </p>
 
     <h3 id="compass-setup">Setup</h3>
