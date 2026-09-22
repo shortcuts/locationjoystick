@@ -42,58 +42,83 @@
 
     <h2 id="turn-capture-on">Set up Capture</h2>
     <p>
-      Until this app is your default browser, the Capture page shows only the setup steps and a
-      <strong>Setup guide</strong> button that opens this page. Once the app is your default browser,
-      the setup steps disappear and the Capture mode switch, List and Jump, the captured list and
-      <strong>Save as route</strong> appear. Points you already captured are kept and come back after setup.
+      Until this app is your default browser, the Capture page shows only the setup steps below and a
+      <strong>Setup guide</strong> button that opens this page. Follow the steps in order.
     </p>
-    <ul class="section-bullets">
-      <li><strong>Default browser</strong> — tap the button to set this app as your default browser. (A system popup that only says "set as default browser" often does nothing on Samsung phones.) The page checks this when you come back from Android settings, and it is the only step the app can verify.</li>
-      <li><strong>Also turn on supported links for this app</strong> — in this app's Android settings, allow it to open supported links. The app cannot check this, so it is a reminder rather than a step to tick off.</li>
-      <li><strong>Turn off Google Maps supported links</strong> — tap the button and turn off opening supported links there. If Maps keeps that on, Google Maps links go straight to Maps and this app never sees them. This step counts as done together with the default browser step.</li>
-    </ul>
+    <ol class="section-bullets">
+      <li>
+        Tap <strong>Default browser</strong>. Set this app as your default browser in the screen that opens.
+        <br>On Samsung phones, a popup that only says "set as default browser" often does nothing — open
+        Android's default apps settings instead and pick this app there.
+      </li>
+      <li>
+        Go back to the Capture page. It rechecks automatically and moves to the next step.
+      </li>
+      <li>
+        In this app's Android settings, turn on <strong>supported links</strong>. The app can't check this step,
+        so double check it yourself.
+      </li>
+      <li>
+        Tap <strong>Turn off Google Maps supported links</strong> and turn off "open supported links" for
+        Google Maps. Skip this and Maps links go straight to Maps — this app never sees them.
+      </li>
+    </ol>
     <p>
-      <strong>Done with Capture?</strong> Tap the three dots at the top of the page and choose
-      <strong>Restore default browser</strong>. Tick the box to confirm and tap <strong>Restore</strong>.
-      Capture turns off, the setup steps come back, and Android's default apps screen opens so you can
-      pick your usual browser again. This app cannot switch your browser back by itself. Your captured
-      points and your pass-through browser are kept. The same menu also has <strong>Setup guide</strong>.
+      Once the app is your default browser, the setup steps disappear and the Capture mode switch, List and
+      Jump, the captured list, and <strong>Save as route</strong> appear. Any points you already captured come
+      back too.
     </p>
     <p>
-      After setup, turn on <strong>Capture mode</strong>, then choose <strong>List</strong> to add each location, <strong>Jump</strong> to move there immediately, or both. If the list already has points when you turn the mode on, choose <strong>Clear</strong> (the main action) to start fresh or <strong>Keep</strong> to continue.
-    </p>
-    <p>
-      With Capture mode off—or with both List and Jump unchecked—links pass through without being
-      collected or changing your location. Tap the short <strong>Pass-through</strong> row to choose an
-      installed browser for links that pass through. Google Maps links are sent to
-      the Google Maps app first while Capture mode is off, even if its supported-links switch is off;
-      if Maps is unavailable, they use your chosen browser.
-    </p>
-    <p>
-      The browser list refreshes when you return from Android settings. It continues to show your
-      installed browsers even while this app is selected as the default browser.
+      To turn Capture back off later: tap the three dots at the top of the page, choose
+      <strong>Restore default browser</strong>, tick the confirm box, and tap <strong>Restore</strong>.
+      Capture turns off and Android's default apps screen opens so you can pick your usual browser again
+      — this app can't switch it back for you. Your captured points and your pass-through browser choice
+      stay. The same three-dot menu has <strong>Setup guide</strong> too.
     </p>
 
-    <h2 id="collect-and-save">Collect and save</h2>
+    <h2 id="choose-what-links-do">Choose what captured links do</h2>
+    <ol class="section-bullets">
+      <li>Turn on <strong>Capture mode</strong>.</li>
+      <li>
+        Choose <strong>List</strong> to add each tapped location to your list, <strong>Jump</strong> to move
+        there right away, or check both.
+      </li>
+      <li>
+        If the list already has points, choose <strong>Clear</strong> to start fresh or
+        <strong>Keep</strong> to add to what's there.
+      </li>
+    </ol>
     <p>
-      With the setup above in place, tap a map link in another app.
-      List adds the point without moving, Jump moves there without adding, and using both does
-      both immediately. A short message confirms what happened and the other app stays on screen.
-      Open Capture later to see the list. Use <strong>Copy</strong>,
-      <strong>Last</strong> (removes the most recent point), or <strong>Clear</strong> on
-      the row above the route name. Enter a route name and tap <strong>Save as route</strong> when
-      you have at least two points. The new route appears under Routes.
+      With Capture mode off, or with both List and Jump unchecked, links pass through instead — nothing is
+      collected and your location doesn't change. Tap <strong>Pass-through</strong> to pick which installed
+      browser handles those links. Google Maps links always try the Google Maps app first while Capture
+      mode is off, even if its supported-links switch is off; if Maps isn't installed, your chosen browser
+      opens them instead. The browser list refreshes when you return from Android settings.
+    </p>
+
+    <h2 id="collect-and-save">Collect and save a route</h2>
+    <ol class="section-bullets">
+      <li>With setup done, tap a map link in another app.</li>
+      <li>
+        List adds the point, Jump moves you there, both do both — instantly, with a short confirmation
+        message. The other app stays open.
+      </li>
+      <li>Open Capture to see your list, shown in an orange box in the order you captured each point.</li>
+      <li>
+        Use <strong>Copy</strong>, <strong>Last</strong> (removes the most recent point), or
+        <strong>Clear</strong> on the row above the route name field.
+      </li>
+      <li>Type a route name.</li>
+      <li>Tap <strong>Save as route</strong> — needs at least two points. The route appears under Routes.</li>
+    </ol>
+    <p>
+      <strong>Optimize proximity</strong> is on by default when you copy or save — it reorders points so
+      each stop sits near the last one, the same option used when pasting coordinates into a route. Turn on
+      <strong>Keep original</strong> instead to save them in capture order.
     </p>
     <p>
-      The on-screen list stays in the order you captured the points, inside an orange box,
-      so <strong>Last</strong> always drops the most recent one. <strong>Optimize proximity</strong>
-      is on by default when you copy or save — the same option as when you paste coordinates
-      into a route. It reorders the points so each stop is near the previous one. Choose
-      <strong>Keep original</strong> if you want the capture order instead.
-    </p>
-    <p>
-      The same link tapped twice in a row is not added twice. A later repeat of an earlier
-      point is kept, so a loop in the list is allowed.
+      Tapping the same link twice in a row does not add it twice. Tapping an earlier point again later
+      does add it again, so a loop in the route is allowed.
     </p>
   </main>
 
