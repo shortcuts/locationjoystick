@@ -22,6 +22,20 @@ All wiki pages are read by **app users, not developers**. Write every sentence a
 
 ---
 
+## Writing or editing wiki prose
+
+Whenever a change adds or edits prose on a `docs/wiki/*.html` page, run the `/no-ai-slop`
+skill on the page first, then the `/documentation` skill, before considering the page done.
+`/no-ai-slop` cuts filler and AI-sounding phrasing while preserving meaning; `/documentation`
+checks structure against the Diátaxis reference/how-to shape these pages already follow. Judge
+the result against the audience test above — could a non-technical friend understand every
+sentence? — not against either skill's own output in isolation.
+
+This applies to prose edits only. Screenshot regeneration, nav wiring in `wiki-init.js`, and
+`changelog.html` generation (see below) are unaffected.
+
+---
+
 ## Adding a new page to the navbar
 
 All nav items live in `docs/wiki/wiki-init.js`, in the `NAV_ITEMS` array near the top of the file.
