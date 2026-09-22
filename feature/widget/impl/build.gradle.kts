@@ -4,6 +4,9 @@ plugins {
 
 android {
     namespace = "com.locationjoystick.feature.widget.impl"
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
     lint {
         disable += "MultipleAwaitPointerEventScopes"
     }
