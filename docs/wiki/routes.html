@@ -37,7 +37,7 @@
       <ul class="section-bullets">
         <li>Tap the add button to create a new route by placing stops on the map, pasting coordinates, or importing a file.</li>
         <li>Tap a saved route to start it. Playback jumps to the first stop, then follows the path. You can loop it, reverse it, or have it return to the start.</li>
-        <li>A search box at the top of the list finds a route by name as you type. The map's routes sheet has the same box. From the floating widget, tap the search icon next to the close button to open it. Closing the list clears what you typed.</li>
+        <li>A search box at the top of the list finds a route by name as you type — the map's routes sheet has the same box. From the floating widget, tap the search icon next to the close button to open it. Closing the list clears what you typed.</li>
         <li>Sort routes A–Z, Z–A, newest saved, or oldest saved. The same choice applies to the floating widget's route list.</li>
         <li>While a route is playing, a count like <code>3/12</code> at the bottom of the map and widget button lists shows which stop you're on.</li>
         <li>The three-dot menu on a saved route lets you edit it, share its coordinates, export it, or delete it. Share shows every stop as <code>lat, lon</code> lines you can copy or send as a message.</li>
@@ -54,7 +54,7 @@
       <ul class="section-bullets">
         <li>The button opens a menu with every way to add a route.</li>
         <li>Choose "Draw on map" to place stops by hand, "Draw on map (follow roads)" to snap them to real streets, "Draw on map (teleport)" to jump between stops, "Paste coordinates" to build a route from a list of points, or "Import GPX file" to import an existing route.</li>
-        <li>You can also open a GPX file from another app (Files, Downloads, Share, or a chat app). This app appears in the list of apps that can open it, even when the other app sends it as a generic document. It does not appear for photos or app installer files. The map then shows the same Start sheet as paste coordinates, with the path filled in. Save keeps the original file name unless the file already has a name inside it. Teleport, Walk, and Start work the same as paste. If the app is already open, that sheet still appears. If the file is not a GPX, a short message says it could not be opened.</li>
+        <li>You can also open a GPX file from another app (Files, Downloads, Share, or a chat app). This app appears in the list of apps that can open it, even when the other app sends it as a generic document, but not for photos or app installer files. The map then shows the same Start sheet as paste coordinates, with the path filled in. Save keeps the original file name unless the file already has a name inside it. Teleport, Walk, and Start work the same as paste. If the app is already open, that sheet still appears. If the file is not a GPX, a short message says it could not be opened.</li>
       </ul>
     </div>
 
@@ -69,11 +69,11 @@
         </tr>
         <tr>
           <td><strong>Guided (road-following)</strong></td>
-          <td>Each stretch between stops is sent to an online road routing service at <a href="https://router.project-osrm.org" target="_blank" rel="noopener">router.project-osrm.org</a>, which sends back a path that follows real roads. The Walk and Run speeds use walking directions; the Bike speed uses cycling directions. If the service can't be reached, that stretch <a href="map.html#road-routing-fallback">falls back to a straight line</a>. The road path is saved after it's fetched once, so later replays don't need to look it up again.</td>
+          <td>Each stretch between stops is sent to an online road routing service at <a href="https://router.project-osrm.org" target="_blank" rel="noopener">router.project-osrm.org</a>, which returns a path along real roads. The Walk and Run speeds use walking directions; the Bike speed uses cycling directions. If the service can't be reached, that stretch <a href="map.html#road-routing-fallback">falls back to a straight line</a>. The road path is saved after it's fetched once, so later replays don't need to fetch it again.</td>
         </tr>
         <tr>
           <td><strong>Teleport</strong></td>
-          <td>You jump straight to each stop instead of walking there. When you place a stop while drawing this kind of route, you're asked how many seconds to stay there before jumping to the next one (at least 1 second). During playback, you stay at each stop for the time you set, then jump straight to the next one — no movement in between. Follow roads has no effect on this route type, since nothing walks between the stops.</td>
+          <td>You jump straight between stops instead of walking. When you place a stop while drawing this kind of route, you're asked how many seconds to stay there before jumping to the next one (at least 1 second). During playback, you stay at each stop for the time you set, then jump straight to the next one — no movement in between. Follow roads has no effect on this route type, since nothing walks between the stops.</td>
         </tr>
       </tbody>
     </table>
@@ -90,7 +90,7 @@
       <tbody>
         <tr>
           <td><strong>Loop</strong></td>
-          <td>Checked when you open the sheet. Once you reach the last stop, playback starts over from the first. It keeps going until you stop it yourself.</td>
+          <td>Checked when you open the sheet. Once you reach the last stop, playback starts over from the first. It keeps going until you stop it.</td>
         </tr>
         <tr>
           <td><strong>Planting</strong></td>
@@ -122,7 +122,7 @@
         </tr>
         <tr>
           <td><strong>Pause / Resume</strong></td>
-          <td>Pauses movement while holding your current position in place. Available from the widget and the map while a route is running. You can steer with the joystick while a route is paused. Resume jumps to the next stop, then continues the route from there. Pause or stop the route to start roaming.</td>
+          <td>Pauses movement while holding your position in place. Available from the widget and the map while a route is running. You can steer with the joystick while a route is paused. Resume jumps to the next stop, then continues the route from there. Pause or stop the route to start roaming.</td>
         </tr>
         <tr>
           <td><strong>Previous / Next stop</strong></td>
@@ -146,7 +146,7 @@
     <ul class="section-bullets">
       <li><strong>As-is</strong> connects the cleaned points with straight lines. No internet needed.</li>
       <li><strong>Walkable path</strong> follows real footpaths between the points. Needs internet for the first build; the path is saved so later replays work offline.</li>
-      <li><strong>Planting mode</strong> walks a circle around each pasted point (35 meters by default). Use this when you want to circle each spot instead of walking through its center. Travel between circles can be a straight line or via roads. To circle stops on a route you already saved, turn on Planting when you start playback instead — that does not change the saved route.</li>
+      <li><strong>Planting mode</strong> walks a circle around each pasted point (35 meters by default) instead of walking through its center. Travel between circles can be a straight line or via roads. To circle stops on a route you already saved, turn on Planting when you start playback instead — that does not change the saved route.</li>
       <li><strong>Optimize proximity</strong> reorders the points so each stop is near the previous one, instead of keeping the pasted order.</li>
     </ul>
     <p>One paste makes one route. A single point is enough for Planting mode (one circle). The other modes need at least two points.</p>
@@ -158,7 +158,7 @@
       A route you saved under your own name stays, even if you pick the same title.
     </p>
     <p>
-      Opening a GPX file from another app uses this same box on the map. The title says Open GPX, the points are already filled, and Save route suggests the original file name when the path itself has no name. Chat apps may send the file as a generic document; this app still appears for those. It does not appear for photos or app installer files. If the app is already open, the sheet still appears. If the file is not a GPX, a short message says it could not be opened.
+      Opening a GPX file from another app uses this same box on the map. The title says Open GPX, the points are already filled, and Save route suggests the original file name when the path itself has no name. Chat apps may send the file as a generic document; this app still appears for those, but not for photos or app installer files. If the app is already open, the sheet still appears. If the file is not a GPX, a short message says it could not be opened.
       The paste box grows up to 10 lines, then scrolls. The top and bottom edges fade so you can tell there is more. Select all and Clear all sit under it.
     </p>
 
