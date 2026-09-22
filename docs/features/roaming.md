@@ -46,7 +46,7 @@ full-tick-budget-consumption fix.
 |---|---|
 | `kind` | `WALK_AROUND` (default) or `PLANTING` |
 | `centerPosition` | Center of the roaming area (current position) |
-| `radiusMeters` | Walk-around: radius of the random walk area |
+| `radiusMeters` | Walk-around: radius of the random walk area (default 500 m, clamp 1 m–100,000 m) |
 | `distanceMeters` | Walk-around: total distance to walk before stopping |
 | `speedProfileId` | Movement speed only — does not affect OSRM profile selection |
 | `useRoadSnapping` | Walk-around: enables OSRM road-following |
