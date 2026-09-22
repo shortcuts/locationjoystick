@@ -13,9 +13,9 @@
     <string name="widget_panel_content_stop_spoofing">"Stop spoofing"</string>
     <string name="widget_panel_content_stop_roaming">"Stop roaming"</string>
     <string name="widget_panel_content_open_capture">"Open capture"</string>
-    <string name="widget_panel_content_2f_6f">"%%.2f, %%.6f"</string>
-    <string name="widget_panel_content_speed_2f_m_s_alt_ellipsoidal_2f_m">"speed %%.2f m/s · alt (ellipsoidal) %%.2f m"</string>
-    <string name="widget_panel_content_acc_1f_m_bearing_s_1f_hz">"acc %%.1f m · bearing %%s · %%.1f Hz"</string>
+    <string name="widget_panel_content_2f_6f">"%1$.2f, %2$.6f"</string>
+    <string name="widget_panel_content_speed_2f_m_s_alt_ellipsoidal_2f_m">"speed %1$.2f m/s · alt (ellipsoidal) %2$.2f m"</string>
+    <string name="widget_panel_content_acc_1f_m_bearing_s_1f_hz">"acc %1$.1f m · bearing %2$s · %3$.1f Hz"</string>
     <string name="widget_panel_content_switch_apps_to_copy_then_expand_to_paste">"Switch apps to copy, then expand to paste"</string>
     <string name="widget_panel_content_back">"Back"</string>
     <string name="widget_panel_content_share_current_location">"Share current location"</string>

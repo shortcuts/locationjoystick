@@ -13,9 +13,9 @@
     <string name="widget_panel_content_stop_spoofing">"停止模拟"</string>
     <string name="widget_panel_content_stop_roaming">"停止漫游"</string>
     <string name="widget_panel_content_open_capture">"打开采集"</string>
-    <string name="widget_panel_content_2f_6f">"%%.2f, %%.6f"</string>
-    <string name="widget_panel_content_speed_2f_m_s_alt_ellipsoidal_2f_m">"速度 %%.2f 米/秒 · 海拔（椭球）%%.2f 米"</string>
-    <string name="widget_panel_content_acc_1f_m_bearing_s_1f_hz">"精度 %%.1f 米 · 方位 %%s · %%.1f Hz"</string>
+    <string name="widget_panel_content_2f_6f">"%1$.2f, %2$.6f"</string>
+    <string name="widget_panel_content_speed_2f_m_s_alt_ellipsoidal_2f_m">"速度 %1$.2f 米/秒 · 海拔（椭球）%2$.2f 米"</string>
+    <string name="widget_panel_content_acc_1f_m_bearing_s_1f_hz">"精度 %1$.1f 米 · 方位 %2$s · %3$.1f Hz"</string>
     <string name="widget_panel_content_switch_apps_to_copy_then_expand_to_paste">"切换应用以复制，然后展开以粘贴"</string>
     <string name="widget_panel_content_back">"返回"</string>
     <string name="widget_panel_content_share_current_location">"分享当前位置"</string>
