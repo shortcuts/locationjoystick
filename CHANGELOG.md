@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.24.0](https://github.com/shortcuts/locationjoystick/compare/v0.23.0...v0.24.0) (2026-09-23)
+
+
+### Features
+
+* add disclosure screen for play store publishing ([a9bd704](https://github.com/shortcuts/locationjoystick/commit/a9bd7046a2e6f96b953810aabbc1834acf34869f))
+
+
+### Bug Fixes
+
+* compress disclosure dialog ([f71a6fb](https://github.com/shortcuts/locationjoystick/commit/f71a6fb40b8752099e79a3eb8cbbcd8de77324f5))
+* tap to walk disclosure content ([aeda9be](https://github.com/shortcuts/locationjoystick/commit/aeda9be588b256d04c6187caebba477ba54f6a76))
+* **tap-to-walk:** tighten accessibility disclosure and link the guide ([bcf06a5](https://github.com/shortcuts/locationjoystick/commit/bcf06a5126150515f7549b481a65f5d73def451c))
+* wiki reference screenshots ([d51041c](https://github.com/shortcuts/locationjoystick/commit/d51041ce865e856d4bddbc98e7b1efe91989e252))
+
 ## [0.23.0](https://github.com/shortcuts/locationjoystick/compare/v0.22.0...v0.23.0) (2026-09-22)
 
 
