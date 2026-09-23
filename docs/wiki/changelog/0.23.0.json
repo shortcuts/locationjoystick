@@ -2,27 +2,120 @@
   "version": "0.23.0",
   "date": "2026-09-19",
   "entries": [
-    { "category": "feat", "scope": "Route System", "summary": "Paste coordinates: paste a list of coordinates copied from Maps, Notes or a chat. Teleport or walk to one point, or turn several points into a route you can play right away or save. Available from the map, the floating widget and the Routes menu. The map and widget buttons are off by default; turn them on in Settings → Menus → App Features." },
-    { "category": "feat", "scope": "Route System", "summary": "Open GPX files straight from Files, Downloads or a chat app using Open with or Share. The track loads on the map, ready to play or save as a route." },
-    { "category": "feat", "scope": "Capture Coordinates", "summary": "Capture: when you tap a map link in another app, this app can save the location to a list, teleport there at once, or both. Save the list as a route when you are done." },
-    { "category": "feat", "scope": "Roaming Mode", "summary": "Added Planting: walk a spiral that grows and shrinks around your position, once or on repeat. Routes can also walk a circle around each stop." },
-    { "category": "feat", "scope": "Tap to Walk", "summary": "Tap to Walk is out of beta. Compass detection is now automatic, with nothing to calibrate, and the default map scale works out of the box." },
-    { "category": "feat", "scope": "Map", "summary": "Added a Map source switch in Settings → Menus to show Amap (高德) tiles instead of OpenStreetMap on every map, with automatic GCJ-02 conversion so markers, routes and taps stay accurate; saved data remains in standard GPS coordinates." },
-    { "category": "feat", "scope": "General", "summary": "The app now opens on the Map while spoofing is on, and on Home while it's off." },
-    { "category": "feat", "scope": "Group Sync", "summary": "When the group leader teleports, followers now jump there too. Turn off Follow leader teleports to walk instead." },
-    { "category": "feat", "scope": "Last Remembered Location", "summary": "On first launch, the map now opens at your phone's real location instead of a default city. Your remembered position still wins when you have one." },
-    { "category": "feat", "scope": "Map", "summary": "A small credit for the map provider (OpenStreetMap contributors or Amap) now shows in the corner of every map, as the provider's terms require." },
-    { "category": "feat", "scope": "Update Available Check", "summary": "A small badge on the home screen now tells you when a newer version is available." },
-    { "category": "feat", "scope": "Capture Coordinates", "summary": "Capture now walks you through setup with step cards until this app is your default browser, and a new menu lets you restore your previous default browser." },
-    { "category": "feat", "scope": "Roaming Mode", "summary": "The roaming sheet now shows one mode at a time, with a button to switch between Walk around and Planting." },
-    { "category": "feat", "scope": "Group Sync", "summary": "Joining a group now turns on Follow leader automatically." },
-    { "category": "fix", "scope": "Group Sync", "summary": "When a group leader taps Stop, followers now pause cleanly and resume when the leader starts again, instead of losing the connection." },
-    { "category": "feat", "scope": "Map", "summary": "Maps now keep up to 200 MB of tiles you've already viewed, so places you revisit load faster." },
-    { "category": "fix", "scope": "Map", "summary": "Fixed a rare crash when coming back to the app with a map open." },
-    { "category": "fix", "scope": "Map", "summary": "Tapping the center-on-map button repeatedly no longer lags." },
-    { "category": "feat", "scope": "Theme", "summary": "Cards and sheets have a flatter, rounder look with clearer surface colors." },
-    { "category": "feat", "scope": "Localization", "summary": "Added Traditional Chinese (繁體中文) as a display language." },
-    { "category": "fix", "scope": "Floating Widget", "summary": "While roaming, the widget's route button no longer turns green too; each button now lights up only for its own session." },
-    { "category": "feat", "scope": "Floating Widget", "summary": "Removed the Group Sync button from the floating widget. Use the Teleport to leader now button on the Group Sync screen instead." }
+    {
+      "category": "feat",
+      "scope": "Route System",
+      "summary": "Paste coordinates: paste a list of coordinates copied from Maps, Notes or a chat. Teleport or walk to one point, or turn several points into a route you can play right away or save. Available from the map, the floating widget and the Routes menu. The map and widget buttons are off by default; turn them on in Settings → Menus → App Features."
+    },
+    {
+      "category": "feat",
+      "scope": "Route System",
+      "summary": "Open GPX files straight from Files, Downloads or a chat app using Open with or Share. The track loads on the map, ready to play or save as a route."
+    },
+    {
+      "category": "feat",
+      "scope": "Capture Coordinates",
+      "summary": "Capture: when you tap a map link in another app, this app can save the location to a list, teleport there at once, or both. Save the list as a route when you are done."
+    },
+    {
+      "category": "feat",
+      "scope": "Roaming Mode",
+      "summary": "Added Planting: walk a spiral that grows and shrinks around your position, once or on repeat. Routes can also walk a circle around each stop."
+    },
+    {
+      "category": "feat",
+      "scope": "Tap to Walk",
+      "summary": "Tap to Walk is out of beta. Compass detection is now automatic, with nothing to calibrate, and the default map scale works out of the box."
+    },
+    {
+      "category": "feat",
+      "scope": "Map",
+      "summary": "Added a Map source switch in Settings → Menus to show Amap (高德) tiles instead of OpenStreetMap on every map, with automatic GCJ-02 conversion so markers, routes and taps stay accurate; saved data remains in standard GPS coordinates."
+    },
+    {
+      "category": "feat",
+      "scope": "General",
+      "summary": "The app now opens on the Map while spoofing is on, and on Home while it's off."
+    },
+    {
+      "category": "feat",
+      "scope": "Group Sync",
+      "summary": "When the group leader teleports, followers now jump there too. Turn off Follow leader teleports to walk instead."
+    },
+    {
+      "category": "feat",
+      "scope": "Last Remembered Location",
+      "summary": "On first launch, the map now opens at your phone's real location instead of a default city. Your remembered position still wins when you have one."
+    },
+    {
+      "category": "feat",
+      "scope": "Map",
+      "summary": "A small credit for the map provider (OpenStreetMap contributors or Amap) now shows in the corner of every map, as the provider's terms require."
+    },
+    {
+      "category": "feat",
+      "scope": "Update Available Check",
+      "summary": "A small badge on the home screen now tells you when a newer version is available."
+    },
+    {
+      "category": "feat",
+      "scope": "Capture Coordinates",
+      "summary": "Capture now walks you through setup with step cards until this app is your default browser, and a new menu lets you restore your previous default browser."
+    },
+    {
+      "category": "feat",
+      "scope": "Roaming Mode",
+      "summary": "The roaming sheet now shows one mode at a time, with a button to switch between Walk around and Planting."
+    },
+    {
+      "category": "feat",
+      "scope": "Group Sync",
+      "summary": "Joining a group now turns on Follow leader automatically."
+    },
+    {
+      "category": "fix",
+      "scope": "Group Sync",
+      "summary": "When a group leader taps Stop, followers now pause cleanly and resume when the leader starts again, instead of losing the connection."
+    },
+    {
+      "category": "feat",
+      "scope": "Map",
+      "summary": "Maps now keep up to 200 MB of tiles you've already viewed, so places you revisit load faster."
+    },
+    {
+      "category": "fix",
+      "scope": "Map",
+      "summary": "Fixed a rare crash when coming back to the app with a map open."
+    },
+    {
+      "category": "fix",
+      "scope": "Map",
+      "summary": "Tapping the center-on-map button repeatedly no longer lags."
+    },
+    {
+      "category": "feat",
+      "scope": "Theme",
+      "summary": "Cards and sheets have a flatter, rounder look with clearer surface colors."
+    },
+    {
+      "category": "feat",
+      "scope": "Localization",
+      "summary": "Added Traditional Chinese (繁體中文) as a display language."
+    },
+    {
+      "category": "fix",
+      "scope": "Floating Widget",
+      "summary": "While roaming, the widget's route button no longer turns green too; each button now lights up only for its own session."
+    },
+    {
+      "category": "feat",
+      "scope": "Floating Widget",
+      "summary": "Removed the Group Sync button from the floating widget. Use the Teleport to leader now button on the Group Sync screen instead."
+    },
+    {
+      "category": "fix",
+      "scope": "Tap to Walk",
+      "summary": "The compass helper now explains what it looks at on a full screen the first time you turn Tap to Walk on or tap the crosshair, and it never reads your screen until you agree."
+    }
   ]
 }

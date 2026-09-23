@@ -51,7 +51,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.Lifecycle
@@ -60,6 +59,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
+import com.locationjoystick.core.designsystem.component.CompassDisclosureDialog
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjLanguageDropdown
@@ -288,7 +288,9 @@ private fun TapToWalkSection(
     onTestCompassDetection: suspend () -> Float? = { null },
     launchableApps: List<InstalledApp> = emptyList(),
 ) {
+    val context = LocalContext.current
     var showWarning by rememberSaveable { mutableStateOf(false) }
+    var showCompassDisclosure by rememberSaveable { mutableStateOf(false) }
     val enabled = uiState.tapToWalkOverlayEnabled
 
     Text(stringResource(R.string.settings_menus_tap_to_walk), style = MaterialTheme.typography.headlineSmall)
@@ -361,10 +363,27 @@ private fun TapToWalkSection(
                 LjTextButton(onClick = {
                     showWarning = false
                     onAction(SettingsAction.SetTapToWalkOverlayEnabled(true))
+                    showCompassDisclosure =
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                        !uiState.compassDisclosureAnswered &&
+                        !uiState.isCompassServiceGranted
                 }) { Text(stringResource(R.string.settings_menus_enable_anyway)) }
             },
             dismissButton = {
                 LjTextButton(onClick = { showWarning = false }) { Text(stringResource(R.string.common_cancel)) }
+            },
+        )
+    }
+    if (showCompassDisclosure) {
+        CompassDisclosureDialog(
+            onAccept = {
+                showCompassDisclosure = false
+                onAction(SettingsAction.SetCompassDisclosureAccepted(true))
+                openAccessibilitySettings(context)
+            },
+            onDecline = {
+                showCompassDisclosure = false
+                onAction(SettingsAction.SetCompassDisclosureAccepted(false))
             },
         )
     }
@@ -435,42 +454,10 @@ private fun DebugSection(
     )
 }
 
-// Play's Accessibility API policy requires an in-app disclosure with an explicit accept tap
-// before the user reaches Android's accessibility settings; dismissing must not count as consent.
-@Composable
-private fun AccessibilityDisclosureDialog(
-    onAccept: () -> Unit,
-    onDecline: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDecline,
-        title = { Text(stringResource(R.string.settings_menus_accessibility_service_use)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    stringResource(R.string.settings_menus_locationjoystick_uses_android_s_accessib),
-                )
-                Text(
-                    stringResource(R.string.settings_menus_what_it_accesses_a_screenshot_of),
-                )
-                Text(
-                    stringResource(R.string.settings_menus_why_to_find_your_game_s),
-                )
-                Text(
-                    stringResource(R.string.settings_menus_the_screenshot_is_processed_on_your),
-                )
-                Text(stringResource(R.string.settings_menus_you_can_turn_the_service_off))
-            }
-        },
-        confirmButton = { LjTextButton(onClick = onAccept) { Text(stringResource(R.string.settings_menus_agree)) } },
-        dismissButton = { LjTextButton(onClick = onDecline) { Text(stringResource(R.string.settings_menus_no_thanks)) } },
+private fun openAccessibilitySettings(context: android.content.Context) {
+    context.startActivity(
+        Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun AccessibilityDisclosureDialogPreview() {
-    AccessibilityDisclosureDialog(onAccept = {}, onDecline = {})
 }
 
 @Composable
@@ -521,20 +508,24 @@ private fun CompassOrientationSection(
         }
         if (!uiState.isCompassServiceGranted) {
             Spacer(Modifier.width(8.dp))
-            LjButton(onClick = { showDisclosure = true }) { Text(stringResource(R.string.settings_menus_open_settings)) }
+            LjButton(
+                onClick = {
+                    if (uiState.compassDisclosureAnswered) openAccessibilitySettings(context) else showDisclosure = true
+                },
+            ) { Text(stringResource(R.string.settings_menus_open_settings)) }
         }
     }
     if (showDisclosure) {
-        AccessibilityDisclosureDialog(
+        CompassDisclosureDialog(
             onAccept = {
                 showDisclosure = false
-                context.startActivity(
-                    Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    },
-                )
+                onAction(SettingsAction.SetCompassDisclosureAccepted(true))
+                openAccessibilitySettings(context)
             },
-            onDecline = { showDisclosure = false },
+            onDecline = {
+                showDisclosure = false
+                onAction(SettingsAction.SetCompassDisclosureAccepted(false))
+            },
         )
     }
     if (uiState.isCompassServiceGranted) {

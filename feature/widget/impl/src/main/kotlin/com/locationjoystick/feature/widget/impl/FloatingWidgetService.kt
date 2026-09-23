@@ -163,6 +163,7 @@ class FloatingWidgetService :
 
     private val isTapToWalkActiveFlow = MutableStateFlow(false)
     private lateinit var tapToWalkScaleMpx: StateFlow<Double>
+    private lateinit var compassDisclosureChoice: StateFlow<String>
     private var tapToWalkOverlay: TapToWalkOverlay? = null
 
     // Drag position — class-level so onConfigurationChanged can read them after rotation.
@@ -210,6 +211,14 @@ class FloatingWidgetService :
             settingsRepository
                 .getTapToWalkScaleMpx()
                 .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
+        compassDisclosureChoice =
+            settingsRepository
+                .getCompassDisclosureChoice()
+                .stateIn(
+                    lifecycleScope,
+                    SharingStarted.Eagerly,
+                    AppConstants.CompassTrackingConstants.DISCLOSURE_UNANSWERED,
+                )
         serviceBinder.bind()
         if (isSpoofingActive()) {
             serviceBinder.bindJoystick()
@@ -569,6 +578,8 @@ class FloatingWidgetService :
         if (!isSpoofingActive()) return
         if (tapToWalkOverlay?.isShowing() == true) {
             dismissTapToWalkOverlay()
+        } else if (needsCompassDisclosure()) {
+            showCompassDisclosure()
         } else {
             val overlay =
                 TapToWalkOverlay(
@@ -585,6 +596,31 @@ class FloatingWidgetService :
             tapToWalkOverlay = overlay
             isTapToWalkActiveFlow.value = true
             overlay.show()
+        }
+    }
+
+    /**
+     * The compass screenshot is the first thing the overlay would take, so Play's Accessibility
+     * API policy puts the disclosure here — in the feature's own usage flow — not only in Settings.
+     * Asked once: any answer, accept or decline, is persisted and never prompts again.
+     */
+    private fun needsCompassDisclosure(): Boolean =
+        CompassAccessibilityService.isSupported() &&
+            compassDisclosureChoice.value == AppConstants.CompassTrackingConstants.DISCLOSURE_UNANSWERED
+
+    private fun showCompassDisclosure() {
+        panelPresenter.hidePanelView()
+        isPanelExpandedFlow.value = false
+        try {
+            startActivity(
+                Intent().apply {
+                    setClassName(packageName, "com.locationjoystick.app.MainActivity")
+                    putExtra(AppConstants.ServiceConstants.EXTRA_SHOW_COMPASS_DISCLOSURE, true)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                },
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open compass disclosure", e)
         }
     }
 

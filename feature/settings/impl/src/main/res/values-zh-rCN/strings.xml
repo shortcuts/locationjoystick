@@ -114,14 +114,6 @@
     <string name="settings_menus_debug">"调试"</string>
     <string name="settings_menus_debug_stats">"调试信息"</string>
     <string name="settings_menus_debug_stats_desc">"模拟定位生效期间，在悬浮窗面板中显示实时速度、海拔、坐标和刷新频率。"</string>
-    <string name="settings_menus_accessibility_service_use">"无障碍服务使用说明"</string>
-    <string name="settings_menus_locationjoystick_uses_android_s_accessib">"locationjoystick 仅在“点击行走”的可选罗盘功能中使用 Android 无障碍服务 API。"</string>
-    <string name="settings_menus_what_it_accesses_a_screenshot_of">"访问内容：当你打开“点击行走”悬浮层或点击“测试”时截取的一张屏幕截图。"</string>
-    <string name="settings_menus_why_to_find_your_game_s">"用途：找到游戏中的罗盘图标，把你的点击转换为正确的行走方向。"</string>
-    <string name="settings_menus_the_screenshot_is_processed_on_your">"截图仅在你的设备上处理，并会立即删除，绝不保存、上传或分享。本服务不会读取文字、收集个人数据，也不会代你执行操作。"</string>
-    <string name="settings_menus_you_can_turn_the_service_off">"你可以随时在 Android 的无障碍设置中关闭该服务。"</string>
-    <string name="settings_menus_agree">"同意"</string>
-    <string name="settings_menus_no_thanks">"不用了"</string>
     <string name="settings_menus_compass_orientation">"罗盘方向"</string>
     <string name="settings_menus_when_enabled_the_app_detects_your">"启用后，应用会在每次行走前识别游戏中的罗盘（与大多数 AR／GPS 游戏一样位于右上角），以校正目标位置 — 无需额外设置。需要无障碍服务。注意：部分游戏会检测无障碍服务。"</string>
     <string name="settings_menus_accessibility_service">"无障碍服务"</string>

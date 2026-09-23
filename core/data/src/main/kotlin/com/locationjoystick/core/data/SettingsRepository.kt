@@ -1,5 +1,6 @@
 package com.locationjoystick.core.data
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.datastore.toActiveSpeedProfile
@@ -353,6 +354,13 @@ class SettingsRepository
         fun getCompassTestTargetPackage(): Flow<String> = dataSource.getCompassTestTargetPackage()
 
         suspend fun setCompassTestTargetPackage(packageName: String) = dataSource.setCompassTestTargetPackage(packageName)
+
+        fun getCompassDisclosureChoice(): Flow<String> = dataSource.getCompassDisclosureChoice()
+
+        fun getCompassDisclosureAccepted(): Flow<Boolean> =
+            dataSource.getCompassDisclosureChoice().map { it == AppConstants.CompassTrackingConstants.DISCLOSURE_ACCEPTED }
+
+        suspend fun setCompassDisclosureChoice(choice: String) = dataSource.setCompassDisclosureChoice(choice)
 
         fun getSettingsSnapshot(): Flow<SettingsSnapshot> = dataSource.getSettingsSnapshot()
 

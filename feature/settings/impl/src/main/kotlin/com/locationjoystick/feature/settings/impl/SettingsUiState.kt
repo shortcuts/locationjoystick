@@ -38,6 +38,7 @@ data class SettingsUiState(
     val tapToWalkScaleMpx: Double = AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX,
     val compassTestTargetPackage: String = "",
     val isCompassServiceGranted: Boolean = false,
+    val compassDisclosureAnswered: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.DARK,
     val hideTeleportFeatures: Boolean = false,
     val hideWidgetOverlay: Boolean = false,

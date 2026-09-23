@@ -105,14 +105,6 @@
     <string name="settings_menus_debug">"偵錯"</string>
     <string name="settings_menus_debug_stats">"偵錯資訊"</string>
     <string name="settings_menus_debug_stats_desc">"模擬定位生效期間，在浮動面板中顯示即時速度、海拔、座標與重新整理頻率。"</string>
-    <string name="settings_menus_accessibility_service_use">"協助工具服務使用說明"</string>
-    <string name="settings_menus_locationjoystick_uses_android_s_accessib">"locationjoystick 僅在「點擊行走」的選用羅盤功能中使用 Android 協助工具服務 API。"</string>
-    <string name="settings_menus_what_it_accesses_a_screenshot_of">"存取內容：當你開啟「點擊行走」懸浮層或點擊「測試」時截取的一張螢幕截圖。"</string>
-    <string name="settings_menus_why_to_find_your_game_s">"用途：找到遊戲中的羅盤圖示，將你的點擊轉換為正確的行走方向。"</string>
-    <string name="settings_menus_the_screenshot_is_processed_on_your">"截圖僅在你的裝置上處理，並會立即刪除，絕不儲存、上傳或分享。本服務不會讀取文字、收集個人資料，亦不會代你執行操作。"</string>
-    <string name="settings_menus_you_can_turn_the_service_off">"你可以隨時在 Android 的協助工具設定中關閉該服務。"</string>
-    <string name="settings_menus_agree">"同意"</string>
-    <string name="settings_menus_no_thanks">"不用了"</string>
     <string name="settings_menus_compass_orientation">"羅盤方向"</string>
     <string name="settings_menus_when_enabled_the_app_detects_your">"啟用後，應用程式會在每次行走前識別遊戲中的羅盤（與大多數 AR／GPS 遊戲相同位於右上角），以校正目標位置 — 無需額外設定。需要協助工具服務。注意：部分遊戲會偵測協助工具服務。"</string>
     <string name="settings_menus_accessibility_service">"協助工具服務"</string>

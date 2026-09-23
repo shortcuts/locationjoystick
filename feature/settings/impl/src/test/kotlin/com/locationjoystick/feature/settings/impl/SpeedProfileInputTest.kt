@@ -57,7 +57,7 @@ class SpeedProfileInputTest {
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
-                compassHeadingSource = CompassHeadingSource(),
+                compassHeadingSource = CompassHeadingSource(SettingsRepository(fakeDataSource)),
                 context = context,
             )
     }

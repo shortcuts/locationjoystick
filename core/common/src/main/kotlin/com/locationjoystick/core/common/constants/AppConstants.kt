@@ -337,6 +337,7 @@ object AppConstants {
         const val EXTRA_NAVIGATE_TO_ROUTES = "navigate_to_routes"
         const val EXTRA_NAVIGATE_TO_ROUTE_CREATOR = "navigate_to_route_creator"
         const val EXTRA_NAVIGATE_TO_CAPTURE = "navigate_to_capture"
+        const val EXTRA_SHOW_COMPASS_DISCLOSURE = "show_compass_disclosure"
         const val ACTION_ENTER_FOLLOWER = "com.locationjoystick.core.location.ACTION_ENTER_FOLLOWER"
         const val ACTION_EXIT_FOLLOWER = "com.locationjoystick.core.location.ACTION_EXIT_FOLLOWER"
         const val ACTION_FOLLOWER_TELEPORT = "com.locationjoystick.core.location.ACTION_FOLLOWER_TELEPORT"
@@ -556,6 +557,13 @@ object AppConstants {
         const val MIN_ICON_FRACTION = 0.008f
         const val MAX_ICON_FRACTION = 0.06f
         const val MIN_RED_PIXELS = 20
+
+        // Play's Accessibility API policy: the screenshot capture must not run until the user has
+        // accepted the in-app disclosure, even if they enabled the service from Android's own
+        // accessibility settings. "declined" is stored too, so the prompt is never shown twice.
+        const val DISCLOSURE_UNANSWERED = ""
+        const val DISCLOSURE_ACCEPTED = "accepted"
+        const val DISCLOSURE_DECLINED = "declined"
     }
 
     object FollowerRestorationConstants {

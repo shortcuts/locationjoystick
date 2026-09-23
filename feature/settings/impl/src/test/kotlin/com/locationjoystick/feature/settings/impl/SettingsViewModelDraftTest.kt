@@ -52,7 +52,7 @@ class SettingsViewModelDraftTest {
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
-                compassHeadingSource = CompassHeadingSource(),
+                compassHeadingSource = CompassHeadingSource(settingsRepo),
                 context = context,
             )
     }

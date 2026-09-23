@@ -347,8 +347,12 @@ interface PreferencesDataSource {
     /** Gets the package name of the app the compass test button switches to. Empty if unset. */
     fun getCompassTestTargetPackage(): Flow<String>
 
+    fun getCompassDisclosureChoice(): Flow<String>
+
     /** Sets the package name of the app the compass test button switches to. */
     suspend fun setCompassTestTargetPackage(packageName: String)
+
+    suspend fun setCompassDisclosureChoice(choice: String)
 
     /** Returns all settings needed by the settings UI in a single DataStore scan. */
     fun getSettingsSnapshot(): Flow<SettingsSnapshot>
@@ -579,6 +583,7 @@ class AppPreferencesDataSource
             val TAP_TO_WALK_OVERLAY_ENABLED = booleanPreferencesKey("tap_to_walk_overlay_enabled")
             val TAP_TO_WALK_SCALE_MPX = doublePreferencesKey("tap_to_walk_scale_mpx")
             val COMPASS_TEST_TARGET_PACKAGE = stringPreferencesKey("compass_test_target_package")
+            val COMPASS_DISCLOSURE_CHOICE = stringPreferencesKey("compass_disclosure_choice")
             val REALISM_REAL_ELEVATION_ENABLED = booleanPreferencesKey("realism_real_elevation_enabled")
             val BASE_ALTITUDE_OVERRIDE_METERS = doublePreferencesKey("base_altitude_override_meters")
             val ALTITUDE_JITTER_RADIUS_METERS = doublePreferencesKey("altitude_jitter_radius_meters")
@@ -1059,6 +1064,11 @@ class AppPreferencesDataSource
         override fun getCompassTestTargetPackage(): Flow<String> = pref(Keys.COMPASS_TEST_TARGET_PACKAGE, "")
 
         override suspend fun setCompassTestTargetPackage(packageName: String) = setPref(Keys.COMPASS_TEST_TARGET_PACKAGE, packageName)
+
+        override fun getCompassDisclosureChoice(): Flow<String> =
+            pref(Keys.COMPASS_DISCLOSURE_CHOICE, AppConstants.CompassTrackingConstants.DISCLOSURE_UNANSWERED)
+
+        override suspend fun setCompassDisclosureChoice(choice: String) = setPref(Keys.COMPASS_DISCLOSURE_CHOICE, choice)
 
         override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
             dataStore.edit { prefs ->

@@ -11,6 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -24,10 +25,12 @@ import com.locationjoystick.core.data.GoogleMapsShortLinkResolver
 import com.locationjoystick.core.data.GpxOpenRepository
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.designsystem.component.CompassDisclosureDialog
 import com.locationjoystick.core.model.ThemeMode
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,6 +66,7 @@ class MainActivity : ComponentActivity() {
     internal val deepLinkFailedFlow = deepLinkFailedMutableFlow.asSharedFlow()
     private val gpxOpenFailedMutableFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     internal val gpxOpenFailedFlow = gpxOpenFailedMutableFlow.asSharedFlow()
+    private val showCompassDisclosureFlow = MutableStateFlow(false)
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleContextWrapper.wrap(newBase))
@@ -89,6 +93,25 @@ class MainActivity : ComponentActivity() {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
             LjTheme(darkTheme = themeMode == ThemeMode.DARK) {
+                val showCompassDisclosure by showCompassDisclosureFlow.collectAsStateWithLifecycle()
+                if (showCompassDisclosure) {
+                    val compassViewModel: CompassDisclosureViewModel = hiltViewModel()
+                    val context = LocalContext.current
+                    CompassDisclosureDialog(
+                        onAccept = {
+                            showCompassDisclosureFlow.value = false
+                            compassViewModel.record(true)
+                            context.startActivity(
+                                Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                            )
+                        },
+                        onDecline = {
+                            showCompassDisclosureFlow.value = false
+                            compassViewModel.record(false)
+                        },
+                    )
+                }
                 LjApp(
                     navigateToMapFlow = navigateToMapFlow,
                     navigateToRouteCreatorFlow = navigateToRouteCreatorFlow,
@@ -125,6 +148,9 @@ class MainActivity : ComponentActivity() {
         }
         if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_CAPTURE, false) == true) {
             navigateToCaptureMutableFlow.tryEmit(Unit)
+        }
+        if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_SHOW_COMPASS_DISCLOSURE, false) == true) {
+            showCompassDisclosureFlow.value = true
         }
         if (intent?.action == ACTION_MOVE_TO_BACK) {
             moveTaskToBack(true)

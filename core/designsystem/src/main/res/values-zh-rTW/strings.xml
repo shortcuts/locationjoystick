@@ -57,4 +57,12 @@
     <string name="language_short_chinese">"CN"</string>
     <string name="language_short_traditional_chinese">"TW"</string>
     <string name="language_dropdown_cd">"變更語言"</string>
+    <string name="compass_disclosure_title">"羅盤方向功能使用無障礙服務"</string>
+    <string name="compass_disclosure_intro">"locationjoystick 僅為「點擊行走」的選用羅盤方向功能申請 Android 的 AccessibilityService API。應用程式的其他功能無需該權限即可使用。"</string>
+    <string name="compass_disclosure_data">"存取內容：一張螢幕截圖，在你開啟「點擊行走」覆蓋層或在設定中點擊「測試」時擷取。"</string>
+    <string name="compass_disclosure_purpose">"用途：找出遊戲畫面中的羅盤圖示，把你的點擊轉換成正確的實際行走方向。"</string>
+    <string name="compass_disclosure_handling">"截圖在本機處理後立即捨棄，絕不儲存、傳送或分享。該服務不讀取文字，不收集個人資料，也不會代你執行任何操作。"</string>
+    <string name="compass_disclosure_optional">"若你同意，接下來會開啟 Android 無障礙設定以啟用該服務。你可以隨時在那裡關閉它。"</string>
+    <string name="compass_disclosure_accept">"同意"</string>
+    <string name="compass_disclosure_decline">"不用了"</string>
 </resources>

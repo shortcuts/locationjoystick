@@ -114,14 +114,6 @@
     <string name="settings_menus_debug">"Debug"</string>
     <string name="settings_menus_debug_stats">"Debug stats"</string>
     <string name="settings_menus_debug_stats_desc">"Shows live speed, altitude, coordinates, and tick rate in the floating widget panel while spoofing is active."</string>
-    <string name="settings_menus_accessibility_service_use">"Accessibility Service Use"</string>
-    <string name="settings_menus_locationjoystick_uses_android_s_accessib">"locationjoystick uses Android's Accessibility Service API only for the optional Compass orientation feature of Tap to Walk."</string>
-    <string name="settings_menus_what_it_accesses_a_screenshot_of">"What it accesses: a screenshot of your screen, taken when you open the Tap to Walk overlay or tap Test."</string>
-    <string name="settings_menus_why_to_find_your_game_s">"Why: to find your game's compass icon and turn your tap into the correct walking direction."</string>
-    <string name="settings_menus_the_screenshot_is_processed_on_your">"The screenshot is processed on your device and deleted right away. It is never saved, sent, or shared. The service does not read text, collect personal data, or act on your behalf."</string>
-    <string name="settings_menus_you_can_turn_the_service_off">"You can turn the service off at any time in Android's accessibility settings."</string>
-    <string name="settings_menus_agree">"Agree"</string>
-    <string name="settings_menus_no_thanks">"No thanks"</string>
     <string name="settings_menus_compass_orientation">"Compass Orientation"</string>
     <string name="settings_menus_when_enabled_the_app_detects_your">"When enabled, the app detects your game's compass (top-right corner, like most AR/GPS games) before each walk to correct the target position — no setup needed. Requires an Accessibility Service. Note: some games detect accessibility services."</string>
     <string name="settings_menus_accessibility_service">"Accessibility Service"</string>

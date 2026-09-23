@@ -77,7 +77,7 @@ class SettingsViewModelSaveTest {
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
-                compassHeadingSource = CompassHeadingSource(),
+                compassHeadingSource = CompassHeadingSource(fakeSettingsRepo),
                 context = context,
             )
     }
@@ -690,6 +690,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getCompassTestTargetPackage(): Flow<String> = flowOf("")
 
     override suspend fun setCompassTestTargetPackage(packageName: String) = Unit
+
+    override fun getCompassDisclosureChoice(): Flow<String> = flowOf("")
+
+    override suspend fun setCompassDisclosureChoice(choice: String) = Unit
 
     var clearAllExceptOnboardingCallCount = 0
 

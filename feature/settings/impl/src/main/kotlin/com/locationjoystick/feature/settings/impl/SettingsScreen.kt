@@ -404,6 +404,10 @@ fun SettingsRoute(
                     viewModel.setCompassTestTargetPackage(action.packageName)
                 }
 
+                is SettingsAction.SetCompassDisclosureAccepted -> {
+                    viewModel.setCompassDisclosureAccepted(action.accepted)
+                }
+
                 is SettingsAction.SetThemeMode -> {
                     viewModel.setThemeMode(action.mode)
                 }

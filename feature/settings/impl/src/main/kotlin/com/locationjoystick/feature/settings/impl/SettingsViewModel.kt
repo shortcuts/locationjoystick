@@ -189,13 +189,16 @@ class SettingsViewModel
         val uiState: StateFlow<SettingsUiState> =
             combine(
                 combine(snapshotFlow, draftStateFlow) { snapshot, draft -> Pair(snapshot, draft) },
-                settingsRepository.getCompassTestTargetPackage(),
+                combine(
+                    settingsRepository.getCompassTestTargetPackage(),
+                    settingsRepository.getCompassDisclosureChoice(),
+                ) { pkg, choice -> pkg to choice },
                 compassServiceGranted,
                 settingsRepository.getThemeMode(),
                 settingsRepository.getBaseAltitudeOverride(),
             ) {
                 (snapshot, draftState),
-                compassTestTargetPackage,
+                (compassTestTargetPackage, compassDisclosureChoice),
                 isServiceGranted,
                 themeMode,
                 baseAltitudeOverride,
@@ -245,6 +248,8 @@ class SettingsViewModel
                     debugStatsEnabled = draftState.debugStatsEnabled ?: snapshot.debugStatsEnabled,
                     compassTestTargetPackage = compassTestTargetPackage,
                     isCompassServiceGranted = isServiceGranted,
+                    compassDisclosureAnswered =
+                        compassDisclosureChoice != AppConstants.CompassTrackingConstants.DISCLOSURE_UNANSWERED,
                     themeMode = themeMode,
                     isDirty = isDirty,
                 )
@@ -431,6 +436,18 @@ class SettingsViewModel
 
         fun setTapToWalkScaleMpx(scale: Double) {
             mutableDraft.update { it.copy(tapToWalkScaleMpx = scale) }
+        }
+
+        fun setCompassDisclosureAccepted(accepted: Boolean) {
+            viewModelScope.launch {
+                settingsRepository.setCompassDisclosureChoice(
+                    if (accepted) {
+                        AppConstants.CompassTrackingConstants.DISCLOSURE_ACCEPTED
+                    } else {
+                        AppConstants.CompassTrackingConstants.DISCLOSURE_DECLINED
+                    },
+                )
+            }
         }
 
         fun setCompassTestTargetPackage(packageName: String) {

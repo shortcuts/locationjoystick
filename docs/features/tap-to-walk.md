@@ -18,6 +18,7 @@ on whenever the accessibility service is granted (see "Compass Orientation" belo
 | `TAP_TO_WALK_OVERLAY_ENABLED` | Boolean | `false` | Show crosshair button in widget panel |
 | `TAP_TO_WALK_SCALE_MPX` | Double | `0.23` | Meters per pixel for pixel→GPS conversion (calibrated for a fully zoomed-out AR game map) |
 | `COMPASS_TEST_TARGET_PACKAGE` | String | `""` | Package the "Compass orientation" Test button switches to automatically. Empty = manual switch |
+| `COMPASS_DISCLOSURE_CHOICE` | String | `""` | The user's answer to the accessibility disclosure: `""` (unanswered), `accepted`, `declined` (`AppConstants.CompassTrackingConstants`). Per-device, not part of `ExportData` |
 
 Scale is clamped to `AppConstants.TapToWalkConstants.MIN_SCALE_MPX`–`MAX_SCALE_MPX` (0.01–1.0 m/px) in `applySnapshot()`.
 
@@ -151,13 +152,28 @@ task stack after that switch sequence) instead of launching an intent.
 
 ### Prominent Disclosure
 
-Play's Accessibility API policy rejected a release that sent the user straight from Settings to
-Android's accessibility settings. The "Open Settings" button in Settings → Menus → Tap to Walk →
-"Compass orientation" now shows `AccessibilityDisclosureDialog` (`SettingsMenusSubScreen.kt`)
-first. It states the data accessed (a screenshot), the purpose (compass heading), and that the
-screenshot stays on-device and is never saved or shared. Only the "Agree" button opens
-`ACTION_ACCESSIBILITY_SETTINGS`. "No thanks" and dismissing the dialog do nothing. Keep this
-dialog in front of every path that leads the user to enable the service.
+Play's Accessibility API policy rejected releases that showed the disclosure only in a settings
+sub-screen, or that let the accessibility service run without an in-app accept. `CompassDisclosureDialog`
+(`:core:designsystem`) is the single disclosure surface: a full-screen dialog that names the
+AccessibilityService API, the data it reads (one screenshot), the purpose (compass heading), and
+that the screenshot stays on-device. It cannot be dismissed by back press or outside tap — only
+"Agree" or "No thanks". Only "Agree" opens `ACTION_ACCESSIBILITY_SETTINGS`.
+
+It appears at all three points where a user reaches the feature, always before Android's own
+accessibility consent screen:
+
+| Entry point | Where |
+|---|---|
+| Turning Tap to Walk on | `TapToWalkSection`'s "Enable anyway" (`SettingsMenusSubScreen.kt`), API 30+ only |
+| Tapping the widget crosshair | `FloatingWidgetService.onTapToWalkClicked()` launches `MainActivity` with `EXTRA_SHOW_COMPASS_DISCLOSURE`; the overlay opens on the next tap |
+| Settings compass row | "Open Settings" in `CompassOrientationSection` |
+
+The answer is persisted in `COMPASS_DISCLOSURE_CHOICE`, so each entry point prompts at most once —
+declining is remembered too, otherwise every crosshair tap would re-prompt.
+
+`CompassHeadingSource.captureHeading()` returns `null` until the choice is `accepted`. The consent
+check lives there, not at the call sites, because Android's accessibility settings can enable the
+service without the app ever being opened (see `CompassHeadingSourceTest`).
 
 ### Anti-cheat caveat
 
