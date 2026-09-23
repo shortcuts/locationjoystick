@@ -30,11 +30,19 @@ import com.locationjoystick.core.designsystem.R
  * AccessibilityService API, the data it reads and why, with an explicit accept tap, before the
  * user reaches Android's accessibility consent screen. Back and outside taps must not consent,
  * so the dialog is not dismissible — [onDecline] is the only way out besides [onAccept].
+ *
+ * [caveats] and [showAccessibilityDisclosure] let the Tap to Walk switch reuse this one screen for
+ * its own risk warning, so enabling the feature is a single surface instead of a dialog then a
+ * screen. Below API 30 compass tracking cannot run, so only the caveats are shown.
  */
 @Composable
 fun CompassDisclosureDialog(
     onAccept: () -> Unit,
     onDecline: () -> Unit,
+    title: String = stringResource(R.string.compass_disclosure_title),
+    acceptLabel: String = stringResource(R.string.compass_disclosure_accept),
+    caveats: List<String> = emptyList(),
+    showAccessibilityDisclosure: Boolean = true,
 ) {
     Dialog(
         onDismissRequest = onDecline,
@@ -60,15 +68,15 @@ fun CompassDisclosureDialog(
                     modifier = Modifier.size(40.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
-                Text(
-                    stringResource(R.string.compass_disclosure_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-                Text(stringResource(R.string.compass_disclosure_intro))
-                Text(stringResource(R.string.compass_disclosure_data))
-                Text(stringResource(R.string.compass_disclosure_purpose))
-                Text(stringResource(R.string.compass_disclosure_handling))
-                Text(stringResource(R.string.compass_disclosure_optional))
+                Text(title, style = MaterialTheme.typography.headlineSmall)
+                caveats.forEach { Text(it) }
+                if (showAccessibilityDisclosure) {
+                    Text(stringResource(R.string.compass_disclosure_intro))
+                    Text(stringResource(R.string.compass_disclosure_data))
+                    Text(stringResource(R.string.compass_disclosure_purpose))
+                    Text(stringResource(R.string.compass_disclosure_handling))
+                    Text(stringResource(R.string.compass_disclosure_optional))
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -77,9 +85,7 @@ fun CompassDisclosureDialog(
                     LjOutlinedButton(onClick = onDecline, modifier = Modifier.weight(1f)) {
                         Text(stringResource(R.string.compass_disclosure_decline))
                     }
-                    LjButton(onClick = onAccept, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.compass_disclosure_accept))
-                    }
+                    LjButton(onClick = onAccept, modifier = Modifier.weight(1f)) { Text(acceptLabel) }
                 }
             }
         }

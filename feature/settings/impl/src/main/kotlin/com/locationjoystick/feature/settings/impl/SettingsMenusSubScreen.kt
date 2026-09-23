@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -65,7 +64,6 @@ import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjLanguageDropdown
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
-import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppLanguage
@@ -289,9 +287,12 @@ private fun TapToWalkSection(
     launchableApps: List<InstalledApp> = emptyList(),
 ) {
     val context = LocalContext.current
-    var showWarning by rememberSaveable { mutableStateOf(false) }
-    var showCompassDisclosure by rememberSaveable { mutableStateOf(false) }
+    var showEnableDisclosure by rememberSaveable { mutableStateOf(false) }
     val enabled = uiState.tapToWalkOverlayEnabled
+    val needsCompassDisclosure =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            !uiState.compassDisclosureAnswered &&
+            !uiState.isCompassServiceGranted
 
     Text(stringResource(R.string.settings_menus_tap_to_walk), style = MaterialTheme.typography.headlineSmall)
     Spacer(Modifier.height(4.dp))
@@ -314,7 +315,7 @@ private fun TapToWalkSection(
             checked = enabled,
             onCheckedChange = { on ->
                 if (on) {
-                    showWarning = true
+                    showEnableDisclosure = true
                 } else {
                     onAction(SettingsAction.SetTapToWalkOverlayEnabled(false))
                 }
@@ -349,42 +350,25 @@ private fun TapToWalkSection(
             CompassOrientationSection(uiState, onAction, onTestCompassDetection, launchableApps)
         }
     }
-    if (showWarning) {
-        AlertDialog(
-            onDismissRequest = { showWarning = false },
-            title = { Text(stringResource(R.string.settings_menus_enable_tap_to_walk_2)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.settings_menus_a_screen_overlay_that_intercepts_taps))
-                    Text(stringResource(R.string.settings_menus_accuracy_depends_on_the_scale_setting))
+    if (showEnableDisclosure) {
+        CompassDisclosureDialog(
+            title = stringResource(R.string.settings_menus_enable_tap_to_walk_2),
+            acceptLabel = stringResource(R.string.settings_menus_enable_anyway),
+            caveats =
+                listOf(
+                    stringResource(R.string.settings_menus_a_screen_overlay_that_intercepts_taps),
+                    stringResource(R.string.settings_menus_accuracy_depends_on_the_scale_setting),
+                ),
+            showAccessibilityDisclosure = needsCompassDisclosure,
+            onAccept = {
+                showEnableDisclosure = false
+                onAction(SettingsAction.SetTapToWalkOverlayEnabled(true))
+                if (needsCompassDisclosure) {
+                    onAction(SettingsAction.SetCompassDisclosureAccepted(true))
+                    openAccessibilitySettings(context)
                 }
             },
-            confirmButton = {
-                LjTextButton(onClick = {
-                    showWarning = false
-                    onAction(SettingsAction.SetTapToWalkOverlayEnabled(true))
-                    showCompassDisclosure =
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-                        !uiState.compassDisclosureAnswered &&
-                        !uiState.isCompassServiceGranted
-                }) { Text(stringResource(R.string.settings_menus_enable_anyway)) }
-            },
-            dismissButton = {
-                LjTextButton(onClick = { showWarning = false }) { Text(stringResource(R.string.common_cancel)) }
-            },
-        )
-    }
-    if (showCompassDisclosure) {
-        CompassDisclosureDialog(
-            onAccept = {
-                showCompassDisclosure = false
-                onAction(SettingsAction.SetCompassDisclosureAccepted(true))
-                openAccessibilitySettings(context)
-            },
-            onDecline = {
-                showCompassDisclosure = false
-                onAction(SettingsAction.SetCompassDisclosureAccepted(false))
-            },
+            onDecline = { showEnableDisclosure = false },
         )
     }
 }

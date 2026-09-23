@@ -164,7 +164,7 @@ accessibility consent screen:
 
 | Entry point | Where |
 |---|---|
-| Turning Tap to Walk on | `TapToWalkSection`'s "Enable anyway" (`SettingsMenusSubScreen.kt`), API 30+ only |
+| Turning Tap to Walk on | The Tap to Walk switch opens the same screen, with the two overlay caveats above the disclosure text and "Enable anyway" as the accept label (`SettingsMenusSubScreen.kt`). Below API 30 only the caveats are shown |
 | Tapping the widget crosshair | `FloatingWidgetService.onTapToWalkClicked()` launches `MainActivity` with `EXTRA_SHOW_COMPASS_DISCLOSURE`; the overlay opens on the next tap |
 | Settings compass row | "Open Settings" in `CompassOrientationSection` |
 
@@ -185,14 +185,19 @@ Accessibility services running in the background are detectable by some games. T
 
 API 30 (`takeScreenshot`) — no fallback exists below it. On API 28–29, the "Compass orientation" Settings section is hidden and `CompassAccessibilityService.onServiceConnected()` skips binding, so compass tracking is unavailable; the rest of Tap to Walk (Tier 1 quick-walk, Tier 2 overlay) works unchanged.
 
-## Warning Dialog
+## Warning Screen
 
-Enabling the overlay shows an `AlertDialog` with three caveats before activating:
+Enabling the overlay opens `CompassDisclosureDialog` (see "Prominent Disclosure" above) with two
+caveats before activating:
 1. Some apps detect mock location activity and may penalise the account.
 2. Accuracy depends on the scale setting matching the game's zoom level.
-3. Zoom out for better precision; zoomed-in maps amplify offset errors.
 
-User must confirm "Enable anyway" or cancel. Cancel leaves the toggle off. State is local (`rememberSaveable`) so the dialog re-shows if the user disables and re-enables.
+The caveats and the accessibility disclosure share one screen, so the user confirms once instead of
+passing a dialog and then a disclosure screen. "Enable anyway" turns the overlay on; when the
+accessibility disclosure was part of that screen it also records the accept and opens
+`ACTION_ACCESSIBILITY_SETTINGS`. "No thanks" leaves the toggle off and records nothing — the user
+declined the feature, not the accessibility service. State is local (`rememberSaveable`) so the
+screen re-shows if the user disables and re-enables.
 
 ## Anti-Patterns to Avoid
 
