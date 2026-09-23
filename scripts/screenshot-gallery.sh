@@ -33,7 +33,7 @@
 #   --steps 01,03,05     (run steps 1, 3, 5)
 # Seeding (routes, favorites) always runs before the first selected step.
 #
-# Output files (24 canonical PNGs):
+# Output files (25 canonical PNGs):
 #   01_idle, 02_map, 03_routes, 04_favorites, 05_settings,
 #   06_map_routes_sheet, 07_map_favorites_sheet, 08_map_roaming_sheet,
 #   09_route_creator, 10_route_detail, 11_map_picker,
@@ -43,7 +43,8 @@
 #   17_group_sync, 18_debug_stats,
 #   19_onboarding_mock_location,
 #   20_tap_to_walk_settings, 21_compass_orientation,
-#   22_capture_coordinates, 23_map_paste_coordinates, 24_roaming_planting
+#   22_capture_coordinates, 23_map_paste_coordinates, 24_roaming_planting,
+#   25_compass_disclosure
 #
 # 19_onboarding_mock_location ("Set as fake GPS app" onboarding step) is only
 # captured on a genuinely fresh install — it's taken mid-onboarding, before
@@ -101,7 +102,7 @@ if [[ -n "$STEPS_FILTER" ]]; then
   done
 else
   # No filter: enable all steps
-  for i in $(seq 1 24); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
+  for i in $(seq 1 25); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
 fi
 
 # Helper to check if a step should run (e.g. should_run_step "16")
@@ -142,6 +143,22 @@ bounds_of() {
       last;
     }
   ' "$dump" 2>/dev/null
+}
+
+# Is the switch on the row labelled "$1" currently checked? Echoes True or False.
+switch_is_on() {
+  local dump result
+  dump=$(ui_dump)
+  result=$(python3 -c '
+import sys
+data = open(sys.argv[1]).read()
+idx = data.find(sys.argv[2])
+seg = data[idx:idx + 900] if idx >= 0 else ""
+i = seg.find("checkable=\"true\"")
+print("checked=\"true\"" in seg[i:i + 40] if i >= 0 else False)
+' "$dump" "$1")
+  rm -f "$dump"
+  echo "$result"
 }
 
 # Tap the toggle switch on the same row as a label (settings rows place the
@@ -741,6 +758,40 @@ go_idle() {
   wait_s 4 "App starting"
 }
 
+# Set an App Features checkbox (Settings → Menus) to on/off, by the checkbox's
+# content-desc ("<Feature> on map" / "<Feature> on widget"). Idempotent: the
+# checkbox is a toggle, so a blind tap would disable an already-enabled feature.
+set_app_feature() {
+  local cd="$1" want="$2" dump state
+  go_idle
+  tap_text_below "Settings" "$CARD_Y_MIN"
+  wait_s 2 "Settings loading"
+  tap_text "Menus"
+  wait_s 2 "Menus loading"
+  for _ in 1 2 3 4 5; do
+    dump=$(ui_dump)
+    state=$(perl -lne 'print $1 if /content-desc="'"$cd"'"[^>]*checked="(true|false)"/i; ' "$dump" | head -1)
+    rm -f "$dump"
+    [[ -n "$state" ]] && break
+    $ADB shell input swipe 540 1600 540 900
+    wait_s 1 "Scrolling to App Features"
+  done
+  if [[ -z "$state" ]]; then
+    warn "Could not find feature checkbox \"$cd\" — skipping."
+    return 1
+  fi
+  if [[ "$state" != "$want" ]]; then
+    tap_text "$cd"
+    wait_s 1 "Setting \"$cd\" to $want"
+    # App Features is a draft setting — without Save the change never reaches DataStore.
+    # The Save FAB never appears in the uiautomator dump (Compose AnimatedVisibility),
+    # so tap its fixed bottom-right slot instead of searching for its label.
+    log "Tapping Save FAB at ($(( SCREEN_W * 83 / 100 )), $(( SCREEN_H * 926 / 1000 )))"
+    $ADB shell input tap "$(( SCREEN_W * 83 / 100 ))" "$(( SCREEN_H * 926 / 1000 ))"
+    wait_s 2 "Saving settings"
+  fi
+}
+
 # ── Marketing-only mode: skip device entirely ─────────────────────────────────
 
 if [[ "$MARKETING_ONLY" == true ]]; then
@@ -1210,16 +1261,7 @@ if should_run_step "20"; then
   wait_s 1 "Scrolling to Tap to Walk"
   $ADB shell input swipe 540 1600 540 400
   wait_s 1 "Scrolling to Tap to Walk"
-  dump=$(ui_dump)
-  already_on=$(python3 -c '
-data = open("'"$dump"'").read()
-idx = data.find("Enable Tap to Walk")
-seg = data[idx:idx+900]
-i = seg.find("checkable=\"true\"")
-print("checked=\"true\"" in seg[i:i+40])
-')
-  rm -f "$dump"
-  if [[ "$already_on" != "True" ]]; then
+  if [[ "$(switch_is_on "Enable Tap to Walk")" != "True" ]]; then
     tap_switch_for "Enable Tap to Walk"
     wait_s 1 "Warning dialog opening"
     tap_text "Enable anyway"
@@ -1265,6 +1307,8 @@ fi
 
 if should_run_step "23"; then
   log "=== 23 MAP PASTE COORDINATES ==="
+  # The paste FAB ships off, so it is not on the map until it is turned on here.
+  set_app_feature "Paste coordinates on map" true
   go_idle
   tap_text_below "Map" "$CARD_Y_MIN"
   wait_s 3 "Map loading"
@@ -1281,6 +1325,7 @@ if should_run_step "23"; then
   screenshot "23_map_paste_coordinates"
   back
   wait_s 1 "Dismissing sheet"
+  set_app_feature "Paste coordinates on map" false
 fi
 
 # ── 24. Map → Roaming sheet, Planting mode ───────────────────────────────────
@@ -1297,6 +1342,39 @@ if should_run_step "24"; then
   screenshot "24_roaming_planting"
   back
   wait_s 1 "Dismissing sheet"
+fi
+
+# ── 25. Tap to Walk accessibility disclosure ─────────────────────────────────
+# Play's Accessibility API policy is reviewed against this screen, so it needs
+# its own shot. It only appears while the switch is off, so the switch is turned
+# off first on a device that already has Tap to Walk enabled.
+
+if should_run_step "25"; then
+  log "=== 25 COMPASS DISCLOSURE ==="
+  go_idle
+  tap_text_below "Settings" "$CARD_Y_MIN"
+  wait_s 2 "Settings loading"
+  tap_text "Menus"
+  wait_s 2 "Menus loading"
+  for _ in 1 2 3; do
+    dump=$(ui_dump)
+    found=$(grep -c 'text="Enable Tap to Walk"' "$dump" || true)
+    rm -f "$dump"
+    (( found > 0 )) && break
+    $ADB shell input swipe 540 1600 540 400
+    wait_s 1 "Scrolling to Tap to Walk"
+  done
+  if [[ "$(switch_is_on "Enable Tap to Walk")" == "True" ]]; then
+    tap_switch_for "Enable Tap to Walk"
+    wait_s 1 "Turning Tap to Walk off"
+  fi
+  tap_switch_for "Enable Tap to Walk"
+  wait_s 2 "Disclosure opening"
+  screenshot "25_compass_disclosure"
+  # Decline leaves the feature off and records nothing, so the device keeps the
+  # state it had before this step.
+  tap_text_exact "No thanks"
+  wait_s 1 "Dismissing disclosure"
 fi
 
 # ── Done ─────────────────────────────────────────────
