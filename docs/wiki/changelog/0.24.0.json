@@ -1,0 +1,8 @@
+{
+  "version": "0.24.0",
+  "date": "2026-09-23",
+  "entries": [
+    { "category": "feat", "scope": "Tap to Walk", "summary": "Turning on compass orientation now shows a full explanation first: what the screen reading is used for, that the screenshot never leaves your phone, and a link to the guide." },
+    { "category": "fix", "scope": "Tap to Walk", "summary": "The compass orientation explanation is shorter and clearer, and appears every time before the Android accessibility screen opens." }
+  ]
+}
