@@ -27,7 +27,7 @@ All constants → `:core:common/constants/AppConstants.kt`.
 | `RouteConstants` | Route-related defaults, planting circle radius/vertex clamps, reserved paste-play route id/name |
 | `DatabaseConstants` | DB name, version |
 | `TopBarConstants` | Max characters for the idle Start place-name suffix |
-| `AppInfo` | Version name, fork changelog/releases URL, upstream issues/docs/troubleshooting URLs, Capture setup guide URL (`CAPTURE_GUIDE_URL`) |
+| `AppInfo` | Version name, fork changelog/releases URL, upstream issues/docs/troubleshooting URLs, Capture setup guide URL (`CAPTURE_GUIDE_URL`), Tap to Walk guide URL (`TAP_TO_WALK_GUIDE_URL`) |
 | `UpdateCheckConstants` | GitHub API URL, connect/read timeouts, check interval, release-tag URL builder |
 | `WhatsNewConstants` | APK asset file name for the per-version changelog JSON |
 | `FollowerRestorationConstants` | Follower boot restoration retry delay, max delay, max attempts, jitter range |

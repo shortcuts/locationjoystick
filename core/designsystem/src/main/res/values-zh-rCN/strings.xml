@@ -58,11 +58,12 @@
     <string name="language_short_traditional_chinese">"TW"</string>
     <string name="language_dropdown_cd">"更改语言"</string>
     <string name="compass_disclosure_title">"罗盘方向功能使用无障碍服务"</string>
-    <string name="compass_disclosure_intro">"locationjoystick 仅为“点击行走”的可选罗盘方向功能申请 Android 的 AccessibilityService API。应用的其他功能无需该权限即可使用。"</string>
+    <string name="compass_disclosure_intro">"罗盘方向是“点击行走”的可选功能，使用 Android 的 AccessibilityService API。locationjoystick 的其他功能都不需要该 API。"</string>
     <string name="compass_disclosure_data">"访问内容：一张屏幕截图，在你打开“点击行走”覆盖层或在设置中点击“测试”时拍摄。"</string>
-    <string name="compass_disclosure_purpose">"用途：定位游戏画面中的罗盘图标，把你的点击转换成正确的实际行走方向。"</string>
-    <string name="compass_disclosure_handling">"截图在本机处理后立即丢弃，绝不保存、上传或分享。该服务不读取文字，不收集个人数据，也不会代你执行任何操作。"</string>
+    <string name="compass_disclosure_purpose">"用途：在该截图中找到游戏的罗盘图标，把你的点击转换成正确的实际行走方向。"</string>
+    <string name="compass_disclosure_handling">"截图在本机读取后立即丢弃，绝不保存、上传或分享。该服务不读取文字，不收集个人数据，也不会代你点击。"</string>
     <string name="compass_disclosure_optional">"若你同意，接下来会打开 Android 无障碍设置以启用该服务。你可以随时在那里关闭它。"</string>
+    <string name="compass_disclosure_guide">"阅读“点击行走”指南"</string>
     <string name="compass_disclosure_accept">"同意"</string>
     <string name="compass_disclosure_decline">"不用了"</string>
 </resources>

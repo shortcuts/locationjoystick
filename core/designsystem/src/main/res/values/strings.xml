@@ -58,11 +58,12 @@
     <string name="language_short_traditional_chinese">"TW"</string>
     <string name="language_dropdown_cd">"Change language"</string>
     <string name="compass_disclosure_title">"Compass orientation uses an Accessibility Service"</string>
-    <string name="compass_disclosure_intro">"locationjoystick asks for Android’s AccessibilityService API only for the optional Compass orientation part of Tap to Walk. Everything else in the app works without it."</string>
-    <string name="compass_disclosure_data">"What it accesses: a single screenshot of your screen, taken when you open the Tap to Walk overlay or tap Test in Settings."</string>
-    <string name="compass_disclosure_purpose">"Why: to locate your game’s on-screen compass icon and turn your tap into the correct real-world walking direction."</string>
-    <string name="compass_disclosure_handling">"The screenshot is processed on your device and discarded right away. It is never saved, sent, or shared. The service reads no text, collects no personal data, and never acts on your behalf."</string>
+    <string name="compass_disclosure_intro">"Compass orientation is an optional part of Tap to Walk. It uses Android’s AccessibilityService API. Nothing else in locationjoystick needs that API."</string>
+    <string name="compass_disclosure_data">"What it accesses: one screenshot of your screen, taken when you open the Tap to Walk overlay or tap Test in Settings."</string>
+    <string name="compass_disclosure_purpose">"Why: to find your game’s compass icon in that screenshot and turn your tap into the correct real-world walking direction."</string>
+    <string name="compass_disclosure_handling">"The screenshot is read on your phone and discarded at once. It is never saved, sent, or shared. The service reads no text, collects no personal data, and never taps for you."</string>
     <string name="compass_disclosure_optional">"If you agree, Android’s accessibility settings open next so you can turn the service on. You can turn it off there at any time."</string>
+    <string name="compass_disclosure_guide">"Read the Tap to Walk guide"</string>
     <string name="compass_disclosure_accept">"Agree"</string>
     <string name="compass_disclosure_decline">"No thanks"</string>
 </resources>

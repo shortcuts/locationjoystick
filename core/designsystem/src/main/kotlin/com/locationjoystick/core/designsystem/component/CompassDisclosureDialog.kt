@@ -1,7 +1,10 @@
 package com.locationjoystick.core.designsystem.component
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,14 +16,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.R
@@ -44,6 +50,7 @@ fun CompassDisclosureDialog(
     caveats: List<String> = emptyList(),
     showAccessibilityDisclosure: Boolean = true,
 ) {
+    val context = LocalContext.current
     Dialog(
         onDismissRequest = onDecline,
         properties =
@@ -76,6 +83,16 @@ fun CompassDisclosureDialog(
                     Text(stringResource(R.string.compass_disclosure_purpose))
                     Text(stringResource(R.string.compass_disclosure_handling))
                     Text(stringResource(R.string.compass_disclosure_optional))
+                }
+                TextButton(
+                    onClick = {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.AppInfo.TAP_TO_WALK_GUIDE_URL)),
+                        )
+                    },
+                    contentPadding = PaddingValues(0.dp),
+                ) {
+                    Text(stringResource(R.string.compass_disclosure_guide))
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),

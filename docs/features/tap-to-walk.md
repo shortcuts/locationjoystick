@@ -157,7 +157,9 @@ sub-screen, or that let the accessibility service run without an in-app accept. 
 (`:core:designsystem`) is the single disclosure surface: a full-screen dialog that names the
 AccessibilityService API, the data it reads (one screenshot), the purpose (compass heading), and
 that the screenshot stays on-device. It cannot be dismissed by back press or outside tap — only
-"Agree" or "No thanks". Only "Agree" opens `ACTION_ACCESSIBILITY_SETTINGS`.
+"Agree" or "No thanks". Only "Agree" opens `ACTION_ACCESSIBILITY_SETTINGS`. A "Read the Tap to
+Walk guide" link opens `AppConstants.AppInfo.TAP_TO_WALK_GUIDE_URL` (the wiki page), so the
+in-app disclosure stands on its own and the long-form explanation stays one tap away.
 
 It appears at all three points where a user reaches the feature, always before Android's own
 accessibility consent screen:
