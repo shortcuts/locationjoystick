@@ -1,13 +1,22 @@
 #!/usr/bin/env bash
 # playstore-foreground-location-video.sh
 #
-# Records the Play Console "FOREGROUND_SERVICE_LOCATION" demo video.
-# Demonstrates the "background location notifications" use case: starting
-# spoofing shows a persistent foreground-service notification, the
-# notification survives backgrounding the app, and stopping spoofing clears it.
+# Records a Play Console demo video. Two flows:
+#
+#   --flow foreground (default)
+#     "FOREGROUND_SERVICE_LOCATION" use case: starting spoofing shows a
+#     persistent foreground-service notification, the notification survives
+#     backgrounding the app, and stopping spoofing clears it.
+#
+#   --flow accessibility
+#     AccessibilityService use case: Settings -> Menus -> Tap to Walk switch
+#     opens the prominent disclosure (CompassDisclosureDialog), which names the
+#     API, the data read, and the purpose. Navigation mirrors step 25 of
+#     scripts/screenshot-gallery.sh.
 #
 # Usage:
 #   ./scripts/playstore-foreground-location-video.sh
+#   ./scripts/playstore-foreground-location-video.sh --flow accessibility
 #   ./scripts/playstore-foreground-location-video.sh --output demo.mp4
 #   ./scripts/playstore-foreground-location-video.sh --device emulator-5554
 #
@@ -22,17 +31,25 @@ set -euo pipefail
 
 PACKAGE="com.locationjoystick.app"
 ACTIVITY=".MainActivity"
-OUTPUT="playstore_foreground_location_demo.mp4"
+OUTPUT=""
 ADB_DEVICE=""
 DEVICE_PATH="/sdcard/playstore_demo.mp4"
+FLOW="foreground"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --output) OUTPUT="$2"; shift 2 ;;
     --device) ADB_DEVICE="-s $2"; shift 2 ;;
+    --flow)   FLOW="$2"; shift 2 ;;
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac
 done
+
+case "$FLOW" in
+  foreground)    : "${OUTPUT:=playstore_foreground_location_demo.mp4}" ;;
+  accessibility) : "${OUTPUT:=playstore_accessibility_demo.mp4}" ;;
+  *) echo "Unknown --flow: $FLOW (expected foreground or accessibility)"; exit 1 ;;
+esac
 
 ADB="adb $ADB_DEVICE"
 
@@ -92,6 +109,58 @@ tap_text_below() {
   read -r x y <<< "$centre"
   log "Tapping \"$text\" at ($x, $y) [y≥$min_y filter]"
   $ADB shell input tap "$x" "$y"
+}
+
+tap_text_exact() {
+  local text="$1"
+  local dump centre x y
+  dump=$(ui_dump)
+  centre=$(perl -lne '
+    if (/(?:text|content-desc)="'"${text}"'"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/i) {
+      printf "%d %d\n", int(($1+$3)/2), int(($2+$4)/2);
+      last;
+    }
+  ' "$dump" 2>/dev/null)
+  rm -f "$dump"
+  if [[ -z "$centre" ]]; then
+    warn "Could not find exact text \"$text\" — skipping tap."
+    return 1
+  fi
+  read -r x y <<< "$centre"
+  log "Tapping \"$text\" (exact) at ($x, $y)"
+  $ADB shell input tap "$x" "$y"
+}
+
+switch_is_on() {
+  local dump result
+  dump=$(ui_dump)
+  result=$(python3 -c '
+import sys
+data = open(sys.argv[1]).read()
+idx = data.find(sys.argv[2])
+seg = data[idx:idx + 900] if idx >= 0 else ""
+i = seg.find("checkable=\"true\"")
+print("checked=\"true\"" in seg[i:i + 40] if i >= 0 else False)
+' "$dump" "$1")
+  rm -f "$dump"
+  echo "$result"
+}
+
+# The label node is not clickable; the Switch sits in the fixed right-hand
+# column at x=970 on the same row.
+tap_switch_for() {
+  local text="$1"
+  local dump centre y
+  dump=$(ui_dump)
+  centre=$(bounds_of "$dump" "$text")
+  rm -f "$dump"
+  if [[ -z "$centre" ]]; then
+    warn "Could not find row \"$text\" — skipping switch tap."
+    return 1
+  fi
+  read -r _ y <<< "$centre"
+  log "Tapping switch for \"$text\" at (970, $y)"
+  $ADB shell input tap 970 "$y"
 }
 
 wait_s() {
@@ -179,7 +248,13 @@ rm -f "$dump"
 
 # ── Recorded flow ────────────────────────────────────────────────────────────
 
+SCREEN_SIZE=$($ADB shell wm size | awk '{print $NF}')
+SCREEN_H=$(echo "$SCREEN_SIZE" | awk -F'x' '{print $2}')
+CARD_Y_MIN=$(( SCREEN_H * 30 / 100 ))
+
 start_recording
+
+if [[ "$FLOW" == "foreground" ]]; then
 
 log "=== Open Map screen ==="
 tap_text_below "Map" 1
@@ -210,6 +285,50 @@ wait_s 3 "App resuming"
 log "=== Stop spoofing (foreground service stops, notification clears) ==="
 tap_text "location simulation" || tap_text "stop"
 wait_s 2 "Simulation stopping"
+
+else
+
+log "=== Open Settings ==="
+tap_text_below "Settings" "$CARD_Y_MIN"
+wait_s 3 "Settings loading"
+
+log "=== Open Menus ==="
+tap_text "Menus"
+wait_s 3 "Menus loading"
+
+log "=== Scroll to Tap to Walk ==="
+for _ in 1 2 3 4; do
+  dump=$(ui_dump)
+  found=$(grep -c 'text="Enable Tap to Walk"' "$dump" || true)
+  rm -f "$dump"
+  (( found > 0 )) && break
+  $ADB shell input swipe 540 1600 540 400
+  wait_s 2 "Scrolling to Tap to Walk"
+done
+wait_s 2 "Showing Tap to Walk section"
+
+# The disclosure only opens while the switch is off.
+if [[ "$(switch_is_on "Enable Tap to Walk")" == "True" ]]; then
+  log "=== Tap to Walk already on — turning it off first ==="
+  tap_switch_for "Enable Tap to Walk"
+  wait_s 2 "Turning Tap to Walk off"
+fi
+
+log "=== Tap the Tap to Walk switch (prominent disclosure opens) ==="
+tap_switch_for "Enable Tap to Walk"
+wait_s 5 "Reading disclosure"
+
+log "=== Scroll the disclosure so the full text is visible ==="
+$ADB shell input swipe 540 1600 540 700
+wait_s 4 "Reading rest of disclosure"
+$ADB shell input swipe 540 1600 540 700
+wait_s 4 "Reading rest of disclosure"
+
+log "=== Decline (leaves the feature off and the device state unchanged) ==="
+tap_text_exact "No thanks"
+wait_s 3 "Dismissing disclosure"
+
+fi
 
 stop_recording
 
