@@ -493,9 +493,9 @@ private fun CompassOrientationSection(
         if (!uiState.isCompassServiceGranted) {
             Spacer(Modifier.width(8.dp))
             LjButton(
-                onClick = {
-                    if (uiState.compassDisclosureAnswered) openAccessibilitySettings(context) else showDisclosure = true
-                },
+                // Play requires the disclosure before every trip to Android's accessibility consent
+                // screen, so a prior answer must not short-circuit it.
+                onClick = { showDisclosure = true },
             ) { Text(stringResource(R.string.settings_menus_open_settings)) }
         }
     }

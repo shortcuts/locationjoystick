@@ -170,8 +170,11 @@ accessibility consent screen:
 | Tapping the widget crosshair | `FloatingWidgetService.onTapToWalkClicked()` launches `MainActivity` with `EXTRA_SHOW_COMPASS_DISCLOSURE`; the overlay opens on the next tap |
 | Settings compass row | "Open Settings" in `CompassOrientationSection` |
 
-The answer is persisted in `COMPASS_DISCLOSURE_CHOICE`, so each entry point prompts at most once —
-declining is remembered too, otherwise every crosshair tap would re-prompt.
+The answer is persisted in `COMPASS_DISCLOSURE_CHOICE`. The Tap to Walk switch and the crosshair
+prompt at most once — declining is remembered too, otherwise every crosshair tap would re-prompt.
+The Settings compass row's "Open Settings" button always prompts, because it is the one path that
+opens Android's accessibility consent screen, and Play requires the disclosure before every trip
+there.
 
 `CompassHeadingSource.captureHeading()` returns `null` until the choice is `accepted`. The consent
 check lives there, not at the call sites, because Android's accessibility settings can enable the
