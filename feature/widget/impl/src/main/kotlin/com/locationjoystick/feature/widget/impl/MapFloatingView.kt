@@ -195,6 +195,8 @@ internal fun MapFloatingView(
     // See MapScreen: everything drawn on / read from the MapLibre map goes through `proj`.
     val proj = tileSource.projection
     val appliedTileSource = remember { mutableStateOf<MapTileSource?>(null) }
+    // Map callbacks outlive recomposition; read the latest source instead of a first-composition capture.
+    val currentTileSource by rememberUpdatedState(tileSource)
 
     fun LatLng.toMapLatLng(): MapLatLng = proj.toMap(this).let { MapLatLng(it.latitude, it.longitude) }
 
@@ -209,12 +211,13 @@ internal fun MapFloatingView(
     val pendingTapSource = remember { mutableStateOf<GeoJsonSource?>(null) }
 
     val applyStyle: (MapLibreMap) -> Unit = { map ->
-        appliedTileSource.value = tileSource
-        map.applyZoomBounds(tileSource)
+        val source = currentTileSource
+        appliedTileSource.value = source
+        map.applyZoomBounds(source)
         map.setStyle(Style.Builder().fromUri(AppConstants.MapConstants.EMPTY_MAP_STYLE_URI)) { style ->
             val layers =
                 style.addLocationLayers(
-                    tileSource = tileSource,
+                    tileSource = source,
                     osmSourceId = MapLibreSourceIds.PANEL_OSM,
                     osmLayerId = MapLibreLayerIds.PANEL_OSM,
                     osmPreviewSourceId = MapLibreSourceIds.PANEL_OSM_PREVIEW,
@@ -316,17 +319,17 @@ internal fun MapFloatingView(
                             CameraPosition
                                 .Builder()
                                 .target(
-                                    (
-                                        initialPosition
-                                            ?: tileSource.defaultCenter
-                                    ).toMapLatLng(),
+                                    (initialPosition ?: currentTileSource.defaultCenter)
+                                        .let { currentTileSource.projection.toMap(it) }
+                                        .let { MapLatLng(it.latitude, it.longitude) },
                                 ).zoom(AppConstants.MapConstants.DEFAULT_ZOOM)
                                 .build()
 
                         applyStyle(map)
 
                         map.addOnMapClickListener { latLng ->
-                            val pos = proj.fromMap(LatLng(latLng.latitude, latLng.longitude))
+                            val pos =
+                                currentTileSource.projection.fromMap(LatLng(latLng.latitude, latLng.longitude))
                             if (quickWalkState.value) {
                                 onWalkToState.value(pos)
                             } else {
