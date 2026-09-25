@@ -21,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -110,6 +111,8 @@ internal fun MapPickerScreen(
     // Selected/persisted positions are WGS-84; only the MapLibre drawing/tap boundary is projected.
     val proj = tileSource.projection
     val appliedTileSource = remember { mutableStateOf<MapTileSource?>(null) }
+    // Map callbacks outlive recomposition; read the latest source instead of a first-composition capture.
+    val currentTileSource by rememberUpdatedState(tileSource)
 
     fun LatLng.toMapLatLng(): MapLatLng = proj.toMap(this).let { MapLatLng(it.latitude, it.longitude) }
 
@@ -130,13 +133,18 @@ internal fun MapPickerScreen(
     val effectivePosition = { selectedPosition.value ?: initialPosition?.let { it.latitude to it.longitude } }
 
     val applyStyle: (MapLibreMap) -> Unit = { map ->
-        appliedTileSource.value = tileSource
-        map.applyZoomBounds(tileSource)
+        val source = currentTileSource
+        val sourceProj = source.projection
+        appliedTileSource.value = source
+        map.applyZoomBounds(source)
         map.setStyle(Style.Builder().fromUri(AppConstants.MapConstants.EMPTY_MAP_STYLE_URI)) { style ->
             val layers =
                 style.addPickerLayers(
-                    tileSource = tileSource,
-                    currentPosGeoJson = effectivePosition()?.let { (lat, lon) -> markerGeoJson(lat, lon) },
+                    tileSource = source,
+                    currentPosGeoJson =
+                        effectivePosition()?.let { (lat, lon) ->
+                            sourceProj.toMap(LatLng(lat, lon)).let { buildMarkerGeoJson(it.latitude, it.longitude) }
+                        },
                 )
             markerSource.value = layers.markerSource
         }
@@ -266,17 +274,17 @@ internal fun MapPickerScreen(
                                 CameraPosition
                                     .Builder()
                                     .target(
-                                        (
-                                            initialPosition
-                                                ?: tileSource.defaultCenter
-                                        ).toMapLatLng(),
+                                        (initialPosition ?: currentTileSource.defaultCenter)
+                                            .let { currentTileSource.projection.toMap(it) }
+                                            .let { MapLatLng(it.latitude, it.longitude) },
                                     ).zoom(AppConstants.MapConstants.DEFAULT_ZOOM)
                                     .build()
 
                             applyStyle(map)
 
                             map.addOnMapClickListener { latLng ->
-                                val wgs = proj.fromMap(LatLng(latLng.latitude, latLng.longitude))
+                                val wgs =
+                                    currentTileSource.projection.fromMap(LatLng(latLng.latitude, latLng.longitude))
                                 selectedPosition.value = wgs.latitude to wgs.longitude
                                 val src = markerSource.value ?: return@addOnMapClickListener true
                                 // Marker is drawn where the user tapped (already in map CRS).

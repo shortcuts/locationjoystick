@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -204,14 +205,17 @@ internal fun MapScreen(
     val tileSource = uiState.mapTileSource
     val proj = tileSource.projection
     val appliedTileSource = remember { mutableStateOf<MapTileSource?>(null) }
+    // Map callbacks outlive recomposition; read the latest source instead of a first-composition capture.
+    val currentTileSource by rememberUpdatedState(tileSource)
 
     fun LatLng.toMapLatLng(): MapLatLng = proj.toMap(this).let { MapLatLng(it.latitude, it.longitude) }
 
     val applyStyle: (MapLibreMap) -> Unit = { map ->
-        appliedTileSource.value = tileSource
-        map.applyZoomBounds(tileSource)
+        val source = currentTileSource
+        appliedTileSource.value = source
+        map.applyZoomBounds(source)
         map.setStyle(Style.Builder().fromUri(AppConstants.MapConstants.EMPTY_MAP_STYLE_URI)) { style ->
-            val layers = style.addLocationLayers(tileSource = tileSource, includeSearchMarker = true)
+            val layers = style.addLocationLayers(tileSource = source, includeSearchMarker = true)
             positionSource.value = layers.positionSource
             tracedSource.value = layers.tracedSource
             remainingSource.value = layers.remainingSource
@@ -321,22 +325,29 @@ internal fun MapScreen(
                                 CameraPosition
                                     .Builder()
                                     .target(
-                                        (
-                                            initialPosition
-                                                ?: tileSource.defaultCenter
-                                        ).toMapLatLng(),
+                                        (initialPosition ?: currentTileSource.defaultCenter)
+                                            .let { currentTileSource.projection.toMap(it) }
+                                            .let { MapLatLng(it.latitude, it.longitude) },
                                     ).zoom(AppConstants.MapConstants.DEFAULT_ZOOM)
                                     .build()
 
                             applyStyle(map)
 
                             map.addOnMapClickListener { latLng ->
-                                onAction(MapAction.TapToTeleport(proj.fromMap(LatLng(latLng.latitude, latLng.longitude))))
+                                onAction(
+                                    MapAction.TapToTeleport(
+                                        currentTileSource.projection.fromMap(LatLng(latLng.latitude, latLng.longitude)),
+                                    ),
+                                )
                                 true
                             }
 
                             map.addOnMapLongClickListener { latLng ->
-                                onAction(MapAction.LongPressTapToWalk(proj.fromMap(LatLng(latLng.latitude, latLng.longitude))))
+                                onAction(
+                                    MapAction.LongPressTapToWalk(
+                                        currentTileSource.projection.fromMap(LatLng(latLng.latitude, latLng.longitude)),
+                                    ),
+                                )
                                 true
                             }
 

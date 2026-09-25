@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -163,6 +164,8 @@ internal fun PasteCoordinatesScreen(
     // WGS-84 <-> map-tile CRS boundary; view-model state always stays WGS-84.
     val proj = tileSource.projection
     val appliedTileSource = remember { mutableStateOf<MapTileSource?>(null) }
+    // Map callbacks outlive recomposition; read the latest source instead of a first-composition capture.
+    val currentTileSource by rememberUpdatedState(tileSource)
 
     fun LatLng.toMapLatLng(): MapLatLng = proj.toMap(this).let { MapLatLng(it.latitude, it.longitude) }
 
@@ -172,16 +175,18 @@ internal fun PasteCoordinatesScreen(
     val waypointsSource = remember { mutableStateOf<GeoJsonSource?>(null) }
 
     val applyStyle: (MapLibreMap) -> Unit = { map ->
-        appliedTileSource.value = tileSource
-        map.applyZoomBounds(tileSource)
+        val source = currentTileSource
+        val sourceProj = source.projection
+        appliedTileSource.value = source
+        map.applyZoomBounds(source)
         map.setStyle(Style.Builder().fromUri(AppConstants.MapConstants.EMPTY_MAP_STYLE_URI)) { style ->
-            val layers = style.addCreatorLayers(tileSource = tileSource)
+            val layers = style.addCreatorLayers(tileSource = source)
             segmentsSource.value = layers.segmentsSource
             waypointsSource.value = layers.waypointsSource
             layers.segmentsSource.setGeoJson(
-                buildSegmentsGeoJson(listOf(proj.toMap(state.previewWaypoints)).filter { it.size >= 2 }),
+                buildSegmentsGeoJson(listOf(sourceProj.toMap(state.previewWaypoints)).filter { it.size >= 2 }),
             )
-            layers.waypointsSource.setGeoJson(buildWaypointsGeoJson(proj.toMap(state.cleanedPoints)))
+            layers.waypointsSource.setGeoJson(buildWaypointsGeoJson(sourceProj.toMap(state.cleanedPoints)))
             mapReady = true
         }
     }
@@ -283,7 +288,11 @@ internal fun PasteCoordinatesScreen(
                                 map.cameraPosition =
                                     CameraPosition
                                         .Builder()
-                                        .target(tileSource.defaultCenter.toMapLatLng())
+                                        .target(
+                                            currentTileSource.defaultCenter
+                                                .let { currentTileSource.projection.toMap(it) }
+                                                .let { MapLatLng(it.latitude, it.longitude) },
+                                        )
                                         .zoom(AppConstants.MapConstants.DEFAULT_ZOOM)
                                         .build()
                                 applyStyle(map)

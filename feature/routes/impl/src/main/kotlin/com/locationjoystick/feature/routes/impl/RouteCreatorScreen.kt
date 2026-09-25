@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -145,6 +146,8 @@ internal fun RouteCreatorScreen(
     // WGS-84 <-> map-tile CRS boundary; persisted route data always stays WGS-84.
     val proj = tileSource.projection
     val appliedTileSource = remember { mutableStateOf<MapTileSource?>(null) }
+    // Map callbacks outlive recomposition; read the latest source instead of a first-composition capture.
+    val currentTileSource by rememberUpdatedState(tileSource)
 
     fun LatLng.toMapLatLng(): MapLatLng = proj.toMap(this).let { MapLatLng(it.latitude, it.longitude) }
 
@@ -159,18 +162,20 @@ internal fun RouteCreatorScreen(
     var pendingWaitPrompt by remember { mutableStateOf<LatLng?>(null) }
 
     val applyStyle: (MapLibreMap) -> Unit = { map ->
-        appliedTileSource.value = tileSource
-        map.applyZoomBounds(tileSource)
+        val source = currentTileSource
+        val sourceProj = source.projection
+        appliedTileSource.value = source
+        map.applyZoomBounds(source)
         map.setStyle(Style.Builder().fromUri(AppConstants.MapConstants.EMPTY_MAP_STYLE_URI)) { style ->
             val layers =
                 style.addCreatorLayers(
-                    tileSource = tileSource,
-                    currentPosGeoJson = initialPosition?.let { buildPositionGeoJson(proj.toMap(it)) },
+                    tileSource = source,
+                    currentPosGeoJson = initialPosition?.let { buildPositionGeoJson(sourceProj.toMap(it)) },
                 )
             segmentsSource.value = layers.segmentsSource
             waypointsSource.value = layers.waypointsSource
-            segmentsSource.value?.setGeoJson(buildSegmentsGeoJson(state.segments.map(proj::toMap)))
-            waypointsSource.value?.setGeoJson(buildWaypointsGeoJson(proj.toMap(state.waypoints)))
+            segmentsSource.value?.setGeoJson(buildSegmentsGeoJson(state.segments.map(sourceProj::toMap)))
+            waypointsSource.value?.setGeoJson(buildWaypointsGeoJson(sourceProj.toMap(state.waypoints)))
         }
     }
 
@@ -304,17 +309,17 @@ internal fun RouteCreatorScreen(
                                 CameraPosition
                                     .Builder()
                                     .target(
-                                        (
-                                            initialPosition
-                                                ?: tileSource.defaultCenter
-                                        ).toMapLatLng(),
+                                        (initialPosition ?: currentTileSource.defaultCenter)
+                                            .let { currentTileSource.projection.toMap(it) }
+                                            .let { MapLatLng(it.latitude, it.longitude) },
                                     ).zoom(AppConstants.MapConstants.DEFAULT_ZOOM)
                                     .build()
 
                             applyStyle(map)
 
                             map.addOnMapClickListener { latLng ->
-                                val position = proj.fromMap(LatLng(latLng.latitude, latLng.longitude))
+                                val position =
+                                    currentTileSource.projection.fromMap(LatLng(latLng.latitude, latLng.longitude))
                                 if (routeType == RouteType.TELEPORT) {
                                     pendingWaitPrompt = position
                                 } else {
