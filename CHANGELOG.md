@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.25.0](https://github.com/shortcuts/locationjoystick/compare/v0.24.0...v0.25.0) (2026-09-27)
+
+
+### Features
+
+* moving the joystick takes over from automated movement ([#96](https://github.com/shortcuts/locationjoystick/issues/96)) ([e9bf703](https://github.com/shortcuts/locationjoystick/commit/e9bf7033d96f97889732d34c13a1b8adb98f3868))
+
+
+### Bug Fixes
+
+* gate the compass Accessibility service to API 30+ and name Accessibility in every locale ([f1f350f](https://github.com/shortcuts/locationjoystick/commit/f1f350f314767cb25d35187e4c73c9dbc5b4366e))
+* show the Accessibility disclosure in the normal onboarding flow ([66150ec](https://github.com/shortcuts/locationjoystick/commit/66150ec39835db1f3326b7cd066900790df62a44))
+* stop a cancelled walk from resuming after a teleport ([#99](https://github.com/shortcuts/locationjoystick/issues/99)) ([794ccf7](https://github.com/shortcuts/locationjoystick/commit/794ccf7f74332b36ff9d233bbbaadfc4a442ad03))
+
 ## [0.24.0](https://github.com/shortcuts/locationjoystick/compare/v0.23.0...v0.24.0) (2026-09-23)
 
 
