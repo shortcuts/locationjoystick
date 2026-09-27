@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.25.0](https://github.com/shortcuts/locationjoystick/compare/v0.24.0...v0.25.0) (2026-09-27)
+
+
+### Features
+
+* moving the joystick takes over from automated movement ([#96](https://github.com/shortcuts/locationjoystick/issues/96)) ([e9bf703](https://github.com/shortcuts/locationjoystick/commit/e9bf7033d96f97889732d34c13a1b8adb98f3868))
+* **settings:** add Capture config section to Settings &gt; Menus ([ff0df4f](https://github.com/shortcuts/locationjoystick/commit/ff0df4f67aca9ce5f43b624377a55673886a93f1))
+
+
+### Bug Fixes
+
+* **deep-link:** route capture-off VIEW links through confirm sheet ([748d99f](https://github.com/shortcuts/locationjoystick/commit/748d99fa7535285bf2933ac849106abc71ce9383))
+* gate the compass Accessibility service to API 30+ and name Accessibility in every locale ([f1f350f](https://github.com/shortcuts/locationjoystick/commit/f1f350f314767cb25d35187e4c73c9dbc5b4366e))
+* **screenshot-gallery:** match renamed Tap to Walk dialog buttons ([2380636](https://github.com/shortcuts/locationjoystick/commit/23806361a7c46f84a02d3f6374d6b2d742aff545))
+* show the Accessibility disclosure in the normal onboarding flow ([66150ec](https://github.com/shortcuts/locationjoystick/commit/66150ec39835db1f3326b7cd066900790df62a44))
+* **smoke-test:** stop map-feature toggle test from mis-clicking Save FAB ([78957f0](https://github.com/shortcuts/locationjoystick/commit/78957f0c287c5126659340a00397e2b9a84ed136))
+* stop a cancelled walk from resuming after a teleport ([#99](https://github.com/shortcuts/locationjoystick/issues/99)) ([794ccf7](https://github.com/shortcuts/locationjoystick/commit/794ccf7f74332b36ff9d233bbbaadfc4a442ad03))
+
 ## [0.24.0](https://github.com/shortcuts/locationjoystick/compare/v0.23.0...v0.24.0) (2026-09-23)
 
 
