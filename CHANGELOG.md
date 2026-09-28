@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.1](https://github.com/shortcuts/locationjoystick/compare/v0.25.0...v0.25.1) (2026-09-28)
+
+
+### Bug Fixes
+
+* **whats-new:** add missing 0.25.0 changelog entries ([0777548](https://github.com/shortcuts/locationjoystick/commit/077754849577a12708423379759ad2a333a0eab9))
+
 ## [0.25.0](https://github.com/shortcuts/locationjoystick/compare/v0.24.0...v0.25.0) (2026-09-27)
 
 
