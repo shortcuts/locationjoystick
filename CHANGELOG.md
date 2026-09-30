@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.26.0](https://github.com/shortcuts/locationjoystick/compare/v0.25.0...v0.26.0) (2026-09-30)
+
+
+### Features
+
+* **api:** add JSON CRUD for favorites, routes and speed profiles ([33d525e](https://github.com/shortcuts/locationjoystick/commit/33d525e696c1ff619403a25888f25bf09901557b))
+* **api:** add movement and state commands to leader control API ([a4bfd7c](https://github.com/shortcuts/locationjoystick/commit/a4bfd7c2cd4f408f99f76faf2ca3d133ca36a16b))
+* **drawer:** add Acknowledgements link to wiki page ([d7be9f1](https://github.com/shortcuts/locationjoystick/commit/d7be9f15dd34887872e2b5216396388ea1065ee5))
+* **group:** leader Control API toggle with host, port, key on Group Sync screen ([9e5f16b](https://github.com/shortcuts/locationjoystick/commit/9e5f16b2eebee5f4bbdf8102bddee695a2897f82))
+* **onboarding:** move compass disclosure from launch dialog into onboarding card ([ebac1a9](https://github.com/shortcuts/locationjoystick/commit/ebac1a93491754d14117093c36d93bc8e7db3564))
+* **sync:** serve Bearer-auth /api/v1 routes on leader server ([55cd0d7](https://github.com/shortcuts/locationjoystick/commit/55cd0d732973a6dcd681c8586cf4e13c2173c2ce))
+* **wiki:** sidebar outline of current page headings with scroll-spy ([92feff2](https://github.com/shortcuts/locationjoystick/commit/92feff2d39dde8b2d9e1a1192f4e7ff8feb85777))
+
+
+### Bug Fixes
+
+* **a11y:** stop drawer external links from duplicating on TalkBack ([02706c0](https://github.com/shortcuts/locationjoystick/commit/02706c0287322a5a967fa2e6252eea835b6a6410))
+* **compass:** retry heading capture up to 3 times ([9479cd0](https://github.com/shortcuts/locationjoystick/commit/9479cd0e4edf710f8ecaba695b2e2c2ae826cd9a))
+* **designsystem:** add light theme warning colors for permission cards ([49827e3](https://github.com/shortcuts/locationjoystick/commit/49827e37f1070d13ccfb5b72f446805400bcf5f2))
+* **designsystem:** darken light accent and add light error color for WCAG contrast ([62b5d69](https://github.com/shortcuts/locationjoystick/commit/62b5d692c707a9a9bea9e3428fd9a47eff0aa34e))
+* **designsystem:** raise light outline variant contrast to WCAG 3:1 ([20a15e3](https://github.com/shortcuts/locationjoystick/commit/20a15e3596c906481b9ae94b496b4dc68d43b285))
+* **designsystem:** raise top-bar toggle contrast to WCAG AA in light theme ([3cd4ef5](https://github.com/shortcuts/locationjoystick/commit/3cd4ef5eab73e5cb103f6e711cd72a13c17698ce))
+* **onboarding:** show accessibility disclosure automatically ([27d1d71](https://github.com/shortcuts/locationjoystick/commit/27d1d71cc269f98ec4a4da82a6020d47560825b4))
+* pause automatic movement on joystick takeover and clarify widget states ([#107](https://github.com/shortcuts/locationjoystick/issues/107)) ([b028f31](https://github.com/shortcuts/locationjoystick/commit/b028f31e4b713e7535fb57c8f1b4953bdb1a61c4))
+* **screenshots:** back out to IdleScreen for overlay shots ([cffc9be](https://github.com/shortcuts/locationjoystick/commit/cffc9beffc0362d8ada2dc1ed714370d77e756bf))
+* **screenshots:** expand widget panel taps Expand directly, no false Collapse warning ([dd4b0e6](https://github.com/shortcuts/locationjoystick/commit/dd4b0e6beacd7e014402fd87035d648ae1cd2685))
+* **screenshots:** peek for Agree before tapping in step 20 ([b831c4a](https://github.com/shortcuts/locationjoystick/commit/b831c4a4535857c15d0c7c6ea3e3ff752e97510e))
+* **screenshots:** press HOME before overlay shots ([a3b40cb](https://github.com/shortcuts/locationjoystick/commit/a3b40cb041e1d4a804949af242adec327aadf08d))
+* **screenshots:** reach IdleScreen when a session restores on launch ([dbe078e](https://github.com/shortcuts/locationjoystick/commit/dbe078ebe9691921efaa59f48a554ce8e2d09a61))
+* **screenshots:** switch debug stats off after step 18 ([eef3b79](https://github.com/shortcuts/locationjoystick/commit/eef3b79135f9e7c07c4619732d03f2f80c5a6ae3))
+* **screenshots:** tap widget overlay buttons by name ([48a4e7f](https://github.com/shortcuts/locationjoystick/commit/48a4e7fbb4d884eaa71ecc7b5bd3b81a3b9e671d))
+* **test:** import assertCountEquals in IdleSmokeTest ([daaddbb](https://github.com/shortcuts/locationjoystick/commit/daaddbb2ffaf3a839b1bae24ac669e7e75ee88fb))
+* **widget:** make tap-to-walk cancel button accessible ([506c9e2](https://github.com/shortcuts/locationjoystick/commit/506c9e222a1992899a7946439d1a1a939f93dac8))
+* **widget:** move debug stats readout into a side popup ([#106](https://github.com/shortcuts/locationjoystick/issues/106)) ([19cf555](https://github.com/shortcuts/locationjoystick/commit/19cf555fc4de01ecdd5bb2309ca78a020b6a8f92))
+* **wiki:** render sidebar outline as a tree and pin hash target as active ([00b1239](https://github.com/shortcuts/locationjoystick/commit/00b1239f6d666f4f3dcf9063a9dfec852168a7bc))
+
 ## [0.25.0](https://github.com/shortcuts/locationjoystick/compare/v0.24.0...v0.25.0) (2026-09-28)
 
 
