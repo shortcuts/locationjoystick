@@ -1,0 +1,13 @@
+{
+  "version": "0.26.0",
+  "date": "2026-09-30",
+  "entries": [
+    { "category": "feat", "scope": "Group Sync", "summary": "The Control API can now read and edit your favorites, routes, and speed profiles, and it accepts movement and state commands. The wiki has the full reference." },
+    { "category": "feat", "scope": "General", "summary": "The side menu now links to the Acknowledgements page, which credits the projects this app uses." },
+    { "category": "fix", "scope": "Floating Joystick", "summary": "Moving the joystick now pauses a walk, route, or roam instead of ending it, so you can resume it afterward. The widget also shows more clearly which state it is in." },
+    { "category": "fix", "scope": "Floating Widget", "summary": "The debug stats readout now opens in a small popup beside the widget instead of covering it. The Tap to Walk cancel button now works with TalkBack." },
+    { "category": "fix", "scope": "Tap to Walk", "summary": "Compass orientation now retries up to three times when it cannot read your heading. The Accessibility explanation now appears on its own during first-run setup." },
+    { "category": "fix", "scope": "Theme", "summary": "The light theme has stronger contrast for accents, errors, warnings, outlines, and the top-bar toggle, so text and controls are easier to see." },
+    { "category": "fix", "scope": "General", "summary": "External links in the side menu are no longer read twice by TalkBack." }
+  ]
+}
