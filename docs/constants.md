@@ -20,7 +20,7 @@ All constants → `:core:common/constants/AppConstants.kt`.
 | `ElevationConstants` | Open-Meteo endpoint, timeouts, elevation cache size and coordinate scale |
 | `ExportConstants` | Schema version, MIME type, GPX version/creator, max GPX import size, max GPX route waypoint count |
 | `CooldownConstants` | Distance-tiered teleport cooldown table (distance → seconds) |
-| `AnimationConstants` | Spring damping ratio, stiffness values for nav transitions |
+| `AnimationConstants` | Spring damping ratio, stiffness values for nav transitions, liquid-label timing and gap |
 | `TimeConstants` | Time-related constants |
 | `NotificationConstants` | Channel IDs |
 | `ServiceConstants` | Service action strings |

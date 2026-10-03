@@ -196,6 +196,7 @@ class SettingsViewModel
             val hideTeleportFeatures: Boolean? = null,
             val hideWidgetOverlay: Boolean? = null,
             val hideForegroundNotification: Boolean? = null,
+            val hidePausedReminder: Boolean? = null,
             val showRouteJumpButtons: Boolean? = null,
             val realismRealElevationEnabled: Boolean? = null,
             val altitudeJitterRadiusMeters: Double? = null,
@@ -273,6 +274,8 @@ class SettingsViewModel
                     hideWidgetOverlay = draftState.hideWidgetOverlay ?: snapshot.hideWidgetOverlay,
                     hideForegroundNotification =
                         draftState.hideForegroundNotification ?: snapshot.hideForegroundNotification,
+                    hidePausedReminder =
+                        draftState.hidePausedReminder ?: snapshot.hidePausedReminder,
                     showRouteJumpButtons = draftState.showRouteJumpButtons ?: snapshot.showRouteJumpButtons,
                     realismRealElevationEnabled =
                         draftState.realismRealElevationEnabled ?: snapshot.realismRealElevationEnabled,
@@ -452,6 +455,10 @@ class SettingsViewModel
             mutableDraft.update { it.copy(hideForegroundNotification = enabled) }
         }
 
+        fun setHidePausedReminder(enabled: Boolean) {
+            mutableDraft.update { it.copy(hidePausedReminder = enabled) }
+        }
+
         fun setShowRouteJumpButtons(enabled: Boolean) {
             mutableDraft.update { it.copy(showRouteJumpButtons = enabled) }
         }
@@ -611,6 +618,7 @@ class SettingsViewModel
                             hideTeleportFeatures = state.hideTeleportFeatures,
                             hideWidgetOverlay = state.hideWidgetOverlay,
                             hideForegroundNotification = state.hideForegroundNotification,
+                            hidePausedReminder = state.hidePausedReminder,
                             showRouteJumpButtons = state.showRouteJumpButtons,
                             realismRealElevationEnabled = state.realismRealElevationEnabled,
                             altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
@@ -707,6 +715,7 @@ class SettingsViewModel
                     hideTeleportFeatures = state.hideTeleportFeatures,
                     hideWidgetOverlay = state.hideWidgetOverlay,
                     hideForegroundNotification = state.hideForegroundNotification,
+                    hidePausedReminder = state.hidePausedReminder,
                     showRouteJumpButtons = state.showRouteJumpButtons,
                     bypassMockLocationCheck = settingsRepository.getBypassMockLocationCheck().first(),
                     realElevationEnabled = state.realismRealElevationEnabled,
@@ -922,6 +931,7 @@ class SettingsViewModel
                     hideTeleportFeatures = data.settings.hideTeleportFeatures,
                     hideWidgetOverlay = data.settings.hideWidgetOverlay,
                     hideForegroundNotification = data.settings.hideForegroundNotification,
+                    hidePausedReminder = data.settings.hidePausedReminder,
                     showRouteJumpButtons = data.settings.showRouteJumpButtons,
                     bypassMockLocationCheck = data.settings.bypassMockLocationCheck,
                     realismRealElevationEnabled = data.settings.realElevationEnabled,

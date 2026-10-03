@@ -143,6 +143,10 @@ internal sealed class SettingsAction {
         val enabled: Boolean,
     ) : SettingsAction()
 
+    data class SetHidePausedReminder(
+        val enabled: Boolean,
+    ) : SettingsAction()
+
     data class SetShowRouteJumpButtons(
         val enabled: Boolean,
     ) : SettingsAction()

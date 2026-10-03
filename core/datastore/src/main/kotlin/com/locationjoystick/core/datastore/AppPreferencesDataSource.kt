@@ -233,6 +233,12 @@ interface PreferencesDataSource {
     /** Sets whether the foreground-service notification's status bar icon is hidden. */
     suspend fun setHideForegroundNotification(enabled: Boolean)
 
+    /** Gets whether paused activity labels are hidden. */
+    fun getHidePausedReminder(): Flow<Boolean>
+
+    /** Sets whether paused activity labels are hidden. */
+    suspend fun setHidePausedReminder(enabled: Boolean)
+
     /** Gets whether the route-replay jump-to-waypoint buttons are shown. */
     fun getShowRouteJumpButtons(): Flow<Boolean>
 
@@ -413,6 +419,7 @@ data class SettingsSnapshot(
     val hideTeleportFeatures: Boolean = false,
     val hideWidgetOverlay: Boolean = false,
     val hideForegroundNotification: Boolean = false,
+    val hidePausedReminder: Boolean = false,
     val showRouteJumpButtons: Boolean = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
     val bypassMockLocationCheck: Boolean = false,
     val realismRealElevationEnabled: Boolean = AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
@@ -576,6 +583,7 @@ class AppPreferencesDataSource
             val HIDE_TELEPORT_FEATURES = booleanPreferencesKey("hide_teleport_features")
             val HIDE_WIDGET_OVERLAY = booleanPreferencesKey("hide_widget_overlay")
             val HIDE_FOREGROUND_NOTIFICATION = booleanPreferencesKey("hide_foreground_notification")
+            val HIDE_PAUSED_REMINDER = booleanPreferencesKey("hide_paused_reminder")
             val SHOW_ROUTE_JUMP_BUTTONS = booleanPreferencesKey("show_route_jump_buttons")
             val BYPASS_MOCK_LOCATION_CHECK = booleanPreferencesKey("bypass_mock_location_check")
             val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
@@ -923,6 +931,10 @@ class AppPreferencesDataSource
 
         override suspend fun setHideForegroundNotification(enabled: Boolean) = setPref(Keys.HIDE_FOREGROUND_NOTIFICATION, enabled)
 
+        override fun getHidePausedReminder(): Flow<Boolean> = pref(Keys.HIDE_PAUSED_REMINDER, false)
+
+        override suspend fun setHidePausedReminder(enabled: Boolean) = setPref(Keys.HIDE_PAUSED_REMINDER, enabled)
+
         override fun getShowRouteJumpButtons(): Flow<Boolean> =
             pref(Keys.SHOW_ROUTE_JUMP_BUTTONS, AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT)
 
@@ -1137,6 +1149,7 @@ class AppPreferencesDataSource
                 prefs[Keys.HIDE_TELEPORT_FEATURES] = snapshot.hideTeleportFeatures
                 prefs[Keys.HIDE_WIDGET_OVERLAY] = snapshot.hideWidgetOverlay
                 prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] = snapshot.hideForegroundNotification
+                prefs[Keys.HIDE_PAUSED_REMINDER] = snapshot.hidePausedReminder
                 prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] = snapshot.showRouteJumpButtons
                 prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] = snapshot.bypassMockLocationCheck
                 prefs[Keys.REALISM_REAL_ELEVATION_ENABLED] = snapshot.realismRealElevationEnabled
@@ -1233,6 +1246,7 @@ class AppPreferencesDataSource
                         hideTeleportFeatures = prefs[Keys.HIDE_TELEPORT_FEATURES] ?: false,
                         hideWidgetOverlay = prefs[Keys.HIDE_WIDGET_OVERLAY] ?: false,
                         hideForegroundNotification = prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] ?: false,
+                        hidePausedReminder = prefs[Keys.HIDE_PAUSED_REMINDER] ?: false,
                         showRouteJumpButtons =
                             prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS]
                                 ?: AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
