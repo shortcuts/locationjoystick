@@ -187,6 +187,7 @@ internal fun WidgetPanel(
     activeProfileId: String,
     routeControls: RouteControlsState,
     roamingControls: RoamingControlsState,
+    hidePausedReminder: Boolean = false,
     joystickInputIgnored: Boolean = false,
     roamingStartIgnored: Boolean = false,
     isPanelExpanded: Boolean,
@@ -333,6 +334,12 @@ internal fun WidgetPanel(
                             enabled = controlsEnabled,
                             onClick = routeControls.onIconClick,
                         )
+                        if (!hidePausedReminder) {
+                            WidgetPausedLabel(
+                                visible = routeControls.isActive && routeControls.isPaused,
+                                controlsExpanded = routeControls.expanded,
+                            )
+                        }
                         WidgetSidePopup(visible = routeControls.isActive && routeControls.expanded) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (routeControls.isPausable) {
@@ -405,6 +412,12 @@ internal fun WidgetPanel(
                             enabled = controlsEnabled,
                             onClick = roamingControls.onIconClick,
                         )
+                        if (!hidePausedReminder) {
+                            WidgetPausedLabel(
+                                visible = roamingControls.isActive && roamingControls.isPaused,
+                                controlsExpanded = roamingControls.expanded,
+                            )
+                        }
                         WidgetSidePopup(visible = roamingControls.isActive && roamingControls.expanded) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 val pauseResumeIcon = if (roamingControls.isPaused) LjIcons.PlayArrow else LjIcons.Pause

@@ -98,6 +98,8 @@
     <string name="settings_menus_hide_floating_widget_desc">"模擬定位生效期間不再顯示浮動小工具按鈕。"</string>
     <string name="settings_menus_hide_notification_icon">"隱藏通知圖示"</string>
     <string name="settings_menus_hide_notification_icon_desc">"移除模擬定位通知的狀態列圖示。Android 要求該通知必須保留 — 它會被收納至通知欄中。"</string>
+    <string name="settings_menus_hide_paused_reminder">隱藏暫停提醒</string>
+    <string name="settings_menus_hide_paused_reminder_desc">隱藏行走、路線與漫遊暫停時的「已暫停」標籤。</string>
     <string name="settings_menus_show_route_jump_buttons">"顯示路線跳轉按鈕"</string>
     <string name="settings_menus_show_route_jump_buttons_desc">"在路線重播控制列中加入「上一個途經點／下一個途經點」按鈕，可在途經點之間立即瞬移。預設關閉。"</string>
     <string name="settings_menus_show_altitude_override_button">"顯示海拔覆蓋按鈕"</string>

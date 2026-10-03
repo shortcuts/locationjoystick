@@ -54,4 +54,5 @@
     <string name="widget_feature_favorites_cd">"收藏选择"</string>
     <string name="widget_feature_speed_cycle_cd">"速度切换"</string>
     <string name="widget_feature_open_map_cd">"打开地图"</string>
+    <string name="widget_activity_paused">已暂停</string>
 </resources>

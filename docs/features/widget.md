@@ -79,6 +79,41 @@ teleport does not unpark mock GPS.
 See docs/features/favorites.md and docs/features/routes.md for the shared `matchesNameSearch`
 filter used by the in-app lists and map sheets.
 
+## Paused activity label
+
+Paused walk-to, route replay, and roaming show a dark rounded "Paused" label beside the
+grey activity icon in the expanded widget. A small circle pulls out through a narrowing
+liquid neck, pinches free with a slight recoil, and immediately expands into the label.
+There is no hold between separation and expansion. The final gap from the icon edge is 8 dp.
+The corner radius is 20 dp, clamped to
+half the label height. Text fades in during expansion. Resume or Stop reverses the motion;
+opening activity controls hides the label immediately so the two never overlap.
+
+Settings → Menus → Privacy → **Hide pause reminder** sits immediately below
+**Hide notification icon** and defaults to off. It uses the existing draft + Save flow.
+Saving it removes both paused-label popups immediately, including an animation in progress.
+Unchecking and saving shows the label again if the activity is still paused. The grey
+icons, pause/resume controls, and movement state are unchanged. `hidePausedReminder`
+persists in DataStore, is included in settings snapshots and JSON export/import, and resets
+to `false` with the other settings. The widget waits for the preference before showing
+labels, avoiding a flash during startup when reminders are hidden.
+
+The reusable `LjLiquidLabel` and `rememberLiquidLabelProgress` live in `:core:designsystem`.
+They accept text, colors, source diameter, gap, corner radius, maximum label width and
+left/right direction; they own only transient animation progress, never activity state.
+The Canvas excludes the source circle's interior so the original icon stays visible.
+One reversible timeline enters in 1500 ms and exits in 900 ms; interrupted transitions
+continue from the current fraction. Compose's system animator duration scale applies.
+Timing constants are in `AppConstants.AnimationConstants`. Text is measured with the current
+font scale; the label grows vertically when needed and ellipsizes long translations.
+
+`WidgetPausedLabel` hosts the drawing in a non-focusable, non-touchable child popup attached
+to the widget token. The popup reserves its final size for the entire animation, keeps the
+source centered over its icon while dragging, and mirrors left near the right screen edge.
+Text remains readable in either direction. The original 48 dp button hit area and the
+underlying app's touch handling are preserved. The popup remains until exit finishes and is
+removed with the parent composition. Existing activity state remains in the service.
+
 ## Appearance
 
 Overlay panels follow Settings → Appearance (`getThemeMode()` → `LjTheme`), same as the main app.

@@ -111,6 +111,8 @@
     <string name="settings_menus_hide_floating_widget_desc">"模拟定位生效期间不再显示悬浮窗按钮。"</string>
     <string name="settings_menus_hide_notification_icon">"隐藏通知图标"</string>
     <string name="settings_menus_hide_notification_icon_desc">"移除模拟定位通知的状态栏图标。Android 要求该通知必须保留 — 它会被收纳到通知栏中。"</string>
+    <string name="settings_menus_hide_paused_reminder">隐藏暂停提醒</string>
+    <string name="settings_menus_hide_paused_reminder_desc">隐藏行走、路线和漫游暂停时的「已暂停」标签。</string>
     <string name="settings_menus_show_route_jump_buttons">"显示路线跳转按钮"</string>
     <string name="settings_menus_show_route_jump_buttons_desc">"在路线回放控制栏中添加“上一个途经点／下一个途经点”按钮，可在途经点之间立即瞬移。默认关闭。"</string>
     <string name="settings_menus_show_altitude_override_button">"显示海拔覆盖按钮"</string>

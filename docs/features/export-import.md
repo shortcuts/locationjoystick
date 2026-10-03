@@ -8,6 +8,8 @@ Key files: `:feature:settings:impl/SettingsScreen.kt`, `:core:data/SettingsRepos
 
 Covers: routes, favorites, speed profiles, widget/map feature config + shared display order, roaming defaults, jitter settings, hot locations state, hot routes state, sort preferences.
 
+`AppSettings.hidePausedReminder` round-trips as the `hidePausedReminder` boolean. Missing fields in older exports default to `false`, keeping paused activity labels visible.
+
 `AppSettings.mapTileSource` round-trips as the `mapTileSource` string (`OSM` / `AMAP`). Old exports without it, or with an unknown value, import cleanly — `MapTileSource.fromName` falls back to `OSM`.
 
 `AppSettings.disabledGeocodingProviders` round-trips as the `disabledGeocodingProviders` array of `GeocodingProviderId` names. A missing array means every provider is enabled; unknown names are ignored.

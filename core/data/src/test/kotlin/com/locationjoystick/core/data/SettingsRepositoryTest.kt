@@ -1546,6 +1546,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         hideForegroundNotificationFlow.value = enabled
     }
 
+    private val hidePausedReminderFlow = MutableStateFlow(false)
+
+    override fun getHidePausedReminder(): Flow<Boolean> = hidePausedReminderFlow
+
+    override suspend fun setHidePausedReminder(enabled: Boolean) {
+        hidePausedReminderFlow.value = enabled
+    }
+
     private val showRouteJumpButtonsFlow =
         MutableStateFlow(AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT)
 
@@ -1719,6 +1727,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         hideTeleportFeaturesFlow.value = false
         hideWidgetOverlayFlow.value = false
         hideForegroundNotificationFlow.value = false
+        hidePausedReminderFlow.value = false
         showRouteJumpButtonsFlow.value = false
         bypassMockLocationCheckFlow.value = false
         onboardingCompleteFlow.value = onboardingComplete
