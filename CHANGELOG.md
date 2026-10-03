@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.27.0](https://github.com/shortcuts/locationjoystick/compare/v0.26.0...v0.27.0) (2026-10-03)
+
+
+### Features
+
+* **capture:** open chosen app after a handled map link ([537b90b](https://github.com/shortcuts/locationjoystick/commit/537b90b407b5b73526438226e32216deca8f4e48))
+* **favorites:** mark one favorite as Home start point ([ab402a5](https://github.com/shortcuts/locationjoystick/commit/ab402a5a86da714bac9fffe5b90aeaa7aaecf136))
+* **geocoding:** add PhotonProvider as second geocoding provider ([e4f6769](https://github.com/shortcuts/locationjoystick/commit/e4f6769bb5843d289eadb92aa40d0c84841a8842))
+* **geocoding:** fall back across providers with 10-minute failure cooldown ([1b75a84](https://github.com/shortcuts/locationjoystick/commit/1b75a84104513b7849a0bfe68930855e420fbb12))
+* **settings:** toggle geocoding providers in Settings &gt; Menus ([29d529a](https://github.com/shortcuts/locationjoystick/commit/29d529a975155462f2cdf1e21c9cffcf5b9eafe0)), closes [#97](https://github.com/shortcuts/locationjoystick/issues/97)
+
+
+### Bug Fixes
+
+* **i18n:** localize cooldown advisory and badge text ([e6f35df](https://github.com/shortcuts/locationjoystick/commit/e6f35df411f660bc06dd37fdf2fa60add8737492))
+* **map:** read the current tile source in map callbacks ([ed8b697](https://github.com/shortcuts/locationjoystick/commit/ed8b697c02e1c522669953367c5fad96795a4419))
+* smoke tests ([9d2770f](https://github.com/shortcuts/locationjoystick/commit/9d2770f8aa8a685eb29e8f85c627fb53a815f701))
+
 ## [0.26.0](https://github.com/shortcuts/locationjoystick/compare/v0.25.0...v0.26.0) (2026-09-30)
 
 
