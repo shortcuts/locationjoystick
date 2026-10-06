@@ -111,8 +111,6 @@
     <string name="settings_menus_hide_floating_widget_desc">"Keeps the floating widget button from appearing while spoofing is active."</string>
     <string name="settings_menus_hide_notification_icon">"Hide notification icon"</string>
     <string name="settings_menus_hide_notification_icon_desc">"Removes the status bar icon for the spoofing notification. Android requires the notification to keep existing — it's tucked into the notification shade instead."</string>
-    <string name="settings_menus_hide_paused_reminder">Hide pause reminder</string>
-    <string name="settings_menus_hide_paused_reminder_desc">Hides the Paused label when walking, routes, or roaming are paused.</string>
     <string name="settings_menus_show_route_jump_buttons">"Show route jump buttons"</string>
     <string name="settings_menus_show_route_jump_buttons_desc">"Adds Previous waypoint / Next waypoint buttons to route replay controls, for instantly teleporting between waypoints. Off by default."</string>
     <string name="settings_menus_show_altitude_override_button">"Show altitude override button"</string>

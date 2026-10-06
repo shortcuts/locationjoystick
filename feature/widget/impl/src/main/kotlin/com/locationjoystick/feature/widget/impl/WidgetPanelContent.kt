@@ -184,10 +184,10 @@ internal fun WidgetPanel(
     features: List<AppFeature>,
     joystickVisible: Boolean,
     joystickLocked: Boolean,
+    joystickMoving: Boolean,
     activeProfileId: String,
     routeControls: RouteControlsState,
     roamingControls: RoamingControlsState,
-    hidePausedReminder: Boolean = false,
     joystickInputIgnored: Boolean = false,
     roamingStartIgnored: Boolean = false,
     isPanelExpanded: Boolean,
@@ -321,11 +321,7 @@ internal fun WidgetPanel(
             features.forEach { feature ->
                 if (feature == AppFeature.ROUTES) {
                     val routeIconTint =
-                        when {
-                            routeControls.isActive && routeControls.isPaused -> WidgetInactiveTint
-                            routeControls.isActive -> LjSuccess
-                            else -> MaterialTheme.colorScheme.primary
-                        }
+                        activityTint(widgetActivityState(routeControls.isActive, routeControls.isPaused))
                     Box {
                         WidgetIconButton(
                             icon = LjIcons.Route,
@@ -334,12 +330,6 @@ internal fun WidgetPanel(
                             enabled = controlsEnabled,
                             onClick = routeControls.onIconClick,
                         )
-                        if (!hidePausedReminder) {
-                            WidgetPausedLabel(
-                                visible = routeControls.isActive && routeControls.isPaused,
-                                controlsExpanded = routeControls.expanded,
-                            )
-                        }
                         WidgetSidePopup(visible = routeControls.isActive && routeControls.expanded) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (routeControls.isPausable) {
@@ -390,12 +380,12 @@ internal fun WidgetPanel(
                         }
                     }
                 } else if (feature == AppFeature.ROAMING) {
+                    val roamingState = widgetActivityState(roamingControls.isActive, roamingControls.isPaused)
                     val roamingTint =
-                        when {
-                            roamingControls.isActive && roamingControls.isPaused -> WidgetInactiveTint
-                            roamingControls.isActive -> LjSuccess
-                            roamingStartIgnored -> WidgetIgnoredTint
-                            else -> MaterialTheme.colorScheme.primary
+                        if (roamingState == WidgetActivityState.IDLE && roamingStartIgnored) {
+                            WidgetIgnoredTint
+                        } else {
+                            activityTint(roamingState)
                         }
                     Box {
                         WidgetIconButton(
@@ -412,12 +402,6 @@ internal fun WidgetPanel(
                             enabled = controlsEnabled,
                             onClick = roamingControls.onIconClick,
                         )
-                        if (!hidePausedReminder) {
-                            WidgetPausedLabel(
-                                visible = roamingControls.isActive && roamingControls.isPaused,
-                                controlsExpanded = roamingControls.expanded,
-                            )
-                        }
                         WidgetSidePopup(visible = roamingControls.isActive && roamingControls.expanded) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 val pauseResumeIcon = if (roamingControls.isPaused) LjIcons.PlayArrow else LjIcons.Pause
@@ -454,7 +438,13 @@ internal fun WidgetPanel(
                             joystickLocked,
                             activeProfileId,
                         )
-                    val iconTint = if (active) MaterialTheme.colorScheme.primary else WidgetInactiveTint
+                    val isJoystickIcon = feature == AppFeature.JOYSTICK_TOGGLE || feature == AppFeature.JOYSTICK_LOCK
+                    val iconTint =
+                        when {
+                            isJoystickIcon -> if (joystickMoving) LjSuccess else WidgetInactiveTint
+                            active -> MaterialTheme.colorScheme.primary
+                            else -> WidgetInactiveTint
+                        }
                     Box {
                         WidgetIconButton(
                             icon = icon,
@@ -545,6 +535,14 @@ internal fun WidgetPanel(
         }
     }
 }
+
+@Composable
+private fun activityTint(state: WidgetActivityState): Color =
+    when (state) {
+        WidgetActivityState.IDLE -> WidgetInactiveTint
+        WidgetActivityState.MOVING -> LjSuccess
+        WidgetActivityState.PAUSED -> MaterialTheme.colorScheme.primary
+    }
 
 private fun featureIconAndState(
     feature: AppFeature,

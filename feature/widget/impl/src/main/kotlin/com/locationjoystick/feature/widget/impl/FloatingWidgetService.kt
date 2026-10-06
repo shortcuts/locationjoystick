@@ -355,7 +355,6 @@ class FloatingWidgetService :
             val isTapToWalkEnabled by settingsRepository.getTapToWalkOverlayEnabled().collectAsStateWithLifecycle(initialValue = false)
             val isTapToWalkActive by isTapToWalkActiveFlow.collectAsStateWithLifecycle()
             val hideTeleportFeatures by settingsRepository.getHideTeleportFeatures().collectAsStateWithLifecycle(initialValue = false)
-            val hidePausedReminder by settingsRepository.getHidePausedReminder().collectAsStateWithLifecycle(initialValue = true)
             val showRouteJumpButtons by settingsRepository.getShowRouteJumpButtons().collectAsStateWithLifecycle(
                 initialValue = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
             )
@@ -450,10 +449,10 @@ class FloatingWidgetService :
                     features = features,
                     joystickVisible = joystickVisible,
                     joystickLocked = joystickLocked,
+                    joystickMoving = joystickMoving(currentMode),
                     activeProfileId = activeProfileId,
                     routeControls = routeControls,
                     roamingControls = roamingControls,
-                    hidePausedReminder = hidePausedReminder,
                     joystickInputIgnored =
                         shouldIgnoreJoystickInput(
                             currentMode,

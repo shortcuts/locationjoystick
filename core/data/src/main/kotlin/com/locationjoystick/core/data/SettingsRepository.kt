@@ -326,10 +326,6 @@ class SettingsRepository
 
         suspend fun setHideForegroundNotification(enabled: Boolean) = dataSource.setHideForegroundNotification(enabled)
 
-        fun getHidePausedReminder(): Flow<Boolean> = dataSource.getHidePausedReminder()
-
-        suspend fun setHidePausedReminder(enabled: Boolean) = dataSource.setHidePausedReminder(enabled)
-
         fun getShowRouteJumpButtons(): Flow<Boolean> = dataSource.getShowRouteJumpButtons()
 
         suspend fun setShowRouteJumpButtons(enabled: Boolean) = dataSource.setShowRouteJumpButtons(enabled)

@@ -79,41 +79,6 @@ teleport does not unpark mock GPS.
 See docs/features/favorites.md and docs/features/routes.md for the shared `matchesNameSearch`
 filter used by the in-app lists and map sheets.
 
-## Paused activity label
-
-Paused walk-to, route replay, and roaming show a dark rounded "Paused" label beside the
-grey activity icon in the expanded widget. A small circle pulls out through a narrowing
-liquid neck, pinches free with a slight recoil, and immediately expands into the label.
-There is no hold between separation and expansion. The final gap from the icon edge is 8 dp.
-The corner radius is 20 dp, clamped to
-half the label height. Text fades in during expansion. Resume or Stop reverses the motion;
-opening activity controls hides the label immediately so the two never overlap.
-
-Settings → Menus → Privacy → **Hide pause reminder** sits immediately below
-**Hide notification icon** and defaults to off. It uses the existing draft + Save flow.
-Saving it removes both paused-label popups immediately, including an animation in progress.
-Unchecking and saving shows the label again if the activity is still paused. The grey
-icons, pause/resume controls, and movement state are unchanged. `hidePausedReminder`
-persists in DataStore, is included in settings snapshots and JSON export/import, and resets
-to `false` with the other settings. The widget waits for the preference before showing
-labels, avoiding a flash during startup when reminders are hidden.
-
-The reusable `LjLiquidLabel` and `rememberLiquidLabelProgress` live in `:core:designsystem`.
-They accept text, colors, source diameter, gap, corner radius, maximum label width and
-left/right direction; they own only transient animation progress, never activity state.
-The Canvas excludes the source circle's interior so the original icon stays visible.
-One reversible timeline enters in 1500 ms and exits in 900 ms; interrupted transitions
-continue from the current fraction. Compose's system animator duration scale applies.
-Timing constants are in `AppConstants.AnimationConstants`. Text is measured with the current
-font scale; the label grows vertically when needed and ellipsizes long translations.
-
-`WidgetPausedLabel` hosts the drawing in a non-focusable, non-touchable child popup attached
-to the widget token. The popup reserves its final size for the entire animation, keeps the
-source centered over its icon while dragging, and mirrors left near the right screen edge.
-Text remains readable in either direction. The original 48 dp button hit area and the
-underlying app's touch handling are preserved. The popup remains until exit finishes and is
-removed with the parent composition. Existing activity state remains in the service.
-
 ## Appearance
 
 Overlay panels follow Settings → Appearance (`getThemeMode()` → `LjTheme`), same as the main app.
@@ -121,7 +86,7 @@ List rows use `surfaceVariant`; route-start checkboxes use `ljCheckboxColors()`.
 column stays black circles with orange / white icons so it remains visible over other apps —
 inactive icons use a light grey-white tint. Disabled controls and ignored roam starts fade to about
 42% white instead of nearly matching the circle. While spoofing is active, the joystick lock icon
-uses primary orange when locked and `WidgetInactiveTint` grey when unlocked. Activity playback
+is green while the stick is moving (`joystickMoving`, `MockMode.JOYSTICK`) and `WidgetInactiveTint` grey otherwise. Activity playback
 and pause do not change its tint. The launcher and every expanded control share a
 50 dp-wide, 52 dp-high slot: each control keeps a 48 dp touch target around its 42 dp circle, while
 the common slot centers the full column and reduces the visible gap by 4 dp. `WidgetSidePopup`
@@ -158,7 +123,7 @@ does not affect the others.
 | Widget panel row | `:feature:widget:impl/WidgetPanelContent.kt`, `FloatingWidgetService.kt` | `FloatingWidgetService.routeExpandedFlow` (`MutableStateFlow<Boolean>`) |
 | Floating map (in-widget) | `:feature:widget:impl/MapFloatingView.kt`, `WidgetPanelPresenter.kt` | `WidgetPanelPresenter.mapRouteControlsExpanded` (`MutableStateFlow<Boolean>`) — see below |
 
-In the widget icon column the route icon is active (pause/stop popup) only for route replay and walk-to, and the roaming icon only for roaming — roaming never lights the route icon (`routeControlsActive`, `WidgetParkControls.kt`), matching the floating map. Each activity icon is orange when idle, green while moving, and uses the Pause control's existing `WidgetInactiveTint` grey while its own activity is paused. Resume restores green; completion or Stop restores orange. The pause/resume arrows and click behavior are unchanged. Floating-map route/roam buttons also use their existing neutral map-button colors while paused. While roaming, tapping the route icon opens the routes picker.
+In the widget icon column the route icon is active (pause/stop popup) only for route replay and walk-to, and the roaming icon only for roaming — roaming never lights the route icon (`routeControlsActive`, `WidgetParkControls.kt`), matching the floating map. Each activity icon is grey (`WidgetInactiveTint`) when idle, green while moving, and primary orange while its own activity is paused (`widgetActivityState`). Resume restores green; completion or Stop restores grey. The pause/resume arrows and click behavior are unchanged. Floating-map route/roam buttons also use their existing neutral map-button colors while paused. While roaming, tapping the route icon opens the routes picker.
 
 While a route replay is active, a `current/total` progress chip is pinned at the **bottom** of the widget panel icon list (after configurable features and extra sections, before debug stats) and at the bottom of the floating-map FAB column. Same `LocationRepository.routeProgress` source as the main map FAB column (docs/features/routes.md, "Route progress"). Previous / Next on these surfaces use `RouteReplayEngine.jumpToNextWaypoint` / `jumpToPreviousWaypoint`; when Teleport between waypoints is on, the engine lingers at the jumped stop before the next automatic hop (docs/features/routes.md, "Next / Previous Waypoint").
 
@@ -190,7 +155,7 @@ When `AppFeature.MAP_FLOATING` is enabled, the floating map's FAB column include
   - **Pause / Resume** — toggles replay pause state.
 - **No replay active**: tapping the route button opens the floating routes picker (`showRoutesFloatingView()`), matching the main map screen's behaviour and the button's own "Open routes" label.
 - **Expansion state ownership**: the expanded/collapsed flag lives in `WidgetPanelPresenter.mapRouteControlsExpanded`, **not** in a `remember` inside `MapFloatingView`. `showPanel()` builds a fresh `ComposeView` on every open, so composable-local state would reset to collapsed each time the map panel was reopened mid-replay — leaving the pause/stop controls unreachable. The presenter collapses the flag automatically once `mockMode` leaves `ROUTE_REPLAY`, so a new route never starts pre-expanded.
-- **Settings gate**: `enabledMapFeatures` flows through `MapSharedState` so the floating map respects the same visibility toggle as the main map screen. Paste coordinates (`AppFeature.PASTE_COORDINATES`) is on both WIDGET and MAP, off by default (absent from `DEFAULT_WIDGET_ENABLED` / `DEFAULT_MAP_ENABLED`; enable in Settings → Menus → App Features), and uses the map-surface gate on the floating-map FAB column. The widget panel button opens `PasteCoordinatesFloatingView` (shared `PasteCoordinatesForm`): one valid point offers Teleport / Walk / Walk via roads; multiple points switch to route-labelled options and Start route. Save first as favorite remains separate from Save route. Roaming (`AppFeature.ROAMING`) is on both WIDGET and MAP, on by default on the widget (`DEFAULT_WIDGET_ENABLED`). Existing installs gain it via `mergeNewDefaultWidgetFeatures`: `LEGACY_WIDGET_SEEN_DEFAULTS` is the pre-paste set, and `WIDGET_PRE_ROAMING_SEEN_DEFAULTS` is the paste-era set, so roaming is unseen until 0.20.5. If `widget_seen_defaults` already contains `roaming`, the user ran a build where the widget button was a default and then turned it off — leave it off. Tap while idle opens `RoamingFloatingView` (Walk around the block + Planting). Tap while `MockMode.ROAMING` expands pause/stop via `WidgetSidePopup` (`roamingExpandedFlow`). A playing route blocks roam start; the roam icon fades but stays readable on the black circle when that control is ignored. The widget show/hide button uses `LjIcons.JoystickToggle` (the supplied Material Symbols vector) in both visibility states, with the existing size, click handler, and accessibility label. Its tint reflects overlay visibility only: primary orange when attached, `WidgetInactiveTint` grey when hidden, regardless of lock or movement ownership. It shows or hides the overlay on its own (lock is not required). The Settings menu keeps its original `LjIcons.Joystick` gamepad icon. Moving a locked stick into its center dead zone stops manual stepping without unlocking. Pulling outward retains lock; the lock button itself toggles locking. Joystick show/hide and lock remain tappable during automatic movement. The lock icon reflects `joystickLocked` only: primary orange when locked, `WidgetInactiveTint` grey when unlocked, regardless of activity playback or pause. Moving the stick pauses the walk, route, or roam and takes over; releasing leaves the activity paused until Resume (docs/features/joystick.md, "Manual takeover"). Roam start stays a no-op while a route is playing. Capture coordinates (`AppFeature.CAPTURE_COORDINATES`) is MAP-only, on by default on the map FAB set, and opens the same helper page on the floating map; intercept does not require the overlay (docs/features/location-links.md, Opt-in Tier). Installs that already persisted `PASTE_COORDINATES` keep it; the upgrade merge never adds it. Map FABs gain `CAPTURE_COORDINATES` on upgrade via `mergeNewDefaultMapFeatures`. Turning either off in Settings then sticks.
+- **Settings gate**: `enabledMapFeatures` flows through `MapSharedState` so the floating map respects the same visibility toggle as the main map screen. Paste coordinates (`AppFeature.PASTE_COORDINATES`) is on both WIDGET and MAP, off by default (absent from `DEFAULT_WIDGET_ENABLED` / `DEFAULT_MAP_ENABLED`; enable in Settings → Menus → App Features), and uses the map-surface gate on the floating-map FAB column. The widget panel button opens `PasteCoordinatesFloatingView` (shared `PasteCoordinatesForm`): one valid point offers Teleport / Walk / Walk via roads; multiple points switch to route-labelled options and Start route. Save first as favorite remains separate from Save route. Roaming (`AppFeature.ROAMING`) is on both WIDGET and MAP, on by default on the widget (`DEFAULT_WIDGET_ENABLED`). Existing installs gain it via `mergeNewDefaultWidgetFeatures`: `LEGACY_WIDGET_SEEN_DEFAULTS` is the pre-paste set, and `WIDGET_PRE_ROAMING_SEEN_DEFAULTS` is the paste-era set, so roaming is unseen until 0.20.5. If `widget_seen_defaults` already contains `roaming`, the user ran a build where the widget button was a default and then turned it off — leave it off. Tap while idle opens `RoamingFloatingView` (Walk around the block + Planting). Tap while `MockMode.ROAMING` expands pause/stop via `WidgetSidePopup` (`roamingExpandedFlow`). A playing route blocks roam start; the roam icon fades but stays readable on the black circle when that control is ignored. The widget show/hide button uses `LjIcons.JoystickToggle` (the supplied Material Symbols vector) in both visibility states, with the existing size, click handler, and accessibility label. Its tint is green while the stick is moving and `WidgetInactiveTint` grey otherwise, regardless of visibility or lock. It shows or hides the overlay on its own (lock is not required). The Settings menu keeps its original `LjIcons.Joystick` gamepad icon. Moving a locked stick into its center dead zone stops manual stepping without unlocking. Pulling outward retains lock; the lock button itself toggles locking. Joystick show/hide and lock remain tappable during automatic movement. The lock glyph reflects `joystickLocked`; its tint is green while the stick is moving and `WidgetInactiveTint` grey otherwise (a locked stick keeps moving, so stays green). Moving the stick pauses the walk, route, or roam and takes over; releasing leaves the activity paused until Resume (docs/features/joystick.md, "Manual takeover"). Roam start stays a no-op while a route is playing. Capture coordinates (`AppFeature.CAPTURE_COORDINATES`) is MAP-only, on by default on the map FAB set, and opens the same helper page on the floating map; intercept does not require the overlay (docs/features/location-links.md, Opt-in Tier). Installs that already persisted `PASTE_COORDINATES` keep it; the upgrade merge never adds it. Map FABs gain `CAPTURE_COORDINATES` on upgrade via `mergeNewDefaultMapFeatures`. Turning either off in Settings then sticks.
 
 The floating map is a MapLibre `MapView` inside a `TYPE_APPLICATION_OVERLAY` window.
 `rememberMapView(overlay = true)` (`:core:map`) sets `textureMode` so the map composites

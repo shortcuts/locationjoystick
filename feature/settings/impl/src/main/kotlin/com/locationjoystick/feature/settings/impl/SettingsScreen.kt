@@ -374,10 +374,6 @@ fun SettingsRoute(
                     viewModel.setHideForegroundNotification(action.enabled)
                 }
 
-                is SettingsAction.SetHidePausedReminder -> {
-                    viewModel.setHidePausedReminder(action.enabled)
-                }
-
                 is SettingsAction.SetShowRouteJumpButtons -> {
                     viewModel.setShowRouteJumpButtons(action.enabled)
                 }

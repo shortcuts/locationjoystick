@@ -21,7 +21,6 @@ data class AppSettings(
     val hideTeleportFeatures: Boolean = false,
     val hideWidgetOverlay: Boolean = false,
     val hideForegroundNotification: Boolean = false,
-    val hidePausedReminder: Boolean = false,
     val showRouteJumpButtons: Boolean = false,
     val bypassMockLocationCheck: Boolean = false,
     val realElevationEnabled: Boolean = true,

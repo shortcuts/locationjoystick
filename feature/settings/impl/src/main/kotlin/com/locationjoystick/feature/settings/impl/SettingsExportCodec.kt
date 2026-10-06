@@ -88,7 +88,6 @@ internal object SettingsExportCodec {
         settingsObj.put("disabledGeocodingProviders", JSONArray(data.settings.disabledGeocodingProviders.map { it.name }))
         settingsObj.put("hideWidgetOverlay", data.settings.hideWidgetOverlay)
         settingsObj.put("hideForegroundNotification", data.settings.hideForegroundNotification)
-        settingsObj.put("hidePausedReminder", data.settings.hidePausedReminder)
         settingsObj.put("showRouteJumpButtons", data.settings.showRouteJumpButtons)
         settingsObj.put("bypassMockLocationCheck", data.settings.bypassMockLocationCheck)
         settingsObj.put("realElevationEnabled", data.settings.realElevationEnabled)
@@ -244,7 +243,6 @@ internal object SettingsExportCodec {
                 }.orEmpty()
         val hideWidgetOverlay = settingsObj.optBoolean("hideWidgetOverlay", false)
         val hideForegroundNotification = settingsObj.optBoolean("hideForegroundNotification", false)
-        val hidePausedReminder = settingsObj.optBoolean("hidePausedReminder", false)
         val showRouteJumpButtons =
             settingsObj.optBoolean(
                 "showRouteJumpButtons",
@@ -317,7 +315,6 @@ internal object SettingsExportCodec {
                 disabledGeocodingProviders = disabledGeocodingProviders,
                 hideWidgetOverlay = hideWidgetOverlay,
                 hideForegroundNotification = hideForegroundNotification,
-                hidePausedReminder = hidePausedReminder,
                 showRouteJumpButtons = showRouteJumpButtons,
                 bypassMockLocationCheck = bypassMockLocationCheck,
                 roamingDefaults = roamingDefaults,

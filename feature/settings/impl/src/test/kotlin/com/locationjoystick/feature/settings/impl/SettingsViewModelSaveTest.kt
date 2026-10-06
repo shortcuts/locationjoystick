@@ -96,25 +96,6 @@ class SettingsViewModelSaveTest {
     }
 
     @Test
-    fun `hide pause reminder remains a draft until saved and can be turned off`() =
-        runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
-
-            viewModel.setHidePausedReminder(true)
-            assertTrue(viewModel.uiState.value.hidePausedReminder)
-            assertTrue(viewModel.uiState.value.isDirty)
-            assertEquals(0, fakeDataSource.applySnapshotCallCount)
-
-            viewModel.saveChanges()
-            assertTrue(fakeDataSource.lastAppliedSnapshot!!.hidePausedReminder)
-            assertFalse(viewModel.uiState.value.isDirty)
-
-            viewModel.setHidePausedReminder(false)
-            viewModel.saveChanges()
-            assertFalse(fakeDataSource.lastAppliedSnapshot!!.hidePausedReminder)
-        }
-
-    @Test
     fun `saveChanges triggers exactly one applySnapshot call`() =
         runTest(testDispatcher) {
             viewModel.setSpeed("walk", 2.0)
@@ -240,7 +221,6 @@ class SettingsViewModelSaveTest {
                             satelliteExtrasEnabled = false,
                             suspendedMockingEnabled = true,
                             hideTeleportFeatures = true,
-                            hidePausedReminder = true,
                             roamingDefaults = customRoaming,
                         ),
                     speedProfiles =
@@ -267,7 +247,6 @@ class SettingsViewModelSaveTest {
             assertEquals(1, fakeDataSource.applySnapshotCallCount)
             val snapshot = fakeDataSource.lastAppliedSnapshot!!
             assertEquals(1.1, snapshot.walkSpeedMs, 0.001)
-            assertTrue(snapshot.hidePausedReminder)
             assertEquals(3.3, snapshot.runSpeedMs, 0.001)
             assertEquals(7.7, snapshot.bikeSpeedMs, 0.001)
             assertEquals(SpeedUnit.MPH, snapshot.speedUnit)
@@ -712,10 +691,6 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getHideForegroundNotification(): Flow<Boolean> = flowOf(false)
 
     override suspend fun setHideForegroundNotification(enabled: Boolean) = Unit
-
-    override fun getHidePausedReminder(): Flow<Boolean> = flowOf(false)
-
-    override suspend fun setHidePausedReminder(enabled: Boolean) = Unit
 
     override fun getShowRouteJumpButtons(): Flow<Boolean> = flowOf(false)
 

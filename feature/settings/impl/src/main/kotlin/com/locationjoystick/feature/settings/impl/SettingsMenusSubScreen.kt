@@ -429,13 +429,6 @@ private fun PrivacySection(
     )
     Spacer(Modifier.height(8.dp))
     LjCheckboxRow(
-        checked = uiState.hidePausedReminder,
-        onCheckedChange = { onAction(SettingsAction.SetHidePausedReminder(it)) },
-        title = stringResource(R.string.settings_menus_hide_paused_reminder),
-        description = stringResource(R.string.settings_menus_hide_paused_reminder_desc),
-    )
-    Spacer(Modifier.height(8.dp))
-    LjCheckboxRow(
         checked = uiState.showRouteJumpButtons,
         onCheckedChange = { onAction(SettingsAction.SetShowRouteJumpButtons(it)) },
         title = stringResource(R.string.settings_menus_show_route_jump_buttons),

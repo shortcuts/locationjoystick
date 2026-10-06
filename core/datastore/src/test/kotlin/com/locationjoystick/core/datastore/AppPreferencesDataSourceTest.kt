@@ -83,32 +83,6 @@ class AppPreferencesDataSourceTest {
         }
 
     @Test
-    fun `hidePausedReminder persists across data source recreation and resets to visible`() =
-        runTest {
-            assertFalse(dataSource.getHidePausedReminder().first())
-            dataSource.setHidePausedReminder(true)
-
-            val reopened = AppPreferencesDataSource(fakeDataStore)
-            assertTrue(reopened.getHidePausedReminder().first())
-            assertTrue(reopened.getSettingsSnapshot().first().hidePausedReminder)
-
-            reopened.clearAllExceptOnboarding()
-            assertFalse(reopened.getHidePausedReminder().first())
-        }
-
-    @Test
-    fun `snapshot applies hidePausedReminder to the live preference in both directions`() =
-        runTest {
-            val snapshot = dataSource.getSettingsSnapshot().first()
-            dataSource.applySnapshot(snapshot.copy(hidePausedReminder = true))
-            assertTrue(dataSource.getHidePausedReminder().first())
-            assertTrue(dataSource.getSettingsSnapshot().first().hidePausedReminder)
-
-            dataSource.applySnapshot(snapshot.copy(hidePausedReminder = false))
-            assertFalse(dataSource.getHidePausedReminder().first())
-        }
-
-    @Test
     fun `showRouteJumpButtons defaults to false and round-trips true`() =
         runTest {
             assertFalse(dataSource.getShowRouteJumpButtons().first())

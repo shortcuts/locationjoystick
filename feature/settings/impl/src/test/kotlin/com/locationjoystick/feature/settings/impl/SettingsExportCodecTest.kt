@@ -296,25 +296,6 @@ class SettingsExportCodecTest {
     }
 
     @Test
-    fun `pause reminder preference round-trips true and false`() {
-        for (hidden in listOf(true, false)) {
-            val data = minimalExportData().copy(settings = minimalExportData().settings.copy(hidePausedReminder = hidden))
-            val parsed = SettingsExportCodec.parseExportData(SettingsExportCodec.serializeExportData(data))
-            assertEquals(hidden, parsed.settings.hidePausedReminder)
-        }
-    }
-
-    @Test
-    fun `older exports keep pause reminders visible`() {
-        val json =
-            """
-            {"schemaVersion":1,"exportedAt":0,"settings":{"speedUnit":"KMH","enabledWidgetFeatures":[]},
-             "speedProfiles":[],"routes":[],"favoriteLocations":[]}
-            """.trimIndent()
-        assertEquals(false, SettingsExportCodec.parseExportData(json).settings.hidePausedReminder)
-    }
-
-    @Test
     fun `round-trip preserves hideForegroundNotification`() {
         val data =
             minimalExportData().copy(

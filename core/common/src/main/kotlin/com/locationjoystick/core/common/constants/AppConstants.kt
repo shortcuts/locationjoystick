@@ -543,14 +543,6 @@ object AppConstants {
     object AnimationConstants {
         const val SPRING_DAMPING_RATIO = 0.85f
         const val SPRING_STIFFNESS = 400f
-        const val LIQUID_LABEL_ENTER_MS = 1500
-        const val LIQUID_LABEL_EXIT_MS = 900
-        const val LIQUID_LABEL_PINCH_START = 0.18f
-        const val LIQUID_LABEL_PINCH_END = 0.33f
-        const val LIQUID_LABEL_SEPARATION_END = 0.42f
-        const val LIQUID_LABEL_TEXT_START = 0.67f
-        const val LIQUID_LABEL_EXPANSION_END = 0.90f
-        const val LIQUID_LABEL_GAP_DP = 8
     }
 
     object TimeConstants {
