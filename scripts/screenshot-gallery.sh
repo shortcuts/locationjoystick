@@ -296,6 +296,9 @@ wait_s() {
 # no notifications) so screenshots don't leak personal phone information.
 demo_mode_enter() {
   log "Entering demo mode (clean status bar)..."
+  # Developer overlays (pointer location, touch dots) would be baked into every capture.
+  $ADB shell settings put system pointer_location 0 2>/dev/null || true
+  $ADB shell settings put system show_touches 0 2>/dev/null || true
   $ADB shell settings put global sysui_demo_allowed 1 2>/dev/null || true
   $ADB shell am broadcast -a com.android.systemui.demo \
     -e command enter >/dev/null 2>&1 || true
@@ -1184,8 +1187,9 @@ fi
 
 # Set Settings → Menus → Debug stats to $1 (True|False). Idempotent: taps only on mismatch.
 # Step 18 turns it on for its shot and back off afterwards so steps 13/14 never capture the stats block.
+DEBUG_STATS_FLIPPED=0
 set_debug_stats() {
-  local want="$1" current
+  local want="$1"
   go_idle
   tap_text_below "Settings" "$CARD_Y_MIN"
   wait_s 2 "Settings loading"
@@ -1203,22 +1207,10 @@ set_debug_stats() {
     $ADB shell input swipe 540 1800 540 400
     wait_s 1 "Scrolling to Debug section"
   done
-  # Idempotent: only tap if state differs — the row is a toggle, so
-  # tapping an already-matching setting (e.g. left on from a prior run) would
-  # flip it the wrong way. The dump is one giant single line, so a line-based
-  # grep -B1 can't isolate the checkbox next to "Debug stats" — walk the
-  # raw text backwards from that label to its nearest preceding checked= instead.
-  dump=$(ui_dump)
-  current=$(python3 -c '
-data = open("'"$dump"'").read()
-idx = data.find("text=\"Debug stats\"")
-prefix = data[:idx]
-last = prefix.rfind("checked=\"")
-print(prefix[last+9:last+13] == "true")
-')
-  if [[ "$current" == "$want" ]]; then
-    log "Debug stats already $want — skipping toggle tap."
-  else
+  # The Debug stats switch is clipped out of the UI dump at the very bottom of
+  # the page, so its state cannot be read back. Track the flip instead: assume
+  # the setting ships off, flip it on for step 18, and flip back only if we did.
+  if [[ "$want" == "True" && "$DEBUG_STATS_FLIPPED" == "0" ]] || [[ "$want" == "False" && "$DEBUG_STATS_FLIPPED" == "1" ]]; then
     tap_text "Debug stats"
     wait_s 2 "Setting debug stats to $want"
     # This settings page buffers changes behind a Save/Discard FAB —
@@ -1226,6 +1218,9 @@ print(prefix[last+9:last+13] == "true")
     # The FAB exposes no text or content-desc to uiautomator, so tap its fixed spot.
     $ADB shell input tap "$(( SCREEN_W * 83 / 100 ))" "$(( SCREEN_H * 92 / 100 ))"
     wait_s 1 "Saving setting"
+    if [[ "$want" == "True" ]]; then DEBUG_STATS_FLIPPED=1; else DEBUG_STATS_FLIPPED=0; fi
+  else
+    log "Debug stats already $want — skipping toggle tap."
   fi
   rm -f "$dump"
 }
@@ -1286,12 +1281,12 @@ if should_run_step "20"; then
   tap_text "Menus"
   wait_s 2 "Menus loading"
   # Scroll until the row is on screen; a fixed swipe count overshoots on tall devices.
-  for _ in 1 2 3; do
+  for _ in 1 2 3 4 5 6 7 8; do
     dump=$(ui_dump)
     found=$(grep -c 'text="Enable Tap to Walk"' "$dump" || true)
     rm -f "$dump"
     (( found > 0 )) && break
-    $ADB shell input swipe 540 1600 540 400
+    $ADB shell input swipe 540 1600 540 400 500
     wait_s 1 "Scrolling to Tap to Walk"
   done
   if [[ "$(switch_is_on "Enable Tap to Walk")" != "True" ]]; then
@@ -1332,12 +1327,12 @@ if should_run_step "21"; then
   wait_s 2 "Settings loading"
   tap_text "Menus"
   wait_s 2 "Menus loading"
-  for _ in 1 2 3; do
+  for _ in 1 2 3 4 5 6 7 8; do
     dump=$(ui_dump)
     found=$(grep -c 'text="Compass orientation"' "$dump" || true)
     rm -f "$dump"
     (( found > 0 )) && break
-    $ADB shell input swipe 540 1600 540 400
+    $ADB shell input swipe 540 1600 540 400 500
     wait_s 1 "Scrolling to Compass orientation"
   done
   screenshot "21_compass_orientation"
@@ -1406,12 +1401,12 @@ if should_run_step "25"; then
   wait_s 2 "Settings loading"
   tap_text "Menus"
   wait_s 2 "Menus loading"
-  for _ in 1 2 3; do
+  for _ in 1 2 3 4 5 6 7 8; do
     dump=$(ui_dump)
     found=$(grep -c 'text="Enable Tap to Walk"' "$dump" || true)
     rm -f "$dump"
     (( found > 0 )) && break
-    $ADB shell input swipe 540 1600 540 400
+    $ADB shell input swipe 540 1600 540 400 500
     wait_s 1 "Scrolling to Tap to Walk"
   done
   if [[ "$(switch_is_on "Enable Tap to Walk")" == "True" ]]; then
