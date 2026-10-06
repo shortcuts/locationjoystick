@@ -8,14 +8,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
-import com.locationjoystick.core.designsystem.LjAccent
+import com.locationjoystick.core.designsystem.ActivityState
 import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.UiConstants
+import com.locationjoystick.core.designsystem.activityState
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.RouteProgressBadgeInMapFabSlot
 import com.locationjoystick.core.designsystem.component.routeProgressStopContentDescription
+import com.locationjoystick.core.designsystem.containerColor
+import com.locationjoystick.core.designsystem.contentColor
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
@@ -44,13 +47,14 @@ internal fun MapFabColumn(
                 } else {
                     stringResource(R.string.map_fab_recenter_mock_cd)
                 },
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
             contentColor =
-                if (isFollowingCamera) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimaryContainer,
+                if (isFollowingCamera) MaterialTheme.colorScheme.primary else ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
             onClick = { onAction(MapAction.RecenterCamera(lastFollowedPosition)) },
         )
 
         if (uiState.walkTarget != null) {
+            val walkState = activityState(active = true, paused = uiState.isWalkPaused)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4),
@@ -89,9 +93,8 @@ internal fun MapFabColumn(
                 LjMapIconButton(
                     icon = LjIcons.DirectionsWalk,
                     contentDescription = stringResource(R.string.map_fab_walk_in_progress_cd),
-                    containerColor = if (uiState.isWalkPaused) MaterialTheme.colorScheme.surfaceVariant else LjAccent,
-                    contentColor =
-                        if (uiState.isWalkPaused) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onPrimary,
+                    containerColor = walkState.containerColor(MaterialTheme.colorScheme),
+                    contentColor = walkState.contentColor(MaterialTheme.colorScheme),
                     onClick = { onAction(MapAction.ToggleWalkControls) },
                 )
             }
@@ -105,8 +108,8 @@ internal fun MapFabColumn(
                         LjMapIconButton(
                             icon = LjIcons.Favorite,
                             contentDescription = stringResource(R.string.map_fab_open_favorites_cd),
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
+                            contentColor = ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
                             onClick = { onAction(MapAction.OpenFavoritesPicker) },
                         )
                     }
@@ -115,6 +118,7 @@ internal fun MapFabColumn(
                 // Routes — expandable: icon always, pause/stop expand when replay active
                 AppFeature.ROUTES -> {
                     if (enabled || uiState.isRouteReplay) {
+                        val routeState = activityState(uiState.isRouteReplay, uiState.isRoutePaused)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4),
@@ -129,18 +133,8 @@ internal fun MapFabColumn(
                                             R.string.map_fab_open_routes_cd
                                         },
                                     ),
-                                containerColor =
-                                    when {
-                                        uiState.isRouteReplay && uiState.isRoutePaused -> MaterialTheme.colorScheme.surfaceVariant
-                                        uiState.isRouteReplay -> LjSuccess
-                                        else -> MaterialTheme.colorScheme.primaryContainer
-                                    },
-                                contentColor =
-                                    when {
-                                        uiState.isRouteReplay && uiState.isRoutePaused -> MaterialTheme.colorScheme.onSurfaceVariant
-                                        uiState.isRouteReplay -> LjBg
-                                        else -> MaterialTheme.colorScheme.onPrimaryContainer
-                                    },
+                                containerColor = routeState.containerColor(MaterialTheme.colorScheme),
+                                contentColor = routeState.contentColor(MaterialTheme.colorScheme),
                                 onClick = {
                                     if (uiState.isRouteReplay) {
                                         onAction(MapAction.ToggleRouteControls)
@@ -205,6 +199,7 @@ internal fun MapFabColumn(
                     val routePlaying =
                         uiState.isRouteReplay && uiState.mockLocationState == MockLocationState.RUNNING
                     if (enabled || uiState.isRoaming || uiState.isRoamingSheetMinimized) {
+                        val roamState = activityState(uiState.isRoaming, uiState.isRoamingPaused)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4),
@@ -251,18 +246,17 @@ internal fun MapFabColumn(
                                         else -> stringResource(R.string.map_fab_start_roaming_cd)
                                     },
                                 containerColor =
-                                    when {
-                                        uiState.isRoaming -> LjBg
-                                        uiState.isRoamingSheetMinimized -> MaterialTheme.colorScheme.tertiary
-                                        else -> MaterialTheme.colorScheme.primaryContainer
+                                    if (!uiState.isRoaming && uiState.isRoamingSheetMinimized) {
+                                        MaterialTheme.colorScheme.tertiary
+                                    } else {
+                                        roamState.containerColor(MaterialTheme.colorScheme)
                                     },
                                 contentColor =
                                     when {
-                                        uiState.isRoaming && uiState.isRoamingPaused -> MaterialTheme.colorScheme.onSurfaceVariant
-                                        uiState.isRoaming -> LjSuccess
-                                        routePlaying -> MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.22f)
+                                        uiState.isRoaming -> roamState.contentColor(MaterialTheme.colorScheme)
+                                        routePlaying -> roamState.contentColor(MaterialTheme.colorScheme).copy(alpha = 0.22f)
                                         uiState.isRoamingSheetMinimized -> MaterialTheme.colorScheme.onTertiary
-                                        else -> MaterialTheme.colorScheme.onPrimaryContainer
+                                        else -> roamState.contentColor(MaterialTheme.colorScheme)
                                     },
                                 onClick = {
                                     when {
@@ -281,8 +275,8 @@ internal fun MapFabColumn(
                         LjMapIconButton(
                             icon = LjIcons.Search,
                             contentDescription = stringResource(R.string.map_fab_search_location_cd),
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
+                            contentColor = ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
                             onClick = onToggleSearch,
                         )
                     }
@@ -293,8 +287,8 @@ internal fun MapFabColumn(
                         LjMapIconButton(
                             icon = LjIcons.ContentPaste,
                             contentDescription = stringResource(R.string.map_fab_column_paste_coordinates),
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
+                            contentColor = ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
                             onClick = { onAction(MapAction.OpenPasteCoordinates) },
                         )
                     }

@@ -47,9 +47,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.CooldownState
-import com.locationjoystick.core.designsystem.LjBg
+import com.locationjoystick.core.designsystem.ActivityState
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.LjSuccess
+import com.locationjoystick.core.designsystem.activityState
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
@@ -62,6 +62,8 @@ import com.locationjoystick.core.designsystem.component.RouteProgressBadgeInMapF
 import com.locationjoystick.core.designsystem.component.cooldownAdvisoryLabel
 import com.locationjoystick.core.designsystem.component.rememberCooldownStringLookup
 import com.locationjoystick.core.designsystem.component.routeProgressStopContentDescription
+import com.locationjoystick.core.designsystem.containerColor
+import com.locationjoystick.core.designsystem.contentColor
 import com.locationjoystick.core.map.geojson.buildLineGeoJson
 import com.locationjoystick.core.map.geojson.buildPointsGeoJson
 import com.locationjoystick.core.map.geojson.buildPositionGeoJson
@@ -498,17 +500,17 @@ internal fun MapFloatingView(
                         },
                     ),
                 containerColor =
-                    if (northLocked) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.tertiaryContainer,
+                    if (northLocked) MaterialTheme.colorScheme.tertiary else ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
                 contentColor =
-                    if (northLocked) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onTertiaryContainer,
+                    if (northLocked) MaterialTheme.colorScheme.onTertiary else ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
                 onClick = { northLocked = !northLocked },
             )
             if (!isFollowingCamera.value) {
                 LjMapIconButton(
                     icon = LjIcons.MyLocation,
                     contentDescription = stringResource(R.string.overlay_recenter_cd),
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
+                    contentColor = ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
                     onClick = {
                         isFollowingCamera.value = true
                         val target = currentPosition ?: lastFollowedPosition.value
@@ -527,8 +529,8 @@ internal fun MapFloatingView(
             LjMapIconButton(
                 icon = LjIcons.Favorite,
                 contentDescription = stringResource(R.string.overlay_open_favorites_cd),
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
+                contentColor = ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
                 onClick = { showFavoritesPicker = true },
             )
             MapFloatingRouteControlsRow(
@@ -546,6 +548,7 @@ internal fun MapFloatingView(
                 onJumpToNextWaypoint = onJumpToNextWaypoint,
                 onOpenRoutes = onOpenRoutes,
             )
+            val roamState = activityState(isRoaming, isRoamingPaused)
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 androidx.compose.animation.AnimatedVisibility(visible = isRoaming) {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -580,18 +583,16 @@ internal fun MapFloatingView(
                             routePlaying -> stringResource(R.string.overlay_roaming_ignored_route_playing_cd)
                             else -> stringResource(R.string.overlay_start_roaming_cd)
                         },
-                    containerColor =
-                        when {
-                            isRoaming && isRoamingPaused -> MaterialTheme.colorScheme.surfaceVariant
-                            isRoaming -> LjSuccess
-                            else -> MaterialTheme.colorScheme.tertiaryContainer
-                        },
+                    containerColor = roamState.containerColor(MaterialTheme.colorScheme),
                     contentColor =
-                        when {
-                            isRoaming && isRoamingPaused -> MaterialTheme.colorScheme.onSurfaceVariant
-                            isRoaming -> LjBg
-                            routePlaying -> MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.22f)
-                            else -> MaterialTheme.colorScheme.onTertiaryContainer
+                        roamState.contentColor(MaterialTheme.colorScheme).let {
+                            if (!isRoaming &&
+                                routePlaying
+                            ) {
+                                it.copy(alpha = 0.22f)
+                            } else {
+                                it
+                            }
                         },
                     onClick = { if (!isRoaming) showRoamingSheet = true },
                 )
@@ -599,8 +600,8 @@ internal fun MapFloatingView(
             LjMapIconButton(
                 icon = LjIcons.Search,
                 contentDescription = stringResource(R.string.overlay_search_location_cd),
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
+                contentColor = ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
                 onClick = {
                     showPasteCoordinates = false
                     showSearch = !showSearch
@@ -610,8 +611,8 @@ internal fun MapFloatingView(
                 LjMapIconButton(
                     icon = LjIcons.ContentPaste,
                     contentDescription = stringResource(R.string.map_floating_view_paste_coordinates),
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    containerColor = ActivityState.IDLE.containerColor(MaterialTheme.colorScheme),
+                    contentColor = ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
                     onClick = {
                         showSearch = false
                         showPasteCoordinates = !showPasteCoordinates

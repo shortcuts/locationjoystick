@@ -8,10 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSuccess
+import com.locationjoystick.core.designsystem.activityState
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
+import com.locationjoystick.core.designsystem.containerColor
+import com.locationjoystick.core.designsystem.contentColor
 import com.locationjoystick.core.model.AppFeature
 
 /**
@@ -84,6 +86,7 @@ internal fun MapFloatingRouteControlsRow(
                     }
                 }
             }
+            val routeState = activityState(isRouteReplay, isRoutePaused)
             LjMapIconButton(
                 icon = LjIcons.Route,
                 contentDescription =
@@ -94,18 +97,8 @@ internal fun MapFloatingRouteControlsRow(
                             R.string.overlay_open_routes_cd
                         },
                     ),
-                containerColor =
-                    when {
-                        isRouteReplay && isRoutePaused -> MaterialTheme.colorScheme.surfaceVariant
-                        isRouteReplay -> LjSuccess
-                        else -> MaterialTheme.colorScheme.primaryContainer
-                    },
-                contentColor =
-                    when {
-                        isRouteReplay && isRoutePaused -> MaterialTheme.colorScheme.onSurfaceVariant
-                        isRouteReplay -> LjBg
-                        else -> MaterialTheme.colorScheme.onPrimaryContainer
-                    },
+                containerColor = routeState.containerColor(MaterialTheme.colorScheme),
+                contentColor = routeState.contentColor(MaterialTheme.colorScheme),
                 onClick = {
                     if (isRouteReplay) {
                         onRouteControlsExpandedChange(!isRouteControlsExpanded)

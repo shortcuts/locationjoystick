@@ -44,10 +44,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.DebugStats
+import com.locationjoystick.core.designsystem.ActivityState
 import com.locationjoystick.core.designsystem.LjError
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.UiConstants
+import com.locationjoystick.core.designsystem.activityState
 import com.locationjoystick.core.designsystem.component.RouteProgressBadge
 import com.locationjoystick.core.designsystem.component.routeProgressStopContentDescription
 import com.locationjoystick.core.model.AppFeature
@@ -182,7 +184,6 @@ internal sealed interface WidgetPanelSection {
 @Composable
 internal fun WidgetPanel(
     features: List<AppFeature>,
-    joystickVisible: Boolean,
     joystickLocked: Boolean,
     joystickMoving: Boolean,
     activeProfileId: String,
@@ -321,7 +322,7 @@ internal fun WidgetPanel(
             features.forEach { feature ->
                 if (feature == AppFeature.ROUTES) {
                     val routeIconTint =
-                        activityTint(widgetActivityState(routeControls.isActive, routeControls.isPaused))
+                        activityTint(activityState(routeControls.isActive, routeControls.isPaused))
                     Box {
                         WidgetIconButton(
                             icon = LjIcons.Route,
@@ -380,9 +381,9 @@ internal fun WidgetPanel(
                         }
                     }
                 } else if (feature == AppFeature.ROAMING) {
-                    val roamingState = widgetActivityState(roamingControls.isActive, roamingControls.isPaused)
+                    val roamingState = activityState(roamingControls.isActive, roamingControls.isPaused)
                     val roamingTint =
-                        if (roamingState == WidgetActivityState.IDLE && roamingStartIgnored) {
+                        if (roamingState == ActivityState.IDLE && roamingStartIgnored) {
                             WidgetIgnoredTint
                         } else {
                             activityTint(roamingState)
@@ -431,20 +432,9 @@ internal fun WidgetPanel(
                         }
                     }
                 } else {
-                    val (icon, active) =
-                        featureIconAndState(
-                            feature,
-                            joystickVisible,
-                            joystickLocked,
-                            activeProfileId,
-                        )
+                    val icon = featureIcon(feature, joystickLocked, activeProfileId)
                     val isJoystickIcon = feature == AppFeature.JOYSTICK_TOGGLE || feature == AppFeature.JOYSTICK_LOCK
-                    val iconTint =
-                        when {
-                            isJoystickIcon -> if (joystickMoving) LjSuccess else WidgetInactiveTint
-                            active -> MaterialTheme.colorScheme.primary
-                            else -> WidgetInactiveTint
-                        }
+                    val iconTint = if (isJoystickIcon && joystickMoving) LjSuccess else WidgetInactiveTint
                     Box {
                         WidgetIconButton(
                             icon = icon,
@@ -467,7 +457,7 @@ internal fun WidgetPanel(
                                 WidgetIconButton(
                                     icon = LjIcons.AddLocationAlt,
                                     contentDescription = stringResource(R.string.widget_panel_content_open_capture),
-                                    tint = MaterialTheme.colorScheme.primary,
+                                    tint = WidgetInactiveTint,
                                     enabled = controlsEnabled,
                                     onClick = pasteCapture.onCaptureShortcut,
                                 )
@@ -479,7 +469,7 @@ internal fun WidgetPanel(
             sections.forEach { section ->
                 when (section) {
                     is WidgetPanelSection.TapToWalk -> {
-                        val crosshairTint = if (section.active) MaterialTheme.colorScheme.primary else WidgetInactiveTint
+                        val crosshairTint = if (section.active) LjSuccess else WidgetInactiveTint
                         WidgetIconButton(
                             icon = LjIcons.MyLocation,
                             contentDescription =
@@ -501,7 +491,7 @@ internal fun WidgetPanel(
                             WidgetIconButton(
                                 icon = LjIcons.Terrain,
                                 contentDescription = stringResource(R.string.widget_panel_altitude_override_cd),
-                                tint = if (section.expanded) LjSuccess else MaterialTheme.colorScheme.primary,
+                                tint = if (section.expanded) LjSuccess else WidgetInactiveTint,
                                 enabled = controlsEnabled,
                                 onClick = section.onClick,
                             )
@@ -537,64 +527,34 @@ internal fun WidgetPanel(
 }
 
 @Composable
-private fun activityTint(state: WidgetActivityState): Color =
+private fun activityTint(state: ActivityState): Color =
     when (state) {
-        WidgetActivityState.IDLE -> WidgetInactiveTint
-        WidgetActivityState.MOVING -> LjSuccess
-        WidgetActivityState.PAUSED -> MaterialTheme.colorScheme.primary
+        ActivityState.IDLE -> WidgetInactiveTint
+        ActivityState.MOVING -> LjSuccess
+        ActivityState.PAUSED -> MaterialTheme.colorScheme.primary
     }
 
-private fun featureIconAndState(
+private fun featureIcon(
     feature: AppFeature,
-    joystickVisible: Boolean,
     joystickLocked: Boolean,
     activeProfileId: String,
-): Pair<ImageVector, Boolean> =
+): ImageVector =
     when (feature) {
-        AppFeature.JOYSTICK_TOGGLE -> {
-            Pair(LjIcons.JoystickToggle, joystickVisible)
-        }
-
-        AppFeature.JOYSTICK_LOCK -> {
-            Pair(
-                if (joystickLocked) LjIcons.Lock else LjIcons.LockOpen,
-                joystickLocked,
-            )
-        }
-
-        AppFeature.ROUTES -> {
-            Pair(LjIcons.Route, true)
-        }
-
-        AppFeature.FAVORITES -> {
-            Pair(LjIcons.Favorite, true)
-        }
-
-        AppFeature.SPEED_CYCLE -> {
-            Pair(
-                when (activeProfileId) {
-                    AppConstants.ProfileConstants.PROFILE_ID_SLOW_WALK -> LjIcons.Hiking
-                    AppConstants.ProfileConstants.PROFILE_ID_RUN -> LjIcons.DirectionsRun
-                    AppConstants.ProfileConstants.PROFILE_ID_BIKE -> LjIcons.DirectionsBike
-                    AppConstants.ProfileConstants.PROFILE_ID_DRIVE -> LjIcons.DirectionsCar
-                    else -> LjIcons.DirectionsWalk
-                },
-                true,
-            )
-        }
-
-        AppFeature.MAP_FLOATING -> {
-            Pair(LjIcons.Map, true)
-        }
-
-        AppFeature.PASTE_COORDINATES -> {
-            Pair(LjIcons.ContentPaste, true)
-        }
-
-        AppFeature.ROAMING -> {
-            Pair(LjIcons.Explore, true)
-        }
-
+        AppFeature.JOYSTICK_TOGGLE -> LjIcons.JoystickToggle
+        AppFeature.JOYSTICK_LOCK -> if (joystickLocked) LjIcons.Lock else LjIcons.LockOpen
+        AppFeature.ROUTES -> LjIcons.Route
+        AppFeature.FAVORITES -> LjIcons.Favorite
+        AppFeature.SPEED_CYCLE ->
+            when (activeProfileId) {
+                AppConstants.ProfileConstants.PROFILE_ID_SLOW_WALK -> LjIcons.Hiking
+                AppConstants.ProfileConstants.PROFILE_ID_RUN -> LjIcons.DirectionsRun
+                AppConstants.ProfileConstants.PROFILE_ID_BIKE -> LjIcons.DirectionsBike
+                AppConstants.ProfileConstants.PROFILE_ID_DRIVE -> LjIcons.DirectionsCar
+                else -> LjIcons.DirectionsWalk
+            }
+        AppFeature.MAP_FLOATING -> LjIcons.Map
+        AppFeature.PASTE_COORDINATES -> LjIcons.ContentPaste
+        AppFeature.ROAMING -> LjIcons.Explore
         AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES -> {
             error("$feature is map-only and never appears in the widget panel")
         }

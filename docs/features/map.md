@@ -98,6 +98,8 @@ Do not invent a second `MapLibre.getInstance` path. The empty style
 
 ## Configurable FABs
 
+Every FAB is neutral (`surfaceVariant`) when idle. Walk, Routes and Roaming use `ActivityState`: green while moving, orange (primary) while paused. Roaming keeps its tertiary accent while its sheet is minimized.
+
 `MapFabColumn` renders Favorites/Routes/Roaming/Search/Paste coordinates in the shared `AppFeature` order (see docs/features/widget.md, "Configurability"), filtered to features enabled for the `MAP` surface — configured in Settings → Menus → "App Features". Routes and Roaming also force-show while actively in progress, even if toggled off, so the user can still control a running session.
 
 Walk, route, and roaming activity buttons use the existing neutral pause-control colors while their own session is paused, including pauses caused by the joystick. They remain tappable to open controls. Resume restores each button's existing running appearance; pause/resume arrows are unchanged. Route/roam buttons on the floating map follow the same rule; the floating map has no walk-in-progress button, so the walk rule applies to the main map only.

@@ -338,7 +338,6 @@ class FloatingWidgetService :
 
         view.setContent {
             val features by settingsRepository.getWidgetFeatures().collectAsStateWithLifecycle(initialValue = emptyList())
-            val joystickVisible by joystickVisibleFlow.collectAsStateWithLifecycle()
             val joystickLocked by joystickLockedFlow.collectAsStateWithLifecycle()
             val activeProfileId by activeProfileIdFlow.collectAsStateWithLifecycle()
             val currentMode by locationRepository.currentMode.collectAsStateWithLifecycle(initialValue = MockMode.TELEPORT)
@@ -447,7 +446,6 @@ class FloatingWidgetService :
 
                 WidgetPanel(
                     features = features,
-                    joystickVisible = joystickVisible,
                     joystickLocked = joystickLocked,
                     joystickMoving = joystickMoving(currentMode),
                     activeProfileId = activeProfileId,

@@ -117,7 +117,7 @@ The temp row appears in the Routes list until the next paste Start replaces it, 
 - Playing route replay takes precedence over roaming: starting
   roam is a no-op (widget/map roam controls fade toward their background).
   Widget joystick show/hide and lock still open and lock the overlay. The lock
-  icon stays orange when locked and grey when unlocked during both playback and pause.
+  icon is green while the stick is moving and grey otherwise, regardless of lock state.
   Pause or stop the route first to start roaming (walk-around
   or planting). A paused route is stopped before roam starts so the two engines
   never write together.

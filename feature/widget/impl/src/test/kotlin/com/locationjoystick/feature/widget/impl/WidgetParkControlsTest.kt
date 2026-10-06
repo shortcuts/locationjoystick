@@ -25,14 +25,6 @@ class WidgetParkControlsTest {
     }
 
     @Test
-    fun `activity state is idle, moving or paused`() {
-        assertEquals(WidgetActivityState.IDLE, widgetActivityState(active = false, paused = false))
-        assertEquals(WidgetActivityState.IDLE, widgetActivityState(active = false, paused = true))
-        assertEquals(WidgetActivityState.MOVING, widgetActivityState(active = true, paused = false))
-        assertEquals(WidgetActivityState.PAUSED, widgetActivityState(active = true, paused = true))
-    }
-
-    @Test
     fun `joystick is moving only in joystick mode`() {
         assertEquals(true, joystickMoving(MockMode.JOYSTICK))
         assertEquals(false, joystickMoving(MockMode.TELEPORT))
