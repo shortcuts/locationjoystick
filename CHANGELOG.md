@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.27.0](https://github.com/shortcuts/locationjoystick/compare/v0.26.0...v0.27.0) (2026-10-08)
+
+
+### Features
+
+* **capture:** open chosen app after a handled map link ([537b90b](https://github.com/shortcuts/locationjoystick/commit/537b90b407b5b73526438226e32216deca8f4e48))
+* **favorites:** mark one favorite as Home start point ([ab402a5](https://github.com/shortcuts/locationjoystick/commit/ab402a5a86da714bac9fffe5b90aeaa7aaecf136))
+* **favorites:** serve hot locations from wiki JSON, cached in app ([0391dae](https://github.com/shortcuts/locationjoystick/commit/0391daeba437d28cfcc744f5b9035e38e1f581e3))
+* **geocoding:** add PhotonProvider as second geocoding provider ([e4f6769](https://github.com/shortcuts/locationjoystick/commit/e4f6769bb5843d289eadb92aa40d0c84841a8842))
+* **geocoding:** fall back across providers with 10-minute failure cooldown ([1b75a84](https://github.com/shortcuts/locationjoystick/commit/1b75a84104513b7849a0bfe68930855e420fbb12))
+* **routes:** serve hot routes from wiki JSON, cached in app ([d9aedc3](https://github.com/shortcuts/locationjoystick/commit/d9aedc3c5ac7f3bed5dcaa7af0fade7d4d48537b))
+* **settings:** toggle geocoding providers in Settings &gt; Menus ([29d529a](https://github.com/shortcuts/locationjoystick/commit/29d529a975155462f2cdf1e21c9cffcf5b9eafe0)), closes [#97](https://github.com/shortcuts/locationjoystick/issues/97)
+* **ui:** grey idle icons across widget, map FABs, floating map ([fb4ceba](https://github.com/shortcuts/locationjoystick/commit/fb4ceba4536d8495c1e62d0184f07b597764f8ea))
+* **widget:** add animated pause reminders ([518ae9a](https://github.com/shortcuts/locationjoystick/commit/518ae9a5469c5b0a5facd3c40b5df607e243a92b))
+* **widget:** state colors for icons, drop paused label ([21d59c2](https://github.com/shortcuts/locationjoystick/commit/21d59c2ae97a8496eaaba4ca3c256950bdb463c9))
+
+
+### Bug Fixes
+
+* **group-sync:** follower mirrors leader speed ([2268fa7](https://github.com/shortcuts/locationjoystick/commit/2268fa7c4cf691d9d9fa65e31c346148c2a8c3de))
+* **i18n:** localize cooldown advisory and badge text ([e6f35df](https://github.com/shortcuts/locationjoystick/commit/e6f35df411f660bc06dd37fdf2fa60add8737492))
+* **map:** read the current tile source in map callbacks ([ed8b697](https://github.com/shortcuts/locationjoystick/commit/ed8b697c02e1c522669953367c5fad96795a4419))
+* **screenshots:** stable Tap to Walk scroll, debug stats reset, clean captures ([b9d0821](https://github.com/shortcuts/locationjoystick/commit/b9d08211d24992e920abaa6dbe103fc2fb6e54d0))
+* smoke tests ([9d2770f](https://github.com/shortcuts/locationjoystick/commit/9d2770f8aa8a685eb29e8f85c627fb53a815f701))
+* **wiki:** stop mobile layout overflowing the viewport ([53285b4](https://github.com/shortcuts/locationjoystick/commit/53285b47f660ac6c4c759b65a3b8c2e69b82f661))
+
 ## [0.26.0](https://github.com/shortcuts/locationjoystick/compare/v0.25.0...v0.26.0) (2026-09-30)
 
 
