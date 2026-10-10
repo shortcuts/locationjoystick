@@ -6,6 +6,11 @@
     { "category": "feat", "scope": "Settings", "summary": "You can now turn individual place-search services on or off in Settings > Menus. Mainland China users can switch off Nominatim to avoid waiting for its timeout." },
     { "category": "feat", "scope": "Favorite Locations", "summary": "The hot locations list now updates online, so places can be added or removed without an app update." },
     { "category": "feat", "scope": "Routes", "summary": "The hot routes list now updates online, so routes can be added or removed without an app update." },
-    { "category": "fix", "scope": "Group Sync", "summary": "Followers now walk at the leader's speed instead of their own. While the leader stands still, they use their own speed to catch up." }
+    { "category": "fix", "scope": "Group Sync", "summary": "Followers now walk at the leader's speed instead of their own. While the leader stands still, they use their own speed to catch up." },
+    { "category": "feat", "scope": "Search", "summary": "Place search now tries a second service when the first one fails. A service that has just failed is skipped for ten minutes." },
+    { "category": "feat", "scope": "Capture", "summary": "You can now pick an app to open after the app handles a map link. Set it in Settings > Menus > Capture. It opens after you teleport or walk to the link's point." },
+    { "category": "feat", "scope": "Floating Widget", "summary": "Controls now show their state by color. They are grey when idle, green when moving, and orange when a walk, route, or roam is paused." },
+    { "category": "fix", "scope": "Map", "summary": "Switching the map style now takes effect on every map screen right away, without closing and reopening the screen." },
+    { "category": "fix", "scope": "General", "summary": "The cooldown message and its badge now show in the app's supported languages instead of only English." }
   ]
 }
