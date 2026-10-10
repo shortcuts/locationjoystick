@@ -4,6 +4,13 @@
       { href: 'index.html', label: 'Getting Started' },
     ] },
     { group: 'Use', items: [
+      { href: 'tasks.html', label: 'Common tasks' },
+      { href: 'teleport-to-a-place.html', label: 'Teleport to a place' },
+      { href: 'loop-a-route.html', label: 'Loop a route' },
+      { href: 'follow-a-friend.html', label: 'Follow a friend' },
+      { href: 'move-to-a-new-phone.html', label: 'Move to a new phone' },
+      { href: 'tap-to-walk-in-a-game.html', label: 'Tap to walk in a game' },
+      { href: 'collect-links-into-a-route.html', label: 'Collect links into a route' },
       { href: 'map.html', label: 'Map' },
       { href: 'overlays.html', label: 'Overlays' },
       { href: 'routes.html', label: 'Routes &amp; Favorites' },

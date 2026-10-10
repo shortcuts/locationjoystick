@@ -13,4 +13,11 @@
   <url><loc>https://locationjoystick.shrtcts.fr/changelog.html</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
   <url><loc>https://locationjoystick.shrtcts.fr/privacy.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://locationjoystick.shrtcts.fr/acknowledgements.html</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
+  <url><loc>https://locationjoystick.shrtcts.fr/tasks.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://locationjoystick.shrtcts.fr/teleport-to-a-place.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://locationjoystick.shrtcts.fr/loop-a-route.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://locationjoystick.shrtcts.fr/follow-a-friend.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://locationjoystick.shrtcts.fr/move-to-a-new-phone.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://locationjoystick.shrtcts.fr/tap-to-walk-in-a-game.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://locationjoystick.shrtcts.fr/collect-links-into-a-route.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
 </urlset>

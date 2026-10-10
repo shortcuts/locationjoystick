@@ -84,7 +84,7 @@ The sidebar is organized into five groups in fixed order:
 | Group | Purpose | Pages |
 |---|---|---|
 | **Start** | First-time setup and getting going. | Getting Started. |
-| **Use** | Goal-based task pages first, then everyday features you navigate while using the app. | Common tasks (goal pages, planned), Map, Overlays, Tap to Walk, Routes, Favorites, Location Links, Group Sync. |
+| **Use** | Goal-based task pages first, then everyday features you navigate while using the app. | Common tasks (hub plus goal pages), Map, Overlays, Tap to Walk, Routes, Favorites, Location Links, Group Sync. |
 | **Configure** | Settings and data backup or transfer. | Settings, Backup & Transfer. |
 | **Help** | Fixing problems and integrations for developers. | Troubleshooting, Control API. |
 | **About** | Meta pages for the project. | Changelog, Privacy, Acknowledgements. |
