@@ -44,10 +44,11 @@
   var currentFile = location.pathname.split('/').pop() || 'index.html';
 
   var navHtml = NAV_ITEMS.map(function (g) {
-    return '<span class="nav-group">' + g.group + '</span>' + g.items.map(function (item) {
-      var cls = item.href === currentFile ? ' class="active"' : '';
+    var gid = 'nav-group-' + g.group.toLowerCase();
+    return '<div role="group" aria-labelledby="' + gid + '"><span class="nav-group" id="' + gid + '">' + g.group + '</span>' + g.items.map(function (item) {
+      var cls = item.href === currentFile ? ' class="active" aria-current="page"' : '';
       return '<a href="' + item.href + '"' + cls + '>' + item.label + '</a>';
-    }).join('');
+    }).join('') + '</div>';
   }).join('');
 
   navHtml += '<span class="nav-sep"></span>';
@@ -61,13 +62,12 @@
     +   '<span class="brand-name">locationjoystick</span>'
     + '</a>'
     + '<div id="docsearch"></div>'
-    + '<button class="nav-toggle-btn" aria-label="Toggle navigation"'
-    +   ' onclick="this.closest(\'.sidebar\').querySelector(\'nav\').classList.toggle(\'open\')">'
+    + '<button class="nav-toggle-btn" aria-label="Toggle navigation" aria-expanded="false" aria-controls="site-nav">'
     +   '<svg width="16" height="16" viewBox="0 0 16 16" fill="none">'
     +     '<path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>'
     +   '</svg>'
     + '</button>'
-    + '<nav>' + navHtml + '</nav>'
+    + '<nav id="site-nav" aria-label="Site">' + navHtml + '</nav>'
     + '<div class="sidebar-foot">'
     +   '<a class="gh-star" href="https://github.com/shortcuts/locationjoystick" target="_blank" rel="noopener">'
     +     '<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'
@@ -84,14 +84,35 @@
 
   document.querySelector('.layout').insertAdjacentHTML('afterbegin', aside);
 
-  fetch('https://api.github.com/repos/shortcuts/locationjoystick')
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-      var n = d.stargazers_count;
-      var t = n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n);
-      document.querySelectorAll('.gh-star-count').forEach(function (el) { el.textContent = t; });
-    })
-    .catch(function () {});
+  var mainEl = document.querySelector('main');
+  if (!mainEl.id) mainEl.id = 'main-content';
+  document.body.insertAdjacentHTML('afterbegin', '<a class="skip-link" href="#' + mainEl.id + '">Skip to content</a>'
+    + '<div class="sr-only" id="live-status" role="status"></div>');
+
+  var toggle = document.querySelector('.nav-toggle-btn');
+  toggle.addEventListener('click', function () {
+    toggle.setAttribute('aria-expanded', String(document.getElementById('site-nav').classList.toggle('open')));
+  });
+
+  // Unauthenticated GitHub API allows 60 requests/hour per IP; cache the count for the tab session.
+  var showStars = function (t) {
+    document.querySelectorAll('.gh-star-count').forEach(function (el) { el.textContent = t; });
+  };
+  var cachedStars = null;
+  try { cachedStars = sessionStorage.getItem('lj-stars'); } catch (e) {}
+  if (cachedStars) {
+    showStars(cachedStars);
+  } else {
+    fetch('https://api.github.com/repos/shortcuts/locationjoystick')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var n = d.stargazers_count;
+        var t = n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n);
+        showStars(t);
+        try { sessionStorage.setItem('lj-stars', t); } catch (e) {}
+      })
+      .catch(function () {});
+  }
 
   var ds = document.createElement('script');
   ds.src = 'https://cdn.jsdelivr.net/npm/@docsearch/js@4';
@@ -155,11 +176,10 @@
     spy();
   }
 
-  // "On this page" list for long pages: the sidebar outline is hidden behind the menu button on phones.
+  // "On this page" list: the sidebar outline is hidden behind the menu button on phones, so CSS shows this one only there.
   var tocHeads = document.querySelectorAll('main h2[id]');
-  var mainEl = document.querySelector('main');
-  var lead = mainEl.querySelector('h1 + p');
-  if (lead && tocHeads.length >= 4 && mainEl.textContent.split(/\s+/).length > 700) {
+  var lead = mainEl.querySelector('h1 + p') || mainEl.querySelector('h1');
+  if (lead && tocHeads.length >= 2) {
     var toc = document.createElement('nav');
     toc.className = 'page-toc';
     toc.setAttribute('aria-label', 'On this page');
@@ -194,9 +214,17 @@
       + '</svg>';
     btn.addEventListener('click', function () {
       var url = location.origin + location.pathname + '#' + heading.id;
-      navigator.clipboard.writeText(url).catch(function () {});
-      btn.classList.add('copied');
-      setTimeout(function () { btn.classList.remove('copied'); }, 1200);
+      var done = function () {
+        btn.classList.add('copied');
+        document.getElementById('live-status').textContent = 'Link copied';
+        setTimeout(function () {
+          btn.classList.remove('copied');
+          document.getElementById('live-status').textContent = '';
+        }, 1200);
+      };
+      // clipboard is undefined on non-secure origins; fall back to putting the link in the address bar.
+      if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, function () {});
+      else location.hash = heading.id;
     });
     heading.appendChild(btn);
   });

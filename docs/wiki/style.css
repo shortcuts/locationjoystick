@@ -6,6 +6,8 @@
   --muted:    #9a9aaa;
   --accent:   #f79d5c;
   --accent-bg:rgba(247,157,92,0.08);
+  --info:     #6ea8fe;
+  --danger:   #f0716b;
   --mono: ui-monospace,'Cascadia Code','SF Mono',Menlo,'Courier New',monospace;
   --sans: ui-sans-serif,system-ui,-apple-system,'Segoe UI',Helvetica,sans-serif;
   --nav-w: 212px;
@@ -13,7 +15,8 @@
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media(prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 
 ::selection{background:var(--accent);color:var(--bg)}
 
@@ -112,29 +115,31 @@ main{
 }
 
 /* ── Type ── */
-.page-title{
-  font-size:1.45rem;
+/* Descending scale: h1 1.6rem > h2 1.2rem > h3 1rem (= body) > h4 mono label. */
+h1{
+  font-size:1.6rem;
   font-weight:700;
   letter-spacing:-0.03em;
-  color:var(--text);
-  margin-bottom:14px;
   line-height:1.2;
+  color:var(--text);
+  margin:0 0 14px;
+  text-wrap:balance;
 }
 
-h1,h2{
-  font-family:var(--mono);
-  font-size:0.67rem;
+h2{
+  font-size:1.2rem;
   font-weight:600;
-  text-transform:uppercase;
-  letter-spacing:0.14em;
+  letter-spacing:-0.01em;
+  line-height:1.3;
   color:var(--accent);
   margin:48px 0 18px;
+  text-wrap:balance;
 }
 
-h1:first-child,h2:first-child{margin-top:0}
+h2:first-child{margin-top:0}
 
 h3{
-  font-size:0.88rem;
+  font-size:1rem;
   font-weight:600;
   color:var(--text);
   margin:22px 0 8px;
@@ -144,7 +149,7 @@ h3:first-child{margin-top:0}
 
 h4{
   font-family:var(--mono);
-  font-size:0.67rem;
+  font-size:0.72rem;
   font-weight:600;
   text-transform:uppercase;
   letter-spacing:0.1em;
@@ -167,8 +172,8 @@ h1,h2,h3{position:relative}
   justify-content:center;
   margin-left:6px;
   padding:0;
-  width:20px;
-  height:20px;
+  width:24px;
+  height:24px;
   border:none;
   background:none;
   color:var(--muted);
@@ -181,6 +186,11 @@ h1,h2,h3{position:relative}
 h1:hover .heading-link,h2:hover .heading-link,h3:hover .heading-link,.heading-link:focus-visible{opacity:1}
 
 .heading-link:hover{color:var(--accent)}
+
+/* Touch has no hover: keep the copy-link control visible and finger-sized. */
+@media(hover:none){
+  .heading-link{opacity:0.7;width:36px;height:36px;margin-top:-8px;margin-bottom:-8px}
+}
 
 .heading-link:active{transform:scale(0.96)}
 
@@ -296,9 +306,9 @@ blockquote p, blockquote em{margin:0}
 
 .option-table tbody tr:hover td{background:var(--accent-bg)}
 
-/* On This Page list (built by wiki-init.js on long pages). */
+/* On This Page list (built by wiki-init.js); shown only where the sidebar outline is hidden (phones). */
 .page-toc{
-  display:flex;
+  display:none;
   flex-wrap:wrap;
   gap:6px 16px;
   margin:0 0 28px;
@@ -320,7 +330,7 @@ blockquote p, blockquote em{margin:0}
 }
 
 @media(max-width:680px){
-  .page-toc{flex-direction:column;gap:2px}
+  .page-toc{display:flex;flex-direction:column;gap:2px}
   .page-toc a{padding:6px 0}
 
   /* Stack each table row as a card: name on top, extra columns labelled, description below. */
@@ -372,8 +382,8 @@ blockquote p, blockquote em{margin:0}
 }
 .method-get{background:rgba(154,154,170,0.16);color:var(--muted)}
 .method-post{background:rgba(247,157,92,0.16);color:var(--accent)}
-.method-put{background:rgba(110,168,254,0.16);color:#6ea8fe}
-.method-delete{background:rgba(240,113,107,0.16);color:#f0716b}
+.method-put{background:rgba(110,168,254,0.16);color:var(--info)}
+.method-delete{background:rgba(240,113,107,0.16);color:var(--danger)}
 .params{margin:12px 0 0;border-top:1px solid var(--border)}
 .param{
   display:grid;
@@ -391,7 +401,6 @@ blockquote p, blockquote em{margin:0}
 .param-flag{font-family:var(--mono);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;margin-right:6px}
 .endpoint-returns{padding-top:8px;border-top:1px solid var(--border)}
 .endpoint code{overflow-wrap:anywhere}
-#control-api pre{white-space:pre-wrap;overflow-wrap:anywhere}
 @media(max-width:680px){
   .param{grid-template-columns:minmax(0,1fr)}
 }
@@ -540,13 +549,6 @@ ul.trouble li{
   margin:0;
 }
 
-/* ── Divider ── */
-.divider{
-  border:none;
-  border-top:1px solid var(--border);
-  margin:40px 0;
-}
-
 /* ── GitHub star button ── */
 .gh-star{
   display:inline-flex;
@@ -603,15 +605,17 @@ h2[id],h3[id]{scroll-margin-top:16px}
   text-transform:uppercase;
   letter-spacing:0.08em;
   color:var(--muted);
-  opacity:0.7;
   padding:12px 20px 4px;
 }
 .nav-group:first-child{padding-top:0}
 
-nav a.nav-ext{
-  font-size:0.70rem;
-  opacity:0.6;
-}
+nav a.nav-ext{font-size:0.70rem}
+
+nav [role=group]{display:flex;flex-direction:column}
+
+.skip-link{position:absolute;left:8px;top:-60px;z-index:10;padding:8px 12px;background:var(--accent);color:var(--bg);border-radius:var(--r)}
+.skip-link:focus{top:8px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 .nav-toggle-btn{display:none}
 
@@ -681,7 +685,8 @@ nav a.nav-ext{
   main{padding:28px 16px 56px;min-width:0;overflow-wrap:anywhere}
 
   /* Mono labels at 10-12px are unreadable on a phone; raise to ~13px. */
-  h1,h2,h4{font-size:0.8rem}
+  h1{font-size:1.45rem}
+  h2{font-size:1.15rem}
   nav a,.nav-outline a{font-size:0.82rem}
   nav a.nav-ext{font-size:0.78rem}
   .nav-group{font-size:0.72rem}
