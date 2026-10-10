@@ -25,36 +25,59 @@
 
   <main>
     <h1 id="backup-transfer">Backup &amp; Transfer</h1>
-    <p>Save your routes, favorites, and settings to keep them safe or move them to another phone. All actions are in the menu at the top right of <a href="settings.html">Settings</a>.</p>
+    <p>Save your routes, favorites, and settings to keep them safe or move them to another phone.</p>
+    <p>Every action is in the <strong>More actions</strong> menu at the top right of <a href="settings.html">Settings</a>. Steps below name the section and item to tap.</p>
 
     <h2 id="what-is-included">What is included</h2>
-    <p>Backups contain your routes, favorites, speed profiles, widget setup, location randomness settings, and roaming defaults.</p>
-    <p>Captured location lists are not backed up. Permissions stay on your phone, so you don't need to repeat setup after a reset.</p>
+    <ul>
+      <li>Routes, with each route's type, stops, waits, and speed profile.</li>
+      <li>Favorites, with their categories and your Home favorite.</li>
+      <li>Speed profiles.</li>
+      <li>Map button and widget setup, including their display order.</li>
+      <li>Sort choices for your routes and favorites lists.</li>
+      <li>Location randomness settings and roaming defaults.</li>
+    </ul>
+    <p>Captured location lists are not included. Permissions are not included either.</p>
 
     <h2 id="back-up-to-a-file">Back up to a file</h2>
     <ol class="quickstart">
-      <li>Open <a href="settings.html">Settings</a> and tap the menu at the top right.</li>
-      <li>Under <strong>Export</strong>, tap <strong>Export settings</strong>.</li>
-      <li>Your backup file opens in your file manager. Save it or share it.</li>
+      <li>Open <a href="settings.html">Settings</a> and open the menu. Under <strong>Export</strong>, tap <strong>Export settings</strong>.</li>
+      <li>Your phone's share menu opens.</li>
+      <li>Pick where the backup file goes, such as Files, a drive, or a chat.</li>
     </ol>
+    <p>Save the file somewhere you can find it later.</p>
 
     <h2 id="restore-from-a-file">Restore from a file</h2>
     <ol class="quickstart">
-      <li>Open <a href="settings.html">Settings</a> and tap the menu at the top right.</li>
-      <li>Under <strong>Import</strong>, tap <strong>Import from file</strong>.</li>
+      <li>Open the menu. Under <strong>Import</strong>, tap <strong>Import from file</strong>.</li>
       <li>Choose your backup file.</li>
-      <li>Choose <strong>Add to my data</strong> to keep what you have. Or choose <strong>Replace all data</strong> to use only the backup.</li>
+      <li>Choose <strong>Add to my data</strong> or <strong>Replace all data</strong>.</li>
     </ol>
-    <p>A backup from this app keeps everything, including each route's type and stops.</p>
+    <div class="table-wrap">
+    <table class="option-table">
+      <thead><tr><th>Choice</th><th>What happens</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Add to my data</strong></td>
+          <td>Keeps your routes and favorites. The backup's items are added next to them. An item you already have is overwritten, so near-duplicates can appear.</td>
+        </tr>
+        <tr>
+          <td><strong>Replace all data</strong></td>
+          <td>Deletes your routes and favorites first. You end up with only the backup's.</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <p>Both choices apply the backup's settings and setup over yours.</p>
 
     <h2 id="transfer-to-another-phone">Transfer to another phone</h2>
-    <p>Send your entire setup to another phone with a QR code or short code. Both phones must be on the same Wi-Fi network.</p>
+    <p>Copy your backup straight to another phone with a QR code or short code. Both phones must be on the same Wi-Fi network.</p>
 
     <h3 id="send-with-a-qr-code">Send with a QR code</h3>
     <ol class="quickstart">
-      <li>Open <a href="settings.html">Settings</a> and tap the menu at the top right.</li>
-      <li>Under <strong>Export</strong>, tap <strong>Export via QR code</strong>.</li>
-      <li>A dialog shows your QR code and short backup code. Share these with the other phone.</li>
+      <li>Open the menu. Under <strong>Export</strong>, tap <strong>Export via QR code</strong>.</li>
+      <li>A dialog shows a QR code and a short backup code.</li>
+      <li>Let the other phone scan the QR code. Or read out or message the short code.</li>
     </ol>
     <div class="feature-section" id="qr-share">
       <img class="phone-shot" src="screenshots/12_qr_share.png" alt="QR share dialog">
@@ -62,13 +85,11 @@
 
     <h3 id="receive-on-the-other-phone">Receive on the other phone</h3>
     <ol class="quickstart">
-      <li>Open <a href="settings.html">Settings</a> and tap the menu at the top right.</li>
-      <li>Under <strong>Import</strong>, tap <strong>Import from QR code</strong> or <strong>Import via code</strong>.</li>
-      <li>Scan the QR code or type the short code from the other phone.</li>
-      <li>Choose <strong>Add to my data</strong> or <strong>Replace all data</strong>.</li>
+      <li>Open the menu. Under <strong>Import</strong>, tap <strong>Import from QR code</strong> or <strong>Import via code</strong>.</li>
+      <li>Scan the QR code or type the short code. Phone hotspots can block typed codes, so scan if typing fails.</li>
+      <li>Choose <strong>Add to my data</strong> or <strong>Replace all data</strong>, as in <a href="#restore-from-a-file">Restore from a file</a>.</li>
     </ol>
-    <p>Data goes directly between the two devices. See the <a href="privacy.html#no-cloud">privacy policy</a>.</p>
-    <p>If phone hotspots block typed codes, scan the QR code instead.</p>
+    <p>Data goes directly between the two phones. See the <a href="privacy.html#no-cloud">privacy policy</a>.</p>
 
     <h2 id="import-from-other-apps">Import from other apps</h2>
     <div class="table-wrap">
@@ -77,34 +98,48 @@
       <tbody>
         <tr>
           <td><strong>GPX</strong></td>
-          <td>A common file for GPS tracks and routes. Each track or route becomes its own straight-line route. Named places become favorites. Altitude comes from the GPS realism settings. Routes with too many points are skipped.</td>
+          <td>A common file for GPS tracks and routes. Each track or route becomes its own straight-line route. Named places become favorites.</td>
+        </tr>
+        <tr>
+          <td><strong>GPX limits</strong></td>
+          <td>Routes with too many points are skipped. A message after the import says how many.</td>
         </tr>
         <tr>
           <td><strong>GPS Joystick</strong></td>
-          <td>Routes and favorites from a GPS Joystick export. Backup files from that app do not work, so export GPX instead.</td>
+          <td>Routes and favorites from a GPS Joystick export.</td>
+        </tr>
+        <tr>
+          <td><strong>GPS Joystick backups</strong></td>
+          <td>Backup files from that app do not work. Export GPX there instead.</td>
         </tr>
         <tr>
           <td><strong>YAMLA</strong></td>
-          <td>Favorites and speed profiles from a YAMLA export file.</td>
+          <td>Favorites, plus walk, run, and bike speeds. Routes in a YAMLA file are not imported.</td>
         </tr>
       </tbody>
     </table>
     </div>
 
+    <h2 id="new-phone-or-factory-reset">Move to a new phone or after a factory reset</h2>
+    <ol class="quickstart">
+      <li>On the old phone, do <a href="#back-up-to-a-file">Back up to a file</a>. Keep the file off the phone, such as in a drive.</li>
+      <li>On the new phone, install the app and finish the first-run setup. Permissions are not in the backup.</li>
+      <li>Under <strong>Import</strong>, tap <strong>Import from file</strong>. Choose the backup, then <strong>Replace all data</strong>.</li>
+    </ol>
+    <p>Both phones on the same Wi-Fi? <a href="#transfer-to-another-phone">Transfer with a QR code</a> instead.</p>
+
     <h2 id="switching-from-the-play-store-version">Switch from the Play Store version</h2>
     <p>To move between the Play Store app and the GitHub APK, carry your data over with a file.</p>
     <ol class="quickstart">
-      <li>Open <a href="settings.html">Settings</a>, then under <strong>Export</strong>, tap <strong>Export settings</strong>.</li>
-      <li>Uninstall the old version.</li>
-      <li>Install the new version.</li>
+      <li>Back up to a file and keep it off the phone.</li>
+      <li>Uninstall the old version, then install the new one.</li>
       <li>Under <strong>Import</strong>, tap <strong>Import from file</strong> and choose your backup.</li>
     </ol>
 
     <h2 id="reset-all-data">Reset all data</h2>
-    <p>Permanently delete all your favorites, routes, and settings without needing Android's system settings.</p>
+    <p>Permanently delete all your favorites, routes, and settings.</p>
     <ol class="quickstart">
-      <li>Open <a href="settings.html">Settings</a> and tap the menu at the top right.</li>
-      <li>Under <strong>Danger</strong>, tap <strong>Reset all data</strong>.</li>
+      <li>Open the menu. Under <strong>Danger</strong>, tap <strong>Reset all data</strong>.</li>
       <li>Confirm the action. It cannot be undone.</li>
     </ol>
     <p>Permissions stay on your phone, so you don't need to repeat setup.</p>

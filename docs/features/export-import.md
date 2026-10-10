@@ -85,9 +85,9 @@ Settings screen → "More actions" overflow menu → Import section offers:
 - **Import from GPS Joystick** — imports routes and favorites from a GPS Joystick export (its Realm database, parsed structurally by `GpsJoystickMigrator`). Keeps the original list order.
   GPX exports are also supported: named `<wpt>` points become favorites and each track or route
   remains separate. Routes over the GPX waypoint limit are skipped with a reported count.
-- **Import from YAMLA** — imports routes from YAMLA JSON format.
+- **Import from YAMLA** — imports favorites and walk/run/bike speeds from YAMLA JSON. `YamlaMigrator` also parses an `all_routes` array, but `importFromYamla` only applies favorites and speeds, so routes are not imported.
 
-All imported routes are saved as `RouteType.STRAIGHT` segments.
+All routes imported from GPS Joystick or GPX are saved as `RouteType.STRAIGHT` segments.
 
 ## Reset All Data
 
