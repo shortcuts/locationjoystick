@@ -247,14 +247,14 @@ The Control API starts routes with the Hide Teleport setting bypassed, so Telepo
   `hideTeleportFeatures` is on (docs/features/hide-teleport.md). Still
   jumps to the saved stop itself when Planting is on; Start then snaps to
   the first rim vertex.
-- **Start** — teleports to the first waypoint (last, if Reverse is checked),
-  then begins replay honoring Loop/Reverse/Return to location, Follow roads,
-  Planting, and Teleport between waypoints. Planting forces looping regardless of the Loop checkbox.
-  When Teleport between waypoints is on, Start lingers at that first stop
-  for the hop delay before jumping to the next. When `hideTeleportFeatures`
-  is on, Start instead walks (straight or via roads, per Follow roads) from
-  the current position to the first replay point (the first rim vertex when
-  Planting is on), then begins replay.
+- **Start** — walks (straight or via roads, per Follow roads) from the
+  current position to the first waypoint (last, if Reverse is checked; the
+  first rim vertex when Planting is on), then begins replay honoring
+  Loop/Reverse/Return to location, Follow roads, Planting, and Teleport
+  between waypoints. Planting forces looping regardless of the Loop checkbox.
+  When Teleport between waypoints is on, Start teleports to the first stop
+  instead and lingers there for the hop delay before jumping to the next.
+  Use the standalone **Teleport** button first to jump to the start, then Start.
 
 Implemented via `RouteStartConfig` fields: `teleportToStart` (default `false`, derived by
 `StartRouteReplayUseCase` from Teleport between waypoints and `hideTeleportFeatures`), a
