@@ -63,16 +63,16 @@
         <tr>
           <td>Drive</td>
           <td class="default-cell">54.0 km/h</td>
-          <td>Driving. Off in the Speed cycle. Above the anti-cheat limit below.</td>
+          <td>Driving. Off in the Speed cycle. Triggers the <a href="#speed-warning">speed warning</a>.</td>
         </tr>
       </tbody>
     </table>
     </div>
 
-    <p>Walk, Run, and Bike are in the <a href="#speed-cycle-settings">Speed cycle</a> by default. Slow Walk and Drive are not.</p>
+    <p>Walk, Run, and Bike are in the <a href="#speed-cycle">Speed cycle</a> by default. Slow Walk and Drive are not.</p>
 
-    <h3 id="anti-cheat-warning">Anti-cheat warning</h3>
-    <p>Speeds above 28.8 km/h (17.9 mph) show this message: <em>"Speed exceeds 8 m/s, may trigger anti-cheat in some games"</em>. It is a notice only and changes nothing.</p>
+    <h3 id="speed-warning">Speed warning</h3>
+    <p>Speeds above 28.8 km/h (17.9 mph) show a warning. The warning does not block anything.</p>
 
     <h3 id="gps-jitter">Location randomness</h3>
     <p>Small random changes to each location update, like real GPS drift. Set a value to 0 to turn it off. Wobble and altitude show in feet when you use mph.</p>
@@ -92,17 +92,17 @@
           <td>Largest random shift while you move. Keep it below the still value. Maximum 50 m.</td>
         </tr>
         <tr>
-          <td>Max step per tick</td>
+          <td>Largest change per update</td>
           <td class="default-cell">1 m</td>
           <td>How far the shift can change in one update. Allowed range: 0.1 to 5 m.</td>
         </tr>
         <tr>
-          <td>Speed wobble when still</td>
+          <td>Speed variation when still</td>
           <td class="default-cell">5%</td>
           <td>Random percentage added to or taken from the reported speed at rest. 0 looks perfectly still.</td>
         </tr>
         <tr>
-          <td>Speed wobble while moving</td>
+          <td>Speed variation while moving</td>
           <td class="default-cell">5%</td>
           <td>Random percentage added to or taken from the reported speed while you move. Allowed range: 0 to 50%.</td>
         </tr>
@@ -112,7 +112,7 @@
           <td>How often the speed shows a small wobble at rest. 0 means never. 100 means every update.</td>
         </tr>
         <tr>
-          <td>Vary altitude (m)</td>
+          <td>Altitude variation</td>
           <td class="default-cell">1.5 m</td>
           <td>How much the reported height moves. 0 gives a flat height. Shows only while Vary altitude is on.</td>
         </tr>
@@ -121,7 +121,7 @@
     </div>
 
     <h3 id="gps-realism">GPS realism</h3>
-    <p>Each option copies real GPS behavior, to avoid detection by app checks.</p>
+    <p>Each option makes the fake location behave more like a real GPS.</p>
 
     <div class="table-wrap">
     <table class="option-table">
@@ -135,7 +135,7 @@
         <tr>
           <td>Vary altitude</td>
           <td class="default-cell">On</td>
-          <td>Moves the reported altitude slightly. The Vary altitude (m) value above sets how much.</td>
+          <td>Moves the reported altitude slightly. The Altitude variation value above sets how much.</td>
         </tr>
         <tr>
           <td>Use real-world elevation</td>
@@ -156,6 +156,11 @@
           <td>Simulate signal dropouts</td>
           <td class="default-cell">Off</td>
           <td>About every 10 seconds, the signal freezes for about 2 seconds. Most apps show the freeze. Does not run during route playback or walk-to.</td>
+        </tr>
+        <tr>
+          <td>Reset elevation override</td>
+          <td class="default-cell">&mdash;</td>
+          <td>Clears a height set with the altitude override button, so the automatic height resumes. Set the button up under <a href="#privacy-menus">Privacy</a>.</td>
         </tr>
       </tbody>
     </table>
@@ -218,7 +223,7 @@
         <tr>
           <td>Nominatim (OpenStreetMap)</td>
           <td class="default-cell">On</td>
-          <td>The main search service. Turn it off if it is slow or blocked where you are.</td>
+          <td>The main search service. Turn it off if it is blocked where you are. A service that fails is skipped for 10 minutes.</td>
         </tr>
         <tr>
           <td>Photon (Komoot)</td>
@@ -234,67 +239,56 @@
 
     <div class="table-wrap">
     <table class="option-table">
-      <thead><tr><th>Feature</th><th>Icon</th><th>What it does</th></tr></thead>
+      <thead><tr><th>Feature</th><th>Default</th><th>What it does</th></tr></thead>
       <tbody>
         <tr>
           <td><strong>Map shortcut</strong></td>
-          <td>🗺️</td>
+          <td class="default-cell">On</td>
           <td>Widget only. A small map over your current app.</td>
         </tr>
         <tr>
           <td><strong>Show/hide joystick</strong></td>
-          <td>🕹️</td>
+          <td class="default-cell">On</td>
           <td>Widget only. Shows or hides the joystick.</td>
         </tr>
         <tr>
           <td><strong>Lock joystick</strong></td>
-          <td>🔒</td>
+          <td class="default-cell">On</td>
           <td>Widget only. Keeps the joystick's direction after you let go. Tap again to unlock.</td>
         </tr>
         <tr>
           <td><strong>Favorites</strong></td>
-          <td>❤️</td>
+          <td class="default-cell">On</td>
           <td>Widget and map. Your favorites, with teleport and walk.</td>
         </tr>
         <tr>
           <td><strong>Routes</strong></td>
-          <td>🗺</td>
+          <td class="default-cell">On</td>
           <td>Widget and map. Your routes.</td>
         </tr>
         <tr>
           <td><strong>Roaming</strong></td>
-          <td>🧭</td>
-          <td>Widget and map. Walk around the block and Planting. On by default.</td>
+          <td class="default-cell">On</td>
+          <td>Widget and map. Walk around the block and Planting.</td>
         </tr>
         <tr>
           <td><strong>Search</strong></td>
-          <td>🔍</td>
+          <td class="default-cell">On</td>
           <td>Map only. Search for a place by name.</td>
         </tr>
         <tr>
           <td><strong>Paste coordinates</strong></td>
-          <td>📋</td>
-          <td>Map and widget. Off by default. See <a href="map.html#paste-coordinates">Map</a>.</td>
+          <td class="default-cell">Off</td>
+          <td>Map and widget. See <a href="map.html#paste-coordinates">Map</a>.</td>
         </tr>
-        <tr>
-          <td><strong>Capture coordinates</strong></td>
-          <td>📍+</td>
-          <td>Opens from Home or the side menu. Off by default. See <a href="location-links.html#set-up-capture">Location Links</a>.</td>
-        </tr>
-        <tr>
+        <tr id="speed-cycle">
           <td><strong>Speed cycle</strong></td>
-          <td>⚡</td>
-          <td>Widget only. One tap switches to the next enabled speed.</td>
+          <td class="default-cell">On</td>
+          <td>Widget only. One tap switches to the next enabled speed. Each speed in <a href="#speed-profiles-list">Speed profiles</a> has one checkbox in this list.</td>
         </tr>
       </tbody>
     </table>
     </div>
-
-    <h3 id="speed-cycle-settings">Speed cycle</h3>
-    <p>Choose which speeds the widget's Speed cycle button cycles through. Each speed in <a href="#speed-profiles-list">Speed profiles</a> has one checkbox.</p>
-
-    <h3 id="tap-to-walk-settings">Tap to Walk</h3>
-    <p>Turns on the crosshair overlay and sets its map scale and compass. See <a href="overlays.html#tap-to-walk">Overlays</a>.</p>
 
     <h3 id="privacy-menus">Privacy</h3>
 
@@ -364,9 +358,9 @@
     </table>
     </div>
 
-    <p>On Android 9 to 12, overlays and the notification use the new language the next time a session starts.</p>
+    <p>On Android 9 to 12, overlays and the notification switch language at the next session start.</p>
 
-    <p>Want to help translate? See the <a href="https://github.com/shortcuts/locationjoystick/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing guide</a> or ask in the <a href="https://discord.gg/r9DRnkwbMf" target="_blank" rel="noopener">Discord</a>.</p>
+    <p>To help translate, see the <a href="https://github.com/shortcuts/locationjoystick/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing guide</a>.</p>
 
     <h2 id="favorites-routes">Favorites &amp; Routes</h2>
 
@@ -447,7 +441,7 @@
     <p>Once roaming starts, changing speed in the app or widget overrides the starting speed.</p>
 
     <h2 id="external-services">External services</h2>
-    <p>The app is offline-first and needs no account. Each service is used only while its feature is active.</p>
+    <p>The app is offline-first and needs no account. Each service is used only while its feature is active, except map images, which load whenever a map is shown.</p>
 
     <div class="table-wrap">
     <table class="option-table">
@@ -472,26 +466,6 @@
           <td><strong>Map images (OpenStreetMap)</strong><br><small><a href="https://tile.openstreetmap.org" target="_blank" rel="noopener">tile.openstreetmap.org</a></small></td>
           <td>Whenever you move or zoom a map.</td>
           <td>Only which part of the map to show. No personal data.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-
-    <h2 id="home-screen-badges">Home screen badges</h2>
-
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Badge</th><th>Shows when</th><th>Dismiss by</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>Update available</td>
-          <td>GitHub has a newer release. Checked once a day. Needs internet.</td>
-          <td>Tap <strong>X</strong>. Hidden until a newer version comes out.</td>
-        </tr>
-        <tr>
-          <td>What's new</td>
-          <td>After an update, showing what changed. Works offline.</td>
-          <td>Tap <strong>X</strong>. Hidden until the next version. See the <a href="changelog.html">changelog</a>.</td>
         </tr>
       </tbody>
     </table>
