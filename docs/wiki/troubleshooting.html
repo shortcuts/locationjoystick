@@ -25,7 +25,21 @@
 
   <main>
     <h1 id="troubleshooting">Troubleshooting</h1>
-    <p>Fix common locationjoystick problems. See <a href="settings.html">Settings</a> for spoofing and permission options.</p>
+    <p>Find your problem in the list, then follow its steps. See <a href="settings.html">Settings</a> for spoofing and permission options.</p>
+
+    <h2 id="symptoms">Symptoms</h2>
+    <ul class="section-bullets">
+      <li><a href="#app-missing-from-list">locationjoystick is missing from "Select mock location app"</a></li>
+      <li><a href="#another-app-holds-slot">Spoofing does not work, another app is selected</a></li>
+      <li><a href="#mock-location-not-detected">The mock location check fails during setup</a></li>
+      <li><a href="#grant-location-all-the-time">An app says "GPS signal not detected" or asks for location again</a></li>
+      <li><a href="#spoofed-location-resets">Spoofed location jumps back to your real location</a></li>
+      <li><a href="#overlay-permission-resets">The joystick or widget disappears after a restart</a></li>
+      <li><a href="#allow-restricted-settings">Cannot grant the overlay permission (Android 12+, installed from a file)</a></li>
+      <li><a href="#game-blocks-location">A game shows a location or GPS error</a></li>
+      <li><a href="#map-black-screen">The map is a black screen</a></li>
+      <li><a href="#report-a-crash">You need to send a crash log</a></li>
+    </ul>
 
     <h2 id="app-missing-from-list">App missing from the "Select mock location app" list</h2>
     <p>Symptom: The app does not appear when you try to select it as the mock location provider.</p>
@@ -56,26 +70,6 @@
       <li>Use <strong>Skip</strong> only after you confirm spoofing works.</li>
     </ol>
 
-    <h2 id="allow-restricted-settings">Allow restricted settings (Android 12+ installed from a file)</h2>
-    <p>Symptom: You cannot grant the overlay permission. This affects Android 12+ when you install from a file instead of the Play Store.</p>
-    <ol>
-      <li>Open the <strong>Settings</strong> app.</li>
-      <li>Tap <strong>Apps</strong> (sometimes "Application Manager").</li>
-      <li>Tap <strong>locationjoystick</strong>.</li>
-      <li>Tap the <strong>⋮</strong> menu, top-right.</li>
-      <li>Tap <strong>Allow restricted settings</strong>.</li>
-      <li>Return to locationjoystick and run setup again.</li>
-    </ol>
-    <p>No <strong>⋮</strong> menu means your phone does not need this step.</p>
-
-    <h2 id="overlay-permission-resets">Overlay permission resets on restart</h2>
-    <p>Symptom: The joystick or widget disappears after restarting the phone.</p>
-    <ul>
-      <li>Known issue on MIUI and ColorOS.</li>
-      <li>Grant the permission again after each restart, or allow locationjoystick in your phone's autostart settings.</li>
-      <li>See <a href="overlays.html">Overlays</a> to show the controls again.</li>
-    </ul>
-
     <h2 id="grant-location-all-the-time">App shows "GPS signal not detected" or asks for location again</h2>
     <p>Symptom: An app that uses spoofed location shows an error or permission prompt.</p>
     <ol>
@@ -88,17 +82,34 @@
     <p><strong>Allow only while using the app</strong> and <strong>Ask every time</strong> are not enough for these apps.</p>
 
     <h2 id="spoofed-location-resets">Spoofed location jumps back to your real location</h2>
-    <p>Symptom: The location keeps reverting to your real position even when spoofing is on.</p>
-    <p>Another part of your phone keeps refreshing your real position, which overrides the spoof. Every step below is reversible. Do one step, then test:</p>
+    <p>Symptom: The location keeps reverting to your real position even when spoofing is on. Google's location services refresh your real position and override the spoof. Change one step at a time, and test after each.</p>
     <ol>
-      <li>Open <strong>Settings → Apps → Google Play Services → Storage</strong> and tap <strong>Clear cache</strong>. Then open the <strong>⋮</strong> menu and tap <strong>Uninstall updates</strong>.</li>
-      <li>On the same screen, open <strong>Permissions → Location</strong> and set <strong>Don't allow</strong>.</li>
-      <li>Open <strong>Settings → Location</strong> and set the mode to <strong>GPS only</strong> (sometimes "Device only") instead of <strong>High accuracy</strong>.</li>
-      <li>In the same menu, turn off <strong>Wi-Fi scanning</strong> and <strong>Bluetooth scanning</strong> (often under "Improve Accuracy").</li>
+      <li>Open <strong>Settings → Location</strong>. Set the mode to <strong>GPS only</strong> (or "Device only"), and turn off <strong>Wi-Fi scanning</strong> and <strong>Bluetooth scanning</strong> (under "Improve Accuracy").</li>
+      <li>Open <strong>Settings → Apps → Google Play Services → Permissions → Location</strong> and set <strong>Don't allow</strong>.</li>
       <li>In your Google account settings, turn off <strong>Location History</strong>, <strong>Location Sharing</strong>, and <strong>Find My Device</strong>.</li>
-      <li>Confirm no other app holds the mock location slot — see the section above.</li>
+      <li>Confirm no other app holds the mock location slot. See the section above.</li>
     </ol>
     <p><strong>To get your real location back:</strong> Stop spoofing in locationjoystick, reverse the steps you changed, and restart the app you want to use.</p>
+
+    <h2 id="overlay-permission-resets">Overlay permission resets on restart</h2>
+    <p>Symptom: The joystick or widget disappears after restarting the phone.</p>
+    <ul>
+      <li>Known issue on MIUI and ColorOS.</li>
+      <li>Grant the permission again after each restart, or allow locationjoystick in your phone's autostart settings.</li>
+      <li>See <a href="overlays.html">Overlays</a> to show the controls again.</li>
+    </ul>
+
+    <h2 id="allow-restricted-settings">Allow restricted settings (Android 12+ installed from a file)</h2>
+    <p>Symptom: You cannot grant the overlay permission. This affects Android 12+ when you install from a file instead of the Play Store.</p>
+    <ol>
+      <li>Open the <strong>Settings</strong> app.</li>
+      <li>Tap <strong>Apps</strong> (sometimes "Application Manager").</li>
+      <li>Tap <strong>locationjoystick</strong>.</li>
+      <li>Tap the <strong>⋮</strong> menu, top-right.</li>
+      <li>Tap <strong>Allow restricted settings</strong>.</li>
+      <li>Return to locationjoystick and run setup again.</li>
+    </ol>
+    <p>No <strong>⋮</strong> menu means your phone does not need this step.</p>
 
     <h2 id="game-blocks-location">A game shows a location or GPS error</h2>
     <p>Symptom: A game shows "Failed to detect location (12)", "location error 12", or similar red GPS error.</p>
@@ -115,22 +126,6 @@
       <li>Turn on Wi-Fi or mobile data. The map downloads street images the first time you open an area.</li>
       <li>Leave the map screen and open it again.</li>
       <li>If you have internet and the map is still black, install the latest GitHub APK. Swipe the app away from Recents and reopen it. Older versions could save blank map images; the new version clears them.</li>
-    </ol>
-
-    <h2 id="updating">Updating the app</h2>
-    <p>Symptom: How do I install a new version?</p>
-    <ol>
-      <li>Open the new APK file.</li>
-      <li>Android asks "Replace app?" — your data stays.</li>
-    </ol>
-
-    <h2 id="switching-from-the-play-store-version">Switching from the Play Store version</h2>
-    <p>Symptom: I want to switch from Play Store to GitHub APK or vice versa.</p>
-    <ol>
-      <li>Export your data: <strong>Settings → Export</strong>.</li>
-      <li>Uninstall the old version.</li>
-      <li>Install the new version.</li>
-      <li>Import your data.</li>
     </ol>
 
     <h2 id="report-a-crash">How to report a crash with a log</h2>
