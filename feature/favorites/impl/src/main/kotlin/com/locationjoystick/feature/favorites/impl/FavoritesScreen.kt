@@ -55,6 +55,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.DeleteItemType
 import com.locationjoystick.core.designsystem.component.EmptyState
+import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
 import com.locationjoystick.core.designsystem.component.HomeToggleButton
 import com.locationjoystick.core.designsystem.component.ListSearchField
 import com.locationjoystick.core.designsystem.component.LjActionSheetRow
@@ -95,6 +96,8 @@ fun FavoritesRoute(
         cooldownStates = cooldownStates,
         snackbarHostState = snackbarHostState,
         onTeleport = viewModel::teleportTo,
+        onWalk = viewModel::walkTo,
+        onWalkViaRoads = viewModel::walkViaRoadsTo,
         onSetPendingDeleteId = viewModel::setPendingDeleteId,
         onConfirmDelete = viewModel::confirmDelete,
         onAddFavorite = viewModel::addFavorite,
@@ -138,6 +141,8 @@ internal fun FavoritesScreen(
     onAddFavorite: (String, Double, Double) -> Unit,
     onAddFavoriteFromPaste: (String, String) -> Boolean = { _, _ -> false },
     onUpdateFavorite: (String, String, Double, Double) -> Unit,
+    onWalk: (com.locationjoystick.core.model.FavoriteLocation) -> Unit = {},
+    onWalkViaRoads: (com.locationjoystick.core.model.FavoriteLocation) -> Unit = {},
     cooldownStates: Map<String, CooldownState> = emptyMap(),
     onNavigateToMapPicker: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
@@ -155,6 +160,7 @@ internal fun FavoritesScreen(
     var prefillLat by remember { mutableStateOf("") }
     var prefillLon by remember { mutableStateOf("") }
     var editingFavorite by remember { mutableStateOf<com.locationjoystick.core.model.FavoriteLocation?>(null) }
+    var targetFavorite by remember { mutableStateOf<com.locationjoystick.core.model.FavoriteLocation?>(null) }
 
     var searchQuery by remember { mutableStateOf("") }
 
@@ -261,7 +267,8 @@ internal fun FavoritesScreen(
                                             onToggleHome = { onToggleHome(it.id) },
                                             cooldownState = cooldownStates[favorite.id] ?: CooldownState.Ready,
                                             currentPosition = getCurrentPosition(),
-                                            onRowClick = { onTeleport(favorite) },
+                                            // Spoofing off: no movement to interrupt, so keep the instant teleport.
+                                            onRowClick = { if (isSpoofing) targetFavorite = favorite else onTeleport(favorite) },
                                             onEdit = { editingFavorite = it },
                                             onDelete = { onSetPendingDeleteId(it.id) },
                                         )
@@ -272,6 +279,33 @@ internal fun FavoritesScreen(
                     }
                 }
             }
+        }
+    }
+
+    targetFavorite?.let { target ->
+        ModalBottomSheet(
+            onDismissRequest = { targetFavorite = null },
+            sheetState = rememberLjSheetState(),
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            FavoriteTargetDetail(
+                favorite = target,
+                onSetLocation = {
+                    onTeleport(target)
+                    targetFavorite = null
+                },
+                onGoToLocation = {
+                    onWalk(target)
+                    targetFavorite = null
+                },
+                onGoToLocationViaRoads = {
+                    onWalkViaRoads(target)
+                    targetFavorite = null
+                },
+                onDismiss = { targetFavorite = null },
+                hideTeleportFeatures = uiState.hideTeleportFeatures,
+                isRoadRouteFetchInFlight = uiState.isRoadRouteFetchInFlight,
+            )
         }
     }
 

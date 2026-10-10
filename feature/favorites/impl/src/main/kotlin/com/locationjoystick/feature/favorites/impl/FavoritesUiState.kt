@@ -10,4 +10,5 @@ data class FavoritesUiState(
     val sortMode: SavedItemSortMode = SavedItemSortMode.NEWEST_FIRST,
     val hideTeleportFeatures: Boolean = false,
     val homeFavoriteId: String? = null,
+    val isRoadRouteFetchInFlight: Boolean = false,
 )

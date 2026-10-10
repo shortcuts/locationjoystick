@@ -10,6 +10,7 @@ import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
+import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
@@ -33,6 +34,7 @@ class FavoritesViewModel
         private val locationRepository: LocationRepository,
         private val settingsRepository: SettingsRepository,
         private val teleportUseCase: TeleportUseCase,
+        private val mapController: MapController,
     ) : ViewModel() {
         private val pendingDeleteIdFlow = MutableStateFlow<String?>(null)
 
@@ -52,6 +54,8 @@ class FavoritesViewModel
                     hideTeleportFeatures = hideTeleportFeatures,
                     homeFavoriteId = homeFavoriteId,
                 )
+            }.combine(locationRepository.isRoadRouteFetchInFlight) { state, isRoadRouteFetchInFlight ->
+                state.copy(isRoadRouteFetchInFlight = isRoadRouteFetchInFlight)
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -107,6 +111,10 @@ class FavoritesViewModel
                 teleportUseCase.execute(favorite.position)
             }
         }
+
+        fun walkTo(favorite: FavoriteLocation) = mapController.walkTo(favorite.position)
+
+        fun walkViaRoadsTo(favorite: FavoriteLocation) = mapController.walkViaRoads(favorite.position)
 
         /** Marks [id] as Home (moving it from any other favorite); clears Home if [id] already is. */
         fun toggleHome(id: String) {

@@ -5,6 +5,7 @@ import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
+import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.SavedItemSortMode
@@ -12,6 +13,7 @@ import com.locationjoystick.core.testing.FakeFavoriteDao
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +36,7 @@ class FavoritesViewModelTest {
     private val locationRepository = LocationRepository()
     private val settingsRepository: SettingsRepository = mockk(relaxed = true)
     private val teleportUseCase: TeleportUseCase = mockk(relaxed = true)
+    private val mapController: MapController = mockk(relaxed = true)
     private val homeFlow = MutableStateFlow<String?>(null)
     private lateinit var viewModel: FavoritesViewModel
 
@@ -48,12 +51,26 @@ class FavoritesViewModelTest {
         every { settingsRepository.getRecentSearches() } returns flowOf(emptyList())
         every { settingsRepository.getHideTeleportFeatures() } returns flowOf(false)
         every { settingsRepository.getHomeFavoriteId() } returns homeFlow
-        viewModel = FavoritesViewModel(favoriteRepository, locationRepository, settingsRepository, teleportUseCase)
+        viewModel = FavoritesViewModel(favoriteRepository, locationRepository, settingsRepository, teleportUseCase, mapController)
     }
 
     @After
     fun teardown() {
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun walkTo_delegates_straight_walk_to_map_controller() {
+        val favorite = FavoriteLocation("id", "Home", LatLng(1.0, 2.0), createdAt = 0L)
+        viewModel.walkTo(favorite)
+        verify { mapController.walkTo(LatLng(1.0, 2.0)) }
+    }
+
+    @Test
+    fun walkViaRoadsTo_delegates_road_walk_to_map_controller() {
+        val favorite = FavoriteLocation("id", "Home", LatLng(1.0, 2.0), createdAt = 0L)
+        viewModel.walkViaRoadsTo(favorite)
+        verify { mapController.walkViaRoads(LatLng(1.0, 2.0)) }
     }
 
     @Test
@@ -99,7 +116,7 @@ class FavoritesViewModelTest {
     fun uiState_sorts_oldest_first_when_sort_flag_false() =
         runTest {
             every { settingsRepository.getFavoritesSortMode() } returns flowOf(SavedItemSortMode.OLDEST_FIRST)
-            val vm = FavoritesViewModel(favoriteRepository, locationRepository, settingsRepository, teleportUseCase)
+            val vm = FavoritesViewModel(favoriteRepository, locationRepository, settingsRepository, teleportUseCase, mapController)
             favoriteRepository.addFavorite("id1", "Old", LatLng(0.0, 0.0), createdAt = 1000L)
             favoriteRepository.addFavorite("id2", "New", LatLng(1.0, 1.0), createdAt = 2000L)
 
@@ -121,7 +138,7 @@ class FavoritesViewModelTest {
     fun uiState_sorts_names_z_to_a() =
         runTest {
             every { settingsRepository.getFavoritesSortMode() } returns flowOf(SavedItemSortMode.NAME_DESCENDING)
-            val vm = FavoritesViewModel(favoriteRepository, locationRepository, settingsRepository, teleportUseCase)
+            val vm = FavoritesViewModel(favoriteRepository, locationRepository, settingsRepository, teleportUseCase, mapController)
             favoriteRepository.addFavorite("id1", "Alpha", LatLng(0.0, 0.0), 1000L)
             favoriteRepository.addFavorite("id2", "Zulu", LatLng(1.0, 1.0), 2000L)
 

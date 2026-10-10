@@ -1,6 +1,6 @@
 # Favorite Locations
 
-Save named locations. Tap from list to instantly teleport spoofed position. A teleport stops any walk, roam, or route session first (`TeleportUseCase.execute`). Rename and delete supported.
+Save named locations. Tap from list: while spoofing runs, a bottom sheet offers Teleport / Walk to location / Walk via roads (Teleport hidden when Hide Teleport is on); while spoofing is off, the tap teleports instantly. A teleport stops any walk, roam, or route session first (`TeleportUseCase.execute`). Rename and delete supported.
 
 Key files: `:feature:favorites:impl/FavoritesScreen.kt`, `:feature:favorites:impl/FavoritesViewModel.kt`, `:core:database/FavoriteDao.kt`
 
@@ -81,6 +81,10 @@ saved-time sort modes are applied above the repository.
 
 Set position directly, push one update, camera jumps to new position. Goes through
 `TeleportUseCase.execute`, which stops any walk, roam, or route session first.
+
+On the Favorites screen, a row tap opens `FavoriteTargetDetail` in a bottom sheet while spoofing
+runs (same choices as the map favorites sheet and widget panel). Walk goes through
+`MapController.walkTo` / `walkViaRoads`. While spoofing is off the tap teleports directly.
 
 ## Shared ViewModel
 
