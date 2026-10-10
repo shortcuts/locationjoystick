@@ -154,6 +154,34 @@
     spy();
   }
 
+  // "On this page" list for long pages: the sidebar outline is hidden behind the menu button on phones.
+  var tocHeads = document.querySelectorAll('main h2[id]');
+  var mainEl = document.querySelector('main');
+  var lead = mainEl.querySelector('h1 + p');
+  if (lead && tocHeads.length >= 4 && mainEl.textContent.split(/\s+/).length > 700) {
+    var toc = document.createElement('nav');
+    toc.className = 'page-toc';
+    toc.setAttribute('aria-label', 'On this page');
+    toc.innerHTML = '<span class="page-toc-title">On this page</span>';
+    tocHeads.forEach(function (h) {
+      var a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent.trim();
+      toc.appendChild(a);
+    });
+    lead.after(toc);
+  }
+
+  // Copy header labels onto cells so the phone layout can stack rows as cards.
+  document.querySelectorAll('main table').forEach(function (table) {
+    var labels = Array.prototype.map.call(table.querySelectorAll('thead th'), function (th) { return th.textContent.trim(); });
+    table.querySelectorAll('tbody tr').forEach(function (tr) {
+      Array.prototype.forEach.call(tr.children, function (td, i) {
+        if (labels[i] && i > 0 && i < tr.children.length - 1) td.setAttribute('data-label', labels[i]);
+      });
+    });
+  });
+
   document.querySelectorAll('main h1[id], main h2[id], main h3[id]').forEach(function (heading) {
     var btn = document.createElement('button');
     btn.className = 'heading-link';

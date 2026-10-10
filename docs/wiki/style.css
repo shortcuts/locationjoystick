@@ -248,7 +248,7 @@ blockquote{
 
 blockquote p, blockquote em{margin:0}
 
-/* Fixed min-width + horizontal scroll keeps multi-column tables readable at their natural width; reflowing into stacked rows would lose column alignment for tables with 3+ columns of prose. */
+/* Wide screens: min-width + horizontal scroll. Phones: rows stack as cards (see the 680px block below). */
 .option-table{
   width:100%;
   min-width:420px;
@@ -296,8 +296,49 @@ blockquote p, blockquote em{margin:0}
 
 .option-table tbody tr:hover td{background:var(--accent-bg)}
 
+/* On This Page list (built by wiki-init.js on long pages). */
+.page-toc{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 16px;
+  margin:0 0 28px;
+  padding:12px 16px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  font-size:0.84rem;
+}
+
+.page-toc-title{
+  flex-basis:100%;
+  font-family:var(--mono);
+  font-size:0.66rem;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--muted);
+}
+
 @media(max-width:680px){
-  .option-table{min-width:340px}
+  .page-toc{flex-direction:column;gap:2px}
+  .page-toc a{padding:6px 0}
+
+  /* Stack each table row as a card: name on top, extra columns labelled, description below. */
+  .table-wrap{border:none}
+  .option-table{min-width:0}
+  .option-table thead{display:none}
+  .option-table,.option-table tbody,.option-table tr,.option-table td{display:block;width:auto}
+  .option-table tr{border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;padding:10px 12px}
+  .option-table td,.option-table tr:first-child td{border-top:none;padding:2px 0}
+  .option-table td:first-child{white-space:normal}
+  .option-table td[data-label]::before{
+    content:attr(data-label) ": ";
+    font-family:var(--mono);
+    font-size:0.7rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--muted);
+  }
 }
 
 /* ── API reference endpoint cards ── */
@@ -645,7 +686,6 @@ nav a.nav-ext{
   nav a.nav-ext{font-size:0.78rem}
   .nav-group{font-size:0.72rem}
   .option-table th{font-size:0.72rem}
-  .option-table td{padding:10px 12px}
 
   .feature-section{flex-direction:column;gap:18px;padding:16px}
   .phone-shot{width:100%;max-width:240px;margin:0 auto}
