@@ -26,157 +26,150 @@
   <main>
     <h1 id="acknowledgements">Acknowledgements</h1>
     <p>
-      locationjoystick is built using a number of open-source projects.
-      Every library and data source listed here is used directly in the app you install.
-      Thanks to everyone who works on them.
+      locationjoystick is built on open-source projects. Thanks to everyone who works on them.
+      For what the app sends to online services, see
+      <a href="settings.html#external-services">Settings &rarr; External services</a>.
     </p>
 
-    <h2 id="map-location-data">Map &amp; location data</h2>
-    <p>The map you see and the routes it can follow come from these projects.</p>
+    <h2 id="maps">Maps</h2>
+    <p>Everything behind the map, routes and place search.</p>
     <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
       <tbody>
         <tr>
           <td><strong><a href="https://maplibre.org/maplibre-gl-js/docs/" target="_blank" rel="noopener">MapLibre Android SDK</a></strong></td>
-          <td>Renders the interactive map throughout the app, including the floating map overlay.</td>
+          <td>Draws the interactive map, including the floating map overlay.</td>
           <td><a href="https://github.com/maplibre/maplibre-native/blob/main/LICENSE.md" target="_blank" rel="noopener">BSD 2-Clause</a></td>
         </tr>
         <tr>
           <td><strong><a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a></strong></td>
-          <td>Default map tile data displayed on every map screen. Tiles are fetched from tile.openstreetmap.org as you navigate.</td>
+          <td>Supplies the default map you see on every map screen.</td>
           <td><a href="https://opendatacommons.org/licenses/odbl/" target="_blank" rel="noopener">ODbL (© OpenStreetMap contributors)</a></td>
         </tr>
         <tr>
           <td><strong><a href="https://www.amap.com" target="_blank" rel="noopener">Amap (高德地图)</a></strong></td>
-          <td>Optional map tiles when "Map source" is set to Amap in Settings. Tiles are fetched from webrd0*.is.autonavi.com as you navigate; only the tile position and zoom level are sent.</td>
+          <td>An optional map source you can choose in Settings.</td>
           <td>© AutoNavi · GCJ-02 coordinate system</td>
         </tr>
         <tr>
           <td><strong><a href="https://project-osrm.org" target="_blank" rel="noopener">OSRM (Open Source Routing Machine)</a></strong></td>
-          <td>Road-following route generation, guided route creation, and roaming with "Follow roads" enabled. The public demo server at router.project-osrm.org is used; waypoint coordinates are sent per request.</td>
+          <td>Makes routes follow real roads, for guided routes and roaming.</td>
           <td><a href="https://github.com/Project-OSRM/osrm-backend/blob/master/LICENSE" target="_blank" rel="noopener">BSD 2-Clause</a></td>
         </tr>
         <tr>
           <td><strong><a href="https://nominatim.openstreetmap.org" target="_blank" rel="noopener">Nominatim</a></strong> (OpenStreetMap Foundation)</td>
-          <td>Place-name search used in the route creator and the favorites map picker. See
-            <a href="settings.html#search-privacy">Settings &rarr; External services &rarr; Place search</a> for what's shared with it.</td>
+          <td>Finds places by name in the route creator and the favorites map picker.</td>
           <td>Data: ODbL · Software: <a href="https://github.com/osm-search/Nominatim/blob/master/COPYING" target="_blank" rel="noopener">GPL-2.0</a></td>
         </tr>
         <tr>
           <td><strong><a href="https://photon.komoot.io" target="_blank" rel="noopener">Photon</a></strong> (Komoot)</td>
-          <td>Backup place-name search and lookup when the main search service cannot be reached. See
-            <a href="settings.html#search-privacy">Settings &rarr; External services &rarr; Place search</a> for what's shared with it.</td>
+          <td>Finds places by name when the main search cannot be reached.</td>
           <td>Data: ODbL (OpenStreetMap) · Software: <a href="https://github.com/komoot/photon/blob/master/LICENSE" target="_blank" rel="noopener">Apache-2.0</a></td>
         </tr>
       </tbody>
     </table>
     </div>
 
-    <h2 id="language-async">Language &amp; async</h2>
-    <p>These tools form the programming foundation the app is written and run on.</p>
+    <h2 id="language">Language</h2>
+    <p>The tools the app is written in.</p>
     <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
       <tbody>
         <tr>
           <td><strong><a href="https://kotlinlang.org" target="_blank" rel="noopener">Kotlin</a></strong> (JetBrains)</td>
-          <td>The programming language the entire app is written in.</td>
+          <td>The language the whole app is written in.</td>
           <td><a href="https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
         <tr>
           <td><strong><a href="https://github.com/Kotlin/kotlinx.coroutines" target="_blank" rel="noopener">Kotlin Coroutines</a></strong> (JetBrains)</td>
-          <td>Handles all background tasks and real-time location updates inside the app.</td>
+          <td>Keeps location updates running smoothly in the background.</td>
           <td><a href="https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
         <tr>
           <td><strong><a href="https://github.com/Kotlin/kotlinx.serialization" target="_blank" rel="noopener">Kotlin Serialization</a></strong> (JetBrains)</td>
-          <td>Reads and writes data for export, import, and QR transfer.</td>
+          <td>Saves and loads your data for backup and transfer.</td>
           <td><a href="https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://dagger.dev/hilt/" target="_blank" rel="noopener">Hilt (Dagger)</a></strong> (Google)</td>
+          <td>Keeps the app stable by connecting its parts reliably.</td>
+          <td><a href="https://github.com/google/dagger/blob/master/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
       </tbody>
     </table>
     </div>
 
-    <h2 id="ui-design">UI &amp; design</h2>
-    <p>These libraries shape how every screen looks and how you move between them.</p>
+    <h2 id="screens">Screens</h2>
+    <p>What you see and how you move around.</p>
     <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
       <tbody>
         <tr>
           <td><strong><a href="https://developer.android.com/compose" target="_blank" rel="noopener">Jetpack Compose</a></strong> (Google)</td>
-          <td>The toolkit used to build every screen and interface element in the app.</td>
+          <td>Builds every screen and button in the app.</td>
           <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
         <tr>
           <td><strong><a href="https://m3.material.io" target="_blank" rel="noopener">Material 3</a></strong> (Google)</td>
-          <td>Provides the visual design system: buttons, cards, dialogs, and colors used throughout the app.</td>
+          <td>Gives the app its look: buttons, cards, dialogs and colors.</td>
           <td><a href="https://github.com/material-components/material-components-android/blob/master/LICENSE" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
         <tr>
           <td><strong><a href="https://github.com/google/material-design-icons" target="_blank" rel="noopener">Google Material Symbols</a></strong></td>
-          <td>The floating widget's show/hide joystick symbol.</td>
+          <td>The show/hide joystick icon on the floating widget.</td>
           <td><a href="https://github.com/google/material-design-icons/blob/master/LICENSE" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
         <tr>
           <td><strong><a href="https://developer.android.com/jetpack/compose/navigation" target="_blank" rel="noopener">AndroidX Navigation Compose</a></strong> (Google)</td>
-          <td>In-app navigation between screens and the navigation drawer.</td>
+          <td>Moves you between screens and opens the side menu.</td>
           <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
         <tr>
-          <td><strong><a href="https://developer.android.com/training/camerax" target="_blank" rel="noopener">AndroidX CameraX</a></strong> (Google)</td>
-          <td>Provides camera access for the QR code scanner when importing a configuration.</td>
+          <td><strong><a href="https://developer.android.com/topic/libraries/architecture/lifecycle" target="_blank" rel="noopener">AndroidX Lifecycle</a></strong> (Google)</td>
+          <td>Keeps the app running smoothly when you rotate the screen or switch apps.</td>
           <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
       </tbody>
     </table>
     </div>
 
-    <h2 id="architecture-storage">Architecture &amp; storage</h2>
-    <p>These libraries wire the app's internals together and store your data on-device.</p>
+    <h2 id="storage">Storage</h2>
+    <p>Your data stays on your phone.</p>
     <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
       <tbody>
         <tr>
-          <td><strong><a href="https://dagger.dev/hilt/" target="_blank" rel="noopener">Hilt (Dagger)</a></strong> (Google)</td>
-          <td>Internal framework that connects the app's components together.</td>
-          <td><a href="https://github.com/google/dagger/blob/master/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
-        </tr>
-        <tr>
           <td><strong><a href="https://developer.android.com/training/data-storage/room" target="_blank" rel="noopener">AndroidX Room</a></strong> (Google)</td>
-          <td>The on-device database that stores your routes, favorites, and settings.</td>
+          <td>Stores your routes and favorites on your phone.</td>
           <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
         <tr>
           <td><strong><a href="https://developer.android.com/topic/libraries/architecture/datastore" target="_blank" rel="noopener">AndroidX DataStore</a></strong> (Google)</td>
-          <td>Saves your settings and preferences on the device.</td>
-          <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
-        </tr>
-        <tr>
-          <td><strong><a href="https://developer.android.com/topic/libraries/architecture/lifecycle" target="_blank" rel="noopener">AndroidX Lifecycle</a></strong> (Google)</td>
-          <td>Manages how the app responds to screen rotation, backgrounding, and other Android lifecycle events.</td>
+          <td>Remembers your settings.</td>
           <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
       </tbody>
     </table>
     </div>
 
-    <h2 id="networking">Networking</h2>
-    <p>These libraries send and receive the app's network requests.</p>
+    <h2 id="network">Network</h2>
+    <p>Sends the few requests the app makes.</p>
     <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
       <tbody>
         <tr>
           <td><strong><a href="https://square.github.io/retrofit/" target="_blank" rel="noopener">Retrofit</a></strong> (Square)</td>
-          <td>Handles network requests for place search and road-following routes.</td>
+          <td>Sends requests for place search and road-following routes.</td>
           <td><a href="https://github.com/square/retrofit/blob/trunk/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
         <tr>
           <td><strong><a href="https://square.github.io/okhttp/" target="_blank" rel="noopener">OkHttp</a></strong> (Square)</td>
-          <td>The networking layer that powers all outbound requests from the app.</td>
+          <td>Carries every request the app sends over the internet.</td>
           <td><a href="https://github.com/square/okhttp/blob/master/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
       </tbody>
@@ -184,20 +177,24 @@
     </div>
 
     <h2 id="qr-codes">QR codes</h2>
-    <p>This library reads and generates the QR codes used for config transfer.</p>
+    <p>Used for transferring your data between phones.</p>
     <div class="table-wrap">
     <table class="option-table">
       <thead><tr><th>Project</th><th>Used for</th><th>License</th></tr></thead>
       <tbody>
         <tr>
           <td><strong><a href="https://github.com/zxing/zxing" target="_blank" rel="noopener">ZXing (Zebra Crossing)</a></strong> (Google)</td>
-          <td>QR code encoding (export) and decoding (import) for the device-to-device config transfer feature.</td>
+          <td>Creates and reads the QR codes for phone-to-phone transfer.</td>
           <td><a href="https://github.com/zxing/zxing/blob/master/LICENSE" target="_blank" rel="noopener">Apache 2.0</a></td>
+        </tr>
+        <tr>
+          <td><strong><a href="https://developer.android.com/training/camerax" target="_blank" rel="noopener">AndroidX CameraX</a></strong> (Google)</td>
+          <td>Lets the QR scanner use your camera when you receive a transfer.</td>
+          <td><a href="https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/LICENSE.txt" target="_blank" rel="noopener">Apache 2.0</a></td>
         </tr>
       </tbody>
     </table>
     </div>
-
 
   </main>
 
