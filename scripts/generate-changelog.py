@@ -44,11 +44,11 @@ HEAD = """<!DOCTYPE html>
   <meta property="og:title" content="Changelog — locationjoystick">
   <meta property="og:description" content="See what's new in each locationjoystick release: new features, improvements, and fixes.">
   <meta property="og:url" content="https://locationjoystick.shrtcts.fr/changelog.html">
-  <meta property="og:image" content="https://locationjoystick.shrtcts.fr/screenshots/01_idle_playstore.png">
+  <meta property="og:image" content="https://locationjoystick.shrtcts.fr/screenshots/marketing/feature_graphic.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Changelog — locationjoystick">
   <meta name="twitter:description" content="See what's new in each locationjoystick release: new features, improvements, and fixes.">
-  <meta name="twitter:image" content="https://locationjoystick.shrtcts.fr/screenshots/01_idle_playstore.png">
+  <meta name="twitter:image" content="https://locationjoystick.shrtcts.fr/screenshots/marketing/feature_graphic.png">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4">
 </head>

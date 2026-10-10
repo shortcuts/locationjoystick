@@ -34,7 +34,8 @@
 #   --steps 01,03,05     (run steps 1, 3, 5)
 # Seeding (routes, favorites) always runs before the first selected step.
 #
-# Output files (25 canonical PNGs):
+# Output files (25 canonical PNGs). Each file's number prefix is its step
+# number, so --steps N writes N_*.png (step 19 runs out of order, see below):
 #   01_idle, 02_map, 03_routes, 04_favorites, 05_settings,
 #   06_map_routes_sheet, 07_map_favorites_sheet, 08_map_roaming_sheet,
 #   09_route_creator, 10_route_detail, 11_map_picker,
@@ -320,12 +321,25 @@ demo_mode_exit() {
   log "Demo mode exited"
 }
 
+# Re-save a PNG over 1 MB as a 256-colour palette PNG (flat UI shots survive;
+# lossless optimize alone only gets ~2.0 MB down). Needs Pillow; never fails the run.
+shrink_png() {
+  local f="$1"
+  [[ "$(wc -c < "$f")" -le 1048576 ]] || python3 -c '
+import sys
+from PIL import Image
+f = sys.argv[1]
+Image.open(f).convert("RGB").quantize(256).save(f, optimize=True)
+' "$f" >/dev/null 2>&1 || true
+}
+
 # Capture screen and pull to OUTPUT_DIR/<name>.png (idempotent overwrite).
 screenshot() {
   local name="$1"
   local dest="$OUTPUT_DIR/${name}.png"
   log "Capturing → $dest"
   $ADB exec-out screencap -p > "$dest"
+  shrink_png "$dest"
   echo "  Saved: $dest"
 }
 
@@ -559,10 +573,10 @@ MASK_SS = 4  # supersample factor for rounded-corner masks only (cheap, localize
 SHOTS = [
   ("01_idle.png", [[("Take control of", False)], [("your ", False), ("GPS", True)]]),
   ("02_map.png", [[("Fake your ", False), ("GPS", True)], [("anywhere", False)]]),
-  ("16_routes_add_button.png", [[("Create routes", False)], [("your ", False), ("way", True)]]),
-  ("17_favorites_add_button.png", [[("Save your ", False), ("favorite", True)], [("spots", False)]]),
+  ("15_routes_add_button.png", [[("Create routes", False)], [("your ", False), ("way", True)]]),
+  ("16_favorites_add_button.png", [[("Save your ", False), ("favorite", True)], [("spots", False)]]),
   ("05_settings.png", [[("Fine-tune every", False)], [("setting", True)]]),
-  ("15_widget_overlay.png", [[("Control it all from", False)], [("one quick ", False), ("widget", True)]]),
+  ("14_widget_overlay.png", [[("Control it all from", False)], [("one quick ", False), ("widget", True)]]),
   ("08_map_roaming_sheet.png", [[("Roam ", False), ("naturally", True)], [("hands-free", False)]]),
   ("17_group_sync.png", [[("Sync location", False)], [("across ", False), ("devices", True)]]),
 ]
@@ -1133,7 +1147,7 @@ if should_run_step "13"; then
     Tip: Map screen → start spoofing → enable joystick from widget or drawer."
   fi
   go_idle_keep_overlays
-  screenshot "14_joystick_overlay"
+  screenshot "13_joystick_overlay"
 fi
 
 # ── 14. Floating widget ──────────────────────────────────────────────────────
@@ -1148,7 +1162,7 @@ if should_run_step "14"; then
     The widget bubble should be visible on screen before you press ENTER."
   fi
   go_idle_keep_overlays
-  screenshot "15_widget_overlay"
+  screenshot "14_widget_overlay"
 fi
 
 # ── 15. Routes add button (FAB) ───────────────────────────────────────────────
@@ -1160,7 +1174,7 @@ if should_run_step "15"; then
   wait_s 2 "Routes loading"
   tap_text "Add route"
   wait_s 1 "Add menu opening"
-  screenshot "16_routes_add_button"
+  screenshot "15_routes_add_button"
 fi
 
 # ── 16. Favorites add button (FAB) ────────────────────────────────────────────
@@ -1172,7 +1186,7 @@ if should_run_step "16"; then
   wait_s 2 "Favorites loading"
   tap_text "Add favorite"
   wait_s 1 "Add menu opening"
-  screenshot "17_favorites_add_button"
+  screenshot "16_favorites_add_button"
 fi
 
 # ── 17. Group Sync screen ────────────────────────────────────────────────────

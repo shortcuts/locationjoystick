@@ -226,7 +226,7 @@ make wiki-serve   # http://localhost:8080
 | `docs/wiki/privacy.html` | Privacy policy |
 | `docs/wiki/acknowledgements.html` | Third-party credits |
 | `docs/wiki/style.css` | Single stylesheet — all pages share it |
-| `docs/wiki/screenshots/` | Phone screenshots (PNG, numbered 01–17) |
+| `docs/wiki/screenshots/` | Phone screenshots (PNG, numbered 01–25, number = script step) |
 | `docs/wiki/screenshots/marketing/` | 8 curated 1024×500 Play Store marketing images (white bg, catch-phrase + phone screenshot) — **generated**, not hand-edited |
 
 Nav groups (Start / Use / Configure / Help / About), order and labels are the single source of truth in the grouped `NAV_ITEMS` (`docs/wiki/wiki-init.js`) — every HTML page's sidebar renders from that script, so a new page needs an entry there, not a hand-edited `<nav>` block per file.
@@ -239,7 +239,7 @@ Screenshots are captured from a connected device/emulator via:
 make screenshot   # outputs to docs/wiki/screenshots/
 ```
 
-The script (`scripts/screenshot-gallery.sh`) navigates the app and captures 17 canonical screens (see the script's header comment for the current numbered list — it is the source of truth, not this doc). Re-run after any UI change. Commit updated PNGs alongside the code change. `--marketing-only` regenerates the 8 `docs/wiki/screenshots/marketing/` images from existing screenshots without a device — the source screenshots and captions are listed in `generate_marketing_variants()` in the script. Overlay screens (joystick, widget) require manual activation — the script pauses and prompts at those steps.
+The script (`scripts/screenshot-gallery.sh`) navigates the app and captures the numbered screens (see the script's header comment for the current list — it is the source of truth, not this doc). Re-run after any UI change. Commit updated PNGs alongside the code change. `--marketing-only` regenerates the 8 `docs/wiki/screenshots/marketing/` images from existing screenshots without a device — the source screenshots and captions are listed in `generate_marketing_variants()` in the script. Overlay screens (joystick, widget) require manual activation — the script pauses and prompts at those steps.
 
 ### Regenerating the changelog
 

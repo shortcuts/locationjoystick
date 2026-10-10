@@ -53,7 +53,7 @@ screenshot:
 	./scripts/screenshot-gallery.sh --auto
 
 screenshot-playstore:
-	./scripts/screenshot-gallery.sh --playstore-only
+	./scripts/screenshot-gallery.sh --marketing-only
 
 wiki-changelog:
 	python3 scripts/generate-changelog.py
