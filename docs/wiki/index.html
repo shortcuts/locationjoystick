@@ -38,60 +38,75 @@
 
   <main>
     <h1 id="getting-started">Getting Started</h1>
-    <p>Install locationjoystick, grant three permissions, and start your first fake GPS walk.</p>
+    <p>In this tutorial you install locationjoystick, grant three permissions, and walk your fake location across the map. It takes about ten minutes. Each step ends with a result you can check.</p>
 
-    <h2 id="install">Install</h2>
+    <h2 id="install">1. Install the app</h2>
     <ol class="quickstart">
       <li><a href="https://github.com/shortcuts/locationjoystick/releases/latest" target="_blank" rel="noopener">Download the latest APK</a> from GitHub Releases.</li>
-      <li>Open the downloaded file. If Android asks you to <em>"Allow installs from unknown sources"</em>, turn it on for your browser or file manager, then try again.</li>
-      <li>Google Play Protect may show <em>"App scan recommended"</em>. It appears for any app installed outside the Play Store. Tap <strong>Install without scanning</strong>, or scan first.</li>
+      <li>Open the downloaded file. If Android asks you to allow installs from unknown sources, turn it on for your browser or file manager, then try again.</li>
+      <li>If Google Play Protect shows "App scan recommended", tap <strong>Install without scanning</strong>.</li>
     </ol>
+    <p><strong>Result:</strong> The locationjoystick icon appears on your home screen. Tap it to open the app.</p>
 
-    <h2 id="first-run-setup">First-run setup</h2>
-    <p>When you open the app for the first time, it guides you through five setup steps:</p>
+    <h2 id="permissions">2. Grant the three permissions</h2>
+    <p>The first time you open the app, it asks for three permissions. Setup ends when all three are granted.</p>
+    <ol class="quickstart">
+      <li><strong>Location.</strong> Tap <strong>Allow</strong> and choose <strong>Precise location</strong>.<br>
+        <strong>Result:</strong> The next setup screen appears.</li>
+      <li><strong>Display over other apps.</strong> The app opens Settings. Turn on locationjoystick, then go back to the app.<br>
+        <strong>Result:</strong> The setup screen shows this permission as granted.</li>
+      <li><strong>Mock location app.</strong> Turn on Developer options and choose locationjoystick. Follow <a href="#developer-options">Turn on Developer options</a> below, then return here. Tap <strong>Check again</strong>.<br>
+        <strong>Result:</strong> The check passes and the Map screen opens.</li>
+    </ol>
+    <p>Compass orientation is optional. Tap to Walk uses it to match your game's compass direction. You can skip it. See <a href="overlays.html#compass-orientation">Overlays</a> to turn it on later.</p>
+    <p><strong>Result:</strong> The Map screen opens with a marker at your real location.</p>
 
-    <ul class="step-list">
-      <li>
-        <div>
-          <strong>Location permission</strong>
-          <p>Grant <strong>Precise location</strong>.</p>
-        </div>
-      </li>
-      <li>
-        <div>
-          <strong>Overlay permission</strong>
-          <p>Grant <strong>Display over other apps</strong>. The app opens Settings; turn on locationjoystick in the list.</p>
-        </div>
-      </li>
-      <li>
-        <div>
-          <strong>Mock location provider</strong>
-          <p>Turn on <strong>Developer Options</strong>: go to Settings &rarr; About phone and tap Build number seven times. Then go to Settings &rarr; Developer Options &rarr; <strong>Select mock location app</strong> and choose locationjoystick. Tap <strong>Check again</strong> in the app. See <a href="troubleshooting.html#another-app-holds-slot">Troubleshooting</a> if this step fails.</p>
-        </div>
-      </li>
-      <li>
-        <div>
-          <strong>Compass orientation (optional)</strong>
-          <p><a href="overlays.html#compass-orientation">Tap to Walk</a> reads your game's compass direction. Turn it on in Accessibility settings, or skip it. Everything works without it.</p>
-        </div>
-      </li>
-      <li>
-        <div>
-          <strong>All done</strong>
-          <p>Setup ends and the Map screen opens.</p>
-        </div>
-      </li>
-    </ul>
+    <h3 id="developer-options">Turn on Developer options</h3>
+    <p>Android hides these settings until you turn them on. The mock location app choice lives here.</p>
+    <ol class="quickstart">
+      <li>Open <strong>Settings</strong>, then <strong>About phone</strong>.</li>
+      <li>Tap <strong>Build number</strong> seven times. Android says "You are now a developer."<br>
+        <strong>Result:</strong> <strong>Developer options</strong> appears in Settings.</li>
+      <li>Open <strong>Settings → Developer options</strong>. Scroll to the <strong>Debugging</strong> group and tap <strong>Select mock location app</strong>.</li>
+      <li>Tap <strong>locationjoystick</strong>.<br>
+        <strong>Result:</strong> locationjoystick is the selected mock location app.</li>
+    </ol>
+    <p>If the app is not in the list, or the check fails, see <a href="troubleshooting.html#app-missing-from-list">Troubleshooting</a>.</p>
 
-    <h2 id="start-spoofing">Start spoofing</h2>
-    <p>Tap <strong>Map</strong>, tap the start button, then tap or long-press the map to move.</p>
+    <h2 id="first-walk">3. Take your first walk</h2>
+    <ol class="quickstart">
+      <li>On the Home screen, tap the start button at the top. It turns on spoofing.<br>
+        <strong>Result:</strong> The button shows that spoofing is on.</li>
+      <li>Tap <strong>Map</strong>.<br>
+        <strong>Result:</strong> The map opens with your marker on it.</li>
+      <li>Long-press a street a few blocks away.<br>
+        <strong>Result:</strong> A menu opens at the point you pressed.</li>
+      <li>Tap <strong>Walk here</strong>.<br>
+        <strong>Result:</strong> Your marker moves toward the point at your current speed, and the map follows it.</li>
+    </ol>
     <div class="feature-section" id="home-screen">
-      <img class="phone-shot" src="screenshots/01_idle.png" alt="Home screen with feature cards">
+      <img class="phone-shot" src="screenshots/01_idle.png" alt="Home screen with the start button at the top">
       <ul class="section-bullets">
-        <li>The Home screen links to Map, Routes, Favorites, Capture, Group Sync, and Settings.</li>
-        <li>The button at the top starts and stops spoofing. When off, it shows where you will start.</li>
+        <li>The start button at the top turns spoofing on and off.</li>
+        <li>The feature cards below link to Map, Routes, Favorites, Capture, Group Sync, and Settings.</li>
       </ul>
     </div>
+    <p>Want to jump instead of walk? Choose <strong>Teleport</strong> in the same menu. See <a href="map.html">Map</a> for every option.</p>
+
+    <h2 id="finish">4. Stop spoofing</h2>
+    <ol class="quickstart">
+      <li>Go back to the Home screen.</li>
+      <li>Tap the start button again.<br>
+        <strong>Result:</strong> The button is off and shows where spoofing will start next time.</li>
+    </ol>
+
+    <h2 id="whats-next">What you did</h2>
+    <p>You installed the app, granted three permissions, and walked your marker across the map. Next:</p>
+    <ul class="section-bullets">
+      <li><a href="map.html">Map</a> covers search, teleport, and routes.</li>
+      <li><a href="overlays.html">Overlays</a> covers the joystick and floating widget for use inside other apps.</li>
+      <li><a href="troubleshooting.html">Troubleshooting</a> covers setup problems.</li>
+    </ul>
 
     <h2 id="source">Source</h2>
     <p><a href="https://github.com/shortcuts/locationjoystick">github.com/shortcuts/locationjoystick</a>. Free, open source, MIT license. See <a href="acknowledgements.html">Acknowledgements</a> for third-party credits.</p>
