@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Capture — locationjoystick</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <meta name="description" content="Collect map links from other apps into a list and save them as a route.">
+  <link rel="canonical" href="https://locationjoystick.shrtcts.fr/capture.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="locationjoystick">
+  <meta property="og:title" content="Capture — locationjoystick">
+  <meta property="og:description" content="Collect map links from other apps into a list and save them as a route.">
+  <meta property="og:url" content="https://locationjoystick.shrtcts.fr/capture.html">
+  <meta property="og:image" content="https://locationjoystick.shrtcts.fr/screenshots/01_idle_playstore.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Capture — locationjoystick">
+  <meta name="twitter:description" content="Collect map links from other apps into a list and save them as a route.">
+  <meta name="twitter:image" content="https://locationjoystick.shrtcts.fr/screenshots/01_idle_playstore.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4">
+</head>
+<body>
+<div class="layout">
+
+  <main>
+    <h1 id="capture-mode">Capture</h1>
+    <p>
+      Capture collects map links from other apps into a list on your device.
+      You can then save the list as a route.
+    </p>
+    <p>
+      With Capture on and this app as your default browser, a map link is caught here.
+      You stay in the app you tapped it in.
+      The floating widget is not needed.
+    </p>
+
+    <h2 id="open-capture">Open Capture</h2>
+    <p>
+      Open <strong>Capture</strong> from the Home screen or the side menu.
+      The page stays open when you leave for Android settings or another app.
+      You can also press and hold the widget's paste button, then tap the Capture shortcut.
+    </p>
+
+    <h2 id="set-up-capture">Set up Capture</h2>
+    <p>
+      Setup lives in <strong>Settings &gt; Menus &gt; Capture</strong>.
+      Until this app is your default browser, the Capture page shows an <strong>Open Capture setup</strong> button.
+      Tap it, then follow the steps in order.
+    </p>
+    <div class="feature-section">
+      <img class="phone-shot" src="screenshots/22_capture_coordinates.png" alt="Capture screen showing the one-time setup steps">
+    </div>
+    <ol class="quickstart">
+      <li>
+        Tap <strong>Default browser</strong> and set this app as your default browser.
+        On Samsung phones, the popup may do nothing. Open Android's default apps settings and pick this app there.
+      </li>
+      <li>
+        Go back to Settings. It checks by itself and moves to the next step.
+      </li>
+      <li>
+        In this app's Android settings, turn on <strong>supported links</strong>.
+        The app cannot check this step, so check it yourself.
+      </li>
+      <li>
+        Tap <strong>Turn off Google Maps supported links</strong>.
+        In Google Maps, turn off <strong>Open supported links</strong>.
+        If you skip this, Maps links go to Maps and this app never sees them.
+      </li>
+    </ol>
+    <p>
+      <strong>Result:</strong> The Capture switch, List and Jump options, the captured list and <strong>Save as route</strong> appear. Your earlier points come back too.
+    </p>
+
+    <h2 id="choose-what-links-do">Choose what captured links do</h2>
+    <ol class="quickstart">
+      <li>Turn on <strong>Capture mode</strong>.</li>
+      <li>Choose <strong>List</strong> (add the point), <strong>Jump</strong> (teleport there), or both.</li>
+      <li>If the list has points, choose <strong>Clear</strong> to start again or <strong>Keep</strong> to add to the list.</li>
+    </ol>
+    <p>
+      With Capture off, links pass through: nothing is collected and your location does not change.
+      Google Maps links open in Maps first. Other links open in the browser you chose with <strong>Pass-through</strong>.
+    </p>
+    <p>
+      To land back in your game after a link, open <strong>Settings &gt; Menus &gt; Capture</strong>.
+      Tap <strong>After a map link, open</strong> and pick the app.
+      It opens after a Jump, or after you choose Teleport or Walk in the popup. The default is <strong>None</strong>.
+    </p>
+
+    <h2 id="collect-and-save">Collect and save a route</h2>
+    <ol class="quickstart">
+      <li>Tap a map link in another app.</li>
+      <li>A short message confirms the point. The other app stays open.</li>
+      <li>Open Capture to see your list in an orange box, in capture order.</li>
+      <li>Edit the list with the buttons above the route name field.</li>
+      <li>Type a route name and tap <strong>Save as route</strong>. You need at least two points.</li>
+    </ol>
+    <p>
+      <strong>Result:</strong> The route appears under Routes.
+    </p>
+    <p>
+      Tapping the same link twice in a row adds it once.
+      Tapping an earlier point again adds it again, so a route can loop.
+    </p>
+
+    <h3 id="list-buttons">List buttons</h3>
+    <div class="table-wrap">
+    <table class="option-table">
+      <thead>
+        <tr><th>Button</th><th>What it does</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Copy</strong></td><td>Copies the list into a new route draft.</td></tr>
+        <tr><td><strong>Last</strong></td><td>Removes the newest point.</td></tr>
+        <tr><td><strong>Clear</strong></td><td>Empties the list.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3 id="save-options">Save options</h3>
+    <div class="table-wrap">
+    <table class="option-table">
+      <thead>
+        <tr><th>Option</th><th>What it does</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Optimize proximity</strong></td><td>Reorders points so each stop is near the last. On by default when you copy or save.</td></tr>
+        <tr><td><strong>Keep original</strong></td><td>Saves points in capture order without reordering.</td></tr>
+        <tr><td><strong>Save as route</strong></td><td>Saves the list as a new route.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2 id="turn-off-capture">Turn off Capture</h2>
+    <p>
+      Open <strong>Settings &gt; Menus &gt; Capture</strong> and tap <strong>Restore default browser</strong>.
+      Tick the confirm box and tap <strong>Restore</strong>.
+    </p>
+    <p>
+      Capture turns off and Android's default apps screen opens. Pick your usual browser there.
+      The app cannot do this for you.
+      Your captured points and pass-through browser choice stay.
+    </p>
+    <p>
+      A link did nothing? See <a href="troubleshooting.html">Troubleshooting</a>.
+      For plain links without Capture, see <a href="location-links.html">Location links</a>.
+    </p>
+  </main>
+
+</div>
+<script src="wiki-init.js"></script>
+</body>
+</html>

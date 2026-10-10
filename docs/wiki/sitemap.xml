@@ -5,6 +5,7 @@
   <url><loc>https://locationjoystick.shrtcts.fr/routes.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://locationjoystick.shrtcts.fr/favorites.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://locationjoystick.shrtcts.fr/location-links.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://locationjoystick.shrtcts.fr/capture.html</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://locationjoystick.shrtcts.fr/group.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://locationjoystick.shrtcts.fr/control-api.html</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
   <url><loc>https://locationjoystick.shrtcts.fr/settings.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
