@@ -35,35 +35,39 @@
       <li><a href="#grant-location-all-the-time">An app says "GPS signal not detected" or asks for location again</a></li>
       <li><a href="#spoofed-location-resets">Spoofed location jumps back to your real location</a></li>
       <li><a href="#overlay-permission-resets">The joystick or widget disappears after a restart</a></li>
-      <li><a href="#allow-restricted-settings">Cannot grant the overlay permission (Android 12+, installed from a file)</a></li>
+      <li><a href="#allow-restricted-settings">Cannot grant the overlay permission</a></li>
       <li><a href="#game-blocks-location">A game shows a location or GPS error</a></li>
       <li><a href="#map-black-screen">The map is a black screen</a></li>
-      <li><a href="#report-a-crash">You need to send a crash log</a></li>
+      <li><a href="#report-a-crash">The app crashes and you want to report it</a></li>
+      <li><a href="overlays.html#floating-joystick">The joystick does not move me</a></li>
+      <li><a href="settings.html#hide-notification">The notification icon is gone</a></li>
+      <li><a href="routes.html#start-and-jump-buttons">A route will not start</a></li>
+      <li><a href="location-links.html">A location link does nothing</a></li>
+      <li><a href="group.html#limitations">Group Sync cannot find the leader</a></li>
     </ul>
 
     <h2 id="app-missing-from-list">App missing from the "Select mock location app" list</h2>
-    <p>Symptom: The app does not appear when you try to select it as the mock location provider.</p>
     <ol>
       <li>Open locationjoystick once. A freshly installed app never appears in the list.</li>
       <li>Turn Developer Options off and back on, or restart the phone.</li>
-      <li>On MIUI, ColorOS, and other custom Android versions, grant "Allow restricted settings" below first.</li>
+      <li>If you installed from a file on Android 12 or later, <a href="#allow-restricted-settings">allow restricted settings</a> first.</li>
       <li>Still missing: reinstall the app, then restart the phone.</li>
       <li>If installed in a work profile: open Developer Options inside that profile. Android keeps the selection per profile.</li>
     </ol>
 
     <h2 id="another-app-holds-slot">Another app holds the mock location slot</h2>
-    <p>Symptom: Spoofing does not work. Another app may be set as the location provider.</p>
+    <p>Spoofing does nothing when another app is set as the mock location app.</p>
     <ol>
-      <li>Open <strong>Developer options</strong> in Settings. On Samsung, it sits at the bottom of the main Settings list.</li>
+      <li>Open <strong>Developer options</strong> in Settings.</li>
       <li>Scroll to the <strong>Debugging</strong> group and tap <strong>Select mock location app</strong>.</li>
       <li>Read which app is selected. Anything other than <strong>locationjoystick</strong> blocks it.</li>
       <li>Tap <strong>locationjoystick</strong> in the list.</li>
       <li>Return to locationjoystick and start spoofing again.</li>
     </ol>
-    <p><strong>Notes:</strong> No <strong>Developer options</strong> entry? Turn it on first: see <a href="index.html#developer-options">Turn on Developer options</a> in Getting Started. If locationjoystick is missing from the list, see "App missing from the 'Select mock location app' list" above.</p>
+    <p><strong>Notes:</strong> No <strong>Developer options</strong> entry? Turn it on first: see <a href="index.html#developer-options">Turn on Developer options</a> in Getting Started. If locationjoystick is missing from the list, see <a href="#app-missing-from-list">App missing from the list</a>.</p>
 
     <h2 id="mock-location-not-detected">Mock location not detected</h2>
-    <p>Symptom: During setup, the mock location check fails or shows an error.</p>
+    <p>The mock location check fails or shows an error during setup.</p>
     <ol>
       <li>Restart the phone after you change the Developer Options setting.</li>
       <li>If spoofing already works, tap <strong>Skip</strong> next to the check during setup, then confirm the warning.</li>
@@ -71,7 +75,6 @@
     </ol>
 
     <h2 id="grant-location-all-the-time">App shows "GPS signal not detected" or asks for location again</h2>
-    <p>Symptom: An app that uses spoofed location shows an error or permission prompt.</p>
     <ol>
       <li>Open the <strong>Settings</strong> app.</li>
       <li>Tap <strong>Apps</strong>, then tap the app that shows the error.</li>
@@ -82,25 +85,25 @@
     <p><strong>Allow only while using the app</strong> and <strong>Ask every time</strong> are not enough for these apps.</p>
 
     <h2 id="spoofed-location-resets">Spoofed location jumps back to your real location</h2>
-    <p>Symptom: The location keeps reverting to your real position even when spoofing is on. Google's location services refresh your real position and override the spoof. Change one step at a time, and test after each.</p>
+    <p>Google's location services can refresh your real position and override the spoof. Change one step at a time, and test after each. Steps run from least to most invasive.</p>
     <ol>
       <li>Open <strong>Settings → Location</strong>. Set the mode to <strong>GPS only</strong> (or "Device only"), and turn off <strong>Wi-Fi scanning</strong> and <strong>Bluetooth scanning</strong> (under "Improve Accuracy").</li>
-      <li>Open <strong>Settings → Apps → Google Play Services → Permissions → Location</strong> and set <strong>Don't allow</strong>.</li>
-      <li>In your Google account settings, turn off <strong>Location History</strong>, <strong>Location Sharing</strong>, and <strong>Find My Device</strong>.</li>
-      <li>Confirm no other app holds the mock location slot. See the section above.</li>
+      <li>Confirm no other app holds the mock location slot. See <a href="#another-app-holds-slot">Another app holds the mock location slot</a>.</li>
+      <li>Last resort: in your Google account settings, turn off <strong>Location History</strong> and <strong>Location Sharing</strong>.</li>
+      <li>Last resort: open <strong>Settings → Apps → Google Play Services → Permissions → Location</strong> and set <strong>Don't allow</strong>. Other apps that use Google location may stop working.</li>
+      <li>Last resort: turn off <strong>Find My Device</strong>. You then cannot locate or lock the phone remotely.</li>
     </ol>
-    <p><strong>To get your real location back:</strong> Stop spoofing in locationjoystick, reverse the steps you changed, and restart the app you want to use.</p>
+    <p><strong>To get your real location back:</strong> Stop spoofing in locationjoystick, undo the settings you changed, and restart the app you want to use.</p>
 
     <h2 id="overlay-permission-resets">Overlay permission resets on restart</h2>
-    <p>Symptom: The joystick or widget disappears after restarting the phone.</p>
+    <p>The joystick or widget disappears after restarting the phone. This is a known issue on MIUI and ColorOS.</p>
     <ul>
-      <li>Known issue on MIUI and ColorOS.</li>
       <li>Grant the permission again after each restart, or allow locationjoystick in your phone's autostart settings.</li>
       <li>See <a href="overlays.html">Overlays</a> to show the controls again.</li>
     </ul>
 
-    <h2 id="allow-restricted-settings">Allow restricted settings (Android 12+ installed from a file)</h2>
-    <p>Symptom: You cannot grant the overlay permission. This affects Android 12+ when you install from a file instead of the Play Store.</p>
+    <h2 id="allow-restricted-settings">Cannot grant the overlay permission</h2>
+    <p>This affects Android 12 and later when you install from a file instead of the Play Store.</p>
     <ol>
       <li>Open the <strong>Settings</strong> app.</li>
       <li>Tap <strong>Apps</strong> (sometimes "Application Manager").</li>
@@ -112,46 +115,35 @@
     <p>No <strong>⋮</strong> menu means your phone does not need this step.</p>
 
     <h2 id="game-blocks-location">A game shows a location or GPS error</h2>
-    <p>Symptom: A game shows "Failed to detect location (12)", "location error 12", or similar red GPS error.</p>
-    <ul>
-      <li>The error comes from the game, not from locationjoystick.</li>
-      <li>The game found the marker that every mock location app leaves on the reported position.</li>
-      <li>locationjoystick cannot hide that marker and will not add a way to hide it.</li>
-      <li>Players who bypass this check root the phone and use Smali Patcher or LSPosed. Read this <a href="https://www.reddit.com/r/PoGoAndroidSpoofing/s/W1qonlYRuU" target="_blank" rel="noopener">community thread</a>. Rooting carries its own risks and is outside locationjoystick support.</li>
-    </ul>
+    <p>Games can detect mock location apps. This is outside this app's control.</p>
 
     <h2 id="map-black-screen">The map is a black screen</h2>
-    <p>Symptom: The map shows nothing or only a blank black area.</p>
     <ol>
       <li>Turn on Wi-Fi or mobile data. The map downloads street images the first time you open an area.</li>
       <li>Leave the map screen and open it again.</li>
-      <li>If you have internet and the map is still black, install the latest GitHub APK. Swipe the app away from Recents and reopen it. Older versions could save blank map images; the new version clears them.</li>
+      <li>Still black with internet: swipe the app away from Recents and reopen it.</li>
     </ol>
 
-    <h2 id="report-a-crash">How to report a crash with a log</h2>
-    <p>Attach a log so the bug can be fixed. You need a computer with Android platform-tools and a USB cable for a real phone. An emulator needs no cable.</p>
+    <h2 id="report-a-crash">Report a crash</h2>
+    <p>Tell us what happened so we can fix it.</p>
+    <ol>
+      <li><a href="https://github.com/shortcuts/locationjoystick/issues/new?template=bug_report.yml">Open the bug report form</a>.</li>
+      <li>Describe what you did before the crash.</li>
+      <li>Fill in your app version and Android version.</li>
+      <li>Say whether the main Map screen works on your device.</li>
+    </ol>
+    <p>A log makes the bug easier to fix, but you can send the report without one.</p>
 
-    <h3 id="turn-on-usb-debugging">Turn on USB debugging</h3>
+    <h3 id="capture-the-log">Attach a log (for developers)</h3>
+    <p>You need a computer with Android platform-tools and a USB cable. An emulator needs no cable.</p>
     <ol>
       <li>Turn on Developer options: see <a href="index.html#developer-options">Turn on Developer options</a> in Getting Started.</li>
       <li>Open <strong>Settings → Developer options</strong> and turn on <strong>USB debugging</strong>.</li>
       <li>Connect the phone to the computer. Tap <strong>Allow</strong> if prompted.</li>
-    </ol>
-
-    <h3 id="capture-the-log">Capture the log</h3>
-    <ol>
-      <li>On the computer, run <code>adb logcat -c</code> to clear the old log.</li>
+      <li>Run <code>adb logcat -c</code> to clear the old log.</li>
       <li>Repeat the steps that crash the app.</li>
-      <li>Run <code>adb logcat -d -b crash</code>. The crash log prints on screen.</li>
-      <li>Copy the whole output. If empty, run <code>adb logcat -d</code> and copy the last 200 lines instead.</li>
-    </ol>
-
-    <h3 id="send-the-report">Send the report</h3>
-    <ol>
-      <li><a href="https://github.com/shortcuts/locationjoystick/issues/new?template=bug_report.yml">Open the bug report form</a>.</li>
-      <li>Paste the log into the <strong>Logcat output</strong> box.</li>
-      <li>Fill in your app version and Android version.</li>
-      <li>Say whether the main Map screen works on your device.</li>
+      <li>Run <code>adb logcat -d -b crash</code> and copy the output. If empty, run <code>adb logcat -d</code> and copy the last 200 lines.</li>
+      <li>Paste the log into the <strong>Logcat output</strong> box of the bug report form.</li>
     </ol>
   </main>
 
