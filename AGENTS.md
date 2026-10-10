@@ -209,7 +209,8 @@ make wiki-serve   # http://localhost:8080
 |------|---------|
 | `docs/wiki/index.html` | Overview + install + first-run setup quick start |
 | `docs/wiki/map.html` | Map screen + bottom sheets |
-| `docs/wiki/routes.html` | Routes + Favorites (lists, creator, detail, map picker) |
+| `docs/wiki/routes.html` | Routes (lists, creator, detail, replay options, import) |
+| `docs/wiki/favorites.html` | Favorites (lists, add methods, map picker, hot locations) |
 | `docs/wiki/location-links.html` | Location links: sharing, deep links, Capture mode |
 | `docs/wiki/group.html` | Group Sync (leader/follower Wi-Fi sync) |
 | `docs/wiki/tasks.html` | Common tasks hub; links goal-based how-to pages (`teleport-to-a-place`, `loop-a-route`, `follow-a-friend`, `move-to-a-new-phone`, `tap-to-walk-in-a-game`, `collect-links-into-a-route`) |
