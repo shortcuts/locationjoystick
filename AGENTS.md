@@ -219,7 +219,7 @@ make wiki-serve   # http://localhost:8080
 | `docs/wiki/overlays.html` | Joystick + widget overlays + Tap to Walk |
 | `docs/wiki/troubleshooting.html` | Troubleshooting (permissions, mock location, map, crash report) |
 | `docs/wiki/control-api.html` | Control API reference for developers |
-| `docs/wiki/favorites.html`, `tap-to-walk.html`, `language.html` | Redirect stubs (canonical + noindex), like `share.html` and `capture-coordinates.html` |
+| `docs/wiki/tap-to-walk.html`, `language.html`, `share.html`, `capture-coordinates.html` | Redirect stubs (canonical + noindex) |
 | `docs/wiki/changelog.html` | Curated, user-facing release notes — **generated**, not hand-edited (see "Regenerating the changelog" below) |
 | `docs/wiki/changelog/<version>.json` | Per-version changelog source — feeds both `changelog.html` (via `make wiki-changelog`) and the in-app What's New popup |
 | `docs/wiki/privacy.html` | Privacy policy |
