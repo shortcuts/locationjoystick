@@ -84,7 +84,7 @@ The sidebar is organized into five groups in fixed order:
 | Group | Purpose | Pages |
 |---|---|---|
 | **Start** | First-time setup and getting going. | Getting Started. |
-| **Use** | Everyday features you navigate while using the app. | Map, Overlays, Routes & Favorites, Location Links, Group Sync. |
+| **Use** | Goal-based task pages first, then everyday features you navigate while using the app. | Common tasks (goal pages, planned), Map, Overlays, Tap to Walk, Routes, Favorites, Location Links, Group Sync. |
 | **Configure** | Settings and data backup or transfer. | Settings, Backup & Transfer. |
 | **Help** | Fixing problems and integrations for developers. | Troubleshooting, Control API. |
 | **About** | Meta pages for the project. | Changelog, Privacy, Acknowledgements. |
@@ -106,11 +106,11 @@ Merge a feature into an existing page if:
 - The feature would have under roughly 300 words of content on its own.
 
 Worked examples:
-- Tap to Walk (under 300 words) merges into Overlays.
-- Favorites (a specialization of Routes) merges into Routes & Favorites.
+- Tap to Walk gets its own page. It is about half of the Overlays content (over 300 words), so it no longer merges.
+- Routes and Favorites are two pages. Routes is over 2000 words on its own, so Favorites is not merged into it.
 - Language/Localization (a setting) merges into Settings.
 
-Add a new page only if the feature is a distinct user goal that does not fit an existing group item. A new group needs explicit reasoning and a user decision — do not add one on your own.
+Add a new page only if the feature is a distinct user goal that does not fit an existing group item. A new group needs explicit reasoning and a user decision — do not add one on your own. The **Common tasks** group in the Use group is the decided exception: it holds goal-based pages (a user arrives with a goal and needs the page that answers it), and it sits at the top of Use.
 
 ### Redirect stubs for moved or merged pages
 
