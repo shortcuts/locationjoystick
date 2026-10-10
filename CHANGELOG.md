@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.0](https://github.com/shortcuts/locationjoystick/compare/v0.27.0...v0.28.0) (2026-10-10)
+
+
+### Features
+
+* **favorites:** offer teleport or walk when tapping a favorite ([67df91c](https://github.com/shortcuts/locationjoystick/commit/67df91c20031be21b98ff910ea5ade1eff5965f0)), closes [#112](https://github.com/shortcuts/locationjoystick/issues/112)
+
 ## [0.27.0](https://github.com/shortcuts/locationjoystick/compare/v0.26.0...v0.27.0) (2026-10-08)
 
 
