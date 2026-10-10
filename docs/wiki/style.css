@@ -237,16 +237,6 @@ pre code{
   padding:0;
 }
 
-/* ── Option tables ── */
-.table-wrap{
-  overflow-x:auto;
-  margin:4px 0 32px;
-  border:1px solid var(--border);
-  border-radius:var(--r);
-}
-
-.table-wrap:last-child{margin-bottom:0}
-
 blockquote{
   margin:4px 0 20px;
   padding:10px 16px;
@@ -257,54 +247,6 @@ blockquote{
 }
 
 blockquote p, blockquote em{margin:0}
-
-/* Wide screens: min-width + horizontal scroll. Phones: rows stack as cards (see the 680px block below). */
-.option-table{
-  width:100%;
-  min-width:420px;
-  border-collapse:collapse;
-  font-size:0.84rem;
-}
-
-.option-table th{
-  font-family:var(--mono);
-  font-size:0.66rem;
-  font-weight:600;
-  text-transform:uppercase;
-  letter-spacing:0.08em;
-  color:var(--muted);
-  text-align:left;
-  padding:10px 16px;
-  background:var(--surface);
-  border-bottom:1px solid var(--border);
-  white-space:nowrap;
-}
-
-.option-table td{
-  padding:12px 16px;
-  border-top:1px solid var(--border);
-  color:var(--muted);
-  vertical-align:top;
-  line-height:1.55;
-  transition:background 0.12s;
-}
-
-.option-table tr:first-child td{border-top:none}
-
-.option-table td:first-child{
-  color:var(--text);
-  font-weight:600;
-  white-space:nowrap;
-}
-
-.option-table td.default-cell{
-  color:var(--accent);
-  font-family:var(--mono);
-  font-size:0.78rem;
-  white-space:nowrap;
-}
-
-.option-table tbody tr:hover td{background:var(--accent-bg)}
 
 /* On This Page list (built by wiki-init.js); shown only where the sidebar outline is hidden (phones). */
 .page-toc{
@@ -332,23 +274,6 @@ blockquote p, blockquote em{margin:0}
 @media(max-width:680px){
   .page-toc{display:flex;flex-direction:column;gap:2px}
   .page-toc a{padding:6px 0}
-
-  /* Stack each table row as a card: name on top, extra columns labelled, description below. */
-  .table-wrap{border:none}
-  .option-table{min-width:0}
-  .option-table thead{display:none}
-  .option-table,.option-table tbody,.option-table tr,.option-table td{display:block;width:auto}
-  .option-table tr{border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;padding:10px 12px}
-  .option-table td,.option-table tr:first-child td{border-top:none;padding:2px 0}
-  .option-table td:first-child{white-space:normal}
-  .option-table td[data-label]::before{
-    content:attr(data-label) ": ";
-    font-family:var(--mono);
-    font-size:0.7rem;
-    text-transform:uppercase;
-    letter-spacing:0.06em;
-    color:var(--muted);
-  }
 }
 
 /* ── API reference endpoint cards ── */
@@ -406,27 +331,29 @@ blockquote p, blockquote em{margin:0}
 }
 
 /* ── Feature sections ── */
-.feature-section{
-  display:flex;
-  gap:28px;
-  align-items:flex-start;
-  margin:20px 0 48px;
-  padding:20px;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--r);
-}
-
-.phone-shot{
-  flex-shrink:0;
-  width:180px;
+.shot img{
+  display:block;
+  width:100%;
+  max-width:240px;
+  margin:0 0 16px;
   border-radius:14px;
   box-shadow:0 8px 28px rgba(0,0,0,0.5);
-  display:block;
+}
+
+/* Wide screens: the screenshot hangs in the right margin and stays in view while its section scrolls. */
+@media(min-width:1280px){
+  .has-shot{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 200px;
+    column-gap:32px;
+    margin-right:-232px;
+  }
+  .has-shot > *{grid-column:1}
+  .has-shot > .shot{grid-column:2;grid-row:1 / span 100;margin-top:8px}
+  .shot img{position:sticky;top:24px;margin:0}
 }
 
 .section-bullets{
-  flex:1;
   list-style:none;
   padding:0;
   margin-top:2px;
@@ -690,11 +617,7 @@ nav [role=group]{display:flex;flex-direction:column}
   nav a,.nav-outline a{font-size:0.82rem}
   nav a.nav-ext{font-size:0.78rem}
   .nav-group{font-size:0.72rem}
-  .option-table th{font-size:0.72rem}
 
-  .feature-section{flex-direction:column;gap:18px;padding:16px}
-  .phone-shot{width:100%;max-width:240px;margin:0 auto}
-  .section-bullets{width:100%}
   .section-bullets li{font-size:0.92rem}
 
   pre{padding:10px 12px;font-size:0.85rem}

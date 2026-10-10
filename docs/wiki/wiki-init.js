@@ -127,7 +127,7 @@
   document.head.appendChild(ds);
 
   var pageLink = document.querySelector('nav a.active');
-  var outlineHeads = document.querySelectorAll('main h2[id], main h3[id]');
+  var outlineHeads = document.querySelectorAll('main h2[id]:not(.item), main h3[id]:not(.item)');
   if (pageLink && outlineHeads.length) {
     var outline = document.createElement('div');
     outline.className = 'nav-outline';
@@ -177,7 +177,7 @@
   }
 
   // "On this page" list: the sidebar outline is hidden behind the menu button on phones, so CSS shows this one only there.
-  var tocHeads = document.querySelectorAll('main h2[id]');
+  var tocHeads = document.querySelectorAll('main h2[id]:not(.item)');
   var lead = mainEl.querySelector('h1 + p') || mainEl.querySelector('h1');
   if (lead && tocHeads.length >= 2) {
     var toc = document.createElement('nav');
@@ -192,16 +192,6 @@
     });
     lead.after(toc);
   }
-
-  // Copy header labels onto cells so the phone layout can stack rows as cards.
-  document.querySelectorAll('main table').forEach(function (table) {
-    var labels = Array.prototype.map.call(table.querySelectorAll('thead th'), function (th) { return th.textContent.trim(); });
-    table.querySelectorAll('tbody tr').forEach(function (tr) {
-      Array.prototype.forEach.call(tr.children, function (td, i) {
-        if (labels[i] && i > 0 && i < tr.children.length - 1) td.setAttribute('data-label', labels[i]);
-      });
-    });
-  });
 
   document.querySelectorAll('main h1[id], main h2[id], main h3[id]').forEach(function (heading) {
     var btn = document.createElement('button');

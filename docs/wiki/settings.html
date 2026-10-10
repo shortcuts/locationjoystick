@@ -24,50 +24,33 @@
 <div class="layout">
 
   <main>
+    <section class="has-shot">
     <h1 id="settings">Settings</h1>
-    <p>Every setting, grouped as in the app. Export, import, and reset are on <a href="backup-transfer.html">Backup &amp; Transfer</a>. For permission problems, see <a href="troubleshooting.html">Troubleshooting</a>.</p>
-
-    <div class="feature-section" id="settings-main">
+    <aside class="shot" id="settings-main">
       <img class="phone-shot" src="screenshots/05_settings.png" alt="Settings screen">
-    </div>
+    </aside>
+    <p>Every setting, grouped as in the app. Export, import, and reset are on <a href="backup-transfer.html">Backup &amp; Transfer</a>. For permission problems, see <a href="troubleshooting.html">Troubleshooting</a>.</p>
 
     <h2 id="speed-profiles">Movement &amp; GPS</h2>
 
     <h3 id="speed-profiles-list">Speed profiles</h3>
     <p>Edits apply at once, even during movement. The km/h ↔ mph switch changes every speed in the app. There is no upper limit. Speeds below 0.04 km/h are raised to 0.04 km/h, because zero blocks movement.</p>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Profile</th><th>Default</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>Slow Walk</td>
-          <td class="default-cell">1.1 km/h</td>
-          <td>Strolling. Off in the Speed cycle.</td>
-        </tr>
-        <tr>
-          <td>Walk</td>
-          <td class="default-cell">2.0 km/h</td>
-          <td>Regular walking pace.</td>
-        </tr>
-        <tr>
-          <td>Run</td>
-          <td class="default-cell">8.0 km/h</td>
-          <td>Jogging. Follows footpaths when Follow roads is on.</td>
-        </tr>
-        <tr>
-          <td>Bike</td>
-          <td class="default-cell">15.0 km/h</td>
-          <td>Cycling. Follows bike lanes when Follow roads is on.</td>
-        </tr>
-        <tr>
-          <td>Drive</td>
-          <td class="default-cell">54.0 km/h</td>
-          <td>Driving. Off in the Speed cycle. Triggers the <a href="#speed-warning">speed warning</a>.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h4 class="item" id="speed-profiles-list-slow-walk">Slow Walk</h4>
+    <p><strong>Default:</strong> 1.1 km/h</p>
+    <p>Strolling. Off in the Speed cycle.</p>
+    <h4 class="item" id="speed-profiles-list-walk">Walk</h4>
+    <p><strong>Default:</strong> 2.0 km/h</p>
+    <p>Regular walking pace.</p>
+    <h4 class="item" id="speed-profiles-list-run">Run</h4>
+    <p><strong>Default:</strong> 8.0 km/h</p>
+    <p>Jogging. Follows footpaths when Follow roads is on.</p>
+    <h4 class="item" id="speed-profiles-list-bike">Bike</h4>
+    <p><strong>Default:</strong> 15.0 km/h</p>
+    <p>Cycling. Follows bike lanes when Follow roads is on.</p>
+    <h4 class="item" id="speed-profiles-list-drive">Drive</h4>
+    <p><strong>Default:</strong> 54.0 km/h</p>
+    <p>Driving. Off in the Speed cycle. Triggers the <a href="#speed-warning">speed warning</a>.</p>
 
     <p>Walk, Run, and Bike are in the <a href="#speed-cycle">Speed cycle</a> by default. Slow Walk and Drive are not.</p>
 
@@ -77,286 +60,154 @@
     <h3 id="gps-jitter">Location randomness</h3>
     <p>Small random changes to each location update, like real GPS drift. Set a value to 0 to turn it off. Wobble and altitude show in feet when you use mph.</p>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>Wobble when still</td>
-          <td class="default-cell">0.8 m</td>
-          <td>Largest random shift while you stand still. Maximum 50 m.</td>
-        </tr>
-        <tr>
-          <td>Wobble while moving</td>
-          <td class="default-cell">0.3 m</td>
-          <td>Largest random shift while you move. Keep it below the still value. Maximum 50 m.</td>
-        </tr>
-        <tr>
-          <td>Largest change per update</td>
-          <td class="default-cell">1 m</td>
-          <td>How far the shift can change in one update. Allowed range: 0.1 to 5 m.</td>
-        </tr>
-        <tr>
-          <td>Speed variation when still</td>
-          <td class="default-cell">5%</td>
-          <td>Random percentage added to or taken from the reported speed at rest. 0 looks perfectly still.</td>
-        </tr>
-        <tr>
-          <td>Speed variation while moving</td>
-          <td class="default-cell">5%</td>
-          <td>Random percentage added to or taken from the reported speed while you move. Allowed range: 0 to 50%.</td>
-        </tr>
-        <tr>
-          <td>Idle wobble frequency</td>
-          <td class="default-cell">15%</td>
-          <td>How often the speed shows a small wobble at rest. 0 means never. 100 means every update.</td>
-        </tr>
-        <tr>
-          <td>Altitude variation</td>
-          <td class="default-cell">1.5 m</td>
-          <td>How much the reported height moves. 0 gives a flat height. Shows only while Vary altitude is on.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h4 class="item" id="gps-jitter-wobble-when-still">Wobble when still</h4>
+    <p><strong>Default:</strong> 0.8 m</p>
+    <p>Largest random shift while you stand still. Maximum 50 m.</p>
+    <h4 class="item" id="gps-jitter-wobble-while-moving">Wobble while moving</h4>
+    <p><strong>Default:</strong> 0.3 m</p>
+    <p>Largest random shift while you move. Keep it below the still value. Maximum 50 m.</p>
+    <h4 class="item" id="gps-jitter-largest-change-per-update">Largest change per update</h4>
+    <p><strong>Default:</strong> 1 m</p>
+    <p>How far the shift can change in one update. Allowed range: 0.1 to 5 m.</p>
+    <h4 class="item" id="gps-jitter-speed-variation-when-still">Speed variation when still</h4>
+    <p><strong>Default:</strong> 5%</p>
+    <p>Random percentage added to or taken from the reported speed at rest. 0 looks perfectly still.</p>
+    <h4 class="item" id="gps-jitter-speed-variation-while-moving">Speed variation while moving</h4>
+    <p><strong>Default:</strong> 5%</p>
+    <p>Random percentage added to or taken from the reported speed while you move. Allowed range: 0 to 50%.</p>
+    <h4 class="item" id="gps-jitter-idle-wobble-frequency">Idle wobble frequency</h4>
+    <p><strong>Default:</strong> 15%</p>
+    <p>How often the speed shows a small wobble at rest. 0 means never. 100 means every update.</p>
+    <h4 class="item" id="gps-jitter-altitude-variation">Altitude variation</h4>
+    <p><strong>Default:</strong> 1.5 m</p>
+    <p>How much the reported height moves. 0 gives a flat height. Shows only while Vary altitude is on.</p>
 
     <h3 id="gps-realism">GPS realism</h3>
     <p>Each option makes the fake location behave more like a real GPS.</p>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>Hold bearing when stationary</td>
-          <td class="default-cell">On</td>
-          <td>Keeps your last direction when you stop, instead of snapping back to north.</td>
-        </tr>
-        <tr>
-          <td>Vary altitude</td>
-          <td class="default-cell">On</td>
-          <td>Moves the reported altitude slightly. The Altitude variation value above sets how much.</td>
-        </tr>
-        <tr>
-          <td>Use real-world elevation</td>
-          <td class="default-cell">On</td>
-          <td>Looks up the real ground height at your fake location every minute. Needs internet. If the lookup fails, uses 35 m. Pauses while an altitude override is set.</td>
-        </tr>
-        <tr>
-          <td>GPS warm-up simulation</td>
-          <td class="default-cell">Off</td>
-          <td>Starts each session with low accuracy that improves over about 30 seconds.</td>
-        </tr>
-        <tr>
-          <td>Realistic satellite count</td>
-          <td class="default-cell">On</td>
-          <td>Reports 7 to 14 visible satellites, and 6 to 12 in use.</td>
-        </tr>
-        <tr>
-          <td>Simulate signal dropouts</td>
-          <td class="default-cell">Off</td>
-          <td>About every 10 seconds, the signal freezes for about 2 seconds. Most apps show the freeze. Does not run during route playback or walk-to.</td>
-        </tr>
-        <tr>
-          <td>Reset elevation override</td>
-          <td class="default-cell">&mdash;</td>
-          <td>Clears a height set with the altitude override button, so the automatic height resumes. Set the button up under <a href="#privacy-menus">Privacy</a>.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h4 class="item" id="gps-realism-hold-bearing-when-stationary">Hold bearing when stationary</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Keeps your last direction when you stop, instead of snapping back to north.</p>
+    <h4 class="item" id="gps-realism-vary-altitude">Vary altitude</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Moves the reported altitude slightly. The Altitude variation value above sets how much.</p>
+    <h4 class="item" id="gps-realism-use-real-world-elevation">Use real-world elevation</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Looks up the real ground height at your fake location every minute. Needs internet. If the lookup fails, uses 35 m. Pauses while an altitude override is set.</p>
+    <h4 class="item" id="gps-realism-gps-warm-up-simulation">GPS warm-up simulation</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Starts each session with low accuracy that improves over about 30 seconds.</p>
+    <h4 class="item" id="gps-realism-realistic-satellite-count">Realistic satellite count</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Reports 7 to 14 visible satellites, and 6 to 12 in use.</p>
+    <h4 class="item" id="gps-realism-simulate-signal-dropouts">Simulate signal dropouts</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>About every 10 seconds, the signal freezes for about 2 seconds. Most apps show the freeze. Does not run during route playback or walk-to.</p>
+    <h4 class="item" id="gps-realism-reset-elevation-override">Reset elevation override</h4>
+    <p><strong>Default:</strong> &mdash;</p>
+    <p>Clears a height set with the altitude override button, so the automatic height resumes. Set the button up under <a href="#privacy-menus">Privacy</a>.</p>
 
     <h3 id="location-memory">Location memory</h3>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>Remember last location</td>
-          <td class="default-cell">On</td>
-          <td>Restores your last fake position when you reopen the app. Starts from your real location if nothing is saved.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h4 class="item" id="location-memory-remember-last-location">Remember last location</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Restores your last fake position when you reopen the app. Starts from your real location if nothing is saved.</p>
+    </section>
 
     <h2 id="menus">Menus</h2>
 
     <h3 id="appearance">Appearance</h3>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>Light mode</td>
-          <td class="default-cell">Off</td>
-          <td>Switches the app and widget lists from dark to bright. Overlay buttons stay dark.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h4 class="item" id="appearance-light-mode">Light mode</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Switches the app and widget lists from dark to bright. Overlay buttons stay dark.</p>
 
     <h3 id="map-source">Map source</h3>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>Map source</td>
-          <td class="default-cell">OpenStreetMap</td>
-          <td>OpenStreetMap or Amap (高德). Amap is faster in mainland China. The app corrects its coordinate shift automatically.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h4 class="item" id="map-source-map-source">Map source</h4>
+    <p><strong>Default:</strong> OpenStreetMap</p>
+    <p>OpenStreetMap or Amap (高德). Amap is faster in mainland China. The app corrects its coordinate shift automatically.</p>
 
     <h3 id="place-search">Place search</h3>
     <p>At least one service must stay on. If one cannot be reached, the app tries the next one that is on.</p>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>Nominatim (OpenStreetMap)</td>
-          <td class="default-cell">On</td>
-          <td>The main search service. Turn it off if it is blocked where you are. A service that fails is skipped for 10 minutes.</td>
-        </tr>
-        <tr>
-          <td>Photon (Komoot)</td>
-          <td class="default-cell">On</td>
-          <td>The backup search service. Works well from mainland China.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h4 class="item" id="place-search-nominatim-openstreetmap">Nominatim (OpenStreetMap)</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>The main search service. Turn it off if it is blocked where you are. A service that fails is skipped for 10 minutes.</p>
+    <h4 class="item" id="place-search-photon-komoot">Photon (Komoot)</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>The backup search service. Works well from mainland China.</p>
 
     <h3 id="app-features">App Features</h3>
     <p>Choose which quick-access features appear in the floating widget and on the map screen. Each feature has one checkbox for the widget and one for the map. Drag the handle to reorder. Both use the same order. Starting and stopping simulation is always available from the top bar.</p>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Feature</th><th>Default</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr>
-          <td><strong>Map shortcut</strong></td>
-          <td class="default-cell">On</td>
-          <td>Widget only. A small map over your current app.</td>
-        </tr>
-        <tr>
-          <td><strong>Show/hide joystick</strong></td>
-          <td class="default-cell">On</td>
-          <td>Widget only. Shows or hides the joystick.</td>
-        </tr>
-        <tr>
-          <td><strong>Lock joystick</strong></td>
-          <td class="default-cell">On</td>
-          <td>Widget only. Keeps the joystick's direction after you let go. Tap again to unlock.</td>
-        </tr>
-        <tr>
-          <td><strong>Favorites</strong></td>
-          <td class="default-cell">On</td>
-          <td>Widget and map. Your favorites, with teleport and walk.</td>
-        </tr>
-        <tr>
-          <td><strong>Routes</strong></td>
-          <td class="default-cell">On</td>
-          <td>Widget and map. Your routes.</td>
-        </tr>
-        <tr>
-          <td><strong>Roaming</strong></td>
-          <td class="default-cell">On</td>
-          <td>Widget and map. Walk around the block and Planting.</td>
-        </tr>
-        <tr>
-          <td><strong>Search</strong></td>
-          <td class="default-cell">On</td>
-          <td>Map only. Search for a place by name.</td>
-        </tr>
-        <tr>
-          <td><strong>Paste coordinates</strong></td>
-          <td class="default-cell">Off</td>
-          <td>Map and widget. See <a href="map.html#paste-coordinates">Map</a>.</td>
-        </tr>
-        <tr id="speed-cycle">
-          <td><strong>Speed cycle</strong></td>
-          <td class="default-cell">On</td>
-          <td>Widget only. One tap switches to the next enabled speed. Each speed in <a href="#speed-profiles-list">Speed profiles</a> has one checkbox in this list.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h4 class="item" id="app-features-map-shortcut">Map shortcut</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Widget only. A small map over your current app.</p>
+    <h4 class="item" id="app-features-show-hide-joystick">Show/hide joystick</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Widget only. Shows or hides the joystick.</p>
+    <h4 class="item" id="app-features-lock-joystick">Lock joystick</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Widget only. Keeps the joystick's direction after you let go. Tap again to unlock.</p>
+    <h4 class="item" id="app-features-favorites">Favorites</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Widget and map. Your favorites, with teleport and walk.</p>
+    <h4 class="item" id="app-features-routes">Routes</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Widget and map. Your routes.</p>
+    <h4 class="item" id="app-features-roaming">Roaming</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Widget and map. Walk around the block and Planting.</p>
+    <h4 class="item" id="app-features-search">Search</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Map only. Search for a place by name.</p>
+    <h4 class="item" id="app-features-paste-coordinates">Paste coordinates</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Map and widget. See <a href="map.html#paste-coordinates">Map</a>.</p>
+    <h4 class="item" id="speed-cycle">Speed cycle</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>Widget only. One tap switches to the next enabled speed. Each speed in <a href="#speed-profiles-list">Speed profiles</a> has one checkbox in this list.</p>
 
     <h3 id="privacy-menus">Privacy</h3>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr id="hide-teleport">
-          <td>Hide teleport features</td>
-          <td class="default-cell">Off</td>
-          <td>Removes every "jump to location" option: map, favorites, routes, Group Sync, and paste. Routes walk to the first stop instead.</td>
-        </tr>
-        <tr id="hide-widget">
-          <td>Hide floating widget</td>
-          <td class="default-cell">Off</td>
-          <td>Keeps the widget button off the screen while spoofing is on. Other overlays keep working.</td>
-        </tr>
-        <tr id="hide-notification">
-          <td>Hide notification icon</td>
-          <td class="default-cell">Off</td>
-          <td>Removes the "Mock location active" status bar icon. The notification stays in the shade (Android requires it).</td>
-        </tr>
-        <tr id="route-jump-buttons">
-          <td>Show route jump buttons</td>
-          <td class="default-cell">Off</td>
-          <td>Adds "Previous stop" and "Next stop" buttons while a route plays. Hidden when Hide teleport features is on.</td>
-        </tr>
-        <tr id="quick-walk-setting">
-          <td>Floating map quick walk</td>
-          <td class="default-cell">Off</td>
-          <td>A tap on the floating map walks there at once, with no popup. See <a href="overlays.html#floating-map-quick-walk">Overlays</a>.</td>
-        </tr>
-        <tr id="altitude-override-setting">
-          <td>Show altitude override button</td>
-          <td class="default-cell">Off</td>
-          <td>Adds a widget button to type a fixed height. See <a href="overlays.html">Overlays</a>.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h4 class="item" id="hide-teleport">Hide teleport features</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Removes every "jump to location" option: map, favorites, routes, Group Sync, and paste. Routes walk to the first stop instead.</p>
+    <h4 class="item" id="hide-widget">Hide floating widget</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Keeps the widget button off the screen while spoofing is on. Other overlays keep working.</p>
+    <h4 class="item" id="hide-notification">Hide notification icon</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Removes the "Mock location active" status bar icon. The notification stays in the shade (Android requires it).</p>
+    <h4 class="item" id="route-jump-buttons">Show route jump buttons</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Adds "Previous stop" and "Next stop" buttons while a route plays. Hidden when Hide teleport features is on.</p>
+    <h4 class="item" id="quick-walk-setting">Floating map quick walk</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>A tap on the floating map walks there at once, with no popup. See <a href="overlays.html#floating-map-quick-walk">Overlays</a>.</p>
+    <h4 class="item" id="altitude-override-setting">Show altitude override button</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Adds a widget button to type a fixed height. See <a href="overlays.html">Overlays</a>.</p>
 
     <h3 id="capture">Capture</h3>
     <p>Capture setup, the on/off switch, the browser choice, and the app to open after a map link. See <a href="capture.html#set-up-capture">Capture</a> for each step.</p>
 
+    <section class="has-shot">
     <h3 id="debug-stats">Debug stats</h3>
-    <div class="feature-section" id="debug-stats-shot">
+    <aside class="shot" id="debug-stats-shot">
       <img class="phone-shot" src="screenshots/18_debug_stats.png" alt="Debug stats shown in the floating widget panel">
+    </aside>
       <p>Shows coordinates, speed, altitude, accuracy, heading, and update rate in the expanded widget. Off by default.</p>
-    </div>
+    </section>
 
     <h2 id="language">Language</h2>
     <p>The app supports English, Simplified Chinese (CN), and Traditional Chinese (TW).</p>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Android version</th><th>How to change</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>Android 13 and newer</td>
-          <td>Phone Settings → Apps → locationjoystick → Language. The app switches at once.</td>
-        </tr>
-        <tr>
-          <td>Android 9 to 12</td>
-          <td>Settings → Menus, then pick a language from the menu in the top bar. The app restarts.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="language-android-13-and-newer">Android 13 and newer</h3>
+    <p>Phone Settings → Apps → locationjoystick → Language. The app switches at once.</p>
+    <h3 class="item" id="language-android-9-to-12">Android 9 to 12</h3>
+    <p>Settings → Menus, then pick a language from the menu in the top bar. The app restarts.</p>
 
     <p>On Android 9 to 12, overlays and the notification switch language at the next session start.</p>
 
@@ -364,112 +215,65 @@
 
     <h2 id="favorites-routes">Favorites &amp; Routes</h2>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>Show hot locations</td>
-          <td class="default-cell">Off</td>
-          <td>Adds popular places around the world to your favorites. Turning it off removes only those entries. See <a href="favorites.html#hot-locations">Favorites</a>.</td>
-        </tr>
-        <tr>
-          <td>Show hot routes</td>
-          <td class="default-cell">Off</td>
-          <td>Adds ready-made routes for popular event locations. Turning it off removes only those routes. See <a href="routes.html#hot-routes">Routes</a>.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="favorites-routes-show-hot-locations">Show hot locations</h3>
+    <p><strong>Default:</strong> Off</p>
+    <p>Adds popular places around the world to your favorites. Turning it off removes only those entries. See <a href="favorites.html#hot-locations">Favorites</a>.</p>
+    <h3 class="item" id="favorites-routes-show-hot-routes">Show hot routes</h3>
+    <p><strong>Default:</strong> Off</p>
+    <p>Adds ready-made routes for popular event locations. Turning it off removes only those routes. See <a href="routes.html#hot-routes">Routes</a>.</p>
 
     <h2 id="roaming">Roaming</h2>
     <p>Defaults for Walk around the block and Planting.</p>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr>
-          <td><strong>Walk around the block — Radius</strong></td>
-          <td class="default-cell">500 m</td>
-          <td>The farthest distance from the start that random stops can land. Maximum 100 km.</td>
-        </tr>
-        <tr>
-          <td><strong>Walk around the block — Route distance</strong></td>
-          <td class="default-cell">1 km</td>
-          <td>The total distance to walk. Allowed range: 50 m to 50 km.</td>
-        </tr>
-        <tr>
-          <td><strong>Walk around the block — Speed</strong></td>
-          <td class="default-cell">Walk</td>
-          <td>Starting speed. The roaming sheet offers Walk, Run, and Bike. Settings also offers Slow Walk and Drive.</td>
-        </tr>
-        <tr>
-          <td><strong>Follow roads</strong></td>
-          <td class="default-cell">On</td>
-          <td>Walk around the block only. Follows walkable paths. Uses straight lines if the road service is unavailable.</td>
-        </tr>
-        <tr>
-          <td><strong>Return to start</strong></td>
-          <td class="default-cell">On</td>
-          <td>Walk around the block only. Walks back to the starting position when the walk ends.</td>
-        </tr>
-        <tr>
-          <td><strong>Planting — Starting radius</strong></td>
-          <td class="default-cell">5 m</td>
-          <td>How close to the center the spiral starts.</td>
-        </tr>
-        <tr>
-          <td><strong>Planting — Ending radius</strong></td>
-          <td class="default-cell">39 m</td>
-          <td>How far out the spiral opens before it tightens again. Maximum 200 m.</td>
-        </tr>
-        <tr>
-          <td><strong>Planting — Speed</strong></td>
-          <td class="default-cell">Bike</td>
-          <td>Starting speed: Walk, Run, or Bike. Separate from the Walk around the block speed.</td>
-        </tr>
-        <tr>
-          <td><strong>Planting — Infinite loop</strong></td>
-          <td class="default-cell">On</td>
-          <td>Repeats until you stop. Turn it off to set a loop count from 1 to 99 (default 1). One loop is one full expand and tighten.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="roaming-walk-around-the-block-radius">Walk around the block — Radius</h3>
+    <p><strong>Default:</strong> 500 m</p>
+    <p>The farthest distance from the start that random stops can land. Maximum 100 km.</p>
+    <h3 class="item" id="roaming-walk-around-the-block-route-distance">Walk around the block — Route distance</h3>
+    <p><strong>Default:</strong> 1 km</p>
+    <p>The total distance to walk. Allowed range: 50 m to 50 km.</p>
+    <h3 class="item" id="roaming-walk-around-the-block-speed">Walk around the block — Speed</h3>
+    <p><strong>Default:</strong> Walk</p>
+    <p>Starting speed. The roaming sheet offers Walk, Run, and Bike. Settings also offers Slow Walk and Drive.</p>
+    <h3 class="item" id="roaming-follow-roads">Follow roads</h3>
+    <p><strong>Default:</strong> On</p>
+    <p>Walk around the block only. Follows walkable paths. Uses straight lines if the road service is unavailable.</p>
+    <h3 class="item" id="roaming-return-to-start">Return to start</h3>
+    <p><strong>Default:</strong> On</p>
+    <p>Walk around the block only. Walks back to the starting position when the walk ends.</p>
+    <h3 class="item" id="roaming-planting-starting-radius">Planting — Starting radius</h3>
+    <p><strong>Default:</strong> 5 m</p>
+    <p>How close to the center the spiral starts.</p>
+    <h3 class="item" id="roaming-planting-ending-radius">Planting — Ending radius</h3>
+    <p><strong>Default:</strong> 39 m</p>
+    <p>How far out the spiral opens before it tightens again. Maximum 200 m.</p>
+    <h3 class="item" id="roaming-planting-speed">Planting — Speed</h3>
+    <p><strong>Default:</strong> Bike</p>
+    <p>Starting speed: Walk, Run, or Bike. Separate from the Walk around the block speed.</p>
+    <h3 class="item" id="roaming-planting-infinite-loop">Planting — Infinite loop</h3>
+    <p><strong>Default:</strong> On</p>
+    <p>Repeats until you stop. Turn it off to set a loop count from 1 to 99 (default 1). One loop is one full expand and tighten.</p>
 
     <p>Once roaming starts, changing speed in the app or widget overrides the starting speed.</p>
 
     <h2 id="external-services">External services</h2>
     <p>The app is offline-first and needs no account. Each service is used only while its feature is active, except map images, which load whenever a map is shown.</p>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Service</th><th>When used</th><th>What is sent</th></tr></thead>
-      <tbody>
-        <tr>
-          <td><strong>Road routing (OSRM)</strong><br><small><a href="https://router.project-osrm.org" target="_blank" rel="noopener">router.project-osrm.org</a></small></td>
-          <td>Routes and roaming that follow roads.</td>
-          <td>The coordinates of your stops or random roaming targets. Nothing that identifies you or your device.</td>
-        </tr>
-        <tr id="search-privacy">
-          <td><strong>Place search (Nominatim)</strong><br><small><a href="https://nominatim.openstreetmap.org" target="_blank" rel="noopener">nominatim.openstreetmap.org</a></small></td>
-          <td>Place search in the route creator and favorites map picker, when you type a search and the setting is on.</td>
-          <td>The text you type. No coordinates and nothing that identifies you.</td>
-        </tr>
-        <tr>
-          <td><strong>Place search backup (Photon)</strong><br><small><a href="https://photon.komoot.io" target="_blank" rel="noopener">photon.komoot.io</a></small></td>
-          <td>Place search and place-name lookup when the main search cannot be reached or is off.</td>
-          <td>The text you type, or the coordinates of the spot you look up. Nothing that identifies you.</td>
-        </tr>
-        <tr>
-          <td><strong>Map images (OpenStreetMap)</strong><br><small><a href="https://tile.openstreetmap.org" target="_blank" rel="noopener">tile.openstreetmap.org</a></small></td>
-          <td>Whenever you move or zoom a map.</td>
-          <td>Only which part of the map to show. No personal data.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="external-services-road-routing-osrm">Road routing (OSRM)</h3>
+    <p><a href="https://router.project-osrm.org" target="_blank" rel="noopener">router.project-osrm.org</a></p>
+    <p><strong>When used:</strong> Routes and roaming that follow roads.</p>
+    <p><strong>What is sent:</strong> The coordinates of your stops or random roaming targets. Nothing that identifies you or your device.</p>
+    <h3 class="item" id="search-privacy">Place search (Nominatim)</h3>
+    <p><a href="https://nominatim.openstreetmap.org" target="_blank" rel="noopener">nominatim.openstreetmap.org</a></p>
+    <p><strong>When used:</strong> Place search in the route creator and favorites map picker, when you type a search and the setting is on.</p>
+    <p><strong>What is sent:</strong> The text you type. No coordinates and nothing that identifies you.</p>
+    <h3 class="item" id="external-services-place-search-backup-photon">Place search backup (Photon)</h3>
+    <p><a href="https://photon.komoot.io" target="_blank" rel="noopener">photon.komoot.io</a></p>
+    <p><strong>When used:</strong> Place search and place-name lookup when the main search cannot be reached or is off.</p>
+    <p><strong>What is sent:</strong> The text you type, or the coordinates of the spot you look up. Nothing that identifies you.</p>
+    <h3 class="item" id="external-services-map-images-openstreetmap">Map images (OpenStreetMap)</h3>
+    <p><a href="https://tile.openstreetmap.org" target="_blank" rel="noopener">tile.openstreetmap.org</a></p>
+    <p><strong>When used:</strong> Whenever you move or zoom a map.</p>
+    <p><strong>What is sent:</strong> Only which part of the map to show. No personal data.</p>
 
   </main>
 

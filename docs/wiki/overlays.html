@@ -31,30 +31,34 @@
       On some phones, such as Xiaomi or Oppo, it can reset after a restart. If an overlay disappears, check your phone's autostart and battery settings.
     </p>
 
+    <section class="has-shot">
     <h2 id="floating-joystick">Floating joystick</h2>
+    <aside class="shot" id="joystick-overlay">
+      <img class="phone-shot" src="screenshots/14_joystick_overlay.png" alt="Floating joystick overlay">
+    </aside>
     <p>
       The floating joystick is a round control that stays on screen. Drag it to move your fake location.
       Show or hide it from the floating widget. Spoofing stays on.
     </p>
 
-    <div class="feature-section" id="joystick-overlay">
-      <img class="phone-shot" src="screenshots/14_joystick_overlay.png" alt="Floating joystick overlay">
       <ul class="section-bullets">
         <li>Drag the center dial to move. Pull farther out to move faster, up to your selected speed.</li>
         <li>Let go to stop. The stick returns to center and your position stays put.</li>
         <li>Drag the outer ring to move the joystick anywhere on screen.</li>
         <li>Moving the stick pauses any walk, route or roam so you can steer. See the Lock joystick control below.</li>
       </ul>
-    </div>
+    </section>
 
+    <section class="has-shot">
     <h2 id="floating-widget">Floating widget</h2>
+    <aside class="shot" id="widget-overlay">
+      <img class="phone-shot" src="screenshots/15_widget_overlay.png" alt="Floating widget overlay">
+    </aside>
     <p>
       The floating widget is a small panel of quick controls. Tap the round button to expand it. It stays on screen when you switch apps.
       Buttons are grey when idle, green while their activity is moving and orange while it is paused.
     </p>
 
-    <div class="feature-section" id="widget-overlay">
-      <img class="phone-shot" src="screenshots/15_widget_overlay.png" alt="Floating widget overlay">
       <ul class="section-bullets">
         <li>Tap the round button again to collapse the panel. Drag it to move the widget.</li>
         <li>Press and hold the app icon to show Pause and Stop.</li>
@@ -64,96 +68,63 @@
         <li>Lists and route options follow Light or Dark mode from Settings &rarr; Menus &rarr; Appearance.</li>
         <li>The route start sheet has the same options as <a href="routes.html#replay-options">Replay options</a>.</li>
       </ul>
-    </div>
+    </section>
 
     <h2 id="available-widget-controls">Available widget controls</h2>
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Control</th><th>What it does</th><th>Default</th></tr></thead>
-      <tbody>
-        <tr>
-          <td><strong>Map shortcut (map icon)</strong></td>
-          <td>Opens a small map above your game. Taps outside the map go to the game.
-            <ul>
-              <li>Use the expand button for full screen, and shrink it again without losing your place.</li>
-              <li>Walk, teleport, paste coordinates or start roaming from it.</li>
-              <li>The N arrow keeps north at the top. Turn it off to rotate the map.</li>
-            </ul>
-          </td>
-          <td>On</td>
-        </tr>
-        <tr>
-          <td><strong>Show / hide joystick (joystick icon)</strong></td>
-          <td>Shows or hides the joystick. Moving the stick pauses the running activity so you can steer.</td>
-          <td>On</td>
-        </tr>
-        <tr>
-          <td><strong>Lock joystick</strong></td>
-          <td>Shows the joystick if hidden, then keeps its direction after you let go.
-            <ul>
-              <li>Drag to the center to stop while keeping lock on. Pull outward to move again.</li>
-              <li>Tap the button again to unlock.</li>
-              <li>Locking alone does not pause an activity. Moving the stick does.</li>
-            </ul>
-          </td>
-          <td>On</td>
-        </tr>
-        <tr>
-          <td><strong>Pause and resume</strong></td>
-          <td>Moving the joystick pauses walk, route, roam or planting. Destination and progress are kept.
-            <ul>
-              <li>Tap Resume to continue, or choose a new destination to start over.</li>
-              <li>If you follow a leader, following turns off and you stay in the group.</li>
-              <li>Touching the very center, or dragging the outer ring, pauses nothing.</li>
-            </ul>
-          </td>
-          <td>Automatic</td>
-        </tr>
-        <tr>
-          <td><strong>Routes picker</strong></td>
-          <td>Lists your routes. Tap one to start, rename, share or delete it. While a route runs, it shows pause, stop, Previous / Next stop and your stop count, such as <code>3/12</code>. Search and sort work as on the <a href="routes.html">Routes</a> screen.</td>
-          <td>On</td>
-        </tr>
-        <tr>
-          <td><strong>Favorites picker</strong></td>
-          <td>Lists your favorites with teleport and walk shortcuts. Open one to rename or delete it. Save your current position, or share it. Search and sort work as on the <a href="favorites.html">Favorites</a> screen.</td>
-          <td>On</td>
-        </tr>
-        <tr>
-          <td><strong>Paste coordinates</strong></td>
-          <td>Opens a small box at the bottom of the screen to paste coordinates. You can still use the app above it.
-            <ul>
-              <li>Shrink the box to a bar to copy more points in another app.</li>
-              <li>Press and hold the button for a Capture shortcut.</li>
-              <li>If you paused spoofing, tap Start before you paste.</li>
-            </ul>
-            See <a href="map.html#paste-coordinates">Map &rarr; Paste coordinates</a> for formats.
-          </td>
-          <td>Off. Turn it on in Settings &rarr; Menus &rarr; App Features.</td>
-        </tr>
-        <tr>
-          <td><strong>Roaming</strong></td>
-          <td>Opens Walk around the block and Planting, so you can roam without opening the app. While roaming runs, tap it for pause and stop.</td>
-          <td>On</td>
-        </tr>
-        <tr>
-          <td><strong>Altitude override</strong></td>
-          <td>Type a fixed height for your fake location. It replaces the automatic height until you reset it in <a href="settings.html#gps-realism">Settings &rarr; Movement &amp; GPS</a>.</td>
-          <td>Off. Turn on Show altitude override button in Settings &rarr; Menus &rarr; Privacy.</td>
-        </tr>
-        <tr>
-          <td><strong>Tap to Walk crosshair</strong></td>
-          <td>Places a clear layer over your app. Your next tap becomes your walk destination. See <a href="#screen-overlay">Tap to Walk</a>.</td>
-          <td>Shown only when Tap to Walk is on</td>
-        </tr>
-        <tr>
-          <td><strong>Speed cycle</strong></td>
-          <td>One tap switches to the next speed. The icon shows the current speed. It applies at once to the joystick, walking, roaming and a playing route.</td>
-          <td>On</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="available-widget-controls-map-shortcut-map-icon">Map shortcut (map icon)</h3>
+    <p>Opens a small map above your game. Taps outside the map go to the game.</p>
+    <ul>
+      <li>Use the expand button for full screen, and shrink it again without losing your place.</li>
+      <li>Walk, teleport, paste coordinates or start roaming from it.</li>
+      <li>The N arrow keeps north at the top. Turn it off to rotate the map.</li>
+    </ul>
+    <p><strong>Default:</strong> On</p>
+    <h3 class="item" id="available-widget-controls-show-hide-joystick-joystick-icon">Show / hide joystick (joystick icon)</h3>
+    <p>Shows or hides the joystick. Moving the stick pauses the running activity so you can steer.</p>
+    <p><strong>Default:</strong> On</p>
+    <h3 class="item" id="available-widget-controls-lock-joystick">Lock joystick</h3>
+    <p>Shows the joystick if hidden, then keeps its direction after you let go.</p>
+    <ul>
+      <li>Drag to the center to stop while keeping lock on. Pull outward to move again.</li>
+      <li>Tap the button again to unlock.</li>
+      <li>Locking alone does not pause an activity. Moving the stick does.</li>
+    </ul>
+    <p><strong>Default:</strong> On</p>
+    <h3 class="item" id="available-widget-controls-pause-and-resume">Pause and resume</h3>
+    <p>Moving the joystick pauses walk, route, roam or planting. Destination and progress are kept.</p>
+    <ul>
+      <li>Tap Resume to continue, or choose a new destination to start over.</li>
+      <li>If you follow a leader, following turns off and you stay in the group.</li>
+      <li>Touching the very center, or dragging the outer ring, pauses nothing.</li>
+    </ul>
+    <p><strong>Default:</strong> Automatic</p>
+    <h3 class="item" id="available-widget-controls-routes-picker">Routes picker</h3>
+    <p>Lists your routes. Tap one to start, rename, share or delete it. While a route runs, it shows pause, stop, Previous / Next stop and your stop count, such as <code>3/12</code>. Search and sort work as on the <a href="routes.html">Routes</a> screen.</p>
+    <p><strong>Default:</strong> On</p>
+    <h3 class="item" id="available-widget-controls-favorites-picker">Favorites picker</h3>
+    <p>Lists your favorites with teleport and walk shortcuts. Open one to rename or delete it. Save your current position, or share it. Search and sort work as on the <a href="favorites.html">Favorites</a> screen.</p>
+    <p><strong>Default:</strong> On</p>
+    <h3 class="item" id="available-widget-controls-paste-coordinates">Paste coordinates</h3>
+    <p>Opens a small box at the bottom of the screen to paste coordinates. You can still use the app above it.</p>
+    <ul>
+      <li>Shrink the box to a bar to copy more points in another app.</li>
+      <li>Press and hold the button for a Capture shortcut.</li>
+      <li>If you paused spoofing, tap Start before you paste.</li>
+    </ul>
+    <p>See <a href="map.html#paste-coordinates">Map &rarr; Paste coordinates</a> for formats.</p>
+    <p><strong>Default:</strong> Off. Turn it on in Settings &rarr; Menus &rarr; App Features.</p>
+    <h3 class="item" id="available-widget-controls-roaming">Roaming</h3>
+    <p>Opens Walk around the block and Planting, so you can roam without opening the app. While roaming runs, tap it for pause and stop.</p>
+    <p><strong>Default:</strong> On</p>
+    <h3 class="item" id="available-widget-controls-altitude-override">Altitude override</h3>
+    <p>Type a fixed height for your fake location. It replaces the automatic height until you reset it in <a href="settings.html#gps-realism">Settings &rarr; Movement &amp; GPS</a>.</p>
+    <p><strong>Default:</strong> Off. Turn on Show altitude override button in Settings &rarr; Menus &rarr; Privacy.</p>
+    <h3 class="item" id="available-widget-controls-tap-to-walk-crosshair">Tap to Walk crosshair</h3>
+    <p>Places a clear layer over your app. Your next tap becomes your walk destination. See <a href="#screen-overlay">Tap to Walk</a>.</p>
+    <p><strong>Default:</strong> Shown only when Tap to Walk is on</p>
+    <h3 class="item" id="available-widget-controls-speed-cycle">Speed cycle</h3>
+    <p>One tap switches to the next speed. The icon shows the current speed. It applies at once to the joystick, walking, roaming and a playing route.</p>
+    <p><strong>Default:</strong> On</p>
 
     <h2 id="tap-to-walk">Tap to Walk</h2>
     <p>
@@ -162,28 +133,15 @@
     </p>
 
     <h3 id="tap-to-walk-settings">Settings</h3>
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Setting</th><th>What it does</th><th>Default</th></tr></thead>
-      <tbody>
-        <tr>
-          <td><strong>Scale</strong></td>
-          <td>Meters per pixel on your screen. Range 0.01 to 1.0. Raise it for a zoomed-out game map and lower it for a zoomed-in one.</td>
-          <td>0.23</td>
-        </tr>
-        <tr>
-          <td><strong>Compass orientation</strong></td>
-          <td>Keeps taps accurate when the game map rotates. Without it, taps assume north is at the top. Uses an Android accessibility feature.</td>
-          <td>Off</td>
-        </tr>
-        <tr>
-          <td><strong>Game app</strong></td>
-          <td>Pick your game from the list, then tap Test to check detection on your phone.</td>
-          <td>Select app</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h4 class="item" id="tap-to-walk-settings-scale">Scale</h4>
+    <p>Meters per pixel on your screen. Range 0.01 to 1.0. Raise it for a zoomed-out game map and lower it for a zoomed-in one.</p>
+    <p><strong>Default:</strong> 0.23</p>
+    <h4 class="item" id="tap-to-walk-settings-compass-orientation">Compass orientation</h4>
+    <p>Keeps taps accurate when the game map rotates. Without it, taps assume north is at the top. Uses an Android accessibility feature.</p>
+    <p><strong>Default:</strong> Off</p>
+    <h4 class="item" id="tap-to-walk-settings-game-app">Game app</h4>
+    <p>Pick your game from the list, then tap Test to check detection on your phone.</p>
+    <p><strong>Default:</strong> Select app</p>
 
     <h3 id="floating-map-quick-walk">Floating map quick walk</h3>
     <p>
@@ -191,7 +149,11 @@
       It skips the popup that asks whether to walk, teleport or use roads.
     </p>
 
+    <section class="has-shot">
     <h3 id="screen-overlay">Screen overlay</h3>
+    <aside class="shot">
+      <img class="phone-shot" src="screenshots/25_compass_disclosure.png" alt="Enable Tap to Walk confirmation screen">
+    </aside>
     <p>
       The overlay adds a crosshair button to the floating widget. Tap it once to place a clear layer over your current app.
       Your next tap anywhere becomes your walk destination, and the layer disappears.
@@ -204,13 +166,11 @@
       <li>Some apps can notice the compass helper. If your game limits features, turn off the locationjoystick compass entry in your phone's accessibility settings.</li>
     </ul>
 
-    <div class="feature-section">
-      <img class="phone-shot" src="screenshots/25_compass_disclosure.png" alt="Enable Tap to Walk confirmation screen">
       <ul class="section-bullets">
         <li>Turning the overlay on opens a confirmation screen first.</li>
         <li>Nothing turns on until you tap Agree.</li>
       </ul>
-    </div>
+    </section>
 
     <h3 id="compass-orientation">Compass orientation</h3>
     <p>

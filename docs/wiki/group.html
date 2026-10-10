@@ -24,16 +24,16 @@
 <div class="layout">
 
   <main>
+    <section class="has-shot">
     <h1 id="group-sync">Group Sync</h1>
+    <aside class="shot" id="group-main">
+      <img class="phone-shot" src="screenshots/17_group_sync.png" alt="Group Sync screen">
+    </aside>
     <p>
       Share one location across several devices on the same Wi-Fi network. One device is the leader and sends its position.
       The other devices follow. No account is needed.
       See the <a href="privacy.html#no-cloud">privacy policy</a>.
     </p>
-
-    <div class="feature-section" id="group-main">
-      <img class="phone-shot" src="screenshots/17_group_sync.png" alt="Group Sync screen">
-    </div>
 
     <h2 id="how-it-works">Set up a group</h2>
     <p>Before you start, put every device on the same Wi-Fi network and <a href="index.html#developer-options">set up mock location</a> on each one.</p>
@@ -47,60 +47,29 @@
       Scanning asks for camera access. Typing the code needs no extra permission.
       A leader can run one group at a time.
     </p>
+    </section>
 
     <h2 id="leader">Leader controls</h2>
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Control</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr>
-          <td><strong>QR code</strong></td>
-          <td>Shows the QR code and the join code. Tap the refresh icon for a new QR code. The join code stays the same.</td>
-        </tr>
-        <tr>
-          <td><strong>Sharing</strong> toggle</td>
-          <td>When on, the leader sends its position once a second. Turn it off to pause sharing and stay in the group.</td>
-        </tr>
-        <tr>
-          <td><strong>Control API</strong> toggle</td>
-          <td>Off by default. Lets other apps on your Wi-Fi control this device. Turns itself off when you leave the group or restart the app. Developers: see the <a href="control-api.html">Control API reference</a>.</td>
-        </tr>
-        <tr>
-          <td><strong>Regenerate key</strong></td>
-          <td>Shown with the Control API address. Makes the old key stop working.</td>
-        </tr>
-        <tr>
-          <td><strong>Leave group</strong></td>
-          <td>Removes this device from the group. Followers lose the connection and stop getting updates.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="leader-qr-code">QR code</h3>
+    <p>Shows the QR code and the join code. Tap the refresh icon for a new QR code. The join code stays the same.</p>
+    <h3 class="item" id="leader-sharing-toggle"><strong>Sharing</strong> toggle</h3>
+    <p>When on, the leader sends its position once a second. Turn it off to pause sharing and stay in the group.</p>
+    <h3 class="item" id="leader-control-api-toggle"><strong>Control API</strong> toggle</h3>
+    <p>Off by default. Lets other apps on your Wi-Fi control this device. Turns itself off when you leave the group or restart the app. Developers: see the <a href="control-api.html">Control API reference</a>.</p>
+    <h3 class="item" id="leader-regenerate-key">Regenerate key</h3>
+    <p>Shown with the Control API address. Makes the old key stop working.</p>
+    <h3 class="item" id="leader-leave-group">Leave group</h3>
+    <p>Removes this device from the group. Followers lose the connection and stop getting updates.</p>
 
     <h2 id="follower">Follower controls</h2>
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Control</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr>
-          <td><strong>Follow leader</strong> toggle</td>
-          <td>On by default when you join. When on, the device walks toward the leader. Turn it off to pause following and stay in the group. Moving the joystick also turns it off.</td>
-        </tr>
-        <tr>
-          <td><strong>Follow leader teleports</strong> toggle</td>
-          <td>On by default. When the leader teleports, or stops and restarts somewhere new, your device jumps there too. Turn it off to walk there instead. Hidden when <strong>Hide teleport features</strong> is on in <a href="settings.html#hide-teleport">Settings</a>. Your device then always walks.</td>
-        </tr>
-        <tr>
-          <td><strong>Teleport to leader now</strong></td>
-          <td>Jumps to the leader's last known position at once. Shown while Follow leader is on. A badge next to it shows the <a href="map.html#teleport-wait">suggested wait</a> before you jump. If the app does not know the leader's position yet, try again in a moment.</td>
-        </tr>
-        <tr>
-          <td><strong>Leave group</strong></td>
-          <td>Disconnects from the leader and clears the saved connection.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="follower-follow-leader-toggle"><strong>Follow leader</strong> toggle</h3>
+    <p>On by default when you join. When on, the device walks toward the leader. Turn it off to pause following and stay in the group. Moving the joystick also turns it off.</p>
+    <h3 class="item" id="follower-follow-leader-teleports-toggle"><strong>Follow leader teleports</strong> toggle</h3>
+    <p>On by default. When the leader teleports, or stops and restarts somewhere new, your device jumps there too. Turn it off to walk there instead. Hidden when <strong>Hide teleport features</strong> is on in <a href="settings.html#hide-teleport">Settings</a>. Your device then always walks.</p>
+    <h3 class="item" id="follower-teleport-to-leader-now">Teleport to leader now</h3>
+    <p>Jumps to the leader's last known position at once. Shown while Follow leader is on. A badge next to it shows the <a href="map.html#teleport-wait">suggested wait</a> before you jump. If the app does not know the leader's position yet, try again in a moment.</p>
+    <h3 class="item" id="follower-leave-group">Leave group</h3>
+    <p>Disconnects from the leader and clears the saved connection.</p>
 
     <h2 id="persistence">After you close the app</h2>
     <p>
@@ -120,29 +89,14 @@
 
     <h2 id="limitations">Troubleshooting</h2>
     <p>For other problems, see <a href="troubleshooting.html">Troubleshooting</a>.</p>
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Problem</th><th>Fix</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>A follower never moves.</td>
-          <td>Check that <strong>Follow leader</strong> is on for the follower and <strong>Sharing</strong> is on for the leader.</td>
-        </tr>
-        <tr>
-          <td>A device cannot reach the leader.</td>
-          <td>Turn off mobile data and any VPN on that device. Both devices must use the same Wi-Fi network.</td>
-        </tr>
-        <tr>
-          <td>The join code finds nothing.</td>
-          <td>Some phone hotspots block the code. Scan the QR code instead.</td>
-        </tr>
-        <tr>
-          <td>Followers cannot reconnect after the leader restarts the app.</td>
-          <td>The leader's network address can change. Followers retry for a short time. If that fails, rejoin with the QR code or the join code.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="limitations-a-follower-never-moves">A follower never moves.</h3>
+    <p>Check that <strong>Follow leader</strong> is on for the follower and <strong>Sharing</strong> is on for the leader.</p>
+    <h3 class="item" id="limitations-a-device-cannot-reach-the-leader">A device cannot reach the leader.</h3>
+    <p>Turn off mobile data and any VPN on that device. Both devices must use the same Wi-Fi network.</p>
+    <h3 class="item" id="limitations-the-join-code-finds-nothing">The join code finds nothing.</h3>
+    <p>Some phone hotspots block the code. Scan the QR code instead.</p>
+    <h3 class="item" id="limitations-followers-cannot-reconnect-after-the-leader-rest">Followers cannot reconnect after the leader restarts the app.</h3>
+    <p>The leader's network address can change. Followers retry for a short time. If that fails, rejoin with the QR code or the join code.</p>
 
   </main>
 

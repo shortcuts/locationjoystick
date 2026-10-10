@@ -24,30 +24,32 @@
 <div class="layout">
 
   <main>
+    <section class="has-shot">
     <h1 id="map">Map</h1>
+    <aside class="shot" id="map-main">
+      <img class="phone-shot" src="screenshots/02_map.png" alt="Map screen">
+    </aside>
     <p>
       The map shows your location as a marker. Buttons on it open search, paste, routes, favorites, and roaming.
       Map tiles come from <a href="settings.html#map-source">Settings &rarr; Menus &rarr; Map source</a>.
       If the map does not appear, see <a href="troubleshooting.html">Troubleshooting</a>.
     </p>
 
-    <div class="feature-section" id="map-main">
-      <img class="phone-shot" src="screenshots/02_map.png" alt="Map screen">
-      <div class="table-wrap">
-      <table class="option-table">
-        <thead><tr><th>Situation</th><th>What you see</th></tr></thead>
-        <tbody>
-          <tr><td>You open the app with spoofing on</td><td>The map loads. With spoofing off, the Home screen loads first. Open the side menu to reach the map.</td></tr>
-          <tr><td>You never set a position</td><td>The map starts at your real location.</td></tr>
-          <tr><td>You drag the map</td><td>It stops following your marker. Tap the center button to follow again. With spoofing off, it centers on your real location and keeps your saved position.</td></tr>
-          <tr><td>A walk, route, or roam is idle</td><td>Its button is grey.</td></tr>
-          <tr><td>A walk, route, or roam is moving</td><td>Its button is green.</td></tr>
-          <tr><td>A walk, route, or roam is paused</td><td>Its button is orange. Tap it to open the controls, then tap Resume.</td></tr>
-        </tbody>
-      </table>
-      </div>
-      <p>To stop or pause a walk, tap its button on the map and use the controls. To change speed, use the speed button on the <a href="overlays.html">widget</a>.</p>
-    </div>
+    <h2 id="map-states">What you see</h2>
+    <h3 class="item" id="map-states-you-open-the-app-with-spoofing-on">You open the app with spoofing on</h3>
+    <p>The map loads. With spoofing off, the Home screen loads first. Open the side menu to reach the map.</p>
+    <h3 class="item" id="map-states-you-never-set-a-position">You never set a position</h3>
+    <p>The map starts at your real location.</p>
+    <h3 class="item" id="map-states-you-drag-the-map">You drag the map</h3>
+    <p>It stops following your marker. Tap the center button to follow again. With spoofing off, it centers on your real location and keeps your saved position.</p>
+    <h3 class="item" id="map-states-a-walk-route-or-roam-is-idle">A walk, route, or roam is idle</h3>
+    <p>Its button is grey.</p>
+    <h3 class="item" id="map-states-a-walk-route-or-roam-is-moving">A walk, route, or roam is moving</h3>
+    <p>Its button is green.</p>
+    <h3 class="item" id="map-states-a-walk-route-or-roam-is-paused">A walk, route, or roam is paused</h3>
+    <p>Its button is orange. Tap it to open the controls, then tap Resume.</p>
+    <p>To stop or pause a walk, tap its button on the map and use the controls. To change speed, use the speed button on the <a href="overlays.html">widget</a>.</p>
+    </section>
 
     <h2 id="location-search">Search for a place</h2>
     <ol class="quickstart">
@@ -63,16 +65,17 @@
       <li>For privacy details, see <a href="settings.html#search-privacy">Settings &rarr; External services</a>.</li>
     </ul>
 
+    <section class="has-shot">
     <h2 id="paste-coordinates">Paste coordinates</h2>
+    <aside class="shot" id="map-paste-coordinates">
+      <img class="phone-shot" src="screenshots/23_map_paste_coordinates.png" alt="Paste coordinates sheet on the map">
+    </aside>
     <p><strong>Prerequisites:</strong> Turn on the paste button in Settings &rarr; Menus &rarr; App Features.</p>
     <ol class="quickstart">
       <li>Tap the paste button (clipboard icon) on the map or widget.</li>
       <li>Paste or type coordinates, one point per line. Formats are listed in <a href="routes.html#paste-coordinates">Routes</a>.</li>
       <li>Choose an action.</li>
     </ol>
-    <div class="feature-section" id="map-paste-coordinates">
-      <img class="phone-shot" src="screenshots/23_map_paste_coordinates.png" alt="Paste coordinates sheet on the map">
-    </div>
     <ul class="section-bullets">
       <li>One point: Teleport, Walk, Walk via roads, or Save favorite. Teleport works offline.</li>
       <li>Two or more points: Save route, Start route, and the route options in <a href="routes.html#replay-options">Routes</a>.</li>
@@ -84,40 +87,22 @@
 
     <h3 id="open-gpx">Open a GPX file</h3>
     <p>Open a GPX file from Files, Downloads, Share, or a chat app. The paste sheet opens titled "Open GPX" with the points filled in. Pick an action as above. Save route suggests the file name. If the file is not valid GPX, a message says so.</p>
+    </section>
 
     <h2 id="click-to-move">Tap to move</h2>
     <p>Long-press a point on the map, then pick an action from the sheet.</p>
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Action</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr>
-          <td><strong>Teleport here</strong></td>
-          <td>Jump to the point at once. Any running or paused route or roam ends first. Works offline. If spoofing is paused, tap Start first.</td>
-        </tr>
-        <tr>
-          <td><strong>Walk here</strong></td>
-          <td>Walk to the point in a straight line at your current speed.</td>
-        </tr>
-        <tr>
-          <td><strong>Walk here via roads</strong></td>
-          <td>Walk along real roads at your current speed. See <a href="#road-routing-fallback">when roads cannot load</a>.</td>
-        </tr>
-        <tr>
-          <td><strong>Add next point</strong></td>
-          <td>While walking, add a stop. The first tap chains your start, destination, and new point. Later taps add more stops. If you are following roads, the new stretch does too.</td>
-        </tr>
-        <tr>
-          <td><strong>Share this location</strong></td>
-          <td>Open the share menu with a link to the point. See <a href="location-links.html#sharing-a-location">Location Links</a>.</td>
-        </tr>
-        <tr>
-          <td><strong>While a saved route plays</strong></td>
-          <td>Choose Stop route and teleport, Stop route and walk here, or Finish route and walk here. Finish adds the point to the route's end.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="click-to-move-teleport-here">Teleport here</h3>
+    <p>Jump to the point at once. Any running or paused route or roam ends first. Works offline. If spoofing is paused, tap Start first.</p>
+    <h3 class="item" id="click-to-move-walk-here">Walk here</h3>
+    <p>Walk to the point in a straight line at your current speed.</p>
+    <h3 class="item" id="click-to-move-walk-here-via-roads">Walk here via roads</h3>
+    <p>Walk along real roads at your current speed. See <a href="#road-routing-fallback">when roads cannot load</a>.</p>
+    <h3 class="item" id="click-to-move-add-next-point">Add next point</h3>
+    <p>While walking, add a stop. The first tap chains your start, destination, and new point. Later taps add more stops. If you are following roads, the new stretch does too.</p>
+    <h3 class="item" id="click-to-move-share-this-location">Share this location</h3>
+    <p>Open the share menu with a link to the point. See <a href="location-links.html#sharing-a-location">Location Links</a>.</p>
+    <h3 class="item" id="click-to-move-while-a-saved-route-plays">While a saved route plays</h3>
+    <p>Choose Stop route and teleport, Stop route and walk here, or Finish route and walk here. Finish adds the point to the route's end.</p>
     <p id="road-routing-fallback">Walking via roads, road-following routes, and roaming load paths from an online service. If it is unreachable, the app uses a straight line for that stretch.</p>
 
     <h2 id="teleport-wait">Teleport wait</h2>
@@ -130,56 +115,59 @@
       <li>It reads "No wait needed" when the wait is over or you have not teleported yet.</li>
       <li>The clock starts at each teleport, from any screen. Walking never affects it.</li>
     </ul>
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Jump distance</th><th>Suggested wait</th></tr></thead>
-      <tbody>
-        <tr><td>Under 10 m</td><td>None</td></tr>
-        <tr><td>10 m</td><td>3 seconds</td></tr>
-        <tr><td>100 m</td><td>15 seconds</td></tr>
-        <tr><td>500 m</td><td>30 seconds</td></tr>
-        <tr><td>1 km</td><td>2 minutes</td></tr>
-        <tr><td>5 km</td><td>6 minutes</td></tr>
-        <tr><td>10 km</td><td>11 minutes</td></tr>
-        <tr><td>25 km</td><td>14 minutes</td></tr>
-        <tr><td>30 km</td><td>22 minutes</td></tr>
-        <tr><td>65 km</td><td>25 minutes</td></tr>
-        <tr><td>81 km</td><td>35 minutes</td></tr>
-        <tr><td>100 km</td><td>45 minutes</td></tr>
-        <tr><td>250 km</td><td>1 hour</td></tr>
-        <tr><td>500 km</td><td>1 hour 15 minutes</td></tr>
-        <tr><td>750 km</td><td>1 hour 30 minutes</td></tr>
-        <tr><td>1,000 km or more</td><td>2 hours</td></tr>
-      </tbody>
-    </table>
-    </div>
+    <ul class="section-bullets">
+  <li><strong>Under 10 m:</strong> None</li>
+  <li><strong>10 m:</strong> 3 seconds</li>
+  <li><strong>100 m:</strong> 15 seconds</li>
+  <li><strong>500 m:</strong> 30 seconds</li>
+  <li><strong>1 km:</strong> 2 minutes</li>
+  <li><strong>5 km:</strong> 6 minutes</li>
+  <li><strong>10 km:</strong> 11 minutes</li>
+  <li><strong>25 km:</strong> 14 minutes</li>
+  <li><strong>30 km:</strong> 22 minutes</li>
+  <li><strong>65 km:</strong> 25 minutes</li>
+  <li><strong>81 km:</strong> 35 minutes</li>
+  <li><strong>100 km:</strong> 45 minutes</li>
+  <li><strong>250 km:</strong> 1 hour</li>
+  <li><strong>500 km:</strong> 1 hour 15 minutes</li>
+  <li><strong>750 km:</strong> 1 hour 30 minutes</li>
+  <li><strong>1,000 km or more:</strong> 2 hours</li>
+</ul>
     <p>Between rows, the lower row applies. Distance is a straight line from your position to the target.</p>
 
+    <section class="has-shot">
     <h2 id="routes-sheet">Routes sheet</h2>
+    <aside class="shot" id="map-routes-sheet">
+      <img class="phone-shot" src="screenshots/06_map_routes_sheet.png" alt="Map routes bottom sheet">
+    </aside>
     <ol class="quickstart">
       <li>Tap the routes button on the map.</li>
       <li>Tap a route to preview its path.</li>
       <li>Choose Start, Loop, or Reverse.</li>
       <li>Use Previous stop and Next stop to skip waypoints. A count like <code>3/12</code> shows your current stop.</li>
     </ol>
-    <div class="feature-section" id="map-routes-sheet">
-      <img class="phone-shot" src="screenshots/06_map_routes_sheet.png" alt="Map routes bottom sheet">
-    </div>
     <p>See <a href="routes.html#replay-options">Replay options</a> for more.</p>
+    </section>
 
+    <section class="has-shot">
     <h2 id="favorites-sheet">Favorites sheet</h2>
+    <aside class="shot" id="map-favorites-sheet">
+      <img class="phone-shot" src="screenshots/07_map_favorites_sheet.png" alt="Map favorites bottom sheet">
+    </aside>
     <ol class="quickstart">
       <li>Tap the favorites button on the map.</li>
       <li>Tap a favorite and pick Set location (teleport), Walk to location (straight line), or Walk via roads.</li>
       <li>Type in the search box to filter by name or area. Closing the sheet clears it.</li>
       <li>Tap Save current location to add where you are now.</li>
     </ol>
-    <div class="feature-section" id="map-favorites-sheet">
-      <img class="phone-shot" src="screenshots/07_map_favorites_sheet.png" alt="Map favorites bottom sheet">
-    </div>
     <p>Each favorite shows its straight-line distance. Road distance is longer. Teleport ends any running or paused route or roam.</p>
+    </section>
 
+    <section class="has-shot">
     <h2 id="roaming-sheet">Roaming sheet</h2>
+    <aside class="shot" id="map-roaming-sheet">
+      <img class="phone-shot" src="screenshots/08_map_roaming_sheet.png" alt="Map roaming bottom sheet">
+    </aside>
     <p><strong>Prerequisites:</strong> Pause or stop a playing route first. Only one roaming mode runs at a time.</p>
     <ol class="quickstart">
       <li>Tap the roaming button on the map.</li>
@@ -188,38 +176,21 @@
       <li>Tap Generate to preview the path.</li>
       <li>Tap Start roaming. It keeps going with the screen off.</li>
     </ol>
-    <div class="feature-section" id="map-roaming-sheet">
-      <img class="phone-shot" src="screenshots/08_map_roaming_sheet.png" alt="Map roaming bottom sheet">
-    </div>
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Mode</th><th>What it does</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Walk around the block</strong></td><td>Walks to random spots within a radius.</td></tr>
-        <tr><td><strong>Planting</strong></td><td>Walks a spiral that opens out, then tightens. One spiral is one loop.</td></tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="roaming-sheet-walk-around-the-block">Walk around the block</h3>
+    <p>Walks to random spots within a radius.</p>
+    <h3 class="item" id="roaming-sheet-planting">Planting</h3>
+    <p>Walks a spiral that opens out, then tightens. One spiral is one loop.</p>
     <p>Changing speed during roaming replaces the speed you set here.</p>
+    </section>
+
     <h2 id="home-screen-badges">Home screen badges</h2>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Badge</th><th>Shows when</th><th>Dismiss by</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>Update available</td>
-          <td>GitHub has a newer release. Checked once a day. Needs internet.</td>
-          <td>Tap <strong>X</strong>. Hidden until a newer version comes out.</td>
-        </tr>
-        <tr>
-          <td>What's new</td>
-          <td>After an update, showing what changed. Works offline.</td>
-          <td>Tap <strong>X</strong>. Hidden until the next version. See the <a href="changelog.html">changelog</a>.</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="home-screen-badges-update-available">Update available</h3>
+    <p><strong>Shows when:</strong> GitHub has a newer release. Checked once a day. Needs internet.</p>
+    <p><strong>Dismiss by:</strong> Tap <strong>X</strong>. Hidden until a newer version comes out.</p>
+    <h3 class="item" id="home-screen-badges-what-s-new">What's new</h3>
+    <p><strong>Shows when:</strong> After an update, showing what changed. Works offline.</p>
+    <p><strong>Dismiss by:</strong> Tap <strong>X</strong>. Hidden until the next version. See the <a href="changelog.html">changelog</a>.</p>
 
   </main>
 

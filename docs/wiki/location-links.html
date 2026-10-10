@@ -46,19 +46,14 @@
       <li>A popup asks what to do.</li>
     </ol>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead>
-        <tr><th>Choice</th><th>What it does</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><strong>Teleport here</strong></td><td>Moves your fake position there at once.</td></tr>
-        <tr><td><strong>Walk here</strong></td><td>Walks there at your current speed.</td></tr>
-        <tr><td><strong>Walk here via roads</strong></td><td>Follows real roads.</td></tr>
-        <tr><td><strong>Do nothing</strong></td><td>Closes the popup. Your position does not change.</td></tr>
-      </tbody>
-    </table>
-    </div>
+    <h4 class="item" id="what-happens-when-the-link-is-opened-teleport-here">Teleport here</h4>
+    <p>Moves your fake position there at once.</p>
+    <h4 class="item" id="what-happens-when-the-link-is-opened-walk-here">Walk here</h4>
+    <p>Walks there at your current speed.</p>
+    <h4 class="item" id="what-happens-when-the-link-is-opened-walk-here-via-roads">Walk here via roads</h4>
+    <p>Follows real roads.</p>
+    <h4 class="item" id="what-happens-when-the-link-is-opened-do-nothing">Do nothing</h4>
+    <p>Closes the popup. Your position does not change.</p>
 
     <h3 id="opening-links-from-other-apps">Opening links from other apps</h3>
     <p>
@@ -82,17 +77,14 @@
     </p>
     <pre><code>https://locationjoystick.shrtcts.fr/?lat=LAT&amp;lon=LON</code></pre>
 
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead>
-        <tr><th>Parameter</th><th>Type</th><th>Valid range</th><th>Description</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><code>lat</code></td><td>decimal</td><td>−90 to 90</td><td>Latitude</td></tr>
-        <tr><td><code>lon</code></td><td>decimal</td><td>−180 to 180</td><td>Longitude</td></tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="url-format-lat"><code>lat</code></h3>
+    <p><strong>Type:</strong> decimal</p>
+    <p><strong>Valid range:</strong> −90 to 90</p>
+    <p>Latitude</p>
+    <h3 class="item" id="url-format-lon"><code>lon</code></h3>
+    <p><strong>Type:</strong> decimal</p>
+    <p><strong>Valid range:</strong> −180 to 180</p>
+    <p>Longitude</p>
 
     <p>Example:</p>
     <pre><code>https://locationjoystick.shrtcts.fr/?lat=35.6762&amp;lon=139.6503</code></pre>

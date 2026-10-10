@@ -45,68 +45,31 @@
 
     <h2 id="endpoints">Endpoints</h2>
     <p>All paths start with <code>/api/v1</code>. Commands that succeed return <code>{"ok":true}</code>.</p>
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Method</th><th>Path</th><th>Purpose</th></tr></thead>
-      <tbody>
-        <tr><td><code>GET</code></td><td><a href="#ep-get-status"><code>/status</code></a></td><td>API version, role and follower count</td></tr>
-        <tr><td><code>GET</code></td><td><a href="#ep-get-state"><code>/state</code></a></td><td>Full state snapshot</td></tr>
-        <tr><td><code>GET</code></td><td><a href="#ep-get-position"><code>/position</code></a></td><td>Current position</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-teleport"><code>/teleport</code></a></td><td>Jump to coordinates</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-walk"><code>/walk</code></a></td><td>Walk to coordinates</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-walk-pause"><code>/walk/pause</code></a></td><td>Pause the walk</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-walk-resume"><code>/walk/resume</code></a></td><td>Resume the walk</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-walk-stop"><code>/walk/stop</code></a></td><td>Stop the walk</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-route-start"><code>/route/start</code></a></td><td>Play a saved route</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-route-pause"><code>/route/pause</code></a></td><td>Pause the route</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-route-resume"><code>/route/resume</code></a></td><td>Resume the route</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-route-stop"><code>/route/stop</code></a></td><td>Stop the route</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-roam-start"><code>/roam/start</code></a></td><td>Start roaming</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-roam-pause"><code>/roam/pause</code></a></td><td>Pause roaming</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-roam-resume"><code>/roam/resume</code></a></td><td>Resume roaming</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-roam-stop"><code>/roam/stop</code></a></td><td>Stop roaming</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-spoofing-start"><code>/spoofing/start</code></a></td><td>Start the fake location</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-spoofing-stop"><code>/spoofing/stop</code></a></td><td>Stop the fake location</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-speed-profile"><code>/speed-profile</code></a></td><td>Set the active speed profile</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-joystick"><code>/joystick</code></a></td><td>Hold the joystick for a short time</td></tr>
-        <tr><td><code>GET</code></td><td><a href="#ep-get-favorites"><code>/favorites</code></a></td><td>List favorites</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-favorites"><code>/favorites</code></a></td><td>Create a favorite</td></tr>
-        <tr><td><code>GET</code></td><td><a href="#ep-get-favorites-id"><code>/favorites/{id}</code></a></td><td>Get one favorite</td></tr>
-        <tr><td><code>PUT</code></td><td><a href="#ep-put-favorites-id"><code>/favorites/{id}</code></a></td><td>Update a favorite</td></tr>
-        <tr><td><code>DELETE</code></td><td><a href="#ep-delete-favorites-id"><code>/favorites/{id}</code></a></td><td>Delete a favorite</td></tr>
-        <tr><td><code>GET</code></td><td><a href="#ep-get-routes"><code>/routes</code></a></td><td>List routes</td></tr>
-        <tr><td><code>POST</code></td><td><a href="#ep-post-routes"><code>/routes</code></a></td><td>Create a route</td></tr>
-        <tr><td><code>GET</code></td><td><a href="#ep-get-routes-id"><code>/routes/{id}</code></a></td><td>Get one route</td></tr>
-        <tr><td><code>PUT</code></td><td><a href="#ep-put-routes-id"><code>/routes/{id}</code></a></td><td>Update a route</td></tr>
-        <tr><td><code>DELETE</code></td><td><a href="#ep-delete-routes-id"><code>/routes/{id}</code></a></td><td>Delete a route</td></tr>
-        <tr><td><code>GET</code></td><td><a href="#ep-get-speed-profiles"><code>/speed-profiles</code></a></td><td>List speed profiles</td></tr>
-        <tr><td><code>GET</code></td><td><a href="#ep-get-speed-profiles-id"><code>/speed-profiles/{id}</code></a></td><td>Get one speed profile</td></tr>
-        <tr><td><code>PUT</code></td><td><a href="#ep-put-speed-profiles-id"><code>/speed-profiles/{id}</code></a></td><td>Change a profile's speed</td></tr>
-      </tbody>
-    </table>
-    </div>
+    
 
     <h2 id="errors">Errors</h2>
     <p>
       Errors return <code>{ "error": { "code": "...", "message": "..." } }</code>.
       Use <code>code</code> in your program and <code>message</code> for people.
     </p>
-    <div class="table-wrap">
-    <table class="option-table">
-      <thead><tr><th>Status</th><th>Code</th><th>When</th></tr></thead>
-      <tbody>
-        <tr><td><code>400</code></td><td><code>bad_request</code></td><td>Invalid input, bad coordinates, unknown profile or kind, or malformed JSON.</td></tr>
-        <tr><td><code>401</code></td><td><code>unauthorized</code></td><td>Missing or incorrect key.</td></tr>
-        <tr><td><code>404</code></td><td><code>not_found</code></td><td>Unknown path, or the Control API is off.</td></tr>
-        <tr><td><code>404</code></td><td><code>route_not_found</code>, <code>favorite_not_found</code>, <code>speed_profile_not_found</code></td><td>No item with that ID.</td></tr>
-        <tr><td><code>405</code></td><td><code>method_not_allowed</code></td><td>Wrong method. The <code>Allow</code> header lists the right ones.</td></tr>
-        <tr><td><code>409</code></td><td><code>no_position</code></td><td>The device has no position yet. Start spoofing first.</td></tr>
-        <tr><td><code>409</code></td><td><code>conflict</code></td><td>A route is playing, so you cannot start roaming or edit that route.</td></tr>
-        <tr><td><code>413</code></td><td><code>payload_too_large</code></td><td>Body is over 64 KiB.</td></tr>
-        <tr><td><code>500</code></td><td><code>internal_error</code></td><td>Server error. Try again.</td></tr>
-      </tbody>
-    </table>
-    </div>
+    <h3 class="item" id="errors-400-bad-request"><code>400</code> <code>bad_request</code></h3>
+    <p>Invalid input, bad coordinates, unknown profile or kind, or malformed JSON.</p>
+    <h3 class="item" id="errors-401-unauthorized"><code>401</code> <code>unauthorized</code></h3>
+    <p>Missing or incorrect key.</p>
+    <h3 class="item" id="errors-404-not-found"><code>404</code> <code>not_found</code></h3>
+    <p>Unknown path, or the Control API is off.</p>
+    <h3 class="item" id="errors-404-route-not-found-favorite-not-found-speed-pro"><code>404</code> <code>route_not_found</code>, <code>favorite_not_found</code>, <code>speed_profile_not_found</code></h3>
+    <p>No item with that ID.</p>
+    <h3 class="item" id="errors-405-method-not-allowed"><code>405</code> <code>method_not_allowed</code></h3>
+    <p>Wrong method. The <code>Allow</code> header lists the right ones.</p>
+    <h3 class="item" id="errors-409-no-position"><code>409</code> <code>no_position</code></h3>
+    <p>The device has no position yet. Start spoofing first.</p>
+    <h3 class="item" id="errors-409-conflict"><code>409</code> <code>conflict</code></h3>
+    <p>A route is playing, so you cannot start roaming or edit that route.</p>
+    <h3 class="item" id="errors-413-payload-too-large"><code>413</code> <code>payload_too_large</code></h3>
+    <p>Body is over 64 KiB.</p>
+    <h3 class="item" id="errors-500-internal-error"><code>500</code> <code>internal_error</code></h3>
+    <p>Server error. Try again.</p>
 
     <h2 id="state-and-status">State and Status</h2>
     <div class="endpoint">

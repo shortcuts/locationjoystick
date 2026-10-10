@@ -28,25 +28,43 @@ All wiki pages are read by **app users, not developers**. Write every sentence a
 
 Every page is one of four types; keep each page to a single type.
 
-| Type | Purpose | Structure |
-|---|---|---|
-| **Tutorial** | Learn by doing on a topic for the first time. | Goal statement → step-by-step instructions → verifiable result after each step → final working outcome. |
-| **How-to guide** | Complete a specific task or solve a problem. | Goal statement → prerequisites → numbered steps → expected result. |
-| **Reference** | Look up facts: options, parameters, controls, API endpoints. | Consistent format per entry (name, description, default) in tables or lists; prose only for behavior a table cannot carry. |
-| **Explanation** | Understand why a feature works the way it does. | Context → core concept → alternatives and trade-offs → broader perspective. |
+- **Tutorial.** Learn by doing on a topic for the first time.
+  - Structure: goal statement → step-by-step instructions → verifiable result after each step → final working outcome.
+- **How-to guide.** Complete a specific task or solve a problem.
+  - Structure: goal statement → prerequisites → numbered steps → expected result.
+- **Reference.** Look up facts: options, parameters, controls, API endpoints.
+  - Structure: one child heading per entry, with a description and default below it; see "Reference pages".
+- **Explanation.** Understand why a feature works the way it does.
+  - Structure: context → core concept → alternatives and trade-offs → broader perspective.
 
 Do not mix types on one page. If content fits multiple types (e.g. an explanation alongside how-to steps), create separate pages and link between them.
+
+### Screenshots
+
+Put a screenshot in the section it illustrates. Wrap the section in `<section class="has-shot">` and place `<aside class="shot"><img class="phone-shot" …></aside>` right after the section heading. On wide screens the screenshot floats in the right margin and scrolls with that section only. On narrow screens it sits under the heading. Use one screenshot per section.
 
 ### Length and clarity
 
 - Sentences must be under 20 words. One idea per sentence.
-- Settings, options, controls, and API parameters go in a table (name, description, default) or bullet list — never paragraph form.
+- Settings, options, controls, and API parameters get one child heading each, or a bullet list for short items — never a table, never paragraph form.
 - Link to an explanation once, then reuse the link text or reference. Do not repeat the same explanation inline.
 - Cut history, marketing tone ("powerful", "seamless"), and repeated phrasing. Every sentence must earn its place.
 
 ### Reference pages
 
-A reference page opens with a table listing the items (name, description, default). Add prose paragraphs only for behavior a table cannot carry. Keep the table as the first and primary content.
+Never use a `<table>`. Tables scroll sideways or squash on phones, and cells cannot hold lists or links cleanly. Give each entry a child heading instead.
+
+Rules:
+- Put one heading per entry, one level below the section heading (`<h3>` under `<h2>`, `<h4>` under `<h3>`). Add `class="item"` so the sidebar outline skips it.
+- Give every item heading a unique `id`. Prefix it with the section `id` (e.g. `available-widget-controls-lock-joystick`).
+- Write the heading as the entry name only: the control, option, mode, or situation.
+- Below the heading, write the description in plain sentences. Use a bullet list for steps or sub-points.
+- End with `<p><strong>Default:</strong> …</p>` when the entry has a default. Use the same bold label for any other fact, such as `Shows when:` or `License:`.
+- Keep the same facts, in the same order, for every entry in a section.
+- Use a plain bullet list for short name-to-value lookups, such as `<strong>10 m:</strong> 3 seconds`.
+- Do not list entries twice. If each entry already has its own card or heading further down, link to those instead of adding an index.
+
+Open a reference section with one sentence that says what the entries are. Add prose paragraphs only for behavior the entries cannot carry.
 
 ---
 
@@ -81,13 +99,11 @@ This applies to prose edits only. Screenshot regeneration, nav wiring in `wiki-i
 
 The sidebar is organized into five groups in fixed order:
 
-| Group | Purpose | Pages |
-|---|---|---|
-| **Start** | First-time setup and getting going. | Getting Started. |
-| **Use** | Goal-based task pages first, then everyday features you navigate while using the app. | Common tasks (hub plus goal pages), Map, Overlays, Tap to Walk, Routes, Favorites, Location Links, Group Sync. |
-| **Configure** | Settings and data backup or transfer. | Settings, Backup & Transfer. |
-| **Help** | Fixing problems and integrations for developers. | Troubleshooting, Control API. |
-| **About** | Meta pages for the project. | Changelog, Privacy, Acknowledgements. |
+- **Start.** First-time setup and getting going. Pages: Getting Started.
+- **Use.** Goal-based task pages first, then everyday features you navigate while using the app. Pages: Common tasks (hub plus goal pages), Map, Overlays, Tap to Walk, Routes, Favorites, Location Links, Group Sync.
+- **Configure.** Settings and data backup or transfer. Pages: Settings, Backup & Transfer.
+- **Help.** Fixing problems and integrations for developers. Pages: Troubleshooting, Control API.
+- **About.** Meta pages for the project. Pages: Changelog, Privacy, Acknowledgements.
 
 All nav items live in `docs/wiki/wiki-init.js`, in the `NAV_ITEMS` array. Each group is an object with a `group` name and an `items` array. See the current `NAV_ITEMS` at the top of `docs/wiki/wiki-init.js` for the live list and label wording — don't copy an example here, it drifts.
 
