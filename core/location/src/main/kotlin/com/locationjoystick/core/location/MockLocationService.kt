@@ -281,6 +281,7 @@ class MockLocationService : Service() {
                 onSpeedChange = { currentSpeedMs = it },
                 pushLocationUpdate = ::pushLocationUpdate,
                 startUpdateLoop = ::startUpdateLoop,
+                plantingRadiusMeters = { realism.plantingRadiusMeters },
             )
         createNotificationChannel()
         observeLocationState()

@@ -60,6 +60,7 @@ class ReplayOrchestratorTest {
     private val stateChanges = mutableListOf<MockLocationState>()
     private val speedChanges = mutableListOf<Float>()
     private var startUpdateLoopCalled = false
+    private var plantingRadius = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS
 
     private lateinit var orchestrator: ReplayOrchestrator
 
@@ -68,6 +69,7 @@ class ReplayOrchestratorTest {
         stateChanges.clear()
         speedChanges.clear()
         startUpdateLoopCalled = false
+        plantingRadius = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS
         orchestrator =
             ReplayOrchestrator(
                 context = context,
@@ -85,6 +87,7 @@ class ReplayOrchestratorTest {
                 onSpeedChange = { speedChanges.add(it) },
                 pushLocationUpdate = { },
                 startUpdateLoop = { startUpdateLoopCalled = true },
+                plantingRadiusMeters = { plantingRadius },
             )
     }
 
@@ -930,6 +933,39 @@ class ReplayOrchestratorTest {
                     onPositionUpdate = any(),
                     onComplete = any(),
                     boundaryIndices = expected.second,
+                )
+            }
+        }
+
+    @Test
+    fun handleStart_planting_usesConfiguredRadius() =
+        runTest {
+            plantingRadius = 100.0
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val center = LatLng(2.0, 2.0)
+            val route =
+                com.locationjoystick.core.model.Route(
+                    id = "route-1",
+                    name = "R",
+                    waypoints =
+                        listOf(
+                            com.locationjoystick.core.model
+                                .Waypoint("w1", center, 0),
+                        ),
+                )
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
+            val expected = buildPlantingReplayPath(listOf(center), 100.0)
+
+            orchestrator.handleStart("route-1", 1.4, RouteStartConfig(isPlanting = true, teleportToStart = true))
+
+            verify {
+                routeReplayEngine.start(
+                    waypoints = expected.first,
+                    speedMs = 1.4,
+                    isLooping = true,
+                    onPositionUpdate = any(),
+                    onComplete = any(),
+                    boundaryIndices = listOf(0),
                 )
             }
         }

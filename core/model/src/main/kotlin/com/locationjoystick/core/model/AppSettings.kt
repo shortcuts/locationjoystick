@@ -25,6 +25,7 @@ data class AppSettings(
     val bypassMockLocationCheck: Boolean = false,
     val realElevationEnabled: Boolean = true,
     val altitudeJitterRadiusMeters: Double = 0.25,
+    val plantingRadiusMeters: Double = 35.0,
     val altitudeOverrideButtonEnabled: Boolean = false,
     val debugStatsEnabled: Boolean = false,
 )

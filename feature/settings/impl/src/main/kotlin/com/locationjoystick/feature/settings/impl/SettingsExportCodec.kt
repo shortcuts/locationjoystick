@@ -92,6 +92,7 @@ internal object SettingsExportCodec {
         settingsObj.put("bypassMockLocationCheck", data.settings.bypassMockLocationCheck)
         settingsObj.put("realElevationEnabled", data.settings.realElevationEnabled)
         settingsObj.put("altitudeJitterRadiusMeters", data.settings.altitudeJitterRadiusMeters)
+        settingsObj.put("plantingRadiusMeters", data.settings.plantingRadiusMeters)
         settingsObj.put("altitudeOverrideButtonEnabled", data.settings.altitudeOverrideButtonEnabled)
         settingsObj.put("debugStatsEnabled", data.settings.debugStatsEnabled)
         val roamingObj = JSONObject()
@@ -253,6 +254,8 @@ internal object SettingsExportCodec {
             settingsObj.optBoolean("realElevationEnabled", AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT)
         val altitudeJitterRadiusMeters =
             settingsObj.optDouble("altitudeJitterRadiusMeters", AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS)
+        val plantingRadiusMeters =
+            settingsObj.optDouble("plantingRadiusMeters", AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS)
         val altitudeOverrideButtonEnabled = settingsObj.optBoolean("altitudeOverrideButtonEnabled", false)
         val debugStatsEnabled = settingsObj.optBoolean("debugStatsEnabled", false)
         val roamingDefaultsObj = settingsObj.optJSONObject("roamingDefaults")
@@ -320,6 +323,7 @@ internal object SettingsExportCodec {
                 roamingDefaults = roamingDefaults,
                 realElevationEnabled = realElevationEnabled,
                 altitudeJitterRadiusMeters = altitudeJitterRadiusMeters,
+                plantingRadiusMeters = plantingRadiusMeters,
                 altitudeOverrideButtonEnabled = altitudeOverrideButtonEnabled,
                 debugStatsEnabled = debugStatsEnabled,
             )

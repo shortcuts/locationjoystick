@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -114,6 +115,21 @@ class PasteCoordinatesViewModel
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(PasteCoordinatesUiState())
         val uiState: StateFlow<PasteCoordinatesUiState> = _uiState.asStateFlow()
+
+        init {
+            // ponytail: a user typing exactly the default text before the first DataStore read is overwritten.
+            viewModelScope.launch {
+                val radius = settingsRepository.getPlantingRadius().first()
+                val defaultText = PasteCoordinatesUiState().plantingRadiusText
+                _uiState.update {
+                    if (it.plantingRadiusText != defaultText) {
+                        it
+                    } else {
+                        it.copy(plantingRadiusMeters = radius, plantingRadiusText = radius.toInt().toString())
+                    }
+                }
+            }
+        }
 
         val mapTileSource: StateFlow<MapTileSource> =
             settingsRepository

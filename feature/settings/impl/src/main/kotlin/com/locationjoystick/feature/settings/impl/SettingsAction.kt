@@ -157,6 +157,10 @@ internal sealed class SettingsAction {
         val meters: Double,
     ) : SettingsAction()
 
+    data class SetPlantingRadius(
+        val meters: Double,
+    ) : SettingsAction()
+
     data class SetAltitudeOverrideButtonEnabled(
         val enabled: Boolean,
     ) : SettingsAction()

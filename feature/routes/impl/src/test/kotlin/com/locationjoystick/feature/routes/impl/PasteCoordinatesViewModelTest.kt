@@ -44,6 +44,8 @@ class PasteCoordinatesViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        every { settingsRepository.getPlantingRadius() } returns
+            flowOf(AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS)
         every { context.getString(R.string.route_paste_no_valid_coordinates) } returns
             "No valid coordinates found in that text."
         every { context.getString(R.string.route_paste_need_one_point_planting) } returns
@@ -58,6 +60,14 @@ class PasteCoordinatesViewModelTest {
     @After
     fun teardown() {
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `planting radius field is seeded from the saved setting`() {
+        every { settingsRepository.getPlantingRadius() } returns flowOf(80.0)
+        val vm = PasteCoordinatesViewModel(routeRepository, osrmClient, routingErrorReporter, settingsRepository, context)
+        assertEquals(80.0, vm.uiState.value.plantingRadiusMeters, 0.0)
+        assertEquals("80", vm.uiState.value.plantingRadiusText)
     }
 
     @Test

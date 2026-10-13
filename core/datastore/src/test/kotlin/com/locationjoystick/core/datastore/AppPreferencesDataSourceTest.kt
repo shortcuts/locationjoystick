@@ -32,6 +32,18 @@ class AppPreferencesDataSourceTest {
         }
 
     @Test
+    fun `plantingRadius defaults to 35 and clamps to 5-200`() =
+        runTest {
+            assertEquals(35.0, dataSource.getPlantingRadius().first(), 0.0)
+            dataSource.setPlantingRadius(60.0)
+            assertEquals(60.0, dataSource.getPlantingRadius().first(), 0.0)
+            dataSource.setPlantingRadius(1.0)
+            assertEquals(5.0, dataSource.getPlantingRadius().first(), 0.0)
+            dataSource.setPlantingRadius(999.0)
+            assertEquals(200.0, dataSource.getPlantingRadius().first(), 0.0)
+        }
+
+    @Test
     fun `sort modes default and round-trip`() =
         runTest {
             assertEquals(SavedItemSortMode.NEWEST_FIRST, dataSource.getRoutesSortMode().first())

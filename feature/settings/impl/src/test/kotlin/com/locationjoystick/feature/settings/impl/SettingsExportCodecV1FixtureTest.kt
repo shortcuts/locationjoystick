@@ -61,6 +61,15 @@ class SettingsExportCodecV1FixtureTest {
     }
 
     @Test
+    fun `planting radius defaults to 35 when absent and round-trips when set`() {
+        val base = SettingsExportCodec.parseExportData(v1Fixture)
+        assertEquals(35.0, base.settings.plantingRadiusMeters, 0.0001)
+        val original = base.copy(settings = base.settings.copy(plantingRadiusMeters = 80.0))
+        val parsed = SettingsExportCodec.parseExportData(SettingsExportCodec.serializeExportData(original))
+        assertEquals(80.0, parsed.settings.plantingRadiusMeters, 0.0001)
+    }
+
+    @Test
     fun `altitude fields round-trip through serialize and parse`() {
         val original =
             SettingsExportCodec.parseExportData(v1Fixture).copy(

@@ -204,6 +204,7 @@ class SettingsViewModel
             val showRouteJumpButtons: Boolean? = null,
             val realismRealElevationEnabled: Boolean? = null,
             val altitudeJitterRadiusMeters: Double? = null,
+            val plantingRadiusMeters: Double? = null,
             val altitudeOverrideButtonEnabled: Boolean? = null,
             val debugStatsEnabled: Boolean? = null,
         )
@@ -287,6 +288,7 @@ class SettingsViewModel
                         draftState.realismRealElevationEnabled ?: snapshot.realismRealElevationEnabled,
                     hasAltitudeOverride = baseAltitudeOverride != null,
                     altitudeJitterRadiusMeters = draftState.altitudeJitterRadiusMeters ?: snapshot.altitudeJitterRadiusMeters,
+                    plantingRadiusMeters = draftState.plantingRadiusMeters ?: snapshot.plantingRadiusMeters,
                     altitudeOverrideButtonEnabled =
                         draftState.altitudeOverrideButtonEnabled ?: snapshot.altitudeOverrideButtonEnabled,
                     debugStatsEnabled = draftState.debugStatsEnabled ?: snapshot.debugStatsEnabled,
@@ -486,6 +488,10 @@ class SettingsViewModel
             mutableDraft.update { it.copy(altitudeJitterRadiusMeters = meters) }
         }
 
+        fun setPlantingRadius(meters: Double) {
+            mutableDraft.update { it.copy(plantingRadiusMeters = meters) }
+        }
+
         fun setAltitudeOverrideButtonEnabled(enabled: Boolean) {
             mutableDraft.update { it.copy(altitudeOverrideButtonEnabled = enabled) }
         }
@@ -644,6 +650,7 @@ class SettingsViewModel
                             showRouteJumpButtons = state.showRouteJumpButtons,
                             realismRealElevationEnabled = state.realismRealElevationEnabled,
                             altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
+                            plantingRadiusMeters = state.plantingRadiusMeters,
                             altitudeOverrideButtonEnabled = state.altitudeOverrideButtonEnabled,
                             debugStatsEnabled = state.debugStatsEnabled,
                             roamingDefaults =
@@ -741,6 +748,7 @@ class SettingsViewModel
                     bypassMockLocationCheck = settingsRepository.getBypassMockLocationCheck().first(),
                     realElevationEnabled = state.realismRealElevationEnabled,
                     altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
+                    plantingRadiusMeters = state.plantingRadiusMeters,
                     altitudeOverrideButtonEnabled = state.altitudeOverrideButtonEnabled,
                     debugStatsEnabled = state.debugStatsEnabled,
                 )
@@ -958,6 +966,7 @@ class SettingsViewModel
                     bypassMockLocationCheck = data.settings.bypassMockLocationCheck,
                     realismRealElevationEnabled = data.settings.realElevationEnabled,
                     altitudeJitterRadiusMeters = data.settings.altitudeJitterRadiusMeters,
+                    plantingRadiusMeters = data.settings.plantingRadiusMeters,
                     altitudeOverrideButtonEnabled = data.settings.altitudeOverrideButtonEnabled,
                     debugStatsEnabled = data.settings.debugStatsEnabled,
                     jitterSpeedIdleVariationPct = data.jitterSpeedIdleVariationPct,

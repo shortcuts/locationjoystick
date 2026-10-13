@@ -35,6 +35,7 @@
     <string name="settings_favorites_routes_options_for_the_routes_list">"路線清單的選項。"</string>
     <string name="settings_favorites_routes_show_hot_routes">"顯示熱門路線"</string>
     <string name="settings_favorites_routes_show_hot_routes_desc">"向你的路線清單加入一組精選的內建路線。可在下方選擇要包含哪些路線。"</string>
+    <string name="settings_favorites_routes_planting_radius_m">"種植圓圈半徑（公尺）"</string>
     <string name="settings_gps_section_location_randomness">"位置隨機化"</string>
     <string name="settings_gps_section_adds_small_random_shifts_to_your">"為你的模擬位置加入小幅隨機偏移，使其看起來更自然。設為 0 可關閉。"</string>
     <string name="settings_gps_section_position_jitter">"位置抖動"</string>

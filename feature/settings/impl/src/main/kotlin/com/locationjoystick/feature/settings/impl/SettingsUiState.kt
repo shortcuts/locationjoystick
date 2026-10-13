@@ -51,6 +51,7 @@ data class SettingsUiState(
     val realismRealElevationEnabled: Boolean = AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
     val hasAltitudeOverride: Boolean = false,
     val altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
+    val plantingRadiusMeters: Double = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS,
     val altitudeOverrideButtonEnabled: Boolean = false,
     val debugStatsEnabled: Boolean = false,
     val captureModeEnabled: Boolean = false,

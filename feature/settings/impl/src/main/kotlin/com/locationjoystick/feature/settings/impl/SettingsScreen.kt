@@ -390,6 +390,10 @@ fun SettingsRoute(
                     viewModel.setAltitudeJitterRadius(action.meters)
                 }
 
+                is SettingsAction.SetPlantingRadius -> {
+                    viewModel.setPlantingRadius(action.meters)
+                }
+
                 is SettingsAction.SetAltitudeOverrideButtonEnabled -> {
                     viewModel.setAltitudeOverrideButtonEnabled(action.enabled)
                 }

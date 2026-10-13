@@ -6,7 +6,7 @@ Key files: `:feature:settings:impl/SettingsScreen.kt`, `:core:data/SettingsRepos
 
 ## Scope
 
-Covers: routes, favorites, speed profiles, widget/map feature config + shared display order, roaming defaults, jitter settings, hot locations state, hot routes state, sort preferences.
+Covers: routes, favorites, speed profiles, widget/map feature config + shared display order, roaming defaults, jitter settings, planting radius, hot locations state, hot routes state, sort preferences.
 
 `AppSettings.mapTileSource` round-trips as the `mapTileSource` string (`OSM` / `AMAP`). Old exports without it, or with an unknown value, import cleanly — `MapTileSource.fromName` falls back to `OSM`.
 

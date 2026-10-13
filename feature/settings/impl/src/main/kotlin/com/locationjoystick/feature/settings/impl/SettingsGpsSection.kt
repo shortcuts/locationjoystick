@@ -32,7 +32,7 @@ private fun formatJitterDouble(d: Double): String {
 }
 
 @Composable
-private fun JitterInput(
+internal fun JitterInput(
     value: Double,
     onValueChange: (Double) -> Unit,
     label: String,

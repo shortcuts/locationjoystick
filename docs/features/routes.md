@@ -66,7 +66,7 @@ windflowers: ends in 1 hour” do not become coordinates. Recognized DMS compass
 
 - **As-is** — cleaned points as a straight polyline. Saved as `RouteType.STRAIGHT`. Needs ≥2 points.
 - **Walkable path** — OSRM foot routing between consecutive points (`OsrmClient.resolveRoute`). Dense geometry persisted. Saved as `RouteType.GUIDED`. Per-leg failure falls back to a straight segment and reports a summary via `RoutingErrorReporter.reportRoadFollowingFallbacks`.
-- **Planting mode** — closed clockwise circle around each pasted point as the center (default `RouteConstants.PLANTING_DEFAULT_RADIUS_METERS` = 35 m, clamp 5–200 m). The center is not a waypoint. Vertex count follows ~8 m chord (`PLANTING_CHORD_METERS`), clamped 8–48. Circles stay geometric even when road-following is on. To circle stops on an already-saved route without rewriting waypoints, use the Planting checkbox on the start-route sheet instead (see Start Flow).
+- **Planting mode** — closed clockwise circle around each pasted point as the center (radius from Settings, `AppSettings.plantingRadiusMeters`, default `RouteConstants.PLANTING_DEFAULT_RADIUS_METERS` = 35 m, clamp 5–200 m; seeds the paste sheet field, which stays editable per paste). The center is not a waypoint. Vertex count follows ~8 m chord (`PLANTING_CHORD_METERS`), clamped 8–48. Circles stay geometric even when road-following is on. To circle stops on an already-saved route without rewriting waypoints, use the Planting checkbox on the start-route sheet instead (see Start Flow).
 
 Point order: keep original, or **Optimize proximity** (`orderByProximity`, nearest-neighbor from min lat+lon). This reorders one route; it does not split into multiple routes.
 
@@ -212,7 +212,7 @@ The Control API starts routes with the Hide Teleport setting bypassed, so Telepo
   (`ReplayOrchestrator.abortInFlightStart`, STOP before UPDATE) cancels the start
   so a late OSRM result cannot snap GPS to the route.
 - **Planting** — when checked, replay walks a closed clockwise circle around
-  each saved waypoint (radius `RouteConstants.PLANTING_DEFAULT_RADIUS_METERS` = 35 m)
+  each saved waypoint (radius `AppSettings.plantingRadiusMeters`, default 35 m, clamp 5–200 m, read at replay start)
   instead of through its center. The saved `Route` / waypoints are not rewritten;
   expansion happens at replay start only (`expandWaypointsForPlanting`). The
   center is not a path point. Reverse reverses the saved centers, then plants.

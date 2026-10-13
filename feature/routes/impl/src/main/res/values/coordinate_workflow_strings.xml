@@ -10,7 +10,7 @@
     <string name="paste_coordinates_screen_point_order">"Point order"</string>
     <string name="paste_coordinates_screen_build_mode">"Build mode"</string>
     <string name="paste_coordinates_screen_circle_radius_meters">"Circle radius (meters)"</string>
-    <string name="paste_coordinates_screen_default_35_m_circles_stay_geometric_only_travel_between_them">"Default 35 m. Circles stay geometric; only travel between them can follow roads."</string>
+    <string name="paste_coordinates_screen_default_35_m_circles_stay_geometric_only_travel_between_them">"Circles stay geometric; only travel between them can follow roads."</string>
     <string name="paste_coordinates_screen_between_circles">"Between circles"</string>
     <string name="paste_coordinates_screen_save_route">"Save Route"</string>
     <string name="paste_coordinates_screen_route_name">"Route name"</string>

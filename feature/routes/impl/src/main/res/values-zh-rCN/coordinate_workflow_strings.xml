@@ -10,7 +10,7 @@
     <string name="paste_coordinates_screen_point_order">"点位顺序"</string>
     <string name="paste_coordinates_screen_build_mode">"构建模式"</string>
     <string name="paste_coordinates_screen_circle_radius_meters">"圆圈半径（米）"</string>
-    <string name="paste_coordinates_screen_default_35_m_circles_stay_geometric_only_travel_between_them">"默认 35 米。圆圈保持几何形状，只有圆圈之间的移动才能沿道路进行。"</string>
+    <string name="paste_coordinates_screen_default_35_m_circles_stay_geometric_only_travel_between_them">"圆圈保持几何形状，只有圆圈之间的移动才能沿道路进行。"</string>
     <string name="paste_coordinates_screen_between_circles">"圆圈之间"</string>
     <string name="paste_coordinates_screen_save_route">"保存路线"</string>
     <string name="paste_coordinates_screen_route_name">"路线名称"</string>

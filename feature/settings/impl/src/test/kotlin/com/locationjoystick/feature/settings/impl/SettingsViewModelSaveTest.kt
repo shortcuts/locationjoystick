@@ -181,6 +181,17 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
+    fun `saveChanges includes planting radius in the applied snapshot`() =
+        runTest(testDispatcher) {
+            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            viewModel.setPlantingRadius(60.0)
+
+            viewModel.saveChanges()
+
+            assertEquals(60.0, fakeDataSource.lastAppliedSnapshot!!.plantingRadiusMeters, 0.001)
+        }
+
+    @Test
     fun `saveChanges includes altitude fields in the single applySnapshot call`() =
         runTest(testDispatcher) {
             // Subscribe to uiState so WhileSubscribed flows activate
@@ -727,6 +738,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getAltitudeJitterRadius(): Flow<Double> = flowOf(AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS)
 
     override suspend fun setAltitudeJitterRadius(meters: Double) = Unit
+
+    override fun getPlantingRadius(): Flow<Double> = flowOf(AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS)
+
+    override suspend fun setPlantingRadius(meters: Double) = Unit
 
     override fun getSelectedHotLocationIds(): Flow<Set<String>> = flowOf(emptySet())
 

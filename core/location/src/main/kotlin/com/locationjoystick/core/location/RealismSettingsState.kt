@@ -62,6 +62,9 @@ internal class RealismSettingsState {
     @Volatile var altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS
         private set
 
+    @Volatile var plantingRadiusMeters: Double = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS
+        private set
+
     /**
      * Launches one collection coroutine per realism setting on [scope]. Each coroutine writes its
      * `@Volatile` field as the source flow emits. Mirrors the prior inline wiring in
@@ -88,6 +91,7 @@ internal class RealismSettingsState {
         scope.collectInto(settingsRepository.getActiveSpeedProfile()) { activeProfileSpeedMs = it.speedMetersPerSecond }
         scope.collectInto(settingsRepository.getRealismRealElevationEnabled()) { realElevationEnabled = it }
         scope.collectInto(settingsRepository.getAltitudeJitterRadius()) { altitudeJitterRadiusMeters = it }
+        scope.collectInto(settingsRepository.getPlantingRadius()) { plantingRadiusMeters = it }
     }
 
     private fun <T> CoroutineScope.collectInto(

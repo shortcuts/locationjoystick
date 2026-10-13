@@ -12,6 +12,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.clampPlantingRadius
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.LatLng
@@ -278,6 +279,12 @@ interface PreferencesDataSource {
     /** Sets the altitude Gaussian-walk jitter radius. */
     suspend fun setAltitudeJitterRadius(meters: Double)
 
+    /** Gets the planting circle radius (meters) used when a route replay plants around stops. */
+    fun getPlantingRadius(): Flow<Double>
+
+    /** Sets the planting circle radius, clamped to the allowed planting range. */
+    suspend fun setPlantingRadius(meters: Double)
+
     /** Gets the list of recently searched locations, newest first. */
     fun getRecentSearches(): Flow<List<RecentSearch>>
 
@@ -438,6 +445,7 @@ data class SettingsSnapshot(
     val bypassMockLocationCheck: Boolean = false,
     val realismRealElevationEnabled: Boolean = AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
     val altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
+    val plantingRadiusMeters: Double = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS,
     val altitudeOverrideButtonEnabled: Boolean = false,
     val debugStatsEnabled: Boolean = false,
     val jitterSpeedIdleWobbleProbabilityPct: Int = AppConstants.JitterConstants.SPEED_IDLE_WOBBLE_PROBABILITY_PCT_DEFAULT,
@@ -628,6 +636,7 @@ class AppPreferencesDataSource
             val REALISM_REAL_ELEVATION_ENABLED = booleanPreferencesKey("realism_real_elevation_enabled")
             val BASE_ALTITUDE_OVERRIDE_METERS = doublePreferencesKey("base_altitude_override_meters")
             val ALTITUDE_JITTER_RADIUS_METERS = doublePreferencesKey("altitude_jitter_radius_meters")
+            val PLANTING_RADIUS_METERS = doublePreferencesKey("planting_radius_meters")
             val ALTITUDE_OVERRIDE_BUTTON_ENABLED = booleanPreferencesKey("altitude_override_button_enabled")
             val DEBUG_STATS_ENABLED = booleanPreferencesKey("debug_stats_enabled")
         }
@@ -993,6 +1002,10 @@ class AppPreferencesDataSource
         override suspend fun setAltitudeJitterRadius(meters: Double) =
             setPref(Keys.ALTITUDE_JITTER_RADIUS_METERS, meters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS))
 
+        override fun getPlantingRadius(): Flow<Double> = pref(Keys.PLANTING_RADIUS_METERS, DEFAULT_PLANTING_RADIUS_METERS)
+
+        override suspend fun setPlantingRadius(meters: Double) = setPref(Keys.PLANTING_RADIUS_METERS, clampPlantingRadius(meters))
+
         override fun getRecentSearches(): Flow<List<RecentSearch>> =
             dataStore.data
                 .catch { e ->
@@ -1199,6 +1212,7 @@ class AppPreferencesDataSource
                 prefs[Keys.REALISM_REAL_ELEVATION_ENABLED] = snapshot.realismRealElevationEnabled
                 prefs[Keys.ALTITUDE_JITTER_RADIUS_METERS] =
                     snapshot.altitudeJitterRadiusMeters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
+                prefs[Keys.PLANTING_RADIUS_METERS] = clampPlantingRadius(snapshot.plantingRadiusMeters)
                 prefs[Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED] = snapshot.altitudeOverrideButtonEnabled
                 prefs[Keys.DEBUG_STATS_ENABLED] = snapshot.debugStatsEnabled
                 prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] =
@@ -1299,6 +1313,7 @@ class AppPreferencesDataSource
                                 ?: AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
                         altitudeJitterRadiusMeters =
                             prefs[Keys.ALTITUDE_JITTER_RADIUS_METERS] ?: DEFAULT_ALTITUDE_JITTER_RADIUS_METERS,
+                        plantingRadiusMeters = prefs[Keys.PLANTING_RADIUS_METERS] ?: DEFAULT_PLANTING_RADIUS_METERS,
                         altitudeOverrideButtonEnabled = prefs[Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED] ?: false,
                         debugStatsEnabled = prefs[Keys.DEBUG_STATS_ENABLED] ?: false,
                         jitterSpeedIdleVariationPct =
@@ -1407,6 +1422,7 @@ class AppPreferencesDataSource
                 AppConstants.JitterConstants.SPEED_IDLE_WOBBLE_PROBABILITY_PCT_DEFAULT
 
             const val DEFAULT_ALTITUDE_JITTER_RADIUS_METERS = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS
+            const val DEFAULT_PLANTING_RADIUS_METERS = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS
         }
     }
 

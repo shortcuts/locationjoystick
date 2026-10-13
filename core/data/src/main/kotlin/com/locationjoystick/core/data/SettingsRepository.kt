@@ -364,6 +364,10 @@ class SettingsRepository
 
         suspend fun setAltitudeJitterRadius(meters: Double) = dataSource.setAltitudeJitterRadius(meters)
 
+        fun getPlantingRadius(): Flow<Double> = dataSource.getPlantingRadius()
+
+        suspend fun setPlantingRadius(meters: Double) = dataSource.setPlantingRadius(meters)
+
         fun getFloatingMapQuickWalk(): Flow<Boolean> = dataSource.getFloatingMapQuickWalk()
 
         fun getTapToWalkOverlayEnabled(): Flow<Boolean> = dataSource.getTapToWalkOverlayEnabled()

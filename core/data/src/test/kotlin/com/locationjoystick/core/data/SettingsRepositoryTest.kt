@@ -1623,6 +1623,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         altitudeJitterRadiusFlow.value = meters.coerceIn(0.0, AppConstants.JitterConstants.MAX_RADIUS_METERS)
     }
 
+    private val plantingRadiusFlow = MutableStateFlow(AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS)
+
+    override fun getPlantingRadius(): Flow<Double> = plantingRadiusFlow
+
+    override suspend fun setPlantingRadius(meters: Double) {
+        plantingRadiusFlow.value = meters
+    }
+
     override fun getSelectedHotLocationIds(): Flow<Set<String>> = flowOf(emptySet())
 
     override suspend fun setSelectedHotLocationIds(ids: Set<String>) = Unit

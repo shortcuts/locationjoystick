@@ -72,6 +72,7 @@ internal class ReplayOrchestrator(
     private val onSpeedChange: (speedMs: Float) -> Unit,
     private val pushLocationUpdate: () -> Unit,
     private val startUpdateLoop: () -> Unit,
+    private val plantingRadiusMeters: () -> Double = { AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS },
 ) {
     /** Tracks the active scope.launch job so new starts can cancel it before launching. */
     private var activeReplayJob: Job? = null
@@ -578,7 +579,7 @@ internal class ReplayOrchestrator(
         followRoads: Boolean,
         teleportBetweenWaypoints: Boolean = false,
     ): Pair<List<LatLng>, List<Int>> {
-        val radius = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS
+        val radius = plantingRadiusMeters()
         if (teleportBetweenWaypoints) {
             return stitchRingsWithoutConnectors(plantingRings(centers, radius))
         }
