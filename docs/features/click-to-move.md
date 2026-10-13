@@ -37,7 +37,9 @@ any earlier point was started.
 
 Managed by `EphemeralReplayController` (`@Singleton`, `:core:location`), injected by both `MapViewModel` and `FloatingWidgetService`:
 
-- **First tap** (walk active): cancels the walk via `WalkCoordinator`, builds a 3-point list (walkStart → walkTarget → newPoint), starts `RouteReplayEngine` in ephemeral mode.
+- **First tap** (walk active): cancels the walk via `WalkCoordinator`, builds the list (current position → rest of the walk → newPoint), starts `RouteReplayEngine` in ephemeral mode.
+  - A walk via roads keeps its remaining road shape (the stored route sliced from the current
+    position); that leg is not re-fetched.
   - The `walkTarget → newPoint` leg is resolved via OSRM (`followRoads = true`) only if the
     tapped button was "via roads" — independent of whether the walk itself was via roads.
 - **Subsequent taps** (already in `ROUTE_REPLAY`): appends the new point to the live route, using that tap's own `followRoads` choice.

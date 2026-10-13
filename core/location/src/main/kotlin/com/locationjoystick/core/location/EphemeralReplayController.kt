@@ -2,6 +2,7 @@ package com.locationjoystick.core.location
 
 import android.content.Context
 import android.content.Intent
+import com.locationjoystick.core.common.util.remainingRoute
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.WalkCoordinator
@@ -54,14 +55,14 @@ class EphemeralReplayController
         /**
          * Called when the user taps "Add next point".
          *
-         * - If currently walking: cancels the walk, builds the 3-point initial list
-         *   (walkStart → walkTarget → newPoint), fires startEphemeralReplay.
+         * - If currently walking: cancels the walk, builds the initial list
+         *   (current position → rest of the walk → newPoint), fires startEphemeralReplay.
+         *   A walk via roads keeps its remaining stored road shape instead of re-fetching it.
          * - If already in ROUTE_REPLAY: appends the new point.
          * - Otherwise: no-op (returns null).
          *
          * @param newPoint The tapped map position.
          * @param currentWaypoints The caller's current ephemeral waypoint list (may be empty).
-         * @param walkStart The start of the current walk leg, if any.
          * @param walkTarget The active walk target, if any.
          * @param followRoads If true, use OSRM road-following for new segments: the
          *   walkTarget→newPoint leg on the initial transition, and each appended segment
@@ -74,7 +75,6 @@ class EphemeralReplayController
         suspend fun addWaypoint(
             newPoint: LatLng,
             currentWaypoints: List<LatLng>,
-            walkStart: LatLng?,
             walkTarget: LatLng?,
             followRoads: Boolean = false,
             context: Context,
@@ -83,10 +83,13 @@ class EphemeralReplayController
             val result =
                 if (currentWaypoints.isEmpty() && walkTarget != null) {
                     // First "Add next point" — transition from WalkCoordinator to RouteReplayEngine
-                    val startPos = walkStart ?: locationRepository.currentPosition.value ?: newPoint
-                    // When road-following, both legs (startPos→walkTarget and walkTarget→newPoint)
-                    // must be OSRM-resolved. The original walk was via roads; preserving that for
-                    // the first leg means the whole chain stays road-following.
+                    val startPos = locationRepository.currentPosition.value ?: newPoint
+                    // Walk-via-roads stores its polyline; read it before cancel() clears it.
+                    val storedRoute = locationRepository.routeWaypoints.value?.takeIf { it.isNotEmpty() }
+                    val firstLeg = storedRoute?.let { remainingRoute(it, startPos) }
+                    val legEnd = firstLeg?.last() ?: walkTarget
+                    // When road-following, any first leg not already stored (startPos→walkTarget)
+                    // and legEnd→newPoint must be OSRM-resolved so the whole chain stays road-following.
                     val initial =
                         if (followRoads) {
                             locationRepository.setRoadRouteFetchInFlight(true)
@@ -95,19 +98,20 @@ class EphemeralReplayController
                                     coroutineScope {
                                         val a =
                                             async {
-                                                osrmClient.resolveRoute(
-                                                    OsrmClient.PROFILE_FOOT,
-                                                    startPos,
-                                                    walkTarget,
-                                                    followRoads = true,
-                                                    onFallback = { reportFallback(context, it) },
-                                                )
+                                                firstLeg
+                                                    ?: osrmClient.resolveRoute(
+                                                        OsrmClient.PROFILE_FOOT,
+                                                        startPos,
+                                                        walkTarget,
+                                                        followRoads = true,
+                                                        onFallback = { reportFallback(context, it) },
+                                                    )
                                             }
                                         val b =
                                             async {
                                                 osrmClient.resolveRoute(
                                                     OsrmClient.PROFILE_FOOT,
-                                                    walkTarget,
+                                                    legEnd,
                                                     newPoint,
                                                     followRoads = true,
                                                     onFallback = { reportFallback(context, it) },
@@ -115,12 +119,13 @@ class EphemeralReplayController
                                             }
                                         a.await() to b.await()
                                     }
-                                toTarget + toNewPoint.drop(1) // walkTarget is last of toTarget, first of toNewPoint
+                                toTarget + toNewPoint.drop(1) // legEnd is last of toTarget, first of toNewPoint
                             } finally {
                                 locationRepository.setRoadRouteFetchInFlight(false)
                             }
                         } else {
-                            listOf(startPos) + osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, walkTarget, newPoint, followRoads = false)
+                            (firstLeg?.dropLast(1) ?: listOf(startPos)) +
+                                osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, legEnd, newPoint, followRoads = false)
                         }
                     walkCoordinator.cancel()
                     val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond

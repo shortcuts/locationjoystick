@@ -639,7 +639,6 @@ class MapController
                 ephemeralReplayController.addWaypoint(
                     newPoint = position,
                     currentWaypoints = ephemeralReplayController.pendingWaypoints.value,
-                    walkStart = current.walkStart,
                     walkTarget = current.walkTarget,
                     followRoads = followRoads,
                     context = context,

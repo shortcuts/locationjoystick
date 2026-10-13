@@ -426,4 +426,34 @@ class GeoUtilsTest {
         assertEquals(37.569833333, result!!.latitude, 1e-6)
         assertEquals(127.004972222, result.longitude, 1e-6)
     }
+
+    // remainingRoute
+
+    private val a = LatLng(0.0, 0.0)
+    private val b = LatLng(0.01, 0.0)
+    private val c = LatLng(0.01, 0.01)
+
+    @Test
+    fun `remainingRoute mid segment returns from plus the vertices ahead`() {
+        val from = LatLng(0.005, 0.0)
+        assertEquals(listOf(from, b, c), remainingRoute(listOf(a, b, c), from))
+    }
+
+    @Test
+    fun `remainingRoute on second segment skips the vertex behind`() {
+        val from = LatLng(0.01, 0.005)
+        assertEquals(listOf(from, c), remainingRoute(listOf(a, b, c), from))
+    }
+
+    @Test
+    fun `remainingRoute past the end returns from and last`() {
+        val from = LatLng(0.01, 0.02)
+        assertEquals(listOf(from, c), remainingRoute(listOf(a, b, c), from))
+    }
+
+    @Test
+    fun `remainingRoute empty and single point routes`() {
+        assertEquals(listOf(a), remainingRoute(emptyList(), a))
+        assertEquals(listOf(b, c), remainingRoute(listOf(c), b))
+    }
 }

@@ -377,6 +377,56 @@ class MapControllerWalkCancellationTest {
             coVerify(exactly = 0) { harness.teleportUseCase.stopAutomatedMovement() }
         }
 
+    @Test
+    fun `first add next point seeds replay from current position`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val osrmClient =
+                mockk<OsrmClient>(relaxed = true).also {
+                    coEvery { it.resolveRoute(any(), any(), any(), any(), any()) } answers {
+                        listOf(secondArg<LatLng>(), thirdArg<LatLng>())
+                    }
+                }
+            val harness = buildHarness(backgroundScope, osrmClient)
+            val start = LatLng(48.8566, 2.3522)
+            val mid = LatLng(48.8700, 2.3522)
+            val target = LatLng(48.9000, 2.3522)
+            val newPoint = LatLng(48.9100, 2.3522)
+            harness.locationRepository.setPositionInternal(start)
+            harness.mapController.walkTo(target)
+            harness.locationRepository.setPositionInternal(mid)
+
+            harness.mapController.addEphemeralWaypoint(newPoint)
+
+            assertEquals(listOf(mid, target, newPoint), harness.ephemeralController.pendingWaypoints.value)
+        }
+
+    @Test
+    fun `first add next point after walk via roads keeps remaining road shape`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val a = LatLng(48.8566, 2.3522)
+            val b = LatLng(48.8600, 2.3522)
+            val c = LatLng(48.8700, 2.3522)
+            val d = LatLng(48.8800, 2.3522)
+            val newPoint = LatLng(48.8900, 2.3522)
+            val osrmClient =
+                mockk<OsrmClient>(relaxed = true).also {
+                    coEvery { it.getRoute(any(), any()) } returns Result.success(listOf(a, b, c, d))
+                    coEvery { it.resolveRoute(any(), any(), any(), any(), any()) } answers {
+                        listOf(secondArg<LatLng>(), thirdArg<LatLng>())
+                    }
+                }
+            val harness = buildHarness(backgroundScope, osrmClient)
+            val mid = LatLng(48.8650, 2.3522)
+            harness.locationRepository.setPositionInternal(a)
+            harness.mapController.walkViaRoads(d)
+            harness.locationRepository.setPositionInternal(mid)
+
+            harness.mapController.addEphemeralWaypoint(newPoint, followRoads = true)
+
+            assertEquals(listOf(mid, c, d, newPoint), harness.ephemeralController.pendingWaypoints.value)
+            coVerify(exactly = 1) { osrmClient.resolveRoute(any(), any(), any(), any(), any()) }
+        }
+
     private class Harness(
         val locationRepository: LocationRepository,
         val walkCoordinator: WalkCoordinator,

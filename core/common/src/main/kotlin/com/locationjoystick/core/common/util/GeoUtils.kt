@@ -164,6 +164,22 @@ fun rdpSimplify(
     }
 }
 
+/**
+ * The part of [route] still ahead of [from]: [from] followed by every vertex after the segment
+ * nearest to it. Empty route gives just [from]; a single-point route gives [from] and that point.
+ */
+fun remainingRoute(
+    route: List<LatLng>,
+    from: LatLng,
+): List<LatLng> {
+    if (route.isEmpty()) return listOf(from)
+    if (route.size == 1) return listOf(from, route[0])
+    // ponytail: nearest segment, lowest index on ties; a self-overlapping route may pick an earlier
+    // overlap. Add progress-index tracking only if reported.
+    val i = (0 until route.size - 1).minBy { perpendicularDistanceMeters(from, route[it], route[it + 1]) }
+    return listOf(from) + route.drop(i + 1)
+}
+
 private fun perpendicularDistanceMeters(
     point: LatLng,
     lineStart: LatLng,
