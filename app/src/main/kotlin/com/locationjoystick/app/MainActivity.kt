@@ -48,10 +48,6 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var gpxOpenRepository: GpxOpenRepository
 
-    companion object {
-        const val ACTION_MOVE_TO_BACK = "com.locationjoystick.app.ACTION_MOVE_TO_BACK"
-    }
-
     private val navigateToMapMutableFlow = MutableSharedFlow<Unit>(replay = 1)
     internal val navigateToMapFlow = navigateToMapMutableFlow.asSharedFlow()
     private val navigateToRouteCreatorMutableFlow = MutableSharedFlow<Unit>(replay = 1)
@@ -155,9 +151,6 @@ class MainActivity : ComponentActivity() {
         }
         if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_SHOW_COMPASS_DISCLOSURE, false) == true) {
             showCompassDisclosureFlow.value = true
-        }
-        if (intent?.action == ACTION_MOVE_TO_BACK) {
-            moveTaskToBack(true)
         }
         if (intent != null && shouldTryOpenAsGpx(intent)) {
             handleGpxIntent(intent)

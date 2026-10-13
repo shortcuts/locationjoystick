@@ -114,8 +114,6 @@ internal class WidgetPanelPresenter(
             name: String,
             position: LatLng,
         )
-
-        fun moveAppToBack()
     }
 
     private var panelComposeView: ComposeView? = null
@@ -309,18 +307,9 @@ internal class WidgetPanelPresenter(
                 cooldownStates = shared.favoriteCooldownStates,
                 currentPosition = shared.currentPosition,
                 onDismiss = { hidePanelView() },
-                onTeleport = { fav ->
-                    callbacks.teleportToFavorite(fav)
-                    callbacks.moveAppToBack()
-                },
-                onWalk = { fav ->
-                    callbacks.startWalkToFavorite(fav)
-                    callbacks.moveAppToBack()
-                },
-                onWalkViaRoads = { fav ->
-                    callbacks.startWalkViaRoadsToFavorite(fav)
-                    callbacks.moveAppToBack()
-                },
+                onTeleport = { fav -> callbacks.teleportToFavorite(fav) },
+                onWalk = { fav -> callbacks.startWalkToFavorite(fav) },
+                onWalkViaRoads = { fav -> callbacks.startWalkViaRoadsToFavorite(fav) },
                 onRename = { favorite, name ->
                     serviceScope.launch { favoriteRepository.updateFavorite(favorite.copy(name = name)) }
                 },
@@ -346,18 +335,9 @@ internal class WidgetPanelPresenter(
                 minimized = minimized,
                 onToggleMinimize = { minimized = !minimized },
                 onDismiss = { hidePanelView() },
-                onTeleport = { pos ->
-                    callbacks.teleport(pos)
-                    callbacks.moveAppToBack()
-                },
-                onWalk = { pos ->
-                    callbacks.walkTo(pos)
-                    callbacks.moveAppToBack()
-                },
-                onWalkViaRoads = { pos ->
-                    callbacks.walkViaRoads(pos)
-                    callbacks.moveAppToBack()
-                },
+                onTeleport = { pos -> callbacks.teleport(pos) },
+                onWalk = { pos -> callbacks.walkTo(pos) },
+                onWalkViaRoads = { pos -> callbacks.walkViaRoads(pos) },
                 onSaveFavorite = { name, pos -> callbacks.saveFavorite(name, pos) },
                 onSaveRoute = { name, points -> mapController.savePastedRoute(name, points) },
                 onStartRoute = { points, config ->
@@ -392,10 +372,7 @@ internal class WidgetPanelPresenter(
                         mapController.generateRoamingPreview(defaults.toConfig(pos))
                     }
                 },
-                onStart = { defaults ->
-                    callbacks.startRoamingWith(defaults)
-                    callbacks.moveAppToBack()
-                },
+                onStart = { defaults -> callbacks.startRoamingWith(defaults) },
             )
         }
     }
@@ -433,7 +410,6 @@ internal class WidgetPanelPresenter(
                             teleportBetweenDelaySeconds = teleportBetweenDelaySeconds,
                         ),
                     )
-                    callbacks.moveAppToBack()
                 },
                 onTeleport = { pos -> callbacks.teleport(pos) },
                 onRename = { route, name ->
@@ -502,14 +478,12 @@ internal class WidgetPanelPresenter(
                 onTeleport = { pos ->
                     callbacks.teleport(pos)
                     hidePanelView()
-                    callbacks.moveAppToBack()
                 },
                 onWalkTo = { pos -> callbacks.walkTo(pos) },
                 onWalkViaRoads = { pos -> callbacks.walkViaRoads(pos) },
                 onStopRouteAndTeleport = { pos ->
                     callbacks.stopRouteAndTeleport(pos)
                     hidePanelView()
-                    callbacks.moveAppToBack()
                 },
                 onStopRouteAndWalkTo = { pos -> callbacks.stopRouteAndWalkTo(pos) },
                 onFinishRouteAndWalkTo = { pos -> callbacks.finishRouteAndWalkTo(pos) },

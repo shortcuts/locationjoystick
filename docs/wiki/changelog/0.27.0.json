@@ -11,6 +11,7 @@
     { "category": "feat", "scope": "Capture", "summary": "You can now pick an app to open after the app handles a map link. Set it in Settings > Menus > Capture. It opens after you teleport or walk to the link's point." },
     { "category": "feat", "scope": "Floating Widget", "summary": "Controls now show their state by color. They are grey when idle, green when moving, and orange when a walk, route, or roam is paused." },
     { "category": "fix", "scope": "Map", "summary": "Switching the map style now takes effect on every map screen right away, without closing and reopening the screen." },
-    { "category": "fix", "scope": "General", "summary": "The cooldown message and its badge now show in the app's supported languages instead of only English." }
+    { "category": "fix", "scope": "General", "summary": "The cooldown message and its badge now show in the app's supported languages instead of only English." },
+    { "category": "fix", "scope": "Floating Widget", "summary": "Starting a roam, walk, teleport, or route from the floating widget no longer sends this app to the background. The app you are using stays in front." }
   ]
 }

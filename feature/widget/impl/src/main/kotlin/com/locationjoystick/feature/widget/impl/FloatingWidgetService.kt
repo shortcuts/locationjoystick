@@ -810,36 +810,5 @@ class FloatingWidgetService :
                 name: String,
                 position: LatLng,
             ) = mapController.saveFavorite(name, position)
-
-            override fun moveAppToBack() = this@FloatingWidgetService.moveAppToBack()
         }
-
-    private fun moveAppToBack() {
-        // Only send the move-to-back intent if the app is currently in the foreground.
-        // When the user opened the widget from a different app, our process is not in the
-        // foreground and startActivity would briefly launch MainActivity before it calls
-        // moveTaskToBack(true), causing a visible flicker and leaving the user on the home
-        // screen instead of returning to the app they came from.
-        if (!isAppInForeground()) return
-        try {
-            val intent =
-                Intent().apply {
-                    setClassName(packageName, "com.locationjoystick.app.MainActivity")
-                    action = "com.locationjoystick.app.ACTION_MOVE_TO_BACK"
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                }
-            startActivity(intent)
-            Log.d(TAG, "Sent move-to-back to MainActivity")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to send move-to-back", e)
-        }
-    }
-
-    private fun isAppInForeground(): Boolean {
-        val am = getSystemService(android.app.ActivityManager::class.java) ?: return false
-        return am.runningAppProcesses?.any { proc ->
-            proc.importance == android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND &&
-                proc.pkgList.contains(packageName)
-        } == true
-    }
 }
