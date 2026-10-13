@@ -305,7 +305,7 @@ class FloatingWidgetService :
     }
 
     override fun getWindowManagerParams(view: View): AndroidWindowManager.LayoutParams {
-        dragOffsetY = resources.displayMetrics.heightPixels / 2f
+        dragOffsetY = resources.displayMetrics.heightPixels * 0.4f
         return AndroidWindowManager
             .LayoutParams(
                 AndroidWindowManager.LayoutParams.WRAP_CONTENT,
