@@ -84,4 +84,14 @@ class RoamingSpiralTest {
         assertTrue(tight.size > wide.size)
         assertTrue(abs(center.distanceTo(wide.last()) - center.distanceTo(wide.first())) < 1.0)
     }
+
+    @Test
+    fun `expand only ends at the end radius and never returns inward`() {
+        val full = buildPlantingSpiralLoop(center, 5.0, 39.0)
+        val path = buildPlantingSpiralLoop(center, 5.0, 39.0, expandOnly = true)
+        assertEquals(5.0, center.distanceTo(path.first()), 0.75)
+        assertEquals(39.0, center.distanceTo(path.last()), 0.75)
+        assertTrue(path.size < full.size)
+        assertTrue(path.all { center.distanceTo(it) <= 39.75 })
+    }
 }

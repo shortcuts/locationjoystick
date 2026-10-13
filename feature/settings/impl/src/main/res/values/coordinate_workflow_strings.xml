@@ -30,6 +30,8 @@
     <string name="settings_roaming_sub_screen_ending_radius_m">"Ending radius (m)"</string>
     <string name="settings_roaming_sub_screen_ring_spacing_m">"Ring spacing (m)"</string>
     <string name="settings_roaming_sub_screen_speed_profile">"Speed profile"</string>
+    <string name="settings_roaming_sub_screen_expand_only">"Expand only"</string>
+    <string name="settings_roaming_sub_screen_expand_only_description">"Walk the spiral out to the end radius once, then stop. Ignores infinite loop and loop count."</string>
     <string name="settings_roaming_sub_screen_infinite_loop">"Infinite loop"</string>
     <string name="settings_roaming_sub_screen_keeps_expanding_and_contracting_until_you_stop_roaming">"Keeps expanding and contracting until you stop roaming."</string>
     <string name="settings_roaming_sub_screen_number_of_loops">"Number of loops"</string>

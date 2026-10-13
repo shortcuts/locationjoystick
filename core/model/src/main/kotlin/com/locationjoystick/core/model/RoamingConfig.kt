@@ -15,4 +15,5 @@ data class RoamingConfig(
     val plantingInfiniteLoops: Boolean = true,
     val plantingLoopCount: Int = 1,
     val plantingSpacingMeters: Int = 5,
+    val plantingExpandOnly: Boolean = false,
 )

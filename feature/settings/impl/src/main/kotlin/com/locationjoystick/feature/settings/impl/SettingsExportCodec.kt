@@ -107,6 +107,7 @@ internal object SettingsExportCodec {
         roamingObj.put("plantingInfiniteLoops", data.settings.roamingDefaults.plantingInfiniteLoops)
         roamingObj.put("plantingLoopCount", data.settings.roamingDefaults.plantingLoopCount)
         roamingObj.put("plantingSpacingMeters", data.settings.roamingDefaults.plantingSpacingMeters)
+        roamingObj.put("plantingExpandOnly", data.settings.roamingDefaults.plantingExpandOnly)
         roamingObj.put("plantingSpeedProfileId", data.settings.roamingDefaults.plantingSpeedProfileId)
         settingsObj.put("roamingDefaults", roamingObj)
         root.put("settings", settingsObj)
@@ -300,6 +301,11 @@ internal object SettingsExportCodec {
                                 "plantingSpacingMeters",
                                 RoamingDefaults().plantingSpacingMeters,
                             ).coerceAtLeast(AppConstants.RoamingConstants.PLANTING_SPACING_MIN_METERS),
+                    plantingExpandOnly =
+                        roamingDefaultsObj.optBoolean(
+                            "plantingExpandOnly",
+                            RoamingDefaults().plantingExpandOnly,
+                        ),
                     plantingSpeedProfileId =
                         roamingDefaultsObj.optString(
                             "plantingSpeedProfileId",

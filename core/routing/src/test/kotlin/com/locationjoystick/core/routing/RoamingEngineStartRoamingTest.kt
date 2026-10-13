@@ -339,6 +339,25 @@ class RoamingEngineStartRoamingTest {
     }
 
     @Test
+    fun `startRoaming planting expand only completes even with infinite loops`() {
+        val start = LatLng(0.0, 0.0)
+        val config =
+            RoamingConfig(
+                centerPosition = start,
+                radiusMeters = 100.0,
+                distanceMeters = 50.0,
+                kind = com.locationjoystick.core.model.RoamingKind.PLANTING,
+                plantingInfiniteLoops = true,
+                plantingExpandOnly = true,
+                useRoadSnapping = false,
+                plannedWaypoints = listOf(start, LatLng(0.00001, 0.0), start),
+            )
+        val job = engine.startRoaming(config, 50.0) {}
+        Thread.sleep(4_000)
+        assertTrue("expand-only should complete, was active=${job.isActive}", job.isCompleted)
+    }
+
+    @Test
     fun `startRoaming planting infinite loops stays active until stopped`() {
         val config =
             RoamingConfig(

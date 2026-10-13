@@ -211,6 +211,7 @@ class ControlApiRoutes
                         json
                             .optInt("plantingSpacingMeters", base.plantingSpacingMeters)
                             .coerceAtLeast(AppConstants.RoamingConstants.PLANTING_SPACING_MIN_METERS),
+                    plantingExpandOnly = json.optBoolean("plantingExpandOnly", base.plantingExpandOnly),
                     plantingSpeedProfileId = json.optString("plantingSpeedProfileId", base.plantingSpeedProfileId),
                 )
             mapController.startRoaming(draft, position)

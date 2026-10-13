@@ -133,6 +133,7 @@ object AppConstants {
         const val PLANTING_DEFAULT_LOOP_COUNT = 1
         const val PLANTING_MAX_LOOP_COUNT = 99
         const val PLANTING_INFINITE_LOOPS_DEFAULT = true
+        const val PLANTING_EXPAND_ONLY_DEFAULT = false
         const val PLANTING_DEFAULT_SPEED_PROFILE_ID = ProfileConstants.PROFILE_ID_BIKE
     }
 

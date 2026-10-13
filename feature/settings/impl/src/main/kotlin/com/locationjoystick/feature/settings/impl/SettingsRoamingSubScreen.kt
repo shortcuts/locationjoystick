@@ -304,6 +304,14 @@ private fun RoamingSection(
     )
 
     LjCheckboxRow(
+        checked = roamingDefaults.plantingExpandOnly,
+        onCheckedChange = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(plantingExpandOnly = it))) },
+        title = stringResource(R.string.settings_roaming_sub_screen_expand_only),
+        description = stringResource(R.string.settings_roaming_sub_screen_expand_only_description),
+    )
+
+    LjCheckboxRow(
+        enabled = !roamingDefaults.plantingExpandOnly,
         checked = roamingDefaults.plantingInfiniteLoops,
         onCheckedChange = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(plantingInfiniteLoops = it))) },
         title = stringResource(R.string.settings_roaming_sub_screen_infinite_loop),
@@ -332,6 +340,7 @@ private fun RoamingSection(
             label = { Text(stringResource(R.string.settings_roaming_sub_screen_number_of_loops)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
+            enabled = !roamingDefaults.plantingExpandOnly,
             modifier = Modifier.fillMaxWidth(),
         )
     }

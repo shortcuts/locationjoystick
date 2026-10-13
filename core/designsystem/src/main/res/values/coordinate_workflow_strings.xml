@@ -54,6 +54,7 @@
     <string name="roaming_sheet_content_starting_radius_m">"Starting radius (m)"</string>
     <string name="roaming_sheet_content_ending_radius_m">"Ending radius (m)"</string>
     <string name="roaming_sheet_content_ring_spacing_m">"Ring spacing (m)"</string>
+    <string name="roaming_sheet_content_expand_only">"Expand only"</string>
     <string name="roaming_sheet_content_infinite_loop">"Infinite loop"</string>
     <string name="roaming_sheet_content_number_of_loops">"Number of loops"</string>
     <string name="roaming_sheet_content_pause_or_stop_the_playing_route_first_to_start_roaming">"Pause or stop the playing route first to start roaming"</string>

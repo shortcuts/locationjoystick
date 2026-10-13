@@ -522,6 +522,15 @@ class MapViewModel
                     _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingInfiniteLoops = action.enabled)) }
                 }
 
+                is MapAction.TogglePlantingExpandOnly -> {
+                    _uiState.update { s ->
+                        s.copy(
+                            roamingDraft = s.roamingDraft?.copy(plantingExpandOnly = action.enabled),
+                            roamingPreviewWaypoints = null,
+                        )
+                    }
+                }
+
                 is MapAction.UpdatePlantingLoopCount -> {
                     _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingLoopCount = action.count)) }
                 }

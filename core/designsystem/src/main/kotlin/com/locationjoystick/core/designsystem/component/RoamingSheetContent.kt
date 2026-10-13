@@ -321,8 +321,20 @@ fun RoamingSheetContent(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Checkbox(
+                    checked = draft.plantingExpandOnly,
+                    onCheckedChange = { onDraftChange(draft.copy(plantingExpandOnly = it)) },
+                )
+                Text(stringResource(R.string.roaming_sheet_content_expand_only), style = MaterialTheme.typography.bodyMedium)
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Checkbox(
                     checked = draft.plantingInfiniteLoops,
                     onCheckedChange = { onDraftChange(draft.copy(plantingInfiniteLoops = it)) },
+                    enabled = !draft.plantingExpandOnly,
                 )
                 Text(stringResource(R.string.roaming_sheet_content_infinite_loop), style = MaterialTheme.typography.bodyMedium)
             }
@@ -348,6 +360,7 @@ fun RoamingSheetContent(
                     label = { Text(stringResource(R.string.roaming_sheet_content_number_of_loops)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
+                    enabled = !draft.plantingExpandOnly,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

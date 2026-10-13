@@ -116,6 +116,10 @@ sealed interface MapAction {
         val enabled: Boolean,
     ) : MapAction
 
+    data class TogglePlantingExpandOnly(
+        val enabled: Boolean,
+    ) : MapAction
+
     data class UpdatePlantingLoopCount(
         val count: Int,
     ) : MapAction

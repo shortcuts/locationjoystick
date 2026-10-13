@@ -29,6 +29,8 @@
     <string name="settings_roaming_sub_screen_ending_radius_m">"結束半徑（公尺）"</string>
     <string name="settings_roaming_sub_screen_ring_spacing_m">"環間距（公尺）"</string>
     <string name="settings_roaming_sub_screen_speed_profile">"速度預設"</string>
+    <string name="settings_roaming_sub_screen_expand_only">"僅向外擴展"</string>
+    <string name="settings_roaming_sub_screen_expand_only_description">"向外螺旋走到結束半徑一次後停止，忽略無限循環和循環次數。"</string>
     <string name="settings_roaming_sub_screen_infinite_loop">"無限循環"</string>
     <string name="settings_roaming_sub_screen_keeps_expanding_and_contracting_until_you_stop_roaming">"持續展開與收攏，直到你停止漫遊。"</string>
     <string name="settings_roaming_sub_screen_number_of_loops">"循環次數"</string>

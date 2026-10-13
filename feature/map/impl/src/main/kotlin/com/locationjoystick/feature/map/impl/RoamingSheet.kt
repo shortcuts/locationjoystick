@@ -71,6 +71,9 @@ fun RoamingSheet(
                 if (updated.plantingInfiniteLoops != draft.plantingInfiniteLoops) {
                     onAction(MapAction.TogglePlantingInfiniteLoops(updated.plantingInfiniteLoops))
                 }
+                if (updated.plantingExpandOnly != draft.plantingExpandOnly) {
+                    onAction(MapAction.TogglePlantingExpandOnly(updated.plantingExpandOnly))
+                }
                 if (updated.plantingLoopCount != draft.plantingLoopCount) {
                     onAction(MapAction.UpdatePlantingLoopCount(updated.plantingLoopCount))
                 }

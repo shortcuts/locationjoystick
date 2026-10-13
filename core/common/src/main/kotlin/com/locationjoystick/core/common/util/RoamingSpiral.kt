@@ -46,17 +46,19 @@ fun plantingSpiralRevolutions(
 /**
  * One closed planting loop around [center]: Archimedean spiral out from the start radius to the
  * end radius, then back in, continuing the same rotation so the last point sits on the start
- * radius at a multiple of 360°.
+ * radius at a multiple of 360°. With [expandOnly] only the outbound arm is returned.
  */
 fun buildPlantingSpiralLoop(
     center: LatLng,
     startRadiusMeters: Double,
     endRadiusMeters: Double,
     spacingMeters: Int = AppConstants.RoamingConstants.PLANTING_SPACING_DEFAULT_METERS,
+    expandOnly: Boolean = false,
 ): List<LatLng> {
     val (startR, endR) = normalizePlantingRadii(startRadiusMeters, endRadiusMeters)
     val revolutions = plantingSpiralRevolutions(startR, endR, spacingMeters)
     val outbound = spiralArm(center, startR, endR, thetaStartRad = 0.0, revolutions = revolutions)
+    if (expandOnly) return outbound
     val inbound =
         spiralArm(
             center,

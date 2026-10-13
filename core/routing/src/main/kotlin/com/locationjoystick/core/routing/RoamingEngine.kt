@@ -86,6 +86,7 @@ class RoamingEngine
                 startRadiusMeters = config.plantingStartRadiusMeters,
                 endRadiusMeters = config.plantingEndRadiusMeters,
                 spacingMeters = config.plantingSpacingMeters,
+                expandOnly = config.plantingExpandOnly,
             )
 
         private fun planStraightLineRoute(config: RoamingConfig): List<LatLng> {
@@ -206,7 +207,9 @@ class RoamingEngine
                     if (route.size >= 2) {
                         if (config.kind == RoamingKind.PLANTING) {
                             val loops =
-                                if (config.plantingInfiniteLoops) {
+                                if (config.plantingExpandOnly) {
+                                    1
+                                } else if (config.plantingInfiniteLoops) {
                                     Int.MAX_VALUE
                                 } else {
                                     config.plantingLoopCount.coerceAtLeast(1)
