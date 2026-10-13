@@ -103,6 +103,7 @@ fun PasteCoordinatesRoute(
         onBuildModeChange = viewModel::onBuildModeChange,
         onPlantingTravelChange = viewModel::onPlantingTravelChange,
         onPlantingRadiusTextChange = viewModel::onPlantingRadiusTextChange,
+        onTeleportDelayTextChange = viewModel::onTeleportDelayTextChange,
         onBuildPreview = viewModel::buildPreview,
         onSaveRoute = viewModel::saveRoute,
         onBack = onBack,
@@ -126,6 +127,7 @@ private fun PasteCoordinatesScreenPreview() {
         onBuildModeChange = {},
         onPlantingTravelChange = {},
         onPlantingRadiusTextChange = {},
+        onTeleportDelayTextChange = {},
         onBuildPreview = {},
         onSaveRoute = {},
         onBack = {},
@@ -142,6 +144,7 @@ internal fun PasteCoordinatesScreen(
     onBuildModeChange: (PasteBuildMode) -> Unit,
     onPlantingTravelChange: (PlantingTravel) -> Unit,
     onPlantingRadiusTextChange: (String) -> Unit,
+    onTeleportDelayTextChange: (String) -> Unit,
     onBuildPreview: () -> Unit,
     onSaveRoute: (String) -> Unit,
     onBack: () -> Unit,
@@ -405,11 +408,27 @@ internal fun PasteCoordinatesScreen(
                             PasteBuildMode.AS_IS to stringResource(R.string.paste_as_is),
                             PasteBuildMode.WALKABLE to stringResource(R.string.paste_walkable_path),
                             PasteBuildMode.PLANTING to stringResource(R.string.paste_planting_mode),
-                        ),
+                        ) +
+                            if (state.hideTeleportFeatures) {
+                                emptyList()
+                            } else {
+                                listOf(PasteBuildMode.TELEPORT to stringResource(R.string.paste_teleport_mode))
+                            },
                     selected = state.buildMode,
                     onSelect = onBuildModeChange,
                     modifier = Modifier.fillMaxWidth(),
                 )
+
+                if (state.buildMode == PasteBuildMode.TELEPORT) {
+                    OutlinedTextField(
+                        value = state.teleportDelayText,
+                        onValueChange = onTeleportDelayTextChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(R.string.paste_teleport_delay_seconds)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                    )
+                }
 
                 if (state.buildMode == PasteBuildMode.PLANTING) {
                     OutlinedTextField(

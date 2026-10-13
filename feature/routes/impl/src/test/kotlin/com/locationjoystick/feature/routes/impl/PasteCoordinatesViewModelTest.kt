@@ -46,6 +46,7 @@ class PasteCoordinatesViewModelTest {
         Dispatchers.setMain(testDispatcher)
         every { settingsRepository.getPlantingRadius() } returns
             flowOf(AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS)
+        every { settingsRepository.getHideTeleportFeatures() } returns flowOf(false)
         every { context.getString(R.string.route_paste_no_valid_coordinates) } returns
             "No valid coordinates found in that text."
         every { context.getString(R.string.route_paste_need_one_point_planting) } returns
@@ -221,6 +222,69 @@ class PasteCoordinatesViewModelTest {
                 viewModel.uiState.value.previewWaypoints,
             )
         }
+
+    @Test
+    fun `teleport with one point cannot build`() {
+        viewModel.onBuildModeChange(PasteBuildMode.TELEPORT)
+        viewModel.onPasteTextChange("51.5, 0.0")
+        viewModel.loadPoints()
+        viewModel.buildPreview()
+        assertEquals("Need at least 2 points for this mode.", viewModel.uiState.value.buildError)
+    }
+
+    @Test
+    fun `teleport preview keeps points, saves TELEPORT with the chosen wait`() =
+        runTest {
+            coEvery { routeRepository.insertRoute(any()) } returns Result.success(Unit)
+            viewModel.onBuildModeChange(PasteBuildMode.TELEPORT)
+            viewModel.onPasteTextChange("51.5, 0.0\n48.8, 2.3")
+            viewModel.loadPoints()
+            viewModel.buildPreview()
+            advanceUntilIdle()
+            assertEquals(
+                listOf(LatLng(51.5, 0.0), LatLng(48.8, 2.3)),
+                viewModel.uiState.value.previewWaypoints,
+            )
+            assertEquals(RouteType.TELEPORT, viewModel.uiState.value.resolvedRouteType)
+            viewModel.onTeleportDelayTextChange("30")
+            viewModel.saveRoute("Hops")
+            advanceUntilIdle()
+            val routeSlot = slot<com.locationjoystick.core.model.Route>()
+            coVerify { routeRepository.insertRoute(capture(routeSlot)) }
+            assertEquals(RouteType.TELEPORT, routeSlot.captured.routeType)
+            assertEquals(listOf(30, 30), routeSlot.captured.waypoints.map { it.waitSeconds })
+        }
+
+    @Test
+    fun `teleport wait defaults to 8 and clamps to 600`() {
+        assertEquals(8, viewModel.uiState.value.teleportWaitSeconds)
+        viewModel.onTeleportDelayTextChange("999")
+        assertEquals(600, viewModel.uiState.value.teleportWaitSeconds)
+        viewModel.onTeleportDelayTextChange("")
+        assertEquals(8, viewModel.uiState.value.teleportWaitSeconds)
+    }
+
+    @Test
+    fun `as-is save keeps zero wait`() =
+        runTest {
+            coEvery { routeRepository.insertRoute(any()) } returns Result.success(Unit)
+            viewModel.onPasteTextChange("51.5, 0.0\n48.8, 2.3")
+            viewModel.loadPoints()
+            viewModel.buildPreview()
+            advanceUntilIdle()
+            viewModel.saveRoute("Plain")
+            advanceUntilIdle()
+            val routeSlot = slot<com.locationjoystick.core.model.Route>()
+            coVerify { routeRepository.insertRoute(capture(routeSlot)) }
+            assertEquals(listOf(0, 0), routeSlot.captured.waypoints.map { it.waitSeconds })
+        }
+
+    @Test
+    fun `hide teleport setting is reflected in state`() {
+        every { settingsRepository.getHideTeleportFeatures() } returns flowOf(true)
+        val vm = PasteCoordinatesViewModel(routeRepository, osrmClient, routingErrorReporter, settingsRepository, context)
+        assertTrue(vm.uiState.value.hideTeleportFeatures)
+    }
 
     @Test
     fun `blank save name is ignored`() =

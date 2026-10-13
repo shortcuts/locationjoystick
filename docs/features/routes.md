@@ -67,6 +67,7 @@ windflowers: ends in 1 hour” do not become coordinates. Recognized DMS compass
 - **As-is** — cleaned points as a straight polyline. Saved as `RouteType.STRAIGHT`. Needs ≥2 points.
 - **Walkable path** — OSRM foot routing between consecutive points (`OsrmClient.resolveRoute`). Dense geometry persisted. Saved as `RouteType.GUIDED`. Per-leg failure falls back to a straight segment and reports a summary via `RoutingErrorReporter.reportRoadFollowingFallbacks`.
 - **Planting mode** — closed clockwise circle around each pasted point as the center (radius from Settings, `AppSettings.plantingRadiusMeters`, default `RouteConstants.PLANTING_DEFAULT_RADIUS_METERS` = 35 m, clamp 5–200 m; seeds the paste sheet field, which stays editable per paste). The center is not a waypoint. Vertex count follows ~8 m chord (`PLANTING_CHORD_METERS`), clamped 8–48. Circles stay geometric even when road-following is on. To circle stops on an already-saved route without rewriting waypoints, use the Planting checkbox on the start-route sheet instead (see Start Flow).
+- **Teleport** — cleaned points saved as `RouteType.TELEPORT` (jump to each point, wait there). Needs ≥2 points. One wait for every stop (`Waypoint.waitSeconds`), default `TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS` = 8 s, clamp 0–600 s (`parseTeleportBetweenDelaySeconds`). Option removed from the segmented control when `hideTeleportFeatures` is on.
 
 Point order: keep original, or **Optimize proximity** (`orderByProximity`, nearest-neighbor from min lat+lon). This reorders one route; it does not split into multiple routes.
 
@@ -77,7 +78,7 @@ Between circles, chosen at build time:
 - **Straight** — last vertex of one ring to the nearest rim vertex of the next. Saved `STRAIGHT`.
 - **Via roads** — same endpoints, OSRM foot profile for the connector only. Saved `GUIDED`.
 
-A single pasted point is valid in Planting mode (one closed circle). As-is and walkable still require two points.
+A single pasted point is valid in Planting mode (one closed circle). As-is, walkable and teleport still require two points.
 
 ## Paste coordinates (map and widget)
 

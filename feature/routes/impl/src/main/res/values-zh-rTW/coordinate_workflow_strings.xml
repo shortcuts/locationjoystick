@@ -33,6 +33,8 @@
     <string name="paste_as_is">原樣</string>
     <string name="paste_walkable_path">可步行路徑</string>
     <string name="paste_planting_mode">種植模式</string>
+    <string name="paste_teleport_mode">傳送</string>
+    <string name="paste_teleport_delay_seconds">每個點停留時間（秒）</string>
     <string name="paste_straight">直線</string>
     <string name="paste_via_roads">沿道路</string>
     <string name="paste_building">建立中…</string>

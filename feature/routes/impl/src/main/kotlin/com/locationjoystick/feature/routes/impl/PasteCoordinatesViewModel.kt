@@ -9,6 +9,7 @@ import com.locationjoystick.core.common.util.clampPlantingRadius
 import com.locationjoystick.core.common.util.flattenRouteLegs
 import com.locationjoystick.core.common.util.orderByProximity
 import com.locationjoystick.core.common.util.parsePastedCoordinates
+import com.locationjoystick.core.common.util.parseTeleportBetweenDelaySeconds
 import com.locationjoystick.core.common.util.plantingRings
 import com.locationjoystick.core.common.util.stitchRingsWithConnectors
 import com.locationjoystick.core.data.RouteRepository
@@ -35,7 +36,7 @@ import javax.inject.Inject
 
 enum class PastePointOrder { ORIGINAL, PROXIMITY }
 
-enum class PasteBuildMode { AS_IS, WALKABLE, PLANTING }
+enum class PasteBuildMode { AS_IS, WALKABLE, PLANTING, TELEPORT }
 
 enum class PlantingTravel { STRAIGHT, ROADS }
 
@@ -51,6 +52,8 @@ data class PasteCoordinatesUiState(
             .toInt()
             .toString(),
     val plantingTravel: PlantingTravel = PlantingTravel.STRAIGHT,
+    val teleportDelayText: String = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS.toString(),
+    val hideTeleportFeatures: Boolean = false,
     val previewWaypoints: List<LatLng> = emptyList(),
     val isBuilding: Boolean = false,
     val loadError: String? = null,
@@ -60,7 +63,7 @@ data class PasteCoordinatesUiState(
     val canBuild: Boolean
         get() =
             when (buildMode) {
-                PasteBuildMode.AS_IS, PasteBuildMode.WALKABLE -> cleanedPoints.size >= 2
+                PasteBuildMode.AS_IS, PasteBuildMode.WALKABLE, PasteBuildMode.TELEPORT -> cleanedPoints.size >= 2
                 PasteBuildMode.PLANTING -> cleanedPoints.isNotEmpty()
             }
 
@@ -70,17 +73,22 @@ data class PasteCoordinatesUiState(
     val resolvedRouteType: RouteType
         get() =
             when {
+                buildMode == PasteBuildMode.TELEPORT -> RouteType.TELEPORT
                 buildMode == PasteBuildMode.WALKABLE -> RouteType.GUIDED
                 buildMode == PasteBuildMode.PLANTING && plantingTravel == PlantingTravel.ROADS ->
                     RouteType.GUIDED
                 else -> RouteType.STRAIGHT
             }
+
+    val teleportWaitSeconds: Int
+        get() = parseTeleportBetweenDelaySeconds(teleportDelayText)
 }
 
 internal fun buildRouteFromPositions(
     name: String,
     positions: List<LatLng>,
     routeType: RouteType,
+    waitSeconds: Int = 0,
     nowMs: Long = System.currentTimeMillis(),
     id: String = UUID.randomUUID().toString(),
 ): Route {
@@ -90,6 +98,7 @@ internal fun buildRouteFromPositions(
                 id = UUID.randomUUID().toString(),
                 position = latLng,
                 orderIndex = index,
+                waitSeconds = waitSeconds,
             )
         }
     return Route(
@@ -117,6 +126,11 @@ class PasteCoordinatesViewModel
         val uiState: StateFlow<PasteCoordinatesUiState> = _uiState.asStateFlow()
 
         init {
+            viewModelScope.launch {
+                settingsRepository.getHideTeleportFeatures().collect { hide ->
+                    _uiState.update { it.copy(hideTeleportFeatures = hide) }
+                }
+            }
             // ponytail: a user typing exactly the default text before the first DataStore read is overwritten.
             viewModelScope.launch {
                 val radius = settingsRepository.getPlantingRadius().first()
@@ -154,6 +168,10 @@ class PasteCoordinatesViewModel
 
         fun onPlantingTravelChange(travel: PlantingTravel) {
             _uiState.update { it.copy(plantingTravel = travel, previewWaypoints = emptyList()) }
+        }
+
+        fun onTeleportDelayTextChange(text: String) {
+            _uiState.update { it.copy(teleportDelayText = text.filter(Char::isDigit).take(3)) }
         }
 
         fun onPlantingRadiusTextChange(text: String) {
@@ -212,7 +230,7 @@ class PasteCoordinatesViewModel
                 val ordered = orderedPoints(state)
                 val preview =
                     when (state.buildMode) {
-                        PasteBuildMode.AS_IS -> ordered
+                        PasteBuildMode.AS_IS, PasteBuildMode.TELEPORT -> ordered
                         PasteBuildMode.WALKABLE -> buildWalkablePath(ordered)
                         PasteBuildMode.PLANTING -> buildPlantingPath(ordered, state)
                     }
@@ -241,6 +259,7 @@ class PasteCoordinatesViewModel
                         name = trimmed,
                         positions = state.previewWaypoints,
                         routeType = state.resolvedRouteType,
+                        waitSeconds = if (state.buildMode == PasteBuildMode.TELEPORT) state.teleportWaitSeconds else 0,
                     )
                 routeRepository.insertRoute(route)
                 _uiState.update { it.copy(saved = true) }

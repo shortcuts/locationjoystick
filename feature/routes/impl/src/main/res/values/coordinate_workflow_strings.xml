@@ -33,6 +33,8 @@
     <string name="paste_as_is">As-is</string>
     <string name="paste_walkable_path">Walkable path</string>
     <string name="paste_planting_mode">Planting mode</string>
+    <string name="paste_teleport_mode">Teleport</string>
+    <string name="paste_teleport_delay_seconds">Wait at each point (seconds)</string>
     <string name="paste_straight">Straight</string>
     <string name="paste_via_roads">Via roads</string>
     <string name="paste_building">Building…</string>

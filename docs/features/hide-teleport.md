@@ -23,6 +23,7 @@ Key files: `:core:model/AppSettings.kt`, `:core:data/SettingsRepository.kt`, `:c
   - Group Sync "Teleport to leader now" button (Group Sync screen), and the "Follow leader teleports" toggle (the follower always walks).
   - Widget favorites-panel "Teleport" button.
   - Paste-coordinates **Teleport** on the map FAB, floating map, and widget paste box (`PasteCoordinatesForm`). **Start** on that same form still walks to the first stop when hide-teleport is on (`StartRouteReplayUseCase`).
+  - Routes-menu paste builder (`PasteCoordinatesScreen`) **Teleport** build mode and its wait field.
   - Route replay "Previous waypoint" / "Next waypoint" buttons (main map
     FAB column, widget panel, and floating map — see
     docs/features/routes.md, "Next / Previous Waypoint (Teleport)").
