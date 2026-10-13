@@ -272,6 +272,14 @@ def test_twist_events_pairs_two_fingers_and_releases():
     assert ev[-2:] == [(3, 0x39, -1), (0, 0, 0)]
 
 
+def test_pinch_events_spread_symmetric_and_condition_parse():
+    ev = rb.pinch_events(540, 1500, 200, 320)
+    xs = [v for t, c, v in ev if t == 3 and c == 0x35]
+    assert xs[0:2] == [740, 340] and xs[-2:] == [860, 220] and {v for t, c, v in ev if c == 0x36} == {1500}
+    assert ev[-2:] == [(3, 0x39, -1), (0, 0, 0)]
+    assert rb.parse_condition("1.6:-40") == (1.6, -40.0) and rb.condition_name(1.6, -40.0) == "z1.6_t-40"
+
+
 if __name__ == "__main__":
     tests = [v for k, v in list(globals().items()) if k.startswith("test_")]
     for t in tests:

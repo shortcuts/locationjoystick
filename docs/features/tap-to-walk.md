@@ -388,6 +388,36 @@ frames and the single manual twist captured before any tap. The script now clear
 but never taps unless a blob is found in that same frame; no needle exists, so no tapping should be rerun.
 Not covered: one device, one twist; a compass that appears only after a longer rotation was not seen.
 
+### Automated varied-camera capture
+
+Bench only (`registration_bench.py varycap`), nothing in the app changed. One command records walk legs under
+several camera zoom and orientation conditions with no hand steps: per condition it drives a two-finger pinch and
+a two-finger twist through a `uinput` virtual touchscreen (external to the game, no taps, nothing read from or
+injected into it), then walks one straight leg per bearing through the Control API `/walk` at walking speed. No
+teleport is ever called. Output is `<out>/<zoom>_<twist>/walk_C_<bearing>/`, the layout `multileg` and
+`motion --commanded` already read, plus `before.png` / `after.png` around each condition's gestures and
+`condition.json`. `--truth` copies the camera anchor file into each condition directory.
+
+```
+registration_bench.py varycap OUT --conditions 1:0 1.6:0 1:40 0.5:-60 --legs 0 90 45 225 --dist 30 --truth truth.json
+```
+
+| Observation (Pixel 5, latest game build) | Result |
+|---|---|
+| Two fingers spreading horizontally (zoom ratio above 1) | zooms in and lowers the camera pitch to a close-up of the avatar |
+| Two fingers contracting (ratio below 1) | zooms out to a wide, high-pitch view |
+| Two-finger twist of 40 to 60 degrees | rotates the map and the camera heading |
+| Camera reset control | none; gestures accumulate, so conditions are relative to the previous one |
+| 8 short walk legs (10 to 15 m) across five conditions | frames and positions recorded, walk target cleared each leg, no speed abort |
+
+The zoom change also changes the pitch, so a close-up is not a scaled copy of the wide view. The earlier unpitched
+ground map is fitted per condition (`multileg` on one condition directory); whether one calibration spans zooms is
+a question the larger sample set answers, not something shown here. A log-polar estimate of the applied rotation
+and scale between the before and after frames returned about 0 degrees and scale 1.0 for a visible zoom, so it
+is not used: check `before.png` / `after.png` by eye. Walking is about 0.56 m/s, so 4 conditions of 4 legs of 30 m
+take roughly 15 minutes of walking plus screenshots. Not covered: one device; the larger run itself was not
+recorded or scored in this entry.
+
 ## Warning Screen
 
 Enabling the overlay opens `CompassDisclosureDialog` (see "Prominent Disclosure" above) with two

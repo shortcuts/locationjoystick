@@ -5,7 +5,7 @@ Step 1 of the investigation: pure geometry helpers plus one registration method 
 correlation on the FFT magnitude, rotation and scale in one step). Annotate/run/report subcommands are
 added once a device-captured dataset exists (see docs/features/tap-to-walk.md, "Bearing registration
 investigation"). The `motion` subcommand scores the motion-calibrated heading prototype (content_flow,
-heading_from_moves) on stored walk frames.
+heading_from_moves) on stored walk frames. `varycap` captures walk legs under varied zoom and orientation.
 
 Setup (venv is gitignored):
     python3 -m venv scripts/registration-bench/.venv
@@ -429,24 +429,39 @@ def needle_heading(img_bgr):
             "angle_deg": math.degrees(math.atan2(ax, -ay)), "px": int(cnt)}
 
 
-def twist_events(cx, cy, radius, start_deg, delta_deg, steps=24):
-    """Ordered (type, code, value) touch events (protocol B) for two fingers twisting about (cx, cy), then released."""
+def _two_finger_events(finger_xy, steps):
+    """Ordered (type, code, value) touch events (protocol B) for two fingers at finger_xy(k, sign), then released."""
     EV_ABS, EV_SYN = 3, 0
     SLOT, TID, X, Y, SYN = 0x2F, 0x39, 0x35, 0x36, 0
     ev = []
     for k in range(steps):
-        a = math.radians(start_deg + delta_deg * k / max(steps - 1, 1))
         for slot, sign in ((0, 1), (1, -1)):
             ev.append((EV_ABS, SLOT, slot))
             if k == 0:
                 ev.append((EV_ABS, TID, 100 + slot))
-            ev.append((EV_ABS, X, int(round(cx + sign * radius * math.cos(a)))))
-            ev.append((EV_ABS, Y, int(round(cy + sign * radius * math.sin(a)))))
+            x, y = finger_xy(k, sign)
+            ev.append((EV_ABS, X, int(round(x))))
+            ev.append((EV_ABS, Y, int(round(y))))
         ev.append((EV_SYN, SYN, 0))
     for slot in (0, 1):
         ev += [(EV_ABS, SLOT, slot), (EV_ABS, TID, -1)]
     ev.append((EV_SYN, SYN, 0))
     return ev
+
+
+def twist_events(cx, cy, radius, start_deg, delta_deg, steps=24):
+    """Two fingers twisting about (cx, cy) by delta_deg, then released."""
+    def xy(k, sign):
+        a = math.radians(start_deg + delta_deg * k / max(steps - 1, 1))
+        return cx + sign * radius * math.cos(a), cy + sign * radius * math.sin(a)
+    return _two_finger_events(xy, steps)
+
+
+def pinch_events(cx, cy, r0, r1, steps=24):
+    """Two fingers on a horizontal line through (cx, cy), spreading from r0 to r1 px each side (r1 > r0 zooms in)."""
+    def xy(k, sign):
+        return cx + sign * (r0 + (r1 - r0) * k / max(steps - 1, 1)), cy
+    return _two_finger_events(xy, steps)
 
 
 def commanded_target(lat, lon, bearing_deg, dist_m):
@@ -906,6 +921,34 @@ def _preflight():
     return host, key
 
 
+def _capture_leg(host, key, serial, leg, b, lat, lon, every, timeout, extra=None):
+    """Walk to (lat, lon) via /walk and write w<NN>.png + meta.json (bearing b) into leg until the walk ends."""
+    import json
+    import time
+
+    leg.mkdir(parents=True, exist_ok=True)
+    _api(host, key, "POST", "/walk", {"lat": lat, "lon": lon, "viaRoads": False})
+    rows, t0, seen = [], time.time(), False
+    while time.time() - t0 < timeout:
+        tick = time.time()
+        s0 = _api(host, key, "GET", "/state")
+        _adb_screencap(serial, leg / f"w{len(rows):02d}.png")
+        s1 = _api(host, key, "GET", "/state")
+        rows.append({**frame_meta(len(rows), tick - t0, b, s0, s1), **(extra or {})})
+        if len(rows) > 1:  # /state speedMs reads 0 during a walk-to, so derive speed from positions
+            q, c = rows[-2]["pos"], rows[-1]["pos"]
+            dn, de = (c[0] - q[0]) * 111320, (c[1] - q[1]) * 111320 * math.cos(math.radians(c[0]))
+            if math.hypot(dn, de) / max(rows[-1]["t"] - rows[-2]["t"], 1e-6) > 3.0:
+                _api(host, key, "POST", "/walk/stop")
+                raise SystemExit("speed above 3 m/s, aborting")
+        seen = seen or s1["walk"]["target"] is not None
+        if seen and s1["walk"]["target"] is None:
+            break
+        time.sleep(max(0.0, every - (time.time() - tick)))
+    (leg / "meta.json").write_text(json.dumps(rows, indent=1))
+    return len(rows)
+
+
 def cmd_walkcap(args):
     """Record straight walk legs commanded through the Control API /walk, one frame every args.every s.
 
@@ -913,7 +956,6 @@ def cmd_walkcap(args):
     Legs chain from where the previous one ended; /teleport is never called. Credentials come from
     LJ_CONTROL_API_KEY and LJ_CONTROL_API_HOST (host:port) and are never written anywhere.
     """
-    import json
     import time
 
     host, key = _preflight()
@@ -924,27 +966,74 @@ def cmd_walkcap(args):
         for b in args.legs:
             st = _api(host, key, "GET", "/state")
             lat, lon = commanded_target(st["position"]["lat"], st["position"]["lon"], b, args.dist)
-            leg = out / f"walk_C_{int(b):03d}"
-            leg.mkdir(parents=True, exist_ok=True)
-            _api(host, key, "POST", "/walk", {"lat": lat, "lon": lon, "viaRoads": False})
-            rows, t0, seen = [], time.time(), False
-            while time.time() - t0 < args.timeout:
-                tick = time.time()
-                s0 = _api(host, key, "GET", "/state")
-                _adb_screencap(args.serial, leg / f"w{len(rows):02d}.png")
-                s1 = _api(host, key, "GET", "/state")
-                rows.append(frame_meta(len(rows), tick - t0, b, s0, s1))
-                if len(rows) > 1:  # /state speedMs reads 0 during a walk-to, so derive speed from positions
-                    q, c = rows[-2]["pos"], rows[-1]["pos"]
-                    dn, de = (c[0] - q[0]) * 111320, (c[1] - q[1]) * 111320 * math.cos(math.radians(c[0]))
-                    if math.hypot(dn, de) / max(rows[-1]["t"] - rows[-2]["t"], 1e-6) > 3.0:
-                        raise SystemExit("speed above 3 m/s, aborting")
-                seen = seen or s1["walk"]["target"] is not None
-                if seen and s1["walk"]["target"] is None:
-                    break
-                time.sleep(max(0.0, args.every - (time.time() - tick)))
-            (leg / "meta.json").write_text(json.dumps(rows, indent=1))
-            print(f"leg {b}: {len(rows)} frames")
+            n = _capture_leg(host, key, args.serial, out / f"walk_C_{int(b):03d}", b, lat, lon, args.every,
+                             args.timeout)
+            print(f"leg {b}: {n} frames")
+    finally:
+        _api(host, key, "POST", "/walk/stop")
+
+
+def parse_condition(text):
+    """'zoom:twist' -> (zoom_factor, twist_deg); zoom > 1 pinches out (zoom in), 1 leaves it, twist 0 leaves it."""
+    z, t = text.split(":")
+    return float(z), float(t)
+
+
+def condition_name(zoom, twist):
+    return f"z{zoom:g}_t{twist:+g}"
+
+
+# Finger half-spread (px) of a pinch at ratio 1.0; ratios above 1 widen it, below 1 narrow it.
+PINCH_BASE_PX = 200
+GESTURE_CENTER = (540, 1500)  # map area below the top bar, clear of the buttons along the bottom
+
+
+def cmd_varycap(args):
+    """Automated diverse capture: per condition, vary camera zoom and orientation, then walk legs and record.
+
+    No hand steps and no teleport. A condition is 'zoom:twist': a two-finger pinch of the given ratio and a
+    two-finger twist of the given degrees (uinput virtual touchscreen, external to the game), then one walk
+    leg per bearing in args.legs. The game offers no camera reset, so gestures accumulate; before.png and
+    after.png bracket each condition's gestures for checking by eye (a spread pinch zooms in and lowers the
+    camera pitch, a contracting pinch zooms out; the commanded values are relative, not absolute, and a
+    registration estimate between the frames is not reliable once the pitch changes). Output out/<condition>/walk_C_<bearing>/ is what `multileg` and `motion --commanded`
+    read; truth.json (camera anchor) is copied in from args.truth when given. Needs the Control API env
+    vars like walkcap; gestures never tap, so no screen is opened by accident.
+    """
+    import json
+    import shutil
+    import time
+
+    host, key = _preflight()
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    _focus(args.serial, GAME_ACTIVITY)
+    time.sleep(2)
+    cx, cy = GESTURE_CENTER
+    try:
+        for cond in args.conditions:
+            zoom, twist = parse_condition(cond)
+            cdir = out / condition_name(zoom, twist)
+            cdir.mkdir(parents=True, exist_ok=True)
+            _adb_screencap(args.serial, cdir / "before.png")
+            if zoom != 1.0:
+                _twist(args.serial, pinch_events(cx, cy, PINCH_BASE_PX, PINCH_BASE_PX * zoom))
+                time.sleep(1.5)
+            if twist:
+                _twist(args.serial, twist_events(cx, cy, 250, 0.0, twist))
+                time.sleep(1.5)
+            _adb_screencap(args.serial, cdir / "after.png")
+            info = {"zoom_cmd": zoom, "twist_cmd_deg": twist, "legs": args.legs}
+            (cdir / "condition.json").write_text(json.dumps(info, indent=1))
+            if args.truth:
+                shutil.copy(args.truth, cdir / "truth.json")
+            print(f"{cdir.name}: {info}", flush=True)
+            for b in args.legs:
+                st = _api(host, key, "GET", "/state")
+                lat, lon = commanded_target(st["position"]["lat"], st["position"]["lon"], b, args.dist)
+                n = _capture_leg(host, key, args.serial, cdir / f"walk_C_{int(b):03d}", b, lat, lon, args.every,
+                                 args.timeout, {"condition": cdir.name})
+                print(f"  leg {b}: {n} frames", flush=True)
     finally:
         _api(host, key, "POST", "/walk/stop")
 
@@ -1224,6 +1313,17 @@ def main(argv=None):
     tt.add_argument("--need", type=int, default=48)
     tt.add_argument("--tol-m", type=float, default=15.0)
     tt.set_defaults(func=cmd_taptrials)
+    vc = sub.add_parser("varycap")
+    vc.add_argument("out")
+    vc.add_argument("--serial", default="0A061FDD4000JF")
+    vc.add_argument("--conditions", nargs="+", default=["1:0", "1.6:0", "1:40", "0.6:-60"],
+                    help="zoom:twist pairs, zoom = pinch ratio (above 1 zooms in), twist in degrees")
+    vc.add_argument("--legs", type=float, nargs="+", default=[0.0, 90.0, 45.0, 225.0])
+    vc.add_argument("--dist", type=float, default=30.0)
+    vc.add_argument("--every", type=float, default=3.0)
+    vc.add_argument("--timeout", type=float, default=90.0)
+    vc.add_argument("--truth", help="truth.json with the camera anchor, copied into each condition dir")
+    vc.set_defaults(func=cmd_varycap)
     pr = sub.add_parser("probe")
     pr.add_argument("out")
     pr.add_argument("--serial", default="0A061FDD4000JF")
