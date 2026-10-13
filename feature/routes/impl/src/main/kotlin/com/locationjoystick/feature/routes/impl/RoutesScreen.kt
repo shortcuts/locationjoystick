@@ -590,6 +590,8 @@ private fun RouteCard(
                     onCancel = { showStartDialog = false },
                     hideTeleport = hideTeleportFeatures,
                     isTeleportRoute = route.routeType == RouteType.TELEPORT,
+                    isPlantedRoute = route.plantingRadiusMeters != null,
+                    isRoadRoute = route.routeType == RouteType.GUIDED,
                     isRoadRouteFetchInFlight = isRoadRouteFetchInFlight,
                 )
             }

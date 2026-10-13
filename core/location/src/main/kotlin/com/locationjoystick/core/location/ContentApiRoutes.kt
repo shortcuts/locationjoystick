@@ -166,6 +166,17 @@ class ContentApiRoutes
                         waitSeconds = wait,
                     )
                 }
+            val plantingRadius =
+                when {
+                    !json.has("plantingRadiusMeters") -> existing?.plantingRadiusMeters
+                    json.isNull("plantingRadiusMeters") -> null
+                    else ->
+                        json.optDouble("plantingRadiusMeters").also {
+                            val min = AppConstants.RouteConstants.ROUTE_MIN_RADIUS_METERS
+                            val max = AppConstants.RouteConstants.PLANTING_MAX_RADIUS_METERS
+                            require(it in min..max) { "plantingRadiusMeters out of range" }
+                        }
+                }
             val now = System.currentTimeMillis()
             val saved =
                 Route(
@@ -176,6 +187,7 @@ class ContentApiRoutes
                     routeType = type,
                     speedProfileId = profileId,
                     randomizeTeleportOrder = json.optBoolean("randomizeTeleportOrder", false),
+                    plantingRadiusMeters = plantingRadius,
                     createdAt = existing?.createdAt ?: now,
                     updatedAt = now,
                     category = existing?.category,
@@ -186,6 +198,7 @@ class ContentApiRoutes
 
         private fun routeJson(r: Route) =
             JSONObject()
+                .apply { r.plantingRadiusMeters?.let { put("plantingRadiusMeters", it) } }
                 .put("id", r.id)
                 .put("name", r.name)
                 .put("isLooping", r.isLooping)

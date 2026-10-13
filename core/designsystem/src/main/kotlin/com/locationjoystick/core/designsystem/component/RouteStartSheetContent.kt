@@ -30,12 +30,16 @@ fun RouteStartSheetContent(
     hideTeleport: Boolean = false,
     isTeleportRoute: Boolean = false,
     isRoadRouteFetchInFlight: Boolean = false,
+    /** Route carries its own Planting setting: the Planting option is shown on and locked. */
+    isPlantedRoute: Boolean = false,
+    /** Route style is Walkable (roads): with [isPlantedRoute], Follow roads is shown on and locked. */
+    isRoadRoute: Boolean = false,
 ) {
     var loop by remember(key) { mutableStateOf(true) }
     var reverse by remember(key) { mutableStateOf(false) }
     var returnToLocation by remember(key) { mutableStateOf(false) }
-    var followRoads by remember(key) { mutableStateOf(false) }
-    var planting by remember(key) { mutableStateOf(false) }
+    var followRoads by remember(key) { mutableStateOf(isPlantedRoute && isRoadRoute) }
+    var planting by remember(key) { mutableStateOf(isPlantedRoute) }
     var teleportBetweenWaypoints by remember(key) { mutableStateOf(false) }
     var teleportBetweenDelaySecondsText by remember(key) {
         mutableStateOf(AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS.toString())
@@ -83,6 +87,8 @@ fun RouteStartSheetContent(
         },
         hideTeleport = hideTeleport,
         isTeleportRoute = isTeleportRoute,
+        plantingLocked = isPlantedRoute,
+        followRoadsLocked = isPlantedRoute && isRoadRoute,
         isStarting = isAwaitingRoadStart,
     )
 }

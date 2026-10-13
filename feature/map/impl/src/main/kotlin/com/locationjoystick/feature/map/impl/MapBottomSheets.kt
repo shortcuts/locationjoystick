@@ -116,6 +116,8 @@ internal fun RoutesPickerSheet(
                     },
                     hideTeleport = uiState.hideTeleportFeatures,
                     isTeleportRoute = route?.routeType == RouteType.TELEPORT,
+                    isPlantedRoute = route?.plantingRadiusMeters != null,
+                    isRoadRoute = route?.routeType == RouteType.GUIDED,
                     isRoadRouteFetchInFlight = uiState.isRoadRouteFetchInFlight,
                 )
             }

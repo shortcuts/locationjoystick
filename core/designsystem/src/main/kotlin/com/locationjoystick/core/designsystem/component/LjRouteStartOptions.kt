@@ -50,6 +50,8 @@ fun LjRouteStartCheckboxes(
     hideTeleport: Boolean = false,
     enabled: Boolean = true,
     isTeleportRoute: Boolean = false,
+    plantingLocked: Boolean = false,
+    followRoadsLocked: Boolean = false,
     textColor: Color = Color.Unspecified,
 ) {
     // Drop the 48.dp checkbox min size so Loop/Planting/Reverse/Return/Follow roads/
@@ -66,7 +68,7 @@ fun LjRouteStartCheckboxes(
             LjCheckboxRow(
                 title = stringResource(R.string.lj_route_start_options_planting),
                 checked = planting,
-                enabled = enabled && !isTeleportRoute,
+                enabled = enabled && !isTeleportRoute && !plantingLocked,
                 onCheckedChange = onPlantingChange,
                 textColor = textColor,
             )
@@ -87,7 +89,7 @@ fun LjRouteStartCheckboxes(
             LjCheckboxRow(
                 title = stringResource(R.string.lj_route_start_options_follow_roads),
                 checked = followRoads,
-                enabled = enabled && !isTeleportRoute,
+                enabled = enabled && !isTeleportRoute && !followRoadsLocked,
                 onCheckedChange = onFollowRoadsChange,
                 textColor = textColor,
             )
@@ -144,6 +146,8 @@ fun LjRouteStartOptions(
     onStart: () -> Unit,
     hideTeleport: Boolean = false,
     isTeleportRoute: Boolean = false,
+    plantingLocked: Boolean = false,
+    followRoadsLocked: Boolean = false,
     textColor: Color = Color.Unspecified,
     isStarting: Boolean = false,
 ) {
@@ -158,6 +162,8 @@ fun LjRouteStartOptions(
             followRoads = followRoads,
             onFollowRoadsChange = onFollowRoadsChange,
             isTeleportRoute = isTeleportRoute,
+            plantingLocked = plantingLocked,
+            followRoadsLocked = followRoadsLocked,
             planting = planting,
             onPlantingChange = onPlantingChange,
             teleportBetweenWaypoints = teleportBetweenWaypoints,

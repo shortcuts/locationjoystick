@@ -23,6 +23,7 @@ data class RouteEntity(
     val createdAt: Long,
     val updatedAt: Long,
     val category: String? = null,
+    val plantingRadiusMeters: Double? = null,
 )
 
 /**
@@ -41,6 +42,7 @@ fun RouteEntity.toDomain(waypoints: List<WaypointEntity>): Route =
         createdAt = createdAt,
         updatedAt = updatedAt,
         category = category,
+        plantingRadiusMeters = plantingRadiusMeters,
     )
 
 fun Route.toEntity(): RouteEntity =
@@ -54,4 +56,5 @@ fun Route.toEntity(): RouteEntity =
         createdAt = createdAt,
         updatedAt = updatedAt,
         category = category,
+        plantingRadiusMeters = plantingRadiusMeters,
     )

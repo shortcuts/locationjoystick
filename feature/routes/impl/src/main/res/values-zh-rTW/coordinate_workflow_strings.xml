@@ -11,7 +11,6 @@
     <string name="paste_coordinates_screen_build_mode">"建立模式"</string>
     <string name="paste_coordinates_screen_circle_radius_meters">"圓圈半徑（公尺）"</string>
     <string name="paste_coordinates_screen_default_35_m_circles_stay_geometric_only_travel_between_them">"圓圈保持幾何形狀，只有圓圈之間的移動才能沿道路進行。"</string>
-    <string name="paste_coordinates_screen_between_circles">"圓圈之間"</string>
     <string name="paste_coordinates_screen_save_route">"儲存路線"</string>
     <string name="paste_coordinates_screen_route_name">"路線名稱"</string>
     <string name="paste_coordinates_screen_save">"儲存"</string>
@@ -32,11 +31,9 @@
     <string name="paste_optimize_proximity">最佳化路徑順序</string>
     <string name="paste_as_is">原樣</string>
     <string name="paste_walkable_path">可步行路徑</string>
-    <string name="paste_planting_mode">種植模式</string>
+    <string name="paste_planting_toggle">種植</string>
     <string name="paste_teleport_mode">傳送</string>
     <string name="paste_teleport_delay_seconds">每個點停留時間（秒）</string>
-    <string name="paste_straight">直線</string>
-    <string name="paste_via_roads">沿道路</string>
     <string name="paste_building">建立中…</string>
     <string name="paste_build_preview">建立預覽</string>
     <string name="paste_save_route">儲存路線</string>

@@ -24,6 +24,8 @@ Each entry in `routes` includes the optional `category` field (the user group, s
 
 Each entry in `routes` also includes `randomizeTeleportOrder` (`Route.randomizeTeleportOrder`). Old exports without it import cleanly — a missing field defaults to `false`.
 
+Each entry in `routes` may include `plantingRadiusMeters` (`Route.plantingRadiusMeters`, a Planting route's circle radius), written only when set. Old exports without it import cleanly as an ordinary route (`null`).
+
 Each waypoint in a route includes `waitSeconds` (`Waypoint.waitSeconds`, used by teleport routes — see docs/features/routes.md, "Teleport Routes"). Old exports without it import cleanly — a missing `waitSeconds` defaults to `0`.
 `routesSortMode` and `favoritesSortMode` preserve the four list sort choices. Older exports with
 only `routesSortNewestFirst` / `favoritesSortNewestFirst` migrate to **Newest saved** or

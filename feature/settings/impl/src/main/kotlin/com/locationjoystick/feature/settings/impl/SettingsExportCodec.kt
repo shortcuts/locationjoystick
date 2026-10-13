@@ -129,6 +129,7 @@ internal object SettingsExportCodec {
             obj.put("routeType", route.routeType.name)
             obj.put("speedProfileId", route.speedProfileId ?: JSONObject.NULL)
             obj.put("randomizeTeleportOrder", route.randomizeTeleportOrder)
+            route.plantingRadiusMeters?.let { obj.put("plantingRadiusMeters", it) }
             obj.put("createdAt", route.createdAt)
             val wpArray = JSONArray()
             route.waypoints.forEach { wp ->
@@ -379,6 +380,14 @@ internal object SettingsExportCodec {
                         routeType = routeType,
                         speedProfileId = if (obj.isNull("speedProfileId")) null else obj.optString("speedProfileId").ifEmpty { null },
                         randomizeTeleportOrder = obj.optBoolean("randomizeTeleportOrder", false),
+                        plantingRadiusMeters =
+                            if (obj.has("plantingRadiusMeters") &&
+                                !obj.isNull("plantingRadiusMeters")
+                            ) {
+                                obj.getDouble("plantingRadiusMeters")
+                            } else {
+                                null
+                            },
                         createdAt = obj.optLong("createdAt", 0),
                     ),
                 )

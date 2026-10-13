@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -101,7 +102,7 @@ fun PasteCoordinatesRoute(
         onLoadPoints = viewModel::loadPoints,
         onPointOrderChange = viewModel::onPointOrderChange,
         onBuildModeChange = viewModel::onBuildModeChange,
-        onPlantingTravelChange = viewModel::onPlantingTravelChange,
+        onPlantingEnabledChange = viewModel::onPlantingEnabledChange,
         onPlantingRadiusTextChange = viewModel::onPlantingRadiusTextChange,
         onTeleportDelayTextChange = viewModel::onTeleportDelayTextChange,
         onBuildPreview = viewModel::buildPreview,
@@ -125,7 +126,7 @@ private fun PasteCoordinatesScreenPreview() {
         onLoadPoints = {},
         onPointOrderChange = {},
         onBuildModeChange = {},
-        onPlantingTravelChange = {},
+        onPlantingEnabledChange = {},
         onPlantingRadiusTextChange = {},
         onTeleportDelayTextChange = {},
         onBuildPreview = {},
@@ -142,7 +143,7 @@ internal fun PasteCoordinatesScreen(
     onLoadPoints: () -> Unit,
     onPointOrderChange: (PastePointOrder) -> Unit,
     onBuildModeChange: (PasteBuildMode) -> Unit,
-    onPlantingTravelChange: (PlantingTravel) -> Unit,
+    onPlantingEnabledChange: (Boolean) -> Unit,
     onPlantingRadiusTextChange: (String) -> Unit,
     onTeleportDelayTextChange: (String) -> Unit,
     onBuildPreview: () -> Unit,
@@ -407,7 +408,6 @@ internal fun PasteCoordinatesScreen(
                         listOf(
                             PasteBuildMode.AS_IS to stringResource(R.string.paste_as_is),
                             PasteBuildMode.WALKABLE to stringResource(R.string.paste_walkable_path),
-                            PasteBuildMode.PLANTING to stringResource(R.string.paste_planting_mode),
                         ) +
                             if (state.hideTeleportFeatures) {
                                 emptyList()
@@ -430,7 +430,16 @@ internal fun PasteCoordinatesScreen(
                     )
                 }
 
-                if (state.buildMode == PasteBuildMode.PLANTING) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        stringResource(R.string.paste_planting_toggle),
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Switch(checked = state.plantingEnabled, onCheckedChange = onPlantingEnabledChange)
+                }
+
+                if (state.plantingEnabled) {
                     OutlinedTextField(
                         value = state.plantingRadiusText,
                         onValueChange = onPlantingRadiusTextChange,
@@ -445,17 +454,6 @@ internal fun PasteCoordinatesScreen(
                         },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
-                    )
-                    Text(stringResource(R.string.paste_coordinates_screen_between_circles), style = MaterialTheme.typography.titleSmall)
-                    LjSegmentedControl(
-                        options =
-                            listOf(
-                                PlantingTravel.STRAIGHT to stringResource(R.string.paste_straight),
-                                PlantingTravel.ROADS to stringResource(R.string.paste_via_roads),
-                            ),
-                        selected = state.plantingTravel,
-                        onSelect = onPlantingTravelChange,
-                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
 

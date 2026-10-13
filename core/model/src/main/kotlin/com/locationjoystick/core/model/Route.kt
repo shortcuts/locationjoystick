@@ -11,6 +11,8 @@ data class Route(
     val speedProfileId: String? = null,
     /** TELEPORT routes only: shuffle waypoint order on start and again at each loop restart. */
     val randomizeTeleportOrder: Boolean = false,
+    /** Non-null = Planting route: replay circles each waypoint at this radius; waypoints are centers. */
+    val plantingRadiusMeters: Double? = null,
     override val createdAt: Long = 0L,
     val updatedAt: Long = 0L,
     /** User group name; null = ungrouped. Hot routes (`hot_route_` ids) are never grouped. */

@@ -66,19 +66,13 @@ windflowers: ends in 1 hour” do not become coordinates. Recognized DMS compass
 
 - **As-is** — cleaned points as a straight polyline. Saved as `RouteType.STRAIGHT`. Needs ≥2 points.
 - **Walkable path** — OSRM foot routing between consecutive points (`OsrmClient.resolveRoute`). Dense geometry persisted. Saved as `RouteType.GUIDED`. Per-leg failure falls back to a straight segment and reports a summary via `RoutingErrorReporter.reportRoadFollowingFallbacks`.
-- **Planting mode** — closed clockwise circle around each pasted point as the center (radius from Settings, `AppSettings.plantingRadiusMeters`, default `RouteConstants.PLANTING_DEFAULT_RADIUS_METERS` = 35 m, clamp 5–200 m; seeds the paste sheet field, which stays editable per paste). The center is not a waypoint. Vertex count follows ~8 m chord (`PLANTING_CHORD_METERS`), clamped 8–48. Circles stay geometric even when road-following is on. To circle stops on an already-saved route without rewriting waypoints, use the Planting checkbox on the start-route sheet instead (see Start Flow).
 - **Teleport** — cleaned points saved as `RouteType.TELEPORT` (jump to each point, wait there). Needs ≥2 points. One wait for every stop (`Waypoint.waitSeconds`), default `TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS` = 8 s, clamp 0–600 s (`parseTeleportBetweenDelaySeconds`). Option removed from the segmented control when `hideTeleportFeatures` is on.
 
 Point order: keep original, or **Optimize proximity** (`orderByProximity`, nearest-neighbor from min lat+lon). This reorders one route; it does not split into multiple routes.
 
-### Planting travel
+### Planting (paste builder)
 
-Between circles, chosen at build time:
-
-- **Straight** — last vertex of one ring to the nearest rim vertex of the next. Saved `STRAIGHT`.
-- **Via roads** — same endpoints, OSRM foot profile for the connector only. Saved `GUIDED`.
-
-A single pasted point is valid in Planting mode (one closed circle). As-is, walkable and teleport still require two points.
+Planting is a switch under the build-mode control, not a mode: it combines with As-is, Walkable path and Teleport. When on, a radius field appears (seeded from `AppSettings.plantingRadiusMeters`, clamp 5–200 m, editable per paste). Save stores the ordered **centers** plus `Route.plantingRadiusMeters`; no rings are baked in, and replay expands the circles at start (see Start Flow, Planting). The style supplies travel between circles: As-is = straight connectors (`STRAIGHT`), Walkable path = connectors via OSRM foot roads (`GUIDED`), Teleport = hop to the next circle with no connector (`TELEPORT`). The map preview shows the rings but is not what is saved. One pasted point is enough when Planting is on; without it every mode needs two.
 
 ## Paste coordinates (map and widget)
 
@@ -205,8 +199,7 @@ The Control API starts routes with the Hide Teleport setting bypassed, so Telepo
   (docs/features/roaming.md). When teleport-to-start is off (`hideTeleportFeatures`),
   Follow roads also applies to the walk from the current position to the first waypoint.
   Combined with Planting, Follow roads applies only to the connectors between
-  rings — the circles themselves stay geometric, matching paste Planting's
-  "via roads" travel. Combined with **Teleport between waypoints**, Follow roads
+  rings — the circles themselves stay geometric. Combined with **Teleport between waypoints**, Follow roads
   is skipped for those between-stop / between-ring legs (the hop replaces them);
   it still applies to the walk-to-start when `hideTeleportFeatures` is on.
   A user teleport while this planning is still in flight
@@ -223,6 +216,15 @@ The Control API starts routes with the Hide Teleport setting bypassed, so Telepo
   vertex of the first circle and repeats until the user stops. The Loop
   checkbox is forced on (and Return to location off) while Planting is checked.
   `handleStart()` sets `isLooping = true` whenever `isPlanting` is true.
+  A route can carry its own Planting setting (`Route.plantingRadiusMeters`,
+  set in the paste builder or the Route Detail Planting switch). Such a route
+  always plants at that radius (it overrides the Settings radius), and the start
+  sheet shows Planting checked and locked; for a Walkable (`GUIDED`) route Follow
+  roads is shown checked and locked too, and for a `TELEPORT` route the circles
+  are hopped (`StartRouteReplayUseCase` derives `isPlanting`, `followRoadsToStart`
+  and the hop flags; `handleStart()` reads the radius from the route). Baked ring
+  routes saved earlier stay ordinary routes. Unplanting is a Route Detail action,
+  not a per-start choice. Randomize order is ignored on a planted `TELEPORT` route.
   Combined with **Teleport between waypoints**, each circle is walked fully,
   then replay hops to the first vertex of the next circle (same snap as
   skip-to-next-stop). Connectors are omitted (`stitchRingsWithoutConnectors`);
@@ -315,6 +317,7 @@ never goes stale.
   waypoint in the route in one write (`RouteRepository.setAllWaypointsWaitSeconds`,
   `RouteDao.updateWaitSecondsForRoute`) — added so a large route (dozens of stops) can
   be retimed without opening each waypoint individually (issue #72 follow-up).
+- **Planting switch** (Route Detail, any route type): turns the route into a Planting route (radius field shown while on, seeded from Settings). Takes effect at the next start. Hides Randomize order on teleport routes.
 - **Randomize order**: a per-route toggle (`Route.randomizeTeleportOrder`, Route Detail
   screen, teleport routes only) shuffles the waypoint jump order. `TeleportRouteEngine`
   shuffles once on `start()` and again every time the loop restarts (`isLooping = true`

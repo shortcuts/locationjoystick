@@ -37,9 +37,8 @@ import javax.inject.Inject
 enum class PastePointOrder { ORIGINAL, PROXIMITY }
 
 // Keep in sync with RouteType: every route type the paste builder can create needs a mode here (see resolvedRouteType).
-enum class PasteBuildMode { AS_IS, WALKABLE, PLANTING, TELEPORT }
-
-enum class PlantingTravel { STRAIGHT, ROADS }
+// Planting is orthogonal to the mode: see PasteCoordinatesUiState.plantingEnabled.
+enum class PasteBuildMode { AS_IS, WALKABLE, TELEPORT }
 
 data class PasteCoordinatesUiState(
     val pasteText: String = "",
@@ -52,7 +51,7 @@ data class PasteCoordinatesUiState(
         AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS
             .toInt()
             .toString(),
-    val plantingTravel: PlantingTravel = PlantingTravel.STRAIGHT,
+    val plantingEnabled: Boolean = false,
     val teleportDelayText: String = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS.toString(),
     val hideTeleportFeatures: Boolean = false,
     val previewWaypoints: List<LatLng> = emptyList(),
@@ -63,22 +62,17 @@ data class PasteCoordinatesUiState(
 ) {
     val canBuild: Boolean
         get() =
-            when (buildMode) {
-                PasteBuildMode.AS_IS, PasteBuildMode.WALKABLE, PasteBuildMode.TELEPORT -> cleanedPoints.size >= 2
-                PasteBuildMode.PLANTING -> cleanedPoints.isNotEmpty()
-            }
+            if (plantingEnabled) cleanedPoints.isNotEmpty() else cleanedPoints.size >= 2
 
     val canSave: Boolean
         get() = previewWaypoints.size >= 2 && !isBuilding
 
     val resolvedRouteType: RouteType
         get() =
-            when {
-                buildMode == PasteBuildMode.TELEPORT -> RouteType.TELEPORT
-                buildMode == PasteBuildMode.WALKABLE -> RouteType.GUIDED
-                buildMode == PasteBuildMode.PLANTING && plantingTravel == PlantingTravel.ROADS ->
-                    RouteType.GUIDED
-                else -> RouteType.STRAIGHT
+            when (buildMode) {
+                PasteBuildMode.TELEPORT -> RouteType.TELEPORT
+                PasteBuildMode.WALKABLE -> RouteType.GUIDED
+                PasteBuildMode.AS_IS -> RouteType.STRAIGHT
             }
 
     val teleportWaitSeconds: Int
@@ -90,6 +84,7 @@ internal fun buildRouteFromPositions(
     positions: List<LatLng>,
     routeType: RouteType,
     waitSeconds: Int = 0,
+    plantingRadiusMeters: Double? = null,
     nowMs: Long = System.currentTimeMillis(),
     id: String = UUID.randomUUID().toString(),
 ): Route {
@@ -108,6 +103,7 @@ internal fun buildRouteFromPositions(
         waypoints = waypoints,
         isLooping = false,
         routeType = routeType,
+        plantingRadiusMeters = plantingRadiusMeters,
         createdAt = nowMs,
         updatedAt = nowMs,
     )
@@ -167,8 +163,8 @@ class PasteCoordinatesViewModel
             _uiState.update { it.copy(buildMode = mode, previewWaypoints = emptyList(), buildError = null) }
         }
 
-        fun onPlantingTravelChange(travel: PlantingTravel) {
-            _uiState.update { it.copy(plantingTravel = travel, previewWaypoints = emptyList()) }
+        fun onPlantingEnabledChange(enabled: Boolean) {
+            _uiState.update { it.copy(plantingEnabled = enabled, previewWaypoints = emptyList(), buildError = null) }
         }
 
         fun onTeleportDelayTextChange(text: String) {
@@ -218,7 +214,7 @@ class PasteCoordinatesViewModel
             val state = _uiState.value
             if (!state.canBuild) {
                 val message =
-                    if (state.buildMode == PasteBuildMode.PLANTING) {
+                    if (state.plantingEnabled) {
                         context.getString(R.string.route_paste_need_one_point_planting)
                     } else {
                         context.getString(R.string.route_paste_need_two_points)
@@ -230,10 +226,10 @@ class PasteCoordinatesViewModel
                 _uiState.update { it.copy(isBuilding = true, buildError = null) }
                 val ordered = orderedPoints(state)
                 val preview =
-                    when (state.buildMode) {
-                        PasteBuildMode.AS_IS, PasteBuildMode.TELEPORT -> ordered
-                        PasteBuildMode.WALKABLE -> buildWalkablePath(ordered)
-                        PasteBuildMode.PLANTING -> buildPlantingPath(ordered, state)
+                    when {
+                        state.plantingEnabled -> buildPlantingPath(ordered, state)
+                        state.buildMode == PasteBuildMode.WALKABLE -> buildWalkablePath(ordered)
+                        else -> ordered
                     }
                 _uiState.update {
                     it.copy(
@@ -258,9 +254,11 @@ class PasteCoordinatesViewModel
                 val route =
                     buildRouteFromPositions(
                         name = trimmed,
-                        positions = state.previewWaypoints,
+                        // Planting saves the stop centers; replay expands the circles at start.
+                        positions = if (state.plantingEnabled) orderedPoints(state) else state.previewWaypoints,
                         routeType = state.resolvedRouteType,
                         waitSeconds = if (state.buildMode == PasteBuildMode.TELEPORT) state.teleportWaitSeconds else 0,
+                        plantingRadiusMeters = if (state.plantingEnabled) clampPlantingRadius(state.plantingRadiusMeters) else null,
                     )
                 routeRepository.insertRoute(route)
                 _uiState.update { it.copy(saved = true) }
@@ -301,9 +299,9 @@ class PasteCoordinatesViewModel
             state: PasteCoordinatesUiState,
         ): List<LatLng> {
             val radius = clampPlantingRadius(state.plantingRadiusMeters)
-            if (state.plantingTravel == PlantingTravel.STRAIGHT) {
-                return buildPlantingWaypoints(centers, radius)
-            }
+            // Preview only: the saved route keeps the centers. TELEPORT hops between circles with no connector.
+            if (state.buildMode == PasteBuildMode.TELEPORT) return plantingRings(centers, radius).flatten()
+            if (state.buildMode == PasteBuildMode.AS_IS) return buildPlantingWaypoints(centers, radius)
             val rings = plantingRings(centers, radius)
             if (rings.size <= 1) return rings.firstOrNull().orEmpty()
             var fallbackCount = 0

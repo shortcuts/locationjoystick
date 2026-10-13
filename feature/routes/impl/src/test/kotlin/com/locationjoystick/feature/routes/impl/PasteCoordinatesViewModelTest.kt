@@ -137,7 +137,7 @@ class PasteCoordinatesViewModelTest {
         runTest {
             viewModel.onPasteTextChange("35.68, 139.76")
             viewModel.loadPoints()
-            viewModel.onBuildModeChange(PasteBuildMode.PLANTING)
+            viewModel.onPlantingEnabledChange(true)
             viewModel.buildPreview()
             advanceUntilIdle()
             val preview = viewModel.uiState.value.previewWaypoints
@@ -166,14 +166,14 @@ class PasteCoordinatesViewModelTest {
         }
 
     @Test
-    fun `planting via roads resolves GUIDED`() {
-        viewModel.onBuildModeChange(PasteBuildMode.PLANTING)
-        viewModel.onPlantingTravelChange(PlantingTravel.ROADS)
+    fun `planting with walkable style resolves GUIDED`() {
+        viewModel.onBuildModeChange(PasteBuildMode.WALKABLE)
+        viewModel.onPlantingEnabledChange(true)
         assertEquals(RouteType.GUIDED, viewModel.uiState.value.resolvedRouteType)
     }
 
     @Test
-    fun `planting via roads calls OSRM between circles`() =
+    fun `planting with walkable style calls OSRM between circles`() =
         runTest {
             coEvery { osrmClient.resolveRoute(any(), any(), any(), true, any()) } answers {
                 val from = invocation.args[1] as LatLng
@@ -182,8 +182,8 @@ class PasteCoordinatesViewModelTest {
             }
             viewModel.onPasteTextChange("0.0, 0.0\n0.02, 0.0")
             viewModel.loadPoints()
-            viewModel.onBuildModeChange(PasteBuildMode.PLANTING)
-            viewModel.onPlantingTravelChange(PlantingTravel.ROADS)
+            viewModel.onBuildModeChange(PasteBuildMode.WALKABLE)
+            viewModel.onPlantingEnabledChange(true)
             viewModel.buildPreview()
             advanceUntilIdle()
             coVerify(exactly = 1) { osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, any(), any(), true, any()) }
@@ -299,14 +299,67 @@ class PasteCoordinatesViewModelTest {
         }
 
     @Test
+    fun `planting save keeps centers and stores the clamped radius`() =
+        runTest {
+            coEvery { routeRepository.insertRoute(any()) } returns Result.success(Unit)
+            viewModel.onPasteTextChange("35.68, 139.76")
+            viewModel.loadPoints()
+            viewModel.onPlantingEnabledChange(true)
+            viewModel.onPlantingRadiusTextChange("9999")
+            viewModel.buildPreview()
+            advanceUntilIdle()
+            viewModel.saveRoute("Ring")
+            advanceUntilIdle()
+            val routeSlot = slot<com.locationjoystick.core.model.Route>()
+            coVerify { routeRepository.insertRoute(capture(routeSlot)) }
+            assertEquals(listOf(LatLng(35.68, 139.76)), routeSlot.captured.waypoints.map { it.position })
+            assertEquals(AppConstants.RouteConstants.PLANTING_MAX_RADIUS_METERS, routeSlot.captured.plantingRadiusMeters)
+            assertEquals(RouteType.STRAIGHT, routeSlot.captured.routeType)
+        }
+
+    @Test
+    fun `planting with teleport style saves TELEPORT centers with wait and radius`() =
+        runTest {
+            coEvery { routeRepository.insertRoute(any()) } returns Result.success(Unit)
+            viewModel.onBuildModeChange(PasteBuildMode.TELEPORT)
+            viewModel.onPlantingEnabledChange(true)
+            viewModel.onPasteTextChange("51.5, 0.0\n48.8, 2.3")
+            viewModel.loadPoints()
+            viewModel.onTeleportDelayTextChange("12")
+            viewModel.buildPreview()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.previewWaypoints.size > 2)
+            viewModel.saveRoute("Hop rings")
+            advanceUntilIdle()
+            val routeSlot = slot<com.locationjoystick.core.model.Route>()
+            coVerify { routeRepository.insertRoute(capture(routeSlot)) }
+            assertEquals(RouteType.TELEPORT, routeSlot.captured.routeType)
+            assertEquals(listOf(12, 12), routeSlot.captured.waypoints.map { it.waitSeconds })
+            assertEquals(2, routeSlot.captured.waypoints.size)
+            assertEquals(AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS, routeSlot.captured.plantingRadiusMeters)
+        }
+
+    @Test
+    fun `planting off saves without a radius`() =
+        runTest {
+            coEvery { routeRepository.insertRoute(any()) } returns Result.success(Unit)
+            viewModel.onPasteTextChange("51.5, 0.0\n48.8, 2.3")
+            viewModel.loadPoints()
+            viewModel.buildPreview()
+            advanceUntilIdle()
+            viewModel.saveRoute("Plain")
+            advanceUntilIdle()
+            val routeSlot = slot<com.locationjoystick.core.model.Route>()
+            coVerify { routeRepository.insertRoute(capture(routeSlot)) }
+            assertEquals(null, routeSlot.captured.plantingRadiusMeters)
+        }
+
+    @Test
     fun `every RouteType is producible by some paste build mode`() {
         val producible =
             PasteBuildMode.entries
-                .flatMap { mode ->
-                    PlantingTravel.entries.map { travel ->
-                        PasteCoordinatesUiState(buildMode = mode, plantingTravel = travel).resolvedRouteType
-                    }
-                }.toSet()
+                .map { mode -> PasteCoordinatesUiState(buildMode = mode).resolvedRouteType }
+                .toSet()
         val missing = RouteType.entries.toSet() - producible
         assertTrue("RouteType without a paste build mode: $missing", missing.isEmpty())
     }

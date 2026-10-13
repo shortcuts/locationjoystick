@@ -7,6 +7,7 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.model.RouteStartConfig
+import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.startWaypoint
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
@@ -34,12 +35,31 @@ class StartRouteReplayUseCase
             // Walking to the first waypoint is the default (docs/features/routes.md "Start Flow").
             // Teleport between waypoints requires teleporting to the start too, since MockLocationService
             // only honors the hop mode when teleportToStart is also set.
-            val hop = config.teleportBetweenWaypoints && (bypassHideTeleport || !settingsRepository.getHideTeleportFeatures().first())
+            // A planted route's style decides travel between circles (docs/features/routes.md "Planting").
+            val planted = route?.plantingRadiusMeters != null
+            val plantedTeleport = planted && route.routeType == RouteType.TELEPORT
+            val base =
+                if (!planted) {
+                    config
+                } else {
+                    config.copy(
+                        isPlanting = true,
+                        followRoadsToStart = config.followRoadsToStart || route.routeType == RouteType.GUIDED,
+                        teleportBetweenWaypoints = config.teleportBetweenWaypoints || plantedTeleport,
+                        teleportBetweenDelaySeconds =
+                            if (plantedTeleport) {
+                                route.waypoints.firstOrNull()?.waitSeconds ?: config.teleportBetweenDelaySeconds
+                            } else {
+                                config.teleportBetweenDelaySeconds
+                            },
+                    )
+                }
+            val hop = base.teleportBetweenWaypoints && (bypassHideTeleport || !settingsRepository.getHideTeleportFeatures().first())
             val effective =
-                config.copy(
+                base.copy(
                     teleportToStart = hop,
                     teleportBetweenWaypoints = hop,
-                    teleportBetweenDelaySeconds = clampTeleportBetweenDelaySeconds(config.teleportBetweenDelaySeconds),
+                    teleportBetweenDelaySeconds = clampTeleportBetweenDelaySeconds(base.teleportBetweenDelaySeconds),
                 )
             if (hop) {
                 route?.startWaypoint(config.isReverse)?.let { teleportUseCase.execute(it.position, resetMovement = false) }

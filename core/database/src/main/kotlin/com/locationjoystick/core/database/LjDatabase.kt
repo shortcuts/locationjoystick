@@ -17,7 +17,7 @@ import com.locationjoystick.core.database.entities.WaypointEntity
         WaypointEntity::class,
         FavoriteEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
 )
 abstract class LjDatabase : RoomDatabase() {
@@ -67,6 +67,13 @@ abstract class LjDatabase : RoomDatabase() {
             object : Migration(6, 7) {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL("ALTER TABLE routes ADD COLUMN category TEXT")
+                }
+            }
+
+        val MIGRATION_7_8 =
+            object : Migration(7, 8) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE routes ADD COLUMN plantingRadiusMeters REAL")
                 }
             }
     }

@@ -1179,6 +1179,84 @@ class ReplayOrchestratorTest {
         }
 
     @Test
+    fun handleStart_plantedRoute_usesOwnRadiusWithoutPlantingFlag() =
+        runTest {
+            plantingRadius = 35.0
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val center = LatLng(2.0, 2.0)
+            val route =
+                com.locationjoystick.core.model.Route(
+                    id = "route-1",
+                    name = "R",
+                    waypoints =
+                        listOf(
+                            com.locationjoystick.core.model
+                                .Waypoint("w1", center, 0),
+                        ),
+                    plantingRadiusMeters = 100.0,
+                )
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
+            val expected = buildPlantingReplayPath(listOf(center), 100.0)
+
+            orchestrator.handleStart("route-1", 1.4, RouteStartConfig())
+
+            verify {
+                routeReplayEngine.start(
+                    waypoints = expected.first,
+                    speedMs = 1.4,
+                    isLooping = true,
+                    onPositionUpdate = any(),
+                    onComplete = any(),
+                    boundaryIndices = listOf(0),
+                )
+            }
+        }
+
+    @Test
+    fun handleStart_plantedTeleportRoute_walksRingsAndSkipsTeleportEngine() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val w1 = LatLng(2.0, 2.0)
+            val w2 = LatLng(3.0, 3.0)
+            val route =
+                com.locationjoystick.core.model.Route(
+                    id = "route-1",
+                    name = "R",
+                    routeType = com.locationjoystick.core.model.RouteType.TELEPORT,
+                    waypoints =
+                        listOf(
+                            com.locationjoystick.core.model
+                                .Waypoint("w1", w1, 0),
+                            com.locationjoystick.core.model
+                                .Waypoint("w2", w2, 1),
+                        ),
+                    plantingRadiusMeters = 60.0,
+                )
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns kotlinx.coroutines.flow.flowOf(route)
+            val expected = stitchRingsWithoutConnectors(plantingRings(listOf(w1, w2), 60.0))
+
+            orchestrator.handleStart(
+                "route-1",
+                1.4,
+                RouteStartConfig(isPlanting = true, teleportBetweenWaypoints = true, teleportToStart = true),
+            )
+
+            verify(exactly = 0) { teleportRouteEngine.start(any(), any(), any(), any(), any()) }
+            verify {
+                routeReplayEngine.start(
+                    waypoints = expected.first,
+                    speedMs = 1.4,
+                    isLooping = true,
+                    onPositionUpdate = any(),
+                    onComplete = any(),
+                    boundaryIndices = expected.second,
+                    teleportBetweenWaypoints = true,
+                    teleportBetweenDelaySeconds = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
+                )
+            }
+        }
+
+    @Test
     fun handleStart_planting_loopsEvenWhenLoopOverrideIsFalse() =
         runTest {
             locationRepository.setPositionInternal(LatLng(0.0, 0.0))

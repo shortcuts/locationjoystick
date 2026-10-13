@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -47,6 +49,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.locationjoystick.core.common.util.clampPlantingRadius
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjIcons
@@ -65,6 +68,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -161,6 +165,28 @@ class RouteDetailViewModel
                     routeRepository.setAllWaypointsWaitSeconds(routeId, waitSeconds)
                 } catch (e: Exception) {
                     Log.e(TAG, "set all waypoints wait seconds failed", e)
+                }
+            }
+        }
+
+        /** Switch Planting on (seeded from the Settings radius) or off for this route. */
+        fun setPlanting(enabled: Boolean) {
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    val radius = if (enabled) settingsRepository.getPlantingRadius().first() else null
+                    routeRepository.setPlantingRadius(routeId, radius)
+                } catch (e: Exception) {
+                    Log.e(TAG, "set planting failed", e)
+                }
+            }
+        }
+
+        fun setPlantingRadius(meters: Double) {
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    routeRepository.setPlantingRadius(routeId, meters)
+                } catch (e: Exception) {
+                    Log.e(TAG, "set planting radius failed", e)
                 }
             }
         }
@@ -342,28 +368,73 @@ fun RouteDetailScreen(
                         }
                     }
 
+                    // Planting: any route style; radius shown while on. Takes effect at the next start.
+                    item {
+                        val plantingRadius = route!!.plantingRadiusMeters
+                        var radiusText by remember(route!!.id) {
+                            mutableStateOf(plantingRadius?.toInt()?.toString().orEmpty())
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                stringResource(R.string.route_detail_planting),
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Switch(
+                                checked = plantingRadius != null,
+                                onCheckedChange = { on ->
+                                    if (!on) radiusText = ""
+                                    viewModel.setPlanting(on)
+                                },
+                            )
+                        }
+                        Text(
+                            stringResource(R.string.route_detail_planting_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        if (plantingRadius != null) {
+                            OutlinedTextField(
+                                value = radiusText.ifEmpty { plantingRadius.toInt().toString() },
+                                onValueChange = { text ->
+                                    radiusText = text
+                                    text.toDoubleOrNull()?.let { viewModel.setPlantingRadius(clampPlantingRadius(it)) }
+                                },
+                                label = { Text(stringResource(R.string.route_detail_planting_radius_meters)) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            )
+                        }
+                    }
+
                     // Randomize order + mass wait-time edit — teleport routes only
                     if (isTeleportRoute) {
-                        item {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
+                        if (route!!.plantingRadiusMeters == null) {
+                            item {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        stringResource(R.string.route_detail_randomize_order),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    Switch(
+                                        checked = route!!.randomizeTeleportOrder,
+                                        onCheckedChange = { viewModel.setRandomizeTeleportOrder(it) },
+                                    )
+                                }
                                 Text(
-                                    stringResource(R.string.route_detail_randomize_order),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                Switch(
-                                    checked = route!!.randomizeTeleportOrder,
-                                    onCheckedChange = { viewModel.setRandomizeTeleportOrder(it) },
+                                    stringResource(R.string.route_detail_randomize_order_description),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            Text(
-                                stringResource(R.string.route_detail_randomize_order_description),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
                         }
                         item {
                             OutlinedButton(

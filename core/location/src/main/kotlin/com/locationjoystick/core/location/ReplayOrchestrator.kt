@@ -118,11 +118,13 @@ internal class ReplayOrchestrator(
                 teleportRouteEngine.stop()
                 val route = routeRepository.getRouteWithWaypoints(routeId).first() ?: return@launch
                 if (!isStartStillCurrent(generation)) return@launch
-                if (!config.isPlanting && route.waypoints.size < 2) return@launch
+                val isPlanted = route.plantingRadiusMeters != null
+                val isPlanting = config.isPlanting || isPlanted
+                if (!isPlanting && route.waypoints.size < 2) return@launch
                 val orderedWaypoints = if (config.isReverse) route.waypoints.reversed() else route.waypoints
-                val isLooping = config.isPlanting || config.isLooping
+                val isLooping = isPlanting || config.isLooping
 
-                if (route.routeType == RouteType.TELEPORT) {
+                if (route.routeType == RouteType.TELEPORT && !isPlanted) {
                     activeReplayer = teleportRouteEngine
                     startTeleportReplayWithWaypoints(
                         state = state,
@@ -141,8 +143,13 @@ internal class ReplayOrchestrator(
                     if (config.followRoadsToStart) locationRepository.setRoadRouteFetchInFlight(true)
                     val (replayWaypoints, boundaryIndices) =
                         when {
-                            config.isPlanting ->
-                                expandWaypointsForPlanting(latLngs, config.followRoadsToStart, config.teleportBetweenWaypoints)
+                            isPlanting ->
+                                expandWaypointsForPlanting(
+                                    latLngs,
+                                    config.followRoadsToStart,
+                                    config.teleportBetweenWaypoints,
+                                    route.plantingRadiusMeters ?: plantingRadiusMeters(),
+                                )
                             config.teleportBetweenWaypoints -> latLngs to null
                             config.followRoadsToStart -> expandWaypointsForFollowRoads(latLngs)
                             else -> latLngs to null
@@ -578,8 +585,8 @@ internal class ReplayOrchestrator(
         centers: List<LatLng>,
         followRoads: Boolean,
         teleportBetweenWaypoints: Boolean = false,
+        radius: Double,
     ): Pair<List<LatLng>, List<Int>> {
-        val radius = plantingRadiusMeters()
         if (teleportBetweenWaypoints) {
             return stitchRingsWithoutConnectors(plantingRings(centers, radius))
         }

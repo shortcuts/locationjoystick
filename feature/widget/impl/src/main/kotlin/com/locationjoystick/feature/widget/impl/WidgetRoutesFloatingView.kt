@@ -89,8 +89,10 @@ internal fun RoutesFloatingView(
             var loop by remember(routeId) { mutableStateOf(true) }
             var reverse by remember(routeId) { mutableStateOf(false) }
             var returnToLocation by remember(routeId) { mutableStateOf(false) }
-            var followRoads by remember(routeId) { mutableStateOf(false) }
-            var planting by remember(routeId) { mutableStateOf(false) }
+            val isPlanted = route?.plantingRadiusMeters != null
+            val isRoadRoute = route?.routeType == com.locationjoystick.core.model.RouteType.GUIDED
+            var followRoads by remember(routeId) { mutableStateOf(isPlanted && isRoadRoute) }
+            var planting by remember(routeId) { mutableStateOf(isPlanted) }
             var teleportBetweenWaypoints by remember(routeId) { mutableStateOf(false) }
             var teleportBetweenDelaySecondsText by remember(routeId) {
                 mutableStateOf(AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS.toString())
@@ -139,7 +141,7 @@ internal fun RoutesFloatingView(
                     onReturnToLocationChange = { returnToLocation = it },
                     followRoads = followRoads,
                     onFollowRoadsChange = { followRoads = it },
-                    planting = planting && !isTeleportRoute,
+                    planting = planting && (!isTeleportRoute || isPlanted),
                     onPlantingChange = {
                         planting = it
                         if (it) returnToLocation = false
@@ -171,6 +173,8 @@ internal fun RoutesFloatingView(
                     },
                     hideTeleport = hideTeleport,
                     isTeleportRoute = isTeleportRoute,
+                    plantingLocked = isPlanted,
+                    followRoadsLocked = isPlanted && isRoadRoute,
                 )
             }
         } else {

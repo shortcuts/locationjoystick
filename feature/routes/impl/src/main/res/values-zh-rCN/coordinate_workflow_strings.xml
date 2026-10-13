@@ -11,7 +11,6 @@
     <string name="paste_coordinates_screen_build_mode">"构建模式"</string>
     <string name="paste_coordinates_screen_circle_radius_meters">"圆圈半径（米）"</string>
     <string name="paste_coordinates_screen_default_35_m_circles_stay_geometric_only_travel_between_them">"圆圈保持几何形状，只有圆圈之间的移动才能沿道路进行。"</string>
-    <string name="paste_coordinates_screen_between_circles">"圆圈之间"</string>
     <string name="paste_coordinates_screen_save_route">"保存路线"</string>
     <string name="paste_coordinates_screen_route_name">"路线名称"</string>
     <string name="paste_coordinates_screen_save">"保存"</string>
@@ -32,11 +31,9 @@
     <string name="paste_optimize_proximity">优化路径顺序</string>
     <string name="paste_as_is">原样</string>
     <string name="paste_walkable_path">可行走路径</string>
-    <string name="paste_planting_mode">种植模式</string>
+    <string name="paste_planting_toggle">种植</string>
     <string name="paste_teleport_mode">传送</string>
     <string name="paste_teleport_delay_seconds">每个点停留时间（秒）</string>
-    <string name="paste_straight">直线</string>
-    <string name="paste_via_roads">沿道路</string>
     <string name="paste_building">构建中…</string>
     <string name="paste_build_preview">构建预览</string>
     <string name="paste_save_route">保存路线</string>

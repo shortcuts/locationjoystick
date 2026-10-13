@@ -187,7 +187,7 @@ JSON CRUD, same Bearer auth and error body, registered by `ContentApiRoutes`. Fi
 | `POST /favorites` | Body `{name,lat,lon,category?}`. 201 with the created object. |
 | `PUT /favorites/{id}`, `DELETE /favorites/{id}` | Replace (keeps `id`, `createdAt`) / delete. 404 `favorite_not_found`. |
 | `GET /routes`, `GET /routes/{id}` | List / get with `waypoints:[{id,lat,lon,orderIndex,waitSeconds}]`. The paste-temp scratch route is hidden (404). |
-| `POST /routes` | Body `{name,routeType?,isLooping?,speedProfileId?,randomizeTeleportOrder?,waypoints:[{lat,lon,waitSeconds?}]}`. At least 2 waypoints; `routeType` is `STRAIGHT`/`GUIDED`/`TELEPORT`. 201. |
+| `POST /routes` | Body `{name,routeType?,isLooping?,speedProfileId?,randomizeTeleportOrder?,plantingRadiusMeters?,waypoints:[{lat,lon,waitSeconds?}]}`. At least 2 waypoints; `routeType` is `STRAIGHT`/`GUIDED`/`TELEPORT`. `plantingRadiusMeters` (5-200, else 400) makes it a Planting route; absent on PUT keeps the stored value, `null` clears it. 201. |
 | `PUT /routes/{id}`, `DELETE /routes/{id}` | Replace (whole waypoint list, keeps `id`, `createdAt`) / delete. 404 `route_not_found`; 409 `conflict` while that route is playing. |
 | `GET /speed-profiles`, `GET /speed-profiles/{id}` | The five built-ins with `active` and `enabled` flags. |
 | `PUT /speed-profiles/{id}` | Body `{speedMetersPerSecond}` in 0.01..15.0, else 400. Name and id are fixed; no create or delete (405). |

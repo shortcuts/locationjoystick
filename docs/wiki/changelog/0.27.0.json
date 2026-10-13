@@ -2,6 +2,7 @@
   "version": "0.27.0",
   "date": "2026-10-02",
   "entries": [
+    { "category": "feat", "scope": "Routes", "summary": "Planting now works with any route style. Turn it on when you paste coordinates, or in a route's detail screen, and pick the circle size. The start sheet shows it ticked for that route." },
     { "category": "feat", "scope": "Favorite Locations", "summary": "You can now mark one favorite as Home with a house icon. The app starts there instead of your last location. Tap the house again to go back to the last location." },
     { "category": "feat", "scope": "Settings", "summary": "You can now turn individual place-search services on or off in Settings > Menus. Mainland China users can switch off Nominatim to avoid waiting for its timeout." },
     { "category": "feat", "scope": "Favorite Locations", "summary": "The hot locations list now updates online, so places can be added or removed without an app update." },

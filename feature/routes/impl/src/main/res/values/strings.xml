@@ -24,6 +24,9 @@
     <string name="route_detail_set_all_wait_title">"Set wait time for all waypoints"</string>
     <string name="route_detail_randomize_order">"Randomize order"</string>
     <string name="route_detail_randomize_order_description">"Jump to waypoints in random order. Reshuffled at each loop restart."</string>
+    <string name="route_detail_planting">"Planting"</string>
+    <string name="route_detail_planting_description">"Walk a circle around each stop instead of through it. Loops until you stop."</string>
+    <string name="route_detail_planting_radius_meters">"Circle radius (m)"</string>
     <string name="routes_screen_title">"Routes"</string>
     <string name="route_detail_route_details">"Route Details"</string>
     <string name="route_creator_create_route">"Create route"</string>

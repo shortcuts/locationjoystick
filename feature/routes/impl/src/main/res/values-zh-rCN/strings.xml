@@ -24,6 +24,9 @@
     <string name="route_detail_set_all_wait_title">"设置所有途经点的等待时间"</string>
     <string name="route_detail_randomize_order">"随机顺序"</string>
     <string name="route_detail_randomize_order_description">"以随机顺序跳转到各个途经点。每次重新开始循环时都会重新打乱。"</string>
+    <string name="route_detail_planting">"种植"</string>
+    <string name="route_detail_planting_description">"在每个停靠点周围绕圈行走，而不是直接穿过。循环直到你停止。"</string>
+    <string name="route_detail_planting_radius_meters">"圆圈半径（米）"</string>
     <string name="routes_screen_title">"路线"</string>
     <string name="route_detail_route_details">"路线详情"</string>
     <string name="route_creator_create_route">"创建路线"</string>

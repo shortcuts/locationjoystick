@@ -2,6 +2,7 @@ package com.locationjoystick.core.data
 
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.clampPlantingRadius
 import com.locationjoystick.core.database.dao.RouteDao
 import com.locationjoystick.core.database.entities.RouteEntity
 import com.locationjoystick.core.database.entities.WaypointEntity
@@ -178,6 +179,26 @@ class RouteRepository
                     }
                 }.onFailure { e ->
                     Log.e(TAG, "Failed to set randomize teleport order: $routeId", e)
+                }
+            }
+
+        suspend fun setPlantingRadius(
+            routeId: String,
+            radiusMeters: Double?,
+        ): Result<Unit> =
+            withContext(ioDispatcher) {
+                runCatching {
+                    val entity = routeDao.getById(routeId)
+                    if (entity != null) {
+                        routeDao.update(
+                            entity.copy(
+                                plantingRadiusMeters = radiusMeters?.let(::clampPlantingRadius),
+                                updatedAt = System.currentTimeMillis(),
+                            ),
+                        )
+                    }
+                }.onFailure { e ->
+                    Log.e(TAG, "Failed to set planting radius: $routeId", e)
                 }
             }
 

@@ -11,7 +11,6 @@
     <string name="paste_coordinates_screen_build_mode">"Build mode"</string>
     <string name="paste_coordinates_screen_circle_radius_meters">"Circle radius (meters)"</string>
     <string name="paste_coordinates_screen_default_35_m_circles_stay_geometric_only_travel_between_them">"Circles stay geometric; only travel between them can follow roads."</string>
-    <string name="paste_coordinates_screen_between_circles">"Between circles"</string>
     <string name="paste_coordinates_screen_save_route">"Save Route"</string>
     <string name="paste_coordinates_screen_route_name">"Route name"</string>
     <string name="paste_coordinates_screen_save">"Save"</string>
@@ -32,11 +31,9 @@
     <string name="paste_optimize_proximity">Optimize proximity</string>
     <string name="paste_as_is">As-is</string>
     <string name="paste_walkable_path">Walkable path</string>
-    <string name="paste_planting_mode">Planting mode</string>
+    <string name="paste_planting_toggle">Planting</string>
     <string name="paste_teleport_mode">Teleport</string>
     <string name="paste_teleport_delay_seconds">Wait at each point (seconds)</string>
-    <string name="paste_straight">Straight</string>
-    <string name="paste_via_roads">Via roads</string>
     <string name="paste_building">Building…</string>
     <string name="paste_build_preview">Build preview</string>
     <string name="paste_save_route">Save route</string>

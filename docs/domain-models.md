@@ -6,7 +6,7 @@ All in `:core:model`. Pure Kotlin — no Android, no Room. Room entities in `:co
 |-------|--------|
 | `LatLng` | `latitude: Double`, `longitude: Double` |
 | `Waypoint` | `id: String`, `position: LatLng`, `orderIndex: Int`, `waitSeconds: Int` |
-| `Route` | `id: String`, `name: String`, `waypoints: List<Waypoint>`, `isLooping: Boolean`, `routeType: RouteType`, `speedProfileId: String?`, `randomizeTeleportOrder: Boolean`, `createdAt: Long`, `updatedAt: Long`, `category: String?` |
+| `Route` | `id: String`, `name: String`, `waypoints: List<Waypoint>`, `isLooping: Boolean`, `routeType: RouteType`, `speedProfileId: String?`, `randomizeTeleportOrder: Boolean`, `plantingRadiusMeters: Double?`, `createdAt: Long`, `updatedAt: Long`, `category: String?` |
 | `FavoriteLocation` | `id: String`, `name: String`, `position: LatLng`, `createdAt: Long`, `category: String?` |
 | `RouteStartConfig` | `isLooping`, `isReverse`, `isReturnToLocation`, `teleportToStart`, `followRoadsToStart`, `isPlanting`, `teleportBetweenWaypoints`: `Boolean`, `teleportBetweenDelaySeconds: Int` — route-start sheet flags bundle |
 | `RouteType` | enum: `STRAIGHT`, `GUIDED`, `TELEPORT` |

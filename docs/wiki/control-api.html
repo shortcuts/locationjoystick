@@ -257,7 +257,7 @@
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-get-routes"><span class="method method-get">GET</span><code class="endpoint-path">/routes</code></h3>
       <p>List all routes (excludes the internal paste-temp scratch route).</p>
-      <p class="endpoint-returns">Returns an array of route objects with <code>id</code>, <code>name</code>, <code>routeType</code>, <code>isLooping</code>, <code>speedProfileId</code> (string or null), <code>randomizeTeleportOrder</code>, <code>createdAt</code>, <code>updatedAt</code>, and <code>waypoints</code> (array of <code>{id,lat,lon,orderIndex,waitSeconds}</code>).</p>
+      <p class="endpoint-returns">Returns an array of route objects with <code>id</code>, <code>name</code>, <code>routeType</code>, <code>isLooping</code>, <code>speedProfileId</code> (string or null), <code>randomizeTeleportOrder</code>, <code>plantingRadiusMeters</code> (only when set), <code>createdAt</code>, <code>updatedAt</code>, and <code>waypoints</code> (array of <code>{id,lat,lon,orderIndex,waitSeconds}</code>).</p>
     </div>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-post-routes"><span class="method method-post">POST</span><code class="endpoint-path">/routes</code></h3>
@@ -268,6 +268,7 @@
         <div class="param"><dt><code>isLooping</code></dt><dd><span class="param-type">boolean</span> <span class="param-flag">optional</span></dd></div>
         <div class="param"><dt><code>speedProfileId</code></dt><dd><span class="param-type">string</span> <span class="param-flag">optional</span> Speed profile ID. Unset means none.</dd></div>
         <div class="param"><dt><code>randomizeTeleportOrder</code></dt><dd><span class="param-type">boolean</span> <span class="param-flag">optional</span></dd></div>
+        <div class="param"><dt><code>plantingRadiusMeters</code></dt><dd><span class="param-type">number</span> <span class="param-flag">optional</span> Circle radius, 5 to 200. Makes the route a Planting route. Left out on update keeps the current value. <code>null</code> clears it.</dd></div>
         <div class="param"><dt><code>waypoints</code></dt><dd><span class="param-type">array of objects</span> <span class="param-flag">required</span> Each item is <code>{lat,lon,waitSeconds?}</code>. At least 2 waypoints required.</dd></div>
       </dl>
       <p class="endpoint-returns">Returns <code>201 Created</code> with the new route object.</p>
@@ -286,6 +287,7 @@
         <div class="param"><dt><code>isLooping</code></dt><dd><span class="param-type">boolean</span> <span class="param-flag">optional</span></dd></div>
         <div class="param"><dt><code>speedProfileId</code></dt><dd><span class="param-type">string</span> <span class="param-flag">optional</span> Speed profile ID. Unset means none.</dd></div>
         <div class="param"><dt><code>randomizeTeleportOrder</code></dt><dd><span class="param-type">boolean</span> <span class="param-flag">optional</span></dd></div>
+        <div class="param"><dt><code>plantingRadiusMeters</code></dt><dd><span class="param-type">number</span> <span class="param-flag">optional</span> Circle radius, 5 to 200. Makes the route a Planting route. Left out on update keeps the current value. <code>null</code> clears it.</dd></div>
         <div class="param"><dt><code>waypoints</code></dt><dd><span class="param-type">array of objects</span> <span class="param-flag">required</span> Each item is <code>{lat,lon,waitSeconds?}</code>. At least 2 waypoints required.</dd></div>
       </dl>
       <p class="endpoint-returns">Returns <code>404 route_not_found</code> if not found, or <code>409 conflict</code> if the route is playing.</p>
