@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -160,6 +162,7 @@ internal fun RouteCreatorScreen(
     var showSearch by remember { mutableStateOf(false) }
     var showFavoritesSheet by remember { mutableStateOf(false) }
     var pendingWaitPrompt by remember { mutableStateOf<LatLng?>(null) }
+    var pendingFavoriteStop by remember { mutableStateOf<FavoriteLocation?>(null) }
 
     val applyStyle: (MapLibreMap) -> Unit = { map ->
         val source = currentTileSource
@@ -389,13 +392,29 @@ internal fun RouteCreatorScreen(
     if (showFavoritesSheet) {
         CreatorFavoritesSheet(
             favorites = favorites,
-            onSelect = { position ->
+            onSelect = { favorite ->
                 showFavoritesSheet = false
                 mapRef.value?.moveCamera(
-                    CameraUpdateFactory.newLatLng(position.toMapLatLng()),
+                    CameraUpdateFactory.newLatLng(favorite.position.toMapLatLng()),
                 )
+                pendingFavoriteStop = favorite
             },
             onDismiss = { showFavoritesSheet = false },
+        )
+    }
+
+    pendingFavoriteStop?.let { favorite ->
+        FavoriteStopConfirmSheet(
+            favoriteName = favorite.name,
+            onAdd = {
+                pendingFavoriteStop = null
+                if (routeType == RouteType.TELEPORT) {
+                    pendingWaitPrompt = favorite.position
+                } else {
+                    onAddWaypoint(favorite.position, 0)
+                }
+            },
+            onDismiss = { pendingFavoriteStop = null },
         )
     }
 
@@ -414,15 +433,38 @@ internal fun RouteCreatorScreen(
 @Composable
 private fun CreatorFavoritesSheet(
     favorites: List<FavoriteLocation>,
-    onSelect: (LatLng) -> Unit,
+    onSelect: (FavoriteLocation) -> Unit,
     onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberLjSheetState()) {
         FavoritesList(
             title = stringResource(R.string.route_creator_jump_to_favorite),
             favorites = favorites,
-            onSelect = { onSelect(it.position) },
+            onSelect = onSelect,
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FavoriteStopConfirmSheet(
+    favoriteName: String,
+    onAdd: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberLjSheetState()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(favoriteName, style = MaterialTheme.typography.titleMedium)
+            Button(onClick = onAdd, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.route_creator_add_as_stop))
+            }
+            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.route_creator_cancel))
+            }
+        }
     }
 }
 

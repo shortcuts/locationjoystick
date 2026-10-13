@@ -4,6 +4,7 @@
     <string name="route_creator_route_name">"路線名稱"</string>
     <string name="route_creator_save">"儲存"</string>
     <string name="route_creator_cancel">"取消"</string>
+    <string name="route_creator_add_as_stop">"加為途經點"</string>
     <string name="route_creator_wait_duration">"停留時間"</string>
     <string name="route_creator_seconds_to_wait_here">"在此停留的秒數"</string>
     <string name="route_creator_confirm">"確認"</string>

@@ -300,7 +300,8 @@ position stays frozen at that stop before jumping to the next one. Like paused r
 replay, the frozen position is still pushed to the mock provider every tick so the fix
 never goes stale.
 
-- **Placement**: in the route creator, placing a point on a `TELEPORT` route (map tap,
+- **Placement**: in the route creator, picking a favorite recenters the map and opens a confirm
+  sheet; its "Add as stop" button adds the favorite like a map tap (Cancel adds nothing). Placing a point on a `TELEPORT` route (map tap,
   search result, or favorite) shows a modal asking for the wait duration in seconds
   before the point is added. The Route Detail (edit) screen also lets each waypoint's
   wait duration be edited after the route is saved (an edit icon on each waypoint row,

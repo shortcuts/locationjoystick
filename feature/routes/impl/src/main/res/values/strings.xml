@@ -4,6 +4,7 @@
     <string name="route_creator_route_name">"Route name"</string>
     <string name="route_creator_save">"Save"</string>
     <string name="route_creator_cancel">"Cancel"</string>
+    <string name="route_creator_add_as_stop">"Add as stop"</string>
     <string name="route_creator_wait_duration">"Wait duration"</string>
     <string name="route_creator_seconds_to_wait_here">"Seconds to wait here"</string>
     <string name="route_creator_confirm">"Confirm"</string>
