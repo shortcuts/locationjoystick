@@ -90,6 +90,9 @@ fun RoamingSheetContent(
     var endRadiusText by remember {
         mutableStateOf(draft.plantingEndRadiusMeters.roundToInt().toString())
     }
+    var spacingText by remember {
+        mutableStateOf(draft.plantingSpacingMeters.toString())
+    }
     var loopCountText by remember {
         mutableStateOf(draft.plantingLoopCount.toString())
     }
@@ -288,6 +291,23 @@ fun RoamingSheetContent(
                     modifier = Modifier.weight(1f).padding(start = 4.dp),
                 )
             }
+
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = spacingText,
+                onValueChange = { text ->
+                    spacingText = text
+                    text.toIntOrNull()?.let { v ->
+                        onDraftChange(
+                            draft.copy(plantingSpacingMeters = v.coerceAtLeast(AppConstants.RoamingConstants.PLANTING_SPACING_MIN_METERS)),
+                        )
+                    }
+                },
+                label = { Text(stringResource(R.string.roaming_sheet_content_ring_spacing_m)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
 
             Spacer(Modifier.height(12.dp))
             RoamingSpeedProfileRow(

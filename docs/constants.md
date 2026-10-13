@@ -11,7 +11,7 @@ All constants → `:core:common/constants/AppConstants.kt`.
 | `JitterConstants` | Accuracy min/max, jitter radii, max step per tick, speed variation percentages |
 | `RealismConstants` | Altitude sigma/drift/clamp, warmup duration, satellite interval, suspended push/pause durations |
 | `PlantingConstants` | Shared planting geometry: max radius, chord length (used by roaming and route planting) |
-| `RoamingConstants` | Default radius/distance, planting start/end radius, planting default speed (Bike), spiral pitch/chord, loop defaults, OSRM profile IDs, road-snapping defaults |
+| `RoamingConstants` | Default radius/distance, planting start/end radius, planting default speed (Bike), spiral pitch/chord, ring spacing default/min, loop defaults, OSRM profile IDs, road-snapping defaults |
 | `OsrmConstants` | Demo + FOSSGIS base URLs, ladder backoffs, time budgets, bisection thresholds, route cache size/TTL/coordinate scale, cooldown durations and cap, cooldown prefs file name |
 | `MapConstants` | Default coordinates, zoom, favorite street-level zoom, tileset version (tile URLs live on the `MapTileSource` enum), OSM User-Agent app name, OSM cache-bust marker, OSM OkHttp per-host limit, ambient tile cache max bytes, preview max zoom, camera snap distance, map source/layer IDs (including preview) |
 | `PhotonConstants` | Photon base URL (self-hostable) and timeouts |

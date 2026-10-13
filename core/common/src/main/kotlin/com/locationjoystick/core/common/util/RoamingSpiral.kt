@@ -36,9 +36,10 @@ fun normalizePlantingRadii(
 fun plantingSpiralRevolutions(
     startRadiusMeters: Double,
     endRadiusMeters: Double,
+    spacingMeters: Int = AppConstants.RoamingConstants.PLANTING_SPACING_DEFAULT_METERS,
 ): Int {
     val span = kotlin.math.abs(endRadiusMeters - startRadiusMeters)
-    val raw = (span / AppConstants.RoamingConstants.PLANTING_PITCH_METERS).roundToInt()
+    val raw = (span / spacingMeters.coerceAtLeast(AppConstants.RoamingConstants.PLANTING_SPACING_MIN_METERS)).roundToInt()
     return raw.coerceAtLeast(AppConstants.RoamingConstants.PLANTING_MIN_REVOLUTIONS)
 }
 
@@ -51,9 +52,10 @@ fun buildPlantingSpiralLoop(
     center: LatLng,
     startRadiusMeters: Double,
     endRadiusMeters: Double,
+    spacingMeters: Int = AppConstants.RoamingConstants.PLANTING_SPACING_DEFAULT_METERS,
 ): List<LatLng> {
     val (startR, endR) = normalizePlantingRadii(startRadiusMeters, endRadiusMeters)
-    val revolutions = plantingSpiralRevolutions(startR, endR)
+    val revolutions = plantingSpiralRevolutions(startR, endR, spacingMeters)
     val outbound = spiralArm(center, startR, endR, thetaStartRad = 0.0, revolutions = revolutions)
     val inbound =
         spiralArm(

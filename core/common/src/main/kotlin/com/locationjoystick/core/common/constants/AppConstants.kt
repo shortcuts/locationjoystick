@@ -126,6 +126,8 @@ object AppConstants {
         const val ROAMING_MIN_RADIUS_METERS = 1.0
         val PLANTING_MAX_RADIUS_METERS = PlantingConstants.MAX_RADIUS_METERS
         const val PLANTING_PITCH_METERS = 5.0
+        const val PLANTING_SPACING_DEFAULT_METERS = 5
+        const val PLANTING_SPACING_MIN_METERS = 1
         val PLANTING_CHORD_METERS = PlantingConstants.CHORD_METERS
         const val PLANTING_MIN_REVOLUTIONS = 2
         const val PLANTING_DEFAULT_LOOP_COUNT = 1

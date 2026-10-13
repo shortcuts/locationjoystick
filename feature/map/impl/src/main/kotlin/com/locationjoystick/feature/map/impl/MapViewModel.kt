@@ -526,6 +526,10 @@ class MapViewModel
                     _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingLoopCount = action.count)) }
                 }
 
+                is MapAction.UpdatePlantingSpacing -> {
+                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingSpacingMeters = action.meters)) }
+                }
+
                 MapAction.StartRoaming -> {
                     val draft = _uiState.value.roamingDraft ?: return
                     val position = mapController.sharedState.value.currentPosition ?: return

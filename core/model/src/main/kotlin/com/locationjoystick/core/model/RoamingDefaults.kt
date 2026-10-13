@@ -11,6 +11,7 @@ data class RoamingDefaults(
     val plantingEndRadiusMeters: Double = 39.0,
     val plantingInfiniteLoops: Boolean = true,
     val plantingLoopCount: Int = 1,
+    val plantingSpacingMeters: Int = 5,
     /** Planting's own start speed. Independent of walk-around [speedProfileId]. Default Bike. */
     val plantingSpeedProfileId: String = "bike",
 )
@@ -36,4 +37,5 @@ fun RoamingDefaults.toConfig(centerPosition: LatLng): RoamingConfig =
         plantingEndRadiusMeters = plantingEndRadiusMeters,
         plantingInfiniteLoops = plantingInfiniteLoops,
         plantingLoopCount = plantingLoopCount,
+        plantingSpacingMeters = plantingSpacingMeters,
     )

@@ -85,6 +85,7 @@ class RoamingEngine
                 center = config.centerPosition,
                 startRadiusMeters = config.plantingStartRadiusMeters,
                 endRadiusMeters = config.plantingEndRadiusMeters,
+                spacingMeters = config.plantingSpacingMeters,
             )
 
         private fun planStraightLineRoute(config: RoamingConfig): List<LatLng> {

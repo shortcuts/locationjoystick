@@ -53,6 +53,7 @@
     <string name="roaming_sheet_content_walk_around">"繞行"</string>
     <string name="roaming_sheet_content_starting_radius_m">"起始半徑（公尺）"</string>
     <string name="roaming_sheet_content_ending_radius_m">"結束半徑（公尺）"</string>
+    <string name="roaming_sheet_content_ring_spacing_m">"環間距（公尺）"</string>
     <string name="roaming_sheet_content_infinite_loop">"無限循環"</string>
     <string name="roaming_sheet_content_number_of_loops">"循環次數"</string>
     <string name="roaming_sheet_content_pause_or_stop_the_playing_route_first_to_start_roaming">"請先暫停或停止正在進行的路線，才能開始漫遊"</string>

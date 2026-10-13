@@ -27,6 +27,7 @@
     <string name="settings_roaming_sub_screen_planting">"種植"</string>
     <string name="settings_roaming_sub_screen_starting_radius_m">"起始半徑（公尺）"</string>
     <string name="settings_roaming_sub_screen_ending_radius_m">"結束半徑（公尺）"</string>
+    <string name="settings_roaming_sub_screen_ring_spacing_m">"環間距（公尺）"</string>
     <string name="settings_roaming_sub_screen_speed_profile">"速度預設"</string>
     <string name="settings_roaming_sub_screen_infinite_loop">"無限循環"</string>
     <string name="settings_roaming_sub_screen_keeps_expanding_and_contracting_until_you_stop_roaming">"持續展開與收攏，直到你停止漫遊。"</string>

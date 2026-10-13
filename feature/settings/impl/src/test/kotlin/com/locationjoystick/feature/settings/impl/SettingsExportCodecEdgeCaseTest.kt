@@ -337,6 +337,7 @@ class SettingsExportCodecEdgeCaseTest {
         assertEquals(39.0, roaming.plantingEndRadiusMeters, 0.001)
         assertTrue(roaming.plantingInfiniteLoops)
         assertEquals(1, roaming.plantingLoopCount)
+        assertEquals(5, roaming.plantingSpacingMeters)
         assertEquals("bike", roaming.plantingSpeedProfileId)
     }
 
@@ -353,6 +354,7 @@ class SettingsExportCodecEdgeCaseTest {
                                 plantingEndRadiusMeters = 42.0,
                                 plantingInfiniteLoops = false,
                                 plantingLoopCount = 4,
+                                plantingSpacingMeters = 12,
                                 plantingSpeedProfileId = "run",
                             ),
                     ),
@@ -364,6 +366,7 @@ class SettingsExportCodecEdgeCaseTest {
         assertEquals(42.0, roaming.plantingEndRadiusMeters, 0.001)
         assertFalse(roaming.plantingInfiniteLoops)
         assertEquals(4, roaming.plantingLoopCount)
+        assertEquals(12, roaming.plantingSpacingMeters)
         assertEquals("run", roaming.plantingSpeedProfileId)
     }
 

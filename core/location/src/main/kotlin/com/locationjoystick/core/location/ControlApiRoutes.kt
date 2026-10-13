@@ -207,6 +207,10 @@ class ControlApiRoutes
                     plantingEndRadiusMeters = json.optDouble("plantingEndRadiusMeters", base.plantingEndRadiusMeters),
                     plantingInfiniteLoops = json.optBoolean("plantingInfiniteLoops", base.plantingInfiniteLoops),
                     plantingLoopCount = json.optInt("plantingLoopCount", base.plantingLoopCount),
+                    plantingSpacingMeters =
+                        json
+                            .optInt("plantingSpacingMeters", base.plantingSpacingMeters)
+                            .coerceAtLeast(AppConstants.RoamingConstants.PLANTING_SPACING_MIN_METERS),
                     plantingSpeedProfileId = json.optString("plantingSpeedProfileId", base.plantingSpeedProfileId),
                 )
             mapController.startRoaming(draft, position)

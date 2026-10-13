@@ -577,6 +577,7 @@ class AppPreferencesDataSource
             val ROAMING_PLANTING_END_RADIUS_METERS = doublePreferencesKey("roaming_planting_end_radius_meters")
             val ROAMING_PLANTING_INFINITE_LOOPS = booleanPreferencesKey("roaming_planting_infinite_loops")
             val ROAMING_PLANTING_LOOP_COUNT = intPreferencesKey("roaming_planting_loop_count")
+            val ROAMING_PLANTING_SPACING_METERS = intPreferencesKey("roaming_planting_spacing_meters")
             val ROAMING_PLANTING_SPEED_PROFILE_ID = stringPreferencesKey("roaming_planting_speed_profile_id")
             val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
             val SPEED_UNIT = stringPreferencesKey("speed_unit")
@@ -1354,6 +1355,8 @@ class AppPreferencesDataSource
                     this[Keys.ROAMING_PLANTING_INFINITE_LOOPS] ?: DEFAULT_ROAMING_PLANTING_INFINITE_LOOPS,
                 plantingLoopCount =
                     this[Keys.ROAMING_PLANTING_LOOP_COUNT] ?: DEFAULT_ROAMING_PLANTING_LOOP_COUNT,
+                plantingSpacingMeters =
+                    this[Keys.ROAMING_PLANTING_SPACING_METERS] ?: DEFAULT_ROAMING_PLANTING_SPACING_METERS,
                 plantingSpeedProfileId =
                     this[Keys.ROAMING_PLANTING_SPEED_PROFILE_ID] ?: DEFAULT_ROAMING_PLANTING_SPEED_PROFILE_ID,
             )
@@ -1369,6 +1372,7 @@ class AppPreferencesDataSource
             this[Keys.ROAMING_PLANTING_END_RADIUS_METERS] = defaults.plantingEndRadiusMeters
             this[Keys.ROAMING_PLANTING_INFINITE_LOOPS] = defaults.plantingInfiniteLoops
             this[Keys.ROAMING_PLANTING_LOOP_COUNT] = defaults.plantingLoopCount
+            this[Keys.ROAMING_PLANTING_SPACING_METERS] = defaults.plantingSpacingMeters
             this[Keys.ROAMING_PLANTING_SPEED_PROFILE_ID] = defaults.plantingSpeedProfileId
         }
 
@@ -1406,6 +1410,8 @@ class AppPreferencesDataSource
                 AppConstants.RoamingConstants.PLANTING_INFINITE_LOOPS_DEFAULT
             const val DEFAULT_ROAMING_PLANTING_LOOP_COUNT =
                 AppConstants.RoamingConstants.PLANTING_DEFAULT_LOOP_COUNT
+            const val DEFAULT_ROAMING_PLANTING_SPACING_METERS =
+                AppConstants.RoamingConstants.PLANTING_SPACING_DEFAULT_METERS
             const val DEFAULT_ROAMING_PLANTING_SPEED_PROFILE_ID =
                 AppConstants.RoamingConstants.PLANTING_DEFAULT_SPEED_PROFILE_ID
 

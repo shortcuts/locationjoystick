@@ -120,6 +120,10 @@ sealed interface MapAction {
         val count: Int,
     ) : MapAction
 
+    data class UpdatePlantingSpacing(
+        val meters: Int,
+    ) : MapAction
+
     data object StartRoaming : MapAction
 
     data object StopRoaming : MapAction

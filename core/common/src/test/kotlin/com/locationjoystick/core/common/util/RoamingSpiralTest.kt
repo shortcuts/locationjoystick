@@ -67,4 +67,21 @@ class RoamingSpiralTest {
         assertEquals(2, plantingSpiralRevolutions(5.0, 6.0))
         assertEquals(7, plantingSpiralRevolutions(5.0, 39.0))
     }
+
+    @Test
+    fun `spacing sets revolutions across a 10 to 30 span`() {
+        assertEquals(4, plantingSpiralRevolutions(10.0, 30.0, spacingMeters = 5))
+        assertEquals(2, plantingSpiralRevolutions(10.0, 30.0, spacingMeters = 10))
+        assertEquals(20, plantingSpiralRevolutions(10.0, 30.0, spacingMeters = 1))
+        assertEquals(2, plantingSpiralRevolutions(10.0, 30.0, spacingMeters = 500))
+        assertEquals(20, plantingSpiralRevolutions(10.0, 30.0, spacingMeters = 0))
+    }
+
+    @Test
+    fun `wider spacing builds a shorter loop that still closes`() {
+        val tight = buildPlantingSpiralLoop(center, 10.0, 30.0, spacingMeters = 1)
+        val wide = buildPlantingSpiralLoop(center, 10.0, 30.0, spacingMeters = 500)
+        assertTrue(tight.size > wide.size)
+        assertTrue(abs(center.distanceTo(wide.last()) - center.distanceTo(wide.first())) < 1.0)
+    }
 }

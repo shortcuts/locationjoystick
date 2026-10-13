@@ -263,6 +263,31 @@ private fun RoamingSection(
         modifier = Modifier.fillMaxWidth(),
     )
 
+    Spacer(modifier = Modifier.height(4.dp))
+
+    var spacingText by remember {
+        mutableStateOf(roamingDefaults.plantingSpacingMeters.toString())
+    }
+    OutlinedTextField(
+        value = spacingText,
+        onValueChange = { text ->
+            spacingText = text
+            text.toIntOrNull()?.let { v ->
+                onAction(
+                    SettingsAction.UpdateRoamingDefaults(
+                        roamingDefaults.copy(
+                            plantingSpacingMeters = v.coerceAtLeast(AppConstants.RoamingConstants.PLANTING_SPACING_MIN_METERS),
+                        ),
+                    ),
+                )
+            }
+        },
+        label = { Text(stringResource(R.string.settings_roaming_sub_screen_ring_spacing_m)) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+
     Spacer(modifier = Modifier.height(8.dp))
     Text(stringResource(R.string.settings_roaming_sub_screen_speed_profile), style = MaterialTheme.typography.labelLarge)
     Spacer(modifier = Modifier.height(4.dp))

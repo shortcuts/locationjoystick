@@ -74,6 +74,9 @@ fun RoamingSheet(
                 if (updated.plantingLoopCount != draft.plantingLoopCount) {
                     onAction(MapAction.UpdatePlantingLoopCount(updated.plantingLoopCount))
                 }
+                if (updated.plantingSpacingMeters != draft.plantingSpacingMeters) {
+                    onAction(MapAction.UpdatePlantingSpacing(updated.plantingSpacingMeters))
+                }
             },
             onGenerate = { kind ->
                 onAction(MapAction.UpdateRoamingKind(kind))
