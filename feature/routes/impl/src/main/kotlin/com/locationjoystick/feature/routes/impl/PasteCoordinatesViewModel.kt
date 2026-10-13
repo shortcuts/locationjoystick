@@ -36,6 +36,7 @@ import javax.inject.Inject
 
 enum class PastePointOrder { ORIGINAL, PROXIMITY }
 
+// Keep in sync with RouteType: every route type the paste builder can create needs a mode here (see resolvedRouteType).
 enum class PasteBuildMode { AS_IS, WALKABLE, PLANTING, TELEPORT }
 
 enum class PlantingTravel { STRAIGHT, ROADS }

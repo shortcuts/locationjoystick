@@ -297,4 +297,17 @@ class PasteCoordinatesViewModelTest {
             coVerify(exactly = 0) { routeRepository.insertRoute(any()) }
             assertFalse(viewModel.uiState.value.saved)
         }
+
+    @Test
+    fun `every RouteType is producible by some paste build mode`() {
+        val producible =
+            PasteBuildMode.entries
+                .flatMap { mode ->
+                    PlantingTravel.entries.map { travel ->
+                        PasteCoordinatesUiState(buildMode = mode, plantingTravel = travel).resolvedRouteType
+                    }
+                }.toSet()
+        val missing = RouteType.entries.toSet() - producible
+        assertTrue("RouteType without a paste build mode: $missing", missing.isEmpty())
+    }
 }
