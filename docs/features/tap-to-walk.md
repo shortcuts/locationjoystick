@@ -417,6 +417,42 @@ and scale between the before and after frames returned about 0 degrees and scale
 is not used: check `before.png` / `after.png` by eye. Walking is about 0.56 m/s, so 4 conditions of 4 legs of 30 m
 take roughly 15 minutes of walking plus screenshots. Not covered: one device; the larger run itself was not
 recorded or scored in this entry.
+### Perspective ground map and offline landing check
+
+Bench only (`registration_bench.py persp`, `landing`; `taptrials --persp`), nothing in the app changed. Two fixes
+to the earlier multi-leg map. First, the flow is measured per band (seven row bands, two side columns) after
+the leg's static content (HUD, ring, companion) and the player disc are inpainted away, because phase
+correlation over the whole band locked onto that static content and shrank every shift. Second, the 2x2 map is
+replaced by a pitched-camera homography (heading, lateral and forward scale, one perspective term) fitted to
+those band flows, so px per metre falls with distance (about 7.5 down to 2.6 forward at the Pixel 5 wide view).
+A tapped pixel is turned into a ground offset with the inverse homography relative to the player's feet pixel
+(measured by eye per zoom). Heading still comes out of the fit with no north assumed.
+
+Data: 4 legs of 30 m per camera state (bearings 0, 90, 45, 225), walking speed, Pixel 5, three wide-view camera
+orientations reached by two-finger twists (fitted headings about -20, +5 and -21 degrees, same lateral, forward
+and perspective terms within 10 percent). Check: leave one leg out, fit on the other three, then for every held-out
+frame pair with a known move of 5 to 31 m and a grid of 21 pixels, compare where the model says that pixel's
+content went with where a masked template match (NCC at least 0.7) finds it. Error is the ground distance in
+metres. This is what a tap's landing error is, but it is not an on-device tap run.
+
+| camera state | samples | p50 / p90 (m) | within 10 m | within 15 m |
+|---|---|---|---|---|
+| wide, heading about -20 | 3554 | 2.3 / 7.4 | 94% | 96% |
+| wide, twisted, heading about +5 | 3263 | 2.7 / 7.1 | 95% | 98% |
+| wide, twisted again, heading about -21 | 3177 | 2.3 / 6.7 | 95% | 99% |
+
+The old 2x2 map scores p90 7.6 to 8.1 m and 11 to 12 m for moves of 20 m and more on the same data (flat fit,
+exploratory run), so the perspective term matters mostly at distance; the larger gain over the first trials is the
+static-content cleanup. Samples overlap (many pairs per leg), so they are not independent.
+
+Not shown, honestly: (1) no on-device taps were run for this entry, because the app disappeared from the test
+phone mid-session (not installed), so the 10 to 15 m result is the offline check above and still needs a real
+tap run; the earlier on-device run (0 of 4) used the old map. (2) Close-up zoom (pinch out about 1.6x, low
+pitch, horizon visible) was captured but not calibrated: the player fills the middle of the frame and the clean
+side bands gave a median response of 0.04. (3) The offline check only covers moves up to about 31 m and pixels
+of 700 to 1420 rows; taps beyond that are extrapolated. (4) Taps whose patch ends under the player's shadow or
+companion can be mismatched; check the annotated frames by eye. (5) The feet pixel is hand-measured per zoom;
+the app would need to detect it.
 
 ## Warning Screen
 

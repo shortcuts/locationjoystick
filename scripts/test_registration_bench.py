@@ -280,6 +280,24 @@ def test_pinch_events_spread_symmetric_and_condition_parse():
     assert rb.parse_condition("1.6:-40") == (1.6, -40.0) and rb.condition_name(1.6, -40.0) == "z1.6_t-40"
 
 
+def test_perspective_fit_recovers_known_camera_and_tap_round_trips():
+    cam = {"s": 7.5, "sy": 3.1, "a": -0.0022, "px": 540.0, "py": 1510.0}
+    h = rb.ground_to_game(cam, -20.0)
+    hi = np.linalg.inv(h)
+    rng = np.random.default_rng(1)
+    moves = []
+    for b in (0, 45, 90, 135, 180, 225, 270, 315):
+        d = 6.0 * np.array([math.sin(math.radians(b)), math.cos(math.radians(b))])
+        fl = [tuple(rb.predict_flow(h, hi, d, (x, y)) + rng.normal(0, 0.5, 2)) + (0.9, x, y)
+              for y in (600, 800, 1000, 1200, 1350) for x in (250, 850)]
+        moves += [(float(b), d, fl)] * 6
+    fit = rb.fit_perspective(moves, (540.0, 1510.0))
+    assert abs(fit["theta_deg"] - (-20.0)) < 1.0 and abs(fit["a"] - cam["a"]) < 4e-4, fit
+    g = rb.tap_to_ground_persp(fit, (700, 1100))
+    want = rb._h_apply(hi, (700, 1100)) - rb._h_apply(hi, (540, 1510))
+    assert np.linalg.norm(g - want) < 1.5
+
+
 if __name__ == "__main__":
     tests = [v for k, v in list(globals().items()) if k.startswith("test_")]
     for t in tests:

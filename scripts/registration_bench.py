@@ -1086,6 +1086,179 @@ def cmd_multileg(args):
               f"sd={np.std(offs):.1f} deg, |offset| p90={np.percentile(np.abs(offs), 90):.1f} deg")
 
 
+# Perspective ground map (task: reliable landing). The linear 2x2 map is wrong across the frame because the
+# game camera is pitched: px per metre falls with distance. Model: ground_to_game(cam, theta) with cam =
+# {s, sy, a, px, py}, fitted to per-band content flow of the walked legs.
+FLOW_ROWS = [(500, 700), (700, 900), (900, 1100), (1100, 1290), (1290, 1400), (1400, 1520), (1520, 1650)]
+FLOW_COLS = [(120, 430), (650, 1000)]  # side columns: the player, its ring and the HUD sit in the middle
+
+
+def clean_leg(frames, anchor, y0=700, y1=1950, sprite_r=110):
+    """Gray frames with leg-static content (HUD, ring, companion) and the player disc inpainted away.
+
+    Static = a pixel whose value barely changes over the leg and sits on an edge in the temporal median.
+    """
+    st = np.stack([f if f.ndim == 2 else _to_gray(f) for f in frames]).astype(np.float32)
+    med = np.median(st, axis=0)
+    dev = np.median(np.abs(st - med), axis=0)
+    edge = np.hypot(cv2.Sobel(med, cv2.CV_32F, 1, 0), cv2.Sobel(med, cv2.CV_32F, 0, 1))
+    mask = cv2.dilate(((dev < 3.0) & (edge > 60.0)).astype(np.uint8) * 255, np.ones((9, 9), np.uint8))
+    cv2.circle(mask, (int(anchor[0]), int(anchor[1]) - 60), sprite_r, 255, -1)
+    out = []
+    for f in st:
+        g = f.astype(np.uint8)
+        g[y0:y1] = cv2.inpaint(g[y0:y1], mask[y0:y1], 4, cv2.INPAINT_TELEA)
+        out.append(g)
+    return out
+
+
+def band_moves(legs, anchor, ks=(2, 3, 4, 6), min_d=2.0):
+    """[(bearing, d, [(fx, fy, response, x, y) per band])] from legs {bearing: [{ll, img, moving}]}."""
+    lat0 = next(iter(legs.values()))[0]["ll"][0]
+    bands = [(y0, y1, x0, x1) for y0, y1 in FLOW_ROWS for x0, x1 in FLOW_COLS]
+    moves = []
+    for b, fr in legs.items():
+        imgs = clean_leg([f["img"] for f in fr], anchor)
+        feats = [[_feat(g[y0:y1, x0:x1]) for y0, y1, x0, x1 in bands] for g in imgs]
+        for k in ks:
+            for i in range(len(fr) - k):
+                if not (fr[i]["moving"] and fr[i + k]["moving"]):
+                    continue
+                d = along_track_move(fr[i]["ll"], fr[i + k]["ll"], b, lat0)
+                if np.hypot(*d) < min_d:
+                    continue
+                fl = []
+                for bi, (y0, y1, x0, x1) in enumerate(bands):
+                    fa = feats[i][bi]
+                    win = cv2.createHanningWindow((fa.shape[1], fa.shape[0]), cv2.CV_32F)
+                    (fx, fy), resp = cv2.phaseCorrelate(fa, feats[i + k][bi], win)
+                    fl.append((float(fx), float(fy), float(resp), (x0 + x1) / 2, (y0 + y1) / 2))
+                moves.append((b, d, fl))
+    return moves
+
+
+def _h_apply(h, p):
+    v = h @ np.array([p[0], p[1], 1.0])
+    return v[:2] / v[2]
+
+
+def predict_flow(h, hi, d, u):
+    """Screen shift of the content at pixel u when the player moves d (east, north metres)."""
+    return _h_apply(h, _h_apply(hi, u) - np.asarray(d)) - np.asarray(u)
+
+
+def fit_perspective(moves, anchor, min_resp=0.2, theta0s=(-20, 5, 30, -60, 60, 120, 180)):
+    """Gauss-Newton fit of (theta_deg, s, sy, a) of ground_to_game to band flows, outliers down-weighted.
+
+    anchor is the player's feet pixel (measured per camera zoom). Returns {theta_deg, s, sy, a, px, py,
+    med_abs_px, n} or None when fewer than 40 flows pass min_resp.
+    """
+    rows = [(d, f) for _, d, fl in moves for f in fl if f[2] >= min_resp]
+    if len(rows) < 40:
+        return None
+
+    def cam(x):
+        return {"s": x[1], "sy": x[2], "a": x[3], "px": anchor[0], "py": anchor[1]}
+
+    def res(x):
+        h = ground_to_game(cam(x), x[0])
+        hi = np.linalg.inv(h)
+        return np.concatenate([np.array(f[:2]) - predict_flow(h, hi, d, (f[3], f[4])) for d, f in rows])
+
+    best = None
+    for th in theta0s:
+        x, w = np.array([th, 7.0, 3.0, -0.0024]), None
+        for it in range(40):
+            r = res(x)
+            jac = np.stack([(res(x + e) - r) / e[j] for j, e in
+                            enumerate(np.eye(4) * 1e-4 * np.maximum(1.0, np.abs(x)))], axis=1)
+            if it in (8, 20, 30):
+                c = max(3 * 1.4826 * np.median(np.abs(r)), 2.0)
+                w = np.where(np.abs(r) < c, 1.0, c / np.abs(r))
+            ww = np.ones(len(r)) if w is None else w
+            dx = np.linalg.lstsq(jac * ww[:, None], -r * ww, rcond=None)[0]
+            x = x + dx
+            if np.abs(dx).max() < 1e-7:
+                break
+        r = res(x)
+        score = float(np.sqrt(np.mean(np.minimum(r ** 2, 100.0))))
+        if best is None or score < best[0]:
+            best = (score, x, float(np.median(np.abs(r))))
+    _, x, med = best
+    th = (x[0] + 180.0) % 360.0 - 180.0
+    return {"theta_deg": float(th), "s": float(x[1]), "sy": float(x[2]), "a": float(x[3]),
+            "px": float(anchor[0]), "py": float(anchor[1]), "med_abs_px": med, "n": len(rows) // 2}
+
+
+def persp_h(cal):
+    return ground_to_game({k: cal[k] for k in ("s", "sy", "a", "px", "py")}, cal["theta_deg"])
+
+
+def tap_to_ground_persp(cal, p):
+    """Ground offset (east, north metres) to walk so tapped pixel p reaches the player's feet."""
+    hi = np.linalg.inv(persp_h(cal))
+    return _h_apply(hi, p) - _h_apply(hi, (cal["px"], cal["py"]))
+
+
+def cmd_persp(args):
+    """Fit the perspective ground map from every walk_C_* leg under args.data (and extra dirs) -> calibration.json.
+
+    --anchor X Y is the player's feet pixel at this zoom. Prints heading, scales and the median flow residual.
+    """
+    import json
+
+    legs = {}
+    for d in [args.data] + list(args.more):
+        for b, fr in _commanded_legs(Path(d)).items():
+            legs.setdefault(b, fr)
+    fit = fit_perspective(band_moves(legs, tuple(args.anchor)), tuple(args.anchor))
+    if fit is None:
+        print("calibration REJECTED (too few usable flows)")
+        return
+    fit["model"] = "perspective"
+    (Path(args.data) / "calibration_persp.json").write_text(json.dumps(fit, indent=1))
+    print(json.dumps(fit))
+
+
+def cmd_landing(args):
+    """Offline tap-landing check, leave-one-leg-out: fit on the other legs, then for each held-out frame pair
+    (known move d) and a grid of pixels, compare where the model says the content went with where a masked
+    template match finds it. Error is the ground distance in metres (through the all-leg fit). Not a device test.
+    """
+    legs = {}
+    for d in [args.data] + list(args.more):
+        for b, fr in _commanded_legs(Path(d)).items():
+            legs.setdefault(b, fr)
+    anchor = tuple(args.anchor)
+    moves = band_moves(legs, anchor)
+    full = fit_perspective(moves, anchor)
+    hi_full = np.linalg.inv(persp_h(full))
+    lat0 = next(iter(legs.values()))[0]["ll"][0]
+    probes = [(x, y) for x in (200, 540, 880) for y in (700, 900, 1050, 1150, 1250, 1350, 1420)]
+    errs = []
+    for hb, fr in legs.items():
+        cal = fit_perspective([m for m in moves if m[0] != hb], anchor)
+        h = persp_h(cal)
+        hi = np.linalg.inv(h)
+        g = clean_leg([f["img"] for f in fr], anchor)
+        for k in (4, 6, 8, 10, 12, 16):
+            for i in range(len(fr) - k):
+                d = along_track_move(fr[i]["ll"], fr[i + k]["ll"], hb, lat0)
+                if not (fr[i]["moving"] and fr[i + k]["moving"]) or not 5.0 <= np.hypot(*d) <= 31.0:
+                    continue
+                for p in probes:
+                    pred = _h_apply(h, _h_apply(hi, p) - d)
+                    c = (int(round(pred[0])), int(round(pred[1])))
+                    pm, ncc = patch_offset(g[i], g[i + k], p, c, half=70, search=90, scales=(1.0,), sprite=0)
+                    if ncc < 0.7 or not (0 < c[0] < 1080 and 0 < c[1] < 2340):
+                        continue
+                    got = (c[0] + pm[0], c[1] + pm[1])
+                    errs.append(float(np.linalg.norm(_h_apply(hi_full, got) - _h_apply(hi_full, pred))))
+    e = np.array(errs)
+    print(f"{len(e)} samples, p50 {np.percentile(e, 50):.1f} m, p90 {np.percentile(e, 90):.1f} m, "
+          f"within 10 m {np.mean(e <= 10) * 100:.0f}%, within 15 m {np.mean(e <= 15) * 100:.0f}%")
+
+
 def _walk_and_wait(host, key, lat, lon, timeout=300.0, every=2.0):
     """POST /walk (viaRoads false) and poll until the walk target clears. SystemExit above 3 m/s."""
     import time
@@ -1120,15 +1293,24 @@ def cmd_taptrials(args):
     import time
 
     data = Path(args.data)
-    cal = json.loads((data / "calibration.json").read_text())
+    persp = args.persp
+    cal = json.loads((data / ("calibration_persp.json" if persp else "calibration.json")).read_text())
     pts = [(x, y) for x in np.linspace(150, 930, 10) for y in (1200, 1250, 1300, 1340, 1380)]
+    if persp:
+        pts = [(x, y) for x in np.linspace(150, 930, 10) for y in (900, 1000, 1100, 1200, 1300, 1380)]
     random.Random(0).shuffle(pts)
-    pts = pts[:args.n]
     if cal.get("rejected"):
-        print(f"0/{len(pts)} within {args.tol_m} m: calibration rejected -> FAIL")
+        print(f"0/{args.n} within {args.tol_m} m: calibration rejected -> FAIL")
         return
-    a = np.array(cal["A"])
-    anchor = (cal["cam"]["px"], cal["cam"]["py"])
+    if persp:
+        anchor = (cal["px"], cal["py"])
+        hi = np.linalg.inv(persp_h(cal))
+        pts = [p for p in pts if np.hypot(*tap_to_ground_persp(cal, p)) <= args.max_m]
+        a = None
+    else:
+        a = np.array(cal["A"])
+        anchor = (cal["cam"]["px"], cal["cam"]["py"])
+    pts = pts[:args.n]
     host, key = _preflight()
     out = data / "annotated_trials"
     out.mkdir(exist_ok=True)
@@ -1139,7 +1321,7 @@ def cmd_taptrials(args):
         for i, p in enumerate(pts):
             st = _api(host, key, "GET", "/state")
             lat0, lon0 = st["position"]["lat"], st["position"]["lon"]
-            g = tap_to_ground(a, p, anchor)
+            g = tap_to_ground_persp(cal, p) if persp else tap_to_ground(a, p, anchor)
             tgt = (lat0 + g[1] / 111320, lon0 + g[0] / (111320 * math.cos(math.radians(lat0))))
             _adb_screencap(args.serial, out / f"t{i:02d}_before.png")
             before = cv2.imread(str(out / f"t{i:02d}_before.png"))
@@ -1152,7 +1334,11 @@ def cmd_taptrials(args):
                 _adb_screencap(args.serial, out / f"t{i:02d}_after.png")
                 after = cv2.imread(str(out / f"t{i:02d}_after.png"))
                 off, ncc = patch_offset(before, after, p, anchor)
-                err = float(np.linalg.norm(np.linalg.solve(a, np.array(off))))
+                if persp:
+                    err = float(np.linalg.norm(_h_apply(hi, (anchor[0] + off[0], anchor[1] + off[1]))
+                                               - _h_apply(hi, anchor)))
+                else:
+                    err = float(np.linalg.norm(np.linalg.solve(a, np.array(off))))
                 row.update(error_m=err, ncc=ncc, offset_px=[float(off[0]), float(off[1])], arrived=arrived,
                            verdict="unverified" if ncc < 0.4 else ("pass" if err <= args.tol_m else "fail"))
                 cx, cy = int(anchor[0] + off[0]), int(anchor[1] + off[1])
@@ -1312,7 +1498,15 @@ def main(argv=None):
     tt.add_argument("--n", type=int, default=50)
     tt.add_argument("--need", type=int, default=48)
     tt.add_argument("--tol-m", type=float, default=15.0)
+    tt.add_argument("--persp", action="store_true", help="use calibration_persp.json (perspective map)")
+    tt.add_argument("--max-m", type=float, default=45.0, help="with --persp: skip taps farther than this")
     tt.set_defaults(func=cmd_taptrials)
+    for name, fn in (("persp", cmd_persp), ("landing", cmd_landing)):
+        q = sub.add_parser(name)
+        q.add_argument("data")
+        q.add_argument("--anchor", type=float, nargs=2, required=True, help="player's feet px (x y) at this zoom")
+        q.add_argument("--more", nargs="*", default=[], help="extra dirs of walk_C_* legs, same camera")
+        q.set_defaults(func=fn)
     vc = sub.add_parser("varycap")
     vc.add_argument("out")
     vc.add_argument("--serial", default="0A061FDD4000JF")
