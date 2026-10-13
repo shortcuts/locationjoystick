@@ -235,7 +235,7 @@ The Control API starts routes with the Hide Teleport setting bypassed, so Telepo
   a stale intent cannot hop. Leftover interpolator carry is clamped at the
   ring-exit / previous stop so a tick cannot walk into the next hop target
   (`snapCarryIfCrossingBoundary`). Not used for ephemeral walk "add next point".
-  A compact `delay (s)` field on the same checkbox row defaults to
+  A `delay (s)` field on its own row under the checkbox (shown only while it is checked) defaults to
   `TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS` (8) and is clamped 0–600. Hop-mode
   `start()` sets `lingerBeforeNextHop` so playback waits at the first stop
   before hopping to the second — matching Next/Previous and the loop wrap.
