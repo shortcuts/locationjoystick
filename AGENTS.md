@@ -37,6 +37,7 @@ Work is NOT complete until affected docs are updated. These files must stay in s
 | `AGENTS.md` — Key Services table | Adding, removing, or renaming a service or singleton |
 | `docs/architecture.md` — module table | Adding or removing a Gradle module (also update `docs/architecture.md` for architecture pattern changes) |
 | `docs/domain-models.md` | Any change to `core/model/` data classes or enums |
+| `docs/design-system.md` | Changing tokens in `core/designsystem` or adding, removing or renaming a shared `Lj*` component |
 | `docs/features/<feature>.md` | Behaviour change in the corresponding feature |
 | `docs/features/export-import.md` | Any change to `ExportData` fields or import/export scope |
 | `README.md` — feature table | Adding or removing a user-visible feature |
@@ -129,6 +130,12 @@ Rules:
 ## Domain Models
 
 → See docs/domain-models.md
+
+---
+
+## Design System
+
+→ See docs/design-system.md
 
 ---
 
