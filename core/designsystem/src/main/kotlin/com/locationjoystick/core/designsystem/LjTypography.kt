@@ -11,15 +11,15 @@ val LjTypography =
         displayLarge =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 57.sp,
                 lineHeight = 64.sp,
-                letterSpacing = (-0.25).sp,
+                letterSpacing = 0.sp,
             ),
         displayMedium =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 45.sp,
                 lineHeight = 52.sp,
                 letterSpacing = 0.sp,
@@ -27,10 +27,10 @@ val LjTypography =
         displaySmall =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 32.sp,
                 lineHeight = 40.sp,
-                letterSpacing = (-0.4).sp,
+                letterSpacing = 0.sp,
             ),
         headlineLarge =
             TextStyle(
@@ -43,26 +43,26 @@ val LjTypography =
         headlineMedium =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 26.sp,
                 lineHeight = 32.sp,
-                letterSpacing = (-0.3).sp,
+                letterSpacing = 0.sp,
             ),
         headlineSmall =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 22.sp,
                 lineHeight = 28.sp,
-                letterSpacing = (-0.2).sp,
+                letterSpacing = 0.sp,
             ),
         titleLarge =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 20.sp,
                 lineHeight = 26.sp,
-                letterSpacing = (-0.2).sp,
+                letterSpacing = 0.sp,
             ),
         titleMedium =
             TextStyle(

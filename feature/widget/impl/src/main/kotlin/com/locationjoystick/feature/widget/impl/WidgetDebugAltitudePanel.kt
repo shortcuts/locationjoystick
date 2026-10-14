@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.widget.impl
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -19,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,8 +38,8 @@ internal fun DebugStatsPanel(stats: DebugStats) {
         modifier =
             Modifier
                 .padding(4.dp)
-                .shadow(elevation = 8.dp, shape = MaterialTheme.shapes.small)
                 .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.7f), MaterialTheme.shapes.small)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.small)
                 .padding(8.dp),
     ) {
         val tickHz = if (stats.tickIntervalMs > 0) 1000f / stats.tickIntervalMs else 0f

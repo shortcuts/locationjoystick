@@ -28,9 +28,9 @@ Unchecked checkboxes and outlined fields route through `outlineVariant`: dark th
 
 - Both color schemes set the `surfaceContainer*` tokens explicitly. Unset, Material falls back to its baseline (purple-tinted) palette for sheets and cards. Sheets use `surfaceContainerLow`, one step above the background; cards use `surfaceVariant`, one step above the sheet.
 - `LjCard` is flat (no elevation) on `surfaceVariant`.
-- Corner radii scale: 6 / 12 / 20 / 28 / 32 dp (`LjShapes`).
-- `LjTypography` uses bolder titles and headlines with slightly tighter letter spacing; body and label sizes stay the same or shrink.
-- Map chrome floats: `LjMapIconButton` and the map hint pill carry a 4 dp shadow.
+- Corner radii scale: 4 / 8 / 12 / 16 / 20 dp (`LjShapes`).
+- `LjTypography` uses SemiBold titles and headlines with no negative letter spacing; sizes are unchanged.
+- No shadows: `LjMapIconButton`, the search bar, the map hint pill and floating overlay panels use a 1 dp `outlineVariant` hairline border instead.
 
 ## Edge Cases
 

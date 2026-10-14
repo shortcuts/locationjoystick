@@ -21,7 +21,9 @@ import com.locationjoystick.core.designsystem.R
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjCard
+import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
+import com.locationjoystick.core.designsystem.component.LjOutlinedCard
 
 @PreviewLightDark
 @Composable
@@ -75,6 +77,21 @@ private fun ThemePreview() {
                         modifier = Modifier.weight(1f),
                     ) {
                         Text(stringResource(R.string.theme_preview_stop))
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LjMapIconButton(
+                        icon = LjIcons.MyLocation,
+                        contentDescription = "",
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        onClick = {},
+                    )
+                    LjOutlinedCard(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.theme_preview_design_system_preview),
+                            modifier = Modifier.padding(16.dp),
+                        )
                     }
                 }
                 EmptyState(

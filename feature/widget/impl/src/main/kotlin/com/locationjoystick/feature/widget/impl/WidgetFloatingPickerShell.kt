@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.widget.impl
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -97,8 +97,8 @@ internal fun FloatingPickerShell(
                 Modifier
                     .fillMaxSize()
                     .padding(16.dp)
-                    .shadow(elevation = 8.dp, shape = MaterialTheme.shapes.medium)
                     .background(colors.background, MaterialTheme.shapes.medium)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                     .clickable { /* consume touches inside panel */ },
         ) {
             CompositionLocalProvider(LocalContentColor provides colors.onBackground) {

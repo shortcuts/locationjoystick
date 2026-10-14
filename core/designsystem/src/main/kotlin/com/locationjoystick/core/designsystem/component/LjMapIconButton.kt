@@ -2,12 +2,14 @@ package com.locationjoystick.core.designsystem.component
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -40,7 +42,7 @@ fun LjMapIconButton(
             onClick = onClick,
             shape = CircleShape,
             color = containerColor,
-            shadowElevation = 4.dp,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             interactionSource = interactionSource,
             modifier = Modifier.size(UiConstants.FAB_CONTAINER_SIZE).scale(scale),
         ) {

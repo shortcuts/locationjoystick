@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -452,11 +452,11 @@ internal fun MapScreen(
                         Modifier
                             .align(Alignment.BottomCenter)
                             .padding(bottom = 12.dp, start = 16.dp, end = 16.dp)
-                            .shadow(4.dp, CircleShape)
                             .background(
                                 MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
                                 CircleShape,
-                            ).padding(horizontal = 14.dp, vertical = 6.dp),
+                            ).border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
                 )
             }
 

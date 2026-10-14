@@ -6,9 +6,9 @@ import androidx.compose.ui.unit.dp
 
 val LjShapes =
     Shapes(
-        extraSmall = RoundedCornerShape(6.dp),
-        small = RoundedCornerShape(12.dp),
-        medium = RoundedCornerShape(20.dp),
-        large = RoundedCornerShape(28.dp),
-        extraLarge = RoundedCornerShape(32.dp),
+        extraSmall = RoundedCornerShape(4.dp),
+        small = RoundedCornerShape(8.dp),
+        medium = RoundedCornerShape(12.dp),
+        large = RoundedCornerShape(16.dp),
+        extraLarge = RoundedCornerShape(20.dp),
     )
