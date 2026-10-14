@@ -787,7 +787,11 @@ go_idle() {
   wait_s 4 "App starting"
   # A session running at kill time is restored on launch and opens the map, not the idle hub.
   # Relaunching would restore it again, so stop it and go Home instead.
-  if tap_text_exact "Stop"; then
+  local stop_dump restored=false
+  stop_dump=$(ui_dump)
+  grep -qE '(text|content-desc)="Stop"' "$stop_dump" && restored=true
+  rm -f "$stop_dump"
+  if $restored && tap_text_exact "Stop"; then
     wait_s 3 "Stopping restored session"
     # The restored map is the nav root, so back would leave the app; use the drawer.
     local dump; dump=$(ui_dump)
