@@ -30,7 +30,7 @@ Unchecked checkboxes and outlined fields route through `outlineVariant`: dark th
 - `LjCard`/`LjSurface`/`LjOutlinedCard` are flat (no elevation) on `surfaceVariant` with a 1 dp `outlineVariant` hairline and 12 dp corners. Buttons and segmented controls use 8 dp corners; outlined buttons use the hairline, not the orange `outline`. `LjTopBar` sits on `background` with a hairline divider underneath.
 - `LjModalBottomSheet` (`LjBottomSheet.kt`) is the shared sheet wrapper: `surface` container, 16 dp top corners, theme scrim. The map, Routes and Favorites sheets use it; sheet titles are `titleMedium`, full-screen form titles `titleLarge`. `LjFloatingActionButton` is a flat 12 dp rounded square (Routes and Favorites add buttons), and picker rows carry the hairline border.
 - Map FABs (`LjMapIconButton`) and the route-progress chip are 12 dp rounded squares. `CooldownAdvisoryBadge` is plain `bodySmall` text, not a filled chip.
-- Corner radii scale: 4 / 8 / 12 / 16 / 20 dp (`LjShapes`).
+- `LjAlertDialog` (`LjAlertDialog.kt`) wraps every dialog: 16 dp `surface`, no tonal tint, `titleLarge` title. The What's New/update badges, the Tap to Walk cancel button and the floating map-view controls are 12 dp rounded squares.- Corner radii scale: 4 / 8 / 12 / 16 / 20 dp (`LjShapes`).
 - `LjTypography` uses SemiBold titles and headlines with no negative letter spacing; sizes are unchanged.
 - No shadows: `LjMapIconButton`, the search bar, the map hint pill and floating overlay panels use a 1 dp `outlineVariant` hairline border instead.
 

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,6 +51,7 @@ import com.locationjoystick.core.designsystem.component.GroupDialogState
 import com.locationjoystick.core.designsystem.component.GroupDialogs
 import com.locationjoystick.core.designsystem.component.ListSearchField
 import com.locationjoystick.core.designsystem.component.LjActionSheetRow
+import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjFloatingActionButton
 import com.locationjoystick.core.designsystem.component.LjListItemCard
@@ -613,7 +613,7 @@ private fun RouteShareDialog(
             formatCapturedPointsForClipboard(route.waypoints.map { it.position })
         }
 
-    AlertDialog(
+    LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.routes_share_title, route.name)) },
         text = {

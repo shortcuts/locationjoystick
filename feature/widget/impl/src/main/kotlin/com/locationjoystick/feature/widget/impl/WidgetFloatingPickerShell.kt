@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.ZeroCornerSize
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.component.ListSearchField
+import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.SavedItemSortMenu
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.feature.widget.impl.R
@@ -298,7 +298,7 @@ internal fun WidgetRenameDialog(
     onConfirm: (trimmedName: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
@@ -327,7 +327,7 @@ internal fun WidgetDeleteDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(itemName) },

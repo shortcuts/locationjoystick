@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.widget.impl
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -437,7 +437,8 @@ internal fun MapFloatingView(
                     Modifier
                         .align(Alignment.TopStart)
                         .padding(8.dp)
-                        .background(MaterialTheme.colorScheme.background, CircleShape)
+                        .background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                         .pointerInput(Unit) {
                             detectDragGestures { change, dragAmount ->
                                 change.consume()
@@ -459,7 +460,8 @@ internal fun MapFloatingView(
                 Modifier
                     .align(Alignment.TopEnd)
                     .padding(8.dp)
-                    .background(MaterialTheme.colorScheme.background, CircleShape),
+                    .background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium),
         ) {
             IconButton(onClick = onToggleExpanded) {
                 Icon(

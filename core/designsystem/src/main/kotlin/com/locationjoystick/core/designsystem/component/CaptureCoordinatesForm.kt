@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -130,7 +129,7 @@ fun CaptureCoordinatesForm(
     }
 
     if (showClearPrompt) {
-        AlertDialog(
+        LjAlertDialog(
             onDismissRequest = { showClearPrompt = false },
             title = { Text(stringResource(R.string.capture_coordinates_form_clear_captured_locations)) },
             text = { Text(stringResource(R.string.capture_previous_points, capturePoints.points.size)) },
@@ -358,7 +357,7 @@ fun CaptureRestoreDialog(
     onDismiss: () -> Unit,
 ) {
     var understood by rememberSaveable { mutableStateOf(false) }
-    AlertDialog(
+    LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.capture_restore_dialog_title)) },
         text = {
@@ -430,7 +429,7 @@ fun ColumnScope.CapturePassThroughRow(state: CaptureSetupState) {
     }
 
     if (showBrowserPicker) {
-        AlertDialog(
+        LjAlertDialog(
             onDismissRequest = { showBrowserPicker = false },
             title = { Text(stringResource(R.string.capture_setup_form_pass_through_browser)) },
             text = {

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,6 +33,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
 import com.locationjoystick.core.designsystem.component.FavoritesList
+import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjModalBottomSheet
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
@@ -374,7 +374,7 @@ internal fun SaveCurrentLocationDialog(
 ) {
     var name by remember { mutableStateOf("") }
 
-    AlertDialog(
+    LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.map_sheet_save_current_location)) },
         text = {

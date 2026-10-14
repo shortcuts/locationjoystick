@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -382,7 +381,7 @@ private fun MoveToGroupDialog(
     onDismiss: () -> Unit,
 ) {
     var newName by remember { mutableStateOf("") }
-    AlertDialog(
+    LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.grouped_list_move_to_group)) },
         text = {
@@ -431,7 +430,7 @@ private fun GroupNameDialog(
     onDismiss: () -> Unit,
 ) {
     var name by remember { mutableStateOf(initial) }
-    AlertDialog(
+    LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.grouped_list_rename_group)) },
         text = {

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -199,8 +198,8 @@ private fun TapToWalkOverlayContent(
                     .align(Alignment.BottomEnd)
                     .padding(24.dp)
                     .size(48.dp)
-                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f), CircleShape)
-                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f), MaterialTheme.shapes.medium)
+                    .clip(MaterialTheme.shapes.medium)
                     .clickable(role = Role.Button, onClick = onDismiss),
         ) {
             Icon(

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -50,7 +49,7 @@ internal fun DismissiblePillBadge(
         modifier =
             Modifier
                 .scale(scale)
-                .clip(CircleShape)
+                .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.primary)
                 .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
                 .semantics { this.contentDescription = contentDescription }
@@ -74,7 +73,7 @@ internal fun DismissiblePillBadge(
                     // ponytail: 32dp trades below Material's 48dp full touch-target guidance for a
                     // visibly smaller pill; still clears WCAG 2.5.8's 24dp AA minimum for a secondary action.
                     .size(32.dp)
-                    .clip(CircleShape)
+                    .clip(MaterialTheme.shapes.small)
                     .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }, onClick = onDismiss),
         ) {
             Icon(

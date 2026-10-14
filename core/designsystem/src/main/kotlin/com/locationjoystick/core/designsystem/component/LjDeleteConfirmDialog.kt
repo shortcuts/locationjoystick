@@ -1,7 +1,6 @@
 package com.locationjoystick.core.designsystem.component
 
 import androidx.annotation.StringRes
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,7 +31,7 @@ fun LjDeleteConfirmDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
-    AlertDialog(
+    LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.delete_confirm_dialog_title, name)) },
         text = { Text(stringResource(itemType.messageRes)) },

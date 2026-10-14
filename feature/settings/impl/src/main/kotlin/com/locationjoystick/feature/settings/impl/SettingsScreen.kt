@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -46,6 +45,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.DestinationCardSpec
 import com.locationjoystick.core.designsystem.component.DestinationHub
+import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjScaffold
@@ -869,7 +869,7 @@ private fun UnsavedChangesConfirmDialog(
     onDiscard: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.settings_save_changes)) },
         text = { Text(message) },
@@ -893,7 +893,7 @@ private fun ImportConfirmDialog(
     onAdd: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.settings_import_data)) },
         text = { Text(stringResource(R.string.settings_how_would_you_like_to_handle)) },
@@ -913,7 +913,7 @@ private fun ResetAllDataConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.settings_reset_all_data_2)) },
         text = { Text(stringResource(R.string.settings_all_favorites_routes_and_settings_will)) },
@@ -935,7 +935,7 @@ private fun EnterExportCodeDialog(
 ) {
     var code by rememberSaveable { mutableStateOf("") }
 
-    AlertDialog(
+    LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.settings_enter_export_code)) },
         text = {
