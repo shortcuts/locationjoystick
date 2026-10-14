@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -39,7 +40,10 @@ fun ListSearchField(
     }
     val colors =
         if (textColor == Color.Unspecified) {
-            OutlinedTextFieldDefaults.colors()
+            OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            )
         } else {
             OutlinedTextFieldDefaults.colors(
                 focusedTextColor = textColor,
@@ -59,6 +63,7 @@ fun ListSearchField(
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+        shape = MaterialTheme.shapes.small,
         colors = colors,
         modifier = modifier.fillMaxWidth().focusRequester(focusRequester),
     )

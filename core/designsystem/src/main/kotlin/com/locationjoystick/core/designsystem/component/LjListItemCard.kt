@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 /**
  * Shared row layout for a list-of-cards screen (Routes, Favorites): a
  * weighted content column plus a trailing action area — built on [LjCard]
- * for real elevation instead of each screen hand-rolling its own
+ * (flat card with hairline border) instead of each screen hand-rolling its own
  * `background(surfaceVariant, shapes.small)` row.
  */
 @Composable

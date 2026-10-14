@@ -38,7 +38,7 @@ fun LjCheckboxRow(
             modifier
                 .fillMaxWidth()
                 .clickable(enabled = enabled) { onCheckedChange(!checked) }
-                .padding(vertical = LjSpacing.xs),
+                .padding(vertical = LjSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(checked = checked, onCheckedChange = null, enabled = enabled)
@@ -59,6 +59,7 @@ fun LjCheckboxRow(
         Column(modifier = Modifier.weight(1f).padding(start = LjSpacing.sm)) {
             Text(
                 text = title,
+                style = MaterialTheme.typography.bodyLarge,
                 color =
                     if (enabled) {
                         textColor

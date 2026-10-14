@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -54,6 +55,7 @@ fun LjButton(
         onClick = onClick,
         modifier = modifier.defaultMinSize(minHeight = 48.dp).scale(scale),
         enabled = enabled,
+        shape = MaterialTheme.shapes.small,
         colors = colors,
         interactionSource = interactionSource,
         contentPadding = PaddingValues(horizontal = LjSpacing.lg, vertical = 12.dp),
@@ -74,6 +76,8 @@ fun LjOutlinedButton(
         onClick = onClick,
         modifier = modifier.defaultMinSize(minHeight = 48.dp).scale(scale),
         enabled = enabled,
+        shape = MaterialTheme.shapes.small,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         interactionSource = interactionSource,
         contentPadding = PaddingValues(horizontal = LjSpacing.lg, vertical = 12.dp),
         content = content,
@@ -93,6 +97,7 @@ fun LjTextButton(
         onClick = onClick,
         modifier = modifier.defaultMinSize(minHeight = 48.dp).scale(scale),
         enabled = enabled,
+        shape = MaterialTheme.shapes.small,
         interactionSource = interactionSource,
         content = content,
     )
@@ -140,6 +145,8 @@ fun <T> LjSegmentedControl(
             Button(
                 onClick = { onSelect(value) },
                 modifier = Modifier.padding(horizontal = 2.dp).defaultMinSize(minHeight = 48.dp),
+                shape = MaterialTheme.shapes.small,
+                border = if (isSelected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = containerColor,

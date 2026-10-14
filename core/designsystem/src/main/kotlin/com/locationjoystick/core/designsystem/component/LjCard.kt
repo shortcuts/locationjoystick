@@ -1,5 +1,6 @@
 package com.locationjoystick.core.designsystem.component
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun LjCard(
@@ -21,14 +23,20 @@ fun LjCard(
         Card(
             onClick = onClick,
             modifier = modifier,
+            shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = flatCardElevation(),
+            border = hairline(),
             interactionSource = interactionSource,
             content = content,
         )
     } else {
         Card(
             modifier = modifier,
+            shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            elevation = flatCardElevation(),
+            border = hairline(),
             content = content,
         )
     }
@@ -44,11 +52,15 @@ fun LjOutlinedCard(
         OutlinedCard(
             onClick = onClick,
             modifier = modifier,
+            shape = MaterialTheme.shapes.medium,
+            border = hairline(),
             content = content,
         )
     } else {
         OutlinedCard(
             modifier = modifier,
+            shape = MaterialTheme.shapes.medium,
+            border = hairline(),
             content = content,
         )
     }
@@ -61,10 +73,19 @@ fun LjSurface(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
         colors =
             CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
             ),
+        elevation = flatCardElevation(),
+        border = hairline(),
         content = content,
     )
 }
+
+@Composable
+private fun flatCardElevation() = CardDefaults.cardElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp, 0.dp)
+
+@Composable
+private fun hairline() = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)

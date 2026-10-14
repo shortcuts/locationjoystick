@@ -1,6 +1,7 @@
 package com.locationjoystick.core.designsystem.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
@@ -39,6 +40,7 @@ fun RouteProgressBadge(
                 .height(UiConstants.FAB_CONTAINER_SIZE)
                 .defaultMinSize(minWidth = UiConstants.FAB_CONTAINER_SIZE)
                 .background(LjBg, RoundedCornerShape(percent = 50))
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(percent = 50))
                 .padding(horizontal = 10.dp)
                 .semantics { this.contentDescription = contentDescription },
     ) {

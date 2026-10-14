@@ -60,111 +60,114 @@ fun LjTopBar(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.background,
     ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
-                    .padding(horizontal = LjSpacing.xs, vertical = LjSpacing.xs),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Start column: hamburger + title, left-aligned.
+        Column {
             Row(
-                modifier = Modifier.weight(1f),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                        .padding(horizontal = LjSpacing.xs, vertical = LjSpacing.xs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (onNavigationClick != null) {
-                    IconButton(onClick = onNavigationClick) {
-                        Icon(
-                            imageVector = navigationIcon,
-                            contentDescription = stringResource(R.string.top_bar_open_navigation_menu_cd),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                }
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-
-            // Middle column: state indicator, always centered.
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (showSpoofToggle) {
-                    val context = LocalContext.current
-                    val interactionSource = remember { MutableInteractionSource() }
-                    val tint = if (isSpoofing) MaterialTheme.colorScheme.error else ljSuccessColor()
-                    val spoofToggleCd =
-                        stringResource(
-                            if (isSpoofing) {
-                                R.string.top_bar_stop_simulation_cd
-                            } else {
-                                R.string.top_bar_start_simulation_cd
-                            },
-                        )
-                    val spoofToggleLabel =
-                        when {
-                            isSpoofing -> stringResource(R.string.top_bar_stop)
-                            locationLabel != null -> stringResource(R.string.top_bar_start_with_location, locationLabel)
-                            else -> stringResource(R.string.common_start)
-                        }
-                    Row(
-                        modifier =
-                            Modifier
-                                .defaultMinSize(minHeight = 44.dp)
-                                .semantics {
-                                    contentDescription = spoofToggleCd
-                                }.combinedClickable(
-                                    interactionSource = interactionSource,
-                                    indication = LocalIndication.current,
-                                    onClick = onToggleSpoofing,
-                                    onLongClick = {
-                                        if (!isSpoofing && locationLabel != null) {
-                                            Toast.makeText(context, locationLabel, Toast.LENGTH_SHORT).show()
-                                        }
-                                    },
-                                ).padding(horizontal = LjSpacing.sm, vertical = 3.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Crossfade(
-                            targetState = isSpoofing,
-                            animationSpec = tween(150),
-                            label = "spoofToggleIcon",
-                        ) { spoofing ->
+                // Start column: hamburger + title, left-aligned.
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (onNavigationClick != null) {
+                        IconButton(onClick = onNavigationClick) {
                             Icon(
-                                imageVector = if (spoofing) LjIcons.Stop else LjIcons.PlayArrow,
-                                contentDescription = null,
-                                tint = tint,
-                                modifier = Modifier.padding(end = 3.dp).size(14.dp),
+                                imageVector = navigationIcon,
+                                contentDescription = stringResource(R.string.top_bar_open_navigation_menu_cd),
+                                tint = MaterialTheme.colorScheme.onSurface,
                             )
                         }
-                        Text(
-                            text = spoofToggleLabel,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = tint,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                    }
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+
+                // Middle column: state indicator, always centered.
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (showSpoofToggle) {
+                        val context = LocalContext.current
+                        val interactionSource = remember { MutableInteractionSource() }
+                        val tint = if (isSpoofing) MaterialTheme.colorScheme.error else ljSuccessColor()
+                        val spoofToggleCd =
+                            stringResource(
+                                if (isSpoofing) {
+                                    R.string.top_bar_stop_simulation_cd
+                                } else {
+                                    R.string.top_bar_start_simulation_cd
+                                },
+                            )
+                        val spoofToggleLabel =
+                            when {
+                                isSpoofing -> stringResource(R.string.top_bar_stop)
+                                locationLabel != null -> stringResource(R.string.top_bar_start_with_location, locationLabel)
+                                else -> stringResource(R.string.common_start)
+                            }
+                        Row(
+                            modifier =
+                                Modifier
+                                    .defaultMinSize(minHeight = 44.dp)
+                                    .semantics {
+                                        contentDescription = spoofToggleCd
+                                    }.combinedClickable(
+                                        interactionSource = interactionSource,
+                                        indication = LocalIndication.current,
+                                        onClick = onToggleSpoofing,
+                                        onLongClick = {
+                                            if (!isSpoofing && locationLabel != null) {
+                                                Toast.makeText(context, locationLabel, Toast.LENGTH_SHORT).show()
+                                            }
+                                        },
+                                    ).padding(horizontal = LjSpacing.sm, vertical = 3.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Crossfade(
+                                targetState = isSpoofing,
+                                animationSpec = tween(150),
+                                label = "spoofToggleIcon",
+                            ) { spoofing ->
+                                Icon(
+                                    imageVector = if (spoofing) LjIcons.Stop else LjIcons.PlayArrow,
+                                    contentDescription = null,
+                                    tint = tint,
+                                    modifier = Modifier.padding(end = 3.dp).size(14.dp),
+                                )
+                            }
+                            Text(
+                                text = spoofToggleLabel,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = tint,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
-            }
 
-            // End column: overflow menu (or nothing, for screens with no actions).
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                actions()
+                // End column: overflow menu (or nothing, for screens with no actions).
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    actions()
+                }
             }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }
     }
 }

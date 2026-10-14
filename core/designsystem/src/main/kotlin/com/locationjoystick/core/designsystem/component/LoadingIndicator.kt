@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun LoadingIndicator(
     modifier: Modifier = Modifier,
-    size: Dp = 48.dp,
+    size: Dp = 40.dp,
 ) {
     Box(
         modifier = modifier.fillMaxSize(),
@@ -23,7 +23,7 @@ fun LoadingIndicator(
         CircularProgressIndicator(
             modifier = Modifier.size(size),
             color = MaterialTheme.colorScheme.primary,
-            strokeWidth = 4.dp,
+            strokeWidth = 3.dp,
         )
     }
 }
