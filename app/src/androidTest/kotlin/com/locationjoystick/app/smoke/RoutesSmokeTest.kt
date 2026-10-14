@@ -80,6 +80,9 @@ class RoutesSmokeTest : BaseSmokeTest() {
         composeRule.onNodeWithText("Return to location").assertIsDisplayed()
         composeRule.onNodeWithText("Follow roads").assertIsDisplayed()
         composeRule.onNodeWithText("Teleport between waypoints").assertIsDisplayed()
+        // The delay field only appears once "Teleport between waypoints" is ticked.
+        composeRule.onNodeWithText("Teleport between waypoints").performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("delay (s)").assertIsDisplayed()
         composeRule.onNodeWithText("Teleport").assertIsDisplayed()
         composeRule.onNodeWithText("Cancel").assertIsDisplayed()

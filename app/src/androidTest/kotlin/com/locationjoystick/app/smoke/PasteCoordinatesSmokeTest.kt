@@ -26,7 +26,7 @@ class PasteCoordinatesSmokeTest : BaseSmokeTest() {
     fun paste_coordinates_screen_loads() {
         composeRule.onNodeWithText("Coordinates").assertIsDisplayed()
         composeRule.onNodeWithText("Load points").assertIsDisplayed()
-        composeRule.onNodeWithText("Planting mode").assertIsDisplayed()
+        composeRule.onNodeWithText("Planting").assertIsDisplayed()
     }
 
     @Test
