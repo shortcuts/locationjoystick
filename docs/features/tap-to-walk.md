@@ -454,6 +454,21 @@ of 700 to 1420 rows; taps beyond that are extrapolated. (4) Taps whose patch end
 companion can be mismatched; check the annotated frames by eye. (5) The feet pixel is hand-measured per zoom;
 the app would need to detect it.
 
+### Status and open work
+
+Accepted state of the no-compass investigation (branch `tap-to-walk-no-compass`, bench only, no app code changed):
+
+- Heading and scale come out of a walked-leg fit with no north assumed (`persp`).
+- Offline landing error is p50 about 2.5 m, with 96 to 99 percent of samples within 15 m, at wide zoom across three camera orientations.
+- Not proven: real on-device taps with the perspective map, close-up zoom, other devices and screen sizes, and any Kotlin port.
+
+Open work, in order:
+
+1. Run `taptrials --persp` on a device with the app installed, in a fixed camera state, and record the pass rate.
+2. Calibrate close-up zoom and detect the feet pixel automatically instead of measuring it by eye.
+3. Port the calibrated ground map to the app.
+4. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes.
+
 ## Warning Screen
 
 Enabling the overlay opens `CompassDisclosureDialog` (see "Prominent Disclosure" above) with two
