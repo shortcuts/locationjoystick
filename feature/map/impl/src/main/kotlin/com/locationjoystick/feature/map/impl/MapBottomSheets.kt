@@ -16,9 +16,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,6 +35,7 @@ import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
 import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjButton
+import com.locationjoystick.core.designsystem.component.LjModalBottomSheet
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.PasteCoordinatesForm
@@ -45,7 +44,6 @@ import com.locationjoystick.core.designsystem.component.RoutesPickerList
 import com.locationjoystick.core.designsystem.component.cooldownAdvisoryLabel
 import com.locationjoystick.core.designsystem.component.cooldownBadgeText
 import com.locationjoystick.core.designsystem.component.rememberCooldownStringLookup
-import com.locationjoystick.core.designsystem.component.rememberLjSheetState
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.RouteType
@@ -60,13 +58,11 @@ internal fun RoutesPickerSheet(
 ) {
     var selectedRouteId by remember { mutableStateOf<String?>(null) }
 
-    ModalBottomSheet(
+    LjModalBottomSheet(
         onDismissRequest = {
             selectedRouteId = null
             onAction(MapAction.CloseRoutesSheet)
         },
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surface,
     ) {
         val routeId = selectedRouteId
         if (routeId != null) {
@@ -78,7 +74,7 @@ internal fun RoutesPickerSheet(
                     }
                     Text(
                         text = route?.name ?: stringResource(R.string.map_bottom_sheets_start_route),
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 }
                 Spacer(Modifier.height(8.dp))
@@ -140,10 +136,8 @@ internal fun FavoritesPickerSheet(
     var showSaveDialog by remember { mutableStateOf(false) }
     val getString = rememberCooldownStringLookup()
 
-    ModalBottomSheet(
+    LjModalBottomSheet(
         onDismissRequest = { onAction(MapAction.CloseFavoritesPicker) },
-        sheetState = rememberLjSheetState(),
-        containerColor = MaterialTheme.colorScheme.surface,
     ) {
         val target = uiState.favoriteTarget
         if (target == null) {
@@ -208,14 +202,12 @@ internal fun PasteCoordinatesSheet(
     initialRouteName: String = "",
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
-    ModalBottomSheet(
+    LjModalBottomSheet(
         onDismissRequest = {
             if (shouldHonorPasteSheetDismiss(lifecycleOwner.lifecycle.currentState)) {
                 onDismiss()
             }
         },
-        sheetState = rememberLjSheetState(),
-        containerColor = MaterialTheme.colorScheme.surface,
     ) {
         PasteCoordinatesForm(
             onDismiss = onDismiss,
@@ -254,10 +246,8 @@ internal fun PendingTapSheet(
         }
     }
 
-    ModalBottomSheet(
+    LjModalBottomSheet(
         onDismissRequest = { onAction(MapAction.ClearPendingTap) },
-        sheetState = rememberLjSheetState(),
-        containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp)) {
             if (isRouteReplay && !isEphemeralReplay) {

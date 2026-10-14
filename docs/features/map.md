@@ -2,7 +2,7 @@
 
 Main screen. Raster base map (OpenStreetMap by default) centered on `AppConstants.MapConstants.DEFAULT_LAT` / `AppConstants.MapConstants.DEFAULT_LON` first load. Scroll on by default. The app opens on the Map while spoofing is running or paused, and on Home otherwise (see docs/architecture.md, "Navigation").
 
-Key files: `:feature:map:impl/MapScreen.kt`, `:feature:map:impl/MapViewModel.kt`
+Key files: `:feature:map:impl/MapScreen.kt`, `:feature:map:impl/MapViewModel.kt`, `:feature:map:impl/MapSpeedStrip.kt`
 
 ## Library
 
@@ -112,6 +112,10 @@ The map favorites and routes sheets (`FavoritesPickerSheet` / `RoutesPickerSheet
 `FavoritesList` / `RoutesPickerList` with `enableSearch = true` — a name filter under the sheet
 title. Query is `remember`d in the list, so dismissing the sheet starts from the full list.
 See docs/features/favorites.md and docs/features/routes.md.
+
+## Speed strip
+
+`MapSpeedStrip` shows the current speed at the top-left of the map while spoofing is running or paused. Hidden while the search bar is open. The unit follows the Settings speed unit (km/h or mph). Source: `LocationRepository.currentSpeedMps` via `MapController.currentSpeedMps` and `MapUiState.currentSpeedMps`; it reads 0.0 when paused or stopped.
 
 ## Search
 

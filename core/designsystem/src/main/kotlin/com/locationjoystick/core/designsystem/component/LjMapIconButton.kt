@@ -7,7 +7,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -40,7 +39,7 @@ fun LjMapIconButton(
     ) {
         Surface(
             onClick = onClick,
-            shape = CircleShape,
+            shape = MaterialTheme.shapes.medium,
             color = containerColor,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             interactionSource = interactionSource,

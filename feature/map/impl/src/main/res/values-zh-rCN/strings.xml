@@ -48,4 +48,6 @@
     <string name="map_fab_expand_roaming_sheet_cd">"展开漫游面板"</string>
     <string name="map_fab_start_roaming_cd">"开始漫游"</string>
     <string name="map_fab_roaming_ignored_route_playing_cd">"漫游已忽略 — 路线正在进行"</string>
+    <string name="map_speed_strip_kmh">"%1$.1f km/h"</string>
+    <string name="map_speed_strip_mph">"%1$.1f mph"</string>
 </resources>

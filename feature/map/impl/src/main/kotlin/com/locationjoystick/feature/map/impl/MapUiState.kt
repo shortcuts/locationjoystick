@@ -58,6 +58,7 @@ data class MapUiState(
     val debugStatsEnabled: Boolean = false,
     val isRoadRouteFetchInFlight: Boolean = false,
     val routeProgress: RouteProgress? = null,
+    val currentSpeedMps: Float? = null,
 )
 
 enum class PasteSheetTitle { DEFAULT, GPX }

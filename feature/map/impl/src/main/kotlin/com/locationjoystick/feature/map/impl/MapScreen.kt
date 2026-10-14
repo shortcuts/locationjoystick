@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -296,7 +296,9 @@ internal fun MapScreen(
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = bottomBar,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { data -> Snackbar(data, shape = MaterialTheme.shapes.small) }
+        },
         floatingActionButton = {
             MapFabColumn(
                 uiState = uiState,
@@ -454,9 +456,22 @@ internal fun MapScreen(
                             .padding(bottom = 12.dp, start = 16.dp, end = 16.dp)
                             .background(
                                 MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                                CircleShape,
-                            ).border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                                MaterialTheme.shapes.small,
+                            ).border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.small)
                             .padding(horizontal = 14.dp, vertical = 6.dp),
+                )
+            }
+
+            if (!showSearch.value &&
+                (uiState.mockLocationState == MockLocationState.RUNNING || uiState.mockLocationState == MockLocationState.PAUSED)
+            ) {
+                MapSpeedStrip(
+                    speedMps = uiState.currentSpeedMps,
+                    unit = uiState.speedUnit,
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .padding(top = paddingValues.calculateTopPadding() + 8.dp, start = 12.dp),
                 )
             }
 

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,8 +38,8 @@ fun RouteProgressBadge(
             modifier
                 .height(UiConstants.FAB_CONTAINER_SIZE)
                 .defaultMinSize(minWidth = UiConstants.FAB_CONTAINER_SIZE)
-                .background(LjBg, RoundedCornerShape(percent = 50))
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(percent = 50))
+                .background(LjBg, MaterialTheme.shapes.medium)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                 .padding(horizontal = 10.dp)
                 .semantics { this.contentDescription = contentDescription },
     ) {

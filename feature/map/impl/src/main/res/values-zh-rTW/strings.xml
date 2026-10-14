@@ -48,4 +48,6 @@
     <string name="map_fab_start_roaming_cd">"開始漫遊"</string>
     <string name="map_paste_sheet_title_gpx">"開啟 GPX"</string>
     <string name="map_fab_roaming_ignored_route_playing_cd">"漫遊已忽略 — 路線正在進行"</string>
+    <string name="map_speed_strip_kmh">"%1$.1f km/h"</string>
+    <string name="map_speed_strip_mph">"%1$.1f mph"</string>
 </resources>

@@ -143,6 +143,10 @@ class MapViewModel
         }
 
         private fun observeSharedState() {
+            // Separate from sharedState: speed ticks would re-emit its distinct-key flow.
+            viewModelScope.launch {
+                mapController.currentSpeedMps.collect { s -> _uiState.update { it.copy(currentSpeedMps = s) } }
+            }
             viewModelScope.launch {
                 mapController.sharedState
                     .map { it.currentPosition }

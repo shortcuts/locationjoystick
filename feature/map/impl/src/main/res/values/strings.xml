@@ -48,4 +48,6 @@
     <string name="map_fab_expand_roaming_sheet_cd">"Expand roaming sheet"</string>
     <string name="map_fab_start_roaming_cd">"Start roaming"</string>
     <string name="map_fab_roaming_ignored_route_playing_cd">"Roaming ignored — a route is playing"</string>
+    <string name="map_speed_strip_kmh">"%1$.1f km/h"</string>
+    <string name="map_speed_strip_mph">"%1$.1f mph"</string>
 </resources>

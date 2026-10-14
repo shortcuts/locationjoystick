@@ -28,7 +28,8 @@ Unchecked checkboxes and outlined fields route through `outlineVariant`: dark th
 
 - Both color schemes set the `surfaceContainer*` tokens explicitly. Unset, Material falls back to its baseline (purple-tinted) palette for sheets and cards. Sheets use `surfaceContainerLow`, one step above the background; cards use `surfaceVariant`, one step above the sheet.
 - `LjCard`/`LjSurface`/`LjOutlinedCard` are flat (no elevation) on `surfaceVariant` with a 1 dp `outlineVariant` hairline and 12 dp corners. Buttons and segmented controls use 8 dp corners; outlined buttons use the hairline, not the orange `outline`. `LjTopBar` sits on `background` with a hairline divider underneath.
-- `LjModalBottomSheet` (`LjBottomSheet.kt`) is the shared sheet wrapper: `surface` container, 16 dp top corners, theme scrim. Feature sheets adopt it screen by screen.
+- `LjModalBottomSheet` (`LjBottomSheet.kt`) is the shared sheet wrapper: `surface` container, 16 dp top corners, theme scrim. Feature sheets adopt it screen by screen; the map sheets (routes, favorites, paste, pending tap, roaming) use it.
+- Map FABs (`LjMapIconButton`) and the route-progress chip are 12 dp rounded squares. `CooldownAdvisoryBadge` is plain `bodySmall` text, not a filled chip.
 - Corner radii scale: 4 / 8 / 12 / 16 / 20 dp (`LjShapes`).
 - `LjTypography` uses SemiBold titles and headlines with no negative letter spacing; sizes are unchanged.
 - No shadows: `LjMapIconButton`, the search bar, the map hint pill and floating overlay panels use a 1 dp `outlineVariant` hairline border instead.

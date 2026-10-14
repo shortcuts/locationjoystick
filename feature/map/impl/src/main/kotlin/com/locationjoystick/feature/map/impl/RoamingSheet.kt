@@ -1,14 +1,12 @@
 package com.locationjoystick.feature.map.impl
 
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.designsystem.component.LjModalBottomSheet
 import com.locationjoystick.core.designsystem.component.RoamingSheetContent
-import com.locationjoystick.core.designsystem.component.rememberLjSheetState
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
 
@@ -27,10 +25,8 @@ fun RoamingSheet(
     onMinimize: () -> Unit = {},
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(
+    LjModalBottomSheet(
         onDismissRequest = { if (hasPreview) onMinimize() else onDismiss() },
-        sheetState = rememberLjSheetState(),
-        containerColor = MaterialTheme.colorScheme.surface,
     ) {
         RoamingSheetContent(
             draft = draft,
