@@ -75,7 +75,7 @@ internal fun SettingsRoamingSubScreen(
                                 .padding(16.dp),
                     ) {
                         RoamingSection(roamingDefaults, isMph, onAction)
-                        Spacer(modifier = Modifier.height(24.dp))
+                        SettingsSectionDivider()
                     }
                 }
             }
@@ -89,7 +89,7 @@ private fun RoamingSection(
     isMph: Boolean,
     onAction: (SettingsAction) -> Unit,
 ) {
-    Text(stringResource(R.string.settings_roaming_roaming), style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionHeader(stringResource(R.string.settings_roaming_roaming))
     Spacer(modifier = Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_roaming_default_settings_used_when_starting_a),
@@ -197,7 +197,7 @@ private fun RoamingSection(
         description = stringResource(R.string.settings_roaming_return_to_start_desc),
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
+    SettingsSectionDivider()
     Text(stringResource(R.string.settings_roaming_sub_screen_planting), style = MaterialTheme.typography.titleMedium)
     Spacer(modifier = Modifier.height(4.dp))
     Text(

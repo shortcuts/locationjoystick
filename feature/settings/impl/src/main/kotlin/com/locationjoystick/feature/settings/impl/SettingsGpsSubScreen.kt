@@ -77,12 +77,12 @@ internal fun SettingsGpsSubScreen(
                                 .padding(16.dp),
                     ) {
                         SpeedProfilesSection(uiState, onAction)
-                        Spacer(modifier = Modifier.height(24.dp))
+                        SettingsSectionDivider()
                         GpsJitterSection(uiState, isMph, onAction)
-                        Spacer(modifier = Modifier.height(24.dp))
+                        SettingsSectionDivider()
                         GpsRealismSection(uiState, isMph, onAction)
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(stringResource(R.string.settings_gps_location_memory), style = MaterialTheme.typography.headlineSmall)
+                        SettingsSectionDivider()
+                        SettingsSectionHeader(stringResource(R.string.settings_gps_location_memory))
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             stringResource(R.string.settings_gps_controls_whether_the_app_remembers_where),
@@ -108,7 +108,7 @@ private fun SpeedProfilesSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
 ) {
-    Text(stringResource(R.string.settings_gps_speed_profiles), style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionHeader(stringResource(R.string.settings_gps_speed_profiles))
     Spacer(modifier = Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_gps_movement_speed_used_by_the_joystick),

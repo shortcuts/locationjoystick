@@ -75,6 +75,13 @@ class SettingsSmokeTest : BaseSmokeTest() {
     }
 
     @Test
+    fun settings_shows_general_section() {
+        composeRule.onNodeWithText("General").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Appearance").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
     fun settings_shows_location_memory_section() {
         composeRule.onNodeWithText("Movement & GPS").performClick()
         composeRule.waitForIdle()

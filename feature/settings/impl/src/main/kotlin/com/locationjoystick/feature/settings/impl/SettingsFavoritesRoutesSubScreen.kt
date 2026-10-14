@@ -64,9 +64,9 @@ internal fun SettingsFavoritesRoutesSubScreen(
                                 .padding(16.dp),
                     ) {
                         FavoritesSection(uiState, hotLocationTree, onAction)
-                        Spacer(modifier = Modifier.height(24.dp))
+                        SettingsSectionDivider()
                         RoutesSection(uiState, hotRouteTree, onAction)
-                        Spacer(modifier = Modifier.height(24.dp))
+                        SettingsSectionDivider()
                     }
                 }
             }
@@ -80,7 +80,7 @@ private fun FavoritesSection(
     hotLocationTree: HotItemTree,
     onAction: (SettingsAction) -> Unit,
 ) {
-    Text(stringResource(R.string.settings_favorites_routes_favorites), style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionHeader(stringResource(R.string.settings_favorites_routes_favorites))
     Spacer(modifier = Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_favorites_routes_options_for_the_favorites_list),
@@ -111,7 +111,7 @@ private fun RoutesSection(
     hotRouteTree: HotItemTree,
     onAction: (SettingsAction) -> Unit,
 ) {
-    Text(stringResource(R.string.settings_favorites_routes_routes), style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionHeader(stringResource(R.string.settings_favorites_routes_routes))
     Spacer(modifier = Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_favorites_routes_options_for_the_routes_list),

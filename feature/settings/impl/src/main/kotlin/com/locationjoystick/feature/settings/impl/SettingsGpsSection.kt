@@ -105,7 +105,7 @@ internal fun GpsJitterSection(
     isMph: Boolean,
     onAction: (SettingsAction) -> Unit,
 ) {
-    Text(stringResource(R.string.settings_gps_section_location_randomness), style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionHeader(stringResource(R.string.settings_gps_section_location_randomness))
     Spacer(modifier = Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_gps_section_adds_small_random_shifts_to_your),
@@ -178,7 +178,7 @@ internal fun GpsRealismSection(
     isMph: Boolean,
     onAction: (SettingsAction) -> Unit,
 ) {
-    Text(stringResource(R.string.settings_gps_section_gps_realism), style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionHeader(stringResource(R.string.settings_gps_section_gps_realism))
     Spacer(modifier = Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_gps_section_controls_how_the_fake_gps_signal),

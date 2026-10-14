@@ -1225,7 +1225,7 @@ if should_run_step "17"; then
   screenshot "17_group_sync"
 fi
 
-# Set Settings → Menus → Debug stats to $1 (True|False). Idempotent: taps only on mismatch.
+# Set Settings → General → Debug stats to $1 (True|False). Idempotent: taps only on mismatch.
 # Step 18 turns it on for its shot and back off afterwards so steps 13/14 never capture the stats block.
 DEBUG_STATS_FLIPPED=0
 set_debug_stats() {
@@ -1233,10 +1233,10 @@ set_debug_stats() {
   go_idle
   tap_text_below "Settings" "$CARD_Y_MIN"
   wait_s 2 "Settings loading"
-  tap_text "Menus"
-  wait_s 2 "Menus loading"
-  # Debug section is last on the Menus page, well below the fold (Theme,
-  # App Features, Speed Cycle, Tap to Walk, Privacy all come first) — keep
+  tap_text "General"
+  wait_s 2 "General loading"
+  # Debug section is last on the General page, well below the fold (Theme,
+  # Map source, Place search, Privacy, Capture all come first) — keep
   # scrolling until the row actually appears.
   for _ in 1 2 3 4 5 6 7; do
     dump=$(ui_dump)
@@ -1303,7 +1303,7 @@ if should_run_step "18"; then
     done
     wait_s 2 "Stats populating"
   else
-    pause_for_user "Enable Settings → Menus → Debug → \"Debug stats\", start spoofing,
+    pause_for_user "Enable Settings → General → Debug → \"Debug stats\", start spoofing,
     then expand the floating widget panel so the live stats block is visible."
   fi
   go_idle_keep_overlays

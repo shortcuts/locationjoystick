@@ -20,7 +20,9 @@
     <string name="settings_hub_movement_and_gps">"Movement &amp; GPS"</string>
     <string name="settings_hub_movement_and_gps_desc">"Speed presets, signal realism, and location randomness for all movement modes."</string>
     <string name="settings_hub_menus">"Menus"</string>
-    <string name="settings_hub_menus_desc">"Which features appear in the floating widget and map buttons, and how to trigger walks by tapping."</string>
+    <string name="settings_hub_menus_desc">"Widget and map buttons, speed cycle, and Tap to Walk."</string>
+    <string name="settings_hub_general">"General"</string>
+    <string name="settings_hub_general_desc">"Theme, map source, place search, privacy, capture and debug."</string>
     <string name="settings_hub_favorites_and_routes">"Favorites &amp; Routes"</string>
     <string name="settings_hub_favorites_and_routes_desc">"Curated hot locations and pre-built routes to populate your library."</string>
     <string name="settings_hub_roaming">"Roaming"</string>
@@ -99,6 +101,7 @@
     <string name="settings_menus_tap_to_walk">"Tap to Walk"</string>
     <string name="settings_menus_walk_to_a_location_by_tapping">"Walk to a location by tapping it — no confirmation needed."</string>
     <string name="settings_menus_menus">"Menus"</string>
+    <string name="settings_general_general">"General"</string>
     <string name="settings_menus_map_scale_mpx">"Map scale (%1$.2f m/px) — the default works for most players; zoom the game fully out and adjust here only if it's off"</string>
     <string name="settings_menus_enable_tap_to_walk">"Enable Tap to Walk"</string>
     <string name="settings_menus_enable_tap_to_walk_2">"Enable Tap to Walk?"</string>

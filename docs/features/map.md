@@ -17,7 +17,7 @@ MapLibre Android SDK 13.2. Not osmdroid, not Google Maps.
 
 ## Map source
 
-Settings → Menus → Map → **Map source** (`AppSettings.mapTileSource`, `MapTileSource` enum in
+Settings → General → Map → **Map source** (`AppSettings.mapTileSource`, `MapTileSource` enum in
 `:core:model`) picks the raster provider for **every** map surface: main map, floating widget
 map (`MapFloatingView`), favorites picker (`MapPickerScreen`), route creator
 (`RouteCreatorScreen`) and Routes-menu paste coordinates (`PasteCoordinatesScreen`). Each surface collects the setting from `SettingsRepository.getMapTileSource()`
@@ -121,13 +121,13 @@ See docs/features/favorites.md and docs/features/routes.md.
 
 Nominatim search (`NominatimSearchBar`) keeps its 300 ms typing debounce and goes through the process-wide
 `Geocoding.provider` (`GeocodingProvider`, `:core:common`), which also serves the reverse lookups (spoof-toggle
-label, map-picker suggested name). `Geocoding.provider` is a `FallbackGeocodingProvider` that tries `NominatimProvider` then `PhotonProvider` (keyless `photon.komoot.io`, reachable from mainland China). A provider that throws (timeout, connection error, 429, 4xx/5xx) is skipped for 10 minutes (`GeocodingConstants.PROVIDER_COOLDOWN_MS`, in memory, shared by search and reverse); when all are cooling down all are tried anyway, and an empty result is not a failure. Providers unchecked in Settings > Menus > Place search (`AppSettings.disabledGeocodingProviders`, mirrored into `Geocoding.disabled` by `LjApplication`) are never called; if every provider is disabled (hand-edited import), all are used. The UI refuses to uncheck the last one. Each provider owns its URLs and JSON,
+label, map-picker suggested name). `Geocoding.provider` is a `FallbackGeocodingProvider` that tries `NominatimProvider` then `PhotonProvider` (keyless `photon.komoot.io`, reachable from mainland China). A provider that throws (timeout, connection error, 429, 4xx/5xx) is skipped for 10 minutes (`GeocodingConstants.PROVIDER_COOLDOWN_MS`, in memory, shared by search and reverse); when all are cooling down all are tried anyway, and an empty result is not a failure. Providers unchecked in Settings > General > Place search (`AppSettings.disabledGeocodingProviders`, mirrored into `Geocoding.disabled` by `LjApplication`) are never called; if every provider is disabled (hand-edited import), all are used. The UI refuses to uncheck the last one. Each provider owns its URLs and JSON,
 maps them to `GeocodeResult`/`ReverseGeocodeResult`, and uses `NominatimSearchClient` for search: results are cached (24 h fresh, expired entries served only if the
 request fails) and request starts are spaced at least 1.1 s apart to respect Nominatim's 1 request/second policy.
 
 ## Jitter Radius Overlay
 
-When Settings → Menus → Debug → "Debug stats" (`AppSettings.debugStatsEnabled`)
+When Settings → General → Debug → "Debug stats" (`AppSettings.debugStatsEnabled`)
 is on, a translucent circle is drawn on the map centered on the current
 spoofed position, radius = the position-jitter radius currently in effect
 (idle or moving, whichever applies this tick — see docs/features/mock-location.md,

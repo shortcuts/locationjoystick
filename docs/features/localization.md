@@ -41,7 +41,7 @@ Cooldown advisory/badge text lives in `core/designsystem`'s `cooldown_strings.xm
   class), and `MockLocationService` (the foreground service and its notification).
 - **In-app language picker**: a compact top-right dropdown switcher (`LjLanguageDropdown`,
   `:core:designsystem`) sits in the top bar's `actions` slot in two places — onboarding's header
-  (optional, skippable, does not count toward "Step X of 3") and the Settings → Menus screen's top
+  (optional, skippable, does not count toward "Step X of 3") and the Settings → General screen's top
   bar. Choices are "EN" / "CN" / "TW" / "System default" (abbreviated language codes, spelled-out
   fallback option). Selecting a language calls
   `LocaleContextWrapper.setLanguage()` (`:core:common`) — on API 33+, the platform's own

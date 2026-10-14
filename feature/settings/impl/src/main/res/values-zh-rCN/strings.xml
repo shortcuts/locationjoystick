@@ -20,7 +20,9 @@
     <string name="settings_hub_movement_and_gps">"移动与 GPS"</string>
     <string name="settings_hub_movement_and_gps_desc">"所有移动模式的速度预设、信号真实度与位置随机性设置。"</string>
     <string name="settings_hub_menus">"菜单"</string>
-    <string name="settings_hub_menus_desc">"悬浮窗和地图按钮中显示哪些功能，以及如何通过点击触发行走。"</string>
+    <string name="settings_hub_menus_desc">"悬浮窗和地图按钮、速度切换及点击行走。"</string>
+    <string name="settings_hub_general">"常规"</string>
+    <string name="settings_hub_general_desc">"主题、地图来源、地点搜索、隐私、捕获和调试。"</string>
     <string name="settings_hub_favorites_and_routes">"收藏与路线"</string>
     <string name="settings_hub_favorites_and_routes_desc">"精选热门地点和内置路线，用于填充你的收藏与路线库。"</string>
     <string name="settings_hub_roaming">"漫游"</string>
@@ -99,6 +101,7 @@
     <string name="settings_menus_tap_to_walk">"点击行走"</string>
     <string name="settings_menus_walk_to_a_location_by_tapping">"点击某个位置即可走向它 — 无需确认。"</string>
     <string name="settings_menus_menus">"菜单"</string>
+    <string name="settings_general_general">"常规"</string>
     <string name="settings_menus_map_scale_mpx">"地图比例（%1$.2f 米/像素）— 默认值适用于大多数玩家；仅在明显不准时，先把游戏缩放到最小，再在此调整"</string>
     <string name="settings_menus_enable_tap_to_walk">"启用点击行走"</string>
     <string name="settings_menus_enable_tap_to_walk_2">"启用点击行走？"</string>

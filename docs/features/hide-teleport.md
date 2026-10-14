@@ -7,7 +7,7 @@ Key files: `:core:model/AppSettings.kt`, `:core:data/SettingsRepository.kt`, `:c
 ## Behaviour
 
 - Setting: `AppSettings.hideTeleportFeatures` (`Boolean`, default `false`). Persisted via DataStore key `hide_teleport_features`, round-trips through `ExportData`.
-- Toggle location: Settings → Menus → Privacy → "Hide teleport features".
+- Toggle location: Settings → General → Privacy → "Hide teleport features".
 - When enabled, every explicit teleport button, checkbox, or gesture is removed from its composable tree (not just disabled):
   - Map long-press bottom sheet: "Teleport here" and "Stop route and teleport" (both the main map sheet and the floating map's tap panel).
   - Favorites map-picker "Set location" button.

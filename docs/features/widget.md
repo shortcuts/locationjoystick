@@ -15,7 +15,7 @@ Key files: `:feature:widget:impl/FloatingWidgetService.kt`, `:feature:settings:i
 
 ## Hiding the Overlay
 
-Settings → Menus → Privacy → "Hide floating widget" (`AppSettings.hideWidgetOverlay`, DataStore key `hide_widget_overlay`, default `false`) stops `MockLocationService` from starting `FloatingWidgetService` when spoofing starts. The joystick overlay and any accessibility-based features (e.g. compass tracking, see docs/features/tap-to-walk.md) are unaffected — this only hides the widget button/panel itself. Round-trips through `ExportData` like `hideTeleportFeatures`.
+Settings → General → Privacy → "Hide floating widget" (`AppSettings.hideWidgetOverlay`, DataStore key `hide_widget_overlay`, default `false`) stops `MockLocationService` from starting `FloatingWidgetService` when spoofing starts. The joystick overlay and any accessibility-based features (e.g. compass tracking, see docs/features/tap-to-walk.md) are unaffected — this only hides the widget button/panel itself. Round-trips through `ExportData` like `hideTeleportFeatures`.
 
 Live while spoofing is active: `MockLocationService.observeLocationState()` runs a reactive collector (`combine` of its own state and `getHideWidgetOverlay()`, decision via the pure `computeWidgetOverlayAction()` in `LocationLoopPolicy.kt`) that starts or stops `FloatingWidgetService` the moment the toggle changes, not just at the next RUNNING transition — flipping the setting mid-session removes (or restores) the overlay immediately.
 
@@ -179,7 +179,7 @@ was moved to (a tap-to-pin, route jump, etc.) instead of doing nothing.
 
 ## Altitude Override Button
 
-When enabled (Settings → Menus → Privacy → "Show altitude override button", `AppSettings.altitudeOverrideButtonEnabled`,
+When enabled (Settings → General → Privacy → "Show altitude override button", `AppSettings.altitudeOverrideButtonEnabled`,
 default `false`), the widget panel shows a terrain-icon button:
 
 - **Shown when**: the setting is enabled.
@@ -208,7 +208,7 @@ default `false`), the widget panel shows a terrain-icon button:
 
 ## Debug Stats
 
-Settings → Menus → Debug → "Debug stats" (`AppSettings.debugStatsEnabled`, DataStore key
+Settings → General → Debug → "Debug stats" (`AppSettings.debugStatsEnabled`, DataStore key
 `debug_stats_enabled`, default `false`) shows a live text block in the widget panel while it's
 expanded: coordinates, speed (m/s), altitude, accuracy, bearing, and tick rate (Hz).
 

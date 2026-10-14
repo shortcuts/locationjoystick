@@ -6,7 +6,7 @@ Key files: `:feature:widget:impl/MapFloatingView.kt`, `:feature:widget:impl/TapT
 
 ## Settings
 
-Tier 1's toggle lives in Settings → Menus → Privacy, next to "Hide teleport features" — it moved
+Tier 1's toggle lives in Settings → General → Privacy, next to "Hide teleport features" — it moved
 there because Floating Map Quick Walk is its own standalone feature, not part of the Tap to Walk
 umbrella (see docs/features/hide-teleport.md; it is not one of the features that toggle hides).
 Tier 2 stays in Settings → Menus → Tap to Walk. Compass tracking has no toggle — it is always
@@ -14,7 +14,7 @@ on whenever the accessibility service is granted (see "Compass Orientation" belo
 
 | DataStore key | Type | Default | Description |
 |---|---|---|---|
-| `FLOATING_MAP_QUICK_WALK` | Boolean | `false` | Skip confirmation sheet on floating map taps (Settings → Menus → Privacy) |
+| `FLOATING_MAP_QUICK_WALK` | Boolean | `false` | Skip confirmation sheet on floating map taps (Settings → General → Privacy) |
 | `TAP_TO_WALK_OVERLAY_ENABLED` | Boolean | `false` | Show crosshair button in widget panel |
 | `TAP_TO_WALK_SCALE_MPX` | Double | `0.23` | Meters per pixel for pixel→GPS conversion (calibrated for a fully zoomed-out AR game map) |
 | `COMPASS_TEST_TARGET_PACKAGE` | String | `""` | Package the "Compass orientation" Test button switches to automatically. Empty = manual switch |

@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Settings — locationjoystick</title>
   <link rel="icon" href="icon.png" type="image/png">
-  <meta name="description" content="Every setting in locationjoystick: speeds, GPS realism, menus, language, roaming defaults and external services.">
+  <meta name="description" content="Every setting in locationjoystick: speeds, GPS realism, menus, general options, language, roaming defaults and external services.">
   <link rel="canonical" href="https://locationjoystick.shrtcts.fr/settings.html">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="locationjoystick">
   <meta property="og:title" content="Settings — locationjoystick">
-  <meta property="og:description" content="Every setting in locationjoystick: speeds, GPS realism, menus, language, roaming defaults and external services.">
+  <meta property="og:description" content="Every setting in locationjoystick: speeds, GPS realism, menus, general options, language, roaming defaults and external services.">
   <meta property="og:url" content="https://locationjoystick.shrtcts.fr/settings.html">
   <meta property="og:image" content="https://locationjoystick.shrtcts.fr/screenshots/marketing/feature_graphic.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Settings — locationjoystick">
-  <meta name="twitter:description" content="Every setting in locationjoystick: speeds, GPS realism, menus, language, roaming defaults and external services.">
+  <meta name="twitter:description" content="Every setting in locationjoystick: speeds, GPS realism, menus, general options, language, roaming defaults and external services.">
   <meta name="twitter:image" content="https://locationjoystick.shrtcts.fr/screenshots/marketing/feature_graphic.png">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4">
@@ -114,7 +114,7 @@
     <p>Restores your last fake position when you reopen the app. Starts from your real location if nothing is saved.</p>
     </section>
 
-    <h2 id="menus">Menus</h2>
+    <h2 id="general">General</h2>
 
     <h3 id="appearance">Appearance</h3>
 
@@ -137,6 +137,40 @@
     <h4 class="item" id="place-search-photon-komoot">Photon (Komoot)</h4>
     <p><strong>Default:</strong> On</p>
     <p>The backup search service. Works well from mainland China.</p>
+
+    <h3 id="privacy-menus">Privacy</h3>
+
+    <h4 class="item" id="hide-teleport">Hide teleport features</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Removes every "jump to location" option: map, favorites, routes, Group Sync, and paste. Routes walk to the first stop instead.</p>
+    <h4 class="item" id="hide-widget">Hide floating widget</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Keeps the widget button off the screen while spoofing is on. Other overlays keep working.</p>
+    <h4 class="item" id="hide-notification">Hide notification icon</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Removes the "Mock location active" status bar icon. The notification stays in the shade (Android requires it).</p>
+    <h4 class="item" id="route-jump-buttons">Show route jump buttons</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Adds "Previous stop" and "Next stop" buttons while a route plays. Hidden when Hide teleport features is on.</p>
+    <h4 class="item" id="quick-walk-setting">Floating map quick walk</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>A tap on the floating map walks there at once, with no popup. See <a href="overlays.html#floating-map-quick-walk">Overlays</a>.</p>
+    <h4 class="item" id="altitude-override-setting">Show altitude override button</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Adds a widget button to type a fixed height. See <a href="overlays.html">Overlays</a>.</p>
+
+    <h3 id="capture">Capture</h3>
+    <p>Capture setup, the on/off switch, the browser choice, and the app to open after a map link. See <a href="capture.html#set-up-capture">Capture</a> for each step.</p>
+
+    <section class="has-shot">
+    <h3 id="debug-stats">Debug stats</h3>
+    <aside class="shot" id="debug-stats-shot">
+      <img class="phone-shot" src="screenshots/18_debug_stats.png" alt="Debug stats shown in the floating widget panel">
+    </aside>
+      <p>Shows coordinates, speed, altitude, accuracy, heading, and update rate in the expanded widget. Off by default.</p>
+    </section>
+
+    <h2 id="menus">Menus</h2>
 
     <h3 id="app-features">App Features</h3>
     <p>Choose which quick-access features appear in the floating widget and on the map screen. Each feature has one checkbox for the widget and one for the map. Drag the handle to reorder. Both use the same order. Starting and stopping simulation is always available from the top bar.</p>
@@ -175,45 +209,13 @@
     <p><strong>Default:</strong> Off</p>
     <p>About every minute, checks whether your accessory shows as disconnected and taps its connect button. It asks for your approval first. See <a href="reconnect-accessory.html">Reconnect accessory</a>.</p>
 
-    <h3 id="privacy-menus">Privacy</h3>
-
-    <h4 class="item" id="hide-teleport">Hide teleport features</h4>
-    <p><strong>Default:</strong> Off</p>
-    <p>Removes every "jump to location" option: map, favorites, routes, Group Sync, and paste. Routes walk to the first stop instead.</p>
-    <h4 class="item" id="hide-widget">Hide floating widget</h4>
-    <p><strong>Default:</strong> Off</p>
-    <p>Keeps the widget button off the screen while spoofing is on. Other overlays keep working.</p>
-    <h4 class="item" id="hide-notification">Hide notification icon</h4>
-    <p><strong>Default:</strong> Off</p>
-    <p>Removes the "Mock location active" status bar icon. The notification stays in the shade (Android requires it).</p>
-    <h4 class="item" id="route-jump-buttons">Show route jump buttons</h4>
-    <p><strong>Default:</strong> Off</p>
-    <p>Adds "Previous stop" and "Next stop" buttons while a route plays. Hidden when Hide teleport features is on.</p>
-    <h4 class="item" id="quick-walk-setting">Floating map quick walk</h4>
-    <p><strong>Default:</strong> Off</p>
-    <p>A tap on the floating map walks there at once, with no popup. See <a href="overlays.html#floating-map-quick-walk">Overlays</a>.</p>
-    <h4 class="item" id="altitude-override-setting">Show altitude override button</h4>
-    <p><strong>Default:</strong> Off</p>
-    <p>Adds a widget button to type a fixed height. See <a href="overlays.html">Overlays</a>.</p>
-
-    <h3 id="capture">Capture</h3>
-    <p>Capture setup, the on/off switch, the browser choice, and the app to open after a map link. See <a href="capture.html#set-up-capture">Capture</a> for each step.</p>
-
-    <section class="has-shot">
-    <h3 id="debug-stats">Debug stats</h3>
-    <aside class="shot" id="debug-stats-shot">
-      <img class="phone-shot" src="screenshots/18_debug_stats.png" alt="Debug stats shown in the floating widget panel">
-    </aside>
-      <p>Shows coordinates, speed, altitude, accuracy, heading, and update rate in the expanded widget. Off by default.</p>
-    </section>
-
     <h2 id="language">Language</h2>
     <p>The app supports English, Simplified Chinese (CN), and Traditional Chinese (TW).</p>
 
     <h3 class="item" id="language-android-13-and-newer">Android 13 and newer</h3>
     <p>Phone Settings → Apps → locationjoystick → Language. The app switches at once.</p>
     <h3 class="item" id="language-android-9-to-12">Android 9 to 12</h3>
-    <p>Settings → Menus, then pick a language from the menu in the top bar. The app restarts.</p>
+    <p>Settings → General, then pick a language from the menu in the top bar. The app restarts.</p>
 
     <p>On Android 9 to 12, overlays and the notification switch language at the next session start.</p>
 

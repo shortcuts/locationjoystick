@@ -10,7 +10,6 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,8 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,7 +30,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,7 +42,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -60,20 +55,15 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.CompassDisclosureDialog
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
-import com.locationjoystick.core.designsystem.component.LjLanguageDropdown
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.model.AppFeature
-import com.locationjoystick.core.model.AppLanguage
 import com.locationjoystick.core.model.FeatureSurface
-import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.SpeedProfile
-import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.feature.settings.impl.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -84,7 +74,6 @@ import com.locationjoystick.core.designsystem.R as DesignR
 internal fun SettingsMenusSubScreen(
     uiState: SettingsUiState,
     isRooted: Boolean,
-    languageTag: String? = null,
     onNavigateBack: () -> Unit,
     isSpoofing: Boolean,
     onToggleSpoofing: () -> Unit,
@@ -93,14 +82,9 @@ internal fun SettingsMenusSubScreen(
     onCheckCompassService: () -> Unit = {},
     onTestCompassDetection: suspend () -> Float? = { null },
     launchableApps: List<InstalledApp> = emptyList(),
-    scrollToCapture: Boolean = false,
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
-    val captureBringIntoView = remember { BringIntoViewRequester() }
-    LaunchedEffect(scrollToCapture, uiState.isLoading) {
-        if (scrollToCapture && !uiState.isLoading) captureBringIntoView.bringIntoView()
-    }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer =
@@ -121,12 +105,6 @@ internal fun SettingsMenusSubScreen(
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
         floatingActionButton = { SettingsSaveDiscardFab(uiState.isDirty, onAction) },
-        actions = {
-            LjLanguageDropdown(
-                selected = AppLanguage.fromTag(languageTag),
-                onSelect = { language -> onAction(SettingsAction.SetLanguage(language.languageTag)) },
-            )
-        },
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             when {
@@ -142,158 +120,20 @@ internal fun SettingsMenusSubScreen(
                                 .verticalScroll(remember { ScrollState(0) })
                                 .padding(16.dp),
                     ) {
-                        ThemeSection(uiState, onAction)
-                        Spacer(Modifier.height(24.dp))
-                        MapSourceSection(uiState, onAction)
-                        Spacer(Modifier.height(24.dp))
-                        GeocodingSection(uiState, onAction)
-                        Spacer(Modifier.height(24.dp))
                         AppFeaturesSection(uiState, isRooted, onAction)
-                        Spacer(Modifier.height(24.dp))
+                        SettingsSectionDivider()
                         SpeedCycleSection(uiState, onAction)
-                        Spacer(Modifier.height(24.dp))
+                        SettingsSectionDivider()
                         TapToWalkSection(uiState, onAction, onTestCompassDetection, launchableApps)
-                        Spacer(Modifier.height(24.dp))
                         // Same API 30 floor as the screenshot the check depends on.
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            SettingsSectionDivider()
                             ReconnectTapSection(uiState, onAction)
-                            Spacer(Modifier.height(24.dp))
                         }
-                        PrivacySection(uiState, onAction)
-                        Spacer(Modifier.height(24.dp))
-                        CaptureSection(uiState, onAction, launchableApps, Modifier.bringIntoViewRequester(captureBringIntoView))
-                        Spacer(Modifier.height(24.dp))
-                        DebugSection(uiState, onAction)
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun MapSourceSection(
-    uiState: SettingsUiState,
-    onAction: (SettingsAction) -> Unit,
-) {
-    Text(stringResource(R.string.settings_menus_map_section), style = MaterialTheme.typography.headlineSmall)
-    Spacer(Modifier.height(4.dp))
-    Text(
-        stringResource(R.string.settings_menus_map_source_desc),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(8.dp))
-    Text(stringResource(R.string.settings_menus_map_source), style = MaterialTheme.typography.bodyLarge)
-    Spacer(Modifier.height(4.dp))
-    var sourcePickerExpanded by remember { mutableStateOf(false) }
-    var sourcePickerWidth by remember { mutableStateOf(0) }
-    val density = LocalDensity.current
-    Box(modifier = Modifier.fillMaxWidth()) {
-        val chevronRotation by animateFloatAsState(
-            targetValue = if (sourcePickerExpanded) 180f else 0f,
-            label = "mapSourceChevronRotation",
-        )
-        LjOutlinedButton(
-            onClick = { sourcePickerExpanded = true },
-            modifier = Modifier.fillMaxWidth().onSizeChanged { sourcePickerWidth = it.width },
-        ) {
-            Text(
-                mapTileSourceLabel(uiState.mapTileSource),
-                modifier = Modifier.weight(1f),
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Icon(
-                LjIcons.ArrowDropDown,
-                contentDescription = null,
-                modifier = Modifier.graphicsLayer { rotationZ = chevronRotation },
-            )
-        }
-        // Same width as the button and the same horizontal padding as LjOutlinedButton's content,
-        // so item labels line up with the selected label and the check sits under the chevron.
-        DropdownMenu(
-            expanded = sourcePickerExpanded,
-            onDismissRequest = { sourcePickerExpanded = false },
-            modifier = Modifier.width(with(density) { sourcePickerWidth.toDp() }),
-        ) {
-            MapTileSource.entries.forEach { source ->
-                val isSelected = source == uiState.mapTileSource
-                DropdownMenuItem(
-                    text = { Text(mapTileSourceLabel(source)) },
-                    trailingIcon = {
-                        if (isSelected) {
-                            Icon(
-                                LjIcons.Check,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    },
-                    contentPadding = PaddingValues(horizontal = LjSpacing.lg),
-                    onClick = {
-                        onAction(SettingsAction.SetMapTileSource(source))
-                        sourcePickerExpanded = false
-                    },
-                )
-            }
-        }
-    }
-    if (uiState.mapTileSource == MapTileSource.AMAP) {
-        Spacer(Modifier.height(8.dp))
-        Text(
-            stringResource(R.string.settings_menus_map_source_amap_note),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-/** "Provider — default start city", e.g. "OpenStreetMap — Paris, France". */
-@Composable
-private fun mapTileSourceLabel(source: MapTileSource): String =
-    when (source) {
-        MapTileSource.OSM ->
-            stringResource(
-                R.string.settings_menus_map_source_item,
-                stringResource(R.string.settings_menus_map_source_osm),
-                stringResource(R.string.settings_menus_map_source_osm_default_city),
-            )
-        MapTileSource.AMAP ->
-            stringResource(
-                R.string.settings_menus_map_source_item,
-                stringResource(R.string.settings_menus_map_source_amap),
-                stringResource(R.string.settings_menus_map_source_amap_default_city),
-            )
-    }
-
-@Composable
-private fun ThemeSection(
-    uiState: SettingsUiState,
-    onAction: (SettingsAction) -> Unit,
-) {
-    Text(stringResource(R.string.settings_menus_appearance), style = MaterialTheme.typography.headlineSmall)
-    Spacer(Modifier.height(4.dp))
-    Text(
-        stringResource(R.string.settings_menus_switch_to_a_light_theme_for),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(8.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            stringResource(R.string.settings_menus_light_mode),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        Switch(
-            checked = uiState.themeMode == ThemeMode.LIGHT,
-            onCheckedChange = { light ->
-                onAction(SettingsAction.SetThemeMode(if (light) ThemeMode.LIGHT else ThemeMode.DARK))
-            },
-        )
     }
 }
 
@@ -312,7 +152,7 @@ private fun TapToWalkSection(
             !uiState.compassDisclosureAccepted &&
             !uiState.isCompassServiceGranted
 
-    Text(stringResource(R.string.settings_menus_tap_to_walk), style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionHeader(stringResource(R.string.settings_menus_tap_to_walk))
     Spacer(Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_menus_walk_to_a_location_by_tapping),
@@ -406,7 +246,7 @@ private fun ReconnectTapSection(
     val context = LocalContext.current
     var showDisclosure by rememberSaveable { mutableStateOf(false) }
 
-    Text(stringResource(R.string.settings_menus_reconnect_accessory), style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionHeader(stringResource(R.string.settings_menus_reconnect_accessory))
     Spacer(Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_menus_reconnect_accessory_description),
@@ -447,71 +287,6 @@ private fun ReconnectTapSection(
     }
 }
 
-@Composable
-private fun PrivacySection(
-    uiState: SettingsUiState,
-    onAction: (SettingsAction) -> Unit,
-) {
-    Text(stringResource(R.string.settings_menus_privacy), style = MaterialTheme.typography.headlineSmall)
-    Spacer(Modifier.height(4.dp))
-    LjCheckboxRow(
-        checked = uiState.hideTeleportFeatures,
-        onCheckedChange = { onAction(SettingsAction.SetHideTeleportFeatures(it)) },
-        title = stringResource(R.string.settings_menus_hide_teleport_features),
-        description = stringResource(R.string.settings_menus_hide_teleport_features_desc),
-    )
-    Spacer(Modifier.height(8.dp))
-    LjCheckboxRow(
-        checked = uiState.floatingMapQuickWalk,
-        onCheckedChange = { onAction(SettingsAction.SetFloatingMapQuickWalk(it)) },
-        title = stringResource(R.string.settings_menus_floating_map_quick_walk),
-        description = stringResource(R.string.settings_menus_floating_map_quick_walk_desc),
-    )
-    Spacer(Modifier.height(8.dp))
-    LjCheckboxRow(
-        checked = uiState.hideWidgetOverlay,
-        onCheckedChange = { onAction(SettingsAction.SetHideWidgetOverlay(it)) },
-        title = stringResource(R.string.settings_menus_hide_floating_widget),
-        description = stringResource(R.string.settings_menus_hide_floating_widget_desc),
-    )
-    Spacer(Modifier.height(8.dp))
-    LjCheckboxRow(
-        checked = uiState.hideForegroundNotification,
-        onCheckedChange = { onAction(SettingsAction.SetHideForegroundNotification(it)) },
-        title = stringResource(R.string.settings_menus_hide_notification_icon),
-        description = stringResource(R.string.settings_menus_hide_notification_icon_desc),
-    )
-    Spacer(Modifier.height(8.dp))
-    LjCheckboxRow(
-        checked = uiState.showRouteJumpButtons,
-        onCheckedChange = { onAction(SettingsAction.SetShowRouteJumpButtons(it)) },
-        title = stringResource(R.string.settings_menus_show_route_jump_buttons),
-        description = stringResource(R.string.settings_menus_show_route_jump_buttons_desc),
-    )
-    Spacer(Modifier.height(8.dp))
-    LjCheckboxRow(
-        checked = uiState.altitudeOverrideButtonEnabled,
-        onCheckedChange = { onAction(SettingsAction.SetAltitudeOverrideButtonEnabled(it)) },
-        title = stringResource(R.string.settings_menus_show_altitude_override_button),
-        description = stringResource(R.string.settings_menus_show_altitude_override_button_desc),
-    )
-}
-
-@Composable
-private fun DebugSection(
-    uiState: SettingsUiState,
-    onAction: (SettingsAction) -> Unit,
-) {
-    Text(stringResource(R.string.settings_menus_debug), style = MaterialTheme.typography.headlineSmall)
-    Spacer(Modifier.height(4.dp))
-    LjCheckboxRow(
-        checked = uiState.debugStatsEnabled,
-        onCheckedChange = { onAction(SettingsAction.SetDebugStatsEnabled(it)) },
-        title = stringResource(R.string.settings_menus_debug_stats),
-        description = stringResource(R.string.settings_menus_debug_stats_desc),
-    )
-}
-
 private fun openAccessibilitySettings(context: android.content.Context) {
     context.startActivity(
         Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
@@ -534,7 +309,7 @@ private fun CompassOrientationSection(
     var showDisclosure by rememberSaveable { mutableStateOf(false) }
     val selectedApp = launchableApps.find { it.packageName == uiState.compassTestTargetPackage }
 
-    Text(stringResource(R.string.settings_menus_compass_orientation), style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionHeader(stringResource(R.string.settings_menus_compass_orientation))
     Spacer(Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_menus_when_enabled_the_app_detects_your),
@@ -795,7 +570,7 @@ private fun AppFeaturesSection(
     isRooted: Boolean,
     onAction: (SettingsAction) -> Unit,
 ) {
-    Text(stringResource(R.string.settings_menus_app_features), style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionHeader(stringResource(R.string.settings_menus_app_features))
     Spacer(modifier = Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_menus_choose_which_quick_access_features_appea),
@@ -887,7 +662,7 @@ private fun SpeedCycleSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
 ) {
-    Text(stringResource(R.string.settings_menus_speed_cycle), style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionHeader(stringResource(R.string.settings_menus_speed_cycle))
     Spacer(modifier = Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_menus_choose_which_speed_profiles_the_widget),

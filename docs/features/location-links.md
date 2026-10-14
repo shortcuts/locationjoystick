@@ -98,7 +98,7 @@ Collect map links from other apps into an on-device list, then save them as a ro
 
 Capture mode is **off** by default. Capture is a top-level destination listed on Home and in the navigation drawer next to Map / Routes / Favorites.
 
-Setup lives in **Settings > Menus > Capture**. The app verifies only one setup fact: whether it is the default browser. This is the only gate. While gated, the Capture screen shows one card with an **Open Capture setup** button; it navigates to `SETTINGS_CAPTURE_ROUTE` (Settings opened on Menus, scrolled to Capture; Back returns to the Capture screen). Captured points stay stored while gated and reappear after setup.
+Setup lives in **Settings > General > Capture**. The app verifies only one setup fact: whether it is the default browser. This is the only gate. While gated, the Capture screen shows one card with an **Open Capture setup** button; it navigates to `SETTINGS_CAPTURE_ROUTE` (Settings opened on Menus, scrolled to Capture; Back returns to the Capture screen). Captured points stay stored while gated and reappear after setup.
 
 **Setup steps:**
 1. Tap **Default browser** to open Android's Default apps settings. Set this app as **Browser app**. (On Samsung, use the Default apps settings directly rather than a role-request dialog.)
@@ -116,7 +116,7 @@ After setup is complete:
 - **List** / **Jump** — independent checkboxes (both optional). List appends each tapped location to the list; Jump teleports immediately via `TeleportUseCase`. Both can be on, off, or one each.
 - **Pass-through browser** — opens an in-app browser picker, used when Capture mode is off or both List and Jump are off (see the intercept table below).
 
-Capture mode, List, and Jump are **not** part of `ExportData` and are per-device. They reset when this app is no longer the default browser, managed through **Restore default browser** in Settings > Menus > Capture.
+Capture mode, List, and Jump are **not** part of `ExportData` and are per-device. They reset when this app is no longer the default browser, managed through **Restore default browser** in Settings > General > Capture.
 
 ### Also in Settings
 
@@ -155,11 +155,11 @@ Captured points are listed in an orange-outlined read-only box, skipping exact d
 
 **Copy** / **Last** (remove most recent) / **Clear** sit on one icon row above the route-name field. **Save as route** appears below the name field and requires ≥2 points. The new route is added to Routes with the specified name.
 
-**Restore default browser** (Settings > Menus > Capture) clears Capture mode, List, and Jump, and opens Android's Default apps settings so the user can restore their usual browser. It sets a per-device flag so the setup cards return even though the app still holds the browser role. Captured points, the pass-through browser, and the stored previous browser holder are kept (Android will not reassign the previous browser back programmatically). The flag clears when the user taps the default-browser card again or when this app is no longer the default browser.
+**Restore default browser** (Settings > General > Capture) clears Capture mode, List, and Jump, and opens Android's Default apps settings so the user can restore their usual browser. It sets a per-device flag so the setup cards return even though the app still holds the browser role. Captured points, the pass-through browser, and the stored previous browser holder are kept (Android will not reassign the previous browser back programmatically). The flag clears when the user taps the default-browser card again or when this app is no longer the default browser.
 
 ### Launch Another App After a Link
 
-**Settings > Menus > Capture > After a map link, open** picks an installed launchable app (default: None). After any handled link — a Capture Jump teleport in `LinkInterceptorActivity`, or Teleport / Walk / Walk via roads confirmed on the confirm sheet for a link-pinned point — `LaunchAfterLinkUseCase` starts that app so focus returns to the game instead of staying here. Capture-only (List) and "Do nothing" never launch. A missing, disabled or self-package target is a silent no-op (logged). Tap-to-teleport and pasted coordinates never launch: `MapViewModel` only arms the launch for a pin that came from `observeDeepLinkCoords`.
+**Settings > General > Capture > After a map link, open** picks an installed launchable app (default: None). After any handled link — a Capture Jump teleport in `LinkInterceptorActivity`, or Teleport / Walk / Walk via roads confirmed on the confirm sheet for a link-pinned point — `LaunchAfterLinkUseCase` starts that app so focus returns to the game instead of staying here. Capture-only (List) and "Do nothing" never launch. A missing, disabled or self-package target is a silent no-op (logged). Tap-to-teleport and pasted coordinates never launch: `MapViewModel` only arms the launch for a pin that came from `observeDeepLinkCoords`.
 
 The package is stored per-device in DataStore (`CaptureCoordinatesRepository.launchAfterLinkPackage`), is not in `ExportData`, and survives **Restore default browser**. The picker lists apps through the existing `MAIN`/`LAUNCHER` `<queries>` entry in the manifest; no `QUERY_ALL_PACKAGES`.
 

@@ -105,7 +105,7 @@ internal fun CaptureSection(
     }
 
     Column(modifier = modifier) {
-        Text(stringResource(R.string.settings_menus_capture), style = MaterialTheme.typography.headlineSmall)
+        SettingsSectionHeader(stringResource(R.string.settings_menus_capture))
         Spacer(Modifier.height(4.dp))
         Text(
             stringResource(R.string.settings_menus_capture_desc),

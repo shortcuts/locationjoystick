@@ -30,7 +30,7 @@ Park leaves the foreground service running (no `stopSelf()`) so Start from the w
 
 ## Hiding the Notification Icon
 
-Settings → Menus → Privacy → "Hide notification icon"
+Settings → General → Privacy → "Hide notification icon"
 (`AppSettings.hideForegroundNotification`, DataStore key
 `hide_foreground_notification`, default `false`) switches the notification
 to an `IMPORTANCE_MIN` channel instead of the default `IMPORTANCE_LOW`

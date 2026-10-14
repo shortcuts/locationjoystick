@@ -17,7 +17,7 @@ internal fun GeocodingSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
 ) {
-    Text(stringResource(R.string.settings_menus_geocoding_section), style = MaterialTheme.typography.headlineSmall)
+    SettingsSectionHeader(stringResource(R.string.settings_menus_geocoding_section))
     Spacer(Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_menus_geocoding_desc),
