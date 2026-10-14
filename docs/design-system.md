@@ -175,19 +175,22 @@ The wiki (`docs/wiki/style.css`) is user-facing; keep it visually aligned with t
 | App token | Wiki custom property | Rule |
 |---|---|---|
 | `background` | `--bg` | Same hex per theme |
-| `surface` / `surfaceVariant` | `--surface` | Same hex per theme |
+| `surfaceVariant` | `--surface` | Same hex per theme (cards, code, quotes) |
 | `outlineVariant` | `--border` | 1 px hairline; no shadows |
 | `onSurface` | `--text` | Same hex |
 | `onSurfaceVariant` | `--muted` | Same hex; keep 4.5:1 on `--bg` |
 | `primary` | `--accent` | Dark `#F79D5C`, light `#984313` |
-| `shapes.small/medium` | `--r` | 8 px and 12 px |
+| `shapes.medium` | `--r` | 12 px (cards, code blocks, screenshots) |
+| `shapes.small` | `--r-sm` | 8 px (inline code, buttons, pills) |
+| `error` | `--danger` | Same hex per theme |
+| (info blue) | `--info` | Dark `#6EA8FE`, light `#1A56C4` |
 
 Steps for a wiki author:
 
 1. Read `:root` in `docs/wiki/style.css`; change values there, not per page.
 2. Add a light variant under `prefers-color-scheme: light` using the light hex values above.
 3. Use hairline borders and flat surfaces; no `box-shadow`.
-4. Font: the app uses the system sans. Check `--sans`/`--mono` in `style.css` for what the wiki ships; do not add CDN fonts.
+4. Font: the wiki ships the system sans (`--sans`) everywhere and the system mono (`--mono`) only for code and API paths; do not add web fonts or CDN fonts.
 5. Verify with `make wiki-serve`.
 
 ## Maintenance
