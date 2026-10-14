@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -175,16 +173,16 @@ fun LjRouteStartOptions(
         )
         if (!hideTeleport) {
             Spacer(Modifier.height(LjSpacing.sm))
-            OutlinedButton(onClick = onTeleport, modifier = Modifier.fillMaxWidth()) {
+            LjOutlinedButton(onClick = onTeleport, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.route_start_options_teleport), color = textColor)
             }
         }
         Spacer(Modifier.height(LjSpacing.sm))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm)) {
-            OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
+            LjOutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
                 Text(stringResource(R.string.route_start_options_cancel), color = textColor)
             }
-            Button(onClick = onStart, enabled = !isStarting, modifier = Modifier.weight(1f)) {
+            LjButton(onClick = onStart, enabled = !isStarting, modifier = Modifier.weight(1f)) {
                 if (isStarting) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {

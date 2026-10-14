@@ -17,8 +17,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,6 +53,7 @@ import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.LjButton
+import com.locationjoystick.core.designsystem.component.LjCard
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
@@ -254,7 +253,7 @@ private fun NoGroupContent(
         )
         Text(
             text = stringResource(R.string.group_sync_group_sync),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.titleLarge,
         )
         Text(
             text = stringResource(R.string.group_sync_sync_your_fake_location_across_multiple),
@@ -380,8 +379,8 @@ private fun LeaderContent(
         )
 
         val code = groupState.groupId ?: stringResource(R.string.group_sync_unknown)
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        LjCard(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column(
@@ -416,9 +415,7 @@ private fun LeaderContent(
         }
 
         if (qrBitmap != null) {
-            Card(
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            ) {
+            LjCard(containerColor = MaterialTheme.colorScheme.surface) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(12.dp),
@@ -584,8 +581,7 @@ private fun SwitchRow(
     onCheckedChange: (Boolean) -> Unit,
     enabled: Boolean = true,
 ) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    LjCard(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
@@ -622,8 +618,7 @@ private fun ApiAccessSection(
         enabled = host != null && port != null,
     )
     if (apiEnabled) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        LjCard(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {

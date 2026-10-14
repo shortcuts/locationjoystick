@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -17,6 +18,7 @@ fun LjCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (onClick != null) {
@@ -24,7 +26,7 @@ fun LjCard(
             onClick = onClick,
             modifier = modifier,
             shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = CardDefaults.cardColors(containerColor = containerColor),
             elevation = flatCardElevation(),
             border = hairline(),
             interactionSource = interactionSource,
@@ -34,7 +36,7 @@ fun LjCard(
         Card(
             modifier = modifier,
             shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = CardDefaults.cardColors(containerColor = containerColor),
             elevation = flatCardElevation(),
             border = hairline(),
             content = content,

@@ -11,14 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -44,10 +41,12 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.FavoritesList
+import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
+import com.locationjoystick.core.designsystem.component.LjModalBottomSheet
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
-import com.locationjoystick.core.designsystem.component.rememberLjSheetState
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.map.geojson.buildPositionGeoJson
 import com.locationjoystick.core.map.geojson.buildSegmentsGeoJson
@@ -436,7 +435,7 @@ private fun CreatorFavoritesSheet(
     onSelect: (FavoriteLocation) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberLjSheetState()) {
+    LjModalBottomSheet(onDismissRequest = onDismiss) {
         FavoritesList(
             title = stringResource(R.string.route_creator_jump_to_favorite),
             favorites = favorites,
@@ -452,16 +451,16 @@ private fun FavoriteStopConfirmSheet(
     onAdd: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberLjSheetState()) {
+    LjModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(favoriteName, style = MaterialTheme.typography.titleMedium)
-            Button(onClick = onAdd, modifier = Modifier.fillMaxWidth()) {
+            LjButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.route_creator_add_as_stop))
             }
-            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+            LjTextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.route_creator_cancel))
             }
         }
@@ -488,7 +487,7 @@ private fun SaveRouteDialog(
             )
         },
         confirmButton = {
-            TextButton(
+            LjTextButton(
                 onClick = {
                     if (name.isNotBlank()) {
                         onSave(name.trim())
@@ -499,7 +498,7 @@ private fun SaveRouteDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            LjTextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.route_creator_cancel))
             }
         },
@@ -530,7 +529,7 @@ internal fun TeleportWaitDialog(
             )
         },
         confirmButton = {
-            TextButton(
+            LjTextButton(
                 onClick = { seconds?.let(onConfirm) },
                 enabled = isValid,
             ) {
@@ -538,7 +537,7 @@ internal fun TeleportWaitDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            LjTextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.route_creator_cancel_2))
             }
         },

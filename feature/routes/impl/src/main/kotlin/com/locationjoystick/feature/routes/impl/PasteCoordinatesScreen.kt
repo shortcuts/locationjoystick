@@ -23,7 +23,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +56,7 @@ import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSegmentedControl
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.readPlainText
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.map.geojson.buildSegmentsGeoJson
@@ -528,7 +528,7 @@ private fun PasteSaveRouteDialog(
             )
         },
         confirmButton = {
-            TextButton(
+            LjTextButton(
                 onClick = {
                     if (name.isNotBlank()) {
                         onSave(name.trim())
@@ -539,7 +539,7 @@ private fun PasteSaveRouteDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            LjTextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.paste_coordinates_screen_cancel))
             }
         },

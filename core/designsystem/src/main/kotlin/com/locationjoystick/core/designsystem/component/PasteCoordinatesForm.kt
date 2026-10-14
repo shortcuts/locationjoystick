@@ -140,7 +140,7 @@ fun PasteCoordinatesForm(
         if (showTitle) {
             Text(
                 text = title ?: stringResource(R.string.paste_form_title),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }

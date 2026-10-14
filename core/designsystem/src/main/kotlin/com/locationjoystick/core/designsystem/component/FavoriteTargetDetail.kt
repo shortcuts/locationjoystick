@@ -4,12 +4,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,7 +43,7 @@ fun FavoriteTargetDetail(
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
-        Text(favorite.name, style = MaterialTheme.typography.headlineSmall, color = textColor)
+        Text(favorite.name, style = MaterialTheme.typography.titleMedium, color = textColor)
         Text(
             formatLatLng(favorite.position.latitude, favorite.position.longitude),
             style = MaterialTheme.typography.bodyMedium,
@@ -55,7 +52,7 @@ fun FavoriteTargetDetail(
         )
 
         if (!hideTeleportFeatures) {
-            Button(
+            LjButton(
                 onClick = onSetLocation,
                 modifier =
                     Modifier
@@ -65,7 +62,7 @@ fun FavoriteTargetDetail(
                 Text(stringResource(R.string.favorite_target_detail_set_location), color = textColor)
             }
         }
-        OutlinedButton(
+        LjOutlinedButton(
             onClick = onGoToLocation,
             modifier =
                 Modifier
@@ -74,7 +71,7 @@ fun FavoriteTargetDetail(
         ) {
             Text(stringResource(R.string.favorite_target_detail_walk_to_location), color = textColor)
         }
-        OutlinedButton(
+        LjOutlinedButton(
             onClick = onGoToLocationViaRoads,
             enabled = !isRoadRouteFetchInFlight,
             modifier =
@@ -89,7 +86,7 @@ fun FavoriteTargetDetail(
             }
         }
         if (showDismissButton) {
-            TextButton(
+            LjTextButton(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth().padding(top = LjSpacing.sm),
             ) {

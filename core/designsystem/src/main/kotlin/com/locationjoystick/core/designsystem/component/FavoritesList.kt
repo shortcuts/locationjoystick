@@ -1,6 +1,7 @@
 package com.locationjoystick.core.designsystem.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -86,7 +88,7 @@ fun FavoritesList(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(title, style = MaterialTheme.typography.headlineSmall, color = textColor)
+                Text(title, style = MaterialTheme.typography.titleMedium, color = textColor)
                 if (onSaveCurrentLocation != null) {
                     IconButton(onClick = onSaveCurrentLocation) {
                         Icon(LjIcons.Add, contentDescription = stringResource(R.string.favorites_list_save_current_location_cd))
@@ -139,10 +141,10 @@ fun FavoritesList(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .background(
-                                    rowBackground,
-                                    MaterialTheme.shapes.small,
-                                ).clickable { onSelect(favorite) }
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(rowBackground)
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
+                                .clickable { onSelect(favorite) }
                                 .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {

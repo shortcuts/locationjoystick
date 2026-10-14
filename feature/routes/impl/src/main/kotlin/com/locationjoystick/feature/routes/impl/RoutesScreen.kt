@@ -21,16 +21,14 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,11 +53,14 @@ import com.locationjoystick.core.designsystem.component.GroupDialogs
 import com.locationjoystick.core.designsystem.component.ListSearchField
 import com.locationjoystick.core.designsystem.component.LjActionSheetRow
 import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
+import com.locationjoystick.core.designsystem.component.LjFloatingActionButton
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjListItemCardSkeletonList
+import com.locationjoystick.core.designsystem.component.LjModalBottomSheet
 import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.MoveToGroupMenuItem
 import com.locationjoystick.core.designsystem.component.RouteStartSheetContent
 import com.locationjoystick.core.designsystem.component.SavedItemSortMenu
@@ -194,12 +195,14 @@ internal fun RoutesScreen(
         locationLabel = locationLabel,
         onNavigationClick = onOpenDrawer,
         bottomBar = bottomBar,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { data -> Snackbar(data, shape = MaterialTheme.shapes.small) }
+        },
         actions = {
             SavedItemSortMenu(selected = uiState.sortMode, onSelected = onSortModeSelected)
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddOptionsSheet = true }) {
+            LjFloatingActionButton(onClick = { showAddOptionsSheet = true }) {
                 Icon(LjIcons.Add, contentDescription = stringResource(R.string.routes_screen_add_route))
             }
         },
@@ -338,13 +341,11 @@ internal fun RoutesScreen(
     }
 
     if (showAddOptionsSheet) {
-        ModalBottomSheet(
+        LjModalBottomSheet(
             onDismissRequest = { showAddOptionsSheet = false },
-            sheetState = rememberLjSheetState(),
-            containerColor = MaterialTheme.colorScheme.surface,
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                Text(stringResource(R.string.routes_screen_add_a_route), style = MaterialTheme.typography.headlineSmall)
+                Text(stringResource(R.string.routes_screen_add_a_route), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(12.dp))
                 LjActionSheetRow(
                     icon = LjIcons.Map,
@@ -551,13 +552,12 @@ private fun RouteCard(
     }
 
     if (showStartDialog) {
-        ModalBottomSheet(
+        LjModalBottomSheet(
             onDismissRequest = { showStartDialog = false },
             sheetState = startSheetState,
-            containerColor = MaterialTheme.colorScheme.surface,
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                Text(stringResource(R.string.routes_screen_start_route), style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.routes_screen_start_route), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 RouteStartSheetContent(
                     key = route.id,
@@ -629,7 +629,7 @@ private fun RouteShareDialog(
         },
         confirmButton = {
             Row {
-                TextButton(
+                LjTextButton(
                     onClick = {
                         scope.launch { clipboard.writePlainText(coordText) }
                         Toast.makeText(context, copiedMessage, Toast.LENGTH_SHORT).show()
@@ -637,7 +637,7 @@ private fun RouteShareDialog(
                 ) {
                     Text(stringResource(R.string.routes_screen_copy))
                 }
-                TextButton(
+                LjTextButton(
                     onClick = {
                         val shareIntent =
                             Intent(Intent.ACTION_SEND).apply {
@@ -652,7 +652,7 @@ private fun RouteShareDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            LjTextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.routes_screen_close))
             }
         },

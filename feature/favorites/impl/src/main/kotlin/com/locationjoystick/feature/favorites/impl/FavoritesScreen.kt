@@ -19,16 +19,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,8 +60,10 @@ import com.locationjoystick.core.designsystem.component.HomeToggleButton
 import com.locationjoystick.core.designsystem.component.ListSearchField
 import com.locationjoystick.core.designsystem.component.LjActionSheetRow
 import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
+import com.locationjoystick.core.designsystem.component.LjFloatingActionButton
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjListItemCardSkeletonList
+import com.locationjoystick.core.designsystem.component.LjModalBottomSheet
 import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
@@ -78,7 +78,6 @@ import com.locationjoystick.core.designsystem.component.readPlainText
 import com.locationjoystick.core.designsystem.component.rememberCollapsedGroups
 import com.locationjoystick.core.designsystem.component.rememberCooldownStringLookup
 import com.locationjoystick.core.designsystem.component.rememberGroupReorder
-import com.locationjoystick.core.designsystem.component.rememberLjSheetState
 import com.locationjoystick.core.designsystem.component.writePlainText
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.LatLng
@@ -187,7 +186,9 @@ internal fun FavoritesScreen(
         locationLabel = locationLabel,
         onNavigationClick = onOpenDrawer,
         bottomBar = bottomBar,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { data -> Snackbar(data, shape = MaterialTheme.shapes.small) }
+        },
         actions = {
             val context = LocalContext.current
             SavedItemSortMenu(selected = uiState.sortMode, onSelected = onSortModeSelected)
@@ -198,7 +199,7 @@ internal fun FavoritesScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddOptionsSheet = true }) {
+            LjFloatingActionButton(onClick = { showAddOptionsSheet = true }) {
                 Icon(LjIcons.Add, contentDescription = stringResource(R.string.favorites_screen_add_favorite_cd))
             }
         },
@@ -302,10 +303,8 @@ internal fun FavoritesScreen(
     }
 
     targetFavorite?.let { target ->
-        ModalBottomSheet(
+        LjModalBottomSheet(
             onDismissRequest = { targetFavorite = null },
-            sheetState = rememberLjSheetState(),
-            containerColor = MaterialTheme.colorScheme.surface,
         ) {
             FavoriteTargetDetail(
                 favorite = target,
@@ -329,13 +328,11 @@ internal fun FavoritesScreen(
     }
 
     if (showAddOptionsSheet) {
-        ModalBottomSheet(
+        LjModalBottomSheet(
             onDismissRequest = { showAddOptionsSheet = false },
-            sheetState = rememberLjSheetState(),
-            containerColor = MaterialTheme.colorScheme.surface,
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                Text(stringResource(R.string.favorites_screen_add_a_favorite), style = MaterialTheme.typography.headlineSmall)
+                Text(stringResource(R.string.favorites_screen_add_a_favorite), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(12.dp))
                 LjActionSheetRow(
                     icon = LjIcons.Map,
@@ -380,10 +377,8 @@ internal fun FavoritesScreen(
     }
 
     if (showAddSheet) {
-        ModalBottomSheet(
+        LjModalBottomSheet(
             onDismissRequest = { showAddSheet = false },
-            sheetState = rememberLjSheetState(),
-            containerColor = MaterialTheme.colorScheme.surface,
         ) {
             AddFavoriteSheet(
                 initialLat = prefillLat,
@@ -398,10 +393,8 @@ internal fun FavoritesScreen(
     }
 
     if (showPasteSheet) {
-        ModalBottomSheet(
+        LjModalBottomSheet(
             onDismissRequest = { showPasteSheet = false },
-            sheetState = rememberLjSheetState(),
-            containerColor = MaterialTheme.colorScheme.surface,
         ) {
             PasteFavoriteSheet(
                 onDismiss = { showPasteSheet = false },
@@ -596,7 +589,7 @@ private fun AddFavoriteSheet(
     ) {
         Text(
             stringResource(R.string.favorites_screen_add_favorite_location),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
 
@@ -645,7 +638,7 @@ private fun AddFavoriteSheet(
             LjTextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.common_cancel))
             }
-            TextButton(
+            LjTextButton(
                 onClick = { onAdd(name, latVal!!, lonVal!!) },
                 enabled = isValid,
             ) {
@@ -685,7 +678,7 @@ private fun PasteFavoriteSheet(
     ) {
         Text(
             stringResource(R.string.favorites_screen_add_favorite_location),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
 
@@ -739,10 +732,10 @@ private fun PasteFavoriteSheet(
                     .padding(top = 24.dp),
             horizontalArrangement = Arrangement.End,
         ) {
-            TextButton(onClick = onDismiss) {
+            LjTextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.favorites_screen_cancel))
             }
-            TextButton(
+            LjTextButton(
                 onClick = {
                     if (!onAdd(name, pasteText)) {
                         error = invalidMessage
@@ -770,9 +763,9 @@ private fun EditFavoriteDialog(
     val lonVal = lon.toLocaleDoubleOrNull()
     val isValid = name.isNotEmpty() && isValidLatLng(latVal, lonVal)
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberLjSheetState()) {
+    LjModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
-            Text(stringResource(R.string.favorites_screen_edit_favorite), style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.favorites_screen_edit_favorite), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(
                 value = name,

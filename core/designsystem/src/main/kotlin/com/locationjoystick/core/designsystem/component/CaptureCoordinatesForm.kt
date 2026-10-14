@@ -169,7 +169,7 @@ fun CaptureCoordinatesForm(
         if (showTitle) {
             Text(
                 text = stringResource(R.string.capture_coordinates_form_capture_coordinates),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
