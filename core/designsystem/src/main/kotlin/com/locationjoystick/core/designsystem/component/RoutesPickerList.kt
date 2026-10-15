@@ -1,7 +1,6 @@
 package com.locationjoystick.core.designsystem.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -104,7 +103,6 @@ fun RoutesPickerList(
                                 .fillMaxWidth()
                                 .clip(MaterialTheme.shapes.medium)
                                 .background(rowBackground)
-                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                                 .padding(8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,

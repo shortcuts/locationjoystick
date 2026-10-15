@@ -1,7 +1,6 @@
 package com.locationjoystick.core.designsystem.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -143,7 +142,6 @@ fun FavoritesList(
                                 .fillMaxWidth()
                                 .clip(MaterialTheme.shapes.medium)
                                 .background(rowBackground)
-                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                                 .clickable { onSelect(favorite) }
                                 .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,

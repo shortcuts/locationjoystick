@@ -51,7 +51,7 @@ Defined in `LjTypography.kt`. System sans (`FontFamily.Default`) only. Titles an
 
 ### Elevation
 
-None. No shadows, no tonal lift. Separate surfaces with a 1 dp `outlineVariant` hairline (`LjCard`, `LjOutlinedCard`, `LjMapIconButton`, `LjOutlinedButton` do this). Card elevation is forced flat.
+None. No shadows, no tonal lift. Cards (`LjCard`, `LjSurface`, list rows) are borderless and separate by fill and spacing. Only `LjOutlinedCard`, `LjMapIconButton` and `LjOutlinedButton` draw a 1 dp `outlineVariant` hairline. Card elevation is forced flat.
 
 ### Motion
 
@@ -80,7 +80,7 @@ All in `core/designsystem/.../component/`. Prefer these over raw Material3.
 | `LjTopBar`, `LjOverflowMenu`, `LjOverflowMenuSectionLabel` | Screen title, back, actions; secondary actions in the overflow | More than one primary action |
 | `LjCard` | Grouped content on `surfaceVariant`, optionally clickable | A list row (use `LjListItemCard`) |
 | `LjOutlinedCard` | Card on a surface of the same color | Anything needing a fill |
-| `LjSurface` | Plain container with theme shape and hairline | Clickable rows |
+| `LjSurface` | Plain borderless container with theme shape | Clickable rows |
 | `LjListItemCard` | Saved item rows: route, favorite, profile | Settings toggles |
 | `LjModalBottomSheet`, `rememberLjSheetState` | Every bottom sheet | Dialogs that need a decision |
 | `LjActionSheetRow` | One tappable action in a sheet | Navigation rows in lists |
@@ -128,7 +128,7 @@ All in `core/designsystem/.../component/`. Prefer these over raw Material3.
 ## Do and don't
 
 ```kotlin
-// Do: shared card, theme shape, hairline
+// Do: shared card, theme shape, no border
 LjCard { Text(title, style = MaterialTheme.typography.titleMedium) }
 // Don't: raw Material card with custom shape and shadow
 Card(elevation = CardDefaults.cardElevation(4.dp)) { ... }

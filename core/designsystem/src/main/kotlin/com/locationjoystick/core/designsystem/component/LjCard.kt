@@ -28,7 +28,6 @@ fun LjCard(
             shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(containerColor = containerColor),
             elevation = flatCardElevation(),
-            border = hairline(),
             interactionSource = interactionSource,
             content = content,
         )
@@ -38,7 +37,6 @@ fun LjCard(
             shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(containerColor = containerColor),
             elevation = flatCardElevation(),
-            border = hairline(),
             content = content,
         )
     }
@@ -81,7 +79,6 @@ fun LjSurface(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
             ),
         elevation = flatCardElevation(),
-        border = hairline(),
         content = content,
     )
 }

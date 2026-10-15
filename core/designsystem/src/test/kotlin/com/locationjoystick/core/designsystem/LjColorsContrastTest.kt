@@ -23,6 +23,14 @@ class LjColorsContrastTest {
     }
 
     @Test
+    fun borderlessCardFillStaysDistinctFromSurfaces() {
+        listOf(LjDarkColorScheme, LjLightColorScheme).forEach { scheme ->
+            assertTrue(contrast(scheme.surfaceVariant, scheme.surface) >= 1.05f)
+            assertTrue(contrast(scheme.surfaceVariant, scheme.background) >= 1.05f)
+        }
+    }
+
+    @Test
     fun lightThemeTextContrast() {
         // Light theme text pairs must meet WCAG AA 4.5:1 minimum for body text
         val scheme = LjLightColorScheme
