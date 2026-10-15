@@ -496,7 +496,7 @@ Accepted state of the no-compass investigation (branch `tap-to-walk-no-compass`,
 
 - Heading and scale come out of a walked-leg fit with no north assumed (`persp`).
 - Offline landing error is p50 about 2.5 m, with 96 to 99 percent of samples within 15 m, at wide zoom across three camera orientations.
-- Not proven: close-up zoom, other devices and screen sizes beyond the one below, and any Kotlin port.
+- Not proven: close-up zoom (measured 2026-10-15, not met, see below), other devices and screen sizes beyond the one below, and any Kotlin port.
 
 On-device result, perspective map, fixed wide zoom, acceptance 11 of 12 taps within 15 m (2026-10-15):
 
@@ -521,7 +521,7 @@ came from the same session. Not run: the Pixel 5 re-check, close-up zoom, and re
 Open work, in order:
 
 1. Lower the skip rate (24 of 36 taps on the second Pixel 7 run) and explain the 23 m miss (`t17`), then repeat the run on this device and on more devices and camera states.
-2. Capture close-up (`varycap --conditions 1.6:0`) on two screens with different resolution or aspect and run `landing` without `--anchor`; acceptance p90 under 10 m. Feet detection is done (see above); the capture needs the Control API key and a second device.
+2. Close-up (z1.6) landing is not met: p90 96.9 m on the Pixel 7, target under 10 m. Measured with `varycap --conditions 1.6:0` then `landing` without `--anchor`: feet pixel detected 509 1548, 928 samples, p50 22.6 m, p90 96.9 m, within 10 m 20%, within 15 m 34%, 66% of matches skipped as ambiguous. The wide capture on the same device gives p50 3.0 m, p90 9.9 m with the detected anchor. The detected feet row looks too high at close-up (sharp rows span 1149 to 1911, the detector stops at the torso/leg gap); widening the run gap to 0.12 moved the anchor to 1796 and made landing worse (p90 286.8 m), so the anchor is not the main error: the fit and the match step at close-up are. Needs a second device and a cause for the ambiguity at close-up before retrying.
 3. Ground map model ported (`GroundMap`, see "Ground map model"); the walked-leg fit, feet detection and wiring into the tap overlay remain.
 4. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes.
 
