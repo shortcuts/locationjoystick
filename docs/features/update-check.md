@@ -16,4 +16,4 @@ Key files: `:app/UpdateAvailablePopup.kt`, `:app/UpdateAvailableViewModel.kt`, `
 
 ## Not yet
 
-A Play Store link is a planned addition; nothing here hardcodes a Play Store URL.
+The badge always opens the GitHub release page, also on Play Store installs. A Play Store link is a planned addition; nothing here hardcodes a Play Store URL.

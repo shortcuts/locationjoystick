@@ -13,9 +13,17 @@ A free, open-source Android app that changes the location your phone reports. Mo
 
 ## Download
 
-Get the latest APK from the [Releases page](https://github.com/shortcuts/locationjoystick/releases/latest).
+Two ways to install. They follow different release cycles.
 
-Open the downloaded file to install. If Android blocks it, allow installs from unknown sources for your browser or file manager, then try again.
+| | Google Play | GitHub APK |
+|---|---|---|
+| Build | Stable. The safe, latest tested release. | Dev build. Gets changes first. |
+| Updates | Automatic through Google Play. | Manual. Download each new APK. |
+| Get it | [Google Play](https://play.google.com/store/apps/details?id=com.locationjoystick.app) | [Releases page](https://github.com/shortcuts/locationjoystick/releases/latest) |
+
+Pick Google Play if you want stability. Pick the APK if you want new changes sooner and accept rougher edges.
+
+To install the APK, open the downloaded file. If Android blocks it, allow installs from unknown sources for your browser or file manager, then try again.
 
 ## Setup
 
