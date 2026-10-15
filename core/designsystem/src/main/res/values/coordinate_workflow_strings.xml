@@ -95,4 +95,7 @@
     <string name="capture_restore_dialog_checkbox">"I understand this turns Capture off and I need to set my default browser back in Android settings."</string>
     <string name="capture_restore_dialog_confirm">"Restore"</string>
     <string name="capture_restore_dialog_cancel">"Cancel"</string>
+    <string name="share_location_cd">"Share location"</string>
+    <string name="share_location_copy_coordinates_cd">"Copy coordinates"</string>
+    <string name="share_location_link_cd">"Share link"</string>
 </resources>

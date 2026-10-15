@@ -38,9 +38,14 @@ Both formats are parsed identically. HTTPS is preferred for general sharing. The
 
 ### Generating Share Links (UI)
 
-Map long-press → **Share this location** fires the system share sheet with the formatted URL as plain text.
+A **Share** icon (`LjShareLocationAction`) expands inline into **Copy coordinates** (decimal degrees to the clipboard) and **Share link** (the HTTPS URL as plain text through the system share sheet). It appears in four places:
 
-Favorites no longer generate that URL. The favorite overflow menu copies decimal-degree coordinates to the clipboard (**Copy coordinates**) or sends the same text through the system share sheet (**Send as message**).
+- Map and floating-map FAB columns, directly below the recenter / search button: shares the current mock position (toasts "No current location" when there is none).
+- Map long-press sheet (`PendingTapSheet`) and floating-map tap panel (`TapActionPanel`): shares the tapped point.
+
+Helpers live in `core/common/util/ShareCoordinates.kt` (`locationShareLink`, `shareLocationLink`, `copyCoordinatesToClipboard`). From the floating map, **Share link** also closes the overlay so the chooser is not hidden behind it. The old long-press "Share this location" button is gone.
+
+Favorites no longer generate that URL. The favorite overflow menu copies decimal-degree coordinates to the clipboard (**Copy coordinates**, same `copyCoordinatesToClipboard` helper) or sends the same text through the system share sheet (**Send as message**).
 
 ### Receiving Automatic Links
 

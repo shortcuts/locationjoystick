@@ -95,4 +95,7 @@
     <string name="capture_restore_dialog_checkbox">"我了解這會關閉擷取功能，且需要在 Android 設定中把預設瀏覽器改回來。"</string>
     <string name="capture_restore_dialog_confirm">"還原"</string>
     <string name="capture_restore_dialog_cancel">"取消"</string>
+    <string name="share_location_cd">"分享位置"</string>
+    <string name="share_location_copy_coordinates_cd">"複製座標"</string>
+    <string name="share_location_link_cd">"分享連結"</string>
 </resources>

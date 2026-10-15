@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.locationjoystick.core.common.util.copyCoordinatesToClipboard
+import com.locationjoystick.core.common.util.shareLocationLink
 import com.locationjoystick.core.designsystem.ActivityState
 import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjIcons
@@ -15,6 +18,7 @@ import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.activityState
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
+import com.locationjoystick.core.designsystem.component.LjShareLocationAction
 import com.locationjoystick.core.designsystem.component.RouteProgressBadgeInMapFabSlot
 import com.locationjoystick.core.designsystem.component.routeProgressStopContentDescription
 import com.locationjoystick.core.designsystem.containerColor
@@ -32,6 +36,7 @@ internal fun MapFabColumn(
     onAction: (MapAction) -> Unit,
     onToggleSearch: () -> Unit,
 ) {
+    val context = LocalContext.current
     Column(
         verticalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4),
         horizontalAlignment = Alignment.End,
@@ -51,6 +56,11 @@ internal fun MapFabColumn(
             contentColor =
                 if (isFollowingCamera) MaterialTheme.colorScheme.primary else ActivityState.IDLE.contentColor(MaterialTheme.colorScheme),
             onClick = { onAction(MapAction.RecenterCamera(lastFollowedPosition)) },
+        )
+
+        LjShareLocationAction(
+            onCopyCoordinates = { copyCoordinatesToClipboard(context, uiState.currentPosition) },
+            onShareLink = { shareLocationLink(context, uiState.currentPosition) },
         )
 
         if (uiState.walkTarget != null) {

@@ -91,6 +91,7 @@ All in `core/designsystem/.../component/`. Prefer these over raw Material3.
 | `LjTextButton` | Tertiary, dialog dismiss | Primary action |
 | `LjFloatingActionButton` | The single screen-level create action | Map controls |
 | `LjMapIconButton` | Round control over the map | Off-map screens |
+| `LjShareLocationAction` | Share icon that expands inline to copy coordinates / share link (works in overlay windows) | Sharing non-location content |
 | `LjSegmentedControl` | 2-4 mutually exclusive options | Long option lists |
 | `LjCheckboxRow` | Boolean option with label | Immediate on/off settings with side effects |
 | `LjLanguageDropdown` | Language choice | Other pickers |

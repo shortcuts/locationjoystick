@@ -98,6 +98,8 @@ Do not invent a second `MapLibre.getInstance` path. The empty style
 
 ## Configurable FABs
 
+A share icon sits below the recenter button (and below Search on the floating map). It expands to copy the current mock position's coordinates or share its link; it is always shown and not part of the configurable set (docs/features/location-links.md).
+
 Every FAB is neutral (`surfaceVariant`) when idle. Walk, Routes and Roaming use `ActivityState`: green while moving, orange (primary) while paused. Roaming keeps its tertiary accent while its sheet is minimized.
 
 `MapFabColumn` renders Favorites/Routes/Roaming/Search/Paste coordinates in the shared `AppFeature` order (see docs/features/widget.md, "Configurability"), filtered to features enabled for the `MAP` surface — configured in Settings → Menus → "App Features". Routes and Roaming also force-show while actively in progress, even if toggled off, so the user can still control a running session.

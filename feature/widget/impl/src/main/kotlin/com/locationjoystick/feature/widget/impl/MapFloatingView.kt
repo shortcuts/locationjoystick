@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -46,6 +47,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.copyCoordinatesToClipboard
+import com.locationjoystick.core.common.util.shareLocationLink
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.ActivityState
 import com.locationjoystick.core.designsystem.LjIcons
@@ -54,6 +57,7 @@ import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
+import com.locationjoystick.core.designsystem.component.LjShareLocationAction
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.designsystem.component.PasteCoordinatesForm
@@ -189,6 +193,7 @@ internal fun MapFloatingView(
     var pendingTap by remember { mutableStateOf<LatLng?>(null) }
     val quickWalkState = rememberUpdatedState(quickWalk)
     val onWalkToState = rememberUpdatedState(onWalkTo)
+    val shareContext = LocalContext.current
     var showSearch by remember { mutableStateOf(false) }
     var showPasteCoordinates by remember { mutableStateOf(false) }
     var showFavoritesPicker by remember { mutableStateOf(false) }
@@ -610,6 +615,13 @@ internal fun MapFloatingView(
                     showSearch = !showSearch
                 },
             )
+            LjShareLocationAction(
+                onCopyCoordinates = { copyCoordinatesToClipboard(shareContext, currentPosition) },
+                onShareLink = {
+                    shareLocationLink(shareContext, currentPosition)
+                    if (currentPosition != null) onDismiss()
+                },
+            )
             if (AppFeature.PASTE_COORDINATES in enabledMapFabFeatures) {
                 LjMapIconButton(
                     icon = LjIcons.ContentPaste,
@@ -686,6 +698,7 @@ internal fun MapFloatingView(
                 onFinishRouteAndWalkTo = onFinishRouteAndWalkTo,
                 onAddEphemeralWaypoint = onAddEphemeralWaypoint,
                 onDismiss = { pendingTap = null },
+                onShareOpened = onDismiss,
                 hideTeleportFeatures = hideTeleportFeatures,
             )
         }
@@ -865,8 +878,10 @@ private fun BoxScope.TapActionPanel(
     onFinishRouteAndWalkTo: (LatLng) -> Unit,
     onAddEphemeralWaypoint: (LatLng, Boolean) -> Unit,
     onDismiss: () -> Unit,
+    onShareOpened: () -> Unit,
     hideTeleportFeatures: Boolean = false,
 ) {
+    val context = LocalContext.current
     Column(
         modifier =
             Modifier
@@ -876,8 +891,27 @@ private fun BoxScope.TapActionPanel(
                 .clickable {}
                 .padding(16.dp),
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(
+                    if (isRouteReplay && !isEphemeralReplay) {
+                        R.string.map_floating_route_in_progress
+                    } else {
+                        R.string.map_floating_move_to_this_location
+                    },
+                ),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            LjShareLocationAction(
+                onCopyCoordinates = { copyCoordinatesToClipboard(context, tap) },
+                onShareLink = {
+                    shareLocationLink(context, tap)
+                    onShareOpened()
+                },
+            )
+        }
         if (isRouteReplay && !isEphemeralReplay) {
-            Text(stringResource(R.string.map_floating_route_in_progress), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(16.dp))
             if (!hideTeleportFeatures) {
                 LjButton(
@@ -905,7 +939,6 @@ private fun BoxScope.TapActionPanel(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.map_floating_finish_route_and_walk_here)) }
         } else {
-            Text(stringResource(R.string.map_floating_move_to_this_location), style = MaterialTheme.typography.titleMedium)
             val cooldownState by remember(tap) {
                 cooldownForPosition?.invoke(tap) ?: flowOf(CooldownState.Ready)
             }.collectAsStateWithLifecycle(initialValue = CooldownState.Ready)

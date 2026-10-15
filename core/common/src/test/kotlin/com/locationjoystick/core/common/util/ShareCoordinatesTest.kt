@@ -26,4 +26,9 @@ class ShareCoordinatesTest {
     fun `activity share does not force NEW_TASK`() {
         assertEquals(0, shareChooserFlags(fromActivity = true))
     }
+
+    @Test
+    fun `locationShareLink is the HTTPS deep link for the position`() {
+        assertEquals("https://locationjoystick.shrtcts.fr/?lat=11.5&lon=79.25", locationShareLink(LatLng(11.5, 79.25)))
+    }
 }

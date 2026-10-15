@@ -27,6 +27,10 @@ A single shared `featureOrder` list controls display order on both surfaces, so 
 
 Speed Cycle (`AppFeature.SPEED_CYCLE`) writes the global active profile via `SettingsRepository.setActiveProfileId`. Starting a route or roam switches to that session's chosen profile first (`activateSessionSpeed`); later Speed Cycle taps and Settings speed changes win for the rest of the session and are not written back into the route pin or roaming defaults.
 
+## Map share icon
+
+The floating map's FAB column (below Search) and its tap panel title row show the shared share icon (copy coordinates or share link). The link action closes the overlay first so the system chooser is visible.
+
 ## Picker search
 
 The full-screen favorites and routes pickers (`FavoritesFloatingView` / `RoutesFloatingView`)

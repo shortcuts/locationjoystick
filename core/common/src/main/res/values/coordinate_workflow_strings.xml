@@ -2,4 +2,5 @@
 <resources>
     <string name="capture_browser_intents_couldnt_open_setting">"Couldn\'t open that Android setting"</string>
     <string name="share_coordinates_no_current_location">"No current location"</string>
+    <string name="share_location_copied_coordinates">"Copied %1$s"</string>
 </resources>

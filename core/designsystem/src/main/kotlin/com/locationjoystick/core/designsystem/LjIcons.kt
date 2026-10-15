@@ -40,6 +40,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Layers
+import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.LocationOff
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Lock
@@ -170,6 +171,7 @@ object LjIcons {
     val Save = Icons.Rounded.Save
     val Search = Icons.Rounded.Search
     val Share = Icons.Rounded.Share
+    val Link = Icons.Rounded.Link
     val Settings = Icons.Rounded.Settings
     val Speed = Icons.Rounded.Speed
     val SkipNext = Icons.Rounded.SkipNext

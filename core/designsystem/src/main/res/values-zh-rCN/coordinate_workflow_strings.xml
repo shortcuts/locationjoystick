@@ -95,4 +95,7 @@
     <string name="capture_restore_dialog_checkbox">"我了解这会关闭采集功能，我需要在 Android 设置中把默认浏览器改回来。"</string>
     <string name="capture_restore_dialog_confirm">"恢复"</string>
     <string name="capture_restore_dialog_cancel">"取消"</string>
+    <string name="share_location_cd">"分享位置"</string>
+    <string name="share_location_copy_coordinates_cd">"复制坐标"</string>
+    <string name="share_location_link_cd">"分享链接"</string>
 </resources>

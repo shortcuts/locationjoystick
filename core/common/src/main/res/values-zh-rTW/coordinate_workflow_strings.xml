@@ -2,4 +2,5 @@
 <resources>
     <string name="capture_browser_intents_couldnt_open_setting">"無法開啟該 Android 設定頁面"</string>
     <string name="share_coordinates_no_current_location">"沒有目前位置"</string>
+    <string name="share_location_copied_coordinates">"已複製 %1$s"</string>
 </resources>

@@ -24,10 +24,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.locationjoystick.core.common.util.copyCoordinatesToClipboard
 import com.locationjoystick.core.common.util.haversineDistance
+import com.locationjoystick.core.common.util.shareLocationLink
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
@@ -37,6 +40,7 @@ import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjModalBottomSheet
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
+import com.locationjoystick.core.designsystem.component.LjShareLocationAction
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.PasteCoordinatesForm
 import com.locationjoystick.core.designsystem.component.RouteStartSheetContent
@@ -234,7 +238,6 @@ internal fun PendingTapSheet(
     cooldownState: CooldownState,
     onAction: (MapAction) -> Unit,
     isEphemeralReplay: Boolean = false,
-    onShare: (() -> Unit)? = null,
     hideTeleportFeatures: Boolean = false,
     isRoadRouteFetchInFlight: Boolean = false,
 ) {
@@ -249,9 +252,28 @@ internal fun PendingTapSheet(
     LjModalBottomSheet(
         onDismissRequest = { onAction(MapAction.ClearPendingTap) },
     ) {
+        val context = LocalContext.current
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(
+                        if (isRouteReplay &&
+                            !isEphemeralReplay
+                        ) {
+                            R.string.map_sheet_route_in_progress
+                        } else {
+                            R.string.map_sheet_move_to_this_location
+                        },
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                LjShareLocationAction(
+                    onCopyCoordinates = { copyCoordinatesToClipboard(context, position) },
+                    onShareLink = { shareLocationLink(context, position) },
+                )
+            }
             if (isRouteReplay && !isEphemeralReplay) {
-                Text(stringResource(R.string.map_sheet_route_in_progress), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(16.dp))
                 if (!hideTeleportFeatures) {
                     LjButton(
@@ -276,7 +298,6 @@ internal fun PendingTapSheet(
                     Text(stringResource(R.string.map_sheet_finish_route_and_walk_here))
                 }
             } else {
-                Text(stringResource(R.string.map_sheet_move_to_this_location), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(12.dp))
                 CooldownAdvisoryBadge(
                     (cooldownState as? CooldownState.Cooling)
@@ -345,15 +366,6 @@ internal fun PendingTapSheet(
                             }
                         }
                     }
-                }
-            }
-            if (onShare != null) {
-                Spacer(Modifier.height(8.dp))
-                LjOutlinedButton(
-                    onClick = onShare,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.map_sheet_share_this_location))
                 }
             }
             Spacer(Modifier.height(4.dp))

@@ -1,7 +1,6 @@
 package com.locationjoystick.feature.favorites.impl
 
 import android.content.Intent
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +42,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.locationjoystick.core.common.util.copyCoordinatesToClipboard
 import com.locationjoystick.core.common.util.formatCapturedPoint
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.common.util.isValidLatLng
@@ -78,7 +78,6 @@ import com.locationjoystick.core.designsystem.component.readPlainText
 import com.locationjoystick.core.designsystem.component.rememberCollapsedGroups
 import com.locationjoystick.core.designsystem.component.rememberCooldownStringLookup
 import com.locationjoystick.core.designsystem.component.rememberGroupReorder
-import com.locationjoystick.core.designsystem.component.writePlainText
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.isHot
@@ -470,10 +469,7 @@ private fun FavoriteCard(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val clipboard = LocalClipboard.current
-    val scope = rememberCoroutineScope()
     val coordText = formatCapturedPoint(favorite.position)
-    val copiedCoordinatesMessage = stringResource(R.string.favorites_screen_copied_coordinates, coordText)
 
     LjListItemCard(
         modifier = modifier,
@@ -515,8 +511,7 @@ private fun FavoriteCard(
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.favorites_screen_copy_coordinates)) },
                         onClick = {
-                            scope.launch { clipboard.writePlainText(coordText) }
-                            Toast.makeText(context, copiedCoordinatesMessage, Toast.LENGTH_SHORT).show()
+                            copyCoordinatesToClipboard(context, favorite.position)
                             menuExpanded = false
                         },
                         leadingIcon = { Icon(LjIcons.ContentCopy, null) },

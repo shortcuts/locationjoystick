@@ -17,7 +17,6 @@
     <string name="map_sheet_walk_via_roads">"Walk via roads"</string>
     <string name="map_sheet_add_next_point">"Add next point"</string>
     <string name="map_sheet_add_next_point_via_roads">"Add next point via roads"</string>
-    <string name="map_sheet_share_this_location">"Share this location"</string>
     <string name="map_sheet_close">"Close"</string>
     <string name="map_sheet_save_current_location">"Save current location"</string>
     <string name="map_sheet_name">"Name"</string>

@@ -1,6 +1,5 @@
 package com.locationjoystick.feature.map.impl
 
-import android.content.Intent
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.spring
@@ -30,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -179,7 +177,6 @@ internal fun MapScreen(
     bottomBar: @Composable () -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val initialPosition = remember { uiState.currentPosition }
@@ -552,15 +549,6 @@ internal fun MapScreen(
             cooldownState = uiState.cooldownState,
             isEphemeralReplay = uiState.ephemeralWaypoints.isNotEmpty(),
             onAction = onAction,
-            onShare = {
-                val url = AppConstants.AppInfo.buildDeepLink(pending.latitude, pending.longitude)
-                val shareIntent =
-                    Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, url)
-                    }
-                context.startActivity(Intent.createChooser(shareIntent, null))
-            },
             hideTeleportFeatures = uiState.hideTeleportFeatures,
             isRoadRouteFetchInFlight = uiState.isRoadRouteFetchInFlight,
         )

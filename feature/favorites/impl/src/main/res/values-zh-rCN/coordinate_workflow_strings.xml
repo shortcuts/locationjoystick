@@ -3,7 +3,6 @@
     <string name="favorites_screen_share_current_location">"分享当前位置"</string>
     <string name="favorites_screen_paste_coordinates">"粘贴坐标"</string>
     <string name="favorites_screen_copy_coordinates">"复制坐标"</string>
-    <string name="favorites_screen_copied_coordinates">"已复制 %1$s"</string>
     <string name="favorites_screen_send_as_message">"以消息发送"</string>
     <string name="favorites_screen_save">"保存"</string>
     <string name="favorites_screen_name">"名称"</string>

@@ -1,6 +1,6 @@
 # Click-to-Move / Teleport
 
-Long-press map → bottom sheet with "Walk here" or "Teleport here".
+Long-press map → bottom sheet with "Walk here" or "Teleport here". The sheet title row carries a share icon (copy coordinates or share link for the tapped point; see docs/features/location-links.md).
 
 Tapping the map while spoofing and opening a deep link pin a `LatLng` (`pendingTapPosition` + `isPendingTapSheetOpen`) and show this same confirm sheet. The map's paste-coordinates sheet does not pin: Teleport / Walk / Walk via roads under the paste field run those actions directly on the **first** valid pair (`parsePastedCoordinates`). Extra points do not change those three. A future "open location in Maps" intent should skip the paste field and pin a `LatLng` the same way as a deep link.
 
