@@ -148,3 +148,7 @@ The raw rows are in `scripts/reconnect-matrix/cycles.jsonl` (not committed). Fai
 4. `summary`: pass counts per block, then every failed cycle.
 
 A failing cycle never stops the run; it is a `"pass": false` row in `scripts/reconnect-matrix/cycles.jsonl`. Before starting: the game open, the companion connected, Settings > Menus > Reconnect accessory enabled and both disclosures accepted.
+
+## Guided path
+
+On the Pikmin Bloom guided path the Reconnect accessory section in Settings > Menus is removed from the tree. The stored setting is untouched; switching path in Settings shows it again. Source: `GuidedPath.showsReconnectAccessory`.

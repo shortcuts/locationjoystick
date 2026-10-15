@@ -578,6 +578,7 @@ internal fun MapScreen(
             hasPreview = uiState.roamingPreviewWaypoints != null,
             isPreviewLoading = uiState.isRoamingPreviewLoading,
             routePlaying = uiState.isRouteReplay && uiState.mockLocationState == MockLocationState.RUNNING,
+            showPlanting = uiState.showPlanting,
             onAction = onAction,
             onGeneratePreview = { onAction(MapAction.GenerateRoamingPreview) },
             onMinimize = { onAction(MapAction.MinimizeRoamingSheet) },

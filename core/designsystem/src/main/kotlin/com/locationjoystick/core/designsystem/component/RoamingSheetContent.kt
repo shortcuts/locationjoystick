@@ -57,12 +57,15 @@ fun RoamingSheetContent(
     isPreviewLoading: Boolean = false,
     showViewOnMap: Boolean = true,
     routePlaying: Boolean = false,
+    showPlanting: Boolean = true,
     onDraftChange: (RoamingDefaults) -> Unit,
     onGenerate: (RoamingKind) -> Unit,
     onStart: (RoamingKind) -> Unit,
     onViewOnMap: () -> Unit,
 ) {
     val isMph = speedUnit == SpeedUnit.MPH
+    // Hidden planting must not strand a stored PLANTING draft: coerce to the only visible mode.
+    val kind = if (showPlanting) draft.kind else RoamingKind.WALK_AROUND
 
     var radiusText by remember(isMph) {
         mutableStateOf(
@@ -111,19 +114,21 @@ fun RoamingSheetContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(stringResource(R.string.roaming_sheet_roaming), style = MaterialTheme.typography.headlineSmall, color = LjText)
-            LjTextButton(
-                onClick = {
-                    val nextKind = if (draft.kind == RoamingKind.PLANTING) RoamingKind.WALK_AROUND else RoamingKind.PLANTING
-                    onDraftChange(draft.copy(kind = nextKind))
-                },
-            ) {
-                Text(
-                    if (draft.kind == RoamingKind.PLANTING) {
-                        stringResource(R.string.roaming_sheet_content_walk_around)
-                    } else {
-                        stringResource(R.string.roaming_sheet_content_planting_mode)
+            if (showPlanting) {
+                LjTextButton(
+                    onClick = {
+                        val nextKind = if (kind == RoamingKind.PLANTING) RoamingKind.WALK_AROUND else RoamingKind.PLANTING
+                        onDraftChange(draft.copy(kind = nextKind))
                     },
-                )
+                ) {
+                    Text(
+                        if (kind == RoamingKind.PLANTING) {
+                            stringResource(R.string.roaming_sheet_content_walk_around)
+                        } else {
+                            stringResource(R.string.roaming_sheet_content_planting_mode)
+                        },
+                    )
+                }
             }
         }
 
@@ -145,7 +150,7 @@ fun RoamingSheetContent(
 
         Spacer(Modifier.height(12.dp))
 
-        if (draft.kind == RoamingKind.WALK_AROUND) {
+        if (kind == RoamingKind.WALK_AROUND) {
             Text(stringResource(R.string.roaming_sheet_content_walk_around_the_block), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
 
@@ -368,7 +373,7 @@ fun RoamingSheetContent(
 
         Spacer(Modifier.height(12.dp))
         RoamingGenerateStartRow(
-            kind = draft.kind,
+            kind = kind,
             hasCurrentPosition = hasCurrentPosition,
             isSpoofingActive = isSpoofingActive,
             isPreviewLoading = isPreviewLoading,

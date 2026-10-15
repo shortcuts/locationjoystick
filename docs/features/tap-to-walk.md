@@ -565,3 +565,7 @@ screen re-shows if the user disables and re-enables.
 ## Shared disclosure
 
 The accessibility disclosure also covers the Reconnect accessory feature (docs/features/bluetooth-reconnect-tap.md): its text names the periodic screenshot and the tap, and the service gained gesture capability (`canPerformGestures`). Accepting from the Tap to Walk switch does not enable the reconnect tap; that needs its own acceptance.
+
+## Guided path
+
+On the Pikmin Bloom guided path the Tap to Walk section in Settings > Menus is removed from the tree. The stored setting is untouched; switching path in Settings shows it again. Source: `GuidedPath.showsTapToWalk`.

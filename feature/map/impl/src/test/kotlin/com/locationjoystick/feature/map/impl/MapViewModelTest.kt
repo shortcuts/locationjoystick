@@ -18,6 +18,7 @@ import com.locationjoystick.core.location.EphemeralReplayController
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -520,6 +521,25 @@ class MapViewModelTest {
             flow.value = true
             testDispatcher.scheduler.advanceUntilIdle()
             assertEquals(true, viewModel.uiState.value.hideTeleportFeatures)
+        }
+
+    @Test
+    fun `showPlanting is false only on the Pokemon Go path`() =
+        runTest {
+            val flow = MutableStateFlow(GuidedPath.DEFAULT)
+            every { settingsRepository.getGuidedPath() } returns flow
+
+            viewModel = createViewModel()
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertEquals(true, viewModel.uiState.value.showPlanting)
+
+            flow.value = GuidedPath.POKEMON_GO
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertEquals(false, viewModel.uiState.value.showPlanting)
+
+            flow.value = GuidedPath.PIKMIN_BLOOM
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertEquals(true, viewModel.uiState.value.showPlanting)
         }
 
     @Test

@@ -8,6 +8,7 @@ import com.locationjoystick.core.datastore.toAppFeature
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FeatureSurface
 import com.locationjoystick.core.model.GeocodingProviderId
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
@@ -239,6 +240,8 @@ class SettingsRepository
             dataSource.setDisabledGeocodingProviders(ids.map { it.name }.toSet())
 
         fun getMapTileSource(): Flow<MapTileSource> = dataSource.getMapTileSource().map { MapTileSource.fromName(it) }
+
+        fun getGuidedPath(): Flow<GuidedPath> = dataSource.getGuidedPath().map { GuidedPath.fromName(it) }
 
         suspend fun setMapTileSource(source: MapTileSource) = dataSource.setMapTileSource(source.name)
 

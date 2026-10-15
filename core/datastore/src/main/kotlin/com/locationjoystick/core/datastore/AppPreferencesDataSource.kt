@@ -195,6 +195,8 @@ interface PreferencesDataSource {
     /** Gets the raster base-map provider name (see `MapTileSource`). */
     fun getMapTileSource(): Flow<String>
 
+    fun getGuidedPath(): Flow<String>
+
     /** Sets the raster base-map provider name. */
     suspend fun setMapTileSource(name: String)
 
@@ -930,6 +932,8 @@ class AppPreferencesDataSource
         override suspend fun setDisabledGeocodingProviders(names: Set<String>) = setPref(Keys.DISABLED_GEOCODING_PROVIDERS, names)
 
         override fun getMapTileSource(): Flow<String> = pref(Keys.MAP_TILE_SOURCE, MapTileSource.DEFAULT.name)
+
+        override fun getGuidedPath(): Flow<String> = pref(Keys.GUIDED_PATH, GuidedPath.DEFAULT.name)
 
         override suspend fun setMapTileSource(name: String) = setPref(Keys.MAP_TILE_SOURCE, name)
 

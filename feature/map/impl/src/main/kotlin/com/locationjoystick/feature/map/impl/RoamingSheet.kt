@@ -20,6 +20,7 @@ fun RoamingSheet(
     hasPreview: Boolean = false,
     isPreviewLoading: Boolean = false,
     routePlaying: Boolean = false,
+    showPlanting: Boolean = true,
     onAction: (MapAction) -> Unit,
     onGeneratePreview: () -> Unit = {},
     onMinimize: () -> Unit = {},
@@ -36,6 +37,7 @@ fun RoamingSheet(
             hasPreview = hasPreview,
             isPreviewLoading = isPreviewLoading,
             routePlaying = routePlaying,
+            showPlanting = showPlanting,
             onDraftChange = { updated ->
                 if (updated.kind != draft.kind) {
                     onAction(MapAction.UpdateRoamingKind(updated.kind))

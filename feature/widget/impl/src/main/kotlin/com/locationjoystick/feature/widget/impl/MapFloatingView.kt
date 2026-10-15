@@ -120,6 +120,7 @@ internal fun MapFloatingView(
     isRoamingPaused: Boolean,
     favorites: List<FavoriteLocation>,
     roamingDefaults: RoamingDefaults,
+    showPlanting: Boolean = true,
     speedUnit: SpeedUnit,
     onResumeRoaming: () -> Unit,
     onPauseRoaming: () -> Unit,
@@ -650,6 +651,7 @@ internal fun MapFloatingView(
                 speedUnit = speedUnit,
                 mockLocationState = mockLocationState,
                 routePlaying = routePlaying,
+                showPlanting = showPlanting,
                 hasPreview = roamingPreviewWaypoints != null,
                 onGeneratePreviewRoute = onGeneratePreviewRoute,
                 onPreviewGenerated = { roamingPreviewWaypoints = it },
@@ -724,6 +726,7 @@ private fun BoxScope.OverlayRoamingSheet(
     speedUnit: SpeedUnit,
     mockLocationState: MockLocationState,
     routePlaying: Boolean,
+    showPlanting: Boolean,
     hasPreview: Boolean,
     onGeneratePreviewRoute: suspend (RoamingConfig) -> List<LatLng>?,
     onPreviewGenerated: (List<LatLng>?) -> Unit,
@@ -771,6 +774,7 @@ private fun BoxScope.OverlayRoamingSheet(
                     hasPreview = hasPreview,
                     isPreviewLoading = isPreviewLoading,
                     routePlaying = routePlaying,
+                    showPlanting = showPlanting,
                     onDraftChange = { draft = it },
                     onGenerate = { kind ->
                         val next = draft.copy(kind = kind)

@@ -26,6 +26,7 @@ import com.locationjoystick.core.location.ephemeralWaypoints
 import com.locationjoystick.core.location.walkStart
 import com.locationjoystick.core.location.walkTarget
 import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.MockLocationState
@@ -354,6 +355,7 @@ internal class WidgetPanelPresenter(
             val shared by mapController.sharedState.collectAsStateWithLifecycle()
             val initialDefaults = remember { shared.roamingDefaults }
             var draft by remember { mutableStateOf(initialDefaults) }
+            val guidedPath by settingsRepository.getGuidedPath().collectAsStateWithLifecycle(initialValue = GuidedPath.DEFAULT)
             RoamingFloatingView(
                 draft = draft,
                 speedUnit = shared.speedUnit,
@@ -362,6 +364,7 @@ internal class WidgetPanelPresenter(
                     shared.mockLocationState == MockLocationState.RUNNING ||
                         shared.mockLocationState == MockLocationState.PAUSED,
                 routePlaying = isRoutePlaying(shared.mockMode, shared.mockLocationState),
+                showPlanting = guidedPath.showsPlanting,
                 onDismiss = { hidePanelView() },
                 onDraftChange = { draft = it },
                 onGenerate = { defaults ->
@@ -439,6 +442,7 @@ internal class WidgetPanelPresenter(
                 initialValue = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
             )
             val mapTileSource by settingsRepository.getMapTileSource().collectAsStateWithLifecycle(initialValue = MapTileSource.DEFAULT)
+            val guidedPath by settingsRepository.getGuidedPath().collectAsStateWithLifecycle(initialValue = GuidedPath.DEFAULT)
             val routeControlsExpanded by mapRouteControlsExpanded.collectAsStateWithLifecycle()
             val captureEnabled by captureRepository.captureEnabled.collectAsStateWithLifecycle(initialValue = false)
             val capturedPoints by captureRepository.points.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -467,6 +471,7 @@ internal class WidgetPanelPresenter(
                 isRoamingPaused = shared.isRoamingPaused,
                 favorites = shared.favorites,
                 roamingDefaults = shared.roamingDefaults,
+                showPlanting = guidedPath.showsPlanting,
                 speedUnit = shared.speedUnit,
                 recentSearches = shared.recentSearches,
                 ephemeralWaypoints = shared.ephemeralWaypoints.ifEmpty { null },

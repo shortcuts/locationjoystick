@@ -8,6 +8,7 @@ import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.datastore.toAppFeature
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
@@ -945,6 +946,19 @@ class SettingsRepositoryTest {
     // hide teleport features
 
     @Test
+    fun `getGuidedPath defaults then maps stored name and falls back on unknown`() =
+        runTest {
+            repository.getGuidedPath().test {
+                assertEquals(GuidedPath.DEFAULT, awaitItem())
+                fakeDataSource.guidedPathFlow.value = "PIKMIN_BLOOM"
+                assertEquals(GuidedPath.PIKMIN_BLOOM, awaitItem())
+                fakeDataSource.guidedPathFlow.value = "nonsense"
+                assertEquals(GuidedPath.DEFAULT, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `getHideTeleportFeatures returns false by default`() =
         runTest {
             repository.getHideTeleportFeatures().test {
@@ -1440,6 +1454,10 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
     override suspend fun setDisabledGeocodingProviders(names: Set<String>) {
         disabledGeocodingProvidersFlow.value = names
     }
+
+    val guidedPathFlow = MutableStateFlow(GuidedPath.DEFAULT.name)
+
+    override fun getGuidedPath(): Flow<String> = guidedPathFlow
 
     private val mapTileSourceFlow = MutableStateFlow(MapTileSource.DEFAULT.name)
 

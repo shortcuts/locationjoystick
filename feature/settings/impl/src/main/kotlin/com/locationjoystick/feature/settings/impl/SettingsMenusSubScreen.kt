@@ -131,19 +131,21 @@ internal fun SettingsMenusSubScreen(
                         AppFeaturesSection(uiState, isRooted, onAction)
                         SettingsSectionDivider()
                         SpeedCycleSection(uiState, onAction)
-                        SettingsSectionDivider()
-                        TapToWalkSection(
-                            uiState,
-                            onAction,
-                            onTestCompassDetection,
-                            calibrationState,
-                            groundCalibration,
-                            onStartCalibration,
-                            onCancelCalibration,
-                            launchableApps,
-                        )
+                        if (uiState.guidedPath.showsTapToWalk) {
+                            SettingsSectionDivider()
+                            TapToWalkSection(
+                                uiState,
+                                onAction,
+                                onTestCompassDetection,
+                                calibrationState,
+                                groundCalibration,
+                                onStartCalibration,
+                                onCancelCalibration,
+                                launchableApps,
+                            )
+                        }
                         // Same API 30 floor as the screenshot the check depends on.
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        if (uiState.guidedPath.showsReconnectAccessory && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             SettingsSectionDivider()
                             ReconnectTapSection(uiState, onAction)
                         }

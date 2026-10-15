@@ -101,3 +101,7 @@ Public OSRM servers have no SLA and can throttle, error, or time out unpredictab
 ## Movement priority
 
 Playing route replay blocks roam start (walk-around and planting). Pause or stop the route first; a paused replay is stopped synchronously (`RouteReplayEngine.stop()`) before roam starts so both engines cannot tick at once. Starting a saved route still stops roam (`ReplayOrchestrator.startReplayWithWaypoints`). Moving the joystick stick pauses roaming (walk-around or planting), retains the session, and hands control to the stick. Releasing leaves it paused until Resume (docs/features/joystick.md, "Manual takeover"). Without a new touch, a retained locked-stick direction is ignored while roam is running and steers while roam is paused (mode stays `ROAMING`). Widget joystick show/hide and lock still open and lock the overlay. The lock icon stays orange when locked and grey when unlocked while roaming runs or is paused. Map/widget roam controls fade toward their background while a route is playing, but stay readable. Policy: `canStartRoaming` / `shouldIgnoreJoystickInput` / `isRoutePlaying` in `:core:model/MovementPriority.kt`.
+
+## Guided path
+
+On the Pokémon Go guided path the Planting UI is removed from the tree: Settings > Roaming > Planting, and the Walk around / Planting mode switch in the roaming sheet (map, floating map, widget panel), which then always starts a walk-around. Stored planting values and a running planting session are untouched. Source: `GuidedPath.showsPlanting`.

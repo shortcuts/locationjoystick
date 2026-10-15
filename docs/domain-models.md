@@ -27,7 +27,7 @@ All in `:core:model`. Pure Kotlin — no Android, no Room. Room entities in `:co
 | `JoystickStyle` | enum: `FLOATING`, `FIXED` |
 | `SpeedUnit` | enum: `KMH`, `MPH` |
 | `GeocodingProviderId` | enum: `NOMINATIM`, `PHOTON` — geocoding services switchable in Settings > General > Place search; lenient `fromName()` returns null for unknown names (see docs/features/map.md) |
-| `GuidedPath` | enum: `DEFAULT`, `POKEMON_GO`, `PIKMIN_BLOOM` — chosen onboarding path; `DEFAULT` changes nothing; lenient `fromName()` falls back to `DEFAULT` |
+| `GuidedPath` | enum: `DEFAULT`, `POKEMON_GO`, `PIKMIN_BLOOM` — chosen onboarding path; `DEFAULT` changes nothing; `showsPlanting` (false on `POKEMON_GO`), `showsTapToWalk` and `showsReconnectAccessory` (false on `PIKMIN_BLOOM`) drive UI visibility only; lenient `fromName()` falls back to `DEFAULT` |
 | `MapTileSource` | enum: `OSM`, `AMAP` — carries `tileUrlTemplates`, `minZoom`/`maxZoom`, `clampCamera: Boolean`, `coordinateSystem: MapCoordinateSystem`, `defaultCenter: LatLng`; `DEFAULT = OSM`, lenient `fromName()` (see docs/features/map.md, "Map source") |
 | `MapCoordinateSystem` | enum: `WGS84`, `GCJ02` — datum a tile provider renders in; drives the presentation-edge projection in `:core:map` |
 | `ThemeMode` | enum: `DARK`, `LIGHT` |

@@ -88,7 +88,8 @@ class SettingsViewModelSaveTest {
                 compassHeadingSource = CompassHeadingSource(fakeSettingsRepo),
                 calibrationWalkOrchestrator =
                     io.mockk.mockk(relaxed = true) {
-                        io.mockk.every { state } returns kotlinx.coroutines.flow.MutableStateFlow(com.locationjoystick.core.location.CalibrationState.Idle)
+                        io.mockk.every { state } returns
+                            kotlinx.coroutines.flow.MutableStateFlow(com.locationjoystick.core.location.CalibrationState.Idle)
                     },
                 context = context,
             )
@@ -633,6 +634,8 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getDisabledGeocodingProviders(): Flow<Set<String>> = flowOf(emptySet())
 
     override suspend fun setDisabledGeocodingProviders(names: Set<String>) = Unit
+
+    override fun getGuidedPath(): Flow<String> = flowOf("DEFAULT")
 
     override fun getMapTileSource(): Flow<String> = flowOf(MapTileSource.DEFAULT.name)
 
