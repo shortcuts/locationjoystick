@@ -306,6 +306,54 @@ def test_perspective_fit_recovers_known_camera_and_tap_round_trips():
     assert np.linalg.norm(g - want) < 1.5
 
 
+def _scrolling_legs(w, h, feet_frac, figure=True):
+    """Two legs of a scrolling blurred-noise world; an optional static, high-contrast figure above feet_frac."""
+    rng = np.random.default_rng(5)
+    world = cv2.GaussianBlur(rng.integers(0, 256, (h + 400, w + 400), dtype=np.uint8), (0, 0), 6)
+    legs = {}
+    for b, (dx, dy) in ((0.0, (0, 9)), (90.0, (9, 0))):
+        fr = []
+        for t in range(10):
+            img = cv2.cvtColor(world[200 + dy * t:200 + dy * t + h, 200 + dx * t:200 + dx * t + w],
+                               cv2.COLOR_GRAY2BGR)
+            if figure:
+                fx, fy = int(0.5 * w), int(feet_frac * h)
+                cv2.rectangle(img, (fx - int(0.02 * w), fy - int(0.05 * h)), (fx + int(0.02 * w), fy), (255, 255, 255), -1)
+                cv2.rectangle(img, (fx - int(0.01 * w), fy - int(0.04 * h)), (fx + int(0.01 * w), fy), (0, 0, 0), -1)
+            fr.append({"img": img, "moving": True})
+        legs[b] = fr
+    return legs
+
+
+def test_detect_feet_finds_static_figure_at_two_screen_sizes_and_none_without_one():
+    for w, h in ((1080, 2340), (720, 1600)):
+        x, y = rb.detect_feet(_scrolling_legs(w, h, 0.66))
+        assert abs(x - 0.5 * w) < 0.01 * w and abs(y - 0.66 * h) < 0.01 * h, (w, h, x, y)
+    assert rb.detect_feet(_scrolling_legs(720, 1600, 0.66, figure=False)) is None
+
+
+def test_horizon_refit_drops_bands_above_the_horizon():
+    cam = {"s": 7.5, "sy": -1.54, "a": -0.0022, "px": 540.0, "py": 1510.0}  # horizon row sy / a = 700 px
+    h = rb.ground_to_game(cam, -20.0)
+    hi = np.linalg.inv(h)
+    rng = np.random.default_rng(1)
+    moves = []
+    for b in (0, 45, 90, 135, 180, 225, 270, 315):
+        d = 6.0 * np.array([math.sin(math.radians(b)), math.cos(math.radians(b))])
+        fl = []
+        for fy in rb.FLOW_ROWS:
+            y = (fy[0] + fy[1]) / 2 * 2340
+            for x in (250, 540, 850):
+                good = y > 700 + 0.03 * 2340  # above that: far content, coherent but off-model
+                f = rb.predict_flow(h, hi, d, (x, y)) * (1.0 if good else 0.4)  # far content moves less
+                fl.append((*(f + rng.normal(0, 0.5, 2)), 0.9, x, y))
+        moves += [(float(b), d, fl)] * 6
+    fit = rb.fit_perspective_horizon(moves, (540.0, 1510.0))
+    # (s, sy, a) and (-s, -sy, -a) with theta + 180 are the same camera: compare magnitudes
+    assert abs(abs(fit["s"]) - 7.5) < 0.05 and abs(abs(fit["sy"]) - 1.54) < 0.03, fit
+    assert abs(abs(fit["a"]) - 0.0022) < 5e-5, fit
+
+
 def test_adb_devices_parser_keeps_only_authorized_devices():
     text = "List of devices attached\nAAA111 device usb:1 product:x\nBBB222 unauthorized usb:2\nCCC333 offline\n\n"
     assert rb.parse_adb_devices(text) == ["AAA111"]
