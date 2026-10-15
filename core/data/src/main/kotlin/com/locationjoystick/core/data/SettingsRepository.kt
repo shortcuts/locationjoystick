@@ -243,6 +243,8 @@ class SettingsRepository
 
         fun getGuidedPath(): Flow<GuidedPath> = dataSource.getGuidedPath().map { GuidedPath.fromName(it) }
 
+        suspend fun setGuidedPath(path: GuidedPath) = dataSource.setGuidedPath(path.name)
+
         suspend fun setMapTileSource(source: MapTileSource) = dataSource.setMapTileSource(source.name)
 
         fun getRealismBearingHoldIdle(): Flow<Boolean> = dataSource.getRealismBearingHoldIdle()

@@ -13,6 +13,7 @@ import com.locationjoystick.core.common.util.LocaleContextWrapper
 import com.locationjoystick.core.common.util.isMockLocationEnabled
 import com.locationjoystick.core.common.util.isOverlayPermissionGranted
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.model.GuidedPath
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,8 +87,13 @@ class OnboardingViewModel
             }
         }
 
+        fun selectPath(path: GuidedPath) {
+            _uiState.update { it.copy(selectedPath = path) }
+        }
+
         fun onSetupComplete() {
             viewModelScope.launch {
+                settingsRepository.setGuidedPath(_uiState.value.selectedPath)
                 settingsRepository.setOnboardingComplete(true)
             }
         }

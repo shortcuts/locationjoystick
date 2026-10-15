@@ -6,25 +6,37 @@ Key files: `:feature:onboarding:impl/OnboardingScreen.kt`, `:feature:onboarding:
 
 ## Steps
 
-1. Welcome
-2. Grant `ACCESS_FINE_LOCATION`
-3. Grant `SYSTEM_ALERT_WINDOW`
-4. Enable mock location (deep link to Developer Options; re-checked automatically on resume — see "Permission Checks" below)
-5. Optional: Tap to Walk setup (every API level; card text names the calibration screenshots). On API 30+ the Accessibility prominent disclosure
-   (`CompassDisclosureDialog`) opens by itself on entering onboarding while the choice is unanswered, with
-   Accept, Decline and a small Skip. Accept opens Android's Accessibility settings (below API 30 it only
-   records the choice). Every button stores an answer, so it never auto-shows again; Tap to Walk entry
-   points still ask until Accept. The card's "Review and turn on" reopens it. Not required to proceed.
-   Installs that already finished onboarding never see the auto-show. See docs/features/tap-to-walk.md,
-   "Prominent Disclosure".
+One `ONBOARDING_ROUTE`; a local `rememberSaveable` flag in `OnboardingRoute` switches between two
+screens. There is no separate disclaimer screen — the header "Set up locationjoystick" is the
+"Welcome". System back on the picker returns to the permission screen.
+
+Screen 1 (`OnboardingScreen.kt`), "Continue" button:
+
+1. Grant `ACCESS_FINE_LOCATION`
+2. Grant `SYSTEM_ALERT_WINDOW`
+3. Enable mock location (deep link to Developer Options; re-checked automatically on resume — see "Permission Checks" below)
+
+Screen 2, path picker (`PathPickerStep.kt`), "Start using locationjoystick" button, no skip:
+
+4. Pick a guided path: Default (preselected), Pokémon Go or Pikmin Bloom. Selection is held in
+   `OnboardingUiState.selectedPath` and written to `guidedPath` (`SettingsRepository.setGuidedPath`) right
+   before `setOnboardingComplete(true)` when the user finishes. The picker only says which features
+   each path hides; see docs/domain-models.md, `GuidedPath`.
+5. Optional Tap to Walk card, shown on Default and Pokémon Go and hidden on Pikmin Bloom (every API
+   level; card text names the calibration screenshots). On API 30+ the Accessibility prominent disclosure
+   (`CompassDisclosureDialog`) opens by itself when the picker first appears while the choice is unanswered
+   and the path shows Tap to Walk, with Accept, Decline and a small Skip. Accept opens Android's
+   Accessibility settings (below API 30 it only records the choice). Every button stores an answer, so
+   it never auto-shows again; Tap to Walk entry points still ask until Accept. The card's "Review and
+   turn on" reopens it. Not required to proceed. Installs that already finished onboarding never see the
+   auto-show. See docs/features/tap-to-walk.md, "Prominent Disclosure".
 6. Done → MapScreen
 
-A "Step X of 3" label and progress bar sit above the three permission cards, computed from how
-many of them are currently granted — steps 2–4 above, not Welcome/Done.
+A "Step X of 4" label and progress bar sit above the cards. On screen 1 it counts how many of the
+three permissions are granted (progress = granted / 4); the picker is always "Step 4 of 4" with a full bar.
 
-An optional language dropdown (EN / CN / TW / System default) sits in the header, above the
-"Step X of 3" label — it is not one of the numbered/counted steps and can be left alone. See
-docs/features/localization.md.
+An optional language dropdown (EN / CN / TW / System default) sits in the header of both screens —
+it is not one of the numbered/counted steps and can be left alone. See docs/features/localization.md.
 
 ## Permission Checks
 
@@ -56,13 +68,16 @@ Losing `ACCESS_FINE_LOCATION` is unaffected by this and still forces a restart (
 permission) — only the overlay permission is exempted, since it's the one permission every
 other feature already tolerates being absent.
 
-Implemented via the pure `isNavGateReachable()` gate in `LjNavHost.kt`, fed by
-`NavGateViewModel.onboardingComplete` — mirrors the existing `bypassMockLocationCheck` pattern
+Implemented via the pure `isNavGateReachable(onboardingComplete, coreGranted)` gate in `LjNavHost.kt`
+(`coreGranted && onboardingComplete`), fed by `NavGateViewModel.onboardingComplete`. A first-run user is
+never gated through, so granting permissions or skipping the mock-location check cannot jump past the
+path picker; only finishing it sets `onboardingComplete`. A cold start with everything already granted
+still goes straight to `IDLE_ROUTE`, so existing installs are never shown the picker. Mirrors the existing `bypassMockLocationCheck` pattern
 used for the mock-location check skip above.
 
 ## Skip Mock-Location Check
 
-Step 4's card ("Set as fake GPS app") has a secondary action, "Skip", next
+Step 3's card ("Set as fake GPS app") has a secondary action, "Skip", next
 to the primary "Open Developer Options" button. Some modified mock-location
 apps evade `AppOpsManager` detection, so `isMockLocationEnabled()`
 (`core/common/util/AppOpsUtils.kt`) never reports `MODE_ALLOWED` for them
@@ -89,26 +104,6 @@ Both gates honor the persisted flag:
   onboarding from ever being shown again after a skip.
 
 Round-trips through `ExportData` like `hideTeleportFeatures`.
-
-## Returning After Revoking the Overlay Permission
-
-Once onboarding is completed (`ONBOARDING_COMPLETE` DataStore flag,
-`SettingsRepository.getOnboardingComplete()`), later revoking `SYSTEM_ALERT_WINDOW` in system
-Settings does **not** force the user back through the full onboarding flow on the next app
-launch — only `ACCESS_FINE_LOCATION` and mock location remain required to reach `IDLE_ROUTE`.
-Joystick and widget overlays simply stay unavailable until the permission is re-granted
-(`MockLocationService` already gates auto-starting them on `Settings.canDrawOverlays`, see
-docs/features/joystick.md and docs/features/widget.md) — everything else (teleport, walk,
-routes) keeps working.
-
-Losing `ACCESS_FINE_LOCATION` is unaffected by this and still forces a restart (see
-`MockLocationService.onStartCommand`'s `setOnboardingComplete(false)` on missing location
-permission) — only the overlay permission is exempted, since it's the one permission every
-other feature already tolerates being absent.
-
-Implemented via the pure `isNavGateReachable()` gate in `LjNavHost.kt`, fed by
-`NavGateViewModel.onboardingComplete` — mirrors the existing `bypassMockLocationCheck` pattern
-used for the mock-location check skip above.
 
 ## Edge Cases
 

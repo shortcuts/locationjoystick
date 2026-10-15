@@ -12,7 +12,7 @@
     <string name="onboarding_version">"v%1$s"</string>
     <string name="onboarding_skip_anyway">"Skip anyway"</string>
     <string name="onboarding_cancel">"Cancel"</string>
-    <string name="onboarding_step_x_of_3">"Step %1$d of 3"</string>
+    <string name="onboarding_step_x_of_4">"Step %1$d of 4"</string>
     <string name="onboarding_location_permission">"Location permission"</string>
     <string name="onboarding_location_permission_desc">"Required to read your real position for map centering and route recording."</string>
     <string name="onboarding_grant_permission">"Grant Permission"</string>
@@ -28,4 +28,13 @@
     <string name="onboarding_compass_orientation">"Tap to Walk setup (optional)"</string>
     <string name="onboarding_compass_orientation_desc">"Skip this step if you don’t want to use Tap to Walk. Tap to Walk uses Android’s Accessibility permission to take screenshots of your game: a few hundred during a one-time 10 minute calibration walk you start yourself, so your taps land where you tapped."</string>
     <string name="onboarding_compass_review">"Review and turn on"</string>
+    <string name="onboarding_continue">"Continue"</string>
+    <string name="onboarding_pick_path_title">"How will you use it?"</string>
+    <string name="onboarding_pick_path_subtitle">"This only hides features you don’t need. You can change it later in Settings."</string>
+    <string name="onboarding_path_default">"Default"</string>
+    <string name="onboarding_path_default_desc">"Everything is available."</string>
+    <string name="onboarding_path_pokemon_go">"Pokémon Go"</string>
+    <string name="onboarding_path_pokemon_go_desc">"Hides Planting."</string>
+    <string name="onboarding_path_pikmin_bloom">"Pikmin Bloom"</string>
+    <string name="onboarding_path_pikmin_bloom_desc">"Hides Tap to Walk and Reconnect Accessory."</string>
 </resources>

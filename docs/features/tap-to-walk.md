@@ -187,8 +187,8 @@ the first of them is onboarding, which every new install walks through:
 
 | Entry point | Where |
 |---|---|
-| Onboarding (on entry) | `OnboardingScreen` opens the dialog by itself when the stored choice is unanswered and API >= 30. Buttons: Accept (records `accepted`, opens Android's Accessibility settings), Decline (`declined`), Skip (`skipped`). Every button stores an answer, so it never auto-shows again. Installs that finished onboarding before this shipped never reach it |
-| Onboarding card | Optional "Tap to Walk setup" card below the three required steps (every API level, skip line first, not counted in "Step X of 3", never blocks "Start"). "Review and turn on" reopens the same disclosure (`OnboardingScreen.kt`) |
+| Onboarding (on entry) | `PathPickerStep` (last onboarding step) opens the dialog by itself when the stored choice is unanswered, API >= 30 and the chosen path is not Pikmin Bloom. Buttons: Accept (records `accepted`, opens Android's Accessibility settings), Decline (`declined`), Skip (`skipped`). Every button stores an answer, so it never auto-shows again. Installs that finished onboarding before this shipped never reach it |
+| Onboarding card | Optional "Tap to Walk setup" card on the path picker step (every API level, skip line first, hidden on Pikmin Bloom, never blocks "Start"). "Review and turn on" reopens the same disclosure (`PathPickerStep.kt`) |
 | Turning Tap to Walk on | The Tap to Walk switch opens the same screen, with the two overlay caveats above the disclosure text and "Accept" as the accept label (`SettingsMenusSubScreen.kt`). Below API 30 only the caveats are shown, with "Enable anyway" |
 | Tapping the widget crosshair | `FloatingWidgetService.onTapToWalkClicked()` launches `MainActivity` with `EXTRA_SHOW_COMPASS_DISCLOSURE`; the overlay opens on the next tap |
 | Settings compass row | "Open Settings" in `CompassOrientationSection` |

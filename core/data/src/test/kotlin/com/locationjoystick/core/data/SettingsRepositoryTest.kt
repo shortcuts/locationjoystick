@@ -946,6 +946,14 @@ class SettingsRepositoryTest {
     // hide teleport features
 
     @Test
+    fun `setGuidedPath stores the name and getGuidedPath maps it back`() =
+        runTest {
+            repository.setGuidedPath(GuidedPath.POKEMON_GO)
+            assertEquals("POKEMON_GO", fakeDataSource.guidedPathFlow.value)
+            assertEquals(GuidedPath.POKEMON_GO, repository.getGuidedPath().first())
+        }
+
+    @Test
     fun `getGuidedPath defaults then maps stored name and falls back on unknown`() =
         runTest {
             repository.getGuidedPath().test {
@@ -1458,6 +1466,10 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
     val guidedPathFlow = MutableStateFlow(GuidedPath.DEFAULT.name)
 
     override fun getGuidedPath(): Flow<String> = guidedPathFlow
+
+    override suspend fun setGuidedPath(name: String) {
+        guidedPathFlow.value = name
+    }
 
     private val mapTileSourceFlow = MutableStateFlow(MapTileSource.DEFAULT.name)
 

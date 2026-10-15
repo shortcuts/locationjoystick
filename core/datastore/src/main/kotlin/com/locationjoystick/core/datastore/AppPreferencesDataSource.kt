@@ -197,6 +197,8 @@ interface PreferencesDataSource {
 
     fun getGuidedPath(): Flow<String>
 
+    suspend fun setGuidedPath(name: String)
+
     /** Sets the raster base-map provider name. */
     suspend fun setMapTileSource(name: String)
 
@@ -934,6 +936,8 @@ class AppPreferencesDataSource
         override fun getMapTileSource(): Flow<String> = pref(Keys.MAP_TILE_SOURCE, MapTileSource.DEFAULT.name)
 
         override fun getGuidedPath(): Flow<String> = pref(Keys.GUIDED_PATH, GuidedPath.DEFAULT.name)
+
+        override suspend fun setGuidedPath(name: String) = setPref(Keys.GUIDED_PATH, name)
 
         override suspend fun setMapTileSource(name: String) = setPref(Keys.MAP_TILE_SOURCE, name)
 

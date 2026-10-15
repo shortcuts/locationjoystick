@@ -87,13 +87,14 @@ private fun corePermissionsGranted(
  * A returning user (already completed onboarding once) only needs the core permissions to
  * reach the app — losing the overlay permission afterward disables joystick/widget overlays
  * gracefully (see MockLocationService's canDrawOverlays gate) rather than forcing a full
- * onboarding restart. A first-time user still needs every permission, overlay included.
+ * onboarding restart. A first-time user is never gated through: only finishing the onboarding path
+ * picker sets `onboardingComplete`, so granting permissions or skipping the mock-location check
+ * cannot skip it.
  */
 internal fun isNavGateReachable(
     onboardingComplete: Boolean,
     coreGranted: Boolean,
-    overlayGranted: Boolean,
-): Boolean = coreGranted && (onboardingComplete || overlayGranted)
+): Boolean = coreGranted && onboardingComplete
 
 /**
  * Where the app opens (cold start, or returning from background while on Home): the Map while
@@ -133,7 +134,6 @@ fun LjNavHost(
                 isNavGateReachable(
                     onboardingComplete = onboardingComplete,
                     coreGranted = corePermissionsGranted(context, bypassMockLocationCheck),
-                    overlayGranted = isOverlayPermissionGranted(context),
                 )
             if (reachable) {
                 navController.navigate(IDLE_ROUTE) {

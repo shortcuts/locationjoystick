@@ -4,8 +4,8 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ScrollState
@@ -23,10 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +45,6 @@ import androidx.navigation.compose.composable
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
-import com.locationjoystick.core.designsystem.component.CompassDisclosureDialog
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjGuidedStepCard
 import com.locationjoystick.core.designsystem.component.LjLanguageDropdown
@@ -86,25 +85,45 @@ fun OnboardingRoute(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    // Local step keeps one ONBOARDING_ROUTE for the nav gate; back from the picker returns to permissions.
+    var pickingPath by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = pickingPath) { pickingPath = false }
+    val onLanguage: (String?) -> Unit = { tag ->
+        viewModel.setLanguage(tag)
+        (context as? Activity)?.recreate()
+    }
+
+    if (pickingPath) {
+        PathPickerStep(
+            uiState = uiState,
+            onSelectPath = viewModel::selectPath,
+            onCompassDisclosureAnswered = viewModel::recordCompassDisclosure,
+            onCompassDisclosureSkipped = viewModel::skipCompassDisclosure,
+            onFinish = {
+                viewModel.onSetupComplete()
+                onSetupComplete()
+            },
+            isSpoofing = spoofToggle.isSpoofing,
+            onToggleSpoofing = spoofToggle.onToggle,
+            locationLabel = spoofToggle.locationLabel,
+            bottomBar = bottomBar,
+            languageTag = languageTag,
+            onSetLanguage = onLanguage,
+        )
+        return
+    }
+
     OnboardingScreen(
         uiState = uiState,
         onCheckPermissions = viewModel::checkPermissions,
         onSkipMockLocationCheck = viewModel::skipMockLocationCheck,
-        onCompassDisclosureAnswered = viewModel::recordCompassDisclosure,
-        onCompassDisclosureSkipped = viewModel::skipCompassDisclosure,
-        onSetupComplete = {
-            viewModel.onSetupComplete()
-            onSetupComplete()
-        },
+        onContinue = { pickingPath = true },
         isSpoofing = spoofToggle.isSpoofing,
         onToggleSpoofing = spoofToggle.onToggle,
         locationLabel = spoofToggle.locationLabel,
         bottomBar = bottomBar,
         languageTag = languageTag,
-        onSetLanguage = { tag ->
-            viewModel.setLanguage(tag)
-            (context as? Activity)?.recreate()
-        },
+        onSetLanguage = onLanguage,
     )
 }
 
@@ -113,9 +132,7 @@ internal fun OnboardingScreen(
     uiState: OnboardingUiState,
     onCheckPermissions: () -> Unit,
     onSkipMockLocationCheck: () -> Unit = {},
-    onCompassDisclosureAnswered: (accepted: Boolean) -> Unit = {},
-    onCompassDisclosureSkipped: () -> Unit = {},
-    onSetupComplete: () -> Unit,
+    onContinue: () -> Unit,
     isSpoofing: Boolean = false,
     onToggleSpoofing: () -> Unit = {},
     locationLabel: String? = null,
@@ -125,17 +142,6 @@ internal fun OnboardingScreen(
 ) {
     val context = LocalContext.current
     var showSkipMockLocationDialog by remember { mutableStateOf(false) }
-    var showCompassDisclosure by remember { mutableStateOf(false) }
-
-    // Shown on entry so Play's reviewers meet it in the first-run flow. Onboarding only runs once, so
-    // installs that already finished it never reach this prompt.
-    LaunchedEffect(uiState.compassDisclosureChoice) {
-        if (uiState.compassDisclosureChoice == AppConstants.CompassTrackingConstants.DISCLOSURE_UNANSWERED &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-        ) {
-            showCompassDisclosure = true
-        }
-    }
 
     val locationPermissionLauncher =
         rememberLauncherForActivityResult(
@@ -241,7 +247,7 @@ internal fun OnboardingScreen(
                 ).count { it }
 
             Text(
-                text = stringResource(R.string.onboarding_step_x_of_3, grantedStepCount.coerceAtMost(2) + 1),
+                text = stringResource(R.string.onboarding_step_x_of_4, grantedStepCount.coerceAtMost(2) + 1),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -250,7 +256,7 @@ internal fun OnboardingScreen(
             Spacer(modifier = Modifier.height(4.dp))
 
             LinearProgressIndicator(
-                progress = { grantedStepCount / 3f },
+                progress = { grantedStepCount / 4f },
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.secondary,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -303,35 +309,11 @@ internal fun OnboardingScreen(
                 onExtraAction = { showSkipMockLocationDialog = true },
             )
 
-            // Play's Accessibility API policy wants the disclosure in the normal usage flow, not only
-            // behind Settings menus. Onboarding is the one screen every install walks through, so the
-            // compass step lives here (every API level) and re-opens the disclosure that is also shown on
-            // entry, right before Android's Accessibility settings open.
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = stringResource(R.string.onboarding_optional),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            LjGuidedStepCard(
-                title = stringResource(R.string.onboarding_compass_orientation),
-                description = stringResource(R.string.onboarding_compass_orientation_desc),
-                isGranted = uiState.compassServiceEnabled,
-                icon = LjIcons.Explore,
-                actionLabel = stringResource(R.string.onboarding_compass_review),
-                onAction = { showCompassDisclosure = true },
-            )
-
             Spacer(modifier = Modifier.height(16.dp))
 
             LjPrimaryButton(
-                text = stringResource(R.string.onboarding_start_using_locationjoystick),
-                onClick = onSetupComplete,
+                text = stringResource(R.string.onboarding_continue),
+                onClick = onContinue,
                 enabled = uiState.canProceed || uiState.isDebugBuild,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -348,29 +330,6 @@ internal fun OnboardingScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
         }
-    }
-
-    if (showCompassDisclosure) {
-        CompassDisclosureDialog(
-            onAccept = {
-                showCompassDisclosure = false
-                onCompassDisclosureAnswered(true)
-                // Below API 30 the service is disabled, so the settings screen has nothing to turn on.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    context.startActivity(
-                        Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    )
-                }
-            },
-            onDecline = {
-                showCompassDisclosure = false
-                onCompassDisclosureAnswered(false)
-            },
-            onSkip = {
-                showCompassDisclosure = false
-                onCompassDisclosureSkipped()
-            },
-        )
     }
 
     if (showSkipMockLocationDialog) {
@@ -422,7 +381,7 @@ private fun OnboardingScreenPreview() {
                     mockLocationEnabled = false,
                 ),
             onCheckPermissions = {},
-            onSetupComplete = {},
+            onContinue = {},
         )
     }
 }
@@ -440,7 +399,7 @@ private fun OnboardingScreenDebugPreview() {
                     isDebugBuild = true,
                 ),
             onCheckPermissions = {},
-            onSetupComplete = {},
+            onContinue = {},
         )
     }
 }

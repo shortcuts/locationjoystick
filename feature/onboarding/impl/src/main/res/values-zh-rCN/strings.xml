@@ -12,7 +12,7 @@
     <string name="onboarding_version">"v%1$s"</string>
     <string name="onboarding_skip_anyway">"仍然跳过"</string>
     <string name="onboarding_cancel">"取消"</string>
-    <string name="onboarding_step_x_of_3">"第 %1$d 步，共 3 步"</string>
+    <string name="onboarding_step_x_of_4">"第 %1$d 步，共 4 步"</string>
     <string name="onboarding_location_permission">"位置权限"</string>
     <string name="onboarding_location_permission_desc">"用于读取你的真实位置，以便地图居中显示和录制路线。"</string>
     <string name="onboarding_grant_permission">"授予权限"</string>
@@ -28,4 +28,13 @@
     <string name="onboarding_compass_orientation">"点击行走设置（可选）"</string>
     <string name="onboarding_compass_orientation_desc">"如果你不想使用“点击行走”，可以跳过此步骤。“点击行走”使用 Android 无障碍（Accessibility）权限截取游戏的屏幕截图：在你自己开始的一次性 10 分钟校准行走中约几百张，使你的点击落在你点击的位置。"</string>
     <string name="onboarding_compass_review">"查看并开启"</string>
+    <string name="onboarding_continue">"继续"</string>
+    <string name="onboarding_pick_path_title">"你打算怎么使用？"</string>
+    <string name="onboarding_pick_path_subtitle">"这只会隐藏你用不到的功能，之后可以在“设置”中更改。"</string>
+    <string name="onboarding_path_default">"默认"</string>
+    <string name="onboarding_path_default_desc">"所有功能均可使用。"</string>
+    <string name="onboarding_path_pokemon_go">"Pokémon Go"</string>
+    <string name="onboarding_path_pokemon_go_desc">"隐藏种植功能。"</string>
+    <string name="onboarding_path_pikmin_bloom">"Pikmin Bloom"</string>
+    <string name="onboarding_path_pikmin_bloom_desc">"隐藏点击行走和重新连接配件。"</string>
 </resources>
