@@ -592,7 +592,7 @@ Parity target (offline landing check above, bench `landing`): p50 about 2.5 m, 9
 at wide zoom across three camera orientations. The Kotlin unit tests pin the stages, not those end numbers: flow per
 band within 1.0 px of the bench and response within 0.15 (except bands with a cleaned HUD) on a procedural
 1080x2340 scene, fitted heading within 1.5 degrees, scales within 3 percent and the perspective term within 5 percent
-of the bench fit on synthetic flows with outliers. The landing numbers themselves need the cross-device fixture suite.
+of the bench fit on synthetic flows with outliers. The cross-device parity suite (see "Parity fixtures" below) now pins the fit and the tap offsets of each recorded device to the bench. The landing percentages themselves still need on-device or longer offline evidence.
 
 Failure modes: fewer than 40 flows or a singular fit return `null` (calibration failed, store nothing); a feet pixel
 that is wrong by tens of pixels puts the disc mask on the wrong place and leaves the sprite in the flow; frames that
@@ -609,6 +609,45 @@ Invariants a change must not break:
    padding and epsilon of `PhaseCorrelation` (a plain Hann product lowers it by about 20 percent; a 1e-7 epsilon by a third).
 4. Goldens: `scripts/export_flow_golden.py` writes `core/model/src/test/resources/flow_golden/`; rerun it when
    `clean_leg`, `band_moves`, `_feat` or `fit_perspective*` change. The scene is procedural (no image files).
+
+### Parity fixtures
+
+`DeviceParityTest` (`core/model`) replays bench numbers recorded per device: the band flows (device pixels), the feet
+pixel, the bench perspective fit (reference pixels) and the tap-to-ground offsets of a probe grid. Fixtures live in
+`core/model/src/test/resources/device_golden/<device>/` and are written by `scripts/export_device_golden.py`; the
+regeneration command and the tolerances are in docs/testing.md, "Bench parity fixtures".
+
+Provenance (values from the exporter's output, read from `meta.txt`, `fit.txt`):
+
+| fixture | model | resolution | density | camera state | legs captured | bench legs | feet pixel (device px) | bench fit: heading, lateral px/m, forward px/m, perspective, median residual, n |
+|---|---|---|---|---|---|---|---|---|
+| `pixel5_1080x2340` | Pixel 5 | 1080x2340 | 440 dpi | wide zoom, no twist (bench persp run; not recorded at capture) | 2026-10-13 | `data/walk_C_000`, `045`, `090` | 537.6, 1714.6 | -0.94 deg, 11.17, 1.48, -0.00144, 5.24 px, n 1422 |
+| `pixel7_1080x2400` | Pixel 7 | 1080x2400 | 420 dpi | wide zoom, no twist (bench persp run; not recorded at capture) | 2026-10-15 | `persp_pixel7_20261015/walk_C_000`, `045`, `090`, `225` (bench worktree `tap-to-walk-no-compass`) | 536.5, 1557.7 | 1.94 deg, 7.68, 2.90, -0.00165, 3.36 px, n 1995 |
+
+The Pixel 5 feet pixel measures 537.6, 1714.6 on the current detector, not the 542, 1725 quoted in the detection notes
+above; the fixture follows the current detector. The Pixel 5 fixture uses the three-leg set in `data/`; the four-leg
+Pixel 5 set in the same worktree is not used. Both sets are gitignored bench data, so only the numbers are committed.
+
+What the fixtures do not cover, on purpose:
+
+- `FrameFlow` and `FeetDetector` on real game frames. Frames are never committed: the game HUD shows the player's
+  name, and the bench folder is git-ignored. Those stages stay pinned by the procedural goldens in `flow_golden/` and
+  `feet_golden/`.
+- Close-up zoom and any screen other than the two above. A new device needs a new fixture directory and a test entry.
+
+Invariants a change must not break:
+
+1. Units: the fixture flows and taps are device pixels; the first line of `fit.txt` is reference pixels (1080x2340).
+   The exporter converts with `x * 1080 / width` and `y * 2340 / height` before `fit_perspective_horizon`, the same
+   conversion `GroundMapFit.fit` makes, so the expected fit and the Kotlin fit share one frame.
+2. The test passes the device feet pixel (`fit.txt` line 2) and the screen size from `meta.txt`. It never runs
+   `FeetDetector`, so a detector change shows up only in the exporter output and the `fit.txt` values it writes.
+3. Tap offsets are checked through a `GroundMap` built from the Kotlin fit, not from the bench fit, so a drift in
+   either the fit or the map fails the test.
+4. Tolerances are fixed: heading 1.5 degrees, lateral and forward scale 3 percent, perspective 5 percent, median
+   residual 0.3 px, flow count equal to `2 * n`; tap offsets within the larger of 1.0 m and 3 percent of the bench
+   offset length. A failing test is a port defect: fix the port, do not widen the tolerance.
+5. Fixtures hold numbers only. Adding a frame, a screenshot or a pixel dump is out of scope.
 
 ### Calibration walk
 
@@ -716,7 +755,7 @@ Open work, in order:
 1. Lower the skip rate (24 of 36 taps on the second Pixel 7 run) and explain the 23 m miss (`t17`), then repeat the run on this device and on more devices and camera states.
 2. Close-up (z1.6) landing is not met: p90 96.9 m on the Pixel 7, target under 10 m. Measured with `varycap --conditions 1.6:0` then `landing` without `--anchor`: feet pixel detected 509 1548, 928 samples, p50 22.6 m, p90 96.9 m, within 10 m 20%, within 15 m 34%, 66% of matches skipped as ambiguous. The wide capture on the same device gives p50 3.0 m, p90 9.9 m with the detected anchor. The detected feet row looks too high at close-up (sharp rows span 1149 to 1911, the detector stops at the torso/leg gap); widening the run gap to 0.12 moved the anchor to 1796 and made landing worse (p90 286.8 m), so the anchor is not the main error: the fit and the match step at close-up are. Needs a second device and a cause for the ambiguity at close-up before retrying.
 3. Ground map model ported (`GroundMap`, see "Ground map model"), feet detection ported (`FeetDetector`, see "Feet detection"), frame flow and fit ported (`FrameFlow`, `GroundMapFit`, see "Frame flow and ground fit"); the walked-leg capture and orchestration ported (`CalibrationWalkOrchestrator`, see "Calibration walk"); the tap overlay now reads the stored ground map (fallback north-up without one); the calibration UX remains. The on-device analysis time is unmeasured (the pure port was only benchmarked on the host).
-4. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes.
+4. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes. The parity suite shows the port matches the bench on each recorded device; it does not show that the pass rate holds.
 
 ## Warning Screen
 

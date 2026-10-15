@@ -1,0 +1,8 @@
+device pixel5_1080x2340
+model Pixel 5
+width 1080
+height 2340
+density_dpi 440
+camera_state fixed wide zoom, no twist (bench persp run)
+captured_on 2026-10-13
+source data/walk_C_000 data/walk_C_045 data/walk_C_090
