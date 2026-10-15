@@ -454,6 +454,32 @@ of 700 to 1420 rows; taps beyond that are extrapolated. (4) Taps whose patch end
 companion can be mismatched; check the annotated frames by eye. (5) The feet pixel is hand-measured per zoom;
 the app would need to detect it.
 
+### Ground map model
+
+`GroundMap` in `:core:model` (`GroundMap.kt`, pure Kotlin, no Android) is the app-side port of the bench's
+`ground_to_game` / `tap_to_ground_persp`. It only maps; the walked-leg fit and feet detection are separate work.
+
+- Frames: screen x right, y down, in the device's own pixels; ground east +x, north +y (north up), metres relative to the
+  player's feet pixel. No compass is read; `headingDeg` (fitted, degrees) is how far north is rotated in the frame.
+- Calibration (`GroundCalibration`): `headingDeg`, `lateralPxPerM`, `forwardPxPerM`, `perspective` (1/m), `feetX`,
+  `feetY`. All pixel values are reference pixels (1080x2340), not device pixels.
+- Screen scaling: a device pixel is scaled to the reference frame by `x * 1080 / width`, `y * 2340 / height` (and
+  back for `groundToPixel`), so one calibration serves any screen size or density.
+- API: `pixelToGround(x, y)` returns east/north metres or `null` past the horizon line (divisor <= 0);
+  `groundToPixel(east, north)` is the inverse. A non-positive screen size throws.
+- No row-skew term: the validated perspective model has none (skew belonged to the superseded 2x2 map).
+- Valid range: the fit was only checked for rows 700 to 1420 of 2340 and moves up to about 31 m; anything else is
+  extrapolated, not rejected.
+
+Invariants a change must not break:
+
+1. The formula equals the bench: `H = camH * rot(heading)`, `camH = [[s,0,px],[0,-sy,py],[0,-a,1]]`, tap offset
+   `Hinv(p) - Hinv(feet)` with homogeneous divide. Tests pin it to bench goldens within 1e-6 m
+   (`scripts/export_ground_map_golden.py`; rerun when `ground_to_game` changes).
+2. Reference size stays 1080x2340; stored calibrations are in reference pixels.
+3. Units are px per metre, degrees, metres; screen y is down, ground north is up.
+4. `groundToPixel(pixelToGround(p)) == p` (round trip).
+
 ### Status and open work
 
 Accepted state of the no-compass investigation (branch `tap-to-walk-no-compass`, bench only, no app code changed):
@@ -486,7 +512,7 @@ Open work, in order:
 
 1. Lower the skip rate (24 of 36 taps on the second Pixel 7 run) and explain the 23 m miss (`t17`), then repeat the run on this device and on more devices and camera states.
 2. Calibrate close-up zoom and detect the feet pixel automatically instead of measuring it by eye.
-3. Port the calibrated ground map to the app.
+3. Ground map model ported (`GroundMap`, see "Ground map model"); the walked-leg fit, feet detection and wiring into the tap overlay remain.
 4. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes.
 
 ## Warning Screen

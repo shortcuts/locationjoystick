@@ -35,6 +35,9 @@ All in `:core:model`. Pure Kotlin — no Android, no Room. Room entities in `:co
 | `GroupState` | `role: GroupRole`, `groupId: String?`, `leaderHost: String?`, `leaderPort: Int?`, `followerModeEnabled: Boolean`, `sharingEnabled: Boolean`, `followLeaderTeleports: Boolean` (default `true`) |
 | `SyncPositionUpdate` | `timestamp: Long`, `latitude: Double`, `longitude: Double`, `speedMs: Float`, `bearing: Float`, `seq: Long`, `active: Boolean`, `teleportSeq: Long` (default `0`) |
 | `GroupInvite` | `host: String`, `port: Int`, `groupId: String` |
+| `GroundCalibration` | `headingDeg: Double`, `lateralPxPerM: Double`, `forwardPxPerM: Double`, `perspective: Double`, `feetX: Double`, `feetY: Double` — fitted tap-to-walk camera terms in reference pixels (1080x2340); see docs/features/tap-to-walk.md, "Ground map model" |
+| `GroundOffset` | `eastMeters: Double`, `northMeters: Double` — metres from the player's feet, north up |
+| `GroundMap` | class (not data): `GroundMap(cal, screenWidth, screenHeight)`; `pixelToGround(x, y): GroundOffset?`, `groundToPixel(east, north)`. Pure Kotlin perspective pixel/ground mapping |
 
 ## Mapping
 
