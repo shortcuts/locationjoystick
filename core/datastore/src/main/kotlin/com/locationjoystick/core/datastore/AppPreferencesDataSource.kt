@@ -23,6 +23,7 @@ import com.locationjoystick.core.model.RoamingKind
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.StoredGroundCalibration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -382,6 +383,15 @@ interface PreferencesDataSource {
 
     fun getCompassDisclosureChoice(): Flow<String>
 
+    /**
+     * The latest tap-to-walk calibration walk result, or null. Per-device: a standalone key outside
+     * [SettingsSnapshot] on purpose, so it is never exported or imported.
+     */
+    fun getGroundCalibration(): Flow<StoredGroundCalibration?>
+
+    /** Stores [value]; null removes it. */
+    suspend fun setGroundCalibration(value: StoredGroundCalibration?)
+
     /** Sets the package name of the app the compass test button switches to. */
     suspend fun setCompassTestTargetPackage(packageName: String)
 
@@ -633,6 +643,7 @@ class AppPreferencesDataSource
             val TAP_TO_WALK_SCALE_MPX = doublePreferencesKey("tap_to_walk_scale_mpx")
             val COMPASS_TEST_TARGET_PACKAGE = stringPreferencesKey("compass_test_target_package")
             val COMPASS_DISCLOSURE_CHOICE = stringPreferencesKey("compass_disclosure_choice")
+            val TAP_TO_WALK_GROUND_CALIBRATION = stringPreferencesKey("tap_to_walk_ground_calibration")
             val RECONNECT_TAP_ENABLED = booleanPreferencesKey("reconnect_tap_enabled")
             val RECONNECT_TAP_DISCLOSURE_ACCEPTED = booleanPreferencesKey("reconnect_tap_disclosure_accepted")
             val REALISM_REAL_ELEVATION_ENABLED = booleanPreferencesKey("realism_real_elevation_enabled")
@@ -1169,6 +1180,19 @@ class AppPreferencesDataSource
             pref(Keys.COMPASS_DISCLOSURE_CHOICE, AppConstants.CompassTrackingConstants.DISCLOSURE_UNANSWERED)
 
         override suspend fun setCompassDisclosureChoice(choice: String) = setPref(Keys.COMPASS_DISCLOSURE_CHOICE, choice)
+
+        override fun getGroundCalibration(): Flow<StoredGroundCalibration?> =
+            pref(Keys.TAP_TO_WALK_GROUND_CALIBRATION, "").map { if (it.isEmpty()) null else deserializeGroundCalibration(it) }
+
+        override suspend fun setGroundCalibration(value: StoredGroundCalibration?) {
+            dataStore.edit { prefs ->
+                if (value == null) {
+                    prefs.remove(Keys.TAP_TO_WALK_GROUND_CALIBRATION)
+                } else {
+                    prefs[Keys.TAP_TO_WALK_GROUND_CALIBRATION] = serializeGroundCalibration(value)
+                }
+            }
+        }
 
         override fun getReconnectTapEnabled(): Flow<Boolean> = pref(Keys.RECONNECT_TAP_ENABLED, false)
 

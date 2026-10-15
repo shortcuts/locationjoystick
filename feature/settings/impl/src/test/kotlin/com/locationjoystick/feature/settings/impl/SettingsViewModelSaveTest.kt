@@ -767,6 +767,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getCompassDisclosureChoice(): Flow<String> = flowOf("")
 
+    override fun getGroundCalibration(): Flow<com.locationjoystick.core.model.StoredGroundCalibration?> = flowOf(null)
+
+    override suspend fun setGroundCalibration(value: com.locationjoystick.core.model.StoredGroundCalibration?) = Unit
+
     override suspend fun setCompassDisclosureChoice(choice: String) = Unit
 
     override fun getReconnectTapEnabled(): Flow<Boolean> = flowOf(false)

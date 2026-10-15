@@ -437,9 +437,13 @@ class MapController
             }
         }
 
-        fun walkTo(position: LatLng) {
+        /** [speedMsOverride] walks at a fixed m/s instead of the active speed profile (calibration walk). */
+        fun walkTo(
+            position: LatLng,
+            speedMsOverride: Double? = null,
+        ) {
             cancelAnyActiveMovement()
-            startStraightWalk(position, walkCoordinator.currentGeneration())
+            startStraightWalk(position, walkCoordinator.currentGeneration(), speedMsOverride)
         }
 
         /**
@@ -451,11 +455,12 @@ class MapController
         private fun startStraightWalk(
             position: LatLng,
             expectedGeneration: Long,
+            speedMsOverride: Double? = null,
         ): Boolean {
             val walking = WalkMode.Walking(target = position, start = _sharedState.value.currentPosition)
             _sharedState.update { it.copy(walkMode = walking, routeTrace = null) }
             val started =
-                walkCoordinator.startWalk(position, appScope, expectedGeneration) { newPos, speedMs, bearing ->
+                walkCoordinator.startWalk(position, appScope, expectedGeneration, speedMsOverride) { newPos, speedMs, bearing ->
                     context.startService(
                         MockLocationIntentBuilder.updatePosition(
                             context,

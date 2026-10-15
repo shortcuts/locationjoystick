@@ -2,6 +2,7 @@ package com.locationjoystick.core.location
 
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.model.GrayImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -49,9 +50,21 @@ class CompassHeadingSource
             }
             return null
         }
+
+        /**
+         * One 8-bit luma screenshot for the tap-to-walk calibration walk, or null (unbound, disclosure
+         * not accepted, or the screenshot was rejected). Same consent gate as [captureHeading]; no
+         * retry, the walk's 3 s cadence already tolerates a missed frame.
+         */
+        suspend fun captureGrayFrame(): GrayImage? {
+            if (!settingsRepository.getCompassDisclosureAccepted().first()) return null
+            return service?.captureGrayFrame()
+        }
     }
 
 /** Minimal interface exposed by CompassAccessibilityService to avoid a circular module dependency. */
 interface CompassAccessibilityServiceBridge {
     suspend fun captureHeading(): Float?
+
+    suspend fun captureGrayFrame(): GrayImage?
 }

@@ -91,6 +91,27 @@ class WalkToEngineTest {
         }
 
     @Test
+    fun `speed override wins over the active speed profile`() =
+        runTest {
+            val target = LatLng(48.9000, 2.3522)
+            locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+            locationRepository.setWalkTarget(target)
+            val speeds = mutableListOf<Float>()
+
+            with(engine) {
+                backgroundScope.launchWalkAlongRoute(
+                    waypoints = listOf(target),
+                    onPositionUpdate = { _, speedMs, _ -> speeds += speedMs },
+                    onArrival = {},
+                    speedMsOverride = 0.25,
+                )
+            }
+            advanceTimeBy(AppConstants.LocationConstants.UPDATE_INTERVAL_MS + 1)
+
+            assertEquals(0.25f, speeds.first(), 0.001f)
+        }
+
+    @Test
     fun `bearing reported equals calculateBearing result`() =
         runTest {
             // Target due north: same longitude, higher latitude

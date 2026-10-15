@@ -63,6 +63,21 @@ class WalkCoordinatorTest {
         }
 
     @Test
+    fun `startWalk forwards the speed override to the engine`() =
+        runTest {
+            val target = LatLng(48.9000, 2.3522)
+            locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+            val speeds = mutableListOf<Float>()
+
+            walkCoordinator.startWalk(target, backgroundScope, speedMsOverride = 0.25) { _, speedMs, _ ->
+                speeds += speedMs
+            }
+            advanceTimeBy(AppConstants.LocationConstants.UPDATE_INTERVAL_MS + 1)
+
+            assertEquals(0.25f, speeds.first(), 0.001f)
+        }
+
+    @Test
     fun `startWalk sets walk target`() =
         runTest {
             val target = LatLng(48.9000, 2.3522)

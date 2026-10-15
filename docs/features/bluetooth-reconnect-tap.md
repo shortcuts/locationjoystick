@@ -34,6 +34,7 @@ Bluetooth API reconnect is out of scope by the task definition.
 Why:
 
 - The service is already enabled, disclosed and screenshot-capable (`feature/widget/impl/.../CompassAccessibilityService.kt`, `app/src/main/res/xml/compass_accessibility_service.xml`). The tap adds no new permission prompt, no new process, no new dependency, and no new entry in the enabled-services list a target app could enumerate.
+- The same service also serves `captureGrayFrame()` for the tap-to-walk calibration walk (docs/features/tap-to-walk.md, "Calibration walk"); the reconnect behaviour is unchanged.
 - The app is offline-first with no extra installs (see `AGENTS.md`, Project table).
 - It is the only path that reaches the target app without injection, shell access or node reads.
 

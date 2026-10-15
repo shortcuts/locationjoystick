@@ -61,6 +61,23 @@ class FeetDetectorTest {
     }
 
     @Test
+    fun gradientPathEqualsDetect() {
+        val dir = "/feet_golden/"
+        val raw = javaClass.getResourceAsStream(dir + "legs.raw")!!.readBytes()
+        val w = 120
+        val h = 260
+        val frames = raw.size / (w * h)
+        val imgs = (0 until frames).map { GrayImage(w, h, raw.copyOfRange(it * w * h, (it + 1) * w * h)) }
+        val gray = imgs.map { im -> GrayFrame(FloatArray(w * h) { (im.pixels[it].toInt() and 0xFF).toFloat() }) }
+        val expected = FeetDetector.detect(gray.chunked(frames / 2), w, h)!!
+        val grads = imgs.chunked(frames / 2).map { FeetDetector.legGradient(it)!! }
+        val got = FeetDetector.detectFromGradients(grads, w, h)!!
+        assertEquals(expected.x, got.x, 0.0)
+        assertEquals(expected.y, got.y, 0.0)
+        assertNull(FeetDetector.legGradient(imgs.take(2)))
+    }
+
+    @Test
     fun findsFigureAtTwoScreenSizes() {
         for ((w, h) in listOf(1080 to 2340, 720 to 1600)) {
             val p = FeetDetector.detect(legs(w, h, 0.66), w, h)

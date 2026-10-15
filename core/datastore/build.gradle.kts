@@ -15,4 +15,5 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(project(":core:testing"))
+    testImplementation(libs.orgjson)
 }

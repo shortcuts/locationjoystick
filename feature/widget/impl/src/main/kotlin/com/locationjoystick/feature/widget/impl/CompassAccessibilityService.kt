@@ -13,6 +13,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.CompassAccessibilityServiceBridge
 import com.locationjoystick.core.location.CompassHeadingSource
+import com.locationjoystick.core.model.GrayImage
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -357,6 +358,24 @@ class CompassAccessibilityService :
         val result = detectNorthAngle(bitmap)
         bitmap.recycle()
         return result
+    }
+
+    override suspend fun captureGrayFrame(): GrayImage? {
+        val bitmap = takeScreenshotBitmap() ?: return null
+        val soft = if (bitmap.config == Bitmap.Config.HARDWARE) bitmap.copy(Bitmap.Config.ARGB_8888, false) else bitmap
+        val w = soft.width
+        val h = soft.height
+        val pixels = IntArray(w * h)
+        soft.getPixels(pixels, 0, w, 0, 0, w, h)
+        if (soft !== bitmap) soft.recycle()
+        bitmap.recycle()
+        // Rec. 601 luma, the same weights as the bench's gray conversion.
+        val gray =
+            ByteArray(w * h) {
+                val p = pixels[it]
+                ((0.299 * ((p shr 16) and 0xFF) + 0.587 * ((p shr 8) and 0xFF) + 0.114 * (p and 0xFF)).toInt()).toByte()
+            }
+        return GrayImage(w, h, gray)
     }
 
     private suspend fun takeScreenshotBitmap(): Bitmap? {

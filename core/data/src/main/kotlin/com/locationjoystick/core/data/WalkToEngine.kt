@@ -53,12 +53,15 @@ class WalkToEngine
          * @param onFinished Optional owner-managed cleanup on completion or cancellation.
          *   When supplied, replaces the default target cleanup; the owner must clear only
          *   its own session, atomically with any replacement start.
+         * @param speedMsOverride Fixed speed in m/s used instead of the active speed profile
+         *   (calibration walks must stay at the validated walking speed).
          */
         fun CoroutineScope.launchWalkAlongRoute(
             waypoints: List<LatLng>,
             onPositionUpdate: suspend (LatLng, Float, Float) -> Unit,
             onArrival: suspend () -> Unit,
             onFinished: (() -> Unit)? = null,
+            speedMsOverride: Double? = null,
         ): Job {
             require(waypoints.isNotEmpty()) { "Waypoints must not be empty" }
             val finalTarget = waypoints.last()
@@ -81,7 +84,7 @@ class WalkToEngine
                             if (distanceM < AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS) break
 
                             val speedMs =
-                                settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+                                speedMsOverride ?: settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
                             val tick = computeWalkTick(current, waypoint, speedMs)
                             onPositionUpdate(tick.position, tick.speedMs, tick.bearingDeg)
 

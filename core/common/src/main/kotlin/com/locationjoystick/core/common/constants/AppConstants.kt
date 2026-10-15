@@ -589,6 +589,13 @@ object AppConstants {
         const val DEFAULT_SCALE_MPX = 0.23
         const val MIN_SCALE_MPX = 0.01
         const val MAX_SCALE_MPX = 1.0
+
+        // Calibration walk (docs/features/tap-to-walk.md, "Calibration walk"). Values come from the bench walks.
+        const val CALIBRATION_FRAME_INTERVAL_MS = 3000L // one screenshot per tick, as the bench's --every 3
+        const val CALIBRATION_LEG_TIMEOUT_FACTOR = 2.0 // a leg may take twice its nominal time (40 m at walking speed)
+        const val CALIBRATION_SPEED_ABORT_MPS = 3.0 // faster than this between frames is a teleport, not a walk
+        const val CALIBRATION_ARRIVAL_SLACK_M = 5.0 // a leg that ended farther than this from its target was cancelled
+        const val CALIBRATION_SPOOL_FRAMES_PER_LEG = 36 // 108 s of a typical leg plus slack, sizes the free-space check
     }
 
     object CompassTrackingConstants {

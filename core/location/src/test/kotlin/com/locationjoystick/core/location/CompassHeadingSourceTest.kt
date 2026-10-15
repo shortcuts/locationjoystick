@@ -2,6 +2,7 @@ package com.locationjoystick.core.location
 
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.model.GrayImage
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
@@ -18,6 +19,8 @@ class CompassHeadingSourceTest {
             bind(
                 object : CompassAccessibilityServiceBridge {
                     override suspend fun captureHeading(): Float = 1.5f
+
+                    override suspend fun captureGrayFrame(): GrayImage = GrayImage(2, 2, ByteArray(4))
                 },
             )
         }
@@ -35,12 +38,27 @@ class CompassHeadingSourceTest {
             assertEquals(1.5f, source(accepted = true).captureHeading())
         }
 
+    @Test
+    fun `no gray frame until the disclosure is accepted`() =
+        runTest {
+            assertNull(source(accepted = false).captureGrayFrame())
+        }
+
+    @Test
+    fun `gray frame comes from the bound service once accepted`() =
+        runTest {
+            val frame = source(accepted = true).captureGrayFrame()
+            assertEquals(2, frame!!.width)
+        }
+
     private class FakeBridge(
         private val results: List<Float?>,
     ) : CompassAccessibilityServiceBridge {
         var calls = 0
 
         override suspend fun captureHeading(): Float? = results.getOrNull(calls++)
+
+        override suspend fun captureGrayFrame(): GrayImage? = null
     }
 
     private fun accepted(bridge: FakeBridge?): CompassHeadingSource {

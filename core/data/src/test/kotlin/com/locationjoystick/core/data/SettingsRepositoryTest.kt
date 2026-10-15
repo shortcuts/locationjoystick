@@ -13,6 +13,7 @@ import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.StoredGroundCalibration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -1121,6 +1122,24 @@ class SettingsRepositoryTest {
             }
         }
 
+    @Test
+    fun `ground calibration delegates to the data source`() =
+        runTest {
+            val stored =
+                StoredGroundCalibration(
+                    com.locationjoystick.core.model
+                        .GroundCalibration(1.0, 2.0, 3.0, 0.0, 4.0, 5.0),
+                    1080,
+                    2340,
+                    9L,
+                    50,
+                    0.5,
+                )
+            repository.setGroundCalibration(stored)
+            assertEquals(stored, fakeDataSource.groundCalibrationFlow.value)
+            assertEquals(stored, repository.getGroundCalibration().first())
+        }
+
     // recordCompassDisclosure
 
     @Test
@@ -1652,6 +1671,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
     override fun getCompassTestTargetPackage(): Flow<String> = flowOf("")
 
     override suspend fun setCompassTestTargetPackage(packageName: String) = Unit
+
+    val groundCalibrationFlow = MutableStateFlow<StoredGroundCalibration?>(null)
+
+    override fun getGroundCalibration(): Flow<StoredGroundCalibration?> = groundCalibrationFlow
+
+    override suspend fun setGroundCalibration(value: StoredGroundCalibration?) {
+        groundCalibrationFlow.value = value
+    }
 
     val compassDisclosureChoiceFlow = MutableStateFlow("")
 

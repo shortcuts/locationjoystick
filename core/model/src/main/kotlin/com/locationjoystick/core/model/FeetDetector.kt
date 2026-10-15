@@ -47,7 +47,32 @@ object FeetDetector {
         height: Int,
     ): FeetPixel? {
         require(width >= 2 && height >= 2) { "frame size must be at least 2x2" }
-        val grads = legs.filter { it.size >= MIN_FRAMES }.map { gradient(it, width, height) }
+        val grads =
+            legs.filter { it.size >= MIN_FRAMES }.map { fr ->
+                gradient(fr.size, width, height) { f, i -> fr[f].pixels[i] }
+            }
+        return detectFromGradients(grads, width, height)
+    }
+
+    /**
+     * Incremental half of [detect]: the gradient of one leg's temporal median from 8-bit frames, so a caller
+     * can keep one 10 MB gradient per leg instead of every frame. Null under 3 frames (leg unusable).
+     */
+    fun legGradient(frames: List<GrayImage>): FloatArray? {
+        if (frames.size < MIN_FRAMES) return null
+        val w = frames[0].width
+        val h = frames[0].height
+        require(w >= 2 && h >= 2) { "frame size must be at least 2x2" }
+        return gradient(frames.size, w, h) { f, i -> (frames[f].pixels[i].toInt() and 0xFF).toFloat() }
+    }
+
+    /** Second half of [detect]: the feet pixel from per-leg gradients ([legGradient]), or null. */
+    fun detectFromGradients(
+        grads: List<FloatArray>,
+        width: Int,
+        height: Int,
+    ): FeetPixel? {
+        require(width >= 2 && height >= 2) { "frame size must be at least 2x2" }
         if (grads.isEmpty()) return null
         val n = width * height
         val edge = BooleanArray(n) { i -> grads.minOf { it[i] } > EDGE_THRESHOLD }
@@ -94,16 +119,16 @@ object FeetDetector {
     }
 
     /** Gradient magnitude of the blurred per-pixel temporal median of one leg. */
-    private fun gradient(
-        frames: List<GrayFrame>,
+    private inline fun gradient(
+        m: Int,
         w: Int,
         h: Int,
+        pixel: (frame: Int, index: Int) -> Float,
     ): FloatArray {
-        val m = frames.size
         val med = FloatArray(w * h)
         val col = FloatArray(m)
         for (i in med.indices) {
-            for (f in 0 until m) col[f] = frames[f].pixels[i]
+            for (f in 0 until m) col[f] = pixel(f, i)
             col.sort()
             med[i] = if (m % 2 == 1) col[m / 2] else (col[m / 2 - 1] + col[m / 2]) / 2f
         }

@@ -40,7 +40,7 @@ All in `:core:model`. Pure Kotlin — no Android, no Room. Room entities in `:co
 | `GroundMap` | class (not data): `GroundMap(cal, screenWidth, screenHeight)`; `pixelToGround(x, y): GroundOffset?`, `groundToPixel(east, north)`. Pure Kotlin perspective pixel/ground mapping |
 | `GrayFrame` | `pixels: FloatArray` — row-major gray 0..255 frame fed to `FeetDetector` |
 | `FeetPixel` | `x: Double`, `y: Double` device pixels; `toReference(width, height)` → reference-frame pair |
-| `FeetDetector` | object: `detect(legs, width, height): FeetPixel?` — pure-Kotlin feet pixel from walked-leg frames; see docs/features/tap-to-walk.md, "Feet detection" |
+| `FeetDetector` | object: `detect(legs, width, height): FeetPixel?` — pure-Kotlin feet pixel from walked-leg frames; `legGradient(frames: List<GrayImage>): FloatArray?` (null under 3 frames) and `detectFromGradients(grads, width, height): FeetPixel?` are the incremental halves of `detect` (one gradient per leg kept instead of every frame); see docs/features/tap-to-walk.md, "Feet detection" |
 | `GrayImage` | `width: Int`, `height: Int`, `pixels: ByteArray` — row-major 8-bit gray frame fed to `FrameFlow` |
 | `WalkLeg` | `frames: List<GrayImage>`, `moving: List<Boolean>`, `offsets: List<GroundOffset>` — one walked leg; offsets are the mock position of each frame in metres |
 | `BandFlow` | `fx`, `fy`, `response`, `cx`, `cy` — content shift of one band between two frames and its centre, device pixels |
@@ -49,6 +49,10 @@ All in `:core:model`. Pure Kotlin — no Android, no Room. Room entities in `:co
 | `GroundFit` | `calibration: GroundCalibration`, `medianAbsPx: Double`, `flowCount: Int` — output of `GroundMapFit.fit` |
 | `PhaseCorrelation` | object: `correlate(a, b, width, height): FlowResult` (also `spectrum` / `correlate(Spectrum, Spectrum)` to reuse a frame's transform) — pure-Kotlin windowed phase correlation, `cv2.phaseCorrelate` equivalent |
 | `FrameFlow` | object: `cleanLeg(frames, feetX, feetY)`, `bandMoves(legs, feetX, feetY, ks)` — static-content cleanup and per-band flow; see docs/features/tap-to-walk.md, "Frame flow and ground fit" |
+| `StoredGroundCalibration` | `calibration: GroundCalibration`, `screenWidth: Int`, `screenHeight: Int`, `calibratedAtMs: Long`, `flowCount: Int`, `medianAbsPx: Double`; `matches(width, height)` — latest calibration walk result, stored per device (DataStore key `tap_to_walk_ground_calibration`, JSON `v` 1), not part of `ExportData`; see docs/features/tap-to-walk.md, "Calibration walk" |
+| `CalibrationWalkMath` | object: `LEG_METERS` (40), `BEARINGS_DEG` (0,180,90,270,45,225,135,315), `METERS_PER_DEGREE` (111320), `commandedTarget`, `alongTrackOffset`, `movingFlags` — calibration walk geometry, bench parity |
+| `CapturedLeg` | `bearingDeg: Double`, `timesS: DoubleArray`, `positions: List<LatLng>`, `frames: () -> List<GrayImage>` — one captured calibration leg; frames are loaded lazily, one leg at a time |
+| `GroundCalibrationSolver` / `SolveResult` | object: `solve(legs, width, height, onStep): SolveResult` — feet pixel, band flows and fit over the captured legs; result `Ok(fit, feet)`, `FeetNotFound`, `TooFewFlows` or `ImplausibleFit` (a scale under 1 reference px per metre) |
 | `GroundMapFit` | object: `fit(moves, feetX, feetY, width, height): GroundFit?` — least-squares perspective ground map fit; `null` under 40 usable flows |
 
 ## Mapping

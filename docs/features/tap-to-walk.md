@@ -18,6 +18,7 @@ on whenever the accessibility service is granted (see "Compass Orientation" belo
 | `TAP_TO_WALK_OVERLAY_ENABLED` | Boolean | `false` | Show crosshair button in widget panel |
 | `TAP_TO_WALK_SCALE_MPX` | Double | `0.23` | Meters per pixel for pixel→GPS conversion (calibrated for a fully zoomed-out AR game map) |
 | `COMPASS_TEST_TARGET_PACKAGE` | String | `""` | Package the "Compass orientation" Test button switches to automatically. Empty = manual switch |
+| `TAP_TO_WALK_GROUND_CALIBRATION` | String (JSON) | absent | Latest calibration walk result (`StoredGroundCalibration`, see "Calibration walk"). Per-device, not part of `ExportData`; cleared by Reset All Data |
 | `COMPASS_DISCLOSURE_CHOICE` | String | `""` | The user's answer to the accessibility disclosure: `""` (unanswered), `accepted`, `declined` (`AppConstants.CompassTrackingConstants`). Per-device, not part of `ExportData` |
 
 Scale is clamped to `AppConstants.TapToWalkConstants.MIN_SCALE_MPX`–`MAX_SCALE_MPX` (0.01–1.0 m/px) in `applySnapshot()`.
@@ -520,8 +521,8 @@ Invariants a change must not break:
 ### Frame flow and ground fit
 
 `PhaseCorrelation`, `FrameFlow` and `GroundMapFit` in `:core:model` (pure Kotlin, no OpenCV, no Android) port the
-bench's `content_flow`, `clean_leg`, `band_moves` and `fit_perspective_horizon`. Nothing in the app calls them yet
-(the calibration-walk entry will). They turn walked-leg frames plus the mock position of each frame into a
+bench's `content_flow`, `clean_leg`, `band_moves` and `fit_perspective_horizon`. The calibration walk
+(`CalibrationWalkOrchestrator`, see "Calibration walk") calls them through `GroundCalibrationSolver`. They turn walked-leg frames plus the mock position of each frame into a
 `GroundCalibration`; `FeetDetector` supplies the feet pixel.
 
 Data flow, in order:
@@ -601,6 +602,79 @@ Invariants a change must not break:
 4. Goldens: `scripts/export_flow_golden.py` writes `core/model/src/test/resources/flow_golden/`; rerun it when
    `clean_leg`, `band_moves`, `_feat` or `fit_perspective*` change. The scene is procedural (no image files).
 
+### Calibration walk
+
+`CalibrationWalkOrchestrator` (`:core:location`, `@Singleton`) walks the mock position, screenshots the game,
+runs the solver and stores one map. Nothing user-visible starts it yet and the tap handler does not read the
+result yet; both consume `CalibrationWalkOrchestrator.state` and `SettingsRepository.getGroundCalibration()`.
+
+Data flow:
+
+1. `start()` checks readiness (`NOT_READY` otherwise): spoofing `RUNNING`, mode `JOYSTICK` or `TELEPORT`, no
+   walk target, a position. It then takes one probe frame through `CompassHeadingSource.captureGrayFrame()`
+   (null: `SERVICE_UNAVAILABLE`, which also covers an unbound service and a disclosure not accepted) and
+   checks free cache space for `8 legs x 36 frames x width x height` bytes (`STORAGE`).
+2. Eight legs, bearings 0, 180, 90, 270, 45, 225, 135, 315, each 40 m from where the previous leg ended
+   (`MapController.walkTo(target, WALK_SPEED_MPS)`; flat-earth target, 111320 m per degree, as the bench's
+   `commanded_target`). About 320 m at 0.5556 m/s is about 10 minutes. Opposite bearings in sequence bring the
+   player back to the start, so there is no return walk. It never calls `TeleportUseCase`: no teleport, no
+   cooldown timestamp written, and the game's speed warning (which teleports of 25 to 120 m triggered) is not
+   provoked.
+3. One screenshot per 3 s tick (`captureGrayFrame`: 8-bit luma in device pixels). The frame's position is the
+   mean of `currentPosition` just before and just after the screenshot; its time is seconds since the leg's
+   first tick. A null screenshot is skipped. Frames go to `cacheDir/tap_calibration/<leg>/<i>.gray` and only
+   metadata stays in memory (24 to 36 frames x 8 legs x 2.5 MB would not fit the heap; one leg is about 60 MB).
+   The directory is emptied at start and on every exit path.
+4. A leg ends when `walkTarget` clears after having been set. It counts only if the player is within 5 m of
+   the leg target; otherwise `INTERRUPTED`.
+5. `GroundCalibrationSolver.solve` loads one leg at a time: moving frames (neighbour speed at least 0.3 m/s),
+   `FeetDetector.legGradient` per leg, `FeetDetector.detectFromGradients`, per leg `FrameFlow.bandMoves` with
+   along-track offsets (`CalibrationWalkMath.alongTrackOffset`), then `GroundMapFit.fit`. The result is stored
+   as one `StoredGroundCalibration` before `Done` is emitted.
+
+Stored record: fitted `GroundCalibration` (heading is the camera orientation; lateral, forward and perspective
+are zoom and pitch) plus the screenshot `screenWidth x screenHeight`, `calibratedAtMs`, `flowCount`,
+`medianAbsPx`. It is one record (latest success), not a family keyed by zoom or orientation: the game exposes no
+signal to read its zoom or rotation at tap time (see "Game-camera orientation signals"), so a keyed record
+could never be looked up. "Per device" holds because DataStore is on-device and a stored map is rejected by
+`matches(width, height)` on another screen size. It is a standalone key outside `SettingsSnapshot`, so it is never
+exported or imported (docs/features/export-import.md) and a restored backup cannot carry a wrong map to a phone.
+
+Failure reasons (`CalibrationFailure`; any one stores nothing, deletes the frames and stops the walk):
+
+| reason | when |
+|---|---|
+| `NOT_READY` | start preconditions above |
+| `SERVICE_UNAVAILABLE` | accessibility service unbound, disclosure not accepted, probe screenshot rejected |
+| `STORAGE` | free cache space under the estimate |
+| `TIMEOUT` | a leg longer than 2 x (40 m / 0.5556 m/s), about 144 s (a joystick takeover pauses the walk and lands here) |
+| `SPEED_ABORT` | more than 3 m/s between two consecutive frames (also catches a teleport mid-run) |
+| `INTERRUPTED` | walk target cleared more than 5 m from the leg target, or the position was lost |
+| `FRAME_SIZE_CHANGED` | a screenshot differs in size from the probe (rotation) |
+| `FEET_NOT_FOUND` / `TOO_FEW_FLOWS` | solver: no figure in the temporal median, or fewer than 40 usable flows |
+| `IMPLAUSIBLE_FIT` | a fit converged but a scale is under 1 reference px per metre: the screen did not follow the walk (game in the background shows this app or a frozen frame; a static screen fits about 0.003 with a perfect residual, which the bench would have accepted) |
+
+Cooldown and anti-cheat: the walk never teleports, so it neither reads nor writes the teleport cooldown and does
+not look like a jump to the game. The periodic screenshots are as detectable as the compass capture (see
+"Anti-cheat caveat"); they go through the same disclosure gate as `captureHeading()`.
+
+Invariants a change must not break:
+
+1. Speed is `WALK_SPEED_MPS` (0.5556), not the user's walk profile (`speedMsOverride` through `WalkToEngine`):
+   it is the speed the bench legs were validated at, and a faster user profile risks the game's speed warning.
+2. Geometry uses 111320 m per degree and the bench's moving rule (0.3 m/s over the neighbouring frames, clamped at
+   the ends); `CalibrationWalkMathTest` pins it to `scripts/export_calibration_walk_golden.py` output within
+   1e-6 m. Do not swap in the haversine radius (111195 m per degree): it drifts 0.1 percent from the goldens.
+3. The feet pixel goes to `bandMoves` and `fit` in device pixels; only `GroundMapFit.fit` converts to reference.
+4. The full walk is never held in memory: frames are spooled and the solver asks for one leg at a time (twice:
+   once for the feet gradient, once for the flows).
+5. The stored map is valid only for the screenshot size it was fitted at.
+6. Spool ceiling: raw frames are about 0.7 GB on disk at 1080x2340 during a run; compress or crop only if devices
+   report `STORAGE`.
+7. Opposite legs in the synthetic test differ in scroll size on purpose: identical frame sets give identical
+   temporal medians, which defeat the detector's min-over-legs rejection of world texture. Real walks never
+   repeat terrain exactly.
+
 ### Status and open work
 
 Accepted state of the no-compass investigation (branch `tap-to-walk-no-compass`, bench only, no app code changed):
@@ -633,7 +707,7 @@ Open work, in order:
 
 1. Lower the skip rate (24 of 36 taps on the second Pixel 7 run) and explain the 23 m miss (`t17`), then repeat the run on this device and on more devices and camera states.
 2. Close-up (z1.6) landing is not met: p90 96.9 m on the Pixel 7, target under 10 m. Measured with `varycap --conditions 1.6:0` then `landing` without `--anchor`: feet pixel detected 509 1548, 928 samples, p50 22.6 m, p90 96.9 m, within 10 m 20%, within 15 m 34%, 66% of matches skipped as ambiguous. The wide capture on the same device gives p50 3.0 m, p90 9.9 m with the detected anchor. The detected feet row looks too high at close-up (sharp rows span 1149 to 1911, the detector stops at the torso/leg gap); widening the run gap to 0.12 moved the anchor to 1796 and made landing worse (p90 286.8 m), so the anchor is not the main error: the fit and the match step at close-up are. Needs a second device and a cause for the ambiguity at close-up before retrying.
-3. Ground map model ported (`GroundMap`, see "Ground map model"), feet detection ported (`FeetDetector`, see "Feet detection"), frame flow and fit ported (`FrameFlow`, `GroundMapFit`, see "Frame flow and ground fit"); the walked-leg capture/orchestration and wiring into the tap overlay remain.
+3. Ground map model ported (`GroundMap`, see "Ground map model"), feet detection ported (`FeetDetector`, see "Feet detection"), frame flow and fit ported (`FrameFlow`, `GroundMapFit`, see "Frame flow and ground fit"); the walked-leg capture and orchestration ported (`CalibrationWalkOrchestrator`, see "Calibration walk"); the calibration UX and the wiring into the tap overlay remain. The on-device analysis time is unmeasured (the pure port was only benchmarked on the host).
 4. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes.
 
 ## Warning Screen

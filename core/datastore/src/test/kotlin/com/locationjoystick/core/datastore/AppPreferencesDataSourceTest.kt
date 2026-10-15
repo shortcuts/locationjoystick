@@ -1,14 +1,19 @@
 package com.locationjoystick.core.datastore
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.GroundCalibration
 import com.locationjoystick.core.model.SavedItemSortMode
+import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.testing.FakePreferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -29,6 +34,47 @@ class AppPreferencesDataSourceTest {
             assertFalse(dataSource.getHideTeleportFeatures().first())
             dataSource.setHideTeleportFeatures(true)
             assertTrue(dataSource.getHideTeleportFeatures().first())
+        }
+
+    private val storedCalibration =
+        StoredGroundCalibration(
+            GroundCalibration(-12.5, 7.25, 6.5, -0.0024, 540.0, 1490.5),
+            screenWidth = 1080,
+            screenHeight = 2400,
+            calibratedAtMs = 1_700_000_000_000L,
+            flowCount = 211,
+            medianAbsPx = 0.8,
+        )
+
+    @Test
+    fun `ground calibration round-trips and null removes it`() =
+        runTest {
+            assertNull(dataSource.getGroundCalibration().first())
+            dataSource.setGroundCalibration(storedCalibration)
+            assertEquals(storedCalibration, dataSource.getGroundCalibration().first())
+            dataSource.setGroundCalibration(null)
+            assertNull(dataSource.getGroundCalibration().first())
+        }
+
+    @Test
+    fun `corrupt or unknown version ground calibration reads null`() =
+        runTest {
+            val key = stringPreferencesKey("tap_to_walk_ground_calibration")
+            for (raw in listOf("not json", "{}", serializeGroundCalibration(storedCalibration).replace("\"v\":1", "\"v\":2"))) {
+                fakeDataStore.edit { it[key] = raw }
+                assertNull(raw, dataSource.getGroundCalibration().first())
+            }
+        }
+
+    @Test
+    fun `ground calibration is outside the settings snapshot and cleared by reset`() =
+        runTest {
+            dataSource.setGroundCalibration(storedCalibration)
+            val snapshot = dataSource.getSettingsSnapshot().first()
+            dataSource.applySnapshot(snapshot)
+            assertEquals(storedCalibration, dataSource.getGroundCalibration().first())
+            dataSource.clearAllExceptOnboarding()
+            assertNull(dataSource.getGroundCalibration().first())
         }
 
     @Test

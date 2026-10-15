@@ -14,6 +14,7 @@ import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -373,6 +374,11 @@ class SettingsRepository
         fun getTapToWalkOverlayEnabled(): Flow<Boolean> = dataSource.getTapToWalkOverlayEnabled()
 
         fun getTapToWalkScaleMpx(): Flow<Double> = dataSource.getTapToWalkScaleMpx()
+
+        /** Latest calibration walk result; per-device and never exported. */
+        fun getGroundCalibration(): Flow<StoredGroundCalibration?> = dataSource.getGroundCalibration()
+
+        suspend fun setGroundCalibration(value: StoredGroundCalibration?) = dataSource.setGroundCalibration(value)
 
         fun getCompassTestTargetPackage(): Flow<String> = dataSource.getCompassTestTargetPackage()
 
