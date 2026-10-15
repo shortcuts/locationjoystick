@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import android.widget.Toast
 import android.view.accessibility.AccessibilityManager
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,14 +32,15 @@ import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RoamingDefaults
-import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.feature.settings.impl.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,7 +48,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
@@ -307,6 +307,7 @@ class SettingsViewModel
                     rememberLastLocation = draftState.rememberLastLocation ?: snapshot.rememberLastLocation,
                     mapFollowsLocation = draftState.mapFollowsLocation ?: snapshot.mapFollowsLocation,
                     mapTileSource = draftState.mapTileSource ?: snapshot.mapTileSource,
+                    guidedPath = snapshot.guidedPath,
                     disabledGeocodingProviders = draftState.disabledGeocodingProviders ?: snapshot.disabledGeocodingProviders,
                     jitterIdleRadiusMeters = draftState.jitterIdleRadius ?: snapshot.jitterIdleRadius,
                     jitterMovingRadiusMeters = draftState.jitterMovingRadius ?: snapshot.jitterMovingRadius,
@@ -673,6 +674,7 @@ class SettingsViewModel
                             rememberLastLocation = state.rememberLastLocation,
                             mapFollowsLocation = state.mapFollowsLocation,
                             mapTileSource = state.mapTileSource,
+                            guidedPath = state.guidedPath,
                             disabledGeocodingProviders = state.disabledGeocodingProviders,
                             jitterIdleRadius = state.jitterIdleRadiusMeters,
                             jitterMovingRadius = state.jitterMovingRadiusMeters,
@@ -779,6 +781,7 @@ class SettingsViewModel
                 AppSettings(
                     speedUnit = state.speedUnit,
                     mapTileSource = state.mapTileSource,
+                    guidedPath = state.guidedPath,
                     disabledGeocodingProviders = state.disabledGeocodingProviders,
                     featureOrder = state.featureOrder,
                     enabledWidgetFeatures = state.enabledWidgetFeatures,
@@ -994,6 +997,7 @@ class SettingsViewModel
                     driveSpeedMs = profileById["drive"]?.speedMetersPerSecond ?: currentSnapshot.driveSpeedMs,
                     speedUnit = data.settings.speedUnit,
                     mapTileSource = data.settings.mapTileSource,
+                    guidedPath = data.settings.guidedPath,
                     disabledGeocodingProviders = data.settings.disabledGeocodingProviders,
                     featureOrder = data.settings.featureOrder,
                     enabledWidgetFeatures = data.settings.enabledWidgetFeatures,

@@ -9,6 +9,7 @@ data class AppSettings(
     val enabledMapFeatures: Set<AppFeature> = AppFeature.DEFAULT_MAP_ENABLED,
     val mapFollowsLocation: Boolean = true,
     val mapTileSource: MapTileSource = MapTileSource.DEFAULT,
+    val guidedPath: GuidedPath = GuidedPath.DEFAULT,
     val disabledGeocodingProviders: Set<GeocodingProviderId> = emptySet(),
     val useRoadSnappingByDefault: Boolean = false,
     val speedUnit: SpeedUnit = SpeedUnit.KMH,

@@ -15,6 +15,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.clampPlantingRadius
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.GeocodingProviderId
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
@@ -428,6 +429,7 @@ data class SettingsSnapshot(
     val rememberLastLocation: Boolean,
     val mapFollowsLocation: Boolean,
     val mapTileSource: MapTileSource = MapTileSource.DEFAULT,
+    val guidedPath: GuidedPath = GuidedPath.DEFAULT,
     val disabledGeocodingProviders: Set<GeocodingProviderId> = emptySet(),
     val jitterIdleRadius: Double,
     val jitterMovingRadius: Double,
@@ -594,6 +596,7 @@ class AppPreferencesDataSource
             val SPEED_UNIT = stringPreferencesKey("speed_unit")
             val THEME_MODE = stringPreferencesKey("theme_mode")
             val MAP_TILE_SOURCE = stringPreferencesKey("map_tile_source")
+            val GUIDED_PATH = stringPreferencesKey("guided_path")
             val DISABLED_GEOCODING_PROVIDERS = stringSetPreferencesKey("disabled_geocoding_providers")
             val KEEP_WIDGET_ON_IDLE = booleanPreferencesKey("keep_widget_on_idle")
             val WHATS_NEW_LAST_SEEN_VERSION = stringPreferencesKey("whats_new_last_seen_version")
@@ -1220,6 +1223,7 @@ class AppPreferencesDataSource
                 prefs[Keys.REMEMBER_LAST_LOCATION] = snapshot.rememberLastLocation
                 prefs[Keys.MAP_FOLLOWS_LOCATION] = snapshot.mapFollowsLocation
                 prefs[Keys.MAP_TILE_SOURCE] = snapshot.mapTileSource.name
+                prefs[Keys.GUIDED_PATH] = snapshot.guidedPath.name
                 prefs[Keys.DISABLED_GEOCODING_PROVIDERS] = snapshot.disabledGeocodingProviders.map { it.name }.toSet()
                 prefs[Keys.JITTER_IDLE_RADIUS_METERS] = snapshot.jitterIdleRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
                 prefs[Keys.JITTER_MOVING_RADIUS_METERS] = snapshot.jitterMovingRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
@@ -1317,6 +1321,7 @@ class AppPreferencesDataSource
                                 ?: AppConstants.DataStoreConstants.DEFAULT_REMEMBER_LAST_LOCATION,
                         mapFollowsLocation = prefs[Keys.MAP_FOLLOWS_LOCATION] ?: true,
                         mapTileSource = MapTileSource.fromName(prefs[Keys.MAP_TILE_SOURCE]),
+                        guidedPath = GuidedPath.fromName(prefs[Keys.GUIDED_PATH]),
                         disabledGeocodingProviders =
                             prefs[Keys.DISABLED_GEOCODING_PROVIDERS].orEmpty().mapNotNull(GeocodingProviderId::fromName).toSet(),
                         jitterIdleRadius = prefs[Keys.JITTER_IDLE_RADIUS_METERS] ?: DEFAULT_JITTER_IDLE_RADIUS_METERS,

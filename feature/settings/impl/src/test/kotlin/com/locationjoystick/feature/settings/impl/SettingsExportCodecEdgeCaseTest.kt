@@ -3,6 +3,7 @@ package com.locationjoystick.feature.settings.impl
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RoamingDefaults
@@ -274,6 +275,24 @@ class SettingsExportCodecEdgeCaseTest {
         val parsed = SettingsExportCodec.parseExportData(json)
 
         assertEquals(SpeedUnit.KMH, parsed.settings.speedUnit)
+    }
+
+    @Test
+    fun `guidedPath round-trips and missing or unknown falls back to DEFAULT`() {
+        val base =
+            SettingsExportCodec.parseExportData(
+                """{"schemaVersion":1,"exportedAt":0,"settings":{"guidedPath":"POKEMON_GO"},""" +
+                    """"speedProfiles":[],"routes":[],"favoriteLocations":[]}""",
+            )
+        assertEquals(GuidedPath.POKEMON_GO, base.settings.guidedPath)
+        val reparsed = SettingsExportCodec.parseExportData(SettingsExportCodec.serializeExportData(base))
+        assertEquals(GuidedPath.POKEMON_GO, reparsed.settings.guidedPath)
+        for (v in listOf("""{}""", """{"guidedPath":"bogus"}""")) {
+            val json =
+                """{"schemaVersion":1,"exportedAt":0,"settings":$v,""" +
+                    """"speedProfiles":[],"routes":[],"favoriteLocations":[]}"""
+            assertEquals(GuidedPath.DEFAULT, SettingsExportCodec.parseExportData(json).settings.guidedPath)
+        }
     }
 
     @Test
