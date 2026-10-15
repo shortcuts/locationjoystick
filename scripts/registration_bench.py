@@ -348,13 +348,18 @@ def tap_to_ground(a, p, anchor):
     return np.linalg.solve(np.asarray(a, float), np.asarray(p, float) - np.asarray(anchor, float))
 
 
-def patch_offset(before, after, p, anchor, half=100, search=150, scales=(1.0, 1.15, 1.3), sprite=70, sprite_dy=-40):
+def patch_offset(before, after, p, anchor, half=100, search=150, scales=(1.0, 1.15, 1.3), sprite=70, sprite_dy=-40,
+                 ratio_min=1.1, peak_gap=25, feet=None):
     """Where the game drew the content that was under pixel p in `before`, found in `after`.
 
     Returns ((dx, dy) of the match centre minus anchor in px, normalised cross-correlation). The player
     sprite (a disc of radius `sprite` centred `sprite_dy` px above the anchor, the feet) is excluded from both frames by a masked NCC,
     so a match that lands under the sprite still scores on the pixels around it. The (2*half)^2 template
     is tried at several scales inside +-search px of the anchor; at least half of it must be unmasked.
+
+    Ambiguity guard: a match is rejected (offset None, NCC still returned) when its peak is on the search
+    window edge, or when the best peak is not at least `ratio_min` times the best peak more than `peak_gap`
+    px away (repeating or linear content). Callers skip a rejected match; it is neither a pass nor a fail.
     """
     def gray(img):
         return ((img if img.ndim == 2 else _to_gray(img)).astype(np.float32) - 128.0) / 128.0  # float32 sums
@@ -362,7 +367,8 @@ def patch_offset(before, after, p, anchor, half=100, search=150, scales=(1.0, 1.
     b, a = gray(before), gray(after)
     ax, ay = int(anchor[0]), int(anchor[1])
     mask = np.ones(b.shape, np.float32)
-    cv2.circle(mask, (ax, ay + sprite_dy), sprite, 0, -1)
+    fx, fy = (ax, ay) if feet is None else (int(feet[0]), int(feet[1]))
+    cv2.circle(mask, (fx, fy + sprite_dy), sprite, 0, -1)
     px, py = int(p[0]), int(p[1])
     sl = (slice(max(py - half, 0), py + half), slice(max(px - half, 0), px + half))
     tpl, tm = b[sl], mask[sl]
@@ -387,7 +393,13 @@ def patch_offset(before, after, p, anchor, half=100, search=150, scales=(1.0, 1.
         r = np.where(n >= 0.5 * th * tw, num / den, -1.0)
         _, mx, _, loc = cv2.minMaxLoc(r)
         if mx > best[1]:
-            best = ((x0 + loc[0] + tw / 2 - ax, y0 + loc[1] + th / 2 - ay), float(mx))
+            rival = r.copy()
+            cv2.circle(rival, (int(loc[0]), int(loc[1])), peak_gap, -1.0, -1)
+            mx2 = cv2.minMaxLoc(rival)[1]
+            on_edge = loc[0] in (0, r.shape[1] - 1) or loc[1] in (0, r.shape[0] - 1)
+            clear = mx2 <= 0 or mx >= ratio_min * mx2
+            off = (x0 + loc[0] + tw / 2 - ax, y0 + loc[1] + th / 2 - ay) if clear and not on_edge else None
+            best = (off, float(mx))
     return best
 
 
@@ -1280,7 +1292,8 @@ def cmd_landing(args):
     hi_full = np.linalg.inv(persp_h(full))
     lat0 = next(iter(legs.values()))[0]["ll"][0]
     probes = [(x, y) for x in (200, 540, 880) for y in (700, 900, 1050, 1150, 1250, 1350, 1420)]
-    errs = []
+    errs, skipped = [], 0
+    SPRITE_R = args.sprite_r
     for hb, fr in legs.items():
         cal = fit_perspective([m for m in moves if m[0] != hb], anchor)
         h = persp_h(cal)
@@ -1294,14 +1307,19 @@ def cmd_landing(args):
                 for p in probes:
                     pred = _h_apply(h, _h_apply(hi, p) - d)
                     c = (int(round(pred[0])), int(round(pred[1])))
-                    pm, ncc = patch_offset(g[i], g[i + k], p, c, half=70, search=90, scales=(1.0,), sprite=0)
+                    pm, ncc = patch_offset(g[i], g[i + k], p, c, half=70, search=300, scales=(1.0,),
+                                           sprite=SPRITE_R, feet=anchor)
                     if ncc < 0.7 or not (0 < c[0] < g[i].shape[1] and 0 < c[1] < g[i].shape[0]):
+                        continue
+                    if pm is None:  # ambiguous match: skipped, not scored
+                        skipped += 1
                         continue
                     got = (c[0] + pm[0], c[1] + pm[1])
                     errs.append(float(np.linalg.norm(_h_apply(hi_full, got) - _h_apply(hi_full, pred))))
     e = np.array(errs)
     print(f"{len(e)} samples, p50 {np.percentile(e, 50):.1f} m, p90 {np.percentile(e, 90):.1f} m, "
-          f"within 10 m {np.mean(e <= 10) * 100:.0f}%, within 15 m {np.mean(e <= 15) * 100:.0f}%")
+          f"within 10 m {np.mean(e <= 10) * 100:.0f}%, within 15 m {np.mean(e <= 15) * 100:.0f}%, "
+          f"ambiguous skipped {skipped} ({skipped / max(skipped + len(e), 1) * 100:.0f}%)")
 
 
 def _walk_and_wait(host, key, lat, lon, timeout=300.0, every=2.0):
@@ -1363,7 +1381,6 @@ def cmd_taptrials(args):
     else:
         a = np.array(cal["A"])
         anchor = (cal["cam"]["px"], cal["cam"]["py"])
-    pts = pts[:args.n]
     host, key = _preflight()
     out = data / "annotated_trials"
     out.mkdir(exist_ok=True)
@@ -1372,6 +1389,8 @@ def cmd_taptrials(args):
     rows = []
     try:
         for i, p in enumerate(pts):
+            if sum(r["verdict"] != "ambiguous" for r in rows) >= args.n:
+                break
             st = _api(host, key, "GET", "/state")
             lat0, lon0 = st["position"]["lat"], st["position"]["lon"]
             g = tap_to_ground_persp(cal, p) if persp else tap_to_ground(a, p, anchor)
@@ -1387,19 +1406,22 @@ def cmd_taptrials(args):
                 _adb_screencap(args.serial, out / f"t{i:02d}_after.png")
                 after = cv2.imread(str(out / f"t{i:02d}_after.png"))
                 off, ncc = patch_offset(before, after, p, anchor)
-                if persp:
-                    err = float(np.linalg.norm(_h_apply(hi, (anchor[0] + off[0], anchor[1] + off[1]))
-                                               - _h_apply(hi, anchor)))
+                if off is None:
+                    row.update(error_m=None, ncc=ncc, arrived=arrived, verdict="ambiguous")
                 else:
-                    err = float(np.linalg.norm(np.linalg.solve(a, np.array(off))))
-                row.update(error_m=err, ncc=ncc, offset_px=[float(off[0]), float(off[1])], arrived=arrived,
-                           verdict="unverified" if ncc < 0.4 else ("pass" if err <= args.tol_m else "fail"))
-                cx, cy = int(anchor[0] + off[0]), int(anchor[1] + off[1])
-                cv2.rectangle(after, (cx - 100, cy - 100), (cx + 100, cy + 100), (0, 255, 0), 4)
-                cv2.drawMarker(after, (int(anchor[0]), int(anchor[1])), (0, 0, 255), cv2.MARKER_CROSS, 60, 6)
-                cv2.putText(after, f"err {err:.1f} m ncc {ncc:.2f} {row['verdict']}", (30, 100),
-                            cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
-                cv2.imwrite(str(out / f"t{i:02d}_after.png"), after)
+                    if persp:
+                        err = float(np.linalg.norm(_h_apply(hi, (anchor[0] + off[0], anchor[1] + off[1]))
+                                                   - _h_apply(hi, anchor)))
+                    else:
+                        err = float(np.linalg.norm(np.linalg.solve(a, np.array(off))))
+                    row.update(error_m=err, ncc=ncc, offset_px=[float(off[0]), float(off[1])], arrived=arrived,
+                               verdict="unverified" if ncc < 0.4 else ("pass" if err <= args.tol_m else "fail"))
+                    cx, cy = int(anchor[0] + off[0]), int(anchor[1] + off[1])
+                    cv2.rectangle(after, (cx - 100, cy - 100), (cx + 100, cy + 100), (0, 255, 0), 4)
+                    cv2.drawMarker(after, (int(anchor[0]), int(anchor[1])), (0, 0, 255), cv2.MARKER_CROSS, 60, 6)
+                    cv2.putText(after, f"err {err:.1f} m ncc {ncc:.2f} {row['verdict']}", (30, 100),
+                                cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
+                    cv2.imwrite(str(out / f"t{i:02d}_after.png"), after)
                 _walk_and_wait(host, key, lat0, lon0)  # back to the start, unscored
             cv2.circle(before, (int(p[0]), int(p[1])), 40, (0, 255, 0), 6)
             cv2.putText(before, f"tap -> ground E{g[0]:.0f} N{g[1]:.0f} m", (30, 100),
@@ -1408,17 +1430,20 @@ def cmd_taptrials(args):
             rows.append(row)
             print(f"t{i:02d} {row['verdict']} err={row['error_m']}", flush=True)
             (data / "trials.json").write_text(json.dumps(rows, indent=1))
-            if sum(r["verdict"] != "pass" for r in rows) > args.n - args.need:
-                print(f"bar {args.need}/{args.n} unreachable after {len(rows)} trials, stopping")
+            scored = [r for r in rows if r["verdict"] != "ambiguous"]
+            if sum(r["verdict"] != "pass" for r in scored) > args.n - args.need:
+                print(f"bar {args.need}/{args.n} unreachable after {len(scored)} trials, stopping")
                 break
     finally:
         _api(host, key, "POST", "/walk/stop")
     errs = sorted(r["error_m"] for r in rows if r["verdict"] in ("pass", "fail"))
     passes = sum(r["verdict"] == "pass" for r in rows)
     unv = sum(r["verdict"] in ("unverified", "unreachable") for r in rows)
+    amb = sum(r["verdict"] == "ambiguous" for r in rows)
     pct = lambda q: errs[min(len(errs) - 1, int(q * len(errs)))] if errs else float("nan")
     ok = passes >= args.need
-    print(f"{passes}/{len(rows)} within {args.tol_m} m, unverified {unv}, p50 {pct(0.5):.1f} m, "
+    print(f"{passes}/{len(rows) - amb} within {args.tol_m} m, unverified {unv}, ambiguous (skipped) {amb}, "
+          f"p50 {pct(0.5):.1f} m, "
           f"p90 {pct(0.9):.1f} m -> {'PASS' if ok else 'FAIL'} (bar {args.need}/{args.n})")
 
 
@@ -1559,6 +1584,7 @@ def main(argv=None):
         q.add_argument("data")
         q.add_argument("--anchor", type=float, nargs=2, required=True, help="player's feet px (x y) at this zoom")
         q.add_argument("--more", nargs="*", default=[], help="extra dirs of walk_C_* legs, same camera")
+        q.add_argument("--sprite-r", type=int, default=0, help="landing only: mask radius at the player's feet")
         q.set_defaults(func=fn)
     vc = sub.add_parser("varycap")
     vc.add_argument("out")

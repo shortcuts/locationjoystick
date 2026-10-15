@@ -234,6 +234,14 @@ def test_patch_offset_finds_shifted_content_and_ignores_player_sprite():
     assert abs(off[0] - want[0]) < 3 and abs(off[1] - want[1]) < 3 and ncc > 0.4, (off, ncc)
 
 
+def test_patch_offset_rejects_repeating_content():
+    yy, xx = np.mgrid[0:2340, 0:1080]
+    checker = (((xx // 50) + (yy // 50)) % 2 * 255).astype(np.uint8)  # period 100 px: every shift ties
+    anchor, p = (520, 1560), (640, 1440)
+    off, ncc = rb.patch_offset(checker, checker, p, anchor)
+    assert off is None and ncc > 0.4, (off, ncc)
+
+
 def test_frame_meta_has_only_state_fields():
     st = {"position": {"lat": 1.0, "lon": 2.0}, "speedMs": 1.4, "bearing": 45.0, "key": "SECRET-SENTINEL"}
     row = rb.frame_meta(3, 9.0, 45.0, st, st)
