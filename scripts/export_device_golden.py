@@ -7,7 +7,8 @@ docs/testing.md "Bench parity fixtures".
 
 Run:
   scripts/registration-bench/.venv/bin/python scripts/export_device_golden.py pixel5_1080x2340 \
-      scripts/registration-bench/data --model "Pixel 5" --density 440 --camera "fixed pitched 3D camera, closer zoom"
+      scripts/registration-bench/data --model "Pixel 5" --density 440 --camera "fixed pitched 3D camera, closer zoom" \
+      --captured-on 2026-10-13
 
 Writes core/model/src/test/resources/device_golden/<device-name>/:
   meta.txt   "key value" lines: device, model, width, height, density_dpi, camera_state, captured_on, source
@@ -42,6 +43,12 @@ def main():
     ap.add_argument("--model", required=True, help='marketing name, e.g. "Pixel 5"')
     ap.add_argument("--density", type=int, required=True, help="screen density in dpi (adb shell wm density)")
     ap.add_argument("--camera", required=True, help="game camera state while the legs were walked")
+    ap.add_argument(
+        "--captured-on",
+        required=True,
+        type=lambda v: datetime.strptime(v, "%Y-%m-%d").strftime("%Y-%m-%d"),
+        help="date the legs were captured, YYYY-MM-DD",
+    )
     args = ap.parse_args()
 
     legs = rb._commanded_legs(args.data)
@@ -63,7 +70,6 @@ def main():
     out = Path(__file__).parent.parent / "core/model/src/test/resources/device_golden" / args.device
     out.mkdir(parents=True, exist_ok=True)
     sources = [f"{args.data.name}/{p.name}" for p in sorted(args.data.glob("walk_C_*"))]
-    captured = max((p / "meta.json").stat().st_mtime for p in args.data.glob("walk_C_*"))
 
     (out / "meta.txt").write_text(
         "\n".join(
@@ -74,7 +80,7 @@ def main():
                 f"height {h}",
                 f"density_dpi {args.density}",
                 f"camera_state {args.camera}",
-                f"captured_on {datetime.fromtimestamp(captured):%Y-%m-%d}",
+                f"captured_on {args.captured_on}",
                 f"source {' '.join(sources)}",
             ]
         )

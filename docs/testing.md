@@ -119,8 +119,11 @@ Regenerate one device (bench venv, legs already captured; `--density` is the scr
 
 ```bash
 scripts/registration-bench/.venv/bin/python scripts/export_device_golden.py pixel5_1080x2340 \
-    scripts/registration-bench/data --model "Pixel 5" --density 440 --camera "wide zoom, no twist"
+    scripts/registration-bench/data --model "Pixel 5" --density 440 --camera "wide zoom, no twist" \
+    --captured-on 2026-10-13
 ```
+
+`--captured-on` is the day the legs were captured; it is never derived from file timestamps.
 
 Then run `./gradlew :core:model:test --tests '*DeviceParityTest*'`. Rerun the exporter when `clean_leg`,
 `band_moves`, `detect_feet`, `_feat`, `fit_perspective*` or `tap_to_ground_persp` change in

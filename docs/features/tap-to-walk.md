@@ -368,7 +368,7 @@ pixel, the bench perspective fit (reference pixels) and the tap-to-ground offset
 `core/model/src/test/resources/device_golden/<device>/` and are written by `scripts/export_device_golden.py`; the
 regeneration command and the tolerances are in docs/testing.md, "Bench parity fixtures".
 
-Provenance (values from the exporter's output, read from `meta.txt`, `fit.txt`):
+Provenance (values from the exporter's output, read from `meta.txt`, `fit.txt`; `captured_on` is the exporter's required `--captured-on` argument, the "legs captured" column):
 
 | fixture | model | resolution | density | camera state | legs captured | bench legs | feet pixel (device px) | bench fit: heading, lateral px/m, forward px/m, perspective, median residual, n |
 |---|---|---|---|---|---|---|---|---|
