@@ -296,6 +296,21 @@ wait_s() {
   printf "\r%*s\r" 40 ""
 }
 
+# Swipe the current screen up until a row with this exact text is on screen.
+# Returns 1 if not found after max swipes. A fixed swipe count overshoots on tall devices.
+scroll_until_text() {
+  local text="$1" max="${2:-8}" i dump found
+  for (( i=0; i<max; i++ )); do
+    dump=$(ui_dump)
+    found=$(grep -c "text=\"$text\"" "$dump" || true)
+    rm -f "$dump"
+    (( found > 0 )) && return 0
+    $ADB shell input swipe 540 1600 540 400 500
+    wait_s 1 "Scrolling to $text"
+  done
+  return 1
+}
+
 # Enter Android Demo Mode: clean status bar (neutral clock, full battery/signal,
 # no notifications) so screenshots don't leak personal phone information.
 demo_mode_enter() {
@@ -1469,14 +1484,7 @@ if should_run_step "25"; then
   wait_s 2 "Settings loading"
   tap_text "Menus"
   wait_s 2 "Menus loading"
-  for _ in 1 2 3 4 5 6 7 8; do
-    dump=$(ui_dump)
-    found=$(grep -c 'text="Enable Tap to Walk"' "$dump" || true)
-    rm -f "$dump"
-    (( found > 0 )) && break
-    $ADB shell input swipe 540 1600 540 400 500
-    wait_s 1 "Scrolling to Tap to Walk"
-  done
+  scroll_until_text "Enable Tap to Walk" || true
   if [[ "$(switch_is_on "Enable Tap to Walk")" == "True" ]]; then
     tap_switch_for "Enable Tap to Walk"
     wait_s 1 "Turning Tap to Walk off"
@@ -1504,29 +1512,14 @@ if should_run_step "26"; then
   wait_s 2 "Settings loading"
   tap_text "Menus"
   wait_s 2 "Menus loading"
-  for _ in 1 2 3 4 5 6 7 8; do
-    dump=$(ui_dump)
-    found=$(grep -c 'text="Enable Tap to Walk"' "$dump" || true)
-    rm -f "$dump"
-    (( found > 0 )) && break
-    $ADB shell input swipe 540 1600 540 400 500
-    wait_s 1 "Scrolling to Tap to Walk"
-  done
+  scroll_until_text "Enable Tap to Walk" || true
   if [[ "$(switch_is_on "Enable Tap to Walk")" != "True" ]]; then
     tap_switch_for "Enable Tap to Walk"
     wait_s 1 "Enabling Tap to Walk"
     tap_text_exact "Enable anyway"
     wait_s 1 "Enabling Tap to Walk"
   fi
-  for _ in $(seq 1 16); do
-    dump=$(ui_dump)
-    found=$(grep -c 'text="Ground calibration"' "$dump" || true)
-    rm -f "$dump"
-    (( found > 0 )) && break
-    $ADB shell input swipe 540 1600 540 400 500
-    wait_s 1 "Scrolling to Ground calibration"
-  done
-  if (( found == 0 )); then
+  if ! scroll_until_text "Ground calibration" 16; then
     echo "✗ Step 26: \"Ground calibration\" not found on Menus. Grant the Tap to Walk accessibility service (docs/testing.md, \"Test phone setup\") and retry." >&2
     exit 1
   fi
