@@ -420,13 +420,23 @@ recorded or scored in this entry.
 ### Perspective ground map and offline landing check
 
 Bench only (`registration_bench.py persp`, `landing`; `taptrials --persp`), nothing in the app changed. Two fixes
-to the earlier multi-leg map. First, the flow is measured per band (seven row bands, two side columns) after
-the leg's static content (HUD, ring, companion) and the player disc are inpainted away, because phase
+to the earlier multi-leg map. First, the flow is measured per band (seven row bands, three column thirds) after
+the leg's static content (HUD, ring, companion) and the player disc are inpainted away; band rows and columns are fractions of the frame, so no screen size is special-cased, because phase
 correlation over the whole band locked onto that static content and shrank every shift. Second, the 2x2 map is
 replaced by a pitched-camera homography (heading, lateral and forward scale, one perspective term) fitted to
 those band flows, so px per metre falls with distance (about 7.5 down to 2.6 forward at the Pixel 5 wide view).
 A tapped pixel is turned into a ground offset with the inverse homography relative to the player's feet pixel
-(measured by eye per zoom). Heading still comes out of the fit with no north assumed.
+(detected from the walked legs, see below). Heading still comes out of the fit with no north assumed.
+
+Feet pixel detection (`detect_feet`): the world scrolls under a player that stays put, so in each leg's temporal
+median only the player and HUD stay sharp, and the minimum over legs of different bearings also drops roads
+parallel to one walk. Along the centre column the figure is the strongest vertical run of sharp rows (gaps of up
+to 5% of the height bridged for dark legs); the feet are its last row, lifted by 7% of the figure height (the one
+value tuned, on the two hand-measured points). No orientation, game read or per-device number is used. On the
+recorded legs it gives 537 1558 on the Pixel 7 (by eye 538 1556) and 542 1725 on the Pixel 5 (by eye 532 1720),
+and `landing` without `--anchor` scores p90 9.9 m on the Pixel 7 legs (9.7 m with the hand anchor and the old bands); the wide-zoom twist datasets above are not on disk, so their rows were not re-run.
+`--anchor` stays as an override. After the fit, bands at or above the fitted horizon row (`sy / a`) are dropped
+and the map refitted (`fit_perspective_horizon`); with the horizon off screen this is a no-op.
 
 Data: 4 legs of 30 m per camera state (bearings 0, 90, 45, 225), walking speed, Pixel 5, three wide-view camera
 orientations reached by two-finger twists (fitted headings about -20, +5 and -21 degrees, same lateral, forward
@@ -448,11 +458,11 @@ static-content cleanup. Samples overlap (many pairs per leg), so they are not in
 Not shown, honestly: (1) no on-device taps were run for this entry, because the app disappeared from the test
 phone mid-session (not installed), so the 10 to 15 m result is the offline check above and still needs a real
 tap run; the earlier on-device run (0 of 4) used the old map. (2) Close-up zoom (pinch out about 1.6x, low
-pitch, horizon visible) was captured but not calibrated: the player fills the middle of the frame and the clean
-side bands gave a median response of 0.04. (3) The offline check only covers moves up to about 31 m and pixels
+pitch, horizon visible) is still not calibrated or re-captured: the band grid is now relative and horizon-aware
+and the feet pixel is detected, but the close-up `landing` check (p90 under 10 m on two screens) has not been run.
+The first close-up capture (side bands, hand anchor) gave a median response of 0.04. (3) The offline check only covers moves up to about 31 m and pixels
 of 700 to 1420 rows; taps beyond that are extrapolated. (4) Taps whose patch ends under the player's shadow or
-companion can be mismatched; check the annotated frames by eye. (5) The feet pixel is hand-measured per zoom;
-the app would need to detect it.
+companion can be mismatched; check the annotated frames by eye. (5) The feet pixel is detected by the bench, not yet by the app.
 
 ### Status and open work
 
@@ -485,7 +495,7 @@ came from the same session. Not run: the Pixel 5 re-check, close-up zoom, and re
 Open work, in order:
 
 1. Lower the skip rate (24 of 36 taps on the second Pixel 7 run) and explain the 23 m miss (`t17`), then repeat the run on this device and on more devices and camera states.
-2. Calibrate close-up zoom and detect the feet pixel automatically instead of measuring it by eye.
+2. Capture close-up (`varycap --conditions 1.6:0`) on two screens with different resolution or aspect and run `landing` without `--anchor`; acceptance p90 under 10 m. Feet detection is done (see above); the capture needs the Control API key and a second device.
 3. Port the calibrated ground map to the app.
 4. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes.
 

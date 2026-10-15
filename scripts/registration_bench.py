@@ -1144,8 +1144,54 @@ def cmd_multileg(args):
 # Perspective ground map (task: reliable landing). The linear 2x2 map is wrong across the frame because the
 # game camera is pitched: px per metre falls with distance. Model: ground_to_game(cam, theta) with cam =
 # {s, sy, a, px, py}, fitted to per-band content flow of the walked legs.
-FLOW_ROWS = [(500, 700), (700, 900), (900, 1100), (1100, 1290), (1290, 1400), (1400, 1520), (1520, 1650)]
-FLOW_COLS = [(120, 430), (650, 1000)]  # side columns: the player, its ring and the HUD sit in the middle
+# Band grid as fractions of the frame (no device pixels): 7 row bands over 0.21h..0.70h x 3 column thirds.
+# The full 0.12h..0.88h x 14 grid measured worse on the wide Pixel 7 legs (p90 13.4 m vs 9.7 m).
+FLOW_ROWS = [(0.21 + i * 0.49 / 7, 0.21 + (i + 1) * 0.49 / 7) for i in range(7)]
+FLOW_COLS = [(0.0, 1 / 3), (1 / 3, 2 / 3), (2 / 3, 1.0)]
+
+
+def detect_feet(legs, thr=30.0, gap=0.05):
+    """Player feet pixel (x, y) from the walked legs alone, or None when no figure is found.
+
+    The world scrolls under a player that stays put on screen, so in each leg's temporal median only the
+    player (and HUD) stay sharp; the minimum of that gradient over legs of different bearings also drops
+    roads parallel to one walk. Along the centre column band the figure is the strongest run of sharp rows
+    with gaps up to `gap` * height (dark legs); its feet are the last row with real support. Nothing is read from
+    the game and no orientation or per-device number is used: every size is a fraction of the frame.
+    """
+    grads = []
+    for fr in legs.values():
+        g = [f["img"] for f in fr if f["moving"]]
+        if len(g) < 3:
+            continue
+        med = cv2.GaussianBlur(np.median(np.stack([_to_gray(x) for x in g]).astype(np.float32), axis=0), (3, 3), 0)
+        grads.append(np.hypot(cv2.Sobel(med, cv2.CV_32F, 1, 0), cv2.Sobel(med, cv2.CV_32F, 0, 1)))
+    if not grads:
+        return None
+    e = np.minimum.reduce(grads) > thr
+    h, w = e.shape
+    x0, x1 = int(0.42 * w), int(0.58 * w)
+    k = max(3, int(0.005 * h))
+    rows = np.convolve(e[:, x0:x1].mean(axis=1), np.ones(k), mode="same")
+    lo, hi = int(0.4 * h), int(0.9 * h)
+    ys = [y for y in range(lo, hi) if rows[y] > 0.0]
+    if not ys:
+        return None
+    runs, cur = [], [ys[0]]
+    for y in ys[1:]:
+        if y - cur[-1] > gap * h:
+            runs.append(cur)
+            cur = []
+        cur.append(y)
+    runs.append(cur)
+    run = max(runs, key=lambda r: float(rows[r].sum()))
+    if rows[run].sum() < 0.0005 * h * k:
+        return None
+    # drop the faint tail (a stray sharp pixel) so the feet are the last row with real support
+    run = [y for y in run if rows[y] >= 0.1 * rows[run].max()]
+    ys_, xs_ = np.nonzero(e[run[0]:run[-1] + 1, x0:x1])
+    # the last sharp row is the sole's lower edge; the ground contact sits 7% of the figure height above it
+    return float(x0 + xs_.mean()), float(run[-1] - 0.07 * (run[-1] - run[0]))
 
 
 def clean_leg(frames, anchor, sprite_r=110):
@@ -1174,7 +1220,7 @@ def band_moves(legs, anchor, ks=(2, 3, 4, 6), min_d=2.0):
     moves = []
     for b, fr in legs.items():
         h, w = fr[0]["img"].shape[:2]
-        bands = [(_sy(y0, h), _sy(y1, h), _sx(x0, w), _sx(x1, w)) for y0, y1 in FLOW_ROWS for x0, x1 in FLOW_COLS]
+        bands = [(int(y0 * h), int(y1 * h), int(x0 * w), int(x1 * w)) for y0, y1 in FLOW_ROWS for x0, x1 in FLOW_COLS]
         imgs = clean_leg([f["img"] for f in fr], anchor)
         feats = [[_feat(g[y0:y1, x0:x1]) for y0, y1, x0, x1 in bands] for g in imgs]
         for k in ks:
@@ -1247,6 +1293,27 @@ def fit_perspective(moves, anchor, min_resp=0.2, theta0s=(-20, 5, 30, -60, 60, 1
             "px": float(anchor[0]), "py": float(anchor[1]), "med_abs_px": med, "n": len(rows) // 2}
 
 
+def fit_perspective_horizon(moves, anchor, margin=0.03, **kw):
+    """fit_perspective, then refit without bands at or above the fitted horizon row.
+
+    Rows of the camera's vanishing line are y = sy / a; when that row is on screen (close-up, steep pitch)
+    the bands near and above it have no coherent flow, so they are dropped. Horizon off screen: one pass.
+    """
+    fit = fit_perspective(moves, anchor, **kw)
+    if fit is None or fit["a"] == 0.0:
+        return fit
+    hz = fit["sy"] / fit["a"]
+    cy = [f[4] for _, _, fl in moves for f in fl]
+    if not cy:
+        return fit
+    h = max(cy) / sum(FLOW_ROWS[-1]) * 2  # frame height: the lowest band centre sits at that fraction of it
+    if not 0.0 <= hz < h:
+        return fit
+    cut = hz + margin * h
+    kept = [(b, d, [f for f in fl if f[4] > cut]) for b, d, fl in moves]
+    return fit_perspective(kept, anchor, **kw) or fit
+
+
 def persp_h(cal):
     return ground_to_game({k: cal[k] for k in ("s", "sy", "a", "px", "py")}, cal["theta_deg"])
 
@@ -1257,10 +1324,22 @@ def tap_to_ground_persp(cal, p):
     return _h_apply(hi, p) - _h_apply(hi, (cal["px"], cal["py"]))
 
 
+def _anchor(args, legs):
+    """--anchor when given, else the feet pixel detected from the legs; None (and a message) when not found."""
+    if args.anchor:
+        return tuple(args.anchor)
+    feet = detect_feet(legs)
+    if feet is None:
+        print("feet pixel not found -> REJECTED")
+        return None
+    print(f"feet pixel detected: {feet[0]:.0f} {feet[1]:.0f}")
+    return feet
+
+
 def cmd_persp(args):
     """Fit the perspective ground map from every walk_C_* leg under args.data (and extra dirs) -> calibration.json.
 
-    --anchor X Y is the player's feet pixel at this zoom. Prints heading, scales and the median flow residual.
+    The feet pixel is detected from the legs unless --anchor X Y overrides it. Prints heading, scales and the median flow residual.
     """
     import json
 
@@ -1268,7 +1347,10 @@ def cmd_persp(args):
     for d in [args.data] + list(args.more):
         for b, fr in _commanded_legs(Path(d)).items():
             legs.setdefault(b, fr)
-    fit = fit_perspective(band_moves(legs, tuple(args.anchor)), tuple(args.anchor))
+    anchor = _anchor(args, legs)
+    if anchor is None:
+        return
+    fit = fit_perspective_horizon(band_moves(legs, anchor), anchor)
     if fit is None:
         print("calibration REJECTED (too few usable flows)")
         return
@@ -1286,16 +1368,18 @@ def cmd_landing(args):
     for d in [args.data] + list(args.more):
         for b, fr in _commanded_legs(Path(d)).items():
             legs.setdefault(b, fr)
-    anchor = tuple(args.anchor)
+    anchor = _anchor(args, legs)
+    if anchor is None:
+        return
     moves = band_moves(legs, anchor)
-    full = fit_perspective(moves, anchor)
+    full = fit_perspective_horizon(moves, anchor)
     hi_full = np.linalg.inv(persp_h(full))
     lat0 = next(iter(legs.values()))[0]["ll"][0]
     probes = [(x, y) for x in (200, 540, 880) for y in (700, 900, 1050, 1150, 1250, 1350, 1420)]
     errs, skipped = [], 0
     SPRITE_R = args.sprite_r
     for hb, fr in legs.items():
-        cal = fit_perspective([m for m in moves if m[0] != hb], anchor)
+        cal = fit_perspective_horizon([m for m in moves if m[0] != hb], anchor)
         h = persp_h(cal)
         hi = np.linalg.inv(h)
         g = clean_leg([f["img"] for f in fr], anchor)
@@ -1582,7 +1666,7 @@ def main(argv=None):
     for name, fn in (("persp", cmd_persp), ("landing", cmd_landing)):
         q = sub.add_parser(name)
         q.add_argument("data")
-        q.add_argument("--anchor", type=float, nargs=2, required=True, help="player's feet px (x y) at this zoom")
+        q.add_argument("--anchor", type=float, nargs=2, help="override the detected feet px (x y), to reproduce old runs")
         q.add_argument("--more", nargs="*", default=[], help="extra dirs of walk_C_* legs, same camera")
         q.add_argument("--sprite-r", type=int, default=0, help="landing only: mask radius at the player's feet")
         q.set_defaults(func=fn)
