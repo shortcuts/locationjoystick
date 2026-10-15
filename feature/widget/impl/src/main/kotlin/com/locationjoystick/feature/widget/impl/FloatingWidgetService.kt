@@ -25,7 +25,6 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjTheme
-import com.locationjoystick.core.location.CompassHeadingSource
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.AppFeature
@@ -35,6 +34,7 @@ import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RouteStartConfig
+import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.core.model.isRoutePlaying
 import com.locationjoystick.core.model.shouldIgnoreJoystickInput
@@ -133,8 +133,6 @@ class FloatingWidgetService :
 
     @Inject lateinit var mapController: MapController
 
-    @Inject lateinit var compassHeadingSource: CompassHeadingSource
-
     @Inject lateinit var captureCoordinatesRepository: CaptureCoordinatesRepository
 
     @Inject lateinit var favoriteRepository: FavoriteRepository
@@ -163,6 +161,7 @@ class FloatingWidgetService :
 
     private val isTapToWalkActiveFlow = MutableStateFlow(false)
     private lateinit var tapToWalkScaleMpx: StateFlow<Double>
+    private lateinit var groundCalibration: StateFlow<StoredGroundCalibration?>
     private lateinit var compassDisclosureChoice: StateFlow<String>
     private var tapToWalkOverlay: TapToWalkOverlay? = null
 
@@ -211,6 +210,10 @@ class FloatingWidgetService :
             settingsRepository
                 .getTapToWalkScaleMpx()
                 .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
+        groundCalibration =
+            settingsRepository
+                .getGroundCalibration()
+                .stateIn(lifecycleScope, SharingStarted.Eagerly, null)
         compassDisclosureChoice =
             settingsRepository
                 .getCompassDisclosureChoice()
@@ -591,7 +594,7 @@ class FloatingWidgetService :
                     getPosition = { mapController.sharedState.value.currentPosition },
                     getScaleMpx = { tapToWalkScaleMpx.value },
                     onDismissed = { isTapToWalkActiveFlow.value = false },
-                    getHeadingAsync = { compassHeadingSource.captureHeading() },
+                    getGroundCalibration = { groundCalibration.value },
                 )
             tapToWalkOverlay = overlay
             isTapToWalkActiveFlow.value = true

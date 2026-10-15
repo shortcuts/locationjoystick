@@ -2,6 +2,7 @@ package com.locationjoystick.feature.widget.impl
 
 import android.content.Context
 import android.graphics.PixelFormat
+import android.os.Build
 import android.util.Log
 import android.view.WindowManager
 import androidx.compose.foundation.background
@@ -32,17 +33,15 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjOnScrim
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.model.CalibrationWalkMath
+import com.locationjoystick.core.model.GroundMap
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.feature.widget.impl.R
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.PI
+import kotlin.math.atan2
 import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.hypot
 
 internal class TapToWalkOverlay(
     private val context: Context,
@@ -53,22 +52,14 @@ internal class TapToWalkOverlay(
     private val getPosition: () -> LatLng?,
     private val getScaleMpx: () -> Double,
     private val onDismissed: () -> Unit,
-    private val getHeadingAsync: (suspend () -> Float?)? = null,
+    private val getGroundCalibration: () -> StoredGroundCalibration? = { null },
 ) {
     private var overlayView: ComposeView? = null
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private var preCapturedHeading: Float? = null
 
     fun isShowing(): Boolean = overlayView?.isAttachedToWindow == true
 
     fun show() {
         if (isShowing()) return
-        if (getHeadingAsync != null) {
-            scope.launch {
-                preCapturedHeading =
-                    withTimeoutOrNull(AppConstants.CompassTrackingConstants.OVERLAY_HEADING_TIMEOUT_MS) { getHeadingAsync.invoke() }
-            }
-        }
         val view =
             ComposeView(context).apply {
                 setViewTreeLifecycleOwner(lifecycleOwner)
@@ -79,9 +70,7 @@ internal class TapToWalkOverlay(
                             onTap = { x, y, screenW, screenH ->
                                 val pos = getPosition()
                                 if (pos != null) {
-                                    val northAngle = preCapturedHeading?.toDouble() ?: 0.0
-                                    val newPos = computeWalkTarget(pos, x, y, screenW, screenH, getScaleMpx(), northAngle)
-                                    onWalkTo(newPos)
+                                    onWalkTo(resolveTarget(pos, x, y, screenW, screenH))
                                 }
                                 dismiss()
                             },
@@ -101,8 +90,6 @@ internal class TapToWalkOverlay(
     }
 
     fun dismiss() {
-        scope.coroutineContext.cancelChildren()
-        preCapturedHeading = null
         val had = overlayView != null
         overlayView?.let { view ->
             try {
@@ -114,6 +101,35 @@ internal class TapToWalkOverlay(
         }
         overlayView = null
         if (had) onDismissed()
+    }
+
+    /**
+     * Ground-map path when a stored calibration matches the full display; otherwise the north-up scale
+     * formula. The map is fitted on full-display frames, so the tap is shifted by the window's
+     * on-screen origin (system bars may inset the overlay).
+     */
+    private fun resolveTarget(
+        pos: LatLng,
+        x: Float,
+        y: Float,
+        screenW: Int,
+        screenH: Int,
+    ): LatLng {
+        val stored = getGroundCalibration()
+        if (stored != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val bounds = windowManager.maximumWindowMetrics.bounds
+            if (stored.matches(bounds.width(), bounds.height())) {
+                val origin = IntArray(2).also { overlayView?.getLocationOnScreen(it) }
+                val map = GroundMap(stored.calibration, bounds.width().toDouble(), bounds.height().toDouble())
+                val target = computeGroundWalkTarget(pos, map, (origin[0] + x).toDouble(), (origin[1] + y).toDouble())
+                if (target != null) {
+                    Log.d(TAG, "tap resolved via ground map")
+                    return target
+                }
+            }
+        }
+        Log.d(TAG, "tap resolved via north-up fallback")
+        return computeWalkTarget(pos, x, y, screenW, screenH, getScaleMpx())
     }
 
     private fun overlayLayoutParams() =
@@ -130,11 +146,23 @@ internal class TapToWalkOverlay(
         private const val TAG = "TapToWalkOverlay"
 
         /**
-         * Converts a screen tap position to a GPS coordinate.
-         *
-         * [northAngleRad] is the clockwise angle from screen-up to geographic north
-         * (atan2 of red-pixel centroid offset). Default 0 = north-up map.
-         * Zooming out reduces positioning error per pixel.
+         * Ground-map conversion of a full-display tap pixel to a GPS coordinate, or null past the
+         * horizon. The offset is applied with the calibration walk's flat-earth frame (111320 m/deg).
+         */
+        fun computeGroundWalkTarget(
+            currentPos: LatLng,
+            map: GroundMap,
+            tapX: Double,
+            tapY: Double,
+        ): LatLng? {
+            val o = map.pixelToGround(tapX, tapY) ?: return null
+            val bearing = Math.toDegrees(atan2(o.eastMeters, o.northMeters))
+            return CalibrationWalkMath.commandedTarget(currentPos, bearing, hypot(o.eastMeters, o.northMeters))
+        }
+
+        /**
+         * Fallback conversion of a screen tap position to a GPS coordinate, assuming a north-up map
+         * at [metersPerPixel] (no compass is read). Zooming out reduces positioning error per pixel.
          */
         fun computeWalkTarget(
             currentPos: LatLng,
@@ -143,12 +171,9 @@ internal class TapToWalkOverlay(
             screenW: Int,
             screenH: Int,
             metersPerPixel: Double,
-            northAngleRad: Double = 0.0,
         ): LatLng {
-            val rawDx = (tapX - screenW / 2f) * metersPerPixel
-            val rawDy = -(tapY - screenH / 2f) * metersPerPixel
-            val dx = rawDx * cos(northAngleRad) - rawDy * sin(northAngleRad)
-            val dy = rawDx * sin(northAngleRad) + rawDy * cos(northAngleRad)
+            val dx = (tapX - screenW / 2f) * metersPerPixel
+            val dy = -(tapY - screenH / 2f) * metersPerPixel
             val lat = currentPos.latitude + (dy / AppConstants.LocationConstants.EARTH_RADIUS_METERS) * (180.0 / PI)
             val lon =
                 currentPos.longitude +

@@ -65,6 +65,16 @@ The overlay shows:
 
 ### Pixel → GPS Formula
 
+Primary path (ground map): when a stored calibration (`StoredGroundCalibration`, see "Calibration walk")
+matches the full display size, the tap pixel goes through `GroundMap.pixelToGround`, and the resulting
+east/north offset is applied with `CalibrationWalkMath.commandedTarget` (bearing = `atan2(east, north)`,
+distance = `hypot`) to the current position. No screenshot or heading is read in the tap callback: the map
+comes from the cached stored calibration (`FloatingWidgetService.groundCalibration`).
+`TapToWalkOverlay.computeGroundWalkTarget(...)` is the pure companion function (null past the horizon).
+
+Fallback (no matching calibration, other screen size, API < 30, or tap past the horizon): the north-up
+scale formula, never blocking the tap. No compass is read.
+
 ```
 dx_m = (tapX - screenW/2) * metersPerPixel
 dy_m = -(tapY - screenH/2) * metersPerPixel
@@ -72,24 +82,22 @@ newLat = currentLat + (dy_m / 6_371_000) * (180/π)
 newLon = currentLon + (dx_m / 6_371_000) * (180/π) / cos(currentLat * π/180)
 ```
 
-**North-up assumption**: the formula assumes the game map is north-up. Accuracy depends on the scale setting matching the game's actual zoom level.
-
+Accuracy of the fallback depends on the scale setting matching the game's zoom and the map being north-up.
 `TapToWalkOverlay.computeWalkTarget(...)` is a `companion object` pure function — no Android deps, testable directly.
 
-The function accepts an optional `northAngleRad` (default `0.0` = north-up). When compass tracking is active the pre-captured heading is passed here:
+Invariants a change must not break:
 
-```
-geo_east  = rawDx·cos(θ) − rawDy·sin(θ)
-geo_north = rawDx·sin(θ) + rawDy·cos(θ)
-```
-
-where θ = `northAngleRad` (clockwise from screen-up to geographic north).
+- Tap pixel is in full-display device pixels: `getLocationOnScreen` of the overlay plus the in-window tap, never the overlay window size (system bars may inset it). The calibration is fitted on full-display screenshots and `matches(w, h)` compares against `maximumWindowMetrics`.
+- Ground frame is north-up metres east/north of the feet, flat earth at 111320 m/deg (the walk's frame), not the 6,371,000 m haversine radius used by the fallback.
+- Fallback is north-up by design: nothing assumes or reads a compass; heading comes from the walked-leg fit only.
+- The fallback must stay while nothing user-visible starts a calibration walk; when it does, that entry must dismiss the overlay first.
 
 ## Compass Orientation
 
-When enabled, `TapToWalkOverlay` takes a screenshot immediately after `show()` and auto-locates the
-game's compass needle icon to detect its heading. The heading is available by the time the user
-taps (3 s budget; falls back to north-up if not ready). **No manual calibration**: an earlier
+`TapToWalkOverlay` no longer reads the compass heading: taps use the ground map (see "Pixel → GPS
+Formula"). The service, `CompassHeadingSource.captureHeading()`, the Settings **Test** button and the
+shared icon detection remain, and Reconnect accessory (docs/features/bluetooth-reconnect-tap.md) shares
+them. The text below describes that detection. **No manual calibration**: an earlier
 version asked the user to drag a circle onto the compass and store its position/radius — that
 required precise calibration to avoid picking up unrelated red UI elements (a gym marker, a raid
 egg) nearby, and a bad calibration made detection "confused" (issue reported after that version
@@ -605,8 +613,8 @@ Invariants a change must not break:
 ### Calibration walk
 
 `CalibrationWalkOrchestrator` (`:core:location`, `@Singleton`) walks the mock position, screenshots the game,
-runs the solver and stores one map. Nothing user-visible starts it yet and the tap handler does not read the
-result yet; both consume `CalibrationWalkOrchestrator.state` and `SettingsRepository.getGroundCalibration()`.
+runs the solver and stores one map. Nothing user-visible starts it yet and the tap handler reads the
+stored result via `SettingsRepository.getGroundCalibration()`; the future UX consumes `CalibrationWalkOrchestrator.state`.
 
 Data flow:
 
@@ -707,7 +715,7 @@ Open work, in order:
 
 1. Lower the skip rate (24 of 36 taps on the second Pixel 7 run) and explain the 23 m miss (`t17`), then repeat the run on this device and on more devices and camera states.
 2. Close-up (z1.6) landing is not met: p90 96.9 m on the Pixel 7, target under 10 m. Measured with `varycap --conditions 1.6:0` then `landing` without `--anchor`: feet pixel detected 509 1548, 928 samples, p50 22.6 m, p90 96.9 m, within 10 m 20%, within 15 m 34%, 66% of matches skipped as ambiguous. The wide capture on the same device gives p50 3.0 m, p90 9.9 m with the detected anchor. The detected feet row looks too high at close-up (sharp rows span 1149 to 1911, the detector stops at the torso/leg gap); widening the run gap to 0.12 moved the anchor to 1796 and made landing worse (p90 286.8 m), so the anchor is not the main error: the fit and the match step at close-up are. Needs a second device and a cause for the ambiguity at close-up before retrying.
-3. Ground map model ported (`GroundMap`, see "Ground map model"), feet detection ported (`FeetDetector`, see "Feet detection"), frame flow and fit ported (`FrameFlow`, `GroundMapFit`, see "Frame flow and ground fit"); the walked-leg capture and orchestration ported (`CalibrationWalkOrchestrator`, see "Calibration walk"); the calibration UX and the wiring into the tap overlay remain. The on-device analysis time is unmeasured (the pure port was only benchmarked on the host).
+3. Ground map model ported (`GroundMap`, see "Ground map model"), feet detection ported (`FeetDetector`, see "Feet detection"), frame flow and fit ported (`FrameFlow`, `GroundMapFit`, see "Frame flow and ground fit"); the walked-leg capture and orchestration ported (`CalibrationWalkOrchestrator`, see "Calibration walk"); the tap overlay now reads the stored ground map (fallback north-up without one); the calibration UX remains. The on-device analysis time is unmeasured (the pure port was only benchmarked on the host).
 4. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes.
 
 ## Warning Screen
@@ -730,7 +738,9 @@ screen re-shows if the user disables and re-enables.
 - Do not add `FLAG_NOT_TOUCH_MODAL` to the overlay — this breaks interception.
 - Do not re-read position inside the tap callback — capture it once via `getPosition()` at tap time.
 - Do not persist `isTapToWalkActive` in DataStore — it is transient session state in `MutableStateFlow`.
-- Do not block the tap callback waiting for heading — pre-capture in `show()` with a timeout instead.
+- Do not capture a screenshot or heading in the tap callback — the map is read from the cached stored calibration.
+- Do not use the overlay window size as the screen size — use full-display pixels (location on screen plus display metrics).
+- Do not use the haversine radius for the ground-map offset — the ground frame is 111320 m/deg.
 - Do not call `getPixel` on a hardware bitmap — copy to `ARGB_8888` first via `bitmap.copy(Bitmap.Config.ARGB_8888, false)`.
 
 ## Shared disclosure

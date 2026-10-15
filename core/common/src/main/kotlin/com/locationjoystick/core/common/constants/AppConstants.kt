@@ -600,11 +600,9 @@ object AppConstants {
 
     object CompassTrackingConstants {
         // Android rate-limits accessibility screenshots and a game frame can be mid-transition, so
-        // one failed capture is retried after a short wait. The overlay budget covers the worst
-        // case: 3 captures plus 2 delays.
+        // one failed capture is retried after a short wait.
         const val CAPTURE_ATTEMPTS = 3
         const val CAPTURE_RETRY_DELAY_MS = 500L
-        const val OVERLAY_HEADING_TIMEOUT_MS = 3000L
 
         // Fixed search window — every tested AR/GPS-spoofing game places its compass top-right,
         // so this needs no per-user calibration. Covers the right 45% / top 35% of the screen.
