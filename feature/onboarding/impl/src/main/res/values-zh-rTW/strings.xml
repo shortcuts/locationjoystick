@@ -25,7 +25,7 @@
     <string name="onboarding_skip">"跳過"</string>
     <string name="onboarding_start_using_locationjoystick">"開始使用 locationjoystick"</string>
     <string name="onboarding_optional">"選用"</string>
-    <string name="onboarding_compass_orientation">"羅盤方向（選用）"</string>
-    <string name="onboarding_compass_orientation_desc">"如果你不想使用「點擊行走」，可以略過此步驟。它讓「點擊行走」讀取遊戲中的羅盤，使每次點擊都朝正確方向行走，並使用 Android 無障礙（Accessibility）權限。"</string>
+    <string name="onboarding_compass_orientation">"點擊行走設定（選用）"</string>
+    <string name="onboarding_compass_orientation_desc">"如果你不想使用「點擊行走」，可以略過此步驟。「點擊行走」使用 Android 無障礙（Accessibility）權限擷取遊戲的螢幕截圖：在你自己開始的一次性 10 分鐘校準行走中約幾百張，使你的點擊落在你點擊的位置。"</string>
     <string name="onboarding_compass_review">"查看並開啟"</string>
 </resources>

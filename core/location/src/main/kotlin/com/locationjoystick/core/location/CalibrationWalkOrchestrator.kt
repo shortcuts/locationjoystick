@@ -99,6 +99,14 @@ class CalibrationWalkOrchestrator
             val reason: CalibrationFailure,
         ) : Exception(reason.name)
 
+        /** True when spoofing runs idle in a joystick or teleport mode with a position and no walk target. */
+        val isReady: Boolean
+            get() =
+                locationRepository.mockLocationState.value == MockLocationState.RUNNING &&
+                    locationRepository.currentMode.value in READY_MODES &&
+                    locationRepository.walkTarget.value == null &&
+                    locationRepository.currentPosition.value != null
+
         /**
          * Starts a calibration walk. False when one is already running, or when the app is not ready
          * (state becomes [CalibrationState.Failed] with [CalibrationFailure.NOT_READY]).
@@ -106,12 +114,7 @@ class CalibrationWalkOrchestrator
         fun start(): Boolean =
             synchronized(this) {
                 if (_state.value is CalibrationState.Walking || _state.value is CalibrationState.Analysing) return false
-                val ready =
-                    locationRepository.mockLocationState.value == MockLocationState.RUNNING &&
-                        locationRepository.currentMode.value in READY_MODES &&
-                        locationRepository.walkTarget.value == null &&
-                        locationRepository.currentPosition.value != null
-                if (!ready) {
+                if (!isReady) {
                     _state.value = CalibrationState.Failed(CalibrationFailure.NOT_READY)
                     return false
                 }

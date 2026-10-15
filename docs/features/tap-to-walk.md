@@ -164,8 +164,12 @@ task stack after that switch sequence) instead of launching an intent.
 Play's Accessibility API policy rejected releases that showed the disclosure only in a settings
 sub-screen, or that let the accessibility service run without an in-app accept. `CompassDisclosureDialog`
 (`:core:designsystem`) is the single disclosure surface: a full-screen dialog that names the
-AccessibilityService API, the data it reads (one screenshot), the purpose (compass heading), and
-that the screenshot stays on-device and nothing is collected or shared. Its title and body say
+AccessibilityService API, the data it reads (screenshots, with their cadence: about one every 3 seconds for
+about 10 minutes during a calibration walk the user starts, one per Test tap, about one a minute while Reconnect
+accessory is on), the purpose (measuring how the game's map moves, the compass icon in Test, the accessory
+state), and that calibration screenshots stay on the phone only until the calibration ends, other
+screenshots are deleted at once, and nothing is collected or shared. Play's policy requires the periodic
+screenshot to be named in this text, in the onboarding card and in the service description. Its title and body say
 "Accessibility" explicitly. It cannot be dismissed by back press or outside tap — only "Accept" or
 "Decline" (the wording from Play's prominent-disclosure guidance), plus a small "Skip" at the
 bottom right on the onboarding prompt only (`onSkip`). The body text scrolls while the buttons
@@ -182,10 +186,11 @@ the first of them is onboarding, which every new install walks through:
 | Entry point | Where |
 |---|---|
 | Onboarding (on entry) | `OnboardingScreen` opens the dialog by itself when the stored choice is unanswered and API >= 30. Buttons: Accept (records `accepted`, opens Android's Accessibility settings), Decline (`declined`), Skip (`skipped`). Every button stores an answer, so it never auto-shows again. Installs that finished onboarding before this shipped never reach it |
-| Onboarding card | Optional "Compass orientation" card below the three required steps (every API level, skip line first, not counted in "Step X of 3", never blocks "Start"). "Review and turn on" reopens the same disclosure (`OnboardingScreen.kt`) |
+| Onboarding card | Optional "Tap to Walk setup" card below the three required steps (every API level, skip line first, not counted in "Step X of 3", never blocks "Start"). "Review and turn on" reopens the same disclosure (`OnboardingScreen.kt`) |
 | Turning Tap to Walk on | The Tap to Walk switch opens the same screen, with the two overlay caveats above the disclosure text and "Accept" as the accept label (`SettingsMenusSubScreen.kt`). Below API 30 only the caveats are shown, with "Enable anyway" |
 | Tapping the widget crosshair | `FloatingWidgetService.onTapToWalkClicked()` launches `MainActivity` with `EXTRA_SHOW_COMPASS_DISCLOSURE`; the overlay opens on the next tap |
 | Settings compass row | "Open Settings" in `CompassOrientationSection` |
+| Calibration | Calibration needs the service already granted, so it adds no new consent path |
 
 Play Console side is done and needs no re-checking: declaration form, per-submission video,
 store-listing mention, and no stale artifacts on other tracks. Rejections after build 2400 came from
@@ -652,8 +657,8 @@ Invariants a change must not break:
 ### Calibration walk
 
 `CalibrationWalkOrchestrator` (`:core:location`, `@Singleton`) walks the mock position, screenshots the game,
-runs the solver and stores one map. Nothing user-visible starts it yet and the tap handler reads the
-stored result via `SettingsRepository.getGroundCalibration()`; the future UX consumes `CalibrationWalkOrchestrator.state`.
+runs the solver and stores one map. The tap handler reads the stored result via
+`SettingsRepository.getGroundCalibration()`; the user starts it from Settings, see "Calibration UX" below.
 
 Data flow:
 
@@ -704,6 +709,35 @@ Failure reasons (`CalibrationFailure`; any one stores nothing, deletes the frame
 Cooldown and anti-cheat: the walk never teleports, so it neither reads nor writes the teleport cooldown and does
 not look like a jump to the game. The periodic screenshots are as detectable as the compass capture (see
 "Anti-cheat caveat"); they go through the same disclosure gate as `captureHeading()`.
+
+#### Calibration UX
+
+Lives in Settings -> Menus -> Tap to Walk, as `GroundCalibrationSection` directly under the compass block
+(`SettingsMenusSubScreen.kt`), shown on API 30+ once Tap to Walk is on and the accessibility service is granted.
+State comes from `SettingsViewModel.calibrationState` (the orchestrator's `state`) and `groundCalibration`; both
+sit outside the draft/save `SettingsUiState` because a calibration is not a setting.
+
+- Start button is disabled until the game app (the compass Test picker) is chosen. On tap the view model checks
+  `CalibrationWalkOrchestrator.isReady` first: not ready shows `NOT_READY` without leaving Settings. Otherwise it
+  launches the game, waits `CALIBRATION_GAME_FOREGROUND_DELAY_MS` (3 s) and calls `start()`. The wait matters:
+  `run()` takes its probe frame at once, and a probe of Settings fits a static screen (`IMPLAUSIBLE_FIT`).
+- Progress: "Walking leg L of 8" with a bar at `(L-1)/8`, then "Analysing step S of N". Cancel calls `cancel()`.
+- End: `Done` or `Failed` shows a toast over the game and brings the app's task to front, because the user spends
+  the ten minutes inside the game. The same message stays in the section.
+- Failure copy: one string per `CalibrationFailure`, selected by the exhaustive `calibrationFailureMessageRes`
+  (`CalibrationCopy.kt`), so a new enum entry fails to compile until it has text.
+- Status line: no record is "Not calibrated. Taps assume the map is north-up."; a record shows date and
+  measurement count; a record whose size differs from the display shows "Saved map is for a different screen
+  size. Recalibrate." (the same `matches` test as the tap overlay).
+- Recalibration is manual. Zoom and rotation cannot be read at tap time (see "Game-camera orientation
+  signals"), so the button reads "Recalibrate" and the help text says to run it after changing the game's zoom,
+  rotation or the phone's display size.
+- The tap overlay hint reads "Not calibrated: taps assume north-up. Calibrate in Settings." when no usable
+  record exists, the one place a player sees the fallback happen.
+
+Invariants of the UX: the game must be in front before `start()`; readiness is checked before leaving the app;
+the start never teleports and the copy tells the user not to touch the joystick, zoom or rotate; the disclosure
+names the periodic screenshot (below).
 
 Invariants a change must not break:
 

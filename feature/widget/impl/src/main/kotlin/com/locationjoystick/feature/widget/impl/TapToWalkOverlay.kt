@@ -60,6 +60,7 @@ internal class TapToWalkOverlay(
 
     fun show() {
         if (isShowing()) return
+        val usable = hasUsableGroundMap()
         val view =
             ComposeView(context).apply {
                 setViewTreeLifecycleOwner(lifecycleOwner)
@@ -67,6 +68,7 @@ internal class TapToWalkOverlay(
                 setContent {
                     LjTheme {
                         TapToWalkOverlayContent(
+                            calibrated = usable,
                             onTap = { x, y, screenW, screenH ->
                                 val pos = getPosition()
                                 if (pos != null) {
@@ -101,6 +103,14 @@ internal class TapToWalkOverlay(
         }
         overlayView = null
         if (had) onDismissed()
+    }
+
+    /** True when a stored calibration matches the full display, the condition [resolveTarget] needs for the ground map. */
+    private fun hasUsableGroundMap(): Boolean {
+        val stored = getGroundCalibration() ?: return false
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return false
+        val bounds = windowManager.maximumWindowMetrics.bounds
+        return stored.matches(bounds.width(), bounds.height())
     }
 
     /**
@@ -186,6 +196,7 @@ internal class TapToWalkOverlay(
 
 @Composable
 private fun TapToWalkOverlayContent(
+    calibrated: Boolean,
     onTap: (x: Float, y: Float, screenW: Int, screenH: Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -204,7 +215,14 @@ private fun TapToWalkOverlayContent(
         )
         // Hint label
         Text(
-            text = stringResource(R.string.tap_to_walk_overlay_tap_anywhere_to_walk_there),
+            text =
+                stringResource(
+                    if (calibrated) {
+                        R.string.tap_to_walk_overlay_tap_anywhere_to_walk_there
+                    } else {
+                        R.string.tap_to_walk_overlay_not_calibrated_hint
+                    },
+                ),
             style = MaterialTheme.typography.bodyMedium,
             color = LjOnScrim,
             textAlign = TextAlign.Center,

@@ -10,7 +10,7 @@ Key files: `:feature:onboarding:impl/OnboardingScreen.kt`, `:feature:onboarding:
 2. Grant `ACCESS_FINE_LOCATION`
 3. Grant `SYSTEM_ALERT_WINDOW`
 4. Enable mock location (deep link to Developer Options; re-checked automatically on resume — see "Permission Checks" below)
-5. Optional: Compass orientation (every API level). On API 30+ the Accessibility prominent disclosure
+5. Optional: Tap to Walk setup (every API level; card text names the calibration screenshots). On API 30+ the Accessibility prominent disclosure
    (`CompassDisclosureDialog`) opens by itself on entering onboarding while the choice is unanswered, with
    Accept, Decline and a small Skip. Accept opens Android's Accessibility settings (below API 30 it only
    records the choice). Every button stores an answer, so it never auto-shows again; Tap to Walk entry

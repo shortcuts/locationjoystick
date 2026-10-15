@@ -32,6 +32,7 @@ dependencies {
     implementation(libs.okhttp)
 
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
     testImplementation(libs.robolectric)
     testImplementation(libs.orgjson)
     testImplementation(libs.okhttp.mockwebserver)

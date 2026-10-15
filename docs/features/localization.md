@@ -71,6 +71,8 @@ cases) so new UI text is externalized to `strings.xml` and stays translatable by
   `values-<qualifier>/strings.xml` with the exact same keys.
 - Never translate: the app name/brand ("locationjoystick"), and units/symbols embedded in format
   strings (e.g. "m/s", "km/h").
+- Disclosure, onboarding-card, service-description and calibration failure strings are Play-policy relevant
+  and need the same native-speaker review before release.
 - AI-assisted translations require a native-speaker review before merge — see CONTRIBUTING.md,
   "Translations".
 

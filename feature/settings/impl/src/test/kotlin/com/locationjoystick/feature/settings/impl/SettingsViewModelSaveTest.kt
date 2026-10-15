@@ -86,6 +86,10 @@ class SettingsViewModelSaveTest {
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
                 compassHeadingSource = CompassHeadingSource(fakeSettingsRepo),
+                calibrationWalkOrchestrator =
+                    io.mockk.mockk(relaxed = true) {
+                        io.mockk.every { state } returns kotlinx.coroutines.flow.MutableStateFlow(com.locationjoystick.core.location.CalibrationState.Idle)
+                    },
                 context = context,
             )
     }

@@ -46,7 +46,7 @@
 #   19_onboarding_mock_location,
 #   20_tap_to_walk_settings, 21_compass_orientation,
 #   22_capture_coordinates, 23_map_paste_coordinates, 24_roaming_planting,
-#   25_compass_disclosure
+#   25_compass_disclosure, 26_calibration
 #
 # 19_onboarding_mock_location ("Set as fake GPS app" onboarding step) is only
 # captured on a genuinely fresh install — it's taken mid-onboarding, before
@@ -1461,6 +1461,28 @@ if should_run_step "25"; then
   # state it had before this step.
   tap_text_exact "Decline"
   wait_s 1 "Dismissing disclosure"
+fi
+
+# ── 26. Settings → Menus → Ground calibration section ───────────────────────
+# GroundCalibrationSection renders below Compass orientation, and only while
+# the accessibility service is granted (API 30+), so grant it first.
+
+if should_run_step "26"; then
+  log "=== 26 CALIBRATION ==="
+  go_idle
+  tap_text_below "Settings" "$CARD_Y_MIN"
+  wait_s 2 "Settings loading"
+  tap_text "Menus"
+  wait_s 2 "Menus loading"
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    dump=$(ui_dump)
+    found=$(grep -c 'text="Ground calibration"' "$dump" || true)
+    rm -f "$dump"
+    (( found > 0 )) && break
+    $ADB shell input swipe 540 1600 540 400 500
+    wait_s 1 "Scrolling to Ground calibration"
+  done
+  screenshot "26_calibration"
 fi
 
 # ── Done ─────────────────────────────────────────────

@@ -164,6 +164,26 @@ class CalibrationWalkOrchestratorTest {
         }
 
     @Test
+    fun `isReady follows the four preconditions`() =
+        runTest {
+            val o = orchestrator()
+            assertTrue(o.isReady)
+
+            locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+            assertFalse(o.isReady)
+            locationRepository.setMockMode(MockMode.TELEPORT)
+            assertTrue(o.isReady)
+
+            locationRepository.setWalkTarget(start)
+            assertFalse(o.isReady)
+            locationRepository.setWalkTarget(null)
+
+            locationRepository.stopSpoofing()
+            assertFalse(o.isReady)
+            assertEquals(CalibrationState.Idle, o.state.value)
+        }
+
+    @Test
     fun `service unavailable when the bridge is unbound or the disclosure is not accepted`() =
         runTest {
             for (unbound in listOf(true, false)) {

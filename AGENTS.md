@@ -171,7 +171,7 @@ Rules:
 | `FrameFlow` / `PhaseCorrelation` | `:core:model` | Objects | Pure-Kotlin walked-leg frame flow: static-content cleanup (`cleanLeg`) and per-band phase correlation (`bandMoves`), ports of bench `clean_leg` / `band_moves` / `cv2.phaseCorrelate`. Not wired yet. |
 | `GroundMapFit` | `:core:model` | Object | Pure-Kotlin least-squares fit of the perspective ground map (`GroundCalibration`) to band flows (bench `fit_perspective_horizon` port); `null` under 40 usable flows. Not wired yet. |
 | `Geocoding` / `GeocodingProvider` | `:core:common` | Object + interface | Process-wide entry for search and reverse lookup. `FallbackGeocodingProvider` (wired) tries `NominatimProvider` then `PhotonProvider` in order, skipping a failed provider for a 10-minute in-memory cooldown shared by search and reverse; the providers own provider-specific URLs and JSON, mapping to `GeocodeResult`/`ReverseGeocodeResult`. |
-| `CalibrationWalkOrchestrator` | `:core:location` | Class (`@Singleton`) | Tap-to-walk calibration walk: 8 chained 40 m legs at walking speed (never a teleport), a screenshot every 3 s via `CompassHeadingSource.captureGrayFrame()`, frames spooled to cache, `GroundCalibrationSolver` fit, result stored per device via `SettingsRepository.setGroundCalibration`. Exposes `state: StateFlow<CalibrationState>`, `start()`, `cancel()` (docs/features/tap-to-walk.md, "Calibration walk"). |
+| `CalibrationWalkOrchestrator` | `:core:location` | Class (`@Singleton`) | Tap-to-walk calibration walk: 8 chained 40 m legs at walking speed (never a teleport), a screenshot every 3 s via `CompassHeadingSource.captureGrayFrame()`, frames spooled to cache, `GroundCalibrationSolver` fit, result stored per device via `SettingsRepository.setGroundCalibration`. Exposes `state: StateFlow<CalibrationState>`, `isReady`, `start()`, `cancel()`; started from Settings > Menus > Tap to Walk (docs/features/tap-to-walk.md, "Calibration walk", "Calibration UX"). |
 | `CompassHeadingSource` | `:core:location` | Class (`@Singleton`) | Bridges `CompassAccessibilityService` (`:feature:widget:impl`) and consumers (e.g. `FloatingWidgetService`) via `bind`/`unbind`/`captureHeading()`/`captureGrayFrame()`. Gates capture on `SettingsRepository.getCompassDisclosureAccepted()` — Play's Accessibility API policy requires the in-app disclosure accepted before any screenshot. |
 
 ---
@@ -238,7 +238,7 @@ make wiki-serve   # http://localhost:8080
 | `docs/wiki/privacy.html` | Privacy policy |
 | `docs/wiki/acknowledgements.html` | Third-party credits |
 | `docs/wiki/style.css` | Single stylesheet — all pages share it |
-| `docs/wiki/screenshots/` | Phone screenshots (PNG, numbered 01–25, number = script step) |
+| `docs/wiki/screenshots/` | Phone screenshots (PNG, numbered 01–26, number = script step) |
 | `docs/wiki/screenshots/marketing/` | 8 curated 1024×500 Play Store marketing images (white bg, catch-phrase + phone screenshot) — **generated**, not hand-edited |
 
 Nav groups (Start / Use / Configure / Help / About), order and labels are the single source of truth in the grouped `NAV_ITEMS` (`docs/wiki/wiki-init.js`) — every HTML page's sidebar renders from that script, so a new page needs an entry there, not a hand-edited `<nav>` block per file.

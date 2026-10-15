@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
+import android.view.WindowManager
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -24,6 +25,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -61,9 +63,11 @@ import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
+import com.locationjoystick.core.location.CalibrationState
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FeatureSurface
 import com.locationjoystick.core.model.SpeedProfile
+import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.feature.settings.impl.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -81,6 +85,10 @@ internal fun SettingsMenusSubScreen(
     onAction: (SettingsAction) -> Unit,
     onCheckCompassService: () -> Unit = {},
     onTestCompassDetection: suspend () -> Float? = { null },
+    calibrationState: CalibrationState = CalibrationState.Idle,
+    groundCalibration: StoredGroundCalibration? = null,
+    onStartCalibration: (String) -> Unit = {},
+    onCancelCalibration: () -> Unit = {},
     launchableApps: List<InstalledApp> = emptyList(),
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
@@ -124,7 +132,16 @@ internal fun SettingsMenusSubScreen(
                         SettingsSectionDivider()
                         SpeedCycleSection(uiState, onAction)
                         SettingsSectionDivider()
-                        TapToWalkSection(uiState, onAction, onTestCompassDetection, launchableApps)
+                        TapToWalkSection(
+                            uiState,
+                            onAction,
+                            onTestCompassDetection,
+                            calibrationState,
+                            groundCalibration,
+                            onStartCalibration,
+                            onCancelCalibration,
+                            launchableApps,
+                        )
                         // Same API 30 floor as the screenshot the check depends on.
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             SettingsSectionDivider()
@@ -142,6 +159,10 @@ private fun TapToWalkSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
     onTestCompassDetection: suspend () -> Float? = { null },
+    calibrationState: CalibrationState = CalibrationState.Idle,
+    groundCalibration: StoredGroundCalibration? = null,
+    onStartCalibration: (String) -> Unit = {},
+    onCancelCalibration: () -> Unit = {},
     launchableApps: List<InstalledApp> = emptyList(),
 ) {
     val context = LocalContext.current
@@ -206,6 +227,10 @@ private fun TapToWalkSection(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Spacer(Modifier.height(16.dp))
             CompassOrientationSection(uiState, onAction, onTestCompassDetection, launchableApps)
+            if (uiState.isCompassServiceGranted) {
+                Spacer(Modifier.height(16.dp))
+                GroundCalibrationSection(uiState, calibrationState, groundCalibration, onStartCalibration, onCancelCalibration)
+            }
         }
     }
     if (showEnableDisclosure) {
@@ -767,6 +792,96 @@ private fun FeatureRow(
                 enabled = false,
                 modifier = Modifier.width(56.dp),
                 onCheckedChange = {},
+            )
+        }
+    }
+}
+
+@Composable
+private fun GroundCalibrationSection(
+    uiState: SettingsUiState,
+    state: CalibrationState,
+    stored: StoredGroundCalibration?,
+    onStart: (String) -> Unit,
+    onCancel: () -> Unit,
+) {
+    val context = LocalContext.current
+    val running = state is CalibrationState.Walking || state is CalibrationState.Analysing
+    val hasGame = uiState.compassTestTargetPackage.isNotEmpty()
+    // Same stale-screen test as the tap overlay: a record only applies to the size it was fitted on.
+    val wrongScreen =
+        stored != null &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            context.getSystemService(WindowManager::class.java).maximumWindowMetrics.bounds.let {
+                !stored.matches(it.width(), it.height())
+            }
+
+    SettingsSectionHeader(stringResource(R.string.settings_menus_calibration_header))
+    Spacer(Modifier.height(4.dp))
+    Text(
+        stringResource(R.string.settings_menus_calibration_desc),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(8.dp))
+    when (state) {
+        is CalibrationState.Walking -> {
+            Text(
+                stringResource(R.string.settings_menus_calibration_walking, state.leg, state.legCount),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Spacer(Modifier.height(4.dp))
+            LinearProgressIndicator(progress = { (state.leg - 1f) / state.legCount }, modifier = Modifier.fillMaxWidth())
+        }
+        is CalibrationState.Analysing -> {
+            Text(
+                stringResource(R.string.settings_menus_calibration_analysing, state.step, state.stepCount),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Spacer(Modifier.height(4.dp))
+            LinearProgressIndicator(progress = { state.step.toFloat() / state.stepCount }, modifier = Modifier.fillMaxWidth())
+        }
+        is CalibrationState.Failed -> {
+            Text(
+                stringResource(calibrationFailureMessageRes(state.reason)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+        else -> {
+            Text(
+                when {
+                    stored == null -> stringResource(R.string.settings_menus_calibration_not_calibrated)
+                    wrongScreen -> stringResource(R.string.settings_menus_calibration_wrong_screen)
+                    else -> calibrationDoneText(context, stored)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color =
+                    if (stored != null && !wrongScreen) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+            )
+        }
+    }
+    Spacer(Modifier.height(8.dp))
+    if (running) {
+        LjOutlinedButton(onClick = onCancel) { Text(stringResource(R.string.settings_menus_calibration_cancel)) }
+    } else {
+        LjButton(onClick = { onStart(uiState.compassTestTargetPackage) }, enabled = hasGame) {
+            Text(
+                stringResource(
+                    if (stored != null) R.string.settings_menus_calibration_recalibrate else R.string.settings_menus_calibration_start,
+                ),
+            )
+        }
+        if (!hasGame) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                stringResource(R.string.settings_menus_calibration_need_app),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

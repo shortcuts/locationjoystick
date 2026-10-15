@@ -168,7 +168,7 @@
     <p><strong>Risks</strong></p>
     <ul class="section-bullets">
       <li>Some apps can detect a fake location and act on your account. Use this feature only in apps where you accept that risk.</li>
-      <li>Some apps can notice the compass helper. If your game limits features, turn off the locationjoystick compass entry in your phone's accessibility settings.</li>
+      <li>Some apps can notice the screenshot helper. If your game limits features, turn off the locationjoystick compass entry in your phone's accessibility settings.</li>
     </ul>
 
       <ul class="section-bullets">
@@ -183,9 +183,9 @@
       <img class="phone-shot" src="screenshots/21_compass_orientation.png" alt="Compass orientation settings with game app picker and Test button">
     </aside>
     <p>
-      When the overlay opens, the app takes a picture of the screen and looks for your game's compass icon in the top-right corner.
-      It uses the compass direction to rotate the walk target, so it lands correctly on a turned map.
-      It runs once you turn on the accessibility feature below.
+      Tap to Walk uses a calibration walk (see Calibrate Tap to Walk below) to learn how your game's map moves, so the walk target lands correctly on a turned map.
+      The Test button finds your game's compass icon in the top-right corner to check that the screen can be read.
+      Both need the accessibility feature below.
     </p>
 
     <p><strong>Setup</strong></p>
@@ -208,10 +208,34 @@
       To see the message again, go to Settings &rarr; Menus &rarr; Tap to Walk &rarr; Compass orientation and tap Open Settings.
     </p>
 
+    <p><strong>Calibrate Tap to Walk</strong></p>
+    <section>
+    <p>
+      Calibration teaches the app how your game's map moves, so a tap lands where you tapped, whichever way the map is turned.
+      While it runs, the app takes a picture of your screen about every 3 seconds for about 10 minutes. The pictures stay on your phone and are deleted when it finishes.
+      Until you calibrate, taps assume north is at the top.
+    </p>
+    <ol>
+      <li>Start your fake location and stop any walk, route or roam.</li>
+      <li>In Settings &rarr; Menus &rarr; Tap to Walk, pick your game, then tap Start calibration.</li>
+      <li>The app opens your game and walks your location about 320 m in 8 short legs. Leave the phone alone: no joystick, no zooming, no rotating the map.</li>
+      <li>A message tells you when it is done and brings you back to the app.</li>
+    </ol>
+    <p>Calibrate again after you change the game's zoom or rotation, or the phone's display size. If it fails, the message says why:</p>
+    <ul class="section-bullets">
+      <li>Fake location not started, or a walk, route or roam is running: start it and stop the walk first.</li>
+      <li>Accessibility feature off: turn it on in the same screen.</li>
+      <li>Not enough free storage: free about 1 GB.</li>
+      <li>Joystick used or location moved too fast: leave the phone alone and do not teleport.</li>
+      <li>Rotated screen or display change: keep one orientation.</li>
+      <li>Character not found, or the map did not move: keep the game open and in front the whole time.</li>
+    </ul>
+    </section>
+
     <p><strong>Check that it works</strong></p>
     <ol>
       <li>Pick your game from the Game app list. Without a pick, switch to your game, switch back, then continue.</li>
-      <li>Tap Test. The app briefly switches to your game, reads its compass, and returns.</li>
+      <li>Tap Test. The app briefly switches to your game, takes one picture, looks for its compass, and returns.</li>
       <li>The app shows the detected direction. If it finds nothing, make sure the compass is visible in the game.</li>
     </ol>
     </section>

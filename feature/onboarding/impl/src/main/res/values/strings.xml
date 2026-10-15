@@ -25,7 +25,7 @@
     <string name="onboarding_skip">"Skip"</string>
     <string name="onboarding_start_using_locationjoystick">"Start using locationjoystick"</string>
     <string name="onboarding_optional">"Optional"</string>
-    <string name="onboarding_compass_orientation">"Compass orientation (optional)"</string>
-    <string name="onboarding_compass_orientation_desc">"Skip this step if you don’t want to use Tap to Walk. It lets Tap to Walk read your game’s compass so each tap walks the right way, using Android’s Accessibility permission."</string>
+    <string name="onboarding_compass_orientation">"Tap to Walk setup (optional)"</string>
+    <string name="onboarding_compass_orientation_desc">"Skip this step if you don’t want to use Tap to Walk. Tap to Walk uses Android’s Accessibility permission to take screenshots of your game: a few hundred during a one-time 10 minute calibration walk you start yourself, so your taps land where you tapped."</string>
     <string name="onboarding_compass_review">"Review and turn on"</string>
 </resources>

@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">locationjoystick</string>
     <string name="accessibility_service_label">locationjoystick compass</string>
-    <string name="accessibility_service_description">"Used only by two optional features, after you tap Accept on the in-app Accessibility disclosure: the Tap to Walk compass, and Reconnect accessory. Takes screenshots to read your game’s compass direction and to see whether your accessory is disconnected, and taps its connect button only when you turned Reconnect accessory on. Screenshots stay on your phone and are deleted immediately. Nothing is collected or shared. Not an accessibility tool for users with disabilities."</string>
+    <string name="accessibility_service_description">"Used only by two optional features, after you tap Accept on the in-app Accessibility disclosure: Tap to Walk and Reconnect accessory. Takes screenshots during the calibration walk you start (about every 3 seconds for about 10 minutes), to read your game’s compass icon when you tap Test, and to see whether your accessory is disconnected. Taps its connect button only when you turned Reconnect accessory on. Screenshots stay on your phone and are deleted when done. Nothing is collected or shared. Not an accessibility tool for users with disabilities."</string>
     <string name="app_couldn_t_open_that_link">"Couldn't open that link"</string>
     <string name="drawer_close_menu_cd">"Close menu"</string>
     <string name="drawer_home">"Home"</string>

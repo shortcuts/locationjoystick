@@ -59,11 +59,11 @@
     <string name="language_short_chinese">"CN"</string>
     <string name="language_short_traditional_chinese">"TW"</string>
     <string name="language_dropdown_cd">"更改语言"</string>
-    <string name="compass_disclosure_title">"无障碍（Accessibility）权限：罗盘方向"</string>
-    <string name="compass_disclosure_intro">"locationjoystick 在两项可选功能中使用 Android 的无障碍服务（Accessibility Service）API：“点击行走”的罗盘方向，以及重新连接你的蓝牙配件。应用的其他部分都不使用它。"</string>
-    <string name="compass_disclosure_data">"访问的数据：一张屏幕截图。在你打开“点击行走”覆盖层、在设置中点击“测试”时拍摄，开启“重新连接配件”后还会大约每 5 分钟拍摄一次。"</string>
-    <string name="compass_disclosure_purpose">"用途：找到游戏的罗盘图标并把你的点击转换成行走方向，以及查看你的配件是否显示为已断开。"</string>
-    <string name="compass_disclosure_handling">"收集或分享的数据：无。截图在本机检查后立即删除，绝不保存或发送到任何地方。该服务不读取文字。它只会在“重新连接配件”开启时，代你点击配件的连接按钮。"</string>
+    <string name="compass_disclosure_title">"无障碍（Accessibility）权限：点击行走和重新连接配件"</string>
+    <string name="compass_disclosure_intro">"locationjoystick 在两项可选功能中使用 Android 的无障碍服务（Accessibility Service）API：测量游戏地图如何移动的“点击行走”，以及重新连接你的蓝牙配件。应用的其他部分都不使用它。"</string>
+    <string name="compass_disclosure_data">"访问的数据：屏幕截图。在你自己开始的校准行走中，约每 3 秒一张，持续约 10 分钟。在设置中点击“测试”时一张。开启“重新连接配件”后约每分钟一张。"</string>
+    <string name="compass_disclosure_purpose">"用途：在应用移动你的位置时测量游戏地图如何移动，使你的点击落在你点击的位置。点击“测试”时找到游戏的罗盘图标。查看你的配件是否显示为已断开。"</string>
+    <string name="compass_disclosure_handling">"收集或分享的数据：无。校准截图仅在校准结束前保留在你的手机上，随后删除。其他截图在本机检查后立即删除。不会发送到任何地方。该服务不读取文字。它只会在“重新连接配件”开启时，代你点击配件的连接按钮。"</string>
     <string name="compass_disclosure_optional">"点击“接受”将打开 Android 无障碍设置，你可以在那里开启该服务。点击“拒绝”则保持关闭。应用的其他功能不受影响。你可以随时关闭它。"</string>
     <string name="compass_disclosure_guide">"阅读“点击行走”指南"</string>
     <string name="compass_disclosure_accept">"接受"</string>
