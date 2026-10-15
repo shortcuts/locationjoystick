@@ -41,6 +41,15 @@ All in `:core:model`. Pure Kotlin — no Android, no Room. Room entities in `:co
 | `GrayFrame` | `pixels: FloatArray` — row-major gray 0..255 frame fed to `FeetDetector` |
 | `FeetPixel` | `x: Double`, `y: Double` device pixels; `toReference(width, height)` → reference-frame pair |
 | `FeetDetector` | object: `detect(legs, width, height): FeetPixel?` — pure-Kotlin feet pixel from walked-leg frames; see docs/features/tap-to-walk.md, "Feet detection" |
+| `GrayImage` | `width: Int`, `height: Int`, `pixels: ByteArray` — row-major 8-bit gray frame fed to `FrameFlow` |
+| `WalkLeg` | `frames: List<GrayImage>`, `moving: List<Boolean>`, `offsets: List<GroundOffset>` — one walked leg; offsets are the mock position of each frame in metres |
+| `BandFlow` | `fx`, `fy`, `response`, `cx`, `cy` — content shift of one band between two frames and its centre, device pixels |
+| `LegMove` | `d: GroundOffset`, `bands: List<BandFlow>` — a known move and the flow of every band it caused |
+| `FlowResult` | `fx`, `fy`, `response` — output of `PhaseCorrelation.correlate` |
+| `GroundFit` | `calibration: GroundCalibration`, `medianAbsPx: Double`, `flowCount: Int` — output of `GroundMapFit.fit` |
+| `PhaseCorrelation` | object: `correlate(a, b, width, height): FlowResult` (also `spectrum` / `correlate(Spectrum, Spectrum)` to reuse a frame's transform) — pure-Kotlin windowed phase correlation, `cv2.phaseCorrelate` equivalent |
+| `FrameFlow` | object: `cleanLeg(frames, feetX, feetY)`, `bandMoves(legs, feetX, feetY, ks)` — static-content cleanup and per-band flow; see docs/features/tap-to-walk.md, "Frame flow and ground fit" |
+| `GroundMapFit` | object: `fit(moves, feetX, feetY, width, height): GroundFit?` — least-squares perspective ground map fit; `null` under 40 usable flows |
 
 ## Mapping
 

@@ -462,12 +462,12 @@ pitch, horizon visible) is still not calibrated or re-captured: the band grid is
 and the feet pixel is detected, but the close-up `landing` check (p90 under 10 m on two screens) has not been run.
 The first close-up capture (side bands, hand anchor) gave a median response of 0.04. (3) The offline check only covers moves up to about 31 m and pixels
 of 700 to 1420 rows; taps beyond that are extrapolated. (4) Taps whose patch ends under the player's shadow or
-companion can be mismatched; check the annotated frames by eye. (5) The feet pixel is detected by the bench and ported to the app (`FeetDetector`), but nothing in the app calls it yet.
+companion can be mismatched; check the annotated frames by eye. (5) The feet pixel detection, the flow estimator and the fit are ported to the app (`FeetDetector`, `FrameFlow`, `GroundMapFit`), but nothing in the app calls them yet.
 
 ### Ground map model
 
 `GroundMap` in `:core:model` (`GroundMap.kt`, pure Kotlin, no Android) is the app-side port of the bench's
-`ground_to_game` / `tap_to_ground_persp`. It only maps; the walked-leg fit and feet detection are separate work.
+`ground_to_game` / `tap_to_ground_persp`. It only maps; the walked-leg fit (see "Frame flow and ground fit") and feet detection are separate.
 
 - Frames: screen x right, y down, in the device's own pixels; ground east +x, north +y (north up), metres relative to the
   player's feet pixel. No compass is read; `headingDeg` (fitted, degrees) is how far north is rotated in the frame.
@@ -517,13 +517,97 @@ Invariants a change must not break:
 2. Input and output are device pixels; only `toReference` scales. No screen size, density or north is hardcoded.
 3. Parity, not improvement: fixing the close-up row is a separate bench-first change.
 
+### Frame flow and ground fit
+
+`PhaseCorrelation`, `FrameFlow` and `GroundMapFit` in `:core:model` (pure Kotlin, no OpenCV, no Android) port the
+bench's `content_flow`, `clean_leg`, `band_moves` and `fit_perspective_horizon`. Nothing in the app calls them yet
+(the calibration-walk entry will). They turn walked-leg frames plus the mock position of each frame into a
+`GroundCalibration`; `FeetDetector` supplies the feet pixel.
+
+Data flow, in order:
+
+1. Caller supplies per leg a `WalkLeg`: gray frames (`GrayImage`, 8-bit, luma `0.299R + 0.587G + 0.114B`, device
+   pixels), a moving flag per frame, and each frame's mock position as `GroundOffset` metres east/north of any
+   origin (only differences are used; the orchestrator derives them from the commanded bearing and the polled
+   position, as the bench's `along_track_move` does).
+2. `FrameFlow.cleanLeg(frames, feetX, feetY)` removes leg-static content. A pixel is static when its deviation
+   from the temporal median is under 3 gray levels and it sits on an edge of that median (Sobel magnitude over 60);
+   the static mask is dilated 9x9 and joined with the player disc (radius 110 px, centre 60 px above the feet).
+   Masked pixels are filled in every frame. Only rows 700/2340 to 1950/2340 of the height are cleaned.
+3. `FrameFlow.bandMoves(legs, feetX, feetY)` cuts the cleaned frames into 7 row bands (0.21h to 0.70h) x 3 column
+   thirds, builds the local-contrast feature of each band and phase-correlates every pair of frames `k` apart
+   (`k` in 2, 3, 4, 6) that were both moving and moved at least 2 m. Output per pair: the known move and per band
+   `fx, fy` (device px, content shift of the later frame), `response`, band centre.
+4. `GroundMapFit.fit(moves, feetX, feetY, width, height)` converts flows and band centres to reference pixels and
+   fits `(heading, lateral, forward, perspective)` of the pitched-camera homography; `GroundFit.calibration` feeds
+   `GroundMap`. Returns `null` under 40 usable flows.
+
+Thresholds and why (`FrameFlow`, `PhaseCorrelation`, `GroundMapFit` constants; pixel sizes are scaled by
+`width / 1080`, rows and bands are fractions of the height):
+
+| value | where | why |
+|---|---|---|
+| feature: blur 6 px, subtract; energy blur 10 px, divide by `sqrt + 4`; blur 1.5 px | `FrameFlow.feature` | local-contrast luminance: removes ground colour and brightness, the 4 gray-level floor keeps flat areas from being amplified |
+| static: deviation < 3, edge > 60, dilate 9x9 | `cleanLeg` | HUD, ring and companion do not move with the ground; a bare phase correlation locks onto them and shrinks every shift |
+| disc radius 110 px, 60 px above feet | `cleanLeg` | player sprite and its shadow, measured on the Pixel 5 at wide zoom |
+| rows 700..1950 of 2340 | `cleanLeg` | below the HUD, above the bottom bar |
+| 7 x 3 bands over 0.21h..0.70h | `bandMoves` | the full 14-column grid measured worse on the wide Pixel 7 legs (p90 13.4 m against 9.7 m) |
+| frame gaps 2, 3, 4, 6; move >= 2 m | `bandMoves` | shorter moves give flows too small to fit |
+| response floor 0.2 | `GroundMapFit` | the value of the validated `persp` path (below that the peak is noise) |
+| outlier cut `max(3 * 1.4826 * MAD, 2.0)` px as weights `c / abs(r)`, recomputed at Gauss-Newton iterations 8, 20, 30 | `GroundMapFit` | robust to a few bands that still see static content |
+| at least 40 flows | `GroundMapFit` | four parameters from fewer flows are not pinned |
+| 7 starts `theta0` in -20, 5, 30, -60, 60, 120, 180 | `GroundMapFit` | the heading is unknown (no north); best start by `sqrt(mean(min(r^2, 100)))` |
+| horizon refit: drop bands whose centre row is at or above `sy / a` plus 0.03h, once | `GroundMapFit` | close-up zoom shows the horizon; bands near it have no coherent flow |
+| Hann window `sqrt(wx * wy)`, padding to 2^a 3^b 5^c, cross power divided by `abs + 2.2e-16`, 5x5 centroid, response = 5x5 sum | `PhaseCorrelation` | exactly `cv2.phaseCorrelate` with `createHanningWindow` (measured: its 2-D window is the square root of the outer product) |
+
+The entry text quoted 0.1 for the response floor and `max(3 MAD, 1.5 px)` for outliers. Those are the values of the
+superseded 2x2 map (`fit_ground_map`, `multileg`). The perspective path that produced the landing numbers below
+uses 0.2 and `max(3 MAD, 2.0)`, so that is what is ported; do not "fix" it back.
+
+Deviations from the bench, each checked by a test:
+
+- Fill instead of `cv2.inpaint` (Telea): masked pixels are filled ring by ring from the mask boundary with the mean of
+  valid 4-neighbours, then 40 Gauss-Seidel smoothing sweeps. Without the sweeps the fill copies boundary streaks
+  inward; they are static in position and pulled a band's flow to zero (measured on the synthetic scene). Bands
+  holding a cleaned HUD therefore differ in response from the bench.
+- Band-disc weighting (fixes a bench defect): bench far-row bands crossing the player disc kept full weight. A band
+  overlapping the disc has its response multiplied by the unmasked fraction of the band and set to 0 below 0.5, so
+  it cannot bias the forward scale.
+- Reported camera is the positive-scale one: `(s, sy, a, theta)` and `(-s, -sy, -a, theta + 180)` are the same
+  homography and the bench returns either; the port flips to `s > 0`.
+- `GroundFit.flowCount` is the number of flows used; the bench's `n` is half of that.
+- Not ported: the patch-match landing check and its edge/ambiguity guard (`patch_offset`, open work 1). It is
+  bench trial tooling for scoring taps, not part of the calibration.
+
+Parity target (offline landing check above, bench `landing`): p50 about 2.5 m, 96 to 99 percent of samples within 15 m
+at wide zoom across three camera orientations. The Kotlin unit tests pin the stages, not those end numbers: flow per
+band within 1.0 px of the bench and response within 0.15 (except bands with a cleaned HUD) on a procedural
+1080x2340 scene, fitted heading within 1.5 degrees, scales within 3 percent and the perspective term within 5 percent
+of the bench fit on synthetic flows with outliers. The landing numbers themselves need the cross-device fixture suite.
+
+Failure modes: fewer than 40 flows or a singular fit return `null` (calibration failed, store nothing); a feet pixel
+that is wrong by tens of pixels puts the disc mask on the wrong place and leaves the sprite in the flow; frames that
+are static for the whole leg (not moving) give no flows; very few frames (under about 8) let chance "static" speckle
+into the mask (the 9-frame test scene is the minimum that was clean).
+
+Invariants a change must not break:
+
+1. Units: `fx, fy` and band centres in device pixels out of `bandMoves`, converted to 1080x2340 reference pixels
+   only inside `GroundMapFit.fit`; `GroundCalibration` is in reference pixels; moves in metres east/north (north up).
+2. No pixel constant is device-specific: sigmas, disc and dilation scale by `width / 1080`, rows and bands are
+   fractions of the height; the feet pixel is an argument, never a default.
+3. Response is not normalised across implementations: the 0.2 floor was tuned on cv2's value, so keep the window,
+   padding and epsilon of `PhaseCorrelation` (a plain Hann product lowers it by about 20 percent; a 1e-7 epsilon by a third).
+4. Goldens: `scripts/export_flow_golden.py` writes `core/model/src/test/resources/flow_golden/`; rerun it when
+   `clean_leg`, `band_moves`, `_feat` or `fit_perspective*` change. The scene is procedural (no image files).
+
 ### Status and open work
 
 Accepted state of the no-compass investigation (branch `tap-to-walk-no-compass`, bench only, no app code changed):
 
 - Heading and scale come out of a walked-leg fit with no north assumed (`persp`).
 - Offline landing error is p50 about 2.5 m, with 96 to 99 percent of samples within 15 m, at wide zoom across three camera orientations.
-- Not proven: close-up zoom (measured 2026-10-15, not met, see below), other devices and screen sizes beyond the one below, and any Kotlin port.
+- Not proven: close-up zoom (measured 2026-10-15, not met, see below), other devices and screen sizes beyond the one below, and the end-to-end landing numbers of the Kotlin port (its stages are pinned to the bench by unit tests).
 
 On-device result, perspective map, fixed wide zoom, acceptance 11 of 12 taps within 15 m (2026-10-15):
 
@@ -549,7 +633,7 @@ Open work, in order:
 
 1. Lower the skip rate (24 of 36 taps on the second Pixel 7 run) and explain the 23 m miss (`t17`), then repeat the run on this device and on more devices and camera states.
 2. Close-up (z1.6) landing is not met: p90 96.9 m on the Pixel 7, target under 10 m. Measured with `varycap --conditions 1.6:0` then `landing` without `--anchor`: feet pixel detected 509 1548, 928 samples, p50 22.6 m, p90 96.9 m, within 10 m 20%, within 15 m 34%, 66% of matches skipped as ambiguous. The wide capture on the same device gives p50 3.0 m, p90 9.9 m with the detected anchor. The detected feet row looks too high at close-up (sharp rows span 1149 to 1911, the detector stops at the torso/leg gap); widening the run gap to 0.12 moved the anchor to 1796 and made landing worse (p90 286.8 m), so the anchor is not the main error: the fit and the match step at close-up are. Needs a second device and a cause for the ambiguity at close-up before retrying.
-3. Ground map model ported (`GroundMap`, see "Ground map model") and feet detection ported (`FeetDetector`, see "Feet detection"); the walked-leg capture/fit and wiring into the tap overlay remain.
+3. Ground map model ported (`GroundMap`, see "Ground map model"), feet detection ported (`FeetDetector`, see "Feet detection"), frame flow and fit ported (`FrameFlow`, `GroundMapFit`, see "Frame flow and ground fit"); the walked-leg capture/orchestration and wiring into the tap overlay remain.
 4. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes.
 
 ## Warning Screen
