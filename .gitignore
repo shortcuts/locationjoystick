@@ -38,3 +38,9 @@ scripts/reconnect-matrix/
 
 # Local Play Console demo recordings (scripts/playstore-foreground-location-video.sh)
 *.mp4
+
+# Tap-to-walk bench game frames show the player username; never commit them (smoke/bench output)
+**/annotated/
+**/annotated_trials/
+**/walk_*/
+**/varycap*/
