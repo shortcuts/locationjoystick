@@ -298,6 +298,20 @@ def test_perspective_fit_recovers_known_camera_and_tap_round_trips():
     assert np.linalg.norm(g - want) < 1.5
 
 
+def test_adb_devices_parser_keeps_only_authorized_devices():
+    text = "List of devices attached\nAAA111 device usb:1 product:x\nBBB222 unauthorized usb:2\nCCC333 offline\n\n"
+    assert rb.parse_adb_devices(text) == ["AAA111"]
+    assert rb.parse_adb_devices("List of devices attached\n\n") == []
+    assert rb.parse_adb_devices("List of devices attached\nAAA111 device\nDDD444 device\n") == ["AAA111", "DDD444"]
+
+
+def test_pixel_constants_scale_with_screen_height_and_width():
+    assert rb._sy(1720, 2340) == 1720
+    assert rb._sy(1720, 2400) == 1764  # 1720 * 2400 / 2340 = 1764.1
+    assert rb._sx(930, 1080) == 930
+    assert rb._sx(930, 540) == 465
+
+
 if __name__ == "__main__":
     tests = [v for k, v in list(globals().items()) if k.startswith("test_")]
     for t in tests:

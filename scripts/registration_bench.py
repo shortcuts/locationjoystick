@@ -725,6 +725,49 @@ def _adb_screencap(serial, out_path):
     Path(out_path).write_bytes(data)
 
 
+def parse_adb_devices(text):
+    """Serials in state 'device' (authorized and online) from `adb devices` output."""
+    return [parts[0] for parts in (line.split() for line in text.splitlines()[1:])
+            if len(parts) >= 2 and parts[1] == "device"]
+
+
+def _resolve_serial(serial):
+    """The given serial, or the single authorized device `adb devices` lists; SystemExit otherwise."""
+    import subprocess
+
+    if serial:
+        return serial
+    found = parse_adb_devices(subprocess.run(["adb", "devices"], check=True, capture_output=True,
+                                             text=True).stdout)
+    if len(found) != 1:
+        raise SystemExit(f"pass --serial: {len(found)} authorized devices attached ({', '.join(found) or 'none'})")
+    return found[0]
+
+
+def _device_size(serial):
+    """(width, height) in px from `adb shell wm size`."""
+    import re
+    import subprocess
+
+    out = subprocess.run(["adb", "-s", serial, "shell", "wm", "size"], check=True, capture_output=True,
+                         text=True).stdout
+    w, h = re.search(r"(\d+)x(\d+)", out).groups()
+    return int(w), int(h)
+
+
+# The bench constants (taps, flow bands, gesture centre) were first fitted on a 1080x2340 screen. Other
+# screens use the same layout scaled by their own width and height, so no device is special-cased.
+REF_W, REF_H = 1080, 2340
+
+
+def _sx(x, width):
+    return int(round(x * width / REF_W))
+
+
+def _sy(y, height):
+    return int(round(y * height / REF_H))
+
+
 def _adb_swipe(serial, x1, y1, x2, y2, ms=400):
     import subprocess
 
@@ -1093,11 +1136,12 @@ FLOW_ROWS = [(500, 700), (700, 900), (900, 1100), (1100, 1290), (1290, 1400), (1
 FLOW_COLS = [(120, 430), (650, 1000)]  # side columns: the player, its ring and the HUD sit in the middle
 
 
-def clean_leg(frames, anchor, y0=700, y1=1950, sprite_r=110):
+def clean_leg(frames, anchor, sprite_r=110):
     """Gray frames with leg-static content (HUD, ring, companion) and the player disc inpainted away.
 
     Static = a pixel whose value barely changes over the leg and sits on an edge in the temporal median.
     """
+    y0, y1 = _sy(700, frames[0].shape[0]), _sy(1950, frames[0].shape[0])
     st = np.stack([f if f.ndim == 2 else _to_gray(f) for f in frames]).astype(np.float32)
     med = np.median(st, axis=0)
     dev = np.median(np.abs(st - med), axis=0)
@@ -1115,9 +1159,10 @@ def clean_leg(frames, anchor, y0=700, y1=1950, sprite_r=110):
 def band_moves(legs, anchor, ks=(2, 3, 4, 6), min_d=2.0):
     """[(bearing, d, [(fx, fy, response, x, y) per band])] from legs {bearing: [{ll, img, moving}]}."""
     lat0 = next(iter(legs.values()))[0]["ll"][0]
-    bands = [(y0, y1, x0, x1) for y0, y1 in FLOW_ROWS for x0, x1 in FLOW_COLS]
     moves = []
     for b, fr in legs.items():
+        h, w = fr[0]["img"].shape[:2]
+        bands = [(_sy(y0, h), _sy(y1, h), _sx(x0, w), _sx(x1, w)) for y0, y1 in FLOW_ROWS for x0, x1 in FLOW_COLS]
         imgs = clean_leg([f["img"] for f in fr], anchor)
         feats = [[_feat(g[y0:y1, x0:x1]) for y0, y1, x0, x1 in bands] for g in imgs]
         for k in ks:
@@ -1250,7 +1295,7 @@ def cmd_landing(args):
                     pred = _h_apply(h, _h_apply(hi, p) - d)
                     c = (int(round(pred[0])), int(round(pred[1])))
                     pm, ncc = patch_offset(g[i], g[i + k], p, c, half=70, search=90, scales=(1.0,), sprite=0)
-                    if ncc < 0.7 or not (0 < c[0] < 1080 and 0 < c[1] < 2340):
+                    if ncc < 0.7 or not (0 < c[0] < g[i].shape[1] and 0 < c[1] < g[i].shape[0]):
                         continue
                     got = (c[0] + pm[0], c[1] + pm[1])
                     errs.append(float(np.linalg.norm(_h_apply(hi_full, got) - _h_apply(hi_full, pred))))
@@ -1281,6 +1326,10 @@ def _walk_and_wait(host, key, lat, lon, timeout=300.0, every=2.0):
     return False
 
 
+# A tap closer than this barely moves the player, so it tests the walk very little.
+TRIAL_MIN_M = 5.0
+
+
 def cmd_taptrials(args):
     """50 on-device taps: walk to each pixel's predicted ground point, then find where the pixel's content landed.
 
@@ -1295,9 +1344,12 @@ def cmd_taptrials(args):
     data = Path(args.data)
     persp = args.persp
     cal = json.loads((data / ("calibration_persp.json" if persp else "calibration.json")).read_text())
-    pts = [(x, y) for x in np.linspace(150, 930, 10) for y in (1200, 1250, 1300, 1340, 1380)]
+    w, h = _device_size(args.serial)
+    pts = [(_sx(x, w), _sy(y, h)) for x in np.linspace(150, 930, 10) for y in (1200, 1250, 1300, 1340, 1380)]
     if persp:
-        pts = [(x, y) for x in np.linspace(150, 930, 10) for y in (900, 1000, 1100, 1200, 1300, 1380)]
+        # Candidate rows span the whole ground band; the ground-distance filter below keeps the reachable ones,
+        # so the tap band follows this device's camera state instead of a fixed row range.
+        pts = [(_sx(x, w), _sy(y, h)) for x in np.linspace(150, 930, 10) for y in np.linspace(1000, 1900, 19)]
     random.Random(0).shuffle(pts)
     if cal.get("rejected"):
         print(f"0/{args.n} within {args.tol_m} m: calibration rejected -> FAIL")
@@ -1305,7 +1357,8 @@ def cmd_taptrials(args):
     if persp:
         anchor = (cal["px"], cal["py"])
         hi = np.linalg.inv(persp_h(cal))
-        pts = [p for p in pts if np.hypot(*tap_to_ground_persp(cal, p)) <= args.max_m]
+        pts = [p for p in pts if TRIAL_MIN_M <= np.hypot(*tap_to_ground_persp(cal, p)) <= args.max_m]
+        print(f"{len(pts)} candidate taps {TRIAL_MIN_M:g}-{args.max_m:g} m on {w}x{h}")
         a = None
     else:
         a = np.array(cal["A"])
@@ -1455,8 +1508,8 @@ def main(argv=None):
     sub = p.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("capture")
     c.add_argument("out")
-    c.add_argument("--game-serial", default="0A061FDD4000JF")
-    c.add_argument("--app-serial", default="0A061FDD4000JF")
+    c.add_argument("--game-serial", default=None)
+    c.add_argument("--app-serial", default=None)
     c.add_argument("--pairs", type=int, default=6)
     c.add_argument("--dx", type=int, default=120)
     c.add_argument("--dy", type=int, default=0)
@@ -1481,7 +1534,7 @@ def main(argv=None):
     mo.set_defaults(func=cmd_motion)
     wc = sub.add_parser("walkcap")
     wc.add_argument("out")
-    wc.add_argument("--serial", default="0A061FDD4000JF")
+    wc.add_argument("--serial", default=None)
     wc.add_argument("--legs", type=float, nargs="+", default=[0.0, 90.0, 45.0])
     wc.add_argument("--dist", type=float, default=40.0)
     wc.add_argument("--every", type=float, default=3.0)
@@ -1494,7 +1547,7 @@ def main(argv=None):
     ml.set_defaults(func=cmd_multileg)
     tt = sub.add_parser("taptrials")
     tt.add_argument("data")
-    tt.add_argument("--serial", default="0A061FDD4000JF")
+    tt.add_argument("--serial", default=None)
     tt.add_argument("--n", type=int, default=50)
     tt.add_argument("--need", type=int, default=48)
     tt.add_argument("--tol-m", type=float, default=15.0)
@@ -1509,7 +1562,7 @@ def main(argv=None):
         q.set_defaults(func=fn)
     vc = sub.add_parser("varycap")
     vc.add_argument("out")
-    vc.add_argument("--serial", default="0A061FDD4000JF")
+    vc.add_argument("--serial", default=None)
     vc.add_argument("--conditions", nargs="+", default=["1:0", "1.6:0", "1:40", "0.6:-60"],
                     help="zoom:twist pairs, zoom = pinch ratio (above 1 zooms in), twist in degrees")
     vc.add_argument("--legs", type=float, nargs="+", default=[0.0, 90.0, 45.0, 225.0])
@@ -1520,13 +1573,16 @@ def main(argv=None):
     vc.set_defaults(func=cmd_varycap)
     pr = sub.add_parser("probe")
     pr.add_argument("out")
-    pr.add_argument("--serial", default="0A061FDD4000JF")
+    pr.add_argument("--serial", default=None)
     pr.add_argument("--deltas", type=float, nargs="+", default=[40.0, -40.0, 135.0])
     pr.set_defaults(func=cmd_probe)
     rep = sub.add_parser("report")
     rep.add_argument("results")
     rep.set_defaults(func=cmd_report)
     args = p.parse_args(argv)
+    for name in ("serial", "game_serial", "app_serial"):
+        if hasattr(args, name):
+            setattr(args, name, _resolve_serial(getattr(args, name)))
     args.func(args)
 
 

@@ -460,11 +460,24 @@ Accepted state of the no-compass investigation (branch `tap-to-walk-no-compass`,
 
 - Heading and scale come out of a walked-leg fit with no north assumed (`persp`).
 - Offline landing error is p50 about 2.5 m, with 96 to 99 percent of samples within 15 m, at wide zoom across three camera orientations.
-- Not proven: real on-device taps with the perspective map, close-up zoom, other devices and screen sizes, and any Kotlin port.
+- Not proven: close-up zoom, other devices and screen sizes beyond the one below, and any Kotlin port.
+
+On-device result, perspective map, fixed wide zoom, acceptance 11 of 12 taps within 15 m (2026-10-15):
+
+| device | resolution, density | feet pixel | calibration | taps | within 15 m | p50 / p90 (m) | verdict |
+|---|---|---|---|---|---|---|---|
+| Pixel 7 (model Pixel 7) | 1080x2400, 420 dpi | 538 1556 (by eye) | n 1247, median residual 3.3 px | 9 run | 7 of 9 | 4.1 / 21.6 | FAIL |
+
+The run stopped after 9 taps, when 11 of 12 could no longer be reached. The two misses landed 21.6 m and 18.6 m
+off; the first had a match score of 0.59 and the second 0.90, so the second is a confident mismatch to check
+in its annotated frames. Taps closer than 5 m are not drawn (they barely test the walk). The bench constants
+were fitted on a Pixel 5 (1080x2340); the bench now scales them to the screen's own width and height, and the
+tap rows are taken from the device's own ground band, so this is the first run on a second screen. It is one
+device and one camera state. Not run: the Pixel 5 re-check, close-up zoom, and a second run for variance.
 
 Open work, in order:
 
-1. Run `taptrials --persp` on a device with the app installed, in a fixed camera state, and record the pass rate.
+1. Find the cause of the two misses on the Pixel 7 run (annotated frames `t06`, `t08`), fix it, and re-run `taptrials --persp` to reach 11 of 12 on this device, then on more devices and camera states.
 2. Calibrate close-up zoom and detect the feet pixel automatically instead of measuring it by eye.
 3. Port the calibrated ground map to the app.
 4. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes.
