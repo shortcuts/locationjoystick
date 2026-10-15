@@ -43,6 +43,22 @@ Covers every nav path in `LjNavHost`:
 
 Helpers in `SmokeTestHelpers.kt`: `waitForIdleScreen()`, `openDrawer()`, `navigateViaDrawer()`, `navigateFromIdle()`.
 
+## Test phone setup (screenshot harness)
+
+Tap to Walk's Ground calibration section (screenshot step 26) only renders when the Tap to Walk accessibility service is granted and Tap to Walk is on. A force-stop clears the grant, so `scripts/screenshot-gallery.sh` re-grants it over adb after its own force-stop (`grant_tap_to_walk_accessibility`). Test devices only. To repeat the grant by hand:
+
+```bash
+adb shell settings put secure enabled_accessibility_services com.locationjoystick.app/com.locationjoystick.feature.widget.impl.CompassAccessibilityService
+adb shell settings put secure accessibility_enabled 1
+adb shell settings get secure enabled_accessibility_services   # must list the service
+```
+
+Re-run the grant after any `am force-stop com.locationjoystick.app`. The helper appends to the existing list, so other enabled services stay on.
+
+With the grant in place, Enable Tap to Walk shows "Enable anyway" instead of the Play accessibility disclosure. The disclosure acceptance flag is set only by tapping Accept in the app; adb does not set it.
+
+Check: `./scripts/screenshot-gallery.sh --auto --steps 26` exits 0 and writes `docs/wiki/screenshots/26_calibration.png`. It exits 1 with `"Ground calibration" not found` when the section is missing.
+
 ## Tap-to-walk global smoke gate
 
 On-device regression gate for tap-to-walk landing: 20 fixed locations across the globe, 12 scored taps each.

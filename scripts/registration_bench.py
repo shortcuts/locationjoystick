@@ -3,7 +3,7 @@
 
 Step 1 of the investigation: pure geometry helpers plus one registration method (log-polar phase
 correlation on the FFT magnitude, rotation and scale in one step). Annotate/run/report subcommands are
-added once a device-captured dataset exists (see docs/features/tap-to-walk.md, "Bearing registration
+added once a device-captured dataset exists (see docs/features/tap-to-walk-investigation.md, "Bearing registration
 investigation"). The `motion` subcommand scores the motion-calibrated heading prototype (content_flow,
 heading_from_moves) on stored walk frames. `varycap` captures walk legs under varied zoom and orientation.
 

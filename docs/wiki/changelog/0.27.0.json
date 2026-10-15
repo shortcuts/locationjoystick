@@ -16,6 +16,7 @@
     { "category": "fix", "scope": "Map", "summary": "Switching the map style now takes effect on every map screen right away, without closing and reopening the screen." },
     { "category": "fix", "scope": "General", "summary": "The cooldown message and its badge now show in the app's supported languages instead of only English." },
     { "category": "feat", "scope": "Tap to Walk", "summary": "You can now calibrate Tap to Walk in Settings > Menus > Tap to Walk. A 10 minute walk teaches the app how your game's map moves, so taps land where you tapped. The permission message now says the app takes a picture of your screen every 3 seconds during it." },
+    { "category": "feat", "scope": "Tap to Walk", "summary": "Taps now land where you tapped even when your game map is turned or tilted. Calibrate once first. Without a calibration, taps assume north is at the top." },
     { "category": "fix", "scope": "Floating Widget", "summary": "Starting a roam, walk, teleport, or route from the floating widget no longer sends this app to the background. The app you are using stays in front." }
   ]
 }

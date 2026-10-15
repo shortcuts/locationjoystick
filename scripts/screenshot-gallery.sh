@@ -34,7 +34,7 @@
 #   --steps 01,03,05     (run steps 1, 3, 5)
 # Seeding (routes, favorites) always runs before the first selected step.
 #
-# Output files (25 canonical PNGs). Each file's number prefix is its step
+# Output files (26 canonical PNGs). Each file's number prefix is its step
 # number, so --steps N writes N_*.png (step 19 runs out of order, see below):
 #   01_idle, 02_map, 03_routes, 04_favorites (with a "Local spots" group), 05_settings,
 #   06_map_routes_sheet, 07_map_favorites_sheet, 08_map_roaming_sheet,
@@ -104,7 +104,7 @@ if [[ -n "$STEPS_FILTER" ]]; then
   done
 else
   # No filter: enable all steps
-  for i in $(seq 1 25); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
+  for i in $(seq 1 26); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
 fi
 
 # Helper to check if a step should run (e.g. should_run_step "16")
@@ -805,6 +805,21 @@ go_idle() {
   fi
 }
 
+# Grant the Tap to Walk accessibility service over adb (test device only).
+# The force-stop in go_idle clears the grant, so call this after go_idle.
+# Appends to enabled_accessibility_services so other services stay enabled.
+grant_tap_to_walk_accessibility() {
+  local svc="${PACKAGE}/com.locationjoystick.feature.widget.impl.CompassAccessibilityService"
+  local current
+  current=$($ADB shell settings get secure enabled_accessibility_services | tr -d '\r')
+  if [[ -z "$current" || "$current" == "null" ]]; then
+    $ADB shell settings put secure enabled_accessibility_services "$svc"
+  elif [[ ":$current:" != *":$svc:"* ]]; then
+    $ADB shell settings put secure enabled_accessibility_services "$current:$svc"
+  fi
+  $ADB shell settings put secure accessibility_enabled 1
+}
+
 # Back out to IdleScreen without killing the app: go_idle's force-stop would
 # also kill the overlay services the caller is about to photograph.
 go_idle_keep_overlays() {
@@ -1464,17 +1479,34 @@ if should_run_step "25"; then
 fi
 
 # ── 26. Settings → Menus → Ground calibration section ───────────────────────
-# GroundCalibrationSection renders below Compass orientation, and only while
-# the accessibility service is granted (API 30+), so grant it first.
+# GroundCalibrationSection renders below Compass orientation, which sits inside
+# the Tap to Walk expansion, and only while the accessibility service is granted
+# (API 30+). Tap to Walk is switched on here if off: with the grant in place the
+# dialog's button reads "Enable anyway" (no disclosure), as in step 20.
 
 if should_run_step "26"; then
   log "=== 26 CALIBRATION ==="
   go_idle
+  grant_tap_to_walk_accessibility
   tap_text_below "Settings" "$CARD_Y_MIN"
   wait_s 2 "Settings loading"
   tap_text "Menus"
   wait_s 2 "Menus loading"
-  for _ in 1 2 3 4 5 6 7 8 9 10; do
+  for _ in 1 2 3 4 5 6 7 8; do
+    dump=$(ui_dump)
+    found=$(grep -c 'text="Enable Tap to Walk"' "$dump" || true)
+    rm -f "$dump"
+    (( found > 0 )) && break
+    $ADB shell input swipe 540 1600 540 400 500
+    wait_s 1 "Scrolling to Tap to Walk"
+  done
+  if [[ "$(switch_is_on "Enable Tap to Walk")" != "True" ]]; then
+    tap_switch_for "Enable Tap to Walk"
+    wait_s 1 "Enabling Tap to Walk"
+    tap_text_exact "Enable anyway"
+    wait_s 1 "Enabling Tap to Walk"
+  fi
+  for _ in $(seq 1 16); do
     dump=$(ui_dump)
     found=$(grep -c 'text="Ground calibration"' "$dump" || true)
     rm -f "$dump"
@@ -1482,6 +1514,10 @@ if should_run_step "26"; then
     $ADB shell input swipe 540 1600 540 400 500
     wait_s 1 "Scrolling to Ground calibration"
   done
+  if (( found == 0 )); then
+    echo "✗ Step 26: \"Ground calibration\" not found on Menus. Grant the Tap to Walk accessibility service (docs/testing.md, \"Test phone setup\") and retry." >&2
+    exit 1
+  fi
   screenshot "26_calibration"
 fi
 

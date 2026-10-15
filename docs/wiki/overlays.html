@@ -141,11 +141,14 @@
     <p>Meters per pixel on your screen. Range 0.01 to 1.0. Raise it for a zoomed-out game map and lower it for a zoomed-in one.</p>
     <p><strong>Default:</strong> 0.23</p>
     <h4 class="item" id="tap-to-walk-settings-compass-orientation">Compass orientation</h4>
-    <p>Keeps taps accurate when the game map rotates. Without it, taps assume north is at the top. Uses an Android accessibility feature.</p>
+    <p>Lets the app take a picture of your screen. Calibration and Test need it. Uses an Android accessibility feature.</p>
     <p><strong>Default:</strong> Off</p>
     <h4 class="item" id="tap-to-walk-settings-game-app">Game app</h4>
     <p>Pick your game from the list, then tap Test to check detection on your phone.</p>
     <p><strong>Default:</strong> Select app</p>
+    <h4 class="item" id="tap-to-walk-settings-calibration">Calibration</h4>
+    <p>Teaches the app how your game's map moves. Start it once your game is chosen. See Calibrate Tap to Walk below.</p>
+    <p><strong>Default:</strong> Not calibrated. Taps assume the map is north-up.</p>
     </section>
 
     <h3 id="floating-map-quick-walk">Floating map quick walk</h3>
@@ -208,8 +211,11 @@
       To see the message again, go to Settings &rarr; Menus &rarr; Tap to Walk &rarr; Compass orientation and tap Open Settings.
     </p>
 
-    <p><strong>Calibrate Tap to Walk</strong></p>
-    <section>
+    <section class="has-shot">
+    <h3 id="calibrate-tap-to-walk">Calibrate Tap to Walk</h3>
+    <aside class="shot" id="calibration-shot">
+      <img class="phone-shot" src="screenshots/26_calibration.png" alt="Ground calibration section in Tap to Walk settings">
+    </aside>
     <p>
       Calibration teaches the app how your game's map moves, so a tap lands where you tapped, whichever way the map is turned.
       While it runs, the app takes a picture of your screen about every 3 seconds for about 10 minutes. The pictures stay on your phone and are deleted when it finishes.
