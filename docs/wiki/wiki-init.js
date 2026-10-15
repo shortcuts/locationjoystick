@@ -22,6 +22,7 @@
     ] },
     { group: 'Configure', items: [
       { href: 'settings.html', label: 'Settings' },
+      { href: 'game-setup.html', label: 'Game setup' },
       { href: 'backup-transfer.html', label: 'Backup &amp; Transfer' },
     ] },
     { group: 'Help', items: [

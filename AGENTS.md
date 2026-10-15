@@ -116,6 +116,7 @@ Rules:
 | Location Links (Automatic & Capture) | docs/features/location-links.md |
 | Last Remembered Location | docs/features/last-location.md |
 | Onboarding | docs/features/onboarding.md |
+| Guided Paths (game setup) | docs/features/guided-paths.md |
 | Group Sync | docs/features/group-sync.md |
 | Tap to Walk | docs/features/tap-to-walk.md |
 | Reconnect Accessory (Bluetooth reconnect tap) | docs/features/bluetooth-reconnect-tap.md |
@@ -227,6 +228,7 @@ make wiki-serve   # http://localhost:8080
 | `docs/wiki/capture.html` | Capture mode: setup, collecting links, saving a route |
 | `docs/wiki/group.html` | Group Sync (leader/follower Wi-Fi sync) |
 | `docs/wiki/tasks.html` | Common tasks hub; links goal-based how-to pages (`teleport-to-a-place`, `loop-a-route`, `follow-a-friend`, `move-to-a-new-phone`, `tap-to-walk-in-a-game`, `collect-links-into-a-route`) |
+| `docs/wiki/game-setup.html` | Game setup: the three paths, what each hides, how to switch |
 | `docs/wiki/settings.html` | Settings + language |
 | `docs/wiki/backup-transfer.html` | Export/import + QR transfer |
 | `docs/wiki/overlays.html` | Joystick + widget overlays + Tap to Walk |

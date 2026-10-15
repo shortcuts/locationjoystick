@@ -1,0 +1,7 @@
+{
+  "version": "0.28.0",
+  "date": "2026-10-15",
+  "entries": [
+    { "category": "feat", "scope": "Settings", "summary": "Pick your game during first setup: Default, Pokémon Go or Pikmin Bloom. It only hides features you do not need. Change it any time in Settings > General > Game setup." }
+  ]
+}

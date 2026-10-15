@@ -21,7 +21,7 @@ Screen 2, path picker (`PathPickerStep.kt`), "Start using locationjoystick" butt
 4. Pick a guided path: Default (preselected), Pokémon Go or Pikmin Bloom. Selection is held in
    `OnboardingUiState.selectedPath` and written to `guidedPath` (`SettingsRepository.setGuidedPath`) right
    before `setOnboardingComplete(true)` when the user finishes. The picker only says which features
-   each path hides; see docs/domain-models.md, `GuidedPath`.
+   each path hides; see docs/domain-models.md, `GuidedPath`. The full matrix is in docs/features/guided-paths.md.
 5. Optional Tap to Walk card, shown on Default and Pokémon Go and hidden on Pikmin Bloom (every API
    level; card text names the calibration screenshots). On API 30+ the Accessibility prominent disclosure
    (`CompassDisclosureDialog`) opens by itself when the picker first appears while the choice is unanswered

@@ -38,6 +38,7 @@ See the **[wiki](https://locationjoystick.shrtcts.fr/)** for every feature: the 
 - Use a compact movable widget map with north lock, or expand it for more space.
 - Preview planting circles and spiral roaming, with optional jumps between route stops.
 - Optionally reconnect your Bluetooth accessory automatically when it drops.
+- Pick Default, Pokémon Go or Pikmin Bloom during setup to hide the features your game does not need. Change it any time in Settings.
 - See an "update available" badge (checked about once a day) and a "What's new" badge for your current version on the Home screen.
 
 ## Community

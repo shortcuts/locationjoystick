@@ -43,7 +43,7 @@
 #   13_joystick_overlay, 14_widget_overlay,
 #   15_routes_add_button, 16_favorites_add_button,
 #   17_group_sync, 18_debug_stats,
-#   19_onboarding_mock_location,
+#   19_onboarding_mock_location, 27_onboarding_path_picker,
 #   20_tap_to_walk_settings, 21_compass_orientation,
 #   22_capture_coordinates, 23_map_paste_coordinates, 24_roaming_planting,
 #   25_compass_disclosure, 26_calibration
@@ -51,6 +51,9 @@
 # 19_onboarding_mock_location ("Set as fake GPS app" onboarding step) is only
 # captured on a genuinely fresh install — it's taken mid-onboarding, before
 # mock_location is granted, inside the onboarding auto-complete branch above.
+# 27_onboarding_path_picker (the last onboarding screen, Game setup) is captured
+# in the same branch on a fresh install only. The branch then taps "Start using
+# locationjoystick" to finish onboarding, with or without step 27 requested.
 # If the app is already past onboarding when the script runs, that branch
 # never executes and step 19 is silently skipped, no matter --steps. Run
 # `make reinstall-on-phone` right before `make screenshot` to guarantee it.
@@ -958,6 +961,15 @@ if grep -qi "onboarding\|Welcome\|grant\|permission" "$dump" 2>/dev/null; then
     sleep 1
     $ADB shell am start -n "${PACKAGE}/${ACTIVITY}" >/dev/null
     wait_s 3 "App starting"
+
+    if should_run_step "27"; then
+      log "=== 27 ONBOARDING PATH PICKER ==="
+      screenshot "27_onboarding_path_picker"
+    fi
+    # The path picker is the last onboarding screen; finish it with its button.
+    tap_text_exact "Start using locationjoystick" 2>/dev/null || log "Start button not found; the check below will catch it"
+    wait_s 3 "Finishing onboarding"
+
     # Verify onboarding is past
     dump=$(ui_dump)
     if grep -qi "onboarding\|Welcome\|grant\|permission" "$dump" 2>/dev/null; then
