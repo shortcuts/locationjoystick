@@ -80,6 +80,14 @@
     <string name="settings_gps_remember_last_location">"記住上次位置"</string>
     <string name="settings_gps_remember_last_location_desc">"應用程式重新啟動時恢復上次設定的位置。"</string>
     <string name="settings_menus_appearance">"外觀"</string>
+    <string name="settings_menus_guided_path">"遊戲設定"</string>
+    <string name="settings_menus_guided_path_desc">"這只會隱藏你用不到的功能，隨時可以變更。"</string>
+    <string name="settings_menus_guided_path_default">"預設"</string>
+    <string name="settings_menus_guided_path_default_desc">"所有功能均可使用。"</string>
+    <string name="settings_menus_guided_path_pokemon_go">"Pokémon Go"</string>
+    <string name="settings_menus_guided_path_pokemon_go_desc">"隱藏種植功能。"</string>
+    <string name="settings_menus_guided_path_pikmin_bloom">"Pikmin Bloom"</string>
+    <string name="settings_menus_guided_path_pikmin_bloom_desc">"隱藏點擊行走和重新連接配件。"</string>
     <string name="settings_menus_switch_to_a_light_theme_for">"切換至淺色主題，便於在強光或陽光直射下看清螢幕。"</string>
     <string name="settings_menus_light_mode">"淺色模式"</string>
     <string name="settings_menus_reconnect_accessory">"重新連接配件"</string>

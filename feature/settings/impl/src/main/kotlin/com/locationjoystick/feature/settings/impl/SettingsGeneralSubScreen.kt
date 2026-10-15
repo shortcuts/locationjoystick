@@ -1,7 +1,9 @@
 package com.locationjoystick.feature.settings.impl
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,12 +16,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +39,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
@@ -43,6 +49,7 @@ import com.locationjoystick.core.designsystem.component.LjLanguageDropdown
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.model.AppLanguage
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.feature.settings.impl.R
@@ -97,6 +104,8 @@ internal fun SettingsGeneralSubScreen(
                                 .verticalScroll(remember { ScrollState(0) })
                                 .padding(16.dp),
                     ) {
+                        GuidedPathSection(uiState, onAction)
+                        SettingsSectionDivider()
                         ThemeSection(uiState, onAction)
                         SettingsSectionDivider()
                         MapSourceSection(uiState, onAction)
@@ -114,6 +123,74 @@ internal fun SettingsGeneralSubScreen(
         }
     }
 }
+
+@Composable
+private fun GuidedPathSection(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    SettingsSectionHeader(stringResource(R.string.settings_menus_guided_path))
+    Spacer(Modifier.height(4.dp))
+    Text(
+        stringResource(R.string.settings_menus_guided_path_desc),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(8.dp))
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        GuidedPath.entries.forEach { path ->
+            GuidedPathRow(
+                title = stringResource(path.titleRes()),
+                description = stringResource(path.descriptionRes()),
+                selected = path == uiState.guidedPath,
+                onClick = { onAction(SettingsAction.SetGuidedPath(path)) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun GuidedPathRow(
+    title: String,
+    description: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().selectable(selected = selected, onClick = onClick, role = Role.RadioButton),
+        border = if (selected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            RadioButton(selected = selected, onClick = null)
+            Column {
+                Text(text = title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+private fun GuidedPath.titleRes(): Int =
+    when (this) {
+        GuidedPath.DEFAULT -> R.string.settings_menus_guided_path_default
+        GuidedPath.POKEMON_GO -> R.string.settings_menus_guided_path_pokemon_go
+        GuidedPath.PIKMIN_BLOOM -> R.string.settings_menus_guided_path_pikmin_bloom
+    }
+
+private fun GuidedPath.descriptionRes(): Int =
+    when (this) {
+        GuidedPath.DEFAULT -> R.string.settings_menus_guided_path_default_desc
+        GuidedPath.POKEMON_GO -> R.string.settings_menus_guided_path_pokemon_go_desc
+        GuidedPath.PIKMIN_BLOOM -> R.string.settings_menus_guided_path_pikmin_bloom_desc
+    }
 
 @Composable
 private fun MapSourceSection(

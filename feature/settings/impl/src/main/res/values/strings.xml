@@ -80,6 +80,14 @@
     <string name="settings_gps_remember_last_location">"Remember last location"</string>
     <string name="settings_gps_remember_last_location_desc">"Restores your last set position when the app restarts."</string>
     <string name="settings_menus_appearance">"Appearance"</string>
+    <string name="settings_menus_guided_path">"Game setup"</string>
+    <string name="settings_menus_guided_path_desc">"This only hides features you don’t need. You can change it any time."</string>
+    <string name="settings_menus_guided_path_default">"Default"</string>
+    <string name="settings_menus_guided_path_default_desc">"Everything is available."</string>
+    <string name="settings_menus_guided_path_pokemon_go">"Pokémon Go"</string>
+    <string name="settings_menus_guided_path_pokemon_go_desc">"Hides Planting."</string>
+    <string name="settings_menus_guided_path_pikmin_bloom">"Pikmin Bloom"</string>
+    <string name="settings_menus_guided_path_pikmin_bloom_desc">"Hides Tap to Walk and Reconnect Accessory."</string>
     <string name="settings_menus_switch_to_a_light_theme_for">"Switch to a light theme for better readability in bright/sunny conditions."</string>
     <string name="settings_menus_light_mode">"Light mode"</string>
     <string name="settings_menus_map_section">"Map"</string>

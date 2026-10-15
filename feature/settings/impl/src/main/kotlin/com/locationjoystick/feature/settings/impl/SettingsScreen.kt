@@ -464,6 +464,8 @@ fun SettingsRoute(
                     viewModel.acceptReconnectTapDisclosure()
                 }
 
+                is SettingsAction.SetGuidedPath -> viewModel.setGuidedPath(action.path)
+
                 is SettingsAction.SetThemeMode -> {
                     viewModel.setThemeMode(action.mode)
                 }

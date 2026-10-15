@@ -637,7 +637,11 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getGuidedPath(): Flow<String> = flowOf("DEFAULT")
 
-    override suspend fun setGuidedPath(name: String) = Unit
+    var lastSetGuidedPath: String? = null
+
+    override suspend fun setGuidedPath(name: String) {
+        lastSetGuidedPath = name
+    }
 
     override fun getMapTileSource(): Flow<String> = flowOf(MapTileSource.DEFAULT.name)
 

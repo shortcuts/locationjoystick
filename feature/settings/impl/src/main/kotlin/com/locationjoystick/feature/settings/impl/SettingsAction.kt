@@ -2,6 +2,7 @@ package com.locationjoystick.feature.settings.impl
 
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.GeocodingProviderId
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
@@ -218,6 +219,10 @@ internal sealed class SettingsAction {
     ) : SettingsAction()
 
     data object AcceptReconnectTapDisclosure : SettingsAction()
+
+    data class SetGuidedPath(
+        val path: GuidedPath,
+    ) : SettingsAction()
 
     data class SetThemeMode(
         val mode: ThemeMode,

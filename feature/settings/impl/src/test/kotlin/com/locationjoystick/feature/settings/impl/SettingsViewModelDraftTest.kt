@@ -10,6 +10,7 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.CompassHeadingSource
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import com.locationjoystick.core.testing.FakePreferencesDataStore
@@ -41,6 +42,7 @@ class SettingsViewModelDraftTest {
     private val testDispatcher = UnconfinedTestDispatcher()
 
     private lateinit var viewModel: SettingsViewModel
+    private lateinit var fakeDataSource: SaveTestPreferencesDataSource
     private lateinit var captureRepository: CaptureCoordinatesRepository
     private lateinit var hotLocationsRepository: HotLocationsRepository
 
@@ -48,7 +50,7 @@ class SettingsViewModelDraftTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         val context = RuntimeEnvironment.getApplication()
-        val fakeDataSource = SaveTestPreferencesDataSource()
+        fakeDataSource = SaveTestPreferencesDataSource()
         val settingsRepo = SettingsRepository(fakeDataSource)
         captureRepository = CaptureCoordinatesRepository(FakePreferencesDataStore())
         hotLocationsRepository = HotLocationsRepository(context)
@@ -68,7 +70,8 @@ class SettingsViewModelDraftTest {
                 compassHeadingSource = CompassHeadingSource(settingsRepo),
                 calibrationWalkOrchestrator =
                     io.mockk.mockk(relaxed = true) {
-                        io.mockk.every { state } returns kotlinx.coroutines.flow.MutableStateFlow(com.locationjoystick.core.location.CalibrationState.Idle)
+                        io.mockk.every { state } returns
+                            kotlinx.coroutines.flow.MutableStateFlow(com.locationjoystick.core.location.CalibrationState.Idle)
                     },
                 context = context,
             )
@@ -124,6 +127,15 @@ class SettingsViewModelDraftTest {
                     .getValue("bike"),
                 0.01,
             )
+        }
+
+    @Test
+    fun `setGuidedPath writes immediately and does not mark dirty`() =
+        runTest(testDispatcher) {
+            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            viewModel.setGuidedPath(GuidedPath.POKEMON_GO)
+            assertEquals("POKEMON_GO", fakeDataSource.lastSetGuidedPath)
+            assertFalse(viewModel.uiState.value.isDirty)
         }
 
     @Test

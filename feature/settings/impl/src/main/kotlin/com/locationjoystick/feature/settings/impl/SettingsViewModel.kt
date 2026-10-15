@@ -30,6 +30,7 @@ import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.GeocodingProviderId
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
@@ -622,6 +623,10 @@ class SettingsViewModel
                 .map { InstalledApp(it.activityInfo.packageName, it.loadLabel(pm).toString()) }
                 .distinctBy { it.packageName }
                 .sortedBy { it.label.lowercase() }
+        }
+
+        fun setGuidedPath(path: GuidedPath) {
+            viewModelScope.launch { settingsRepository.setGuidedPath(path) }
         }
 
         fun setThemeMode(mode: ThemeMode) {
