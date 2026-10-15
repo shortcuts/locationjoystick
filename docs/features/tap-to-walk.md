@@ -462,7 +462,7 @@ pitch, horizon visible) is still not calibrated or re-captured: the band grid is
 and the feet pixel is detected, but the close-up `landing` check (p90 under 10 m on two screens) has not been run.
 The first close-up capture (side bands, hand anchor) gave a median response of 0.04. (3) The offline check only covers moves up to about 31 m and pixels
 of 700 to 1420 rows; taps beyond that are extrapolated. (4) Taps whose patch ends under the player's shadow or
-companion can be mismatched; check the annotated frames by eye. (5) The feet pixel is detected by the bench, not yet by the app.
+companion can be mismatched; check the annotated frames by eye. (5) The feet pixel is detected by the bench and ported to the app (`FeetDetector`), but nothing in the app calls it yet.
 
 ### Ground map model
 
@@ -489,6 +489,33 @@ Invariants a change must not break:
 2. Reference size stays 1080x2340; stored calibrations are in reference pixels.
 3. Units are px per metre, degrees, metres; screen y is down, ground north is up.
 4. `groundToPixel(pixelToGround(p)) == p` (round trip).
+
+### Feet detection
+
+`FeetDetector` in `:core:model` (`FeetDetector.kt`, pure Kotlin) ports the bench `detect_feet`. Input: per walked leg,
+the gray frames recorded while moving (`GrayFrame`, row-major 0..255, device pixels, at least 3 per leg). Output:
+`FeetPixel` in device pixels, or `null`; `toReference(width, height)` converts to the 1080x2340 frame of
+`GroundCalibration.feetX/feetY`. Nothing calls it yet (the walked-leg calibration entry will).
+
+Method: per leg take the per-pixel temporal median (the world scrolls, the player stays put, so only the player and
+HUD stay sharp), blur 3x3, Sobel gradient magnitude; take the minimum over legs (drops roads parallel to one walk);
+edge = above 30. In the centre columns 0.42w to 0.58w, sum edges per row with a box of `max(3, 0.005h)`. In rows
+0.4h to 0.9h group rows into runs split by gaps over 0.05h (dark legs break the figure), keep the run with the most
+support (reject under `0.0005 * h * k`), drop rows under 0.1 of the run peak. x = mean edge column in the run; y =
+last run row minus 0.07 of the run height (sole edge to ground contact; the one tuned value).
+
+Failure modes: a shadow below the sole lifts the last row; a companion sprite beside the player joins the run and
+shifts x; close-up zoom puts the anchor too high (see open work 2, not gated in code); a stationary HUD element in the
+centre column reads as figure; all legs parallel to one road keep road edges. Fallback: `null` means calibration
+failed, store nothing. There is no default anchor (feet differ per device and zoom: Pixel 5 542,1725 of 1080x2340;
+Pixel 7 538,1556 of 1080x2400).
+
+Invariants a change must not break:
+
+1. Constants and order equal the bench (`scripts/registration_bench.py` `detect_feet`); tests pin a bench-exported
+   scene within 1.0 px (`scripts/export_feet_golden.py`; rerun when `detect_feet` changes).
+2. Input and output are device pixels; only `toReference` scales. No screen size, density or north is hardcoded.
+3. Parity, not improvement: fixing the close-up row is a separate bench-first change.
 
 ### Status and open work
 
@@ -522,7 +549,7 @@ Open work, in order:
 
 1. Lower the skip rate (24 of 36 taps on the second Pixel 7 run) and explain the 23 m miss (`t17`), then repeat the run on this device and on more devices and camera states.
 2. Close-up (z1.6) landing is not met: p90 96.9 m on the Pixel 7, target under 10 m. Measured with `varycap --conditions 1.6:0` then `landing` without `--anchor`: feet pixel detected 509 1548, 928 samples, p50 22.6 m, p90 96.9 m, within 10 m 20%, within 15 m 34%, 66% of matches skipped as ambiguous. The wide capture on the same device gives p50 3.0 m, p90 9.9 m with the detected anchor. The detected feet row looks too high at close-up (sharp rows span 1149 to 1911, the detector stops at the torso/leg gap); widening the run gap to 0.12 moved the anchor to 1796 and made landing worse (p90 286.8 m), so the anchor is not the main error: the fit and the match step at close-up are. Needs a second device and a cause for the ambiguity at close-up before retrying.
-3. Ground map model ported (`GroundMap`, see "Ground map model"); the walked-leg fit, feet detection and wiring into the tap overlay remain.
+3. Ground map model ported (`GroundMap`, see "Ground map model") and feet detection ported (`FeetDetector`, see "Feet detection"); the walked-leg capture/fit and wiring into the tap overlay remain.
 4. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes.
 
 ## Warning Screen

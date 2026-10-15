@@ -38,6 +38,9 @@ All in `:core:model`. Pure Kotlin — no Android, no Room. Room entities in `:co
 | `GroundCalibration` | `headingDeg: Double`, `lateralPxPerM: Double`, `forwardPxPerM: Double`, `perspective: Double`, `feetX: Double`, `feetY: Double` — fitted tap-to-walk camera terms in reference pixels (1080x2340); see docs/features/tap-to-walk.md, "Ground map model" |
 | `GroundOffset` | `eastMeters: Double`, `northMeters: Double` — metres from the player's feet, north up |
 | `GroundMap` | class (not data): `GroundMap(cal, screenWidth, screenHeight)`; `pixelToGround(x, y): GroundOffset?`, `groundToPixel(east, north)`. Pure Kotlin perspective pixel/ground mapping |
+| `GrayFrame` | `pixels: FloatArray` — row-major gray 0..255 frame fed to `FeetDetector` |
+| `FeetPixel` | `x: Double`, `y: Double` device pixels; `toReference(width, height)` → reference-frame pair |
+| `FeetDetector` | object: `detect(legs, width, height): FeetPixel?` — pure-Kotlin feet pixel from walked-leg frames; see docs/features/tap-to-walk.md, "Feet detection" |
 
 ## Mapping
 
