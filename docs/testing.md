@@ -43,6 +43,43 @@ Covers every nav path in `LjNavHost`:
 
 Helpers in `SmokeTestHelpers.kt`: `waitForIdleScreen()`, `openDrawer()`, `navigateViaDrawer()`, `navigateFromIdle()`.
 
+## Tap-to-walk global smoke gate
+
+On-device regression gate for tap-to-walk landing: 20 fixed locations across the globe, 12 scored taps each.
+It drives the bench (`scripts/registration_bench.py` `walkcap`, `persp`, `taptrials`) per location, so scoring is the
+same masked-NCC landing error as the bench.
+
+```bash
+export LJ_CONTROL_API_KEY=... LJ_CONTROL_API_HOST=<phone ip>:<port>
+make tap-smoke                    # all 20 locations, roughly 3 hours
+make tap-smoke SERIAL=<adb serial> ONLY="1 2"   # a subset; a subset never meets the 19 of 20 bar
+make tap-smoke-selfcheck          # pure verdict logic, no device
+```
+
+- **Throwaway account only.** The run teleports across the globe through the Control API (`POST /teleport`, so
+  `TeleportUseCase` persists last location and cooldown). The script refuses to start without
+  `--ack-throwaway-account`, which `make tap-smoke` passes: running it is the acknowledgement. Never use the main account.
+- **Cooldown.** The app's cooldown is advisory. By default the run does not wait; pass `--respect-cooldown` to the script
+  to sleep the advised time before each teleport. `--settle <s>` (default 45) is the wait for tiles after each teleport.
+- **Per location.** Teleport, wait for the position and tiles, walk four 30 m legs (bearings 0, 90, 45, 225), fit the
+  perspective ground map, then score 12 taps 5 to 40 m away. Tap order is seeded, so a failure reproduces.
+- **Pass bar.** A location passes with at least 11 of 12 scored taps within 15 m. Ambiguous matches are skipped, not
+  counted. A rejected calibration (`no_calibration`) or fewer than 12 scored taps (`insufficient_scored`) fails; so do
+  more than one miss (`below_bar`). The suite passes with at least 19 of 20 locations. Exit code is 0 only on suite PASS.
+- **Locations.** `scripts/tap_smoke_locations.json`, ordered `{name, lat, lon, kind}`, committed and never regenerated at
+  run time. To add one, append an entry (keep names and coordinates unique) and update the bar constants in
+  `scripts/tap_smoke.py` and `scripts/test_tap_smoke.py` if the count changes. Rural and polar entries may fail
+  honestly: record the result, do not tune thresholds to pass.
+- **Report.** `scripts/registration-bench/smoke/<UTC stamp>/report.md` (and `report.json`): one row per location with
+  lat/lon, device, resolution, density, scored, passes, p50/p90 error in metres, verdict and reason, then
+  `TAP SMOKE: <p>/<n> locations pass (bar 19/20) -> PASS|FAIL`. Per-location frames live beside it.
+- **Frames and username.** The game HUD shows the player's username at the bottom of the screen. Frames and annotated
+  images stay under the gitignored `scripts/registration-bench/`; never copy or commit one without masking that region.
+  The report files contain numbers only.
+- **Resolution-agnostic.** No size is passed; the bench reads the attached device's size and the report records it.
+- **Gate.** A failing run blocks the Kotlin port entry and the "Prove tap-to-walk 100% reliable" entry
+  (docs/features/tap-to-walk.md, "Status and open work").
+
 ## Unit Tests (`:core:*`)
 
 - Repo logic w/ fake DAO (in-memory Room)

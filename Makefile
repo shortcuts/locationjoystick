@@ -1,6 +1,6 @@
 .PHONY: stop clean build bundle format lint install-on-phone reinstall-on-phone start-on-phone tail-log-on-phone \
 	test coverage coverage-open screenshot screenshot-playstore accessibility-video wiki-changelog wiki-serve \
-	smoke-test smoke-test-one reconnect-matrix reconnect-auto reconnect-already-on reconnect-summary reconnect-selfcheck
+	smoke-test smoke-test-one reconnect-matrix reconnect-auto reconnect-already-on reconnect-summary reconnect-selfcheck tap-smoke tap-smoke-selfcheck
 
 stop:
 	pkill -f gradlew || true
@@ -115,3 +115,12 @@ reconnect-summary:
 
 reconnect-selfcheck:
 	python3 scripts/test_reconnect_matrix.py
+
+# Tap-to-walk global smoke gate (docs/testing.md). Throwaway game account only.
+# make tap-smoke SERIAL=<adb serial> ONLY="1 2"   (needs LJ_CONTROL_API_KEY, LJ_CONTROL_API_HOST)
+tap-smoke:
+	scripts/registration-bench/.venv/bin/python scripts/tap_smoke.py --ack-throwaway-account \
+		$(if $(SERIAL),--serial $(SERIAL)) $(if $(ONLY),--only $(ONLY))
+
+tap-smoke-selfcheck:
+	python3 scripts/test_tap_smoke.py

@@ -1,0 +1,22 @@
+[
+ {"name": "New York Times Square", "lat": 40.7580, "lon": -73.9855, "kind": "dense"},
+ {"name": "London Hyde Park", "lat": 51.5073, "lon": -0.1657, "kind": "dense"},
+ {"name": "Tokyo Shinjuku Gyoen", "lat": 35.6852, "lon": 139.7100, "kind": "dense"},
+ {"name": "Sydney Botanic Garden", "lat": -33.8642, "lon": 151.2166, "kind": "coastal"},
+ {"name": "Sao Paulo Ibirapuera", "lat": -23.5874, "lon": -46.6576, "kind": "dense"},
+ {"name": "Cape Town Company's Garden", "lat": -33.9288, "lon": 18.4172, "kind": "coastal"},
+ {"name": "Reykjavik", "lat": 64.1466, "lon": -21.9426, "kind": "high-lat"},
+ {"name": "Tromso", "lat": 69.6492, "lon": 18.9553, "kind": "polar-edge"},
+ {"name": "Ushuaia", "lat": -54.8019, "lon": -68.3030, "kind": "south-edge"},
+ {"name": "Singapore Botanic", "lat": 1.3138, "lon": 103.8159, "kind": "equator"},
+ {"name": "Nairobi Uhuru Park", "lat": -1.2921, "lon": 36.8219, "kind": "equator"},
+ {"name": "Mumbai Marine Drive", "lat": 18.9442, "lon": 72.8231, "kind": "coastal"},
+ {"name": "Mexico City Chapultepec", "lat": 19.4204, "lon": -99.1819, "kind": "dense"},
+ {"name": "Honolulu Waikiki", "lat": 21.2766, "lon": -157.8267, "kind": "island"},
+ {"name": "Anchorage", "lat": 61.2181, "lon": -149.9003, "kind": "high-lat"},
+ {"name": "Auckland", "lat": -36.8485, "lon": 174.7633, "kind": "antimeridian"},
+ {"name": "Kansas plains", "lat": 38.5000, "lon": -98.0000, "kind": "rural"},
+ {"name": "Bavaria fields", "lat": 47.9000, "lon": 11.4000, "kind": "rural"},
+ {"name": "Dubai", "lat": 25.2048, "lon": 55.2708, "kind": "desert"},
+ {"name": "Moscow Gorky Park", "lat": 55.7280, "lon": 37.6010, "kind": "dense"}
+]
