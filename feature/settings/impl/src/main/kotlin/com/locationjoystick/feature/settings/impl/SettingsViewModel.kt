@@ -780,6 +780,7 @@ class SettingsViewModel
 
         private suspend fun buildCurrentExportData(): ExportData {
             val state = uiState.value
+            val snapshot = settingsRepository.getSettingsSnapshot().first()
             val speedProfiles =
                 SpeedProfile.defaultProfiles().map { it.copy(speedMetersPerSecond = state.speeds.getValue(it.id)) }
             val settings =
@@ -807,6 +808,15 @@ class SettingsViewModel
                     plantingRadiusMeters = state.plantingRadiusMeters,
                     altitudeOverrideButtonEnabled = state.altitudeOverrideButtonEnabled,
                     debugStatsEnabled = state.debugStatsEnabled,
+                    activeSpeedProfileId = settingsRepository.getActiveSpeedProfile().first().id,
+                    mapFollowsLocation = snapshot.mapFollowsLocation,
+                    rememberLastLocation = snapshot.rememberLastLocation,
+                    floatingMapQuickWalk = snapshot.floatingMapQuickWalk,
+                    tapToWalkOverlayEnabled = snapshot.tapToWalkOverlayEnabled,
+                    tapToWalkScaleMpx = snapshot.tapToWalkScaleMpx,
+                    reconnectTapEnabled = settingsRepository.getReconnectTapEnabled().first(),
+                    keepWidgetOnIdle = settingsRepository.getKeepWidgetOnIdle().first(),
+                    themeMode = settingsRepository.getThemeMode().first(),
                 )
             return ExportData(
                 schemaVersion = AppConstants.ExportConstants.SCHEMA_VERSION,
@@ -1034,8 +1044,17 @@ class SettingsViewModel
                     hotRoutesEnabled = data.hotRoutesEnabled,
                     selectedHotRouteIds = data.selectedHotRouteIds,
                     roamingDefaults = data.settings.roamingDefaults,
+                    rememberLastLocation = data.settings.rememberLastLocation,
+                    mapFollowsLocation = data.settings.mapFollowsLocation,
+                    floatingMapQuickWalk = data.settings.floatingMapQuickWalk,
+                    tapToWalkOverlayEnabled = data.settings.tapToWalkOverlayEnabled,
+                    tapToWalkScaleMpx = data.settings.tapToWalkScaleMpx,
                 ),
             )
+            settingsRepository.setActiveProfileId(data.settings.activeSpeedProfileId)
+            settingsRepository.setReconnectTapEnabled(data.settings.reconnectTapEnabled)
+            settingsRepository.setKeepWidgetOnIdle(data.settings.keepWidgetOnIdle)
+            settingsRepository.setThemeMode(data.settings.themeMode)
             if (data.hotLocationsEnabled) {
                 favoriteRepository.upsertHotLocations(hotLocationsRepository.locations.value, data.selectedHotLocationIds)
             } else {

@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.settings.impl
 
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.GeocodingProviderId
@@ -9,6 +10,7 @@ import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpeedProfile
+import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.core.model.Waypoint
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -71,6 +73,51 @@ private fun fullExportData(): ExportData =
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class SettingsExportCodecTest {
+    @Test
+    fun `round-trip preserves tap to walk, reconnect, theme and other app-wide settings`() {
+        val original =
+            minimalExportData().copy(
+                settings =
+                    AppSettings(
+                        activeSpeedProfileId = "bike",
+                        mapFollowsLocation = false,
+                        rememberLastLocation = false,
+                        floatingMapQuickWalk = true,
+                        tapToWalkOverlayEnabled = true,
+                        tapToWalkScaleMpx = 0.42,
+                        reconnectTapEnabled = true,
+                        keepWidgetOnIdle = true,
+                        themeMode = ThemeMode.LIGHT,
+                    ),
+            )
+
+        val settings = SettingsExportCodec.parseExportData(SettingsExportCodec.serializeExportData(original)).settings
+
+        assertEquals("bike", settings.activeSpeedProfileId)
+        assertFalse(settings.mapFollowsLocation)
+        assertFalse(settings.rememberLastLocation)
+        assertEquals(true, settings.floatingMapQuickWalk)
+        assertEquals(true, settings.tapToWalkOverlayEnabled)
+        assertEquals(0.42, settings.tapToWalkScaleMpx, 0.0001)
+        assertEquals(true, settings.reconnectTapEnabled)
+        assertEquals(true, settings.keepWidgetOnIdle)
+        assertEquals(ThemeMode.LIGHT, settings.themeMode)
+    }
+
+    @Test
+    fun `old export without the app-wide settings imports with defaults`() {
+        val settings = SettingsExportCodec.parseExportData("""{"schemaVersion":2,"settings":{}}""").settings
+
+        val d = AppSettings()
+        assertEquals(d.activeSpeedProfileId, settings.activeSpeedProfileId)
+        assertEquals(d.mapFollowsLocation, settings.mapFollowsLocation)
+        assertEquals(d.rememberLastLocation, settings.rememberLastLocation)
+        assertEquals(d.tapToWalkOverlayEnabled, settings.tapToWalkOverlayEnabled)
+        assertEquals(d.tapToWalkScaleMpx, settings.tapToWalkScaleMpx, 0.0001)
+        assertEquals(d.reconnectTapEnabled, settings.reconnectTapEnabled)
+        assertEquals(d.themeMode, settings.themeMode)
+    }
+
     @Test
     fun `round-trip preserves route and favorite sort modes`() {
         val original =

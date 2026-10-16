@@ -15,6 +15,7 @@ import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.core.model.Waypoint
 import org.json.JSONArray
 import org.json.JSONObject
@@ -97,6 +98,15 @@ internal object SettingsExportCodec {
         settingsObj.put("plantingRadiusMeters", data.settings.plantingRadiusMeters)
         settingsObj.put("altitudeOverrideButtonEnabled", data.settings.altitudeOverrideButtonEnabled)
         settingsObj.put("debugStatsEnabled", data.settings.debugStatsEnabled)
+        settingsObj.put("activeSpeedProfileId", data.settings.activeSpeedProfileId)
+        settingsObj.put("mapFollowsLocation", data.settings.mapFollowsLocation)
+        settingsObj.put("rememberLastLocation", data.settings.rememberLastLocation)
+        settingsObj.put("floatingMapQuickWalk", data.settings.floatingMapQuickWalk)
+        settingsObj.put("tapToWalkOverlayEnabled", data.settings.tapToWalkOverlayEnabled)
+        settingsObj.put("tapToWalkScaleMpx", data.settings.tapToWalkScaleMpx)
+        settingsObj.put("reconnectTapEnabled", data.settings.reconnectTapEnabled)
+        settingsObj.put("keepWidgetOnIdle", data.settings.keepWidgetOnIdle)
+        settingsObj.put("themeMode", data.settings.themeMode.name)
         val roamingObj = JSONObject()
         roamingObj.put("radiusMeters", data.settings.roamingDefaults.radiusMeters)
         roamingObj.put("distanceMeters", data.settings.roamingDefaults.distanceMeters)
@@ -264,6 +274,7 @@ internal object SettingsExportCodec {
             settingsObj.optDouble("plantingRadiusMeters", AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS)
         val altitudeOverrideButtonEnabled = settingsObj.optBoolean("altitudeOverrideButtonEnabled", false)
         val debugStatsEnabled = settingsObj.optBoolean("debugStatsEnabled", false)
+        val defaults = AppSettings()
         val roamingDefaultsObj = settingsObj.optJSONObject("roamingDefaults")
         val roamingDefaults =
             if (roamingDefaultsObj != null) {
@@ -344,6 +355,15 @@ internal object SettingsExportCodec {
                 plantingRadiusMeters = plantingRadiusMeters,
                 altitudeOverrideButtonEnabled = altitudeOverrideButtonEnabled,
                 debugStatsEnabled = debugStatsEnabled,
+                activeSpeedProfileId = settingsObj.optString("activeSpeedProfileId", defaults.activeSpeedProfileId),
+                mapFollowsLocation = settingsObj.optBoolean("mapFollowsLocation", defaults.mapFollowsLocation),
+                rememberLastLocation = settingsObj.optBoolean("rememberLastLocation", defaults.rememberLastLocation),
+                floatingMapQuickWalk = settingsObj.optBoolean("floatingMapQuickWalk", defaults.floatingMapQuickWalk),
+                tapToWalkOverlayEnabled = settingsObj.optBoolean("tapToWalkOverlayEnabled", defaults.tapToWalkOverlayEnabled),
+                tapToWalkScaleMpx = settingsObj.optDouble("tapToWalkScaleMpx", defaults.tapToWalkScaleMpx),
+                reconnectTapEnabled = settingsObj.optBoolean("reconnectTapEnabled", defaults.reconnectTapEnabled),
+                keepWidgetOnIdle = settingsObj.optBoolean("keepWidgetOnIdle", defaults.keepWidgetOnIdle),
+                themeMode = runCatching { ThemeMode.valueOf(settingsObj.optString("themeMode")) }.getOrDefault(defaults.themeMode),
             )
 
         val speedProfiles = mutableListOf<SpeedProfile>()

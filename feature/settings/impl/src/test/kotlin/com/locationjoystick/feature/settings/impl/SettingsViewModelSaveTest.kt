@@ -286,19 +286,32 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
-    fun `importSettings(ExportData) preserves rememberLastLocation and mapFollowsLocation`() =
+    fun `importSettings(ExportData) applies rememberLastLocation, mapFollowsLocation and tap to walk settings`() =
         runTest(testDispatcher) {
-            // The fake data source returns rememberLastLocation=false, mapFollowsLocation=true
-            // from getSettingsSnapshot(). Importing must not reset them.
+            // The fake snapshot has rememberLastLocation=false, mapFollowsLocation=true, tap to walk off.
+            val exportData =
+                ExportData(
+                    settings =
+                        AppSettings(
+                            rememberLastLocation = true,
+                            mapFollowsLocation = false,
+                            tapToWalkOverlayEnabled = true,
+                            tapToWalkScaleMpx = 0.5,
+                            floatingMapQuickWalk = true,
+                        ),
+                )
             viewModel.userFeedback.test {
-                viewModel.importSettings(ExportData())
+                viewModel.importSettings(exportData)
                 awaitItem()
                 cancelAndIgnoreRemainingEvents()
             }
 
             val snapshot = fakeDataSource.lastAppliedSnapshot!!
-            assertFalse(snapshot.rememberLastLocation)
-            assertTrue(snapshot.mapFollowsLocation)
+            assertTrue(snapshot.rememberLastLocation)
+            assertFalse(snapshot.mapFollowsLocation)
+            assertTrue(snapshot.tapToWalkOverlayEnabled)
+            assertEquals(0.5, snapshot.tapToWalkScaleMpx, 0.0001)
+            assertTrue(snapshot.floatingMapQuickWalk)
         }
 
     @Test

@@ -29,4 +29,11 @@ data class AppSettings(
     val plantingRadiusMeters: Double = 35.0,
     val altitudeOverrideButtonEnabled: Boolean = false,
     val debugStatsEnabled: Boolean = false,
+    val rememberLastLocation: Boolean = true,
+    val floatingMapQuickWalk: Boolean = false,
+    val tapToWalkOverlayEnabled: Boolean = false,
+    val tapToWalkScaleMpx: Double = 0.23,
+    val reconnectTapEnabled: Boolean = false,
+    val keepWidgetOnIdle: Boolean = false,
+    val themeMode: ThemeMode = ThemeMode.DARK,
 )
