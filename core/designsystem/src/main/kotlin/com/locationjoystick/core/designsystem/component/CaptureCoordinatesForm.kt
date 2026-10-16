@@ -9,23 +9,19 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,18 +31,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.util.CaptureBrowserChoice
 import com.locationjoystick.core.common.util.formatCapturedPoint
 import com.locationjoystick.core.common.util.formatCapturedPointsForClipboard
-import com.locationjoystick.core.designsystem.LjAccent
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjTheme
@@ -108,10 +103,7 @@ fun CaptureCoordinatesForm(
     captureSetup: CaptureSetupState,
     capturePoints: CapturePointsState,
     routeSave: CaptureRouteSaveState,
-    onDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
-    showTitle: Boolean = true,
-    showClose: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(horizontal = LjSpacing.md, vertical = LjSpacing.md),
 ) {
     val context = LocalContext.current
@@ -134,7 +126,7 @@ fun CaptureCoordinatesForm(
             title = { Text(stringResource(R.string.capture_coordinates_form_clear_captured_locations)) },
             text = { Text(stringResource(R.string.capture_previous_points, capturePoints.points.size)) },
             confirmButton = {
-                Button(
+                LjButton(
                     onClick = {
                         capturePoints.onClearPoints()
                         captureMode.onCaptureModeEnabledChange(true)
@@ -145,7 +137,7 @@ fun CaptureCoordinatesForm(
                 }
             },
             dismissButton = {
-                TextButton(
+                LjTextButton(
                     onClick = {
                         captureMode.onCaptureModeEnabledChange(true)
                         showClearPrompt = false
@@ -163,15 +155,8 @@ fun CaptureCoordinatesForm(
                 .verticalScroll(rememberScrollState())
                 .padding(contentPadding)
                 .imePadding(),
-        verticalArrangement = Arrangement.spacedBy(LjSpacing.lg),
+        verticalArrangement = Arrangement.spacedBy(LjSpacing.md),
     ) {
-        if (showTitle) {
-            Text(
-                text = stringResource(R.string.capture_coordinates_form_capture_coordinates),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
         if (captureSetup.isDefaultBrowser) {
             Text(
                 text = stringResource(R.string.capture_intro),
@@ -187,97 +172,98 @@ fun CaptureCoordinatesForm(
                 onJumpEnabledChange = captureMode.onJumpEnabledChange,
             )
             CapturePassThroughRow(state = captureSetup)
-            Column(verticalArrangement = Arrangement.spacedBy(LjSpacing.sm)) {
-                Text(
-                    text =
-                        if (capturePoints.points.isEmpty()) {
-                            stringResource(R.string.capture_empty)
-                        } else {
-                            stringResource(R.string.capture_point_count, capturePoints.points.size)
-                        },
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                OutlinedTextField(
-                    value =
-                        capturePoints.points
-                            .mapIndexed { index, point -> "${index + 1}. ${formatCapturedPoint(point)}" }
-                            .joinToString("\n"),
-                    onValueChange = {},
-                    readOnly = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text(stringResource(R.string.capture_empty)) },
-                    minLines = 3,
-                    maxLines = 8,
-                    colors =
-                        OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = LjAccent,
-                            unfocusedBorderColor = LjAccent,
-                            disabledBorderColor = LjAccent,
-                        ),
-                )
-                Text(
-                    stringResource(R.string.capture_coordinates_form_point_order),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(top = LjSpacing.sm),
-                )
-                LjSegmentedControl(
-                    options =
-                        listOf(
-                            false to stringResource(R.string.capture_original_order),
-                            true to stringResource(R.string.capture_optimize_order),
-                        ),
-                    selected = capturePoints.optimizeProximity,
-                    onSelect = capturePoints.onOptimizeProximityChange,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(LjSpacing.sm)) {
-                CapturePointActions(
-                    enabled = capturePoints.points.isNotEmpty(),
-                    onCopy = {
-                        val text = formatCapturedPointsForClipboard(capturePoints.orderedPoints)
-                        scope.launch { clipboard.writePlainText(text) }
-                        Toast.makeText(context, copiedMessage, Toast.LENGTH_SHORT).show()
-                    },
-                    onRemoveLast = capturePoints.onRemoveLast,
-                    onClearPoints = capturePoints.onClearPoints,
-                )
-                OutlinedTextField(
-                    value = routeSave.routeName,
-                    onValueChange = routeSave.onRouteNameChange,
-                    label = { Text(stringResource(R.string.capture_coordinates_form_route_name)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    supportingText = {
-                        Text(
-                            routeSave.saveError
-                                ?: if (routeSave.saved) {
-                                    stringResource(R.string.capture_saved)
-                                } else {
-                                    stringResource(R.string.capture_need_points)
-                                },
-                        )
-                    },
-                    isError = routeSave.saveError != null,
-                )
-                Button(
-                    onClick = routeSave.onSaveRoute,
-                    enabled = routeSave.canSave,
-                    modifier = Modifier.fillMaxWidth(),
+            LjCard(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(LjSpacing.md),
+                    verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
                 ) {
-                    Text(stringResource(R.string.capture_coordinates_form_save_as_route))
+                    Text(
+                        text =
+                            if (capturePoints.points.isEmpty()) {
+                                stringResource(R.string.capture_empty)
+                            } else {
+                                stringResource(R.string.capture_point_count, capturePoints.points.size)
+                            },
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    if (capturePoints.points.isNotEmpty()) {
+                        LjOutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(
+                                modifier =
+                                    Modifier
+                                        .heightIn(max = 240.dp)
+                                        .verticalScroll(rememberScrollState())
+                                        .padding(LjSpacing.md),
+                                verticalArrangement = Arrangement.spacedBy(LjSpacing.xs),
+                            ) {
+                                capturePoints.points.forEachIndexed { index, point ->
+                                    Text(
+                                        text = "${index + 1}. ${formatCapturedPoint(point)}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    CapturePointActions(
+                        enabled = capturePoints.points.isNotEmpty(),
+                        onCopy = {
+                            val text = formatCapturedPointsForClipboard(capturePoints.orderedPoints)
+                            scope.launch { clipboard.writePlainText(text) }
+                            Toast.makeText(context, copiedMessage, Toast.LENGTH_SHORT).show()
+                        },
+                        onRemoveLast = capturePoints.onRemoveLast,
+                        onClearPoints = capturePoints.onClearPoints,
+                    )
+                    Text(
+                        stringResource(R.string.capture_coordinates_form_point_order),
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(top = LjSpacing.sm),
+                    )
+                    LjSegmentedControl(
+                        options =
+                            listOf(
+                                false to stringResource(R.string.capture_original_order),
+                                true to stringResource(R.string.capture_optimize_order),
+                            ),
+                        selected = capturePoints.optimizeProximity,
+                        onSelect = capturePoints.onOptimizeProximityChange,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+            LjCard(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(LjSpacing.md),
+                    verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
+                ) {
+                    OutlinedTextField(
+                        value = routeSave.routeName,
+                        onValueChange = routeSave.onRouteNameChange,
+                        label = { Text(stringResource(R.string.capture_coordinates_form_route_name)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        supportingText = {
+                            Text(
+                                routeSave.saveError
+                                    ?: if (routeSave.saved) {
+                                        stringResource(R.string.capture_saved)
+                                    } else {
+                                        stringResource(R.string.capture_need_points)
+                                    },
+                            )
+                        },
+                        isError = routeSave.saveError != null,
+                    )
+                    LjPrimaryButton(
+                        text = stringResource(R.string.capture_coordinates_form_save_as_route),
+                        onClick = routeSave.onSaveRoute,
+                        enabled = routeSave.canSave,
+                    )
                 }
             }
         } else {
             CaptureSetupNeeded(onOpenSetup = captureSetup.onOpenSetup)
-        }
-        if (showClose) {
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier.align(Alignment.End),
-            ) {
-                Text(stringResource(R.string.capture_coordinates_form_close))
-            }
         }
     }
 }
@@ -303,25 +289,24 @@ fun CaptureToggleStep(
             ) {
                 Text(
                     stringResource(R.string.capture_coordinates_form_capture_mode),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.weight(1f),
                 )
                 Switch(checked = captureModeEnabled, onCheckedChange = onCaptureModeEnabledChange)
             }
-            CaptureFunctionToggle(
-                label = stringResource(R.string.capture_coordinates_form_list),
-                description = stringResource(R.string.capture_coordinates_form_add_each_location_to_the_list),
+            LjCheckboxRow(
                 checked = captureEnabled,
-                enabled = captureModeEnabled,
                 onCheckedChange = onCaptureEnabledChange,
-            )
-            CaptureFunctionToggle(
-                label = stringResource(R.string.capture_coordinates_form_jump),
-                description = stringResource(R.string.capture_coordinates_form_teleport_to_each_location_immediately),
-                checked = jumpEnabled,
+                title = stringResource(R.string.capture_coordinates_form_list),
+                description = stringResource(R.string.capture_coordinates_form_add_each_location_to_the_list),
                 enabled = captureModeEnabled,
+            )
+            LjCheckboxRow(
+                checked = jumpEnabled,
                 onCheckedChange = onJumpEnabledChange,
+                title = stringResource(R.string.capture_coordinates_form_jump),
+                description = stringResource(R.string.capture_coordinates_form_teleport_to_each_location_immediately),
+                enabled = captureModeEnabled,
             )
         }
     }
@@ -343,7 +328,7 @@ private fun CaptureSetupNeeded(onOpenSetup: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Button(onClick = onOpenSetup, modifier = Modifier.fillMaxWidth()) {
+            LjButton(onClick = onOpenSetup, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.capture_setup_needed_action))
             }
         }
@@ -368,12 +353,12 @@ fun CaptureRestoreDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = understood) {
+            LjTextButton(onClick = onConfirm, enabled = understood) {
                 Text(stringResource(R.string.capture_restore_dialog_confirm))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.capture_restore_dialog_cancel)) }
+            LjTextButton(onClick = onDismiss) { Text(stringResource(R.string.capture_restore_dialog_cancel)) }
         },
     )
 }
@@ -384,7 +369,7 @@ fun CaptureSetupSteps(
     state: CaptureSetupState,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(LjSpacing.md)) {
         Text(
             text = stringResource(R.string.capture_setup_section_title),
             style = MaterialTheme.typography.titleMedium,
@@ -410,7 +395,7 @@ fun CaptureSetupSteps(
             actionLabel = stringResource(R.string.capture_setup_step_maps_links_action),
             onAction = state.onOpenMapsLinks,
         )
-        TextButton(onClick = state.onOpenSetupGuide, modifier = Modifier.align(Alignment.End)) {
+        LjTextButton(onClick = state.onOpenSetupGuide, modifier = Modifier.align(Alignment.End)) {
             Text(stringResource(R.string.capture_setup_guide))
         }
     }
@@ -421,9 +406,9 @@ fun CaptureSetupSteps(
 fun ColumnScope.CapturePassThroughRow(state: CaptureSetupState) {
     var showBrowserPicker by remember { mutableStateOf(false) }
 
-    TextButton(
+    LjOutlinedButton(
         onClick = { showBrowserPicker = state.browserChoices.isNotEmpty() },
-        modifier = Modifier.align(Alignment.End),
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Text(stringResource(R.string.capture_passthrough_label, state.passThroughBrowserName))
     }
@@ -456,31 +441,11 @@ fun ColumnScope.CapturePassThroughRow(state: CaptureSetupState) {
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showBrowserPicker = false }) {
+                LjTextButton(onClick = { showBrowserPicker = false }) {
                     Text(stringResource(R.string.capture_setup_form_cancel))
                 }
             },
         )
-    }
-}
-
-@Composable
-private fun CaptureFunctionToggle(
-    label: String,
-    description: String,
-    checked: Boolean,
-    enabled: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable(enabled = enabled) { onCheckedChange(!checked) },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
-            Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-            Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Checkbox(checked = checked, enabled = enabled, onCheckedChange = onCheckedChange)
     }
 }
 
@@ -492,58 +457,57 @@ private fun CapturePointActions(
     onClearPoints: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val buttonPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
     val copyDescription = stringResource(R.string.capture_coordinates_form_copy_coordinates)
     val removeDescription = stringResource(R.string.capture_coordinates_form_remove_last)
     val clearDescription = stringResource(R.string.capture_coordinates_form_clear_list)
     Row(
         modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm),
     ) {
-        OutlinedButton(
-            onClick = onCopy,
-            enabled = enabled,
-            contentPadding = buttonPadding,
-            modifier = Modifier.semantics { contentDescription = copyDescription },
-        ) {
-            Icon(
-                imageVector = LjIcons.ContentCopy,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(stringResource(R.string.capture_coordinates_form_copy))
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        OutlinedButton(
-            onClick = onRemoveLast,
-            enabled = enabled,
-            contentPadding = buttonPadding,
-            modifier = Modifier.semantics { contentDescription = removeDescription },
-        ) {
-            Icon(
-                imageVector = LjIcons.Undo,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(stringResource(R.string.capture_coordinates_form_last))
-        }
-        Spacer(modifier = Modifier.width(LjSpacing.sm))
-        OutlinedButton(
-            onClick = onClearPoints,
-            enabled = enabled,
-            contentPadding = buttonPadding,
-            modifier = Modifier.semantics { contentDescription = clearDescription },
-        ) {
-            Icon(
-                imageVector = LjIcons.Delete,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(stringResource(R.string.capture_coordinates_form_clear))
-        }
+        PointActionButton(
+            LjIcons.ContentCopy,
+            stringResource(R.string.capture_coordinates_form_copy),
+            copyDescription,
+            enabled,
+            onCopy,
+            Modifier.weight(1f),
+        )
+        PointActionButton(
+            LjIcons.Undo,
+            stringResource(R.string.capture_coordinates_form_last),
+            removeDescription,
+            enabled,
+            onRemoveLast,
+            Modifier.weight(1f),
+        )
+        PointActionButton(
+            LjIcons.Delete,
+            stringResource(R.string.capture_coordinates_form_clear),
+            clearDescription,
+            enabled,
+            onClearPoints,
+            Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun PointActionButton(
+    icon: ImageVector,
+    label: String,
+    description: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LjOutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.semantics { contentDescription = description },
+    ) {
+        Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(modifier = Modifier.width(LjSpacing.xs))
+        Text(label, maxLines = 1)
     }
 }
 
@@ -585,7 +549,6 @@ private fun CaptureCoordinatesFormPreview() {
                     onRouteNameChange = {},
                     onSaveRoute = {},
                 ),
-            onDismiss = {},
         )
     }
 }
@@ -628,7 +591,6 @@ private fun CaptureCoordinatesFormSetupPreview() {
                     onRouteNameChange = {},
                     onSaveRoute = {},
                 ),
-            onDismiss = {},
         )
     }
 }

@@ -156,7 +156,7 @@ Browser discovery combines installed web-link handlers with apps that advertise 
 
 ### Collecting and Saving
 
-Captured points are listed in an orange-outlined read-only box, skipping exact duplicates of the last point. Point order defaults to **Optimize proximity** (nearest-neighbor ordering, the same option used when pasting coordinates into a route). Select **Keep original** instead to save in capture order.
+Captured points are listed as numbered rows in a scrolling list card (Copy, Last and Clear sit below it as three equal buttons), skipping exact duplicates of the last point. Point order defaults to **Optimize proximity** (nearest-neighbor ordering, the same option used when pasting coordinates into a route). Select **Keep original** instead to save in capture order.
 
 **Copy** / **Last** (remove most recent) / **Clear** sit on one icon row above the route-name field. **Save as route** appears below the name field and requires ≥2 points. The new route is added to Routes with the specified name.
 

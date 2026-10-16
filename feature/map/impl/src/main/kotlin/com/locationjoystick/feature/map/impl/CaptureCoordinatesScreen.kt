@@ -160,8 +160,6 @@ internal fun CaptureCoordinatesScreen(
                     onRouteNameChange = onRouteNameChange,
                     onSaveRoute = onSaveRoute,
                 ),
-            showTitle = false,
-            showClose = false,
             modifier = Modifier.padding(paddingValues),
         )
     }

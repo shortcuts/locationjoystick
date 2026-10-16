@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
@@ -49,8 +50,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjButton
+import com.locationjoystick.core.designsystem.component.LjCard
 import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
@@ -317,7 +320,7 @@ internal fun PasteCoordinatesScreen(
                     },
                     modifier = Modifier.fillMaxSize(),
                 )
-                MapAttribution(tileSource, Modifier.align(Alignment.BottomStart).padding(4.dp))
+                MapAttribution(tileSource, Modifier.align(Alignment.BottomStart).padding(LjSpacing.xs))
             }
 
             Column(
@@ -325,138 +328,152 @@ internal fun PasteCoordinatesScreen(
                     Modifier
                         .weight(1f)
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                        .imePadding()
+                        .padding(LjSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(LjSpacing.md),
             ) {
-                OutlinedTextField(
-                    value = state.pasteText,
-                    onValueChange = onPasteTextChange,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(140.dp),
-                    label = { Text(stringResource(R.string.paste_coordinates_screen_coordinates)) },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.paste_coordinates_screen_paste_coordinates_here_one_per_line) +
-                                "64.147609, -21.922327\n" +
-                                "37°34'11.4\"N 127°00'17.9\"E",
-                        )
-                    },
-                )
-                LjCheckboxRow(
-                    checked = state.swapLatLon,
-                    onCheckedChange = onSwapLatLonChange,
-                    title = stringResource(R.string.paste_coordinates_screen_swap_lat_lon_order),
-                    description = stringResource(R.string.paste_coordinates_screen_use_this_when_the_first_number_is_longitude),
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    LjOutlinedButton(
-                        onClick = {
-                            scope.launch {
-                                val text = clipboard.readPlainText()
-                                if (text.isNullOrBlank()) {
-                                    clipboardMessage = emptyClipboardMessage
-                                } else {
-                                    onPasteTextChange(text)
-                                }
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
+                LjCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(LjSpacing.md),
+                        verticalArrangement = Arrangement.spacedBy(LjSpacing.md),
                     ) {
-                        Text(stringResource(R.string.paste_coordinates_screen_paste_from_clipboard))
-                    }
-                    LjButton(
-                        onClick = onLoadPoints,
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(stringResource(R.string.paste_coordinates_screen_load_points))
-                    }
-                }
-                if (state.loadError != null) {
-                    Text(state.loadError, color = MaterialTheme.colorScheme.error)
-                }
-                if (state.cleanedPoints.isNotEmpty()) {
-                    Text(
-                        pluralStringResource(
-                            R.plurals.paste_coordinates_screen_points_loaded,
-                            state.cleanedPoints.size,
-                            state.cleanedPoints.size,
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-
-                Text(stringResource(R.string.paste_coordinates_screen_point_order), style = MaterialTheme.typography.titleSmall)
-                LjSegmentedControl(
-                    options =
-                        listOf(
-                            PastePointOrder.ORIGINAL to stringResource(R.string.paste_keep_original),
-                            PastePointOrder.PROXIMITY to stringResource(R.string.paste_optimize_proximity),
-                        ),
-                    selected = state.pointOrder,
-                    onSelect = onPointOrderChange,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                Text(stringResource(R.string.paste_coordinates_screen_build_mode), style = MaterialTheme.typography.titleSmall)
-                LjSegmentedControl(
-                    options =
-                        listOf(
-                            PasteBuildMode.AS_IS to stringResource(R.string.paste_as_is),
-                            PasteBuildMode.WALKABLE to stringResource(R.string.paste_walkable_path),
-                        ) +
-                            if (state.hideTeleportFeatures) {
-                                emptyList()
-                            } else {
-                                listOf(PasteBuildMode.TELEPORT to stringResource(R.string.paste_teleport_mode))
+                        OutlinedTextField(
+                            value = state.pasteText,
+                            onValueChange = onPasteTextChange,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(140.dp),
+                            label = { Text(stringResource(R.string.paste_coordinates_screen_coordinates)) },
+                            isError = state.loadError != null,
+                            supportingText = state.loadError?.let { error -> { Text(error) } },
+                            placeholder = {
+                                Text(
+                                    stringResource(R.string.paste_coordinates_screen_paste_coordinates_here_one_per_line) +
+                                        "64.147609, -21.922327\n" +
+                                        "37°34'11.4\"N 127°00'17.9\"E",
+                                )
                             },
-                    selected = state.buildMode,
-                    onSelect = onBuildModeChange,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                if (state.buildMode == PasteBuildMode.TELEPORT) {
-                    OutlinedTextField(
-                        value = state.teleportDelayText,
-                        onValueChange = onTeleportDelayTextChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(R.string.paste_teleport_delay_seconds)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                    )
-                }
-
-                if (state.showPlanting) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            stringResource(R.string.paste_planting_toggle),
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.weight(1f),
                         )
-                        Switch(checked = state.plantingEnabled, onCheckedChange = onPlantingEnabledChange)
+                        LjCheckboxRow(
+                            checked = state.swapLatLon,
+                            onCheckedChange = onSwapLatLonChange,
+                            title = stringResource(R.string.paste_coordinates_screen_swap_lat_lon_order),
+                            description = stringResource(R.string.paste_coordinates_screen_use_this_when_the_first_number_is_longitude),
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm),
+                        ) {
+                            LjOutlinedButton(
+                                onClick = {
+                                    scope.launch {
+                                        val text = clipboard.readPlainText()
+                                        if (text.isNullOrBlank()) {
+                                            clipboardMessage = emptyClipboardMessage
+                                        } else {
+                                            onPasteTextChange(text)
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(stringResource(R.string.paste_coordinates_screen_paste_from_clipboard))
+                            }
+                            LjButton(
+                                onClick = onLoadPoints,
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(stringResource(R.string.paste_coordinates_screen_load_points))
+                            }
+                        }
+                        if (state.cleanedPoints.isNotEmpty()) {
+                            Text(
+                                pluralStringResource(
+                                    R.plurals.paste_coordinates_screen_points_loaded,
+                                    state.cleanedPoints.size,
+                                    state.cleanedPoints.size,
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
                     }
                 }
 
-                if (state.plantingEnabled) {
-                    OutlinedTextField(
-                        value = state.plantingRadiusText,
-                        onValueChange = onPlantingRadiusTextChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(R.string.paste_coordinates_screen_circle_radius_meters)) },
-                        supportingText = {
-                            Text(
-                                stringResource(
-                                    R.string.paste_coordinates_screen_default_35_m_circles_stay_geometric_only_travel_between_them,
+                LjCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(LjSpacing.md),
+                        verticalArrangement = Arrangement.spacedBy(LjSpacing.md),
+                    ) {
+                        Text(stringResource(R.string.paste_coordinates_screen_point_order), style = MaterialTheme.typography.titleSmall)
+                        LjSegmentedControl(
+                            options =
+                                listOf(
+                                    PastePointOrder.ORIGINAL to stringResource(R.string.paste_keep_original),
+                                    PastePointOrder.PROXIMITY to stringResource(R.string.paste_optimize_proximity),
                                 ),
+                            selected = state.pointOrder,
+                            onSelect = onPointOrderChange,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+
+                        Text(stringResource(R.string.paste_coordinates_screen_build_mode), style = MaterialTheme.typography.titleSmall)
+                        LjSegmentedControl(
+                            options =
+                                listOf(
+                                    PasteBuildMode.AS_IS to stringResource(R.string.paste_as_is),
+                                    PasteBuildMode.WALKABLE to stringResource(R.string.paste_walkable_path),
+                                ) +
+                                    if (state.hideTeleportFeatures) {
+                                        emptyList()
+                                    } else {
+                                        listOf(PasteBuildMode.TELEPORT to stringResource(R.string.paste_teleport_mode))
+                                    },
+                            selected = state.buildMode,
+                            onSelect = onBuildModeChange,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+
+                        if (state.buildMode == PasteBuildMode.TELEPORT) {
+                            OutlinedTextField(
+                                value = state.teleportDelayText,
+                                onValueChange = onTeleportDelayTextChange,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text(stringResource(R.string.paste_teleport_delay_seconds)) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                singleLine = true,
                             )
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                    )
+                        }
+
+                        if (state.showPlanting) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    stringResource(R.string.paste_planting_toggle),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Switch(checked = state.plantingEnabled, onCheckedChange = onPlantingEnabledChange)
+                            }
+                        }
+
+                        if (state.plantingEnabled) {
+                            OutlinedTextField(
+                                value = state.plantingRadiusText,
+                                onValueChange = onPlantingRadiusTextChange,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text(stringResource(R.string.paste_coordinates_screen_circle_radius_meters)) },
+                                supportingText = {
+                                    Text(
+                                        stringResource(
+                                            R.string.paste_coordinates_screen_default_35_m_circles_stay_geometric_only_travel_between_them,
+                                        ),
+                                    )
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                singleLine = true,
+                            )
+                        }
+                    }
                 }
 
                 LjPrimaryButton(
@@ -496,7 +513,7 @@ internal fun PasteCoordinatesScreen(
                         enabled = state.canSave,
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(LjSpacing.sm))
             }
         }
     }

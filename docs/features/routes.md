@@ -52,6 +52,8 @@ Leaving the app (switching to copy more coordinates from Maps, Notes, etc.) keep
 until the user saves or goes back. `LjApp` otherwise redirects most destinations to Idle on
 `ON_STOP` to unload MapLibre; paste coordinates is exempt, matching Settings (file pickers).
 
+The screen keeps the map on top and groups the form below into two cards: coordinates input, then ordering and build options.
+
 Key files: `:feature:routes:impl/PasteCoordinatesScreen.kt`, `:feature:routes:impl/PasteCoordinatesViewModel.kt`, `:core:common/PastedCoordinates.kt`, `:core:common/PlantingPath.kt`
 
 ### Cleanup

@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.espresso.Espresso
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Before
@@ -26,7 +27,7 @@ class PasteCoordinatesSmokeTest : BaseSmokeTest() {
     fun paste_coordinates_screen_loads() {
         composeRule.onNodeWithText("Coordinates").assertIsDisplayed()
         composeRule.onNodeWithText("Load points").assertIsDisplayed()
-        composeRule.onNodeWithText("Planting").assertIsDisplayed()
+        composeRule.onNodeWithText("Planting").performScrollTo().assertIsDisplayed()
     }
 
     @Test
