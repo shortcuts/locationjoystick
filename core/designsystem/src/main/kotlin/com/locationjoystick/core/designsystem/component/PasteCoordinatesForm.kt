@@ -73,6 +73,7 @@ fun PasteCoordinatesForm(
     onStartRoute: (points: List<LatLng>, config: RouteStartConfig) -> Unit,
     modifier: Modifier = Modifier,
     hideTeleportFeatures: Boolean = false,
+    showPlanting: Boolean = true,
     showTitle: Boolean = true,
     title: String? = null,
     initialText: String = "",
@@ -382,6 +383,7 @@ fun PasteCoordinatesForm(
                         teleportBetweenDelaySecondsText = teleportBetweenDelaySecondsText,
                         onTeleportBetweenDelaySecondsTextChange = { teleportBetweenDelaySecondsText = it },
                         hideTeleport = hideTeleportFeatures,
+                        showPlanting = showPlanting,
                     )
                     Button(
                         onClick = {

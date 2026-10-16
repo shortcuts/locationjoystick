@@ -54,6 +54,7 @@ data class PasteCoordinatesUiState(
     val plantingEnabled: Boolean = false,
     val teleportDelayText: String = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS.toString(),
     val hideTeleportFeatures: Boolean = false,
+    val showPlanting: Boolean = true,
     val previewWaypoints: List<LatLng> = emptyList(),
     val isBuilding: Boolean = false,
     val loadError: String? = null,
@@ -126,6 +127,17 @@ class PasteCoordinatesViewModel
             viewModelScope.launch {
                 settingsRepository.getHideTeleportFeatures().collect { hide ->
                     _uiState.update { it.copy(hideTeleportFeatures = hide) }
+                }
+            }
+            viewModelScope.launch {
+                settingsRepository.getGuidedPath().collect { path ->
+                    // Hidden Planting must not stay armed: the toggle is the only way to turn it off.
+                    _uiState.update {
+                        it.copy(
+                            showPlanting = path.showsPlanting,
+                            plantingEnabled = it.plantingEnabled && path.showsPlanting,
+                        )
+                    }
                 }
             }
             // ponytail: a user typing exactly the default text before the first DataStore read is overwritten.

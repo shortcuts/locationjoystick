@@ -69,6 +69,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -99,6 +100,13 @@ class RouteDetailViewModel
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = emptyList(),
+            )
+
+        val showPlanting: StateFlow<Boolean> =
+            settingsRepository.getGuidedPath().map { it.showsPlanting }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = true,
             )
 
         private val _nameError = MutableStateFlow(false)
@@ -223,6 +231,7 @@ fun RouteDetailScreen(
     val route by viewModel.route.collectAsStateWithLifecycle()
     val nameError by viewModel.nameError.collectAsStateWithLifecycle()
     val speedProfiles by viewModel.speedProfiles.collectAsStateWithLifecycle()
+    val showPlanting by viewModel.showPlanting.collectAsStateWithLifecycle()
     val spoofToggle = rememberSpoofToggleState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -369,45 +378,48 @@ fun RouteDetailScreen(
                     }
 
                     // Planting: any route style; radius shown while on. Takes effect at the next start.
-                    item {
-                        val plantingRadius = route!!.plantingRadiusMeters
-                        var radiusText by remember(route!!.id) {
-                            mutableStateOf(plantingRadius?.toInt()?.toString().orEmpty())
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
+                    // Hidden on the Pokemon Go path; the route's stored radius is left untouched.
+                    if (showPlanting) {
+                        item {
+                            val plantingRadius = route!!.plantingRadiusMeters
+                            var radiusText by remember(route!!.id) {
+                                mutableStateOf(plantingRadius?.toInt()?.toString().orEmpty())
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    stringResource(R.string.route_detail_planting),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Switch(
+                                    checked = plantingRadius != null,
+                                    onCheckedChange = { on ->
+                                        if (!on) radiusText = ""
+                                        viewModel.setPlanting(on)
+                                    },
+                                )
+                            }
                             Text(
-                                stringResource(R.string.route_detail_planting),
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.weight(1f),
+                                stringResource(R.string.route_detail_planting_description),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                            Switch(
-                                checked = plantingRadius != null,
-                                onCheckedChange = { on ->
-                                    if (!on) radiusText = ""
-                                    viewModel.setPlanting(on)
-                                },
-                            )
-                        }
-                        Text(
-                            stringResource(R.string.route_detail_planting_description),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        if (plantingRadius != null) {
-                            OutlinedTextField(
-                                value = radiusText.ifEmpty { plantingRadius.toInt().toString() },
-                                onValueChange = { text ->
-                                    radiusText = text
-                                    text.toDoubleOrNull()?.let { viewModel.setPlantingRadius(clampPlantingRadius(it)) }
-                                },
-                                label = { Text(stringResource(R.string.route_detail_planting_radius_meters)) },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                            )
+                            if (plantingRadius != null) {
+                                OutlinedTextField(
+                                    value = radiusText.ifEmpty { plantingRadius.toInt().toString() },
+                                    onValueChange = { text ->
+                                        radiusText = text
+                                        text.toDoubleOrNull()?.let { viewModel.setPlantingRadius(clampPlantingRadius(it)) }
+                                    },
+                                    label = { Text(stringResource(R.string.route_detail_planting_radius_meters)) },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                )
+                            }
                         }
                     }
 

@@ -525,6 +525,7 @@ internal fun MapScreen(
                 onSaveRoute = onSavePastedRoute,
                 onStartRoute = onStartPastedRoute,
                 hideTeleportFeatures = uiState.hideTeleportFeatures,
+                showPlanting = uiState.showPlanting,
                 title =
                     when (uiState.pasteSheetTitle) {
                         PasteSheetTitle.GPX -> stringResource(R.string.map_paste_sheet_title_gpx)

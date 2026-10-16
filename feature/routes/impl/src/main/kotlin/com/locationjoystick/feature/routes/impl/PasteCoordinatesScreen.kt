@@ -430,13 +430,15 @@ internal fun PasteCoordinatesScreen(
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        stringResource(R.string.paste_planting_toggle),
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Switch(checked = state.plantingEnabled, onCheckedChange = onPlantingEnabledChange)
+                if (state.showPlanting) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            stringResource(R.string.paste_planting_toggle),
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Switch(checked = state.plantingEnabled, onCheckedChange = onPlantingEnabledChange)
+                    }
                 }
 
                 if (state.plantingEnabled) {

@@ -47,6 +47,7 @@ internal fun RoutesFloatingView(
     onDelete: (com.locationjoystick.core.model.Route) -> Unit,
     onShareOpened: () -> Unit = onDismiss,
     hideTeleport: Boolean = false,
+    showPlanting: Boolean = true,
     sortMode: SavedItemSortMode = SavedItemSortMode.NEWEST_FIRST,
     onSortModeSelected: (SavedItemSortMode) -> Unit = {},
 ) {
@@ -172,6 +173,7 @@ internal fun RoutesFloatingView(
                         onDismiss()
                     },
                     hideTeleport = hideTeleport,
+                    showPlanting = showPlanting,
                     isTeleportRoute = isTeleportRoute,
                     plantingLocked = isPlanted,
                     followRoadsLocked = isPlanted && isRoadRoute,

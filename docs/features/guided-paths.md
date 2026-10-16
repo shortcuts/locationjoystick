@@ -9,7 +9,7 @@ Key files: `:core:model/GuidedPath.kt`, `:core:model/AppSettings.kt`, `:core:dat
 | Path | Hides |
 |------|-------|
 | Default | Nothing |
-| Pokémon Go | Planting: Settings → Roaming → Planting, the "Walk around / Planting" switch in the roaming sheet, the floating map, and the widget panel |
+| Pokémon Go | Planting: Settings → Roaming → Planting, the "Walk around / Planting" switch in the roaming sheet, the floating map, and the widget panel; the Planting switch in the paste-coordinates builder and paste sheets, the Planting option in the start-route sheet (app and widget), and the Planting switch in Route Detail |
 | Pikmin Bloom | Tap to Walk and Reconnect Accessory: their Settings → Menus sections |
 
 Flags live on `GuidedPath`: `showsPlanting`, `showsTapToWalk`, `showsReconnectAccessory`. Each flag is a pure check on the enum. Gating happens in the UI only.

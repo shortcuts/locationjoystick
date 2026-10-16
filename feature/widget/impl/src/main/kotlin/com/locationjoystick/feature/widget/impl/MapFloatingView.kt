@@ -653,6 +653,7 @@ internal fun MapFloatingView(
                 onSaveRoute = { name, points -> savePastedRoute?.invoke(name, points) },
                 onStartRoute = { points, config -> startPastedRoute?.invoke(points, config) },
                 hideTeleportFeatures = hideTeleportFeatures,
+                showPlanting = showPlanting,
             )
         }
 
@@ -820,6 +821,7 @@ private fun BoxScope.OverlayPasteCoordinatesSheet(
     onSaveRoute: (name: String, points: List<LatLng>) -> Unit,
     onStartRoute: (points: List<LatLng>, config: RouteStartConfig) -> Unit,
     hideTeleportFeatures: Boolean = false,
+    showPlanting: Boolean = true,
 ) {
     Box(modifier = Modifier.fillMaxSize().clickable { onDismiss() })
     Box(
@@ -854,6 +856,7 @@ private fun BoxScope.OverlayPasteCoordinatesSheet(
                     onSaveRoute = onSaveRoute,
                     onStartRoute = onStartRoute,
                     hideTeleportFeatures = hideTeleportFeatures,
+                    showPlanting = showPlanting,
                 )
             }
         }

@@ -4,6 +4,7 @@ import android.content.Context
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RouteType
@@ -17,6 +18,7 @@ import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -47,6 +49,7 @@ class PasteCoordinatesViewModelTest {
         every { settingsRepository.getPlantingRadius() } returns
             flowOf(AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS)
         every { settingsRepository.getHideTeleportFeatures() } returns flowOf(false)
+        every { settingsRepository.getGuidedPath() } returns flowOf(GuidedPath.DEFAULT)
         every { context.getString(R.string.route_paste_no_valid_coordinates) } returns
             "No valid coordinates found in that text."
         every { context.getString(R.string.route_paste_need_one_point_planting) } returns
@@ -69,6 +72,19 @@ class PasteCoordinatesViewModelTest {
         val vm = PasteCoordinatesViewModel(routeRepository, osrmClient, routingErrorReporter, settingsRepository, context)
         assertEquals(80.0, vm.uiState.value.plantingRadiusMeters, 0.0)
         assertEquals("80", vm.uiState.value.plantingRadiusText)
+    }
+
+    @Test
+    fun `pokemon go path hides planting and disarms it`() {
+        val path = MutableStateFlow(GuidedPath.DEFAULT)
+        every { settingsRepository.getGuidedPath() } returns path
+        val vm = PasteCoordinatesViewModel(routeRepository, osrmClient, routingErrorReporter, settingsRepository, context)
+        vm.onPlantingEnabledChange(true)
+        assertTrue(vm.uiState.value.showPlanting)
+        assertTrue(vm.uiState.value.plantingEnabled)
+        path.value = GuidedPath.POKEMON_GO
+        assertFalse(vm.uiState.value.showPlanting)
+        assertFalse(vm.uiState.value.plantingEnabled)
     }
 
     @Test

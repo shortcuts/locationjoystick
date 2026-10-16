@@ -49,6 +49,7 @@ fun LjRouteStartCheckboxes(
     enabled: Boolean = true,
     isTeleportRoute: Boolean = false,
     plantingLocked: Boolean = false,
+    showPlanting: Boolean = true,
     followRoadsLocked: Boolean = false,
     textColor: Color = Color.Unspecified,
 ) {
@@ -63,13 +64,15 @@ fun LjRouteStartCheckboxes(
                 onCheckedChange = onLoopChange,
                 textColor = textColor,
             )
-            LjCheckboxRow(
-                title = stringResource(R.string.lj_route_start_options_planting),
-                checked = planting,
-                enabled = enabled && !isTeleportRoute && !plantingLocked,
-                onCheckedChange = onPlantingChange,
-                textColor = textColor,
-            )
+            if (showPlanting) {
+                LjCheckboxRow(
+                    title = stringResource(R.string.lj_route_start_options_planting),
+                    checked = planting,
+                    enabled = enabled && !isTeleportRoute && !plantingLocked,
+                    onCheckedChange = onPlantingChange,
+                    textColor = textColor,
+                )
+            }
             LjCheckboxRow(
                 title = stringResource(R.string.route_start_options_reverse),
                 checked = reverse,
@@ -145,6 +148,7 @@ fun LjRouteStartOptions(
     hideTeleport: Boolean = false,
     isTeleportRoute: Boolean = false,
     plantingLocked: Boolean = false,
+    showPlanting: Boolean = true,
     followRoadsLocked: Boolean = false,
     textColor: Color = Color.Unspecified,
     isStarting: Boolean = false,
@@ -161,6 +165,7 @@ fun LjRouteStartOptions(
             onFollowRoadsChange = onFollowRoadsChange,
             isTeleportRoute = isTeleportRoute,
             plantingLocked = plantingLocked,
+            showPlanting = showPlanting,
             followRoadsLocked = followRoadsLocked,
             planting = planting,
             onPlantingChange = onPlantingChange,

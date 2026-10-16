@@ -332,6 +332,7 @@ internal class WidgetPanelPresenter(
             var minimized by remember { mutableStateOf(false) }
             LaunchedEffect(minimized) { applyPasteOverlayMinimized(minimized) }
             val hideTeleportFeatures by settingsRepository.getHideTeleportFeatures().collectAsStateWithLifecycle(initialValue = false)
+            val guidedPath by settingsRepository.getGuidedPath().collectAsStateWithLifecycle(initialValue = GuidedPath.DEFAULT)
             PasteCoordinatesFloatingView(
                 minimized = minimized,
                 onToggleMinimize = { minimized = !minimized },
@@ -346,6 +347,7 @@ internal class WidgetPanelPresenter(
                     hidePanelView()
                 },
                 hideTeleport = hideTeleportFeatures,
+                showPlanting = guidedPath.showsPlanting,
             )
         }
     }
@@ -388,6 +390,7 @@ internal class WidgetPanelPresenter(
             val sortMode by settingsRepository.getRoutesSortMode().collectAsStateWithLifecycle(
                 initialValue = com.locationjoystick.core.model.SavedItemSortMode.NEWEST_FIRST,
             )
+            val guidedPath by settingsRepository.getGuidedPath().collectAsStateWithLifecycle(initialValue = GuidedPath.DEFAULT)
             RoutesFloatingView(
                 routes = routes,
                 onDismiss = { hidePanelView() },
@@ -423,6 +426,7 @@ internal class WidgetPanelPresenter(
                 },
                 onShareOpened = { hidePanelView() },
                 hideTeleport = hideTeleportFeatures,
+                showPlanting = guidedPath.showsPlanting,
                 sortMode = sortMode,
                 onSortModeSelected = { mode -> serviceScope.launch { settingsRepository.setRoutesSortMode(mode) } },
             )

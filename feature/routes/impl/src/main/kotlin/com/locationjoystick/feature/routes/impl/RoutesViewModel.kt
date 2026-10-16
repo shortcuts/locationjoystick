@@ -68,6 +68,8 @@ class RoutesViewModel
                     hideTeleportFeatures = hideTeleportFeatures,
                     isRoadRouteFetchInFlight = isRoadRouteFetchInFlight,
                 )
+            }.combine(settingsRepository.getGuidedPath()) { state, path ->
+                state.copy(showPlanting = path.showsPlanting)
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),

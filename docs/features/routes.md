@@ -72,6 +72,8 @@ Point order: keep original, or **Optimize proximity** (`orderByProximity`, neare
 
 ### Planting (paste builder)
 
+Hidden on the Pokémon Go guided path (`GuidedPath.showsPlanting`): the paste-builder switch, the paste-sheet and start-route Planting options, and the Route Detail Planting switch are removed from the tree. A route's stored Planting radius is untouched, so a planted route still plants when started. See docs/features/guided-paths.md.
+
 Planting is a switch under the build-mode control, not a mode: it combines with As-is, Walkable path and Teleport. When on, a radius field appears (seeded from `AppSettings.plantingRadiusMeters`, clamp 5–200 m, editable per paste). Save stores the ordered **centers** plus `Route.plantingRadiusMeters`; no rings are baked in, and replay expands the circles at start (see Start Flow, Planting). The style supplies travel between circles: As-is = straight connectors (`STRAIGHT`), Walkable path = connectors via OSRM foot roads (`GUIDED`), Teleport = hop to the next circle with no connector (`TELEPORT`). The map preview shows the rings but is not what is saved. One pasted point is enough when Planting is on; without it every mode needs two.
 
 ## Paste coordinates (map and widget)
