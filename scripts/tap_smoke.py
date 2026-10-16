@@ -26,6 +26,8 @@ HERE = Path(__file__).parent
 BENCH = HERE / "registration_bench.py"
 N_TAPS, NEED_TAPS, TOL_M, MAX_M = 12, 11, 15.0, 40.0
 NEED_LOCATIONS = 19
+# Per-step wall-clock bound: a hang fails the location, not the run. taptrials walks to each tap, so it is the long one.
+STEP_TIMEOUT_S = {"walkcap": 900, "persp": 600, "taptrials": 3600}
 LEG_BEARINGS = ["0", "90", "45", "225"]
 
 
@@ -124,7 +126,11 @@ def teleport_and_settle(host, key, loc, settle, respect_cooldown):
 
 def _bench(py, serial, *args):
     cmd = [py, str(BENCH), *args]
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    budget = STEP_TIMEOUT_S.get(args[0], 900)
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=budget)
+    except subprocess.TimeoutExpired:
+        return False, f"timed out after {budget:.0f} s"
     return r.returncode == 0, (r.stdout + r.stderr)[-400:]
 
 

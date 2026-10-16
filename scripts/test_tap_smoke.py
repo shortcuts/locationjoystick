@@ -3,6 +3,7 @@
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -64,6 +65,20 @@ def test_location_file_is_20_unique_in_range():
     assert len({(l["lat"], l["lon"]) for l in locs}) == 20
     assert all(-90 <= l["lat"] <= 90 and -180 <= l["lon"] <= 180 for l in locs)
     assert all(l["name"] and l["kind"] for l in locs)
+
+
+def test_bench_step_is_bounded_by_timeout():
+    # A hung bench step must not stall the gate (a run once sat ~50 min on one location).
+    import time
+    import tempfile
+    hang = Path(tempfile.mkdtemp()) / "hang.py"
+    hang.write_text("import time\ntime.sleep(4)\n")
+    ts.BENCH = hang
+    ts.STEP_TIMEOUT_S = {"walkcap": 0.5}
+    t0 = time.time()
+    ok, tail = ts._bench(sys.executable, None, "walkcap")
+    assert time.time() - t0 < 2.0
+    assert not ok and "timed out" in tail
 
 
 if __name__ == "__main__":
