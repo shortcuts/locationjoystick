@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -111,6 +112,22 @@ fun OnboardingRoute(
             onSetLanguage = onLanguage,
         )
         return
+    }
+
+    // Play requires the Accessibility disclosure before anything else on a fresh install. This route only
+    // renders while onboarding is incomplete, so installs that finished it never see this.
+    var showCompassDisclosure by remember { mutableStateOf(false) }
+    LaunchedEffect(uiState.compassDisclosureChoice) {
+        if (uiState.compassDisclosureChoice == AppConstants.CompassTrackingConstants.DISCLOSURE_UNANSWERED) {
+            showCompassDisclosure = true
+        }
+    }
+    if (showCompassDisclosure) {
+        OnboardingCompassDisclosure(
+            onClose = { showCompassDisclosure = false },
+            onAnswered = viewModel::recordCompassDisclosure,
+            onSkipped = viewModel::skipCompassDisclosure,
+        )
     }
 
     OnboardingScreen(

@@ -975,6 +975,9 @@ if grep -qi "onboarding\|Welcome\|grant\|permission" "$dump" 2>/dev/null; then
       $ADB shell input tap "$allow_x" "$allow_y"
     fi
     wait_s 2 "Dialog dismissing"
+    # A fresh install opens the Accessibility disclosure over the permission screen; Decline reveals it.
+    tap_text_exact "Decline" 2>/dev/null || log "No Accessibility disclosure shown (choice already stored)"
+    wait_s 1 "Disclosure dismissing"
 
     if should_run_step "19"; then
       log "=== 19 ONBOARDING MOCK LOCATION ==="

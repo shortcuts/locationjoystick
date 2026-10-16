@@ -16,6 +16,14 @@ Screen 1 (`OnboardingScreen.kt`), "Continue" button:
 2. Grant `SYSTEM_ALERT_WINDOW`
 3. Enable mock location (deep link to Developer Options; re-checked automatically on resume — see "Permission Checks" below)
 
+On a fresh install the Accessibility prominent disclosure (`CompassDisclosureDialog`) opens over screen 1
+before any permission card, on every API level, whichever path is later picked
+(`OnboardingCompassDisclosure` in `PathPickerStep.kt`, shown by `OnboardingRoute`). It shows while the stored
+choice is unanswered; `OnboardingRoute` only renders while onboarding is incomplete, so updates never see it.
+Accept (opens Android's Accessibility settings on API 30+, otherwise only records the choice), Decline and
+Skip each store an answer and reveal the permission screen. See docs/features/tap-to-walk.md,
+"Prominent Disclosure".
+
 Screen 2, path picker (`PathPickerStep.kt`), "Start using locationjoystick" button, no skip:
 
 4. Pick a guided path: Default (preselected), Pokémon Go or Pikmin Bloom. Selection is held in
@@ -23,9 +31,9 @@ Screen 2, path picker (`PathPickerStep.kt`), "Start using locationjoystick" butt
    before `setOnboardingComplete(true)` when the user finishes. The picker only says which features
    each path hides; see docs/domain-models.md, `GuidedPath`. The full matrix is in docs/features/guided-paths.md.
 5. Optional Tap to Walk card, shown on Default and Pokémon Go and hidden on Pikmin Bloom (every API
-   level; card text names the calibration screenshots). On API 30+ the Accessibility prominent disclosure
-   (`CompassDisclosureDialog`) opens by itself when the picker first appears while the choice is unanswered
-   and the path shows Tap to Walk, with Accept, Decline and a small Skip. Accept opens Android's
+   level; card text names the calibration screenshots). On API 30+ the disclosure also
+   opens by itself when the picker first appears while the choice is unanswered (fallback; normally
+   already answered on screen 1) and the path shows Tap to Walk, with Accept, Decline and a small Skip. Accept opens Android's
    Accessibility settings (below API 30 it only records the choice). Every button stores an answer, so
    it never auto-shows again; Tap to Walk entry points still ask until Accept. The card's "Review and
    turn on" reopens it. Not required to proceed. Installs that already finished onboarding never see the

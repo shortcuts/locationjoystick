@@ -175,7 +175,7 @@ the first of them is onboarding, which every new install walks through:
 
 | Entry point | Where |
 |---|---|
-| Onboarding (on entry) | `PathPickerStep` (last onboarding step) opens the dialog by itself when the stored choice is unanswered, API >= 30 and the chosen path is not Pikmin Bloom. Buttons: Accept (records `accepted`, opens Android's Accessibility settings), Decline (`declined`), Skip (`skipped`). Every button stores an answer, so it never auto-shows again. Installs that finished onboarding before this shipped never reach it |
+| Onboarding (on entry) | `OnboardingRoute` opens the dialog over the permission screen (first screen of a fresh install, every API level, no path gate) while the stored choice is unanswered. `PathPickerStep` keeps a fallback auto-show (unanswered, API >= 30, path not Pikmin Bloom). Buttons: Accept (records `accepted`, opens Android's Accessibility settings), Decline (`declined`), Skip (`skipped`). Every button stores an answer, so it never auto-shows again. Installs that finished onboarding before this shipped never reach it |
 | Onboarding card | Optional "Tap to Walk setup" card on the path picker step (every API level, skip line first, hidden on Pikmin Bloom, never blocks "Start"). "Review and turn on" reopens the same disclosure (`PathPickerStep.kt`) |
 | Turning Tap to Walk on | The Tap to Walk switch opens the same screen, with the two overlay caveats above the disclosure text and "Accept" as the accept label (`SettingsMenusSubScreen.kt`). Below API 30 only the caveats are shown, with "Enable anyway" |
 | Tapping the widget crosshair | `FloatingWidgetService.onTapToWalkClicked()` launches `MainActivity` with `EXTRA_SHOW_COMPASS_DISCLOSURE`; the overlay opens on the next tap |

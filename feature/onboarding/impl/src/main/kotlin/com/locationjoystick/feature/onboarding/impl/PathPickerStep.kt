@@ -62,7 +62,6 @@ internal fun PathPickerStep(
     languageTag: String? = null,
     onSetLanguage: (String?) -> Unit = {},
 ) {
-    val context = LocalContext.current
     var showCompassDisclosure by remember { mutableStateOf(false) }
     val showsTapToWalk = uiState.selectedPath.showsTapToWalk
 
@@ -168,27 +167,42 @@ internal fun PathPickerStep(
     }
 
     if (showCompassDisclosure) {
-        CompassDisclosureDialog(
-            onAccept = {
-                showCompassDisclosure = false
-                onCompassDisclosureAnswered(true)
-                // Below API 30 the service is disabled, so the settings screen has nothing to turn on.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    context.startActivity(
-                        Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    )
-                }
-            },
-            onDecline = {
-                showCompassDisclosure = false
-                onCompassDisclosureAnswered(false)
-            },
-            onSkip = {
-                showCompassDisclosure = false
-                onCompassDisclosureSkipped()
-            },
+        OnboardingCompassDisclosure(
+            onClose = { showCompassDisclosure = false },
+            onAnswered = onCompassDisclosureAnswered,
+            onSkipped = onCompassDisclosureSkipped,
         )
     }
+}
+
+/** Accessibility prominent disclosure with the onboarding answer handlers; shared by the permission and picker steps. */
+@Composable
+internal fun OnboardingCompassDisclosure(
+    onClose: () -> Unit,
+    onAnswered: (accepted: Boolean) -> Unit,
+    onSkipped: () -> Unit,
+) {
+    val context = LocalContext.current
+    CompassDisclosureDialog(
+        onAccept = {
+            onClose()
+            onAnswered(true)
+            // Below API 30 the service is disabled, so the settings screen has nothing to turn on.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                context.startActivity(
+                    Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
+        },
+        onDecline = {
+            onClose()
+            onAnswered(false)
+        },
+        onSkip = {
+            onClose()
+            onSkipped()
+        },
+    )
 }
 
 @Composable
