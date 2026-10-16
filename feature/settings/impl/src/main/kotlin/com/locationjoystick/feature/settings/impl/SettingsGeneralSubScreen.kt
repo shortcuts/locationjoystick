@@ -102,7 +102,7 @@ internal fun SettingsGeneralSubScreen(
                             Modifier
                                 .fillMaxSize()
                                 .verticalScroll(remember { ScrollState(0) })
-                                .padding(16.dp),
+                                .padding(settingsScrollPadding()),
                     ) {
                         GuidedPathSection(uiState, onAction)
                         SettingsSectionDivider()

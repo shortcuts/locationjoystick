@@ -12,6 +12,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
@@ -843,6 +844,16 @@ private fun SettingsHubScreen(
         )
     }
 }
+
+/**
+ * Padding for a settings scroll column. The bottom reserves room for the Save/Discard FABs
+ * (56dp tall + 16dp scaffold margin, plus slack for large font scale) so the last entries
+ * can scroll fully above them.
+ */
+internal fun settingsScrollPadding(): PaddingValues =
+    PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = SETTINGS_FAB_CLEARANCE)
+
+internal val SETTINGS_FAB_CLEARANCE = 120.dp
 
 @Composable
 internal fun SettingsSaveDiscardFab(

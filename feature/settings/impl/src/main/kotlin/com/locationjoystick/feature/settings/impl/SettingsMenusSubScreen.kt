@@ -126,7 +126,7 @@ internal fun SettingsMenusSubScreen(
                             Modifier
                                 .fillMaxSize()
                                 .verticalScroll(remember { ScrollState(0) })
-                                .padding(16.dp),
+                                .padding(settingsScrollPadding()),
                     ) {
                         AppFeaturesSection(uiState, isRooted, onAction)
                         SettingsSectionDivider()

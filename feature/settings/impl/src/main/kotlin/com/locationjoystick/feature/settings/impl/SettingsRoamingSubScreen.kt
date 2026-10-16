@@ -72,7 +72,7 @@ internal fun SettingsRoamingSubScreen(
                             Modifier
                                 .fillMaxSize()
                                 .verticalScroll(remember { ScrollState(0) })
-                                .padding(16.dp),
+                                .padding(settingsScrollPadding()),
                     ) {
                         RoamingSection(roamingDefaults, isMph, uiState.guidedPath.showsPlanting, onAction)
                         SettingsSectionDivider()

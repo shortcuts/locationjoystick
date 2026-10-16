@@ -61,7 +61,7 @@ internal fun SettingsFavoritesRoutesSubScreen(
                             Modifier
                                 .fillMaxSize()
                                 .verticalScroll(remember { ScrollState(0) })
-                                .padding(16.dp),
+                                .padding(settingsScrollPadding()),
                     ) {
                         FavoritesSection(uiState, hotLocationTree, onAction)
                         SettingsSectionDivider()

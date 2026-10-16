@@ -74,7 +74,7 @@ internal fun SettingsGpsSubScreen(
                             Modifier
                                 .fillMaxSize()
                                 .verticalScroll(remember { ScrollState(0) })
-                                .padding(16.dp),
+                                .padding(settingsScrollPadding()),
                     ) {
                         SpeedProfilesSection(uiState, onAction)
                         SettingsSectionDivider()
