@@ -87,27 +87,15 @@ fun CompassDisclosureDialog(
                         tint = MaterialTheme.colorScheme.primary,
                     )
                     Text(title, style = MaterialTheme.typography.headlineSmall)
-                    caveats.forEach { Text(it, style = MaterialTheme.typography.bodyLarge) }
+                    caveats.forEach { DisclosurePanel { Text(it, style = MaterialTheme.typography.bodyLarge) } }
                     if (showAccessibilityDisclosure) {
-                        Text(stringResource(R.string.compass_disclosure_intro), style = MaterialTheme.typography.bodyLarge)
-                        Surface(
-                            shape = MaterialTheme.shapes.medium,
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(14.dp),
-                            ) {
-                                DisclosureFact(stringResource(R.string.compass_disclosure_data))
-                                DisclosureFact(stringResource(R.string.compass_disclosure_purpose))
-                                DisclosureFact(stringResource(R.string.compass_disclosure_handling))
-                            }
+                        DisclosurePanel {
+                            Text(stringResource(R.string.compass_disclosure_intro), style = MaterialTheme.typography.bodyLarge)
                         }
-                        Text(
-                            stringResource(R.string.compass_disclosure_optional),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        DisclosurePanel { DisclosureFact(stringResource(R.string.compass_disclosure_data)) }
+                        DisclosurePanel { DisclosureFact(stringResource(R.string.compass_disclosure_purpose)) }
+                        DisclosurePanel { DisclosureFact(stringResource(R.string.compass_disclosure_handling)) }
+                        DisclosurePanel { DisclosureFact(stringResource(R.string.compass_disclosure_optional)) }
                     }
                     TextButton(
                         onClick = {
@@ -142,6 +130,13 @@ fun CompassDisclosureDialog(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DisclosurePanel(content: @Composable () -> Unit) {
+    Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceVariant) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) { content() }
     }
 }
 
