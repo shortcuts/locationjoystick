@@ -125,4 +125,13 @@ class FeetDetectorTest {
         assertEquals(540.0, x, 1e-9)
         assertEquals(1170.0, y, 1e-9)
     }
+
+    @Test
+    fun fallbackIsTheCentredPriorRowAtAnySize() {
+        for ((w, h) in listOf(1080 to 2400, 720 to 1600)) {
+            val p = FeetDetector.fallback(w, h)
+            assertEquals(0.5 * w, p.x, 1e-9)
+            assertEquals(0.6415 * h, p.y, 1e-9)
+        }
+    }
 }

@@ -50,7 +50,8 @@ object GroundCalibrationSolver {
                 FeetDetector.legGradient(frames.filterIndexed { i, _ -> moving[i] })
             }
         onStep(2)
-        val feet = FeetDetector.detectFromGradients(grads, width, height) ?: return SolveResult.FeetNotFound
+        if (grads.isEmpty()) return SolveResult.FeetNotFound
+        val feet = FeetDetector.detectFromGradients(grads, width, height) ?: FeetDetector.fallback(width, height)
         onStep(3)
         val moves =
             legs.flatMap { leg ->

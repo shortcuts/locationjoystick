@@ -256,8 +256,10 @@ more than 0.03h from the prior 0.6415h, the row is the screen-fixed range ring m
 Failure modes: a shadow below the sole lifts the last row; a companion sprite beside the player joins the run and
 shifts x; close-up zoom puts the anchor too high (see open work 2, not gated in code); a stationary HUD element in the
 centre column reads as figure; all legs parallel to one road keep road edges. Fallback: `null` means calibration
-failed, store nothing. The row prior (0.6415h, tolerance 0.03h) is the only default anchor: it applies only when the
-detected row is outside the tolerance (feet differ per device and zoom: Pixel 5 542,1725 of 1080x2340; Pixel 7
+failed, store nothing, except that legs with moving frames never end in `null`: the sprite faces each walk
+direction, so the minimum over the app's eight legs can erase it (Pixel 7, NYC: calibration was rejected), and
+`FeetDetector.fallback` then returns the centred prior (0.5w, 0.6415h). The row prior (0.6415h, tolerance 0.03h) is the
+only default anchor: it applies when the detected row is outside the tolerance or nothing is detected (feet differ per device and zoom: Pixel 5 542,1725 of 1080x2340; Pixel 7
 538,1556 of 1080x2400). Each use of the prior is a fallback to count; a frequent one counts as a failed registration.
 
 Invariants a change must not break:

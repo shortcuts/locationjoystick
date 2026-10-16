@@ -336,6 +336,12 @@ def test_detect_feet_finds_static_figure_at_two_screen_sizes_and_none_without_on
     assert rb.detect_feet(_scrolling_legs(720, 1600, 0.66, figure=False)) is None
 
 
+def test_anchor_uses_prior_when_no_figure_survives_the_legs():
+    import types
+    a = rb._anchor(types.SimpleNamespace(anchor=None), _scrolling_legs(720, 1600, 0.66, figure=False))
+    assert a == (0.5 * 720, rb.PRIOR_FEET_FRAC * 1600), a
+
+
 def test_detect_feet_falls_back_to_prior_when_ring_merges_into_figure():
     # Detected row ~0.70h (ring bar joined the figure's run) is far from the prior: the prior is used, not the merge.
     for w, h in ((1080, 2400), (720, 1600)):

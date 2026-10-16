@@ -2,7 +2,7 @@
 """Global tap-to-walk smoke gate (docs/testing.md, "Tap-to-walk global smoke gate").
 
 For each location in scripts/tap_smoke_locations.json: teleport through the Control API, wait for the game
-to settle, walk four calibration legs, fit the perspective ground map, then score 12 on-device taps with
+to settle, walk the app's eight calibration legs, fit the perspective ground map, then score 12 on-device taps with
 registration_bench.py's masked-NCC `taptrials`. Writes report.md and report.json (numbers only, no frames)
 under scripts/registration-bench/smoke/<UTC stamp>/ (gitignored). Exit 0 iff 19 of 20 locations pass.
 
@@ -27,8 +27,9 @@ BENCH = HERE / "registration_bench.py"
 N_TAPS, NEED_TAPS, TOL_M, MAX_M = 12, 11, 15.0, 40.0
 NEED_LOCATIONS = 19
 # Per-step wall-clock bound: a hang fails the location, not the run. taptrials walks to each tap, so it is the long one.
-STEP_TIMEOUT_S = {"walkcap": 900, "persp": 600, "taptrials": 3600}
-LEG_BEARINGS = ["0", "90", "45", "225"]
+STEP_TIMEOUT_S = {"walkcap": 1800, "persp": 600, "taptrials": 3600}
+# Same legs as the app (CalibrationWalkMath.BEARINGS_DEG, LEG_METERS): fewer legs hide the sprite-erasure bug.
+LEG_BEARINGS = ["0", "180", "90", "270", "45", "225", "135", "315"]
 
 
 # ---- pure logic (pinned by test_tap_smoke.py) ----
@@ -142,7 +143,7 @@ def run_location(py, serial, host, key, loc, i, out, settle, respect_cooldown):
     try:
         cooldown = teleport_and_settle(host, key, loc, settle, respect_cooldown)
         for step in (
-            ["walkcap", str(d), "--serial", serial, "--legs", *LEG_BEARINGS, "--dist", "30", "--every", "3"],
+            ["walkcap", str(d), "--serial", serial, "--legs", *LEG_BEARINGS, "--dist", "40", "--every", "3"],
             ["persp", str(d)],
             ["taptrials", str(d), "--serial", serial, "--persp", "--n", str(N_TAPS), "--need", str(NEED_TAPS),
              "--tol-m", str(TOL_M), "--max-m", str(MAX_M)],

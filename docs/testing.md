@@ -77,7 +77,7 @@ make tap-smoke-selfcheck          # pure verdict logic, no device
   `--ack-throwaway-account`, which `make tap-smoke` passes: running it is the acknowledgement. Never use the main account.
 - **Cooldown.** The app's cooldown is advisory. By default the run does not wait; pass `--respect-cooldown` to the script
   to sleep the advised time before each teleport. `--settle <s>` (default 45) is the wait for tiles after each teleport.
-- **Per location.** Teleport, wait for the position and tiles, walk four 30 m legs (bearings 0, 90, 45, 225), fit the
+- **Per location.** Teleport, wait for the position and tiles, walk the app's eight 40 m legs (bearings 0, 180, 90, 270, 45, 225, 135, 315), fit the
   perspective ground map, then score 12 taps 5 to 40 m away. Tap order is seeded, so a failure reproduces.
 - **Pass bar.** A location passes with at least 11 of 12 scored taps within 15 m. Ambiguous matches are skipped, not
   counted. A rejected calibration (`no_calibration`) or fewer than 12 scored taps (`insufficient_scored`) fails; so do

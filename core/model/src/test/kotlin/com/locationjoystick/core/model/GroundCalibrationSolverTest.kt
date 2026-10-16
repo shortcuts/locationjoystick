@@ -108,16 +108,16 @@ class GroundCalibrationSolverTest {
     }
 
     @Test
-    fun movingWorldWithoutFigureIsFeetNotFound() {
+    fun movingWorldWithoutFigureUsesPriorFeetAndFailsOnFlows() {
         val sc = SyntheticWalkScene(540, 1170, 270.0, 750.0, figure = false)
         val ls =
             legs(540, 1170, scene = sc).map { l ->
                 CapturedLeg(l.bearingDeg, l.timesS, l.positions) {
-                    // a flat grey world: no sharp static figure at all
+                    // a flat grey world: no sharp static figure, so the prior feet row is used; no content, no flow
                     List(l.timesS.size) { GrayImage(540, 1170, ByteArray(540 * 1170) { 100 }) }
                 }
             }
-        assertEquals(SolveResult.FeetNotFound, GroundCalibrationSolver.solve(ls, 540, 1170))
+        assertEquals(SolveResult.TooFewFlows, GroundCalibrationSolver.solve(ls, 540, 1170))
     }
 
     @Test

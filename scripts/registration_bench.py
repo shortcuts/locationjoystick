@@ -1150,7 +1150,7 @@ FLOW_ROWS = [(0.21 + i * 0.49 / 7, 0.21 + (i + 1) * 0.49 / 7) for i in range(7)]
 FLOW_COLS = [(0.0, 1 / 3), (1 / 3, 2 / 3), (2 / 3, 1.0)]
 
 
-PRIOR_FEET_FRAC, PRIOR_TOLERANCE = 0.6415, 0.03  # feet row as a fraction of height (wide-zoom Pixel 7 runs: 0.635-0.648)
+PRIOR_FEET_FRAC, PRIOR_TOLERANCE, PRIOR_FEET_X = 0.6415, 0.03, 0.5  # feet row as a fraction of height (wide-zoom Pixel 7 runs: 0.635-0.648)
 
 
 def detect_feet(legs, thr=30.0, gap=0.05):
@@ -1337,10 +1337,14 @@ def _anchor(args, legs):
     """--anchor when given, else the feet pixel detected from the legs; None (and a message) when not found."""
     if args.anchor:
         return tuple(args.anchor)
-    feet = detect_feet(legs)
-    if feet is None:
-        print("feet pixel not found -> REJECTED")
+    if not any(f["moving"] for fr in legs.values() for f in fr):
+        print("no moving frames -> REJECTED")
         return None
+    feet = detect_feet(legs)
+    if feet is None:  # the sprite faces each walk direction: the min over many legs can erase it (NYC, 8 legs)
+        h, w = next(iter(legs.values()))[0]["img"].shape[:2]
+        print("feet anchor: no figure found -> prior fallback")
+        return PRIOR_FEET_X * w, PRIOR_FEET_FRAC * h
     print(f"feet pixel detected: {feet[0]:.0f} {feet[1]:.0f}")
     return feet
 
@@ -1477,6 +1481,7 @@ def cmd_taptrials(args):
     host, key = _preflight()
     out = data / "annotated_trials"
     out.mkdir(exist_ok=True)
+    raw = data / "raw_trials"
     _focus(args.serial, GAME_ACTIVITY)
     time.sleep(2)
     rows = []
@@ -1490,6 +1495,8 @@ def cmd_taptrials(args):
             tgt = (lat0 + g[1] / 111320, lon0 + g[0] / (111320 * math.cos(math.radians(lat0))))
             _adb_screencap(args.serial, out / f"t{i:02d}_before.png")
             before = cv2.imread(str(out / f"t{i:02d}_before.png"))
+            raw.mkdir(exist_ok=True)
+            cv2.imwrite(str(raw / f"t{i:02d}_before.png"), before)  # unannotated, for offline matcher work
             row = {"i": i, "tap": [float(p[0]), float(p[1])], "ground_m": [float(g[0]), float(g[1])]}
             if np.hypot(*g) > 150:
                 row.update(error_m=None, ncc=None, verdict="unreachable")
@@ -1498,6 +1505,7 @@ def cmd_taptrials(args):
                 time.sleep(3)
                 _adb_screencap(args.serial, out / f"t{i:02d}_after.png")
                 after = cv2.imread(str(out / f"t{i:02d}_after.png"))
+                cv2.imwrite(str(raw / f"t{i:02d}_after.png"), after)
                 off, ncc = patch_offset(before, after, p, anchor)
                 if off is None:
                     row.update(error_m=None, ncc=ncc, arrived=arrived, verdict="ambiguous")

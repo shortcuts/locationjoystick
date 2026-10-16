@@ -42,6 +42,16 @@ object FeetDetector {
     // screen-fixed range ring merged into the figure's run: use the prior instead. Mirrors registration_bench.py.
     private const val PRIOR_FEET_FRAC = 0.6415
     private const val PRIOR_TOLERANCE = 0.03
+    private const val PRIOR_FEET_X = 0.5 // the game keeps the player centred
+
+    /**
+     * The feet pixel when legs of different bearings share no sharp figure: the sprite faces each walk
+     * direction, so the min over many legs can erase it (NYC, 8 legs). Calibration then uses the prior.
+     */
+    fun fallback(
+        width: Int,
+        height: Int,
+    ) = FeetPixel(PRIOR_FEET_X * width, PRIOR_FEET_FRAC * height)
 
     /**
      * @param legs one list per walked leg, only frames recorded while moving, each `width * height`.
