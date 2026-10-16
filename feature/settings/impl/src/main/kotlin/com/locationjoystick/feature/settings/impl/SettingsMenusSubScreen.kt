@@ -687,6 +687,13 @@ private fun AppFeaturesSection(
         title = stringResource(R.string.settings_menus_show_route_jump_buttons),
         description = stringResource(R.string.settings_menus_show_route_jump_buttons_desc),
     )
+    Spacer(modifier = Modifier.height(8.dp))
+    LjCheckboxRow(
+        checked = uiState.altitudeOverrideButtonEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetAltitudeOverrideButtonEnabled(it)) },
+        title = stringResource(R.string.settings_menus_show_altitude_override_button),
+        description = stringResource(R.string.settings_menus_show_altitude_override_button_desc),
+    )
 }
 
 private fun Modifier.graphicsLayerTranslationY(ty: Float): Modifier = this.then(Modifier.graphicsLayer { translationY = ty })

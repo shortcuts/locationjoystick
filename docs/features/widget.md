@@ -183,7 +183,7 @@ was moved to (a tap-to-pin, route jump, etc.) instead of doing nothing.
 
 ## Altitude Override Button
 
-When enabled (Settings → General → Privacy → "Show altitude override button", `AppSettings.altitudeOverrideButtonEnabled`,
+When enabled (Settings → Menus → App Features → "Show altitude override button", `AppSettings.altitudeOverrideButtonEnabled`,
 default `false`), the widget panel shows a terrain-icon button:
 
 - **Shown when**: the setting is enabled.

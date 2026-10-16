@@ -352,13 +352,6 @@ private fun PrivacySection(
         title = stringResource(R.string.settings_menus_hide_notification_icon),
         description = stringResource(R.string.settings_menus_hide_notification_icon_desc),
     )
-    Spacer(Modifier.height(8.dp))
-    LjCheckboxRow(
-        checked = uiState.altitudeOverrideButtonEnabled,
-        onCheckedChange = { onAction(SettingsAction.SetAltitudeOverrideButtonEnabled(it)) },
-        title = stringResource(R.string.settings_menus_show_altitude_override_button),
-        description = stringResource(R.string.settings_menus_show_altitude_override_button_desc),
-    )
 }
 
 @Composable
