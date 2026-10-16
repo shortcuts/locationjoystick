@@ -33,6 +33,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.locationjoystick.app.IDLE_ROUTE
 import com.locationjoystick.app.R
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.feature.favorites.api.FAVORITES_ROUTE
@@ -157,7 +158,7 @@ fun LjDrawerContent(
         ExternalLinkDrawerItem(
             leadingIcon = LjIcons.Explore,
             label = stringResource(R.string.drawer_website),
-            url = "https://locationjoystick.shrtcts.fr/",
+            url = AppConstants.AppInfo.DOCS_URL,
             onClose = { scope.launch { drawerState.close() } },
             context = context,
         )
@@ -171,7 +172,7 @@ fun LjDrawerContent(
         ExternalLinkDrawerItem(
             leadingIcon = LjIcons.Info,
             label = stringResource(R.string.drawer_acknowledgements),
-            url = "https://acknowledgements.gg/r9DRnkwbMf",
+            url = AppConstants.AppInfo.ACKNOWLEDGEMENTS_URL,
             onClose = { scope.launch { drawerState.close() } },
             context = context,
         )
