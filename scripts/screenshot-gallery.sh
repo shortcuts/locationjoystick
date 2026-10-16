@@ -1491,11 +1491,22 @@ fi
 if should_run_step "25"; then
   log "=== 25 COMPASS DISCLOSURE ==="
   go_idle
+  # Step 20 (or an earlier run) leaves the choice "accepted", which skips the dialog.
+  # "declined" has the same length, so patching the stored value keeps the file valid.
+  prefs=files/datastore/app_preferences.preferences_pb
+  $ADB exec-out run-as "$PACKAGE" cat "$prefs" \
+    | python3 -c 'import sys; k=b"compass_disclosure_choice\x12\x0a\x2a\x08"; sys.stdout.buffer.write(sys.stdin.buffer.read().replace(k+b"accepted", k+b"declined"))' \
+    > "$TMPDIR/prefs.pb"
+  $ADB shell run-as "$PACKAGE" sh -c "'cat > $prefs'" < "$TMPDIR/prefs.pb"
+  rm -f "$TMPDIR/prefs.pb"
   tap_text_below "Settings" "$CARD_Y_MIN"
   wait_s 2 "Settings loading"
   tap_text "Menus"
   wait_s 2 "Menus loading"
   scroll_until_text "Enable Tap to Walk" || true
+  # The row first appears under the Save/Discard bar, which swallows the switch tap.
+  $ADB shell input swipe 540 1600 540 1000 500
+  wait_s 1 "Clearing Save bar"
   if [[ "$(switch_is_on "Enable Tap to Walk")" == "True" ]]; then
     tap_switch_for "Enable Tap to Walk"
     wait_s 1 "Turning Tap to Walk off"
