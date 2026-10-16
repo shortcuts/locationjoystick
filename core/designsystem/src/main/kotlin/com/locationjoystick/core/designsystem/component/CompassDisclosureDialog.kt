@@ -22,8 +22,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.locationjoystick.core.common.constants.AppConstants
@@ -82,13 +87,27 @@ fun CompassDisclosureDialog(
                         tint = MaterialTheme.colorScheme.primary,
                     )
                     Text(title, style = MaterialTheme.typography.headlineSmall)
-                    caveats.forEach { Text(it) }
+                    caveats.forEach { Text(it, style = MaterialTheme.typography.bodyLarge) }
                     if (showAccessibilityDisclosure) {
-                        Text(stringResource(R.string.compass_disclosure_intro))
-                        Text(stringResource(R.string.compass_disclosure_data))
-                        Text(stringResource(R.string.compass_disclosure_purpose))
-                        Text(stringResource(R.string.compass_disclosure_handling))
-                        Text(stringResource(R.string.compass_disclosure_optional))
+                        Text(stringResource(R.string.compass_disclosure_intro), style = MaterialTheme.typography.bodyLarge)
+                        Surface(
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp),
+                            ) {
+                                DisclosureFact(stringResource(R.string.compass_disclosure_data))
+                                DisclosureFact(stringResource(R.string.compass_disclosure_purpose))
+                                DisclosureFact(stringResource(R.string.compass_disclosure_handling))
+                            }
+                        }
+                        Text(
+                            stringResource(R.string.compass_disclosure_optional),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                     TextButton(
                         onClick = {
@@ -124,6 +143,24 @@ fun CompassDisclosureDialog(
             }
         }
     }
+}
+
+// The strings start with a "Label:" lead-in in every locale, so bolding up to the first colon avoids
+// splitting each string into label + body (and re-translating them).
+@Composable
+private fun DisclosureFact(text: String) {
+    val colon = text.indexOfFirst { it == ':' || it == '：' }
+    Text(
+        buildAnnotatedString {
+            if (colon > 0) {
+                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(text.substring(0, colon + 1)) }
+                append(text.substring(colon + 1))
+            } else {
+                append(text)
+            }
+        },
+        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 22.sp),
+    )
 }
 
 @Preview(showBackground = true)

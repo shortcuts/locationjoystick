@@ -168,6 +168,9 @@ stay fixed at the bottom, so they are always visible. Only "Accept" opens
 `ACTION_ACCESSIBILITY_SETTINGS`; Skip consents to nothing and opens nothing. A "Read the Tap to
 Walk guide" link opens `AppConstants.AppInfo.TAP_TO_WALK_GUIDE_URL` (the wiki page), so the
 in-app disclosure stands on its own and the long-form explanation stays one tap away.
+Layout: a larger intro, then the data, purpose and handling facts in one tonal panel with a bold
+lead-in each (bold up to the first colon), then the muted "works fully if you Decline" note. The same
+dialog serves onboarding, Settings and the widget/intent path.
 
 Play also rejected a build (2400) whose disclosure was reachable only through Settings menus:
 the disclosure must sit in the normal usage flow. It therefore appears at every point where a user

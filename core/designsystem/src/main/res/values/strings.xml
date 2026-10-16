@@ -59,8 +59,8 @@
     <string name="language_short_chinese">"CN"</string>
     <string name="language_short_traditional_chinese">"TW"</string>
     <string name="language_dropdown_cd">"Change language"</string>
-    <string name="compass_disclosure_title">"Accessibility permission: off by default, optional"</string>
-    <string name="compass_disclosure_intro">"Everything here is off by default. locationjoystick uses Android’s Accessibility Service API only if you turn on one of two optional features: Tap to Walk, which measures how your game’s map moves, and Reconnect accessory, which reconnects the Bluetooth accessories linked to your game. While a feature is off, the app takes no screenshot and makes no tap for it. Nothing else in the app uses this API."</string>
+    <string name="compass_disclosure_title">"Access to Android Accessibility API (optional)"</string>
+    <string name="compass_disclosure_intro">"locationjoystick uses the Android Accessibility API for two optional features: “Tap to Walk” and “Reconnect accessory”. If you do not want them, tap “Decline” or “Skip”. You can keep using the app."</string>
     <string name="compass_disclosure_data">"Data accessed: screenshots of your screen. During a calibration walk you start yourself, about one every 3 seconds for about 10 minutes. One when you tap Test in Settings. About one a minute while Reconnect accessory is on."</string>
     <string name="compass_disclosure_purpose">"Why: to measure how your game’s map moves while the app walks your location, so your taps land where you tapped. To find your game’s compass icon when you tap Test. To see whether your accessory shows as disconnected."</string>
     <string name="compass_disclosure_handling">"Data collected or shared: none. Calibration screenshots are kept on your phone only until the calibration ends, then deleted. Other screenshots are checked on your phone and deleted at once. Nothing is sent anywhere. The service reads no text. It taps for you only on your accessory’s connect button, and only while Reconnect accessory is on."</string>
