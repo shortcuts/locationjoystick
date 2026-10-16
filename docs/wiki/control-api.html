@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control API (for developers) — locationjoystick</title>
+  <title>Control API (for developers) | locationjoystick</title>
   <link rel="icon" href="icon.png" type="image/png">
   <meta name="description" content="HTTP API on the Group Sync leader for teleport, walk and route commands, plus favorites, routes and speed profiles, over your local Wi-Fi.">
   <link rel="canonical" href="https://locationjoystick.shrtcts.fr/control-api.html">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="locationjoystick">
-  <meta property="og:title" content="Control API (for developers) — locationjoystick">
+  <meta property="og:title" content="Control API (for developers) | locationjoystick">
   <meta property="og:description" content="HTTP API on the Group Sync leader for teleport, walk and route commands, plus favorites, routes and speed profiles, over your local Wi-Fi.">
   <meta property="og:url" content="https://locationjoystick.shrtcts.fr/control-api.html">
   <meta property="og:image" content="https://locationjoystick.shrtcts.fr/screenshots/marketing/feature_graphic.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Control API (for developers) — locationjoystick">
+  <meta name="twitter:title" content="Control API (for developers) | locationjoystick">
   <meta name="twitter:description" content="HTTP API on the Group Sync leader for teleport, walk and route commands, plus favorites, routes and speed profiles, over your local Wi-Fi.">
   <meta name="twitter:image" content="https://locationjoystick.shrtcts.fr/screenshots/marketing/feature_graphic.png">
   <link rel="stylesheet" href="style.css">
@@ -71,7 +71,7 @@
     <h3 class="item" id="errors-500-internal-error"><code>500</code> <code>internal_error</code></h3>
     <p>Server error. Try again.</p>
 
-    <h2 id="state-and-status">State and Status</h2>
+    <h2 id="state-and-status">State and status</h2>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-get-status"><span class="method method-get">GET</span><code class="endpoint-path">/status</code></h3>
       <p>Returns the API version, the device's role (always <code>"leader"</code>), and the number of active followers.</p>
@@ -97,7 +97,7 @@
       <p>Current position only.</p>
       <p class="endpoint-returns">Returns <code>{"lat":double,"lon":double}</code>. Returns <code>409 no_position</code> if the device has no position.</p>
     </div>
-    <h2 id="movement-commands">Movement Commands</h2>
+    <h2 id="movement-commands">Movement commands</h2>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-post-teleport"><span class="method method-post">POST</span><code class="endpoint-path">/teleport</code></h3>
       <p>Teleport to the given coordinates. Followers follow or walk there, depending on their <strong>Follow leader teleports</strong> setting.
@@ -203,7 +203,7 @@
     </div>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-post-speed-profile"><span class="method method-post">POST</span><code class="endpoint-path">/speed-profile</code></h3>
-      <p>Set the active speed profile (e.g. <code>"slow_walk"</code>, <code>"walk"</code>, <code>"run"</code>, <code>"bike"</code>, <code>"drive"</code>).</p>
+      <p>Set the active speed profile (such as <code>"slow_walk"</code>, <code>"walk"</code>, <code>"run"</code>, <code>"bike"</code>, <code>"drive"</code>).</p>
       <dl class="params">
         <div class="param"><dt><code>id</code></dt><dd><span class="param-type">string</span> <span class="param-flag">required</span></dd></div>
       </dl>
@@ -318,15 +318,15 @@
       <p class="endpoint-returns">Returns the updated profile. Returns <code>400 bad_request</code> if the speed is out of range, or <code>404 speed_profile_not_found</code> if the profile does not exist.</p>
     </div>
 
-    <h2 id="security-limits">Security Limits</h2>
+    <h2 id="security-limits">Security limits</h2>
     <ul class="section-bullets">
-      <li><strong>Local network only:</strong> The API is accessible only over the same Wi-Fi network. It does not work over the internet or mobile data.</li>
-      <li><strong>Plain HTTP, no encryption:</strong> Requests travel in clear text. Do not send the API key over an untrusted network.</li>
-      <li><strong>API key in clear:</strong> The key must be sent in the <code>Authorization</code> header with each request. Treat it like a password.</li>
-      <li><strong>Off by default:</strong> The Control API is disabled when you create or join a group. Turn it on explicitly in the Control API section to allow other apps to connect.</li>
-      <li><strong>Resets on exit:</strong> Leaving the group or restarting the app turns the Control API off. The key persists; you can turn the API back on next time.</li>
-      <li><strong>Key rotation:</strong> Tap <strong>Regenerate key</strong> in the Control API section to create a new key. The old key stops working immediately.</li>
-      <li><strong>Hide Teleport is bypassed:</strong> Teleports and routes sent through the API work even when <strong>Hide Teleport</strong> is on. See <a href="#ep-post-teleport">/teleport</a> and <a href="#ep-post-route-start">/route/start</a>.</li>
+      <li>The API works only on the same Wi-Fi network. It does not work over the internet or mobile data.</li>
+      <li>The API uses plain HTTP, so requests travel unencrypted. Do not send the API key over an untrusted network.</li>
+      <li>Send the key in the <code>Authorization</code> header with each request. Treat it like a password.</li>
+      <li>The API is off when you create or join a group. Turn it on in the Control API section to let other apps connect.</li>
+      <li>Leaving the group or restarting the app turns the API off. The key stays, so you can turn the API back on later.</li>
+      <li>To create a new key, tap <strong>Regenerate key</strong> in the Control API section. The old key stops working at once.</li>
+      <li>Teleports and routes sent through the API work even when <strong>Hide Teleport</strong> is on. See <a href="#ep-post-teleport">/teleport</a> and <a href="#ep-post-route-start">/route/start</a>.</li>
     </ul>
 
     <h2 id="example-teleport-via-curl">Example: teleport with curl</h2>

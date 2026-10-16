@@ -5,11 +5,11 @@
 ![minSdk](https://img.shields.io/badge/minSdk-28%20(Android%209)-green?style=flat-square)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/r9DRnkwbMf)
 
-A free, open-source Android app that changes the location your phone reports. Move a floating joystick, replay a saved route, or let the app wander on its own — your other apps keep working like nothing changed.
+A free, open-source Android app that changes the location your phone reports. Move a floating joystick, replay a saved route, or let the app wander on its own. Your other apps keep working as before.
 
-- **Free and open-source** — no subscriptions, no ads, no paywalled features
-- **No root required** — works through Android's built-in Developer Options
-- **Runs in the background** — keep using other apps while it's active
+- Free and open source. No subscriptions, no ads, no paid features.
+- No root needed. The app uses the mock location option in Android's Developer Options.
+- Runs in the background, so you can use other apps while it is active.
 
 ## Download
 
@@ -21,29 +21,30 @@ Two ways to install. They follow different release cycles.
 | Updates | Automatic through Google Play. | Manual. Download each new APK. |
 | Get it | [Google Play](https://play.google.com/store/apps/details?id=com.locationjoystick.app) | [Releases page](https://github.com/shortcuts/locationjoystick/releases/latest) |
 
-Pick Google Play if you want stability. Pick the APK if you want new changes sooner and accept rougher edges.
+Pick Google Play for stability. Pick the APK to get new changes sooner, with more bugs.
 
 To install the APK, open the downloaded file. If Android blocks it, allow installs from unknown sources for your browser or file manager, then try again.
 
 ## Setup
 
-Full setup guide with screenshots: **[locationjoystick.shrtcts.fr](https://locationjoystick.shrtcts.fr/)**
+The [setup guide](https://locationjoystick.shrtcts.fr/) has screenshots for every step.
 
 ## What it can do
 
-See the **[wiki](https://locationjoystick.shrtcts.fr/)** for every feature: the map, joystick, routes, roaming, favorites, the floating widget, group sync, and more.
+The [wiki](https://locationjoystick.shrtcts.fr/) describes every feature, including the map, joystick, routes, roaming, favorites, the floating widget, and group sync.
 
-- Paste coordinates as a single location or a complete route, and capture locations from shared map links.
-- Search and sort saved favorites and routes; rename, delete, and share them from the widget too.
-- Use a compact movable widget map with north lock, or expand it for more space.
+- Paste coordinates as one location or a whole route.
+- Capture locations from shared map links.
+- Search and sort saved favorites and routes. Rename, delete, and share them from the widget.
+- Use a small movable widget map with north lock, or expand it for more room.
 - Preview planting circles and spiral roaming, with optional jumps between route stops.
-- Optionally reconnect your Bluetooth accessory automatically when it drops.
-- Pick Default, Pokémon Go or Pikmin Bloom during setup to hide the features your game does not need. Change it any time in Settings.
-- See an "update available" badge (checked about once a day) and a "What's new" badge for your current version on the Home screen.
+- Reconnect your Bluetooth accessory automatically when it drops (optional).
+- Pick Default, Pokémon Go, or Pikmin Bloom during setup to hide the features your game does not need. You can change this in Settings.
+- See an "update available" badge (checked about once a day) and a "What's new" badge on the Home screen.
 
 ## Community
 
-Join the **[Discord server](https://discord.gg/r9DRnkwbMf)** for help, feature requests, and updates.
+Join the [Discord server](https://discord.gg/r9DRnkwbMf) for help, feature requests, and updates.
 
 ## Contributing
 
@@ -51,4 +52,4 @@ Want to build the app or open a PR? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for full text.
+MIT License. The full text is in [LICENSE](LICENSE).

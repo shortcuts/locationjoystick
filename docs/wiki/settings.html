@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings — locationjoystick</title>
+  <title>Settings | locationjoystick</title>
   <link rel="icon" href="icon.png" type="image/png">
   <meta name="description" content="Every setting in locationjoystick: speeds, GPS realism, menus, general options, language, roaming defaults and external services.">
   <link rel="canonical" href="https://locationjoystick.shrtcts.fr/settings.html">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="locationjoystick">
-  <meta property="og:title" content="Settings — locationjoystick">
+  <meta property="og:title" content="Settings | locationjoystick">
   <meta property="og:description" content="Every setting in locationjoystick: speeds, GPS realism, menus, general options, language, roaming defaults and external services.">
   <meta property="og:url" content="https://locationjoystick.shrtcts.fr/settings.html">
   <meta property="og:image" content="https://locationjoystick.shrtcts.fr/screenshots/marketing/feature_graphic.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Settings — locationjoystick">
+  <meta name="twitter:title" content="Settings | locationjoystick">
   <meta name="twitter:description" content="Every setting in locationjoystick: speeds, GPS realism, menus, general options, language, roaming defaults and external services.">
   <meta name="twitter:image" content="https://locationjoystick.shrtcts.fr/screenshots/marketing/feature_graphic.png">
   <link rel="stylesheet" href="style.css">
@@ -37,7 +37,7 @@
 
     <h4 class="item" id="game-setup-choose-your-game">Choose your game</h4>
     <p><strong>Default:</strong> Default, or the setup you picked during first setup</p>
-    <p>Hides the features your game does not need. Pick Default, Pokémon Go or Pikmin Bloom. See <a href="game-setup.html">Game setup</a>.</p>
+    <p>Hides the features your game does not need. Pick Default, Pokémon Go, or Pikmin Bloom. See <a href="game-setup.html">Game setup</a>.</p>
 
     <h3 id="appearance">Appearance</h3>
 
@@ -160,7 +160,7 @@
     <p><strong>Default:</strong> Off</p>
     <p>About every 10 seconds, the signal freezes for about 2 seconds. Most apps show the freeze. Does not run during route playback or walk-to.</p>
     <h4 class="item" id="gps-realism-reset-elevation-override">Reset elevation override</h4>
-    <p><strong>Default:</strong> &mdash;</p>
+    <p><strong>Default:</strong> None</p>
     <p>Clears a height set with the altitude override button, so the automatic height resumes. Set the button up under <a href="#altitude-override-setting">App Features</a>.</p>
 
     <h3 id="location-memory">Location memory</h3>
@@ -248,13 +248,13 @@
     <p>Defaults for Walk around the block and Planting.</p>
     <p>Planting is hidden on the Pokémon Go setup. See <a href="game-setup.html">Game setup</a>.</p>
 
-    <h3 class="item" id="roaming-walk-around-the-block-radius">Walk around the block — Radius</h3>
+    <h3 class="item" id="roaming-walk-around-the-block-radius">Walk around the block: Radius</h3>
     <p><strong>Default:</strong> 500 m</p>
     <p>The farthest distance from the start that random stops can land. Maximum 100 km.</p>
-    <h3 class="item" id="roaming-walk-around-the-block-route-distance">Walk around the block — Route distance</h3>
+    <h3 class="item" id="roaming-walk-around-the-block-route-distance">Walk around the block: Route distance</h3>
     <p><strong>Default:</strong> 1 km</p>
     <p>The total distance to walk. Allowed range: 50 m to 50 km.</p>
-    <h3 class="item" id="roaming-walk-around-the-block-speed">Walk around the block — Speed</h3>
+    <h3 class="item" id="roaming-walk-around-the-block-speed">Walk around the block: Speed</h3>
     <p><strong>Default:</strong> Walk</p>
     <p>Starting speed. The roaming sheet offers Walk, Run, and Bike. Settings also offers Slow Walk and Drive.</p>
     <h3 class="item" id="roaming-follow-roads">Follow roads</h3>
@@ -263,22 +263,22 @@
     <h3 class="item" id="roaming-return-to-start">Return to start</h3>
     <p><strong>Default:</strong> On</p>
     <p>Walk around the block only. Walks back to the starting position when the walk ends.</p>
-    <h3 class="item" id="roaming-planting-starting-radius">Planting — Starting radius</h3>
+    <h3 class="item" id="roaming-planting-starting-radius">Planting: Starting radius</h3>
     <p><strong>Default:</strong> 5 m</p>
     <p>How close to the center the spiral starts.</p>
-    <h3 class="item" id="roaming-planting-ending-radius">Planting — Ending radius</h3>
+    <h3 class="item" id="roaming-planting-ending-radius">Planting: Ending radius</h3>
     <p><strong>Default:</strong> 39 m</p>
     <p>How far out the spiral opens before it tightens again. Maximum 200 m.</p>
-    <h3 class="item" id="roaming-planting-spacing">Planting — Ring spacing</h3>
+    <h3 class="item" id="roaming-planting-spacing">Planting: Ring spacing</h3>
     <p><strong>Default:</strong> 5 m</p>
     <p>The gap between each ring of the spiral. Use a whole number of 1 m or more. A larger gap means fewer rings, so you don't walk loops too close together. The spiral always makes at least two rings.</p>
-    <h3 class="item" id="roaming-planting-speed">Planting — Speed</h3>
+    <h3 class="item" id="roaming-planting-speed">Planting: Speed</h3>
     <p><strong>Default:</strong> Bike</p>
     <p>Starting speed: Walk, Run, or Bike. Separate from the Walk around the block speed.</p>
-    <h3 class="item" id="roaming-planting-expand-only">Planting — Expand only</h3>
+    <h3 class="item" id="roaming-planting-expand-only">Planting: Expand only</h3>
     <p><strong>Default:</strong> Off</p>
     <p>Walks the spiral out to the end radius once, then stops. Infinite loop and the loop count are greyed out while this is on.</p>
-    <h3 class="item" id="roaming-planting-infinite-loop">Planting — Infinite loop</h3>
+    <h3 class="item" id="roaming-planting-infinite-loop">Planting: Infinite loop</h3>
     <p><strong>Default:</strong> On</p>
     <p>Repeats until you stop. Turn it off to set a loop count from 1 to 99 (default 1). One loop is one full expand and tighten.</p>
 

@@ -2,7 +2,7 @@
 
 ## Building
 
-Prerequisites: Android Studio (or JDK 17 + Android SDK command-line tools), API 28+ SDK.
+Prerequisites: Android Studio, or JDK 17 with the Android SDK command-line tools. Install the API 28 or later SDK.
 
 ```bash
 git clone https://github.com/shortcuts/locationjoystick.git
@@ -13,28 +13,24 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 
 Release build: `./gradlew assembleRelease`. AAB for Play Store: `make bundle`.
 
-Releases are automated via [release-please](https://github.com/googleapis/release-please): merging to `main` opens/updates a release PR from Conventional Commits; merging that PR tags the version and triggers CI to build, sign, and upload the APK to GitHub Releases.
+[release-please](https://github.com/googleapis/release-please) automates releases. When you merge to `main`, it opens or updates a release PR from the Conventional Commits. When you merge that PR, it tags the version, and CI builds, signs, and uploads the APK to GitHub Releases.
 
-## Before Opening a PR
+## Before you open a PR
 
-1. Read [AGENTS.md](AGENTS.md) — code standards, modules, arch rules, agent tooling.
-2. One feature/fix per PR.
-3. New feature: open issue first.
+1. Read [AGENTS.md](AGENTS.md) for code standards, modules, and architecture rules.
+2. Put one feature or fix in each PR.
+3. For a new feature, open an issue first.
 
 ## Translations
 
-- Resource layout and conventions: see [docs/features/localization.md](docs/features/localization.md).
-- A translation is a sibling `values-<qualifier>/strings.xml` next to each module's
-  `res/values/strings.xml`, with the exact same keys.
-- Never translate the app name/brand ("locationjoystick") or units/symbols embedded in format
-  strings.
-- If a translation is AI-assisted, get a native speaker of the target language to review it
-  before opening the PR — AI translation tools reliably produce plausible-but-wrong phrasing that
-  a non-speaker reviewer won't catch.
+- [docs/features/localization.md](docs/features/localization.md) describes the resource layout and conventions.
+- Put each translation in a `values-<qualifier>/strings.xml` next to the module's `res/values/strings.xml`. Use exactly the same keys.
+- Do not translate the app name ("locationjoystick") or the units and symbols inside format strings.
+- If an AI tool helped with the translation, ask a native speaker to review it before you open the PR. AI tools produce phrasing that sounds right but is wrong, and a reviewer who does not speak the language cannot catch it.
 
-## Required Checks
+## Required checks
 
-All 3 must pass:
+All three must pass:
 
 ```bash
 make format
@@ -42,9 +38,9 @@ make lint
 make test
 ```
 
-Fix all lint **error**s before done. Warnings ok; errors not. Never suppress `Errors` rules. Never `@file:Suppress`.
+Fix every lint error before you finish. Warnings are acceptable. Do not suppress `Errors` rules, and do not use `@file:Suppress`.
 
-## Reference Docs
+## Reference docs
 
 | Topic | File |
 |-------|------|
