@@ -680,6 +680,13 @@ private fun AppFeaturesSection(
             }
         }
     }
+    Spacer(modifier = Modifier.height(8.dp))
+    LjCheckboxRow(
+        checked = uiState.showRouteJumpButtons,
+        onCheckedChange = { onAction(SettingsAction.SetShowRouteJumpButtons(it)) },
+        title = stringResource(R.string.settings_menus_show_route_jump_buttons),
+        description = stringResource(R.string.settings_menus_show_route_jump_buttons_desc),
+    )
 }
 
 private fun Modifier.graphicsLayerTranslationY(ty: Float): Modifier = this.then(Modifier.graphicsLayer { translationY = ty })

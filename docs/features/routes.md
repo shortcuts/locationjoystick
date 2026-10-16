@@ -164,8 +164,8 @@ nearest *named* waypoint via the engine's boundary-index list rather than
 the nearest expanded point (road vertices, or planting-circle vertices). Not available for ephemeral (walk-here "Add next point") replay,
 which has no persisted waypoint list. Gated by `hideTeleportFeatures` like every other teleport entry point
 (docs/features/hide-teleport.md), **and** by a separate, independent
-opt-in toggle — `AppSettings.showRouteJumpButtons` (Settings → General →
-Privacy → "Show route jump buttons", DataStore key
+opt-in toggle — `AppSettings.showRouteJumpButtons` (Settings → Menus →
+App Features → "Show route jump buttons", DataStore key
 `show_route_jump_buttons`, default `false`). Both must allow the buttons
 for them to show: `!hideTeleportFeatures && showRouteJumpButtons`.
 Jumping to the last waypoint while replay is running lets it complete

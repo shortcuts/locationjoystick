@@ -354,13 +354,6 @@ private fun PrivacySection(
     )
     Spacer(Modifier.height(8.dp))
     LjCheckboxRow(
-        checked = uiState.showRouteJumpButtons,
-        onCheckedChange = { onAction(SettingsAction.SetShowRouteJumpButtons(it)) },
-        title = stringResource(R.string.settings_menus_show_route_jump_buttons),
-        description = stringResource(R.string.settings_menus_show_route_jump_buttons_desc),
-    )
-    Spacer(Modifier.height(8.dp))
-    LjCheckboxRow(
         checked = uiState.altitudeOverrideButtonEnabled,
         onCheckedChange = { onAction(SettingsAction.SetAltitudeOverrideButtonEnabled(it)) },
         title = stringResource(R.string.settings_menus_show_altitude_override_button),
