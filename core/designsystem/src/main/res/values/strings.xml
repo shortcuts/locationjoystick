@@ -59,12 +59,12 @@
     <string name="language_short_chinese">"CN"</string>
     <string name="language_short_traditional_chinese">"TW"</string>
     <string name="language_dropdown_cd">"Change language"</string>
-    <string name="compass_disclosure_title">"Accessibility permission: Tap to Walk and Reconnect accessory"</string>
-    <string name="compass_disclosure_intro">"locationjoystick uses Android’s Accessibility Service API for two optional features: Tap to Walk, which measures how your game’s map moves, and reconnecting your Bluetooth accessory. Nothing else in the app uses it."</string>
+    <string name="compass_disclosure_title">"Accessibility permission: off by default, optional"</string>
+    <string name="compass_disclosure_intro">"Everything here is off by default. locationjoystick uses Android’s Accessibility Service API only if you turn on one of two optional features: Tap to Walk, which measures how your game’s map moves, and Reconnect accessory, which reconnects the Bluetooth accessories linked to your game. While a feature is off, the app takes no screenshot and makes no tap for it. Nothing else in the app uses this API."</string>
     <string name="compass_disclosure_data">"Data accessed: screenshots of your screen. During a calibration walk you start yourself, about one every 3 seconds for about 10 minutes. One when you tap Test in Settings. About one a minute while Reconnect accessory is on."</string>
     <string name="compass_disclosure_purpose">"Why: to measure how your game’s map moves while the app walks your location, so your taps land where you tapped. To find your game’s compass icon when you tap Test. To see whether your accessory shows as disconnected."</string>
     <string name="compass_disclosure_handling">"Data collected or shared: none. Calibration screenshots are kept on your phone only until the calibration ends, then deleted. Other screenshots are checked on your phone and deleted at once. Nothing is sent anywhere. The service reads no text. It taps for you only on your accessory’s connect button, and only while Reconnect accessory is on."</string>
-    <string name="compass_disclosure_optional">"Tap Accept to open Android’s Accessibility settings and turn on the service. Tap Decline to keep it off. The rest of the app works without it. You can turn it off at any time."</string>
+    <string name="compass_disclosure_optional">"The app works fully if you tap Decline. Only these two features stay unavailable. Tap Accept to open Android’s Accessibility settings and turn on the service. Tap Decline to keep it off. You can turn it off at any time."</string>
     <string name="compass_disclosure_guide">"Read the Tap to Walk guide"</string>
     <string name="compass_disclosure_accept">"Accept"</string>
     <string name="compass_disclosure_decline">"Decline"</string>

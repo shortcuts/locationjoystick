@@ -160,7 +160,8 @@ accessory is on), the purpose (measuring how the game's map moves, the accessory
 state), and that calibration screenshots stay on the phone only until the calibration ends, other
 screenshots are deleted at once, and nothing is collected or shared. Play's policy requires the periodic
 screenshot to be named in this text, in the onboarding card and in the service description. Its title and body say
-"Accessibility" explicitly. It cannot be dismissed by back press or outside tap — only "Accept" or
+"Accessibility" explicitly, state that everything is off by default, that no screenshot or tap happens while
+the features (Tap to Walk, Reconnect accessory) are off, and that the app works fully after "Decline". It cannot be dismissed by back press or outside tap — only "Accept" or
 "Decline" (the wording from Play's prominent-disclosure guidance), plus a small "Skip" at the
 bottom right on the onboarding prompt only (`onSkip`). The body text scrolls while the buttons
 stay fixed at the bottom, so they are always visible. Only "Accept" opens
