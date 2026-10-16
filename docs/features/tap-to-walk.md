@@ -262,20 +262,23 @@ HUD stay sharp), blur 3x3, Sobel gradient magnitude; take the minimum over legs 
 edge = above 30. In the centre columns 0.42w to 0.58w, sum edges per row with a box of `max(3, 0.005h)`. In rows
 0.4h to 0.9h group rows into runs split by gaps over 0.05h (dark legs break the figure), keep the run with the most
 support (reject under `0.0005 * h * k`), drop rows under 0.1 of the run peak. x = mean edge column in the run; y =
-last run row minus 0.07 of the run height (sole edge to ground contact; the one tuned value).
+last run row minus 0.07 of the run height (sole edge to ground contact; the one tuned value). Then, if that row is
+more than 0.03h from the prior 0.6415h, the row is the screen-fixed range ring merged into the figure's run (NYC smoke,
+1695 against about 1556), so the prior is used instead and the fallback is printed by the bench. x is kept.
 
 Failure modes: a shadow below the sole lifts the last row; a companion sprite beside the player joins the run and
 shifts x; close-up zoom puts the anchor too high (see open work 2, not gated in code); a stationary HUD element in the
 centre column reads as figure; all legs parallel to one road keep road edges. Fallback: `null` means calibration
-failed, store nothing. There is no default anchor (feet differ per device and zoom: Pixel 5 542,1725 of 1080x2340;
-Pixel 7 538,1556 of 1080x2400).
+failed, store nothing. The row prior (0.6415h, tolerance 0.03h) is the only default anchor: it applies only when the
+detected row is outside the tolerance (feet differ per device and zoom: Pixel 5 542,1725 of 1080x2340; Pixel 7
+538,1556 of 1080x2400). Each use of the prior is a fallback to count; a frequent one counts as a failed registration.
 
 Invariants a change must not break:
 
 1. Constants and order equal the bench (`scripts/registration_bench.py` `detect_feet`); tests pin a bench-exported
    scene within 1.0 px (`scripts/export_feet_golden.py`; rerun when `detect_feet` changes).
 2. Input and output are device pixels; only `toReference` scales. No screen size, density or north is hardcoded.
-3. Parity, not improvement: fixing the close-up row is a separate bench-first change.
+3. Bench and Kotlin change together: the row prior and tolerance are the same constants in both (`PRIOR_FEET_FRAC`, `PRIOR_TOLERANCE`).
 
 ### Frame flow and ground fit
 
@@ -536,6 +539,13 @@ Open work, in order:
 2. Close-up (z1.6) landing is not met: p90 96.9 m on the Pixel 7, target under 10 m. Measured with `varycap --conditions 1.6:0` then `landing` without `--anchor`: feet pixel detected 509 1548, 928 samples, p50 22.6 m, p90 96.9 m, within 10 m 20%, within 15 m 34%, 66% of matches skipped as ambiguous. The wide capture on the same device gives p50 3.0 m, p90 9.9 m with the detected anchor. The detected feet row looks too high at close-up (sharp rows span 1149 to 1911, the detector stops at the torso/leg gap); widening the run gap to 0.12 moved the anchor to 1796 and made landing worse (p90 286.8 m), so the anchor is not the main error: the fit and the match step at close-up are. Needs a second device and a cause for the ambiguity at close-up before retrying.
 3. Ground map model ported (`GroundMap`, see "Ground map model"), feet detection ported (`FeetDetector`, see "Feet detection"), frame flow and fit ported (`FrameFlow`, `GroundMapFit`, see "Frame flow and ground fit"); the walked-leg capture and orchestration ported (`CalibrationWalkOrchestrator`, see "Calibration walk"); the tap overlay now reads the stored ground map (fallback north-up without one). The on-device analysis time is unmeasured (the pure port was only benchmarked on the host).
 4. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes. The proof command is `make tap-smoke` (docs/testing.md, "Tap-to-walk global smoke gate"): 20 fixed locations, 12 taps each, bar 19 of 20 locations with 11 of 12 within 15 m. A failing gate blocks the port entry and the "Prove tap-to-walk 100% reliable" entry. No full run has been recorded yet. The parity suite shows the port matches the bench on each recorded device; it does not show that the pass rate holds.
+
+Measured 2026-10-16 (Pixel 7, `make tap-smoke ONLY=1`, New York Times Square, wide zoom): the range-ring merge put the
+feet row at 1695 (about 1556 true), so calibration errors were 19.7 and 20.5 m on the failing taps. With the row prior
+the row is 1540 (prior fallback fired once), and the same location gives 2 passes (7.5, 10.3 m), 1 fail (16.8 m),
+1 unverified (14.0 m), 2 ambiguous, stopped at below_bar. Location 1 still fails its 11 of 12 bar. Not built: the
+retry / last-good / north-up fallback chain per tap (taps resolve from the stored calibration, which has no per-tap
+registration to retry) and the 5 s latency budget. Full 20-location gate not run.
 
 ## Warning Screen
 

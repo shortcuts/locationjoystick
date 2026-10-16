@@ -15,6 +15,7 @@ class FeetDetectorTest {
         feetFrac: Double,
         figure: Boolean = true,
         frames: Int = 4,
+        ringFrac: Double? = null,
     ): List<List<GrayFrame>> =
         listOf(0 to 9, 9 to 0).map { (dx, dy) ->
             (0 until frames).map { t ->
@@ -33,6 +34,20 @@ class FeetDetectorTest {
                     ) = (fy - top until fy).forEach { y -> (fx - hw..fx + hw).forEach { x -> p[y * w + x] = v } }
                     rect((0.02 * w).toInt(), (0.05 * h).toInt(), 255f)
                     rect((0.01 * w).toInt(), (0.04 * h).toInt(), 0f)
+                }
+                if (ringFrac != null) {
+                    val ry = (ringFrac * h).toInt()
+                    val fx = (0.5 * w).toInt()
+                    (ry until ry + (0.01 * h).toInt()).forEach { y ->
+                        (fx - (0.05 * w).toInt()..fx + (0.05 * w).toInt()).forEach { x ->
+                            p[
+                                y *
+                                    w +
+                                    x,
+                            ] =
+                                255f
+                        }
+                    }
                 }
                 GrayFrame(p)
             }
@@ -84,6 +99,17 @@ class FeetDetectorTest {
             assertNotNull(p)
             assertEquals(0.5 * w, p!!.x, 0.01 * w)
             assertEquals(0.66 * h, p.y, 0.01 * h)
+        }
+    }
+
+    @Test
+    fun ringMergedIntoFigureRunFallsBackToPrior() {
+        // A static bar 0.04h under the feet joins the figure's sharp run; the detected row (~0.70h) is outside
+        // the prior tolerance, so the feet row falls back to the prior (~0.64h), not the merged row.
+        for ((w, h) in listOf(1080 to 2400, 720 to 1600)) {
+            val p = FeetDetector.detect(legs(w, h, 0.66, ringFrac = 0.70), w, h)
+            assertNotNull(p)
+            assertEquals(0.66 * h, p!!.y, 0.025 * h)
         }
     }
 

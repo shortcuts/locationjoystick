@@ -306,8 +306,9 @@ def test_perspective_fit_recovers_known_camera_and_tap_round_trips():
     assert np.linalg.norm(g - want) < 1.5
 
 
-def _scrolling_legs(w, h, feet_frac, figure=True):
-    """Two legs of a scrolling blurred-noise world; an optional static, high-contrast figure above feet_frac."""
+def _scrolling_legs(w, h, feet_frac, figure=True, ring_frac=None):
+    """Two legs of a scrolling blurred-noise world; an optional static, high-contrast figure above feet_frac.
+    ring_frac adds a static bar (stand-in for the screen-fixed range ring) 0.04h under the feet, which merges into the figure's sharp run."""
     rng = np.random.default_rng(5)
     world = cv2.GaussianBlur(rng.integers(0, 256, (h + 400, w + 400), dtype=np.uint8), (0, 0), 6)
     legs = {}
@@ -320,6 +321,9 @@ def _scrolling_legs(w, h, feet_frac, figure=True):
                 fx, fy = int(0.5 * w), int(feet_frac * h)
                 cv2.rectangle(img, (fx - int(0.02 * w), fy - int(0.05 * h)), (fx + int(0.02 * w), fy), (255, 255, 255), -1)
                 cv2.rectangle(img, (fx - int(0.01 * w), fy - int(0.04 * h)), (fx + int(0.01 * w), fy), (0, 0, 0), -1)
+                if ring_frac is not None:
+                    ry = int(ring_frac * h)
+                    cv2.rectangle(img, (fx - int(0.05 * w), ry), (fx + int(0.05 * w), ry + int(0.01 * h)), (255, 255, 255), -1)
             fr.append({"img": img, "moving": True})
         legs[b] = fr
     return legs
@@ -330,6 +334,14 @@ def test_detect_feet_finds_static_figure_at_two_screen_sizes_and_none_without_on
         x, y = rb.detect_feet(_scrolling_legs(w, h, 0.66))
         assert abs(x - 0.5 * w) < 0.01 * w and abs(y - 0.66 * h) < 0.01 * h, (w, h, x, y)
     assert rb.detect_feet(_scrolling_legs(720, 1600, 0.66, figure=False)) is None
+
+
+def test_detect_feet_falls_back_to_prior_when_ring_merges_into_figure():
+    # Detected row ~0.70h (ring bar joined the figure's run) is far from the prior: the prior is used, not the merge.
+    for w, h in ((1080, 2400), (720, 1600)):
+        x, y = rb.detect_feet(_scrolling_legs(w, h, 0.66, ring_frac=0.70))
+        assert abs(y - 0.66 * h) < 0.025 * h, (w, h, y)  # merged ring would put it at ~0.70h
+        assert abs(x - 0.5 * w) < 0.01 * w, (w, h, x)
 
 
 def test_horizon_refit_drops_bands_above_the_horizon():

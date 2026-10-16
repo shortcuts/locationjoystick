@@ -1150,6 +1150,9 @@ FLOW_ROWS = [(0.21 + i * 0.49 / 7, 0.21 + (i + 1) * 0.49 / 7) for i in range(7)]
 FLOW_COLS = [(0.0, 1 / 3), (1 / 3, 2 / 3), (2 / 3, 1.0)]
 
 
+PRIOR_FEET_FRAC, PRIOR_TOLERANCE = 0.6415, 0.03  # feet row as a fraction of height (wide-zoom Pixel 7 runs: 0.635-0.648)
+
+
 def detect_feet(legs, thr=30.0, gap=0.05):
     """Player feet pixel (x, y) from the walked legs alone, or None when no figure is found.
 
@@ -1191,7 +1194,13 @@ def detect_feet(legs, thr=30.0, gap=0.05):
     run = [y for y in run if rows[y] >= 0.1 * rows[run].max()]
     ys_, xs_ = np.nonzero(e[run[0]:run[-1] + 1, x0:x1])
     # the last sharp row is the sole's lower edge; the ground contact sits 7% of the figure height above it
-    return float(x0 + xs_.mean()), float(run[-1] - 0.07 * (run[-1] - run[0]))
+    feet_y = float(run[-1] - 0.07 * (run[-1] - run[0]))
+    # The screen-fixed range ring under the figure is sharp too and can join its run (NYC smoke: 1695 vs ~1556).
+    # A feet row far from the prior is that merge: use the prior and count it (a frequent fallback = failed registration).
+    if abs(feet_y / h - PRIOR_FEET_FRAC) > PRIOR_TOLERANCE:
+        print(f"feet anchor: detected row {feet_y / h:.3f}h is outside the prior -> prior fallback")
+        feet_y = PRIOR_FEET_FRAC * h
+    return float(x0 + xs_.mean()), feet_y
 
 
 def clean_leg(frames, anchor, sprite_r=110):

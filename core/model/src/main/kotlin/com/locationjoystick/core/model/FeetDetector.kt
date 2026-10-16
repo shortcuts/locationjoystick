@@ -1,5 +1,6 @@
 package com.locationjoystick.core.model
 
+import kotlin.math.abs
 import kotlin.math.hypot
 
 /** Row-major gray frame, values 0..255, `width * height` floats (size is passed to [FeetDetector.detect]). */
@@ -36,6 +37,11 @@ object FeetDetector {
     private const val TAIL_FRACTION = 0.1 // drop run rows below this share of the strongest row
     private const val LIFT = 0.07 // ground contact sits 7% of figure height above the last sharp row (tuned)
     private const val MIN_FRAMES = 3 // a leg needs this many moving frames
+
+    // Feet row as a fraction of height (wide-zoom runs: 0.635-0.648). A row further than PRIOR_TOLERANCE is the
+    // screen-fixed range ring merged into the figure's run: use the prior instead. Mirrors registration_bench.py.
+    private const val PRIOR_FEET_FRAC = 0.6415
+    private const val PRIOR_TOLERANCE = 0.03
 
     /**
      * @param legs one list per walked leg, only frames recorded while moving, each `width * height`.
@@ -115,7 +121,9 @@ object FeetDetector {
             }
         }
         if (count == 0) return null
-        return FeetPixel(x0 + sum / count, last - LIFT * (last - first))
+        val feetY = last - LIFT * (last - first)
+        val y = if (abs(feetY / height - PRIOR_FEET_FRAC) > PRIOR_TOLERANCE) PRIOR_FEET_FRAC * height else feetY
+        return FeetPixel(x0 + sum / count, y)
     }
 
     /** Gradient magnitude of the blurred per-pixel temporal median of one leg. */
