@@ -227,17 +227,22 @@ tap_text_exact() {
 # the semantics tree and would otherwise ambiguate IdleScreen card taps.
 tap_text_below() {
   local text="$1" min_y="$2"
-  local dump centre x y
-  dump=$(ui_dump)
-  centre=$(perl -lne '
-    while (/(?:text|content-desc)="[^"]*'"${text}"'[^"]*"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/gi) {
-      my $cy = int(($2+$4)/2);
-      next if $cy < '"${min_y}"';
-      printf "%d %d\n", int(($1+$3)/2), $cy;
-      last;
-    }
-  ' "$dump" 2>/dev/null)
-  rm -f "$dump"
+  local dump centre x y attempt
+  # Launch is slow once the accessibility service is enabled; the first dump can miss the idle screen.
+  for attempt in 1 2 3; do
+    dump=$(ui_dump)
+    centre=$(perl -lne '
+      while (/(?:text|content-desc)="[^"]*'"${text}"'[^"]*"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/gi) {
+        my $cy = int(($2+$4)/2);
+        next if $cy < '"${min_y}"';
+        printf "%d %d\n", int(($1+$3)/2), $cy;
+        last;
+      }
+    ' "$dump" 2>/dev/null)
+    rm -f "$dump"
+    [[ -n "$centre" ]] && break
+    sleep 3
+  done
   if [[ -z "$centre" ]]; then
     warn "Could not find \"$text\" below y=$min_y — skipping tap."
     return 1
@@ -828,14 +833,20 @@ go_idle() {
 # Appends to enabled_accessibility_services so other services stay enabled.
 grant_tap_to_walk_accessibility() {
   local svc="${PACKAGE}/com.locationjoystick.feature.widget.impl.CompassAccessibilityService"
-  local current
-  current=$($ADB shell settings get secure enabled_accessibility_services | tr -d '\r')
-  if [[ -z "$current" || "$current" == "null" ]]; then
-    $ADB shell settings put secure enabled_accessibility_services "$svc"
-  elif [[ ":$current:" != *":$svc:"* ]]; then
-    $ADB shell settings put secure enabled_accessibility_services "$current:$svc"
-  fi
-  $ADB shell settings put secure accessibility_enabled 1
+  local current attempt
+  # The force-stop clears the grant asynchronously, so a list read right after it can still show the
+  # service; trust only the bound-service check and re-grant until it holds.
+  for attempt in 1 2 3 4 5; do
+    current=$($ADB shell settings get secure enabled_accessibility_services | tr -d '\r')
+    if [[ -z "$current" || "$current" == "null" ]]; then
+      $ADB shell settings put secure enabled_accessibility_services "$svc"
+    elif [[ ":$current:" != *":$svc:"* ]]; then
+      $ADB shell settings put secure enabled_accessibility_services "$current:$svc"
+    fi
+    $ADB shell settings put secure accessibility_enabled 1
+    sleep 2
+    $ADB shell dumpsys accessibility | grep -q "locationjoystick compass" && break
+  done
 }
 
 # Back out to IdleScreen without killing the app: go_idle's force-stop would
