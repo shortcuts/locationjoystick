@@ -1412,7 +1412,7 @@ fi
 # ── 21. Settings → Menus → Compass orientation section ──────────────────────
 # CompassOrientationSection renders below the Map scale slider (API 30+ only)
 # — off-screen in step 20's screenshot. Scroll further to capture the Game
-# app picker + Test button on their own.
+# app picker on its own (it feeds the Calibration section).
 
 if should_run_step "21"; then
   log "=== 21 COMPASS ORIENTATION ==="

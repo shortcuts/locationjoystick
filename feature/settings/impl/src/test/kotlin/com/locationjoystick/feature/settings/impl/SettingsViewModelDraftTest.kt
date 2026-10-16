@@ -8,7 +8,6 @@ import com.locationjoystick.core.data.HotLocationsRepository
 import com.locationjoystick.core.data.HotRoutesRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
-import com.locationjoystick.core.location.CompassHeadingSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.SpeedUnit
@@ -67,7 +66,6 @@ class SettingsViewModelDraftTest {
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
-                compassHeadingSource = CompassHeadingSource(settingsRepo),
                 calibrationWalkOrchestrator =
                     io.mockk.mockk(relaxed = true) {
                         io.mockk.every { state } returns

@@ -25,7 +25,6 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.location.CalibrationState
 import com.locationjoystick.core.location.CalibrationWalkOrchestrator
-import com.locationjoystick.core.location.CompassHeadingSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
@@ -79,7 +78,6 @@ class SettingsViewModel
         private val exportSyncServer: ExportSyncServer,
         private val exportSyncClient: ExportSyncClient,
         private val nsdCodeManager: NsdCodeManager,
-        private val compassHeadingSource: CompassHeadingSource,
         private val calibrationWalkOrchestrator: CalibrationWalkOrchestrator,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
@@ -632,9 +630,6 @@ class SettingsViewModel
         fun setThemeMode(mode: ThemeMode) {
             viewModelScope.launch { settingsRepository.setThemeMode(mode) }
         }
-
-        /** Runs actual detection so the user can verify the auto-located compass works on their device. */
-        suspend fun testCompassDetection(): Float? = compassHeadingSource.captureHeading()
 
         fun checkCompassServiceGranted() {
             val am = context.getSystemService(AccessibilityManager::class.java)

@@ -15,7 +15,6 @@ import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.datastore.toAppFeature
-import com.locationjoystick.core.location.CompassHeadingSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
@@ -85,7 +84,6 @@ class SettingsViewModelSaveTest {
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
-                compassHeadingSource = CompassHeadingSource(fakeSettingsRepo),
                 calibrationWalkOrchestrator =
                     io.mockk.mockk(relaxed = true) {
                         io.mockk.every { state } returns

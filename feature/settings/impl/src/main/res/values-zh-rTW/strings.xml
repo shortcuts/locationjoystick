@@ -133,12 +133,6 @@
     <string name="settings_menus_compass_service_enabled">"已啟用"</string>
     <string name="settings_menus_compass_service_not_enabled">"未啟用 — 點擊開啟 Android 設定"</string>
     <string name="settings_menus_select_app">"選取應用程式…"</string>
-    <string name="settings_menus_tap_test_to_switch_to">"點擊「測試」將切換至 %1$s、擷取其羅盤，然後返回此處。"</string>
-    <string name="settings_menus_select_the_game_above">"在上方選取遊戲，或先自行切換至該遊戲 — 然後點擊「測試」。應用程式會短暫最小化以擷取螢幕畫面，隨後返回。"</string>
-    <string name="settings_menus_testing">"測試中…"</string>
-    <string name="settings_menus_test">"測試"</string>
-    <string name="settings_menus_compass_detected">"已識別 — 正北與螢幕上方相差 %1$d°"</string>
-    <string name="settings_menus_compass_not_detected">"未識別 — 請確認遊戲的羅盤顯示在右上角"</string>
     <string name="settings_menus_app_features">"應用程式功能"</string>
     <string name="settings_menus_choose_which_quick_access_features_appea">"選擇哪些捷徑功能顯示在浮動小工具與地圖畫面上，並可拖曳排序。預設情況下兩個畫面共用同一順序。"</string>
     <string name="settings_menus_widget">"浮動小工具"</string>

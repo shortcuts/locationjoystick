@@ -146,12 +146,6 @@
     <string name="settings_menus_compass_service_enabled">"Enabled"</string>
     <string name="settings_menus_compass_service_not_enabled">"Not enabled — tap to open Android Settings"</string>
     <string name="settings_menus_select_app">"Select app…"</string>
-    <string name="settings_menus_tap_test_to_switch_to">"Tap Test to switch to %1$s, capture its compass, and return here."</string>
-    <string name="settings_menus_select_the_game_above">"Select the game above, or switch to it yourself first — then tap Test. The app briefly minimizes itself to capture whatever's on screen, then returns."</string>
-    <string name="settings_menus_testing">"Testing…"</string>
-    <string name="settings_menus_test">"Test"</string>
-    <string name="settings_menus_compass_detected">"Detected — north is %1$d° from up"</string>
-    <string name="settings_menus_compass_not_detected">"Not detected — make sure your game's compass is visible top-right"</string>
     <string name="settings_menus_app_features">"App Features"</string>
     <string name="settings_menus_choose_which_quick_access_features_appea">"Choose which quick-access features appear in the floating widget and on the map screen, and drag to reorder them. Both surfaces share the same order by default."</string>
     <string name="settings_menus_widget">"Widget"</string>

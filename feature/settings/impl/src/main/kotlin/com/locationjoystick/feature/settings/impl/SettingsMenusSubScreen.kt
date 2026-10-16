@@ -1,6 +1,5 @@
 package com.locationjoystick.feature.settings.impl
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
@@ -35,7 +34,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -69,8 +67,6 @@ import com.locationjoystick.core.model.FeatureSurface
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.feature.settings.impl.R
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import com.locationjoystick.core.designsystem.R as DesignR
 
@@ -84,7 +80,6 @@ internal fun SettingsMenusSubScreen(
     locationLabel: String? = null,
     onAction: (SettingsAction) -> Unit,
     onCheckCompassService: () -> Unit = {},
-    onTestCompassDetection: suspend () -> Float? = { null },
     calibrationState: CalibrationState = CalibrationState.Idle,
     groundCalibration: StoredGroundCalibration? = null,
     onStartCalibration: (String) -> Unit = {},
@@ -136,7 +131,6 @@ internal fun SettingsMenusSubScreen(
                             TapToWalkSection(
                                 uiState,
                                 onAction,
-                                onTestCompassDetection,
                                 calibrationState,
                                 groundCalibration,
                                 onStartCalibration,
@@ -160,7 +154,6 @@ internal fun SettingsMenusSubScreen(
 private fun TapToWalkSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
-    onTestCompassDetection: suspend () -> Float? = { null },
     calibrationState: CalibrationState = CalibrationState.Idle,
     groundCalibration: StoredGroundCalibration? = null,
     onStartCalibration: (String) -> Unit = {},
@@ -228,7 +221,7 @@ private fun TapToWalkSection(
         // takeScreenshot(int, Executor, TakeScreenshotCallback) requires API 30 — no fallback exists.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Spacer(Modifier.height(16.dp))
-            CompassOrientationSection(uiState, onAction, onTestCompassDetection, launchableApps)
+            CompassOrientationSection(uiState, onAction, launchableApps)
             if (uiState.isCompassServiceGranted) {
                 Spacer(Modifier.height(16.dp))
                 GroundCalibrationSection(uiState, calibrationState, groundCalibration, onStartCalibration, onCancelCalibration)
@@ -324,14 +317,9 @@ private fun openAccessibilitySettings(context: android.content.Context) {
 private fun CompassOrientationSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
-    onTestCompassDetection: suspend () -> Float? = { null },
     launchableApps: List<InstalledApp> = emptyList(),
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var hasTested by remember { mutableStateOf(false) }
-    var testAngle by remember { mutableStateOf<Float?>(null) }
-    var isTesting by remember { mutableStateOf(false) }
     var appPickerExpanded by remember { mutableStateOf(false) }
     var showDisclosure by rememberSaveable { mutableStateOf(false) }
     val selectedApp = launchableApps.find { it.packageName == uiState.compassTestTargetPackage }
@@ -424,74 +412,6 @@ private fun CompassOrientationSection(
                         },
                     )
                 }
-            }
-        }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            if (selectedApp != null) {
-                stringResource(R.string.settings_menus_tap_test_to_switch_to, selectedApp.label)
-            } else {
-                stringResource(R.string.settings_menus_select_the_game_above)
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            LjOutlinedButton(
-                onClick = {
-                    isTesting = true
-                    hasTested = false
-                    scope.launch {
-                        // Detection reads whatever is CURRENTLY on screen. With a selected app we launch
-                        // it directly; otherwise fall back to the old behavior — send ourselves to the
-                        // back, revealing whatever the user switched to themselves beforehand.
-                        val targetIntent = selectedApp?.let { context.packageManager.getLaunchIntentForPackage(it.packageName) }
-                        if (targetIntent != null) {
-                            context.startActivity(targetIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                        } else {
-                            (context as? Activity)?.moveTaskToBack(true)
-                        }
-                        delay(700)
-                        val angle = onTestCompassDetection()
-                        context.packageManager.getLaunchIntentForPackage(context.packageName)?.let {
-                            it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_NEW_TASK)
-                            context.startActivity(it)
-                        }
-                        testAngle = angle
-                        hasTested = true
-                        isTesting = false
-                    }
-                },
-                enabled = !isTesting,
-            ) {
-                Text(
-                    if (isTesting) {
-                        stringResource(R.string.settings_menus_testing)
-                    } else {
-                        stringResource(R.string.settings_menus_test)
-                    },
-                )
-            }
-            if (hasTested) {
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    if (testAngle != null) {
-                        stringResource(
-                            R.string.settings_menus_compass_detected,
-                            Math.toDegrees(testAngle!!.toDouble()).roundToInt(),
-                        )
-                    } else {
-                        stringResource(R.string.settings_menus_compass_not_detected)
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color =
-                        if (testAngle != null) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        },
-                )
             }
         }
     }

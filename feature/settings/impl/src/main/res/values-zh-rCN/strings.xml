@@ -146,12 +146,6 @@
     <string name="settings_menus_compass_service_enabled">"已启用"</string>
     <string name="settings_menus_compass_service_not_enabled">"未启用 — 点击打开 Android 设置"</string>
     <string name="settings_menus_select_app">"选择应用…"</string>
-    <string name="settings_menus_tap_test_to_switch_to">"点击“测试”将切换到 %1$s、截取其罗盘，然后返回此处。"</string>
-    <string name="settings_menus_select_the_game_above">"在上方选择游戏，或先自行切换到该游戏 — 然后点击“测试”。应用会短暂最小化以截取屏幕内容，随后返回。"</string>
-    <string name="settings_menus_testing">"测试中…"</string>
-    <string name="settings_menus_test">"测试"</string>
-    <string name="settings_menus_compass_detected">"已识别 — 正北与屏幕上方相差 %1$d°"</string>
-    <string name="settings_menus_compass_not_detected">"未识别 — 请确认游戏的罗盘显示在右上角"</string>
     <string name="settings_menus_app_features">"应用功能"</string>
     <string name="settings_menus_choose_which_quick_access_features_appea">"选择哪些快捷功能显示在悬浮窗和地图界面上，并可拖动排序。默认情况下两个界面共用同一顺序。"</string>
     <string name="settings_menus_widget">"悬浮窗"</string>

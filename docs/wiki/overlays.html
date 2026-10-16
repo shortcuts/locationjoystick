@@ -142,10 +142,10 @@
     <p>Meters per pixel on your screen. Range 0.01 to 1.0. Raise it for a zoomed-out game map and lower it for a zoomed-in one.</p>
     <p><strong>Default:</strong> 0.23</p>
     <h4 class="item" id="tap-to-walk-settings-compass-orientation">Compass orientation</h4>
-    <p>Lets the app take a picture of your screen. Calibration and Test need it. Uses an Android accessibility feature.</p>
+    <p>Lets the app take a picture of your screen. Calibration needs it. Uses an Android accessibility feature.</p>
     <p><strong>Default:</strong> Off</p>
     <h4 class="item" id="tap-to-walk-settings-game-app">Game app</h4>
-    <p>Pick your game from the list, then tap Test to check detection on your phone.</p>
+    <p>Pick the game that calibration runs in. Start calibration opens it for you.</p>
     <p><strong>Default:</strong> Select app</p>
     <h4 class="item" id="tap-to-walk-settings-calibration">Calibration</h4>
     <p>Teaches the app how your game's map moves. Start it once your game is chosen. See Calibrate Tap to Walk below.</p>
@@ -184,12 +184,11 @@
     <section class="has-shot">
     <h3 id="compass-orientation">Compass orientation</h3>
     <aside class="shot" id="compass-orientation-shot">
-      <img class="phone-shot" src="screenshots/21_compass_orientation.png" alt="Compass orientation settings with game app picker and Test button">
+      <img class="phone-shot" src="screenshots/21_compass_orientation.png" alt="Compass orientation settings with game app picker">
     </aside>
     <p>
       Tap to Walk uses a calibration walk (see Calibrate Tap to Walk below) to learn how your game's map moves, so the walk target lands correctly on a turned map.
-      The Test button finds your game's compass icon in the top-right corner to check that the screen can be read.
-      Both need the accessibility feature below.
+      Calibration needs the accessibility feature below.
     </p>
 
     <p><strong>Setup</strong></p>
@@ -241,9 +240,9 @@
 
     <p><strong>Check that it works</strong></p>
     <ol>
-      <li>Pick your game from the Game app list. Without a pick, switch to your game, switch back, then continue.</li>
-      <li>Tap Test. The app briefly switches to your game, takes one picture, looks for its compass, and returns.</li>
-      <li>The app shows the detected direction. If it finds nothing, make sure the compass is visible in the game.</li>
+      <li>Pick your game from the Game app list.</li>
+      <li>Tap Start calibration in the Calibration section. The app switches to your game and walks your character through a set route.</li>
+      <li>When it finishes, the section shows the date of the calibration. If it says the saved map is for a different screen size, calibrate again.</li>
     </ol>
     </section>
   </main>

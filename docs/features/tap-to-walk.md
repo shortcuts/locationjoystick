@@ -19,7 +19,7 @@ on whenever the accessibility service is granted (see "Compass Orientation" belo
 | `FLOATING_MAP_QUICK_WALK` | Boolean | `false` | Skip confirmation sheet on floating map taps (Settings → General → Privacy) |
 | `TAP_TO_WALK_OVERLAY_ENABLED` | Boolean | `false` | Show crosshair button in widget panel |
 | `TAP_TO_WALK_SCALE_MPX` | Double | `0.23` | Meters per pixel for pixel→GPS conversion (calibrated for a fully zoomed-out AR game map) |
-| `COMPASS_TEST_TARGET_PACKAGE` | String | `""` | Package the "Compass orientation" Test button switches to automatically. Empty = manual switch |
+| `COMPASS_TEST_TARGET_PACKAGE` | String | `""` | Game app picked in Settings → Menus → Tap to Walk. The calibration walk launches it. Empty = Start calibration disabled |
 | `TAP_TO_WALK_GROUND_CALIBRATION` | String (JSON) | absent | Latest calibration walk result (`StoredGroundCalibration`, see "Calibration walk"). Per-device, not part of `ExportData`; cleared by Reset All Data |
 | `COMPASS_DISCLOSURE_CHOICE` | String | `""` | The user's answer to the accessibility disclosure: `""` (unanswered), `accepted`, `declined` (`AppConstants.CompassTrackingConstants`). Per-device, not part of `ExportData` |
 
@@ -97,9 +97,9 @@ Invariants a change must not break:
 ## Compass Orientation
 
 `TapToWalkOverlay` no longer reads the compass heading: taps use the ground map (see "Pixel → GPS
-Formula"). The service, `CompassHeadingSource.captureHeading()`, the Settings **Test** button and the
-shared icon detection remain, and Reconnect accessory (docs/features/bluetooth-reconnect-tap.md) shares
-them. The text below describes that detection. **No manual calibration**: an earlier
+Formula"). The service, `CompassHeadingSource.captureHeading()` and the shared icon detection remain, and
+Reconnect accessory (docs/features/bluetooth-reconnect-tap.md) shares the detection. Settings no longer calls
+`captureHeading()` (the Test button is gone), so it has no Settings caller. The text below describes that detection. **No manual calibration**: an earlier
 version asked the user to drag a circle onto the compass and store its position/radius — that
 required precise calibration to avoid picking up unrelated red UI elements (a gym marker, a raid
 egg) nearby, and a bad calibration made detection "confused" (issue reported after that version
@@ -110,7 +110,7 @@ Key files: `:core:location/CompassHeadingSource.kt`, `:feature:widget:impl/Compa
 
 ### CompassHeadingSource
 
-`@Singleton` bridge owned by `:core:location`. `CompassAccessibilityService` calls `bind(this)` on connect and `unbind()` on disconnect. `FloatingWidgetService` calls `captureHeading()` which delegates to the live service; `SettingsViewModel.testCompassDetection()` calls the same method for the Settings screen's Test button (see "Verifying On-Device" below). `captureHeading()` retries up to 3 times, 500 ms apart, on any null result.
+`@Singleton` bridge owned by `:core:location`. `CompassAccessibilityService` calls `bind(this)` on connect and `unbind()` on disconnect. `captureHeading()` delegates to the live service and retries up to 3 times, 500 ms apart, on any null result.
 
 ### CompassAccessibilityService
 
@@ -141,25 +141,13 @@ Hardware bitmaps are copied to `ARGB_8888` before pixel access and recycled afte
 
 ### Verifying On-Device
 
-Settings → Menus → Tap to Walk → "Compass orientation" → **Test** button lets the user confirm
-detection works on their device/game without leaving Settings mid-session.
+The Settings Test button was removed. Settings no longer runs a compass check. Verify on device through the
+calibration walk (see "Calibration walk").
 
 A "Game app" picker (`SettingsViewModel.launchableApps`, queried once via
 `PackageManager.queryIntentActivities` on `ACTION_MAIN`/`CATEGORY_LAUNCHER`, excluding this app)
-lets the user select their game once — persisted live as `COMPASS_TEST_TARGET_PACKAGE`. With an
-app selected, tapping Test launches it directly (`getLaunchIntentForPackage` +
-`FLAG_ACTIVITY_NEW_TASK`) instead of relying on the user having switched to it themselves.
-
-Since `captureHeading()` screenshots whatever is *currently on screen* — which would otherwise be
-the Settings UI itself, not the game behind it — the Test button waits 700 ms after switching for
-the game to render, captures, then relaunches the app's own task
-(`FLAG_ACTIVITY_REORDER_TO_FRONT`) to return. Reports "Detected — north is N° from up" or "Not
-detected — make sure your game's compass is visible top-right".
-
-**No app selected (picker left on "Select app…")**: falls back to the original flow — the user
-switches to the game themselves, switches back to Settings, then taps Test, which briefly calls
-`Activity.moveTaskToBack(true)` (revealing the game, which sits directly behind Settings in the
-task stack after that switch sequence) instead of launching an intent.
+lets the user select their game once — persisted live as `COMPASS_TEST_TARGET_PACKAGE`. The calibration walk
+launches that app.
 
 ### Prominent Disclosure
 
@@ -167,8 +155,8 @@ Play's Accessibility API policy rejected releases that showed the disclosure onl
 sub-screen, or that let the accessibility service run without an in-app accept. `CompassDisclosureDialog`
 (`:core:designsystem`) is the single disclosure surface: a full-screen dialog that names the
 AccessibilityService API, the data it reads (screenshots, with their cadence: about one every 3 seconds for
-about 10 minutes during a calibration walk the user starts, one per Test tap, about one a minute while Reconnect
-accessory is on), the purpose (measuring how the game's map moves, the compass icon in Test, the accessory
+about 10 minutes during a calibration walk the user starts, about one a minute while Reconnect
+accessory is on), the purpose (measuring how the game's map moves, the accessory
 state), and that calibration screenshots stay on the phone only until the calibration ends, other
 screenshots are deleted at once, and nothing is collected or shared. Play's policy requires the periodic
 screenshot to be named in this text, in the onboarding card and in the service description. Its title and body say
@@ -466,7 +454,7 @@ Lives in Settings -> Menus -> Tap to Walk, as `GroundCalibrationSection` directl
 State comes from `SettingsViewModel.calibrationState` (the orchestrator's `state`) and `groundCalibration`; both
 sit outside the draft/save `SettingsUiState` because a calibration is not a setting.
 
-- Start button is disabled until the game app (the compass Test picker) is chosen. On tap the view model checks
+- Start button is disabled until the game app (the Game app picker) is chosen. On tap the view model checks
   `CalibrationWalkOrchestrator.isReady` first: not ready shows `NOT_READY` without leaving Settings. Otherwise it
   launches the game, waits `CALIBRATION_GAME_FOREGROUND_DELAY_MS` (3 s) and calls `start()`. The wait matters:
   `run()` takes its probe frame at once, and a probe of Settings fits a static screen (`IMPLAUSIBLE_FIT`).

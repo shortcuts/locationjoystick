@@ -10,7 +10,6 @@ import com.locationjoystick.core.data.HotLocationsRepository
 import com.locationjoystick.core.data.HotRoutesRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
-import com.locationjoystick.core.location.CompassHeadingSource
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import com.locationjoystick.core.testing.FakePreferencesDataStore
@@ -64,7 +63,6 @@ class SpeedProfileInputTest {
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
-                compassHeadingSource = CompassHeadingSource(SettingsRepository(fakeDataSource)),
                 calibrationWalkOrchestrator =
                     io.mockk.mockk(relaxed = true) {
                         io.mockk.every { state } returns
