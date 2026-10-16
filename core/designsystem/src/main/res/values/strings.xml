@@ -69,7 +69,7 @@
     <string name="compass_disclosure_accept">"Accept"</string>
     <string name="compass_disclosure_decline">"Decline"</string>
     <string name="compass_disclosure_skip">"Skip"</string>
-    <string name="delete_confirm_dialog_message_group">"The group is removed. Its items are kept and move to Ungrouped."</string>
+    <string name="delete_confirm_dialog_message_group">"Deleting the group keeps its items and moves them to Ungrouped."</string>
     <string name="grouped_list_ungrouped">"Ungrouped"</string>
     <string name="grouped_list_collapse_cd">"Collapse %1$s"</string>
     <string name="grouped_list_expand_cd">"Expand %1$s"</string>

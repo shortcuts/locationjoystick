@@ -5,8 +5,8 @@
     <string name="group_qr_scanner_back_cd">"Back"</string>
     <string name="group_sync_group_sync">"Group Sync"</string>
     <string name="group_sync_sync_your_fake_location_across_multiple">"Sync your fake location across multiple devices on the same Wi-Fi network. No account needed."</string>
-    <string name="group_sync_create_group_i_m_the_leader">"Create group — I'm the leader"</string>
-    <string name="group_sync_or_join_an_existing_group">"— or join an existing group —"</string>
+    <string name="group_sync_create_group_i_m_the_leader">"Create group: I'm the leader"</string>
+    <string name="group_sync_or_join_an_existing_group">"or join an existing group"</string>
     <string name="group_sync_scan_qr">"Scan QR"</string>
     <string name="group_sync_enter_code">"Enter code"</string>
     <string name="group_sync_enter_group_code">"Enter group code"</string>
@@ -25,8 +25,8 @@
     <string name="group_sync_follower_mode_resumes_when_you_open">"Follower mode resumes when you open the app after a reboot."</string>
     <string name="group_sync_teleport_to_leader_now">"Teleport to leader now"</string>
     <string name="group_sync_leave_group_2">"Leave group"</string>
-    <string name="group_sync_leader_position_not_yet_known">"Leader position not yet known — try again in a moment"</string>
-    <string name="group_sync_disconnected_from_group">"Disconnected from group — leader is no longer reachable"</string>
+    <string name="group_sync_leader_position_not_yet_known">"Leader position not known yet. Try again in a moment."</string>
+    <string name="group_sync_disconnected_from_group">"Disconnected from group. The leader is no longer reachable."</string>
     <string name="group_sync_code_must_be_characters">"Code must be %1$d characters"</string>
     <string name="group_sync_no_group_found_for_code">"No group found for code %1$s"</string>
     <string name="group_sync_invalid_group_qr_code">"Invalid group QR code"</string>

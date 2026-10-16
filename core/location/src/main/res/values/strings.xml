@@ -3,7 +3,7 @@
     <string name="notification_channel_name_active">"Location Spoofing"</string>
     <string name="notification_channel_desc_active">"Active while mock location is running"</string>
     <string name="notification_channel_name_active_minimized">"Location Spoofing (Minimized)"</string>
-    <string name="notification_channel_desc_active_minimized">"Active while mock location is running — hidden from the status bar"</string>
+    <string name="notification_channel_desc_active_minimized">"Active while mock location is running. Hidden from the status bar."</string>
     <string name="notification_channel_name_permission_error">"Permission Errors"</string>
     <string name="notification_channel_desc_permission_error">"Shown when required permissions are missing"</string>
     <string name="notification_title_permission_error">"Permissions missing"</string>
@@ -15,7 +15,7 @@
     <string name="notification_action_favorites">"Favorites"</string>
     <string name="notification_action_pause">"Pause"</string>
     <string name="notification_action_resume">"Resume"</string>
-    <string name="walk_to_start_fallback_message">"%1$s — using straight walk to the route start"</string>
-    <string name="walk_via_roads_fallback_message">"%1$s — using straight walk"</string>
-    <string name="ephemeral_replay_fallback_message">"%1$s — using straight line for part of the route"</string>
+    <string name="walk_to_start_fallback_message">"%1$s. Using a straight walk to the route start."</string>
+    <string name="walk_via_roads_fallback_message">"%1$s. Using a straight walk."</string>
+    <string name="ephemeral_replay_fallback_message">"%1$s. Using a straight line for part of the route."</string>
 </resources>

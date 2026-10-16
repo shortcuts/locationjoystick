@@ -20,7 +20,7 @@ The leader's group ID is a 6-character uppercase alphanumeric code (e.g. `AB3X9K
 ## Flow
 
 ### Create a group (leader)
-1. Open Group Sync screen → "Create group — I'm the leader".
+1. Open Group Sync screen → "Create group: I'm the leader".
 2. `GroupSyncViewModel.createGroup()` generates a 6-char code and sends `ACTION_START_LEADER`.
 3. `MockLocationService.enterLeaderMode(code)`:
    - Starts `LeaderSyncServer` (OS-assigned port).

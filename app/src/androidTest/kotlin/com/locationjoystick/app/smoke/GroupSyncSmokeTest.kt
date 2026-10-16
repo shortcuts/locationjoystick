@@ -42,7 +42,7 @@ class GroupSyncSmokeTest : BaseSmokeTest() {
 
     @Test
     fun shows_create_and_join_options() {
-        composeRule.onNodeWithText("Create group — I'm the leader").assertIsDisplayed()
+        composeRule.onNodeWithText("Create group: I'm the leader").assertIsDisplayed()
         composeRule.onNodeWithText("Scan QR").assertIsDisplayed()
         composeRule.onNodeWithText("Enter code").assertIsDisplayed()
     }
@@ -61,7 +61,7 @@ class GroupSyncSmokeTest : BaseSmokeTest() {
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Cancel").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Create group — I'm the leader").assertIsDisplayed()
+        composeRule.onNodeWithText("Create group: I'm the leader").assertIsDisplayed()
     }
 
     @Test
@@ -70,6 +70,6 @@ class GroupSyncSmokeTest : BaseSmokeTest() {
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Create group — I'm the leader").assertIsDisplayed()
+        composeRule.onNodeWithText("Create group: I'm the leader").assertIsDisplayed()
     }
 }

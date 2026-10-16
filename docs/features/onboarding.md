@@ -78,7 +78,7 @@ used for the mock-location check skip above.
 ## Skip Mock-Location Check
 
 Step 3's card ("Set as fake GPS app") has a secondary action, "Skip", next
-to the primary "Open Developer Options" button. Some modified mock-location
+to the primary "Open Developer options" button. Some modified mock-location
 apps evade `AppOpsManager` detection, so `isMockLocationEnabled()`
 (`core/common/util/AppOpsUtils.kt`) never reports `MODE_ALLOWED` for them
 even though mock location actually works. Tapping it shows a confirmation

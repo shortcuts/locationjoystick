@@ -73,7 +73,7 @@ class ControlApiDocsSmokeTest : BaseSmokeTest() {
 
     @Test
     fun leader_exposes_documented_api() {
-        composeRule.onNodeWithText("Create group — I'm the leader").performClick()
+        composeRule.onNodeWithText("Create group: I'm the leader").performClick()
         composeRule.waitUntil(10_000) { runBlocking { groupRepository.groupState.first().leaderPort } != null }
         val port = runBlocking { groupRepository.groupState.first().leaderPort!! }
 

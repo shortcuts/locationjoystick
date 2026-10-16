@@ -6,5 +6,5 @@
     <string name="osrm_failure_no_route_found">"No road route found"</string>
     <string name="osrm_failure_network_unavailable">"No network connection"</string>
     <string name="osrm_failure_unknown">"Road routing unavailable"</string>
-    <string name="routing_road_following_partial_fallback">"Road-following partially unavailable — %1$d of %2$d legs used straight-line paths"</string>
+    <string name="routing_road_following_partial_fallback">"Road-following partly unavailable. %1$d of %2$d legs used straight lines."</string>
 </resources>

@@ -44,7 +44,7 @@
     <string name="overlay_pause_roaming_cd">"Pause roaming"</string>
     <string name="overlay_start_roaming_cd">"Start roaming"</string>
     <string name="overlay_roaming_active_cd">"Roaming active"</string>
-    <string name="overlay_roaming_ignored_route_playing_cd">"Roaming ignored — a route is playing"</string>
+    <string name="overlay_roaming_ignored_route_playing_cd">"Roaming ignored. A route is playing."</string>
     <string name="widget_panel_tap_to_walk_cd">"Tap to walk"</string>
     <string name="widget_panel_altitude_override_cd">"Altitude override"</string>
     <string name="widget_panel_routes_title">"Routes"</string>

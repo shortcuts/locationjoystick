@@ -33,7 +33,7 @@
     <string name="widget_panel_content_paste_coordinates">"Paste coordinates"</string>
     <string name="widget_panel_content_roaming">"Roaming"</string>
     <string name="widget_delete_route_title">Delete route?</string>
-    <string name="widget_roaming_ignored_a_route_is_playing">"Roaming ignored — a route is playing"</string>
+    <string name="widget_roaming_ignored_a_route_is_playing">"Roaming ignored. A route is playing."</string>
     <string name="widget_roaming">"Roaming"</string>
     <string name="widget_resume_roaming">"Resume roaming"</string>
     <string name="widget_pause_roaming">"Pause roaming"</string>

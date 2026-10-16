@@ -19,7 +19,7 @@
     <string name="idle_routes_description">"Replay saved routes."</string>
     <string name="idle_favorites_description">"Teleport or walk to saved locations."</string>
     <string name="idle_group_sync_description">"Mirror your location to other devices on the same Wi-Fi."</string>
-    <string name="idle_settings_description">"Configure locationjoystick and spoof preferences."</string>
+    <string name="idle_settings_description">"Change app and spoofing settings."</string>
     <string name="whats_new_new_and_improved">"New &amp; Improved"</string>
     <string name="whats_new_fixes">"Fixes"</string>
     <string name="whats_new_what_s_new">"What's new"</string>

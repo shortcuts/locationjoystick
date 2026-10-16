@@ -457,7 +457,7 @@ sit outside the draft/save `SettingsUiState` because a calibration is not a sett
   `CalibrationWalkOrchestrator.isReady` first: not ready shows `NOT_READY` without leaving Settings. Otherwise it
   launches the game, waits `CALIBRATION_GAME_FOREGROUND_DELAY_MS` (3 s) and calls `start()`. The wait matters:
   `run()` takes its probe frame at once, and a probe of Settings fits a static screen (`IMPLAUSIBLE_FIT`).
-- Progress: "Walking leg L of 8" with a bar at `(L-1)/8`, then "Analysing step S of N". Cancel calls `cancel()`.
+- Progress: "Walking leg L of 8" with a bar at `(L-1)/8`, then "Analyzing step S of N". Cancel calls `cancel()`.
 - End: `Done` or `Failed` shows a toast over the game and brings the app's task to front, because the user spends
   the ten minutes inside the game. The same message stays in the section.
 - Failure copy: one string per `CalibrationFailure`, selected by the exhaustive `calibrationFailureMessageRes`
