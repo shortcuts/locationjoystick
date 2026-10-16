@@ -41,7 +41,7 @@ Why:
 Implemented changes:
 
 - `android:canPerformGestures="true"` in `compass_accessibility_service.xml`.
-- Disclosure copy (`compass_disclosure_*`, `accessibility_service_description`) names the periodic screenshot and the tap, and a separate `reconnect_tap_disclosure_accepted` flag forces re-acceptance.
+- Disclosure copy (`compass_disclosure_*`, `accessibility_service_description`) names the periodic screenshot and the tap, and a separate `reconnect_tap_disclosure_accepted` flag records the reconnect acceptance. The Reconnect accessory dialog is skipped once either that flag or the compass accessibility choice is accepted.
 - No manual trigger. While `reconnect_tap_enabled` (Settings > Menus > Reconnect accessory, default off) and both disclosure flags (`getReconnectTapDisclosureAccepted()`, `getCompassDisclosureAccepted()`) are true, `CompassAccessibilityService` runs a check every `ReconnectTapConstants.CHECK_INTERVAL_MS` (1 min in release; `DEBUG_CHECK_INTERVAL_MS`, 10 s, in debug builds; first check one interval after the loop starts). Turning any flag off cancels the loop at once.
 - The run logic is `runReconnectTap` in `ReconnectTapRunner.kt` (fake-driven unit tests); the detector is `ReconnectControlDetector`. The settings and consent flags are device-local and excluded from export.
 

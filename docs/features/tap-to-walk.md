@@ -191,10 +191,9 @@ The Map never auto-shows it, so existing installs see no change.
 The answer is persisted in `COMPASS_DISCLOSURE_CHOICE` (`accepted`, `declined`, `skipped`, or empty
 when unanswered). Only the onboarding auto-show is gated on "unanswered"; the Tap to Walk switch, the
 crosshair and the Settings row keep asking until the choice is `accepted`, so a Decline or Skip
-never locks the feature out.
-The Settings compass row's "Open Settings" button always prompts, because it is the one path that
-opens Android's accessibility consent screen, and Play requires the disclosure before every trip
-there.
+never locks the feature out. Once the choice is `accepted`, the Tap to Walk switch and the Settings
+compass row's "Open Settings" button skip the disclosure and act directly (`showsTapToWalkEnableDisclosure`,
+`showsCompassOpenSettingsDisclosure` in `SettingsMenusSubScreen.kt`).
 
 `CompassHeadingSource.captureHeading()` returns `null` until the choice is `accepted`. The consent
 check lives there, not at the call sites, because Android's accessibility settings can enable the
@@ -547,8 +546,8 @@ passing a dialog and then a disclosure screen. The confirm button turns the over
 "Accept" when the accessibility disclosure is part of the screen, and then also records the accept
 and opens `ACTION_ACCESSIBILITY_SETTINGS`. Below API 30, where only the caveats show, it reads
 "Enable anyway". "Decline" leaves the toggle off and records nothing — the user declined the
-feature, not the accessibility service. State is local (`rememberSaveable`) so the
-screen re-shows if the user disables and re-enables.
+feature, not the accessibility service. Once the accessibility choice is `accepted`, turning the switch
+on skips this screen and enables the overlay directly (`showsTapToWalkEnableDisclosure`).
 
 ## Anti-Patterns to Avoid
 
@@ -562,7 +561,7 @@ screen re-shows if the user disables and re-enables.
 
 ## Shared disclosure
 
-The accessibility disclosure also covers the Reconnect accessory feature (docs/features/bluetooth-reconnect-tap.md): its text names the periodic screenshot and the tap, and the service gained gesture capability (`canPerformGestures`). Accepting from the Tap to Walk switch does not enable the reconnect tap; that needs its own acceptance.
+The accessibility disclosure also covers the Reconnect accessory feature (docs/features/bluetooth-reconnect-tap.md): its text names the periodic screenshot and the tap, and the service gained gesture capability (`canPerformGestures`). Accepting from the Tap to Walk switch does not set the reconnect flag. Turning on Reconnect accessory asks for its own acceptance only while neither flag is accepted; once the accessibility choice is accepted, it records the reconnect acceptance without a dialog (`showsReconnectDisclosure`).
 
 ## Guided path
 

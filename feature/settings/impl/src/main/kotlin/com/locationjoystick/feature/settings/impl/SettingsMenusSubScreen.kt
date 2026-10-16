@@ -188,7 +188,7 @@ private fun TapToWalkSection(
         Switch(
             checked = enabled,
             onCheckedChange = { on ->
-                if (on) {
+                if (on && showsTapToWalkEnableDisclosure(uiState.compassDisclosureAccepted)) {
                     showEnableDisclosure = true
                 } else {
                     onAction(SettingsAction.SetTapToWalkOverlayEnabled(false))
@@ -286,10 +286,15 @@ private fun ReconnectTapSection(
         Switch(
             checked = uiState.reconnectTapEnabled,
             onCheckedChange = { on ->
-                if (on && !uiState.reconnectTapDisclosureAccepted) {
-                    showDisclosure = true
-                } else {
-                    onAction(SettingsAction.SetReconnectTapEnabled(on))
+                val acceptReconnect = {
+                    onAction(SettingsAction.AcceptReconnectTapDisclosure)
+                    if (!uiState.isCompassServiceGranted) openAccessibilitySettings(context)
+                }
+                when {
+                    on && showsReconnectDisclosure(uiState.reconnectTapDisclosureAccepted, uiState.compassDisclosureAccepted) ->
+                        showDisclosure = true
+                    on && !uiState.reconnectTapDisclosureAccepted -> acceptReconnect()
+                    else -> onAction(SettingsAction.SetReconnectTapEnabled(on))
                 }
             },
         )
@@ -306,6 +311,18 @@ private fun ReconnectTapSection(
         )
     }
 }
+
+// Per-feature disclosure dialogs are re-entry points for consent that is not yet given. Once the
+// relevant accepted flag is set they are skipped. The reconnect gate also accepts compass consent,
+// because reconnect is only allowed while compass consent is on.
+internal fun showsTapToWalkEnableDisclosure(compassAccepted: Boolean): Boolean = !compassAccepted
+
+internal fun showsReconnectDisclosure(
+    reconnectAccepted: Boolean,
+    compassAccepted: Boolean,
+): Boolean = !reconnectAccepted && !compassAccepted
+
+internal fun showsCompassOpenSettingsDisclosure(compassAccepted: Boolean): Boolean = !compassAccepted
 
 private fun openAccessibilitySettings(context: android.content.Context) {
     context.startActivity(
@@ -357,9 +374,13 @@ private fun CompassOrientationSection(
         if (!uiState.isCompassServiceGranted) {
             Spacer(Modifier.width(8.dp))
             LjButton(
-                // Play requires the disclosure before every trip to Android's accessibility consent
-                // screen, so a prior answer must not short-circuit it.
-                onClick = { showDisclosure = true },
+                onClick = {
+                    if (showsCompassOpenSettingsDisclosure(uiState.compassDisclosureAccepted)) {
+                        showDisclosure = true
+                    } else {
+                        openAccessibilitySettings(context)
+                    }
+                },
             ) { Text(stringResource(R.string.settings_menus_open_settings)) }
         }
     }
