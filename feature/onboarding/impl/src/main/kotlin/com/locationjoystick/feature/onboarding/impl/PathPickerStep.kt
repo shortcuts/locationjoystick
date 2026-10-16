@@ -3,22 +3,15 @@ package com.locationjoystick.feature.onboarding.impl
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -42,6 +34,9 @@ import com.locationjoystick.core.designsystem.component.LjGuidedStepCard
 import com.locationjoystick.core.designsystem.component.LjLanguageDropdown
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjSelectionMode
+import com.locationjoystick.core.designsystem.component.LjSelectionRow
+import com.locationjoystick.core.designsystem.component.LjSelectionStyle
 import com.locationjoystick.core.designsystem.component.WideContentClamp
 import com.locationjoystick.core.model.AppLanguage
 import com.locationjoystick.core.model.GuidedPath
@@ -128,11 +123,13 @@ internal fun PathPickerStep(
             Spacer(modifier = Modifier.height(12.dp))
 
             GuidedPath.entries.forEach { path ->
-                PathRow(
+                LjSelectionRow(
+                    mode = LjSelectionMode.Single,
+                    style = LjSelectionStyle.Card,
                     title = stringResource(path.titleRes()),
                     description = stringResource(path.descriptionRes()),
-                    selected = path == uiState.selectedPath,
-                    onClick = { onSelectPath(path) },
+                    checked = path == uiState.selectedPath,
+                    onCheckedChange = { onSelectPath(path) },
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -203,38 +200,6 @@ internal fun OnboardingCompassDisclosure(
             onSkipped()
         },
     )
-}
-
-@Composable
-private fun PathRow(
-    title: String,
-    description: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Card(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .selectable(selected = selected, onClick = onClick, role = Role.RadioButton),
-        border = if (selected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            RadioButton(selected = selected, onClick = null)
-            Column {
-                Text(text = title, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
 }
 
 private fun GuidedPath.titleRes(): Int =

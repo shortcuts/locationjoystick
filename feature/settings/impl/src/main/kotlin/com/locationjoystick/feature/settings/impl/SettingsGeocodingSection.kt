@@ -8,7 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.locationjoystick.core.designsystem.component.LjCheckboxRow
+import com.locationjoystick.core.designsystem.component.LjSelectionMode
+import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.feature.settings.impl.R
 
@@ -28,7 +29,8 @@ internal fun GeocodingSection(
     val enabledCount = GeocodingProviderId.entries.count { it !in uiState.disabledGeocodingProviders }
     GeocodingProviderId.entries.forEach { id ->
         val checked = id !in uiState.disabledGeocodingProviders
-        LjCheckboxRow(
+        LjSelectionRow(
+            mode = LjSelectionMode.Multi,
             checked = checked,
             title =
                 stringResource(

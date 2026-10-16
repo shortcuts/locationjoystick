@@ -4,7 +4,7 @@ Light and dark color themes, for readability across lighting conditions (e.g. di
 
 Design tokens and components: see [../design-system.md](../design-system.md).
 
-Key files: `:core:designsystem/LjColors.kt`, `:core:designsystem/LjTheme.kt`, `:core:designsystem/LjShapes.kt`, `:core:designsystem/LjTypography.kt`, `:core:designsystem/component/LjCard.kt`, `:core:designsystem/component/LjBottomSheet.kt`, `:core:designsystem/component/LjMapIconButton.kt`, `:core:designsystem/component/LjCheckboxRow.kt`, `:core:datastore/AppPreferencesDataSource.kt`, `:core:data/SettingsRepository.kt`, `:app/ThemeViewModel.kt`, `:app/MainActivity.kt`, `:feature:widget:impl/FloatingWidgetService.kt`, `:feature:widget:impl/WidgetPanelPresenter.kt`
+Key files: `:core:designsystem/LjColors.kt`, `:core:designsystem/LjTheme.kt`, `:core:designsystem/LjShapes.kt`, `:core:designsystem/LjTypography.kt`, `:core:designsystem/component/LjCard.kt`, `:core:designsystem/component/LjBottomSheet.kt`, `:core:designsystem/component/LjMapIconButton.kt`, `:core:designsystem/component/LjSelectionRow.kt`, `:core:datastore/AppPreferencesDataSource.kt`, `:core:data/SettingsRepository.kt`, `:app/ThemeViewModel.kt`, `:app/MainActivity.kt`, `:feature:widget:impl/FloatingWidgetService.kt`, `:feature:widget:impl/WidgetPanelPresenter.kt`
 
 ## Modes
 

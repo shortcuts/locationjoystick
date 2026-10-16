@@ -93,7 +93,7 @@ All in `core/designsystem/.../component/`. Prefer these over raw Material3.
 | `LjMapIconButton` | Round control over the map | Off-map screens |
 | `LjShareLocationAction` | Share icon that expands inline to copy coordinates / share link (works in overlay windows) | Sharing non-location content |
 | `LjSegmentedControl` | 2-4 mutually exclusive options | Long option lists |
-| `LjCheckboxRow` | Boolean option with label | Immediate on/off settings with side effects |
+| `LjSelectionRow` | Single (radio), multi (checkbox) or toggle (switch) option with label; `LjSelectionMode` picks the control, `LjSelectionStyle` picks Card (bordered when selected, for step-level choices) or Flat (inside lists and sheets) | Any labelled choice or on/off setting; whole row is the tap target |
 | `LjLanguageDropdown` | Language choice | Other pickers |
 | `LjGuidedStepCard` | Setup step with status | General info cards |
 | `LjRouteStartOptions`, `RouteStartSheetContent` | Route start options (shared by map and widget) | Anything else |

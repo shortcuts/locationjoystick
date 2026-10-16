@@ -57,7 +57,8 @@ fun LjRouteStartCheckboxes(
     // Teleport between waypoints fit a phone sheet without scrolling past Start.
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            LjCheckboxRow(
+            LjSelectionRow(
+                mode = LjSelectionMode.Multi,
                 title = stringResource(R.string.route_start_options_loop),
                 checked = loop || planting,
                 enabled = enabled && !returnToLocation && !planting,
@@ -65,7 +66,8 @@ fun LjRouteStartCheckboxes(
                 textColor = textColor,
             )
             if (showPlanting) {
-                LjCheckboxRow(
+                LjSelectionRow(
+                    mode = LjSelectionMode.Multi,
                     title = stringResource(R.string.lj_route_start_options_planting),
                     checked = planting,
                     enabled = enabled && !isTeleportRoute && !plantingLocked,
@@ -73,21 +75,24 @@ fun LjRouteStartCheckboxes(
                     textColor = textColor,
                 )
             }
-            LjCheckboxRow(
+            LjSelectionRow(
+                mode = LjSelectionMode.Multi,
                 title = stringResource(R.string.route_start_options_reverse),
                 checked = reverse,
                 enabled = enabled,
                 onCheckedChange = onReverseChange,
                 textColor = textColor,
             )
-            LjCheckboxRow(
+            LjSelectionRow(
+                mode = LjSelectionMode.Multi,
                 title = stringResource(R.string.lj_route_start_options_return_to_location),
                 checked = returnToLocation && !planting,
                 enabled = enabled && !loop && !planting,
                 onCheckedChange = onReturnToLocationChange,
                 textColor = textColor,
             )
-            LjCheckboxRow(
+            LjSelectionRow(
+                mode = LjSelectionMode.Multi,
                 title = stringResource(R.string.lj_route_start_options_follow_roads),
                 checked = followRoads,
                 enabled = enabled && !isTeleportRoute && !followRoadsLocked,
@@ -95,7 +100,8 @@ fun LjRouteStartCheckboxes(
                 textColor = textColor,
             )
             if (!hideTeleport && !isTeleportRoute) {
-                LjCheckboxRow(
+                LjSelectionRow(
+                    mode = LjSelectionMode.Multi,
                     title = stringResource(R.string.lj_route_start_options_teleport_between_waypoints),
                     checked = teleportBetweenWaypoints,
                     enabled = enabled,

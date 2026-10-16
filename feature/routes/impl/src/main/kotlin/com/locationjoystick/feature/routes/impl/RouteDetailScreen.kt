@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,7 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,6 +54,8 @@ import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjSelectionMode
+import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.Route
@@ -385,27 +385,15 @@ fun RouteDetailScreen(
                             var radiusText by remember(route!!.id) {
                                 mutableStateOf(plantingRadius?.toInt()?.toString().orEmpty())
                             }
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    stringResource(R.string.route_detail_planting),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                Switch(
-                                    checked = plantingRadius != null,
-                                    onCheckedChange = { on ->
-                                        if (!on) radiusText = ""
-                                        viewModel.setPlanting(on)
-                                    },
-                                )
-                            }
-                            Text(
-                                stringResource(R.string.route_detail_planting_description),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            LjSelectionRow(
+                                mode = LjSelectionMode.Toggle,
+                                title = stringResource(R.string.route_detail_planting),
+                                description = stringResource(R.string.route_detail_planting_description),
+                                checked = plantingRadius != null,
+                                onCheckedChange = { on ->
+                                    if (!on) radiusText = ""
+                                    viewModel.setPlanting(on)
+                                },
                             )
                             if (plantingRadius != null) {
                                 OutlinedTextField(
@@ -427,24 +415,12 @@ fun RouteDetailScreen(
                     if (isTeleportRoute) {
                         if (route!!.plantingRadiusMeters == null) {
                             item {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        stringResource(R.string.route_detail_randomize_order),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                    Switch(
-                                        checked = route!!.randomizeTeleportOrder,
-                                        onCheckedChange = { viewModel.setRandomizeTeleportOrder(it) },
-                                    )
-                                }
-                                Text(
-                                    stringResource(R.string.route_detail_randomize_order_description),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                LjSelectionRow(
+                                    mode = LjSelectionMode.Toggle,
+                                    title = stringResource(R.string.route_detail_randomize_order),
+                                    description = stringResource(R.string.route_detail_randomize_order_description),
+                                    checked = route!!.randomizeTeleportOrder,
+                                    onCheckedChange = { viewModel.setRandomizeTeleportOrder(it) },
                                 )
                             }
                         }

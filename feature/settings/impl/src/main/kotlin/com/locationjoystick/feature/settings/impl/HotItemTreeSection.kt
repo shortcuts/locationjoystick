@@ -20,7 +20,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.component.LjCheckboxRow
+import com.locationjoystick.core.designsystem.component.LjSelectionMode
+import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.feature.settings.impl.R
 
 /**
@@ -142,7 +143,8 @@ internal fun HotItemTreeSection(
 
                 if (hasMultiple && isCityExpanded) {
                     items.forEach { entry ->
-                        LjCheckboxRow(
+                        LjSelectionRow(
+                            mode = LjSelectionMode.Multi,
                             checked = entry.id in selectedIds,
                             onCheckedChange = { isChecked ->
                                 val updated = selectedIds.toMutableSet()

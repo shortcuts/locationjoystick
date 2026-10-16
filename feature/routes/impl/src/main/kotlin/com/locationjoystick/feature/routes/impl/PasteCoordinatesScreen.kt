@@ -21,7 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -54,11 +53,12 @@ import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjCard
-import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSegmentedControl
+import com.locationjoystick.core.designsystem.component.LjSelectionMode
+import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.readPlainText
 import com.locationjoystick.core.location.rememberSpoofToggleState
@@ -355,7 +355,8 @@ internal fun PasteCoordinatesScreen(
                                 )
                             },
                         )
-                        LjCheckboxRow(
+                        LjSelectionRow(
+                            mode = LjSelectionMode.Multi,
                             checked = state.swapLatLon,
                             onCheckedChange = onSwapLatLonChange,
                             title = stringResource(R.string.paste_coordinates_screen_swap_lat_lon_order),
@@ -446,14 +447,12 @@ internal fun PasteCoordinatesScreen(
                         }
 
                         if (state.showPlanting) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    stringResource(R.string.paste_planting_toggle),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                Switch(checked = state.plantingEnabled, onCheckedChange = onPlantingEnabledChange)
-                            }
+                            LjSelectionRow(
+                                mode = LjSelectionMode.Toggle,
+                                title = stringResource(R.string.paste_planting_toggle),
+                                checked = state.plantingEnabled,
+                                onCheckedChange = onPlantingEnabledChange,
+                            )
                         }
 
                         if (state.plantingEnabled) {

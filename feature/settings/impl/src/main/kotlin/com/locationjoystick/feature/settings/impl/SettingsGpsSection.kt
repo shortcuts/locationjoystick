@@ -22,7 +22,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.component.LjButton
-import com.locationjoystick.core.designsystem.component.LjCheckboxRow
+import com.locationjoystick.core.designsystem.component.LjSelectionMode
+import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.feature.settings.impl.R
 import kotlin.math.roundToInt
 
@@ -186,13 +187,15 @@ internal fun GpsRealismSection(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(modifier = Modifier.height(8.dp))
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.realismBearingHoldIdle,
         onCheckedChange = { onAction(SettingsAction.SetRealismBearingHoldIdle(it)) },
         title = stringResource(R.string.settings_gps_section_hold_bearing_when_stationary),
         description = stringResource(R.string.settings_gps_section_hold_bearing_when_stationary_desc),
     )
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.realismAltitudeEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismAltitudeEnabled(it)) },
         title = stringResource(R.string.settings_gps_section_vary_altitude),
@@ -212,7 +215,8 @@ internal fun GpsRealismSection(
         )
         Spacer(modifier = Modifier.height(4.dp))
     }
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.realismRealElevationEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismRealElevationEnabled(it)) },
         title = stringResource(R.string.settings_gps_section_use_real_world_elevation),
@@ -231,19 +235,22 @@ internal fun GpsRealismSection(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(modifier = Modifier.height(8.dp))
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.realismWarmupEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismWarmupEnabled(it)) },
         title = stringResource(R.string.settings_gps_section_gps_warm_up_simulation),
         description = stringResource(R.string.settings_gps_section_gps_warm_up_simulation_desc),
     )
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.realismSatelliteExtrasEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismSatelliteExtrasEnabled(it)) },
         title = stringResource(R.string.settings_gps_section_realistic_satellite_count),
         description = stringResource(R.string.settings_gps_section_realistic_satellite_count_desc),
     )
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.realismSuspendedMockingEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismSuspendedMockingEnabled(it)) },
         title = stringResource(R.string.settings_gps_section_simulate_signal_dropouts),

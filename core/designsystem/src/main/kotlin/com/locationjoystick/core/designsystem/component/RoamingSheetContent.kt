@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -221,26 +220,20 @@ fun RoamingSheetContent(
             Spacer(Modifier.height(8.dp))
 
             Row(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                LjSelectionRow(
+                    mode = LjSelectionMode.Multi,
+                    checked = draft.followRoads,
+                    onCheckedChange = { onDraftChange(draft.copy(followRoads = it)) },
+                    title = stringResource(R.string.roaming_sheet_follow_roads),
                     modifier = Modifier.weight(1f),
-                ) {
-                    Checkbox(
-                        checked = draft.followRoads,
-                        onCheckedChange = { onDraftChange(draft.copy(followRoads = it)) },
-                    )
-                    Text(stringResource(R.string.roaming_sheet_follow_roads), style = MaterialTheme.typography.bodyMedium, color = LjText)
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                )
+                LjSelectionRow(
+                    mode = LjSelectionMode.Multi,
+                    checked = draft.returnToInitialLocation,
+                    onCheckedChange = { onDraftChange(draft.copy(returnToInitialLocation = it)) },
+                    title = stringResource(R.string.roaming_sheet_return_to_start),
                     modifier = Modifier.weight(1f),
-                ) {
-                    Checkbox(
-                        checked = draft.returnToInitialLocation,
-                        onCheckedChange = { onDraftChange(draft.copy(returnToInitialLocation = it)) },
-                    )
-                    Text(stringResource(R.string.roaming_sheet_return_to_start), style = MaterialTheme.typography.bodyMedium)
-                }
+                )
             }
         } else {
             Text(stringResource(R.string.roaming_sheet_content_planting), style = MaterialTheme.typography.titleMedium)
@@ -321,28 +314,22 @@ fun RoamingSheetContent(
             )
             Spacer(Modifier.height(8.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            LjSelectionRow(
+                mode = LjSelectionMode.Multi,
+                checked = draft.plantingExpandOnly,
+                onCheckedChange = { onDraftChange(draft.copy(plantingExpandOnly = it)) },
+                title = stringResource(R.string.roaming_sheet_content_expand_only),
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Checkbox(
-                    checked = draft.plantingExpandOnly,
-                    onCheckedChange = { onDraftChange(draft.copy(plantingExpandOnly = it)) },
-                )
-                Text(stringResource(R.string.roaming_sheet_content_expand_only), style = MaterialTheme.typography.bodyMedium)
-            }
+            )
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            LjSelectionRow(
+                mode = LjSelectionMode.Multi,
+                checked = draft.plantingInfiniteLoops,
+                onCheckedChange = { onDraftChange(draft.copy(plantingInfiniteLoops = it)) },
+                title = stringResource(R.string.roaming_sheet_content_infinite_loop),
+                enabled = !draft.plantingExpandOnly,
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Checkbox(
-                    checked = draft.plantingInfiniteLoops,
-                    onCheckedChange = { onDraftChange(draft.copy(plantingInfiniteLoops = it)) },
-                    enabled = !draft.plantingExpandOnly,
-                )
-                Text(stringResource(R.string.roaming_sheet_content_infinite_loop), style = MaterialTheme.typography.bodyMedium)
-            }
+            )
 
             if (!draft.plantingInfiniteLoops) {
                 Spacer(Modifier.height(8.dp))

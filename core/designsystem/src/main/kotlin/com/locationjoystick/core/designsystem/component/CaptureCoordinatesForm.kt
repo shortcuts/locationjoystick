@@ -1,7 +1,6 @@
 package com.locationjoystick.core.designsystem.component
 
 import android.widget.Toast
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -19,8 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -283,25 +280,22 @@ fun CaptureToggleStep(
             modifier = Modifier.padding(LjSpacing.md),
             verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().clickable { onCaptureModeEnabledChange(!captureModeEnabled) },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    stringResource(R.string.capture_coordinates_form_capture_mode),
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.weight(1f),
-                )
-                Switch(checked = captureModeEnabled, onCheckedChange = onCaptureModeEnabledChange)
-            }
-            LjCheckboxRow(
+            LjSelectionRow(
+                mode = LjSelectionMode.Toggle,
+                checked = captureModeEnabled,
+                onCheckedChange = onCaptureModeEnabledChange,
+                title = stringResource(R.string.capture_coordinates_form_capture_mode),
+            )
+            LjSelectionRow(
+                mode = LjSelectionMode.Multi,
                 checked = captureEnabled,
                 onCheckedChange = onCaptureEnabledChange,
                 title = stringResource(R.string.capture_coordinates_form_list),
                 description = stringResource(R.string.capture_coordinates_form_add_each_location_to_the_list),
                 enabled = captureModeEnabled,
             )
-            LjCheckboxRow(
+            LjSelectionRow(
+                mode = LjSelectionMode.Multi,
                 checked = jumpEnabled,
                 onCheckedChange = onJumpEnabledChange,
                 title = stringResource(R.string.capture_coordinates_form_jump),
@@ -346,7 +340,8 @@ fun CaptureRestoreDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.capture_restore_dialog_title)) },
         text = {
-            LjCheckboxRow(
+            LjSelectionRow(
+                mode = LjSelectionMode.Multi,
                 checked = understood,
                 onCheckedChange = { understood = it },
                 title = stringResource(R.string.capture_restore_dialog_checkbox),
@@ -420,23 +415,15 @@ fun ColumnScope.CapturePassThroughRow(state: CaptureSetupState) {
             text = {
                 Column {
                     state.browserChoices.forEach { choice ->
-                        Row(
-                            modifier =
-                                Modifier.clickable {
-                                    state.onSelectBrowser(choice.packageName)
-                                    showBrowserPicker = false
-                                },
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(
-                                selected = choice.packageName == state.selectedBrowserPackage,
-                                onClick = {
-                                    state.onSelectBrowser(choice.packageName)
-                                    showBrowserPicker = false
-                                },
-                            )
-                            Text(choice.label)
-                        }
+                        LjSelectionRow(
+                            mode = LjSelectionMode.Single,
+                            checked = choice.packageName == state.selectedBrowserPackage,
+                            onCheckedChange = {
+                                state.onSelectBrowser(choice.packageName)
+                                showBrowserPicker = false
+                            },
+                            title = choice.label,
+                        )
                     }
                 }
             },

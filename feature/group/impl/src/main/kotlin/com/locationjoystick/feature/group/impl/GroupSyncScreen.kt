@@ -24,7 +24,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +56,8 @@ import com.locationjoystick.core.designsystem.component.LjCard
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjSelectionMode
+import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.WideContentClamp
 import com.locationjoystick.core.designsystem.component.cooldownBadgeText
@@ -581,23 +582,16 @@ private fun SwitchRow(
     onCheckedChange: (Boolean) -> Unit,
     enabled: Boolean = true,
 ) {
-    LjCard(
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = label, style = MaterialTheme.typography.titleSmall)
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
-        }
+    LjCard(modifier = Modifier.fillMaxWidth()) {
+        LjSelectionRow(
+            mode = LjSelectionMode.Toggle,
+            title = label,
+            description = description,
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
     }
 }
 

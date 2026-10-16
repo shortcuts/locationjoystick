@@ -31,9 +31,10 @@ import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSegmentedControl
+import com.locationjoystick.core.designsystem.component.LjSelectionMode
+import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
@@ -90,7 +91,8 @@ internal fun SettingsGpsSubScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        LjCheckboxRow(
+                        LjSelectionRow(
+                            mode = LjSelectionMode.Multi,
                             checked = uiState.rememberLastLocation,
                             onCheckedChange = { onAction(SettingsAction.SetRememberLastLocation(it)) },
                             title = stringResource(R.string.settings_gps_remember_last_location),

@@ -1,13 +1,11 @@
 package com.locationjoystick.feature.settings.impl
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,8 +21,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,15 +34,16 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
-import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjLanguageDropdown
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjSelectionMode
+import com.locationjoystick.core.designsystem.component.LjSelectionRow
+import com.locationjoystick.core.designsystem.component.LjSelectionStyle
 import com.locationjoystick.core.model.AppLanguage
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.MapTileSource
@@ -139,41 +135,14 @@ private fun GuidedPathSection(
     Spacer(Modifier.height(8.dp))
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         GuidedPath.entries.forEach { path ->
-            GuidedPathRow(
+            LjSelectionRow(
+                mode = LjSelectionMode.Single,
+                style = LjSelectionStyle.Card,
                 title = stringResource(path.titleRes()),
                 description = stringResource(path.descriptionRes()),
-                selected = path == uiState.guidedPath,
-                onClick = { onAction(SettingsAction.SetGuidedPath(path)) },
+                checked = path == uiState.guidedPath,
+                onCheckedChange = { onAction(SettingsAction.SetGuidedPath(path)) },
             )
-        }
-    }
-}
-
-@Composable
-private fun GuidedPathRow(
-    title: String,
-    description: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth().selectable(selected = selected, onClick = onClick, role = Role.RadioButton),
-        border = if (selected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            RadioButton(selected = selected, onClick = null)
-            Column {
-                Text(text = title, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         }
     }
 }
@@ -300,22 +269,14 @@ private fun ThemeSection(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(Modifier.height(8.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            stringResource(R.string.settings_menus_light_mode),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        Switch(
-            checked = uiState.themeMode == ThemeMode.LIGHT,
-            onCheckedChange = { light ->
-                onAction(SettingsAction.SetThemeMode(if (light) ThemeMode.LIGHT else ThemeMode.DARK))
-            },
-        )
-    }
+    LjSelectionRow(
+        mode = LjSelectionMode.Toggle,
+        title = stringResource(R.string.settings_menus_light_mode),
+        checked = uiState.themeMode == ThemeMode.LIGHT,
+        onCheckedChange = { light ->
+            onAction(SettingsAction.SetThemeMode(if (light) ThemeMode.LIGHT else ThemeMode.DARK))
+        },
+    )
 }
 
 @Composable
@@ -325,28 +286,32 @@ private fun PrivacySection(
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_menus_privacy))
     Spacer(Modifier.height(4.dp))
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.hideTeleportFeatures,
         onCheckedChange = { onAction(SettingsAction.SetHideTeleportFeatures(it)) },
         title = stringResource(R.string.settings_menus_hide_teleport_features),
         description = stringResource(R.string.settings_menus_hide_teleport_features_desc),
     )
     Spacer(Modifier.height(8.dp))
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.floatingMapQuickWalk,
         onCheckedChange = { onAction(SettingsAction.SetFloatingMapQuickWalk(it)) },
         title = stringResource(R.string.settings_menus_floating_map_quick_walk),
         description = stringResource(R.string.settings_menus_floating_map_quick_walk_desc),
     )
     Spacer(Modifier.height(8.dp))
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.hideWidgetOverlay,
         onCheckedChange = { onAction(SettingsAction.SetHideWidgetOverlay(it)) },
         title = stringResource(R.string.settings_menus_hide_floating_widget),
         description = stringResource(R.string.settings_menus_hide_floating_widget_desc),
     )
     Spacer(Modifier.height(8.dp))
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.hideForegroundNotification,
         onCheckedChange = { onAction(SettingsAction.SetHideForegroundNotification(it)) },
         title = stringResource(R.string.settings_menus_hide_notification_icon),
@@ -361,7 +326,8 @@ private fun DebugSection(
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_menus_debug))
     Spacer(Modifier.height(4.dp))
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.debugStatsEnabled,
         onCheckedChange = { onAction(SettingsAction.SetDebugStatsEnabled(it)) },
         title = stringResource(R.string.settings_menus_debug_stats),

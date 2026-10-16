@@ -19,8 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjSelectionMode
+import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.feature.settings.impl.R
 
@@ -88,7 +89,8 @@ private fun FavoritesSection(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(modifier = Modifier.height(8.dp))
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.hotLocationsEnabled,
         onCheckedChange = { onAction(SettingsAction.SetHotLocationsEnabled(it)) },
         title = stringResource(R.string.settings_favorites_routes_show_hot_locations),
@@ -119,7 +121,8 @@ private fun RoutesSection(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(modifier = Modifier.height(8.dp))
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.hotRoutesEnabled,
         onCheckedChange = { onAction(SettingsAction.SetHotRoutesEnabled(it)) },
         title = stringResource(R.string.settings_favorites_routes_show_hot_routes),

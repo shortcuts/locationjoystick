@@ -27,9 +27,10 @@ import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSegmentedControl
+import com.locationjoystick.core.designsystem.component.LjSelectionMode
+import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
@@ -185,13 +186,15 @@ private fun RoamingSection(
         modifier = Modifier.fillMaxWidth(),
     )
 
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = roamingDefaults.followRoads,
         onCheckedChange = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(followRoads = it))) },
         title = stringResource(R.string.settings_roaming_follow_roads),
         description = stringResource(R.string.settings_roaming_follow_roads_desc),
     )
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = roamingDefaults.returnToInitialLocation,
         onCheckedChange = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(returnToInitialLocation = it))) },
         title = stringResource(R.string.settings_roaming_return_to_start),
@@ -305,14 +308,16 @@ private fun RoamingSection(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        LjCheckboxRow(
+        LjSelectionRow(
+            mode = LjSelectionMode.Multi,
             checked = roamingDefaults.plantingExpandOnly,
             onCheckedChange = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(plantingExpandOnly = it))) },
             title = stringResource(R.string.settings_roaming_sub_screen_expand_only),
             description = stringResource(R.string.settings_roaming_sub_screen_expand_only_description),
         )
 
-        LjCheckboxRow(
+        LjSelectionRow(
+            mode = LjSelectionMode.Multi,
             enabled = !roamingDefaults.plantingExpandOnly,
             checked = roamingDefaults.plantingInfiniteLoops,
             onCheckedChange = { onAction(SettingsAction.UpdateRoamingDefaults(roamingDefaults.copy(plantingInfiniteLoops = it))) },

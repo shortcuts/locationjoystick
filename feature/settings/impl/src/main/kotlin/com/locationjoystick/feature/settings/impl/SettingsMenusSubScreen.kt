@@ -27,7 +27,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -57,9 +56,10 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.CompassDisclosureDialog
 import com.locationjoystick.core.designsystem.component.LjButton
-import com.locationjoystick.core.designsystem.component.LjCheckboxRow
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjSelectionMode
+import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.location.CalibrationState
 import com.locationjoystick.core.model.AppFeature
@@ -176,26 +176,18 @@ private fun TapToWalkSection(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(Modifier.height(8.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            stringResource(R.string.settings_menus_enable_tap_to_walk),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        Switch(
-            checked = enabled,
-            onCheckedChange = { on ->
-                if (on && showsTapToWalkEnableDisclosure(uiState.compassDisclosureAccepted)) {
-                    showEnableDisclosure = true
-                } else {
-                    onAction(SettingsAction.SetTapToWalkOverlayEnabled(false))
-                }
-            },
-        )
-    }
+    LjSelectionRow(
+        mode = LjSelectionMode.Toggle,
+        title = stringResource(R.string.settings_menus_enable_tap_to_walk),
+        checked = enabled,
+        onCheckedChange = { on ->
+            if (on && showsTapToWalkEnableDisclosure(uiState.compassDisclosureAccepted)) {
+                showEnableDisclosure = true
+            } else {
+                onAction(SettingsAction.SetTapToWalkOverlayEnabled(false))
+            }
+        },
+    )
     if (enabled) {
         Spacer(Modifier.height(12.dp))
         Text(
@@ -274,31 +266,23 @@ private fun ReconnectTapSection(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(Modifier.height(8.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            stringResource(R.string.settings_menus_reconnect_accessory_automatically),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        Switch(
-            checked = uiState.reconnectTapEnabled,
-            onCheckedChange = { on ->
-                val acceptReconnect = {
-                    onAction(SettingsAction.AcceptReconnectTapDisclosure)
-                    if (!uiState.isCompassServiceGranted) openAccessibilitySettings(context)
-                }
-                when {
-                    on && showsReconnectDisclosure(uiState.reconnectTapDisclosureAccepted, uiState.compassDisclosureAccepted) ->
-                        showDisclosure = true
-                    on && !uiState.reconnectTapDisclosureAccepted -> acceptReconnect()
-                    else -> onAction(SettingsAction.SetReconnectTapEnabled(on))
-                }
-            },
-        )
-    }
+    LjSelectionRow(
+        mode = LjSelectionMode.Toggle,
+        title = stringResource(R.string.settings_menus_reconnect_accessory_automatically),
+        checked = uiState.reconnectTapEnabled,
+        onCheckedChange = { on ->
+            val acceptReconnect = {
+                onAction(SettingsAction.AcceptReconnectTapDisclosure)
+                if (!uiState.isCompassServiceGranted) openAccessibilitySettings(context)
+            }
+            when {
+                on && showsReconnectDisclosure(uiState.reconnectTapDisclosureAccepted, uiState.compassDisclosureAccepted) ->
+                    showDisclosure = true
+                on && !uiState.reconnectTapDisclosureAccepted -> acceptReconnect()
+                else -> onAction(SettingsAction.SetReconnectTapEnabled(on))
+            }
+        },
+    )
     if (showDisclosure) {
         CompassDisclosureDialog(
             title = stringResource(R.string.settings_menus_reconnect_accessory),
@@ -622,14 +606,16 @@ private fun AppFeaturesSection(
         }
     }
     Spacer(modifier = Modifier.height(8.dp))
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.showRouteJumpButtons,
         onCheckedChange = { onAction(SettingsAction.SetShowRouteJumpButtons(it)) },
         title = stringResource(R.string.settings_menus_show_route_jump_buttons),
         description = stringResource(R.string.settings_menus_show_route_jump_buttons_desc),
     )
     Spacer(modifier = Modifier.height(8.dp))
-    LjCheckboxRow(
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.altitudeOverrideButtonEnabled,
         onCheckedChange = { onAction(SettingsAction.SetAltitudeOverrideButtonEnabled(it)) },
         title = stringResource(R.string.settings_menus_show_altitude_override_button),
@@ -656,7 +642,8 @@ private fun SpeedCycleSection(
     Column {
         SpeedProfile.defaultProfiles().forEach { profile ->
             val checked = profile.id in uiState.enabledSpeedProfileIds
-            LjCheckboxRow(
+            LjSelectionRow(
+                mode = LjSelectionMode.Multi,
                 checked = checked,
                 title = speedProfileLabel(profile.id),
                 onCheckedChange = { isChecked ->
