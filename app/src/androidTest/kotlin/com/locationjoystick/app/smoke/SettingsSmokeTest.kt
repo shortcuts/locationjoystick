@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import dagger.hilt.android.testing.HiltAndroidTest
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
@@ -21,6 +22,19 @@ class SettingsSmokeTest : BaseSmokeTest() {
     @Test
     fun settings_screen_loads() {
         composeRule.onNodeWithText("Movement & GPS").assertIsDisplayed()
+    }
+
+    @Test
+    fun settings_hub_order_is_general_gps_menus_favorites_roaming() {
+        val labels = listOf("General", "Movement & GPS", "Menus", "Favorites & Routes", "Roaming")
+        val tops =
+            labels.map {
+                composeRule
+                    .onNodeWithText(it)
+                    .fetchSemanticsNode()
+                    .boundsInRoot.top
+            }
+        assertEquals("hub card order", tops.sorted(), tops)
     }
 
     @Test

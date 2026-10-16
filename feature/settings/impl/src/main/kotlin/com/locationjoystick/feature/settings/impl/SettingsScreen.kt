@@ -811,6 +811,12 @@ private fun SettingsHubScreen(
             cards =
                 listOf(
                     DestinationCardSpec(
+                        icon = LjIcons.Settings,
+                        title = stringResource(R.string.settings_hub_general),
+                        description = stringResource(R.string.settings_hub_general_desc),
+                        onClick = { onNavigate(SettingsSection.GENERAL) },
+                    ),
+                    DestinationCardSpec(
                         icon = LjIcons.Speed,
                         title = stringResource(R.string.settings_hub_movement_and_gps),
                         description = stringResource(R.string.settings_hub_movement_and_gps_desc),
@@ -821,12 +827,6 @@ private fun SettingsHubScreen(
                         title = stringResource(R.string.settings_hub_menus),
                         description = stringResource(R.string.settings_hub_menus_desc),
                         onClick = { onNavigate(SettingsSection.MENUS) },
-                    ),
-                    DestinationCardSpec(
-                        icon = LjIcons.Settings,
-                        title = stringResource(R.string.settings_hub_general),
-                        description = stringResource(R.string.settings_hub_general_desc),
-                        onClick = { onNavigate(SettingsSection.GENERAL) },
                     ),
                     DestinationCardSpec(
                         icon = LjIcons.Favorite,

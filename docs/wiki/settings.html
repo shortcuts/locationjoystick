@@ -31,6 +31,62 @@
     </aside>
     <p>Every setting, grouped as in the app. Export, import, and reset are on <a href="backup-transfer.html">Backup &amp; Transfer</a>. For permission problems, see <a href="troubleshooting.html">Troubleshooting</a>.</p>
 
+    <h2 id="general">General</h2>
+
+    <h3 id="game-setup">Game setup</h3>
+
+    <h4 class="item" id="game-setup-choose-your-game">Choose your game</h4>
+    <p><strong>Default:</strong> Default, or the setup you picked during first setup</p>
+    <p>Hides the features your game does not need. Pick Default, Pokémon Go or Pikmin Bloom. See <a href="game-setup.html">Game setup</a>.</p>
+
+    <h3 id="appearance">Appearance</h3>
+
+    <h4 class="item" id="appearance-light-mode">Light mode</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Switches the app and widget lists from dark to bright. Overlay buttons stay dark.</p>
+
+    <h3 id="map-source">Map source</h3>
+
+    <h4 class="item" id="map-source-map-source">Map source</h4>
+    <p><strong>Default:</strong> OpenStreetMap</p>
+    <p>OpenStreetMap or Amap (高德). Amap is faster in mainland China. The app corrects its coordinate shift automatically.</p>
+
+    <h3 id="place-search">Place search</h3>
+    <p>At least one service must stay on. If one cannot be reached, the app tries the next one that is on.</p>
+
+    <h4 class="item" id="place-search-nominatim-openstreetmap">Nominatim (OpenStreetMap)</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>The main search service. Turn it off if it is blocked where you are. A service that fails is skipped for 10 minutes.</p>
+    <h4 class="item" id="place-search-photon-komoot">Photon (Komoot)</h4>
+    <p><strong>Default:</strong> On</p>
+    <p>The backup search service. Works well from mainland China.</p>
+
+    <h3 id="privacy-menus">Privacy</h3>
+
+    <h4 class="item" id="hide-teleport">Hide teleport features</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Removes every "jump to location" option: map, favorites, routes, Group Sync, and paste. Routes walk to the first stop instead.</p>
+    <h4 class="item" id="hide-widget">Hide floating widget</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Keeps the widget button off the screen while spoofing is on. Other overlays keep working.</p>
+    <h4 class="item" id="hide-notification">Hide notification icon</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>Removes the "Mock location active" status bar icon. The notification stays in the shade (Android requires it).</p>
+    <h4 class="item" id="quick-walk-setting">Floating map quick walk</h4>
+    <p><strong>Default:</strong> Off</p>
+    <p>A tap on the floating map walks there at once, with no popup. See <a href="overlays.html#floating-map-quick-walk">Overlays</a>.</p>
+
+    <h3 id="capture">Capture</h3>
+    <p>Capture setup, the on/off switch, the browser choice, and the app to open after a map link. See <a href="capture.html#set-up-capture">Capture</a> for each step.</p>
+
+    <section class="has-shot">
+    <h3 id="debug-stats">Debug stats</h3>
+    <aside class="shot" id="debug-stats-shot">
+      <img class="phone-shot" src="screenshots/18_debug_stats.png" alt="Debug stats shown in the floating widget panel">
+    </aside>
+      <p>Shows coordinates, speed, altitude, accuracy, heading, and update rate in the expanded widget. Off by default.</p>
+    </section>
+
     <h2 id="speed-profiles">Movement &amp; GPS</h2>
 
     <h3 id="speed-profiles-list">Speed profiles</h3>
@@ -112,62 +168,6 @@
     <h4 class="item" id="location-memory-remember-last-location">Remember last location</h4>
     <p><strong>Default:</strong> On</p>
     <p>Restores your last fake position when you reopen the app. Starts from your real location if nothing is saved.</p>
-    </section>
-
-    <h2 id="general">General</h2>
-
-    <h3 id="game-setup">Game setup</h3>
-
-    <h4 class="item" id="game-setup-choose-your-game">Choose your game</h4>
-    <p><strong>Default:</strong> Default, or the setup you picked during first setup</p>
-    <p>Hides the features your game does not need. Pick Default, Pokémon Go or Pikmin Bloom. See <a href="game-setup.html">Game setup</a>.</p>
-
-    <h3 id="appearance">Appearance</h3>
-
-    <h4 class="item" id="appearance-light-mode">Light mode</h4>
-    <p><strong>Default:</strong> Off</p>
-    <p>Switches the app and widget lists from dark to bright. Overlay buttons stay dark.</p>
-
-    <h3 id="map-source">Map source</h3>
-
-    <h4 class="item" id="map-source-map-source">Map source</h4>
-    <p><strong>Default:</strong> OpenStreetMap</p>
-    <p>OpenStreetMap or Amap (高德). Amap is faster in mainland China. The app corrects its coordinate shift automatically.</p>
-
-    <h3 id="place-search">Place search</h3>
-    <p>At least one service must stay on. If one cannot be reached, the app tries the next one that is on.</p>
-
-    <h4 class="item" id="place-search-nominatim-openstreetmap">Nominatim (OpenStreetMap)</h4>
-    <p><strong>Default:</strong> On</p>
-    <p>The main search service. Turn it off if it is blocked where you are. A service that fails is skipped for 10 minutes.</p>
-    <h4 class="item" id="place-search-photon-komoot">Photon (Komoot)</h4>
-    <p><strong>Default:</strong> On</p>
-    <p>The backup search service. Works well from mainland China.</p>
-
-    <h3 id="privacy-menus">Privacy</h3>
-
-    <h4 class="item" id="hide-teleport">Hide teleport features</h4>
-    <p><strong>Default:</strong> Off</p>
-    <p>Removes every "jump to location" option: map, favorites, routes, Group Sync, and paste. Routes walk to the first stop instead.</p>
-    <h4 class="item" id="hide-widget">Hide floating widget</h4>
-    <p><strong>Default:</strong> Off</p>
-    <p>Keeps the widget button off the screen while spoofing is on. Other overlays keep working.</p>
-    <h4 class="item" id="hide-notification">Hide notification icon</h4>
-    <p><strong>Default:</strong> Off</p>
-    <p>Removes the "Mock location active" status bar icon. The notification stays in the shade (Android requires it).</p>
-    <h4 class="item" id="quick-walk-setting">Floating map quick walk</h4>
-    <p><strong>Default:</strong> Off</p>
-    <p>A tap on the floating map walks there at once, with no popup. See <a href="overlays.html#floating-map-quick-walk">Overlays</a>.</p>
-
-    <h3 id="capture">Capture</h3>
-    <p>Capture setup, the on/off switch, the browser choice, and the app to open after a map link. See <a href="capture.html#set-up-capture">Capture</a> for each step.</p>
-
-    <section class="has-shot">
-    <h3 id="debug-stats">Debug stats</h3>
-    <aside class="shot" id="debug-stats-shot">
-      <img class="phone-shot" src="screenshots/18_debug_stats.png" alt="Debug stats shown in the floating widget panel">
-    </aside>
-      <p>Shows coordinates, speed, altitude, accuracy, heading, and update rate in the expanded widget. Off by default.</p>
     </section>
 
     <h2 id="menus">Menus</h2>
