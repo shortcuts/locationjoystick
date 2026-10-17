@@ -164,9 +164,7 @@ private fun TapToWalkSection(
     var showEnableDisclosure by rememberSaveable { mutableStateOf(false) }
     val enabled = uiState.tapToWalkOverlayEnabled
     val needsAccessibilityDisclosure =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-            !uiState.accessibilityDisclosureAccepted &&
-            !uiState.isScreenServiceGranted
+        showsFullAccessibilityDisclosure(Build.VERSION.SDK_INT, uiState.accessibilityDisclosureAccepted)
 
     SettingsSectionHeader(stringResource(R.string.settings_menus_tap_to_walk))
     Spacer(Modifier.height(4.dp))
@@ -243,7 +241,7 @@ private fun TapToWalkSection(
                 onAction(SettingsAction.SetTapToWalkOverlayEnabled(true))
                 if (needsAccessibilityDisclosure) {
                     onAction(SettingsAction.SetAccessibilityDisclosureAccepted(true))
-                    openAccessibilitySettings(context)
+                    if (!uiState.isScreenServiceGranted) openAccessibilitySettings(context)
                 }
             },
             onDecline = { showEnableDisclosure = false },
@@ -301,6 +299,12 @@ private fun ReconnectTapSection(
 // relevant accepted flag is set they are skipped. The reconnect gate also accepts accessibility consent,
 // because reconnect is only allowed while accessibility consent is on.
 internal fun showsTapToWalkEnableDisclosure(accessibilityAccepted: Boolean): Boolean = !accessibilityAccepted
+
+/** Service state is deliberately not an input: enabling the service in Android settings records no consent. */
+internal fun showsFullAccessibilityDisclosure(
+    sdkInt: Int,
+    accessibilityAccepted: Boolean,
+): Boolean = sdkInt >= Build.VERSION_CODES.R && !accessibilityAccepted
 
 /** Value to store for the switch, or null when the enable disclosure must show first. */
 internal fun tapToWalkToggleResult(

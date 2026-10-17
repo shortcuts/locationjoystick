@@ -33,4 +33,11 @@ class SettingsDisclosureGatesTest {
         assertTrue(showsAccessibilityOpenSettingsDisclosure(accessibilityAccepted = false))
         assertFalse(showsAccessibilityOpenSettingsDisclosure(accessibilityAccepted = true))
     }
+
+    @Test
+    fun fullDisclosureShownWheneverUnacceptedEvenIfServiceAlreadyGranted() {
+        assertTrue(showsFullAccessibilityDisclosure(sdkInt = 30, accessibilityAccepted = false))
+        assertFalse(showsFullAccessibilityDisclosure(sdkInt = 30, accessibilityAccepted = true))
+        assertFalse(showsFullAccessibilityDisclosure(sdkInt = 29, accessibilityAccepted = false))
+    }
 }
