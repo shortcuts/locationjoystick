@@ -68,7 +68,7 @@ The proof is run by the reconnect matrix script in `scripts/`. Its raw rows are 
 
 ## Failure notification
 
-The check runs in the background, so the user cannot see it fail. `ReconnectFailureStreak` counts consecutive `FAILED` runs and tells the service to post one notification per streak. `NOT_OFF` is neutral: an absent or unknown control looks the same as "connected" or "left the game", so counting it would warn users who simply closed the game. A `RECONNECTED` run re-arms the streak. The streak is in memory only; a process restart at worst delays one notification. The notification has its own channel because the foreground-service channels are silent or hidden.
+The check runs in the background, so the user cannot see it fail. `ReconnectFailureStreak` counts consecutive `FAILED` runs and tells the service to post one notification per streak. `NOT_OFF` is neutral: an absent or unknown control looks the same as "connected" or "left the game", so counting it would warn users who simply closed the game. A `RECONNECTED` run re-arms the streak. The streak is in memory only; a process restart at worst delays one notification. `ReconnectNotFoundStreak` covers the case NOT_OFF hides: the game is in front (the gate) yet the first read finds no control for `NOT_FOUND_NOTIFY_THRESHOLD` checks in a row, which means the HUD moved or the colours changed and reconnect has silently stopped. It posts one notification per streak on the same channel; any other result, including a closed gate, re-arms it. Also in memory only. The notification has its own channel because the foreground-service channels are silent or hidden.
 
 ## Open work
 
@@ -77,7 +77,7 @@ The check runs in the background, so the user cannot see it fail. `ReconnectFail
 ## Open risks
 
 - Play review of the gesture capability (see above).
-- Target app changes: a HUD move or colour change needs the region re-measured. Unknown prevents false taps, but reconnect stops until fixed.
+- Target app changes: a HUD move or colour change needs the region re-measured. Unknown prevents false taps, but reconnect stops until fixed; the not-found notification (see "Failure notification") tells the user.
 
 ## Guided path
 

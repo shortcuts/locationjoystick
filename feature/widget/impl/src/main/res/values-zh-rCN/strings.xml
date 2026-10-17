@@ -58,4 +58,6 @@
     <string name="reconnect_failed_channel_name">"配件重新连接"</string>
     <string name="reconnect_failed_title">"配件未能重新连接"</string>
     <string name="reconnect_failed_text">"连续多次重新连接配件失败。请打开应用查看。"</string>
+    <string name="reconnect_not_found_title">"找不到配件控件"</string>
+    <string name="reconnect_not_found_text">"游戏已打开，但长时间找不到重新连接按钮。游戏可能已更新，自动重新连接已暂停。"</string>
 </resources>

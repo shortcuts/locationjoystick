@@ -12,7 +12,8 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-enum class ReconnectRunResult { NOT_OFF, RECONNECTED, FAILED }
+/** NOT_FOUND: the game was in front but the first read found no control (HUD moved or colours changed). */
+enum class ReconnectRunResult { NOT_OFF, NOT_FOUND, RECONNECTED, FAILED }
 
 /**
  * Counts consecutive FAILED runs; [record] returns true once per streak when it is time to tell the
@@ -24,7 +25,7 @@ internal class ReconnectFailureStreak {
 
     fun record(result: ReconnectRunResult): Boolean {
         when (result) {
-            ReconnectRunResult.NOT_OFF -> return false
+            ReconnectRunResult.NOT_OFF, ReconnectRunResult.NOT_FOUND -> return false
             ReconnectRunResult.RECONNECTED -> {
                 failures = 0
                 notified = false
@@ -33,6 +34,27 @@ internal class ReconnectFailureStreak {
             ReconnectRunResult.FAILED -> failures++
         }
         if (failures < ReconnectTapConstants.FAILURE_NOTIFY_THRESHOLD || notified) return false
+        notified = true
+        return true
+    }
+}
+
+/**
+ * Counts consecutive NOT_FOUND runs; [record] returns true once per streak. Any other result found
+ * the control (or the gate was closed, so the game was not in front) and re-arms.
+ */
+internal class ReconnectNotFoundStreak {
+    private var misses = 0
+    private var notified = false
+
+    fun record(result: ReconnectRunResult): Boolean {
+        if (result != ReconnectRunResult.NOT_FOUND) {
+            misses = 0
+            notified = false
+            return false
+        }
+        misses++
+        if (misses < ReconnectTapConstants.NOT_FOUND_NOTIFY_THRESHOLD || notified) return false
         notified = true
         return true
     }
@@ -93,7 +115,8 @@ private suspend fun runGated(
     tap: suspend (x: Int, y: Int, durationMs: Long) -> Boolean,
     random: Random,
 ): ReconnectRunResult {
-    capture()?.takeIf { it.state == ReconnectState.OFF } ?: return ReconnectRunResult.NOT_OFF
+    val first = capture() ?: return ReconnectRunResult.NOT_FOUND
+    if (first.state != ReconnectState.OFF) return ReconnectRunResult.NOT_OFF
     delay(ReconnectTapConstants.CONFIRM_DELAY_MS)
     capture()?.takeIf { it.state == ReconnectState.OFF } ?: return ReconnectRunResult.NOT_OFF
 

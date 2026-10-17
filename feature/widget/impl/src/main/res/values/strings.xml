@@ -58,4 +58,6 @@
     <string name="reconnect_failed_channel_name">"Accessory reconnect"</string>
     <string name="reconnect_failed_title">"Accessory did not reconnect"</string>
     <string name="reconnect_failed_text">"Reconnecting your accessory failed several times in a row. Open the app to check."</string>
+    <string name="reconnect_not_found_title">"Accessory control not found"</string>
+    <string name="reconnect_not_found_text">"Your game is open, but the reconnect button could not be found for a long time. The game may have changed. Reconnect is paused."</string>
 </resources>

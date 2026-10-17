@@ -12,6 +12,7 @@ import android.os.PowerManager
 import android.util.Log
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
+import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.locationjoystick.core.common.constants.AppConstants
@@ -54,6 +55,7 @@ class ScreenAccessibilityService :
 
     // In memory only: a process restart at worst delays one notification.
     private val failureStreak = ReconnectFailureStreak()
+    private val notFoundStreak = ReconnectNotFoundStreak()
 
     // Package of the last window-state-changed event. Only the package name is read, never the view tree.
     @Volatile private var foregroundPackage: String? = null
@@ -133,10 +135,27 @@ class ScreenAccessibilityService :
                 },
             )
         Log.d(TAG, "Reconnect check: $result")
-        if (failureStreak.record(result)) postReconnectFailedNotification()
+        if (failureStreak.record(result)) {
+            postReconnectNotification(
+                R.string.reconnect_failed_title,
+                R.string.reconnect_failed_text,
+                AppConstants.NotificationConstants.ID_RECONNECT_FAILED,
+            )
+        }
+        if (notFoundStreak.record(result)) {
+            postReconnectNotification(
+                R.string.reconnect_not_found_title,
+                R.string.reconnect_not_found_text,
+                AppConstants.NotificationConstants.ID_RECONNECT_NOT_FOUND,
+            )
+        }
     }
 
-    private fun postReconnectFailedNotification() {
+    private fun postReconnectNotification(
+        @StringRes title: Int,
+        @StringRes text: Int,
+        id: Int,
+    ) {
         val manager = NotificationManagerCompat.from(this)
         if (!manager.areNotificationsEnabled()) return
         val openApp =
@@ -147,14 +166,14 @@ class ScreenAccessibilityService :
             NotificationCompat
                 .Builder(this, AppConstants.NotificationConstants.CHANNEL_ID_RECONNECT_FAILED)
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
-                .setContentTitle(getString(R.string.reconnect_failed_title))
-                .setContentText(getString(R.string.reconnect_failed_text))
+                .setContentTitle(getString(title))
+                .setContentText(getString(text))
                 .setContentIntent(openApp)
                 .setAutoCancel(true)
                 .build()
         // areNotificationsEnabled() above covers the POST_NOTIFICATIONS check lint cannot trace.
         @Suppress("MissingPermission")
-        manager.notify(AppConstants.NotificationConstants.ID_RECONNECT_FAILED, notification)
+        manager.notify(id, notification)
     }
 
     private suspend fun dispatchTap(

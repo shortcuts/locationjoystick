@@ -43,7 +43,7 @@ class ReconnectTapRunnerTest {
     @Test
     fun `on null or flapping first reads never tap`() =
         runTest {
-            for (script in listOf(listOf(on), listOf(null), listOf(off, on), listOf(off, null))) {
+            for (script in listOf(listOf(on), listOf(off, on), listOf(off, null))) {
                 val taps = Taps()
                 val result =
                     runReconnectTap(1080, reads(*script.toTypedArray()), { _, _, _ ->
@@ -53,6 +53,19 @@ class ReconnectTapRunnerTest {
                 assertEquals(ReconnectRunResult.NOT_OFF, result)
                 assertEquals(0, taps.count)
             }
+        }
+
+    @Test
+    fun `no control on the first read is not found and never taps`() =
+        runTest {
+            val taps = Taps()
+            val result =
+                runReconnectTap(1080, reads(null), { _, _, _ ->
+                    taps.count++
+                    true
+                })
+            assertEquals(ReconnectRunResult.NOT_FOUND, result)
+            assertEquals(0, taps.count)
         }
 
     @Test
