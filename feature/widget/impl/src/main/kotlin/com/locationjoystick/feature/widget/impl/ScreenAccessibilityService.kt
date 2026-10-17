@@ -74,7 +74,7 @@ class ScreenAccessibilityService :
 
     /**
      * Periodic reconnect check (docs/features/bluetooth-reconnect-tap.md). Runs only while the
-     * setting and both disclosures are on; `collectLatest` cancels a run in flight the moment any
+     * setting, both disclosures and the guided path allow it; `collectLatest` cancels a run in flight the moment any
      * of them turns off.
      */
     private fun startReconnectLoop() {
@@ -83,8 +83,9 @@ class ScreenAccessibilityService :
                 settingsRepository.getReconnectTapEnabled(),
                 settingsRepository.getReconnectTapDisclosureAccepted(),
                 settingsRepository.getAccessibilityDisclosureAccepted(),
-            ) { enabled, reconnectOk, accessibilityOk -> enabled && reconnectOk && accessibilityOk }
-                .distinctUntilChanged()
+                settingsRepository.getGuidedPath(),
+                ::reconnectLoopActive,
+            ).distinctUntilChanged()
                 .collectLatest { active ->
                     while (active) {
                         delay(

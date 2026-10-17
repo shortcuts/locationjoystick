@@ -1,6 +1,6 @@
 # Guided Paths (Game Setup)
 
-A guided path is a setup choice that hides features a given game does not need. It only hides UI. It never changes a stored value, a default, or a running session.
+A guided path is a setup choice that hides features a given game does not need. It never changes a stored value, a default, or a running session. Beyond hiding UI, it gates the runtime of Tap to Walk and Reconnect Accessory.
 
 Key files: `:core:model/GuidedPath.kt` (the path flags), `:core:data/SettingsRepository.kt`, the onboarding picker, and the Game setup section of General settings.
 
@@ -9,6 +9,8 @@ Key files: `:core:model/GuidedPath.kt` (the path flags), `:core:data/SettingsRep
 - **Default:** nothing hidden.
 - **Pokémon Go:** hides Planting everywhere it is offered. Planting is a walking-around-a-game-map feature the game does not need.
 - **Pikmin Bloom:** hides Tap to Walk and Reconnect Accessory. Neither is useful in that game.
+
+On Pikmin Bloom the reconnect loop stops and the widget crosshair is hidden, since the hidden settings would otherwise leave no way to turn them off. Stored values stay, so switching back restores them.
 
 The exact screens each path hides are in the flags on `GuidedPath` and the code that reads them.
 

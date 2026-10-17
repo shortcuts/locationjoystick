@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.widget.impl
 
 import com.locationjoystick.core.common.constants.AppConstants.ReconnectTapConstants
+import com.locationjoystick.core.model.GuidedPath
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlin.math.PI
@@ -87,6 +88,14 @@ internal suspend fun runReconnectTap(
     }
     return ReconnectRunResult.FAILED
 }
+
+/** Loop gate: setting, both disclosures, and a guided path that still shows the feature (docs/features/guided-paths.md). */
+internal fun reconnectLoopActive(
+    enabled: Boolean,
+    reconnectOk: Boolean,
+    accessibilityOk: Boolean,
+    path: GuidedPath,
+): Boolean = enabled && reconnectOk && accessibilityOk && path.showsReconnectAccessory
 
 /**
  * Runs one periodic check so a throwing screenshot, bitmap copy, detector or gesture only skips this

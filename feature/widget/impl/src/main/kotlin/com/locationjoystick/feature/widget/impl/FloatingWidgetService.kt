@@ -50,6 +50,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -161,6 +162,7 @@ class FloatingWidgetService :
 
     private val isTapToWalkActiveFlow = MutableStateFlow(false)
     private lateinit var tapToWalkScaleMpx: StateFlow<Double>
+    private lateinit var tapToWalkVisible: StateFlow<Boolean>
     private lateinit var groundCalibration: StateFlow<StoredGroundCalibration?>
     private lateinit var accessibilityDisclosureChoice: StateFlow<String>
     private var tapToWalkOverlay: TapToWalkOverlay? = null
@@ -210,6 +212,10 @@ class FloatingWidgetService :
             settingsRepository
                 .getTapToWalkScaleMpx()
                 .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
+        tapToWalkVisible =
+            combine(settingsRepository.getTapToWalkOverlayEnabled(), settingsRepository.getGuidedPath()) { enabled, path ->
+                enabled && path.showsTapToWalk
+            }.stateIn(lifecycleScope, SharingStarted.Eagerly, false)
         groundCalibration =
             settingsRepository
                 .getGroundCalibration()
@@ -277,8 +283,8 @@ class FloatingWidgetService :
             panelExpand.flow(PanelExpandKey.ALTITUDE).collect { expanded -> setOverlayFocusable(expanded) }
         }
         lifecycleScope.launch {
-            settingsRepository.getTapToWalkOverlayEnabled().collect { enabled ->
-                if (!enabled) dismissTapToWalkOverlay()
+            tapToWalkVisible.collect { visible ->
+                if (!visible) dismissTapToWalkOverlay()
             }
         }
     }
@@ -354,7 +360,7 @@ class FloatingWidgetService :
             val pasteCaptureExpanded by panelExpand.flow(PanelExpandKey.PASTE_CAPTURE).collectAsStateWithLifecycle()
             val isPanelExpanded by isPanelExpandedFlow.collectAsStateWithLifecycle()
             val hasPendingCompletion by pendingCompletionFlow.collectAsStateWithLifecycle()
-            val isTapToWalkEnabled by settingsRepository.getTapToWalkOverlayEnabled().collectAsStateWithLifecycle(initialValue = false)
+            val isTapToWalkEnabled by tapToWalkVisible.collectAsStateWithLifecycle(initialValue = false)
             val isTapToWalkActive by isTapToWalkActiveFlow.collectAsStateWithLifecycle()
             val hideTeleportFeatures by settingsRepository.getHideTeleportFeatures().collectAsStateWithLifecycle(initialValue = false)
             val showRouteJumpButtons by settingsRepository.getShowRouteJumpButtons().collectAsStateWithLifecycle(
