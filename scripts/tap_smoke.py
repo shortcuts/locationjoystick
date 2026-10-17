@@ -57,6 +57,16 @@ def location_verdict(trials, calibration_ok, need=NEED_TAPS, n=N_TAPS):
     return "PASS", ""
 
 
+def trial_counts(trials):
+    """(unverified, ambiguous) trial counts for the report."""
+    return (sum(t["verdict"] == "unverified" for t in trials), sum(t["verdict"] == "ambiguous" for t in trials))
+
+
+def prior_fallbacks(persp_log):
+    """Feet-anchor prior fallbacks the bench's persp step printed (a frequent one means failed registration)."""
+    return sum("prior fallback" in line for line in persp_log.splitlines())
+
+
 def suite_verdict(rows, need=NEED_LOCATIONS):
     """(passing, total, ok)."""
     p = sum(r["verdict"] == "PASS" for r in rows)
@@ -68,10 +78,11 @@ def summary_line(p, n, ok):
 
 
 def render_report(rows):
-    head = ("| # | name | lat | lon | kind | device | resolution | density | scored | pass | p50 (m) | p90 (m) "
-            "| verdict | reason |\n|" + "---|" * 14)
+    head = ("| # | name | lat | lon | kind | device | resolution | density | scored | pass | unverified | ambiguous "
+            "| prior fallback | p50 (m) | p90 (m) | verdict | reason |\n|" + "---|" * 17)
     body = [f"| {r['index']} | {r['name']} | {r['lat']} | {r['lon']} | {r['kind']} | {r['device']} "
-            f"| {r['resolution']} | {r['density']} | {r['scored']} | {r['passes']} | {r['p50']:.1f} "
+            f"| {r['resolution']} | {r['density']} | {r['scored']} | {r['passes']} | {r['unverified']} "
+            f"| {r['ambiguous']} | {r['prior_fallback']} | {r['p50']:.1f} "
             f"| {r['p90']:.1f} | {r['verdict']} | {r['reason']} |" for r in rows]
     return "\n".join([head, *body, "", summary_line(*suite_verdict(rows))]) + "\n"
 
@@ -132,13 +143,13 @@ def _bench(py, serial, *args):
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=budget)
     except subprocess.TimeoutExpired:
         return False, f"timed out after {budget:.0f} s"
-    return r.returncode == 0, (r.stdout + r.stderr)[-400:]
+    return r.returncode == 0, r.stdout + r.stderr
 
 
 def run_location(py, serial, host, key, loc, i, out, settle, respect_cooldown):
     d = out / f"{i:02d}_{''.join(c if c.isalnum() else '_' for c in loc['name'].lower())}"
     row = {"index": i, **{k: loc[k] for k in ("name", "lat", "lon", "kind")}, "scored": 0, "passes": 0,
-           "p50": float("nan"), "p90": float("nan")}
+           "unverified": 0, "ambiguous": 0, "prior_fallback": 0, "p50": float("nan"), "p90": float("nan")}
     cooldown = 0
     try:
         cooldown = teleport_and_settle(host, key, loc, settle, respect_cooldown)
@@ -148,9 +159,11 @@ def run_location(py, serial, host, key, loc, i, out, settle, respect_cooldown):
             ["taptrials", str(d), "--serial", serial, "--persp", "--n", str(N_TAPS), "--need", str(NEED_TAPS),
              "--tol-m", str(TOL_M), "--max-m", str(MAX_M)],
         ):
-            ok, tail = _bench(py, serial, *step)
+            d.mkdir(parents=True, exist_ok=True)
+            ok, log = _bench(py, serial, *step)
+            (d / f"{step[0]}.log").write_text(log)  # kept whole: the report counts fallbacks from it
             if not ok:
-                raise RuntimeError(f"{step[0]} failed: {tail}")
+                raise RuntimeError(f"{step[0]} failed: {log[-400:]}")
     except (RuntimeError, OSError, KeyError, subprocess.SubprocessError) as e:
         print(f"[{i}] {loc['name']}: {e}", file=sys.stderr)
         row.update(verdict="FAIL", reason="bench_error")
@@ -159,8 +172,10 @@ def run_location(py, serial, host, key, loc, i, out, settle, respect_cooldown):
     cal_ok = cal.exists() and not json.loads(cal.read_text()).get("rejected")
     trials = json.loads(tj.read_text()) if tj.exists() else []
     errs = [t["error_m"] for t in trials if t["verdict"] in ("pass", "fail")]
+    unverified, ambiguous = trial_counts(trials)
     row.update(scored=sum(t["verdict"] in ("pass", "fail", "unverified") for t in trials),
-               passes=sum(t["verdict"] == "pass" for t in trials), p50=percentile(errs, 0.5),
+               passes=sum(t["verdict"] == "pass" for t in trials), unverified=unverified, ambiguous=ambiguous,
+               prior_fallback=prior_fallbacks((d / "persp.log").read_text()), p50=percentile(errs, 0.5),
                p90=percentile(errs, 0.9))
     row["verdict"], row["reason"] = location_verdict(trials, cal_ok)
     return row, cooldown

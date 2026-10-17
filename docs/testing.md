@@ -70,12 +70,16 @@ make tap-smoke-selfcheck          # pure verdict logic, no device
 - **Pass bar.** A location passes with at least 11 of 12 scored taps within 15 m. Ambiguous matches are skipped, not
   counted. A rejected calibration (`no_calibration`) or fewer than 12 scored taps (`insufficient_scored`) fails; so do
   more than one miss (`below_bar`). The suite passes with at least 19 of 20 locations. Exit code is 0 only on suite PASS.
+- **Unverified taps are misses.** A tap whose match confidence is too low to confirm the landing (NCC below 0.4) counts as a
+  miss, not as unscored. Its error is reported but never passes. Skipping it would let a weak verifier raise the pass rate,
+  so the gate does not do that. Ambiguous taps (no match at all) are the only ones skipped, and they stay visible as a count.
 - **Locations.** `scripts/tap_smoke_locations.json`, ordered `{name, lat, lon, kind}`, committed and never regenerated at
   run time. To add one, append an entry (keep names and coordinates unique) and update the bar constants in
   `scripts/tap_smoke.py` and `scripts/test_tap_smoke.py` if the count changes. Rural and polar entries may fail
   honestly: record the result, do not tune thresholds to pass.
 - **Report.** `scripts/registration-bench/smoke/<UTC stamp>/report.md` (and `report.json`): one row per location with
-  lat/lon, device, resolution, density, scored, passes, p50/p90 error in metres, verdict and reason, then
+  lat/lon, device, resolution, density, scored, passes, unverified and ambiguous counts, prior-anchor fallback count
+  (the feet anchor fell back to the prior, a sign of failed registration), p50/p90 error in metres, verdict and reason, then
   `TAP SMOKE: <p>/<n> locations pass (bar 19/20) -> PASS|FAIL`. Per-location frames live beside it.
 - **Frames and username.** The game HUD shows the player's username at the bottom of the screen. Frames and annotated
   images stay under the gitignored `scripts/registration-bench/`; never copy or commit one without masking that region.

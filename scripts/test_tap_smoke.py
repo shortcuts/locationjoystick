@@ -81,6 +81,27 @@ def test_bench_step_is_bounded_by_timeout():
     assert not ok and "timed out" in tail
 
 
+def test_prior_fallbacks_counts_the_bench_fallback_lines():
+    log = ("feet anchor: detected row 0.91h is outside the prior -> prior fallback\n"
+           "feet anchor: no figure found -> prior fallback\n"
+           "feet pixel detected: 540 1400\n")
+    assert ts.prior_fallbacks(log) == 2
+    assert ts.prior_fallbacks("feet pixel detected: 540 1400\n") == 0
+
+
+def test_unverified_and_ambiguous_counts():
+    assert ts.trial_counts(trials(10, fails=1, unverified=2, ambiguous=3)) == (2, 3)
+    assert ts.trial_counts([]) == (0, 0)
+
+
+def test_report_has_unverified_ambiguous_and_fallback_columns():
+    row = {"index": 1, "name": "X", "lat": 1.0, "lon": 2.0, "kind": "dense", "device": "P", "resolution": "1x2",
+           "density": "420", "scored": 12, "passes": 11, "p50": 6.0, "p90": 9.0, "verdict": "PASS", "reason": "",
+           "unverified": 1, "ambiguous": 2, "prior_fallback": 3}
+    line = ts.render_report([row]).splitlines()[2]
+    assert line == "| 1 | X | 1.0 | 2.0 | dense | P | 1x2 | 420 | 12 | 11 | 1 | 2 | 3 | 6.0 | 9.0 | PASS |  |"
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for t in tests:
