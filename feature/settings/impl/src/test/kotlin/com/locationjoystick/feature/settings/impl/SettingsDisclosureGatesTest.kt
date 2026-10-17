@@ -1,6 +1,8 @@
 package com.locationjoystick.feature.settings.impl
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -9,6 +11,14 @@ class SettingsDisclosureGatesTest {
     fun tapToWalkEnableDialogSkippedOnceAccessibilityAccepted() {
         assertTrue(showsTapToWalkEnableDisclosure(accessibilityAccepted = false))
         assertFalse(showsTapToWalkEnableDisclosure(accessibilityAccepted = true))
+    }
+
+    @Test
+    fun tapToWalkToggleEnablesWhenAccessibilityAccepted() {
+        assertEquals(true, tapToWalkToggleResult(on = true, accessibilityAccepted = true))
+        assertNull(tapToWalkToggleResult(on = true, accessibilityAccepted = false))
+        assertEquals(false, tapToWalkToggleResult(on = false, accessibilityAccepted = true))
+        assertEquals(false, tapToWalkToggleResult(on = false, accessibilityAccepted = false))
     }
 
     @Test

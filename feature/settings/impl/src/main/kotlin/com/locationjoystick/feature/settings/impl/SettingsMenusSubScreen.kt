@@ -181,10 +181,11 @@ private fun TapToWalkSection(
         title = stringResource(R.string.settings_menus_enable_tap_to_walk),
         checked = enabled,
         onCheckedChange = { on ->
-            if (on && showsTapToWalkEnableDisclosure(uiState.accessibilityDisclosureAccepted)) {
+            val enable = tapToWalkToggleResult(on, uiState.accessibilityDisclosureAccepted)
+            if (enable == null) {
                 showEnableDisclosure = true
             } else {
-                onAction(SettingsAction.SetTapToWalkOverlayEnabled(false))
+                onAction(SettingsAction.SetTapToWalkOverlayEnabled(enable))
             }
         },
     )
@@ -300,6 +301,17 @@ private fun ReconnectTapSection(
 // relevant accepted flag is set they are skipped. The reconnect gate also accepts accessibility consent,
 // because reconnect is only allowed while accessibility consent is on.
 internal fun showsTapToWalkEnableDisclosure(accessibilityAccepted: Boolean): Boolean = !accessibilityAccepted
+
+/** Value to store for the switch, or null when the enable disclosure must show first. */
+internal fun tapToWalkToggleResult(
+    on: Boolean,
+    accessibilityAccepted: Boolean,
+): Boolean? =
+    when {
+        !on -> false
+        showsTapToWalkEnableDisclosure(accessibilityAccepted) -> null
+        else -> true
+    }
 
 internal fun showsReconnectDisclosure(
     reconnectAccepted: Boolean,
