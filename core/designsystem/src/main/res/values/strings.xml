@@ -61,9 +61,9 @@
     <string name="language_dropdown_cd">"Change language"</string>
     <string name="accessibility_disclosure_title">"Android Accessibility API (optional)"</string>
     <string name="accessibility_disclosure_intro">"locationjoystick uses the Android Accessibility API for two optional features: “Tap to Walk” and “Reconnect accessory”. If you do not want them, tap “Decline” or “Skip”. You can keep using the app."</string>
-    <string name="accessibility_disclosure_data">"Data accessed: about one screenshot a minute ONLY while Reconnect accessory is on, in order to determine if we should reconnect the device."</string>
-    <string name="accessibility_disclosure_purpose">"Why: to replicate the in-game taps to locationjoystick or to see whether your accessory shows as disconnected."</string>
-    <string name="accessibility_disclosure_handling">"Data collected or shared: none. screenshots stays on your device and deleted right away. Nothing is sent anywhere. The service reads no text, it only taps for you."</string>
+    <string name="accessibility_disclosure_data">"Data accessed: screenshots of your screen. About one a minute ONLY while Reconnect accessory is on, and about one every 3 seconds for about 10 minutes during a Tap to Walk calibration walk that you start."</string>
+    <string name="accessibility_disclosure_purpose">"Why: Tap to Walk uses the screenshots to calibrate how your in-game character moves. Reconnect accessory uses them to see whether your accessory shows as disconnected, and taps its connect button."</string>
+    <string name="accessibility_disclosure_handling">"Data collected or shared: none. Screenshots stay on your device and are deleted right away. Nothing is sent anywhere. The service reads no text. It only taps your accessory’s connect button, and only while Reconnect accessory is on."</string>
     <string name="accessibility_disclosure_optional">"You can turn it off at any time."</string>
     <string name="accessibility_disclosure_guide">"Read the Tap to Walk guide"</string>
     <string name="accessibility_disclosure_accept">"Accept"</string>

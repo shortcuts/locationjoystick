@@ -61,9 +61,9 @@
     <string name="language_dropdown_cd">"更改语言"</string>
     <string name="accessibility_disclosure_title">"Android 无障碍（Accessibility）API（可选）"</string>
     <string name="accessibility_disclosure_intro">"locationjoystick 使用 Android 无障碍（Accessibility）API 提供两项可选功能：“点击行走”和“重新连接配件”。如果你不想使用它们，请点击“拒绝”或“跳过”，仍可继续使用应用。"</string>
-    <string name="accessibility_disclosure_data">"访问的数据：仅在“重新连接配件”开启时，约每分钟一张屏幕截图，用于判断是否需要重新连接设备。"</string>
-    <string name="accessibility_disclosure_purpose">"用途：把游戏内的点击复现到 locationjoystick，或查看你的配件是否显示为已断开。"</string>
-    <string name="accessibility_disclosure_handling">"收集或分享的数据：无。截图只保留在你的设备上，并会立即删除。不会发送到任何地方。该服务不读取文字，只会代你点击。"</string>
+    <string name="accessibility_disclosure_data">"访问的数据：屏幕截图。仅在“重新连接配件”开启时约每分钟一张；在你开始的“点击行走”校准行走期间，约每 3 秒一张，持续约 10 分钟。"</string>
+    <string name="accessibility_disclosure_purpose">"用途：“点击行走”用截图校准游戏角色的移动方式；“重新连接配件”用截图查看你的配件是否显示为已断开，并点击其连接按钮。"</string>
+    <string name="accessibility_disclosure_handling">"收集或分享的数据：无。截图只保留在你的设备上，并会立即删除。不会发送到任何地方。该服务不读取文字，仅在“重新连接配件”开启时点击配件的连接按钮。"</string>
     <string name="accessibility_disclosure_optional">"你可以随时关闭它。"</string>
     <string name="accessibility_disclosure_guide">"阅读“点击行走”指南"</string>
     <string name="accessibility_disclosure_accept">"接受"</string>
