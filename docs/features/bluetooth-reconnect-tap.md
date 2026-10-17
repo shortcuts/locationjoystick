@@ -29,6 +29,10 @@ What the target app can observe on the chosen path: the enabled-services list (a
 
 Gesture use under an accessibility service that does not declare itself an accessibility tool is a review risk. Mitigations: off by default, a separate explicit acceptance, a disclosure that names the periodic screenshot and the tap, and no tap on any state other than a confident "off".
 
+## Gate
+
+A check (screenshot or tap) runs only while the screen is interactive and the foreground window belongs to the hardcoded game package (`AppConstants.GameConstants`). Without it the loop screenshotted whatever app was in front, which broke the narrow use the disclosure promises, and the shape-based detector could tap a lookalike control in another app. The foreground package comes from window-state-changed events, reading only the event's package name, never the view tree (hard rule above). The gate is re-checked before every capture and every tap, so a tap never lands after the user switched apps. A run cut short by the gate is neutral for the failure streak. No picker: one game, no extra setup.
+
 ## Recognising the control
 
 The control is located and classified from a screenshot, every run, with no fixed colours.

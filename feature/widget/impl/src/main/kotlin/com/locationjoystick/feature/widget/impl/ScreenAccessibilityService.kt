@@ -8,6 +8,7 @@ import android.app.PendingIntent
 import android.graphics.Bitmap
 import android.graphics.Path
 import android.os.Build
+import android.os.PowerManager
 import android.util.Log
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
@@ -53,6 +54,9 @@ class ScreenAccessibilityService :
 
     // In memory only: a process restart at worst delays one notification.
     private val failureStreak = ReconnectFailureStreak()
+
+    // Package of the last window-state-changed event. Only the package name is read, never the view tree.
+    @Volatile private var foregroundPackage: String? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -107,6 +111,7 @@ class ScreenAccessibilityService :
         val result =
             runReconnectTap(
                 screenWidth = resources.displayMetrics.widthPixels,
+                gate = { reconnectGateOpen(getSystemService(PowerManager::class.java).isInteractive, foregroundPackage) },
                 capture = {
                     val bitmap = takeScreenshotBitmap()
                     val control =
@@ -188,7 +193,9 @@ class ScreenAccessibilityService :
         return false
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) foregroundPackage = event.packageName?.toString()
+    }
 
     override fun onInterrupt() = Unit
 

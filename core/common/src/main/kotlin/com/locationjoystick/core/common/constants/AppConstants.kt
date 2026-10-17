@@ -478,6 +478,11 @@ object AppConstants {
         const val LOCATION_LABEL_MAX_CHARS = 18
     }
 
+    /** The one game the screen-access features target; hardcoded, no picker (docs/features/bluetooth-reconnect-tap.md). */
+    object GameConstants {
+        const val PACKAGE = "com.nianticlabs.pokemongo"
+    }
+
     object AppInfo {
         const val VERSION_NAME = "0.27.0" // x-release-please-version
         const val GITHUB_REPO_SLUG = "shortcuts/locationjoystick"

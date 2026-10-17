@@ -175,4 +175,45 @@ class ReconnectTapRunnerTest {
         assertFalse(reconnectLoopActive(true, false, true, GuidedPath.DEFAULT))
         assertFalse(reconnectLoopActive(true, true, false, GuidedPath.DEFAULT))
     }
+
+    @Test
+    fun `gate opens only for screen on and game package`() {
+        assertTrue(reconnectGateOpen(true, "com.nianticlabs.pokemongo"))
+        assertFalse(reconnectGateOpen(false, "com.nianticlabs.pokemongo"))
+        assertFalse(reconnectGateOpen(true, "com.other.app"))
+        assertFalse(reconnectGateOpen(true, null))
+    }
+
+    @Test
+    fun `closed gate means no capture and no tap`() =
+        runTest {
+            var captures = 0
+            var taps = 0
+            val result =
+                runReconnectTap(1080, {
+                    captures++
+                    off
+                }, { _, _, _ ->
+                    taps++
+                    true
+                }, gate = { false })
+            assertEquals(ReconnectRunResult.NOT_OFF, result)
+            assertEquals(0, captures)
+            assertEquals(0, taps)
+        }
+
+    @Test
+    fun `gate closing before the tap skips the tap and stays neutral`() =
+        runTest {
+            var taps = 0
+            var gateCalls = 0
+            // Gate is checked once per capture and once per tap: close it at the third check (the pre-tap read).
+            val result =
+                runReconnectTap(1080, reads(off), { _, _, _ ->
+                    taps++
+                    true
+                }, gate = { ++gateCalls < 3 })
+            assertEquals(ReconnectRunResult.NOT_OFF, result)
+            assertEquals(0, taps)
+        }
 }

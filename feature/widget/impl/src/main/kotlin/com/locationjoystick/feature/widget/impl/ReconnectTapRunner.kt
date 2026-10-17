@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.widget.impl
 
+import com.locationjoystick.core.common.constants.AppConstants.GameConstants
 import com.locationjoystick.core.common.constants.AppConstants.ReconnectTapConstants
 import com.locationjoystick.core.model.GuidedPath
 import kotlinx.coroutines.CancellationException
@@ -54,6 +55,14 @@ internal fun jitteredTapPoint(
     return control.centerX + offset() to control.centerY + offset()
 }
 
+/** No screenshot and no tap unless the screen is on and the game window is in front. */
+internal fun reconnectGateOpen(
+    screenInteractive: Boolean,
+    foregroundPackage: String?,
+): Boolean = screenInteractive && foregroundPackage == GameConstants.PACKAGE
+
+private class GateClosed : RuntimeException()
+
 /**
  * One reconnect run. Taps only on a fresh OFF read: two OFF reads, then up to MAX_TAPS taps, each
  * preceded by a read taken after the pre-tap pause (ON ends the run, null never taps) and followed by
@@ -64,6 +73,25 @@ internal suspend fun runReconnectTap(
     capture: suspend () -> ReconnectControl?,
     tap: suspend (x: Int, y: Int, durationMs: Long) -> Boolean,
     random: Random = Random.Default,
+    gate: () -> Boolean = { true },
+): ReconnectRunResult =
+    try {
+        runGated(
+            screenWidth,
+            { if (!gate()) throw GateClosed() else capture() },
+            { x, y, d -> if (!gate()) throw GateClosed() else tap(x, y, d) },
+            random,
+        )
+    } catch (_: GateClosed) {
+        // Left the game or screen off mid-run: neutral, so it never counts toward the failure streak.
+        ReconnectRunResult.NOT_OFF
+    }
+
+private suspend fun runGated(
+    screenWidth: Int,
+    capture: suspend () -> ReconnectControl?,
+    tap: suspend (x: Int, y: Int, durationMs: Long) -> Boolean,
+    random: Random,
 ): ReconnectRunResult {
     capture()?.takeIf { it.state == ReconnectState.OFF } ?: return ReconnectRunResult.NOT_OFF
     delay(ReconnectTapConstants.CONFIRM_DELAY_MS)
