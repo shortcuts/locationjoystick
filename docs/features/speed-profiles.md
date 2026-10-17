@@ -1,42 +1,29 @@
 # Speed Profiles
 
-Five presets: Slow Walk, Walk, Run, Bike, Drive. All user-editable. Applies to joystick, route replay, and roaming.
+A set of editable speed presets. The built-in presets cover walking through driving. Profiles apply to the joystick, route replay, walk-to and roaming.
 
-Key files: `:feature:settings:impl/SettingsScreen.kt`, `:core:data/SettingsRepository.kt`
-
-## Presets
-
-| Profile | Constant |
-|---------|----------|
-| Slow Walk | `AppConstants.ProfileConstants.SLOW_WALK_SPEED_MPS` |
-| Walk | `AppConstants.ProfileConstants.WALK_SPEED_MPS` |
-| Run | `AppConstants.ProfileConstants.RUN_SPEED_MPS` |
-| Bike | `AppConstants.ProfileConstants.BIKE_SPEED_MPS` |
-| Drive | `AppConstants.ProfileConstants.DRIVE_SPEED_MPS` |
+Key files: the settings screen and the settings repository.
 
 ## Behaviour
 
-- Stored in DataStore.
-- UI: scrollable segmented control (roaming default) and individually labeled speed inputs (Settings screen).
-- Starting a saved route or roam switches the active profile to that session's chosen speed (route pin, walk-around `speedProfileId`, or planting `plantingSpeedProfileId`, default Bike).
-- After start, widget Speed Cycle and Settings speed changes apply on the next tick to joystick, walk-to, route replay, and roaming. They do not rewrite the route pin or roaming defaults.
-- Widget's Speed Cycle feature cycles through the user's **enabled** profiles in preset order via `SettingsRepository.getEnabledSpeedProfiles()`.
+- Profiles are stored in settings. Each has an editable speed. The built-in profiles cannot be deleted.
+- The settings screen shows the speed controls as a segmented control for roaming defaults, and as labelled inputs for the speed values.
+- Starting a saved route or a roam switches the active profile to that session's chosen speed. The sources are the route's pinned profile, the walk-around profile, or the planting profile.
+- After start, the widget's speed cycle and the settings speed changes apply on the next tick. They do not rewrite the route's pin or the roaming defaults. The session follows the user, not the saved setting.
 
-## Enabled Speed Profiles (Speed Cycle)
+## Speed cycle
 
-Settings → Menus → "Speed Cycle" lets the user choose which of the five presets the widget's Speed Cycle button cycles through — useful since most users only need a subset.
+The widget's speed cycle button cycles through the profiles the user has enabled, in preset order.
 
-- Default enabled: Walk, Run, Bike. Slow Walk and Drive are opt-in.
-- Stored as `AppSettings.enabledSpeedProfileIds` (`Set<String>` of profile IDs), DataStore key `enabled_speed_profile_ids`.
-- Editing speed *values* (Settings → GPS) always shows and edits all 5 profiles regardless of enablement — this toggle only affects which profiles are cycled through, not which can be edited.
-- If the enabled set is ever empty, `SettingsRepository.getEnabledSpeedProfiles()` falls back to all 5 profiles so cycling never breaks. The Settings UI itself also blocks unchecking the last enabled profile.
-- Round-trips through export/import via `AppSettings.enabledSpeedProfileIds`; old exports without the field default to Walk/Run/Bike.
+- Most users need only a few. Walk, Run and Bike are on by default. Slow Walk and Drive are opt-in.
+- Editing a profile's speed always shows all profiles, whether or not they are enabled. The enabled set only controls cycling.
+- If the enabled set is ever empty, cycling falls back to all profiles, so the button never does nothing. The settings screen also refuses to uncheck the last enabled profile.
 
 ## Constraints
 
-- Speed clamped to `AppConstants.ProfileConstants.MIN_SPEED_MS`–`AppConstants.ProfileConstants.MAX_SPEED_MS`.
-- Inline warning shown below speed input when speed exceeds `AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS`. Warning uses generic language — no specific game names. Drive's default speed exceeds this threshold by design.
+- Speeds are clamped to a range. Out-of-range input is not saved.
+- Above a threshold, the settings screen shows a warning. The threshold is an anti-cheat signal, not a physical limit. The warning must use neutral wording and name no game, because naming one would tie the app to it. The default drive speed is above the threshold by design.
 
-## API
+## Control API
 
-Speeds can be read and updated over the leader Control API; see docs/features/group-sync.md, "Content API".
+Speeds can be read and updated over the leader Control API. See [group-sync.md](group-sync.md), "Content API".

@@ -1,58 +1,34 @@
 # Foreground Service
 
-Persistent notif while spoofing active. Keeps app alive when minimized/screen off.
+A persistent notification is shown while spoofing is active. It keeps the app alive when it is minimised or the screen is off.
 
-Key files: `:core:location/MockLocationService.kt`
+Key files: the mock location service in `:core:location`.
 
-## Setup
+## Why a foreground service
 
-- Declared in manifest with `foregroundServiceType="location"`.
-- Started via `ServiceCompat.startForeground` with `FOREGROUND_SERVICE_TYPE_LOCATION` (API 34+ required).
-- Restart: `START_STICKY`.
-- Notif channel: `IMPORTANCE_LOW`, ID `AppConstants.NotificationConstants.CHANNEL_ID_ACTIVE`.
+Without the foreground service, Android stops the spoofing loop as soon as the app leaves the screen. The notification is the platform's requirement for a long-running service that uses location. It is not decorative.
+
+The service restarts itself with no intent after the system kills it, so the spoofing loop can recover without the user opening the app. The restart rules are in the service code and in [group-sync.md](group-sync.md), "Boot and restore".
 
 ## Lifecycle
 
-- Update loop: coroutine with `SupervisorJob()` scope.
-- `onDestroy`: cancel scope + call `locationManager.removeTestProvider`.
+- The update loop runs in a coroutine scope that one failed child cannot cancel. A tick error must not stop the whole loop.
+- On destroy, the scope is cancelled and the test provider is removed. See [mock-location.md](mock-location.md), "Core mechanics", for why removal is mandatory.
 
-## Service Interface
+## Wake lock
 
-`MockLocationService` exposes `StateFlow<SpoofState>`. Commands: `startSpoofing`, `updatePosition`, `stopSpoofing`, `parkSpoofingKeepWidget` (mock GPS off, widget stays; see docs/features/widget.md, "Pause vs Stop").
+Route replay and walk-to can slow down when the screen locks, because some devices throttle background apps. While spoofing is active, the service holds a partial wake lock, so these engines keep advancing.
 
-Clients bind via `LocalBinder` inner class + `ServiceConnection`. Unbind in `onDestroy`/`onCleared`.
+The lock is taken when spoofing starts, and released on stop, on park, and on destroy. Holding it while idle would drain the battery for nothing.
 
-## Wakelock Handling
+Parking keeps the service running. A parked widget must not race a dead service when the user taps Start again. A restart of a parked service stays parked, so the phone does not start spoofing on its own. A group leader's stop keeps the service running too, because the sync server must keep serving followers. See [widget.md](widget.md), "Pause and stop".
 
-To keep route replay and walk-to advancing reliably when the screen locks (workaround for Doze/Adaptive Battery throttling on some devices), the service holds a `PARTIAL_WAKE_LOCK` while spoofing is active (`state != IDLE`). Acquired in `startSpoofing()`, released in `stopSpoofing()`, `parkSpoofingKeepWidget()`, and `onDestroy()`.
+## Hiding the notification icon
 
-Park leaves the foreground service running (no `stopSelf()`) so Start from the widget does not race a dead FGS. `START_STICKY` with a null intent stays parked when `keep_widget_on_idle` is set, instead of resuming spoofing at the remembered location. A Group Sync leader's Stop also leaves the service running, for the same reason: its sync server must keep serving followers so they can pause and resume (docs/features/group-sync.md, "Edge Cases").
+A setting moves the notification to the lowest importance channel. That removes the status bar icon, lock-screen visibility and alerts. It is the most hidden a notification can be on Android.
 
-## Hiding the Notification Icon
+Android still requires an active notification for a foreground service. There is no API for zero notification. The notification stays reachable in the shade, under silent notifications. That meets the platform's rule without a visible icon.
 
-Settings → General → Privacy → "Hide notification icon"
-(`AppSettings.hideForegroundNotification`, DataStore key
-`hide_foreground_notification`, default `false`) switches the notification
-to an `IMPORTANCE_MIN` channel instead of the default `IMPORTANCE_LOW`
-channel. This removes the status bar icon, lock-screen visibility, and
-heads-up alerting — the maximum degree of hiding Android permits.
+Two channels exist, one per importance level. A channel's importance cannot change after it is created, so the app switches channels rather than changing one.
 
-Android requires every foreground service to post an active notification;
-there is no API to run one with zero notification. The notification still
-exists and is reachable by pulling down the notification shade (collapsed
-under "Show silent notifications"), which satisfies the platform
-requirement without keeping a persistent icon visible.
-
-Implemented as two pre-registered `NotificationChannel`s
-(`MockLocationNotification.kt`) — `location_spoof_channel` (`IMPORTANCE_LOW`)
-and `location_spoof_channel_minimized` (`IMPORTANCE_MIN`) — selected per
-notification build via `notificationChannelId(hideNotification)`, since a
-channel's importance can't be changed after creation. Round-trips through
-`ExportData` like `hideWidgetOverlay`.
-
-`onStartCommand()` re-posts the notification via `startForeground()` on
-every call, not just service creation (e.g. once per joystick-driven
-`ACTION_UPDATE_POSITION` intent). It reads the setting from the
-`@Volatile` field the same reactive collector writes, instead of a
-hardcoded default — otherwise every re-post would silently revert the
-notification back to the visible channel mid-session.
+The notification is posted again on every start command, not only at creation. Otherwise a joystick-driven update would quietly restore the visible channel mid-session. The re-post reads the setting from the same live value that the settings collector writes.

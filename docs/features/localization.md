@@ -1,85 +1,43 @@
 # Localization
 
-The app's interface can be shown in a language other than English. English is the source
-language; translations are added as additional resource sets alongside it.
+The app's interface can be shown in a language other than English. English is the source language. Translations are added as extra resource sets beside it.
 
-Key files: `core/common/util/LocaleContextWrapper.kt`, `core/common/constants/AppConstants.kt`
-(`LocaleConstants`), `core/model/AppLanguage.kt`, `core/designsystem/component/LjLanguageRow.kt`,
-`lint/checks/HardcodedComposeStringDetector.kt`
+Key files: the locale wrapper and the language constants in `:core:common`, the language model in `:core:model`, the language dropdown in `:core:designsystem`, and the lint check that flags hardcoded strings in `:lint:checks`.
 
-## Supported Locales
+## Supported locales
 
-| Locale | Qualifier |
-|---|---|
-| English (default/source) | `values/` |
-| Simplified Chinese | `values-zh-rCN/` |
-| Traditional Chinese | `values-zh-rTW/` |
+English is the default and source. Simplified and Traditional Chinese are shipped. The list of folders is the list of locales; the build generates the system locale list from them.
 
-## Resource Layout
+## Resource layout
 
-There is no single central `strings.xml`. Every module that has its own user-facing strings
-(Compose UI or `Context.getString()` call sites) owns its own `res/values/strings.xml` (English,
-source of truth) plus a sibling `res/values-<qualifier>/strings.xml` per supported locale, with
-identical keys: `app`, `core/common`, `core/designsystem`, `core/location`, `core/map`, `core/routing`,
-`feature/favorites/impl`, `feature/group/impl`, `feature/map/impl`, `feature/onboarding/impl`,
-`feature/routes/impl`, `feature/settings/impl`, `feature/widget/impl`. A module may split its
-strings across several files in the same `values*/` folders (e.g. `coordinate_workflow_strings.xml`
-in `app`, `core/common` and `core/designsystem`), each with a sibling in every supported locale.
-Cooldown advisory/badge text lives in `core/designsystem`'s `cooldown_strings.xml`, formatted by
-`cooldownAdvisoryLabel()`/`cooldownBadgeText()` (`CooldownText.kt`); `CooldownState` itself holds no text.
+Each module that shows user-facing text owns its own English strings file, plus a sibling file per supported locale. Keys must be identical across locales. A module may split its strings across several files, and each split needs a sibling in every locale.
 
-## Selecting a Display Language
+Cooldown text is kept in the design system's own strings and formatted by helper functions, so the state objects hold no text.
 
-- **Android 13+ (API 33+)**: the OS's own per-app-language Settings screen lists every locale
-  this app ships, sourced from `app/build.gradle.kts`'s `androidResources { generateLocaleConfig
-  = true }` — AGP generates the locale-config XML and the manifest's `android:localeConfig`
-  attribute automatically from whichever `values-*` folders exist at build time. No hand-maintained
-  locale-config file.
-- **Android 9-12 (API 28-32)**: the OS has no per-app-language UI at this API level, so
-  `LocaleContextWrapper.wrap()` (`:core:common`) supports an app-chosen override on this range via
-  `attachBaseContext()` in `MainActivity`, `OverlayService` (the joystick and widget overlay base
-  class), and `MockLocationService` (the foreground service and its notification).
-- **In-app language picker**: a compact top-right dropdown switcher (`LjLanguageDropdown`,
-  `:core:designsystem`) sits in the top bar's `actions` slot in two places — onboarding's header
-  (optional, skippable, does not count toward "Step X of 3") and the Settings → General screen's top
-  bar. Choices are "EN" / "CN" / "TW" / "System default" (abbreviated language codes, spelled-out
-  fallback option). Selecting a language calls
-  `LocaleContextWrapper.setLanguage()` (`:core:common`) — on API 33+, the platform's own
-  `LocaleManager.setApplicationLocales`; on API 28-32, writes `LocaleConstants.KEY_LANGUAGE_TAG`
-  to the same SharedPreferences file `LocaleContextWrapper.wrap()` reads — then calls
-  `Activity.recreate()` so `MainActivity` picks it up immediately. Persisted per-device, not part
-  of `AppSettings`/`ExportData` (like `ThemeMode`).
-- **Android 9-12 (API 28-32) limitation**: the SharedPreferences override above only takes effect
-  for a component the next time it's created (`attachBaseContext()` runs once per instance). A
-  language change made while a spoofing session is actively running won't retroactively relabel
-  that session's already-running foreground-service notification or overlays — only the next
-  session (or `MainActivity`, which is force-recreated immediately) picks it up. Android 13+ has
-  no such gap: the framework applies the per-app override process-wide the moment it's set.
-- **Play Store installs**: `app/build.gradle.kts`'s `bundle { language { enableSplit = false } }`
-  disables Play's per-device language-APK splitting, so every install carries every supported
-  locale's resources regardless of the installing device's system language at install time.
+## Choosing a language
 
-## Lint Enforcement
+- **Android 13 and later:** the system's per-app language screen lists the shipped locales. The build generates the list, so nothing is maintained by hand.
+- **Android 9 to 12:** the system has no per-app language screen. The app wraps the base context in each component that shows text, including the main activity, the overlays and the foreground service and its notification. The app's own choice is read from its preferences.
+- **In-app picker:** a compact dropdown in the header of onboarding and of general settings. It offers EN, CN, TW and system default. On Android 13 and later, the choice goes to the system. On earlier versions it goes to the app's preferences, and the activity is recreated so the change shows at once.
+- **Limitation below Android 13:** a running spoofing session keeps the language it started with. Its notification and overlays change at the next session, because a component reads its language only when it is created. Android 13 applies the change everywhere at once.
+- **Play installs:** language splitting is off, so every install carries every locale. A device's language at install time does not decide what is shipped.
 
-`HardcodedComposeStringDetector` (`:lint:checks`) flags hardcoded user-facing strings in Compose
-(direct calls, conditional/branch expressions, `semantics {}` blocks, and other generic literal
-cases) so new UI text is externalized to `strings.xml` and stays translatable by construction.
+The language choice is per device. It is not part of the export, like the theme.
 
-## Translation Conventions
+## Lint enforcement
 
-- English (`values/strings.xml` in each module) is the source of truth; a translation is a sibling
-  `values-<qualifier>/strings.xml` with the exact same keys.
-- Never translate: the app name/brand ("locationjoystick"), and units/symbols embedded in format
-  strings (e.g. "m/s", "km/h").
-- Disclosure, onboarding-card, service-description and calibration failure strings are Play-policy relevant
-  and need the same native-speaker review before release.
-- AI-assisted translations require a native-speaker review before merge — see CONTRIBUTING.md,
-  "Translations".
+A lint check flags hardcoded user-facing strings in Compose code, including strings in conditional expressions and semantics blocks. New text must go in a strings file, so it stays translatable.
 
-## Adding a New Language
+## Translation rules
 
-1. For every module's `res/values/strings.xml`, add a sibling `res/values-<qualifier>/strings.xml`
-   translating every key (same key set, no additions/removals).
-2. Leave the app name/brand and embedded units/symbols untranslated (see Translation Conventions).
-3. Run `make format`, `make lint`, `make test`.
-4. Get a native speaker of the target language to review the translated strings before merging.
+- English is the source of truth. A translation carries the same keys and nothing else.
+- The app name and brand are never translated. Units and symbols inside format strings are not translated either.
+- Strings that Play policy depends on need native-speaker review before release. These are the accessibility disclosure, the onboarding card, the service description and the calibration failure messages. See [tap-to-walk.md](tap-to-walk.md).
+- AI-assisted translations need native-speaker review before merging. See `CONTRIBUTING.md` at the repo root, "Translations".
+
+## Adding a language
+
+1. For each module's English strings file, add a sibling file for the new locale with every key translated. No keys added or removed.
+2. Leave the brand and embedded units untranslated.
+3. Run the format, lint and test targets.
+4. Get a native speaker to review the strings before merging.

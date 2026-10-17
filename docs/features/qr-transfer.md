@@ -1,30 +1,24 @@
 # QR Share / Transfer
 
-Settings → share or import config between devices over the local network, kicked off by scanning a single QR code **or** typing a 6-character code. Both devices must be on the same Wi-Fi/LAN.
+Share or import settings between two devices over the local network. The sender shows a QR code or a short typed code. The receiver scans the code or types it. Both devices must be on the same Wi-Fi or LAN.
 
-Key files: `:feature:settings:impl/ExportSyncServer.kt`, `:feature:settings:impl/ExportSyncClient.kt`, `:feature:settings:impl/QrScannerScreen.kt`, `:feature:settings:impl/QrShareDialog.kt`, `:feature:settings:impl/QrEncoder.kt`, `:core:common/util/NetworkUtils.kt`, `:core:common/util/NsdCodeManager.kt`, `:core:common/util/RandomCode.kt`
+Key files: the settings feature's export server, client, scanner and share dialog, and the shared network and discovery helpers in `:core:common`.
 
-## Mechanism
+## Why a QR code carries a connection, not the data
 
-The QR code does not carry the export data itself — it carries connection info for a transient local HTTP server. This avoids any size limit, multi-QR chunking, or scan-sequence logic. The same connection is also reachable by typing a short code, mirroring Group Sync's leader/follower discovery (`NsdCodeManager`, shared by both features).
+The QR code holds only the address of a short-lived local server. The export itself is fetched over that connection. This avoids size limits, multi-code chunking and scan-sequence logic. A typed code reaches the same server through the same discovery used by Group Sync ([group-sync.md](group-sync.md)).
 
-1. **Sender** taps "Export via QR code". `SettingsViewModel.prepareQrExport()`:
-   - Serializes current settings via `SettingsExportCodec.serializeExportData`.
-   - Generates a random 6-character code via `RandomCode.generate()`.
-   - Starts `ExportSyncServer` (a `ServerSocket(0)`-bound local HTTP server, OS-assigned port), which serves that JSON at `GET /export?token=CODE`.
-   - Registers the code for NSD discovery via `NsdCodeManager.startAdvertising(code, port)`.
-   - Builds `locationjoystick://export?host=HOST&port=PORT&token=CODE` (HOST resolved via `NetworkUtils.getLocalIpAddress()`) and renders it as a QR code via `QrEncoder`. `QrShareDialog` displays the code alongside the QR for manual entry.
-   - `QrShareDialog` opens immediately and shows a "Starting local export server…" message with a loading indicator (`SettingsViewModel.isPreparingQrExport`) until the server/NSD setup above finishes and the QR/code are ready.
-   - Both the HTTP server and NSD advertising only run while `QrShareDialog` is open — dismissing it calls `SettingsViewModel.stopQrExport()`.
-2. **Receiver** has two options, both ending in the same fetch:
-   - **Scan**: taps "Import from QR code", scans the code. `QrScannerScreen` decodes the raw URL via `ZxingImageAnalyzer` and passes it to `SettingsViewModel.onQrScanned`, which parses `host`/`port`/`token` from the URL. While the resulting fetch (below) is in flight, `QrScannerScreen` shows a loading indicator under its status label (`SettingsViewModel.qrImportFetching`).
-   - **Type code**: taps "Import via code", enters the 6-character code. `SettingsViewModel.onExportCodeEntered` resolves it to a host:port via `NsdCodeManager.discoverByCode`.
-   - Either path then fetches the export JSON over HTTP via `ExportSyncClient`, parses it via `SettingsExportCodec.parseExportData`, and surfaces the standard Add/Replace `ImportConfirmDialog`.
+## Flow
 
-## Edge Cases
+1. **Sender:** opens the share dialog. The app serialises the current settings, generates a short code, and starts a local server on a free port that serves the export only under that code. The server and the discovery advertisement run only while the dialog is open. Closing the dialog stops both.
+2. **Receiver:** either scans the QR code, or types the short code. Both give the same host, port and code. The receiver fetches the export over HTTP, parses it, and shows the same add-or-replace confirmation as a file import.
 
-- Devices not on the same Wi-Fi/LAN → fetch (or NSD discovery) times out (`AppConstants.SyncConstants.EXPORT_FETCH_TIMEOUT_MS` / `NSD_DISCOVERY_TIMEOUT_MS`), error snackbar shown.
-- Malformed/foreign QR code (missing `host`/`port`/`token`) → "Invalid QR code" error snackbar, no fetch attempted.
-- Typed code not found within the NSD discovery window → "No sender found for code" error snackbar.
-- No size limit on the export — the HTTP body is just the same JSON used by file export.
-- Phone-hotspot networks often drop client-to-client multicast — typed-code discovery can fail there; QR scan (direct host:port) is the fallback. See the hotspot note in docs/features/group-sync.md.
+The shown code and QR are only ready once the server and discovery are up. The dialog shows a loading state until then.
+
+## Edge cases
+
+- Devices on different networks: the fetch or discovery times out and the user sees an error.
+- A QR code that is not ours, or is missing its parts: rejected before any fetch.
+- A typed code that no sender answers for within the discovery window: an error.
+- Hotspots often block multicast between clients, so typed-code discovery can fail there. The scan path works, because it uses a direct address. See [group-sync.md](group-sync.md), "Why discovery is secondary".
+- The export has no size limit. The body is the same JSON as the file export ([export-import.md](export-import.md)).

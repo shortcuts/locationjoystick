@@ -1,246 +1,124 @@
 # Floating Widget
 
-Small floating button overlay. Tap to expand a panel with configured quick-access controls. Items configured in Settings.
+A small floating button overlay. Tap it to expand a panel of quick-access controls. The user chooses which controls appear.
 
-Key files: `:feature:widget:impl/FloatingWidgetService.kt`, `:feature:settings:impl/SettingsScreen.kt`
+Key files: the widget module's service and panel presenter, and the settings screen.
 
 ## Mechanism
 
-- Same overlay mechanism as the joystick via `:core:overlay`.
-- Separate service, toggled independently of the joystick.
-- State transitions: collapsed (FAB) ↔ expanded (panel) via `ValueAnimator`.
-- Long-press the launcher icon shows a `WidgetSidePopup` with **Pause** and **Stop** while spoofing is active. Pause calls `MapController.parkSpoofingKeepWidget()`: mock GPS, joystick overlay, wakelock, and any route/walk/roam stop, but `FloatingWidgetService` stays. Feature icons fade (`WidgetIgnoredTint`) and taps are no-ops until Start. The Pause icon becomes **Start** (`mapController.startSpoofing()` at the last location). Stop still calls `MapController.stopSpoofing()` (same as the app top-bar Stop) and removes the widget. Short tap still expands/collapses; drag still repositions.
-- Enabled features stored in DataStore as `stringSetPreferencesKey`; the shared display order (see below) is a separate `stringPreferencesKey`.
-- `MockLocationService` auto-starts the widget overlay (alongside the joystick overlay) whenever spoofing starts and `SYSTEM_ALERT_WINDOW` is granted — there is no separate manual start button for it.
+- Same overlay mechanism as the joystick ([joystick.md](joystick.md)). It is a separate service, toggled independently of the joystick.
+- It starts automatically when spoofing starts, provided the overlay permission is granted. There is no separate start button.
+- Enabled features are a set. Display order is a separate list. See "Configurability".
 
-## Hiding the Overlay
+### Pause and stop
 
-Settings → General → Privacy → "Hide floating widget" (`AppSettings.hideWidgetOverlay`, DataStore key `hide_widget_overlay`, default `false`) stops `MockLocationService` from starting `FloatingWidgetService` when spoofing starts. The joystick overlay and any accessibility-based features (e.g. Tap to Walk screen access, see docs/features/tap-to-walk.md) are unaffected — this only hides the widget button/panel itself. Round-trips through `ExportData` like `hideTeleportFeatures`.
+Long-pressing the launcher icon offers Pause and Stop while spoofing is active.
 
-Live while spoofing is active: `MockLocationService.observeLocationState()` runs a reactive collector (`combine` of its own state and `getHideWidgetOverlay()`, decision via the pure `computeWidgetOverlayAction()` in `LocationLoopPolicy.kt`) that starts or stops `FloatingWidgetService` the moment the toggle changes, not just at the next RUNNING transition — flipping the setting mid-session removes (or restores) the overlay immediately.
+- **Pause** parks mock location: spoofing stops, and the joystick and any route, walk or roam stop with it. The widget stays on screen and its controls fade until Start. Start resumes at the last location.
+- **Stop** ends everything and removes the widget.
+
+Pause is not the same as the paused state of a route. A paused route keeps pushing a frozen fix. A parked widget removes the mock provider altogether, so the app does not look like it is still spoofing.
+
+Why the service stays alive while parked: the foreground notification requires the service to keep running, and a restart must not resume spoofing unasked. A stored flag keeps a restart parked. Full stop always clears that flag, even if the service is already parked, because the state would not emit again.
+
+## Hiding the overlay
+
+A setting hides the widget entirely. The joystick and the accessibility-based features are unaffected. The setting takes effect immediately during a session. Turning it on removes the overlay, and turning it off restores it, without waiting for the next start.
 
 ## Configurability
 
-Both the widget panel and the map screen's FAB column render the same `AppFeature` set (`:core:model/AppFeature.kt`), each feature declaring which surface(s) — `WIDGET`, `MAP`, or both — it's eligible for. Settings → Menus → "App Features" shows one combined, drag-to-reorder list: a drag handle, a checkbox to show on the widget (if eligible), and a checkbox to show on the map (if eligible).
+The widget panel and the map's button column show the same set of features. Each feature declares which surfaces it can appear on, widget or map or both.
 
-A single shared `featureOrder` list controls display order on both surfaces, so they stay consistent by default — the user can still diverge enablement per surface, just not relative order. `SettingsRepository.getWidgetFeatures()` / `getMapFeatures()` filter+sort that shared order by each surface's enabled set.
+- One shared display order keeps the two surfaces consistent. The user can enable features differently per surface, but not reorder them differently.
+- New features are added to existing installs once, through a merge against the defaults each version saw. Turning a default off in settings sticks; the merge never turns it back on.
 
-Speed Cycle (`AppFeature.SPEED_CYCLE`) writes the global active profile via `SettingsRepository.setActiveProfileId`. Starting a route or roam switches to that session's chosen profile first (`activateSessionSpeed`); later Speed Cycle taps and Settings speed changes win for the rest of the session and are not written back into the route pin or roaming defaults.
+Speed cycle writes the global active speed profile. Starting a route or a roam first switches to that session's profile. Later changes win for the rest of the session and are not written back into the route's pin or the roaming defaults.
 
-## Map share icon
+## Share and picker
 
-The floating map's FAB column (below Search) and its tap panel title row show the shared share icon (copy coordinates or share link). The link action closes the overlay first so the system chooser is visible.
+- The map's share action copies coordinates or shares a link. The link path closes the overlay first, so the system share sheet is not covered.
+- The favorites and routes pickers have a search field. It is hidden until the user opens it, and it clears when the picker closes, so each reopen starts unfiltered.
+- Overlay panels that take text input must be focusable, or the keyboard never appears. The compact icon column must not be focusable, or it steals focus from the app underneath.
+- Sharing from a picker closes the overlay first, for the same reason as the map share action.
 
-## Picker search
+## Paste overlay
 
-The full-screen favorites and routes pickers (`FavoritesFloatingView` / `RoutesFloatingView`)
-show a search icon next to Close. Tapping it reveals a `ListSearchField`; tapping again hides
-the field and clears the query so the full list returns. Query state is `remember` inside those
-composables and the panel `ComposeView` is recreated on every `showPanel()`, so reopening always
-starts unfiltered.
+The paste sheet is a bottom sheet, not a full-screen dimmer, so taps above it reach the app underneath. The user can copy from Maps while the sheet is open.
 
-The favorites picker also has **Share current location** immediately left of Search (same
-`shareCurrentLocationCoordinates` helper as the Favorites screen toolbar). It is hidden on a
-favorite's detail (`hasBack`). Empty lists still show Share, even though Search is hidden.
-A successful share closes the overlay (`onShareOpened`) before starting the chooser so the
-system sheet is not covered by the panel; a missing location only toasts and leaves the list
-open.
+- It can shrink to a bar, so the user can switch apps and copy. Shrinking makes the window non-focusable so the other app can take focus. The form stays alive while shrunk, so typed text is kept.
+- Clipboard paste appends a line, as on the other paste surfaces.
+- A long-press on the paste button offers a shortcut to the Capture screen. A short tap still opens paste.
 
-Both pickers use `mapPanelLayoutParams()` (focusable overlay + `SOFT_INPUT_ADJUST_RESIZE`) so the
-search field can take IME input. The compact FAB column stays `FLAG_NOT_FOCUSABLE`.
-
-Favorite detail adds **Rename** and **Delete** with in-overlay dialogs. Route detail adds compact
-Rename, Share, and Delete icons above its start options. Sharing dismisses the overlay before
-launching Android's share sheet, preventing the picker from covering or trapping the sheet.
-
-## Paste coordinates overlay
-
-The widget paste button opens a **bottom sheet**, not a full-screen dimmer (`pasteOverlayLayoutParams()`:
-`MATCH_PARENT` × `WRAP_CONTENT`, `Gravity.BOTTOM`, `FLAG_NOT_TOUCH_MODAL`). Taps above the sheet
-reach the app underneath so the user can copy from Maps without closing paste. Height is capped at
-half the screen; the form already scrolls.
-
-The title row has a shrink control (`ExpandMore` / `ExpandLess`). Shrunk, the sheet is a bar plus
-hint ("Switch apps to copy, then expand to paste") and the window becomes `FLAG_NOT_FOCUSABLE` so
-the other app can take focus for copy. The `PasteCoordinatesForm` stays composed at zero size so
-`rememberSaveable` text is not wiped. Expand restores focus for IME and the clipboard paste icon.
-
-Clipboard paste on every paste surface **appends** a new line when the field already has text
-(`mergeClipboardIntoPasteText`) so a second copy from another app adds a point instead of replacing
-the first.
-
-When the paste button is enabled, long-pressing the widget panel's paste button toggles one compact, anchor-aligned Capture shortcut
-in a `WidgetSidePopup`. It opens the existing Capture screen in `MainActivity` directly, without an
-extra-functions menu. A short tap still opens paste.
-
-Teleport from this sheet (and from the map paste sheet) is a GPS jump: it does not call OSRM.
-Walk via roads does, and can fall back to a straight walk if routing is down. A user teleport
-while spoofing is RUNNING aborts any in-flight Follow-roads route start so a late routing result
-cannot overwrite the jump, and the test provider is updated on that same intent (not on the next
-1 Hz tick). After widget Pause, paste and the other feature icons stay faded until Start —
-teleport does not unpark mock GPS.
-
-See docs/features/favorites.md and docs/features/routes.md for the shared `matchesNameSearch`
-filter used by the in-app lists and map sheets.
+Teleporting from the paste sheet is a plain position jump and does not call the routing service. Walking via roads does, and can fall back to a straight walk when routing is unavailable. A teleport during spoofing aborts any road-following start that is still pending, so a late result cannot undo the jump.
 
 ## Appearance
 
-Overlay panels follow Settings → Appearance (`getThemeMode()` → `LjTheme`), same as the main app.
-List rows use `surfaceVariant`; route-start checkboxes use `ljCheckboxColors()`. The compact icon
-column stays black circles with orange / white icons so it remains visible over other apps —
-every icon uses a light grey-white tint when idle (Favorites, Speed cycle, Map, Paste, Tap to Walk, Altitude, the Capture shortcut). State color follows one rule: grey idle, green moving, orange paused; a green accent marks an "on" state (Tap to Walk active, Altitude input open, joystick stick moving). The main-map FAB column and the floating map follow the same rule with a neutral container when idle (`ActivityState`, `:core:designsystem`). Disabled controls and ignored roam starts fade to about
-42% white instead of nearly matching the circle. While spoofing is active, the joystick lock icon
-is green while the stick is moving (`joystickMoving`, `MockMode.JOYSTICK`) and `WidgetInactiveTint` grey otherwise. Activity playback
-and pause do not change its tint. The launcher and every expanded control share a
-50 dp-wide, 52 dp-high slot: each control keeps a 48 dp touch target around its 42 dp circle, while
-the common slot centers the full column and reduces the visible gap by 4 dp. `WidgetSidePopup`
-uses the same slot height, so pause, stop, and other secondary controls stay centered on their
-parent row. See docs/features/theme.md.
+Overlay panels follow the app's theme setting. Their icons are tinted for legibility over other apps, because the icon column is drawn on top of whatever app is running. Colour states follow one rule across the app: grey when idle, green when moving, orange when paused. Green also marks an "on" state. Disabled controls fade, so they stay visible without looking active.
 
-## Service Lifecycle
+## Route controls across surfaces
 
-- Binds to `MockLocationService` in `onStartCommand`.
-- Unbinds in `onDestroy`.
-- Binds to `JoystickOverlayService` only while mock GPS is not IDLE. Pause unbinds first so `BIND_AUTO_CREATE` cannot restart the joystick while the widget stays on screen.
+Pause, resume and stop for a route are implemented on three surfaces: the main map, the widget panel and the floating map. Each keeps its own expanded or collapsed state. A change on one surface does not affect the others.
 
-## Pause vs Stop
+- The widget's route icon is active only for route replay and walk-to. The roaming icon is active only for roaming. Roaming never lights the route icon.
+- The route icon is grey when idle, green while moving, and orange while paused.
+- A `current / total` progress chip sits at the bottom of the icon column while a route plays. It uses the same progress source as the main map ([routes.md](routes.md)).
 
-Pause is **not** `LocationRepository.pauseSpoofing()` (`MockLocationState.PAUSED`), which keeps pushing a frozen mock fix. Pause parks: state goes IDLE, the test provider is removed, and `MockLocationService` does **not** `stopSelf()`, matching the follower-inactive-leader keep-alive pattern. A persisted `keep_widget_on_idle` flag makes a `START_STICKY` restart stay parked instead of resuming spoofing at the last location. Full Stop (widget long-press Stop, notification Stop, or app Stop) always clears that flag, stops the widget, and `stopSelf()`s — including while already parked, because StateFlow will not re-emit IDLE. The widget also `stopSelf()`s on Stop so the overlay goes away immediately. The foreground notification stays while parked (Android requires an ongoing notification for the still-running service); Stop on that notification is a full stop.
+## Expanded controls and touch
 
-## Completion Badge
+The compact overlay is sized to its content. A transparent area around the icon column still takes touches, which would block the app underneath. Extra controls that open beside an icon are drawn in a separate child window attached to the overlay, sized to the buttons. This keeps the taps around them passing through.
 
-A red dot appears at the top-right of the widget FAB when a route, walk, or roaming session ends naturally (completion, not user-initiated stop). The badge is driven by `pendingCompletionFlow: MutableStateFlow<Boolean>` in `FloatingWidgetService`, set on `mapController.completionMessages` emission.
+The side popups stay attached to the parent when the widget is dragged. They flip to the left when the widget is near the right edge of the screen.
 
-- **Trigger**: any natural completion event (route replay end, walk-to arrival, roaming loop end).
-- **Cleared**: when the user taps the FAB to expand the panel (`isPanelExpandedFlow` becomes `true`).
-- **Does not appear**: when the user manually stops a session.
+## Floating map
 
-## Route Controls Across Surfaces
+The floating map is a map view inside an overlay window ([map.md](map.md), [map-tiles.md](map-tiles.md)). Rules that cannot be changed without breaking it:
 
-Pause/resume/stop for an active route replay is implemented separately on
-three surfaces. Each owns its own expand/collapse state — a change to one
-does not affect the others.
+- It renders in texture mode. The default surface view punches a transparent hole, so the map shows no streets over the game.
+- It opens compact, so taps outside its window reach the game. Expand switches the same window to a larger layout without recreating the map.
+- North lock starts on: bearing is held at zero and rotation gestures are disabled, while panning still works. Unlocking restores the normal gestures and does not force a saved bearing.
+- Its centre button follows the spoofed position while spoofing. When idle, it falls back to the last point the map camera was moved to.
 
-| Surface | Entry-point file(s) | State ownership |
-|---|---|---|
-| Main map screen FAB column | `:feature:map:impl/MapFabColumn.kt`, `MapViewModel.kt`, `MapUiState.kt` | `MapUiState.isRouteControlsExpanded`, toggled by `MapAction.ToggleRouteControls` in `MapViewModel` |
-| Widget panel row | `:feature:widget:impl/WidgetPanelContent.kt`, `FloatingWidgetService.kt` | `FloatingWidgetService.routeExpandedFlow` (`MutableStateFlow<Boolean>`) |
-| Floating map (in-widget) | `:feature:widget:impl/MapFloatingView.kt`, `WidgetPanelPresenter.kt` | `WidgetPanelPresenter.mapRouteControlsExpanded` (`MutableStateFlow<Boolean>`) — see below |
+### Route controls on the floating map
 
-In the widget icon column the route icon is active (pause/stop popup) only for route replay and walk-to, and the roaming icon only for roaming — roaming never lights the route icon (`routeControlsActive`, `WidgetParkControls.kt`), matching the floating map. Each activity icon is grey (`WidgetInactiveTint`) when idle, green while moving, and primary orange while its own activity is paused (`activityState`). Resume restores green; completion or Stop restores grey. The pause/resume arrows and click behavior are unchanged. Floating-map route/roam buttons use the same grey / green / orange states as filled buttons. While roaming, tapping the route icon opens the routes picker.
+The floating map's button column shows a route button when the routes feature is enabled on the map, or when a route is playing.
 
-While a route replay is active, a `current/total` progress chip is pinned at the **bottom** of the widget panel icon list (after configurable features and extra sections, before debug stats) and at the bottom of the floating-map FAB column. Same `LocationRepository.routeProgress` source as the main map FAB column (docs/features/routes.md, "Route progress"). Previous / Next on these surfaces use `RouteReplayEngine.jumpToNextWaypoint` / `jumpToPreviousWaypoint`; when Teleport between waypoints is on, the engine lingers at the jumped stop before the next automatic hop (docs/features/routes.md, "Next / Previous Waypoint").
+- Tapping it while a route plays expands Pause/Resume and Stop beside it.
+- Tapping it while idle opens the routes picker.
+- Its expanded state lives in the presenter, not in the map's composable. The map view is recreated on every open, so composable state would reset, leaving the controls unreachable mid-route.
 
-## Expanded-control hit testing
+### Feature gates
 
-The compact widget overlay is `WRAP_CONTENT`. Putting extra buttons in a `Row` beside the
-route / roaming / altitude icon widens the whole `Column`, so the transparent rectangle
-above and below that row still captures touches (`FLAG_NOT_TOUCH_MODAL` only passes
-events *outside* the window). `WidgetSidePopup` draws those extra controls in a
-`TYPE_APPLICATION_SUB_PANEL` child window attached to the overlay's `windowToken`,
-sized to the buttons, with `clippingEnabled = false` so it can draw outside the FAB
-column. Parent-relative placement (`anchorRight`/`anchorTop`, flip left if the bar
-would go off the right of the screen) keeps the bar flush with the icon and moving
-with the widget when it is dragged — a sibling `TYPE_APPLICATION_OVERLAY` popup
-stayed put. Taps on the game or map around the bar reach the app underneath.
-Altitude's popup is `focusable` so the IME still works; the parent overlay still
-clears `FLAG_NOT_FOCUSABLE` while altitude is expanded.
+Paste coordinates is off by default and must be enabled in settings. Roaming is on by default on the widget. Capture is on by default on the map. Each has its own merge rule for existing installs, so a feature is added once and never silently re-enabled.
 
-## Floating Map — Route Controls
+Roaming on the widget: a tap while idle opens the roaming panel. A tap while roaming expands pause and stop. A playing route blocks a roam start, and the roam icon fades when that is the case.
 
-The widget's `AppFeature.MAP_FLOATING` shortcut uses `LjIcons.Map` and opens `MapFloatingView`. Its "Open map" accessibility label and click behavior are unchanged; recenter controls continue to use `LjIcons.MyLocation`.
+The joystick toggle shows or hides the stick on its own. It does not need the stick to be locked. The lock button toggles locking. Moving the stick pauses the walk, route or roam, and releasing it leaves that paused until the user resumes.
 
-When `AppFeature.MAP_FLOATING` is enabled, the floating map's FAB column includes a route button:
+## Altitude override button
 
-- **Shown when**: `AppFeature.ROUTES` is enabled for the map surface in Settings **or** a route replay is currently active.
-- **Active state**: route icon turns green (`LjSuccess`) during `ROUTE_REPLAY` mode.
-- **Expand controls**: tapping the route button expands two inline buttons to the left:
-  - **Stop** — ends the replay immediately.
-  - **Pause / Resume** — toggles replay pause state.
-- **No replay active**: tapping the route button opens the floating routes picker (`showRoutesFloatingView()`), matching the main map screen's behaviour and the button's own "Open routes" label.
-- **Expansion state ownership**: the expanded/collapsed flag lives in `WidgetPanelPresenter.mapRouteControlsExpanded`, **not** in a `remember` inside `MapFloatingView`. `showPanel()` builds a fresh `ComposeView` on every open, so composable-local state would reset to collapsed each time the map panel was reopened mid-replay — leaving the pause/stop controls unreachable. The presenter collapses the flag automatically once `mockMode` leaves `ROUTE_REPLAY`, so a new route never starts pre-expanded.
-- **Settings gate**: `enabledMapFeatures` flows through `MapSharedState` so the floating map respects the same visibility toggle as the main map screen. Paste coordinates (`AppFeature.PASTE_COORDINATES`) is on both WIDGET and MAP, off by default (absent from `DEFAULT_WIDGET_ENABLED` / `DEFAULT_MAP_ENABLED`; enable in Settings → Menus → App Features), and uses the map-surface gate on the floating-map FAB column. The widget panel button opens `PasteCoordinatesFloatingView` (shared `PasteCoordinatesForm`): one valid point offers Teleport / Walk / Walk via roads; multiple points switch to route-labelled options and Start route. Save first as favorite remains separate from Save route. Roaming (`AppFeature.ROAMING`) is on both WIDGET and MAP, on by default on the widget (`DEFAULT_WIDGET_ENABLED`). Existing installs gain it via `mergeNewDefaultWidgetFeatures`: `LEGACY_WIDGET_SEEN_DEFAULTS` is the pre-paste set, and `WIDGET_PRE_ROAMING_SEEN_DEFAULTS` is the paste-era set, so roaming is unseen until 0.20.5. If `widget_seen_defaults` already contains `roaming`, the user ran a build where the widget button was a default and then turned it off — leave it off. Tap while idle opens `RoamingFloatingView` (Walk around the block + Planting). Tap while `MockMode.ROAMING` expands pause/stop via `WidgetSidePopup` (`roamingExpandedFlow`). A playing route blocks roam start; the roam icon fades but stays readable on the black circle when that control is ignored. The widget show/hide button uses `LjIcons.JoystickToggle` (the supplied Material Symbols vector) in both visibility states, with the existing size, click handler, and accessibility label. Its tint is green while the stick is moving and `WidgetInactiveTint` grey otherwise, regardless of visibility or lock. It shows or hides the overlay on its own (lock is not required). The Settings menu keeps its original `LjIcons.Joystick` gamepad icon. Moving a locked stick into its center dead zone stops manual stepping without unlocking. Pulling outward retains lock; the lock button itself toggles locking. Joystick show/hide and lock remain tappable during automatic movement. The lock glyph reflects `joystickLocked`; its tint is green while the stick is moving and `WidgetInactiveTint` grey otherwise (a locked stick keeps moving, so stays green). Moving the stick pauses the walk, route, or roam and takes over; releasing leaves the activity paused until Resume (docs/features/joystick.md, "Manual takeover"). Roam start stays a no-op while a route is playing. Capture coordinates (`AppFeature.CAPTURE_COORDINATES`) is MAP-only, on by default on the map FAB set, and opens the same helper page on the floating map; intercept does not require the overlay (docs/features/location-links.md, Opt-in Tier). Installs that already persisted `PASTE_COORDINATES` keep it; the upgrade merge never adds it. Map FABs gain `CAPTURE_COORDINATES` on upgrade via `mergeNewDefaultMapFeatures`. Turning either off in Settings then sticks.
+An optional button in the widget panel opens an inline numeric field with the current altitude. Confirming it sets a base altitude that overrides the default and any real-elevation lookup. The override applies at once. Setting it suspends the periodic elevation lookup until the user resets it in settings ([mock-location.md](mock-location.md)).
 
-The floating map is a MapLibre `MapView` inside a `TYPE_APPLICATION_OVERLAY` window.
-`rememberMapView(overlay = true)` (`:core:map`) sets `textureMode` so the map composites
-over the app underneath. A default GLSurfaceView punches a transparent hole (location
-dot and FABs visible, no streets). OSM tiles use the same `MapTileHttp.install` path as
-the main map (docs/features/map-tiles.md).
+The panel's overlay window is non-focusable by design, so it never takes focus from the app underneath. The altitude field is the one exception: while it is open, the window becomes focusable, so the keyboard can appear. It goes back to non-focusable when the field closes.
 
-It opens as a compact window (82% of screen width, 58% of screen height, capped at 420 × 560 dp)
-with a drag handle and expand button. The window itself uses those compact bounds with
-`FLAG_NOT_TOUCH_MODAL`; it is not a full-screen transparent touch target, so taps outside it reach
-the game underneath. Expand switches the existing window to the previous full-screen layout, and
-shrink restores its compact position without recreating the `MapView`.
+## Debug stats
 
-The floating map also has an always-visible **N + navigation arrow** north-lock button. North lock
-starts on, immediately keeps bearing at 0, and disables rotation gestures while leaving pan gestures
-available. Turning it off restores MapLibre's normal rotation gestures; it does not force a saved
-bearing after unlock. The lock is local UI state for that floating-map instance. The floating map's
-own center (my-location) button centers on the current spoofed position while spoofing is active;
-when idle with no current position, it falls back to the last position the floating map's camera
-was moved to (a tap-to-pin, route jump, etc.) instead of doing nothing.
+An optional block in the expanded panel shows live position, speed, altitude, accuracy, bearing and tick rate. It is for diagnosis, so it reads the same tick as the mock location loop.
 
-## Altitude Override Button
+- Tick rate is measured from the time between ticks, not assumed, so a stalled loop shows up.
+- Bearing shows a dash until the first movement. A made-up zero would look like a real heading.
+- The readout is drawn in its own child window. Drawn inline, it widened the overlay's touch area and blocked taps on the map beside the icons.
 
-When enabled (Settings → Menus → App Features → "Show altitude override button", `AppSettings.altitudeOverrideButtonEnabled`,
-default `false`), the widget panel shows a terrain-icon button:
+## Completion badge
 
-- **Shown when**: the setting is enabled.
-- **Tap**: expands an inline decimal text field prefilled with the currently reported altitude
-  (`LocationRepository.reportedAltitudeMeters`, falling back to
-  `AppConstants.RealismConstants.DEFAULT_ALTITUDE_METERS` if not currently spoofing), plus a
-  confirm (check) button.
-- **Confirm**: calls `SettingsRepository.setBaseAltitudeOverride(value)` — `MockLocationService`
-  picks it up via its existing reactive collector on `getBaseAltitudeOverride()`, with no new
-  `Intent`/service command needed, then the row collapses.
-- **Effect**: the override becomes the new base altitude the Gaussian walk clamps around,
-  applied instantly (unlike a real-elevation fetch, which converges gradually — see
-  docs/features/mock-location.md, "Real Elevation Lookup"), and takes priority over both the
-  35 m default and any real-elevation fetch. Setting it also suspends the periodic elevation
-  fetch until cleared via Settings → GPS → "Reset elevation override".
-- **Expansion state ownership**: `FloatingWidgetService.altitudeExpandedFlow`
-  (`MutableStateFlow<Boolean>`), per the "Anti-Patterns to Avoid" rule below — never `remember`
-  in `WidgetPanelContent` directly.
-- **Keyboard focus**: the widget's overlay window is `FLAG_NOT_FOCUSABLE` by design (it must
-  never steal keyboard focus from the foreground app — see docs/features/joystick.md,
-  "Requirements"), which otherwise silently prevents the text field from ever receiving IME
-  focus, so no keyboard appears and the field cannot be typed into. `FloatingWidgetService`
-  clears `FLAG_NOT_FOCUSABLE` on the overlay window (`windowManager.updateViewLayout`) only
-  while `altitudeExpandedFlow` is `true`, restoring it once the row collapses — mirroring the
-  fix already applied to the map panel's search field (`mapPanelLayoutParams`).
+A red dot on the widget button marks a route, walk or roam that ended on its own. It is cleared when the user expands the panel. It does not appear when the user stopped the session.
 
-## Debug Stats
+## Anti-patterns to avoid
 
-Settings → General → Debug → "Debug stats" (`AppSettings.debugStatsEnabled`, DataStore key
-`debug_stats_enabled`, default `false`) shows a live text block in the widget panel while it's
-expanded: coordinates, speed (m/s), altitude, accuracy, bearing, and tick rate (Hz).
+- Do not keep panel state that must survive a reopen in composable `remember`. Each open builds a fresh composable tree, so the state resets. Hold it in the presenter or service as a flow.
+- Do not make the compact overlay focusable. It would steal keyboard focus from the game.
+- Do not draw an extra control in the same window as the icon column. The window's touch area grows to cover the whole row, and taps on the game beside it are lost.
 
-- **Source**: `MockLocationService.pushLocationUpdate()` — the single 1 Hz tick every mode routes
-  through (see docs/features/mock-location.md, "Internal Architecture") — publishes a
-  `LocationRepository.DebugStats` snapshot every tick, unconditionally (cheap: one data class
-  alloc at 1 Hz). Tick rate is derived from the wall-clock delta between ticks, not assumed to be
-  a fixed 1 Hz, so a throttled or delayed loop is visible instead of hidden.
-- **Display gate**: `FloatingWidgetService` only passes the live `DebugStats` through to
-  `WidgetPanel` when the setting is enabled — the collector itself always runs, matching every
-  other reactive widget-panel toggle.
-- **Unset bearing**: `DebugStats.hasBearing` mirrors `LocationFix.hasBearing` (see
-  docs/features/mock-location.md, "No bearing before first move") — before the first tick with
-  motion in the session, the bearing segment reads "—" instead of a misleading "0°" (issue #58).
-- **Own window**: the readout renders inside a `WidgetSidePopup` (`TYPE_APPLICATION_SUB_PANEL`),
-  not inline in the panel `Column`. Inline, it widened the overlay's `WRAP_CONTENT` hit rectangle
-  to the bounding box of an L-shaped layout — a narrow icon column plus a wide readout — so the
-  empty map to the right of the icon column silently ate taps meant for the app underneath
-  (issue #104). Its popup has no anchor icon, so the anchor `Box` collapses to zero width and the
-  readout stays flush with the icon column's left edge; `widgetSidePopupOffset` flips it to the
-  left when the widget is docked near the right screen edge.
+## Edge cases
 
-## Anti-Patterns to Avoid
-
-- Do not store reopen-surviving panel state in a composable `remember`. `WidgetPanelPresenter.showPanel()` builds a fresh `ComposeView` on every open, so `remember` state resets to its initial value each time the panel reopens. Hoist the state to the presenter or service instead (a `StateFlow`), per the fix in PR #40 — see `mapRouteControlsExpanded` in "Floating Map — Route Controls" above for the concrete example.
-
-## Edge Cases
-
-- No items configured → show placeholder.
-- Clamp panel to screen bounds.
-- Re-clamp on `onConfigurationChanged`.
+- No features enabled: show a placeholder, not an empty panel.
+- The panel is clamped to the screen. It is clamped again on rotation.

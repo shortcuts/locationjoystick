@@ -1,118 +1,58 @@
 # Export / Import
 
-Settings → export all data to JSON, import from a previous export.
+Settings exports all user data to a JSON file, and imports a file from a previous export.
 
-Key files: `:feature:settings:impl/SettingsScreen.kt`, `:core:data/SettingsRepository.kt`
+Key files: the settings feature module, the settings repository, and the export codec in `:core:data`.
 
 ## Scope
 
-Covers: routes, favorites, speed profiles, widget/map feature config + shared display order, roaming defaults, jitter settings, planting radius, hot locations state, hot routes state, sort preferences.
+The export holds routes, favorites, speed profiles, the widget and map feature choices and their shared order, roaming defaults, jitter settings, the planting radius, the hot-list state, sort choices and the general settings. The exact field list is the export data model in `:core:model`. It is the source of truth; this file records only the rules.
 
-`AppSettings.mapTileSource` round-trips as the `mapTileSource` string (`OSM` / `AMAP`). Old exports without it, or with an unknown value, import cleanly — `MapTileSource.fromName` falls back to `OSM`.
+Rules for what is and is not exported:
 
-`AppSettings.guidedPath` round-trips as the `guidedPath` string (`DEFAULT` / `POKEMON_GO` / `PIKMIN_BLOOM`). Old exports without it, or with an unknown value, import as `DEFAULT`.
+- **Per-device, never exported:** the accessibility disclosure answers, the tap-to-walk ground calibration, the control-API key, the last remembered location, the capture on/off state and its list, the launch-after-link app, and update and what's-new bookkeeping.
+  - Calibration is per device because it depends on that phone's screen and camera. A map from another phone would give wrong taps.
+  - Consent answers are per device because a restored backup must not carry consent to a new phone.
+  - The API key is a secret.
+- **Feature choices are exported.** A restored backup brings its own button set, and the import marks the defaults as seen so the upgrade merge does not undo the choice.
 
-`AppSettings.disabledGeocodingProviders` round-trips as the `disabledGeocodingProviders` array of `GeocodingProviderId` names. A missing array means every provider is enabled; unknown names are ignored.
+## Compatibility rules
 
-`AppSettings.featureOrder`/`enabledWidgetFeatures`/`enabledMapFeatures` (`AppFeature` enum) round-trip through `enabledWidgetFeatures`/`enabledMapFeatures`/`featureOrder` JSON arrays. Old exports from before the `WidgetFeature`/`MapFabFeature` merge still import correctly — `SettingsExportCodec` aliases the legacy `ROUTES_FLOATING`/`FAVORITES_FLOATING` names to `AppFeature.ROUTES`/`AppFeature.FAVORITES`, and missing `enabledMapFeatures`/`featureOrder` fields fall back to defaults (`DEFAULT_MAP_ENABLED` includes `CAPTURE_COORDINATES`; `DEFAULT_WIDGET_ENABLED` includes `ROAMING`; `PASTE_COORDINATES` is off by default on both). An export that already lists `enabledMapFeatures` / `enabledWidgetFeatures` without those newer FABs keeps that set as stored (import writes `map_fab_seen_defaults` / `widget_seen_defaults` so the on-device upgrade merge does not add them back). On-device upgrades that never imported such a file still gain new default-on FABs via `mergeNewDefaultMapFeatures` / `mergeNewDefaultWidgetFeatures`. Captured-coordinate lists and the capture on/off toggle are **not** part of `ExportData`.
+Every new field must import from an older file that lacks it. An old file imports with a documented default, and an unknown value falls back to the default rather than failing the import. Adding a field is a schema decision, so a new field needs a default, a lenient parse, and a test with an old file.
 
-`settings` also carries `activeSpeedProfileId`, `mapFollowsLocation`, `rememberLastLocation`, `floatingMapQuickWalk`, `tapToWalkOverlayEnabled`, `tapToWalkScaleMpx`, `reconnectTapEnabled`, `keepWidgetOnIdle` and `themeMode`. Old exports without them import cleanly with the defaults. `AppSettings.joystickStyle` and `useRoadSnappingByDefault` have no persisted setting behind them, so they are not exported. Device-local and never exported: the accessibility disclosure flags (reconnect tap, screen access), the ground calibration below, the control-API key, last location, and update/what's-new bookkeeping.
+Specific rules that have bitten us:
 
-The tap-to-walk ground calibration (`StoredGroundCalibration`, DataStore key `tap_to_walk_ground_calibration`) is per-device and is **not** part of `ExportData` or `SettingsSnapshot`: it is valid only for the phone and camera state that produced it. Reset All Data clears it.
+- A file that lists the feature set without the newer buttons keeps that set. The import marks them as seen, so the upgrade merge does not add them back.
+- An install that never imported such a file still gains new default-on buttons through the upgrade merge.
+- The planting defaults for roaming apply to files that lack them.
+- Old sort choices (two booleans) migrate to the matching new sort mode. The booleans remain in new exports for older builds.
+- A Home favorite id is written only when set. Import with replace resets Home to the file's value. Import with merge only sets it when the file has one. A Home id whose favorite is missing is cleared.
+- Route waypoint wait times default to zero when absent.
 
-`roamingDefaults` JSON includes `kind`, `plantingStartRadiusMeters`, `plantingEndRadiusMeters`, `plantingInfiniteLoops`, `plantingLoopCount`, `plantingSpacingMeters`, `plantingExpandOnly`, and `plantingSpeedProfileId`. Old exports without those keys import as Walk around the block with planting defaults (5 m / 39 m, 5 m ring spacing, infinite loops, expand only off, Bike speed).
+## Export and import flow
 
-Each entry in `favoriteLocations` includes the optional `category` field (`FavoriteLocation.category`). Old exports without it import cleanly — a missing or `null` `category` defaults to `null`.
+Export serialises to JSON and shares the file. The QR-code export and import are separate features ([qr-transfer.md](qr-transfer.md)).
 
-`homeFavoriteId` (`ExportData.homeFavoriteId`) carries the id of the Home favorite, written only when set. Old exports without it import cleanly with no Home. Import with replace resets Home to the file's value; merge only sets it when the file has one. Import then clears a Home id whose favorite is missing.
+Import reads the file, checks the schema version is within the supported range, asks for confirmation, then replaces the stored data. All file and database work runs off the main thread. A file that is malformed, too large, or has the wrong schema shows an error and changes nothing.
 
-Each entry in `routes` includes the optional `category` field (the user group, same meaning as `FavoriteLocation.category`) and the optional `speedProfileId` field (`Route.speedProfileId`), round-tripping the same way `FavoriteLocation.category` does. Old exports without them import cleanly — a missing or `null` `category` or `speedProfileId` defaults to `null`.
+## GPX import (routes only)
 
-Each entry in `routes` also includes `randomizeTeleportOrder` (`Route.randomizeTeleportOrder`). Old exports without it import cleanly — a missing field defaults to `false`.
+Routes can be imported from GPX files.
 
-Each entry in `routes` may include `plantingRadiusMeters` (`Route.plantingRadiusMeters`, a Planting route's circle radius), written only when set. Old exports without it import cleanly as an ordinary route (`null`).
+- Every track and route element becomes its own route. Elements are never merged, even if unnamed. Elements with no name take a numbered default.
+- A file with no track or route elements but with bare waypoints imports those waypoints as one route.
+- A file with no points at all shows an import error, rather than an empty route.
+- Routes over the waypoint limit are skipped, and the user is told how many.
 
-Each waypoint in a route includes `waitSeconds` (`Waypoint.waitSeconds`, used by teleport routes — see docs/features/routes.md, "Teleport Routes"). Old exports without it import cleanly — a missing `waitSeconds` defaults to `0`.
-`routesSortMode` and `favoritesSortMode` preserve the four list sort choices. Older exports with
-only `routesSortNewestFirst` / `favoritesSortNewestFirst` migrate to **Newest saved** or
-**Oldest saved**. The legacy booleans remain in new exports for backward compatibility.
+The parser is shared with opening a GPX file from another app. That path shows the paste sheet rather than saving at once ([routes.md](routes.md)).
 
-Schema version: `AppConstants.ExportConstants.SCHEMA_VERSION`.
+## Third-party imports
 
-## Settings Screen Entry Point
+Two other apps can be imported:
 
-All export/import/reset actions live behind a single "More actions" overflow menu
-(`LjOverflowMenu`, `:core:designsystem/LjTopBar.kt`) in the top bar of `SettingsHubScreen`,
-grouped into three labeled sections (`LjOverflowMenuSectionLabel`): **Export**, **Import**,
-**Danger**. There are no standalone Export/Import icon buttons.
+- A GPS Joystick export: routes and favorites. Its list order is kept. Its routes become straight routes.
+- A YAMLA export: favorites and the walk, run and bike speeds. Its routes are not imported, by design. The speeds are the only part the app can map cleanly.
 
-## Export Flow
+## Reset all data
 
-Overflow menu → Export section → "Export settings":
-
-1. Serialize via `kotlinx.serialization`.
-2. Write to `getExternalFilesDir(null)`.
-3. Share via `FileProvider` + `Intent.ACTION_SEND`.
-
-"Export via QR code" (same section) instead starts the local QR transfer server — see
-docs/features/qr-transfer.md.
-
-## Import Flow
-
-Overflow menu → Import section → "Import from file":
-
-1. File picker (`OpenDocument`, MIME `AppConstants.ExportConstants.MIME_TYPE`).
-2. Parse + validate `schemaVersion` is between 1 and `AppConstants.ExportConstants.SCHEMA_VERSION`, inclusive.
-3. Confirm "replace all data?".
-4. Clear Room + DataStore.
-5. Insert new data.
-
-All I/O runs on `Dispatchers.IO`.
-
-"Import from QR code" and "Import via code" (same section) instead fetch the export over the
-local network — see docs/features/qr-transfer.md.
-
-## GPX Import (Routes only)
-
-Routes can be imported from GPX files via the Routes screen overflow menu → "Import GPX".
-
-- File picker with `application/gpx+xml` MIME type.
-- Max file size: `AppConstants.ExportConstants.MAX_GPX_IMPORT_SIZE_BYTES` (10 MB).
-- A GPX file may describe multiple routes — every `<trk>` and `<rte>` element is imported as its own separate `RouteType.STRAIGHT` route, named from that element's own `<name>` child (falling back to "Imported Route"/"Imported Route N" when absent). Elements are never merged together, even if unnamed.
-- If a file has no `<trk>`/`<rte>` elements, bare top-level `<wpt>` points are imported as a single "Imported Route".
-- A file with no `<trk>`/`<rte>`/`<wpt>` points at all shows an "Import failed" error rather than creating an empty route.
-
-Key function: `parseGpxRoutes` in `:core:common/util/GpxRoutes.kt` (used by Routes → Import GPX and by opening a GPX from another app).
-
-Opening a `.gpx` from Files / Downloads / Share / a chat app uses the same parser, then the map paste-coordinates sheet (`GpxOpenRepository`) instead of saving every track immediately. See docs/features/routes.md.
-
-## Third-Party Imports
-
-Settings screen → "More actions" overflow menu → Import section offers:
-
-- **Import from GPS Joystick** — imports routes and favorites from a GPS Joystick export (its Realm database, parsed structurally by `GpsJoystickMigrator`). Keeps the original list order.
-  GPX exports are also supported: named `<wpt>` points become favorites and each track or route
-  remains separate. Routes over the GPX waypoint limit are skipped with a reported count.
-- **Import from YAMLA** — imports favorites and walk/run/bike speeds from YAMLA JSON. `YamlaMigrator` also parses an `all_routes` array, but `importFromYamla` only applies favorites and speeds, so routes are not imported.
-
-All routes imported from GPS Joystick or GPX are saved as `RouteType.STRAIGHT` segments.
-
-## Reset All Data
-
-Settings screen → "More actions" overflow menu → Danger section → "Reset all data" → confirmation dialog → clears everything without needing Android's system-level "Clear data & cache".
-
-- Clears all routes (`RouteRepository.deleteAllRoutes()`) and all favorites (`FavoriteRepository.deleteAllFavorites()`).
-- Clears all DataStore preferences via `SettingsRepository.resetAllData()` → `PreferencesDataSource.clearAllExceptOnboarding()`.
-- **Preserves `ONBOARDING_COMPLETE`** — the user doesn't need to redo permission grants, just their data.
-- Irreversible; the confirmation dialog states "All favorites, routes, and settings will be permanently deleted."
-
-Key files: `:feature:settings:impl/SettingsScreen.kt` (`ResetAllDataConfirmDialog`), `:feature:settings:impl/SettingsViewModel.kt` (`resetAllData()`), `:core:data/SettingsRepository.kt` (`resetAllData()`), `:core:datastore/AppPreferencesDataSource.kt` (`clearAllExceptOnboarding()`).
-
-## Edge Cases
-
-- Malformed JSON → show "Invalid file" error.
-- Missing fields → use `@SerialName` defaults.
-- Skip confirmation on fresh install (empty DB).
-- GPX file exceeds max size → show "File too large" error.
-- Invalid third-party format → show "Invalid file" error.
-- The control-API key (Group Sync) is a secret and is never exported.
+Reset clears all routes, favorites and settings, and keeps only the onboarding-complete flag. A user who resets should not need to re-grant system permissions, only re-enter their data. The action is irreversible, and the confirmation says so.

@@ -2,214 +2,105 @@
 
 Sync spoofed location across multiple devices on the same Wi-Fi network. No account required.
 
-Key files: `:feature:group:impl/GroupSyncScreen.kt`, `:feature:group:impl/GroupSyncViewModel.kt`, `:core:data/GroupRepository.kt`, `:core:location/GroupNsdManager.kt`, `:core:location/FollowerCatchUpCoordinator.kt`
+Key files: the group feature module (screen, view model), the group repository, and the NSD and follower code in `:core:location`.
 
 ## Roles
 
-- **Leader**: hosts the group. Starts a local server, registers an NSD service, and broadcasts position to followers when sharing is enabled.
-- **Follower**: joins via QR scan or 6-character group code. Mirrors leader's spoofed location when follower mode is enabled.
-- **None**: not in a group (default state).
+- **Leader:** hosts the group. Runs a local server on the Wi-Fi network and broadcasts its position when sharing is on.
+- **Follower:** joins with a QR code or a group code. Mirrors the leader's spoofed location when follow mode is on.
+- **None:** not in a group. The default.
 
-## Group Code
+## Group code
 
-The leader's group ID is a 6-character uppercase alphanumeric code (e.g. `AB3X9K`), generated from `CODE_CHARS` (`A–Z` excluding `I` and `O`, `2–9`). This replaces the previous UUID. The code is used as:
-- The auth token for the HTTP sync server (`/position?token=CODE`)
-- The NSD service instance name for code-based discovery
-- The value shown prominently on the leader screen
+The group code is a short uppercase code that avoids easily confused characters. It is used for three things: the token the sync server checks, the name the leader advertises on the network, and the code shown on the leader screen. A code is not a secret; the Control API has its own key (see below).
 
-## Flow
+## Joining
 
-### Create a group (leader)
-1. Open Group Sync screen → "Create group: I'm the leader".
-2. `GroupSyncViewModel.createGroup()` generates a 6-char code and sends `ACTION_START_LEADER`.
-3. `MockLocationService.enterLeaderMode(code)`:
-   - Starts `LeaderSyncServer` (OS-assigned port).
-   - Registers NSD service via `GroupNsdManager.startLeader(code, port)`.
-   - Calls `GroupRepository.createGroup(host, port, code)`.
-4. QR code generated encoding `locationjoystick://group?host=HOST&port=PORT&id=CODE`.
-5. Leader screen shows both the 6-char code and the QR. Toggle **Sharing** to broadcast.
+- **By QR:** the leader's QR carries the host, port and code, so no discovery is needed. Join works even where discovery fails.
+- **By code:** the follower looks up the leader by its advertised name on the network, then joins with the resolved address.
 
-### Join a group (follower) — via QR
-1. Tap "Scan QR" on the Group Sync screen → `GroupQrScannerScreen` opens.
-2. Scan the leader's QR → raw URL parsed by `GroupSyncViewModel.joinViaScannedUrl()`.
-3. `GroupRepository.joinGroup(invite)` stores connection details.
-4. Following starts automatically: joining sets **Follow leader** on (persisted as `followerModeEnabled = true`, applied to new joins only, never overwriting an existing stored value). Turn it off to stay in the group without mirroring. Leaving resets the ViewModel's one-shot follower checks, so a rejoin on the same screen starts following again.
+Following starts on join. The follow switch is saved, but only for new joins: a join never overwrites a stored choice. Leaving resets the one-shot checks so a rejoin on the same screen starts following again.
 
-### Join a group (follower) — via code
-1. Tap "Enter code" on the Group Sync screen → 6-char input dialog.
-2. `GroupSyncViewModel.joinByCode(code)` calls `GroupNsdManager.discoverByCode(code)`.
-3. NSD discovery finds the leader's advertised service by name, resolves host:port.
-4. Joins group with resolved host:port and the entered code as groupId.
-5. Same auto-follow as the QR path.
+## Why discovery is secondary
 
-### Leave
-- Leader: `ACTION_EXIT_LEADER` → server stopped + `GroupNsdManager.stopLeader()`.
-- Follower: `ACTION_EXIT_FOLLOWER` if active → group cleared.
+Network discovery depends on multicast. Many phone hotspots do not forward multicast between clients, so code-based join cannot find the leader there. QR join uses a unicast address and is the workaround. If the hotspot also isolates clients, no app change can fix it.
 
-## NSD (Network Service Discovery)
+The leader's advertised address prefers the Wi-Fi or hotspot interface. A cellular address behind carrier NAT is unreachable from another phone, so it must never be put in the QR.
 
-`GroupNsdManager` (`@Singleton`, `:core:location`) wraps Android's `NsdManager`:
+## State
 
-- **Leader**: registers a `_ljsync._tcp.` service with the 6-char code as instance name.
-- **Follower**: discovers `_ljsync._tcp.` services, matches by instance name, resolves to host:port.
-- Discovery timeout: `AppConstants.SyncConstants.NSD_DISCOVERY_TIMEOUT_MS` (10 s).
-- NSD is only used for code-based join. QR join uses the embedded host:port directly.
+Group state is one value: role, group code, leader address, and the flags for sharing and follow. Transitions go through the group repository. A leader that joins another group leaves its own group first.
 
-## Deep Link / QR Format
+All changes reach the spoofing service as intents. The service owns the server and the discovery; the UI does not start them directly.
 
-```
-locationjoystick://group?host=HOST&port=PORT&id=CODE
-```
+## Follower catch-up
 
-The `id` parameter is the 6-char group code. Parsed by `GroupSyncViewModel.joinViaScannedUrl()`. The same format is used for `GroupRepository.pendingGroupInvite` (system QR scanner / deep link path via `MainActivity`).
+A follower walks toward the leader at the leader's reported speed. It does not snap to the leader's position, because a snap looks like a teleport to the game and to anyone watching.
 
-## State Machine
+Rules that must hold:
 
-`GroupRepository` exposes `groupState: StateFlow<GroupState>`. Transitions:
+- The follower walks, never snaps, unless the leader teleported (below), the user asked for "teleport to leader now", or the follower is starting from nothing.
+- Once the follower arrives, its heading is the leader's heading, not whatever direction its own walk last pointed. Two followers arriving from different paths would otherwise show different headings while nothing moves.
+- Because the walk matches the leader's speed, the gap stays constant while the leader moves. A far-away follower takes a long time to catch up. This is intentional. There is no distance-based auto-teleport.
+- If the follower was not already spoofing when it joined, the first position starts spoofing at the leader's coordinates. Nothing was being reported yet, so there is no anti-cheat risk. If it was already spoofing, the first position is walked to like any other.
+- Followers apply their own jitter to the received position, so two followers never show identical coordinates.
 
-```
-NONE → LEADER   (createGroup)
-NONE → FOLLOWER (joinGroup via QR or code)
-LEADER → NONE   (leaveGroup)
-FOLLOWER → NONE (leaveGroup)
-LEADER → FOLLOWER (joinGroup while leading — exits leader first)
-```
+"Teleport to leader now" is the only manual snap. It is a real teleport, so it shares the same cooldown clock as every other teleport in the app. If the leader's position is not yet known, the button says so instead of doing nothing.
 
-## Service Commands
+A distance and cooldown hint sits next to the button. It is advisory: it shows how far away the leader is and how long to wait.
 
-All group state changes are sent as `Intent` actions to `MockLocationService`:
+## Following leader teleports
 
-| Action | Extra keys |
-|--------|-----------|
-| `ACTION_START_LEADER` | `EXTRA_LEADER_GROUP_ID` (6-char code) |
-| `ACTION_EXIT_LEADER` | — |
-| `ACTION_ENTER_FOLLOWER` | `EXTRA_FOLLOWER_HOST`, `EXTRA_FOLLOWER_PORT`, `EXTRA_FOLLOWER_GROUP_ID` |
-| `ACTION_EXIT_FOLLOWER` | — |
-| `ACTION_RESUME_FOLLOWER` | — (re-resolves the stored group via NSD) |
+A follower mirrors the leader's teleports, so a jump on the leader is not left as a long walk on the follower.
 
-## Follower Catch-Up Walk
+- The leader counts explicit teleports only. Walk arrivals and route hops do not count, so followers still walk to those. The follower never guesses a teleport from distance.
+- A follower compares the counter with a change check, not an order check, because a leader restart resets it. The first value seen is a baseline, so joining or reconnecting never triggers a snap.
+- A leader stopping, moving and starting again counts as a teleport. With the switch off, the follower restarts at its own position and walks.
+- Hide-teleport features disable the switch, and the follower always walks.
+- An old leader that does not send the counter is read as "no teleports". An old follower ignores the extra field.
 
-Followers only snap to a leader teleport (see "Following Leader Teleports" below), otherwise they never snap straight to the leader's position. `FollowerSyncClient`'s `onPosition` callback calls `FollowerCatchUpCoordinator.setTarget()` (owner of `target: AtomicReference<LatLng?>`); the actual movement happens once per tick in `advanceFollowerCatchUp()` (called at the top of `pushLocationUpdate()`, before `captureSnapshot()`), which delegates to `FollowerCatchUpCoordinator.advance()`.
+## Boot and restore
 
-This logic was extracted from `MockLocationService` into a dedicated `FollowerCatchUpCoordinator` class (`:core:location`, commit `bd2e5335`), mirroring the `WalkCoordinator` pattern (`:core:data`) used for walk-to — state ownership and per-tick step logic live in one small class instead of scattered `@Volatile` fields on the service. Its interface: `setTarget(position, leaderBearing, leaderSpeedMs)` records the latest leader position and the leader's own reported bearing and speed, `clear()` resets it (e.g. on exiting follower mode), `currentTarget()` returns the last-known leader position (or `null`), and `advance()` computes one catch-up step.
+There is no receiver for device boot. After a reboot, nothing runs until the user opens the app:
 
-- Distance to `currentTarget()` is computed via `haversineDistance`. Within `AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS`, the follower snaps to the exact target (negligible distance) and zeroes speed.
-- Otherwise it advances one step (`advancePosition` along the bearing from `calculateBearing`) at the leader's reported speed, so the follower mirrors it. While the leader reports speed 0 it uses the follower's own active profile speed (`RealismSettingsState.activeProfileSpeedMs`) so it can still arrive. If the step would overshoot the target, it snaps instead.
-- **Idle bearing**: once arrived (snapped or overshot), the reported bearing is the leader's own `leaderBearing` rather than whatever direction this follower's catch-up walk last pointed. Two followers reaching the same leader position from different prior paths would otherwise freeze at different, device-specific headings even though nothing is actually moving — the leader's real bearing is the only value that's consistent and meaningful once idle. `teleportToLeaderNow()`'s `markArrived()` applies the same rule.
-- Because the walk matches the leader's speed, a gap stays constant until the leader idles, and a follower that starts far away may take a long time to catch up. This is intentional: no distance-based auto-teleport.
-- **Bootstrap exception**: if spoofing wasn't already running when follower mode is enabled, the first position received starts spoofing directly at the leader's coordinates (`startSpoofing(lat, lon)`) — nothing was being reported to other apps yet, so this carries no anti-cheat risk. If spoofing was already active (already being reported), that first position is treated like any other: walked toward, never snapped. Because following now starts on join, joining with spoofing off starts spoofing at the leader's position. If re-resolving the leader fails, the flag reverts to off and the error snackbar shows.
-- **Manual override**: "Teleport to leader now" button (shown on the Follower screen while follow mode is enabled) sends `ACTION_FOLLOWER_TELEPORT` to `MockLocationService`, which calls `teleportToLeaderNow()` — reads `FollowerCatchUpCoordinator.currentTarget()` and is the only path that snaps directly to the last-known leader position. If the leader's position isn't known yet (`currentTarget()` is `null`), the call logs a warning and emits `GroupRepository.emitTeleportUnavailable()`, which the Group Sync screen surfaces as "Leader position not yet known — try again in a moment" (snackbar) instead of silently doing nothing. On success, `teleportToLeaderNow()` also records `SettingsRepository.setLastTeleportTime()` — the follower teleport shares the same cooldown clock as every other teleport in the app (Favorites, map long-press).
-- **Distance + cooldown advisory**: `GroupRepository.leaderPosition` (`StateFlow<LatLng?>`, in-memory only, not persisted) holds the leader's last-known position — set on every follower position tick (`MockLocationService.enterFollowerMode`'s `onPosition` callback) and cleared in `exitFollowerMode()`. `GroupSyncViewModel.cooldownState` combines it with the follower's own current position and `SettingsRepository.getLastTeleportTime()` via the shared `CooldownEngine` (same distance-tiered table used by Favorites/map teleports, see `AppConstants.CooldownConstants`) to show a `CooldownAdvisoryBadge` next to the Follower screen's teleport button — distance-away when ready, suggested wait time when cooling down.
+1. App launch: if the saved role is leader, or follower with follow on, the app starts the spoofing service with a plain launch.
+2. Service restart after a process kill: the system restarts the service with no intent, and the same path runs.
+3. The follower rediscovers the leader in the background, with retries and backoff. Both devices may restart together, so the leader might not yet be advertising.
+4. If all retries fail, the follower stays idle. Opening the app triggers discovery again.
 
-## Following Leader Teleports
+Retries use exponential backoff with jitter, so many followers do not all probe at once.
 
-The Follower screen has a **Follow leader teleports** switch (`GroupState.followLeaderTeleports`, default on, per-device DataStore key `group_follow_leader_teleports`, cleared by `leaveGroup()`, not part of `ExportData`).
+## Control API
 
-- **Detection**: the leader stamps a monotonic `SyncPositionUpdate.teleportSeq` (served as `teleportSeq` in the `/position` JSON). It is bumped only by an explicit teleport: `TeleportUseCase` sets `EXTRA_IS_TELEPORT` on its `ACTION_UPDATE_POSITION` intent. Walk-to arrival ticks and route hops do not count, so followers still walk to those. The follower never infers a teleport from distance.
-- **Follower rule**: `FollowerCatchUpCoordinator.observeTeleportSeq()` compares with `!=` (a leader restart resets the counter to 0); the first value is only a baseline, so joining or reconnecting never teleports. `shouldSnapToLeader(leaderTeleported, followLeaderTeleports, hideTeleportFeatures)` decides: snap (same path and cooldown clock as "Teleport to leader now") or keep walking.
-- **Leader stop, move, start again** counts as a teleport: a BOOTSTRAP that follows a PAUSE (`consumePausedByLeader()`) snaps with the toggle on, and with it off restarts spoofing at the follower's own position and walks. The very first bootstrap after joining always snaps.
-- **`hideTeleportFeatures` on**: the switch is hidden and the follower always walks.
-- **Compatibility**: an old leader omits `teleportSeq`, parsed as 0 forever (never a change, so the follower walks); an old follower ignores the extra key.
+The leader's sync server also serves a versioned control API under `/api/v1/`. It is the public contract for integrators. Its reference lives in the wiki (`docs/wiki/control-api.html`). **Any endpoint change must update that reference.**
 
-## Jitter
+Rules:
 
-Followers apply independent per-device jitter to the received position, preserving the configured jitter profile without cloning the leader's exact coordinates.
+- Off by default. It turns on only while the server runs, and turns off when the server stops.
+- A separate persistent API key is used, not the group code. It survives leaving a group and is never exported.
+- Every command calls the same controller method as the UI. A follower then sees the same signals whether a human or the API drove the leader, so followers need no API-specific handling.
+- Teleport and route start from the API bypass the hide-teleport setting for teleport-between-waypoints only. Plain teleport and walk never read that setting.
+- A joystick request is a timed hold, not one step. HTTP cannot keep a finger down, so the server holds a stick position for the requested time, with the same release rules as the on-screen joystick.
+- A teleport inside the suggested cooldown still runs. The response carries a warning instead of refusing. The cooldown is advisory because an integrator may know better.
+- Transport is plain HTTP on the local network only. There is no TLS and no internet exposure.
 
-## Follower Boot Sequence
+Errors use one shape everywhere, so an integrator parses one format.
 
-After a device restart, a follower that was previously synced automatically rejoins the group in the background without requiring a visit to the Group Sync screen.
+### Content API
 
-There is no `RECEIVE_BOOT_COMPLETED` receiver in this app, so nothing runs after a genuine
-device reboot until the user opens the app:
+The content routes give JSON create, read, update and delete for favorites, routes and speed profiles. Field names match the export format, so the backup format is the single reference. Built-in speed profiles can be read and have their speed changed, but not created or deleted.
 
-1. **App launch trigger**: `LjApplication.onCreate()` reads the persisted `GroupRepository.groupState`. If the role is `LEADER`, or `FOLLOWER` with `followerModeEnabled = true`, it starts `MockLocationService` directly with a plain launch intent — this is what actually resumes sync after a device reboot, since the service was never running to be recovered by the OS.
-2. **OS-restart trigger (secondary path)**: if the app process is killed while `MockLocationService` is already running (e.g. low memory), Android restarts the service via `START_STICKY` with a null intent — no reboot involved.
-3. **Async restoration**: either trigger routes into the same `onStartCommand` `null ->` branch. If the follower was in `FOLLOWER` mode with `followerModeEnabled = true`, the service launches a background async job to re-discover the leader via NSD.
-4. **Exponential backoff retries**: the discovery job retries up to 5 times with exponential backoff (500 ms, 1 s, 2 s, 4 s, 8 s + random jitter ±100 ms), accounting for the leader not having advertised yet if both devices rebooted simultaneously.
-5. **Success**: once the leader is found, the follower enters sync mode and begins following.
-6. **Exhaustion**: if discovery fails after all retries (e.g., both devices on different Wi-Fi networks, or group deleted), the follower stays idle. If the follower app is opened again, `GroupSyncViewModel` re-triggers discovery as a final safety net.
+Route replacement keeps the route's id and creation time, and is refused while that route is playing.
 
-### Boot timing scenarios
+## Leader screen
 
-Timing below is measured from app launch (post-reboot) or service restart (process killed
-while running) — not from the device's own boot time, since the app has no way to run
-earlier than that.
+The Control API switch sits under Sharing and is enabled only once the server's address is known. It shows the address, port and key with copy buttons, a key regeneration action (the old key stops working at once), and a warning that the link is plain and local. The switch resets when the group is left or the app restarts. The key persists.
 
-- **Leader's app opens first**: follower discovers it on first or second attempt.
-- **Follower's app opens first**: follower retries until leader advertises (within ~30 seconds of the follower's restoration start).
-- **Both open around the same time**: exponential backoff with jitter prevents thundering herd; most followers reconnect within 10–15 seconds.
-- **Wi-Fi disconnected at restoration start**: restoration retries continue; once Wi-Fi reconnects, discovery succeeds on the next attempt.
+## Edge cases
 
-## Control API foundation
-
-The leader's sync server (same socket, same port) also serves a versioned control API under `/api/v1/`. Only the leader can expose it.
-
-**Public API reference:** See `docs/wiki/control-api.html` for the full endpoint documentation. Any endpoint change must update that reference — it is the public contract for integrators.
-
-- Off by default. `LeaderSyncServer.enableApi(key)` turns it on (only while the server runs); `stop()` (leave group, app exit) turns it off. While off, every `/api/v1/` path returns 404.
-- Auth: `Authorization: Bearer <api key>`. The key is a persisted 32-char random string (`GroupRepository.getOrCreateApiKey()` / `regenerateApiKey()`), separate from the group code, and kept across leave-group. It is never exported. `/api/v1/` paths skip the `?token=` check; `/position` and `/health` are unchanged.
-- Routes: `registerApiRoute(method, path, handler)`, exact-path match first, then a one-segment `{id}` pattern (`/api/v1/favorites/{id}`; the segment reaches the handler as `ApiRequest.pathParam`). Built in: `GET /api/v1/status` returns `{"apiVersion":1,"role":"leader","followers":N}`.
-- Check order: disabled 404, bad key 401 (`WWW-Authenticate: Bearer`), body over 64 KiB 413, unknown path 404, wrong method 405 (`Allow`), handler exception 500.
-- Errors always use `{"error":{"code":"<snake_case>","message":"..."}}`.
-- Transport is plain HTTP on the local network only. No TLS, no internet exposure.
-
-### Control API commands
-
-`ControlApiRoutes` (`:core:location`, installed from `MockLocationService.enterLeaderMode`) registers the commands below. Every one calls the same `MapController` method the map screen and widget call, so followers see exactly the signals a UI-driven leader sends (`teleportSeq`, `active`, position ticks) and need no API-specific handling. Bodies are JSON; success is `{"ok":true}`. Bad input is 400 `bad_request`, no position is 409 `no_position`.
-
-| Route | Body | Calls |
-|---|---|---|
-| `GET /state` | | `spoofState`, `mode`, `position`, `bearing`, `speedMs`, `activeRouteId`, `walk{target,paused}`, `roaming{active,paused}`, `speedProfileId` |
-| `GET /position` | | `{"lat","lon"}` |
-| `POST /teleport` | `lat`, `lon` | `teleportTo` |
-| `POST /walk` | `lat`, `lon`, `viaRoads?` | `walkTo` / `walkViaRoads` |
-| `POST /walk/pause`, `/resume`, `/stop` | | `pauseWalk`, `resumeWalk`, `stopWalk` |
-| `POST /route/start` | `routeId`, `loop?`, `reverse?`, `returnToLocation?`, `followRoadsToStart?`, `planting?`, `teleportBetweenWaypoints?`, `teleportBetweenDelaySeconds?` | `startRouteReplay`; unknown route is 404 `route_not_found` |
-| `POST /route/pause`, `/resume`, `/stop` | | `pauseRouteReplay`, `resumeRouteReplay`, `stopRouteReplay` |
-| `POST /roam/start` | optional `lat`, `lon`, `radiusMeters`, `distanceMeters`, `speedProfileId`, `followRoads`, `returnToInitialLocation`, `kind`, planting fields | `startRoaming` over the saved roaming defaults; a playing route is 409 `conflict` |
-| `POST /roam/pause`, `/resume`, `/stop` | | `pauseRoaming`, `resumeRoaming`, `stopRoaming` |
-| `POST /speed-profile` | `id` | `setActiveProfileId`; unknown id is 400 |
-| `POST /spoofing/start`, `/stop` | | `startSpoofing`, `stopSpoofing` |
-| `POST /joystick` | `bearingDegrees` (0 north, clockwise), `force` (0..1), `durationMs` | timed stick hold |
-
-- Cooldown is advisory only. A teleport inside the suggested cooldown still runs and answers `{"ok":true,"warning":{"code":"teleport_cooldown","message":...,"remainingSeconds","totalSeconds","distanceMeters"}}`. No cooldown, no `warning` key.
-- Hide Teleport is bypassed: `startRouteReplay(..., bypassHideTeleport = true)` keeps "Teleport between waypoints" working. Teleport and walk never read the setting.
-- Joystick: one request is a hold, not a single step (HTTP cannot keep a finger down). It pauses automatic movement like a live touch, then steps every `JoystickConstants.STEP_MS` for `durationMs` (max `API_JOYSTICK_MAX_DURATION_MS` = 10 s) with the same mode and release handling as `JoystickOverlayService` (via `shouldPreserveEngineMode` / `shouldIgnoreJoystickInput` in `MovementPriority.kt`; the release clears the motion vector through `ACTION_CLEAR_MOTION_VECTOR`). A new request replaces the running hold; `force` 0 or `durationMs` 0 releases at once.
-- `teleportToStart` is not accepted on `/route/start`: the use case derives it from `teleportBetweenWaypoints`.
-
-### Content API (favorites, routes, speed profiles)
-
-JSON CRUD, same Bearer auth and error body, registered by `ContentApiRoutes`. Field names follow the export format (`docs/domain-models.md`); coordinates are flat `lat`/`lon`.
-
-| Route | Behaviour |
-|---|---|
-| `GET /favorites`, `GET /favorites/{id}` | List / get. Shape `{id,name,lat,lon,createdAt,category}`. |
-| `POST /favorites` | Body `{name,lat,lon,category?}`. 201 with the created object. |
-| `PUT /favorites/{id}`, `DELETE /favorites/{id}` | Replace (keeps `id`, `createdAt`) / delete. 404 `favorite_not_found`. |
-| `GET /routes`, `GET /routes/{id}` | List / get with `waypoints:[{id,lat,lon,orderIndex,waitSeconds}]`. The paste-temp scratch route is hidden (404). |
-| `POST /routes` | Body `{name,routeType?,isLooping?,speedProfileId?,randomizeTeleportOrder?,plantingRadiusMeters?,waypoints:[{lat,lon,waitSeconds?}]}`. At least 2 waypoints; `routeType` is `STRAIGHT`/`GUIDED`/`TELEPORT`. `plantingRadiusMeters` (5-200, else 400) makes it a Planting route; absent on PUT keeps the stored value, `null` clears it. 201. |
-| `PUT /routes/{id}`, `DELETE /routes/{id}` | Replace (whole waypoint list, keeps `id`, `createdAt`) / delete. 404 `route_not_found`; 409 `conflict` while that route is playing. |
-| `GET /speed-profiles`, `GET /speed-profiles/{id}` | The five built-ins with `active` and `enabled` flags. |
-| `PUT /speed-profiles/{id}` | Body `{speedMetersPerSecond}` in 0.01..15.0, else 400. Name and id are fixed; no create or delete (405). |
-
-Invalid input is 400 `bad_request`. `hot_*` favorites and routes are ordinary rows and can be edited or deleted.
-
-### Group Sync screen toggle
-
-- The leader card has a **Control API** switch under Sharing (`ApiAccessSection` in `GroupSyncScreen.kt`), off by default and enabled only once the server's host and port are known. Followers and the no-group screen show nothing new.
-- While on, it lists host, port and API key with copy buttons, a **Regenerate key** action (rotates the live key, so the old one stops working at once) and a plain-language LAN/unencrypted warning.
-- `GroupSyncViewModel.setApiEnabled` / `regenerateApiKey` are leader-only. The switch state is `LeaderSyncServer.apiEnabled`, so it resets to off on leave group or app restart; the key persists.
-- Wiki screenshot gallery has no leader-screen shot (17_group_sync is taken with no group), so no refresh is needed.
-
-## Edge Cases
-
-- Leader pauses its route/roaming/walk → broadcasting to followers continues (frozen position, refreshed each tick) instead of going stale. `MockLocationService.observeLocationState` keeps the update loop alive on `PAUSED` when `leaderSharingEnabled` is true.
-- **Leader manually stops/starts spoofing** (global stop/start toggle, not pause) → every `SyncPositionUpdate` carries an `active` flag (`true` for `RUNNING`/`PAUSED`, `false` for `IDLE`/`ERROR`), set in `MockLocationService.pushLocationUpdate()` and served by `LeaderSyncServer`/parsed by `FollowerSyncClient`. A follower reacts via the pure `computeFollowerActiveAction()` (`:core:location/LocationLoopPolicy.kt`): `active=false` while the follower is spoofing calls `pauseFollowerForInactiveLeader()` — removes the mock provider and sets state `IDLE` without `stopSelf()`, so the service, notification, and follower polling all stay alive; `active=true` again re-triggers the same bootstrap path used on first connect (snap straight to the leader's position, no anti-cheat risk since nothing was being reported). A leader's Stop itself keeps the service and `LeaderSyncServer` alive (`shouldStopServiceOnStop()`: no `stopSelf()` while `GroupRole.LEADER`, same as follower pause) and `tearDownSpoofing()` pushes one final `active=false` update, since the update loop that normally reports it is cancelled by then; `FollowerSyncClient` delivers an inactive update even when its timestamp is stale. On `active=false` the follower clears its catch-up target and `leaderPosition`, so "Teleport to leader now" reports "Leader position not yet known" until the leader is active again. `ACTION_START` re-enters leader mode if the server is not running (OS-killed service).
-- Joining while leading → leader exits first, then joins as follower.
-- Follower moves the joystick stick → **Follow leader** turns off (same as the switch on the Follower screen: `setFollowerModeEnabled(false)` + `ACTION_EXIT_FOLLOWER`) and the stick steers from the current position. The device stays in the group. Follow leader turns back on by itself once nothing has moved for `AppConstants.SyncConstants.FOLLOWER_RESUME_IDLE_MS` (30 s). `MapController.resumeFollowAfterIdle()` sets `followerModeEnabled = true` and sends `ACTION_RESUME_FOLLOWER`, which re-resolves the leader via NSD (same job as boot restoration). The follower walks back to the leader, never snaps. The same applies to every manual departure from FOLLOWER mode: a favorite or map teleport, walk-to, route replay, roaming. Those leave the flag on and only change the mode, so `MapController.observeFollowerDeparture()` starts the wait when the mode leaves FOLLOWER. A running or paused activity keeps the wait going; the 30 s counts from when the device is idle again. No resume if spoofing stopped, the user turned Follow leader off on the Follower screen, or the device left the group. Turning Follow leader on by hand also works (docs/features/joystick.md, "Manual takeover").
-- Network unavailable → follower's boot restoration fails, but retries are queued. Once network is available, restoration succeeds. UI shows last known role until sync resumes.
-- QR regeneration: leader can regenerate QR (new port/session) without changing the group code.
-- Code discovery timeout (10 s) → error snackbar shown, user can retry.
-- Phone-hotspot networks: many hotspots do not forward multicast between clients, so mDNS code-based join can never find the leader there. QR join (embedded host:port, unicast) is the workaround — unless the hotspot also enables full client isolation, which no app-side change can fix. `NsdCodeManager` holds a `WifiManager.MulticastLock` while advertising/discovering (some OEM Wi-Fi drivers filter multicast without it), and `NetworkUtils.getLocalIpAddress()` prefers `wlan`/`ap`/`swlan` interfaces so the QR never embeds an unreachable cellular (CGNAT) address when mobile data is on.
-- NSD registration failure → logged; QR still works as fallback.
-- **Group no longer exists**: `FollowerSyncClient` detects this two ways — an immediate `403 Forbidden` from `/position` (token rejected, e.g. leader restarted with a new group) or `AppConstants.SyncConstants.MAX_CONSECUTIVE_POLL_FAILURES` (15) consecutive request failures (leader server unreachable/torn down). The higher threshold (raised from 5) gives a brief Wi-Fi reassociation or Doze-deferred network access on the background service enough real-world time to recover before this fires. Either condition fires `onGroupLost`, which — before actually leaving — retries NSD re-discovery up to `AppConstants.SyncConstants.NSD_REDISCOVERY_RETRY_COUNT` (2) extra times (`MockLocationService.enterFollowerMode`'s `onGroupLost` callback) to recover from a leader that changed host/port (e.g. its own app restarted). Only once all retries are exhausted does it call `exitFollowerMode()` and `GroupRepository.leaveGroup()` to fully clear follower state automatically — no manual exit required.
+- The leader pauses a route, roam or walk: sharing continues with the frozen position, refreshed each tick, so followers do not go stale.
+- The leader stops spoofing (not pause): each update carries an active flag. A follower that sees inactive parks itself without stopping its service, so the notification and polling stay alive. When the leader is active again, the follower bootstraps as on first connect. A leader's stop keeps its server alive, so the group survives.
+- The follower moves its own stick: follow turns off and the stick steers from the current position. The device stays in the group. Follow turns back on by itself after a short idle period, and the follower walks back to the leader. The same applies to any manual departure from follow mode, such as a favorite teleport or a route. A stop of spoofing or leaving the group cancels the return.
+- The group no longer exists: a rejected token, or a long run of failed polls, triggers rediscovery first, because the leader may have restarted on a new address. Only after the retries fail does the follower leave the group automatically.
+- Discovery timeout: an error appears, and the user can retry.
+- Registration failure: logged. The QR code still works.

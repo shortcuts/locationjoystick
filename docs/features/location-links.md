@@ -1,184 +1,114 @@
 # Location Links
 
-Get externally-shared location links into the app. Two tiers—automatic and opt-in—both route through the same confirm sheet (Teleport / Walk / Do nothing).
+Get externally shared location links into the app. Two tiers, automatic and opt-in. Both end in the same confirm sheet (teleport, walk, or do nothing).
 
 ## Overview
 
-**Automatic tier** (always on):
-- Receives: `geo:`, `google.navigation:`, own domain (`https://locationjoystick.shrtcts.fr`), Google Maps shares (`ACTION_SEND` text/plain)
-- Setup: None
-- Outcome: Confirm sheet to Teleport / Walk / Do nothing
+**Automatic tier** (always on): map links and location shares from other apps open the confirm sheet. No setup.
 
-**Opt-in tier** (Capture mode):
-- Receives: Any map link when this app is the default browser and Capture mode is on
-- Setup: Set this app as default browser + turn on supported links
-- Actions: List (collect), Jump (teleport), or both; pass-through browser when off
-- Outcome: List appends, Jump teleports, then confirm sheet (when Capture off or link unparseable)
+**Opt-in tier** (Capture mode): every map link can be captured while this app is the default browser. The user can collect links into a list, jump to them, or both. Setup is needed.
 
-## Automatic Tier: Deep Links & Location Sharing
+## Automatic tier
 
-### URL Format
+### Link format
 
-```
-https://locationjoystick.shrtcts.fr/?lat=LAT&lon=LON
-```
+The app's own HTTPS link carries a latitude and a longitude. A custom-scheme link with the same parameters works for app-to-app use. Both are parsed identically. HTTPS is preferred for sharing. The exact URL format is in the code (`AppInfo.buildDeepLink`), not repeated here.
 
-| Parameter | Type | Range | Description |
-|-----------|------|-------|-------------|
-| `lat` | `Double` | `[-90, 90]` | Latitude |
-| `lon` | `Double` | `[-180, 180]` | Longitude |
+Rules that third-party tools rely on:
 
-Custom scheme equivalent (app-to-app):
+- Both coordinates are required. A link missing either one is dropped silently.
+- Out-of-range coordinates are rejected.
+- No API key or account is needed. Anyone can build a link.
 
-```
-locationjoystick://open?lat=LAT&lon=LON
-```
+### Generating share links
 
-Both formats are parsed identically. HTTPS is preferred for general sharing. The custom scheme is useful for automation and app-to-app workflows.
+The share action appears beside the recenter and search buttons on the map, on the floating map, and in the long-press and tap sheets. Share copies the coordinates or sends the link. The floating map closes its overlay before the system share sheet opens, so the sheet is not hidden behind it.
 
-### Generating Share Links (UI)
+Favorites copy plain coordinates instead of a link. A link for a saved place is not needed, because the place already has a name in the app.
 
-A **Share** icon (`LjShareLocationAction`) expands inline into **Copy coordinates** (decimal degrees to the clipboard) and **Share link** (the HTTPS URL as plain text through the system share sheet). It appears in four places:
+### Receiving
 
-- Map and floating-map FAB columns, directly below the recenter / search button: shares the current mock position (toasts "No current location" when there is none).
-- Map long-press sheet (`PendingTapSheet`) and floating-map tap panel (`TapActionPanel`): shares the tapped point.
+The app opens on the map and pans to the coordinate. The coordinate is never acted on automatically. The user must choose teleport, walk, walk via roads, or do nothing. Confirming teleport or walk also opens the app the user picked for after-link launch, if any.
 
-Helpers live in `core/common/util/ShareCoordinates.kt` (`locationShareLink`, `shareLocationLink`, `copyCoordinatesToClipboard`). From the floating map, **Share link** also closes the overlay so the chooser is not hidden behind it. The old long-press "Share this location" button is gone.
+If the link cannot be read, the user sees a message rather than nothing.
 
-Favorites no longer generate that URL. The favorite overflow menu copies decimal-degree coordinates to the clipboard (**Copy coordinates**, same `copyCoordinatesToClipboard` helper) or sends the same text through the system share sheet (**Send as message**).
+### Supported formats
 
-### Receiving Automatic Links
+The app accepts the common location formats from map apps: geo URIs (including the placeholder-base form, where the query value takes priority), the navigation scheme, and the Google Maps web forms (search, camera view, and place links). For place links the place's own coordinates win over the camera position, because the camera can drift from the place that was actually shared.
 
-When the link is opened:
+### Shortened Maps links
 
-1. App opens (or comes to foreground via `singleTask` launch mode).
-2. Map screen activates.
-3. Map pans to the coordinate.
-4. Confirmation sheet appears: Teleport / Walk here / Walk via roads / Do nothing.
+Maps' Share button sends a shortened link with no coordinates in it. The app follows the redirect chain to the full link before reading coordinates. This needs network access; offline, a shortened link cannot be read.
 
-The coordinate is never acted on automatically — the user must confirm. Confirming Teleport / Walk also opens the app chosen under "Launch Another App After a Link", if any.
+### Domain verification
 
-If the link's coordinates can't be parsed or no URL/coordinates can be extracted from the shared text, a snackbar reading "Couldn't open that link" is shown instead of silently doing nothing.
+Opening the app's own HTTPS links directly, with no chooser, requires the domain to publish the app's signing fingerprint. Without it, links still work, but Android asks which app to use.
 
-### Supported Link Formats
+## Opt-in tier: Capture mode
 
-These intent filters are always active (not part of Capture mode):
+Collect map links from other apps into an on-device list, then save them as a route. Capture only intercepts when Capture mode is on and this app is the default browser.
 
-| Format | Example |
-|---|---|
-| `geo:` URI | `geo:35.62,139.77` |
-| `geo:` URI with placeholder base + `q` param | `geo:0,0?q=35.62,139.77(Landmark)` — `q` takes priority over the `0,0` base, since many apps emit a placeholder base coordinate |
-| `google.navigation:` scheme | `google.navigation:q=35.62,139.77` |
-| `maps.google.com` (any path) | `https://maps.google.com/maps?q=35.62,139.77` |
-| `www.google.com/maps*` | `https://www.google.com/maps/search/?api=1&query=35.62,139.77` |
-| `www.google.com/maps/@LAT,LON,Zoomz` path form | `https://www.google.com/maps/@35.62,139.77,15z` |
-| `www.google.com/maps/place/.../data=!3dLAT!4dLON` (place link) | `https://www.google.com/maps/place/Name/@1.0,2.0,15z/data=!3d50.305571!4d2.792041` — `data=!3d!4d` is preferred over the `@` segment, since `@` is just the last camera/viewport position and can diverge from the actual shared place |
+### Why the default browser role
 
-### Google Maps "Share" Button
-
-The Maps app's **Share** button uses Android's `ACTION_SEND` share sheet (text/plain), a separate mechanism with its own intent filter. The shared text usually contains a shortened link (`https://goo.gl/maps/...` or `https://maps.app.goo.gl/...`) with no embedded coordinates — the real lat/lon only exists in the page the shortener redirects to. This app detects these hosts and follows the HTTP redirect chain to recover the final long URL before parsing coordinates.
-
-### Domain Verification
-
-`locationjoystick.shrtcts.fr` uses `android:autoVerify="true"`. For HTTPS links to open the app directly (no disambiguation dialog), `/.well-known/assetlinks.json` must be served at that domain with the release signing fingerprint. Without it, Android shows a chooser — links still work but require user selection.
-
-### Third-Party Integration
-
-Any tool can construct a link without an API key or authentication:
-
-```
-https://locationjoystick.shrtcts.fr/?lat=35.6762&lon=139.6503
-```
-
-Rules:
-- Both `lat` and `lon` are required. Missing either silently drops the link.
-- Coordinates outside valid range (`lat` > 90 or < −90, `lon` > 180 or < −180) are rejected.
-- Standard URL percent-encoding applies for any unusual characters, though coordinates are pure ASCII.
-
-## Opt-In Tier: Capture Mode
-
-Collect map links from other apps into an on-device list, then save them as a route. This tier intercepts links **only when Capture mode is on** and this app is the default browser.
+Android sends every web link to the default browser. Only then can the app see links from any app, not just the ones that declare a filter for them. That is why Capture needs the role, and why the app must forward links to a real browser when it does not capture them.
 
 ### Setup
 
-Capture mode is **off** by default. Capture is a top-level destination listed on Home and in the navigation drawer next to Map / Routes / Favorites.
+Capture is off by default. Setup needs two things the app can check and one it cannot:
 
-Setup lives in **Settings > General > Capture**. The app verifies only one setup fact: whether it is the default browser. This is the only gate. While gated, the Capture screen shows one card with an **Open Capture setup** button; it navigates to `SETTINGS_CAPTURE_ROUTE` (Settings opened on Menus, scrolled to Capture; Back returns to the Capture screen). Captured points stay stored while gated and reappear after setup.
+1. Set this app as the browser in Android's default apps settings. The app checks this and rechecks when the user returns.
+2. Turn on supported links for this app in its Android settings. The app cannot verify this. The user must check it.
+3. Turn off "open supported links" for Google Maps. Otherwise Maps opens links itself, and the app never sees them.
 
-**Setup steps:**
-1. Tap **Default browser** to open Android's Default apps settings. Set this app as **Browser app**. (On Samsung, use the Default apps settings directly rather than a role-request dialog.)
-2. Return to Settings — it rechecks automatically.
-3. Turn on **supported links** for this app in its Android settings. The app cannot verify this, so verify it yourself.
-4. Turn off **Open supported links** for Google Maps. With this off, Maps links come to this app instead of opening Maps directly.
-
-Once setup is complete, the setup cards disappear and Settings shows the toggle and controls; the Capture screen shows the full list UI.
+Until setup is complete, the Capture screen shows only the setup step. Captured points are kept and reappear after setup.
 
 ### Configuration
 
-After setup is complete:
+- **Capture mode:** the master switch. The first time it is enabled, the user chooses whether to clear or keep existing points.
+- **List** and **Jump:** independent options. List appends a location to the list. Jump teleports to it at once, using the same teleport path as the rest of the app.
+- **Pass-through browser:** where a link goes when it is not captured.
 
-- **Capture mode** — overall switch; off by default. When enabled for the first time, a dialog asks whether to **Clear** existing points or **Keep** them.
-- **List** / **Jump** — independent checkboxes (both optional). List appends each tapped location to the list; Jump teleports immediately via `TeleportUseCase`. Both can be on, off, or one each.
-- **Pass-through browser** — opens an in-app browser picker, used when Capture mode is off or both List and Jump are off (see the intercept table below).
+Capture settings are per device and are not exported. They reset when this app stops being the default browser. A separate restore action gives back the user's usual browser, while keeping the captured points.
 
-Capture mode, List, and Jump are **not** part of `ExportData` and are per-device. They reset when this app is no longer the default browser, managed through **Restore default browser** in Settings > General > Capture.
+Settings and the Capture screen read and write the same stored choices, so a change in one shows in the other. Setup steps and the restore action live only in settings.
 
-### Also in Settings
+### Intercept behaviour
 
-The Capture toggles, List/Jump checkboxes, and pass-through browser picker are also available on the Capture screen. Both surfaces read and write the same `CaptureCoordinatesRepository`, so changes made in either place reflect everywhere. Setup steps and **Restore default browser** exist in Settings only.
+The interceptor activity does not bring the app to the front. The calling app stays in the foreground, so the user can keep copying links.
 
-### Intercept Behavior
+| Capture | List | Jump | Coordinates | Result |
+|---|---|---|---|---|
+| on | on | off | yes | append, then finish |
+| on | off | on | yes | teleport, then finish |
+| on | on | on | yes | append, teleport, then finish |
+| off | any | any | any | forward to pass-through browser |
+| on | off | off | any | forward to pass-through browser |
+| on | any | any | no | forward to pass-through browser |
 
-`LinkInterceptorActivity` (`singleInstance`, `excludeFromRecents`, `noHistory`) catches all `http`/`https` VIEW + BROWSABLE intents and Google Maps hosts. Unlike `MainActivity`, it does not bring focus back to the app, letting the calling app stay in front.
+When Capture is off, or both List and Jump are off, and the link has coordinates, the confirm sheet appears, with the same outcome as the automatic tier.
 
-`decideCaptureLink(captureModeEnabled, listEnabled, jumpEnabled, parsedCoords)`:
+### Forwarding to a browser
 
-| Mode | List | Jump | Parsed coords | Action |
-|------|------|------|---------------|--------|
-| On | On | Off | yes | Append point, toast, finish; the calling app stays in front |
-| On | Off | On | yes | Teleport with `TeleportUseCase`, toast, finish; do not append |
-| On | On | On | yes | Append, then teleport with `TeleportUseCase`, toast, finish |
-| Off | Either | Either | either | Forward to pass-through browser without capture or teleport |
-| On | Off | Off | either | Forward to pass-through browser without capture or teleport |
-| On | Either | Either | no | Forward to the chosen pass-through browser |
+This app cannot forward to the system's default browser, because it is the default. So it remembers the browser that held the role before setup, and lets the user pick another installed browser. Forwarding never goes back to this app, which would loop.
 
-When both List and Jump are off or Capture mode is off and coordinates parse, the confirm sheet (Teleport / Walk / Do nothing) is shown, routing through the same outcome as automatic tier links.
+Google Maps web links go straight to Maps when Capture is off, even with Maps' supported-links switch off, because Maps can still open them when named explicitly. If Maps is missing, the chosen browser is used.
 
-Coordinates are parsed with `parseUrlCoords` / `parseDeepLinkCoords` (in `DeepLinkParser.kt`), including implicit VIEW intents on Google Maps search URLs. Short Maps share links are resolved via `GoogleMapsShortLinkResolver` before parse.
+Browser discovery combines web-link handlers with browser launchers, because a phone that gives only the current role holder would hide the other browsers.
 
-### Browser Forwarding
+### Collecting and saving
 
-The app cannot forward to Android's current default browser while it is itself the default, so it stores the browser that held the role before setup and lets the user choose another installed browser on the Capture page. Forwarding excludes this app to prevent a loop.
+Captured points appear as a numbered list. An exact repeat of the last point is skipped. The default order is nearest-neighbour, the same as the paste builder. The user can choose capture order instead.
 
-With Capture mode off, Google Maps web links are first sent explicitly to the Google Maps package; this still works when Maps' supported-links switch is off. If Maps is unavailable, the selected browser is used.
+The user can copy, remove the last point, or clear the list. Saving as a route needs at least two points. The route is added to the routes list under the name the user gives it.
 
-Browser discovery combines installed web-link handlers with apps that advertise a browser launcher. This matters while the app owns Android's browser role: some phones return only the current role holder for a generic web query even though other browsers remain installed. The list refreshes when the Capture screen resumes after a system Settings change.
+### After-link launch
 
-### Collecting and Saving
+The user can pick an installed app to open after a link is handled. Focus then returns to the game, rather than staying in this app. It runs after a capture jump, and after a teleport or walk confirmed from a link. It never runs for list-only captures, for "do nothing", or for taps and pasted coordinates. The choice is per device and survives the browser restore.
 
-Captured points are listed as numbered rows in a scrolling list card (Copy, Last and Clear sit below it as three equal buttons), skipping exact duplicates of the last point. Point order defaults to **Optimize proximity** (nearest-neighbor ordering, the same option used when pasting coordinates into a route). Select **Keep original** instead to save in capture order.
+The app list uses the launcher query only, so the app does not need broad package-listing permission.
 
-**Copy** / **Last** (remove most recent) / **Clear** sit on one icon row above the route-name field. **Save as route** appears below the name field and requires ≥2 points. The new route is added to Routes with the specified name.
+## Implementation map
 
-**Restore default browser** (Settings > General > Capture) clears Capture mode, List, and Jump, and opens Android's Default apps settings so the user can restore their usual browser. It sets a per-device flag so the setup cards return even though the app still holds the browser role. Captured points, the pass-through browser, and the stored previous browser holder are kept (Android will not reassign the previous browser back programmatically). The flag clears when the user taps the default-browser card again or when this app is no longer the default browser.
-
-### Launch Another App After a Link
-
-**Settings > General > Capture > After a map link, open** picks an installed launchable app (default: None). After any handled link — a Capture Jump teleport in `LinkInterceptorActivity`, or Teleport / Walk / Walk via roads confirmed on the confirm sheet for a link-pinned point — `LaunchAfterLinkUseCase` starts that app so focus returns to the game instead of staying here. Capture-only (List) and "Do nothing" never launch. A missing, disabled or self-package target is a silent no-op (logged). Tap-to-teleport and pasted coordinates never launch: `MapViewModel` only arms the launch for a pin that came from `observeDeepLinkCoords`.
-
-The package is stored per-device in DataStore (`CaptureCoordinatesRepository.launchAfterLinkPackage`), is not in `ExportData`, and survives **Restore default browser**. The picker lists apps through the existing `MAIN`/`LAUNCHER` `<queries>` entry in the manifest; no `QUERY_ALL_PACKAGES`.
-
-## Implementation
-
-| Layer | Detail |
-|-------|--------|
-| **Automatic Tier Entry** | `MainActivity.handleIntent` → `parseDeepLinkCoords` (in `DeepLinkParser.kt`) |
-| **Automatic Channel** | `DeepLinkRepository` — `SharedFlow(replay=1)`; `consume()` calls `resetReplayCache()` to clear after delivery |
-| **Automatic Consumer** | `MapViewModel.observeDeepLinkCoords` — pins via `pinCoordinateTarget` (`pendingTapPosition` + `pendingCameraTarget` + confirm sheet), the same path as map paste-coordinates |
-| **Automatic URL builder** | `AppConstants.AppInfo.buildDeepLink(lat, lon)` |
-| **Automatic Manifest** | Intent filters on `MainActivity`: HTTPS own domain (`autoVerify`) + custom scheme + `geo:` + `google.navigation:` + `ACTION_SEND` text/plain |
-| **Capture Manifest** | Intent filters on `LinkInterceptorActivity`: catch-all `http`/`https` VIEW + BROWSABLE, and Google Maps hosts |
-| **Capture Intercept** | `LinkInterceptorActivity.kt`, `CaptureCoordinatesRepository.kt` (`:core:data`) |
-| **Capture UI** | `CaptureCoordinatesForm` + `CaptureSetupSteps` + `CaptureRestoreDialog` (`:core:designsystem`) + `SettingsMenusSubScreen` (hosts setup) (`:feature:settings:impl`) |
-| **Launch after link** | `LaunchAfterLinkUseCase` (`:core:data`), called by `LinkInterceptorActivity` and `MapViewModel` |
-| **Capture List** | `CaptureCoordinatesViewModel.kt` (`:feature:map:impl`), `CaptureLink.kt` (`:core:common/util`) |
+- Automatic entry: the main activity reads the link and hands it to a shared channel. The map view model consumes it and pins the coordinate through the same path as paste.
+- Capture entry: the interceptor activity handles web links. Its decision is a pure function of the mode switches and the parsed coordinates, so it is testable without a device.
+- The Capture list lives in the map feature. The stored choices live in the capture repository.

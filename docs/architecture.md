@@ -26,11 +26,11 @@ core/model       — Pure Kotlin data classes, no Android deps
 | `:core:designsystem` | Tokens, theme, typography, shared components |
 | `:core:location` | Mock GPS foreground service + movement engine |
 | `:core:model` | Pure Kotlin domain classes |
-| `:core:map` | GeoJSON utils, MapLibre lifecycle bridge, `createMapView`/`rememberMapView`, OSM tile HTTP (`MapTileHttp` — docs/features/map-tiles.md) |
+| `:core:map` | Map view factories, MapLibre bridge, OSM tile HTTP (docs/features/map-tiles.md) |
 | `:core:overlay` | WindowManager overlay utils |
 | `:core:routing` | OSRM client, route interpolation, roaming engine, replay engine |
 | `:core:testing` | Shared test utils, fakes |
-| `:lint:checks` | Custom Android Lint rules (`HardcodedComposeStringDetector` flags hardcoded user-facing strings in Compose) |
+| `:lint:checks` | Custom Android Lint rules (see docs/features/localization.md) |
 | `:feature:favorites:api` / `:impl` | Favorites list, MapPicker, teleport |
 | `:feature:group:api` / `:impl` | Group Sync screen — leader/follower Wi-Fi location sync |
 | `:feature:joystick:impl` | Floating joystick overlay |
@@ -50,20 +50,11 @@ Data flow: ViewModel → Repository → DataSource (Room / DataStore / LocationM
 
 `LjApp` wraps `LjNavHost` in `ModalNavigationDrawer`. `IdleScreen` = main hub post-onboarding; cards nav to Map, Routes, Favorites, Capture, Settings.
 
-`LjNavHost` uses nested `navigation {}` graphs for back-isolation:
-- `routes_graph`: Routes + RouteCreator + RouteDetail
-- `favorites_graph`: Favorites + MapPicker
+Navigation graphs are nested so that back stays inside a feature (the routes and favorites flows each have their own graph). The start destination is chosen once from the spoofing state, and onboarding always wins. The graph code is the reference for which destinations exist and how they connect.
 
-Entry destination (`entryRouteFor`, `LjNavHost.kt`): Map when spoofing is `RUNNING`/`PAUSED`, Idle when `IDLE`/`ERROR`. Onboarding still wins. Chosen once as the start destination from the current state. The `ON_STOP` redirect below is unchanged; on `ON_START`, an Idle landing while spoofing forwards to Map. Idle stays reachable from the drawer.
+On app stop, the app returns to Idle so map-heavy screens unload. The screens that must survive a stop are listed in the shouldSkipIdleRedirect function. They are the screens where the user leaves the app on purpose to copy coordinates or to pick a file. Keep that list in step with those flows.
 
-Drawer nav: `popUpTo(IDLE_ROUTE) { saveState = true }` + `launchSingleTop + restoreState`.
-
-On `ON_STOP` (app switch / recents), `LjApp` navigates back to Idle so MapLibre-heavy screens
-unload while backgrounded. Exceptions: Idle, Onboarding, Settings (SAF file pickers), Favorites
-(paste / from-coordinates sheets — users leave to copy lat/lon), route paste coordinates
-(same copy-from-another-app flow), and Capture (Android default-app settings). See `shouldSkipIdleRedirect()`.
-
-`FavoritesViewModel` shared across favorites graph via `hiltViewModel(navController.getBackStackEntry("favorites_graph"))`.
+Feature view models that share a graph share its back-stack entry, so state survives moves inside that graph.
 
 ## Dependency Injection
 

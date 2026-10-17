@@ -1,63 +1,50 @@
 # Click-to-Move / Teleport
 
-Long-press map → bottom sheet with "Walk here" or "Teleport here". The sheet title row carries a share icon (copy coordinates or share link for the tapped point; see docs/features/location-links.md).
+Long-press the map to open a sheet with "Walk here" or "Teleport here". The sheet's title row has a share action for the tapped point ([location-links.md](location-links.md)).
 
-Tapping the map while spoofing and opening a deep link pin a `LatLng` (`pendingTapPosition` + `isPendingTapSheetOpen`) and show this same confirm sheet. The map's paste-coordinates sheet does not pin: Teleport / Walk / Walk via roads under the paste field run those actions directly on the **first** valid pair (`parsePastedCoordinates`). Extra points do not change those three. A future "open location in Maps" intent should skip the paste field and pin a `LatLng` the same way as a deep link.
+Tapping the map while spoofing, and opening a deep link, both pin a point and show this same sheet. The paste sheet does not pin. Its walk and teleport buttons act directly on the first valid point. Extra points do not change that. A future "open in Maps" intent should pin a point the same way as a deep link.
 
-With two or more valid points, the same sheet can **Save route** (new UUID, cloned waypoints) or **Start** a named `ROUTE_REPLAY` via a reserved Room row (`paste_temp_route` / "Temp Route from Paste") — see docs/features/routes.md, "Paste coordinates (map and widget)". Start is real route replay, not ephemeral "Add next point". Teleport is hidden when `hideTeleportFeatures` is on; Start still walks to the first stop (`StartRouteReplayUseCase`).
+With two or more valid points, the sheet can also save a route, or start a named route replay from the reserved temporary route. Start is real route replay, not the ephemeral "add next point" mode. See [routes.md](routes.md). Teleport is hidden when hide-teleport is on. Start still walks to the first stop.
 
-Key files: `:feature:map:impl/MapViewModel.kt`, `:core:location/EphemeralReplayController.kt`, `:core:data/WalkCoordinator.kt`
+Key files: the map view model, the ephemeral replay controller, and the walk coordinator.
 
-## Walk Here
+## Walk here
 
-- Bearing computed from current position to target.
-- Advances at `currentSpeed` m/s per tick.
-- Snaps to target when within `AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS`.
+The walk heads straight for the target at the current walking speed, and snaps to it once inside the arrival threshold.
 
 ## Teleport
 
-- Sets position directly.
-- Pushes one GPS update immediately (does not wait for the 1 Hz loop). Does not need a network.
-- User-initiated jumps (`TeleportUseCase.execute`, default `resetMovement = true`) stop any walk, roam, or route session first so the engine cannot overwrite the new position. That includes an in-flight Follow-roads route start: mode is still TELEPORT until OSRM returns, so STOP is sent even when `currentMode` is not yet `ROUTE_REPLAY`, and `ReplayOrchestrator.abortInFlightStart()` cancels the planning job before the teleport intent is applied. Favorite, map, and pasted-coordinate teleports all go through this path. Starting a saved route in Teleport-between-waypoints mode teleports to the first stop with `resetMovement = false` so the replay that follows is not cancelled; otherwise Start walks there.
-- Cancellation is race-free across threads (issue #99). `WalkCoordinator` keeps a generation token that every start and `cancel()` bumps. A walk tick already running when a teleport lands is dropped rather than writing the old path back, and "Walk via roads" passes its token to `startWalkAlongRoute`/`startWalk` after the OSRM lookup, so a routing result (or straight-line fallback) that arrives after any teleport — including ones from Favorites, Routes or a Capture jump, which never touch `MapController`'s pending road-walk job — is discarded instead of walking from the new spot back toward the old target.
-- Parked spoofing (widget long-press Pause: mock GPS IDLE, widget still shown) does **not** resume on teleport. Feature buttons stay faded until Start. That is intentional — teleport is not a substitute for Start.
+A teleport sets the position and pushes one fix at once, without waiting for the one-second loop. It needs no network.
 
-## Walk via Roads
+Rules that must hold:
 
-- Long-press map → bottom sheet → "Walk via roads".
-- Fetches OSRM route from current position to target; walks it segment by segment.
-- On OSRM failure (after the backend/profile ladder and bisection — see docs/features/roaming.md), falls back to a straight-line walk and reports a reason-specific message via `RoutingErrorReporter` (`:core:routing`), e.g. "Routing server unavailable — using straight walk".
+- A user-initiated teleport stops any walk, roam or route first. Otherwise the engine would overwrite the new position on its next tick.
+- The stop covers a route that is still planning its road path. The mode has not yet changed to route replay while the routing service is answering, so the stop must not depend on the mode. The pending start is cancelled before the teleport applies.
+- Teleports from favorites, the map, pasted coordinates and captured links all share this path.
+- Starting a route in teleport-between-waypoints mode teleports to the first stop without stopping the replay that follows. Otherwise Start would cancel itself.
+- Cancelling a walk is race-free across threads. Each walk carries a generation token, and every start and cancel bumps it. A tick that was already running when a teleport landed is dropped, and so is a routing answer that arrives after a teleport from any screen. Without this, the position would walk back toward the old target.
+- A parked widget (paused from the widget, mock location idle) does not resume on teleport. Teleport is not a substitute for Start. The feature buttons stay faded until the user starts.
 
-## Add Next Point (Ephemeral Replay)
+## Walk via roads
 
-While a walk-here is active, the user can tap "Add next point" (straight line) or "Add next
-point via roads" on the map to chain waypoints without saving a route. Each tap picks
-road-following independently for that leg only — it is not inherited from how the walk or
-any earlier point was started.
+The walk fetches a road route from the current position to the target, then walks it. If routing fails, the walk falls back to a straight line and says so. The routing fallback ladder is in [roaming.md](roaming.md), "Routing reliability".
 
-Managed by `EphemeralReplayController` (`@Singleton`, `:core:location`), injected by both `MapViewModel` and `FloatingWidgetService`:
+## Add next point (ephemeral replay)
 
-- **First tap** (walk active): cancels the walk via `WalkCoordinator`, builds the list (current position → rest of the walk → newPoint), starts `RouteReplayEngine` in ephemeral mode.
-  - A walk via roads keeps its remaining road shape (the stored route sliced from the current
-    position); that leg is not re-fetched.
-  - The `walkTarget → newPoint` leg is resolved via OSRM (`followRoads = true`) only if the
-    tapped button was "via roads" — independent of whether the walk itself was via roads.
-- **Subsequent taps** (already in `ROUTE_REPLAY`): appends the new point to the live route, using that tap's own `followRoads` choice.
-- **No active walk**: no-op.
+While a walk is active, the user can add the next point, either straight or via roads, without saving a route. Each tap chooses its own road setting for its own leg. The setting is not inherited from the walk or from earlier points, because inheriting it mixed up road and straight legs across taps.
 
-`MapController.addEphemeralWaypoint(position, followRoads)` takes `followRoads` as a caller-supplied
-parameter rather than deriving it from `WalkMode` — deriving it from prior state mixed up
-road/no-road legs across taps (e.g. two straight-line taps followed by a road-following one
-would silently reuse a stale flag).
+The ephemeral replay controller owns this transition. The map and the widget both use it, so the logic lives once.
 
-This eliminates duplicated state-machine logic that previously existed in both `MapViewModel` and `FloatingWidgetService`.
+- The first tap cancels the walk and starts an ephemeral replay from the current position, through the rest of the walk, to the new point. The rest of a road walk keeps its road shape and is not fetched again. Only the new leg is routed, and only if that tap asked for roads.
+- Later taps append to the live route, each with its own road choice.
+- With no active walk, the tap does nothing.
 
-If a road-following leg falls back to a straight line (OSRM backend/profile ladder and bisection exhausted), `EphemeralReplayController` reports a reason-specific message via the shared `RoutingErrorReporter` (`:core:routing`), e.g. "No road route found — using straight line for part of the route".
+If a road leg falls back to a straight line, the user is told.
 
-## Edge Cases
+## Edge cases
 
-- New walk-here cancels the previous one.
-- Moving the joystick pauses a walk and retains its target, including during a road lookup (docs/features/joystick.md, "Manual takeover"). Releasing the stick does not resume it. Resume continues from the manually moved position. Choosing a new map destination replaces the paused walk and clears its pause flag.
-- Cancelled walk cleanup belongs to its generation: an old job finishing after a same-coordinate restart cannot clear the newer walk target. `WalkCoordinator` checks and clears under the same lock; standalone `WalkToEngine` callers retain their own cleanup contract.
-- Walk-here while route replay is active → show confirmation dialog to stop replay before proceeding.
-- "Add next point" while in roaming mode → no-op (only valid during walk-to or active ephemeral replay).
+- A new walk cancels the previous one.
+- Moving the joystick pauses a walk and keeps its target, including during a road lookup. Releasing the stick does not resume it. Resume continues from the moved position. A new destination replaces a paused walk.
+- A cancelled walk must not clear the target of a newer walk, even when both have the same coordinates. The check and the clear happen under one lock.
+- Walking here while a route plays asks the user to stop the route first.
+- Add next point while roaming does nothing. It is valid only during a walk or an ephemeral replay.

@@ -1,131 +1,76 @@
 # Favorite Locations
 
-Save named locations. Tap from list: while spoofing runs, a bottom sheet offers Teleport / Walk to location / Walk via roads (Teleport hidden when Hide Teleport is on); while spoofing is off, the tap teleports instantly. A teleport stops any walk, roam, or route session first (`TeleportUseCase.execute`). Rename and delete supported.
+Save named locations and teleport or walk to them.
 
-Key files: `:feature:favorites:impl/FavoritesScreen.kt`, `:feature:favorites:impl/FavoritesViewModel.kt`, `:core:database/FavoriteDao.kt`
+Tapping a favorite does the following. While spoofing runs, a sheet offers teleport, walk, and walk via roads. The teleport choice is hidden when hide-teleport is on. While spoofing is off, the tap teleports at once. Any teleport first stops a running walk, roam or route, so two sessions never write the position together. Rename and delete are supported.
+
+Key files: the favorites feature module, its view model, and the favorites table in `:core:database`.
 
 ## Search
 
-A search field at the top of the Favorites screen filters the list by name or category
-(case-insensitive substring match via `matchesNameSearch` / `FavoriteLocation.matchesSearch`),
-updating live as the user types. Hidden when there are no favorites at all. If the query matches
-nothing, a "No favorites match your search" placeholder is shown instead of the list. Query state
-is `remember` (not `rememberSaveable`) so leaving the screen starts from the full list.
+Search matches the name or the group name, case-insensitively, and updates as the user types. It is hidden when there are no favorites at all. The query is not saved, so leaving the screen starts from the full list.
 
-The same filter is on every other favorites picker:
+Every favorites picker uses the same filter: the map sheet, the route creator's jump list, and the widget panel. The widget panel is a separate window, so it needs a focusable window for the keyboard to work, and it clears the query each time it closes.
 
-| Surface | UI |
-|---|---|
-| Map favorites sheet | Search field under the sheet title (`FavoritesList`, `enableSearch = true`) |
-| Route creator "Jump to Favorite" | Same embedded field |
-| Widget favorites panel | Share current location left of Search, then Close. Search icon reveals the field. `FloatingPickerShell` owns the query and passes it as `filterQuery` (`enableSearch = false` so the list does not draw a second field). Closing the panel (or hiding search) clears the query — `WidgetPanelPresenter.showPanel()` builds a fresh `ComposeView` on every open. |
+## Sort
 
-The widget favorites panel uses `mapPanelLayoutParams()` so the overlay is focusable and the
-search field can take IME input (same reason as the map/paste panels).
-
-The Sort menu is available on the main Favorites screen, widget favorites panel, and the floating
-map's favorites panel. It offers **A–Z**, **Z–A**, **Newest saved**, and **Oldest saved**. The
-selection persists and is shared across those surfaces.
+The sort menu is shared by the Favorites screen, the widget panel and the floating map's panel. The chosen order is kept and shared.
 
 ## Groups
 
-`FavoriteLocation.category` holds the group name (`null` = ungrouped). Hot locations (`hot_` ids) use it for their country and are read-only. A user can create groups for their own favorites; the same mechanism and UI exist for routes (docs/features/routes.md, "Groups").
+A favorite's group is a plain name. No group is stored as a separate table: a group exists only while it has members.
 
-- **Create / move**: overflow menu → **Move to group**. The dialog lists existing groups, **Ungrouped**, and a field that creates a new group and moves the favorite into it. A group exists only while it has members.
-- **Rename**: the group header's menu → **Rename group**. Renames the category on every member.
-- **Delete**: the header menu → **Delete group**. Members are kept and become ungrouped.
-- **Collapse**: tap a header. Collapse state is `remember`d, not saved. An active search expands every group so matches stay visible.
-- **Search**: also matches the group name.
-- **Order**: user groups (A–Z), then ungrouped favorites, then hot country groups (A–Z). User groups sit above hot lists so local places stay on top. A user group may share a name with a hot country; they stay separate sections.
-- **Everywhere**: the Favorites screen, the map favorites sheet, the widget panel and the route-creator jump list all render through `groupedItems` (`:core:designsystem/GroupedList.kt`). Rename, delete and move are on the Favorites screen only; the pickers show headers and collapse.
-- **Reordering groups by drag** is not supported; order is alphabetical.
+- Create or move a favorite into a group from its menu. A field there creates a new group.
+- Renaming a group renames it on every member. Deleting a group keeps its members and makes them ungrouped.
+- Collapsing is not saved. An active search expands every group, so matches stay visible.
+- Order: user groups first, then ungrouped favorites, then hot-list groups. Local places stay above the curated list. A user group may share a name with a hot-list country, and the two stay as separate sections.
+- Groups are alphabetical. Drag reordering is not supported.
 
-## Add Flows
+Hot-list favorites are read-only and cannot be moved. Their group is their country.
 
-Four ways to add a favorite, from the add FAB action sheet:
+## Add
 
-1. **From map**: navigate to `MapPickerScreen` where user taps map or uses Nominatim search, enters name, then confirms. `MapPickerScreen` calls back with `(name, lat, lon)`.
-2. **From coordinates**: inline dialog with name, lat, lon fields. Save is disabled until the name is non-empty and lat/lon parse as a valid pair (`isValidLatLng`).
-3. **Paste coordinates**: same dialog layout with a name field plus a single paste box for
-   decimal-degree `lat, lon` (example `11.0127769, 79.48065`) or DMS
-   (`37°34'11.4"N 127°00'17.9"E`). Uses `parsePastedCoordinates`
-   (`:core:common`) — the same messy-text parser as route paste — and saves the first valid pair.
-   Invalid text shows "No valid coordinates" and does not save.
-4. **Use current location**: pre-fills lat/lon from the current spoofed position.
-4. **From the map paste sheet**: the map FAB's paste-coordinates sheet can save the parsed point as a favorite after prompting for a name (same parser, first valid pair).
+There are four ways to add a favorite:
+
+1. **From the map:** pick a point on the map or from a search result, then name it.
+2. **From coordinates:** type a name and a latitude and longitude. Save is disabled until the pair is valid.
+3. **Paste coordinates:** a name plus a paste box. The same lenient parser as route paste is used, and the first valid pair is saved.
+4. **Current location:** fills the coordinates from the current spoofed position.
+
+The map's paste sheet can also save its first point as a favorite.
 
 ## Share
 
-The overflow menu on each favorite is **Edit**, **Copy coordinates**, **Send as message**, **Delete**.
-Copy and send use the same decimal-degree `lat, lon` text as paste (`formatCapturedPoint`). They do
-not generate a `locationjoystick.shrtcts.fr` shortcut URL.
+Copy and send use the same decimal `lat, lon` text as paste. They do not make a link. A saved place has a name in the app, so a link would add nothing for the user.
 
-The Favorites screen toolbar is Sort, **Share current location**, Add (`+`). Share sits immediately
-left of Add. The widget favorites picker has the same share action in the title row, immediately
-left of Search (hidden on a favorite's detail). Both open the system share sheet
-(`Intent.ACTION_SEND` / `text/plain`) with `formatCapturedPoint` of the current spoofed (or last)
-position — not the favorite list. If there is no current position, a toast says "No current
-location" and the picker stays open. After a successful share from the widget (or floating-map)
-picker, the overlay closes first so the system share sheet is not covered (`onShareOpened`,
-default `onDismiss` / `hidePanelView()`). The widget overlay is not an Activity, so the chooser
-is started with `FLAG_ACTIVITY_NEW_TASK` (`shareCurrentLocationCoordinates` in `:core:common`).
-Favorite detail in both the widget picker and its floating-map picker also supports Rename and
-Delete. Their dialogs stay inside the focusable overlay and return cleanly to the list after delete.
+The Favorites screen and the widget picker both have a share-current-location action, which shares the current position, not the list. With no current position, the user is told and the picker stays open. In the widget, the overlay closes before the system share sheet opens, so the sheet is not hidden behind it.
 
 ## Home
 
-One favorite can be marked Home; the app then starts there instead of the last remembered location.
+One favorite can be marked as Home. The app then starts there, instead of at the last remembered location.
 
-- A tappable house icon (`HomeToggleButton`, shared by `FavoritesList` and the Favorites screen) toggles Home on the Favorites screen, the map favorites sheet and the widget favorites panel. The Favorites screen overflow menu has the same "Set as home" / "Remove home" item. The route-creator "Jump to Favorite" list and the widget's floating-map picker show no icon.
-- Only one Home. Marking another favorite moves the flag silently; tapping the active Home clears it.
-- Stored as one DataStore value (`HOME_FAVORITE_ID`, see docs/features/last-location.md), not a column on `FavoriteEntity`. A Home id whose favorite no longer exists resolves to nothing, so deleting the Home favorite falls back to the last location. Turning hot locations off (or an import that drops the favorite) clears the id.
-- Local startup preference: no Content API or Control API field. It round-trips through export/import (`ExportData.homeFavoriteId`).
+- Only one Home. Marking another moves the mark. Tapping the active Home clears it.
+- Home is stored as a single setting, not a column on the favorite. If the Home favorite is deleted, the setting resolves to nothing, and the app falls back to the last location.
+- It is a local startup preference. It is not part of the Control API, but it does round-trip through export and import.
 
 ## Storage
 
-`FavoriteEntity` flat table (no relations). Sort by `createdAt` descending by default; name and
-saved-time sort modes are applied above the repository.
+Favorites are a flat table with no relations. Sorting by time is the default, and the other sorts are applied above the repository.
 
-## Teleport
+## Hot locations
 
-Set position directly, push one update, camera jumps to new position. Goes through
-`TeleportUseCase.execute`, which stops any walk, roam, or route session first.
+Settings has a toggle to show a curated list of popular places. When on, the list is inserted into the favorites table. When off, only the inserted entries are removed.
 
-On the Favorites screen, a row tap opens `FavoriteTargetDetail` in a bottom sheet while spoofing
-runs (same choices as the map favorites sheet and widget panel). Walk goes through
-`MapController.walkTo` / `walkViaRoads`. While spoofing is off the tap teleports directly.
+- Inserted entries get an id prefix, so they can be told apart from the user's own favorites. A user's favorite with the same name keeps its own id and is never removed by turning the list off.
+- Identity is the name plus city. Keep both stable upstream, or users lose their selections.
+- The upsert also removes hot entries that were dropped from the list upstream, so the list can change without an app update.
+- Export and import carry the toggle. A backup with it on re-applies the upsert.
+- The category field round-trips, and an older export without it imports cleanly.
 
-## Shared ViewModel
+The list is the wiki's `hot/locations.json`. It is fetched and cached like the hot routes list ([routes.md](routes.md)). It is refreshed once a day when the app opens, and a failed check keeps the last good copy. A body is rejected whole if its schema version is wrong or any entry is malformed. A new incompatible format must get a new schema number, so old apps keep their last good copy instead of breaking.
 
-`FavoritesViewModel` is shared across the favorites graph via `hiltViewModel(navController.getBackStackEntry("favorites_graph"))`.
+New entries from a refresh are not switched on. The user chooses them in settings.
 
-## Hot Locations
+## Control API
 
-Settings → Favorites → "Show hot locations" toggle (default off). When enabled, upserts the curated locations (see "Source of the list") into the favorites DB. When disabled, removes only the entries this feature inserted.
-
-Key files: `:core:data/HotLocationsRepository.kt` (list source, cache, refresh), `:core:data/FavoriteRepository.kt` (upsert/remove logic), `docs/wiki/hot/locations.json` (the list), `:core:datastore/AppPreferencesDataSource.kt` (`hot_locations_enabled` key)
-
-**Upsert rule**: match by name + city (via `idForLocation`). If a favorite with the same derived ID already exists, its coordinates and `category` are updated and its original ID is preserved. New entries get IDs prefixed with `hot_`. The upsert also deletes every `hot_*` favorite whose derived ID is no longer in the list, so a location removed upstream disappears without an app release.
-
-**Remove rule**: delete all favorites whose ID starts with `hot_`. User favorites that happened to share a name with a hot location (and thus had their coords updated) are kept — their ID was never changed to `hot_`.
-
-**Export/import**: `hotLocationsEnabled` field in `ExportData`. Importing a backup with it `true` re-applies the upsert. The per-favorite `category` field also round-trips as part of `favoriteLocations` — old exports without it import cleanly (missing field defaults to `null`).
-
-**Categories**: each hot location entry carries `country` and `city` fields, used both for the grouped picker UI in Settings and — since this feature — for the `FavoriteLocation.category` field once added as a favorite (set to `country`, e.g. "Pago Pago" gets category "American Samoa").
-
-### Source of the list
-
-The list is `docs/wiki/hot/locations.json`, published with the wiki at `https://locationjoystick.shrtcts.fr/hot/locations.json`:
-
-```json
-{ "schema": 1, "locations": [ { "name": "", "lat": 0.0, "lon": 0.0, "country": "", "city": "" } ] }
-```
-
-- A body is accepted only if `schema` is `1`, `locations` is non-empty and every entry has all five fields; otherwise the whole body is rejected. Unknown extra fields are ignored. Publish an incompatible format under a new `schema` number: old apps keep their last good copy.
-- Fetch/cache code is the shared `WikiJsonCache` (also used by hot routes, docs/features/routes.md).
-- The same file is packed into the APK as the seed (`assets.srcDir` in `:core:data`). `HotLocationsRepository.locations` serves the cached copy (`filesDir/hot_locations.json`), else the seed.
-- On app open (`LjApplication`), `refreshIfStale()` fetches silently when the cache is older than 24 h (file modified time as the clock; no toggle, no DataStore key). A failed check keeps the last good copy and also waits 24 h; with no cache it retries next launch.
-- After a successful refresh, if "Show hot locations" is on, `upsertHotLocations` reconciles `hot_*` favorites to the new list. New entries are not auto-selected: they show unchecked in the Settings tree.
-- Identity is `name` + `city` (`idForLocation`). Renaming either is a remove plus a new unchecked entry, so publishers should keep both stable to preserve users' selections.
-
-**API**: favorites can be listed, created, updated and deleted over the leader Control API; see docs/features/group-sync.md, "Content API".
+Favorites can be listed, created, updated and deleted over the leader Control API. See [group-sync.md](group-sync.md), "Content API".

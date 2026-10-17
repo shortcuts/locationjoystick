@@ -29,17 +29,19 @@ Constraints:
 
 ## Documentation Maintenance Policy
 
-Work is NOT complete until affected docs are updated. These files must stay in sync with the code:
+**Docs give context; code holds the data.** Never copy what a symbol, string resource, constant or type already states (field lists, enum values, defaults, UI wording, numeric cadences, hex or dp values, layout). Point to the symbol or file instead. Keep the why: constraints, platform policy, tradeoffs, rejected approaches, and anything a reader cannot find in code.
+
+Work is NOT complete until affected docs are updated where they state context. These files must stay accurate:
 
 | File | Update when |
 |------|-------------|
 | `AGENTS.md` (this file) — Feature Specifications table | Adding or removing a feature |
 | `AGENTS.md` — Key Services table | Adding, removing, or renaming a service or singleton |
 | `docs/architecture.md` — module table | Adding or removing a Gradle module (also update `docs/architecture.md` for architecture pattern changes) |
-| `docs/domain-models.md` | Any change to `core/model/` data classes or enums |
-| `docs/design-system.md` | Changing tokens in `core/designsystem` or adding, removing or renaming a shared `Lj*` component |
-| `docs/features/<feature>.md` | Behaviour change in the corresponding feature |
-| `docs/features/export-import.md` | Any change to `ExportData` fields or import/export scope |
+| `docs/domain-models.md` | A model's rationale or a cross-module rule changes (a new field or enum value needs no edit) |
+| `docs/design-system.md` | A design rule or a use-when judgement changes (a new token or component needs no edit) |
+| `docs/features/<feature>.md` | The rationale or a constraint of the feature changes |
+| `docs/features/export-import.md` | The import/export scope or its rationale changes |
 | `README.md` — feature table | Adding or removing a user-visible feature |
 | `docs/wiki/<feature>.html` | Adding or changing any user-visible feature |
 | `scripts/screenshot-gallery.sh` | Renaming, moving, or reordering any UI element it taps (labels, content descriptions, screen flow, defaults such as a FAB or setting that ships off). Run the affected step with `make screenshot` args `--auto --steps <N>` and confirm no `Could not find UI element` warning. |
@@ -48,7 +50,6 @@ Work is NOT complete until affected docs are updated. These files must stay in s
 Rules:
 - New feature → create `docs/features/<feature>.md` AND add row to AGENTS.md's Feature Specifications table AND README.md's feature table.
 - New Gradle module → add row to `docs/architecture.md`'s module table (the single source of truth — README.md links to it, doesn't duplicate it).
-- New domain model or field → update `docs/domain-models.md`.
 - Deleted feature/module → remove from all tables above.
 - Doc changes go in the same commit as the code change, not a follow-up.
 - New user-visible feature → create `docs/wiki/<feature>.html` AND add it to `NAV_ITEMS` in `docs/wiki/wiki-init.js`. Follow `docs/wiki/CONTRIBUTING.md` for page structure, nav ordering, and writing style. Wiki pages are for **app users, not developers** — no code symbols, class names, Android internals, or library names.
@@ -144,37 +145,37 @@ Rules:
 
 | Service | Module | Type | Purpose |
 |---------|--------|------|---------|
-| `MockLocationService` | `:core:location` | ForegroundService | Owns `LocationManager` test provider. Exposes `StateFlow<SpoofState>`. Commands: `startSpoofing`, `updatePosition`, `stopSpoofing`, `parkSpoofingKeepWidget` (IDLE while retaining the floating widget). Suspended-phase state held in `AtomicReference<SuspendedPhaseState>`; transitions via `advanceSuspendedPhase()` pure function (testable independently). |
-| `JoystickOverlayService` | `:feature:joystick:impl` | Service | Extends `OverlayService`. Manages `WindowManager` overlay. Reads joystick input → `LocationRepository.updatePosition()`. Moving the stick calls `MapController.pauseAutomatedMovement()`, which pauses walk-to/route/roam and turns Follow leader off for followers. Center-dead-zone input has zero force and preserves lock; the widget lock button toggles locking. |
-| `FloatingWidgetService` | `:feature:widget:impl` | Service | Manages widget overlay. Binds to `MockLocationService`. |
-| `RoamingEngine` | `:core:routing` | Class (not service) | Instantiated by `MockLocationService`. Owns OSRM client + random waypoint picker. Runs on service scope. |
-| `ReplayOrchestrator` | `:core:location` | Class (not service) | Instantiated by `MockLocationService`. Owns all route-replay and walk-to orchestration (`handleStart`/`handlePause`/`handleResume`/`handleStop`/`handleCancel`) extracted from the service. Communicates back via lambdas (`onStateChange`, `onPositionChange`, `pushLocationUpdate`, etc.) instead of holding its own state directly. |
-| `FollowerCatchUpCoordinator` | `:core:location` | Class (not service) | Instantiated by `MockLocationService`. Owns the FOLLOWER-mode catch-up target (`AtomicReference<LatLng?>`), the per-tick step logic (`advance()`), and the leader-active bootstrap/pause state machine (`handleLeaderActiveUpdate()`) — all extracted from the service, mirroring the `WalkCoordinator` pattern: state ownership + step logic live in one small class instead of scattered `@Volatile` fields and call-site-local flags on the service. |
-| `ReplayStartLifecycle` | `:core:location` | Class (not service) | Instantiated by `ReplayOrchestrator`. Owns the route-start generation counter, the per-start `Session` (`paused`, `engineStarted`) and the lifecycle lock, so pause/resume/abort state lives in one small class instead of scattered fields on the orchestrator — mirrors `FollowerCatchUpCoordinator`. |
-| `AltitudeAnchorCoordinator` | `:core:location` | Class (not service) | Instantiated by `MockLocationService`. Owns the altitude-anchor convergence state (`currentBaseAltitudeMeters`/`targetBaseAltitudeMeters`, the elevation-fetch-in-flight guard) and the per-tick `stepConverge()` call — mirrors `FollowerCatchUpCoordinator`: state ownership + step logic live in one small class instead of scattered `@Volatile` fields on the service. |
-| `PositionJitterCoordinator` | `:core:location` | Class (not service) | Instantiated by `MockLocationService`. Owns a persistent position-jitter offset that wanders inside the configured radius, stepping at most `AppSettings.jitterMaxStepMeters` in a fresh random direction every tick (clamped back to the disc edge on overshoot), instead of teleporting between interval-gated Gaussian draws or beelining to one distant target per leg. |
-| `OverlayNotificationReactor` | `:core:location` | Class (not service) | Instantiated by `MockLocationService`. Owns the two settings-reactive collectors that keep the foreground notification (docs/features/foreground-service.md, "Hiding the Notification Icon") and the widget overlay (docs/features/widget.md, "Hiding the Overlay") in sync with live setting changes mid-session — previously inline in the service. |
-| `ContentApiRoutes` | `:core:location` | Class (`@Singleton`) | Registers `/api/v1` JSON CRUD for favorites, routes and speed profiles (built-ins: read + speed update) on `LeaderSyncServer`; installed by `MockLocationService` beside `ControlApiRoutes`. |
-| `EphemeralReplayController` | `:core:location` | Class (`@Singleton`) | Owns the walk→ephemeral-replay transition. Injected by both `MapViewModel` and `FloatingWidgetService`. `addWaypoint()` decides whether to start a new ephemeral replay (walk→replay transition) or append to an existing one. Eliminates duplicated state-machine logic across call sites. |
-| `WalkCoordinator` | `:core:data` | Class (`@Singleton`) | Thin facade over `WalkToEngine`. Cancels any in-flight walk before starting a new one, forwards position ticks to `LocationRepository`, clears `walkTarget` on arrival or cancellation. |
-| `ActivityStateRepository` | `:core:data` | Repository (`@Singleton`) | Single source of truth for unified pause state across all movement modes. Exposes `isActivityPaused: Flow<Boolean>` combining walk-to, route replay, and roaming pause. Prefer over manually combining individual flows from `LocationRepository` and `RoamingRepository`. |
-| `TeleportUseCase` | `:core:data` | Class (`@Singleton`) | Single entry point for all teleport operations — fires the update-position intent to `MockLocationService`, persists last location + last teleport time. Injected by both `MapViewModel` and `FavoritesViewModel` so every teleport path shares the same persistence and cooldown logic (`cooldownFor`/`cooldownsFor`). |
-| `CaptureCoordinatesRepository` | `:core:data` | Repository (`@Singleton`) | Owns Capture mode, List/Jump actions, captured points, and the pass-through browser choice. DataStore-only; intercepts use `TeleportUseCase` for jumps. |
-| `RealLocationRepository` | `:core:data` | Repository (`@Singleton`) | Obtains a real GPS fix without changing the mock-position cache or cooldown. Supplies the newest non-mock last-known fix (`lastKnownRealPosition()`) that `MapController` uses to seed the initial map position when nothing is remembered. |
-| `LaunchAfterLinkUseCase` | `:core:data` | Class (`@Singleton`) | Opens the app picked in Settings > Menus > Capture after a handled map link (Capture Jump teleport in `LinkInterceptorActivity`, confirm-sheet Teleport/Walk in `MapViewModel`). No-op when unset or not launchable. |
-| `GpxOpenRepository` | `:core:data` | Repository (`@Singleton`) | Buffers externally opened GPX files until the map paste sheet consumes them. |
-| `HotLocationsRepository` | `:core:data` | Repository (`@Singleton`) | Serves the hot-location list from a 24h-refreshed wiki-JSON cache (`docs/wiki/hot/locations.json`) over the bundled seed copy; `LjApplication` refreshes it on app open and reconciles `hot_*` favorites. Sibling of `UpdateCheckRepository`; fetch/cache lives in the shared internal `WikiJsonCache`. |
-| `HotRoutesRepository` | `:core:data` | Repository (`@Singleton`) | Same as `HotLocationsRepository` for hot routes (`docs/wiki/hot/routes.json`); `LjApplication` refreshes it on app open and reconciles `hot_route_*` routes. |
-| `UpdateCheckRepository` | `:core:data` | Repository (`@Singleton`) | Fetches the latest GitHub release tag (api.github.com) for the home-screen "update available" badge; gated by a 24h cache, no toggle. |
-| `StartRouteReplayUseCase` | `:core:location` | Class (`@Singleton`) | Starts a route replay: resolves the route's speed profile, optionally teleports to the start waypoint first (via `TeleportUseCase`), then sends the start-replay intent to `MockLocationService`. Dedupes route-replay-start logic previously duplicated in `MapViewModel` and `FloatingWidgetService`. `bypassHideTeleport` (Control API only) keeps hop mode working when the Hide Teleport setting is on. |
-| `ControlApiRoutes` | `:core:location` | Class (`@Singleton`) | Registers the `/api/v1` state and command routes onto `LeaderSyncServer` (installed by `MockLocationService.enterLeaderMode`), each calling the same `MapController` method as the UI (docs/features/group-sync.md, "Control API commands"). |
-| `FeetDetector` | `:core:model` | Object | Pure-Kotlin player feet-pixel detection from walked-leg gray frames (bench `detect_feet` port); returns `null` when no figure is found. Not wired yet. |
-| `FrameFlow` / `PhaseCorrelation` | `:core:model` | Objects | Pure-Kotlin walked-leg frame flow: static-content cleanup (`cleanLeg`) and per-band phase correlation (`bandMoves`), ports of bench `clean_leg` / `band_moves` / `cv2.phaseCorrelate`. Not wired yet. |
-| `GroundMapFit` | `:core:model` | Object | Pure-Kotlin least-squares fit of the perspective ground map (`GroundCalibration`) to band flows (bench `fit_perspective_horizon` port); `null` under 40 usable flows. Not wired yet. |
-| `ReconnectControlDetector` | `:feature:widget:impl` | Object | Pure-Kotlin classifier of the target app's reconnect control state (ON / OFF / none) from screenshot ARGB pixels; used by `runReconnectTap` in `ReconnectTapRunner.kt` (docs/features/bluetooth-reconnect-tap.md). |
-| `Geocoding` / `GeocodingProvider` | `:core:common` | Object + interface | Process-wide entry for search and reverse lookup. `FallbackGeocodingProvider` (wired) tries `NominatimProvider` then `PhotonProvider` in order, skipping a failed provider for a 10-minute in-memory cooldown shared by search and reverse; the providers own provider-specific URLs and JSON, mapping to `GeocodeResult`/`ReverseGeocodeResult`. |
-| `CalibrationWalkOrchestrator` | `:core:location` | Class (`@Singleton`) | Tap-to-walk calibration walk: 8 chained 40 m legs at walking speed (never a teleport), a screenshot every 3 s via `ScreenCaptureSource.captureGrayFrame()`, frames spooled to cache, `GroundCalibrationSolver` fit, result stored per device via `SettingsRepository.setGroundCalibration`. Exposes `state: StateFlow<CalibrationState>`, `isReady`, `start()`, `cancel()`; started from Settings > Menus > Tap to Walk (docs/features/tap-to-walk.md, "Calibration walk", "Calibration UX"). |
-| `ScreenCaptureSource` | `:core:location` | Class (`@Singleton`) | Bridges `ScreenAccessibilityService` (`:feature:widget:impl`) and consumers (e.g. `FloatingWidgetService`) via `bind`/`unbind`/`isAvailable`/`captureGrayFrame()`. Gates capture on `SettingsRepository.getAccessibilityDisclosureAccepted()` — Play's Accessibility API policy requires the in-app disclosure accepted before any screenshot. |
+| `MockLocationService` | `:core:location` | ForegroundService | Owns the mock location provider and the foreground lifecycle. Single owner of the spoofing state exposed to the UI. |
+| `JoystickOverlayService` | `:feature:joystick:impl` | Service | Overlay window for the joystick. Moving the stick pauses automated movement; the widget lock button owns locking. |
+| `FloatingWidgetService` | `:feature:widget:impl` | Service | Overlay window for the widget. Binds to `MockLocationService`. |
+| `RoamingEngine` | `:core:routing` | Class (not service) | Random roaming waypoints and road routing. Owned by `MockLocationService`. |
+| `ReplayOrchestrator` | `:core:location` | Class (not service) | Owns route-replay and walk-to orchestration, extracted from the service. Reports back through callbacks rather than holding UI state. |
+| `FollowerCatchUpCoordinator` | `:core:location` | Class (not service) | Owns follower catch-up state so the service does not hold it in loose fields. Mirrors `WalkCoordinator`. |
+| `ReplayStartLifecycle` | `:core:location` | Class (not service) | Owns route-start sessions and the lifecycle lock, so pause, resume and abort live in one place. |
+| `AltitudeAnchorCoordinator` | `:core:location` | Class (not service) | Owns altitude convergence state. Same pattern as `FollowerCatchUpCoordinator`. |
+| `PositionJitterCoordinator` | `:core:location` | Class (not service) | Owns the jitter offset. Its motion model is a constraint: it must not teleport between draws. See [features/mock-location.md](docs/features/mock-location.md). |
+| `OverlayNotificationReactor` | `:core:location` | Class (not service) | Keeps the notification icon and widget overlay in sync with live settings mid-session. |
+| `ContentApiRoutes` | `:core:location` | Class (`@Singleton`) | Content CRUD routes on the local sync server, installed beside `ControlApiRoutes`. |
+| `EphemeralReplayController` | `:core:location` | Class (`@Singleton`) | Owns the walk-to-ephemeral-replay transition. Shared by the map and the widget so the state machine lives once. |
+| `WalkCoordinator` | `:core:data` | Class (`@Singleton`) | Facade over the walk engine. Cancels an in-flight walk before a new one starts. |
+| `ActivityStateRepository` | `:core:data` | Repository (`@Singleton`) | Single source of truth for pause state across movement modes. Prefer it over combining the individual flows. |
+| `TeleportUseCase` | `:core:data` | Class (`@Singleton`) | Single entry point for teleports, so every path shares persistence and cooldown. |
+| `CaptureCoordinatesRepository` | `:core:data` | Repository (`@Singleton`) | Owns Capture mode state. Jumps go through `TeleportUseCase`. |
+| `RealLocationRepository` | `:core:data` | Repository (`@Singleton`) | Reads a real GPS fix without touching the mock-position cache or cooldown. |
+| `LaunchAfterLinkUseCase` | `:core:data` | Class (`@Singleton`) | Opens the user's chosen app after a handled map link. |
+| `GpxOpenRepository` | `:core:data` | Repository (`@Singleton`) | Holds externally opened GPX files until the map consumes them. |
+| `HotLocationsRepository` | `:core:data` | Repository (`@Singleton`) | Hot-location list from a cached wiki JSON with a bundled seed. Sibling of `UpdateCheckRepository`. |
+| `HotRoutesRepository` | `:core:data` | Repository (`@Singleton`) | Same pattern as `HotLocationsRepository`, for hot routes. |
+| `UpdateCheckRepository` | `:core:data` | Repository (`@Singleton`) | Latest-release check for the update badge. Cached; there is no toggle. |
+| `StartRouteReplayUseCase` | `:core:location` | Class (`@Singleton`) | Shared route-replay start for the map and the widget. `bypassHideTeleport` is Control API only. |
+| `ControlApiRoutes` | `:core:location` | Class (`@Singleton`) | Control API routes. Each calls the same controller method as the UI; see [features/group-sync.md](docs/features/group-sync.md). |
+| `FeetDetector` | `:core:model` | Object | Pure-Kotlin feet detection for tap to walk calibration. Not wired yet. |
+| `FrameFlow` / `PhaseCorrelation` | `:core:model` | Objects | Pure-Kotlin frame flow for the calibration bench. Not wired yet. |
+| `GroundMapFit` | `:core:model` | Object | Pure-Kotlin ground map fit for the calibration bench. Not wired yet. |
+| `ReconnectControlDetector` | `:feature:widget:impl` | Object | Classifies the target app's reconnect control from screenshot pixels. See [features/bluetooth-reconnect-tap.md](docs/features/bluetooth-reconnect-tap.md). |
+| `Geocoding` / `GeocodingProvider` | `:core:common` | Object + interface | Search and reverse lookup entry point. Falls back between providers with a shared cooldown. |
+| `CalibrationWalkOrchestrator` | `:core:location` | Class (`@Singleton`) | Runs the calibration walk and stores the result per device. See [features/tap-to-walk.md](docs/features/tap-to-walk.md). |
+| `ScreenCaptureSource` | `:core:location` | Class (`@Singleton`) | Bridges the screen accessibility service to consumers. Capture is gated on the in-app disclosure. |
 
 ---
 

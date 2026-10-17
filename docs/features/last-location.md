@@ -1,29 +1,22 @@
 # Last Remembered Location
 
-On app restart, restores the last spoofed position. No manual re-entry needed.
+On app restart, restores the last spoofed position, so the user does not re-enter it.
 
-## DataStore Keys (`:core:datastore`)
-
-| Key | Type | Purpose |
-|-----|------|---------|
-| `REMEMBER_LAST_LOCATION` | `Boolean` | Feature toggle |
-| `LAST_LATITUDE` | `Double` | Last spoofed latitude |
-| `LAST_LONGITUDE` | `Double` | Last spoofed longitude |
-| `HOME_FAVORITE_ID` | `String?` | Id of the Home favorite (docs/features/favorites.md, "Home"); absent when none |
+Stored values are per device and are listed in the settings and preferences code. The Home favorite is the one exception that has its own rules: see [favorites.md](favorites.md), "Home".
 
 ## Behaviour
 
-- On startup, with no position set yet: seed the initial position from the Home favorite when one is set and still exists (beats everything, even with `REMEMBER_LAST_LOCATION` on); otherwise from `LAST_LATITUDE`/`LAST_LONGITUDE` when `REMEMBER_LAST_LOCATION` is `true` and valid coordinates exist; otherwise from the phone's real location (below); otherwise, with location permission granted, from `DEFAULT_LAT`/`DEFAULT_LON`, so the map always shows a point. Without permission the position stays unset and the next restore call retries.
-- Real-location fallback (`RealLocationRepository.lastKnownRealPosition()`): the newest non-mock last-known fix across GPS and network providers. When none exists, the restore asks for one fresh fix (`getCurrentPosition()`, 10 s timeout) in the background. The default shows at once; the fresh fix then replaces it and the map follows, unless the position changed meanwhile (teleport, start). Read-only: not persisted, no cooldown, no teleport. It applies whether `REMEMBER_LAST_LOCATION` is on or off (the toggle gates only the saved position) and is skipped silently without location permission.
-- The Start button begins from the current position, then the Home favorite, then the stored last location (read directly, not gated by the toggle), then `DEFAULT_LAT`/`DEFAULT_LON`.
-- Group Sync: the restore only seeds when no position is set, and a follower bootstraps at the leader position (docs/features/group-sync.md), so the leader position takes over and Home does not apply.
-- The startup restore (`MapController.restoreLastLocationIfNeeded()`, called from `MapController.init` and
-  the map screen) is single-flight: an overlapping call is a no-op, a call after a restore that found nothing
-  retries.
-- While spoofing runs, `MockLocationService.pushLocationUpdate()` — the single 1 Hz tick every mode
-  (joystick, walk-to, route replay, roaming, follower catch-up) routes through — writes the current
-  position to DataStore, throttled to `AppConstants.LocationConstants.LAST_LOCATION_PERSIST_INTERVAL_MS`
-  (5 s) so a battery death or hard reboot loses at most a few seconds of movement instead of resuming
-  at wherever the session started. The write is unconditional — `REMEMBER_LAST_LOCATION` gates restore
-  only, not persistence.
-- `stopSpoofing()` and `onDestroy()` also persist immediately on clean stop / process kill, same as before.
+- **Start position at launch**, when nothing is set yet, in this order:
+  1. The Home favorite, if one is set and still exists. It wins over everything, even when remembering is off.
+  2. The saved position, if remembering is on and the saved coordinates are valid.
+  3. The phone's own last known real location, from a provider that is not spoofing. When none exists, one fresh fix is requested in the background. The map shows the default at once, and the fresh fix replaces it unless the position has changed since (a teleport or a start).
+  4. The built-in default position, once location permission is granted, so the map always shows a point.
+  Without permission, the position stays unset, and the next restore call retries.
+- The real-location lookup is read-only. It is not saved, does not touch the teleport cooldown, and does not teleport. It runs whether remembering is on or off, because the switch gates only the saved position.
+- **Start button** begins from the current position, then the Home favorite, then the saved position, then the default. The saved position is read even when remembering is off. Start must never begin from nothing.
+- **Group Sync:** a follower's position comes from the leader, so the restore does not seed a position over it. See [group-sync.md](group-sync.md).
+- The restore is single-flight. An overlapping call does nothing, and a call after a restore that found nothing tries again.
+
+## Persistence while spoofing
+
+Every tick writes the current position, but at most once every few seconds. A battery death or a hard reboot then loses a few seconds of movement, not the whole session. Writes are not gated by the remember switch: the switch controls only restore, not saving. A clean stop and process shutdown write immediately.

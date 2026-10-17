@@ -1,6 +1,6 @@
 # Technical Constraints
 
-- Min SDK API 28. `MockLocationService.setupTestProvider()` gates on `Build.VERSION.SDK_INT >= Build.VERSION_CODES.S`: the `ProviderProperties.Builder()` path on API 31+, the deprecated raw-arg `addTestProvider` overload (`@Suppress("DEPRECATION")`) below it. Tap to Walk screen access (see docs/features/tap-to-walk.md) requires API 30 (`takeScreenshot`) with no fallback — its Settings row, onboarding step and `ScreenAccessibilityService` binding are gated on `Build.VERSION.SDK_INT >= Build.VERSION_CODES.R`, and the service is disabled in the manifest below API 30 (`@bool/screen_accessibility_service_enabled`, overridden in `values-v30/`), so it is unavailable on API 28–29. The Reconnect accessory tap (docs/features/bluetooth-reconnect-tap.md) shares the same service and API 30 gating.
+- Min SDK API 28. The mock provider is registered through two code paths, split by API level. The newer API needs a builder; the older one uses the deprecated call. Screen capture (Tap to Walk, Reconnect accessory) needs API 30 and has no fallback, so the service is disabled in the manifest below that level. See docs/features/tap-to-walk.md.
 - No Play Services. MapLibre, not Google Maps. No Firebase.
 - Offline-first. Core features work without internet. OSRM opt-in, degrades gracefully.
 - No `Thread.sleep()`. Use `delay()` in coroutines.
@@ -8,5 +8,5 @@
 - No `GlobalScope`. Use `viewModelScope`, `lifecycleScope`, or scoped `CoroutineScope`.
 - No memory leaks. Every `WindowManager.addView` needs matching `removeView` in `onDestroy`. Every scope cancelled in `onDestroy`/`onCleared`.
 - Location updates at 1 Hz.
-- Battery: use `IMPORTANCE_LOW` notification channel. Wake locks used only when necessary for essential background operations. `MockLocationService` holds `PARTIAL_WAKE_LOCK` while spoofing is active (state != IDLE) — foreground service alone doesn't guarantee the `delay()`-based update loop fires reliably under Doze/Adaptive Battery throttling on some devices (e.g. Android 15 Pixel) once the screen locks. Released on stop/idle/onDestroy.
+- Battery: use `IMPORTANCE_LOW` notification channel. Wake locks used only when necessary for essential background operations. The mock service holds a partial wake lock while spoofing is active. A foreground service alone does not keep the update loop firing under Doze or adaptive battery on some devices once the screen locks. See docs/features/foreground-service.md.
 - OSM tiles require an identifying `User-Agent` and MapLibre's per-host download cap. The full required recipe (install path, interceptor replace, R8 keeps, cache wipe, 20 requests/host, overlay TextureView) is docs/features/map-tiles.md. Do not invent a second `MapLibre.getInstance` / `MapView` path.

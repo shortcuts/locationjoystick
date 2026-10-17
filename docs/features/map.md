@@ -1,146 +1,89 @@
 # Map (MapLibre)
 
-Main screen. Raster base map (OpenStreetMap by default) centered on `AppConstants.MapConstants.DEFAULT_LAT` / `AppConstants.MapConstants.DEFAULT_LON` first load. Scroll on by default. The app opens on the Map while spoofing is running or paused, and on Home otherwise (see docs/architecture.md, "Navigation").
+Main screen. A raster base map (OpenStreetMap by default) that is the centre of most actions. The app opens on the map while spoofing is running or paused, and on Home otherwise (see [architecture.md](../architecture.md), "Navigation").
 
-Key files: `:feature:map:impl/MapScreen.kt`, `:feature:map:impl/MapViewModel.kt`, `:feature:map:impl/MapSpeedStrip.kt`
+Key files: the map feature module (screen, view model, speed strip).
 
 ## Library
 
-MapLibre Android SDK 13.2. Not osmdroid, not Google Maps.
+MapLibre Android SDK. Not osmdroid, not Google Maps.
 
-- Raster tile source via `RasterSource`, built from the selected `MapTileSource` (see "Map source" below) by `Style.addRasterTiles` in `:core:map/MapLibreStyleExt.kt`. A low-zoom preview source sits under the full-detail one.
-- OSM tile HTTP: **required recipe in docs/features/map-tiles.md**. Skipping it blanks or crawls the map. Do not re-derive the rules here.
-- Location marker: `SymbolLayer` backed by GeoJSON. Update coords — no remove/re-add.
-- Route polylines: `LineLayer` backed by GeoJSON `FeatureCollection`.
-- Jitter radius overlay: `FillLayer` + `LineLayer` backed by a real-world-meters GeoJSON polygon (not `CircleLayer` — its radius is screen pixels, not meters).
-- Offline tiles via `OfflineManager.downloadRegion()`.
+- Raster tiles come from the selected map source (below), applied as a style. A low-zoom preview layer sits under the full-detail one, so the map paints something before the detailed tiles arrive.
+- OSM tile HTTP has a required recipe. Skipping any part blanks or slows the map. **Read [map-tiles.md](map-tiles.md) before changing maps.**
+- The location marker updates its coordinates in place. Removing and re-adding it causes flicker and loses state.
+- Route lines and the jitter overlay are GeoJSON layers. The jitter overlay is drawn in metres, not screen pixels, because a pixel-radius circle would not match the real jitter.
+- Offline tile download uses the library's region download.
 
 ## Map source
 
-Settings → General → Map → **Map source** (`AppSettings.mapTileSource`, `MapTileSource` enum in
-`:core:model`) picks the raster provider for **every** map surface: main map, floating widget
-map (`MapFloatingView`), favorites picker (`MapPickerScreen`), route creator
-(`RouteCreatorScreen`) and Routes-menu paste coordinates (`PasteCoordinatesScreen`). Each surface collects the setting from `SettingsRepository.getMapTileSource()`
-and re-applies its MapLibre style when it changes, re-anchoring the camera on the same real-world
-point.
+Settings picks the raster provider for every map surface: the main map, the floating widget map, the favorites picker, the route creator and the paste-coordinates screen. Each surface re-applies its style when the setting changes, keeping the camera on the same real-world point.
 
-| Source | Tiles | Datum | Zoom | Default center | Notes |
-|---|---|---|---|---|---|
-| `OSM` (default) | `tile.openstreetmap.org` | WGS-84 | 0–19 | Paris | Unchanged behaviour. |
-| `AMAP` | `webrd0{1-4}.is.autonavi.com` (style 8, zh labels) | GCJ-02 | 3–18 | Beijing | Community raster endpoint, no API key. Fast from mainland China where OSM tiles are throttled. Coverage is mainland China only. |
+Two sources exist, and the code holds their tile URLs, zoom ranges and default centres:
 
-Each source carries `minZoom`/`maxZoom`/`clampCamera`/`defaultCenter`. Every surface calls
-`MapLibreMap.applyZoomBounds(tileSource)` when it applies a style. Only sources with `clampCamera`
-(Amap) clamp the camera to the served range — otherwise Amap shows blank tiles when zoomed out past
-z3 or in past z18 and looks broken. OSM keeps MapLibre's default camera range (tiles overzoom past
-z19, as before). `defaultCenter` is used as the first-open camera when there is no position yet, and by
-`MapController.startSpoofing` as the very first mock fix, so a fresh install on Amap starts inside
-its coverage instead of over Paris.
+- **OSM** (default): the standard tile service, WGS-84.
+- **AMap:** a community raster endpoint with no key. It is faster from mainland China, where OSM tiles are throttled. Its coverage is mainland China only, and it uses a different datum.
 
-No custom-URL option by design — keeps the setting a simple two-way toggle and avoids shipping a
-free-form network field.
+No custom-URL option, by design. The setting stays a simple choice, and the app does not ship a free-form network field.
+
+Only AMap clamps the camera to its served zoom range. Without the clamp it shows blank tiles when zoomed past its range. OSM keeps the library's default range, since its tiles overzoom.
 
 ### GCJ-02 boundary
 
-GCJ-02 is an obfuscated datum; drawing WGS-84 data on Amap tiles is off by ~100–700 m. Conversion
-lives in `:core:map/projection/` (`Gcj02.kt`, pure Kotlin, unit-tested to 10 m round-trip) and is
-applied **only at the MapLibre presentation edge**, in both directions, via
-`MapTileSource.projection` (`MapProjection.Identity` for WGS-84 sources, `Gcj02Projection` for GCJ-02):
+AMap uses GCJ-02, an obfuscated datum. Drawing WGS-84 data on it is off by a few hundred metres, so conversion is needed.
 
-- `proj.toMap(...)` — every WGS-84 value handed to MapLibre: camera targets, position marker, route
-  traces, waypoints, jitter circle, search/pending-tap markers, roaming preview.
-- `proj.fromMap(...)` — every value read back from MapLibre: tap / long-press coordinates, picker
-  selections, camera center when swapping styles.
+Rules that must hold:
 
-Everything else — `AppSettings`, favorites, routes, `LocationRepository`, `LocationManager` mock
-fixes, Nominatim, OSRM, exports — stays WGS-84. Never persist or spoof a GCJ-02 coordinate.
+- Conversion happens only at the map's presentation edge, in both directions. Values going to the map are converted; values read back from it are converted to WGS-84.
+- Everything else stays WGS-84: settings, favorites, routes, the mock location, the geocoders, the routing service and exports.
+- Never store or spoof a GCJ-02 coordinate. A stored value would be wrong for every other map source.
 
-Map callbacks (style apply, initial camera, tap, long-press) read the latest tile source, so switching
-in Settings applies to every open map screen without recreating it.
+Map callbacks read the latest source, so switching in Settings applies to every open map without recreating it.
 
 ### Attribution
 
-MapLibre's built-in attribution button is disabled on all surfaces, so each one renders
-`MapAttribution` (`:core:map/ui/MapAttribution.kt`) in the bottom-left corner with a
-per-provider credit line (`map_attribution_osm` / `map_attribution_amap`), which also surfaces the
-GCJ-02 datum to the user. The OSM label is required by the OSM Tile Usage Policy (attribution must be
-clearly visible on the map), so it stays visible on the default source and is never gated to
-non-default sources.
-
-### OSM tiles
-
-Required HTTP / MapView / R8 / overlay recipe: docs/features/map-tiles.md.
-Do not invent a second `MapLibre.getInstance` path. The empty style
-(`asset://empty.json`) lives in `:core:map` assets.
+The library's own attribution button is hidden on every map. Each surface shows its own attribution line in the bottom-left corner. The OSM credit is required by the OSM tile usage policy, so it stays visible on the default source. The attribution line also tells the user which datum the map uses.
 
 ## Navigation
 
-- TopAppBar hamburger opens nav drawer via `onOpenDrawer: () -> Unit`. Drawer owned by `LjApp`, not `LjNavHost`.
-- Start/stop spoofing is controlled solely from the top bar's `LjScaffold`/`LjTopBar` toggle (see docs/features/mock-location.md, "Global Start/Stop Control") — there is no separate start/stop FAB on the map screen.
+- The hamburger opens the navigation drawer. The drawer is owned by the app shell, not by the map.
+- Start and stop spoofing is controlled only from the top bar toggle. There is no separate start or stop button on the map.
 
 ## Interactions
 
-- Long-press → bottom sheet with "Walk here" / "Teleport here".
-- Tap route point → select.
-- Tap empty map in edit mode → add waypoint.
-- Camera follow: disabled on `REASON_API_GESTURE`. The center FAB is always available. While
-  spoofing is running or paused it preserves the existing behaviour and follows the cached mock
-  position again. While spoofing is idle or in an error state it jumps at once to the marker
-  (`currentPosition`), or to the last position the camera was moved to on this screen when no marker
-  exists. It never queries GPS: a GPS request lagged the button and stacked on repeated taps. The move
-  is read-only: it does not update `LocationRepository`, the remembered mock position, or teleport
-  cooldown state.
-  Walking follow uses a short `animateCamera`. Teleport-scale jumps (`SNAP_CAMERA_DISTANCE_METERS`,
-  2 km) and favorite/search/recenter jumps use `moveCamera` so MapLibre does not request tiles
-  along a flyover path (that left the destination on the empty-style canvas for many seconds).
-  Favorites still use street-level zoom (`FAVORITE_CAMERA_ZOOM` 18); a low-zoom OSM preview
-  layer paints first (see docs/features/map-tiles.md).
+- Long-press opens a sheet with walk and teleport choices.
+- Tapping a route point selects it. In route edit mode, tapping empty map adds a waypoint.
+- Camera follow stops when the user drags the map. The centre button is always available.
+- While spoofing runs or is paused, the centre button follows the mock position. While idle, it jumps to the marker, or to the last point the camera was moved to when there is no marker. It never asks the device for a GPS fix: a fix request lags the button and stacks up on repeated taps.
+- Re-centring is a read-only camera move. It does not change the remembered mock position or the teleport cooldown.
+- Short camera moves animate. Long jumps use an instant move, so the map does not fetch tiles along a flyover path, which would leave the destination blank for many seconds.
+- Favorites use street-level zoom.
 
-## Configurable FABs
+## Floating action buttons
 
-A share icon sits below the recenter button (and below Search on the floating map). It expands to copy the current mock position's coordinates or share its link; it is always shown and not part of the configurable set (docs/features/location-links.md).
+- The share icon sits under the centre button. It is not part of the configurable set ([location-links.md](location-links.md)).
+- Every button is neutral when idle. Walk, routes and roaming use the activity colour rule: green while moving, orange while paused.
+- Routes and roaming buttons stay visible while their session runs, even if the user turned them off. A running session must always be controllable.
+- Paste coordinates is off by default. It is a bottom sheet that accepts decimal or degree-minute-second text. Lines with prose are ignored whole, so a note with numbers in it is not misread as coordinates.
+- With one valid point, the sheet offers teleport, walk and walk via roads, and the buttons act at once. With several points, the single-point actions are replaced by route actions. This stops input from silently acting on only the first point.
+- Invalid text does nothing. Saving a favorite from several points saves the first, and the label says so.
 
-Every FAB is neutral (`surfaceVariant`) when idle. Walk, Routes and Roaming use `ActivityState`: green while moving, orange (primary) while paused. Roaming keeps its tertiary accent while its sheet is minimized.
-
-`MapFabColumn` renders Favorites/Routes/Roaming/Search/Paste coordinates in the shared `AppFeature` order (see docs/features/widget.md, "Configurability"), filtered to features enabled for the `MAP` surface — configured in Settings → Menus → "App Features". Routes and Roaming also force-show while actively in progress, even if toggled off, so the user can still control a running session.
-
-Walk, route, and roaming activity buttons use the existing neutral pause-control colors while their own session is paused, including pauses caused by the joystick. They remain tappable to open controls. Resume restores each button's existing running appearance; pause/resume arrows are unchanged. Route/roam buttons on the floating map follow the same rule; the floating map has no walk-in-progress button, so the walk rule applies to the main map only.
-
-Paste coordinates (`AppFeature.PASTE_COORDINATES`, WIDGET + MAP, off by default on both; enable in Settings → Menus → App Features) opens a map overlay sheet. The user pastes comma-separated decimal-degree text (example `11.0127769, 79.48065`) or degree-minute-second text (example `37°34'11.4"N 127°00'17.9"E`); `PasteCoordinatesForm` calls `parsePastedCoordinates` (`:core:common`) once. Lines containing unrecognized prose are ignored as a whole, including any unrelated numbers on the line. With exactly one valid pair, Teleport / Walk / Walk via roads sit on one row and use that pair. With more than one pair, those single-location actions are replaced by clearly labelled route actions and **Start route** so input cannot silently act on only the first point. Invalid text shows "No valid coordinates" and does not move. The single-point movement buttons run `ConfirmTeleport` / `LongPressTapToWalk` / `WalkViaRoadsTo` and close the sheet — they do not pin through the confirm sheet. Teleport is hidden when `hideTeleportFeatures` is on. Save favorite is enabled at ≥1 point and intentionally writes the first point; for multi-point input it is labelled **Save first as favorite**. Save route is a separate action for ≥2 points, prompts for a name, and inserts the full sequence as a new UUID route. Loop / Planting / Reverse / Return to location / Follow roads / Teleport between waypoints plus Start route appear for multi-point input; Teleport between waypoints is omitted when `hideTeleportFeatures` is on (delay field included). Loop is checked by default. Start route upserts `paste_temp_route` and runs named `ROUTE_REPLAY` (docs/features/routes.md, "Paste coordinates (map and widget)"). Deep links still pin via `observeDeepLinkCoords` → `pinCoordinateTarget` (confirm sheet); `applyPastedCoordinates` is that same pin path for tests and a future incoming-intent flow. The floating map FAB column exposes the same control, gated by `enabledMapFeatures`. Clipboard paste on the shared form appends a new line when the field already has text. The compact field has no redundant format helper text, is capped at 10 lines then scrolls, and keeps Select all and Clear all directly below it with 48 dp touch targets. The widget paste control opens a bottom sheet (`PasteCoordinatesFloatingView`) that can shrink so other apps stay usable (docs/features/widget.md, "Paste coordinates overlay"). Installs that already persisted it keep it; the upgrade merge never adds it. While a route is playing, a `current/total` progress chip is pinned under that column (docs/features/routes.md, "Route progress").
-
-Capture coordinates is a top-level screen (Home + drawer), not a map FAB. Capture itself is off until toggled on that page. Intercept does not need the floating widget — docs/features/location-links.md (Opt-in Tier).
-
-The map favorites and routes sheets (`FavoritesPickerSheet` / `RoutesPickerSheet`) embed
-`FavoritesList` / `RoutesPickerList` with `enableSearch = true` — a name filter under the sheet
-title. Query is `remember`d in the list, so dismissing the sheet starts from the full list.
-See docs/features/favorites.md and docs/features/routes.md.
+The button order and visibility rules are in [widget.md](widget.md), "Configurability".
 
 ## Speed strip
 
-`MapSpeedStrip` shows the current speed at the top-left of the map while spoofing is running or paused. Hidden while the search bar is open. The unit follows the Settings speed unit (km/h or mph). Source: `LocationRepository.currentSpeedMps` via `MapController.currentSpeedMps` and `MapUiState.currentSpeedMps`; it reads 0.0 when paused or stopped.
+A small strip at the top left shows the current speed while spoofing runs or is paused. It is hidden while search is open. Units follow the settings. It reads zero when paused or stopped.
 
 ## Search
 
-Nominatim search (`NominatimSearchBar`) keeps its 300 ms typing debounce and goes through the process-wide
-`Geocoding.provider` (`GeocodingProvider`, `:core:common`), which also serves the reverse lookups (spoof-toggle
-label, map-picker suggested name). `Geocoding.provider` is a `FallbackGeocodingProvider` that tries `NominatimProvider` then `PhotonProvider` (keyless `photon.komoot.io`, reachable from mainland China). A provider that throws (timeout, connection error, 429, 4xx/5xx) is skipped for 10 minutes (`GeocodingConstants.PROVIDER_COOLDOWN_MS`, in memory, shared by search and reverse); when all are cooling down all are tried anyway, and an empty result is not a failure. Providers unchecked in Settings > General > Place search (`AppSettings.disabledGeocodingProviders`, mirrored into `Geocoding.disabled` by `LjApplication`) are never called; if every provider is disabled (hand-edited import), all are used. The UI refuses to uncheck the last one. Each provider owns its URLs and JSON,
-maps them to `GeocodeResult`/`ReverseGeocodeResult`, and uses `NominatimSearchClient` for search: results are cached (24 h fresh, expired entries served only if the
-request fails) and request starts are spaced at least 1.1 s apart to respect Nominatim's 1 request/second policy.
+Place search goes through a process-wide geocoder that tries providers in order, with a shared cooldown after a provider fails. Providers that the user has unchecked in settings are never called. The UI refuses to uncheck the last one, since a search with no provider would be useless.
 
-## Jitter Radius Overlay
+Results are cached briefly. Requests are spaced to respect the public geocoder's usage limit, because a burst gets the app blocked. The reverse lookup for place names uses the same chain.
 
-When Settings → General → Debug → "Debug stats" (`AppSettings.debugStatsEnabled`)
-is on, a translucent circle is drawn on the map centered on the current
-spoofed position, radius = the position-jitter radius currently in effect
-(idle or moving, whichever applies this tick — see docs/features/mock-location.md,
-"Position jitter"). Lets the user visually calibrate Settings → Location
-Randomness jitter values against the map instead of guessing from a raw
-meters number. Rendered as a real-world-meters GeoJSON polygon
-(`buildCirclePolygonGeoJson`, `:core:map`) via `FillLayer` + `LineLayer` —
-not `CircleLayer`, whose radius is always screen pixels, not meters. Main
-map screen only, not the floating map.
+## Jitter radius overlay
+
+With debug stats on, a translucent circle shows the jitter radius in effect around the spoofed position. It lets the user match the jitter settings to what the map shows, instead of guessing from a number. It is drawn in metres, and it appears only on the main map, not the floating map.
 
 ## Lifecycle
 
-- Forward all lifecycle events to `MapView`.
-- Never call MapLibre APIs before `onMapReady`.
+- Forward every lifecycle event to the map view.
+- Never call the map library before the map reports ready.

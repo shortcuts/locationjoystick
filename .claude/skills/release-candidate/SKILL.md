@@ -87,8 +87,7 @@ read the docs and compare against the changed sources:
 3. `README.md` names the feature when it is user-visible.
 4. `AGENTS.md` reflects new services, modules, or domain models.
 
-Also verify: the `Key Services` table matches the real services, `docs/domain-models.md`
-matches `:core:model` classes, and the module table covers every module added or removed
+Also verify: the `Key Services` table matches the real services, and the module table covers every module added or removed
 since the tag.
 
 Per gap, invoke `radin-record`:
