@@ -98,8 +98,8 @@ fun OnboardingRoute(
         PathPickerStep(
             uiState = uiState,
             onSelectPath = viewModel::selectPath,
-            onCompassDisclosureAnswered = viewModel::recordCompassDisclosure,
-            onCompassDisclosureSkipped = viewModel::skipCompassDisclosure,
+            onAccessibilityDisclosureAnswered = viewModel::recordAccessibilityDisclosure,
+            onAccessibilityDisclosureSkipped = viewModel::skipAccessibilityDisclosure,
             onFinish = {
                 viewModel.onSetupComplete()
                 onSetupComplete()
@@ -116,17 +116,17 @@ fun OnboardingRoute(
 
     // Play requires the Accessibility disclosure before anything else on a fresh install. This route only
     // renders while onboarding is incomplete, so installs that finished it never see this.
-    var showCompassDisclosure by remember { mutableStateOf(false) }
-    LaunchedEffect(uiState.compassDisclosureChoice) {
-        if (uiState.compassDisclosureChoice == AppConstants.CompassTrackingConstants.DISCLOSURE_UNANSWERED) {
-            showCompassDisclosure = true
+    var showAccessibilityDisclosure by remember { mutableStateOf(false) }
+    LaunchedEffect(uiState.accessibilityDisclosureChoice) {
+        if (uiState.accessibilityDisclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_UNANSWERED) {
+            showAccessibilityDisclosure = true
         }
     }
-    if (showCompassDisclosure) {
-        OnboardingCompassDisclosure(
-            onClose = { showCompassDisclosure = false },
-            onAnswered = viewModel::recordCompassDisclosure,
-            onSkipped = viewModel::skipCompassDisclosure,
+    if (showAccessibilityDisclosure) {
+        OnboardingAccessibilityDisclosure(
+            onClose = { showAccessibilityDisclosure = false },
+            onAnswered = viewModel::recordAccessibilityDisclosure,
+            onSkipped = viewModel::skipAccessibilityDisclosure,
         )
     }
 

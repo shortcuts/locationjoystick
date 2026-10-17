@@ -206,11 +206,11 @@ internal sealed class SettingsAction {
         val scale: Double,
     ) : SettingsAction()
 
-    data class SetCompassTestTargetPackage(
+    data class SetTapToWalkGamePackage(
         val packageName: String,
     ) : SettingsAction()
 
-    data class SetCompassDisclosureAccepted(
+    data class SetAccessibilityDisclosureAccepted(
         val accepted: Boolean,
     ) : SettingsAction()
 

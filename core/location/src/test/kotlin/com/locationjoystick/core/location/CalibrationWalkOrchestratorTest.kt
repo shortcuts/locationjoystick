@@ -44,7 +44,7 @@ class CalibrationWalkOrchestratorTest {
     private val start = LatLng(48.8566, 2.3522)
     private lateinit var locationRepository: LocationRepository
     private lateinit var mapController: MapController
-    private lateinit var source: CompassHeadingSource
+    private lateinit var source: ScreenCaptureSource
     private lateinit var settings: SettingsRepository
     private lateinit var context: Context
     private val walks = mutableListOf<Pair<LatLng, Double?>>()

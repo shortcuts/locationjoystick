@@ -785,17 +785,17 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getTapToWalkScaleMpx(): Flow<Double> = flowOf(AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
 
-    override fun getCompassTestTargetPackage(): Flow<String> = flowOf("")
+    override fun getTapToWalkGamePackage(): Flow<String> = flowOf("")
 
-    override suspend fun setCompassTestTargetPackage(packageName: String) = Unit
+    override suspend fun setTapToWalkGamePackage(packageName: String) = Unit
 
-    override fun getCompassDisclosureChoice(): Flow<String> = flowOf("")
+    override fun getAccessibilityDisclosureChoice(): Flow<String> = flowOf("")
 
     override fun getGroundCalibration(): Flow<com.locationjoystick.core.model.StoredGroundCalibration?> = flowOf(null)
 
     override suspend fun setGroundCalibration(value: com.locationjoystick.core.model.StoredGroundCalibration?) = Unit
 
-    override suspend fun setCompassDisclosureChoice(choice: String) = Unit
+    override suspend fun setAccessibilityDisclosureChoice(choice: String) = Unit
 
     override fun getReconnectTapEnabled(): Flow<Boolean> = flowOf(false)
 

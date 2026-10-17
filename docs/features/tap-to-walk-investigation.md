@@ -91,7 +91,7 @@ the joint-fit truth of -46.7) but sit about 7 degrees off, and even with the tru
 error is p50/p90 37.5 / 50.0 m on the far probes, because a degree of heading is about 6 m at the top of the
 frame. Half the pairs are rejected, mostly stationary lag frames at the start of a walk. Caveat: truth comes from
 these same walks (a joint fit good to about 8 degrees), so this table alone is not independent proof; see
-"Re-measurement against the commanded heading" for the follow-up. The compass-icon detector stays; nothing in the
+"Re-measurement against the commanded heading" for the follow-up. At that time the app still shipped its (since removed) compass-icon detector; nothing in the
 app changed.
 
 ### Re-measurement against the commanded heading

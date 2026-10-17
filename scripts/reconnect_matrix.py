@@ -46,7 +46,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "scripts" / "reconnect-matrix"
 ROWS = OUT / "cycles.jsonl"
-TAG = "CompassAccessibilitySvc"
+TAG = "ScreenAccessibilitySvc"
 LOOP_INTERVAL_S = 60  # AppConstants.ReconnectTapConstants.CHECK_INTERVAL_MS (release); debug is 10 s
 CYCLE_TIMEOUT_S = 150  # one loop interval + up to 3 taps with settles
 
@@ -104,7 +104,7 @@ def cycle_passes(outcome, connected):
 # Port of ReconnectControlDetector.kt (same rules: flat regions, ball by shape, state by relative
 # channel dominance, ON checked before OFF). Keep in sync with the Kotlin detector; its fixtures
 # are the self-check's fixtures.
-SEARCH_X_MIN_PCT = 0.55  # AppConstants.CompassTrackingConstants
+SEARCH_X_MIN_PCT = 0.55  # AppConstants.AccessibilityConstants
 SEARCH_Y_MAX_PCT = 0.35
 FLAT_STEP = 4
 MIN_PIXELS = 12

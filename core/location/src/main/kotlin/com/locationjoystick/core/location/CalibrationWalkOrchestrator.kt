@@ -79,7 +79,7 @@ class CalibrationWalkOrchestrator
     constructor(
         private val mapController: MapController,
         private val locationRepository: LocationRepository,
-        private val compassHeadingSource: CompassHeadingSource,
+        private val screenCaptureSource: ScreenCaptureSource,
         private val settingsRepository: SettingsRepository,
         @param:ApplicationContext private val context: Context,
         @param:ApplicationScope private val appScope: CoroutineScope,
@@ -178,8 +178,8 @@ class CalibrationWalkOrchestrator
 
         /** One frame before moving: proves the service is bound and consented, and sizes the spool check. */
         private suspend fun probeFrame(spool: File): GrayImage {
-            if (!compassHeadingSource.isAvailable) throw Abort(CalibrationFailure.SERVICE_UNAVAILABLE)
-            val probe = compassHeadingSource.captureGrayFrame() ?: throw Abort(CalibrationFailure.SERVICE_UNAVAILABLE)
+            if (!screenCaptureSource.isAvailable) throw Abort(CalibrationFailure.SERVICE_UNAVAILABLE)
+            val probe = screenCaptureSource.captureGrayFrame() ?: throw Abort(CalibrationFailure.SERVICE_UNAVAILABLE)
             val needed =
                 LEG_COUNT.toLong() * AppConstants.TapToWalkConstants.CALIBRATION_SPOOL_FRAMES_PER_LEG * probe.width * probe.height
             if (spool.usableSpace < needed) throw Abort(CalibrationFailure.STORAGE)
@@ -225,7 +225,7 @@ class CalibrationWalkOrchestrator
                 val tick = nowMs()
                 if (tick - legStart > timeoutMs) throw Abort(CalibrationFailure.TIMEOUT)
                 val before = locationRepository.currentPosition.value
-                val frame = compassHeadingSource.captureGrayFrame()
+                val frame = screenCaptureSource.captureGrayFrame()
                 val after = locationRepository.currentPosition.value
                 if (frame != null && before != null && after != null) {
                     if (frame.width != width || frame.height != height) throw Abort(CalibrationFailure.FRAME_SIZE_CHANGED)

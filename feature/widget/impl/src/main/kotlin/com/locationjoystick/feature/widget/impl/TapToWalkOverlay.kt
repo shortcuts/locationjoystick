@@ -172,7 +172,7 @@ internal class TapToWalkOverlay(
 
         /**
          * Fallback conversion of a screen tap position to a GPS coordinate, assuming a north-up map
-         * at [metersPerPixel] (no compass is read). Zooming out reduces positioning error per pixel.
+         * at [metersPerPixel]. Zooming out reduces positioning error per pixel.
          */
         fun computeWalkTarget(
             currentPos: LatLng,

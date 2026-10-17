@@ -44,7 +44,7 @@ import com.locationjoystick.core.designsystem.R
  *
  * [caveats] and [showAccessibilityDisclosure] let the Tap to Walk switch reuse this one screen for
  * its own risk warning, so enabling the feature is a single surface instead of a dialog then a
- * screen. Below API 30 compass tracking cannot run, so only the caveats are shown.
+ * screen. Below API 30 screen capture cannot run, so only the caveats are shown.
  *
  * [onSkip], when set, adds a small bottom-right Skip button for the first-run prompt: it neither
  * consents nor opens settings, it only marks the prompt as asked.
@@ -52,11 +52,11 @@ import com.locationjoystick.core.designsystem.R
  * The body scrolls; Decline/Accept (and Skip) stay pinned at the bottom so they are always visible.
  */
 @Composable
-fun CompassDisclosureDialog(
+fun AccessibilityDisclosureDialog(
     onAccept: () -> Unit,
     onDecline: () -> Unit,
-    title: String = stringResource(R.string.compass_disclosure_title),
-    acceptLabel: String = stringResource(R.string.compass_disclosure_accept),
+    title: String = stringResource(R.string.accessibility_disclosure_title),
+    acceptLabel: String = stringResource(R.string.accessibility_disclosure_accept),
     caveats: List<String> = emptyList(),
     showAccessibilityDisclosure: Boolean = true,
     onSkip: (() -> Unit)? = null,
@@ -90,12 +90,12 @@ fun CompassDisclosureDialog(
                     caveats.forEach { DisclosurePanel { Text(it, style = MaterialTheme.typography.bodyLarge) } }
                     if (showAccessibilityDisclosure) {
                         DisclosurePanel {
-                            Text(stringResource(R.string.compass_disclosure_intro), style = MaterialTheme.typography.bodyLarge)
+                            Text(stringResource(R.string.accessibility_disclosure_intro), style = MaterialTheme.typography.bodyLarge)
                         }
-                        DisclosurePanel { DisclosureFact(stringResource(R.string.compass_disclosure_data)) }
-                        DisclosurePanel { DisclosureFact(stringResource(R.string.compass_disclosure_purpose)) }
-                        DisclosurePanel { DisclosureFact(stringResource(R.string.compass_disclosure_handling)) }
-                        DisclosurePanel { DisclosureFact(stringResource(R.string.compass_disclosure_optional)) }
+                        DisclosurePanel { DisclosureFact(stringResource(R.string.accessibility_disclosure_data)) }
+                        DisclosurePanel { DisclosureFact(stringResource(R.string.accessibility_disclosure_purpose)) }
+                        DisclosurePanel { DisclosureFact(stringResource(R.string.accessibility_disclosure_handling)) }
+                        DisclosurePanel { DisclosureFact(stringResource(R.string.accessibility_disclosure_optional)) }
                     }
                     TextButton(
                         onClick = {
@@ -105,7 +105,7 @@ fun CompassDisclosureDialog(
                         },
                         contentPadding = PaddingValues(0.dp),
                     ) {
-                        Text(stringResource(R.string.compass_disclosure_guide))
+                        Text(stringResource(R.string.accessibility_disclosure_guide))
                     }
                 }
                 Row(
@@ -114,7 +114,7 @@ fun CompassDisclosureDialog(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     LjOutlinedButton(onClick = onDecline, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.compass_disclosure_decline))
+                        Text(stringResource(R.string.accessibility_disclosure_decline))
                     }
                     LjButton(onClick = onAccept, modifier = Modifier.weight(1f)) { Text(acceptLabel) }
                 }
@@ -122,7 +122,7 @@ fun CompassDisclosureDialog(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         TextButton(onClick = onSkip) {
                             Text(
-                                stringResource(R.string.compass_disclosure_skip),
+                                stringResource(R.string.accessibility_disclosure_skip),
                                 style = MaterialTheme.typography.bodySmall,
                             )
                         }
@@ -160,12 +160,12 @@ private fun DisclosureFact(text: String) {
 
 @Preview(showBackground = true)
 @Composable
-private fun CompassDisclosureDialogPreview() {
-    LjTheme { CompassDisclosureDialog(onAccept = {}, onDecline = {}) }
+private fun AccessibilityDisclosureDialogPreview() {
+    LjTheme { AccessibilityDisclosureDialog(onAccept = {}, onDecline = {}) }
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun CompassDisclosureDialogWithSkipPreview() {
-    LjTheme { CompassDisclosureDialog(onAccept = {}, onDecline = {}, onSkip = {}) }
+private fun AccessibilityDisclosureDialogWithSkipPreview() {
+    LjTheme { AccessibilityDisclosureDialog(onAccept = {}, onDecline = {}, onSkip = {}) }
 }

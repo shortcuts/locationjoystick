@@ -37,7 +37,8 @@ All constants → `:core:common/constants/AppConstants.kt`.
 | `FollowerRestorationConstants` | Follower boot restoration retry delay, max delay, max attempts, jitter range |
 | `SyncConstants` | Group Sync/QR transfer: poll interval/timeout, server backlog, stale-position threshold, NSD service type and discovery timeout, group code length, API key length, API max body bytes, max poll failures, NSD re-discovery retries, export fetch timeout |
 | `TapToWalkConstants` | Tap to Walk default/min/max map scale (m/px) |
-| `CompassTrackingConstants` | Compass detection search window and icon-blob size bounds |
+| `AccessibilityConstants` | Accessibility-disclosure choice values (`DISCLOSURE_*`) |
+| `ReconnectTapConstants` | Reconnect-control search window, check intervals and tap policy |
 | `LocaleConstants` | Locale SharedPreferences file name and language-tag key |
 
 ## Rules

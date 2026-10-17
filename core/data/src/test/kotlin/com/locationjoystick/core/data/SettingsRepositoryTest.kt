@@ -1162,33 +1162,33 @@ class SettingsRepositoryTest {
             assertEquals(stored, repository.getGroundCalibration().first())
         }
 
-    // recordCompassDisclosure
+    // recordAccessibilityDisclosure
 
     @Test
-    fun `recordCompassDisclosure accepted stores DISCLOSURE_ACCEPTED`() =
+    fun `recordAccessibilityDisclosure accepted stores DISCLOSURE_ACCEPTED`() =
         runTest {
-            repository.recordCompassDisclosure(accepted = true)
+            repository.recordAccessibilityDisclosure(accepted = true)
 
             assertEquals(
-                AppConstants.CompassTrackingConstants.DISCLOSURE_ACCEPTED,
-                fakeDataSource.compassDisclosureChoiceFlow.value,
+                AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
+                fakeDataSource.accessibilityDisclosureChoiceFlow.value,
             )
-            repository.getCompassDisclosureAccepted().test {
+            repository.getAccessibilityDisclosureAccepted().test {
                 assertTrue(awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `recordCompassDisclosure declined stores DISCLOSURE_DECLINED`() =
+    fun `recordAccessibilityDisclosure declined stores DISCLOSURE_DECLINED`() =
         runTest {
-            repository.recordCompassDisclosure(accepted = false)
+            repository.recordAccessibilityDisclosure(accepted = false)
 
             assertEquals(
-                AppConstants.CompassTrackingConstants.DISCLOSURE_DECLINED,
-                fakeDataSource.compassDisclosureChoiceFlow.value,
+                AppConstants.AccessibilityConstants.DISCLOSURE_DECLINED,
+                fakeDataSource.accessibilityDisclosureChoiceFlow.value,
             )
-            repository.getCompassDisclosureAccepted().test {
+            repository.getAccessibilityDisclosureAccepted().test {
                 assertFalse(awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
@@ -1698,9 +1698,9 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override fun getTapToWalkScaleMpx(): Flow<Double> = flowOf(AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
 
-    override fun getCompassTestTargetPackage(): Flow<String> = flowOf("")
+    override fun getTapToWalkGamePackage(): Flow<String> = flowOf("")
 
-    override suspend fun setCompassTestTargetPackage(packageName: String) = Unit
+    override suspend fun setTapToWalkGamePackage(packageName: String) = Unit
 
     val groundCalibrationFlow = MutableStateFlow<StoredGroundCalibration?>(null)
 
@@ -1710,12 +1710,12 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         groundCalibrationFlow.value = value
     }
 
-    val compassDisclosureChoiceFlow = MutableStateFlow("")
+    val accessibilityDisclosureChoiceFlow = MutableStateFlow("")
 
-    override fun getCompassDisclosureChoice(): Flow<String> = compassDisclosureChoiceFlow
+    override fun getAccessibilityDisclosureChoice(): Flow<String> = accessibilityDisclosureChoiceFlow
 
-    override suspend fun setCompassDisclosureChoice(choice: String) {
-        compassDisclosureChoiceFlow.value = choice
+    override suspend fun setAccessibilityDisclosureChoice(choice: String) {
+        accessibilityDisclosureChoiceFlow.value = choice
     }
 
     val reconnectTapEnabledFlow = MutableStateFlow(false)

@@ -10,7 +10,7 @@
 #
 #   --flow accessibility
 #     AccessibilityService use case: first-run onboarding shows the prominent
-#     disclosure (CompassDisclosureDialog) on entry. The script records the
+#     disclosure (AccessibilityDisclosureDialog) on entry. The script records the
 #     disclosure, Accept, then Android's Accessibility settings screen. It wipes
 #     app data first (pm clear, no re-grants) so the app opens on onboarding with
 #     the choice unanswered, leaving the device with the choice accepted.
@@ -182,7 +182,7 @@ go_idle() {
   wait_s 3 "App starting"
 }
 
-# Wipes app data so the app opens on onboarding with the compass disclosure
+# Wipes app data so the app opens on onboarding with the accessibility disclosure
 # choice unanswered, like a fresh install. Only the notification prompt is
 # pre-granted: its system dialog would otherwise cover the disclosure on camera.
 reset_to_first_run() {

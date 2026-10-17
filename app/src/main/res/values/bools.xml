@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Compass detection needs AccessibilityService.takeScreenshot (API 30). Below that the
+    <!-- Screen capture needs AccessibilityService.takeScreenshot (API 30). Below that the
          service is disabled so it never appears in Android's Accessibility settings, where it
          could be turned on without the in-app prominent disclosure (which is API 30+ only). -->
-    <bool name="compass_accessibility_service_enabled">false</bool>
+    <bool name="screen_accessibility_service_enabled">false</bool>
 </resources>

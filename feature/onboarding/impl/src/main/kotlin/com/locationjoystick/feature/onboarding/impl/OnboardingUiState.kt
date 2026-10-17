@@ -8,9 +8,9 @@ data class OnboardingUiState(
     val mockLocationEnabled: Boolean = false,
     val isDebugBuild: Boolean = false,
     // Optional step on the path picker; never required to proceed.
-    val compassServiceEnabled: Boolean = false,
+    val screenServiceEnabled: Boolean = false,
     // Null until DataStore loads, so an already-answered install never sees the first-run prompt flash.
-    val compassDisclosureChoice: String? = null,
+    val accessibilityDisclosureChoice: String? = null,
     val selectedPath: GuidedPath = GuidedPath.DEFAULT,
 )
 

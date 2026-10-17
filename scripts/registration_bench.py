@@ -403,7 +403,7 @@ def patch_offset(before, after, p, anchor, half=100, search=150, scales=(1.0, 1.
     return best
 
 
-# Mirrors CompassTrackingConstants (core/common AppConstants.kt) and CompassAccessibilityService.detectNorthAngle.
+# Mirrors the former needle detector constants; kept only so the bench stays comparable with old runs.
 NEEDLE_X_MIN_PCT, NEEDLE_Y_MAX_PCT = 0.55, 0.35
 NEEDLE_MIN_FRAC, NEEDLE_MAX_FRAC, NEEDLE_MIN_PX = 0.008, 0.06, 20
 

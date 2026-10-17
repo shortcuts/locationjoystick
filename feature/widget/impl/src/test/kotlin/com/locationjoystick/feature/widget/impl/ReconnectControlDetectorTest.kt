@@ -131,7 +131,7 @@ class ReconnectControlDetectorTest {
 
     @Test
     fun screenWithoutControl_returnsNull() {
-        assertNull(detect("compass/pogo_orientation_a.png"))
+        assertNull(detect("reconnect/screen_without_control.png"))
     }
 
     @Test

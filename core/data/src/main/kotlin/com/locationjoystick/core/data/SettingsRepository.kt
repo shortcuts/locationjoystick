@@ -385,24 +385,24 @@ class SettingsRepository
 
         suspend fun setGroundCalibration(value: StoredGroundCalibration?) = dataSource.setGroundCalibration(value)
 
-        fun getCompassTestTargetPackage(): Flow<String> = dataSource.getCompassTestTargetPackage()
+        fun getTapToWalkGamePackage(): Flow<String> = dataSource.getTapToWalkGamePackage()
 
-        suspend fun setCompassTestTargetPackage(packageName: String) = dataSource.setCompassTestTargetPackage(packageName)
+        suspend fun setTapToWalkGamePackage(packageName: String) = dataSource.setTapToWalkGamePackage(packageName)
 
-        fun getCompassDisclosureChoice(): Flow<String> = dataSource.getCompassDisclosureChoice()
+        fun getAccessibilityDisclosureChoice(): Flow<String> = dataSource.getAccessibilityDisclosureChoice()
 
-        fun getCompassDisclosureAccepted(): Flow<Boolean> =
-            dataSource.getCompassDisclosureChoice().map { it == AppConstants.CompassTrackingConstants.DISCLOSURE_ACCEPTED }
+        fun getAccessibilityDisclosureAccepted(): Flow<Boolean> =
+            dataSource.getAccessibilityDisclosureChoice().map { it == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED }
 
-        suspend fun setCompassDisclosureChoice(choice: String) = dataSource.setCompassDisclosureChoice(choice)
+        suspend fun setAccessibilityDisclosureChoice(choice: String) = dataSource.setAccessibilityDisclosureChoice(choice)
 
         /** Maps the disclosure dialog's answer to the stored choice, so callers don't duplicate the mapping. */
-        suspend fun recordCompassDisclosure(accepted: Boolean) =
-            setCompassDisclosureChoice(
+        suspend fun recordAccessibilityDisclosure(accepted: Boolean) =
+            setAccessibilityDisclosureChoice(
                 if (accepted) {
-                    AppConstants.CompassTrackingConstants.DISCLOSURE_ACCEPTED
+                    AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED
                 } else {
-                    AppConstants.CompassTrackingConstants.DISCLOSURE_DECLINED
+                    AppConstants.AccessibilityConstants.DISCLOSURE_DECLINED
                 },
             )
 

@@ -383,10 +383,10 @@ interface PreferencesDataSource {
     /** Gets the scale factor (meters per pixel) for the tap-to-walk overlay coordinate conversion. */
     fun getTapToWalkScaleMpx(): Flow<Double>
 
-    /** Gets the package name of the app the compass test button switches to. Empty if unset. */
-    fun getCompassTestTargetPackage(): Flow<String>
+    /** Gets the package name of the game app Tap to Walk switches to. Empty if unset. */
+    fun getTapToWalkGamePackage(): Flow<String>
 
-    fun getCompassDisclosureChoice(): Flow<String>
+    fun getAccessibilityDisclosureChoice(): Flow<String>
 
     /**
      * The latest tap-to-walk calibration walk result, or null. Per-device: a standalone key outside
@@ -397,10 +397,10 @@ interface PreferencesDataSource {
     /** Stores [value]; null removes it. */
     suspend fun setGroundCalibration(value: StoredGroundCalibration?)
 
-    /** Sets the package name of the app the compass test button switches to. */
-    suspend fun setCompassTestTargetPackage(packageName: String)
+    /** Sets the package name of the game app Tap to Walk switches to. */
+    suspend fun setTapToWalkGamePackage(packageName: String)
 
-    suspend fun setCompassDisclosureChoice(choice: String)
+    suspend fun setAccessibilityDisclosureChoice(choice: String)
 
     fun getReconnectTapEnabled(): Flow<Boolean>
 
@@ -648,8 +648,8 @@ class AppPreferencesDataSource
             val FLOATING_MAP_QUICK_WALK = booleanPreferencesKey("floating_map_quick_walk")
             val TAP_TO_WALK_OVERLAY_ENABLED = booleanPreferencesKey("tap_to_walk_overlay_enabled")
             val TAP_TO_WALK_SCALE_MPX = doublePreferencesKey("tap_to_walk_scale_mpx")
-            val COMPASS_TEST_TARGET_PACKAGE = stringPreferencesKey("compass_test_target_package")
-            val COMPASS_DISCLOSURE_CHOICE = stringPreferencesKey("compass_disclosure_choice")
+            val TAP_TO_WALK_GAME_PACKAGE = stringPreferencesKey("tap_to_walk_game_package")
+            val ACCESSIBILITY_DISCLOSURE_CHOICE = stringPreferencesKey("accessibility_disclosure_choice")
             val TAP_TO_WALK_GROUND_CALIBRATION = stringPreferencesKey("tap_to_walk_ground_calibration")
             val RECONNECT_TAP_ENABLED = booleanPreferencesKey("reconnect_tap_enabled")
             val RECONNECT_TAP_DISCLOSURE_ACCEPTED = booleanPreferencesKey("reconnect_tap_disclosure_accepted")
@@ -1183,14 +1183,14 @@ class AppPreferencesDataSource
         override fun getTapToWalkScaleMpx(): Flow<Double> =
             pref(Keys.TAP_TO_WALK_SCALE_MPX, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
 
-        override fun getCompassTestTargetPackage(): Flow<String> = pref(Keys.COMPASS_TEST_TARGET_PACKAGE, "")
+        override fun getTapToWalkGamePackage(): Flow<String> = pref(Keys.TAP_TO_WALK_GAME_PACKAGE, "")
 
-        override suspend fun setCompassTestTargetPackage(packageName: String) = setPref(Keys.COMPASS_TEST_TARGET_PACKAGE, packageName)
+        override suspend fun setTapToWalkGamePackage(packageName: String) = setPref(Keys.TAP_TO_WALK_GAME_PACKAGE, packageName)
 
-        override fun getCompassDisclosureChoice(): Flow<String> =
-            pref(Keys.COMPASS_DISCLOSURE_CHOICE, AppConstants.CompassTrackingConstants.DISCLOSURE_UNANSWERED)
+        override fun getAccessibilityDisclosureChoice(): Flow<String> =
+            pref(Keys.ACCESSIBILITY_DISCLOSURE_CHOICE, AppConstants.AccessibilityConstants.DISCLOSURE_UNANSWERED)
 
-        override suspend fun setCompassDisclosureChoice(choice: String) = setPref(Keys.COMPASS_DISCLOSURE_CHOICE, choice)
+        override suspend fun setAccessibilityDisclosureChoice(choice: String) = setPref(Keys.ACCESSIBILITY_DISCLOSURE_CHOICE, choice)
 
         override fun getGroundCalibration(): Flow<StoredGroundCalibration?> =
             pref(Keys.TAP_TO_WALK_GROUND_CALIBRATION, "").map { if (it.isEmpty()) null else deserializeGroundCalibration(it) }

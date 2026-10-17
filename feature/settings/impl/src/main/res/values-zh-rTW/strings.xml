@@ -125,13 +125,13 @@
     <string name="settings_menus_debug">"偵錯"</string>
     <string name="settings_menus_debug_stats">"偵錯資訊"</string>
     <string name="settings_menus_debug_stats_desc">"模擬定位生效期間，在浮動面板中顯示即時速度、海拔、座標與重新整理頻率。"</string>
-    <string name="settings_menus_compass_orientation">"羅盤方向"</string>
-    <string name="settings_menus_when_enabled_the_app_detects_your">"啟用後，應用程式會在每次行走前識別遊戲中的羅盤（與大多數 AR／GPS 遊戲相同位於右上角），以校正目標位置 — 無需額外設定。需要協助工具服務。注意：部分遊戲會偵測協助工具服務。"</string>
+    <string name="settings_menus_screen_access">"螢幕存取"</string>
+    <string name="settings_menus_when_enabled_the_app_detects_your">"允許應用程式擷取螢幕截圖，校準需要它。使用 Android 協助工具服務。注意：部分遊戲會偵測協助工具服務。"</string>
     <string name="settings_menus_accessibility_service">"協助工具服務"</string>
     <string name="settings_menus_open_settings">"開啟設定"</string>
     <string name="settings_menus_game_app">"遊戲應用程式"</string>
-    <string name="settings_menus_compass_service_enabled">"已啟用"</string>
-    <string name="settings_menus_compass_service_not_enabled">"未啟用 — 點擊開啟 Android 設定"</string>
+    <string name="settings_menus_screen_service_enabled">"已啟用"</string>
+    <string name="settings_menus_screen_service_not_enabled">"未啟用 — 點擊開啟 Android 設定"</string>
     <string name="settings_menus_select_app">"選取應用程式…"</string>
     <string name="settings_menus_app_features">"應用程式功能"</string>
     <string name="settings_menus_choose_which_quick_access_features_appea">"選擇哪些捷徑功能顯示在浮動小工具與地圖畫面上，並可拖曳排序。預設情況下兩個畫面共用同一順序。"</string>

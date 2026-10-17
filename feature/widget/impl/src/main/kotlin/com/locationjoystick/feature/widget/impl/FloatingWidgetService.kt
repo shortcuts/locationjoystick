@@ -162,7 +162,7 @@ class FloatingWidgetService :
     private val isTapToWalkActiveFlow = MutableStateFlow(false)
     private lateinit var tapToWalkScaleMpx: StateFlow<Double>
     private lateinit var groundCalibration: StateFlow<StoredGroundCalibration?>
-    private lateinit var compassDisclosureChoice: StateFlow<String>
+    private lateinit var accessibilityDisclosureChoice: StateFlow<String>
     private var tapToWalkOverlay: TapToWalkOverlay? = null
 
     // Drag position — class-level so onConfigurationChanged can read them after rotation.
@@ -214,13 +214,13 @@ class FloatingWidgetService :
             settingsRepository
                 .getGroundCalibration()
                 .stateIn(lifecycleScope, SharingStarted.Eagerly, null)
-        compassDisclosureChoice =
+        accessibilityDisclosureChoice =
             settingsRepository
-                .getCompassDisclosureChoice()
+                .getAccessibilityDisclosureChoice()
                 .stateIn(
                     lifecycleScope,
                     SharingStarted.Eagerly,
-                    AppConstants.CompassTrackingConstants.DISCLOSURE_UNANSWERED,
+                    AppConstants.AccessibilityConstants.DISCLOSURE_UNANSWERED,
                 )
         serviceBinder.bind()
         if (isSpoofingActive()) {
@@ -581,8 +581,8 @@ class FloatingWidgetService :
         if (!isSpoofingActive()) return
         if (tapToWalkOverlay?.isShowing() == true) {
             dismissTapToWalkOverlay()
-        } else if (needsCompassDisclosure()) {
-            showCompassDisclosure()
+        } else if (needsAccessibilityDisclosure()) {
+            showAccessibilityDisclosure()
         } else {
             val overlay =
                 TapToWalkOverlay(
@@ -603,27 +603,27 @@ class FloatingWidgetService :
     }
 
     /**
-     * The compass screenshot is the first thing the overlay would take, so Play's Accessibility
+     * The calibration screenshot is the first thing the overlay would take, so Play's Accessibility
      * API policy puts the disclosure here — in the feature's own usage flow — not only in Settings.
      * Re-shown until accepted: decline and skip are persisted but the next tap asks again.
      */
-    private fun needsCompassDisclosure(): Boolean =
-        CompassAccessibilityService.isSupported() &&
-            compassDisclosureChoice.value != AppConstants.CompassTrackingConstants.DISCLOSURE_ACCEPTED
+    private fun needsAccessibilityDisclosure(): Boolean =
+        ScreenAccessibilityService.isSupported() &&
+            accessibilityDisclosureChoice.value != AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED
 
-    private fun showCompassDisclosure() {
+    private fun showAccessibilityDisclosure() {
         panelPresenter.hidePanelView()
         isPanelExpandedFlow.value = false
         try {
             startActivity(
                 Intent().apply {
                     setClassName(packageName, "com.locationjoystick.app.MainActivity")
-                    putExtra(AppConstants.ServiceConstants.EXTRA_SHOW_COMPASS_DISCLOSURE, true)
+                    putExtra(AppConstants.ServiceConstants.EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE, true)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 },
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to open compass disclosure", e)
+            Log.e(TAG, "Failed to open accessibility disclosure", e)
         }
     }
 

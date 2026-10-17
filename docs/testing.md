@@ -48,7 +48,7 @@ Helpers in `SmokeTestHelpers.kt`: `waitForIdleScreen()`, `openDrawer()`, `naviga
 Tap to Walk's Ground calibration section (screenshot step 26) only renders when the Tap to Walk accessibility service is granted and Tap to Walk is on. A force-stop clears the grant, so `scripts/screenshot-gallery.sh` re-grants it over adb after its own force-stop (`grant_tap_to_walk_accessibility`). Test devices only. To repeat the grant by hand:
 
 ```bash
-adb shell settings put secure enabled_accessibility_services com.locationjoystick.app/com.locationjoystick.feature.widget.impl.CompassAccessibilityService
+adb shell settings put secure enabled_accessibility_services com.locationjoystick.app/com.locationjoystick.feature.widget.impl.ScreenAccessibilityService
 adb shell settings put secure accessibility_enabled 1
 adb shell settings get secure enabled_accessibility_services   # must list the service
 ```

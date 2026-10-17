@@ -54,7 +54,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.component.CompassDisclosureDialog
+import com.locationjoystick.core.designsystem.component.AccessibilityDisclosureDialog
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
@@ -79,7 +79,7 @@ internal fun SettingsMenusSubScreen(
     onToggleSpoofing: () -> Unit,
     locationLabel: String? = null,
     onAction: (SettingsAction) -> Unit,
-    onCheckCompassService: () -> Unit = {},
+    onCheckScreenService: () -> Unit = {},
     calibrationState: CalibrationState = CalibrationState.Idle,
     groundCalibration: StoredGroundCalibration? = null,
     onStartCalibration: (String) -> Unit = {},
@@ -92,7 +92,7 @@ internal fun SettingsMenusSubScreen(
     DisposableEffect(lifecycleOwner) {
         val observer =
             LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) onCheckCompassService()
+                if (event == Lifecycle.Event.ON_RESUME) onCheckScreenService()
             }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -163,10 +163,10 @@ private fun TapToWalkSection(
     val context = LocalContext.current
     var showEnableDisclosure by rememberSaveable { mutableStateOf(false) }
     val enabled = uiState.tapToWalkOverlayEnabled
-    val needsCompassDisclosure =
+    val needsAccessibilityDisclosure =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-            !uiState.compassDisclosureAccepted &&
-            !uiState.isCompassServiceGranted
+            !uiState.accessibilityDisclosureAccepted &&
+            !uiState.isScreenServiceGranted
 
     SettingsSectionHeader(stringResource(R.string.settings_menus_tap_to_walk))
     Spacer(Modifier.height(4.dp))
@@ -181,7 +181,7 @@ private fun TapToWalkSection(
         title = stringResource(R.string.settings_menus_enable_tap_to_walk),
         checked = enabled,
         onCheckedChange = { on ->
-            if (on && showsTapToWalkEnableDisclosure(uiState.compassDisclosureAccepted)) {
+            if (on && showsTapToWalkEnableDisclosure(uiState.accessibilityDisclosureAccepted)) {
                 showEnableDisclosure = true
             } else {
                 onAction(SettingsAction.SetTapToWalkOverlayEnabled(false))
@@ -213,21 +213,21 @@ private fun TapToWalkSection(
         // takeScreenshot(int, Executor, TakeScreenshotCallback) requires API 30 — no fallback exists.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Spacer(Modifier.height(16.dp))
-            CompassOrientationSection(uiState, onAction, launchableApps)
-            if (uiState.isCompassServiceGranted) {
+            ScreenAccessSection(uiState, onAction, launchableApps)
+            if (uiState.isScreenServiceGranted) {
                 Spacer(Modifier.height(16.dp))
                 GroundCalibrationSection(uiState, calibrationState, groundCalibration, onStartCalibration, onCancelCalibration)
             }
         }
     }
     if (showEnableDisclosure) {
-        CompassDisclosureDialog(
+        AccessibilityDisclosureDialog(
             title = stringResource(R.string.settings_menus_enable_tap_to_walk_2),
             // Play requires Play-recommended Accept/Decline wording whenever the Accessibility disclosure
             // is on screen; the caveats-only variant (below API 30) keeps "Enable anyway".
             acceptLabel =
-                if (needsCompassDisclosure) {
-                    stringResource(DesignR.string.compass_disclosure_accept)
+                if (needsAccessibilityDisclosure) {
+                    stringResource(DesignR.string.accessibility_disclosure_accept)
                 } else {
                     stringResource(R.string.settings_menus_enable_anyway)
                 },
@@ -236,12 +236,12 @@ private fun TapToWalkSection(
                     stringResource(R.string.settings_menus_a_screen_overlay_that_intercepts_taps),
                     stringResource(R.string.settings_menus_accuracy_depends_on_the_scale_setting),
                 ),
-            showAccessibilityDisclosure = needsCompassDisclosure,
+            showAccessibilityDisclosure = needsAccessibilityDisclosure,
             onAccept = {
                 showEnableDisclosure = false
                 onAction(SettingsAction.SetTapToWalkOverlayEnabled(true))
-                if (needsCompassDisclosure) {
-                    onAction(SettingsAction.SetCompassDisclosureAccepted(true))
+                if (needsAccessibilityDisclosure) {
+                    onAction(SettingsAction.SetAccessibilityDisclosureAccepted(true))
                     openAccessibilitySettings(context)
                 }
             },
@@ -273,10 +273,10 @@ private fun ReconnectTapSection(
         onCheckedChange = { on ->
             val acceptReconnect = {
                 onAction(SettingsAction.AcceptReconnectTapDisclosure)
-                if (!uiState.isCompassServiceGranted) openAccessibilitySettings(context)
+                if (!uiState.isScreenServiceGranted) openAccessibilitySettings(context)
             }
             when {
-                on && showsReconnectDisclosure(uiState.reconnectTapDisclosureAccepted, uiState.compassDisclosureAccepted) ->
+                on && showsReconnectDisclosure(uiState.reconnectTapDisclosureAccepted, uiState.accessibilityDisclosureAccepted) ->
                     showDisclosure = true
                 on && !uiState.reconnectTapDisclosureAccepted -> acceptReconnect()
                 else -> onAction(SettingsAction.SetReconnectTapEnabled(on))
@@ -284,12 +284,12 @@ private fun ReconnectTapSection(
         },
     )
     if (showDisclosure) {
-        CompassDisclosureDialog(
+        AccessibilityDisclosureDialog(
             title = stringResource(R.string.settings_menus_reconnect_accessory),
             onAccept = {
                 showDisclosure = false
                 onAction(SettingsAction.AcceptReconnectTapDisclosure)
-                if (!uiState.isCompassServiceGranted) openAccessibilitySettings(context)
+                if (!uiState.isScreenServiceGranted) openAccessibilitySettings(context)
             },
             onDecline = { showDisclosure = false },
         )
@@ -297,16 +297,16 @@ private fun ReconnectTapSection(
 }
 
 // Per-feature disclosure dialogs are re-entry points for consent that is not yet given. Once the
-// relevant accepted flag is set they are skipped. The reconnect gate also accepts compass consent,
-// because reconnect is only allowed while compass consent is on.
-internal fun showsTapToWalkEnableDisclosure(compassAccepted: Boolean): Boolean = !compassAccepted
+// relevant accepted flag is set they are skipped. The reconnect gate also accepts accessibility consent,
+// because reconnect is only allowed while accessibility consent is on.
+internal fun showsTapToWalkEnableDisclosure(accessibilityAccepted: Boolean): Boolean = !accessibilityAccepted
 
 internal fun showsReconnectDisclosure(
     reconnectAccepted: Boolean,
-    compassAccepted: Boolean,
-): Boolean = !reconnectAccepted && !compassAccepted
+    accessibilityAccepted: Boolean,
+): Boolean = !reconnectAccepted && !accessibilityAccepted
 
-internal fun showsCompassOpenSettingsDisclosure(compassAccepted: Boolean): Boolean = !compassAccepted
+internal fun showsAccessibilityOpenSettingsDisclosure(accessibilityAccepted: Boolean): Boolean = !accessibilityAccepted
 
 private fun openAccessibilitySettings(context: android.content.Context) {
     context.startActivity(
@@ -315,7 +315,7 @@ private fun openAccessibilitySettings(context: android.content.Context) {
 }
 
 @Composable
-private fun CompassOrientationSection(
+private fun ScreenAccessSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
     launchableApps: List<InstalledApp> = emptyList(),
@@ -323,9 +323,9 @@ private fun CompassOrientationSection(
     val context = LocalContext.current
     var appPickerExpanded by remember { mutableStateOf(false) }
     var showDisclosure by rememberSaveable { mutableStateOf(false) }
-    val selectedApp = launchableApps.find { it.packageName == uiState.compassTestTargetPackage }
+    val selectedApp = launchableApps.find { it.packageName == uiState.tapToWalkGamePackage }
 
-    SettingsSectionHeader(stringResource(R.string.settings_menus_compass_orientation))
+    SettingsSectionHeader(stringResource(R.string.settings_menus_screen_access))
     Spacer(Modifier.height(4.dp))
     Text(
         stringResource(R.string.settings_menus_when_enabled_the_app_detects_your),
@@ -341,25 +341,25 @@ private fun CompassOrientationSection(
         Column(modifier = Modifier.weight(1f)) {
             Text(stringResource(R.string.settings_menus_accessibility_service), style = MaterialTheme.typography.bodyLarge)
             Text(
-                if (uiState.isCompassServiceGranted) {
-                    stringResource(R.string.settings_menus_compass_service_enabled)
+                if (uiState.isScreenServiceGranted) {
+                    stringResource(R.string.settings_menus_screen_service_enabled)
                 } else {
-                    stringResource(R.string.settings_menus_compass_service_not_enabled)
+                    stringResource(R.string.settings_menus_screen_service_not_enabled)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color =
-                    if (uiState.isCompassServiceGranted) {
+                    if (uiState.isScreenServiceGranted) {
                         MaterialTheme.colorScheme.primary
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
                     },
             )
         }
-        if (!uiState.isCompassServiceGranted) {
+        if (!uiState.isScreenServiceGranted) {
             Spacer(Modifier.width(8.dp))
             LjButton(
                 onClick = {
-                    if (showsCompassOpenSettingsDisclosure(uiState.compassDisclosureAccepted)) {
+                    if (showsAccessibilityOpenSettingsDisclosure(uiState.accessibilityDisclosureAccepted)) {
                         showDisclosure = true
                     } else {
                         openAccessibilitySettings(context)
@@ -369,19 +369,19 @@ private fun CompassOrientationSection(
         }
     }
     if (showDisclosure) {
-        CompassDisclosureDialog(
+        AccessibilityDisclosureDialog(
             onAccept = {
                 showDisclosure = false
-                onAction(SettingsAction.SetCompassDisclosureAccepted(true))
+                onAction(SettingsAction.SetAccessibilityDisclosureAccepted(true))
                 openAccessibilitySettings(context)
             },
             onDecline = {
                 showDisclosure = false
-                onAction(SettingsAction.SetCompassDisclosureAccepted(false))
+                onAction(SettingsAction.SetAccessibilityDisclosureAccepted(false))
             },
         )
     }
-    if (uiState.isCompassServiceGranted) {
+    if (uiState.isScreenServiceGranted) {
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.settings_menus_game_app), style = MaterialTheme.typography.bodyLarge)
         Spacer(Modifier.height(4.dp))
@@ -412,7 +412,7 @@ private fun CompassOrientationSection(
                     DropdownMenuItem(
                         text = { Text(app.label) },
                         onClick = {
-                            onAction(SettingsAction.SetCompassTestTargetPackage(app.packageName))
+                            onAction(SettingsAction.SetTapToWalkGamePackage(app.packageName))
                             appPickerExpanded = false
                         },
                     )
@@ -751,7 +751,7 @@ private fun GroundCalibrationSection(
 ) {
     val context = LocalContext.current
     val running = state is CalibrationState.Walking || state is CalibrationState.Analysing
-    val hasGame = uiState.compassTestTargetPackage.isNotEmpty()
+    val hasGame = uiState.tapToWalkGamePackage.isNotEmpty()
     // Same stale-screen test as the tap overlay: a record only applies to the size it was fitted on.
     val wrongScreen =
         stored != null &&
@@ -813,7 +813,7 @@ private fun GroundCalibrationSection(
     if (running) {
         LjOutlinedButton(onClick = onCancel) { Text(stringResource(R.string.settings_menus_calibration_cancel)) }
     } else {
-        LjButton(onClick = { onStart(uiState.compassTestTargetPackage) }, enabled = hasGame) {
+        LjButton(onClick = { onStart(uiState.tapToWalkGamePackage) }, enabled = hasGame) {
             Text(
                 stringResource(
                     if (stored != null) R.string.settings_menus_calibration_recalibrate else R.string.settings_menus_calibration_start,

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">"locationjoystick"</string>
-    <string name="accessibility_service_label">"locationjoystick 罗盘"</string>
-    <string name="accessibility_service_description">"仅供两项可选功能使用，且只在你于应用内的无障碍（Accessibility）说明中点击“接受”后启用：“点击行走”和“重新连接配件”。在你开始的校准行走期间（约每 3 秒一张，持续约 10 分钟）、点击“测试”读取游戏罗盘图标时，以及查看配件是否已断开时截取屏幕截图。仅在你开启“重新连接配件”时点击其连接按钮。截图只留在你的手机上并在完成后删除，不会收集或分享任何数据。本服务不是面向残障用户的无障碍工具。"</string>
+    <string name="accessibility_service_label">"locationjoystick 屏幕助手"</string>
+    <string name="accessibility_service_description">"仅供两项可选功能使用，且只在你于应用内的无障碍（Accessibility）说明中点击“接受”后启用：“点击行走”和“重新连接配件”。在你开始的校准行走期间（约每 3 秒一张，持续约 10 分钟），以及查看配件是否已断开时截取屏幕截图。仅在你开启“重新连接配件”时点击其连接按钮。截图只留在你的手机上并在完成后删除，不会收集或分享任何数据。本服务不是面向残障用户的无障碍工具。"</string>
     <string name="app_couldn_t_open_that_link">"无法打开该链接"</string>
     <string name="drawer_close_menu_cd">"关闭菜单"</string>
     <string name="drawer_home">"首页"</string>

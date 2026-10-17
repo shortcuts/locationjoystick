@@ -1,6 +1,6 @@
 package com.locationjoystick.feature.widget.impl
 
-import com.locationjoystick.core.common.constants.AppConstants.CompassTrackingConstants
+import com.locationjoystick.core.common.constants.AppConstants.ReconnectTapConstants
 import kotlin.math.abs
 
 enum class ReconnectState { ON, OFF }
@@ -38,8 +38,8 @@ object ReconnectControlDetector {
         width: Int,
         height: Int,
     ): ReconnectControl? {
-        val x0 = (width * CompassTrackingConstants.SEARCH_X_MIN_PCT).toInt()
-        val y1 = (height * CompassTrackingConstants.SEARCH_Y_MAX_PCT).toInt()
+        val x0 = (width * ReconnectTapConstants.SEARCH_X_MIN_PCT).toInt()
+        val y1 = (height * ReconnectTapConstants.SEARCH_Y_MAX_PCT).toInt()
         val flats = flatRegions(pixels, width, x0, y1)
         val halves =
             flats.filter {

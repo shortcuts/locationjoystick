@@ -6,21 +6,21 @@ import org.junit.Test
 
 class SettingsDisclosureGatesTest {
     @Test
-    fun tapToWalkEnableDialogSkippedOnceCompassAccepted() {
-        assertTrue(showsTapToWalkEnableDisclosure(compassAccepted = false))
-        assertFalse(showsTapToWalkEnableDisclosure(compassAccepted = true))
+    fun tapToWalkEnableDialogSkippedOnceAccessibilityAccepted() {
+        assertTrue(showsTapToWalkEnableDisclosure(accessibilityAccepted = false))
+        assertFalse(showsTapToWalkEnableDisclosure(accessibilityAccepted = true))
     }
 
     @Test
     fun reconnectDialogSkippedWhenEitherFlagAccepted() {
-        assertTrue(showsReconnectDisclosure(reconnectAccepted = false, compassAccepted = false))
-        assertFalse(showsReconnectDisclosure(reconnectAccepted = true, compassAccepted = false))
-        assertFalse(showsReconnectDisclosure(reconnectAccepted = false, compassAccepted = true))
+        assertTrue(showsReconnectDisclosure(reconnectAccepted = false, accessibilityAccepted = false))
+        assertFalse(showsReconnectDisclosure(reconnectAccepted = true, accessibilityAccepted = false))
+        assertFalse(showsReconnectDisclosure(reconnectAccepted = false, accessibilityAccepted = true))
     }
 
     @Test
-    fun compassOpenSettingsDialogSkippedOnceAccepted() {
-        assertTrue(showsCompassOpenSettingsDisclosure(compassAccepted = false))
-        assertFalse(showsCompassOpenSettingsDisclosure(compassAccepted = true))
+    fun accessibilityOpenSettingsDialogSkippedOnceAccepted() {
+        assertTrue(showsAccessibilityOpenSettingsDisclosure(accessibilityAccepted = false))
+        assertFalse(showsAccessibilityOpenSettingsDisclosure(accessibilityAccepted = true))
     }
 }

@@ -25,7 +25,7 @@ import com.locationjoystick.core.data.GoogleMapsShortLinkResolver
 import com.locationjoystick.core.data.GpxOpenRepository
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.designsystem.LjTheme
-import com.locationjoystick.core.designsystem.component.CompassDisclosureDialog
+import com.locationjoystick.core.designsystem.component.AccessibilityDisclosureDialog
 import com.locationjoystick.core.model.ThemeMode
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
     internal val deepLinkFailedFlow = deepLinkFailedMutableFlow.asSharedFlow()
     private val gpxOpenFailedMutableFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     internal val gpxOpenFailedFlow = gpxOpenFailedMutableFlow.asSharedFlow()
-    private val showCompassDisclosureFlow = MutableStateFlow(false)
+    private val showAccessibilityDisclosureFlow = MutableStateFlow(false)
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleContextWrapper.wrap(newBase))
@@ -89,15 +89,15 @@ class MainActivity : ComponentActivity() {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
             LjTheme(darkTheme = themeMode == ThemeMode.DARK) {
-                val compassViewModel: CompassDisclosureViewModel = hiltViewModel()
-                val showCompassDisclosure by showCompassDisclosureFlow.collectAsStateWithLifecycle()
+                val accessibilityViewModel: AccessibilityDisclosureViewModel = hiltViewModel()
+                val showAccessibilityDisclosure by showAccessibilityDisclosureFlow.collectAsStateWithLifecycle()
                 // The first-run disclosure lives in onboarding; this serves the widget/intent path.
-                if (showCompassDisclosure) {
+                if (showAccessibilityDisclosure) {
                     val context = LocalContext.current
-                    CompassDisclosureDialog(
+                    AccessibilityDisclosureDialog(
                         onAccept = {
-                            showCompassDisclosureFlow.value = false
-                            compassViewModel.record(true)
+                            showAccessibilityDisclosureFlow.value = false
+                            accessibilityViewModel.record(true)
                             // Below API 30 the service is disabled, so the settings screen has nothing to turn on.
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                 context.startActivity(
@@ -107,8 +107,8 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onDecline = {
-                            showCompassDisclosureFlow.value = false
-                            compassViewModel.record(false)
+                            showAccessibilityDisclosureFlow.value = false
+                            accessibilityViewModel.record(false)
                         },
                     )
                 }
@@ -149,8 +149,8 @@ class MainActivity : ComponentActivity() {
         if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_CAPTURE, false) == true) {
             navigateToCaptureMutableFlow.tryEmit(Unit)
         }
-        if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_SHOW_COMPASS_DISCLOSURE, false) == true) {
-            showCompassDisclosureFlow.value = true
+        if (intent?.getBooleanExtra(AppConstants.ServiceConstants.EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE, false) == true) {
+            showAccessibilityDisclosureFlow.value = true
         }
         if (intent != null && shouldTryOpenAsGpx(intent)) {
             handleGpxIntent(intent)

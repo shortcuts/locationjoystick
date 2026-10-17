@@ -44,9 +44,9 @@
 #   15_routes_add_button, 16_favorites_add_button,
 #   17_group_sync, 18_debug_stats,
 #   19_onboarding_mock_location, 27_onboarding_path_picker,
-#   20_tap_to_walk_settings, 21_compass_orientation,
+#   20_tap_to_walk_settings, 21_screen_access,
 #   22_capture_coordinates, 23_map_paste_coordinates, 24_roaming_planting,
-#   25_compass_disclosure, 26_calibration
+#   25_accessibility_disclosure, 26_calibration
 #
 # 19_onboarding_mock_location ("Set as fake GPS app" onboarding step) is only
 # captured on a genuinely fresh install — it's taken mid-onboarding, before
@@ -832,7 +832,7 @@ go_idle() {
 # The force-stop in go_idle clears the grant, so call this after go_idle.
 # Appends to enabled_accessibility_services so other services stay enabled.
 grant_tap_to_walk_accessibility() {
-  local svc="${PACKAGE}/com.locationjoystick.feature.widget.impl.CompassAccessibilityService"
+  local svc="${PACKAGE}/com.locationjoystick.feature.widget.impl.ScreenAccessibilityService"
   local current attempt
   # The force-stop clears the grant asynchronously, so a list read right after it can still show the
   # service; trust only the bound-service check and re-grant until it holds.
@@ -845,7 +845,7 @@ grant_tap_to_walk_accessibility() {
     fi
     $ADB shell settings put secure accessibility_enabled 1
     sleep 2
-    $ADB shell dumpsys accessibility | grep -q "locationjoystick compass" && break
+    $ADB shell dumpsys accessibility | grep -q "locationjoystick screen helper" && break
   done
 }
 
@@ -1407,18 +1407,18 @@ if should_run_step "20"; then
     else
       tap_text_exact "Enable anyway"
     fi
-    wait_s 1 "Enabling Tap to Walk — Map scale / Compass sections expanding"
+    wait_s 1 "Enabling Tap to Walk — Map scale / Screen access sections expanding"
   fi
   screenshot "20_tap_to_walk_settings"
 fi
 
-# ── 21. Settings → Menus → Compass orientation section ──────────────────────
-# CompassOrientationSection renders below the Map scale slider (API 30+ only)
+# ── 21. Settings → Menus → Screen access section ──────────────────────
+# ScreenAccessSection renders below the Map scale slider (API 30+ only)
 # — off-screen in step 20's screenshot. Scroll further to capture the Game
 # app picker on its own (it feeds the Calibration section).
 
 if should_run_step "21"; then
-  log "=== 21 COMPASS ORIENTATION ==="
+  log "=== 21 SCREEN ACCESS ==="
   go_idle
   tap_text_below "Settings" "$CARD_Y_MIN"
   wait_s 2 "Settings loading"
@@ -1426,13 +1426,13 @@ if should_run_step "21"; then
   wait_s 2 "Menus loading"
   for _ in 1 2 3 4 5 6 7 8; do
     dump=$(ui_dump)
-    found=$(grep -c 'text="Compass orientation"' "$dump" || true)
+    found=$(grep -c 'text="Screen access"' "$dump" || true)
     rm -f "$dump"
     (( found > 0 )) && break
     $ADB shell input swipe 540 1600 540 400 500
-    wait_s 1 "Scrolling to Compass orientation"
+    wait_s 1 "Scrolling to Screen access"
   done
-  screenshot "21_compass_orientation"
+  screenshot "21_screen_access"
 fi
 
 # ── 22. Capture coordinates screen ───────────────────────────────────────────
@@ -1492,13 +1492,13 @@ fi
 # off first on a device that already has Tap to Walk enabled.
 
 if should_run_step "25"; then
-  log "=== 25 COMPASS DISCLOSURE ==="
+  log "=== 25 ACCESSIBILITY DISCLOSURE ==="
   go_idle
   # Step 20 (or an earlier run) leaves the choice "accepted", which skips the dialog.
   # "declined" has the same length, so patching the stored value keeps the file valid.
   prefs=files/datastore/app_preferences.preferences_pb
   $ADB exec-out run-as "$PACKAGE" cat "$prefs" \
-    | python3 -c 'import sys; k=b"compass_disclosure_choice\x12\x0a\x2a\x08"; sys.stdout.buffer.write(sys.stdin.buffer.read().replace(k+b"accepted", k+b"declined"))' \
+    | python3 -c 'import sys; k=b"accessibility_disclosure_choice\x12\x0a\x2a\x08"; sys.stdout.buffer.write(sys.stdin.buffer.read().replace(k+b"accepted", k+b"declined"))' \
     > "$TMPDIR/prefs.pb"
   $ADB shell run-as "$PACKAGE" sh -c "'cat > $prefs'" < "$TMPDIR/prefs.pb"
   rm -f "$TMPDIR/prefs.pb"
@@ -1516,7 +1516,7 @@ if should_run_step "25"; then
   fi
   tap_switch_for "Enable Tap to Walk"
   wait_s 2 "Disclosure opening"
-  screenshot "25_compass_disclosure"
+  screenshot "25_accessibility_disclosure"
   # Decline leaves the feature off and records nothing, so the device keeps the
   # state it had before this step.
   tap_text_exact "Decline"
@@ -1524,7 +1524,7 @@ if should_run_step "25"; then
 fi
 
 # ── 26. Settings → Menus → Ground calibration section ───────────────────────
-# GroundCalibrationSection renders below Compass orientation, which sits inside
+# GroundCalibrationSection renders below Screen access, which sits inside
 # the Tap to Walk expansion, and only while the accessibility service is granted
 # (API 30+). Tap to Walk is switched on here if off: with the grant in place the
 # dialog's button reads "Enable anyway" (no disclosure), as in step 20.

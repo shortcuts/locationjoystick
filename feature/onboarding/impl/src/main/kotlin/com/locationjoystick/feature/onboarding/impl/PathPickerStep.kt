@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
-import com.locationjoystick.core.designsystem.component.CompassDisclosureDialog
+import com.locationjoystick.core.designsystem.component.AccessibilityDisclosureDialog
 import com.locationjoystick.core.designsystem.component.LjGuidedStepCard
 import com.locationjoystick.core.designsystem.component.LjLanguageDropdown
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
@@ -47,8 +47,8 @@ import com.locationjoystick.feature.onboarding.impl.R
 internal fun PathPickerStep(
     uiState: OnboardingUiState,
     onSelectPath: (GuidedPath) -> Unit,
-    onCompassDisclosureAnswered: (accepted: Boolean) -> Unit,
-    onCompassDisclosureSkipped: () -> Unit,
+    onAccessibilityDisclosureAnswered: (accepted: Boolean) -> Unit,
+    onAccessibilityDisclosureSkipped: () -> Unit,
     onFinish: () -> Unit,
     isSpoofing: Boolean = false,
     onToggleSpoofing: () -> Unit = {},
@@ -57,17 +57,17 @@ internal fun PathPickerStep(
     languageTag: String? = null,
     onSetLanguage: (String?) -> Unit = {},
 ) {
-    var showCompassDisclosure by remember { mutableStateOf(false) }
+    var showAccessibilityDisclosure by remember { mutableStateOf(false) }
     val showsTapToWalk = uiState.selectedPath.showsTapToWalk
 
     // Shown when the picker first appears so Play's reviewers meet it in the first-run flow. Onboarding
     // only runs once, so installs that already finished it never reach this prompt.
-    LaunchedEffect(uiState.compassDisclosureChoice) {
+    LaunchedEffect(uiState.accessibilityDisclosureChoice) {
         if (showsTapToWalk &&
-            uiState.compassDisclosureChoice == AppConstants.CompassTrackingConstants.DISCLOSURE_UNANSWERED &&
+            uiState.accessibilityDisclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_UNANSWERED &&
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
         ) {
-            showCompassDisclosure = true
+            showAccessibilityDisclosure = true
         }
     }
 
@@ -144,12 +144,12 @@ internal fun PathPickerStep(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 LjGuidedStepCard(
-                    title = stringResource(R.string.onboarding_compass_orientation),
-                    description = stringResource(R.string.onboarding_compass_orientation_desc),
-                    isGranted = uiState.compassServiceEnabled,
+                    title = stringResource(R.string.onboarding_tap_to_walk_access),
+                    description = stringResource(R.string.onboarding_tap_to_walk_access_desc),
+                    isGranted = uiState.screenServiceEnabled,
                     icon = LjIcons.Explore,
-                    actionLabel = stringResource(R.string.onboarding_compass_review),
-                    onAction = { showCompassDisclosure = true },
+                    actionLabel = stringResource(R.string.onboarding_tap_to_walk_access_review),
+                    onAction = { showAccessibilityDisclosure = true },
                 )
             }
 
@@ -163,24 +163,24 @@ internal fun PathPickerStep(
         }
     }
 
-    if (showCompassDisclosure) {
-        OnboardingCompassDisclosure(
-            onClose = { showCompassDisclosure = false },
-            onAnswered = onCompassDisclosureAnswered,
-            onSkipped = onCompassDisclosureSkipped,
+    if (showAccessibilityDisclosure) {
+        OnboardingAccessibilityDisclosure(
+            onClose = { showAccessibilityDisclosure = false },
+            onAnswered = onAccessibilityDisclosureAnswered,
+            onSkipped = onAccessibilityDisclosureSkipped,
         )
     }
 }
 
 /** Accessibility prominent disclosure with the onboarding answer handlers; shared by the permission and picker steps. */
 @Composable
-internal fun OnboardingCompassDisclosure(
+internal fun OnboardingAccessibilityDisclosure(
     onClose: () -> Unit,
     onAnswered: (accepted: Boolean) -> Unit,
     onSkipped: () -> Unit,
 ) {
     val context = LocalContext.current
-    CompassDisclosureDialog(
+    AccessibilityDisclosureDialog(
         onAccept = {
             onClose()
             onAnswered(true)
@@ -223,8 +223,8 @@ private fun PathPickerStepPreview() {
         PathPickerStep(
             uiState = OnboardingUiState(),
             onSelectPath = {},
-            onCompassDisclosureAnswered = {},
-            onCompassDisclosureSkipped = {},
+            onAccessibilityDisclosureAnswered = {},
+            onAccessibilityDisclosureSkipped = {},
             onFinish = {},
         )
     }

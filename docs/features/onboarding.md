@@ -16,9 +16,9 @@ Screen 1 (`OnboardingScreen.kt`), "Continue" button:
 2. Grant `SYSTEM_ALERT_WINDOW`
 3. Enable mock location (deep link to Developer Options; re-checked automatically on resume — see "Permission Checks" below)
 
-On a fresh install the Accessibility prominent disclosure (`CompassDisclosureDialog`) opens over screen 1
+On a fresh install the Accessibility prominent disclosure (`AccessibilityDisclosureDialog`) opens over screen 1
 before any permission card, on every API level, whichever path is later picked
-(`OnboardingCompassDisclosure` in `PathPickerStep.kt`, shown by `OnboardingRoute`). It shows while the stored
+(`OnboardingAccessibilityDisclosure` in `PathPickerStep.kt`, shown by `OnboardingRoute`). It shows while the stored
 choice is unanswered; `OnboardingRoute` only renders while onboarding is incomplete, so updates never see it.
 Accept (opens Android's Accessibility settings on API 30+, otherwise only records the choice), Decline and
 Skip each store an answer and reveal the permission screen. See docs/features/tap-to-walk.md,

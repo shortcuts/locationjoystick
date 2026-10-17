@@ -250,7 +250,7 @@ fun SettingsRoute(
         isSpoofing = spoofToggle.isSpoofing,
         onToggleSpoofing = spoofToggle.onToggle,
         locationLabel = spoofToggle.locationLabel,
-        onCheckCompassService = { viewModel.checkCompassServiceGranted() },
+        onCheckScreenService = { viewModel.checkScreenServiceGranted() },
         calibrationState = viewModel.calibrationState.collectAsStateWithLifecycle().value,
         groundCalibration = viewModel.groundCalibration.collectAsStateWithLifecycle().value,
         onStartCalibration = viewModel::startCalibration,
@@ -448,12 +448,12 @@ fun SettingsRoute(
                     viewModel.setTapToWalkScaleMpx(action.scale)
                 }
 
-                is SettingsAction.SetCompassTestTargetPackage -> {
-                    viewModel.setCompassTestTargetPackage(action.packageName)
+                is SettingsAction.SetTapToWalkGamePackage -> {
+                    viewModel.setTapToWalkGamePackage(action.packageName)
                 }
 
-                is SettingsAction.SetCompassDisclosureAccepted -> {
-                    viewModel.setCompassDisclosureAccepted(action.accepted)
+                is SettingsAction.SetAccessibilityDisclosureAccepted -> {
+                    viewModel.setAccessibilityDisclosureAccepted(action.accepted)
                 }
 
                 is SettingsAction.SetReconnectTapEnabled -> {
@@ -555,7 +555,7 @@ internal fun SettingsScreen(
     onToggleSpoofing: () -> Unit = {},
     locationLabel: String? = null,
     onAction: (SettingsAction) -> Unit,
-    onCheckCompassService: () -> Unit = {},
+    onCheckScreenService: () -> Unit = {},
     calibrationState: CalibrationState = CalibrationState.Idle,
     groundCalibration: StoredGroundCalibration? = null,
     onStartCalibration: (String) -> Unit = {},
@@ -659,7 +659,7 @@ internal fun SettingsScreen(
                 onToggleSpoofing = guardedToggleSpoofing,
                 locationLabel = locationLabel,
                 onAction = onAction,
-                onCheckCompassService = onCheckCompassService,
+                onCheckScreenService = onCheckScreenService,
                 calibrationState = calibrationState,
                 groundCalibration = groundCalibration,
                 onStartCalibration = onStartCalibration,

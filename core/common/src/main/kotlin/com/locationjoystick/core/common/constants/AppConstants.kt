@@ -353,7 +353,7 @@ object AppConstants {
         const val EXTRA_NAVIGATE_TO_ROUTES = "navigate_to_routes"
         const val EXTRA_NAVIGATE_TO_ROUTE_CREATOR = "navigate_to_route_creator"
         const val EXTRA_NAVIGATE_TO_CAPTURE = "navigate_to_capture"
-        const val EXTRA_SHOW_COMPASS_DISCLOSURE = "show_compass_disclosure"
+        const val EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE = "show_accessibility_disclosure"
         const val ACTION_ENTER_FOLLOWER = "com.locationjoystick.core.location.ACTION_ENTER_FOLLOWER"
         const val ACTION_EXIT_FOLLOWER = "com.locationjoystick.core.location.ACTION_EXIT_FOLLOWER"
         const val ACTION_RESUME_FOLLOWER = "com.locationjoystick.core.location.ACTION_RESUME_FOLLOWER"
@@ -599,24 +599,7 @@ object AppConstants {
         const val CALIBRATION_SPOOL_FRAMES_PER_LEG = 36 // 108 s of a typical leg plus slack, sizes the free-space check
     }
 
-    object CompassTrackingConstants {
-        // Android rate-limits accessibility screenshots and a game frame can be mid-transition, so
-        // one failed capture is retried after a short wait.
-        const val CAPTURE_ATTEMPTS = 3
-        const val CAPTURE_RETRY_DELAY_MS = 500L
-
-        // Fixed search window — every tested AR/GPS-spoofing game places its compass top-right,
-        // so this needs no per-user calibration. Covers the right 45% / top 35% of the screen.
-        const val SEARCH_X_MIN_PCT = 0.55f
-        const val SEARCH_Y_MAX_PCT = 0.35f
-
-        // Icon-sized blob bounds, as a fraction of the screen's short side — rejects both stray
-        // noise pixels (too small) and unrelated large red UI elements like a gym marker or raid
-        // egg (too big), instead of trusting every red pixel in a wide region.
-        const val MIN_ICON_FRACTION = 0.008f
-        const val MAX_ICON_FRACTION = 0.06f
-        const val MIN_RED_PIXELS = 20
-
+    object AccessibilityConstants {
         // Play's Accessibility API policy: the screenshot capture must not run until the user has
         // accepted the in-app disclosure, even if they enabled the service from Android's own
         // accessibility settings. "declined" is stored too, so the prompt is never shown twice.
@@ -629,6 +612,11 @@ object AppConstants {
     }
 
     object ReconnectTapConstants {
+        // Fixed search window — the reconnect control sits top-right, so this needs no per-user
+        // calibration. Covers the right 45% / top 35% of the screen.
+        const val SEARCH_X_MIN_PCT = 0.55f
+        const val SEARCH_Y_MAX_PCT = 0.35f
+
         // User decision: a fixed 1 minute periodic check, no manual trigger. First check runs one
         // interval after the loop (re)starts so enabling the setting never taps immediately.
         const val CHECK_INTERVAL_MS = 60_000L

@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.locationjoystick.core.datastore.AppPreferencesDataSource
+import com.locationjoystick.core.datastore.LegacyKeyMigration
 import com.locationjoystick.core.datastore.PreferencesDataSource
 import dagger.Module
 import dagger.Provides
@@ -15,6 +16,7 @@ import javax.inject.Singleton
 
 private val Context.appPreferencesDataStore: DataStore<Preferences> by preferencesDataStore(
     name = AppPreferencesDataSource.DATASTORE_FILE_NAME,
+    produceMigrations = { listOf(LegacyKeyMigration) },
 )
 
 @Module

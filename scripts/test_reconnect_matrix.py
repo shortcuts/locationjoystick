@@ -26,20 +26,20 @@ def test_parse_acl_state_returns_last_state_for_suffix():
 
 def test_classify_logs_reconnected_run():
     lines = [
-        "I CompassAccessibilitySvc: Reconnect read: OFF",
-        "I CompassAccessibilitySvc: Reconnect tap: 791,240,120",
-        "I CompassAccessibilitySvc: Reconnect read: ON",
-        "I CompassAccessibilitySvc: Reconnect check: RECONNECTED",
+        "I ScreenAccessibilitySvc: Reconnect read: OFF",
+        "I ScreenAccessibilitySvc: Reconnect tap: 791,240,120",
+        "I ScreenAccessibilitySvc: Reconnect read: ON",
+        "I ScreenAccessibilitySvc: Reconnect check: RECONNECTED",
     ]
     assert rm.classify_logs(lines) == {"outcome": "RECONNECTED", "taps": 1, "reads": ["OFF", "ON"]}
 
 
 def test_classify_logs_failed_run():
     lines = [
-        "I CompassAccessibilitySvc: Reconnect read: OFF",
-        "I CompassAccessibilitySvc: Reconnect tap: 791,240,120",
-        "I CompassAccessibilitySvc: Reconnect read: OFF",
-        "I CompassAccessibilitySvc: Reconnect check: FAILED",
+        "I ScreenAccessibilitySvc: Reconnect read: OFF",
+        "I ScreenAccessibilitySvc: Reconnect tap: 791,240,120",
+        "I ScreenAccessibilitySvc: Reconnect read: OFF",
+        "I ScreenAccessibilitySvc: Reconnect check: FAILED",
     ]
     info = rm.classify_logs(lines)
     assert info["outcome"] == "FAILED" and info["taps"] == 1
@@ -47,8 +47,8 @@ def test_classify_logs_failed_run():
 
 def test_classify_logs_already_on_run_has_no_taps():
     lines = [
-        "I CompassAccessibilitySvc: Reconnect read: ON",
-        "I CompassAccessibilitySvc: Reconnect check: NOT_OFF",
+        "I ScreenAccessibilitySvc: Reconnect read: ON",
+        "I ScreenAccessibilitySvc: Reconnect check: NOT_OFF",
     ]
     info = rm.classify_logs(lines)
     assert info == {"outcome": "NOT_OFF", "taps": 0, "reads": ["ON"]}

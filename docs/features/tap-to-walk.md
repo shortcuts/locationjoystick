@@ -11,22 +11,19 @@ Bench record and measured results: [tap-to-walk-investigation.md](tap-to-walk-in
 Tier 1's toggle lives in Settings → General → Privacy, next to "Hide teleport features" — it moved
 there because Floating Map Quick Walk is its own standalone feature, not part of the Tap to Walk
 umbrella (see docs/features/hide-teleport.md; it is not one of the features that toggle hides).
-Tier 2 stays in Settings → Menus → Tap to Walk. Compass tracking has no toggle — it is always
-on whenever the accessibility service is granted (see "Compass Orientation" below).
+Tier 2 stays in Settings → Menus → Tap to Walk. Screen access has no toggle — it is always
+on whenever the accessibility service is granted (see "Screen access" below).
 
 | DataStore key | Type | Default | Description |
 |---|---|---|---|
 | `FLOATING_MAP_QUICK_WALK` | Boolean | `false` | Skip confirmation sheet on floating map taps (Settings → General → Privacy) |
 | `TAP_TO_WALK_OVERLAY_ENABLED` | Boolean | `false` | Show crosshair button in widget panel |
 | `TAP_TO_WALK_SCALE_MPX` | Double | `0.23` | Meters per pixel for pixel→GPS conversion (calibrated for a fully zoomed-out AR game map) |
-| `COMPASS_TEST_TARGET_PACKAGE` | String | `""` | Game app picked in Settings → Menus → Tap to Walk. The calibration walk launches it. Empty = Start calibration disabled |
+| `TAP_TO_WALK_GAME_PACKAGE` | String | `""` | Game app picked in Settings → Menus → Tap to Walk. The calibration walk launches it. Empty = Start calibration disabled |
 | `TAP_TO_WALK_GROUND_CALIBRATION` | String (JSON) | absent | Latest calibration walk result (`StoredGroundCalibration`, see "Calibration walk"). Per-device, not part of `ExportData`; cleared by Reset All Data |
-| `COMPASS_DISCLOSURE_CHOICE` | String | `""` | The user's answer to the accessibility disclosure: `""` (unanswered), `accepted`, `declined` (`AppConstants.CompassTrackingConstants`). Per-device, not part of `ExportData` |
+| `ACCESSIBILITY_DISCLOSURE_CHOICE` | String | `""` | The user's answer to the accessibility disclosure: `""` (unanswered), `accepted`, `declined` (`AppConstants.AccessibilityConstants`). Per-device, not part of `ExportData` |
 
 Scale is clamped to `AppConstants.TapToWalkConstants.MIN_SCALE_MPX`–`MAX_SCALE_MPX` (0.01–1.0 m/px) in `applySnapshot()`.
-
-There is no compass-region setting — see "Compass Orientation" below; detection auto-locates the
-icon fresh on every call, so nothing needs to be stored.
 
 ### Map Scale
 
@@ -75,7 +72,7 @@ comes from the cached stored calibration (`FloatingWidgetService.groundCalibrati
 `TapToWalkOverlay.computeGroundWalkTarget(...)` is the pure companion function (null past the horizon).
 
 Fallback (no matching calibration, other screen size, API < 30, or tap past the horizon): the north-up
-scale formula, never blocking the tap. No compass is read.
+scale formula, never blocking the tap.
 
 ```
 dx_m = (tapX - screenW/2) * metersPerPixel
@@ -91,68 +88,46 @@ Invariants a change must not break:
 
 - Tap pixel is in full-display device pixels: `getLocationOnScreen` of the overlay plus the in-window tap, never the overlay window size (system bars may inset it). The calibration is fitted on full-display screenshots and `matches(w, h)` compares against `maximumWindowMetrics`.
 - Ground frame is north-up metres east/north of the feet, flat earth at 111320 m/deg (the walk's frame), not the 6,371,000 m haversine radius used by the fallback.
-- Fallback is north-up by design: nothing assumes or reads a compass; heading comes from the walked-leg fit only.
+- Fallback is north-up by design: nothing assumes a map heading; heading comes from the walked-leg fit only.
 - The fallback must stay while nothing user-visible starts a calibration walk; when it does, that entry must dismiss the overlay first.
 
-## Compass Orientation
+## Screen access
 
-`TapToWalkOverlay` no longer reads the compass heading: taps use the ground map (see "Pixel → GPS
-Formula"). The service, `CompassHeadingSource.captureHeading()` and the shared icon detection remain, and
-Reconnect accessory (docs/features/bluetooth-reconnect-tap.md) shares the detection. Settings no longer calls
-`captureHeading()` (the Test button is gone), so it has no Settings caller. The text below describes that detection. **No manual calibration**: an earlier
-version asked the user to drag a circle onto the compass and store its position/radius — that
-required precise calibration to avoid picking up unrelated red UI elements (a gym marker, a raid
-egg) nearby, and a bad calibration made detection "confused" (issue reported after that version
-shipped). Detection now re-locates the icon fresh on every call instead, immune to nearby clutter
-by construction — see below.
+Nothing reads the map orientation in the tap callback: taps use the ground map (see "Pixel → GPS
+Formula"). The accessibility service exists to take screenshots for the calibration walk and, for
+Reconnect accessory (docs/features/bluetooth-reconnect-tap.md), to read the connect control and tap it.
+It captures nothing until the user accepts the disclosure (see "Prominent Disclosure"). Where the map points
+is measured, not read: the calibration walk fits it from how the map moves between frames (see
+"Calibration walk").
 
-Key files: `:core:location/CompassHeadingSource.kt`, `:feature:widget:impl/CompassAccessibilityService.kt`
+Key files: `:core:location/ScreenCaptureSource.kt`, `:feature:widget:impl/ScreenAccessibilityService.kt`
 
-### CompassHeadingSource
+### ScreenCaptureSource
 
-`@Singleton` bridge owned by `:core:location`. `CompassAccessibilityService` calls `bind(this)` on connect and `unbind()` on disconnect. `captureHeading()` delegates to the live service and retries up to 3 times, 500 ms apart, on any null result.
+`@Singleton` bridge owned by `:core:location`. `ScreenAccessibilityService` calls `bind(this)` on connect and `unbind()` on disconnect. `captureGrayFrame()` delegates to the live service and returns null until the disclosure is accepted, when unbound, or when the screenshot is rejected. There is no retry: the walk's 3 s cadence tolerates a missed frame.
 
-### CompassAccessibilityService
+### ScreenAccessibilityService
 
-`@AndroidEntryPoint AccessibilityService` in `:feature:widget:impl`. Injects `CompassHeadingSource`. Implements `CompassAccessibilityServiceBridge`.
+`@AndroidEntryPoint AccessibilityService` in `:feature:widget:impl`. Injects `ScreenCaptureSource`. Implements `ScreenAccessibilityServiceBridge`.
 
-`captureHeading()` calls `takeScreenshot(Display.DEFAULT_DISPLAY, ...)` via `suspendCancellableCoroutine`, then calls `detectNorthAngle()` on the result.
+`captureGrayFrame()` calls `takeScreenshot(Display.DEFAULT_DISPLAY, ...)` via `suspendCancellableCoroutine`, bulk-reads the pixels (`Bitmap.getPixels`) and returns 8-bit luma. Hardware bitmaps are copied to `ARGB_8888` before pixel access and recycled after use. The label shown in Android's Accessibility settings is "locationjoystick screen helper".
 
-`detectNorthAngle(bitmap)` is a `companion object` pure function, no calibration input:
-
-1. Bulk-reads (`Bitmap.getPixels`, not per-pixel `getPixel` — much faster) a fixed search window —
-   the right `SEARCH_X_MIN_PCT` (55%) / top `SEARCH_Y_MAX_PCT` (35%) of the screen
-   (`AppConstants.CompassTrackingConstants`) — where every tested AR/GPS-spoofing game places its
-   compass (confirmed on-device against a popular AR/GPS-spoofing game).
-2. Filters pixels by the same red-hue test as before (HSV hue < 15° or > 345°, sat > 0.5, val > 0.3).
-3. Runs 4-connected-component labelling (`findBestIconBlob`, BFS-based) over the red mask, keeping
-   only blobs whose bounding box falls within `MIN_ICON_FRACTION`–`MAX_ICON_FRACTION` (0.8%–6%) of
-   the screen's short side and whose pixel count clears `MIN_RED_PIXELS` (20) — this is what makes
-   detection immune to a stray red pixel (too small) or an unrelated large red UI element like a
-   gym marker or raid egg (too big) landing in the search window, unlike scanning a big fixed
-   circle for the reddest pixel. The largest surviving blob wins.
-4. The needle's pivot is approximated as the bottom-center of the winning blob's bounding box —
-   empirically where the icon's rotation center sits, right at the base of its colored half (the
-   red top sits directly above the icon's grey center dot in every game tested). The angle is
-   `atan2(centroid.x - pivot.x, -(centroid.y - pivot.y))`, i.e. clockwise from screen-up to the
-   centroid-from-pivot direction — self-calibrating every call, nothing stored between calls.
-
-Hardware bitmaps are copied to `ARGB_8888` before pixel access and recycled after use.
+The service was renamed from its earlier name. Android keys the enabled-services list by component name, so users who updated from an older build must turn the service on once more in Android Accessibility settings; Settings shows "Not enabled" until they do. The stored disclosure choice and game package survive: `LegacyKeyMigration` (`:core:datastore`) moves them to `ACCESSIBILITY_DISCLOSURE_CHOICE` and `TAP_TO_WALK_GAME_PACKAGE` on first read.
 
 ### Verifying On-Device
 
-The Settings Test button was removed. Settings no longer runs a compass check. Verify on device through the
+Verify on device through the
 calibration walk (see "Calibration walk").
 
 A "Game app" picker (`SettingsViewModel.launchableApps`, queried once via
 `PackageManager.queryIntentActivities` on `ACTION_MAIN`/`CATEGORY_LAUNCHER`, excluding this app)
-lets the user select their game once — persisted live as `COMPASS_TEST_TARGET_PACKAGE`. The calibration walk
+lets the user select their game once — persisted live as `TAP_TO_WALK_GAME_PACKAGE`. The calibration walk
 launches that app.
 
 ### Prominent Disclosure
 
 Play's Accessibility API policy rejected releases that showed the disclosure only in a settings
-sub-screen, or that let the accessibility service run without an in-app accept. `CompassDisclosureDialog`
+sub-screen, or that let the accessibility service run without an in-app accept. `AccessibilityDisclosureDialog`
 (`:core:designsystem`) is the single disclosure surface: a full-screen dialog that names the
 AccessibilityService API, the data it reads (screenshots, with their cadence: about one every 3 seconds for
 about 10 minutes during a calibration walk the user starts, about one a minute while Reconnect
@@ -179,8 +154,8 @@ the first of them is onboarding, which every new install walks through:
 | Onboarding (on entry) | `OnboardingRoute` opens the dialog over the permission screen (first screen of a fresh install, every API level, no path gate) while the stored choice is unanswered. `PathPickerStep` keeps a fallback auto-show (unanswered, API >= 30, path not Pikmin Bloom). Buttons: Accept (records `accepted`, opens Android's Accessibility settings), Decline (`declined`), Skip (`skipped`). Every button stores an answer, so it never auto-shows again. Installs that finished onboarding before this shipped never reach it |
 | Onboarding card | Optional "Tap to Walk setup" card on the path picker step (every API level, skip line first, hidden on Pikmin Bloom, never blocks "Start"). "Review and turn on" reopens the same disclosure (`PathPickerStep.kt`) |
 | Turning Tap to Walk on | The Tap to Walk switch opens the same screen, with the two overlay caveats above the disclosure text and "Accept" as the accept label (`SettingsMenusSubScreen.kt`). Below API 30 only the caveats are shown, with "Enable anyway" |
-| Tapping the widget crosshair | `FloatingWidgetService.onTapToWalkClicked()` launches `MainActivity` with `EXTRA_SHOW_COMPASS_DISCLOSURE`; the overlay opens on the next tap |
-| Settings compass row | "Open Settings" in `CompassOrientationSection` |
+| Tapping the widget crosshair | `FloatingWidgetService.onTapToWalkClicked()` launches `MainActivity` with `EXTRA_SHOW_ACCESSIBILITY_DISCLOSURE`; the overlay opens on the next tap |
+| Settings screen access row | "Open Settings" in `ScreenAccessSection` |
 | Calibration | Calibration needs the service already granted, so it adds no new consent path |
 
 Play Console side is done and needs no re-checking: declaration form, per-submission video,
@@ -189,16 +164,16 @@ reviewers not reaching the in-app disclosure, hence the onboarding auto-show. It
 screen every new install walks through, and the service stays gated on an in-app accept regardless.
 The Map never auto-shows it, so existing installs see no change.
 
-The answer is persisted in `COMPASS_DISCLOSURE_CHOICE` (`accepted`, `declined`, `skipped`, or empty
+The answer is persisted in `ACCESSIBILITY_DISCLOSURE_CHOICE` (`accepted`, `declined`, `skipped`, or empty
 when unanswered). Only the onboarding auto-show is gated on "unanswered"; the Tap to Walk switch, the
 crosshair and the Settings row keep asking until the choice is `accepted`, so a Decline or Skip
 never locks the feature out. Once the choice is `accepted`, the Tap to Walk switch and the Settings
-compass row's "Open Settings" button skip the disclosure and act directly (`showsTapToWalkEnableDisclosure`,
-`showsCompassOpenSettingsDisclosure` in `SettingsMenusSubScreen.kt`).
+screen access row's "Open Settings" button skip the disclosure and act directly (`showsTapToWalkEnableDisclosure`,
+`showsAccessibilityOpenSettingsDisclosure` in `SettingsMenusSubScreen.kt`).
 
-`CompassHeadingSource.captureHeading()` returns `null` until the choice is `accepted`. The consent
+`ScreenCaptureSource.captureGrayFrame()` returns `null` until the choice is `accepted`. The consent
 check lives there, not at the call sites, because Android's accessibility settings can enable the
-service without the app ever being opened (see `CompassHeadingSourceTest`).
+service without the app ever being opened (see `ScreenCaptureSourceTest`).
 
 ### Anti-cheat caveat
 
@@ -208,7 +183,7 @@ Accessibility services running in the background are detectable by some games. T
 
 `android.permission.BIND_ACCESSIBILITY_SERVICE` — granted by Android when the user enables the service in system Accessibility Settings. No runtime prompt needed.
 
-API 30 (`takeScreenshot`) — no fallback exists below it. On API 28–29, the "Compass orientation" Settings section is hidden, and the service itself is disabled in the manifest (`android:enabled="@bool/compass_accessibility_service_enabled"`, `false` in `values/bools.xml`, `true` in `values-v30/`), so it never appears in Android's Accessibility settings where it could be turned on without the in-app disclosure. `CompassAccessibilityService.onServiceConnected()` also skips binding as a second guard. The rest of Tap to Walk (Tier 1 quick-walk, Tier 2 overlay) works unchanged.
+API 30 (`takeScreenshot`) — no fallback exists below it. On API 28–29, the "Screen access" Settings section is hidden, and the service itself is disabled in the manifest (`android:enabled="@bool/screen_accessibility_service_enabled"`, `false` in `values/bools.xml`, `true` in `values-v30/`), so it never appears in Android's Accessibility settings where it could be turned on without the in-app disclosure. `ScreenAccessibilityService.onServiceConnected()` also skips binding as a second guard. The rest of Tap to Walk (Tier 1 quick-walk, Tier 2 overlay) works unchanged.
 
 The disclosure, the onboarding step and the service's system-settings description are localized in every supported locale with identical keys (docs/features/localization.md). The Chinese strings keep the English word "Accessibility" in parentheses next to 无障碍 so a reviewer testing in any locale sees the term Play asks for.
 
@@ -218,7 +193,7 @@ The disclosure, the onboarding step and the service's system-settings descriptio
 `ground_to_game` / `tap_to_ground_persp`. It only maps; the walked-leg fit (see "Frame flow and ground fit") and feet detection are separate.
 
 - Frames: screen x right, y down, in the device's own pixels; ground east +x, north +y (north up), metres relative to the
-  player's feet pixel. No compass is read; `headingDeg` (fitted, degrees) is how far north is rotated in the frame.
+  player's feet pixel. `headingDeg` (fitted, degrees) is how far north is rotated in the frame.
 - Calibration (`GroundCalibration`): `headingDeg`, `lateralPxPerM`, `forwardPxPerM`, `perspective` (1/m), `feetX`,
   `feetY`. All pixel values are reference pixels (1080x2340), not device pixels.
 - Screen scaling: a device pixel is scaled to the reference frame by `x * 1080 / width`, `y * 2340 / height` (and
@@ -402,7 +377,7 @@ runs the solver and stores one map. The tap handler reads the stored result via
 Data flow:
 
 1. `start()` checks readiness (`NOT_READY` otherwise): spoofing `RUNNING`, mode `JOYSTICK` or `TELEPORT`, no
-   walk target, a position. It then takes one probe frame through `CompassHeadingSource.captureGrayFrame()`
+   walk target, a position. It then takes one probe frame through `ScreenCaptureSource.captureGrayFrame()`
    (null: `SERVICE_UNAVAILABLE`, which also covers an unbound service and a disclosure not accepted) and
    checks free cache space for `8 legs x 36 frames x width x height` bytes (`STORAGE`).
 2. Eight legs, bearings 0, 180, 90, 270, 45, 225, 135, 315, each 40 m from where the previous leg ended
@@ -446,12 +421,12 @@ Failure reasons (`CalibrationFailure`; any one stores nothing, deletes the frame
 | `IMPLAUSIBLE_FIT` | a fit converged but a scale is under 1 reference px per metre: the screen did not follow the walk (game in the background shows this app or a frozen frame; a static screen fits about 0.003 with a perfect residual, which the bench would have accepted) |
 
 Cooldown and anti-cheat: the walk never teleports, so it neither reads nor writes the teleport cooldown and does
-not look like a jump to the game. The periodic screenshots are as detectable as the compass capture (see
-"Anti-cheat caveat"); they go through the same disclosure gate as `captureHeading()`.
+not look like a jump to the game. The periodic screenshots are as detectable as any other screenshot capture (see
+"Anti-cheat caveat"); they go through the same disclosure gate as `captureGrayFrame()`.
 
 #### Calibration UX
 
-Lives in Settings -> Menus -> Tap to Walk, as `GroundCalibrationSection` directly under the compass block
+Lives in Settings -> Menus -> Tap to Walk, as `GroundCalibrationSection` directly under the Screen access block
 (`SettingsMenusSubScreen.kt`), shown on API 30+ once Tap to Walk is on and the accessibility service is granted.
 State comes from `SettingsViewModel.calibrationState` (the orchestrator's `state`) and `groundCalibration`; both
 sit outside the draft/save `SettingsUiState` because a calibration is not a setting.
@@ -539,7 +514,7 @@ registration to retry) and the 5 s latency budget. Full 20-location gate not run
 
 ## Warning Screen
 
-Enabling the overlay opens `CompassDisclosureDialog` (see "Prominent Disclosure" above) with two
+Enabling the overlay opens `AccessibilityDisclosureDialog` (see "Prominent Disclosure" above) with two
 caveats before activating:
 1. Some apps detect mock location activity and may penalise the account.
 2. Accuracy depends on the scale setting matching the game's zoom level.

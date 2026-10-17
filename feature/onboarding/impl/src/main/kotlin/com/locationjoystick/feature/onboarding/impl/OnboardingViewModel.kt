@@ -45,8 +45,8 @@ class OnboardingViewModel
         init {
             checkPermissions()
             viewModelScope.launch {
-                settingsRepository.getCompassDisclosureChoice().collect { choice ->
-                    _uiState.update { it.copy(compassDisclosureChoice = choice) }
+                settingsRepository.getAccessibilityDisclosureChoice().collect { choice ->
+                    _uiState.update { it.copy(accessibilityDisclosureChoice = choice) }
                 }
             }
         }
@@ -63,27 +63,27 @@ class OnboardingViewModel
                             ) == PackageManager.PERMISSION_GRANTED,
                         overlayPermissionGranted = isOverlayPermissionGranted(context),
                         mockLocationEnabled = bypassMockLocationCheck || isMockLocationEnabled(context),
-                        compassServiceEnabled = isCompassServiceEnabled(),
+                        screenServiceEnabled = isScreenServiceEnabled(),
                     )
                 }
             }
         }
 
-        private fun isCompassServiceEnabled(): Boolean =
+        private fun isScreenServiceEnabled(): Boolean =
             context
                 .getSystemService(AccessibilityManager::class.java)
                 ?.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-                ?.any { it.id.contains("CompassAccessibilityService") }
+                ?.any { it.id.contains("ScreenAccessibilityService") }
                 ?: false
 
-        fun recordCompassDisclosure(accepted: Boolean) {
-            viewModelScope.launch { settingsRepository.recordCompassDisclosure(accepted) }
+        fun recordAccessibilityDisclosure(accepted: Boolean) {
+            viewModelScope.launch { settingsRepository.recordAccessibilityDisclosure(accepted) }
         }
 
         /** Marks the prompt as asked without consenting; Tap to Walk entry points still re-show it. */
-        fun skipCompassDisclosure() {
+        fun skipAccessibilityDisclosure() {
             viewModelScope.launch {
-                settingsRepository.setCompassDisclosureChoice(AppConstants.CompassTrackingConstants.DISCLOSURE_SKIPPED)
+                settingsRepository.setAccessibilityDisclosureChoice(AppConstants.AccessibilityConstants.DISCLOSURE_SKIPPED)
             }
         }
 

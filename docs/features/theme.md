@@ -38,4 +38,4 @@ Unchecked checkboxes and outlined fields route through `outlineVariant`: dark th
 
 ## Edge Cases
 
-- Not part of `AppSettings`/`ExportData` — it's a per-device display preference, not exported/imported data (matches `REMEMBER_LAST_LOCATION`/compass-tracking pattern).
+- Not part of `AppSettings`/`ExportData` — it's a per-device display preference, not exported/imported data (matches `REMEMBER_LAST_LOCATION` pattern).

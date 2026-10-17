@@ -105,7 +105,7 @@ class SettingsViewModel
             _languageTag.value = tag
         }
 
-        private val compassServiceGranted = MutableStateFlow(false)
+        private val screenServiceGranted = MutableStateFlow(false)
 
         /** Live mirror of [CaptureCoordinatesRepository] — same source the top-level Capture screen reads, no draft/save step. */
         private data class CaptureSnapshot(
@@ -277,19 +277,19 @@ class SettingsViewModel
             combine(
                 combine(snapshotFlow, draftStateFlow) { snapshot, draft -> Pair(snapshot, draft) },
                 combine(
-                    settingsRepository.getCompassTestTargetPackage(),
-                    settingsRepository.getCompassDisclosureChoice(),
+                    settingsRepository.getTapToWalkGamePackage(),
+                    settingsRepository.getAccessibilityDisclosureChoice(),
                     combine(
                         settingsRepository.getReconnectTapEnabled(),
                         settingsRepository.getReconnectTapDisclosureAccepted(),
                     ) { enabled, accepted -> enabled to accepted },
                 ) { pkg, choice, reconnect -> Triple(pkg, choice, reconnect) },
-                combine(compassServiceGranted, captureSnapshot) { granted, capture -> granted to capture },
+                combine(screenServiceGranted, captureSnapshot) { granted, capture -> granted to capture },
                 settingsRepository.getThemeMode(),
                 settingsRepository.getBaseAltitudeOverride(),
             ) {
                 (snapshot, draftState),
-                (compassTestTargetPackage, compassDisclosureChoice, reconnectTap),
+                (tapToWalkGamePackage, accessibilityDisclosureChoice, reconnectTap),
                 (isServiceGranted, capture),
                 themeMode,
                 baseAltitudeOverride,
@@ -346,10 +346,10 @@ class SettingsViewModel
                     capturePreviousBrowserPackage = capture.previousBrowserPackage,
                     captureSetupReset = capture.setupReset,
                     launchAfterLinkPackage = capture.launchAfterLinkPackage,
-                    compassTestTargetPackage = compassTestTargetPackage,
-                    isCompassServiceGranted = isServiceGranted,
-                    compassDisclosureAccepted =
-                        compassDisclosureChoice == AppConstants.CompassTrackingConstants.DISCLOSURE_ACCEPTED,
+                    tapToWalkGamePackage = tapToWalkGamePackage,
+                    isScreenServiceGranted = isServiceGranted,
+                    accessibilityDisclosureAccepted =
+                        accessibilityDisclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
                     reconnectTapEnabled = reconnectTap.first,
                     reconnectTapDisclosureAccepted = reconnectTap.second,
                     themeMode = themeMode,
@@ -590,8 +590,8 @@ class SettingsViewModel
             mutableDraft.update { it.copy(tapToWalkScaleMpx = scale) }
         }
 
-        fun setCompassDisclosureAccepted(accepted: Boolean) {
-            viewModelScope.launch { settingsRepository.recordCompassDisclosure(accepted) }
+        fun setAccessibilityDisclosureAccepted(accepted: Boolean) {
+            viewModelScope.launch { settingsRepository.recordAccessibilityDisclosure(accepted) }
         }
 
         fun setReconnectTapEnabled(enabled: Boolean) {
@@ -602,16 +602,16 @@ class SettingsViewModel
         fun acceptReconnectTapDisclosure() {
             viewModelScope.launch {
                 settingsRepository.setReconnectTapDisclosureAccepted(true)
-                settingsRepository.recordCompassDisclosure(true)
+                settingsRepository.recordAccessibilityDisclosure(true)
                 settingsRepository.setReconnectTapEnabled(true)
             }
         }
 
-        fun setCompassTestTargetPackage(packageName: String) {
-            viewModelScope.launch { settingsRepository.setCompassTestTargetPackage(packageName) }
+        fun setTapToWalkGamePackage(packageName: String) {
+            viewModelScope.launch { settingsRepository.setTapToWalkGamePackage(packageName) }
         }
 
-        /** Launchable apps for the compass-test app picker, queried once on first access. */
+        /** Launchable apps for the Tap to Walk game picker, queried once on first access. */
         internal val launchableApps: List<InstalledApp> by lazy {
             val pm = context.packageManager
             val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
@@ -631,12 +631,12 @@ class SettingsViewModel
             viewModelScope.launch { settingsRepository.setThemeMode(mode) }
         }
 
-        fun checkCompassServiceGranted() {
+        fun checkScreenServiceGranted() {
             val am = context.getSystemService(AccessibilityManager::class.java)
-            compassServiceGranted.value =
+            screenServiceGranted.value =
                 am
                     ?.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-                    ?.any { it.id.contains("CompassAccessibilityService") }
+                    ?.any { it.id.contains("ScreenAccessibilityService") }
                     ?: false
         }
 
