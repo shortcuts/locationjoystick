@@ -167,13 +167,13 @@ class SettingsViewModel
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
         /** Brings the game to the front, waits for it, then starts the walk; a not-ready app never leaves Settings. */
-        fun startCalibration(gamePackage: String) {
+        fun startCalibration() {
             if (!calibrationWalkOrchestrator.isReady) {
                 calibrationWalkOrchestrator.start() // records Failed(NOT_READY) for the section and toast
                 return
             }
             viewModelScope.launch {
-                context.packageManager.getLaunchIntentForPackage(gamePackage)?.let {
+                context.packageManager.getLaunchIntentForPackage(AppConstants.GameConstants.PACKAGE)?.let {
                     context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 }
                 delay(AppConstants.TapToWalkConstants.CALIBRATION_GAME_FOREGROUND_DELAY_MS)
@@ -277,13 +277,12 @@ class SettingsViewModel
             combine(
                 combine(snapshotFlow, draftStateFlow) { snapshot, draft -> Pair(snapshot, draft) },
                 combine(
-                    settingsRepository.getTapToWalkGamePackage(),
                     settingsRepository.getAccessibilityDisclosureChoice(),
                     combine(
                         settingsRepository.getReconnectTapEnabled(),
                         settingsRepository.getReconnectTapDisclosureAccepted(),
                     ) { enabled, accepted -> enabled to accepted },
-                ) { pkg, choice, reconnect -> Triple(pkg, choice, reconnect) },
+                ) { choice, reconnect -> choice to reconnect },
                 combine(screenServiceGranted, captureSnapshot, screenCaptureSource.reconnectStatus) { granted, capture, status ->
                     Triple(granted, capture, status)
                 },
@@ -291,7 +290,7 @@ class SettingsViewModel
                 settingsRepository.getBaseAltitudeOverride(),
             ) {
                 (snapshot, draftState),
-                (tapToWalkGamePackage, accessibilityDisclosureChoice, reconnectTap),
+                (accessibilityDisclosureChoice, reconnectTap),
                 (isServiceGranted, capture, reconnectStatus),
                 themeMode,
                 baseAltitudeOverride,
@@ -349,7 +348,6 @@ class SettingsViewModel
                     capturePreviousBrowserPackage = capture.previousBrowserPackage,
                     captureSetupReset = capture.setupReset,
                     launchAfterLinkPackage = capture.launchAfterLinkPackage,
-                    tapToWalkGamePackage = tapToWalkGamePackage,
                     isScreenServiceGranted = isServiceGranted,
                     accessibilityDisclosureAccepted =
                         accessibilityDisclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
@@ -610,11 +608,7 @@ class SettingsViewModel
             }
         }
 
-        fun setTapToWalkGamePackage(packageName: String) {
-            viewModelScope.launch { settingsRepository.setTapToWalkGamePackage(packageName) }
-        }
-
-        /** Launchable apps for the Tap to Walk game picker, queried once on first access. */
+        /** Launchable apps for the Capture launch-after-link picker, queried once on first access. */
         internal val launchableApps: List<InstalledApp> by lazy {
             val pm = context.packageManager
             val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)

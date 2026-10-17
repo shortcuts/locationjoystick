@@ -41,7 +41,6 @@ data class SettingsUiState(
     val floatingMapQuickWalk: Boolean = false,
     val tapToWalkOverlayEnabled: Boolean = false,
     val tapToWalkScaleMpx: Double = AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX,
-    val tapToWalkGamePackage: String = "",
     val isScreenServiceGranted: Boolean = false,
     val accessibilityDisclosureAccepted: Boolean = false,
     val reconnectTapEnabled: Boolean = false,

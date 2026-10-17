@@ -448,10 +448,6 @@ fun SettingsRoute(
                     viewModel.setTapToWalkScaleMpx(action.scale)
                 }
 
-                is SettingsAction.SetTapToWalkGamePackage -> {
-                    viewModel.setTapToWalkGamePackage(action.packageName)
-                }
-
                 is SettingsAction.SetAccessibilityDisclosureAccepted -> {
                     viewModel.setAccessibilityDisclosureAccepted(action.accepted)
                 }
@@ -558,7 +554,7 @@ internal fun SettingsScreen(
     onCheckScreenService: () -> Unit = {},
     calibrationState: CalibrationState = CalibrationState.Idle,
     groundCalibration: StoredGroundCalibration? = null,
-    onStartCalibration: (String) -> Unit = {},
+    onStartCalibration: () -> Unit = {},
     onCancelCalibration: () -> Unit = {},
     launchableApps: List<InstalledApp> = emptyList(),
     onNavigateUp: () -> Unit = {},
@@ -664,7 +660,6 @@ internal fun SettingsScreen(
                 groundCalibration = groundCalibration,
                 onStartCalibration = onStartCalibration,
                 onCancelCalibration = onCancelCalibration,
-                launchableApps = launchableApps,
                 bottomBar = bottomBar,
                 snackbarHost = snackbarHost,
             )

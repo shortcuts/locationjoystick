@@ -813,10 +813,6 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
         tapToWalkScaleWrite = scale
     }
 
-    override fun getTapToWalkGamePackage(): Flow<String> = flowOf("")
-
-    override suspend fun setTapToWalkGamePackage(packageName: String) = Unit
-
     override fun getAccessibilityDisclosureChoice(): Flow<String> = flowOf("")
 
     override fun getGroundCalibration(): Flow<com.locationjoystick.core.model.StoredGroundCalibration?> = flowOf(null)

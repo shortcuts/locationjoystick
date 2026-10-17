@@ -44,7 +44,7 @@ Capture is gated in the bridge that consumers call, not at each call site. Andro
 
 ### Why the service is named "screen helper"
 
-The service was renamed from an earlier name. Android keys enabled services by component name, so users who updated must turn it on again in Android's settings. Stored choices and the game package survive the rename through a key migration in the datastore module.
+The service was renamed from an earlier name. Android keys enabled services by component name, so users who updated must turn it on again in Android's settings. The stored disclosure choice survives the rename through a key migration in the datastore module.
 
 ### Platform limits
 
@@ -87,6 +87,8 @@ Accessibility services running in the background can be detected by some games. 
 ## Calibration walk
 
 The calibration walk fits a ground map for the player's game and screen, so that a tap on the screen maps to a metre offset rather than assuming north-up.
+
+Start launches the one supported game directly, with no picker, because the feature only works for that game (same rule as [bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)).
 
 Why it walks and does not teleport: a teleport would be a jump the game can flag, and the walk must not write the teleport cooldown. The walk uses the bench's measured speed. A faster profile risks the game's speed warning.
 

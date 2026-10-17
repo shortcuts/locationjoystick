@@ -149,11 +149,9 @@
     <string name="settings_menus_when_enabled_the_app_detects_your">"允许应用截取屏幕截图，点按行走校准和重新连接配件需要它。使用 Android 无障碍服务。注意：部分游戏会检测无障碍服务。"</string>
     <string name="settings_menus_accessibility_service">"无障碍服务"</string>
     <string name="settings_menus_open_settings">"打开设置"</string>
-    <string name="settings_menus_game_app">"游戏应用"</string>
     <string name="settings_menus_screen_service_enabled">"已启用"</string>
     <string name="settings_menus_screen_service_not_enabled">"未启用 — 点击打开 Android 设置"</string>
     <string name="settings_menus_screen_service_off_hint">"屏幕助手未开启，因此暂时无法使用。"</string>
-    <string name="settings_menus_select_app">"选择应用…"</string>
     <string name="settings_menus_app_features">"应用功能"</string>
     <string name="settings_menus_choose_which_quick_access_features_appea">"选择哪些快捷功能显示在悬浮窗和地图界面上，并可拖动排序。默认情况下两个界面共用同一顺序。"</string>
     <string name="settings_menus_widget">"悬浮窗"</string>
@@ -229,7 +227,6 @@
     <string name="settings_menus_calibration_start">"开始校准"</string>
     <string name="settings_menus_calibration_recalibrate">"重新校准"</string>
     <string name="settings_menus_calibration_cancel">"取消校准"</string>
-    <string name="settings_menus_calibration_need_app">"请先在上方选择你的游戏。"</string>
     <string name="settings_menus_calibration_walking">"正在行走第 %1$d 段，共 %2$d 段"</string>
     <string name="settings_menus_calibration_analysing">"正在分析第 %1$d 步，共 %2$d 步"</string>
     <string name="settings_menus_calibration_fail_not_ready">"请先启动虚拟位置：开始模拟，并停止任何行走、路线或漫游。"</string>

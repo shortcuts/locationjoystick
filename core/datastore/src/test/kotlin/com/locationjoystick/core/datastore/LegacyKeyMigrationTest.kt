@@ -18,9 +18,7 @@ class LegacyKeyMigrationTest {
     @get:Rule val tmp = TemporaryFolder()
 
     private val oldChoice = stringPreferencesKey("compass_disclosure_choice")
-    private val oldGame = stringPreferencesKey("compass_test_target_package")
     private val newChoice = stringPreferencesKey("accessibility_disclosure_choice")
-    private val newGame = stringPreferencesKey("tap_to_walk_game_package")
 
     // The seeding store must be closed before the migrating one opens the same file.
     private suspend fun seed(
@@ -33,12 +31,11 @@ class LegacyKeyMigrationTest {
     }
 
     @Test
-    fun `old keys become the new keys and vanish`() =
+    fun `old key becomes the new key and vanishes`() =
         runTest {
             val file = tmp.newFolder().resolve("p.preferences_pb")
             seed(file) {
                 it[oldChoice] = "accepted"
-                it[oldGame] = "com.example.game"
             }
             // Same file, fresh store with the migration: what the app does on first launch after update.
             val migrated =
@@ -47,9 +44,7 @@ class LegacyKeyMigrationTest {
                     .data
                     .first()
             assertEquals("accepted", migrated[newChoice])
-            assertEquals("com.example.game", migrated[newGame])
             assertNull(migrated[oldChoice])
-            assertNull(migrated[oldGame])
         }
 
     @Test

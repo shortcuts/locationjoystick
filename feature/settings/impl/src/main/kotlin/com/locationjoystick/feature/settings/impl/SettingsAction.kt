@@ -206,10 +206,6 @@ internal sealed class SettingsAction {
         val scale: Double,
     ) : SettingsAction()
 
-    data class SetTapToWalkGamePackage(
-        val packageName: String,
-    ) : SettingsAction()
-
     data class SetAccessibilityDisclosureAccepted(
         val accepted: Boolean,
     ) : SettingsAction()

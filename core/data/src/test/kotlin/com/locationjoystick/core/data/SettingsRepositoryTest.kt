@@ -1702,10 +1702,6 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setTapToWalkScaleMpx(scale: Double) = Unit
 
-    override fun getTapToWalkGamePackage(): Flow<String> = flowOf("")
-
-    override suspend fun setTapToWalkGamePackage(packageName: String) = Unit
-
     val groundCalibrationFlow = MutableStateFlow<StoredGroundCalibration?>(null)
 
     override fun getGroundCalibration(): Flow<StoredGroundCalibration?> = groundCalibrationFlow

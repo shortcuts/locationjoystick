@@ -5,7 +5,6 @@ import android.os.Build
 import android.provider.Settings
 import android.text.format.DateUtils
 import android.view.WindowManager
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
@@ -22,8 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -84,9 +81,8 @@ internal fun SettingsMenusSubScreen(
     onCheckScreenService: () -> Unit = {},
     calibrationState: CalibrationState = CalibrationState.Idle,
     groundCalibration: StoredGroundCalibration? = null,
-    onStartCalibration: (String) -> Unit = {},
+    onStartCalibration: () -> Unit = {},
     onCancelCalibration: () -> Unit = {},
-    launchableApps: List<InstalledApp> = emptyList(),
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
@@ -141,7 +137,6 @@ internal fun SettingsMenusSubScreen(
                                 groundCalibration,
                                 onStartCalibration,
                                 onCancelCalibration,
-                                launchableApps,
                             )
                         }
                         // Same API 30 floor as the screenshot the check depends on.
@@ -162,9 +157,8 @@ private fun TapToWalkSection(
     onAction: (SettingsAction) -> Unit,
     calibrationState: CalibrationState = CalibrationState.Idle,
     groundCalibration: StoredGroundCalibration? = null,
-    onStartCalibration: (String) -> Unit = {},
+    onStartCalibration: () -> Unit = {},
     onCancelCalibration: () -> Unit = {},
-    launchableApps: List<InstalledApp> = emptyList(),
 ) {
     val context = LocalContext.current
     var showEnableDisclosure by rememberSaveable { mutableStateOf(false) }
@@ -228,8 +222,6 @@ private fun TapToWalkSection(
                 ServiceOffHint(uiState, onAction)
             }
             if (uiState.isScreenServiceGranted) {
-                Spacer(Modifier.height(16.dp))
-                GameAppPicker(uiState, onAction, launchableApps)
                 Spacer(Modifier.height(16.dp))
                 GroundCalibrationSection(uiState, calibrationState, groundCalibration, onStartCalibration, onCancelCalibration)
             }
@@ -485,52 +477,6 @@ private fun ServiceOffHint(
         )
         Spacer(Modifier.width(8.dp))
         OpenSettingsButton(uiState, onAction)
-    }
-}
-
-@Composable
-private fun GameAppPicker(
-    uiState: SettingsUiState,
-    onAction: (SettingsAction) -> Unit,
-    launchableApps: List<InstalledApp>,
-) {
-    var appPickerExpanded by remember { mutableStateOf(false) }
-    val selectedApp = launchableApps.find { it.packageName == uiState.tapToWalkGamePackage }
-    Text(stringResource(R.string.settings_menus_game_app), style = MaterialTheme.typography.bodyLarge)
-    Spacer(Modifier.height(4.dp))
-    Box(modifier = Modifier.fillMaxWidth()) {
-        val chevronRotation by animateFloatAsState(
-            targetValue = if (appPickerExpanded) 180f else 0f,
-            label = "gameAppChevronRotation",
-        )
-        LjOutlinedButton(onClick = { appPickerExpanded = true }, modifier = Modifier.fillMaxWidth()) {
-            Text(
-                selectedApp?.label ?: stringResource(R.string.settings_menus_select_app),
-                modifier = Modifier.weight(1f),
-                color =
-                    if (selectedApp != null) {
-                        MaterialTheme.colorScheme.onSurface
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-            )
-            Icon(
-                LjIcons.ArrowDropDown,
-                contentDescription = null,
-                modifier = Modifier.graphicsLayer { rotationZ = chevronRotation },
-            )
-        }
-        DropdownMenu(expanded = appPickerExpanded, onDismissRequest = { appPickerExpanded = false }) {
-            launchableApps.forEach { app ->
-                DropdownMenuItem(
-                    text = { Text(app.label) },
-                    onClick = {
-                        onAction(SettingsAction.SetTapToWalkGamePackage(app.packageName))
-                        appPickerExpanded = false
-                    },
-                )
-            }
-        }
     }
 }
 
@@ -858,12 +804,11 @@ private fun GroundCalibrationSection(
     uiState: SettingsUiState,
     state: CalibrationState,
     stored: StoredGroundCalibration?,
-    onStart: (String) -> Unit,
+    onStart: () -> Unit,
     onCancel: () -> Unit,
 ) {
     val context = LocalContext.current
     val running = state is CalibrationState.Walking || state is CalibrationState.Analysing
-    val hasGame = uiState.tapToWalkGamePackage.isNotEmpty()
     // Same stale-screen test as the tap overlay: a record only applies to the size it was fitted on.
     val wrongScreen =
         stored != null &&
@@ -925,19 +870,11 @@ private fun GroundCalibrationSection(
     if (running) {
         LjOutlinedButton(onClick = onCancel) { Text(stringResource(R.string.settings_menus_calibration_cancel)) }
     } else {
-        LjButton(onClick = { onStart(uiState.tapToWalkGamePackage) }, enabled = hasGame) {
+        LjButton(onClick = onStart) {
             Text(
                 stringResource(
                     if (stored != null) R.string.settings_menus_calibration_recalibrate else R.string.settings_menus_calibration_start,
                 ),
-            )
-        }
-        if (!hasGame) {
-            Spacer(Modifier.height(4.dp))
-            Text(
-                stringResource(R.string.settings_menus_calibration_need_app),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

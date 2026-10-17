@@ -389,10 +389,6 @@ class SettingsRepository
 
         suspend fun setGroundCalibration(value: StoredGroundCalibration?) = dataSource.setGroundCalibration(value)
 
-        fun getTapToWalkGamePackage(): Flow<String> = dataSource.getTapToWalkGamePackage()
-
-        suspend fun setTapToWalkGamePackage(packageName: String) = dataSource.setTapToWalkGamePackage(packageName)
-
         fun getAccessibilityDisclosureChoice(): Flow<String> = dataSource.getAccessibilityDisclosureChoice()
 
         fun getAccessibilityDisclosureAccepted(): Flow<Boolean> =

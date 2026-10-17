@@ -387,9 +387,6 @@ interface PreferencesDataSource {
 
     suspend fun setTapToWalkScaleMpx(scale: Double)
 
-    /** Gets the package name of the game app Tap to Walk switches to. Empty if unset. */
-    fun getTapToWalkGamePackage(): Flow<String>
-
     fun getAccessibilityDisclosureChoice(): Flow<String>
 
     /**
@@ -400,9 +397,6 @@ interface PreferencesDataSource {
 
     /** Stores [value]; null removes it. */
     suspend fun setGroundCalibration(value: StoredGroundCalibration?)
-
-    /** Sets the package name of the game app Tap to Walk switches to. */
-    suspend fun setTapToWalkGamePackage(packageName: String)
 
     suspend fun setAccessibilityDisclosureChoice(choice: String)
 
@@ -652,7 +646,6 @@ class AppPreferencesDataSource
             val FLOATING_MAP_QUICK_WALK = booleanPreferencesKey("floating_map_quick_walk")
             val TAP_TO_WALK_OVERLAY_ENABLED = booleanPreferencesKey("tap_to_walk_overlay_enabled")
             val TAP_TO_WALK_SCALE_MPX = doublePreferencesKey("tap_to_walk_scale_mpx")
-            val TAP_TO_WALK_GAME_PACKAGE = stringPreferencesKey("tap_to_walk_game_package")
             val ACCESSIBILITY_DISCLOSURE_CHOICE = stringPreferencesKey("accessibility_disclosure_choice")
             val TAP_TO_WALK_GROUND_CALIBRATION = stringPreferencesKey("tap_to_walk_ground_calibration")
             val RECONNECT_TAP_ENABLED = booleanPreferencesKey("reconnect_tap_enabled")
@@ -1190,10 +1183,6 @@ class AppPreferencesDataSource
         override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) = setPref(Keys.TAP_TO_WALK_OVERLAY_ENABLED, enabled)
 
         override suspend fun setTapToWalkScaleMpx(scale: Double) = setPref(Keys.TAP_TO_WALK_SCALE_MPX, scale)
-
-        override fun getTapToWalkGamePackage(): Flow<String> = pref(Keys.TAP_TO_WALK_GAME_PACKAGE, "")
-
-        override suspend fun setTapToWalkGamePackage(packageName: String) = setPref(Keys.TAP_TO_WALK_GAME_PACKAGE, packageName)
 
         override fun getAccessibilityDisclosureChoice(): Flow<String> =
             pref(Keys.ACCESSIBILITY_DISCLOSURE_CHOICE, AppConstants.AccessibilityConstants.DISCLOSURE_UNANSWERED)
