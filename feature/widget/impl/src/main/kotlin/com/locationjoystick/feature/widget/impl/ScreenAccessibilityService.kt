@@ -94,7 +94,9 @@ class ScreenAccessibilityService :
                                 AppConstants.ReconnectTapConstants.CHECK_INTERVAL_MS
                             },
                         )
-                        runReconnectCheck()
+                        guardedReconnectCheck(
+                            onError = { Log.e(TAG, "Reconnect check failed; next interval retries", it) },
+                        ) { runReconnectCheck() }
                     }
                 }
         }

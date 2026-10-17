@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.widget.impl
 
 import com.locationjoystick.core.common.constants.AppConstants.ReconnectTapConstants
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.math.cos
@@ -85,4 +86,21 @@ internal suspend fun runReconnectTap(
         }
     }
     return ReconnectRunResult.FAILED
+}
+
+/**
+ * Runs one periodic check so a throwing screenshot, bitmap copy, detector or gesture only skips this
+ * interval instead of ending the loop. Cancellation still propagates.
+ */
+internal suspend fun guardedReconnectCheck(
+    onError: (Exception) -> Unit,
+    check: suspend () -> Unit,
+) {
+    try {
+        check()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        onError(e)
+    }
 }

@@ -4,6 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.random.Random
@@ -146,4 +147,20 @@ class ReconnectTapRunnerTest {
         assertTrue(points.all { (x, y) -> x in 875..925 && y in 175..225 })
         assertTrue(points.toSet().size > 20)
     }
+
+    @Test
+    fun `throwing check does not stop later checks`() =
+        runTest {
+            var runs = 0
+            repeat(3) { guardedReconnectCheck({}) { if (++runs == 1) error("boom") } }
+            assertEquals(3, runs)
+        }
+
+    @Test
+    fun `cancellation still propagates`() =
+        runTest {
+            assertThrows(kotlinx.coroutines.CancellationException::class.java) {
+                kotlinx.coroutines.runBlocking { guardedReconnectCheck({}) { throw kotlinx.coroutines.CancellationException("c") } }
+            }
+        }
 }
