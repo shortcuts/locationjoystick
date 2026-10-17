@@ -106,6 +106,13 @@
     <string name="settings_menus_reconnect_accessory">"Reconnect accessory"</string>
     <string name="settings_menus_reconnect_accessory_description">"Every minute, checks whether your accessory shows as disconnected and taps its connect button."</string>
     <string name="settings_menus_reconnect_accessory_automatically">"Reconnect accessory automatically"</string>
+    <string name="settings_menus_reconnect_status_none">"No checks yet"</string>
+    <string name="settings_menus_reconnect_status_line">"Last check %1$s: %2$s"</string>
+    <string name="settings_menus_reconnect_status_not_off">"No reconnect needed"</string>
+    <string name="settings_menus_reconnect_status_reconnected">"Reconnected"</string>
+    <string name="settings_menus_reconnect_status_failed">"Failed"</string>
+    <string name="settings_menus_reconnect_status_gate_closed">"Game not in front"</string>
+    <string name="settings_menus_reconnect_status_not_found">"Control not found"</string>
     <string name="settings_menus_tap_to_walk">"Tap to Walk"</string>
     <string name="settings_menus_walk_to_a_location_by_tapping">"Walk to a location by tapping it, with no confirmation."</string>
     <string name="settings_menus_menus">"Menus"</string>

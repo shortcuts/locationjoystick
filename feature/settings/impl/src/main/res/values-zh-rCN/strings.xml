@@ -106,6 +106,13 @@
     <string name="settings_menus_reconnect_accessory">"重新连接配件"</string>
     <string name="settings_menus_reconnect_accessory_description">"每 5 分钟检查一次你的配件是否显示为已断开，并点击其连接按钮。"</string>
     <string name="settings_menus_reconnect_accessory_automatically">"自动重新连接配件"</string>
+    <string name="settings_menus_reconnect_status_none">"尚未检查"</string>
+    <string name="settings_menus_reconnect_status_line">"上次检查 %1$s：%2$s"</string>
+    <string name="settings_menus_reconnect_status_not_off">"无需重新连接"</string>
+    <string name="settings_menus_reconnect_status_reconnected">"已重新连接"</string>
+    <string name="settings_menus_reconnect_status_failed">"失败"</string>
+    <string name="settings_menus_reconnect_status_gate_closed">"游戏不在前台"</string>
+    <string name="settings_menus_reconnect_status_not_found">"未找到控件"</string>
     <string name="settings_menus_tap_to_walk">"点击行走"</string>
     <string name="settings_menus_walk_to_a_location_by_tapping">"点击某个位置即可走向它 — 无需确认。"</string>
     <string name="settings_menus_menus">"菜单"</string>

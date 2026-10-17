@@ -2,6 +2,8 @@ package com.locationjoystick.core.location
 
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.GrayImage
+import com.locationjoystick.core.model.ReconnectRunResult
+import com.locationjoystick.core.model.ReconnectStatus
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
@@ -46,4 +48,14 @@ class ScreenCaptureSourceTest {
         runTest {
             assertNull(source(accepted = true, bound = false).captureGrayFrame())
         }
+
+    @Test
+    fun `reconnect status is reported and cleared on unbind`() {
+        val source = source(accepted = true)
+        val status = ReconnectStatus(ReconnectRunResult.GATE_CLOSED, 42L)
+        source.reportReconnect(status)
+        assertEquals(status, source.reconnectStatus.value)
+        source.unbind()
+        assertNull(source.reconnectStatus.value)
+    }
 }

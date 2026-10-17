@@ -20,6 +20,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.ScreenAccessibilityServiceBridge
 import com.locationjoystick.core.location.ScreenCaptureSource
 import com.locationjoystick.core.model.GrayImage
+import com.locationjoystick.core.model.ReconnectStatus
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -93,6 +94,7 @@ class ScreenAccessibilityService :
                 ::reconnectLoopActive,
             ).distinctUntilChanged()
                 .collectLatest { active ->
+                    if (!active) screenCaptureSource.reportReconnect(null)
                     while (active) {
                         delay(
                             if (BuildConfig.DEBUG) {
@@ -135,6 +137,7 @@ class ScreenAccessibilityService :
                 },
             )
         Log.d(TAG, "Reconnect check: $result")
+        screenCaptureSource.reportReconnect(ReconnectStatus(result, System.currentTimeMillis()))
         if (failureStreak.record(result)) {
             postReconnectNotification(
                 R.string.reconnect_failed_title,

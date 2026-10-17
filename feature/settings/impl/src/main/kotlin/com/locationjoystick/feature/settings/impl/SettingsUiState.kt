@@ -5,6 +5,7 @@ import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.MapTileSource
+import com.locationjoystick.core.model.ReconnectStatus
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.ThemeMode
@@ -45,6 +46,7 @@ data class SettingsUiState(
     val accessibilityDisclosureAccepted: Boolean = false,
     val reconnectTapEnabled: Boolean = false,
     val reconnectTapDisclosureAccepted: Boolean = false,
+    val reconnectStatus: ReconnectStatus? = null,
     val themeMode: ThemeMode = ThemeMode.DARK,
     val hideTeleportFeatures: Boolean = false,
     val hideWidgetOverlay: Boolean = false,

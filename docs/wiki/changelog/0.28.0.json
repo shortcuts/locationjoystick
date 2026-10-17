@@ -4,6 +4,7 @@
   "entries": [
     { "category": "feat", "scope": "Map", "summary": "A share icon on the map, floating map and long-press sheet copies coordinates or shares a link to a location. It replaces the Share this location button." },
     { "category": "feat", "scope": "Settings", "summary": "Pick your game during first setup: Default, Pokémon Go or Pikmin Bloom. It only hides features you do not need. Change it any time in Settings > General > Game setup." },
+    { "category": "feat", "scope": "Reconnect accessory", "summary": "Settings now shows when the last check ran and what it found, under the Reconnect switch." },
     { "category": "fix", "scope": "Tap to Walk", "summary": "The accessibility helper is now called locationjoystick screen helper. After updating, turn it on again in Android Accessibility settings." }
   ]
 }

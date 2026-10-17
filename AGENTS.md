@@ -175,7 +175,7 @@ Rules:
 | `ReconnectControlDetector` | `:feature:widget:impl` | Object | Classifies the target app's reconnect control from screenshot pixels. See [features/bluetooth-reconnect-tap.md](docs/features/bluetooth-reconnect-tap.md). |
 | `Geocoding` / `GeocodingProvider` | `:core:common` | Object + interface | Search and reverse lookup entry point. Falls back between providers with a shared cooldown. |
 | `CalibrationWalkOrchestrator` | `:core:location` | Class (`@Singleton`) | Runs the calibration walk and stores the result per device. See [features/tap-to-walk.md](docs/features/tap-to-walk.md). |
-| `ScreenCaptureSource` | `:core:location` | Class (`@Singleton`) | Bridges the screen accessibility service to consumers. Capture is gated on the in-app disclosure. |
+| `ScreenCaptureSource` | `:core:location` | Class (`@Singleton`) | Bridges the screen accessibility service to consumers. Capture is gated on the in-app disclosure. Also carries the in-memory reconnect status for Settings. |
 
 ---
 

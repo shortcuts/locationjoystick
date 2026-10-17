@@ -1,10 +1,12 @@
 package com.locationjoystick.feature.widget.impl
 
 import com.locationjoystick.core.common.constants.AppConstants
-import com.locationjoystick.feature.widget.impl.ReconnectRunResult.FAILED
-import com.locationjoystick.feature.widget.impl.ReconnectRunResult.NOT_FOUND
-import com.locationjoystick.feature.widget.impl.ReconnectRunResult.NOT_OFF
-import com.locationjoystick.feature.widget.impl.ReconnectRunResult.RECONNECTED
+import com.locationjoystick.core.model.ReconnectRunResult
+import com.locationjoystick.core.model.ReconnectRunResult.FAILED
+import com.locationjoystick.core.model.ReconnectRunResult.GATE_CLOSED
+import com.locationjoystick.core.model.ReconnectRunResult.NOT_FOUND
+import com.locationjoystick.core.model.ReconnectRunResult.NOT_OFF
+import com.locationjoystick.core.model.ReconnectRunResult.RECONNECTED
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -22,6 +24,11 @@ class ReconnectFailureStreakTest {
     @Test
     fun `not off neither counts nor resets`() {
         assertEquals(listOf(false, false, false, true), run(FAILED, NOT_OFF, FAILED, FAILED))
+    }
+
+    @Test
+    fun `gate closed neither counts nor resets`() {
+        assertEquals(listOf(false, false, false, true), run(FAILED, GATE_CLOSED, FAILED, FAILED))
     }
 
     @Test
@@ -49,7 +56,7 @@ class ReconnectFailureStreakTest {
         val first = List(n + 2) { streak.record(NOT_FOUND) }
         assertEquals(List(n - 1) { false } + true + false + false, first)
         streak.record(NOT_FOUND)
-        assertEquals(false, streak.record(NOT_OFF))
+        assertEquals(false, streak.record(GATE_CLOSED))
         val second = List(n) { streak.record(NOT_FOUND) }
         assertEquals(List(n - 1) { false } + true, second)
     }

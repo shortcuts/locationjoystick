@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.widget.impl
 
 import com.locationjoystick.core.model.GuidedPath
+import com.locationjoystick.core.model.ReconnectRunResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
@@ -210,7 +211,7 @@ class ReconnectTapRunnerTest {
                     taps++
                     true
                 }, gate = { false })
-            assertEquals(ReconnectRunResult.NOT_OFF, result)
+            assertEquals(ReconnectRunResult.GATE_CLOSED, result)
             assertEquals(0, captures)
             assertEquals(0, taps)
         }
@@ -226,7 +227,7 @@ class ReconnectTapRunnerTest {
                     taps++
                     true
                 }, gate = { ++gateCalls < 3 })
-            assertEquals(ReconnectRunResult.NOT_OFF, result)
+            assertEquals(ReconnectRunResult.GATE_CLOSED, result)
             assertEquals(0, taps)
         }
 }

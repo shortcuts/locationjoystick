@@ -2,6 +2,10 @@ package com.locationjoystick.core.location
 
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.GrayImage
+import com.locationjoystick.core.model.ReconnectStatus
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -9,7 +13,8 @@ import javax.inject.Singleton
 /**
  * Bridge between [ScreenAccessibilityService] (in feature:widget:impl) and consumers
  * (e.g. the calibration walk). The service binds/unbinds itself; consumers call
- * [captureGrayFrame] which delegates to the live service instance.
+ * [captureGrayFrame] which delegates to the live service instance. It also carries the last
+ * reconnect check ([reconnectStatus]) to Settings, in memory only.
  */
 @Singleton
 class ScreenCaptureSource
@@ -25,6 +30,15 @@ class ScreenCaptureSource
 
         fun unbind() {
             service = null
+            reportReconnect(null)
+        }
+
+        private val _reconnectStatus = MutableStateFlow<ReconnectStatus?>(null)
+        val reconnectStatus: StateFlow<ReconnectStatus?> = _reconnectStatus.asStateFlow()
+
+        /** Null clears the line (loop stopped or service gone). */
+        fun reportReconnect(status: ReconnectStatus?) {
+            _reconnectStatus.value = status
         }
 
         val isAvailable: Boolean get() = service != null

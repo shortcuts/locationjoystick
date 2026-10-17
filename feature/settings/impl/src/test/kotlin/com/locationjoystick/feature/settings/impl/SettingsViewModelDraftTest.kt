@@ -8,6 +8,7 @@ import com.locationjoystick.core.data.HotLocationsRepository
 import com.locationjoystick.core.data.HotRoutesRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.location.ScreenCaptureSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.SpeedUnit
@@ -71,6 +72,7 @@ class SettingsViewModelDraftTest {
                         io.mockk.every { state } returns
                             kotlinx.coroutines.flow.MutableStateFlow(com.locationjoystick.core.location.CalibrationState.Idle)
                     },
+                screenCaptureSource = ScreenCaptureSource(settingsRepo),
                 context = context,
             )
     }

@@ -70,6 +70,10 @@ The proof is run by the reconnect matrix script in `scripts/`. Its raw rows are 
 
 The check runs in the background, so the user cannot see it fail. `ReconnectFailureStreak` counts consecutive `FAILED` runs and tells the service to post one notification per streak. `NOT_OFF` is neutral: an absent or unknown control looks the same as "connected" or "left the game", so counting it would warn users who simply closed the game. A `RECONNECTED` run re-arms the streak. The streak is in memory only; a process restart at worst delays one notification. `ReconnectNotFoundStreak` covers the case NOT_OFF hides: the game is in front (the gate) yet the first read finds no control for `NOT_FOUND_NOTIFY_THRESHOLD` checks in a row, which means the HUD moved or the colours changed and reconnect has silently stopped. It posts one notification per streak on the same channel; any other result, including a closed gate, re-arms it. Also in memory only. The notification has its own channel because the foreground-service channels are silent or hidden.
 
+## Status line
+
+Settings shows the last check's result because the loop is invisible otherwise. It travels through `ScreenCaptureSource` (the existing service-to-core bridge), in memory only: a persisted "last check" would mislead after a reboot, so it clears when the loop stops or the service unbinds. `GATE_CLOSED` is its own result so "game not in front" is not read as "connected"; both streaks treat it as neutral.
+
 ## Open work
 
 - Prove reliability on real devices: repeated disconnect and reconnect cycles, with the adapter-toggle faithfulness measured first.

@@ -25,6 +25,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.location.CalibrationState
 import com.locationjoystick.core.location.CalibrationWalkOrchestrator
+import com.locationjoystick.core.location.ScreenCaptureSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
@@ -79,6 +80,7 @@ class SettingsViewModel
         private val exportSyncClient: ExportSyncClient,
         private val nsdCodeManager: NsdCodeManager,
         private val calibrationWalkOrchestrator: CalibrationWalkOrchestrator,
+        private val screenCaptureSource: ScreenCaptureSource,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
         companion object {
@@ -282,13 +284,15 @@ class SettingsViewModel
                         settingsRepository.getReconnectTapDisclosureAccepted(),
                     ) { enabled, accepted -> enabled to accepted },
                 ) { pkg, choice, reconnect -> Triple(pkg, choice, reconnect) },
-                combine(screenServiceGranted, captureSnapshot) { granted, capture -> granted to capture },
+                combine(screenServiceGranted, captureSnapshot, screenCaptureSource.reconnectStatus) { granted, capture, status ->
+                    Triple(granted, capture, status)
+                },
                 settingsRepository.getThemeMode(),
                 settingsRepository.getBaseAltitudeOverride(),
             ) {
                 (snapshot, draftState),
                 (tapToWalkGamePackage, accessibilityDisclosureChoice, reconnectTap),
-                (isServiceGranted, capture),
+                (isServiceGranted, capture, reconnectStatus),
                 themeMode,
                 baseAltitudeOverride,
                 ->
@@ -338,6 +342,7 @@ class SettingsViewModel
                     altitudeOverrideButtonEnabled =
                         draftState.altitudeOverrideButtonEnabled ?: snapshot.altitudeOverrideButtonEnabled,
                     debugStatsEnabled = draftState.debugStatsEnabled ?: snapshot.debugStatsEnabled,
+                    reconnectStatus = reconnectStatus,
                     captureModeEnabled = capture.modeEnabled,
                     captureEnabled = capture.captureEnabled,
                     jumpEnabled = capture.jumpEnabled,

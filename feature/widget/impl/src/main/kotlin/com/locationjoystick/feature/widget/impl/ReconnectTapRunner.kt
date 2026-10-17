@@ -3,6 +3,7 @@ package com.locationjoystick.feature.widget.impl
 import com.locationjoystick.core.common.constants.AppConstants.GameConstants
 import com.locationjoystick.core.common.constants.AppConstants.ReconnectTapConstants
 import com.locationjoystick.core.model.GuidedPath
+import com.locationjoystick.core.model.ReconnectRunResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlin.math.PI
@@ -11,9 +12,6 @@ import kotlin.math.ln
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import kotlin.random.Random
-
-/** NOT_FOUND: the game was in front but the first read found no control (HUD moved or colours changed). */
-enum class ReconnectRunResult { NOT_OFF, NOT_FOUND, RECONNECTED, FAILED }
 
 /**
  * Counts consecutive FAILED runs; [record] returns true once per streak when it is time to tell the
@@ -25,7 +23,7 @@ internal class ReconnectFailureStreak {
 
     fun record(result: ReconnectRunResult): Boolean {
         when (result) {
-            ReconnectRunResult.NOT_OFF, ReconnectRunResult.NOT_FOUND -> return false
+            ReconnectRunResult.NOT_OFF, ReconnectRunResult.NOT_FOUND, ReconnectRunResult.GATE_CLOSED -> return false
             ReconnectRunResult.RECONNECTED -> {
                 failures = 0
                 notified = false
@@ -106,7 +104,7 @@ internal suspend fun runReconnectTap(
         )
     } catch (_: GateClosed) {
         // Left the game or screen off mid-run: neutral, so it never counts toward the failure streak.
-        ReconnectRunResult.NOT_OFF
+        ReconnectRunResult.GATE_CLOSED
     }
 
 private suspend fun runGated(
