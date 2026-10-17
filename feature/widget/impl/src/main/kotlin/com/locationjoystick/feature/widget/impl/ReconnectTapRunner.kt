@@ -11,6 +11,30 @@ import kotlin.random.Random
 
 enum class ReconnectRunResult { NOT_OFF, RECONNECTED, FAILED }
 
+/**
+ * Counts consecutive FAILED runs; [record] returns true once per streak when it is time to tell the
+ * user. NOT_OFF is neutral (an absent control looks the same as connected); RECONNECTED re-arms.
+ */
+internal class ReconnectFailureStreak {
+    private var failures = 0
+    private var notified = false
+
+    fun record(result: ReconnectRunResult): Boolean {
+        when (result) {
+            ReconnectRunResult.NOT_OFF -> return false
+            ReconnectRunResult.RECONNECTED -> {
+                failures = 0
+                notified = false
+                return false
+            }
+            ReconnectRunResult.FAILED -> failures++
+        }
+        if (failures < ReconnectTapConstants.FAILURE_NOTIFY_THRESHOLD || notified) return false
+        notified = true
+        return true
+    }
+}
+
 /** Control center plus a Gaussian offset, clamped to stay inside the ball. Screen pixels. */
 internal fun jitteredTapPoint(
     control: ReconnectControl,

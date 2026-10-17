@@ -62,6 +62,10 @@ The earlier failures were diagnosed as a timing fault, not a detection fault. Th
 
 The proof is run by the reconnect matrix script in `scripts/`. Its raw rows are not committed.
 
+## Failure notification
+
+The check runs in the background, so the user cannot see it fail. `ReconnectFailureStreak` counts consecutive `FAILED` runs and tells the service to post one notification per streak. `NOT_OFF` is neutral: an absent or unknown control looks the same as "connected" or "left the game", so counting it would warn users who simply closed the game. A `RECONNECTED` run re-arms the streak. The streak is in memory only; a process restart at worst delays one notification. The notification has its own channel because the foreground-service channels are silent or hidden.
+
 ## Open work
 
 - Prove reliability on real devices: repeated disconnect and reconnect cycles, with the adapter-toggle faithfulness measured first.

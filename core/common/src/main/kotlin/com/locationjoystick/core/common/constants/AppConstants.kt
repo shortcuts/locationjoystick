@@ -302,9 +302,11 @@ object AppConstants {
     object NotificationConstants {
         const val ID_ACTIVE = 1001
         const val ID_PERMISSION_ERROR = 1002
+        const val ID_RECONNECT_FAILED = 1003
         const val CHANNEL_ID_ACTIVE = "location_spoof_channel"
         const val CHANNEL_ID_PERMISSION_ERROR = "location_perm_error_channel"
         const val CHANNEL_ID_ACTIVE_MINIMIZED = "location_spoof_channel_minimized"
+        const val CHANNEL_ID_RECONNECT_FAILED = "reconnect_failed_channel"
 
         // User-visible channel/notification text lives in :core:location's strings.xml
         // (MockLocationNotification.kt), not here — only technical IDs stay in AppConstants.
@@ -634,6 +636,9 @@ object AppConstants {
         const val SETTLE_POLL_READS = 5
         const val SETTLE_POLL_INTERVAL_MS = 2000L
         const val MAX_TAPS = 3
+
+        // Consecutive FAILED runs before the user is told; fixed, no setting.
+        const val FAILURE_NOTIFY_THRESHOLD = 3
 
         // Gesture stroke length and tap offset spread, as fractions of the screen width (the ball
         // is ~7.2% wide, so sigma 1.1% / clamp 2.5% keeps the tap inside it).

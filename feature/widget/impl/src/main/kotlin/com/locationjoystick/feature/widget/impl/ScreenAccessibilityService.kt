@@ -2,12 +2,17 @@ package com.locationjoystick.feature.widget.impl
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.graphics.Bitmap
 import android.graphics.Path
 import android.os.Build
 import android.util.Log
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.ScreenAccessibilityServiceBridge
@@ -46,6 +51,9 @@ class ScreenAccessibilityService :
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
+    // In memory only: a process restart at worst delays one notification.
+    private val failureStreak = ReconnectFailureStreak()
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         if (!isSupported()) {
@@ -53,6 +61,13 @@ class ScreenAccessibilityService :
             return
         }
         screenCaptureSource.bind(this)
+        getSystemService(NotificationManager::class.java).createNotificationChannel(
+            NotificationChannel(
+                AppConstants.NotificationConstants.CHANNEL_ID_RECONNECT_FAILED,
+                getString(R.string.reconnect_failed_channel_name),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ),
+        )
         Log.d(TAG, "Service connected — bound to ScreenCaptureSource")
         startReconnectLoop()
     }
@@ -110,6 +125,28 @@ class ScreenAccessibilityService :
                 },
             )
         Log.d(TAG, "Reconnect check: $result")
+        if (failureStreak.record(result)) postReconnectFailedNotification()
+    }
+
+    private fun postReconnectFailedNotification() {
+        val manager = NotificationManagerCompat.from(this)
+        if (!manager.areNotificationsEnabled()) return
+        val openApp =
+            packageManager.getLaunchIntentForPackage(packageName)?.let {
+                PendingIntent.getActivity(this, 0, it, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            }
+        val notification =
+            NotificationCompat
+                .Builder(this, AppConstants.NotificationConstants.CHANNEL_ID_RECONNECT_FAILED)
+                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setContentTitle(getString(R.string.reconnect_failed_title))
+                .setContentText(getString(R.string.reconnect_failed_text))
+                .setContentIntent(openApp)
+                .setAutoCancel(true)
+                .build()
+        // areNotificationsEnabled() above covers the POST_NOTIFICATIONS check lint cannot trace.
+        @Suppress("MissingPermission")
+        manager.notify(AppConstants.NotificationConstants.ID_RECONNECT_FAILED, notification)
     }
 
     private suspend fun dispatchTap(

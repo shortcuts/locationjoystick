@@ -55,4 +55,7 @@
     <string name="widget_feature_speed_cycle_cd">"Speed cycle"</string>
     <string name="widget_feature_open_map_cd">"Open map"</string>
     <string name="tap_to_walk_overlay_not_calibrated_hint">"Not calibrated: taps assume north-up. Calibrate in Settings."</string>
+    <string name="reconnect_failed_channel_name">"Accessory reconnect"</string>
+    <string name="reconnect_failed_title">"Accessory did not reconnect"</string>
+    <string name="reconnect_failed_text">"Reconnecting your accessory failed several times in a row. Open the app to check."</string>
 </resources>
