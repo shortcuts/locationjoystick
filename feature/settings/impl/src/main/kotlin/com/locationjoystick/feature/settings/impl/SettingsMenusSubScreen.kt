@@ -126,6 +126,10 @@ internal fun SettingsMenusSubScreen(
                         AppFeaturesSection(uiState, isRooted, onAction)
                         SettingsSectionDivider()
                         SpeedCycleSection(uiState, onAction)
+                        if (showsScreenAccessBlock(Build.VERSION.SDK_INT, tapToWalkOn(uiState), reconnectOn(uiState))) {
+                            SettingsSectionDivider()
+                            ScreenAccessSection(uiState, onAction)
+                        }
                         if (uiState.guidedPath.showsTapToWalk) {
                             SettingsSectionDivider()
                             TapToWalkSection(
@@ -211,9 +215,13 @@ private fun TapToWalkSection(
         )
         // takeScreenshot(int, Executor, TakeScreenshotCallback) requires API 30 — no fallback exists.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Spacer(Modifier.height(16.dp))
-            ScreenAccessSection(uiState, onAction, launchableApps)
+            if (showsServiceOffHint(enabled, uiState.isScreenServiceGranted)) {
+                Spacer(Modifier.height(12.dp))
+                ServiceOffHint(uiState, onAction)
+            }
             if (uiState.isScreenServiceGranted) {
+                Spacer(Modifier.height(16.dp))
+                GameAppPicker(uiState, onAction, launchableApps)
                 Spacer(Modifier.height(16.dp))
                 GroundCalibrationSection(uiState, calibrationState, groundCalibration, onStartCalibration, onCancelCalibration)
             }
@@ -282,6 +290,10 @@ private fun ReconnectTapSection(
             }
         },
     )
+    if (showsServiceOffHint(uiState.reconnectTapEnabled, uiState.isScreenServiceGranted)) {
+        Spacer(Modifier.height(12.dp))
+        ServiceOffHint(uiState, onAction)
+    }
     if (showDisclosure) {
         AccessibilityDisclosureDialog(
             title = stringResource(R.string.settings_menus_reconnect_accessory),
@@ -322,6 +334,22 @@ internal fun showsReconnectDisclosure(
     accessibilityAccepted: Boolean,
 ): Boolean = !reconnectAccepted && !accessibilityAccepted
 
+internal fun showsScreenAccessBlock(
+    sdkInt: Int,
+    tapToWalkOn: Boolean,
+    reconnectOn: Boolean,
+): Boolean = sdkInt >= Build.VERSION_CODES.R && (tapToWalkOn || reconnectOn)
+
+internal fun showsServiceOffHint(
+    featureOn: Boolean,
+    serviceGranted: Boolean,
+): Boolean = featureOn && !serviceGranted
+
+// A switch on a section the guided path hides does not count: the user cannot see it.
+private fun tapToWalkOn(ui: SettingsUiState) = ui.guidedPath.showsTapToWalk && ui.tapToWalkOverlayEnabled
+
+private fun reconnectOn(ui: SettingsUiState) = ui.guidedPath.showsReconnectAccessory && ui.reconnectTapEnabled
+
 internal fun showsAccessibilityOpenSettingsDisclosure(accessibilityAccepted: Boolean): Boolean = !accessibilityAccepted
 
 private fun openAccessibilitySettings(context: android.content.Context) {
@@ -334,13 +362,7 @@ private fun openAccessibilitySettings(context: android.content.Context) {
 private fun ScreenAccessSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
-    launchableApps: List<InstalledApp> = emptyList(),
 ) {
-    val context = LocalContext.current
-    var appPickerExpanded by remember { mutableStateOf(false) }
-    var showDisclosure by rememberSaveable { mutableStateOf(false) }
-    val selectedApp = launchableApps.find { it.packageName == uiState.tapToWalkGamePackage }
-
     SettingsSectionHeader(stringResource(R.string.settings_menus_screen_access))
     Spacer(Modifier.height(4.dp))
     Text(
@@ -373,17 +395,27 @@ private fun ScreenAccessSection(
         }
         if (!uiState.isScreenServiceGranted) {
             Spacer(Modifier.width(8.dp))
-            LjButton(
-                onClick = {
-                    if (showsAccessibilityOpenSettingsDisclosure(uiState.accessibilityDisclosureAccepted)) {
-                        showDisclosure = true
-                    } else {
-                        openAccessibilitySettings(context)
-                    }
-                },
-            ) { Text(stringResource(R.string.settings_menus_open_settings)) }
+            OpenSettingsButton(uiState, onAction)
         }
     }
+}
+
+@Composable
+private fun OpenSettingsButton(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    val context = LocalContext.current
+    var showDisclosure by rememberSaveable { mutableStateOf(false) }
+    LjButton(
+        onClick = {
+            if (showsAccessibilityOpenSettingsDisclosure(uiState.accessibilityDisclosureAccepted)) {
+                showDisclosure = true
+            } else {
+                openAccessibilitySettings(context)
+            }
+        },
+    ) { Text(stringResource(R.string.settings_menus_open_settings)) }
     if (showDisclosure) {
         AccessibilityDisclosureDialog(
             onAccept = {
@@ -397,42 +429,70 @@ private fun ScreenAccessSection(
             },
         )
     }
-    if (uiState.isScreenServiceGranted) {
-        Spacer(Modifier.height(8.dp))
-        Text(stringResource(R.string.settings_menus_game_app), style = MaterialTheme.typography.bodyLarge)
-        Spacer(Modifier.height(4.dp))
-        Box(modifier = Modifier.fillMaxWidth()) {
-            val chevronRotation by animateFloatAsState(
-                targetValue = if (appPickerExpanded) 180f else 0f,
-                label = "gameAppChevronRotation",
+}
+
+@Composable
+private fun ServiceOffHint(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            stringResource(R.string.settings_menus_screen_service_off_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(8.dp))
+        OpenSettingsButton(uiState, onAction)
+    }
+}
+
+@Composable
+private fun GameAppPicker(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+    launchableApps: List<InstalledApp>,
+) {
+    var appPickerExpanded by remember { mutableStateOf(false) }
+    val selectedApp = launchableApps.find { it.packageName == uiState.tapToWalkGamePackage }
+    Text(stringResource(R.string.settings_menus_game_app), style = MaterialTheme.typography.bodyLarge)
+    Spacer(Modifier.height(4.dp))
+    Box(modifier = Modifier.fillMaxWidth()) {
+        val chevronRotation by animateFloatAsState(
+            targetValue = if (appPickerExpanded) 180f else 0f,
+            label = "gameAppChevronRotation",
+        )
+        LjOutlinedButton(onClick = { appPickerExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+            Text(
+                selectedApp?.label ?: stringResource(R.string.settings_menus_select_app),
+                modifier = Modifier.weight(1f),
+                color =
+                    if (selectedApp != null) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
-            LjOutlinedButton(onClick = { appPickerExpanded = true }, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    selectedApp?.label ?: stringResource(R.string.settings_menus_select_app),
-                    modifier = Modifier.weight(1f),
-                    color =
-                        if (selectedApp != null) {
-                            MaterialTheme.colorScheme.onSurface
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
+            Icon(
+                LjIcons.ArrowDropDown,
+                contentDescription = null,
+                modifier = Modifier.graphicsLayer { rotationZ = chevronRotation },
+            )
+        }
+        DropdownMenu(expanded = appPickerExpanded, onDismissRequest = { appPickerExpanded = false }) {
+            launchableApps.forEach { app ->
+                DropdownMenuItem(
+                    text = { Text(app.label) },
+                    onClick = {
+                        onAction(SettingsAction.SetTapToWalkGamePackage(app.packageName))
+                        appPickerExpanded = false
+                    },
                 )
-                Icon(
-                    LjIcons.ArrowDropDown,
-                    contentDescription = null,
-                    modifier = Modifier.graphicsLayer { rotationZ = chevronRotation },
-                )
-            }
-            DropdownMenu(expanded = appPickerExpanded, onDismissRequest = { appPickerExpanded = false }) {
-                launchableApps.forEach { app ->
-                    DropdownMenuItem(
-                        text = { Text(app.label) },
-                        onClick = {
-                            onAction(SettingsAction.SetTapToWalkGamePackage(app.packageName))
-                            appPickerExpanded = false
-                        },
-                    )
-                }
             }
         }
     }

@@ -139,12 +139,13 @@
     <string name="settings_menus_debug_stats">"Debug stats"</string>
     <string name="settings_menus_debug_stats_desc">"Shows live speed, altitude, coordinates, and tick rate in the floating widget panel while spoofing is active."</string>
     <string name="settings_menus_screen_access">"Screen access"</string>
-    <string name="settings_menus_when_enabled_the_app_detects_your">"Lets the app take a picture of your screen. Calibration needs it. Uses an Android Accessibility Service. Some games detect accessibility services."</string>
+    <string name="settings_menus_when_enabled_the_app_detects_your">"Lets the app take a picture of your screen. Tap to Walk calibration and Reconnect accessory need it. Uses an Android Accessibility Service. Some games detect accessibility services."</string>
     <string name="settings_menus_accessibility_service">"Accessibility Service"</string>
     <string name="settings_menus_open_settings">"Open Settings"</string>
     <string name="settings_menus_game_app">"Game app"</string>
     <string name="settings_menus_screen_service_enabled">"Enabled"</string>
     <string name="settings_menus_screen_service_not_enabled">"Not enabled. Tap to open Android Settings."</string>
+    <string name="settings_menus_screen_service_off_hint">"The screen helper is off, so this does nothing yet."</string>
     <string name="settings_menus_select_app">"Select app…"</string>
     <string name="settings_menus_app_features">"App Features"</string>
     <string name="settings_menus_choose_which_quick_access_features_appea">"Choose which quick-access features appear in the floating widget and on the map screen, and drag to reorder them. Both surfaces share the same order by default."</string>

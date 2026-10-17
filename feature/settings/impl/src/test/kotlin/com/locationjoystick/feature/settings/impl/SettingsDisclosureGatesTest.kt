@@ -40,4 +40,19 @@ class SettingsDisclosureGatesTest {
         assertFalse(showsFullAccessibilityDisclosure(sdkInt = 30, accessibilityAccepted = true))
         assertFalse(showsFullAccessibilityDisclosure(sdkInt = 29, accessibilityAccepted = false))
     }
+
+    @Test
+    fun screenAccessBlockShownWhenEitherFeatureOnFromApi30() {
+        assertTrue(showsScreenAccessBlock(sdkInt = 30, tapToWalkOn = false, reconnectOn = true))
+        assertTrue(showsScreenAccessBlock(sdkInt = 30, tapToWalkOn = true, reconnectOn = false))
+        assertFalse(showsScreenAccessBlock(sdkInt = 30, tapToWalkOn = false, reconnectOn = false))
+        assertFalse(showsScreenAccessBlock(sdkInt = 29, tapToWalkOn = true, reconnectOn = true))
+    }
+
+    @Test
+    fun serviceOffHintOnlyWhenFeatureOnAndServiceNotGranted() {
+        assertTrue(showsServiceOffHint(featureOn = true, serviceGranted = false))
+        assertFalse(showsServiceOffHint(featureOn = true, serviceGranted = true))
+        assertFalse(showsServiceOffHint(featureOn = false, serviceGranted = false))
+    }
 }

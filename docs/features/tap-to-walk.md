@@ -48,7 +48,7 @@ The service was renamed from an earlier name. Android keys enabled services by c
 
 ### Platform limits
 
-Screenshots require API 30. No fallback exists below it. On older devices the screen-access section is hidden and the service is disabled in the manifest, so it never shows up in Android's accessibility list where it could be enabled without the in-app disclosure. The service also skips binding on connect as a second guard. Tier 1 and Tier 2 quick-walk still work below API 30.
+Screenshots require API 30. No fallback exists below it. The status block is one shared Screen access block above both feature sections, shown while either switch is on, so a Reconnect-only user still sees whether the service runs; each section adds a service-off hint when its switch is on without the service. On older devices the block is hidden and the service is disabled in the manifest, so it never shows up in Android's accessibility list where it could be enabled without the in-app disclosure. The service also skips binding on connect as a second guard. Tier 1 and Tier 2 quick-walk still work below API 30.
 
 ## Prominent Disclosure
 
