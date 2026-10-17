@@ -383,6 +383,10 @@ interface PreferencesDataSource {
     /** Gets the scale factor (meters per pixel) for the tap-to-walk overlay coordinate conversion. */
     fun getTapToWalkScaleMpx(): Flow<Double>
 
+    suspend fun setTapToWalkOverlayEnabled(enabled: Boolean)
+
+    suspend fun setTapToWalkScaleMpx(scale: Double)
+
     /** Gets the package name of the game app Tap to Walk switches to. Empty if unset. */
     fun getTapToWalkGamePackage(): Flow<String>
 
@@ -1182,6 +1186,10 @@ class AppPreferencesDataSource
 
         override fun getTapToWalkScaleMpx(): Flow<Double> =
             pref(Keys.TAP_TO_WALK_SCALE_MPX, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
+
+        override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) = setPref(Keys.TAP_TO_WALK_OVERLAY_ENABLED, enabled)
+
+        override suspend fun setTapToWalkScaleMpx(scale: Double) = setPref(Keys.TAP_TO_WALK_SCALE_MPX, scale)
 
         override fun getTapToWalkGamePackage(): Flow<String> = pref(Keys.TAP_TO_WALK_GAME_PACKAGE, "")
 

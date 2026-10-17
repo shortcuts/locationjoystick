@@ -1698,6 +1698,10 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override fun getTapToWalkScaleMpx(): Flow<Double> = flowOf(AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
 
+    override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) = Unit
+
+    override suspend fun setTapToWalkScaleMpx(scale: Double) = Unit
+
     override fun getTapToWalkGamePackage(): Flow<String> = flowOf("")
 
     override suspend fun setTapToWalkGamePackage(packageName: String) = Unit

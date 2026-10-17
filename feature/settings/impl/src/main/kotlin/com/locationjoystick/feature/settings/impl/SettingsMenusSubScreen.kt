@@ -192,23 +192,29 @@ private fun TapToWalkSection(
         },
     )
     if (enabled) {
+        // Dragging only moves the thumb; the value is saved once, on release.
+        var dragValue by remember { mutableStateOf<Float?>(null) }
         Spacer(Modifier.height(12.dp))
         Text(
-            stringResource(R.string.settings_menus_map_scale_mpx, uiState.tapToWalkScaleMpx),
+            stringResource(R.string.settings_menus_map_scale_mpx, dragValue?.toDouble() ?: uiState.tapToWalkScaleMpx),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Slider(
-            value = uiState.tapToWalkScaleMpx.toFloat(),
-            onValueChange = { v ->
-                onAction(
-                    SettingsAction.SetTapToWalkScaleMpx(
-                        v.toDouble().coerceIn(
-                            AppConstants.TapToWalkConstants.MIN_SCALE_MPX,
-                            AppConstants.TapToWalkConstants.MAX_SCALE_MPX,
+            value = dragValue ?: uiState.tapToWalkScaleMpx.toFloat(),
+            onValueChange = { dragValue = it },
+            onValueChangeFinished = {
+                dragValue?.let { v ->
+                    onAction(
+                        SettingsAction.SetTapToWalkScaleMpx(
+                            v.toDouble().coerceIn(
+                                AppConstants.TapToWalkConstants.MIN_SCALE_MPX,
+                                AppConstants.TapToWalkConstants.MAX_SCALE_MPX,
+                            ),
                         ),
-                    ),
-                )
+                    )
+                }
+                dragValue = null
             },
             valueRange = AppConstants.TapToWalkConstants.MIN_SCALE_MPX.toFloat()..AppConstants.TapToWalkConstants.MAX_SCALE_MPX.toFloat(),
             modifier = Modifier.fillMaxWidth(),

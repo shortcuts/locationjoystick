@@ -785,6 +785,17 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getTapToWalkScaleMpx(): Flow<Double> = flowOf(AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
 
+    var tapToWalkEnabledWrite: Boolean? = null
+    var tapToWalkScaleWrite: Double? = null
+
+    override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) {
+        tapToWalkEnabledWrite = enabled
+    }
+
+    override suspend fun setTapToWalkScaleMpx(scale: Double) {
+        tapToWalkScaleWrite = scale
+    }
+
     override fun getTapToWalkGamePackage(): Flow<String> = flowOf("")
 
     override suspend fun setTapToWalkGamePackage(packageName: String) = Unit

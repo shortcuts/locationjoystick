@@ -297,21 +297,21 @@ class SettingsViewModelDraftTest {
         }
 
     @Test
-    fun `setTapToWalkOverlayEnabled marks dirty and updates state`() =
+    fun `setTapToWalkOverlayEnabled saves at once without a draft`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setTapToWalkOverlayEnabled(true)
-            assertTrue(viewModel.uiState.value.isDirty)
-            assertTrue(viewModel.uiState.value.tapToWalkOverlayEnabled)
+            assertFalse(viewModel.uiState.value.isDirty)
+            assertEquals(true, fakeDataSource.tapToWalkEnabledWrite)
         }
 
     @Test
-    fun `setTapToWalkScaleMpx marks dirty and updates state`() =
+    fun `setTapToWalkScaleMpx saves at once without a draft`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setTapToWalkScaleMpx(0.25)
-            assertTrue(viewModel.uiState.value.isDirty)
-            assertEquals(0.25, viewModel.uiState.value.tapToWalkScaleMpx, 1e-9)
+            assertFalse(viewModel.uiState.value.isDirty)
+            assertEquals(0.25, fakeDataSource.tapToWalkScaleWrite!!, 1e-9)
         }
 
     // -------------------------------------------------------------------------
