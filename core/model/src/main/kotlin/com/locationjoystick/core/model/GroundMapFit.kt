@@ -22,6 +22,7 @@ data class GroundFit(
 object GroundMapFit {
     private const val MIN_RESPONSE = 0.2 // flows below this are noise, not content
     private const val MIN_FLOWS = 40 // fewer flows cannot pin four parameters robustly
+    private const val MIN_MOVE_FLOWS = 3 // a single move's median needs this many bands
     private const val OUTLIER_SCALE = 3 * 1.4826 // 3 MAD, MAD scaled to a standard deviation
     private const val OUTLIER_FLOOR_PX = 2.0 // cut never tighter than this (sub-pixel flow noise)
     private val REWEIGHT_AT = setOf(8, 20, 30) // Gauss-Newton iterations that recompute outlier weights
@@ -45,16 +46,9 @@ object GroundMapFit {
         height: Int,
     ): GroundFit? {
         require(width > 0 && height > 0) { "screen size must be positive" }
-        val kx = GROUND_MAP_REFERENCE_WIDTH / width
-        val ky = GROUND_MAP_REFERENCE_HEIGHT / height
-        val flows =
-            moves.flatMap { m ->
-                m.bands.map { b ->
-                    Flow(m.d.eastMeters, m.d.northMeters, b.fx * kx, b.fy * ky, b.cx * kx, b.cy * ky, b.response)
-                }
-            }
-        val px = feetX * kx
-        val py = feetY * ky
+        val flows = moves.flatMap { flowsOf(it, width, height) }
+        val px = feetX * GROUND_MAP_REFERENCE_WIDTH / width
+        val py = feetY * GROUND_MAP_REFERENCE_HEIGHT / height
         val first = solve(flows, px, py) ?: return null
         val hz = if (first.a != 0.0) first.sy / first.a else Double.NaN
         val refit =
@@ -67,6 +61,37 @@ object GroundMapFit {
         val best = refit ?: first
         val cal = GroundCalibration(best.theta, best.s, best.sy, best.a, px, py)
         return GroundFit(cal, best.medianAbs, best.n)
+    }
+
+    /**
+     * Median absolute residual (reference px, both components, the measure of [GroundFit.medianAbsPx]) of each move's
+     * kept flows under [cal], null for a move with fewer than 3 usable bands; order follows [moves].
+     */
+    fun moveResidualsPx(
+        cal: GroundCalibration,
+        moves: List<LegMove>,
+        width: Int,
+        height: Int,
+    ): List<Double?> =
+        moves.map { m ->
+            val rows = flowsOf(m, width, height).filter { it.response >= MIN_RESPONSE }
+            if (rows.size < MIN_MOVE_FLOWS) {
+                null
+            } else {
+                medianAbs(residuals(params(cal), rows, cal.feetX, cal.feetY))
+            }
+        }
+
+    private fun params(cal: GroundCalibration) = doubleArrayOf(cal.headingDeg, cal.lateralPxPerM, cal.forwardPxPerM, cal.perspective)
+
+    private fun flowsOf(
+        m: LegMove,
+        width: Int,
+        height: Int,
+    ): List<Flow> {
+        val kx = GROUND_MAP_REFERENCE_WIDTH / width
+        val ky = GROUND_MAP_REFERENCE_HEIGHT / height
+        return m.bands.map { b -> Flow(m.d.eastMeters, m.d.northMeters, b.fx * kx, b.fy * ky, b.cx * kx, b.cy * ky, b.response) }
     }
 
     private class Flow(
@@ -208,6 +233,8 @@ object GroundMapFit {
         }
         return x
     }
+
+    private fun medianAbs(v: DoubleArray): Double = median(DoubleArray(v.size) { abs(v[it]) })
 
     private fun median(v: DoubleArray): Double {
         v.sort()

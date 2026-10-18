@@ -5,6 +5,7 @@ import android.graphics.PixelFormat
 import android.os.Build
 import android.util.Log
 import android.view.WindowManager
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -34,6 +35,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjOnScrim
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.model.CalibrationWalkMath
+import com.locationjoystick.core.model.FitHealth
 import com.locationjoystick.core.model.GroundMap
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.StoredGroundCalibration
@@ -53,6 +55,10 @@ internal class TapToWalkOverlay(
     private val getScaleMpx: () -> Double,
     private val onDismissed: () -> Unit,
     private val getGroundCalibration: () -> StoredGroundCalibration? = { null },
+    private val getFitHealth: () -> FitHealth = { FitHealth.None },
+    private val canLearn: () -> Boolean = { false },
+    /** Called instead of [onWalkTo] when the map is not valid and can be learned: [pos] at tap time, then the full-display tap pixel. */
+    private val onLearnThenWalk: (pos: LatLng, x: Double, y: Double) -> Unit = { _, _, _ -> },
 ) {
     private var overlayView: ComposeView? = null
 
@@ -60,7 +66,7 @@ internal class TapToWalkOverlay(
 
     fun show() {
         if (isShowing()) return
-        val usable = hasUsableGroundMap()
+        val hint = hintFor(hasUsableGroundMap())
         val view =
             ComposeView(context).apply {
                 setViewTreeLifecycleOwner(lifecycleOwner)
@@ -68,11 +74,16 @@ internal class TapToWalkOverlay(
                 setContent {
                     LjTheme {
                         TapToWalkOverlayContent(
-                            calibrated = usable,
+                            hint = hint,
                             onTap = { x, y, screenW, screenH ->
                                 val pos = getPosition()
                                 if (pos != null) {
-                                    onWalkTo(resolveTarget(pos, x, y, screenW, screenH))
+                                    if (needsLearning()) {
+                                        val origin = IntArray(2).also { overlayView?.getLocationOnScreen(it) }
+                                        onLearnThenWalk(pos, (origin[0] + x).toDouble(), (origin[1] + y).toDouble())
+                                    } else {
+                                        onWalkTo(resolveTarget(pos, x, y, screenW, screenH))
+                                    }
                                 }
                                 dismiss()
                             },
@@ -105,7 +116,17 @@ internal class TapToWalkOverlay(
         if (had) onDismissed()
     }
 
-    /** True when a stored calibration matches the full display, the condition [resolveTarget] needs for the ground map. */
+    /** The map is not valid for this display and a learning walk can run: the tap waits for it (see FloatingWidgetService). */
+    private fun needsLearning(): Boolean = (getFitHealth() != FitHealth.Valid || !hasUsableGroundMap()) && canLearn()
+
+    private fun hintFor(usable: Boolean): Int =
+        if (usable || canLearn()) {
+            R.string.tap_to_walk_overlay_tap_anywhere_to_walk_there
+        } else {
+            R.string.tap_to_walk_overlay_north_up_hint
+        }
+
+    /** True when a stored fit matches the full display, the condition [resolveTarget] needs for the ground map. */
     private fun hasUsableGroundMap(): Boolean {
         val stored = getGroundCalibration() ?: return false
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return false
@@ -157,7 +178,7 @@ internal class TapToWalkOverlay(
 
         /**
          * Ground-map conversion of a full-display tap pixel to a GPS coordinate, or null past the
-         * horizon. The offset is applied with the calibration walk's flat-earth frame (111320 m/deg).
+         * horizon. The offset is applied with the fit's flat-earth frame (111320 m/deg).
          */
         fun computeGroundWalkTarget(
             currentPos: LatLng,
@@ -196,7 +217,7 @@ internal class TapToWalkOverlay(
 
 @Composable
 private fun TapToWalkOverlayContent(
-    calibrated: Boolean,
+    @StringRes hint: Int,
     onTap: (x: Float, y: Float, screenW: Int, screenH: Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -215,14 +236,7 @@ private fun TapToWalkOverlayContent(
         )
         // Hint label
         Text(
-            text =
-                stringResource(
-                    if (calibrated) {
-                        R.string.tap_to_walk_overlay_tap_anywhere_to_walk_there
-                    } else {
-                        R.string.tap_to_walk_overlay_not_calibrated_hint
-                    },
-                ),
+            text = stringResource(hint),
             style = MaterialTheme.typography.bodyMedium,
             color = LjOnScrim,
             textAlign = TextAlign.Center,

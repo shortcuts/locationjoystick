@@ -133,7 +133,7 @@
     <string name="settings_menus_debug_stats">"偵錯資訊"</string>
     <string name="settings_menus_debug_stats_desc">"模擬定位生效期間，在浮動面板中顯示即時速度、海拔、座標與重新整理頻率。"</string>
     <string name="settings_menus_screen_access">"螢幕存取"</string>
-    <string name="settings_menus_when_enabled_the_app_detects_your">"允許應用程式擷取螢幕截圖，點按行走校準和重新連接配件需要它。使用 Android 協助工具服務。注意：部分遊戲會偵測協助工具服務。"</string>
+    <string name="settings_menus_when_enabled_the_app_detects_your">"允許應用程式擷取螢幕截圖，點擊行走和重新連接配件需要它。使用 Android 協助工具服務。注意：部分遊戲會偵測協助工具服務。"</string>
     <string name="settings_menus_accessibility_service">"協助工具服務"</string>
     <string name="settings_menus_open_settings">"開啟設定"</string>
     <string name="settings_menus_screen_service_enabled">"已啟用"</string>
@@ -219,24 +219,4 @@
     <string name="settings_menus_map_source_osm_default_city">"法國巴黎"</string>
     <string name="settings_menus_map_source_amap_default_city">"中國北京"</string>
     <string name="settings_menus_map_source_amap_note">"高德圖磚使用 GCJ-02 座標系。應用程式會自動換算座標，確保標記、路線與點擊位置對齊；所有資料仍以 WGS-84 儲存。"</string>
-    <string name="settings_menus_calibration_header">"地面校準"</string>
-    <string name="settings_menus_calibration_desc">"在遊戲保持開啟的情況下，以步行速度分 8 小段移動你的虛擬位置約 320 公尺（約 10 分鐘），然後測量地圖如何移動。完成前請勿使用搖桿、更改遊戲縮放或旋轉遊戲。更改遊戲縮放或旋轉，或手機顯示尺寸後，請重新校準。"</string>
-    <string name="settings_menus_calibration_not_calibrated">"未校準。點擊按地圖朝北計算。"</string>
-    <string name="settings_menus_calibration_done">"已於 %1$s 校準，共 %2$d 次測量"</string>
-    <string name="settings_menus_calibration_wrong_screen">"已儲存的地圖對應不同的螢幕尺寸。請重新校準。"</string>
-    <string name="settings_menus_calibration_start">"開始校準"</string>
-    <string name="settings_menus_calibration_recalibrate">"重新校準"</string>
-    <string name="settings_menus_calibration_cancel">"取消校準"</string>
-    <string name="settings_menus_calibration_walking">"正在行走第 %1$d 段，共 %2$d 段"</string>
-    <string name="settings_menus_calibration_analysing">"正在分析第 %1$d 步，共 %2$d 步"</string>
-    <string name="settings_menus_calibration_fail_not_ready">"請先啟動虛擬位置：開始模擬，並停止任何行走、路線或漫遊。"</string>
-    <string name="settings_menus_calibration_fail_service">"無障礙服務已關閉或尚未接受說明。請在上方開啟。"</string>
-    <string name="settings_menus_calibration_fail_storage">"儲存空間不足。請釋放約 1 GB 後重試。"</string>
-    <string name="settings_menus_calibration_fail_timeout">"某一段耗時過長。校準期間請勿使用搖桿。"</string>
-    <string name="settings_menus_calibration_fail_speed">"位置移動過快。校準期間請勿傳送。"</string>
-    <string name="settings_menus_calibration_fail_interrupted">"行走在完成前被中止。請重新開始並不要干預。"</string>
-    <string name="settings_menus_calibration_fail_frame_size">"螢幕尺寸發生了變化（旋轉或顯示更改）。請保持手機方向不變。"</string>
-    <string name="settings_menus_calibration_fail_feet">"找不到你的角色。請保持遊戲開啟並位於前景，角色可見。"</string>
-    <string name="settings_menus_calibration_fail_flows">"地圖移動不足，無法測量。請確保遊戲位於前景，並在整個行走過程中保持開啟。"</string>
-    <string name="settings_menus_calibration_fail_implausible">"遊戲沒有跟隨行走。請確保遊戲始終位於前景，且沒有顯示載入或卡住的畫面。"</string>
 </resources>

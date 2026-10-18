@@ -136,17 +136,14 @@
     <h3 id="tap-to-walk-settings">Settings</h3>
     <p>Hidden on the Pikmin Bloom setup. See <a href="game-setup.html">Game setup</a>.</p>
     <aside class="shot" id="tap-to-walk-settings-shot">
-      <img class="phone-shot" src="screenshots/20_tap_to_walk_settings.png" alt="Tap to Walk settings with scale and calibration">
+      <img class="phone-shot" src="screenshots/20_tap_to_walk_settings.png" alt="Tap to Walk settings with scale and screen access">
     </aside>
     <h4 class="item" id="tap-to-walk-settings-scale">Scale</h4>
     <p>Meters per pixel on your screen. Range 0.01 to 1.0. Raise it for a zoomed-out game map and lower it for a zoomed-in one.</p>
     <p><strong>Default:</strong> 0.23</p>
     <h4 class="item" id="tap-to-walk-settings-screen-access">Screen access</h4>
-    <p>Lets the app take a picture of your screen. Calibration needs it, and so does <a href="reconnect-accessory.html">Reconnect accessory</a>. Uses an Android accessibility feature. Its status sits in one Screen access block above both sections, shown whenever either switch is on. Each section also warns you if its switch is on but the helper is off.</p>
+    <p>Lets the app take a picture of your screen. Tap to Walk needs it, and so does <a href="reconnect-accessory.html">Reconnect accessory</a>. Uses an Android accessibility feature. Its status sits in one Screen access block above both sections, shown whenever either switch is on. Each section also warns you if its switch is on but the helper is off.</p>
     <p><strong>Default:</strong> Off</p>
-    <h4 class="item" id="tap-to-walk-settings-calibration">Calibration</h4>
-    <p>Teaches the app how your game's map moves. Start calibration opens your game for you. See Calibrate Tap to Walk below.</p>
-    <p><strong>Default:</strong> Not calibrated. Taps assume the map is north-up.</p>
     </section>
 
     <h3 id="floating-map-quick-walk">Floating map quick walk</h3>
@@ -181,11 +178,11 @@
     <section class="has-shot">
     <h3 id="screen-access">Screen access</h3>
     <aside class="shot" id="screen-access-shot">
-      <img class="phone-shot" src="screenshots/21_screen_access.png" alt="Screen access settings with calibration">
+      <img class="phone-shot" src="screenshots/21_screen_access.png" alt="Screen access settings">
     </aside>
     <p>
-      Tap to Walk uses a calibration walk (see Calibrate Tap to Walk below) to learn how your game's map moves, so the walk target lands correctly on a turned map.
-      Calibration needs the accessibility feature below.
+      Tap to Walk learns how your game's map moves (see Learning the map below), so the walk target lands correctly on a turned map.
+      That needs the accessibility feature below.
     </p>
 
     <p><strong>Setup</strong></p>
@@ -208,34 +205,19 @@
       Once you have accepted the message, you won't see it again. To go to the Accessibility settings directly, go to Settings &rarr; Menus &rarr; Screen access and tap Open Settings. The block appears when Tap to Walk or Reconnect accessory is on.
     </p>
 
-    <section class="has-shot">
-    <h3 id="calibrate-tap-to-walk">Calibrate Tap to Walk</h3>
-    <aside class="shot" id="calibration-shot">
-      <img class="phone-shot" src="screenshots/26_calibration.png" alt="Ground calibration section in Tap to Walk settings">
-    </aside>
+    <section>
+    <h3 id="learning-the-map">Learning the map</h3>
     <p>
-      Calibration teaches the app how your game's map moves, so a tap lands where you tapped, whichever way the map is turned.
-      While it runs, the app takes a picture of your screen about every 3 seconds for about 10 minutes. The pictures stay on your phone and are deleted when it finishes.
-      Until you calibrate, taps assume north is at the top.
+      Tap to Walk needs to know how your game's map is turned and zoomed, so a tap lands where you tapped. There is nothing to set up: the app learns it by itself.
+      While Tap to Walk is on and your game is in front, the app takes a picture of your screen about every 3 seconds as you walk, with a tap, the joystick or a quick walk.
+      It uses those pictures to check that it still understands the map. The pictures stay on your phone and are deleted as soon as they are used.
     </p>
-    <ol>
-      <li>Start your fake location and stop any walk, route, or roam.</li>
-      <li>In Settings &rarr; Menus &rarr; Tap to Walk, then tap Start calibration.</li>
-      <li>The app opens your game and walks your location about 320 m in 8 short legs. Leave the phone alone: no joystick, no zooming, no rotating the map.</li>
-      <li>A message tells you when it is done and brings you back to the app.</li>
-    </ol>
-    <p>Calibrate again after you change the game's zoom or rotation, or the phone's display size. If it fails, the message says why:</p>
     <ul class="section-bullets">
-      <li>Fake location not started, or a walk, route, or roam is running: start it and stop the walk first.</li>
-      <li>Accessibility feature off: turn it on in the same screen.</li>
-      <li>Not enough free storage: free about 1 GB.</li>
-      <li>Joystick used or location moved too fast: leave the phone alone and do not teleport.</li>
-      <li>Rotated screen or display change: keep one orientation.</li>
-      <li>Character not found, or the map did not move: keep the game open and in front the whole time.</li>
+      <li>If you turn the map or zoom in or out, the app notices after a short walk and learns the new view. Taps made before it has learned may land a little off.</li>
+      <li>If the app does not know the map yet, your first tap starts a short walk of about two minutes. A notice shows the progress, with a Cancel button. When it finishes, your location walks to the spot you tapped.</li>
+      <li>The walk is a normal walking pace, never a jump.</li>
+      <li>It only works while the game is open and in front. If the app cannot learn the map, taps assume north is at the top.</li>
     </ul>
-    </section>
-
-    <p>When calibration finishes, the Calibration section shows its date. If it says the saved map is for a different screen size, calibrate again.</p>
     </section>
   </main>
 

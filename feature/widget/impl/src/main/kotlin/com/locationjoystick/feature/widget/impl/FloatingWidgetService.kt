@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.widget.impl
 
 import android.content.Intent
+import android.os.Build
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -25,10 +26,12 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.location.AutoFitCoordinator
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.model.GroundMap
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -133,6 +136,8 @@ class FloatingWidgetService :
     @Inject lateinit var settingsRepository: SettingsRepository
 
     @Inject lateinit var mapController: MapController
+
+    @Inject lateinit var autoFit: AutoFitCoordinator
 
     @Inject lateinit var captureCoordinatesRepository: CaptureCoordinatesRepository
 
@@ -601,6 +606,9 @@ class FloatingWidgetService :
                     getScaleMpx = { tapToWalkScaleMpx.value },
                     onDismissed = { isTapToWalkActiveFlow.value = false },
                     getGroundCalibration = { groundCalibration.value },
+                    getFitHealth = { autoFit.health.value },
+                    canLearn = { autoFit.canLearn },
+                    onLearnThenWalk = ::learnThenWalk,
                 )
             tapToWalkOverlay = overlay
             isTapToWalkActiveFlow.value = true
@@ -609,7 +617,43 @@ class FloatingWidgetService :
     }
 
     /**
-     * The calibration screenshot is the first thing the overlay would take, so Play's Accessibility
+     * A tap with no valid map: the tap pixel is held, [AutoFitCoordinator.learnMap] walks the short learning route
+     * (progress and cancel are on the foreground notification), then the held tap is resolved from the position it was
+     * made at and walked.
+     */
+    private fun learnThenWalk(
+        pos: LatLng,
+        x: Double,
+        y: Double,
+    ) {
+        Toast.makeText(this, R.string.tap_to_walk_learning_started, Toast.LENGTH_LONG).show()
+        lifecycleScope.launch {
+            val target =
+                if (autoFit.learnMap() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    val stored = groundCalibration.value
+                    val bounds = windowManager.maximumWindowMetrics.bounds
+                    stored?.takeIf { it.matches(bounds.width(), bounds.height()) }?.let {
+                        TapToWalkOverlay.computeGroundWalkTarget(
+                            pos,
+                            GroundMap(it.calibration, bounds.width().toDouble(), bounds.height().toDouble()),
+                            x,
+                            y,
+                        )
+                    }
+                } else {
+                    null
+                }
+            if (target != null) {
+                Log.d(TAG, "held tap resolved after learning")
+                mapController.walkTo(target)
+            } else {
+                Toast.makeText(this@FloatingWidgetService, R.string.tap_to_walk_learning_failed, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    /**
+     * The first screenshot is what the overlay's tap would trigger, so Play's Accessibility
      * API policy puts the disclosure here — in the feature's own usage flow — not only in Settings.
      * Re-shown until accepted: decline and skip are persisted but the next tap asks again.
      */

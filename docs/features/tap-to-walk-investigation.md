@@ -263,3 +263,26 @@ and the feet pixel is detected, but the close-up `landing` check (p90 under 10 m
 The first close-up capture (side bands, hand anchor) gave a median response of 0.04. (3) The offline check only covers moves up to about 31 m and pixels
 of 700 to 1420 rows; taps beyond that are extrapolated. (4) Taps whose patch ends under the player's shadow or
 companion can be mismatched; check the annotated frames by eye. (5) The feet pixel detection, the flow estimator and the fit are ported to the app (`FeetDetector`, `FrameFlow`, `GroundMapFit`), but nothing in the app calls them yet (superseded: `CalibrationWalkOrchestrator` calls them; see [tap-to-walk.md](tap-to-walk.md), "Calibration walk").
+
+## Automatic fit bench results
+
+Data: `varycap` on a Pixel 5, 4 legs of 30 m per condition (bearings 0, 90, 45, 225), walking speed, game on a throwaway
+account. Twist run: conditions `1:0 1:40 1:-60`. Zoom run: `1:0 1.3:0 1.6:0 0.7:0`. Gestures accumulate (the game has no
+camera reset), so the net twist of the last twist condition is -20 degrees. The commands are `monitor`, `twist`,
+`zoomfam` and `legsubset` in `scripts/registration_bench.py`; each prints PASS or KILL against the research criteria
+in [tap-to-walk-research.md](tap-to-walk-research.md), "Recommendations for entry A".
+
+| Recommendation | Measured | Bar | Verdict |
+|---|---|---|---|
+| 1. CUSUM alarm, then heading-only re-fit | Twist +40: alarm after 18 to 28 m, heading off 1.8 to 8.3 degrees on 4 of 4 legs. Net twist -20: no alarm on any leg. 0 false alarms on 4 unchanged legs (k 0.25, h 12) | alarm within 15 m, heading within 3 degrees on 80% of runs | KILL |
+| 2. Twist from two still frames | Errors 0.2 and 3.5 degrees; peak-to-sidelobe ratio 9.6 and 5.1 | at most 3 degrees on 80% of twists | KILL (1 of 2) |
+| 3. Zoom as one parameter | Focal length 1498 to 2203 px across four zooms, spread 38% | spread at most 10% | KILL |
+| 12. Two learning legs instead of four | Fit on bearings 0 and 90, landing error on the other legs p50 2.0 m, p90 6.2 m | held-out p90 at most 10 m | PASS |
+
+What the app takes from this:
+
+- The alarm only detects. Any alarm makes the fit suspect and the next legs feed a full four-term re-fit (decision 3 of the plan: the heading-only step is dropped).
+- The CUSUM constants in `FitMonitor` are k 0.25 and h 8. On the zoom run they raised an alarm within 15 m on 2 of 4 legs at 1.6x, within 30 m on 2 of 4 at 1.3x, and none at 0.7x. A modest zoom or twist can therefore stay undetected; the cost is a landing error until the residual grows, not a silent wrong tap beyond the fit's own range.
+- The learning walk is two perpendicular legs of 30 m, about one minute at walking speed.
+- Feet pixel per zoom condition (reference px): 542,1488 at 1x; 540,1501 at 1.3x and 1.6x; 558,1471 at 0.7x. It moves less than 30 px, so a full re-fit re-detects it.
+- Recommendations 2 and 3 are not shipped. Recommendation 2 missed on one of two samples and needs more twist data; recommendation 3 is far from its bar.

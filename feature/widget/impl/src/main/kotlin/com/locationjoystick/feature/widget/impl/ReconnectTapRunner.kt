@@ -81,6 +81,18 @@ internal fun reconnectGateOpen(
     foregroundPackage: String?,
 ): Boolean = screenInteractive && foregroundPackage == GameConstants.PACKAGE
 
+/**
+ * The foreground package after a window-state event. Our own overlay windows (widget panel, tap overlay) raise events
+ * with our package and a view class; they sit on top of the game without taking it off screen, so they must not count.
+ * Our own activity (class name starts with the package) does cover the game and does count.
+ */
+internal fun foregroundAfterWindowEvent(
+    current: String?,
+    eventPackage: String?,
+    eventClass: String?,
+    ownPackage: String,
+): String? = if (eventPackage == ownPackage && eventClass?.startsWith(ownPackage) != true) current else eventPackage
+
 private class GateClosed : RuntimeException()
 
 /**

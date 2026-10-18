@@ -16,6 +16,7 @@ class ScreenCaptureSourceTest {
     private fun source(
         accepted: Boolean,
         bound: Boolean = true,
+        gameInFront: Boolean = true,
     ): ScreenCaptureSource {
         val repository = mockk<SettingsRepository>()
         every { repository.getAccessibilityDisclosureAccepted() } returns flowOf(accepted)
@@ -23,6 +24,8 @@ class ScreenCaptureSourceTest {
             if (bound) {
                 bind(
                     object : ScreenAccessibilityServiceBridge {
+                        override val gameInFront = gameInFront
+
                         override suspend fun captureGrayFrame(): GrayImage = GrayImage(2, 2, ByteArray(4))
                     },
                 )
@@ -41,6 +44,12 @@ class ScreenCaptureSourceTest {
         runTest {
             val frame = source(accepted = true).captureGrayFrame()
             assertEquals(2, frame!!.width)
+        }
+
+    @Test
+    fun `no gray frame while the game is not in front`() =
+        runTest {
+            assertNull(source(accepted = true, gameInFront = false).captureGrayFrame())
         }
 
     @Test

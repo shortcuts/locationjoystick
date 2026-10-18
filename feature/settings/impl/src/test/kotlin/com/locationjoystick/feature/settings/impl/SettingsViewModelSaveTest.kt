@@ -89,11 +89,6 @@ class SettingsViewModelSaveTest {
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
-                calibrationWalkOrchestrator =
-                    io.mockk.mockk(relaxed = true) {
-                        io.mockk.every { state } returns
-                            kotlinx.coroutines.flow.MutableStateFlow(com.locationjoystick.core.location.CalibrationState.Idle)
-                    },
                 screenCaptureSource = screenCaptureSource,
                 context = context,
             )

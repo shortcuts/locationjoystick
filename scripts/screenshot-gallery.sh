@@ -34,7 +34,7 @@
 #   --steps 01,03,05     (run steps 1, 3, 5)
 # Seeding (routes, favorites) always runs before the first selected step.
 #
-# Output files (26 canonical PNGs). Each file's number prefix is its step
+# Output files (25 canonical PNGs). Each file's number prefix is its step
 # number, so --steps N writes N_*.png (step 19 runs out of order, see below):
 #   01_idle, 02_map, 03_routes, 04_favorites (with a "Local spots" group), 05_settings,
 #   06_map_routes_sheet, 07_map_favorites_sheet, 08_map_roaming_sheet,
@@ -46,7 +46,7 @@
 #   19_onboarding_mock_location, 27_onboarding_path_picker,
 #   20_tap_to_walk_settings, 21_screen_access,
 #   22_capture_coordinates, 23_map_paste_coordinates, 24_roaming_planting,
-#   25_accessibility_disclosure, 26_calibration
+#   25_accessibility_disclosure
 #
 # 19_onboarding_mock_location ("Set as fake GPS app" onboarding step) is only
 # captured on a genuinely fresh install — it's taken mid-onboarding, before
@@ -107,7 +107,7 @@ if [[ -n "$STEPS_FILTER" ]]; then
   done
 else
   # No filter: enable all steps
-  for i in $(seq 1 26); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
+  for i in $(seq 1 25); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
 fi
 
 # Helper to check if a step should run (e.g. should_run_step "16")
@@ -1415,7 +1415,7 @@ fi
 # ── 21. Settings → Menus → Screen access section ──────────────────────
 # ScreenAccessSection renders below the Map scale slider (API 30+ only)
 # — off-screen in step 20's screenshot. Scroll further to capture the Game
-# app picker on its own (it feeds the Calibration section).
+# status block on its own.
 
 if should_run_step "21"; then
   log "=== 21 SCREEN ACCESS ==="
@@ -1521,34 +1521,6 @@ if should_run_step "25"; then
   # state it had before this step.
   tap_text_exact "Decline"
   wait_s 1 "Dismissing disclosure"
-fi
-
-# ── 26. Settings → Menus → Ground calibration section ───────────────────────
-# GroundCalibrationSection renders below Screen access, which sits inside
-# the Tap to Walk expansion, and only while the accessibility service is granted
-# (API 30+). Tap to Walk is switched on here if off: with the grant in place the
-# dialog's button reads "Enable anyway" (no disclosure), as in step 20.
-
-if should_run_step "26"; then
-  log "=== 26 CALIBRATION ==="
-  go_idle
-  grant_tap_to_walk_accessibility
-  tap_text_below "Settings" "$CARD_Y_MIN"
-  wait_s 2 "Settings loading"
-  tap_text "Menus"
-  wait_s 2 "Menus loading"
-  scroll_until_text "Enable Tap to Walk" || true
-  if [[ "$(switch_is_on "Enable Tap to Walk")" != "True" ]]; then
-    tap_switch_for "Enable Tap to Walk"
-    wait_s 1 "Enabling Tap to Walk"
-    tap_text_exact "Enable anyway"
-    wait_s 1 "Enabling Tap to Walk"
-  fi
-  if ! scroll_until_text "Ground calibration" 16; then
-    echo "✗ Step 26: \"Ground calibration\" not found on Menus. Grant the Tap to Walk accessibility service (docs/testing.md, \"Test phone setup\") and retry." >&2
-    exit 1
-  fi
-  screenshot "26_calibration"
 fi
 
 # ── Done ─────────────────────────────────────────────

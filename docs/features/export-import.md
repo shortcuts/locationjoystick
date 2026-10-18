@@ -10,8 +10,8 @@ The export holds routes, favorites, speed profiles, the widget and map feature c
 
 Rules for what is and is not exported:
 
-- **Per-device, never exported:** the accessibility disclosure answers, the tap-to-walk ground calibration, the control-API key, the last remembered location, the capture on/off state and its list, the launch-after-link app, and update and what's-new bookkeeping.
-  - Calibration is per device because it depends on that phone's screen and camera. A map from another phone would give wrong taps.
+- **Per-device, never exported:** the accessibility disclosure answers, the tap-to-walk ground map, the control-API key, the last remembered location, the capture on/off state and its list, the launch-after-link app, and update and what's-new bookkeeping.
+  - The ground map is per device because it depends on that phone's screen and camera. A map from another phone would give wrong taps.
   - Consent answers are per device because a restored backup must not carry consent to a new phone.
   - The API key is a secret.
 - **Feature choices are exported.** A restored backup brings its own button set, and the import marks the defaults as seen so the upgrade merge does not undo the choice.

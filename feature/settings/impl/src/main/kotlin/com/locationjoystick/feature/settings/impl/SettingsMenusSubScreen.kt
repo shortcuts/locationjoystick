@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.text.format.DateUtils
-import android.view.WindowManager
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -54,17 +52,14 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.AccessibilityDisclosureDialog
 import com.locationjoystick.core.designsystem.component.LjButton
-import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSelectionMode
 import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
-import com.locationjoystick.core.location.CalibrationState
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FeatureSurface
 import com.locationjoystick.core.model.ReconnectRunResult
 import com.locationjoystick.core.model.SpeedProfile
-import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.feature.settings.impl.R
 import kotlin.math.roundToInt
 import com.locationjoystick.core.designsystem.R as DesignR
@@ -79,10 +74,6 @@ internal fun SettingsMenusSubScreen(
     locationLabel: String? = null,
     onAction: (SettingsAction) -> Unit,
     onCheckScreenService: () -> Unit = {},
-    calibrationState: CalibrationState = CalibrationState.Idle,
-    groundCalibration: StoredGroundCalibration? = null,
-    onStartCalibration: () -> Unit = {},
-    onCancelCalibration: () -> Unit = {},
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
@@ -130,14 +121,7 @@ internal fun SettingsMenusSubScreen(
                         }
                         if (uiState.guidedPath.showsTapToWalk) {
                             SettingsSectionDivider()
-                            TapToWalkSection(
-                                uiState,
-                                onAction,
-                                calibrationState,
-                                groundCalibration,
-                                onStartCalibration,
-                                onCancelCalibration,
-                            )
+                            TapToWalkSection(uiState, onAction)
                         }
                         // Same API 30 floor as the screenshot the check depends on.
                         if (uiState.guidedPath.showsReconnectAccessory && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -155,10 +139,6 @@ internal fun SettingsMenusSubScreen(
 private fun TapToWalkSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
-    calibrationState: CalibrationState = CalibrationState.Idle,
-    groundCalibration: StoredGroundCalibration? = null,
-    onStartCalibration: () -> Unit = {},
-    onCancelCalibration: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var showEnableDisclosure by rememberSaveable { mutableStateOf(false) }
@@ -220,10 +200,6 @@ private fun TapToWalkSection(
             if (showsServiceOffHint(enabled, uiState.isScreenServiceGranted)) {
                 Spacer(Modifier.height(12.dp))
                 ServiceOffHint(uiState, onAction)
-            }
-            if (uiState.isScreenServiceGranted) {
-                Spacer(Modifier.height(16.dp))
-                GroundCalibrationSection(uiState, calibrationState, groundCalibration, onStartCalibration, onCancelCalibration)
             }
         }
     }
@@ -794,87 +770,6 @@ private fun FeatureRow(
                 enabled = false,
                 modifier = Modifier.width(56.dp),
                 onCheckedChange = {},
-            )
-        }
-    }
-}
-
-@Composable
-private fun GroundCalibrationSection(
-    uiState: SettingsUiState,
-    state: CalibrationState,
-    stored: StoredGroundCalibration?,
-    onStart: () -> Unit,
-    onCancel: () -> Unit,
-) {
-    val context = LocalContext.current
-    val running = state is CalibrationState.Walking || state is CalibrationState.Analysing
-    // Same stale-screen test as the tap overlay: a record only applies to the size it was fitted on.
-    val wrongScreen =
-        stored != null &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-            context.getSystemService(WindowManager::class.java).maximumWindowMetrics.bounds.let {
-                !stored.matches(it.width(), it.height())
-            }
-
-    SettingsSectionHeader(stringResource(R.string.settings_menus_calibration_header))
-    Spacer(Modifier.height(4.dp))
-    Text(
-        stringResource(R.string.settings_menus_calibration_desc),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(8.dp))
-    when (state) {
-        is CalibrationState.Walking -> {
-            Text(
-                stringResource(R.string.settings_menus_calibration_walking, state.leg, state.legCount),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Spacer(Modifier.height(4.dp))
-            LinearProgressIndicator(progress = { (state.leg - 1f) / state.legCount }, modifier = Modifier.fillMaxWidth())
-        }
-        is CalibrationState.Analysing -> {
-            Text(
-                stringResource(R.string.settings_menus_calibration_analysing, state.step, state.stepCount),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Spacer(Modifier.height(4.dp))
-            LinearProgressIndicator(progress = { state.step.toFloat() / state.stepCount }, modifier = Modifier.fillMaxWidth())
-        }
-        is CalibrationState.Failed -> {
-            Text(
-                stringResource(calibrationFailureMessageRes(state.reason)),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-            )
-        }
-        else -> {
-            Text(
-                when {
-                    stored == null -> stringResource(R.string.settings_menus_calibration_not_calibrated)
-                    wrongScreen -> stringResource(R.string.settings_menus_calibration_wrong_screen)
-                    else -> calibrationDoneText(context, stored)
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color =
-                    if (stored != null && !wrongScreen) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-            )
-        }
-    }
-    Spacer(Modifier.height(8.dp))
-    if (running) {
-        LjOutlinedButton(onClick = onCancel) { Text(stringResource(R.string.settings_menus_calibration_cancel)) }
-    } else {
-        LjButton(onClick = onStart) {
-            Text(
-                stringResource(
-                    if (stored != null) R.string.settings_menus_calibration_recalibrate else R.string.settings_menus_calibration_start,
-                ),
             )
         }
     }

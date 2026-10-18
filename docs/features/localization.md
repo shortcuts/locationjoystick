@@ -32,7 +32,7 @@ A lint check flags hardcoded user-facing strings in Compose code, including stri
 
 - English is the source of truth. A translation carries the same keys and nothing else.
 - The app name and brand are never translated. Units and symbols inside format strings are not translated either.
-- Strings that Play policy depends on need native-speaker review before release. These are the accessibility disclosure, the onboarding card, the service description and the calibration failure messages. See [tap-to-walk.md](tap-to-walk.md).
+- Strings that Play policy depends on need native-speaker review before release. These are the accessibility disclosure, the onboarding card, the service description and the learning notification text. See [tap-to-walk.md](tap-to-walk.md).
 - AI-assisted translations need native-speaker review before merging. See `CONTRIBUTING.md` at the repo root, "Translations".
 
 ## Adding a language

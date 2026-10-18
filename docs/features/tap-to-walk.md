@@ -26,21 +26,23 @@ Position is read once, at tap time. The tap pixel is in full-display device pixe
 
 ### Pixel to GPS
 
-Primary path: a stored ground calibration (see "Calibration walk") that matches the current display size converts the tap pixel to a ground offset in metres east and north. The offset is applied to the current position using the flat-earth scale that the walk uses, not the haversine radius. Taps past the horizon of the fitted map yield no target.
+Primary path: a stored ground map (see "Automatic fit") that matches the current display size converts the tap pixel to a ground offset in metres east and north. The offset is applied to the current position using the flat-earth scale that the walk uses, not the haversine radius. Taps past the horizon of the fitted map yield no target.
 
-Fallback: with no matching calibration, the tap is converted with a north-up scale formula. The fallback never blocks a tap. Its accuracy depends on the scale setting matching the game's zoom, and on the map being north-up. The fallback exists because the app assumes no map heading: heading comes from the walked-leg fit only.
+Fallback: when no map exists and none can be learned (below API 30, spoofing not running idle, game not in front), the tap is converted with a north-up scale formula. The fallback never blocks a tap. Its accuracy depends on the scale setting matching the game's zoom, and on the map being north-up. The fallback exists because the app assumes no map heading: heading comes from the walked-leg fit only.
+
+When no valid map exists and learning is possible, the tap does not move the player. The overlay holds the tap pixel and the position it was made at, the coordinator walks its learning route, and the held tap is resolved against the new map and walked. The tap is never resolved against a map the monitor flagged as suspect, when a new one can be learned.
 
 Invariants:
 
-- Never read the map orientation or take a screenshot inside the tap callback. The tap reads the cached stored calibration.
-- The ground frame is flat-earth at 111320 m per degree, the frame the calibration walk was measured in. The haversine radius drifts about 0.1 percent from those measurements.
-- The fallback must stay available until something user-visible can start a calibration walk. That entry must dismiss the overlay first.
+- Never read the map orientation or take a screenshot inside the tap callback. The tap reads the cached stored fit only. That fit is written by the coordinator's analysis of earlier walks, never by a user action and never on the tap path. (The old Settings walk made the same rule easy to keep because the user started it; with the automatic fit it is the reason frames are taken on the 3 s tick and analysed at leg close.)
+- The ground frame is flat-earth at 111320 m per degree, the frame the fit is measured in. The haversine radius drifts about 0.1 percent from those measurements.
+- The fallback must stay available whenever learning cannot run. A learning walk starts only from a tap, and the overlay is dismissed first, so it never blocks the player's touches during the walk.
 
 ## Screen access
 
-The accessibility service exists for two things: taking screenshots for the calibration walk, and reading and tapping the connect control for Reconnect accessory ([bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)). It captures nothing until the user accepts the disclosure. Where the map points is never read from the screen. It is measured by fitting how the map moves between frames during the calibration walk.
+The accessibility service exists for two things: taking screenshots for the automatic fit, and reading and tapping the connect control for Reconnect accessory ([bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)). It captures nothing until the user accepts the disclosure. Where the map points is never read from the screen. It is measured by fitting how the map moves between frames of walks.
 
-Capture is gated in the bridge that consumers call, not at each call site. Android can enable the service from system settings without the app ever opening, so a call-site check would be bypassable.
+Capture is gated in the bridge that consumers call, not at each call site: disclosure accepted, screen on and the game in front. Android can enable the service from system settings without the app ever opening, so a call-site check would be bypassable. The disclosure names the game in front as the only time frames are taken, so the gate is part of the consent, not only of battery care.
 
 ### Why the service is named "screen helper"
 
@@ -54,7 +56,7 @@ Screenshots require API 30. No fallback exists below it. The status block is one
 
 Play's accessibility policy rejected releases that showed the disclosure only in a settings sub-screen, and rejected a release that let the accessibility service run without an in-app accept. The disclosure is therefore a single full-screen surface, shown in the normal usage flow, immediately before Android's own consent screen.
 
-It names the accessibility API, the data it reads (periodic screenshots during a walk, and during Reconnect accessory), and the purpose. Play's policy requires the periodic screenshots to be named in this text, in the onboarding card and in the service description. The copy lives in string resources, not here; read it there.
+It names the accessibility API, the data it reads (periodic screenshots while walking with Tap to Walk on and the game in front, and during Reconnect accessory), and the purpose. Play's policy requires the periodic screenshots to be named in this text, in the onboarding card and in the service description. The copy lives in string resources, not here; read it there.
 
 Rules that the code must keep:
 
@@ -72,7 +74,7 @@ Entry points, each immediately before Android's consent screen, so reviewers alw
 - The Tap to Walk switch in Settings, with the two overlay caveats on the same screen.
 - Tapping the widget crosshair, which opens the app to the disclosure.
 - The screen-access row's open-settings button.
-- Calibration adds no new consent path. It needs the service already granted.
+- The automatic fit adds no new consent path. It needs the service granted and the disclosure accepted, both checked in the capture bridge.
 
 The Play Console declaration and store listing are done. Do not re-check them as part of routine work.
 
@@ -84,33 +86,37 @@ Turning on the overlay shows two caveats: some apps detect mock location and may
 
 Accessibility services running in the background can be detected by some games. The settings UI says so. The user can turn the service off in system settings; there is no separate in-app toggle, because that would only hide the same signal.
 
-## Calibration walk
+## Automatic fit
 
-The calibration walk fits a ground map for the player's game and screen, so that a tap on the screen maps to a metre offset rather than assuming north-up.
+The app fits and maintains the ground map itself, so a tap maps to a metre offset rather than assuming north-up, for any camera twist, zoom or screen size. There is no calibration step for the user. The earlier Settings walk (8 legs, 10 minutes, one stored record) was removed: it was a chore, it went stale the moment the player twisted or pinched the map, and nothing readable at tap time says the camera changed.
 
-Start launches the one supported game directly, with no picker, because the feature only works for that game (same rule as [bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)).
+How it works (class docs and tests are the detail): while Tap to Walk is on and the game is in front, every straight stretch of a walk the app already makes (tap to walk, quick walk, joystick) becomes a leg of screenshots. Positions are the app's own mock fixes, so bearing and length are exact. When a leg closes, its screen motion is compared with what the stored fit predicts. A cumulative-sum test on the residual (CUSUM) decides whether it still matches. A camera twist changes only the heading term, so on an alarm only the heading is re-fitted from that leg. A zoom changes scale, perspective and feet, so on a failed heading re-fit the fit becomes suspect and all four terms are re-fitted from the legs that followed. Route replay and roaming are not legs: their path is not straight and the jitter offset applies.
 
-Why it walks and does not teleport: a teleport would be a jump the game can flag, and the walk must not write the teleport cooldown. The walk uses the bench's measured speed. A faster profile risks the game's speed warning.
+Why legs, not a calibration route: every walk is a free measurement, and a camera change is noticed within the walk that follows it. The accepted cost is that a tap made between a twist and the next closed leg uses a stale fit.
 
-Why one stored record and not one per zoom or rotation: the game exposes no signal the app can read at tap time. A record keyed by zoom or rotation could never be looked up, so there is a single latest record per device. That is why the status copy asks the user to recalibrate after changing zoom, rotation or display size.
+Why scale is searched and never asked: a fixed or hand-set scale cannot follow a pinch. The fit solves scale together with heading, so the Map scale slider matters only to the north-up fallback.
+
+Why a tap with no valid map walks first: with no fit there is nothing to resolve the tap against, and a wrong guess is a wrong teleport target. The learning route walks at walking speed, never a teleport, so it does not touch the teleport cooldown and does not look like a jump to the game. Progress and a Cancel action are on the foreground notification, not in the tap overlay, because the overlay takes every touch and would lock the player out of the game for minutes. The route's legs are the set the bench's 2.3 m median was measured on.
+
+Why one stored record and not one per zoom or rotation: the game exposes no signal the app can read at tap time. A record keyed by zoom or rotation could never be looked up, so there is a single latest record per device, overwritten by every re-fit.
 
 Why per device and not exported: the map depends on the phone's screen and the game's camera. A backup restored on another device would give wrong taps. The record is rejected when its screen size differs from the current display.
 
-The walk spools its frames to the app cache, one leg at a time, because a full walk does not fit in the heap. The solver reads one leg at a time for the same reason. Frames are deleted on every exit path, success or failure.
-
-Any failure stores nothing. The failure reasons are an enum; the copy is in string resources and selected by an exhaustive match, so a new reason fails to compile until it has text.
+Frames spool to the app cache, one leg at a time, because a leg does not fit in the heap. A leg's spool is deleted as soon as the fit is valid; while the fit is not valid, the last few legs are kept for the full re-fit, so a twist or zoom from before is never mixed with legs after it. Frames are deleted on every exit path, including the service ending. At most one analysis runs at a time, never on the tap path.
 
 Invariants a change must not break:
 
-1. Walk speed is the calibration constant, not the user's walk profile.
+1. Learning walks at the walking speed constant, not the user's walk profile.
 2. Geometry uses the flat-earth metres-per-degree constant. Do not swap in the haversine radius.
-3. The feet pixel goes into the flow code in device pixels. Only the fit converts to the 1080x2340 reference frame. That reference is fixed; stored calibrations are in reference pixels.
+3. The feet pixel goes into the flow code in device pixels. Only the fit converts to the 1080x2340 reference frame. That reference is fixed; stored fits are in reference pixels.
 4. Opposite legs in the synthetic test must differ in scroll size. Identical frame sets give identical temporal medians, which defeat the rejection of repeated world texture. Real walks never repeat terrain exactly.
 5. A stored map is valid only for the screenshot size it was fitted at.
+6. No frame is taken unless the disclosure is accepted, the screen is on and the game is in front. The check lives in the capture bridge.
+7. An alarm makes the fit suspect until a full re-fit succeeds. Never silently keep a map that does not explain the screen.
 
 ### Ground map
 
-The ground map is a pure-Kotlin perspective model in the model module. It maps device pixels to ground offsets and back, and it has no Android dependency so the math can be tested on the host. A device pixel is scaled into the reference frame, so one calibration serves any screen size. Its valid range was checked only on part of the screen and up to about 31 m; outside that it is extrapolated, not rejected.
+The ground map is a pure-Kotlin perspective model in the model module. It maps device pixels to ground offsets and back, and it has no Android dependency so the math can be tested on the host. A device pixel is scaled into the reference frame, so one fit serves any screen size. Its valid range was checked only on part of the screen and up to about 31 m; outside that it is extrapolated, not rejected.
 
 ### Feet detection and frame flow
 
@@ -132,6 +138,7 @@ Accepted state of the no-compass investigation (branch `tap-to-walk-no-compass`;
 
 - Heading and scale come from the walked-leg fit. No north is assumed.
 - Wide zoom on one device passes the bar. Close-up zoom does not yet.
+- Twist, still-frame twist and one-parameter zoom were benched for the automatic fit: results and thresholds are in the investigation doc, "Automatic fit bench results".
 - Not proven: other devices and screen sizes, close-up zoom, and the end-to-end pass rate of the port. The smoke gate for the pass rate has not been run in full.
 
 Open work, in order:
@@ -146,6 +153,7 @@ Open work, in order:
 - Do not read position again inside the tap callback. Capture it once at tap time.
 - Do not persist the active state of Tap to Walk. It is session state.
 - Do not capture a screenshot or read a heading inside the tap callback.
+- Do not mix legs from before and after a camera change in one re-fit.
 - Do not use the overlay window size as the screen size.
 - Do not use the haversine radius for the ground-map offset.
 - Do not read pixels from a hardware bitmap. Copy it to a software config first.

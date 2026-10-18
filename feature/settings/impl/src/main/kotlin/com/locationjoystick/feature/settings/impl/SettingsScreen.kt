@@ -50,10 +50,8 @@ import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjScaffold
-import com.locationjoystick.core.location.CalibrationState
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.RoamingDefaults
-import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.feature.settings.impl.R
 
 private enum class SettingsSection { GPS, MENUS, GENERAL, FAVORITES_ROUTES, ROAMING }
@@ -251,10 +249,6 @@ fun SettingsRoute(
         onToggleSpoofing = spoofToggle.onToggle,
         locationLabel = spoofToggle.locationLabel,
         onCheckScreenService = { viewModel.checkScreenServiceGranted() },
-        calibrationState = viewModel.calibrationState.collectAsStateWithLifecycle().value,
-        groundCalibration = viewModel.groundCalibration.collectAsStateWithLifecycle().value,
-        onStartCalibration = viewModel::startCalibration,
-        onCancelCalibration = viewModel::cancelCalibration,
         launchableApps = viewModel.launchableApps,
         onNavigateUp = onNavigateUp,
         openCaptureSetup = openCaptureSetup,
@@ -552,10 +546,6 @@ internal fun SettingsScreen(
     locationLabel: String? = null,
     onAction: (SettingsAction) -> Unit,
     onCheckScreenService: () -> Unit = {},
-    calibrationState: CalibrationState = CalibrationState.Idle,
-    groundCalibration: StoredGroundCalibration? = null,
-    onStartCalibration: () -> Unit = {},
-    onCancelCalibration: () -> Unit = {},
     launchableApps: List<InstalledApp> = emptyList(),
     onNavigateUp: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
@@ -656,10 +646,6 @@ internal fun SettingsScreen(
                 locationLabel = locationLabel,
                 onAction = onAction,
                 onCheckScreenService = onCheckScreenService,
-                calibrationState = calibrationState,
-                groundCalibration = groundCalibration,
-                onStartCalibration = onStartCalibration,
-                onCancelCalibration = onCancelCalibration,
                 bottomBar = bottomBar,
                 snackbarHost = snackbarHost,
             )

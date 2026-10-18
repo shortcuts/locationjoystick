@@ -10,7 +10,7 @@ Reconnect a Bluetooth companion device by automating the on-screen tap in the ot
 
 Nothing is injected into, hooked into, patched in, or read from the target app's process or memory. Any approach that needs that is out of scope.
 
-The only data taken from the target app is the pixels on screen, captured the same way as the tap-to-walk calibration ([tap-to-walk.md](tap-to-walk.md), "Screen access").
+The only data taken from the target app is the pixels on screen, captured the same way as the tap-to-walk automatic fit ([tap-to-walk.md](tap-to-walk.md), "Screen access").
 
 ## Why this tap path
 

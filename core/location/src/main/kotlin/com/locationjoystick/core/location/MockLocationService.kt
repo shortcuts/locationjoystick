@@ -146,6 +146,8 @@ class MockLocationService : Service() {
 
     @Inject lateinit var elevationRepository: ElevationRepository
 
+    @Inject lateinit var autoFit: AutoFitCoordinator
+
     private val notificationManager: android.app.NotificationManager by lazy {
         getSystemService(android.app.NotificationManager::class.java)
     }
@@ -255,6 +257,7 @@ class MockLocationService : Service() {
                 notificationManager = notificationManager,
                 locationRepository = locationRepository,
                 settingsRepository = settingsRepository,
+                learning = autoFit.learning,
             )
         altitudeAnchor =
             AltitudeAnchorCoordinator(
@@ -401,6 +404,8 @@ class MockLocationService : Service() {
         // Keeps the foreground notification and widget overlay in sync with live setting
         // changes mid-session (see OverlayNotificationReactor's class doc for why).
         overlayNotificationReactor.observe(serviceScope, _state)
+        // Keeps the tap-to-walk ground map fitted from the walks the app already makes (AutoFitCoordinator).
+        autoFit.observe(serviceScope)
         // Jitter and realism settings — each updates a @Volatile field consumed by captureSnapshot().
         realism.observe(serviceScope, settingsRepository)
         // Propagate live speed-profile changes (e.g. widget Speed Cycle) into an active route
@@ -583,6 +588,10 @@ class MockLocationService : Service() {
                     stopSelf()
                     return START_NOT_STICKY
                 }
+            }
+
+            ServiceConstants.ACTION_CANCEL_AUTOFIT -> {
+                autoFit.cancel()
             }
 
             ACTION_PARK_KEEP_WIDGET -> {

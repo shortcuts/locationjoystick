@@ -146,7 +146,7 @@
     <string name="settings_menus_debug_stats">"调试信息"</string>
     <string name="settings_menus_debug_stats_desc">"模拟定位生效期间，在悬浮窗面板中显示实时速度、海拔、坐标和刷新频率。"</string>
     <string name="settings_menus_screen_access">"屏幕访问"</string>
-    <string name="settings_menus_when_enabled_the_app_detects_your">"允许应用截取屏幕截图，点按行走校准和重新连接配件需要它。使用 Android 无障碍服务。注意：部分游戏会检测无障碍服务。"</string>
+    <string name="settings_menus_when_enabled_the_app_detects_your">"允许应用截取屏幕截图，点击行走和重新连接配件需要它。使用 Android 无障碍服务。注意：部分游戏会检测无障碍服务。"</string>
     <string name="settings_menus_accessibility_service">"无障碍服务"</string>
     <string name="settings_menus_open_settings">"打开设置"</string>
     <string name="settings_menus_screen_service_enabled">"已启用"</string>
@@ -219,24 +219,4 @@
     <string name="qr_share_or_enter_code">"或输入代码：%1$s"</string>
     <string name="hot_item_tree_collapse_cd">"折叠"</string>
     <string name="hot_item_tree_expand_cd">"展开"</string>
-    <string name="settings_menus_calibration_header">"地面校准"</string>
-    <string name="settings_menus_calibration_desc">"在游戏保持打开的情况下，以步行速度分 8 小段移动你的虚拟位置约 320 米（约 10 分钟），然后测量地图如何移动。完成前请勿使用摇杆、更改游戏缩放或旋转游戏。更改游戏缩放或旋转，或手机显示尺寸后，请重新校准。"</string>
-    <string name="settings_menus_calibration_not_calibrated">"未校准。点击按地图朝北计算。"</string>
-    <string name="settings_menus_calibration_done">"已于 %1$s 校准，共 %2$d 次测量"</string>
-    <string name="settings_menus_calibration_wrong_screen">"已保存的地图对应不同的屏幕尺寸。请重新校准。"</string>
-    <string name="settings_menus_calibration_start">"开始校准"</string>
-    <string name="settings_menus_calibration_recalibrate">"重新校准"</string>
-    <string name="settings_menus_calibration_cancel">"取消校准"</string>
-    <string name="settings_menus_calibration_walking">"正在行走第 %1$d 段，共 %2$d 段"</string>
-    <string name="settings_menus_calibration_analysing">"正在分析第 %1$d 步，共 %2$d 步"</string>
-    <string name="settings_menus_calibration_fail_not_ready">"请先启动虚拟位置：开始模拟，并停止任何行走、路线或漫游。"</string>
-    <string name="settings_menus_calibration_fail_service">"无障碍服务已关闭或尚未接受说明。请在上方开启。"</string>
-    <string name="settings_menus_calibration_fail_storage">"存储空间不足。请释放约 1 GB 后重试。"</string>
-    <string name="settings_menus_calibration_fail_timeout">"某一段耗时过长。校准期间请勿使用摇杆。"</string>
-    <string name="settings_menus_calibration_fail_speed">"位置移动过快。校准期间请勿传送。"</string>
-    <string name="settings_menus_calibration_fail_interrupted">"行走在完成前被中止。请重新开始并不要干预。"</string>
-    <string name="settings_menus_calibration_fail_frame_size">"屏幕尺寸发生了变化（旋转或显示更改）。请保持手机方向不变。"</string>
-    <string name="settings_menus_calibration_fail_feet">"找不到你的角色。请保持游戏打开并位于前台，角色可见。"</string>
-    <string name="settings_menus_calibration_fail_flows">"地图移动不足，无法测量。请确保游戏位于前台，并在整个行走过程中保持打开。"</string>
-    <string name="settings_menus_calibration_fail_implausible">"游戏没有跟随行走。请确保游戏始终位于前台，且没有显示加载或卡住的画面。"</string>
 </resources>

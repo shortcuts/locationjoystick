@@ -169,12 +169,13 @@ Rules:
 | `UpdateCheckRepository` | `:core:data` | Repository (`@Singleton`) | Latest-release check for the update badge. Cached; there is no toggle. |
 | `StartRouteReplayUseCase` | `:core:location` | Class (`@Singleton`) | Shared route-replay start for the map and the widget. `bypassHideTeleport` is Control API only. |
 | `ControlApiRoutes` | `:core:location` | Class (`@Singleton`) | Control API routes. Each calls the same controller method as the UI; see [features/group-sync.md](docs/features/group-sync.md). |
-| `FeetDetector` | `:core:model` | Object | Pure-Kotlin feet detection for tap to walk calibration. Not wired yet. |
-| `FrameFlow` / `PhaseCorrelation` | `:core:model` | Objects | Pure-Kotlin frame flow for the calibration bench. Not wired yet. |
-| `GroundMapFit` | `:core:model` | Object | Pure-Kotlin ground map fit for the calibration bench. Not wired yet. |
+| `FeetDetector` | `:core:model` | Object | Pure-Kotlin feet detection for the tap to walk fit. |
+| `FrameFlow` / `PhaseCorrelation` | `:core:model` | Objects | Pure-Kotlin frame flow for the tap to walk fit. |
+| `GroundMapFit` | `:core:model` | Object | Pure-Kotlin ground map fit and the per-move residuals the monitor reads. |
+| `FitMonitor` / `LegSegmenter` | `:core:model` | Objects/Class | Twist and zoom detection (CUSUM on the flow residual) and the straight-leg rule. See [features/tap-to-walk.md](docs/features/tap-to-walk.md). |
 | `ReconnectControlDetector` | `:feature:widget:impl` | Object | Classifies the target app's reconnect control from screenshot pixels. See [features/bluetooth-reconnect-tap.md](docs/features/bluetooth-reconnect-tap.md). |
 | `Geocoding` / `GeocodingProvider` | `:core:common` | Object + interface | Search and reverse lookup entry point. Falls back between providers with a shared cooldown. |
-| `CalibrationWalkOrchestrator` | `:core:location` | Class (`@Singleton`) | Runs the calibration walk and stores the result per device. See [features/tap-to-walk.md](docs/features/tap-to-walk.md). |
+| `AutoFitCoordinator` | `:core:location` | Class (`@Singleton`) | Keeps the tap to walk ground map fitted from the walks the app already makes, and walks a learning route when no fit exists. See [features/tap-to-walk.md](docs/features/tap-to-walk.md). |
 | `ScreenCaptureSource` | `:core:location` | Class (`@Singleton`) | Bridges the screen accessibility service to consumers. Capture is gated on the in-app disclosure. Also carries the in-memory reconnect status for Settings. |
 
 ---
@@ -242,7 +243,7 @@ make wiki-serve   # http://localhost:8080
 | `docs/wiki/privacy.html` | Privacy policy |
 | `docs/wiki/acknowledgements.html` | Third-party credits |
 | `docs/wiki/style.css` | Single stylesheet — all pages share it |
-| `docs/wiki/screenshots/` | Phone screenshots (PNG, numbered 01–26, number = script step) |
+| `docs/wiki/screenshots/` | Phone screenshots (PNG, numbered 01–25, number = script step) |
 | `docs/wiki/screenshots/marketing/` | 8 curated 1024×500 Play Store marketing images (white bg, catch-phrase + phone screenshot) — **generated**, not hand-edited |
 
 Nav groups (Start / Use / Configure / Help / About), order and labels are the single source of truth in the grouped `NAV_ITEMS` (`docs/wiki/wiki-init.js`) — every HTML page's sidebar renders from that script, so a new page needs an entry there, not a hand-edited `<nav>` block per file.

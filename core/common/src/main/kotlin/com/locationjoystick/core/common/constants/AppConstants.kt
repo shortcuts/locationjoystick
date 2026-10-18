@@ -319,6 +319,7 @@ object AppConstants {
         const val WIDGET_SERVICE_CLASS = "com.locationjoystick.feature.widget.impl.FloatingWidgetService"
         const val ACTION_START = "com.locationjoystick.core.location.ACTION_START"
         const val ACTION_STOP = "com.locationjoystick.core.location.ACTION_STOP"
+        const val ACTION_CANCEL_AUTOFIT = "com.locationjoystick.core.location.ACTION_CANCEL_AUTOFIT"
         const val ACTION_PARK_KEEP_WIDGET = "com.locationjoystick.core.location.ACTION_PARK_KEEP_WIDGET"
         const val ACTION_CLEAR_MOTION_VECTOR = "com.locationjoystick.core.location.ACTION_CLEAR_MOTION_VECTOR"
         const val ACTION_UPDATE_POSITION = "com.locationjoystick.core.location.ACTION_UPDATE_POSITION"
@@ -598,13 +599,13 @@ object AppConstants {
         const val MIN_SCALE_MPX = 0.01
         const val MAX_SCALE_MPX = 1.0
 
-        // Calibration walk (docs/features/tap-to-walk.md, "Calibration walk"). Values come from the bench walks.
-        const val CALIBRATION_GAME_FOREGROUND_DELAY_MS = 3000L // lets the game reach the front before the probe frame
-        const val CALIBRATION_FRAME_INTERVAL_MS = 3000L // one screenshot per tick, as the bench's --every 3
-        const val CALIBRATION_LEG_TIMEOUT_FACTOR = 2.0 // a leg may take twice its nominal time (40 m at walking speed)
-        const val CALIBRATION_SPEED_ABORT_MPS = 3.0 // faster than this between frames is a teleport, not a walk
-        const val CALIBRATION_ARRIVAL_SLACK_M = 5.0 // a leg that ended farther than this from its target was cancelled
-        const val CALIBRATION_SPOOL_FRAMES_PER_LEG = 36 // 108 s of a typical leg plus slack, sizes the free-space check
+        // Automatic fit (docs/features/tap-to-walk.md, "Automatic fit"). Values come from the bench walks.
+        const val AUTOFIT_FRAME_INTERVAL_MS = 3000L // one screenshot per tick, as the bench's --every 3
+        const val AUTOFIT_MAX_SPEED_MPS = 3.0 // faster steps are a teleport or a vehicle profile, not a leg to learn from
+        const val AUTOFIT_LEG_TIMEOUT_FACTOR = 2.0 // a learning leg may take twice its nominal time
+        const val AUTOFIT_ARRIVAL_SLACK_M = 5.0 // a learning leg that ended farther than this from its target was cancelled
+        const val AUTOFIT_BUFFER_LEGS = 4 // closed legs kept for a full re-fit while the fit is not valid
+        const val AUTOFIT_MIN_BEARING_SPREAD_DEG = 40.0 // a full re-fit needs legs this far apart in bearing
     }
 
     object AccessibilityConstants {

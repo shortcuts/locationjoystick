@@ -14,6 +14,14 @@ object CalibrationWalkMath {
     const val METERS_PER_DEGREE = 111320.0
     const val MOVING_MIN_MPS = 0.3 // neighbour-frame speed that counts as walking (/state speed reads 0 mid-walk-to)
 
+    /**
+     * Learning walk when no fit exists: two perpendicular legs of [LEARNING_LEG_METERS]. Two legs pin the four terms; held out
+     * on the other two `varycap` legs the fit's landing p90 was 6.2 m, inside the 10 m bar
+     * (docs/features/tap-to-walk-investigation.md, "Automatic fit bench results").
+     */
+    val LEARNING_BEARINGS_DEG = doubleArrayOf(0.0, 90.0)
+    const val LEARNING_LEG_METERS = 30.0
+
     /** Opposite bearings in sequence return the player to the start within the arrival slack. */
     val BEARINGS_DEG = doubleArrayOf(0.0, 180.0, 90.0, 270.0, 45.0, 225.0, 135.0, 315.0)
 

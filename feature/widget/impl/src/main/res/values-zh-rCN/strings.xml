@@ -54,7 +54,9 @@
     <string name="widget_feature_favorites_cd">"收藏选择"</string>
     <string name="widget_feature_speed_cycle_cd">"速度切换"</string>
     <string name="widget_feature_open_map_cd">"打开地图"</string>
-    <string name="tap_to_walk_overlay_not_calibrated_hint">"未校准：点击按地图朝北计算。请在设置中校准。"</string>
+    <string name="tap_to_walk_overlay_north_up_hint">"尚未学习地图：点击按地图朝北计算。"</string>
+    <string name="tap_to_walk_learning_failed">"无法学习地图。请保持游戏打开并重试。"</string>
+    <string name="tap_to_walk_learning_started">"正在为点击行走学习地图。短暂行走后会前往你点击的位置。"</string>
     <string name="reconnect_failed_channel_name">"配件重新连接"</string>
     <string name="reconnect_failed_title">"配件未能重新连接"</string>
     <string name="reconnect_failed_text">"连续多次重新连接配件失败。请打开应用查看。"</string>

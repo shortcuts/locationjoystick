@@ -15,6 +15,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
+private data class NotificationInputs(
+    val mode: MockMode,
+    val state: MockLocationState,
+    val hideNotification: Boolean,
+    val learning: LearningState,
+)
+
 /**
  * Owns the two settings-reactive collectors that keep the foreground notification and the widget
  * overlay in sync with live setting changes mid-session, extracted from
@@ -27,6 +34,7 @@ internal class OverlayNotificationReactor(
     private val notificationManager: NotificationManager,
     private val locationRepository: LocationRepository,
     private val settingsRepository: SettingsRepository,
+    private val learning: StateFlow<LearningState>,
 ) {
     /**
      * Mirrors the current hideNotification setting so [MockLocationService.onStartCommand]'s
@@ -53,16 +61,17 @@ internal class OverlayNotificationReactor(
                 locationRepository.currentMode,
                 locationRepository.mockLocationState,
                 settingsRepository.getHideForegroundNotification(),
-            ) { mode, state, hideNotification -> Triple(mode, state, hideNotification) }
+                learning,
+            ) { mode, state, hideNotification, learningState -> NotificationInputs(mode, state, hideNotification, learningState) }
                 .distinctUntilChanged()
-                .collect { (mode, state, hideNotification) ->
+                .collect { (mode, state, hideNotification, learningState) ->
                     hideNotificationSetting = hideNotification
                     // Double-guarded: walk-to PAUSED never triggers replayPaused=true
                     val replayActive = mode == MockMode.ROUTE_REPLAY
                     val replayPaused = mode == MockMode.ROUTE_REPLAY && state == MockLocationState.PAUSED
                     notificationManager.notify(
                         AppConstants.NotificationConstants.ID_ACTIVE,
-                        buildMockLocationNotification(context, replayActive, replayPaused, hideNotification),
+                        buildMockLocationNotification(context, replayActive, replayPaused, hideNotification, learningState),
                     )
                 }
         }

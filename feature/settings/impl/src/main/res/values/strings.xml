@@ -146,7 +146,7 @@
     <string name="settings_menus_debug_stats">"Debug stats"</string>
     <string name="settings_menus_debug_stats_desc">"Shows live speed, altitude, coordinates, and tick rate in the floating widget panel while spoofing is active."</string>
     <string name="settings_menus_screen_access">"Screen access"</string>
-    <string name="settings_menus_when_enabled_the_app_detects_your">"Lets the app take a picture of your screen. Tap to Walk calibration and Reconnect accessory need it. Uses an Android Accessibility Service. Some games detect accessibility services."</string>
+    <string name="settings_menus_when_enabled_the_app_detects_your">"Lets the app take a picture of your screen. Tap to Walk and Reconnect accessory need it. Uses an Android Accessibility Service. Some games detect accessibility services."</string>
     <string name="settings_menus_accessibility_service">"Accessibility Service"</string>
     <string name="settings_menus_open_settings">"Open Settings"</string>
     <string name="settings_menus_screen_service_enabled">"Enabled"</string>
@@ -219,24 +219,4 @@
     <string name="qr_share_or_enter_code">"Or enter code: %1$s"</string>
     <string name="hot_item_tree_collapse_cd">"Collapse"</string>
     <string name="hot_item_tree_expand_cd">"Expand"</string>
-    <string name="settings_menus_calibration_header">"Ground calibration"</string>
-    <string name="settings_menus_calibration_desc">"Walks your fake location about 320 m in 8 short legs at walking speed (about 10 minutes) while the game stays open, then measures how the map moves. Until it finishes, do not use the joystick, change the game’s zoom, or rotate the game. Recalibrate after you change the game’s zoom or rotation, or the phone’s display size."</string>
-    <string name="settings_menus_calibration_not_calibrated">"Not calibrated. Taps assume the map is north-up."</string>
-    <string name="settings_menus_calibration_done">"Calibrated %1$s from %2$d measurements"</string>
-    <string name="settings_menus_calibration_wrong_screen">"Saved map is for a different screen size. Recalibrate."</string>
-    <string name="settings_menus_calibration_start">"Start calibration"</string>
-    <string name="settings_menus_calibration_recalibrate">"Recalibrate"</string>
-    <string name="settings_menus_calibration_cancel">"Cancel calibration"</string>
-    <string name="settings_menus_calibration_walking">"Walking leg %1$d of %2$d"</string>
-    <string name="settings_menus_calibration_analysing">"Analyzing step %1$d of %2$d"</string>
-    <string name="settings_menus_calibration_fail_not_ready">"Start the fake location first: start spoofing and stop any walk, route, or roam."</string>
-    <string name="settings_menus_calibration_fail_service">"The accessibility service is off or the disclosure was not accepted. Turn it on above."</string>
-    <string name="settings_menus_calibration_fail_storage">"Not enough free storage. Free about 1 GB and try again."</string>
-    <string name="settings_menus_calibration_fail_timeout">"A leg took too long. Do not use the joystick during calibration."</string>
-    <string name="settings_menus_calibration_fail_speed">"The location moved too fast. Do not teleport during calibration."</string>
-    <string name="settings_menus_calibration_fail_interrupted">"The walk was stopped before it finished. Start again and leave it alone."</string>
-    <string name="settings_menus_calibration_fail_frame_size">"The screen size changed (rotation or display change). Keep the phone in one orientation."</string>
-    <string name="settings_menus_calibration_fail_feet">"Could not find your character. Keep the game open and in front, with the character visible."</string>
-    <string name="settings_menus_calibration_fail_flows">"The map did not move enough to measure. Make sure the game is in front and keep it open for the whole walk."</string>
-    <string name="settings_menus_calibration_fail_implausible">"The game did not follow the walk. Make sure the game is in front the whole time and not showing a loading or frozen screen."</string>
 </resources>

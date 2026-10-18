@@ -1223,8 +1223,10 @@ def clean_leg(frames, anchor, sprite_r=110):
     return out
 
 
-def band_moves(legs, anchor, ks=(2, 3, 4, 6), min_d=2.0):
-    """[(bearing, d, [(fx, fy, response, x, y) per band])] from legs {bearing: [{ll, img, moving}]}."""
+def band_moves(legs, anchor, ks=(2, 3, 4, 6), min_d=2.0, with_end=False):
+    """[(bearing, d, [(fx, fy, response, x, y) per band])] from legs {bearing: [{ll, img, moving}]}.
+
+    with_end adds a 4th item: metres walked from the leg start to the move's later frame."""
     lat0 = next(iter(legs.values()))[0]["ll"][0]
     moves = []
     for b, fr in legs.items():
@@ -1245,7 +1247,11 @@ def band_moves(legs, anchor, ks=(2, 3, 4, 6), min_d=2.0):
                     win = cv2.createHanningWindow((fa.shape[1], fa.shape[0]), cv2.CV_32F)
                     (fx, fy), resp = cv2.phaseCorrelate(fa, feats[i + k][bi], win)
                     fl.append((float(fx), float(fy), float(resp), (x0 + x1) / 2, (y0 + y1) / 2))
-                moves.append((b, d, fl))
+                if with_end:
+                    dist = float(np.hypot(*along_track_move(fr[0]["ll"], fr[i + k]["ll"], b, lat0)))
+                    moves.append((b, d, fl, dist))
+                else:
+                    moves.append((b, d, fl))
     return moves
 
 
@@ -1627,6 +1633,353 @@ def cmd_report(args):
                   f"{statistics.median(r['score'] for r in sub):.3f} | {ms[len(ms) // 2]:.0f} | {ms[-1]:.0f} |")
 
 
+# --- Automatic fit (no calibration walk): monitor, twist-from-two-frames, zoom family -------------------
+# docs/features/tap-to-walk-research.md "Recommendations for entry A". Kill criteria are printed as PASS/KILL.
+MONITOR_ALARM_MAX_M = 15.0  # kill: a twist needs more walking than this to alarm
+MONITOR_HEADING_MAX_DEG = 3.0  # kill: heading re-fit off by more than this on over 20 percent of runs
+TWIST_MAX_DEG = 3.0
+MONITOR_UNCHANGED_MAX_DEG = 10.0  # net gesture twist under this still counts as the stored camera
+MONITOR_TWIST_MIN_DEG = 15.0  # at least this much net twist is a twist to detect
+KILL_FRACTION = 0.2
+
+
+def wrap_deg(a):
+    return (a + 180.0) % 360.0 - 180.0
+
+
+def move_excess(cal, move, min_resp=0.2):
+    """Median absolute flow residual (px, both components) of one band move under a stored fit; None when no band is usable."""
+    h = persp_h(cal)
+    hi = np.linalg.inv(h)
+    _, d, fl = move[:3]
+    r = []
+    for f in fl:
+        if f[2] >= min_resp:
+            r.extend(np.abs(np.array(f[:2]) - predict_flow(h, hi, d, (f[3], f[4]))))
+    return float(np.median(r)) if len(r) >= 6 else None
+
+
+def cusum_alarm(zs, k, h):
+    """Index of the first sample where CUSUM of (z - 1 - k) exceeds h, else None. z is residual / stored median, 1 when nothing changed."""
+    s = 0.0
+    for i, z in enumerate(zs):
+        s = max(0.0, s + z - 1.0 - k)
+        if s > h:
+            return i
+    return None
+
+
+def refit_heading(cal, moves, min_resp=0.2, step=10.0):
+    """theta (deg) minimising the capped flow residual with every other term of cal fixed; None under 12 flows.
+
+    Grid of `step` degrees, then halving refinement to 0.05 degrees (ponytail: cost is 1-D, no Gauss-Newton needed)."""
+    rows = [(m[1], f) for m in moves for f in m[2] if f[2] >= min_resp]
+    if len(rows) < 12:
+        return None
+
+    def cost(th):
+        h = persp_h({**cal, "theta_deg": th})
+        hi = np.linalg.inv(h)
+        r = np.concatenate([np.array(f[:2]) - predict_flow(h, hi, d, (f[3], f[4])) for d, f in rows])
+        return float(np.mean(np.minimum(r ** 2, 100.0)))
+
+    grid = np.arange(-180.0, 180.0, step)
+    th = float(grid[int(np.argmin([cost(t) for t in grid]))])
+    w = step
+    while w > 0.05:
+        w /= 2
+        th = min((th - w, th, th + w), key=cost)
+    return wrap_deg(th)
+
+
+def condition_dirs(data):
+    """Condition dirs of a varycap output, in capture order."""
+    return sorted((d for d in Path(data).iterdir() if (d / "condition.json").exists()),
+                  key=lambda d: (d / "condition.json").stat().st_mtime)
+
+
+def load_condition(cdir, ref_anchor=None):
+    """Legs of one varycap condition, its own fit (the truth) and per-leg band moves under ref_anchor (default own anchor)."""
+    import argparse
+
+    legs = _commanded_legs(cdir)
+    own = _anchor(argparse.Namespace(anchor=None), legs)
+    fit = fit_perspective_horizon(band_moves(legs, own), own)
+    anchor = ref_anchor or own
+    per_leg = {b: band_moves({b: fr}, anchor, ks=(4,), with_end=True) for b, fr in legs.items()}
+    return {"name": cdir.name, "fit": fit, "anchor": own, "per_leg": per_leg, "legs": legs,
+            "height": int(next(iter(legs.values()))[0]["img"].shape[0])}
+
+
+def leg_alarm(cal, moves, k, h):
+    """(index into the usable moves of the CUSUM alarm or None, usable moves) for one leg under stored fit cal."""
+    used = [(m, move_excess(cal, m)) for m in moves]
+    used = [(m, z) for m, z in used if z is not None]
+    return cusum_alarm([z / cal["med_abs_px"] for _, z in used], k, h), [m for m, _ in used]
+
+
+def monitor_runs(ref, conds, k, h):
+    """Rows (condition, bearing, alarm_m or None, heading_err_deg or None, truth_dtheta) for every leg of conds under ref's fit."""
+    cal = ref["fit"]
+    rows = []
+    for c in conds:
+        if c["fit"] is None:
+            continue
+        for b, moves in c["per_leg"].items():
+            idx, used = leg_alarm(cal, moves, k, h)
+            truth = wrap_deg(c["fit"]["theta_deg"] - cal["theta_deg"])
+            if idx is None:
+                rows.append((c["name"], b, None, None, truth))
+                continue
+            dist = used[idx][3]
+            th = refit_heading(cal, [m for m in used if m[3] <= dist])
+            err = None if th is None else abs(wrap_deg(th - c["fit"]["theta_deg"]))
+            rows.append((c["name"], b, dist, err, truth))
+    return rows
+
+
+def monitor_conditions(data):
+    """(first condition, later conditions, {held-out bearing: fit without it}); cached in data/monitor_cache.pkl (delete to refresh).
+
+    Band flows take minutes per condition, so the cache keeps what the monitor needs and drops the frames."""
+    import pickle
+
+    cache = data / "monitor_cache.pkl"
+    if cache.exists():
+        return pickle.loads(cache.read_bytes())
+    dirs = condition_dirs(data)
+    first = load_condition(dirs[0])
+    loo = {}
+    for hb in first["per_leg"]:
+        rest = {b: fr for b, fr in first["legs"].items() if b != hb}
+        loo[hb] = fit_perspective_horizon(band_moves(rest, first["anchor"]), first["anchor"])
+    conds = [load_condition(d, first["anchor"]) for d in dirs[1:]]
+    for c in [first] + conds:
+        c.pop("legs")
+    cache.write_bytes(pickle.dumps((first, conds, loo)))
+    return first, conds, loo
+
+
+def cmd_monitor(args):
+    """Rec 1: CUSUM on the flow residual, then heading-only re-fit. args.data holds condition dirs (varycap output).
+
+    The first condition (by capture time) is the stored fit; later ones are the same camera after gestures. Unchanged
+    legs (false-alarm check) are leave-one-leg-out legs of the first condition plus later conditions with no gesture.
+    Twist conditions (net gesture twist of at least 15 degrees, no pinch) are scored for alarm distance and heading error;
+    a condition whose gestures cancel out (net under 10 degrees) counts as unchanged."""
+    import json
+
+    first, conds, loo_fits = monitor_conditions(Path(args.data))
+    info = {c["name"]: json.loads((Path(args.data) / c["name"] / "condition.json").read_text()) for c in conds}
+    # Gestures accumulate (the game has no camera reset), so a condition's camera change is the running sum.
+    net, total = {}, 0.0
+    for c in conds:
+        total += info[c["name"]]["twist_cmd_deg"]
+        net[c["name"]] = total if info[c["name"]]["zoom_cmd"] == 1.0 else None
+    unchanged = [c for c in conds if net[c["name"]] is not None and abs(net[c["name"]]) < MONITOR_UNCHANGED_MAX_DEG]
+    twists = [c for c in conds if net[c["name"]] is not None and abs(net[c["name"]]) >= MONITOR_TWIST_MIN_DEG]
+    loo = [({"fit": sub}, {"name": "loo", "fit": first["fit"], "per_leg": {hb: first["per_leg"][hb]}})
+           for hb, sub in loo_fits.items() if sub]
+    best = None
+    for k in (0.25, 0.5, 0.75, 1.0, 1.5):
+        for h in (2.0, 3.0, 4.0, 6.0, 8.0, 12.0):
+            rows = [r for ref, c in loo for r in monitor_runs(ref, [c], k, h)] + monitor_runs(first, unchanged, k, h)
+            fa = sum(r[2] is not None for r in rows)
+            tw = monitor_runs(first, twists, k, h)
+            dist = [r[2] if r[2] is not None else 1e9 for r in tw]
+            score = (fa / max(len(rows), 1) <= 0.05, -np.percentile(dist, 90) if dist else 0.0)
+            if best is None or score > best[0]:
+                best = (score, k, h, fa, len(rows))
+    _, k, h, fa, n = best
+    k = k if args.k is None else args.k
+    h = h if args.h is None else args.h
+    print(f"k={k} h={h}: {fa} false alarms in {n} unchanged legs")
+    for r in monitor_runs(first, conds, k, h):
+        print("  %-10s leg %5.0f  fitted dtheta %+6.1f  alarm %s  heading err %s" % (
+            r[0], r[1], r[4], "-" if r[2] is None else f"{r[2]:.1f} m", "-" if r[3] is None else f"{r[3]:.1f} deg"))
+    tw = monitor_runs(first, twists, k, h)
+    if not tw:
+        print("MONITOR: INCONCLUSIVE (no twist condition)")
+        return
+    dist = np.array([r[2] if r[2] is not None else np.inf for r in tw])
+    errs = np.array([r[3] if r[3] is not None else np.inf for r in tw])
+    p90 = float(np.percentile(dist, 90))
+    bad = float(np.mean(errs > MONITOR_HEADING_MAX_DEG))
+    ok = p90 <= MONITOR_ALARM_MAX_M and bad <= KILL_FRACTION
+    print(f"MONITOR: {'PASS' if ok else 'KILL'} alarm p90 {p90:.1f} m (max {MONITOR_ALARM_MAX_M:g}), "
+          f"heading off by more than {MONITOR_HEADING_MAX_DEG:g} deg on {bad * 100:.0f}% of {len(tw)} runs "
+          f"(max {KILL_FRACTION * 100:.0f}%)")
+
+
+def polar_ground(gray, h, radius_m=80.0, nr=48, na=360, r0=25.0):
+    """Top-down polar resample of a frame around the feet: rows = ground radius, columns = heading in degrees (east, north).
+
+    r0 starts outside the player disc: the avatar, creatures and range ring stay put on screen and would pull the shift to 0
+    (measured: r0 = 3 m returned 0 degrees for a 25 degree twist, r0 = 25 m read it)."""
+    rs = np.linspace(r0, radius_m, nr)
+    phi = np.radians(np.arange(na) * 360.0 / na)
+    gx = rs[:, None] * np.sin(phi)[None, :]
+    gy = rs[:, None] * np.cos(phi)[None, :]
+    pts = np.stack([gx, gy, np.ones_like(gx)], axis=-1) @ h.T
+    ok = pts[..., 2] > 1e-6
+    den = np.where(ok, pts[..., 2], 1.0)
+    u = np.where(ok, pts[..., 0] / den, -1).astype(np.float32)
+    v = np.where(ok, pts[..., 1] / den, -1).astype(np.float32)
+    out = cv2.remap(gray.astype(np.float32), u, v, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+    valid = ((u >= 0) & (u < gray.shape[1] - 1) & (v >= 0) & (v < gray.shape[0] - 1)).astype(np.float32)
+    return out, valid
+
+
+def twist_from_frames(gray_a, gray_b, h, na=360):
+    """(twist deg, peak-to-sidelobe ratio, second-peak margin) turning frame a into frame b, from two still frames and one map h.
+
+    Both frames are warped top-down with h and resampled in polar coordinates about the feet; a camera twist is a cyclic
+    shift along the angle axis. Per-radius cross-power spectra are summed, so one 1-D correlation uses every ring."""
+    pa, va = polar_ground(gray_a, h, na=na)
+    pb, vb = polar_ground(gray_b, h, na=na)
+    both = va * vb
+    cross = np.zeros(na, np.complex128)
+    for r in range(pa.shape[0]):
+        w = both[r]
+        if w.sum() < na * 0.5:
+            continue
+        a = (pa[r] - (pa[r] * w).sum() / w.sum()) * w
+        b = (pb[r] - (pb[r] * w).sum() / w.sum()) * w
+        c = np.fft.fft(a) * np.conj(np.fft.fft(b))
+        cross += c / (np.abs(c) + 1e-9)
+    corr = np.fft.ifft(cross).real
+    i = int(np.argmax(corr))
+    away = np.abs(wrap_deg((np.arange(na) - i) * 360.0 / na)) > 5.0
+    side = corr[away]
+    psr = float((corr[i] - side.mean()) / (side.std() + 1e-9))
+    margin = float(corr[i] / max(side.max(), 1e-9))
+    return wrap_deg(i * 360.0 / na), psr, margin
+
+
+def similarity_eigs(h_new, h_old):
+    """Moduli of the eigenvalues of G = h_new h_old^-1 (scaled to unit determinant): all 1 for a pure twist, not for a zoom."""
+    g = h_new @ np.linalg.inv(h_old)
+    g = g / np.cbrt(np.linalg.det(g))
+    return np.sort(np.abs(np.linalg.eigvals(g)))
+
+
+def focal_from_fit(cal, height_px):
+    """Focal length (px) of a pinhole camera that explains cal's homography, principal point at x = 0 of the model
+    and y = height/2: the first two columns of K^-1 [[s,0,px],[0,-sy,py],[0,-a,1]] must be equally long."""
+    s, sy, a = cal["s"], cal["sy"], cal["a"]
+    f2 = (s * s - (sy - a * height_px / 2) ** 2) / (a * a)
+    return math.sqrt(f2) if f2 > 0 else float("nan")
+
+
+def canonical_theta(fit):
+    """Heading of the positive-scale equivalent of a bench fit (the bench may return the mirrored one, theta + 180)."""
+    return fit["theta_deg"] if fit["s"] > 0 else wrap_deg(fit["theta_deg"] + 180.0)
+
+
+def sane_fit(fit):
+    """A fit with scales of a real pitched map (a degenerate one, e.g. sy near 0, says nothing about the camera)."""
+    return fit is not None and 3.0 <= abs(fit["s"]) <= 12.0 and abs(fit["sy"]) >= 1.0
+
+
+def cmd_twist(args):
+    """Rec 2: twist from the before.png / after.png of every twist condition (same spot, no walk) against the fitted twist.
+
+    Scored only where both per-condition fits are sane. The eigenvalue test is also run on every consecutive pair of fits
+    (G = H_new H_old^-1): moduli all near 1 is a twist, anything else a zoom."""
+    import json
+
+    dirs = condition_dirs(args.data)
+    first, rest, _ = monitor_conditions(Path(args.data))
+    conds = [first] + rest
+    errs = []
+    for prev, c, d in zip(conds, conds[1:], dirs[1:]):
+        info = json.loads((d / "condition.json").read_text())
+        a, b = (_to_gray(cv2.imread(str(d / n))) for n in ("before.png", "after.png"))
+        est = None
+        if info["zoom_cmd"] == 1.0 and info["twist_cmd_deg"] and prev["fit"]:
+            est, psr, margin = twist_from_frames(a, b, persp_h(prev["fit"]))
+        usable = sane_fit(prev["fit"]) and sane_fit(c["fit"])
+        mods = similarity_eigs(persp_h(c["fit"]), persp_h(prev["fit"])) if usable else None
+        line = f"  {c['name']}: commanded zoom {info['zoom_cmd']:g} twist {info['twist_cmd_deg']:+g}"
+        if est is not None:
+            line += f", from frames {est:+.1f} (PSR {psr:.1f}, margin {margin:.2f})"
+        if usable:
+            truth = wrap_deg(canonical_theta(c["fit"]) - canonical_theta(prev["fit"]))
+            line += f", fitted {truth:+.1f}, eig moduli {np.round(mods, 3)}"
+            if est is not None:
+                errs.append(abs(wrap_deg(est - truth)))
+                line += f", error {errs[-1]:.1f} deg"
+        else:
+            line += ", fit degenerate: not scored"
+        print(line)
+    if not errs:
+        print("TWIST: INCONCLUSIVE (no twist condition with sane fits)")
+        return
+    bad = float(np.mean(np.array(errs) > TWIST_MAX_DEG))
+    print(f"TWIST: {'PASS' if bad <= KILL_FRACTION else 'KILL'} error above {TWIST_MAX_DEG:g} deg on {bad * 100:.0f}% of {len(errs)} scored twists")
+
+
+def cmd_zoomfam(args):
+    """Rec 3: per-condition fits and the decomposed focal length across zooms (constant focal length gates a one-parameter zoom)."""
+    first, rest, _ = monitor_conditions(Path(args.data))
+    fs = []
+    for c in [first] + rest:
+        if c["fit"] is None:
+            continue
+        f = focal_from_fit(c["fit"], c["height"])
+        fs.append(f)
+        print(f"  {c['name']}: s {c['fit']['s']:.2f} sy {c['fit']['sy']:.2f} a {c['fit']['a']:.5f} "
+              f"feet ({c['anchor'][0]:.0f}, {c['anchor'][1]:.0f}) f {f:.0f} px med {c['fit']['med_abs_px']:.2f}")
+    fs = np.array([f for f in fs if np.isfinite(f)])
+    if len(fs) < 2:
+        print("ZOOMFAM: INCONCLUSIVE (fewer than 2 fits with a finite focal length)")
+        return
+    spread = float((fs.max() - fs.min()) / fs.mean())
+    print(f"ZOOMFAM: {'PASS' if spread <= 0.10 else 'KILL'} focal length spread {spread * 100:.0f}% (max 10%)")
+
+
+def flow_landing_errors_m(fit, truth, moves, min_resp=0.2):
+    """Ground distances (m, through the `truth` map) between where `fit` and the measured band flows put the content, per flow."""
+    h, hi = persp_h(fit), np.linalg.inv(persp_h(truth))
+    errs = []
+    for _, d, fl, *_ in moves:
+        hf = np.linalg.inv(h)
+        for f in fl:
+            if f[2] < min_resp:
+                continue
+            c = np.array([f[3], f[4]])
+            pred = c + predict_flow(h, hf, d, c)
+            errs.append(float(np.linalg.norm(_h_apply(hi, c + np.array(f[:2])) - _h_apply(hi, pred))))
+    return errs
+
+
+def cmd_legsubset(args):
+    """Learning route length: fit on a subset of the first condition's legs and score the held-out legs by flow landing error.
+
+    Compares the two-leg route (0 and 90) with three legs and with leave-one-out of four, all against the four-leg map."""
+    first, _, _ = monitor_conditions(Path(args.data))
+    legs = first["per_leg"]
+    truth = first["fit"]
+    rows = {}
+    for name, keep in (("2 legs (0, 90)", (0.0, 90.0)), ("3 legs (0, 90, 45)", (0.0, 90.0, 45.0))):
+        fit = fit_perspective_horizon([m[:3] for b in keep for m in legs[b]], first["anchor"])
+        held = [m for b, ms in legs.items() if b not in keep for m in ms]
+        rows[name] = flow_landing_errors_m(fit, truth, held) if fit else []
+    loo = []
+    for hb in legs:
+        fit = fit_perspective_horizon([m[:3] for b, ms in legs.items() if b != hb for m in ms], first["anchor"])
+        loo += flow_landing_errors_m(fit, truth, legs[hb]) if fit else []
+    rows["4 legs (leave one out, fitted on 3)"] = loo
+    for name, e in rows.items():
+        if e:
+            print(f"  {name}: n={len(e)} p50 {np.percentile(e, 50):.1f} m, p90 {np.percentile(e, 90):.1f} m")
+        else:
+            print(f"  {name}: no fit")
+    e2 = rows["2 legs (0, 90)"]
+    ok = bool(e2) and float(np.percentile(e2, 90)) <= 10.0
+    print(f"LEGSUBSET: two legs {'PASS' if ok else 'KILL'} (held-out p90 at most 10 m)")
+
+
 def main(argv=None):
     import argparse
 
@@ -1703,6 +2056,13 @@ def main(argv=None):
     pr.add_argument("--serial", default=None)
     pr.add_argument("--deltas", type=float, nargs="+", default=[40.0, -40.0, 135.0])
     pr.set_defaults(func=cmd_probe)
+    for name, fn in (("monitor", cmd_monitor), ("twist", cmd_twist), ("zoomfam", cmd_zoomfam), ("legsubset", cmd_legsubset)):
+        q = sub.add_parser(name)
+        q.add_argument("data", help="varycap output dir (condition subdirs)")
+        if name == "monitor":
+            q.add_argument("--k", type=float)
+            q.add_argument("--h", type=float)
+        q.set_defaults(func=fn)
     rep = sub.add_parser("report")
     rep.add_argument("results")
     rep.set_defaults(func=cmd_report)

@@ -5,6 +5,8 @@
     { "category": "feat", "scope": "Map", "summary": "A share icon on the map, floating map and long-press sheet copies coordinates or shares a link to a location. It replaces the Share this location button." },
     { "category": "feat", "scope": "Settings", "summary": "Pick your game during first setup: Default, Pokémon Go or Pikmin Bloom. It only hides features you do not need. Change it any time in Settings > General > Game setup." },
     { "category": "feat", "scope": "Reconnect accessory", "summary": "Settings now shows when the last check ran and what it found, under the Reconnect switch." },
-    { "category": "fix", "scope": "Tap to Walk", "summary": "The accessibility helper is now called locationjoystick screen helper. After updating, turn it on again in Android Accessibility settings." }
+    { "category": "fix", "scope": "Tap to Walk", "summary": "The accessibility helper is now called locationjoystick screen helper. After updating, turn it on again in Android Accessibility settings." },
+    { "category": "feat", "scope": "Tap to Walk", "summary": "Tap to Walk now learns your game's map by itself. The Calibration step in Settings is gone. If you turn or zoom the game map, the app notices as you walk and adjusts. With no map learned yet, your first tap starts a short walk with a Cancel button in the notification, then walks to the spot you tapped." },
+    { "category": "feat", "scope": "Tap to Walk", "summary": "The screen helper now takes a picture about every 3 seconds only while you walk in the game with Tap to Walk on. It takes none when the game is not in front." }
   ]
 }

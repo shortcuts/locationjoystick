@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">"locationjoystick"</string>
     <string name="accessibility_service_label">"locationjoystick 螢幕助手"</string>
-    <string name="accessibility_service_description">"僅供兩項選用功能使用，且只在你於應用程式內的無障礙（Accessibility）說明中點擊「接受」後啟用：「點擊行走」和「重新連接配件」。在你開始的校準行走期間（約每 3 秒一張，持續約 10 分鐘），以及查看配件是否已中斷連線時擷取螢幕截圖。僅在你開啟「重新連接配件」時點擊其連接按鈕。截圖只留在你的手機上並在完成後刪除，不會收集或分享任何資料。本服務不是面向身心障礙使用者的協助工具。"</string>
+    <string name="accessibility_service_description">"僅供兩項選用功能使用，且只在你於應用程式內的無障礙（Accessibility）說明中點擊「接受」後啟用：「點擊行走」和「重新連接配件」。在開啟「點擊行走」並在遊戲中行走時（約每 3 秒一張），以及查看配件是否已中斷連線時擷取螢幕截圖。僅在你開啟「重新連接配件」時點擊其連接按鈕。截圖只留在你的手機上並在完成後刪除，不會收集或分享任何資料。本服務不是面向身心障礙使用者的協助工具。"</string>
     <string name="app_couldn_t_open_that_link">"無法開啟該連結"</string>
     <string name="drawer_close_menu_cd">"關閉選單"</string>
     <string name="drawer_home">"首頁"</string>

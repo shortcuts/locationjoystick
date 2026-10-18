@@ -230,4 +230,14 @@ class ReconnectTapRunnerTest {
             assertEquals(ReconnectRunResult.GATE_CLOSED, result)
             assertEquals(0, taps)
         }
+
+    @Test
+    fun `our own overlay windows do not take the game off the foreground`() {
+        val own = "com.locationjoystick.app"
+        val game = "com.nianticlabs.pokemongo"
+        val overlay = foregroundAfterWindowEvent(game, own, "androidx.compose.ui.platform.ComposeView", own)
+        assertEquals(game, overlay)
+        assertEquals(own, foregroundAfterWindowEvent(game, own, "$own.MainActivity", own))
+        assertEquals(game, foregroundAfterWindowEvent(own, game, "x.UnityMainActivity", own))
+    }
 }

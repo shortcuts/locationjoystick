@@ -386,6 +386,57 @@ def test_pixel_constants_scale_with_screen_height_and_width():
     assert rb._sx(930, 540) == 465
 
 
+def _ground_scene(h, seed=3, size=1200, ppm=4.0):
+    """Frame of a random ground texture seen through ground->game map h (1080x2340)."""
+    rng = np.random.default_rng(seed)
+    tex = cv2.GaussianBlur(rng.integers(0, 256, (size, size), dtype=np.uint8), (0, 0), 5)
+    a = np.array([[ppm, 0, size / 2], [0, -ppm, size / 2], [0, 0, 1]])
+    return cv2.warpPerspective(tex, a @ np.linalg.inv(h), (1080, 2340), flags=cv2.INTER_LINEAR | cv2.WARP_INVERSE_MAP)
+
+
+CAM = {"s": 7.5, "sy": 3.1, "a": -0.0022, "px": 540.0, "py": 1510.0}
+
+
+def test_cusum_alarms_on_sustained_excess_only():
+    assert rb.cusum_alarm([1.0] * 50, 0.5, 4.0) is None
+    assert rb.cusum_alarm([1.0, 1.1, 0.9, 5.0, 5.0, 5.0], 0.5, 4.0) == 4  # two excesses of 3.5 pass h = 4
+    assert rb.cusum_alarm([3.0] * 10, 0.5, 4.0) == 2
+
+
+def test_refit_heading_recovers_a_twist_with_scales_fixed():
+    base = {**CAM, "theta_deg": -20.0}
+    twisted = {**CAM, "theta_deg": 20.0}
+    h = rb.persp_h(twisted)
+    hi = np.linalg.inv(h)
+    rng = np.random.default_rng(2)
+    moves = []
+    for b in (0, 90, 45):
+        d = 6.0 * np.array([math.sin(math.radians(b)), math.cos(math.radians(b))])
+        fl = [tuple(rb.predict_flow(h, hi, d, (x, y)) + rng.normal(0, 0.5, 2)) + (0.9, x, y)
+              for y in (600, 800, 1000, 1200, 1350) for x in (250, 850)]
+        moves += [(float(b), d, fl, 6.0)]
+    th = rb.refit_heading(base, moves)
+    assert abs(th - 20.0) < 1.0, th
+    assert rb.move_excess(base, moves[0]) > 10 * rb.move_excess(twisted, moves[0])
+
+
+def test_twist_from_frames_reads_the_camera_twist_and_eigenvalues_separate_zoom():
+    h0 = rb.persp_h({**CAM, "theta_deg": -20.0})
+    h1 = rb.persp_h({**CAM, "theta_deg": 20.0})
+    a, b = _ground_scene(h0), _ground_scene(h1)
+    est, psr, margin = rb.twist_from_frames(a, b, h0)
+    assert abs(est - 40.0) < 3.0 and psr > 5.0, (est, psr, margin)
+    assert np.allclose(rb.similarity_eigs(h1, h0), 1.0, atol=1e-6)
+    zoomed = rb.persp_h({**CAM, "theta_deg": -20.0, "s": 9.0, "sy": 3.9})
+    assert rb.similarity_eigs(zoomed, h0).max() > 1.05
+
+
+def test_focal_from_fit_is_constant_when_only_pitch_terms_change():
+    f = rb.focal_from_fit(CAM, 2340)
+    assert f == f and f > 0
+    assert rb.focal_from_fit({**CAM, "s": CAM["s"] * 1.3}, 2340) != f
+
+
 if __name__ == "__main__":
     tests = [v for k, v in list(globals().items()) if k.startswith("test_")]
     for t in tests:

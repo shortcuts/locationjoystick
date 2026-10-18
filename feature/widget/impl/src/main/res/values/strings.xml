@@ -54,7 +54,9 @@
     <string name="widget_feature_favorites_cd">"Favorites picker"</string>
     <string name="widget_feature_speed_cycle_cd">"Speed cycle"</string>
     <string name="widget_feature_open_map_cd">"Open map"</string>
-    <string name="tap_to_walk_overlay_not_calibrated_hint">"Not calibrated: taps assume north-up. Calibrate in Settings."</string>
+    <string name="tap_to_walk_overlay_north_up_hint">"Map not learned yet: taps assume north-up."</string>
+    <string name="tap_to_walk_learning_failed">"Could not learn the map. Keep the game open and try again."</string>
+    <string name="tap_to_walk_learning_started">"Learning the map for Tap to Walk. Your tap follows after a short walk."</string>
     <string name="reconnect_failed_channel_name">"Accessory reconnect"</string>
     <string name="reconnect_failed_title">"Accessory did not reconnect"</string>
     <string name="reconnect_failed_text">"Reconnecting your accessory failed several times in a row. Open the app to check."</string>

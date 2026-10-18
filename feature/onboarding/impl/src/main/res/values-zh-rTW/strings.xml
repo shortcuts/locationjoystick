@@ -26,7 +26,7 @@
     <string name="onboarding_start_using_locationjoystick">"開始使用 locationjoystick"</string>
     <string name="onboarding_optional">"選用"</string>
     <string name="onboarding_tap_to_walk_access">"點擊行走設定（選用）"</string>
-    <string name="onboarding_tap_to_walk_access_desc">"如果你不想使用「點擊行走」，可以略過此步驟。「點擊行走」使用 Android 無障礙（Accessibility）權限擷取遊戲的螢幕截圖：在你自己開始的一次性 10 分鐘校準行走中約幾百張，使你的點擊落在你點擊的位置。"</string>
+    <string name="onboarding_tap_to_walk_access_desc">"如果你不想使用「點擊行走」，可以略過此步驟。「點擊行走」使用 Android 無障礙（Accessibility）權限擷取遊戲的螢幕截圖：在遊戲中行走時約每 3 秒一張。它會自動學習地圖，使你的點擊落在你點擊的位置。"</string>
     <string name="onboarding_tap_to_walk_access_review">"查看並開啟"</string>
     <string name="onboarding_continue">"繼續"</string>
     <string name="onboarding_pick_path_title">"你打算怎麼使用？"</string>

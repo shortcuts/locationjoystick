@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.view.accessibility.AccessibilityManager
-import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,8 +22,6 @@ import com.locationjoystick.core.data.HotRoutesRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.datastore.SettingsSnapshot
-import com.locationjoystick.core.location.CalibrationState
-import com.locationjoystick.core.location.CalibrationWalkOrchestrator
 import com.locationjoystick.core.location.ScreenCaptureSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
@@ -35,13 +32,11 @@ import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.feature.settings.impl.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,7 +45,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -79,7 +73,6 @@ class SettingsViewModel
         private val exportSyncServer: ExportSyncServer,
         private val exportSyncClient: ExportSyncClient,
         private val nsdCodeManager: NsdCodeManager,
-        private val calibrationWalkOrchestrator: CalibrationWalkOrchestrator,
         private val screenCaptureSource: ScreenCaptureSource,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
@@ -140,48 +133,7 @@ class SettingsViewModel
 
         init {
             _isRooted.value = sensorPermissionBootstrap.isGranted()
-            // The user is inside the game for the walk, so the end is announced over it and the app brought back.
-            viewModelScope.launch {
-                calibrationWalkOrchestrator.state.drop(1).collect { state ->
-                    val text =
-                        when (state) {
-                            is CalibrationState.Done -> calibrationDoneText(context, state.result)
-                            is CalibrationState.Failed -> context.getString(calibrationFailureMessageRes(state.reason))
-                            else -> return@collect
-                        }
-                    Toast.makeText(context, text, Toast.LENGTH_LONG).show()
-                    context.packageManager.getLaunchIntentForPackage(context.packageName)?.let {
-                        it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_NEW_TASK)
-                        context.startActivity(it)
-                    }
-                }
-            }
         }
-
-        /** Calibration progress and result; outside the draft/save state (docs/features/tap-to-walk.md, "Calibration UX"). */
-        val calibrationState: StateFlow<CalibrationState> = calibrationWalkOrchestrator.state
-
-        val groundCalibration: StateFlow<StoredGroundCalibration?> =
-            settingsRepository
-                .getGroundCalibration()
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-
-        /** Brings the game to the front, waits for it, then starts the walk; a not-ready app never leaves Settings. */
-        fun startCalibration() {
-            if (!calibrationWalkOrchestrator.isReady) {
-                calibrationWalkOrchestrator.start() // records Failed(NOT_READY) for the section and toast
-                return
-            }
-            viewModelScope.launch {
-                context.packageManager.getLaunchIntentForPackage(AppConstants.GameConstants.PACKAGE)?.let {
-                    context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                }
-                delay(AppConstants.TapToWalkConstants.CALIBRATION_GAME_FOREGROUND_DELAY_MS)
-                calibrationWalkOrchestrator.start()
-            }
-        }
-
-        fun cancelCalibration() = calibrationWalkOrchestrator.cancel()
 
         internal data class UserFeedback(
             val message: String,

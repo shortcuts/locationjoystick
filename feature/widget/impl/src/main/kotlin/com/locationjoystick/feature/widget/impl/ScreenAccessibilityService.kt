@@ -216,10 +216,16 @@ class ScreenAccessibilityService :
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) foregroundPackage = event.packageName?.toString()
+        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            foregroundPackage =
+                foregroundAfterWindowEvent(foregroundPackage, event.packageName?.toString(), event.className?.toString(), packageName)
+        }
     }
 
     override fun onInterrupt() = Unit
+
+    override val gameInFront: Boolean
+        get() = reconnectGateOpen(getSystemService(PowerManager::class.java).isInteractive, foregroundPackage)
 
     override suspend fun captureGrayFrame(): GrayImage? {
         val bitmap = takeScreenshotBitmap() ?: return null

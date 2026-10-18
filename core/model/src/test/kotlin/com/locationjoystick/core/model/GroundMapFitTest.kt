@@ -70,4 +70,44 @@ class GroundMapFitTest {
         val weak = moves("A").map { m -> LegMove(m.d, m.bands.map { it.copy(response = 0.1) }) }
         assertNull(GroundMapFit.fit(weak, 540.0, 1510.0, 1080, 2340))
     }
+
+    /** Flows the camera `cal` would show for a player move of `d`, on a grid of bands. */
+    private fun syntheticMoves(
+        cal: GroundCalibration,
+        bearings: List<Double>,
+    ): List<LegMove> {
+        val map = GroundMap(cal, 1080.0, 2340.0)
+        return bearings.flatMap { b ->
+            val d = GroundOffset(6.0 * kotlin.math.sin(Math.toRadians(b)), 6.0 * kotlin.math.cos(Math.toRadians(b)))
+            List(6) {
+                val bands =
+                    listOf(600.0, 800.0, 1000.0, 1200.0, 1350.0).flatMap { y ->
+                        listOf(250.0, 850.0).map { x ->
+                            val g = map.pixelToGround(x, y)!!
+                            val (qx, qy) = map.groundToPixel(g.eastMeters - d.eastMeters, g.northMeters - d.northMeters)
+                            BandFlow(qx - x, qy - y, 0.9, x, y)
+                        }
+                    }
+                LegMove(d, bands)
+            }
+        }
+    }
+
+    @Test
+    fun moveResidualsAreSmallForTheFitCameraAndLargeAfterATwist() {
+        val stored = GroundMapFit.fit(moves("A"), 540.0, 1510.0, 1080, 2340)!!.calibration
+        val same = GroundMapFit.moveResidualsPx(stored, syntheticMoves(stored, listOf(0.0, 90.0)), 1080, 2340)
+        assertEquals(0.0, same.filterNotNull().max(), 0.5)
+        val twisted = stored.copy(headingDeg = stored.headingDeg + 30.0)
+        val seen = GroundMapFit.moveResidualsPx(stored, syntheticMoves(twisted, listOf(0.0, 90.0)), 1080, 2340)
+        val min = seen.filterNotNull().min()
+        assertEquals("twisted residual $min px", true, min > 5.0)
+    }
+
+    @Test
+    fun aMoveWithTooFewUsableBandsHasNoResidual() {
+        val stored = GroundMapFit.fit(moves("A"), 540.0, 1510.0, 1080, 2340)!!.calibration
+        val weak = syntheticMoves(stored, listOf(0.0)).take(1).map { m -> LegMove(m.d, m.bands.map { it.copy(response = 0.1) }) }
+        assertNull(GroundMapFit.moveResidualsPx(stored, weak, 1080, 2340)[0])
+    }
 }
