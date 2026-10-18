@@ -570,6 +570,8 @@ object AppConstants {
         const val POSITION_STALE_THRESHOLD_MS = 5000L
         const val NSD_SERVICE_TYPE = "_ljsync._tcp."
         const val NSD_DISCOVERY_TIMEOUT_MS = 10_000L
+        const val NSD_LEADER_PROBE_TIMEOUT_MS = 4_000L
+        const val NSD_LEADER_POLL_INTERVAL_MS = 30_000L
         const val GROUP_CODE_LENGTH = 6
         const val API_KEY_LENGTH = 32
         const val API_MAX_BODY_BYTES = 65_536

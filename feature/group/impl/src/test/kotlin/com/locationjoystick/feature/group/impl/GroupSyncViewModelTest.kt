@@ -3,6 +3,7 @@ package com.locationjoystick.feature.group.impl
 import android.content.Context
 import android.net.Uri
 import app.cash.turbine.test
+import com.locationjoystick.core.common.util.DiscoveredLeader
 import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.GroupRepository
@@ -25,8 +26,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -165,6 +169,57 @@ class GroupSyncViewModelTest {
             viewModel.createGroup()
 
             verify { context.startService(any()) }
+        }
+
+    @Test
+    fun `watchNearbyLeader publishes a leader then clears it when the next probe finds none`() =
+        runTest {
+            coEvery { groupNsdManager.discoverAnyLeader() } returnsMany
+                listOf(DiscoveredLeader("ABC123", "10.0.0.5", 4000), null)
+
+            backgroundScope.launch { viewModel.watchNearbyLeader() }
+            runCurrent()
+            assertEquals(GroupInvite(host = "10.0.0.5", port = 4000, groupId = "ABC123"), viewModel.nearbyLeader.value)
+
+            advanceTimeBy(30_001L)
+            assertNull(viewModel.nearbyLeader.value)
+            coVerify(exactly = 2) { groupNsdManager.discoverAnyLeader() }
+        }
+
+    @Test
+    fun `watchNearbyLeader does not probe when the role is not NONE`() =
+        runTest {
+            groupStateFlow.value = GroupState(role = GroupRole.FOLLOWER, groupId = "abc")
+
+            viewModel.watchNearbyLeader()
+
+            coVerify(exactly = 0) { groupNsdManager.discoverAnyLeader() }
+        }
+
+    @Test
+    fun `joinNearbyLeader joins the published leader`() =
+        runTest {
+            coEvery { groupNsdManager.discoverAnyLeader() } returns DiscoveredLeader("ABC123", "10.0.0.5", 4000)
+            backgroundScope.launch { viewModel.watchNearbyLeader() }
+            runCurrent()
+
+            viewModel.joinNearbyLeader()
+
+            coVerify { groupRepository.joinGroup(GroupInvite(host = "10.0.0.5", port = 4000, groupId = "ABC123")) }
+        }
+
+    @Test
+    fun `cancelling watchNearbyLeader clears the leader`() =
+        runTest {
+            coEvery { groupNsdManager.discoverAnyLeader() } returns DiscoveredLeader("ABC123", "10.0.0.5", 4000)
+            val job = backgroundScope.launch { viewModel.watchNearbyLeader() }
+            runCurrent()
+            assertEquals("ABC123", viewModel.nearbyLeader.value?.groupId)
+
+            job.cancel()
+            runCurrent()
+
+            assertNull(viewModel.nearbyLeader.value)
         }
 
     @Test

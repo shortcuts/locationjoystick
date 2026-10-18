@@ -16,6 +16,13 @@ import kotlin.coroutines.resume
 
 private const val TAG = "NsdCodeManager"
 
+/** A leader found on the local network. [code] is the advertised service name. */
+data class DiscoveredLeader(
+    val code: String,
+    val host: String,
+    val port: Int,
+)
+
 /**
  * Advertises and discovers a host:port pair on the local network, keyed by a short code.
  * Used by both Group Sync (leader/follower) and QR export/import.
@@ -112,19 +119,38 @@ class NsdCodeManager
          * Discovers the NSD service with the given [code] and resolves it to a host:port pair.
          * Returns null if not found within [AppConstants.SyncConstants.NSD_DISCOVERY_TIMEOUT_MS].
          */
-        suspend fun discoverByCode(code: String): Pair<String, Int>? {
+        suspend fun discoverByCode(code: String): Pair<String, Int>? =
+            discover(AppConstants.SyncConstants.NSD_DISCOVERY_TIMEOUT_MS) { it == code }?.let { it.host to it.port }
+
+        /**
+         * Finds any leader on the network, for the idle-view hint. Leaders advertise a
+         * [AppConstants.SyncConstants.GROUP_CODE_LENGTH]-char code; other services of the type are skipped.
+         */
+        suspend fun discoverAnyLeader(): DiscoveredLeader? =
+            discover(AppConstants.SyncConstants.NSD_LEADER_PROBE_TIMEOUT_MS) {
+                it.length == AppConstants.SyncConstants.GROUP_CODE_LENGTH
+            }
+
+        private suspend fun discover(
+            timeoutMs: Long,
+            matches: (String) -> Boolean,
+        ): DiscoveredLeader? {
             acquireMulticastLock()
             try {
-                return discoverByCodeLocked(code)
+                return discoverLocked(timeoutMs, matches)
             } finally {
                 releaseMulticastLock()
             }
         }
 
-        private suspend fun discoverByCodeLocked(code: String): Pair<String, Int>? =
-            withTimeoutOrNull(AppConstants.SyncConstants.NSD_DISCOVERY_TIMEOUT_MS) {
+        private suspend fun discoverLocked(
+            timeoutMs: Long,
+            matches: (String) -> Boolean,
+        ): DiscoveredLeader? =
+            withTimeoutOrNull(timeoutMs) {
                 suspendCancellableCoroutine { cont ->
                     var discoveryListener: NsdManager.DiscoveryListener? = null
+                    var foundName = ""
 
                     @Suppress("DEPRECATION")
                     val resolveListener =
@@ -143,7 +169,7 @@ class NsdCodeManager
                                 val port = info.port
                                 Log.i(TAG, "NSD resolved: $host:$port (raw: ${inetAddr?.hostAddress})")
                                 if (host != null && port > 0) {
-                                    cont.resume(host to port)
+                                    cont.resume(DiscoveredLeader(foundName, host, port))
                                 } else {
                                     Log.w(TAG, "NSD resolved non-IPv4 or no host — cannot connect")
                                     cont.resume(null)
@@ -169,13 +195,14 @@ class NsdCodeManager
                             }
 
                             override fun onDiscoveryStarted(serviceType: String) {
-                                Log.d(TAG, "NSD discovery started for code=$code")
+                                Log.d(TAG, "NSD discovery started")
                             }
 
                             override fun onDiscoveryStopped(serviceType: String) {}
 
                             override fun onServiceFound(info: NsdServiceInfo) {
-                                if (info.serviceName == code) {
+                                if (matches(info.serviceName)) {
+                                    foundName = info.serviceName
                                     try {
                                         nsdManager.stopServiceDiscovery(this)
                                     } catch (e: Exception) {

@@ -28,6 +28,7 @@ import com.locationjoystick.core.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -66,6 +67,9 @@ class GroupSyncViewModel
 
         private val _isDiscovering = MutableStateFlow(false)
         val isDiscovering: StateFlow<Boolean> = _isDiscovering.asStateFlow()
+
+        private val _nearbyLeader = MutableStateFlow<GroupInvite?>(null)
+        val nearbyLeader: StateFlow<GroupInvite?> = _nearbyLeader.asStateFlow()
 
         val apiEnabled: StateFlow<Boolean> = leaderSyncServer.apiEnabled
 
@@ -225,6 +229,30 @@ class GroupSyncViewModel
                     _errorMessage.value = context.getString(R.string.group_sync_no_group_found_for_code, normalized)
                 }
             }
+        }
+
+        /**
+         * Probes for a leader on the network while idle. The screen scopes this to its visible
+         * lifetime so nothing polls in the background.
+         */
+        suspend fun watchNearbyLeader() {
+            try {
+                while (_groupState.value.role == GroupRole.NONE) {
+                    if (!_isDiscovering.value) {
+                        _nearbyLeader.value =
+                            groupNsdManager.discoverAnyLeader()?.let {
+                                GroupInvite(host = it.host, port = it.port, groupId = it.code)
+                            }
+                    }
+                    delay(AppConstants.SyncConstants.NSD_LEADER_POLL_INTERVAL_MS)
+                }
+            } finally {
+                _nearbyLeader.value = null
+            }
+        }
+
+        fun joinNearbyLeader() {
+            _nearbyLeader.value?.let(::handlePendingInvite)
         }
 
         fun joinViaScannedUrl(url: String) {

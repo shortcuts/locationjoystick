@@ -45,7 +45,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
@@ -64,6 +67,7 @@ import com.locationjoystick.core.designsystem.component.cooldownBadgeText
 import com.locationjoystick.core.designsystem.component.rememberCooldownStringLookup
 import com.locationjoystick.core.designsystem.component.writePlainText
 import com.locationjoystick.core.location.rememberSpoofToggleState
+import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
 import com.locationjoystick.core.model.LatLng
@@ -86,6 +90,8 @@ fun GroupSyncRoute(
     val cooldownState by viewModel.cooldownState.collectAsStateWithLifecycle()
     val apiEnabled by viewModel.apiEnabled.collectAsStateWithLifecycle()
     val apiKey by viewModel.apiKey.collectAsStateWithLifecycle()
+    val nearbyLeader by viewModel.nearbyLeader.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
     val spoofToggle = rememberSpoofToggleState()
 
     var showQrScanner by remember { mutableStateOf(false) }
@@ -101,6 +107,13 @@ fun GroupSyncRoute(
 
     LaunchedEffect(groupState.role) {
         if (groupState.role != GroupRole.NONE) showQrScanner = false
+    }
+
+    // Poll only while the idle view is on screen and started; the QR scanner replaces that view.
+    LaunchedEffect(groupState.role == GroupRole.NONE && !showQrScanner) {
+        if (groupState.role == GroupRole.NONE && !showQrScanner) {
+            lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.watchNearbyLeader() }
+        }
     }
 
     if (showQrScanner) {
@@ -124,6 +137,8 @@ fun GroupSyncRoute(
             onCreateGroup = viewModel::createGroup,
             onJoinViaQr = { showQrScanner = true },
             onJoinByCode = viewModel::joinByCode,
+            nearbyLeader = nearbyLeader,
+            onJoinNearby = viewModel::joinNearbyLeader,
             onSetFollowerModeEnabled = viewModel::setFollowerModeEnabled,
             onSetFollowLeaderTeleports = viewModel::setFollowLeaderTeleports,
             onSetSharingEnabled = viewModel::setSharingEnabled,
@@ -162,6 +177,8 @@ internal fun GroupSyncScreen(
     onTeleportToLeaderNow: () -> Unit,
     onLeaveGroup: () -> Unit,
     onRegenerateQr: () -> Unit,
+    nearbyLeader: GroupInvite? = null,
+    onJoinNearby: () -> Unit = {},
     hideTeleportFeatures: Boolean = false,
     leaderPosition: LatLng? = null,
     currentPosition: LatLng? = null,
@@ -193,6 +210,8 @@ internal fun GroupSyncScreen(
                         onCreateGroup = onCreateGroup,
                         onJoinViaQr = onJoinViaQr,
                         onJoinByCode = onJoinByCode,
+                        nearbyLeader = nearbyLeader,
+                        onJoinNearby = onJoinNearby,
                     )
                 }
 
@@ -238,6 +257,8 @@ private fun NoGroupContent(
     onCreateGroup: () -> Unit,
     onJoinViaQr: () -> Unit,
     onJoinByCode: (String) -> Unit,
+    nearbyLeader: GroupInvite?,
+    onJoinNearby: () -> Unit,
 ) {
     var showCodeDialog by remember { mutableStateOf(false) }
 
@@ -268,6 +289,26 @@ private fun NoGroupContent(
             onClick = onCreateGroup,
             text = stringResource(R.string.group_sync_create_group_i_m_the_leader),
         )
+
+        if (nearbyLeader != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.group_sync_nearby_group_found, nearbyLeader.groupId),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                LjPrimaryButton(
+                    onClick = onJoinNearby,
+                    text = stringResource(R.string.group_sync_join),
+                    modifier = Modifier.weight(1f),
+                    enabled = !isDiscovering,
+                )
+            }
+        }
 
         Text(
             text = stringResource(R.string.group_sync_or_join_an_existing_group),
