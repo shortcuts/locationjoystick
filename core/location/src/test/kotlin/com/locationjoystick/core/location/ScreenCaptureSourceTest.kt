@@ -2,6 +2,7 @@ package com.locationjoystick.core.location
 
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.GrayImage
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.ReconnectRunResult
 import com.locationjoystick.core.model.ReconnectStatus
 import io.mockk.every
@@ -17,9 +18,12 @@ class ScreenCaptureSourceTest {
         accepted: Boolean,
         bound: Boolean = true,
         gameInFront: Boolean = true,
+        tapToWalk: Boolean = true,
     ): ScreenCaptureSource {
         val repository = mockk<SettingsRepository>()
         every { repository.getAccessibilityDisclosureAccepted() } returns flowOf(accepted)
+        every { repository.getTapToWalkOverlayEnabled() } returns flowOf(tapToWalk)
+        every { repository.getGuidedPath() } returns flowOf(GuidedPath.POKEMON_GO)
         return ScreenCaptureSource(repository).apply {
             if (bound) {
                 bind(
@@ -50,6 +54,20 @@ class ScreenCaptureSourceTest {
     fun `no gray frame while the game is not in front`() =
         runTest {
             assertNull(source(accepted = true, gameInFront = false).captureGrayFrame())
+        }
+
+    @Test
+    fun `no gray frame while the Tap to Walk switch is off`() =
+        runTest {
+            assertNull(source(accepted = true, tapToWalk = false).captureGrayFrame())
+        }
+
+    @Test
+    fun `no gray frame after unbind`() =
+        runTest {
+            val source = source(accepted = true)
+            source.unbind()
+            assertNull(source.captureGrayFrame())
         }
 
     @Test

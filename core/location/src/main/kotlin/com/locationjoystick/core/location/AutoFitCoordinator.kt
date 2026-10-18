@@ -84,6 +84,8 @@ class AutoFitCoordinator
         internal var nowMs: () -> Long = { System.nanoTime() / 1_000_000 }
         internal var analysisDispatcher: CoroutineDispatcher = Dispatchers.Default
         internal var ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+        internal var spoolCapBytes = AppConstants.TapToWalkConstants.AUTOFIT_SPOOL_CAP_BYTES
+        internal var freeBytes: () -> Long = { context.cacheDir.usableSpace }
         internal var measure: (CapturedLeg, Double, Double, Int, Int) -> List<LegMove> = ::measureMoves
         internal var fullFit: (List<CapturedLeg>, Int, Int, () -> Unit) -> SolveResult =
             { legs, w, h, checkCancelled -> GroundCalibrationSolver.solve(legs, w, h, checkCancelled = checkCancelled) }
@@ -101,6 +103,7 @@ class AutoFitCoordinator
         private val analysisLock = Mutex()
         private var scope: CoroutineScope = appScope
         private var tapToWalkOn: StateFlow<Boolean> = MutableStateFlow(false)
+        private var active: StateFlow<Boolean> = MutableStateFlow(false) // every switch that lets a frame exist
         private var learningJob: Job? = null
 
         private val spool get() = File(context.cacheDir, SPOOL_DIR)
@@ -141,6 +144,8 @@ class AutoFitCoordinator
                 combine(settingsRepository.getTapToWalkOverlayEnabled(), settingsRepository.getGuidedPath()) { on, path ->
                     on && path.showsTapToWalk
                 }.stateIn(scope, SharingStarted.Eagerly, false)
+            active = screenCaptureSource.captureAllowed.stateIn(scope, SharingStarted.Eagerly, false)
+            scope.launch { active.collect { if (!it) cancel() } } // frames must not outlive the switch that allowed them
             scope.launch {
                 settingsRepository.getGroundCalibration().collect { stored ->
                     if (stored == null) {
@@ -150,7 +155,11 @@ class AutoFitCoordinator
                     }
                 }
             }
-            scope.launch { loop() }
+            // A kill or crash skips loop()'s finally, so frames of the last session may still be on disk.
+            scope.launch {
+                withContext(ioDispatcher) { spool.deleteRecursively() }
+                loop()
+            }
         }
 
         /**
@@ -263,6 +272,7 @@ class AutoFitCoordinator
 
         /** One 3 s tick: take a frame only while the gate is open and the player moved since the last tick. */
         private suspend fun tick() {
+            if (!active.value) return discardOpenLeg()
             val pos = locationRepository.currentPosition.value
             val gate =
                 tapToWalkOn.value &&
@@ -273,6 +283,7 @@ class AutoFitCoordinator
             // No capture while a leg is analysed: the screenshot and the flow code do not fit in the heap together (measured: OOM).
             if (!moved || pending.value > 0) return endLeg()
             val before = pos!!
+            if (!makeRoom()) return endLeg()
             val frame = screenCaptureSource.captureGrayFrame() ?: return endLeg()
             val after = locationRepository.currentPosition.value ?: return endLeg()
             val at = LatLng((before.latitude + after.latitude) / 2, (before.longitude + after.longitude) / 2)
@@ -305,6 +316,38 @@ class AutoFitCoordinator
             onClosed(leg, dir)
         }
 
+        // endLeg() would queue the open leg for analysis and keep its frames on disk.
+        private fun discardOpenLeg() {
+            if (current.count == 0 && lastSample == null) return
+            segmenter.close()
+            current.dir.deleteRecursively()
+            current = newSpool()
+            lastSample = null
+            lastTick = null
+        }
+
+        /**
+         * Drops the oldest buffered legs until one more frame fits under the byte cap and the free-space floor.
+         * Runs before the capture: a failed write after segmenter.add would desync frames from samples.
+         * False when nothing is left to drop. No lock: no analysis runs while pending is zero.
+         */
+        private fun makeRoom(): Boolean {
+            val next = current.width.toLong() * current.height
+            while (true) {
+                val used = spool.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+                if (used + next <= spoolCapBytes &&
+                    freeBytes() >= AppConstants.TapToWalkConstants.AUTOFIT_MIN_FREE_BYTES + next
+                ) {
+                    return true
+                }
+                if (buffer.isEmpty()) return false
+                buffer
+                    .removeAt(0)
+                    .spool.dir
+                    .deleteRecursively()
+            }
+        }
+
         private fun newSpool() = Spool(File(spool, (legSeq++).toString()))
 
         private suspend fun store(frame: GrayImage) {
@@ -335,6 +378,7 @@ class AutoFitCoordinator
                             if (it is CancellationException) throw it
                             Log.e(TAG, "analysis failed", it)
                         }
+                        if (!active.value) clearBuffer() // the gate closed during the analysis
                     }
                 } finally {
                     pending.value--

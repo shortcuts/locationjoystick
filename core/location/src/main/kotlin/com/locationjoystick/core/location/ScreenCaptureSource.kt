@@ -3,9 +3,11 @@ package com.locationjoystick.core.location
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.GrayImage
 import com.locationjoystick.core.model.ReconnectStatus
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,14 +24,14 @@ class ScreenCaptureSource
     constructor(
         private val settingsRepository: SettingsRepository,
     ) {
-        private var service: ScreenAccessibilityServiceBridge? = null
+        private val service = MutableStateFlow<ScreenAccessibilityServiceBridge?>(null)
 
         fun bind(svc: ScreenAccessibilityServiceBridge) {
-            service = svc
+            service.value = svc
         }
 
         fun unbind() {
-            service = null
+            service.value = null
             reportReconnect(null)
         }
 
@@ -41,23 +43,36 @@ class ScreenCaptureSource
             _reconnectStatus.value = status
         }
 
-        val isAvailable: Boolean get() = service != null
+        val isAvailable: Boolean get() = service.value != null
 
         /** Bound, and the screen is on with the game in front (the gate [captureGrayFrame] applies). */
-        val gameInFront: Boolean get() = service?.gameInFront == true
+        val gameInFront: Boolean get() = service.value?.gameInFront == true
+
+        /**
+         * Every switch that lets a tap-to-walk frame exist: disclosure accepted, Tap to Walk on for the guided
+         * path, service bound. The spool owner deletes its frames when this turns false (storage and consent).
+         */
+        val captureAllowed: Flow<Boolean> =
+            combine(
+                settingsRepository.getAccessibilityDisclosureAccepted(),
+                settingsRepository.getTapToWalkOverlayEnabled(),
+                settingsRepository.getGuidedPath(),
+                service,
+            ) { accepted, on, path, svc -> accepted && on && path.showsTapToWalk && svc != null }
 
         /**
          * One 8-bit luma screenshot for the automatic tap-to-walk fit, or null (unbound, disclosure
          * not accepted, game not in front, or the screenshot was rejected). Play's Accessibility API
          * policy: no screenshot may be taken before the user accepts the in-app disclosure, and the
-         * disclosure names the game in front as the only time frames are taken. Android's own
-         * accessibility settings can enable the service without the app ever being opened, so both
-         * checks live here rather than at each call site. No retry, the 3 s cadence already
+         * disclosure names the game in front as the only time frames are taken. The Tap to Walk
+         * switch is part of the gate so a frame never exists while the feature is off. Android's own
+         * accessibility settings can enable the service without the app ever being opened, so every
+         * check lives here rather than at each call site. No retry, the 3 s cadence already
          * tolerates a missed frame.
          */
         suspend fun captureGrayFrame(): GrayImage? {
-            if (!settingsRepository.getAccessibilityDisclosureAccepted().first()) return null
-            val svc = service ?: return null
+            if (!captureAllowed.first()) return null
+            val svc = service.value ?: return null
             if (!svc.gameInFront) return null
             return svc.captureGrayFrame()
         }

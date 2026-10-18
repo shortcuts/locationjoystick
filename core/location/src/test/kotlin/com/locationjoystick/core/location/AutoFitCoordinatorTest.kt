@@ -86,6 +86,7 @@ class AutoFitCoordinatorTest {
         source = mockk()
         every { source.isAvailable } returns true
         every { source.gameInFront } returns true
+        every { source.captureAllowed } returns tapToWalk
         coEvery { source.captureGrayFrame() } answers { frame() }
         settings = mockk(relaxed = true)
         every { settings.getTapToWalkOverlayEnabled() } returns tapToWalk
@@ -344,6 +345,51 @@ class AutoFitCoordinatorTest {
 
             assertTrue("the leg was measured", frames.isNotEmpty())
             frames.forEach { (read, positions) -> assertEquals("every frame of the leg is readable", positions, read) }
+        }
+
+    private fun spoolFiles() = spoolDir.walkTopDown().filter { it.isFile }.toList()
+
+    @Test
+    fun `a leftover tap_autofit dir is deleted when observe starts`() =
+        runTest {
+            val leftover = java.io.File(spoolDir, "9/0.gray").apply { parentFile.mkdirs() }
+            leftover.writeBytes(ByteArray(W * H))
+            coordinator()
+            delay(1)
+            assertFalse(spoolDir.exists())
+        }
+
+    @Test
+    fun `turning Tap to Walk off deletes buffered and pending spools`() =
+        runTest {
+            fakeWalks()
+            coordinator(SolveResult.FeetNotFound)
+            delay(1)
+            walkLeg(0.0)
+            walkLeg(90.0)
+            assertTrue("buffered legs sit on disk", spoolFiles().isNotEmpty())
+
+            val from = locationRepository.currentPosition.value!!
+            mapController.walkTo(CalibrationWalkMath.commandedTarget(from, 45.0, 300.0), null)
+            delay(60_000) // an open leg is on disk too
+            tapToWalk.value = false
+            delay(AppConstants.TapToWalkConstants.AUTOFIT_FRAME_INTERVAL_MS * 10)
+
+            assertEquals(emptyList<java.io.File>(), spoolFiles())
+        }
+
+    @Test
+    fun `spool over the byte cap drops the oldest leg`() =
+        runTest {
+            fakeWalks()
+            val c = coordinator(SolveResult.FeetNotFound)
+            val cap = 25L * W * H
+            c.spoolCapBytes = cap
+            delay(1)
+            repeat(4) { walkLeg(it * 90.0) }
+
+            val bytes = spoolFiles().sumOf { it.length() }
+            assertTrue("spool is $bytes bytes, cap $cap", bytes in 1..(cap + W * H))
         }
 
     private companion object {

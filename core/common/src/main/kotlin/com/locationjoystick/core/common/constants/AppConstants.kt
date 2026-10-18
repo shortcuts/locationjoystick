@@ -603,6 +603,8 @@ object AppConstants {
         const val AUTOFIT_ARRIVAL_SLACK_M = 5.0 // a learning leg that ended farther than this from its target was cancelled
         const val AUTOFIT_BUFFER_LEGS = 4 // closed legs kept for a full re-fit while the fit is not valid
         const val AUTOFIT_MIN_BEARING_SPREAD_DEG = 40.0 // a full re-fit needs legs this far apart in bearing
+        const val AUTOFIT_SPOOL_CAP_BYTES = 150L * 1024 * 1024 // the spool lives in the user's cache: a few legs, never hundreds of MB
+        const val AUTOFIT_MIN_FREE_BYTES = 300L * 1024 * 1024 // keep this much free: a full disk breaks the user's other apps
     }
 
     object AccessibilityConstants {

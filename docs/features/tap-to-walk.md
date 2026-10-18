@@ -100,7 +100,15 @@ Why one stored record and not one per zoom or rotation: the game exposes no sign
 
 Why per device and not exported: the map depends on the phone's screen and the game's camera. A backup restored on another device would give wrong taps. The record is rejected when its screen size differs from the current display.
 
-Frames spool to the app cache, one leg at a time, because a leg does not fit in the heap. A leg's spool is deleted as soon as the fit is valid; while the fit is not valid, the last few legs are kept for the full re-fit, so a twist or zoom from before is never mixed with legs after it. Frames are deleted on every exit path, including the service ending. At most one analysis runs at a time, never on the tap path.
+Frames spool to the app cache, one leg at a time, because a leg does not fit in the heap. A leg's spool is deleted as soon as the fit is valid; while the fit is not valid, the last few legs are kept for the full re-fit, so a twist or zoom from before is never mixed with legs after it. The cache is user storage, so the spool is bounded and short-lived:
+
+- The capture gate lives in `ScreenCaptureSource`, not in callers. It includes the Tap to Walk switch, so no frame exists while the feature is off.
+- The spool is wiped when that gate closes (switch off, disclosure withdrawn, service unbound). A leg already in analysis finishes, and its frames are deleted as soon as it ends.
+- The spool is also wiped when observing starts. A process kill skips the cleanup on exit, so the previous session may have left frames.
+- A byte cap and a free-space floor apply before each frame. Over either, the oldest buffered leg goes first, because a refit that loses an old leg only waits for a newer one.
+- Frames are deleted on every exit path, including the service ending.
+
+At most one analysis runs at a time, never on the tap path.
 
 Invariants a change must not break:
 
