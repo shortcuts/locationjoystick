@@ -58,6 +58,20 @@ class ScreenAccessibilityService :
     private val failureStreak = ReconnectFailureStreak()
     private val notFoundStreak = ReconnectNotFoundStreak()
 
+    // Debug builds never back off: the reliability matrix needs a steady short cycle.
+    private val backoff =
+        if (BuildConfig.DEBUG) {
+            ReconnectBackoff(
+                AppConstants.ReconnectTapConstants.DEBUG_CHECK_INTERVAL_MS,
+                AppConstants.ReconnectTapConstants.DEBUG_CHECK_INTERVAL_MS,
+            )
+        } else {
+            ReconnectBackoff(
+                AppConstants.ReconnectTapConstants.CHECK_INTERVAL_MS,
+                AppConstants.ReconnectTapConstants.MAX_CHECK_INTERVAL_MS,
+            )
+        }
+
     // Package of the last window-state-changed event. Only the package name is read, never the view tree.
     @Volatile private var foregroundPackage: String? = null
 
@@ -96,13 +110,7 @@ class ScreenAccessibilityService :
                 .collectLatest { active ->
                     if (!active) screenCaptureSource.reportReconnect(null)
                     while (active) {
-                        delay(
-                            if (BuildConfig.DEBUG) {
-                                AppConstants.ReconnectTapConstants.DEBUG_CHECK_INTERVAL_MS
-                            } else {
-                                AppConstants.ReconnectTapConstants.CHECK_INTERVAL_MS
-                            },
-                        )
+                        delay(backoff.delayMs)
                         guardedReconnectCheck(
                             onError = { Log.e(TAG, "Reconnect check failed; next interval retries", it) },
                         ) { runReconnectCheck() }
@@ -138,6 +146,7 @@ class ScreenAccessibilityService :
             )
         Log.d(TAG, "Reconnect check: $result")
         screenCaptureSource.reportReconnect(ReconnectStatus(result, System.currentTimeMillis()))
+        backoff.record(result)
         if (failureStreak.record(result)) {
             postReconnectNotification(
                 R.string.reconnect_failed_title,

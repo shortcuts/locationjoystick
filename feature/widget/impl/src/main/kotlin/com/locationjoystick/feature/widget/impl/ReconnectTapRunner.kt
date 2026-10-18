@@ -58,6 +58,27 @@ internal class ReconnectNotFoundStreak {
     }
 }
 
+/**
+ * Delay before the next check. A FAILED run doubles it up to [maxMs]: a companion that stays
+ * unreachable after a tap is likely away, so retrying at the base rate wastes taps and battery.
+ * RECONNECTED and NOT_OFF reset it; NOT_FOUND and GATE_CLOSED are neutral, as in the streaks.
+ */
+internal class ReconnectBackoff(
+    private val baseMs: Long,
+    private val maxMs: Long,
+) {
+    var delayMs = baseMs
+        private set
+
+    fun record(result: ReconnectRunResult) {
+        when (result) {
+            ReconnectRunResult.FAILED -> delayMs = (delayMs * 2).coerceAtMost(maxMs)
+            ReconnectRunResult.RECONNECTED, ReconnectRunResult.NOT_OFF -> delayMs = baseMs
+            ReconnectRunResult.NOT_FOUND, ReconnectRunResult.GATE_CLOSED -> Unit
+        }
+    }
+}
+
 /** Control center plus a Gaussian offset, clamped to stay inside the ball. Screen pixels. */
 internal fun jitteredTapPoint(
     control: ReconnectControl,

@@ -66,6 +66,15 @@ The earlier failures were diagnosed as a timing fault, not a detection fault. Th
 
 The proof is run by the reconnect matrix script in `scripts/`. Its raw rows are not committed.
 
+## Backoff
+
+A `FAILED` run means the tap did not bring the companion back, so it is probably away. `ReconnectBackoff` doubles the wait after each `FAILED`, from the base interval up to `MAX_CHECK_INTERVAL_MS`. Retrying at the base rate would repeat taps and screenshots that cannot succeed.
+
+- `RECONNECTED` and `NOT_OFF` reset the wait to base: the companion is connected, or the control is not off.
+- `NOT_FOUND` and `GATE_CLOSED` keep the wait, the same neutral rule as the streaks.
+- A loop restart (setting toggled) keeps the wait too. The state lives in the service, in memory only.
+- Debug builds never back off, because the reliability matrix needs a steady short cycle.
+
 ## Failure notification
 
 The check runs in the background, so the user cannot see it fail. `ReconnectFailureStreak` counts consecutive `FAILED` runs and tells the service to post one notification per streak. `NOT_OFF` is neutral: an absent or unknown control looks the same as "connected" or "left the game", so counting it would warn users who simply closed the game. A `RECONNECTED` run re-arms the streak. The streak is in memory only; a process restart at worst delays one notification. `ReconnectNotFoundStreak` covers the case NOT_OFF hides: the game is in front (the gate) yet the first read finds no control for `NOT_FOUND_NOTIFY_THRESHOLD` checks in a row, which means the HUD moved or the colours changed and reconnect has silently stopped. It posts one notification per streak on the same channel; any other result, including a closed gate, re-arms it. Also in memory only. The notification has its own channel because the foreground-service channels are silent or hidden.

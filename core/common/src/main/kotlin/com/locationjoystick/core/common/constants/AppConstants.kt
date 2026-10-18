@@ -625,6 +625,9 @@ object AppConstants {
         // interval after the loop (re)starts so enabling the setting never taps immediately.
         const val CHECK_INTERVAL_MS = 60_000L
 
+        // Each FAILED check doubles the wait from CHECK_INTERVAL_MS up to this cap (ReconnectBackoff).
+        const val MAX_CHECK_INTERVAL_MS = 5 * 60_000L
+
         // Debug builds only: the reliability matrix (scripts/reconnect_matrix.py) needs hundreds of
         // cycles, so the wait per cycle is short.
         const val DEBUG_CHECK_INTERVAL_MS = 10_000L
