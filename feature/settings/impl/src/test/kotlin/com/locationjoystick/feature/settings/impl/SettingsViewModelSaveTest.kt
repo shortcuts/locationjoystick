@@ -306,7 +306,6 @@ class SettingsViewModelSaveTest {
                             rememberLastLocation = true,
                             mapFollowsLocation = false,
                             tapToWalkOverlayEnabled = true,
-                            tapToWalkScaleMpx = 0.5,
                             floatingMapQuickWalk = true,
                         ),
                 )
@@ -320,7 +319,6 @@ class SettingsViewModelSaveTest {
             assertTrue(snapshot.rememberLastLocation)
             assertFalse(snapshot.mapFollowsLocation)
             assertTrue(snapshot.tapToWalkOverlayEnabled)
-            assertEquals(0.5, snapshot.tapToWalkScaleMpx, 0.0001)
             assertTrue(snapshot.floatingMapQuickWalk)
         }
 
@@ -795,17 +793,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getTapToWalkOverlayEnabled(): Flow<Boolean> = flowOf(false)
 
-    override fun getTapToWalkScaleMpx(): Flow<Double> = flowOf(AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
-
     var tapToWalkEnabledWrite: Boolean? = null
-    var tapToWalkScaleWrite: Double? = null
 
     override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) {
         tapToWalkEnabledWrite = enabled
-    }
-
-    override suspend fun setTapToWalkScaleMpx(scale: Double) {
-        tapToWalkScaleWrite = scale
     }
 
     override fun getAccessibilityDisclosureChoice(): Flow<String> = flowOf("")

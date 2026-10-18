@@ -54,7 +54,7 @@
     <string name="widget_feature_speed_cycle_cd">"速度切換"</string>
     <string name="widget_feature_open_map_cd">"開啟地圖"</string>
     <string name="overlay_roaming_ignored_route_playing_cd">"漫遊已忽略 — 路線正在進行"</string>
-    <string name="tap_to_walk_overlay_north_up_hint">"尚未學習地圖：點擊按地圖朝北計算。"</string>
+    <string name="tap_to_walk_overlay_cannot_learn_hint">"尚未學習地圖。請開啟遊戲並保持靜止，然後點按。"</string>
     <string name="tap_to_walk_learning_failed">"無法學習地圖。請保持遊戲開啟並重試。"</string>
     <string name="tap_to_walk_learning_started">"正在為點擊行走學習地圖。短暫行走後會前往你點擊的位置。"</string>
     <string name="reconnect_failed_channel_name">"配件重新連線"</string>

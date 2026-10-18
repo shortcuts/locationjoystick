@@ -380,12 +380,7 @@ interface PreferencesDataSource {
     /** Gets whether the screen tap-to-walk overlay is enabled. */
     fun getTapToWalkOverlayEnabled(): Flow<Boolean>
 
-    /** Gets the scale factor (meters per pixel) for the tap-to-walk overlay coordinate conversion. */
-    fun getTapToWalkScaleMpx(): Flow<Double>
-
     suspend fun setTapToWalkOverlayEnabled(enabled: Boolean)
-
-    suspend fun setTapToWalkScaleMpx(scale: Double)
 
     fun getAccessibilityDisclosureChoice(): Flow<String>
 
@@ -450,7 +445,6 @@ data class SettingsSnapshot(
     val roamingDefaults: RoamingDefaults,
     val floatingMapQuickWalk: Boolean = false,
     val tapToWalkOverlayEnabled: Boolean = false,
-    val tapToWalkScaleMpx: Double = AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX,
     val enabledSpeedProfileIds: Set<String> = AppConstants.ProfileConstants.DEFAULT_ENABLED_SPEED_PROFILE_IDS,
     val hideTeleportFeatures: Boolean = false,
     val hideWidgetOverlay: Boolean = false,
@@ -645,7 +639,6 @@ class AppPreferencesDataSource
             val ENABLED_SPEED_PROFILE_IDS = stringSetPreferencesKey("enabled_speed_profile_ids")
             val FLOATING_MAP_QUICK_WALK = booleanPreferencesKey("floating_map_quick_walk")
             val TAP_TO_WALK_OVERLAY_ENABLED = booleanPreferencesKey("tap_to_walk_overlay_enabled")
-            val TAP_TO_WALK_SCALE_MPX = doublePreferencesKey("tap_to_walk_scale_mpx")
             val ACCESSIBILITY_DISCLOSURE_CHOICE = stringPreferencesKey("accessibility_disclosure_choice")
             val TAP_TO_WALK_GROUND_CALIBRATION = stringPreferencesKey("tap_to_walk_ground_calibration")
             val RECONNECT_TAP_ENABLED = booleanPreferencesKey("reconnect_tap_enabled")
@@ -1177,12 +1170,7 @@ class AppPreferencesDataSource
 
         override fun getTapToWalkOverlayEnabled(): Flow<Boolean> = pref(Keys.TAP_TO_WALK_OVERLAY_ENABLED, false)
 
-        override fun getTapToWalkScaleMpx(): Flow<Double> =
-            pref(Keys.TAP_TO_WALK_SCALE_MPX, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
-
         override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) = setPref(Keys.TAP_TO_WALK_OVERLAY_ENABLED, enabled)
-
-        override suspend fun setTapToWalkScaleMpx(scale: Double) = setPref(Keys.TAP_TO_WALK_SCALE_MPX, scale)
 
         override fun getAccessibilityDisclosureChoice(): Flow<String> =
             pref(Keys.ACCESSIBILITY_DISCLOSURE_CHOICE, AppConstants.AccessibilityConstants.DISCLOSURE_UNANSWERED)
@@ -1271,11 +1259,6 @@ class AppPreferencesDataSource
                 prefs[Keys.HOT_ROUTE_SELECTED_IDS] = snapshot.selectedHotRouteIds
                 prefs[Keys.FLOATING_MAP_QUICK_WALK] = snapshot.floatingMapQuickWalk
                 prefs[Keys.TAP_TO_WALK_OVERLAY_ENABLED] = snapshot.tapToWalkOverlayEnabled
-                prefs[Keys.TAP_TO_WALK_SCALE_MPX] =
-                    snapshot.tapToWalkScaleMpx.coerceIn(
-                        AppConstants.TapToWalkConstants.MIN_SCALE_MPX,
-                        AppConstants.TapToWalkConstants.MAX_SCALE_MPX,
-                    )
                 prefs.writeRoamingDefaults(snapshot.roamingDefaults)
             }
         }
@@ -1368,9 +1351,6 @@ class AppPreferencesDataSource
                         roamingDefaults = prefs.toRoamingDefaults(),
                         floatingMapQuickWalk = prefs[Keys.FLOATING_MAP_QUICK_WALK] ?: false,
                         tapToWalkOverlayEnabled = prefs[Keys.TAP_TO_WALK_OVERLAY_ENABLED] ?: false,
-                        tapToWalkScaleMpx =
-                            prefs[Keys.TAP_TO_WALK_SCALE_MPX]
-                                ?: AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX,
                     )
                 }
 

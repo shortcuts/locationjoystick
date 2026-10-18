@@ -5,6 +5,7 @@ import android.graphics.PixelFormat
 import android.os.Build
 import android.util.Log
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,7 +31,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjOnScrim
 import com.locationjoystick.core.designsystem.LjTheme
@@ -40,9 +40,7 @@ import com.locationjoystick.core.model.GroundMap
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.feature.widget.impl.R
-import kotlin.math.PI
 import kotlin.math.atan2
-import kotlin.math.cos
 import kotlin.math.hypot
 
 internal class TapToWalkOverlay(
@@ -52,7 +50,6 @@ internal class TapToWalkOverlay(
     private val savedStateRegistryOwner: SavedStateRegistryOwner,
     private val onWalkTo: (LatLng) -> Unit,
     private val getPosition: () -> LatLng?,
-    private val getScaleMpx: () -> Double,
     private val onDismissed: () -> Unit,
     private val getGroundCalibration: () -> StoredGroundCalibration? = { null },
     private val getFitHealth: () -> FitHealth = { FitHealth.None },
@@ -75,14 +72,19 @@ internal class TapToWalkOverlay(
                     LjTheme {
                         TapToWalkOverlayContent(
                             hint = hint,
-                            onTap = { x, y, screenW, screenH ->
+                            onTap = { x, y ->
                                 val pos = getPosition()
                                 if (pos != null) {
                                     if (needsLearning()) {
                                         val origin = IntArray(2).also { overlayView?.getLocationOnScreen(it) }
                                         onLearnThenWalk(pos, (origin[0] + x).toDouble(), (origin[1] + y).toDouble())
                                     } else {
-                                        onWalkTo(resolveTarget(pos, x, y, screenW, screenH))
+                                        val target = resolveTarget(pos, x, y)
+                                        if (target != null) {
+                                            onWalkTo(target)
+                                        } else {
+                                            Toast.makeText(context, R.string.tap_to_walk_learning_failed, Toast.LENGTH_LONG).show()
+                                        }
                                     }
                                 }
                                 dismiss()
@@ -123,7 +125,7 @@ internal class TapToWalkOverlay(
         if (usable || canLearn()) {
             R.string.tap_to_walk_overlay_tap_anywhere_to_walk_there
         } else {
-            R.string.tap_to_walk_overlay_north_up_hint
+            R.string.tap_to_walk_overlay_cannot_learn_hint
         }
 
     /** True when a stored fit matches the full display, the condition [resolveTarget] needs for the ground map. */
@@ -135,17 +137,15 @@ internal class TapToWalkOverlay(
     }
 
     /**
-     * Ground-map path when a stored calibration matches the full display; otherwise the north-up scale
-     * formula. The map is fitted on full-display frames, so the tap is shifted by the window's
-     * on-screen origin (system bars may inset the overlay).
+     * Ground-map path when a stored calibration matches the full display, else null: a tap with no
+     * map never walks a guessed bearing. The map is fitted on full-display frames, so the tap is
+     * shifted by the window's on-screen origin (system bars may inset the overlay).
      */
     private fun resolveTarget(
         pos: LatLng,
         x: Float,
         y: Float,
-        screenW: Int,
-        screenH: Int,
-    ): LatLng {
+    ): LatLng? {
         val stored = getGroundCalibration()
         if (stored != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val bounds = windowManager.maximumWindowMetrics.bounds
@@ -159,8 +159,7 @@ internal class TapToWalkOverlay(
                 }
             }
         }
-        Log.d(TAG, "tap resolved via north-up fallback")
-        return computeWalkTarget(pos, x, y, screenW, screenH, getScaleMpx())
+        return null
     }
 
     private fun overlayLayoutParams() =
@@ -190,35 +189,13 @@ internal class TapToWalkOverlay(
             val bearing = Math.toDegrees(atan2(o.eastMeters, o.northMeters))
             return CalibrationWalkMath.commandedTarget(currentPos, bearing, hypot(o.eastMeters, o.northMeters))
         }
-
-        /**
-         * Fallback conversion of a screen tap position to a GPS coordinate, assuming a north-up map
-         * at [metersPerPixel]. Zooming out reduces positioning error per pixel.
-         */
-        fun computeWalkTarget(
-            currentPos: LatLng,
-            tapX: Float,
-            tapY: Float,
-            screenW: Int,
-            screenH: Int,
-            metersPerPixel: Double,
-        ): LatLng {
-            val dx = (tapX - screenW / 2f) * metersPerPixel
-            val dy = -(tapY - screenH / 2f) * metersPerPixel
-            val lat = currentPos.latitude + (dy / AppConstants.LocationConstants.EARTH_RADIUS_METERS) * (180.0 / PI)
-            val lon =
-                currentPos.longitude +
-                    (dx / AppConstants.LocationConstants.EARTH_RADIUS_METERS) * (180.0 / PI) /
-                    cos(currentPos.latitude * PI / 180.0)
-            return LatLng(lat.coerceIn(-90.0, 90.0), lon)
-        }
     }
 }
 
 @Composable
 private fun TapToWalkOverlayContent(
     @StringRes hint: Int,
-    onTap: (x: Float, y: Float, screenW: Int, screenH: Int) -> Unit,
+    onTap: (x: Float, y: Float) -> Unit,
     onDismiss: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -230,7 +207,7 @@ private fun TapToWalkOverlayContent(
                     .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.05f))
                     .pointerInput(Unit) {
                         detectTapGestures(onTap = { offset ->
-                            onTap(offset.x, offset.y, size.width, size.height)
+                            onTap(offset.x, offset.y)
                         })
                     },
         )

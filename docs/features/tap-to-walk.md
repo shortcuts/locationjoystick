@@ -12,8 +12,6 @@ State-of-the-art research for the automatic fit and the superposition retry: [ta
 
 Tier 1's toggle is in the Privacy group, next to Hide Teleport Features, because Floating Map Quick Walk is a standalone feature. It is not one of the features that setting hides ([hide-teleport.md](hide-teleport.md)). Tier 2 lives under the Tap to Walk menu. Screen access has no toggle of its own: it is on whenever the accessibility service is granted.
 
-The map scale is a single slider with a default calibrated against a fully zoomed-out AR game map. An earlier version asked players to tap two landmarks and type the real distance between them. It was removed because most players do not know that distance, so the calibrated default plus a manual correction replaces it.
-
 ## Tier 1 — Floating Map Quick Walk
 
 When the option is on, a tap on the floating map walks directly instead of opening the action panel. The option is read as composable state, and the tap callbacks use the latest values rather than values captured once at view creation.
@@ -28,7 +26,7 @@ Position is read once, at tap time. The tap pixel is in full-display device pixe
 
 Primary path: a stored ground map (see "Automatic fit") that matches the current display size converts the tap pixel to a ground offset in metres east and north. The offset is applied to the current position using the flat-earth scale that the walk uses, not the haversine radius. Taps past the horizon of the fitted map yield no target.
 
-Fallback: when no map exists and none can be learned (below API 30, spoofing not running idle, game not in front), the tap is converted with a north-up scale formula. The fallback never blocks a tap. Its accuracy depends on the scale setting matching the game's zoom, and on the map being north-up. The fallback exists because the app assumes no map heading: heading comes from the walked-leg fit only.
+No map and no way to learn one (below API 30, spoofing not running idle, game not in front): the tap walks nowhere and a toast says why. A stored map that matches the display but is not valid still resolves when no new map can be learned, because it is the best bearing available. An earlier version fell back to a north-up formula with a hand-set scale. It was removed: the game camera has no north, so the fallback walked a wrong bearing, and the scale asked the player for something they cannot know.
 
 When no valid map exists and learning is possible, the tap does not move the player. The overlay holds the tap pixel and the position it was made at, the coordinator walks its learning route, and the held tap is resolved against the new map and walked. The tap is never resolved against a map the monitor flagged as suspect, when a new one can be learned.
 
@@ -36,7 +34,7 @@ Invariants:
 
 - Never read the map orientation or take a screenshot inside the tap callback. The tap reads the cached stored fit only. That fit is written by the coordinator's analysis of earlier walks, never by a user action and never on the tap path. (The old Settings walk made the same rule easy to keep because the user started it; with the automatic fit it is the reason frames are taken on the 3 s tick and analysed at leg close.)
 - The ground frame is flat-earth at 111320 m per degree, the frame the fit is measured in. The haversine radius drifts about 0.1 percent from those measurements.
-- The fallback must stay available whenever learning cannot run. A learning walk starts only from a tap, and the overlay is dismissed first, so it never blocks the player's touches during the walk.
+- An unfit tap never walks a guessed bearing. A learning walk starts only from a tap, and the overlay is dismissed first, so it never blocks the player's touches during the walk.
 
 ## Screen access
 
@@ -50,7 +48,7 @@ The service was renamed from an earlier name. Android keys enabled services by c
 
 ### Platform limits
 
-Screenshots require API 30. No fallback exists below it. The status block is one shared Screen access block above both feature sections, shown while either switch is on, so a Reconnect-only user still sees whether the service runs; each section adds a service-off hint when its switch is on without the service. On older devices the block is hidden and the service is disabled in the manifest, so it never shows up in Android's accessibility list where it could be enabled without the in-app disclosure. The service also skips binding on connect as a second guard. Tier 1 and Tier 2 quick-walk still work below API 30.
+Screenshots require API 30. Below it no map can exist, so the overlay walks nowhere. The status block is one shared Screen access block above both feature sections, shown while either switch is on, so a Reconnect-only user still sees whether the service runs; each section adds a service-off hint when its switch is on without the service. On older devices the block is hidden and the service is disabled in the manifest, so it never shows up in Android's accessibility list where it could be enabled without the in-app disclosure. The service also skips binding on connect as a second guard. Tier 1 and Tier 2 quick-walk still work below API 30.
 
 ## Prominent Disclosure
 
@@ -71,7 +69,7 @@ Entry points, each immediately before Android's consent screen, so reviewers alw
 
 - Onboarding: the first screen of a fresh install, on every API level, while unanswered. This was added after build 2400 was rejected for a disclosure reachable only through Settings menus.
 - Optional onboarding card on the path picker.
-- The Tap to Walk switch in Settings, with the two overlay caveats on the same screen.
+- The Tap to Walk switch in Settings, with the overlay caveat on the same screen.
 - Tapping the widget crosshair, which opens the app to the disclosure.
 - The screen-access row's open-settings button.
 - The automatic fit adds no new consent path. It needs the service granted and the disclosure accepted, both checked in the capture bridge.
@@ -80,7 +78,7 @@ The Play Console declaration and store listing are done. Do not re-check them as
 
 ## Warning screen
 
-Turning on the overlay shows two caveats: some apps detect mock location and may penalise the account, and accuracy depends on the scale matching the game's zoom. The caveats and the accessibility disclosure share one screen, so the user confirms once. Decline leaves the toggle off and records nothing: the user declined the feature, not the service.
+Turning on the overlay shows a caveat that the overlay intercepts taps. The caveat and the accessibility disclosure share one screen, so the user confirms once. Decline leaves the toggle off and records nothing: the user declined the feature, not the service.
 
 ## Anti-cheat
 
@@ -88,13 +86,13 @@ Accessibility services running in the background can be detected by some games. 
 
 ## Automatic fit
 
-The app fits and maintains the ground map itself, so a tap maps to a metre offset rather than assuming north-up, for any camera twist, zoom or screen size. There is no calibration step for the user. The earlier Settings walk (8 legs, 10 minutes, one stored record) was removed: it was a chore, it went stale the moment the player twisted or pinched the map, and nothing readable at tap time says the camera changed.
+The app fits and maintains the ground map itself, so a tap maps to a metre offset, for any camera twist, zoom or screen size. There is no calibration step for the user. The earlier Settings walk (8 legs, 10 minutes, one stored record) was removed: it was a chore, it went stale the moment the player twisted or pinched the map, and nothing readable at tap time says the camera changed.
 
 How it works (class docs and tests are the detail): while Tap to Walk is on and the game is in front, every straight stretch of a walk the app already makes (tap to walk, quick walk, joystick) becomes a leg of screenshots. Positions are the app's own mock fixes, so bearing and length are exact. When a leg closes, its screen motion is compared with what the stored fit predicts. A cumulative-sum test on the residual (CUSUM) decides whether it still matches. A camera twist changes only the heading term, so on an alarm only the heading is re-fitted from that leg. A zoom changes scale, perspective and feet, so on a failed heading re-fit the fit becomes suspect and all four terms are re-fitted from the legs that followed. Route replay and roaming are not legs: their path is not straight and the jitter offset applies.
 
 Why legs, not a calibration route: every walk is a free measurement, and a camera change is noticed within the walk that follows it. The accepted cost is that a tap made between a twist and the next closed leg uses a stale fit.
 
-Why scale is searched and never asked: a fixed or hand-set scale cannot follow a pinch. The fit solves scale together with heading, so the Map scale slider matters only to the north-up fallback.
+Why scale is searched and never asked: a fixed or hand-set scale cannot follow a pinch. The fit solves scale together with heading.
 
 Why a tap with no valid map walks first: with no fit there is nothing to resolve the tap against, and a wrong guess is a wrong teleport target. The learning route walks at walking speed, never a teleport, so it does not touch the teleport cooldown and does not look like a jump to the game. Progress and a Cancel action are on the foreground notification, not in the tap overlay, because the overlay takes every touch and would lock the player out of the game for minutes. The route's legs are the set the bench's 2.3 m median was measured on.
 

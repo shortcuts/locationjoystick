@@ -1407,13 +1407,13 @@ if should_run_step "20"; then
     else
       tap_text_exact "Enable anyway"
     fi
-    wait_s 1 "Enabling Tap to Walk — Map scale / Screen access sections expanding"
+    wait_s 1 "Enabling Tap to Walk — Screen access section expanding"
   fi
   screenshot "20_tap_to_walk_settings"
 fi
 
 # ── 21. Settings → Menus → Screen access section ──────────────────────
-# ScreenAccessSection renders below the Map scale slider (API 30+ only)
+# ScreenAccessSection renders below the Tap to Walk switch (API 30+ only)
 # — off-screen in step 20's screenshot. Scroll further to capture the Game
 # status block on its own.
 

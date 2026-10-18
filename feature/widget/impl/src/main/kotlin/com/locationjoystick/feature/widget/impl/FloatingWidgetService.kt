@@ -166,7 +166,6 @@ class FloatingWidgetService :
     private val pendingCompletionFlow = MutableStateFlow(false)
 
     private val isTapToWalkActiveFlow = MutableStateFlow(false)
-    private lateinit var tapToWalkScaleMpx: StateFlow<Double>
     private lateinit var tapToWalkVisible: StateFlow<Boolean>
     private lateinit var groundCalibration: StateFlow<StoredGroundCalibration?>
     private lateinit var accessibilityDisclosureChoice: StateFlow<String>
@@ -213,10 +212,6 @@ class FloatingWidgetService :
                 favoriteRepository = favoriteRepository,
                 routeRepository = routeRepository,
             )
-        tapToWalkScaleMpx =
-            settingsRepository
-                .getTapToWalkScaleMpx()
-                .stateIn(lifecycleScope, SharingStarted.Eagerly, AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
         tapToWalkVisible =
             combine(settingsRepository.getTapToWalkOverlayEnabled(), settingsRepository.getGuidedPath()) { enabled, path ->
                 enabled && path.showsTapToWalk
@@ -603,7 +598,6 @@ class FloatingWidgetService :
                     savedStateRegistryOwner = this,
                     onWalkTo = { pos -> mapController.walkTo(pos) },
                     getPosition = { mapController.sharedState.value.currentPosition },
-                    getScaleMpx = { tapToWalkScaleMpx.value },
                     onDismissed = { isTapToWalkActiveFlow.value = false },
                     getGroundCalibration = { groundCalibration.value },
                     getFitHealth = { autoFit.health.value },

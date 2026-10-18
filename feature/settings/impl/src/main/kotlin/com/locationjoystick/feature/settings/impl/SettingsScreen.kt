@@ -438,10 +438,6 @@ fun SettingsRoute(
                     viewModel.setTapToWalkOverlayEnabled(action.enabled)
                 }
 
-                is SettingsAction.SetTapToWalkScaleMpx -> {
-                    viewModel.setTapToWalkScaleMpx(action.scale)
-                }
-
                 is SettingsAction.SetAccessibilityDisclosureAccepted -> {
                     viewModel.setAccessibilityDisclosureAccepted(action.accepted)
                 }

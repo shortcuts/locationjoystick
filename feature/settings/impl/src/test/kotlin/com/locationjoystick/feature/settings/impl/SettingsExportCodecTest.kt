@@ -84,7 +84,6 @@ class SettingsExportCodecTest {
                         rememberLastLocation = false,
                         floatingMapQuickWalk = true,
                         tapToWalkOverlayEnabled = true,
-                        tapToWalkScaleMpx = 0.42,
                         reconnectTapEnabled = true,
                         keepWidgetOnIdle = true,
                         themeMode = ThemeMode.LIGHT,
@@ -98,10 +97,17 @@ class SettingsExportCodecTest {
         assertFalse(settings.rememberLastLocation)
         assertEquals(true, settings.floatingMapQuickWalk)
         assertEquals(true, settings.tapToWalkOverlayEnabled)
-        assertEquals(0.42, settings.tapToWalkScaleMpx, 0.0001)
         assertEquals(true, settings.reconnectTapEnabled)
         assertEquals(true, settings.keepWidgetOnIdle)
         assertEquals(ThemeMode.LIGHT, settings.themeMode)
+    }
+
+    @Test
+    fun `old export that still carries the removed map scale imports`() {
+        val json = """{"schemaVersion":2,"settings":{"tapToWalkScaleMpx":0.42,"tapToWalkOverlayEnabled":true}}"""
+        val settings = SettingsExportCodec.parseExportData(json).settings
+
+        assertEquals(true, settings.tapToWalkOverlayEnabled)
     }
 
     @Test
@@ -113,7 +119,6 @@ class SettingsExportCodecTest {
         assertEquals(d.mapFollowsLocation, settings.mapFollowsLocation)
         assertEquals(d.rememberLastLocation, settings.rememberLastLocation)
         assertEquals(d.tapToWalkOverlayEnabled, settings.tapToWalkOverlayEnabled)
-        assertEquals(d.tapToWalkScaleMpx, settings.tapToWalkScaleMpx, 0.0001)
         assertEquals(d.reconnectTapEnabled, settings.reconnectTapEnabled)
         assertEquals(d.themeMode, settings.themeMode)
     }

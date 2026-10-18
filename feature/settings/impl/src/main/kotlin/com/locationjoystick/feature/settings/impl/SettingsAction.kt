@@ -202,10 +202,6 @@ internal sealed class SettingsAction {
         val enabled: Boolean,
     ) : SettingsAction()
 
-    data class SetTapToWalkScaleMpx(
-        val scale: Double,
-    ) : SettingsAction()
-
     data class SetAccessibilityDisclosureAccepted(
         val accepted: Boolean,
     ) : SettingsAction()

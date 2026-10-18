@@ -594,11 +594,6 @@ object AppConstants {
     }
 
     object TapToWalkConstants {
-        // Calibrated for a fully zoomed-out AR game map: two known landmarks ~40.5 m apart spanning ~173 px → 0.23 m/px.
-        const val DEFAULT_SCALE_MPX = 0.23
-        const val MIN_SCALE_MPX = 0.01
-        const val MAX_SCALE_MPX = 1.0
-
         // Automatic fit (docs/features/tap-to-walk.md, "Automatic fit"). Values come from the bench walks.
         const val AUTOFIT_FRAME_INTERVAL_MS = 3000L // one screenshot per tick, as the bench's --every 3
         const val AUTOFIT_MAX_SPEED_MPS = 3.0 // faster steps are a teleport or a vehicle profile, not a leg to learn from

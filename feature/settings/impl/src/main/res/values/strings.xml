@@ -117,11 +117,9 @@
     <string name="settings_menus_walk_to_a_location_by_tapping">"Walk to a location by tapping it, with no confirmation."</string>
     <string name="settings_menus_menus">"Menus"</string>
     <string name="settings_general_general">"General"</string>
-    <string name="settings_menus_map_scale_mpx">"Map scale (%1$.2f m/px). The default works for most players. Zoom the game fully out and change this only if taps land in the wrong place."</string>
     <string name="settings_menus_enable_tap_to_walk">"Enable Tap to Walk"</string>
     <string name="settings_menus_enable_tap_to_walk_2">"Enable Tap to Walk?"</string>
     <string name="settings_menus_a_screen_overlay_that_intercepts_taps">"A screen overlay that intercepts taps can make some games more likely to detect it. Use at your own risk."</string>
-    <string name="settings_menus_accuracy_depends_on_the_scale_setting">"Accuracy depends on the scale setting. Zoom out in the game for better results."</string>
     <string name="settings_menus_enable_anyway">"Enable anyway"</string>
     <string name="common_cancel">"Cancel"</string>
     <string name="settings_menus_privacy">"Privacy"</string>

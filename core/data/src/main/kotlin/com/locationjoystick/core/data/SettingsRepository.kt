@@ -378,11 +378,7 @@ class SettingsRepository
 
         fun getTapToWalkOverlayEnabled(): Flow<Boolean> = dataSource.getTapToWalkOverlayEnabled()
 
-        fun getTapToWalkScaleMpx(): Flow<Double> = dataSource.getTapToWalkScaleMpx()
-
         suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) = dataSource.setTapToWalkOverlayEnabled(enabled)
-
-        suspend fun setTapToWalkScaleMpx(scale: Double) = dataSource.setTapToWalkScaleMpx(scale)
 
         /** Latest calibration walk result; per-device and never exported. */
         fun getGroundCalibration(): Flow<StoredGroundCalibration?> = dataSource.getGroundCalibration()

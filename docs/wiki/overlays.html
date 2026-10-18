@@ -136,11 +136,8 @@
     <h3 id="tap-to-walk-settings">Settings</h3>
     <p>Hidden on the Pikmin Bloom setup. See <a href="game-setup.html">Game setup</a>.</p>
     <aside class="shot" id="tap-to-walk-settings-shot">
-      <img class="phone-shot" src="screenshots/20_tap_to_walk_settings.png" alt="Tap to Walk settings with scale and screen access">
+      <img class="phone-shot" src="screenshots/20_tap_to_walk_settings.png" alt="Tap to Walk settings with screen access">
     </aside>
-    <h4 class="item" id="tap-to-walk-settings-scale">Scale</h4>
-    <p>Meters per pixel on your screen. Range 0.01 to 1.0. Raise it for a zoomed-out game map and lower it for a zoomed-in one.</p>
-    <p><strong>Default:</strong> 0.23</p>
     <h4 class="item" id="tap-to-walk-settings-screen-access">Screen access</h4>
     <p>Lets the app take a picture of your screen. Tap to Walk needs it, and so does <a href="reconnect-accessory.html">Reconnect accessory</a>. Uses an Android accessibility feature. Its status sits in one Screen access block above both sections, shown whenever either switch is on. Each section also warns you if its switch is on but the helper is off.</p>
     <p><strong>Default:</strong> Off</p>
@@ -216,7 +213,7 @@
       <li>If you turn the map or zoom in or out, the app notices after a short walk and learns the new view. Taps made before it has learned may land a little off.</li>
       <li>If the app does not know the map yet, your first tap starts a short walk of about two minutes. A notice shows the progress, with a Cancel button. When it finishes, your location walks to the spot you tapped.</li>
       <li>The walk is a normal walking pace, never a jump.</li>
-      <li>It only works while the game is open and in front. If the app cannot learn the map, taps assume north is at the top.</li>
+      <li>It only works while the game is open and in front. If the app cannot learn the map, your tap does nothing and a message tells you to open the game and try again.</li>
     </ul>
     </section>
   </main>

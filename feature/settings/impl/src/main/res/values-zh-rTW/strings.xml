@@ -104,11 +104,9 @@
     <string name="settings_menus_walk_to_a_location_by_tapping">"點擊某個位置即可走向該處 — 無需確認。"</string>
     <string name="settings_menus_menus">"選單"</string>
     <string name="settings_general_general">"一般"</string>
-    <string name="settings_menus_map_scale_mpx">"地圖比例（%1$.2f 公尺/像素）— 預設值適用於大多數玩家；僅在明顯不準時，先將遊戲縮放至最小，再在此調整"</string>
     <string name="settings_menus_enable_tap_to_walk">"啟用點擊行走"</string>
     <string name="settings_menus_enable_tap_to_walk_2">"啟用點擊行走？"</string>
     <string name="settings_menus_a_screen_overlay_that_intercepts_taps">"攔截點擊的螢幕懸浮層可能會提高部分遊戲的偵測機率。請自行承擔風險。"</string>
-    <string name="settings_menus_accuracy_depends_on_the_scale_setting">"準確度取決於比例設定 — 在遊戲中縮小地圖可獲得更好效果。"</string>
     <string name="settings_menus_enable_anyway">"仍然啟用"</string>
     <string name="common_cancel">"取消"</string>
     <string name="settings_menus_privacy">"隱私權"</string>

@@ -103,7 +103,6 @@ internal object SettingsExportCodec {
         settingsObj.put("rememberLastLocation", data.settings.rememberLastLocation)
         settingsObj.put("floatingMapQuickWalk", data.settings.floatingMapQuickWalk)
         settingsObj.put("tapToWalkOverlayEnabled", data.settings.tapToWalkOverlayEnabled)
-        settingsObj.put("tapToWalkScaleMpx", data.settings.tapToWalkScaleMpx)
         settingsObj.put("reconnectTapEnabled", data.settings.reconnectTapEnabled)
         settingsObj.put("keepWidgetOnIdle", data.settings.keepWidgetOnIdle)
         settingsObj.put("themeMode", data.settings.themeMode.name)
@@ -360,7 +359,6 @@ internal object SettingsExportCodec {
                 rememberLastLocation = settingsObj.optBoolean("rememberLastLocation", defaults.rememberLastLocation),
                 floatingMapQuickWalk = settingsObj.optBoolean("floatingMapQuickWalk", defaults.floatingMapQuickWalk),
                 tapToWalkOverlayEnabled = settingsObj.optBoolean("tapToWalkOverlayEnabled", defaults.tapToWalkOverlayEnabled),
-                tapToWalkScaleMpx = settingsObj.optDouble("tapToWalkScaleMpx", defaults.tapToWalkScaleMpx),
                 reconnectTapEnabled = settingsObj.optBoolean("reconnectTapEnabled", defaults.reconnectTapEnabled),
                 keepWidgetOnIdle = settingsObj.optBoolean("keepWidgetOnIdle", defaults.keepWidgetOnIdle),
                 themeMode = runCatching { ThemeMode.valueOf(settingsObj.optString("themeMode")) }.getOrDefault(defaults.themeMode),

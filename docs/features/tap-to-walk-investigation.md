@@ -75,7 +75,7 @@ speed, and two game screenshots around each move give on-screen north and scale 
 in `scripts/registration_bench.py` (`content_flow`, `heading_from_moves`, `motion_g_est`, subcommand `motion`):
 phase correlation of the ground band gives how far the scene shifted for each move; two roughly perpendicular
 moves give the whole ground-to-screen map, so heading and both pixel-per-metre scales fall out with no camera
-calibration. It returns nothing (caller keeps north-up) when a move is under 3 m, a flow under 5 px, the moves are
+calibration. It returns nothing (caller gets no result) when a move is under 3 m, a flow under 5 px, the moves are
 within 30 degrees of parallel, or the two row headings disagree by more than 10 degrees.
 
 Scored on the stored north-walk and east-walk frames, every north move paired with every east move, against the

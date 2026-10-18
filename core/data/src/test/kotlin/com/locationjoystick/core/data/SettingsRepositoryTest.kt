@@ -1696,11 +1696,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override fun getTapToWalkOverlayEnabled(): Flow<Boolean> = flowOf(false)
 
-    override fun getTapToWalkScaleMpx(): Flow<Double> = flowOf(AppConstants.TapToWalkConstants.DEFAULT_SCALE_MPX)
-
     override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) = Unit
-
-    override suspend fun setTapToWalkScaleMpx(scale: Double) = Unit
 
     val groundCalibrationFlow = MutableStateFlow<StoredGroundCalibration?>(null)
 

@@ -22,7 +22,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -48,7 +47,6 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.AccessibilityDisclosureDialog
 import com.locationjoystick.core.designsystem.component.LjButton
@@ -168,33 +166,6 @@ private fun TapToWalkSection(
         },
     )
     if (enabled) {
-        // Dragging only moves the thumb; the value is saved once, on release.
-        var dragValue by remember { mutableStateOf<Float?>(null) }
-        Spacer(Modifier.height(12.dp))
-        Text(
-            stringResource(R.string.settings_menus_map_scale_mpx, dragValue?.toDouble() ?: uiState.tapToWalkScaleMpx),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Slider(
-            value = dragValue ?: uiState.tapToWalkScaleMpx.toFloat(),
-            onValueChange = { dragValue = it },
-            onValueChangeFinished = {
-                dragValue?.let { v ->
-                    onAction(
-                        SettingsAction.SetTapToWalkScaleMpx(
-                            v.toDouble().coerceIn(
-                                AppConstants.TapToWalkConstants.MIN_SCALE_MPX,
-                                AppConstants.TapToWalkConstants.MAX_SCALE_MPX,
-                            ),
-                        ),
-                    )
-                }
-                dragValue = null
-            },
-            valueRange = AppConstants.TapToWalkConstants.MIN_SCALE_MPX.toFloat()..AppConstants.TapToWalkConstants.MAX_SCALE_MPX.toFloat(),
-            modifier = Modifier.fillMaxWidth(),
-        )
         // takeScreenshot(int, Executor, TakeScreenshotCallback) requires API 30 — no fallback exists.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (showsServiceOffHint(enabled, uiState.isScreenServiceGranted)) {
@@ -217,7 +188,6 @@ private fun TapToWalkSection(
             caveats =
                 listOf(
                     stringResource(R.string.settings_menus_a_screen_overlay_that_intercepts_taps),
-                    stringResource(R.string.settings_menus_accuracy_depends_on_the_scale_setting),
                 ),
             showAccessibilityDisclosure = needsAccessibilityDisclosure,
             onAccept = {

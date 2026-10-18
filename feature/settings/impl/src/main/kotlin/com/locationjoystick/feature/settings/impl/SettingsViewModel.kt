@@ -279,7 +279,6 @@ class SettingsViewModel
                     selectedHotRouteIds = draftState.selectedHotRouteIds ?: snapshot.selectedHotRouteIds,
                     floatingMapQuickWalk = draftState.floatingMapQuickWalk ?: snapshot.floatingMapQuickWalk,
                     tapToWalkOverlayEnabled = snapshot.tapToWalkOverlayEnabled,
-                    tapToWalkScaleMpx = snapshot.tapToWalkScaleMpx,
                     hideTeleportFeatures = draftState.hideTeleportFeatures ?: snapshot.hideTeleportFeatures,
                     hideWidgetOverlay = draftState.hideWidgetOverlay ?: snapshot.hideWidgetOverlay,
                     hideForegroundNotification =
@@ -539,10 +538,6 @@ class SettingsViewModel
             viewModelScope.launch { settingsRepository.setTapToWalkOverlayEnabled(enabled) }
         }
 
-        fun setTapToWalkScaleMpx(scale: Double) {
-            viewModelScope.launch { settingsRepository.setTapToWalkScaleMpx(scale) }
-        }
-
         fun setAccessibilityDisclosureAccepted(accepted: Boolean) {
             viewModelScope.launch { settingsRepository.recordAccessibilityDisclosure(accepted) }
         }
@@ -642,7 +637,6 @@ class SettingsViewModel
                             selectedHotRouteIds = state.selectedHotRouteIds,
                             floatingMapQuickWalk = state.floatingMapQuickWalk,
                             tapToWalkOverlayEnabled = state.tapToWalkOverlayEnabled,
-                            tapToWalkScaleMpx = state.tapToWalkScaleMpx,
                             hideTeleportFeatures = state.hideTeleportFeatures,
                             hideWidgetOverlay = state.hideWidgetOverlay,
                             hideForegroundNotification = state.hideForegroundNotification,
@@ -757,7 +751,6 @@ class SettingsViewModel
                     rememberLastLocation = snapshot.rememberLastLocation,
                     floatingMapQuickWalk = snapshot.floatingMapQuickWalk,
                     tapToWalkOverlayEnabled = snapshot.tapToWalkOverlayEnabled,
-                    tapToWalkScaleMpx = snapshot.tapToWalkScaleMpx,
                     reconnectTapEnabled = settingsRepository.getReconnectTapEnabled().first(),
                     keepWidgetOnIdle = settingsRepository.getKeepWidgetOnIdle().first(),
                     themeMode = settingsRepository.getThemeMode().first(),
@@ -992,7 +985,6 @@ class SettingsViewModel
                     mapFollowsLocation = data.settings.mapFollowsLocation,
                     floatingMapQuickWalk = data.settings.floatingMapQuickWalk,
                     tapToWalkOverlayEnabled = data.settings.tapToWalkOverlayEnabled,
-                    tapToWalkScaleMpx = data.settings.tapToWalkScaleMpx,
                 ),
             )
             settingsRepository.setActiveProfileId(data.settings.activeSpeedProfileId)

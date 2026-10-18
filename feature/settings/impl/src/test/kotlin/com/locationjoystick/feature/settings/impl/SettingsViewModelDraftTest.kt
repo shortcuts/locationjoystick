@@ -302,15 +302,6 @@ class SettingsViewModelDraftTest {
             assertEquals(true, fakeDataSource.tapToWalkEnabledWrite)
         }
 
-    @Test
-    fun `setTapToWalkScaleMpx saves at once without a draft`() =
-        runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
-            viewModel.setTapToWalkScaleMpx(0.25)
-            assertFalse(viewModel.uiState.value.isDirty)
-            assertEquals(0.25, fakeDataSource.tapToWalkScaleWrite!!, 1e-9)
-        }
-
     // -------------------------------------------------------------------------
     // Capture — live keys shared with CaptureCoordinatesRepository (Settings > Menus section),
     // no draft/save step, same as the top-level Capture screen.
