@@ -437,6 +437,64 @@ def test_focal_from_fit_is_constant_when_only_pitch_terms_change():
     assert rb.focal_from_fit({**CAM, "s": CAM["s"] * 1.3}, 2340) != f
 
 
+CHAMFER_CAM = {"s": 7.0, "sy": 3.0, "a": -0.0008, "px": 540.0, "py": 1400.0}
+
+
+def _road_map(seed, size=1100):
+    rng = np.random.default_rng(seed)
+    img = np.zeros((size, size), np.uint8)
+    for _ in range(30):
+        pts = rng.integers(0, size, size=(rng.integers(2, 5), 2)).astype(np.int32)
+        cv2.polylines(img, [pts], False, 255, int(rng.integers(3, 6)))
+    return img > 0
+
+
+def _chamfer_margin(ref_seed, game_seed, theta):
+    marker, mpp = (550, 550), 0.6
+    ref_road = _road_map(ref_seed)
+    true = rb.ground_to_game(CHAMFER_CAM, theta) @ rb.ref_to_ground(marker, mpp)
+    game = cv2.warpPerspective(_road_map(game_seed).astype(np.uint8) * 255, true, (1080, 2340))
+    ref = {"dt_road": rb.truncated_dt(ref_road), "dt_water": None, "water_n": 0}
+    hs, costs = rb.search_costs(game, np.zeros_like(game), CHAMFER_CAM, ref, marker, mpp)
+    return rb.margin_score(hs, costs)
+
+
+def test_chamfer_heading_recovers_synthetic_rotation():
+    best, margin = _chamfer_margin(3, 3, 37.0)
+    assert abs(best - 37.0) <= 1.0, best
+    assert margin > 0.2, margin
+
+
+def test_chamfer_margin_low_for_unrelated_masks():
+    _, true_margin = _chamfer_margin(3, 3, 37.0)
+    _, other_margin = _chamfer_margin(3, 4, 37.0)
+    assert other_margin < true_margin / 2, (other_margin, true_margin)
+
+
+def test_osm_masks_classify_carto_colours():
+    img = np.zeros((30, 30, 3), np.uint8)
+    img[:, :10] = (223, 211, 170)  # water
+    img[:, 10:20] = (255, 255, 255)  # white road fill
+    img[:15, 20:] = (164, 214, 252)  # yellow road fill
+    img[15:, 20:] = (217, 208, 201)  # building grey
+    road, water = rb.osm_masks(img)
+    assert water[:, :10].all() and not water[:, 10:].any()
+    assert road[:, 10:20].all() and road[:15, 20:].all()
+    assert not road[:, :10].any() and not road[15:, 20:].any()
+
+
+def test_tile_xy_and_scale_known_points():
+    assert rb.tile_xy(0.0, 0.0) == (131072, 131072, 0.0, 0.0)
+    assert abs(rb.m_per_px_tile(0.0) - 0.597) < 0.001
+
+
+def test_consensus_heading_needs_three_agreeing_frames():
+    spots = [(0.0, 0.0), (10.0, 0.0), (20.0, 0.0)]
+    assert abs(rb.consensus_heading([10.0, 11.0, 12.0], spots) - 11.0) < 0.01
+    assert rb.consensus_heading([10.0, 11.0, 90.0], spots) is None
+    assert rb.consensus_heading([10.0, 11.0, 12.0], [(0.0, 0.0), (1.0, 0.0), (2.0, 0.0)]) is None  # one spot, one vote
+
+
 if __name__ == "__main__":
     tests = [v for k, v in list(globals().items()) if k.startswith("test_")]
     for t in tests:

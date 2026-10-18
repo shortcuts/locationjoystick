@@ -6,6 +6,7 @@ correlation on the FFT magnitude, rotation and scale in one step). Annotate/run/
 added once a device-captured dataset exists (see docs/features/tap-to-walk-investigation.md, "Bearing registration
 investigation"). The `motion` subcommand scores the motion-calibrated heading prototype (content_flow,
 heading_from_moves) on stored walk frames. `varycap` captures walk legs under varied zoom and orientation.
+`chamfer` scores entry B (road and water masks against OSM tiles, heading-only chamfer search) on the stored smoke frames.
 
 Setup (venv is gitignored):
     python3 -m venv scripts/registration-bench/.venv
@@ -1980,6 +1981,440 @@ def cmd_legsubset(args):
     print(f"LEGSUBSET: two legs {'PASS' if ok else 'KILL'} (held-out p90 at most 10 m)")
 
 
+# --- Map superposition retry (entry B): road and water masks, heading-only chamfer search -----------------
+
+TILE_ZOOM = 18
+TILE_CACHE = Path(__file__).parent / "registration-bench" / "data" / "tiles"
+TILES_FETCHED = 0  # counted per process so a re-run can prove the cache served everything
+CHAMFER_TRUNC_PX = 20.0
+DISC_M = 60.0
+OSM_WATER_BGR = (223, 211, 170)
+OSM_PEDESTRIAN_BGR = (232, 221, 221)  # park and plaza paths: the light lavender grey of pedestrian ways
+# Game road limits for the day style; saturation and value limits are tuned by tune_game_thresholds.
+GAME_DAY = {"sat_max": 90, "v_min": 60, "v_max": 170}
+NIGHT_MEDIAN_V = 110  # below this the band is the dark night style, which needs its own road colours
+
+
+def world_px(lat, lon, zoom=TILE_ZOOM):
+    """Web Mercator world pixel (x, y) of a lat/lon with 256 px tiles."""
+    n = 256 * 2**zoom
+    s = math.sin(math.radians(lat))
+    return (lon + 180.0) / 360.0 * n, (0.5 - math.log((1 + s) / (1 - s)) / (4 * math.pi)) * n
+
+
+def tile_xy(lat, lon, zoom=TILE_ZOOM):
+    """(tile x, tile y, pixel x, pixel y in tile) of a lat/lon."""
+    x, y = world_px(lat, lon, zoom)
+    return int(x // 256), int(y // 256), x % 256, y % 256
+
+
+def m_per_px_tile(lat, zoom=TILE_ZOOM):
+    """Ground metres per pixel of a 256 px OSM tile at a latitude."""
+    return 156543.03392 * math.cos(math.radians(lat)) / 2**zoom
+
+
+def fetch_tile(z, x, y):
+    """OSM raster tile as BGR, from the cache or fetched once (retry after 2 s). Policy: fixed UA, no bulk."""
+    global TILES_FETCHED
+    import time
+    import urllib.request
+
+    path = TILE_CACHE / str(z) / str(x) / f"{y}.png"
+    if not path.exists():
+        req = urllib.request.Request(f"https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                                     headers={"User-Agent": "locationjoystick-bench/1.0"})
+        for attempt in (0, 1):
+            try:
+                data = urllib.request.urlopen(req, timeout=20).read()
+                break
+            except OSError:
+                if attempt:
+                    raise
+                time.sleep(2.0)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        TILES_FETCHED += 1
+        time.sleep(0.2)
+    return cv2.imread(str(path))
+
+
+def fetch_reference(lat, lon, n=5):
+    """North-up stitch of n x n zoom-18 tiles around lat/lon. Returns (image, origin world px, m per px)."""
+    tx, ty, _, _ = tile_xy(lat, lon)
+    rows = [np.hstack([fetch_tile(TILE_ZOOM, tx + i, ty + j) for i in range(-(n // 2), n // 2 + 1)])
+            for j in range(-(n // 2), n // 2 + 1)]
+    return np.vstack(rows), ((tx - n // 2) * 256.0, (ty - n // 2) * 256.0), m_per_px_tile(lat)
+
+
+def osm_masks(img):
+    """(road, water) bool masks from the OSM Carto colours of a tile stitch."""
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    water = (np.abs(img.astype(int) - np.array(OSM_WATER_BGR)) <= 12).all(axis=2)
+    white = (img >= 245).all(axis=2)
+    warm = (hsv[..., 0] >= 10) & (hsv[..., 0] <= 35) & (hsv[..., 1] >= 50) & (hsv[..., 2] >= 220)
+    walk = (np.abs(img.astype(int) - np.array(OSM_PEDESTRIAN_BGR)) <= 8).all(axis=2)
+    k = np.ones((3, 3), np.uint8)
+    road, water = (cv2.morphologyEx(m.astype(np.uint8), cv2.MORPH_OPEN, k) for m in (white | warm | walk, water))
+    # park footways are 1 px salmon dashes that the open would erase; the game draws them as roads, so the close joins the dashes
+    foot = ((hsv[..., 0] <= 8) | (hsv[..., 0] >= 172)) & (hsv[..., 1] >= 80) & (hsv[..., 1] <= 200) & (hsv[..., 2] >= 200)
+    foot = cv2.morphologyEx(foot.astype(np.uint8), cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
+    return (road | foot).astype(bool), water.astype(bool)
+
+
+def game_masks(frame, day=GAME_DAY):
+    """(road, water) uint8 0/255 masks of a raw game frame (rows 300 to 1500 only); the style is read from the frame."""
+    hsv = cv2.cvtColor(cv2.medianBlur(frame[300:1500], 5), cv2.COLOR_BGR2HSV)
+    h, s, v = (hsv[..., i].astype(int) for i in range(3))
+    if np.median(v[300:]) < NIGHT_MEDIAN_V:  # rows 600 to 1500: the top rows are sky and buildings
+        # navy fill of a clear night, and the mauve outline that stays in rain and fog
+        road = ((h >= 108) & (h <= 125) & (s >= 120) & (s <= 200) & (v >= 100) & (v <= 170)) | \
+               ((h >= 125) & (h <= 165) & (s >= 15) & (s <= 90) & (v >= 100) & (v <= 150))
+        water = (h >= 108) & (h <= 125) & (s >= 190) & (v >= 170)
+    else:
+        road = (h >= 92) & (h <= 125) & (s <= day["sat_max"]) & (v >= day["v_min"]) & (v <= day["v_max"])
+        water = (h >= 95) & (h <= 125) & (s >= 90) & (v >= 120)
+    out = []
+    for m in (road, water):
+        full = np.zeros(frame.shape[:2], np.uint8)
+        full[300:1500] = m.astype(np.uint8) * 255
+        out.append(full)
+    return tuple(out)
+
+
+def rectified_masks(road, water, cam, mpp, scale=(1.0, 1.0)):
+    """Game masks as top-down bool images of our map's scale, centred on the marker, plus the 60 m disc inside the frame."""
+    r = int(DISC_M / mpp) + 2
+    cam = {**cam, "s": cam["s"] * scale[0], "sy": cam["sy"] * scale[1]}
+    rect, valid = rectify_game(np.dstack([road, water, np.zeros_like(road)]), cam, (r, r), mpp, (2 * r, 2 * r))
+    yy, xx = np.mgrid[0:2 * r, 0:2 * r]
+    inside = (valid > 0) & ((xx - r) ** 2 + (yy - r) ** 2 <= (DISC_M / mpp) ** 2)
+    return rect[..., 0] > 127, rect[..., 1] > 127, inside
+
+
+def rectified_points(road, water, cam, mpp, scale=(1.0, 1.0)):
+    """(road, water) points (x, y) in px relative to the marker, at most 4000 each."""
+    rr, rw, inside = rectified_masks(road, water, cam, mpp, scale)
+    r = rr.shape[0] // 2
+    rng = np.random.default_rng(0)
+    pts = []
+    for m in (rr, rw):
+        ys, xs = np.nonzero(inside & m)
+        if len(xs) > 4000:
+            pick = rng.choice(len(xs), 4000, replace=False)
+            xs, ys = xs[pick], ys[pick]
+        pts.append(np.column_stack([xs - r, ys - r]).astype(np.float64))
+    return pts
+
+
+def truncated_dt(mask):
+    """Distance in px to the nearest True pixel, truncated."""
+    return np.minimum(cv2.distanceTransform((~mask).astype(np.uint8), cv2.DIST_L2, 5), CHAMFER_TRUNC_PX)
+
+
+def heading_costs(pts, dt, marker, headings):
+    """Mean truncated chamfer distance of game points (rel. marker) per heading, one DT lookup per point.
+
+    Game pixel p sits at map pixel marker + R(deg)^T p, which is what warpAffine(getRotationMatrix2D(marker, deg))
+    does to the map, so deg is directly the heading register_unpitched returns.
+    """
+    a = np.radians(np.asarray(headings, dtype=np.float64))[:, None]
+    c, s = np.cos(a), np.sin(a)
+    x = np.rint(marker[0] + c * pts[None, :, 0] - s * pts[None, :, 1]).astype(int)
+    y = np.rint(marker[1] + s * pts[None, :, 0] + c * pts[None, :, 1]).astype(int)
+    ok = (x >= 0) & (x < dt.shape[1]) & (y >= 0) & (y < dt.shape[0])
+    d = np.where(ok, dt[np.clip(y, 0, dt.shape[0] - 1), np.clip(x, 0, dt.shape[1] - 1)], CHAMFER_TRUNC_PX)
+    return d.mean(axis=1)
+
+
+def search_costs(game_road, game_water, cam, ref, marker, mpp, step=1.0, scales=((1.0, 1.0),)):
+    """(headings, cost per heading) of the road term plus the share-weighted water term; lowest over scales.
+
+    ref is {"dt_road", "dt_water", "water_n"}; the water term is dropped when either side has under 200 px.
+    """
+    headings = np.arange(-180.0, 180.0, step)
+    best = None
+    for sc in scales:
+        road_pts, water_pts = rectified_points(game_road, game_water, cam, mpp, sc)
+        if len(road_pts) < 50:
+            continue
+        cost = heading_costs(road_pts, ref["dt_road"], marker, headings)
+        if len(water_pts) >= 200 and ref["water_n"] >= 200:
+            share = len(water_pts) / (len(road_pts) + len(water_pts))
+            cost = cost + share * heading_costs(water_pts, ref["dt_water"], marker, headings)
+        best = cost if best is None else np.minimum(best, cost)
+    return headings, best
+
+
+def margin_score(headings, costs, exclude_deg=15.0):
+    """(best heading, 1 - best cost / lowest cost outside +-exclude_deg of it). The 90 and 180 degree aliases lie outside."""
+    i = int(np.argmin(costs))
+    far = np.abs((headings - headings[i] + 180.0) % 360.0 - 180.0) > exclude_deg
+    alt = float(costs[far].min())
+    return float(headings[i]), (1.0 - float(costs[i]) / alt if alt > 0 else 0.0)
+
+
+def auc(scores, labels):
+    """ROC AUC by the rank formula (ties count half); nan when a class is empty."""
+    scores, labels = np.asarray(scores, dtype=float), np.asarray(labels, dtype=bool)
+    pos, neg = scores[labels], scores[~labels]
+    if not len(pos) or not len(neg):
+        return float("nan")
+    return float(((pos[:, None] > neg[None, :]).sum() + 0.5 * (pos[:, None] == neg[None, :]).sum()) / (len(pos) * len(neg)))
+
+
+def consensus_heading(headings, positions, agree_deg=3.0, min_frames=3, min_apart_m=5.0):
+    """Circular median heading of the biggest group of frames that agree within agree_deg, or None.
+
+    A group counts only with min_frames members at least min_apart_m apart (greedy pick), so one spot cannot vote twice.
+    """
+    best = None
+    for h0 in headings:
+        group = [i for i, h in enumerate(headings) if abs(wrap_deg(h - h0)) <= agree_deg]
+        picked = []
+        for i in group:
+            if all(np.hypot(*(np.asarray(positions[i]) - positions[j])) >= min_apart_m for j in picked):
+                picked.append(i)
+        if len(picked) >= min_frames and (best is None or len(picked) > len(best)):
+            best = picked
+    if best is None:
+        return None
+    ref = headings[best[0]]
+    return float(ref + np.median([wrap_deg(headings[i] - ref) for i in best]))
+
+
+def edge_orientation_bins(mask, bins=12):
+    """(edge pixel xs, ys, orientation bin) of a bool mask: boundary pixels, gradient direction modulo 180 degrees."""
+    m = mask.astype(np.uint8)
+    edge = (m - cv2.erode(m, np.ones((3, 3), np.uint8))).astype(bool)
+    blur = cv2.GaussianBlur(m.astype(np.float32), (0, 0), 1.5)
+    gx, gy = cv2.Sobel(blur, cv2.CV_32F, 1, 0), cv2.Sobel(blur, cv2.CV_32F, 0, 1)
+    ys, xs = np.nonzero(edge & ((gx != 0) | (gy != 0)))
+    ang = np.degrees(np.arctan2(gy[ys, xs], gx[ys, xs])) % 180.0
+    return xs, ys, (ang / (180.0 / bins)).astype(int) % bins
+
+
+def directional_dts(mask, bins=12):
+    """Per bin truncated DT over reference edge pixels of that bin and both neighbours (bins wrap)."""
+    xs, ys, b = edge_orientation_bins(mask, bins)
+    out = []
+    for k in range(bins):
+        sel = (b == k) | (b == (k + 1) % bins) | (b == (k - 1) % bins)
+        e = np.zeros(mask.shape, bool)
+        e[ys[sel], xs[sel]] = True
+        out.append(truncated_dt(e))
+    return np.stack(out)
+
+
+def directional_costs(game_mask_rect, dts, marker, headings, bins=12):
+    """Directional chamfer cost per heading: game edge pixel looked up in the bin of its orientation plus the heading."""
+    gx, gy, gb = edge_orientation_bins(game_mask_rect, bins)
+    r = game_mask_rect.shape[0] // 2
+    pts = np.column_stack([gx - r, gy - r]).astype(np.float64)
+    ang = (gb + 0.5) * (180.0 / bins)
+    costs = []
+    for deg in headings:
+        a = math.radians(deg)
+        x = np.rint(marker[0] + math.cos(a) * pts[:, 0] - math.sin(a) * pts[:, 1]).astype(int)
+        y = np.rint(marker[1] + math.sin(a) * pts[:, 0] + math.cos(a) * pts[:, 1]).astype(int)
+        k = (((ang + deg) % 180.0) / (180.0 / bins)).astype(int) % bins
+        ok = (x >= 0) & (x < dts.shape[2]) & (y >= 0) & (y < dts.shape[1])
+        d = np.where(ok, dts[k, np.clip(y, 0, dts.shape[1] - 1), np.clip(x, 0, dts.shape[2] - 1)], CHAMFER_TRUNC_PX)
+        costs.append(float(d.mean()) if len(d) else float("inf"))
+    return np.array(costs)
+
+
+def refine_directional(game_mask_rect, dts, marker, start_deg, span=10.0, step=0.5):
+    """Heading in start +- span with the lowest directional chamfer cost."""
+    cand = np.arange(start_deg - span, start_deg + span + step, step)
+    return float(cand[int(np.argmin(directional_costs(game_mask_rect, dts, marker, cand)))])
+
+
+def circ_err(a, b):
+    return abs(wrap_deg(a - b))
+
+
+def frame_marker(ll, origin):
+    """Marker pixel of a lat/lon in the stitched reference."""
+    x, y = world_px(*ll)
+    return x - origin[0], y - origin[1]
+
+
+def sampled_frames(legs, every):
+    """Every `every`-th moving frame of each leg: [(ll, image)]."""
+    return [(f["ll"], f["img"]) for fr in legs.values() for f in [g for g in fr if g["moving"]][::every]]
+
+
+def chamfer_sessions(smoke):
+    """[(run, location dir)] holding a sane fit; the newest copy of nothing is dropped, every run is its own heading."""
+    import json
+
+    out = []
+    for cal in sorted(Path(smoke).glob("*/*/calibration_persp.json")):
+        if sane_fit(json.loads(cal.read_text())):
+            out.append(cal.parent)
+    return out
+
+
+def load_session(d, every):
+    import json
+
+    cal = json.loads((d / "calibration_persp.json").read_text())
+    cam = {k: cal[k] for k in ("s", "sy", "a", "px", "py")}
+    frames = sampled_frames(_commanded_legs(d), every)
+    ref_img, origin, mpp = fetch_reference(*frames[0][0])
+    road, water = osm_masks(ref_img)
+    ref = {"road": road, "water": water, "dt_road": truncated_dt(road), "dt_water": truncated_dt(water),
+           "water_n": int(water.sum()), "origin": origin, "mpp": mpp}
+    return cal["theta_deg"], cam, frames, ref
+
+
+def truth_overlap(road, water, cam, theta, ll, ref):
+    """Share of game road pixels that land inside a 3 px dilation of our road mask at the truth heading."""
+    pts, _ = rectified_points(road, water, cam, ref["mpp"])
+    if len(pts) < 50:
+        return 0.0
+    m, a = frame_marker(ll, ref["origin"]), math.radians(theta)
+    x = np.rint(m[0] + math.cos(a) * pts[:, 0] - math.sin(a) * pts[:, 1]).astype(int)
+    y = np.rint(m[1] + math.sin(a) * pts[:, 0] + math.cos(a) * pts[:, 1]).astype(int)
+    ok = (x >= 0) & (x < ref["near"].shape[1]) & (y >= 0) & (y < ref["near"].shape[0])
+    return float(ref["near"][y[ok], x[ok]].sum()) / len(pts)
+
+
+def is_night(img):
+    return np.median(cv2.cvtColor(img[600:1500:8, ::8], cv2.COLOR_BGR2HSV)[..., 2]) < NIGHT_MEDIAN_V
+
+
+def tune_game_thresholds(sessions, every):
+    """Day-style road limits from a 27 cell grid by median truth_overlap; tuned on the first 5 sessions, held-out
+    score on the rest. Uses the truth heading to pick colours only, never a heading. Returns (best, tune, held-out)."""
+    import itertools
+
+    loaded = []
+    for d in sessions:
+        theta, cam, frames, ref = load_session(d, every * 3)
+        ref["near"] = cv2.dilate(ref["road"].astype(np.uint8), np.ones((7, 7), np.uint8)).astype(bool)
+        loaded.append((theta, cam, [f for f in frames if not is_night(f[1])], ref))
+
+    def score(day, subset):
+        vals = [truth_overlap(*game_masks(img, day), cam, theta, ll, ref)
+                for theta, cam, frames, ref in subset for ll, img in frames]
+        return float(np.median(vals)) if vals else float("nan")
+
+    cells = [dict(sat_max=s, v_min=lo, v_max=hi) for s, lo, hi in itertools.product((60, 90, 120), (40, 60, 80), (150, 170, 200))]
+    top, best = max(((score(c, loaded[:5]), c) for c in cells), key=lambda t: t[0])
+    return best, top, score(best, loaded[5:])
+
+
+def refine_rows(rect_road, inside, dts, marker, theta, cam):
+    """Directional-chamfer refinement from truth offset by -10, -5, 5 and 10 degrees: [(start err, refined err, start landing, refined landing)]."""
+    edge_src = rect_road & inside
+    out = []
+    for off in (-10.0, -5.0, 5.0, 10.0):
+        ref_deg = refine_directional(edge_src, dts, marker, theta + off)
+        land = lambda deg: tap_landing_error_m(ground_to_game(cam, deg), ground_to_game(cam, theta), TAP_PROBES)
+        out.append((abs(off), circ_err(ref_deg, theta), land(theta + off), land(ref_deg)))
+    return out
+
+
+def cmd_chamfer(args):
+    """Entry B on stored smoke frames: road and water chamfer heading search against OSM tiles, consensus, refinement.
+
+    Truth heading is theta_deg of each location's calibration_persp.json. Prints rec1, rec2 and rec3 verdicts with the
+    numbers behind them and writes results_chamfer.json under the smoke root.
+    """
+    import json
+
+    global GAME_DAY
+    smoke = Path(args.smoke)
+    sessions = chamfer_sessions(smoke)
+    if len(sessions) < 8:
+        print(f"INCONCLUSIVE (fewer than 8 locations: {len(sessions)} with a sane fit)")
+        return
+    GAME_DAY, tune_top, tune_held = tune_game_thresholds(sessions, args.every)
+    print(f"day road limits {GAME_DAY}: tune score {tune_top:.3f}, held-out {tune_held:.3f}")
+    scales = [(a, b) for a in (0.85, 1.0, 1.15) for b in (0.85, 1.0, 1.15)] if args.ablate else [(1.0, 1.0)]
+    rows, ref_rows = [], []
+    for d in sessions:
+        theta, cam, frames, ref = load_session(d, args.every)
+        name = f"{d.parent.name}/{d.name}"
+        dts = None if args.ablate else directional_dts(ref["road"])
+        for ll, img in frames:
+            road, water = game_masks(img, GAME_DAY)
+            marker = frame_marker(ll, ref["origin"])
+            hs, costs = search_costs(road, water, cam, ref, marker, ref["mpp"], 2.0 if args.ablate else 1.0, scales)
+            if costs is None:
+                rows.append({"session": name, "ll": ll, "no_masks": True})
+                continue
+            best, margin = margin_score(hs, costs)
+            rows.append({"session": name, "ll": ll, "best": best, "truth": theta, "margin": margin,
+                         "landing_m": tap_landing_error_m(ground_to_game(cam, best), ground_to_game(cam, theta), TAP_PROBES),
+                         "correct": bool(circ_err(best, theta) <= 5.0)})
+            if dts is not None:
+                rr, _, inside = rectified_masks(road, water, cam, ref["mpp"])
+                ref_rows += refine_rows(rr, inside, dts, marker, theta, cam)
+        print(f"  {name}: {sum(r['session'] == name for r in rows)} frames, truth {theta:.1f}")
+    scored = [r for r in rows if "margin" in r]
+    margins = np.array([r["margin"] for r in scored])
+    tau = float(np.percentile(margins, 20))
+    acc = [r for r in scored if r["margin"] >= tau]
+    a = auc(margins, [r["correct"] for r in scored])
+    top = float(np.mean([r["correct"] for r in scored]))
+    p90 = float(np.percentile([r["landing_m"] for r in acc], 90))
+    reject = 1.0 - len(acc) / len(rows)
+    ok1 = a >= 0.9 and top >= 0.8 and p90 <= 25.0
+    print(f"rec1 {'PASS' if ok1 else 'KILL'}: AUC {a:.3f} (min 0.9), top-peak rate {top:.2f} (min 0.80), "
+          f"reject {reject * 100:.0f}% (max 20), p90 landing {p90:.1f} m (max 25), frames {len(rows)}, "
+          f"no masks {len(rows) - len(scored)}, tau {tau:.3f}")
+    res = {"rec1": {"auc": a, "top": top, "p90": p90, "reject": reject, "tau": tau, "pass": bool(ok1)}, "rows": rows}
+    if not args.ablate:
+        res["rec2"] = chamfer_rec2(scored, a)
+        res["rec3"] = chamfer_rec3(ref_rows)
+    out = smoke / ("results_chamfer_ablate.json" if args.ablate else "results_chamfer.json")
+    out.write_text(json.dumps(res, indent=1))
+    print(f"tiles: {TILES_FETCHED} fetched; wrote {out}")
+
+
+def _ll_m(ll):
+    return ll[1] * 111320 * math.cos(math.radians(ll[0])), ll[0] * 111320
+
+
+def chamfer_rec2(scored, auc_value):
+    """Rec 2: per session consensus of the sampled frames' best headings; skipped below AUC 0.7."""
+    if not auc_value >= 0.7:
+        print("rec2 SKIPPED (AUC below 0.7)")
+        return {"skipped": True}
+    by = {}
+    for r in scored:
+        by.setdefault(r["session"], []).append(r)
+    none, bad = 0, 0
+    for name, rs in by.items():
+        c = consensus_heading([r["best"] for r in rs], [_ll_m(r["ll"]) for r in rs])
+        if c is None:
+            none += 1
+            print(f"  {name}: no consensus")
+            continue
+        err = circ_err(c, rs[0]["truth"])
+        bad += err > 5.0
+        print(f"  {name}: consensus {c:.1f}, truth {rs[0]['truth']:.1f}, error {err:.1f} deg")
+    ok = none / len(by) <= 0.2 and bad == 0
+    print(f"rec2 {'PASS' if ok else 'KILL'}: {none} of {len(by)} sessions without consensus (max 20%), {bad} off truth by over 5 deg")
+    return {"no_consensus": none, "sessions": len(by), "bad": int(bad), "pass": bool(ok)}
+
+
+def chamfer_rec3(ref_rows):
+    """Rec 3: share of offset starts the directional refiner improves, and p90 landing error before and after."""
+    if not ref_rows:
+        print("rec3 SKIPPED (no frames)")
+        return {"skipped": True}
+    rows = np.array(ref_rows)
+    better = float(np.mean(rows[:, 1] < rows[:, 0]))
+    p90_start, p90_ref = (float(np.percentile(rows[:, c], 90)) for c in (2, 3))
+    ok = better >= 0.8 and p90_ref <= p90_start
+    print(f"rec3 {'PASS' if ok else 'KILL'}: error reduced on {better * 100:.0f}% of {len(rows)} starts (min 80%), "
+          f"p90 landing {p90_start:.1f} m before, {p90_ref:.1f} m after")
+    return {"better": better, "n": len(rows), "p90_start": p90_start, "p90_refined": p90_ref, "pass": bool(ok)}
+
+
 def main(argv=None):
     import argparse
 
@@ -2063,6 +2498,11 @@ def main(argv=None):
             q.add_argument("--k", type=float)
             q.add_argument("--h", type=float)
         q.set_defaults(func=fn)
+    ch = sub.add_parser("chamfer")
+    ch.add_argument("smoke", nargs="?", default="scripts/registration-bench/smoke")
+    ch.add_argument("--every", type=int, default=3, help="use every Nth moving frame of each leg")
+    ch.add_argument("--ablate", action="store_true", help="also search scale and pitch (0.85, 1, 1.15) at a 2 degree step")
+    ch.set_defaults(func=cmd_chamfer)
     rep = sub.add_parser("report")
     rep.add_argument("results")
     rep.set_defaults(func=cmd_report)

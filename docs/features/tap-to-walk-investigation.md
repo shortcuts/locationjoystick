@@ -7,6 +7,7 @@ The measured record behind Tap to Walk's no-compass design: how the bearing, sca
 - The bench constants were fitted on a Pixel 5 (1080x2340). They scale to the screen's own width and height, and the tap rows come from the device's own ground band, but only one second screen (Pixel 7, 1080x2400) has been run.
 - Close-up zoom (z1.6) is not met: p90 96.9 m on the Pixel 7, target under 10 m.
 - The pass rate is proven only for the matches the bench accepted (24 of 36 walked taps were skipped as ambiguous on the second Pixel 7 run).
+- The map superposition retry (entry B) ran on only 4 distinct places with a sane fit; its KILL does not cover other styles or places.
 
 ## Bearing registration investigation
 
@@ -286,3 +287,34 @@ What the app takes from this:
 - The learning walk is two perpendicular legs of 30 m, about one minute at walking speed.
 - Feet pixel per zoom condition (reference px): 542,1488 at 1x; 540,1501 at 1.3x and 1.6x; 558,1471 at 0.7x. It moves less than 30 px, so a full re-fit re-detects it.
 - Recommendations 2 and 3 are not shipped. Recommendation 2 missed on one of two samples and needs more twist data; recommendation 3 is far from its bar.
+
+## Map superposition retry (entry B)
+
+Command: `registration_bench.py chamfer` on the stored smoke frames. It matches road and water masks from game colours
+against OSM raster tiles (zoom 18, the tiles the app draws), searching only the heading, with the position and the
+pitch terms taken from each session's `calibration_persp.json`. The truth heading is that fit's `theta_deg`, which comes
+from commanded bearings and not from the images under test.
+
+Data: 9 sessions with a sane fit (5 New York, 2 London, Tokyo, Sydney), 288 frames (every third moving frame of each leg).
+Only 4 distinct places have a sane fit: the other smoke locations have degenerate fits (scale near 0) and carry no truth.
+Day and night frames needed separate game colour rules (rain and fog changed the night road colours again). The day
+limits come from the 27 cell grid (tuned on the first 5 sessions, held-out overlap 0.31 against 0.78 tuned), which says
+the colour limits do not carry over between sessions.
+
+| Recommendation | Measured | Bar | Verdict |
+|---|---|---|---|
+| 1. Road and water chamfer, heading only | AUC 0.63, true heading is the top peak on 32% of frames, 21% rejected at the margin threshold, p90 landing error 646 m | AUC 0.9, top peak 80%, reject at most 20%, p90 at most 25 m | KILL |
+| 2. Three frames from different places agree | Not run: AUC is below 0.7 | consensus on 80% of sessions, within 5 degrees | SKIPPED |
+| 3. Directional chamfer refinement, +-10 degrees | Error reduced on 70% of 1140 starts offset by 5 and 10 degrees; p90 landing error 61.9 m before, 67.4 m after | reduced on 80% of starts | KILL |
+
+Why it fails:
+
+- It works on some sessions and not on others. Correct heading share per session: New York 70% (newest run) but 0 to 18% on the four older runs, London 71% and 42%, Tokyo 45%, Sydney 5%. The older New York runs have weaker fits (median residual 2 to 3 px), so part of that gap can be truth noise, which this bench cannot separate.
+- Our map and the game map disagree on what a road is. Park footways are salmon dashes in OSM tiles but full roads in the game (Sydney, 5%). Pedestrian ways are lavender grey. Game road colours change with day, night, rain and fog.
+- The margin score does not separate right from wrong (AUC 0.63), so a reject rule cannot save it.
+- Scale and pitch search (`--ablate`, 9 cells at a 2 degree step) does not help: AUC 0.68, top peak 36%, p90 659 m.
+- Game water is unreliable: the blue of Pokestops and gyms matches the water colours, so water is used only where our map also has water.
+
+Open fact: the game's Licences screen lists "OpenStreetMap, Map data (c) OpenStreetMap Contributors" (Pokemon GO 0.431.0, Pixel 5), so the game uses OSM data. The disagreement above is style and tagging, not the data source.
+
+For shipping: nothing from entry B ships. A heading check from colour masks is not within the bar, so the automatic motion fit stays the only heading source and no Kotlin port or tap smoke gate run is needed. Only 4 places were covered, so a retry would need new captures with trustworthy truth before any conclusion beyond this colour-mask approach.
