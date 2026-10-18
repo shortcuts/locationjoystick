@@ -1,5 +1,6 @@
 package com.locationjoystick.core.location
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
@@ -20,7 +21,11 @@ private data class NotificationInputs(
     val state: MockLocationState,
     val hideNotification: Boolean,
     val learning: LearningState,
-)
+) {
+    // Double-guarded: walk-to PAUSED never triggers replayPaused=true
+    val replayActive get() = mode == MockMode.ROUTE_REPLAY
+    val replayPaused get() = replayActive && state == MockLocationState.PAUSED
+}
 
 /**
  * Owns the two settings-reactive collectors that keep the foreground notification and the widget
@@ -44,6 +49,24 @@ internal class OverlayNotificationReactor(
     @Volatile var hideNotificationSetting: Boolean = false
         private set
 
+    @Volatile private var latest: NotificationInputs? = null
+
+    /**
+     * Builds the notification from the last inputs the collector saw. [MockLocationService.onStartCommand]
+     * re-posts through this, so a walk tick cannot reset the learning progress or replay actions
+     * to the defaults.
+     */
+    fun buildCurrent(): Notification {
+        val inputs = latest
+        return buildMockLocationNotification(
+            context,
+            replayActive = inputs?.replayActive ?: false,
+            replayPaused = inputs?.replayPaused ?: false,
+            hideNotification = hideNotificationSetting,
+            learning = inputs?.learning ?: LearningState.Idle,
+        )
+    }
+
     private val widgetServiceIntent by lazy {
         Intent().setClassName(context.packageName, AppConstants.ServiceConstants.WIDGET_SERVICE_CLASS)
     }
@@ -64,15 +87,10 @@ internal class OverlayNotificationReactor(
                 learning,
             ) { mode, state, hideNotification, learningState -> NotificationInputs(mode, state, hideNotification, learningState) }
                 .distinctUntilChanged()
-                .collect { (mode, state, hideNotification, learningState) ->
-                    hideNotificationSetting = hideNotification
-                    // Double-guarded: walk-to PAUSED never triggers replayPaused=true
-                    val replayActive = mode == MockMode.ROUTE_REPLAY
-                    val replayPaused = mode == MockMode.ROUTE_REPLAY && state == MockLocationState.PAUSED
-                    notificationManager.notify(
-                        AppConstants.NotificationConstants.ID_ACTIVE,
-                        buildMockLocationNotification(context, replayActive, replayPaused, hideNotification, learningState),
-                    )
+                .collect { inputs ->
+                    hideNotificationSetting = inputs.hideNotification
+                    latest = inputs
+                    notificationManager.notify(AppConstants.NotificationConstants.ID_ACTIVE, buildCurrent())
                 }
         }
         // The RUNNING branch in observeLocationState only reads getHideWidgetOverlay() at the

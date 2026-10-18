@@ -1,6 +1,5 @@
 package com.locationjoystick.core.location
 
-import android.app.Notification
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -467,7 +466,7 @@ class MockLocationService : Service() {
                 ServiceCompat.startForeground(
                     this,
                     NOTIFICATION_ID,
-                    buildNotification(hideNotification = overlayNotificationReactor.hideNotificationSetting),
+                    overlayNotificationReactor.buildCurrent(),
                     0,
                 )
             } else {
@@ -478,7 +477,7 @@ class MockLocationService : Service() {
                 ServiceCompat.startForeground(
                     this,
                     NOTIFICATION_ID,
-                    buildNotification(hideNotification = overlayNotificationReactor.hideNotificationSetting),
+                    overlayNotificationReactor.buildCurrent(),
                     0,
                 )
                 postPermissionErrorNotification()
@@ -493,7 +492,7 @@ class MockLocationService : Service() {
             ServiceCompat.startForeground(
                 this,
                 NOTIFICATION_ID,
-                buildNotification(hideNotification = overlayNotificationReactor.hideNotificationSetting),
+                overlayNotificationReactor.buildCurrent(),
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
             )
         }
@@ -1444,10 +1443,4 @@ class MockLocationService : Service() {
     private fun createNotificationChannel() = createMockLocationNotificationChannels(this)
 
     private fun postPermissionErrorNotification() = postMockLocationPermissionErrorNotification(this)
-
-    private fun buildNotification(
-        replayActive: Boolean = false,
-        replayPaused: Boolean = false,
-        hideNotification: Boolean,
-    ): Notification = buildMockLocationNotification(this, replayActive, replayPaused, hideNotification)
 }
