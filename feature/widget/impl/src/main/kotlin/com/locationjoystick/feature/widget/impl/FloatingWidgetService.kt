@@ -27,6 +27,7 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.location.AutoFitCoordinator
+import com.locationjoystick.core.location.LearningState
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.AppFeature
@@ -362,6 +363,7 @@ class FloatingWidgetService :
             val hasPendingCompletion by pendingCompletionFlow.collectAsStateWithLifecycle()
             val isTapToWalkEnabled by tapToWalkVisible.collectAsStateWithLifecycle(initialValue = false)
             val isTapToWalkActive by isTapToWalkActiveFlow.collectAsStateWithLifecycle()
+            val learning by autoFit.learning.collectAsStateWithLifecycle()
             val hideTeleportFeatures by settingsRepository.getHideTeleportFeatures().collectAsStateWithLifecycle(initialValue = false)
             val showRouteJumpButtons by settingsRepository.getShowRouteJumpButtons().collectAsStateWithLifecycle(
                 initialValue = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
@@ -438,7 +440,12 @@ class FloatingWidgetService :
                 val sections =
                     buildList {
                         if (isTapToWalkEnabled) {
-                            add(WidgetPanelSection.TapToWalk(active = isTapToWalkActive, onClick = { onTapToWalkClicked() }))
+                            add(
+                                WidgetPanelSection
+                                    .TapToWalk(active = isTapToWalkActive, learning = learning is LearningState.Learning, onClick = {
+                                        onTapToWalkClicked()
+                                    }),
+                            )
                         }
                         if (isAltitudeOverrideButtonVisible) {
                             add(
@@ -585,34 +592,37 @@ class FloatingWidgetService :
 
     private fun onTapToWalkClicked() {
         if (!isSpoofingActive()) return
-        if (tapToWalkOverlay?.isShowing() == true) {
-            dismissTapToWalkOverlay()
-        } else if (needsAccessibilityDisclosure()) {
-            showAccessibilityDisclosure()
-        } else {
-            val overlay =
-                TapToWalkOverlay(
-                    context = this,
-                    windowManager = windowManager,
-                    lifecycleOwner = this,
-                    savedStateRegistryOwner = this,
-                    onWalkTo = { pos -> mapController.walkTo(pos) },
-                    getPosition = { mapController.sharedState.value.currentPosition },
-                    onDismissed = { isTapToWalkActiveFlow.value = false },
-                    getGroundCalibration = { groundCalibration.value },
-                    getFitHealth = { autoFit.health.value },
-                    canLearn = { autoFit.canLearn },
-                    onLearnThenWalk = ::learnThenWalk,
-                )
-            tapToWalkOverlay = overlay
-            isTapToWalkActiveFlow.value = true
-            overlay.show()
+        when (tapToWalkClick(autoFit.learning.value, tapToWalkOverlay?.isShowing() == true, needsAccessibilityDisclosure())) {
+            TapToWalkClick.CANCEL_LEARNING -> autoFit.cancel()
+            TapToWalkClick.DISMISS_OVERLAY -> dismissTapToWalkOverlay()
+            TapToWalkClick.SHOW_DISCLOSURE -> showAccessibilityDisclosure()
+            TapToWalkClick.OPEN_OVERLAY -> openTapToWalkOverlay()
         }
+    }
+
+    private fun openTapToWalkOverlay() {
+        val overlay =
+            TapToWalkOverlay(
+                context = this,
+                windowManager = windowManager,
+                lifecycleOwner = this,
+                savedStateRegistryOwner = this,
+                onWalkTo = { pos -> mapController.walkTo(pos) },
+                getPosition = { mapController.sharedState.value.currentPosition },
+                onDismissed = { isTapToWalkActiveFlow.value = false },
+                getGroundCalibration = { groundCalibration.value },
+                getFitHealth = { autoFit.health.value },
+                canLearn = { autoFit.canLearn },
+                onLearnThenWalk = ::learnThenWalk,
+            )
+        tapToWalkOverlay = overlay
+        isTapToWalkActiveFlow.value = true
+        overlay.show()
     }
 
     /**
      * A tap with no valid map: the tap pixel is held, [AutoFitCoordinator.learnMap] walks the short learning route
-     * (progress and cancel are on the foreground notification), then the held tap is resolved from the position it was
+     * (progress and cancel are on the foreground notification and the crosshair button), then the held tap is resolved from the position it was
      * made at and walked.
      */
     private fun learnThenWalk(

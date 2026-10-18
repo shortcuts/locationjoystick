@@ -15,6 +15,7 @@
     <string name="map_floating_do_nothing">"不進行任何操作"</string>
     <string name="tap_to_walk_overlay_tap_anywhere_to_walk_there">"點擊任意位置即可走向該處"</string>
     <string name="tap_to_walk_overlay_cancel_tap_to_walk_cd">"取消點擊行走"</string>
+    <string name="tap_to_walk_cancel_learning_cd">"正在學習地圖，點按取消"</string>
     <string name="widget_panel_altitude_m">"海拔（公尺）"</string>
     <string name="widget_panel_confirm_altitude_cd">"確認海拔"</string>
     <string name="widget_panel_back_cd">"返回"</string>
