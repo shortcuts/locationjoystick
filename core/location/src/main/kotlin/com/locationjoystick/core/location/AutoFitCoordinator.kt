@@ -27,12 +27,16 @@ import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.WalkLeg
 import com.locationjoystick.core.model.distanceTo
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -81,8 +85,8 @@ class AutoFitCoordinator
         internal var analysisDispatcher: CoroutineDispatcher = Dispatchers.Default
         internal var ioDispatcher: CoroutineDispatcher = Dispatchers.IO
         internal var measure: (CapturedLeg, Double, Double, Int, Int) -> List<LegMove> = ::measureMoves
-        internal var fullFit: (List<CapturedLeg>, Int, Int) -> SolveResult =
-            { legs, w, h -> GroundCalibrationSolver.solve(legs, w, h) }
+        internal var fullFit: (List<CapturedLeg>, Int, Int, () -> Unit) -> SolveResult =
+            { legs, w, h, checkCancelled -> GroundCalibrationSolver.solve(legs, w, h, checkCancelled = checkCancelled) }
 
         @Suppress("ktlint:standard:property-naming")
         private val _health = MutableStateFlow<FitHealth>(FitHealth.None)
@@ -237,7 +241,7 @@ class AutoFitCoordinator
                 while (true) {
                     val tick = nowMs()
                     runCatching { tick() }.onFailure {
-                        if (it is kotlinx.coroutines.CancellationException) {
+                        if (it is CancellationException) {
                             throw it
                         } else {
                             Log.e(
@@ -250,7 +254,10 @@ class AutoFitCoordinator
                     delay(maxOf(0L, AppConstants.TapToWalkConstants.AUTOFIT_FRAME_INTERVAL_MS - (nowMs() - tick)))
                 }
             } finally {
-                withContext(NonCancellable) { discardSpool() }
+                withContext(NonCancellable) {
+                    cancel() // learning ends with the service
+                    discardSpool()
+                }
             }
         }
 
@@ -320,9 +327,15 @@ class AutoFitCoordinator
                 return
             }
             pending.value++
-            scope.launch(analysisDispatcher) {
+            // ATOMIC: a cancel before the first run must still reach the finally, or pending never returns to zero.
+            scope.launch(analysisDispatcher, start = CoroutineStart.ATOMIC) {
                 try {
-                    analysisLock.withLock { runCatching { analyse(Buffered(leg, sp)) }.onFailure { Log.e(TAG, "analysis failed", it) } }
+                    analysisLock.withLock {
+                        runCatching { analyse(Buffered(leg, sp)) }.onFailure {
+                            if (it is CancellationException) throw it
+                            Log.e(TAG, "analysis failed", it)
+                        }
+                    }
                 } finally {
                     pending.value--
                 }
@@ -371,7 +384,8 @@ class AutoFitCoordinator
             val spread = legs.maxOfOrNull { a -> legs.maxOf { bearingGap(a.leg.bearingDeg, it.leg.bearingDeg) } } ?: 0.0
             if (spread < AppConstants.TapToWalkConstants.AUTOFIT_MIN_BEARING_SPREAD_DEG) return
             val started = nowMs()
-            val result = fullFit(legs.map { it.captured() }, w, h)
+            val ctx = currentCoroutineContext()
+            val result = fullFit(legs.map { it.captured() }, w, h) { ctx.ensureActive() }
             Log.d(TAG, "full fit took ${(nowMs() - started) / 1000} s")
             if (result is SolveResult.Ok) {
                 val stored =
@@ -401,11 +415,16 @@ class AutoFitCoordinator
             buffer.clear()
         }
 
-        private fun discardSpool() {
-            segmenter.close()
-            lastSample = null
-            buffer.clear()
-            spool.deleteRecursively()
+        // Under the lock: analyse mutates the buffer and reads the spool. The index reset keeps the next leg's frame numbers at 0.
+        private suspend fun discardSpool() {
+            analysisLock.withLock {
+                segmenter.close()
+                lastSample = null
+                lastTick = null
+                buffer.clear()
+                spool.deleteRecursively()
+                current = newSpool()
+            }
         }
 
         private fun bearingGap(

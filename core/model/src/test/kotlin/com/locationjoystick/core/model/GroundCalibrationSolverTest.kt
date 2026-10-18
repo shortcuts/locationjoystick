@@ -89,6 +89,19 @@ class GroundCalibrationSolverTest {
     }
 
     @Test
+    fun cancellationStopsTheSolveAtTheFirstLeg() {
+        val loaded = IntArray(8)
+        var checks = 0
+        try {
+            GroundCalibrationSolver.solve(legs(540, 1170, loaded), 540, 1170, checkCancelled = { if (++checks == 2) error("cancelled") })
+            org.junit.Assert.fail("solve ignored the cancellation check")
+        } catch (e: IllegalStateException) {
+            assertEquals("cancelled", e.message)
+        }
+        assertEquals("only the first leg was read", 1, loaded.sum())
+    }
+
+    @Test
     fun playerNotMovingIsFeetNotFound() {
         val frame = SyntheticWalkScene(540, 1170, 270.0, 750.0, figure = true, contrast = 0.12).frame(0, 0, 0)
         val ls =

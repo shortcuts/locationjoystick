@@ -26,8 +26,12 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -36,6 +40,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -44,6 +49,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AutoFitCoordinatorTest {
@@ -142,15 +150,17 @@ class AutoFitCoordinatorTest {
         }
     }
 
-    private fun TestScope.coordinator(fullFit: SolveResult = SolveResult.Ok(GroundFit(cal, 0.7, 120), FeetPixel(16.0, 40.0))) =
-        AutoFitCoordinator(mapController, locationRepository, source, settings, context, backgroundScope as CoroutineScope).also {
-            it.nowMs = { currentTime }
-            it.analysisDispatcher = UnconfinedTestDispatcher(testScheduler)
-            it.ioDispatcher = UnconfinedTestDispatcher(testScheduler) // file writes in virtual time, so ticks stay 3 s apart
-            it.measure = { leg, fx, fy, w, h -> fakeMeasure(leg, fx, fy, w, h) }
-            it.fullFit = { _, _, _ -> fullFit }
-            it.observe(backgroundScope)
-        }
+    private fun TestScope.coordinator(
+        fullFit: SolveResult = SolveResult.Ok(GroundFit(cal, 0.7, 120), FeetPixel(16.0, 40.0)),
+        serviceScope: CoroutineScope = backgroundScope,
+    ) = AutoFitCoordinator(mapController, locationRepository, source, settings, context, backgroundScope as CoroutineScope).also {
+        it.nowMs = { currentTime }
+        it.analysisDispatcher = UnconfinedTestDispatcher(testScheduler)
+        it.ioDispatcher = UnconfinedTestDispatcher(testScheduler) // file writes in virtual time, so ticks stay 3 s apart
+        it.measure = { leg, fx, fy, w, h -> fakeMeasure(leg, fx, fy, w, h) }
+        it.fullFit = { _, _, _, _ -> fullFit }
+        it.observe(serviceScope)
+    }
 
     /** A user walk of [meters] along [bearing] from the current position, then idle ticks so the leg closes and is analysed. */
     private suspend fun TestScope.walkLeg(
@@ -251,6 +261,89 @@ class AutoFitCoordinatorTest {
             result.join()
             verify { mapController.stopWalk() }
             assertEquals(LearningState.Idle, c.learning.value)
+        }
+
+    /** A stand-in for the service scope that a test can cancel without ending the test's own scopes. */
+    private fun TestScope.serviceScope() = CoroutineScope(backgroundScope.coroutineContext + Job(backgroundScope.coroutineContext[Job]))
+
+    @Test
+    fun `cancelling the observe scope during analysis stops the full fit`() =
+        runTest {
+            fakeWalks()
+            val service = serviceScope()
+            val c = coordinator(serviceScope = service)
+            c.analysisDispatcher = Dispatchers.Default // the fake fit blocks its thread, which a test dispatcher cannot take
+            val started = CountDownLatch(1)
+            val stopped = CountDownLatch(1)
+            val interrupted = AtomicBoolean(false)
+            c.fullFit = { _, _, _, checkCancelled ->
+                started.countDown()
+                try {
+                    while (true) {
+                        checkCancelled()
+                        Thread.sleep(1)
+                    }
+                    @Suppress("UNREACHABLE_CODE")
+                    SolveResult.FeetNotFound
+                } catch (e: CancellationException) {
+                    interrupted.set(true)
+                    throw e
+                } finally {
+                    stopped.countDown()
+                }
+            }
+            delay(1)
+            walkLeg(0.0)
+            walkLeg(90.0)
+
+            withContext(Dispatchers.Default) { assertTrue(started.await(10, TimeUnit.SECONDS)) }
+            service.cancel()
+            withContext(Dispatchers.Default) { assertTrue("the fit kept running", stopped.await(10, TimeUnit.SECONDS)) }
+            assertTrue(interrupted.get())
+        }
+
+    @Test
+    fun `cancelling the observe scope ends the learning walk`() =
+        runTest {
+            fakeWalks()
+            val service = serviceScope()
+            val c = coordinator(serviceScope = service)
+            delay(1)
+            val result = backgroundScope.launch { c.learnMap() }
+            while (walks.isEmpty()) delay(1000)
+            service.cancel()
+            val walked = walks.size
+            delay(120_000)
+
+            result.join()
+            assertEquals(LearningState.Idle, c.learning.value)
+            assertEquals("no walk starts once the service is gone", walked, walks.size)
+        }
+
+    @Test
+    fun `a leg after the service scope restarts is analysed`() =
+        runTest {
+            fakeWalks()
+            stored.value = storedFit
+            val service = serviceScope()
+            val c = coordinator(serviceScope = service)
+            val frames = mutableListOf<Pair<Int, Int>>()
+            c.measure = { leg, fx, fy, w, h ->
+                frames += leg.frames().size to leg.positions.size
+                fakeMeasure(leg, fx, fy, w, h)
+            }
+            delay(1)
+            val from = locationRepository.currentPosition.value!!
+            mapController.walkTo(CalibrationWalkMath.commandedTarget(from, 0.0, 30.0), null)
+            delay(10_000) // mid-leg: frames are on disk
+            service.cancel()
+            delay(5_000)
+
+            c.observe(serviceScope()) // the same walk goes on, so the first frames of the new session are mid-leg
+            delay(120_000)
+
+            assertTrue("the leg was measured", frames.isNotEmpty())
+            frames.forEach { (read, positions) -> assertEquals("every frame of the leg is readable", positions, read) }
         }
 
     private companion object {

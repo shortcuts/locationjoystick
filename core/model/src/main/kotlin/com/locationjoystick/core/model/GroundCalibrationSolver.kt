@@ -40,11 +40,13 @@ object GroundCalibrationSolver {
         legs: List<CapturedLeg>,
         width: Int,
         height: Int,
+        checkCancelled: () -> Unit = {},
         onStep: (Int) -> Unit = {},
     ): SolveResult {
         onStep(1)
         val grads =
             legs.mapNotNull { leg ->
+                checkCancelled()
                 val moving = CalibrationWalkMath.movingFlags(leg.timesS, leg.positions)
                 val frames = leg.frames()
                 FeetDetector.legGradient(frames.filterIndexed { i, _ -> moving[i] })
@@ -55,6 +57,7 @@ object GroundCalibrationSolver {
         onStep(3)
         val moves =
             legs.flatMap { leg ->
+                checkCancelled()
                 val frames = leg.frames()
                 if (frames.isEmpty()) return@flatMap emptyList()
                 val lat0 = leg.positions[0].latitude
