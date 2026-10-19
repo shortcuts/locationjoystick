@@ -167,6 +167,7 @@ Rules:
 | `HotLocationsRepository` | `:core:data` | Repository (`@Singleton`) | Hot-location list from a cached wiki JSON with a bundled seed. Sibling of `UpdateCheckRepository`. |
 | `HotRoutesRepository` | `:core:data` | Repository (`@Singleton`) | Same pattern as `HotLocationsRepository`, for hot routes. |
 | `UpdateCheckRepository` | `:core:data` | Repository (`@Singleton`) | Latest-release check for the update badge. Cached; there is no toggle. |
+| `MockLocationServiceStarter` | `:core:data` (interface), `:core:location` (impl) | Class (`@Singleton`) | Single start path for `MockLocationService`. Checks location permission first; see [features/foreground-service.md](docs/features/foreground-service.md). |
 | `StartRouteReplayUseCase` | `:core:location` | Class (`@Singleton`) | Shared route-replay start for the map and the widget. `bypassHideTeleport` is Control API only. |
 | `ControlApiRoutes` | `:core:location` | Class (`@Singleton`) | Control API routes. Each calls the same controller method as the UI; see [features/group-sync.md](docs/features/group-sync.md). |
 | `FeetDetector` | `:core:model` | Object | Pure-Kotlin feet detection for the tap to walk fit. |

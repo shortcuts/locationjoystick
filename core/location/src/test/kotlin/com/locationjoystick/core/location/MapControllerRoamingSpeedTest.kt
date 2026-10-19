@@ -129,6 +129,7 @@ class MapControllerRoamingSpeedTest {
             osrmClient = mockk<OsrmClient>(relaxed = true),
             routingErrorReporter = RoutingErrorReporter(mockk<android.content.Context>(relaxed = true)),
             groupRepository = mockk(relaxed = true),
+            serviceStarter = mockk(relaxed = true),
             appScope = appScope,
         )
     }

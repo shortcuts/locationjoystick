@@ -28,16 +28,10 @@ class TeleportUseCaseTest {
     private val teleportRouteEngine = mockk<TeleportRouteEngine>(relaxed = true)
     private val walkCoordinator = mockk<WalkCoordinator>(relaxed = true)
     private val startedIntents = mutableListOf<Intent>()
-    private val context =
-        mockk<Context>(relaxed = true) {
-            every { startService(any()) } answers {
-                startedIntents.add(firstArg())
-                mockk()
-            }
-            every { startForegroundService(any()) } answers {
-                startedIntents.add(firstArg())
-                mockk()
-            }
+    private val context = mockk<Context>(relaxed = true)
+    private val serviceStarter =
+        mockk<MockLocationServiceStarter> {
+            every { start(any()) } answers { startedIntents.add(firstArg()) }
         }
     private val useCase =
         TeleportUseCase(
@@ -48,6 +42,7 @@ class TeleportUseCaseTest {
             routeReplayEngine,
             teleportRouteEngine,
             walkCoordinator,
+            serviceStarter,
         )
 
     init {

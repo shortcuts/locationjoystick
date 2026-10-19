@@ -23,6 +23,12 @@ The lock is taken when spoofing starts, and released on stop, on park, on destro
 
 Parking keeps the service running. A parked widget must not race a dead service when the user taps Start again. A restart of a parked service stays parked, so the phone does not start spoofing on its own. A group leader's stop keeps the service running too, because the sync server must keep serving followers. See [widget.md](widget.md), "Pause and stop".
 
+## Missing location permission
+
+Every start goes through `MockLocationServiceStarter`. It checks location permission before it calls `startForegroundService`. Without permission it posts the error notification, resets onboarding, and starts nothing.
+
+The check sits before the start because Android 14 and later throw when a location-type service calls `startForeground` without permission. The platform also rejects a fallback with no service type. After that exception, no notification could be posted. The service keeps a defensive `stopSelf` for a permission revoked between the check and the start.
+
 ## Hiding the notification icon
 
 A setting moves the notification to the lowest importance channel. That removes the status bar icon, lock-screen visibility and alerts. It is the most hidden a notification can be on Android.

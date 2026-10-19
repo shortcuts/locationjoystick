@@ -127,6 +127,7 @@ class MapControllerTest {
                     roamingRepository = roamingRepository,
                     walkCoordinator = walkCoordinator,
                     teleportUseCase = teleportUseCase,
+                    serviceStarter = mockk(relaxed = true),
                     realLocationRepository =
                         mockk<RealLocationRepository> {
                             every { lastKnownRealPosition() } returns null
@@ -235,6 +236,7 @@ class MapControllerTest {
                     roamingRepository = roamingRepository,
                     walkCoordinator = walkCoordinator,
                     teleportUseCase = teleportUseCase,
+                    serviceStarter = mockk(relaxed = true),
                     realLocationRepository =
                         mockk<RealLocationRepository> {
                             every { lastKnownRealPosition() } returns null
@@ -337,6 +339,7 @@ class MapControllerTest {
                     roamingRepository = roamingRepository,
                     walkCoordinator = walkCoordinator,
                     teleportUseCase = teleportUseCase,
+                    serviceStarter = mockk(relaxed = true),
                     realLocationRepository =
                         mockk<RealLocationRepository> {
                             every { lastKnownRealPosition() } returns null
@@ -435,6 +438,7 @@ class MapControllerTest {
                     roamingRepository = roamingRepository,
                     walkCoordinator = walkCoordinator,
                     teleportUseCase = teleportUseCase,
+                    serviceStarter = mockk(relaxed = true),
                     realLocationRepository =
                         mockk<RealLocationRepository> {
                             every { lastKnownRealPosition() } returns null
@@ -682,6 +686,7 @@ class MapControllerTest {
             roamingRepository = roamingRepository,
             walkCoordinator = walkCoordinator,
             teleportUseCase = mockk<TeleportUseCase>(relaxed = true) { every { cooldownsFor(any()) } returns emptyFlow() },
+            serviceStarter = mockk(relaxed = true),
             realLocationRepository = realLocationRepository,
             startRouteReplayUseCase = mockk<StartRouteReplayUseCase>(relaxed = true),
             ephemeralReplayController =

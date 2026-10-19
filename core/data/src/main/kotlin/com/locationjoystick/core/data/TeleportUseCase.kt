@@ -43,6 +43,7 @@ class TeleportUseCase
         private val routeReplayEngine: RouteReplayEngine,
         private val teleportRouteEngine: TeleportRouteEngine,
         private val walkCoordinator: WalkCoordinator,
+        private val serviceStarter: MockLocationServiceStarter,
     ) {
         /**
          * Fires the teleport intent, persists the new position, and records the timestamp.
@@ -70,21 +71,12 @@ class TeleportUseCase
                         putExtra(AppConstants.ServiceConstants.EXTRA_LON, position.longitude)
                         putExtra(AppConstants.ServiceConstants.EXTRA_IS_TELEPORT, true)
                     }
-                startMockLocationService(intent)
+                serviceStarter.start(intent)
                 settingsRepository.setLastLocation(position)
                 settingsRepository.setLastTeleportTime(System.currentTimeMillis())
                 Log.d(TAG, "Teleport to ${position.latitude}, ${position.longitude}")
             } catch (e: Exception) {
                 Log.e(TAG, "Teleport failed", e)
-            }
-        }
-
-        private fun startMockLocationService(intent: Intent) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                @Suppress("DEPRECATION")
-                context.startService(intent)
             }
         }
 
@@ -117,7 +109,7 @@ class TeleportUseCase
                     setClassName(context, AppConstants.ServiceConstants.MOCK_LOCATION_SERVICE_CLASS)
                     action = AppConstants.ServiceConstants.ACTION_ROUTE_REPLAY_STOP
                 }
-            startMockLocationService(stopReplay)
+            serviceStarter.start(stopReplay)
         }
 
         /**

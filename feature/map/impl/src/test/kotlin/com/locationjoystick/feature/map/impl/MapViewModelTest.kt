@@ -148,6 +148,7 @@ class MapViewModelTest {
             roamingRepository = roamingRepository,
             walkCoordinator = walkCoordinator,
             teleportUseCase = teleportUseCase,
+            serviceStarter = mockk(relaxed = true),
             realLocationRepository = realLocationRepository,
             startRouteReplayUseCase = startRouteReplayUseCase,
             ephemeralReplayController = ephemeralReplayController,

@@ -492,6 +492,7 @@ class MapControllerWalkCancellationTest {
                 roamingRepository = roamingRepository,
                 walkCoordinator = walkCoordinator,
                 teleportUseCase = teleportUseCase,
+                serviceStarter = mockk(relaxed = true),
                 realLocationRepository =
                     mockk<RealLocationRepository> {
                         every { lastKnownRealPosition() } returns null

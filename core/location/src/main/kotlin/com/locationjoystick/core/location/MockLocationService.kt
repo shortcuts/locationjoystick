@@ -3,7 +3,6 @@ package com.locationjoystick.core.location
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.location.Location
 import android.location.LocationManager
@@ -16,7 +15,6 @@ import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
 import androidx.core.app.ServiceCompat
-import androidx.core.content.ContextCompat
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.common.util.LocaleContextWrapper
@@ -447,57 +445,24 @@ class MockLocationService : Service() {
         }
     }
 
-    private fun hasLocationPermission(): Boolean =
-        ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
-            PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) ==
-            PackageManager.PERMISSION_GRANTED
-
     override fun onStartCommand(
         intent: Intent?,
         flags: Int,
         startId: Int,
     ): Int {
-        if (!hasLocationPermission()) {
-            if (BuildConfig.DEBUG) {
-                // In debug builds, allow the service to start without location permission so
-                // spoofing can be iterated on without going through the full permission flow.
-                // FOREGROUND_SERVICE_TYPE_LOCATION requires permission on API 34+, so fall back
-                // to type 0 to avoid the SecurityException.
-                Log.w(TAG, "DEBUG: location permission missing — starting foreground with no service type.")
-                ServiceCompat.startForeground(
-                    this,
-                    NOTIFICATION_ID,
-                    overlayNotificationReactor.buildCurrent(),
-                    0,
-                )
-            } else {
-                Log.e(TAG, "Location permission not granted — posting error notification and resetting onboarding.")
-                // Cannot call startForeground with FOREGROUND_SERVICE_TYPE_LOCATION without location
-                // permission granted — doing so throws SecurityException on API 34+. Start foreground
-                // with no service type as a fallback just long enough to post the error notification.
-                ServiceCompat.startForeground(
-                    this,
-                    NOTIFICATION_ID,
-                    overlayNotificationReactor.buildCurrent(),
-                    0,
-                )
-                postPermissionErrorNotification()
-                serviceScope.launch { settingsRepository.setOnboardingComplete(false) }
-                stopSelf()
-                return START_NOT_STICKY
-            }
-        } else {
-            // Permission is granted — safe to startForeground with FOREGROUND_SERVICE_TYPE_LOCATION.
-            // Android enforces a 5-second window from onStartCommand, so this must come before
-            // any other work.
-            ServiceCompat.startForeground(
-                this,
-                NOTIFICATION_ID,
-                overlayNotificationReactor.buildCurrent(),
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
-            )
+        if (!hasMockLocationPermission(this)) {
+            Log.e(TAG, "Location permission vanished between the start check and onStartCommand.")
+            stopSelf()
+            return START_NOT_STICKY
         }
+        // Android enforces a 5-second window from onStartCommand, so this must come before
+        // any other work.
+        ServiceCompat.startForeground(
+            this,
+            NOTIFICATION_ID,
+            overlayNotificationReactor.buildCurrent(),
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
+        )
 
         when (intent?.action) {
             ACTION_START -> {
@@ -1465,6 +1430,4 @@ class MockLocationService : Service() {
     }
 
     private fun createNotificationChannel() = createMockLocationNotificationChannels(this)
-
-    private fun postPermissionErrorNotification() = postMockLocationPermissionErrorNotification(this)
 }

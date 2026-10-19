@@ -99,6 +99,7 @@ class WidgetPanelPresenterTest {
                 roamingRepository = roamingRepository,
                 walkCoordinator = mockk<WalkCoordinator>(relaxed = true),
                 teleportUseCase = mockk<TeleportUseCase>(relaxed = true),
+                serviceStarter = mockk(relaxed = true),
                 realLocationRepository =
                     mockk<RealLocationRepository> {
                         every { lastKnownRealPosition() } returns null

@@ -2,13 +2,13 @@ package com.locationjoystick.core.location
 
 import android.content.Context
 import android.util.Log
-import androidx.core.content.ContextCompat
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.di.ApplicationScope
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.MockLocationServiceStarter
 import com.locationjoystick.core.data.RealLocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
@@ -82,6 +82,7 @@ class MapController
         private val roamingRepository: RoamingRepository,
         private val walkCoordinator: WalkCoordinator,
         private val teleportUseCase: TeleportUseCase,
+        private val serviceStarter: MockLocationServiceStarter,
         private val realLocationRepository: RealLocationRepository,
         private val startRouteReplayUseCase: StartRouteReplayUseCase,
         private val ephemeralReplayController: EphemeralReplayController,
@@ -393,15 +394,14 @@ class MapController
                         // No position at all yet: start where the map opens, so the first fix is
                         // inside the selected tile provider's coverage (Beijing for Amap, Paris for OSM).
                         ?: settingsRepository.getMapTileSource().first().defaultCenter
-                ContextCompat.startForegroundService(
-                    context,
+                serviceStarter.start(
                     MockLocationIntentBuilder.startSpoofing(context, startPos.latitude, startPos.longitude),
                 )
             }
         }
 
         fun stopSpoofing() {
-            ContextCompat.startForegroundService(context, MockLocationIntentBuilder.stopSpoofing(context))
+            serviceStarter.start(MockLocationIntentBuilder.stopSpoofing(context))
             ephemeralReplayController.clearPendingWaypoints()
             _sharedState.update { it.copy(walkMode = WalkMode.Idle, routeTrace = null) }
         }
@@ -412,7 +412,7 @@ class MapController
          */
         fun parkSpoofingKeepWidget() {
             cancelAnyActiveMovement()
-            ContextCompat.startForegroundService(context, MockLocationIntentBuilder.parkSpoofingKeepWidget(context))
+            serviceStarter.start(MockLocationIntentBuilder.parkSpoofingKeepWidget(context))
             ephemeralReplayController.clearPendingWaypoints()
             _sharedState.update { it.copy(walkMode = WalkMode.Idle, routeTrace = null) }
         }
