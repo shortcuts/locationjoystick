@@ -3,13 +3,16 @@ package com.locationjoystick.app
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
@@ -70,7 +73,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isNavigationBarContrastEnforced = false
         }
@@ -89,7 +91,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
-            LjTheme(darkTheme = themeMode == ThemeMode.DARK) {
+            val darkTheme = themeMode == ThemeMode.DARK
+            // The default auto style follows the system theme, not the in-app choice.
+            LaunchedEffect(darkTheme) {
+                val barStyle =
+                    if (darkTheme) {
+                        SystemBarStyle.dark(Color.TRANSPARENT)
+                    } else {
+                        SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+                    }
+                enableEdgeToEdge(statusBarStyle = barStyle, navigationBarStyle = barStyle)
+            }
+            LjTheme(darkTheme = darkTheme) {
                 val accessibilityViewModel: AccessibilityDisclosureViewModel = hiltViewModel()
                 val showAccessibilityDisclosure by showAccessibilityDisclosureFlow.collectAsStateWithLifecycle()
                 // The first-run disclosure lives in onboarding; this serves the widget/intent path.

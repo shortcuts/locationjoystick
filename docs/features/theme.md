@@ -18,6 +18,8 @@ The choice is a live preference. It takes effect at once, with no save step, and
 
 The app's root theme follows the stored choice, so the whole tree redraws in the new scheme. Overlay windows read the same choice, because they sit outside the app's own theme and would otherwise show the wrong colours over other apps.
 
+The system status and navigation bar icons also follow the stored choice, not the system theme. Otherwise a light app theme under a dark system theme shows white icons on a light bar.
+
 The icon column of the widget stays dark with bright icons in both modes. It must stay visible over any app underneath.
 
 ## Why outlines use their own colours
