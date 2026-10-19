@@ -155,6 +155,9 @@ class AutoFitCoordinator
 
         private val buffer = ArrayList<Buffered>()
 
+        /** The learning leg in flight, so cancel never stops a walk the user started instead. */
+        @Volatile private var legTarget: LatLng? = null
+
         /**
          * Starts watching walks on [scope] (the service scope: the loop and its spool end with the service).
          * Health starts as Valid when a fit is stored, None otherwise.
@@ -218,11 +221,12 @@ class AutoFitCoordinator
         /** Stops the learning walk and drops the buffered legs; the stored fit is untouched. */
         fun cancel() {
             synchronized(this) {
+                val wasLearning = _learning.value != LearningState.Idle // the job's finally sets Idle on another thread
                 learningJob?.cancel()
                 learningJob = null
-                if (_learning.value != LearningState.Idle) {
+                if (wasLearning) {
                     cancelledLearning = true
-                    mapController.stopWalk()
+                    if (locationRepository.walkTarget.value == legTarget) mapController.stopWalk()
                 }
             }
             appScope.launch { analysisLock.withLock { clearBuffer() } }
@@ -250,6 +254,7 @@ class AutoFitCoordinator
                     _learning.value = LearningState.Learning(index + 1, LEG_COUNT)
                     val from = locationRepository.currentPosition.value ?: return
                     val target = CalibrationWalkMath.commandedTarget(from, bearing, CalibrationWalkMath.LEARNING_LEG_METERS)
+                    legTarget = target
                     mapController.walkTo(target, AppConstants.ProfileConstants.WALK_SPEED_MPS)
                     if (!awaitArrival(target)) return
                 }
@@ -273,7 +278,11 @@ class AutoFitCoordinator
             val start = nowMs()
             var seen = false
             while (nowMs() - start < timeoutMs) {
-                val walking = locationRepository.walkTarget.value != null
+                val current = locationRepository.walkTarget.value
+                // Another walk owns the target: leave it alone. A paused walk is the user's joystick takeover.
+                if ((seen && current != null && current != target) || locationRepository.isWalkPaused.value) return false
+                if (!tapToWalkOn.value || locationRepository.mockLocationState.value != MockLocationState.RUNNING) break
+                val walking = current != null
                 seen = seen || walking
                 if (seen && !walking) {
                     // Arrival and cancellation both clear the target; only distance tells them apart.
@@ -282,7 +291,7 @@ class AutoFitCoordinator
                 }
                 delay(POLL_MS)
             }
-            mapController.stopWalk()
+            if (locationRepository.walkTarget.value == target) mapController.stopWalk()
             return false
         }
 

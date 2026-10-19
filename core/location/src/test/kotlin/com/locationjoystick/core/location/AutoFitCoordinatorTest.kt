@@ -155,7 +155,8 @@ class AutoFitCoordinatorTest {
     private fun TestScope.coordinator(
         fullFit: SolveResult = SolveResult.Ok(GroundFit(cal, 0.7, 120), FeetPixel(16.0, 40.0)),
         serviceScope: CoroutineScope = backgroundScope,
-    ) = AutoFitCoordinator(mapController, locationRepository, source, settings, context, backgroundScope as CoroutineScope).also {
+        appScope: CoroutineScope = backgroundScope,
+    ) = AutoFitCoordinator(mapController, locationRepository, source, settings, context, appScope).also {
         it.nowMs = { currentTime }
         it.analysisDispatcher = UnconfinedTestDispatcher(testScheduler)
         it.ioDispatcher = UnconfinedTestDispatcher(testScheduler) // file writes in virtual time, so ticks stay 3 s apart
@@ -321,6 +322,67 @@ class AutoFitCoordinatorTest {
             result.join()
             verify { mapController.stopWalk() }
             assertEquals(LearningState.Idle, c.learning.value)
+        }
+
+    @Test
+    fun `cancel stops the walk even when the job reaches Idle first`() =
+        runTest {
+            fakeWalks()
+            val eager = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + Job(backgroundScope.coroutineContext[Job]))
+            val c = coordinator(appScope = eager)
+            delay(1)
+            backgroundScope.launch { c.learnMap() }
+            delay(20_000)
+            c.cancel()
+            verify { mapController.stopWalk() }
+        }
+
+    @Test
+    fun `a walk started by the user during learning is not stopped`() =
+        runTest {
+            fakeWalks()
+            val c = coordinator()
+            delay(1)
+            val outcome = learnAsync(c)
+            while (walks.isEmpty()) delay(1000)
+            delay(5_000)
+            locationRepository.setWalkTarget(LatLng(start.latitude + 1, start.longitude)) // the user's own walk
+            delay(120_000)
+            verify(exactly = 0) { mapController.stopWalk() }
+            assertEquals(LearnOutcome.Interrupted, outcome.await())
+            assertEquals(LearningState.Idle, c.learning.value)
+        }
+
+    @Test
+    fun `a joystick pause ends learning at once without stopping the walk`() =
+        runTest {
+            fakeWalks()
+            val c = coordinator()
+            delay(1)
+            val outcome = learnAsync(c)
+            while (walks.isEmpty()) delay(1000)
+            delay(5_000)
+            locationRepository.setWalkPaused(true)
+            delay(2_000)
+            assertEquals(LearningState.Idle, c.learning.value)
+            verify(exactly = 0) { mapController.stopWalk() }
+            outcome.await()
+        }
+
+    @Test
+    fun `turning Tap to Walk off ends learning within one poll`() =
+        runTest {
+            fakeWalks()
+            every { source.captureAllowed } returns MutableStateFlow(true) // the capture gate must not be what ends learning
+            val c = coordinator()
+            delay(1)
+            learnAsync(c)
+            while (walks.isEmpty()) delay(1000)
+            delay(5_000)
+            tapToWalk.value = false
+            delay(2_000)
+            assertEquals(LearningState.Idle, c.learning.value)
+            verify { mapController.stopWalk() }
         }
 
     /** A stand-in for the service scope that a test can cancel without ending the test's own scopes. */
