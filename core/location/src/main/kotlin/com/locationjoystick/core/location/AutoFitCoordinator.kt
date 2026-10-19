@@ -160,7 +160,7 @@ class AutoFitCoordinator
 
         /**
          * Starts watching walks on [scope] (the service scope: the loop and its spool end with the service).
-         * Health starts as Valid when a fit is stored, None otherwise.
+         * Health starts as Valid (Suspect if the stored fit was flagged) when a fit is stored, None otherwise.
          */
         fun observe(scope: CoroutineScope) {
             this.scope = scope
@@ -175,7 +175,7 @@ class AutoFitCoordinator
                     if (stored == null) {
                         _health.value = FitHealth.None
                     } else if (_health.value == FitHealth.None) {
-                        _health.value = FitHealth.Valid
+                        _health.value = if (stored.suspect) FitHealth.Suspect else FitHealth.Valid
                     }
                 }
             }
@@ -458,6 +458,7 @@ class AutoFitCoordinator
                 Log.d(TAG, "leg ${b.leg.bearingDeg.toInt()} deg: alarm at move $alarm, fit is suspect")
                 clearBuffer() // legs from before the change must not mix with the ones after it
                 _health.value = FitHealth.Suspect
+                settingsRepository.setGroundCalibration(stored.copy(suspect = true))
             }
             buffer += b
             while (buffer.size > AppConstants.TapToWalkConstants.AUTOFIT_BUFFER_LEGS) {

@@ -21,6 +21,7 @@ internal fun serializeGroundCalibration(value: StoredGroundCalibration): String 
             put("calibratedAtMs", value.calibratedAtMs)
             put("flowCount", value.flowCount)
             put("medianAbsPx", value.medianAbsPx)
+            put("suspect", value.suspect)
         }.toString()
 
 /** Null for an unknown version, a missing field or malformed JSON: a stale map must never throw. */
@@ -45,6 +46,7 @@ internal fun deserializeGroundCalibration(raw: String): StoredGroundCalibration?
                 calibratedAtMs = o.getLong("calibratedAtMs"),
                 flowCount = o.getInt("flowCount"),
                 medianAbsPx = o.getDouble("medianAbsPx"),
+                suspect = o.optBoolean("suspect", false),
             )
         }
     } catch (e: org.json.JSONException) {

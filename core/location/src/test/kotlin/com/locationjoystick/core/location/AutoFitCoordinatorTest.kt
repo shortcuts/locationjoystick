@@ -206,6 +206,22 @@ class AutoFitCoordinatorTest {
             assertTrue("frames are gone once the fit is valid, left: $left", left.isEmpty())
         }
 
+    @Test
+    fun `a suspect fit is still suspect after a new coordinator observes the stored record`() =
+        runTest {
+            fakeWalks()
+            stored.value = storedFit
+            val first = coordinator()
+            delay(1)
+            camera = cal.copy(headingDeg = 18.0, lateralPxPerM = 11.0, forwardPxPerM = 9.0, perspective = -0.003)
+            walkLeg(90.0)
+            assertEquals(FitHealth.Suspect, first.health.value)
+
+            val restarted = coordinator()
+            delay(1)
+            assertEquals(FitHealth.Suspect, restarted.health.value)
+        }
+
     /** Suspect fit, then [bearings] as legs; returns how many full fits ran and the coordinator. */
     private suspend fun TestScope.refitCalls(
         fullFit: SolveResult,

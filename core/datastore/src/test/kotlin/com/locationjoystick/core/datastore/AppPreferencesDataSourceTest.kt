@@ -57,6 +57,17 @@ class AppPreferencesDataSourceTest {
         }
 
     @Test
+    fun `suspect flag round-trips and a record without it reads as not suspect`() =
+        runTest {
+            val key = stringPreferencesKey("tap_to_walk_ground_calibration")
+            dataSource.setGroundCalibration(storedCalibration.copy(suspect = true))
+            assertTrue(dataSource.getGroundCalibration().first()!!.suspect)
+            val old = org.json.JSONObject(serializeGroundCalibration(storedCalibration)).apply { remove("suspect") }
+            fakeDataStore.edit { it[key] = old.toString() }
+            assertEquals(storedCalibration, dataSource.getGroundCalibration().first())
+        }
+
+    @Test
     fun `corrupt or unknown version ground calibration reads null`() =
         runTest {
             val key = stringPreferencesKey("tap_to_walk_ground_calibration")

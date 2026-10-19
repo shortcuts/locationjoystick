@@ -13,6 +13,8 @@ data class StoredGroundCalibration(
     /** Fit quality for staleness checks: kept band flows and their median absolute residual (reference px). */
     val flowCount: Int,
     val medianAbsPx: Double,
+    /** The monitor rejected this fit; kept so a process kill does not make it look valid again. */
+    val suspect: Boolean = false,
 ) {
     fun matches(
         width: Int,
