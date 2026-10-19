@@ -1,7 +1,7 @@
 package com.locationjoystick.core.model
 
 /**
- * The latest successful calibration walk: the fitted map plus the screen it was fitted on. Valid only on
+ * The latest successful automatic fit: the fitted map plus the screen it was fitted on. Valid only on
  * that screen size and the camera state that produced it, so it is never exported (per-device).
  */
 data class StoredGroundCalibration(

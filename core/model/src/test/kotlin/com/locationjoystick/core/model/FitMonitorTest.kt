@@ -12,7 +12,7 @@ class FitMonitorTest {
     }
 
     @Test
-    fun tripledResidualAlarmsWithinTwoMoves() {
+    fun threeAndHalfTimesResidualAlarmsOnFourthMove() {
         // excess per move 3.5 - 1 - 0.25 = 2.25 under h = 8: crosses on the fourth move; 12x on the first alone passes
         assertEquals(3, FitMonitor.alarmIndex(List(10) { 3.5 }, 1.0))
         assertEquals(0, FitMonitor.alarmIndex(listOf(12.0, 12.0), 1.0))

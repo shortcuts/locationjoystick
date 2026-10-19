@@ -385,7 +385,7 @@ interface PreferencesDataSource {
     fun getAccessibilityDisclosureChoice(): Flow<String>
 
     /**
-     * The latest tap-to-walk calibration walk result, or null. Per-device: a standalone key outside
+     * The latest tap-to-walk automatic fit result, or null. Per-device: a standalone key outside
      * [SettingsSnapshot] on purpose, so it is never exported or imported.
      */
     fun getGroundCalibration(): Flow<StoredGroundCalibration?>

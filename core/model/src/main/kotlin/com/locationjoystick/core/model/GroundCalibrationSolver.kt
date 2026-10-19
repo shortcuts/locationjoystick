@@ -27,11 +27,8 @@ sealed interface SolveResult {
     data object ImplausibleFit : SolveResult
 }
 
-/** Calibration walk analysis: feet pixel, band flows and fit, chained as in `registration_bench`. */
+/** Automatic fit analysis: feet pixel, band flows and fit, chained as in `registration_bench`. */
 object GroundCalibrationSolver {
-    /** Steps reported to `onStep` (1-based): gradients, feet, flows, fit. */
-    const val STEP_COUNT = 4
-
     // Reference px per metre below which the content cannot have followed the walk: real maps are 3 to 10,
     // a screen that did not scroll fits ~0.003 with a perfect residual.
     private const val MIN_SCALE_PX_PER_M = 1.0
@@ -41,9 +38,7 @@ object GroundCalibrationSolver {
         width: Int,
         height: Int,
         checkCancelled: () -> Unit = {},
-        onStep: (Int) -> Unit = {},
     ): SolveResult {
-        onStep(1)
         val grads =
             legs.mapNotNull { leg ->
                 checkCancelled()
@@ -51,10 +46,8 @@ object GroundCalibrationSolver {
                 val frames = leg.frames()
                 FeetDetector.legGradient(frames.filterIndexed { i, _ -> moving[i] })
             }
-        onStep(2)
         if (grads.isEmpty()) return SolveResult.FeetNotFound
         val feet = FeetDetector.detectFromGradients(grads, width, height) ?: FeetDetector.fallback(width, height)
-        onStep(3)
         val moves =
             legs.flatMap { leg ->
                 checkCancelled()
@@ -68,7 +61,6 @@ object GroundCalibrationSolver {
                 val walk = WalkLeg(frames, CalibrationWalkMath.movingFlags(leg.timesS, leg.positions), offsets)
                 FrameFlow.bandMoves(listOf(walk), feet.x, feet.y)
             }
-        onStep(4)
         val fit = GroundMapFit.fit(moves, feet.x, feet.y, width, height) ?: return SolveResult.TooFewFlows
         val c = fit.calibration
         if (minOf(abs(c.lateralPxPerM), abs(c.forwardPxPerM)) < MIN_SCALE_PX_PER_M) return SolveResult.ImplausibleFit

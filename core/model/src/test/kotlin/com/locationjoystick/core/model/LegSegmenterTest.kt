@@ -66,6 +66,14 @@ class LegSegmenterTest {
     }
 
     @Test
+    fun legTooShortForAK4PairIsDropped() {
+        // 6 samples 0.45 m apart: the 4-step pair spans 1.8 m, under FrameFlow's 2 m minimum move
+        val seg = LegSegmenter()
+        for (i in 0..5) seg.add(i.toDouble(), at(start, 90.0, 0.45 * i))
+        assertNull(seg.close())
+    }
+
+    @Test
     fun legIsCutAtMaxSamples() {
         val seg = LegSegmenter(maxSamples = 10)
         seg.add(0.0, start)

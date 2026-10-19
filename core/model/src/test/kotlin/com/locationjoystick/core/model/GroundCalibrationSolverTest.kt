@@ -11,7 +11,7 @@ class GroundCalibrationSolverTest {
 
     // Per-frame content scroll (px) per leg; opposite legs differ in size so their frame sets are not identical.
     private val scrolls = listOf(0 to 9, 0 to -8, 9 to 0, -8 to 0, 6 to 6, -5 to -5, 6 to -6, -5 to 5)
-    private val bearings = CalibrationWalkMath.BEARINGS_DEG
+    private val bearings = CalibrationWalkMath.LEARNING_BEARINGS_DEG
 
     /** Truth: feet px / m scales and heading; perspective 0 so the map is affine and invertible by 2x2. */
     private var truth = GroundCalibration(20.0, 7.0, 6.0, 0.0, 0.0, 0.0)
@@ -137,13 +137,5 @@ class GroundCalibrationSolverTest {
                 }
             }
         assertEquals(SolveResult.TooFewFlows, GroundCalibrationSolver.solve(ls, 540, 1170))
-    }
-
-    @Test
-    fun reportsStepsInOrder() {
-        val steps = mutableListOf<Int>()
-        GroundCalibrationSolver.solve(legs(540, 1170), 540, 1170) { steps += it }
-        assertEquals(listOf(1, 2, 3, 4), steps)
-        assertEquals(GroundCalibrationSolver.STEP_COUNT, steps.size)
     }
 }

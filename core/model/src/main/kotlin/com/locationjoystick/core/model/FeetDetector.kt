@@ -3,11 +3,6 @@ package com.locationjoystick.core.model
 import kotlin.math.abs
 import kotlin.math.hypot
 
-/** Row-major gray frame, values 0..255, `width * height` floats (size is passed to [FeetDetector.detect]). */
-class GrayFrame(
-    val pixels: FloatArray,
-)
-
 /** Player feet pixel in device pixels (x right, y down). */
 data class FeetPixel(
     val x: Double,
@@ -54,25 +49,8 @@ object FeetDetector {
     ) = FeetPixel(PRIOR_FEET_X * width, PRIOR_FEET_FRAC * height)
 
     /**
-     * @param legs one list per walked leg, only frames recorded while moving, each `width * height`.
-     * @return the feet pixel, or null when no figure is found (caller: calibration failed, store nothing).
-     */
-    fun detect(
-        legs: List<List<GrayFrame>>,
-        width: Int,
-        height: Int,
-    ): FeetPixel? {
-        require(width >= 2 && height >= 2) { "frame size must be at least 2x2" }
-        val grads =
-            legs.filter { it.size >= MIN_FRAMES }.map { fr ->
-                gradient(fr.size, width, height) { f, i -> fr[f].pixels[i] }
-            }
-        return detectFromGradients(grads, width, height)
-    }
-
-    /**
-     * Incremental half of [detect]: the gradient of one leg's temporal median from 8-bit frames, so a caller
-     * can keep one 10 MB gradient per leg instead of every frame. Null under 3 frames (leg unusable).
+     * The gradient of one leg's temporal median from 8-bit frames, so a caller can keep one 10 MB gradient
+     * per leg instead of every frame. Null under 3 frames (leg unusable).
      */
     fun legGradient(frames: List<GrayImage>): FloatArray? {
         if (frames.size < MIN_FRAMES) return null
@@ -82,13 +60,14 @@ object FeetDetector {
         return gradient(frames.size, w, h) { f, i -> (frames[f].pixels[i].toInt() and 0xFF).toFloat() }
     }
 
-    /** Second half of [detect]: the feet pixel from per-leg gradients ([legGradient]), or null. */
+    /** The feet pixel from per-leg gradients ([legGradient]), or null. */
     fun detectFromGradients(
         grads: List<FloatArray>,
         width: Int,
         height: Int,
     ): FeetPixel? {
         require(width >= 2 && height >= 2) { "frame size must be at least 2x2" }
+        require(grads.all { it.size == width * height }) { "every gradient must be width * height" }
         if (grads.isEmpty()) return null
         val n = width * height
         val edge = BooleanArray(n) { i -> grads.minOf { it[i] } > EDGE_THRESHOLD }

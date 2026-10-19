@@ -54,7 +54,7 @@ class WalkToEngine
          *   When supplied, replaces the default target cleanup; the owner must clear only
          *   its own session, atomically with any replacement start.
          * @param speedMsOverride Fixed speed in m/s used instead of the active speed profile
-         *   (calibration walks must stay at the validated walking speed).
+         *   (learning walks must stay at the validated walking speed).
          */
         fun CoroutineScope.launchWalkAlongRoute(
             waypoints: List<LatLng>,

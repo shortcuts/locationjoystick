@@ -76,11 +76,6 @@ class CalibrationWalkMathTest {
     }
 
     @Test
-    fun bearingsAreTheValidatedOrder() {
-        assertEquals(listOf(0.0, 180.0, 90.0, 270.0, 45.0, 225.0, 135.0, 315.0), CalibrationWalkMath.BEARINGS_DEG.toList())
-    }
-
-    @Test
     fun movingUsesClampedNeighboursAtTheEnds() {
         // 3 m north per 3 s tick (1 m/s) for frames 0..2, then standing still for 3 frames.
         val p = listOf(0.0, 3.0, 6.0, 6.0, 6.0, 6.0).map { LatLng(it / CalibrationWalkMath.METERS_PER_DEGREE, 0.0) }

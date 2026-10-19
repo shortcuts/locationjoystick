@@ -13,7 +13,7 @@ class Leg(
  * Cuts a stream of (time, position) samples into straight legs. The positions are our own mock fixes, so a
  * leg's bearing and length are exact. A leg is closed when the player slows under [CalibrationWalkMath.MOVING_MIN_MPS],
  * when a step turns more than [MAX_TURN_DEG] away from the leg, or at [maxSamples]. Legs under [MIN_SAMPLES] samples
- * or [MIN_LENGTH_M] metres are dropped (no flow pair would pass `FrameFlow`'s minimum move).
+ * or [MIN_LENGTH_M] metres are dropped: a short leg costs a spool write and yields no flow pair.
  */
 class LegSegmenter(
     private val maxSamples: Int = DEFAULT_MAX_SAMPLES,
@@ -78,7 +78,7 @@ class LegSegmenter(
     companion object {
         const val MAX_TURN_DEG = 10.0
         const val MIN_SAMPLES = 6
-        const val MIN_LENGTH_M = 2.0
+        const val MIN_LENGTH_M = 2.5
         const val DEFAULT_MAX_SAMPLES = 24 // 72 s at the 3 s tick; bounds a leg's spool to about 60 MB and its analysis to the heap
     }
 }

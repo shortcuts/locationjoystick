@@ -5,12 +5,11 @@ import kotlin.math.hypot
 import kotlin.math.sin
 
 /**
- * Leg geometry of the calibration walk. Port of `registration_bench.commanded_target`, `along_track_move`
+ * Leg geometry of the learning walk and the automatic fit. Port of `registration_bench.commanded_target`, `along_track_move`
  * and the moving rule of `_commanded_legs`. Flat earth at 111320 m per degree on purpose: the bench goldens
  * use it, and the haversine radius elsewhere (111195 m/deg) would drift 0.1 percent from them.
  */
 object CalibrationWalkMath {
-    const val LEG_METERS = 40.0 // each leg's length, as in the validated bench walks
     const val METERS_PER_DEGREE = 111320.0
     const val MOVING_MIN_MPS = 0.3 // neighbour-frame speed that counts as walking (/state speed reads 0 mid-walk-to)
 
@@ -21,9 +20,6 @@ object CalibrationWalkMath {
      */
     val LEARNING_BEARINGS_DEG = doubleArrayOf(0.0, 90.0)
     const val LEARNING_LEG_METERS = 30.0
-
-    /** Opposite bearings in sequence return the player to the start within the arrival slack. */
-    val BEARINGS_DEG = doubleArrayOf(0.0, 180.0, 90.0, 270.0, 45.0, 225.0, 135.0, 315.0)
 
     fun commandedTarget(
         from: LatLng,

@@ -28,7 +28,7 @@ N_TAPS, NEED_TAPS, TOL_M, MAX_M = 12, 11, 15.0, 40.0
 NEED_LOCATIONS = 19
 # Per-step wall-clock bound: a hang fails the location, not the run. taptrials walks to each tap, so it is the long one.
 STEP_TIMEOUT_S = {"walkcap": 1800, "persp": 600, "taptrials": 3600}
-# Same legs as the app (CalibrationWalkMath.BEARINGS_DEG, LEG_METERS): fewer legs hide the sprite-erasure bug.
+# Eight legs on purpose: fewer legs hide the sprite-erasure bug. The app's learning walk uses two (CalibrationWalkMath.LEARNING_BEARINGS_DEG).
 LEG_BEARINGS = ["0", "180", "90", "270", "45", "225", "135", "315"]
 
 

@@ -437,7 +437,7 @@ class MapController
             }
         }
 
-        /** [speedMsOverride] walks at a fixed m/s instead of the active speed profile (calibration walk). */
+        /** [speedMsOverride] walks at a fixed m/s instead of the active speed profile (learning walk). */
         fun walkTo(
             position: LatLng,
             speedMsOverride: Double? = null,

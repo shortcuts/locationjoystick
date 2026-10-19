@@ -380,7 +380,7 @@ class SettingsRepository
 
         suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) = dataSource.setTapToWalkOverlayEnabled(enabled)
 
-        /** Latest calibration walk result; per-device and never exported. */
+        /** Latest automatic fit result; per-device and never exported. */
         fun getGroundCalibration(): Flow<StoredGroundCalibration?> = dataSource.getGroundCalibration()
 
         suspend fun setGroundCalibration(value: StoredGroundCalibration?) = dataSource.setGroundCalibration(value)

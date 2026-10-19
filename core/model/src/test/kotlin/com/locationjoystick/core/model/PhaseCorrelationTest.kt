@@ -48,4 +48,12 @@ class PhaseCorrelationTest {
         assertEquals(0.0, r.fx, 0.1)
         assertEquals(-7.0, r.fy, 0.1)
     }
+
+    @Test
+    fun knownShiftRecoveredAtOddPaddedHeight() {
+        // 135 rows is its own padded size; the cyclic shift uses the integer centre, which differs from OpenCV's fftShift here
+        val r = PhaseCorrelation.correlate(crop(10, 10, 360, 135), crop(7, 8, 360, 135), 360, 135)
+        assertEquals(3.0, r.fx, 0.05)
+        assertEquals(2.0, r.fy, 0.05)
+    }
 }
