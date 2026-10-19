@@ -13,6 +13,14 @@ class TapToWalkClickTest {
     }
 
     @Test
+    fun `analysing still cancels so the user can stop a four minute wait`() {
+        assertEquals(
+            TapToWalkClick.CANCEL_LEARNING,
+            tapToWalkClick(LearningState.Analysing, overlayShowing = false, needsDisclosure = false),
+        )
+    }
+
+    @Test
     fun `idle with no disclosure needed opens the overlay`() {
         assertEquals(TapToWalkClick.OPEN_OVERLAY, tapToWalkClick(LearningState.Idle, overlayShowing = false, needsDisclosure = false))
     }

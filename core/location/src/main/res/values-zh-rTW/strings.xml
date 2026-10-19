@@ -11,6 +11,7 @@
     <string name="notification_title_active">"模擬定位已啟用"</string>
     <string name="notification_text_active">"locationjoystick 正在模擬你的 GPS 位置"</string>
     <string name="notification_text_learning">"正在為點擊行走學習地圖，第 %1$d 段，共 %2$d 段"</string>
+    <string name="notification_text_analysing">"正在為點擊行走分析地圖…"</string>
     <string name="notification_action_cancel_learning">"取消"</string>
     <string name="notification_action_stop">"停止"</string>
     <string name="notification_action_map">"地圖"</string>

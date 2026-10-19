@@ -189,6 +189,7 @@ internal fun buildMockLocationNotification(
                 when (learning) {
                     is LearningState.Learning ->
                         context.getString(R.string.notification_text_learning, learning.leg, learning.legCount)
+                    LearningState.Analysing -> context.getString(R.string.notification_text_analysing)
                     LearningState.Idle -> context.getString(R.string.notification_text_active)
                 },
             ).setSmallIcon(android.R.drawable.ic_menu_mylocation)
@@ -196,7 +197,7 @@ internal fun buildMockLocationNotification(
             .setOngoing(true)
             .setSilent(true)
 
-    for (action in selectNotificationActions(replayActive, replayPaused, learning is LearningState.Learning)) {
+    for (action in selectNotificationActions(replayActive, replayPaused, learning != LearningState.Idle)) {
         val pendingIntent =
             when (action.action) {
                 NotificationAction.STOP -> stopPendingIntent

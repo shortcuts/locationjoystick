@@ -57,6 +57,7 @@
     <string name="widget_feature_open_map_cd">"Open map"</string>
     <string name="tap_to_walk_overlay_cannot_learn_hint">"Map not learned yet. Open the game and stay idle, then tap."</string>
     <string name="tap_to_walk_learning_failed">"Could not learn the map. Keep the game open and try again."</string>
+    <string name="tap_to_walk_learning_interrupted">"Learning stopped because you moved. Tap again."</string>
     <string name="tap_to_walk_learning_started">"Learning the map for Tap to Walk. Your tap follows after a short walk."</string>
     <string name="reconnect_failed_channel_name">"Accessory reconnect"</string>
     <string name="reconnect_failed_title">"Accessory did not reconnect"</string>

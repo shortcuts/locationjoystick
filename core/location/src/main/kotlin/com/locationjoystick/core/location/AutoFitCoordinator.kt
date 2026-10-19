@@ -60,6 +60,25 @@ sealed interface LearningState {
         val leg: Int,
         val legCount: Int,
     ) : LearningState
+
+    /** The last leg arrived; the fit runs for minutes and nothing walks. */
+    data object Analysing : LearningState
+}
+
+/** How [AutoFitCoordinator.learnMap] ended. Only [Fitted] carries a map; the others say why there is none. */
+sealed interface LearnOutcome {
+    data class Fitted(
+        val calibration: StoredGroundCalibration,
+    ) : LearnOutcome
+
+    data object Cancelled : LearnOutcome
+
+    /** A walk replaced a leg, or the player moved before the fit landed: a held tap would resolve from a stale position. */
+    data object Interrupted : LearnOutcome
+
+    data object NoFit : LearnOutcome
+
+    data object NotReady : LearnOutcome
 }
 
 /**
@@ -105,6 +124,8 @@ class AutoFitCoordinator
         private var tapToWalkOn: StateFlow<Boolean> = MutableStateFlow(false)
         private var active: StateFlow<Boolean> = MutableStateFlow(false) // every switch that lets a frame exist
         private var learningJob: Job? = null
+        private var cancelledLearning = false
+        private var routeEnd: LatLng? = null // where the player stood when the last leg arrived; null if the route did not finish
 
         private val spool get() = File(context.cacheDir, SPOOL_DIR)
         private val segmenter = LegSegmenter()
@@ -163,20 +184,35 @@ class AutoFitCoordinator
         }
 
         /**
-         * Walks the learning route and waits for the fit. True when the fit is valid at the end; false when it
-         * could not start (not ready, game not in front), was cancelled, or the legs gave no fit.
+         * Walks the learning route and waits for the fit. [LearnOutcome.Fitted] carries the stored fit, read here because
+         * the caller's own copy of the setting may lag the write.
          */
-        suspend fun learnMap(): Boolean {
+        suspend fun learnMap(): LearnOutcome {
             val started =
                 synchronized(this) {
                     if (_learning.value != LearningState.Idle || !canLearn) return@synchronized false
+                    cancelledLearning = false
+                    routeEnd = null
                     _learning.value = LearningState.Learning(1, LEG_COUNT)
                     learningJob = appScope.launch { walkLearningRoute() }
                     true
                 }
-            if (!started) return false
+            if (!started) return LearnOutcome.NotReady
             _learning.first { it == LearningState.Idle }
-            return _health.value == FitHealth.Valid
+            val end = routeEnd
+            return when {
+                cancelledLearning -> LearnOutcome.Cancelled
+                end == null -> LearnOutcome.Interrupted
+                _health.value != FitHealth.Valid -> LearnOutcome.NoFit
+                locationRepository.currentPosition.value?.let {
+                    it.distanceTo(
+                        end,
+                    ) > AppConstants.TapToWalkConstants.AUTOFIT_ARRIVAL_SLACK_M
+                } !=
+                    false ->
+                    LearnOutcome.Interrupted
+                else -> settingsRepository.getGroundCalibration().first()?.let { LearnOutcome.Fitted(it) } ?: LearnOutcome.NoFit
+            }
         }
 
         /** Stops the learning walk and drops the buffered legs; the stored fit is untouched. */
@@ -184,7 +220,10 @@ class AutoFitCoordinator
             synchronized(this) {
                 learningJob?.cancel()
                 learningJob = null
-                if (_learning.value != LearningState.Idle) mapController.stopWalk()
+                if (_learning.value != LearningState.Idle) {
+                    cancelledLearning = true
+                    mapController.stopWalk()
+                }
             }
             appScope.launch { analysisLock.withLock { clearBuffer() } }
         }
@@ -214,6 +253,8 @@ class AutoFitCoordinator
                     mapController.walkTo(target, AppConstants.ProfileConstants.WALK_SPEED_MPS)
                     if (!awaitArrival(target)) return
                 }
+                routeEnd = locationRepository.currentPosition.value
+                _learning.value = LearningState.Analysing
                 // The last leg closes on the first idle tick and is analysed after that: wait it out, then the fit is valid or not.
                 delay(2 * AppConstants.TapToWalkConstants.AUTOFIT_FRAME_INTERVAL_MS)
                 withTimeoutOrNull(ANALYSIS_WAIT_MS) { pending.first { it == 0 } }

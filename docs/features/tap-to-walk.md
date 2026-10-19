@@ -28,7 +28,7 @@ Primary path: a stored ground map (see "Automatic fit") that matches the current
 
 No map and no way to learn one (below API 30, spoofing not running idle, game not in front): the tap walks nowhere and a toast says why. A stored map that matches the display but is not valid still resolves when no new map can be learned, because it is the best bearing available. An earlier version fell back to a north-up formula with a hand-set scale. It was removed: the game camera has no north, so the fallback walked a wrong bearing, and the scale asked the player for something they cannot know.
 
-When no valid map exists and learning is possible, the tap does not move the player. The overlay holds the tap pixel and the position it was made at, the coordinator walks its learning route, and the held tap is resolved against the new map and walked. The tap is never resolved against a map the monitor flagged as suspect, when a new one can be learned.
+When no valid map exists and learning is possible, the tap does not move the player. The overlay holds the tap pixel and the position it was made at, the coordinator walks its learning route, and the held tap is resolved against the new map and walked. The tap is never resolved against a map the monitor flagged as suspect, when a new one can be learned. `learnMap` returns a `LearnOutcome`, and only a fresh fit walks the held tap. The fit takes minutes (state `Analysing`, cancellable); if the player teleports or moves meanwhile, the tap is dropped with a "tap again" toast, because walking it would send the player back to the tap-time spot. Cancel is silent: the user asked for it.
 
 Invariants:
 

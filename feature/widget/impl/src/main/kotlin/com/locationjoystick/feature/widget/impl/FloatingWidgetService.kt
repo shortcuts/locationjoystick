@@ -27,6 +27,7 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.location.AutoFitCoordinator
+import com.locationjoystick.core.location.LearnOutcome
 import com.locationjoystick.core.location.LearningState
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationService
@@ -442,7 +443,7 @@ class FloatingWidgetService :
                         if (isTapToWalkEnabled) {
                             add(
                                 WidgetPanelSection
-                                    .TapToWalk(active = isTapToWalkActive, learning = learning is LearningState.Learning, onClick = {
+                                    .TapToWalk(active = isTapToWalkActive, learning = learning != LearningState.Idle, onClick = {
                                         onTapToWalkClicked()
                                     }),
                             )
@@ -623,7 +624,7 @@ class FloatingWidgetService :
     /**
      * A tap with no valid map: the tap pixel is held, [AutoFitCoordinator.learnMap] walks the short learning route
      * (progress and cancel are on the foreground notification and the crosshair button), then the held tap is resolved from the position it was
-     * made at and walked.
+     * made at and walked. Only a fit with the player still at the route end walks it; a move during the analysis would send the player back.
      */
     private fun learnThenWalk(
         pos: LatLng,
@@ -632,11 +633,16 @@ class FloatingWidgetService :
     ) {
         Toast.makeText(this, R.string.tap_to_walk_learning_started, Toast.LENGTH_LONG).show()
         lifecycleScope.launch {
+            val outcome = autoFit.learnMap()
+            if (outcome is LearnOutcome.Cancelled) return@launch // the user asked for it
+            if (outcome is LearnOutcome.Interrupted) {
+                Toast.makeText(this@FloatingWidgetService, R.string.tap_to_walk_learning_interrupted, Toast.LENGTH_LONG).show()
+                return@launch
+            }
             val target =
-                if (autoFit.learnMap() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    val stored = groundCalibration.value
+                if (outcome is LearnOutcome.Fitted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     val bounds = windowManager.maximumWindowMetrics.bounds
-                    stored?.takeIf { it.matches(bounds.width(), bounds.height()) }?.let {
+                    outcome.calibration.takeIf { it.matches(bounds.width(), bounds.height()) }?.let {
                         TapToWalkOverlay.computeGroundWalkTarget(
                             pos,
                             GroundMap(it.calibration, bounds.width().toDouble(), bounds.height().toDouble()),

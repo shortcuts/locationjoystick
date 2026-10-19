@@ -57,6 +57,7 @@
     <string name="widget_feature_open_map_cd">"打开地图"</string>
     <string name="tap_to_walk_overlay_cannot_learn_hint">"尚未学习地图。请打开游戏并保持静止，然后点按。"</string>
     <string name="tap_to_walk_learning_failed">"无法学习地图。请保持游戏打开并重试。"</string>
+    <string name="tap_to_walk_learning_interrupted">"学习已停止，因为你移动了。请再点一次。"</string>
     <string name="tap_to_walk_learning_started">"正在为点击行走学习地图。短暂行走后会前往你点击的位置。"</string>
     <string name="reconnect_failed_channel_name">"配件重新连接"</string>
     <string name="reconnect_failed_title">"配件未能重新连接"</string>

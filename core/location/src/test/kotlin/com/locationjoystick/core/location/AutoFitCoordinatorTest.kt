@@ -27,6 +27,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -231,7 +232,8 @@ class AutoFitCoordinatorTest {
             delay(1)
             assertEquals(FitHealth.None, c.health.value)
 
-            assertTrue(c.learnMap())
+            val outcome = c.learnMap()
+            assertEquals(LearnOutcome.Fitted(stored.value!!), outcome)
 
             assertEquals(FitHealth.Valid, c.health.value)
             assertNotNull(stored.value)
@@ -240,13 +242,69 @@ class AutoFitCoordinatorTest {
             verify(exactly = 0) { mapController.teleportTo(any()) }
         }
 
+    private fun TestScope.learnAsync(c: AutoFitCoordinator): CompletableDeferred<LearnOutcome> {
+        val outcome = CompletableDeferred<LearnOutcome>()
+        backgroundScope.launch { outcome.complete(c.learnMap()) }
+        return outcome
+    }
+
+    @Test
+    fun `cancel during learning returns Cancelled`() =
+        runTest {
+            fakeWalks()
+            val c = coordinator()
+            delay(1)
+            val outcome = learnAsync(c)
+            delay(20_000)
+            c.cancel()
+            assertEquals(LearnOutcome.Cancelled, outcome.await())
+        }
+
+    @Test
+    fun `walk replaced mid-leg returns Interrupted`() =
+        runTest {
+            fakeWalks()
+            val c = coordinator()
+            delay(1)
+            val outcome = learnAsync(c)
+            while (walks.isEmpty()) delay(1000)
+            delay(5_000)
+            locationRepository.setWalkTarget(null) // another walk replaced the leg short of its target
+            assertEquals(LearnOutcome.Interrupted, outcome.await())
+        }
+
+    @Test
+    fun `learning state is Analysing after the last leg arrives`() =
+        runTest {
+            fakeWalks()
+            val c = coordinator()
+            delay(1)
+            val outcome = learnAsync(c)
+            while (c.learning.value != LearningState.Analysing) delay(500)
+            assertEquals(CalibrationWalkMath.LEARNING_BEARINGS_DEG.size, walks.size)
+            outcome.await()
+        }
+
+    @Test
+    fun `learnMap returns Interrupted when the position changed while the fit was analysed`() =
+        runTest {
+            fakeWalks()
+            val c = coordinator()
+            delay(1)
+            val outcome = learnAsync(c)
+            while (c.learning.value != LearningState.Analysing) delay(500)
+            val p = locationRepository.currentPosition.value!!
+            locationRepository.updatePosition(LatLng(p.latitude + 0.01, p.longitude)) // a teleport while the fit runs
+            assertEquals(LearnOutcome.Interrupted, outcome.await())
+        }
+
     @Test
     fun `learning is refused while the game is not in front`() =
         runTest {
             fakeWalks()
             every { source.gameInFront } returns false
             val c = coordinator()
-            assertFalse(c.learnMap())
+            assertEquals(LearnOutcome.NotReady, c.learnMap())
             verify(exactly = 0) { mapController.walkTo(any(), any()) }
         }
 
