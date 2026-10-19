@@ -144,7 +144,7 @@ class ReplayOrchestratorTest {
             orchestrator.handleResume(1.4)
 
             verify(exactly = 1) { routeReplayEngine.start(any(), any(), any(), any(), any(), any(), any(), any()) }
-            verify(exactly = 0) { routeReplayEngine.resume(any(), any()) }
+            verify(exactly = 0) { routeReplayEngine.resume(any(), any(), any()) }
             assertEquals(MockMode.ROUTE_REPLAY, locationRepository.currentMode.value)
             assertEquals(MockLocationState.RUNNING, locationRepository.mockLocationState.value)
         }
@@ -164,7 +164,7 @@ class ReplayOrchestratorTest {
             orchestrator.handlePause()
             orchestrator.handleResume(1.4)
 
-            verify(exactly = 0) { routeReplayEngine.resume(any(), any()) }
+            verify(exactly = 0) { routeReplayEngine.resume(any(), any(), any()) }
             assertEquals(MockMode.ROUTE_REPLAY, locationRepository.currentMode.value)
             planned.complete(listOf(first, last))
             verify(exactly = 1) { routeReplayEngine.start(any(), any(), any(), any(), any(), any(), any(), any()) }
@@ -197,9 +197,9 @@ class ReplayOrchestratorTest {
 
             orchestrator.handleResume(1.4)
 
-            assertEquals(secondTick, locationRepository.currentPosition.value)
+            assertEquals(manualPosition, locationRepository.currentPosition.value)
             verify(exactly = 1) { routeReplayEngine.start(any(), any(), any(), any(), any(), any(), any(), any()) }
-            verify(exactly = 0) { routeReplayEngine.resume(any(), any()) }
+            verify(exactly = 0) { routeReplayEngine.resume(any(), any(), any()) }
         }
 
     @Test
@@ -225,7 +225,7 @@ class ReplayOrchestratorTest {
             assertEquals(listOf(first, last), locationRepository.routeWaypoints.value)
             orchestrator.handleResume(1.4)
             verify(exactly = 1) { routeReplayEngine.pause() }
-            verify(exactly = 1) { routeReplayEngine.resume(any(), any()) }
+            verify(exactly = 1) { routeReplayEngine.resume(any(), any(), any()) }
             verify(exactly = 0) { routeReplayEngine.jumpToNextWaypoint(any(), any()) }
         }
 
@@ -293,7 +293,7 @@ class ReplayOrchestratorTest {
     fun handleResume_emitsRunningState_and_startsEngine() {
         orchestrator.handleResume(1.4)
 
-        verify { routeReplayEngine.resume(any(), any()) }
+        verify { routeReplayEngine.resume(any(), any(), any()) }
         assertTrue(stateChanges.contains(MockLocationState.RUNNING))
     }
 
@@ -308,7 +308,7 @@ class ReplayOrchestratorTest {
 
         verifyOrder {
             routeReplayEngine.jumpToNextWaypoint(any(), any())
-            routeReplayEngine.resume(any(), any())
+            routeReplayEngine.resume(any(), any(), any())
         }
         assertEquals(MockMode.ROUTE_REPLAY, locationRepository.currentMode.value)
         assertEquals(next, locationRepository.currentPosition.value)
@@ -323,9 +323,52 @@ class ReplayOrchestratorTest {
         orchestrator.handleResume(1.4)
 
         verify(exactly = 0) { routeReplayEngine.jumpToNextWaypoint(any(), any()) }
-        verify { routeReplayEngine.resume(any(), any()) }
+        verify { routeReplayEngine.resume(any(), any(), any()) }
         assertEquals(MockLocationState.RUNNING, locationRepository.mockLocationState.value)
     }
+
+    @Test
+    fun handleResume_passesTheSteeredPositionToTheEngine() {
+        val steered = LatLng(5.0, 5.0)
+        locationRepository.setPositionInternal(steered)
+        every { routeReplayEngine.isTeleportBetweenWaypointsActive() } returns false
+
+        orchestrator.handleResume(1.4)
+
+        verify { routeReplayEngine.resume(any(), any(), steered) }
+    }
+
+    @Test
+    fun handleResume_teleportBetweenWaypointsActive_keepsTheHopTargetInsteadOfTheSteeredPosition() {
+        locationRepository.setPositionInternal(LatLng(5.0, 5.0))
+        every { routeReplayEngine.isTeleportBetweenWaypointsActive() } returns true
+        every { routeReplayEngine.jumpToNextWaypoint(any(), any()) } returns LatLng(1.0, 2.0)
+        every { routeReplayEngine.currentProgress() } returns RouteProgress(2, 4)
+
+        orchestrator.handleResume(1.4)
+
+        verify { routeReplayEngine.resume(any(), any(), null) }
+    }
+
+    @Test
+    fun walkToStart_dropsATickComputedBeforeThePause_soResumeDoesNotSnapBack() =
+        runTest {
+            val nextTick = CompletableDeferred<Unit>()
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            coEvery { walkToEngine.walkToOnce(any(), any(), any(), any()) } coAnswers {
+                nextTick.await()
+                arg<suspend (LatLng) -> Unit>(3).invoke(LatLng(9.0, 9.0))
+            }
+            orchestrator.handleEphemeralStart(listOf(LatLng(1.0, 1.0), LatLng(2.0, 2.0)), 1.4)
+            orchestrator.handlePause()
+            val steered = LatLng(5.0, 5.0)
+            locationRepository.setPositionInternal(steered)
+            nextTick.complete(Unit)
+
+            orchestrator.handleResume(1.4)
+
+            assertEquals(steered, locationRepository.currentPosition.value)
+        }
 
     @Test
     fun handleStop_clearsRouteProgress() =
@@ -478,7 +521,7 @@ class ReplayOrchestratorTest {
     fun handleResume_onComplete_doesNotForceIdleState() {
         val onCompleteSlot = slot<() -> Unit>()
         orchestrator.handleResume(1.4)
-        verify { routeReplayEngine.resume(any(), capture(onCompleteSlot)) }
+        verify { routeReplayEngine.resume(any(), capture(onCompleteSlot), any()) }
         stateChanges.clear()
 
         onCompleteSlot.captured.invoke()
@@ -491,7 +534,7 @@ class ReplayOrchestratorTest {
         locationRepository.startSpoofing()
         val onCompleteSlot = slot<() -> Unit>()
         orchestrator.handleResume(1.4)
-        verify { routeReplayEngine.resume(any(), capture(onCompleteSlot)) }
+        verify { routeReplayEngine.resume(any(), capture(onCompleteSlot), any()) }
 
         onCompleteSlot.captured.invoke()
 
@@ -503,7 +546,7 @@ class ReplayOrchestratorTest {
         locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
         val onCompleteSlot = slot<() -> Unit>()
         orchestrator.handleResume(1.4)
-        verify { routeReplayEngine.resume(any(), capture(onCompleteSlot)) }
+        verify { routeReplayEngine.resume(any(), capture(onCompleteSlot), any()) }
 
         onCompleteSlot.captured.invoke()
 
@@ -516,7 +559,7 @@ class ReplayOrchestratorTest {
     fun handleResume_onComplete_zeroesSpeed() {
         val onCompleteSlot = slot<() -> Unit>()
         orchestrator.handleResume(1.4)
-        verify { routeReplayEngine.resume(any(), capture(onCompleteSlot)) }
+        verify { routeReplayEngine.resume(any(), capture(onCompleteSlot), any()) }
         speedChanges.clear()
 
         onCompleteSlot.captured.invoke()
@@ -633,6 +676,10 @@ class ReplayOrchestratorTest {
             coEvery {
                 osrmClient.resolveRoute(any(), LatLng(2.0, 2.0), LatLng(3.0, 3.0), true, any())
             } returns listOf(LatLng(2.0, 2.0), LatLng(3.0, 3.0))
+
+            coEvery { walkToEngine.walkToOnce(any(), any(), any(), any()) } coAnswers {
+                locationRepository.setPositionInternal(secondArg())
+            }
 
             orchestrator.handleStart("route-1", 1.4, RouteStartConfig(followRoadsToStart = true, teleportToStart = false))
 
@@ -1442,8 +1489,8 @@ class ReplayOrchestratorTest {
 
             orchestrator.handleResume(1.4)
 
-            verify { teleportRouteEngine.resume(any(), any()) }
-            verify(exactly = 0) { routeReplayEngine.resume(any(), any()) }
+            verify { teleportRouteEngine.resume(any(), any(), any()) }
+            verify(exactly = 0) { routeReplayEngine.resume(any(), any(), any()) }
         }
 
     @Test

@@ -39,7 +39,7 @@ class RoamingRepository
         }
 
         fun resumeRoaming() {
-            roamingEngine.resumeRoaming()
+            roamingEngine.resumeRoaming(locationRepository.currentPosition.value)
             _isRoamingPaused.value = false
         }
 

@@ -277,12 +277,17 @@ internal class ReplayOrchestrator(
                         locationRepository.emitCompletion("Route complete")
                     }?.let(::tickPosition)
             }
+            // A hop to the next stop has just set the resume position; steering is irrelevant there.
+            val resumeFrom =
+                locationRepository.currentPosition.value
+                    .takeUnless { activeReplayer === routeReplayEngine && routeReplayEngine.isTeleportBetweenWaypointsActive() }
             activeReplayer.resume(
                 onPositionUpdate = ::tickReplayPosition,
                 onComplete = {
                     finishReplay()
                     locationRepository.emitCompletion("Route complete")
                 },
+                resumeFrom = resumeFrom,
             )
             publishProgress()
             Log.i(TAG, "Replay resumed at ${speedMs}m/s")
@@ -618,7 +623,12 @@ internal class ReplayOrchestrator(
         lifecycle.awaitResume(state)
         val startPos = locationRepository.currentPosition.value ?: return
         val onPosition: suspend (LatLng) -> Unit = { position ->
-            lifecycle.runWhenResumed(state) { tickReplayPosition(position) }
+            // The tick was computed before the pause; drop it so the next one starts from the steered position.
+            if (state.paused.value) {
+                lifecycle.awaitResume(state)
+            } else {
+                lifecycle.runWhenResumed(state) { tickReplayPosition(position) }
+            }
         }
         if (!followRoads) {
             walkToEngine.walkToOnce(startPos, target, speedMs, onPosition)
@@ -637,7 +647,7 @@ internal class ReplayOrchestrator(
         locationRepository.setRoadRouteFetchInFlight(false)
         for (i in 0 until legs.size - 1) {
             lifecycle.awaitResume(state)
-            walkToEngine.walkToOnce(legs[i], legs[i + 1], speedMs, onPosition)
+            walkToEngine.walkToOnce(locationRepository.currentPosition.value ?: legs[i], legs[i + 1], speedMs, onPosition)
         }
     }
 

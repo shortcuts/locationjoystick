@@ -141,11 +141,14 @@ class RouteReplayEngine
          *
          * @param onPositionUpdate Callback invoked each tick with new position
          * @param onComplete Callback invoked when replay finishes
+         * @param resumeFrom Position to walk from, when the user moved it while paused
          */
         override fun resume(
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
+            resumeFrom: LatLng?,
         ) {
+            resumeFrom?.let { resumePosition = it }
             launchReplay(onPositionUpdate, onComplete)
             Log.i(TAG, "Replay resumed at index $resumeWaypointIndex")
         }

@@ -2,6 +2,7 @@ package com.locationjoystick.core.data
 
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.calculateBearing
+import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.SpeedProfile
 import io.mockk.every
@@ -9,6 +10,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -354,5 +356,29 @@ class WalkToEngineTest {
             advanceUntilIdle()
 
             assertFalse("onArrival should never run once the walk job has been cancelled", arrivalCalled)
+        }
+
+    @Test
+    fun `walkToOnce continues from a position moved while it ran`() =
+        runTest {
+            val from = LatLng(48.8566, 2.3522)
+            val target = LatLng(48.9000, 2.3522)
+            val steered = LatLng(48.8566, 2.3552)
+            val ticks = mutableListOf<LatLng>()
+
+            val job =
+                backgroundScope.launch {
+                    engine.walkToOnce(from, target, 1.4) { pos ->
+                        ticks.add(pos)
+                        locationRepository.setPositionInternal(if (ticks.size == 1) steered else pos)
+                    }
+                }
+            runCurrent()
+            advanceTimeBy(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
+            runCurrent()
+            job.cancel()
+
+            val moved = haversineDistance(steered, ticks[1])
+            assertTrue("second tick moved $moved m from steered position", moved <= 1.4 * 1.5)
         }
 }

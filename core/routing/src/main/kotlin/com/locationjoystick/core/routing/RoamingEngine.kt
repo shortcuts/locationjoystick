@@ -40,6 +40,8 @@ class RoamingEngine
 
         @Volatile private var isPaused = false
 
+        @Volatile private var resumeFrom: LatLng? = null
+
         /** Live movement speed, read each tick by [walkRouteSegment] so profile changes apply immediately. */
         @Volatile private var currentSpeedMs: Double = 0.0
 
@@ -47,7 +49,8 @@ class RoamingEngine
             isPaused = true
         }
 
-        fun resumeRoaming() {
+        fun resumeRoaming(from: LatLng? = null) {
+            resumeFrom = from
             isPaused = false
         }
 
@@ -195,6 +198,7 @@ class RoamingEngine
             // Reset for this request before launching: a joystick pause after startRoaming
             // returns must survive scheduling and the previous job's asynchronous cleanup.
             isPaused = false
+            resumeFrom = null
             currentSpeedMs = speedMs
 
             val job =
@@ -249,6 +253,7 @@ class RoamingEngine
                     delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
                 }
                 if (!currentCoroutineContext().isActive) break
+                currentPosition = resumeFrom.also { resumeFrom = null } ?: currentPosition
                 val result =
                     routeInterpolator.interpolateAlongRoute(
                         waypoints = route,
@@ -269,6 +274,7 @@ class RoamingEngine
 
         suspend fun stopRoaming() {
             isPaused = false
+            resumeFrom = null
             val job = activeJob
             activeJob = null
             job?.cancelAndJoin()

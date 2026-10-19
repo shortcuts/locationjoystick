@@ -116,7 +116,8 @@ class WalkToEngine
          * Walks from [from] straight toward [target] at a fixed [speedMs], suspending until
          * arrival within [AppConstants.LocationConstants.WALK_ARRIVAL_THRESHOLD_METERS].
          *
-         * Unlike [launchWalkAlongRoute], this has no dependency on
+         * After each tick it continues from [LocationRepository.currentPosition], so joystick
+         * steering during a pause is not undone. Unlike [launchWalkAlongRoute], this has no dependency on
          * [LocationRepository.walkTarget] / [LocationRepository.isWalkPaused] — for callers
          * (e.g. route replay's walk-to-start-of-route phase) that own their own start/stop
          * lifecycle and just need a one-shot walk with no pause support.
@@ -133,6 +134,8 @@ class WalkToEngine
                 current = tick.position
                 onPositionUpdate(current)
                 delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
+                // The user can steer by joystick during a pause; walk on from where they left it.
+                current = locationRepository.currentPosition.value ?: current
             }
         }
 

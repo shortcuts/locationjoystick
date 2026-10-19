@@ -192,4 +192,28 @@ class RouteReplayEnginePauseResumeTest {
 
         assertFalse("should not complete during short test", completed)
     }
+
+    @Test
+    fun `resume from a moved position walks instead of snapping`() {
+        val positions = java.util.concurrent.CopyOnWriteArrayList<LatLng>()
+        engine.start(
+            waypoints = listOf(LatLng(0.0, 0.0), LatLng(0.01, 0.0)),
+            speedMs = 1.4,
+            onPositionUpdate = { positions.add(it) },
+            onComplete = {},
+        )
+        Thread.sleep(1500)
+        engine.pause()
+        Thread.sleep(300)
+        positions.clear()
+
+        val steered = LatLng(0.0, 0.0009)
+        engine.resume(onPositionUpdate = { positions.add(it) }, onComplete = {}, resumeFrom = steered)
+        Thread.sleep(1500)
+        kotlinx.coroutines.runBlocking { engine.stop() }
+
+        val first = positions.first()
+        val metersMoved = kotlin.math.hypot(first.latitude - steered.latitude, first.longitude - steered.longitude) * 111_320.0
+        assertTrue("first tick moved $metersMoved m from steered position", metersMoved <= 1.4 * 1.5)
+    }
 }

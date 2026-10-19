@@ -23,7 +23,7 @@ A new touch past the dead zone pauses automated movement at once. Walk-to, route
 
 For a follower, the same touch turns Follow leader off. The device stays in the group. See [group-sync.md](group-sync.md).
 
-While paused, the stick can steer without changing the activity's mode. Releasing an unlocked stick leaves the activity paused until the user resumes it. A walk resumes toward its retained target.
+While paused, the stick can steer without changing the activity's mode. Releasing an unlocked stick leaves the activity paused until the user resumes it. A walk resumes toward its retained target. A route replay, roam or approach walk resumes by walking back to its retained waypoint from where the stick left the position: snapping back would be a teleport that Hide Teleport must prevent.
 
 ### Lock
 

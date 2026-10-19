@@ -128,4 +128,31 @@ class RoamingEnginePauseStartTest {
                 engine.close()
             }
         }
+
+    @Test
+    fun `resume from a moved position walks instead of snapping`() =
+        runTest {
+            val engine = RoamingEngine(mockk(), RouteInterpolator(), mockk(relaxed = true), StandardTestDispatcher(testScheduler))
+            val positions = mutableListOf<LatLng>()
+            try {
+                engine.startRoaming(config(), 1.4, onPositionUpdate = positions::add)
+                runCurrent()
+                engine.pauseRoaming()
+                advanceTimeBy(3 * interval)
+                runCurrent()
+                positions.clear()
+
+                val steered = LatLng(0.0, 0.001)
+                engine.resumeRoaming(from = steered)
+                advanceTimeBy(interval)
+                runCurrent()
+
+                val moved =
+                    kotlin.math.hypot(positions.first().latitude - steered.latitude, positions.first().longitude - steered.longitude) *
+                        111_320.0
+                assertTrue("first tick moved $moved m from steered position", moved <= 1.4 * interval / 1000.0 * 1.5)
+            } finally {
+                engine.close()
+            }
+        }
 }

@@ -59,9 +59,11 @@ class TeleportRouteEngine
             Log.i(TAG, "Teleport replay started: ${waypoints.size} waypoints looping=$isLooping randomized=$randomizeOrder")
         }
 
+        // Nothing walks in a teleport route, so resumeFrom is unused.
         override fun resume(
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
+            resumeFrom: LatLng?,
         ) {
             launchReplay(onPositionUpdate, onComplete)
             Log.i(TAG, "Teleport replay resumed at index $resumeIndex")

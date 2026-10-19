@@ -16,9 +16,11 @@ interface RouteReplayer {
      */
     fun updateSpeed(speedMs: Double): Float
 
+    /** [resumeFrom] is where the user left the position while paused; the replay walks from it back to the next waypoint. */
     fun resume(
         onPositionUpdate: (LatLng) -> Unit,
         onComplete: () -> Unit,
+        resumeFrom: LatLng? = null,
     )
 
     suspend fun stop()
