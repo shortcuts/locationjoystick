@@ -47,6 +47,8 @@ adb shell settings get secure enabled_accessibility_services   # must list the s
 
 Re-run the grant after any `am force-stop com.locationjoystick.app`. The helper appends to the existing list, so other enabled services stay on.
 
+The same grant lets an agent run the Reconnect accessory check on a device without asking. The service reads the foreground app only from window events, so after the grant background the game and launch it again, or every run ends `GATE_CLOSED`. `adb shell cmd bluetooth_manager disable` makes the companion unreachable and forces `FAILED` runs; `enable` brings it back. Watch `adb logcat -d | grep "Reconnect check"` and `adb shell dumpsys notification --noredact | grep com.locationjoystick.app` (id 1003 is the failure notice). `installDebug` replaces the app, so re-check the grant afterwards.
+
 With the grant in place, Enable Tap to Walk shows "Enable anyway" instead of the Play accessibility disclosure. The disclosure acceptance flag is set only by tapping Accept in the app; adb does not set it.
 
 Check: `./scripts/screenshot-gallery.sh --auto --steps 21` exits 0 and writes `docs/wiki/screenshots/21_screen_access.png` with no `Could not find UI element` warning.
