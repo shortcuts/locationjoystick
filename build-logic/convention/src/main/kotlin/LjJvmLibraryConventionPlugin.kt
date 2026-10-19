@@ -21,6 +21,9 @@ class LjJvmLibraryConventionPlugin : Plugin<Project> {
             extensions.configure<KotlinJvmProjectExtension> {
                 compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
             }
+
+            // `make test` and CI run `testRelease`; a JVM module has no such task, so Gradle would skip it.
+            tasks.register("testRelease") { dependsOn("test") }
         }
     }
 }
