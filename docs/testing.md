@@ -53,6 +53,17 @@ With the grant in place, Enable Tap to Walk shows "Enable anyway" instead of the
 
 Check: `./scripts/screenshot-gallery.sh --auto --steps 21` exits 0 and writes `docs/wiki/screenshots/21_screen_access.png` with no `Could not find UI element` warning.
 
+## Live check: resume after joystick steering
+
+Proves that Resume walks back from the steered position instead of snapping. Positions come from `adb shell dumpsys location | grep -m1 "last mock location"`; `adb logcat` shows no per-tick position and may miss the "Replay paused" line.
+
+1. Wake and swipe up to unlock. Run `adb shell appops set com.locationjoystick.app android:mock_location allow`, then `installDebug` and start spoofing from the Home "Start" action.
+2. Start a route from Routes (play, then Start). The widget launcher is the compass bubble at the screen edge. A tap expands its panel; the joystick toggle is the second icon. Dragging the bubble moves the whole overlay, so never start a drag on it.
+3. With the stick visible, hold a swipe from the stick centre, for example `adb shell input swipe X Y X Y-90 45000`. A 45 s hold moves the position about 12 m at walking speed: speed, not distance, limits the test. The route row then shows play instead of pause.
+4. Record the position, tap the route row's play (or, for roaming, the compass in the panel and then the green play in its sub-menu), and sample the position every second.
+
+Pass: the first sample after Resume equals the steered position and later samples advance by about one speed step per second, with no jump back to the pre-pause position. Verified on route replay and on roaming.
+
 ## Tap-to-walk global smoke gate
 
 On-device regression gate for tap-to-walk landing: 20 fixed locations across the globe, 12 scored taps each.
