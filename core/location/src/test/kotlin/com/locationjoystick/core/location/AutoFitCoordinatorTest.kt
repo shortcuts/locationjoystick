@@ -158,6 +158,7 @@ class AutoFitCoordinatorTest {
         it.nowMs = { currentTime }
         it.analysisDispatcher = UnconfinedTestDispatcher(testScheduler)
         it.ioDispatcher = UnconfinedTestDispatcher(testScheduler) // file writes in virtual time, so ticks stay 3 s apart
+        it.freeBytes = { Long.MAX_VALUE } // the real disk may sit under the free-space floor
         it.measure = { leg, fx, fy, w, h -> fakeMeasure(leg, fx, fy, w, h) }
         it.fullFit = { _, _, _, _ -> fullFit }
         it.observe(serviceScope)
