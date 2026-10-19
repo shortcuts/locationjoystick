@@ -19,7 +19,7 @@ The service restarts itself with no intent after the system kills it, so the spo
 
 Route replay and walk-to can slow down when the screen locks, because some devices throttle background apps. While spoofing is active, the service holds a partial wake lock, so these engines keep advancing.
 
-The lock is taken when spoofing starts, and released on stop, on park, and on destroy. Holding it while idle would drain the battery for nothing.
+The lock is taken when spoofing starts, and released on stop, on park, on destroy, and when spoofing ends in an error. A second acquire keeps the first lock, so a retry from error or pause never leaks one. Holding it while idle would drain the battery for nothing.
 
 Parking keeps the service running. A parked widget must not race a dead service when the user taps Start again. A restart of a parked service stays parked, so the phone does not start spoofing on its own. A group leader's stop keeps the service running too, because the sync server must keep serving followers. See [widget.md](widget.md), "Pause and stop".
 

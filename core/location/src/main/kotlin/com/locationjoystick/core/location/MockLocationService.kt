@@ -151,8 +151,10 @@ class MockLocationService : Service() {
         getSystemService(android.app.NotificationManager::class.java)
     }
 
+    internal var powerManagerOverride: PowerManager? = null
+
     private val powerManager: PowerManager by lazy {
-        getSystemService(PowerManager::class.java)
+        powerManagerOverride ?: getSystemService(PowerManager::class.java)
     }
 
     /** Held only while actively spoofing (RUNNING/PAUSED) — works around Doze/Adaptive Battery
@@ -162,7 +164,7 @@ class MockLocationService : Service() {
     private val exceptionHandler =
         CoroutineExceptionHandler { _, throwable ->
             Log.e(TAG, "MockLocationService coroutine crashed", throwable)
-            _state.value = MockLocationState.ERROR
+            setError()
         }
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + exceptionHandler)
 
@@ -770,8 +772,16 @@ class MockLocationService : Service() {
         Log.i(TAG, "Spoofing started at ($lat, $lon)")
     }
 
-    private fun acquireWakeLock() {
+    internal fun acquireWakeLock() {
+        if (wakeLock?.isHeld == true) return
         wakeLock = acquireSpoofingWakeLock(powerManager)
+    }
+
+    // The crash handler can fire before Hilt injects the repository.
+    private fun setError() {
+        _state.value = MockLocationState.ERROR
+        if (::locationRepository.isInitialized) locationRepository.reportError()
+        releaseWakeLock()
     }
 
     private fun releaseWakeLock() {
@@ -1157,7 +1167,7 @@ class MockLocationService : Service() {
 
     private fun handleReplayJumpPrevious() = replayOrchestrator.handleJumpToPreviousWaypoint()
 
-    private fun setupTestProvider() {
+    internal fun setupTestProvider() {
         if (providerAdded) return
         // Attempt to remove any ghost provider left by a previous crash. If the process was killed
         // mid-run the provider may still be registered under our package, causing addTestProvider
@@ -1195,10 +1205,10 @@ class MockLocationService : Service() {
             Log.i(TAG, "Test provider registered")
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Failed to add test provider — another app may hold the slot", e)
-            _state.value = MockLocationState.ERROR
+            setError()
         } catch (e: SecurityException) {
             Log.e(TAG, "Missing mock location permission", e)
-            _state.value = MockLocationState.ERROR
+            setError()
         }
     }
 
@@ -1340,6 +1350,20 @@ class MockLocationService : Service() {
         )
     }
 
+    internal fun applyFixOrFail(
+        fix: LocationFix,
+        nowNanos: Long,
+    ) {
+        try {
+            applyToProvider(fix, nowNanos)
+        } catch (e: SecurityException) {
+            // Not unregistered: removeTestProvider would throw the same SecurityException.
+            Log.e(TAG, "Mock location app revoked mid-session", e)
+            providerAdded = false
+            setError()
+        }
+    }
+
     /**
      * Android adapter — the only place that touches [android.location.Location] APIs. Translates
      * the pure [LocationFix] into a test provider location update.
@@ -1413,7 +1437,7 @@ class MockLocationService : Service() {
                 lastNonZeroBearing = snapshot.bearing
                 hasEverMoved = true
             }
-            applyToProvider(fix, nowNanos)
+            applyFixOrFail(fix, nowNanos)
             if (shouldPersistLastLocation(lastPersistedLocationMs, nowMs)) {
                 lastPersistedLocationMs = nowMs
                 val pos = positionRef.get()
