@@ -168,6 +168,8 @@ Open work, in order:
 
 The accessibility disclosure also covers Reconnect accessory ([bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)). Accepting from the Tap to Walk switch does not set the reconnect acceptance. Reconnect asks for its own acceptance only while neither is accepted; once the accessibility choice is accepted, it records the reconnect acceptance without a dialog.
 
+Both features share one screenshot budget ([bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)): every screenshot is serialized and spaced, because the platform rejects shots taken too close together.
+
 ## Guided path
 
 On the Pikmin Bloom path the Tap to Walk section is removed from the settings tree. The stored setting is untouched. See [guided-paths.md](guided-paths.md).

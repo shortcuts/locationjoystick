@@ -47,6 +47,20 @@ class ReconnectControlDetectorTest {
         assertNearControl(c)
     }
 
+    @Test
+    fun `detect on a cropped region with offset returns the same control as the full frame`() {
+        for (path in listOf("reconnect/hud_on_night.png", "reconnect/hud_off_night.png")) {
+            val s = load(path)
+            val x0 = ReconnectControlDetector.searchX0(s.width)
+            val y1 = ReconnectControlDetector.searchY1(s.height)
+            val stride = s.width - x0
+            val cropped = IntArray(stride * y1) { s.pixels[(it / stride) * s.width + x0 + it % stride] }
+            val full = checkNotNull(ReconnectControlDetector.detect(s.pixels, s.width, s.height))
+            val crop = checkNotNull(ReconnectControlDetector.detect(cropped, s.width, s.height, cropX = x0))
+            assertEquals(path, full, crop)
+        }
+    }
+
     private fun mapped(
         path: String,
         f: (Int, Int, Int) -> Triple<Int, Int, Int>,

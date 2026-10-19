@@ -661,6 +661,11 @@ object AppConstants {
         const val TAP_CLAMP_WIDTH_FRACTION = 0.025f
     }
 
+    object ScreenshotConstants {
+        // The platform rejects screenshots closer than ~333 ms; 350 ms adds margin.
+        const val MIN_GAP_MS = 350L
+    }
+
     object FollowerRestorationConstants {
         /** Initial retry delay in milliseconds */
         const val INITIAL_RETRY_DELAY_MS = 500L

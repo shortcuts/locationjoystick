@@ -33,14 +33,25 @@ object ReconnectControlDetector {
     private const val MIN_HALF_ASPECT = 0.2f
     private const val MAX_HALF_ASPECT = 0.6f
 
+    /** First screen column and one past the last row of the search window; the caller crops to these. */
+    fun searchX0(width: Int): Int = (width * ReconnectTapConstants.SEARCH_X_MIN_PCT).toInt()
+
+    fun searchY1(height: Int): Int = (height * ReconnectTapConstants.SEARCH_Y_MAX_PCT).toInt()
+
+    /**
+     * [cropX] is the screen column of `pixels[0]`: a caller may pass only the columns from [searchX0] on
+     * (row stride `width - cropX`, row 0 is screen row 0). Results stay in screen coordinates.
+     */
     fun detect(
         pixels: IntArray,
         width: Int,
         height: Int,
+        cropX: Int = 0,
     ): ReconnectControl? {
-        val x0 = (width * ReconnectTapConstants.SEARCH_X_MIN_PCT).toInt()
-        val y1 = (height * ReconnectTapConstants.SEARCH_Y_MAX_PCT).toInt()
-        val flats = flatRegions(pixels, width, x0, y1)
+        val x0 = searchX0(width)
+        val y1 = searchY1(height)
+        require(cropX <= x0) { "cropX $cropX is right of the search window at $x0" }
+        val flats = flatRegions(pixels, width, x0, y1, cropX)
         val halves =
             flats.filter {
                 it.width >= width * MIN_HALF_WIDTH &&
@@ -136,14 +147,16 @@ object ReconnectControlDetector {
         width: Int,
         x0: Int,
         y1: Int,
+        cropX: Int,
     ): List<Flat> {
         val w = width - x0
+        val stride = width - cropX
         if (w <= 0 || y1 <= 0) return emptyList()
 
         fun at(
             x: Int,
             y: Int,
-        ) = pixels[y * width + x0 + x]
+        ) = pixels[y * stride + (x0 - cropX) + x]
 
         fun close(
             a: Int,

@@ -92,6 +92,8 @@ Settings shows the last check's result because the loop is invisible otherwise. 
 - Play review of the gesture capability (see above).
 - Target app changes: a HUD move or colour change needs the region re-measured. Unknown prevents false taps, but reconnect stops until fixed; the not-found notification (see "Failure notification") tells the user.
 
+Both features share one screenshot budget ([tap-to-walk.md](tap-to-walk.md)): every screenshot is serialized and spaced, because the platform rejects shots taken too close together. Reconnect reads only the detector's search region, off the main thread.
+
 ## Guided path
 
 On the Pikmin Bloom path the Reconnect accessory section is hidden. The stored setting is untouched. See [guided-paths.md](guided-paths.md).

@@ -9,9 +9,11 @@ import android.graphics.Bitmap
 import android.graphics.Path
 import android.os.Build
 import android.os.PowerManager
+import android.os.SystemClock
 import android.util.Log
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
+import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.resume
 
@@ -119,6 +122,20 @@ class ScreenAccessibilityService :
         }
     }
 
+    /** Reads only the detector's search window (~16% of the frame) so the heap stays free for the auto-fit analysis. */
+    private fun detectControl(bitmap: Bitmap): ReconnectControl? {
+        val soft = if (bitmap.config == Bitmap.Config.HARDWARE) bitmap.copy(Bitmap.Config.ARGB_8888, false) else bitmap
+        val w = soft.width
+        val x0 = ReconnectControlDetector.searchX0(w)
+        val h = soft.height
+        val y1 = ReconnectControlDetector.searchY1(h)
+        val pixels = IntArray((w - x0) * y1)
+        soft.getPixels(pixels, 0, w - x0, x0, 0, w - x0, y1)
+        if (soft !== bitmap) soft.recycle()
+        bitmap.recycle()
+        return ReconnectControlDetector.detect(pixels, w, h, cropX = x0)
+    }
+
     private suspend fun runReconnectCheck() {
         val result =
             runReconnectTap(
@@ -126,16 +143,8 @@ class ScreenAccessibilityService :
                 gate = { reconnectGateOpen(getSystemService(PowerManager::class.java).isInteractive, foregroundPackage) },
                 capture = {
                     val bitmap = takeScreenshotBitmap()
-                    val control =
-                        bitmap?.let {
-                            val soft = if (it.config == Bitmap.Config.HARDWARE) it.copy(Bitmap.Config.ARGB_8888, false) else it
-                            val pixels = IntArray(soft.width * soft.height)
-                            soft.getPixels(pixels, 0, soft.width, 0, 0, soft.width, soft.height)
-                            val detected = ReconnectControlDetector.detect(pixels, soft.width, soft.height)
-                            if (soft !== it) soft.recycle()
-                            it.recycle()
-                            detected
-                        }
+                    // The main thread draws the overlays: copy, read and scan elsewhere.
+                    val control = bitmap?.let { withContext(Dispatchers.Default) { detectControl(it) } }
                     Log.d(TAG, "Reconnect read: ${control?.state ?: "NONE"}")
                     control
                 },
@@ -254,12 +263,20 @@ class ScreenAccessibilityService :
         return GrayImage(w, h, gray)
     }
 
+    private val screenshotPacer =
+        ScreenshotPacer(AppConstants.ScreenshotConstants.MIN_GAP_MS, SystemClock::elapsedRealtime)
+
     private suspend fun takeScreenshotBitmap(): Bitmap? {
         // Unreachable in practice — onServiceConnected() never binds below API 30 — but
         // takeScreenshot() itself requires API 30, so lint needs an inline SDK_INT check here
         // too (it doesn't trace version guards through a delegated boolean function).
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
-        return suspendCancellableCoroutine { cont ->
+        return screenshotPacer.paced { shoot() }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    private suspend fun shoot(): Bitmap? =
+        suspendCancellableCoroutine { cont ->
             try {
                 takeScreenshot(
                     Display.DEFAULT_DISPLAY,
@@ -271,7 +288,7 @@ class ScreenAccessibilityService :
                                     Bitmap.wrapHardwareBuffer(it, null)
                                 }
                             screenshot.hardwareBuffer?.close()
-                            cont.resume(bmp)
+                            cont.resume(bmp) { bmp?.recycle() }
                         }
 
                         override fun onFailure(errorCode: Int) {
@@ -285,5 +302,4 @@ class ScreenAccessibilityService :
                 cont.resume(null)
             }
         }
-    }
 }
