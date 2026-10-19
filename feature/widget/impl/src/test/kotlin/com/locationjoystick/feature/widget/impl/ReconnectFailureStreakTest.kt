@@ -22,8 +22,24 @@ class ReconnectFailureStreakTest {
     }
 
     @Test
-    fun `not off neither counts nor resets`() {
-        assertEquals(listOf(false, false, false, true), run(FAILED, NOT_OFF, FAILED, FAILED))
+    fun `not off re-arms`() {
+        assertEquals(
+            listOf(false, false, true, false, false, false, true),
+            run(FAILED, FAILED, FAILED, NOT_OFF, FAILED, FAILED, FAILED),
+        )
+    }
+
+    @Test
+    fun `reset re-arms both streaks`() {
+        val failures = ReconnectFailureStreak()
+        repeat(3) { failures.record(FAILED) }
+        failures.reset()
+        assertEquals(listOf(false, false, true), List(3) { failures.record(FAILED) })
+        val n = AppConstants.ReconnectTapConstants.NOT_FOUND_NOTIFY_THRESHOLD
+        val misses = ReconnectNotFoundStreak()
+        repeat(n) { misses.record(NOT_FOUND) }
+        misses.reset()
+        assertEquals(List(n - 1) { false } + true, List(n) { misses.record(NOT_FOUND) })
     }
 
     @Test

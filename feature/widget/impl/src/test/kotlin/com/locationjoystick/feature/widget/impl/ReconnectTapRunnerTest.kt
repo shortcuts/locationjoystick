@@ -44,7 +44,7 @@ class ReconnectTapRunnerTest {
     @Test
     fun `on null or flapping first reads never tap`() =
         runTest {
-            for (script in listOf(listOf(on), listOf(off, on), listOf(off, null))) {
+            for (script in listOf(listOf(on), listOf(off, on))) {
                 val taps = Taps()
                 val result =
                     runReconnectTap(1080, reads(*script.toTypedArray()), { _, _, _ ->
@@ -54,6 +54,46 @@ class ReconnectTapRunnerTest {
                 assertEquals(ReconnectRunResult.NOT_OFF, result)
                 assertEquals(0, taps.count)
             }
+        }
+
+    @Test
+    fun `off then null second read is not found`() =
+        runTest {
+            val taps = Taps()
+            val result = runReconnectTap(1080, reads(off, null), { _, _, _ -> taps.count++ >= 0 })
+            assertEquals(ReconnectRunResult.NOT_FOUND, result)
+            assertEquals(0, taps.count)
+        }
+
+    @Test
+    fun `null after a tap then on reconnects without another tap`() =
+        runTest {
+            val taps = Taps()
+            val result = runReconnectTap(1080, reads(off, off, off, null, on), { _, _, _ -> taps.count++ >= 0 })
+            assertEquals(ReconnectRunResult.RECONNECTED, result)
+            assertEquals(1, taps.count)
+        }
+
+    @Test
+    fun `undelivered taps are neutral`() =
+        runTest {
+            var taps = 0
+            val result =
+                runReconnectTap(1080, reads(off), { _, _, _ ->
+                    taps++
+                    false
+                })
+            assertEquals(ReconnectRunResult.GATE_CLOSED, result)
+            assertEquals(3, taps)
+        }
+
+    @Test
+    fun `one undelivered then delivered tap fails normally`() =
+        runTest {
+            var taps = 0
+            val result = runReconnectTap(1080, reads(off), { _, _, _ -> ++taps > 1 })
+            assertEquals(ReconnectRunResult.FAILED, result)
+            assertEquals(3, taps)
         }
 
     @Test
@@ -151,7 +191,7 @@ class ReconnectTapRunnerTest {
         runTest {
             val taps = Taps()
             val result = runReconnectTap(1080, reads(off, off, null), { _, _, _ -> taps.count++ >= 0 })
-            assertEquals(ReconnectRunResult.NOT_OFF, result)
+            assertEquals(ReconnectRunResult.NOT_FOUND, result)
             assertEquals(0, taps.count)
         }
 

@@ -15,18 +15,22 @@ import kotlin.random.Random
 
 /**
  * Counts consecutive FAILED runs; [record] returns true once per streak when it is time to tell the
- * user. NOT_OFF is neutral (an absent control looks the same as connected); RECONNECTED re-arms.
+ * user. NOT_OFF (the control read ON) and RECONNECTED re-arm; NOT_FOUND and GATE_CLOSED are neutral.
  */
 internal class ReconnectFailureStreak {
     private var failures = 0
     private var notified = false
 
+    fun reset() {
+        failures = 0
+        notified = false
+    }
+
     fun record(result: ReconnectRunResult): Boolean {
         when (result) {
-            ReconnectRunResult.NOT_OFF, ReconnectRunResult.NOT_FOUND, ReconnectRunResult.GATE_CLOSED -> return false
-            ReconnectRunResult.RECONNECTED -> {
-                failures = 0
-                notified = false
+            ReconnectRunResult.NOT_FOUND, ReconnectRunResult.GATE_CLOSED -> return false
+            ReconnectRunResult.RECONNECTED, ReconnectRunResult.NOT_OFF -> {
+                reset()
                 return false
             }
             ReconnectRunResult.FAILED -> failures++
@@ -45,10 +49,14 @@ internal class ReconnectNotFoundStreak {
     private var misses = 0
     private var notified = false
 
+    fun reset() {
+        misses = 0
+        notified = false
+    }
+
     fun record(result: ReconnectRunResult): Boolean {
         if (result != ReconnectRunResult.NOT_FOUND) {
-            misses = 0
-            notified = false
+            reset()
             return false
         }
         misses++
@@ -126,7 +134,8 @@ private class GateClosed : RuntimeException()
 /**
  * One reconnect run. Taps only on a fresh OFF read: two OFF reads, then up to MAX_TAPS taps, each
  * preceded by a read taken after the pre-tap pause (ON ends the run, null never taps) and followed by
- * a poll window; a retap needs every poll read OFF. An absent or unknown control (null) never taps.
+ * a poll window; a retap needs every poll read OFF. A null read before a delivered tap is NOT_FOUND, so NOT_OFF always
+ * means the control read ON. A null poll is unknown: it never retaps. Undelivered taps do not count; a run with none is GATE_CLOSED.
  */
 internal suspend fun runReconnectTap(
     screenWidth: Int,
@@ -156,26 +165,37 @@ private suspend fun runGated(
     val first = capture() ?: return ReconnectRunResult.NOT_FOUND
     if (first.state != ReconnectState.OFF) return ReconnectRunResult.NOT_OFF
     delay(ReconnectTapConstants.CONFIRM_DELAY_MS)
-    capture()?.takeIf { it.state == ReconnectState.OFF } ?: return ReconnectRunResult.NOT_OFF
+    val second = capture() ?: return ReconnectRunResult.NOT_FOUND
+    if (second.state != ReconnectState.OFF) return ReconnectRunResult.NOT_OFF
 
-    repeat(ReconnectTapConstants.MAX_TAPS) { attempt ->
+    var delivered = false
+    repeat(ReconnectTapConstants.MAX_TAPS) { _ ->
         delay(random.nextLong(ReconnectTapConstants.PRE_TAP_DELAY_MIN_MS, ReconnectTapConstants.PRE_TAP_DELAY_MAX_MS + 1))
         // The companion may have connected during the pause: re-read so a tap never lands on ON.
         val control =
             capture()
-                ?: return if (attempt == 0) ReconnectRunResult.NOT_OFF else ReconnectRunResult.FAILED
+                ?: return if (delivered) ReconnectRunResult.FAILED else ReconnectRunResult.NOT_FOUND
         if (control.state == ReconnectState.ON) return ReconnectRunResult.RECONNECTED
         val (x, y) = jitteredTapPoint(control, screenWidth, random)
-        tap(x, y, random.nextLong(ReconnectTapConstants.GESTURE_MIN_MS, ReconnectTapConstants.GESTURE_MAX_MS + 1))
+        // A cancelled or rejected gesture never touched the game: no settle, no polls, no count.
+        if (!tap(x, y, random.nextLong(ReconnectTapConstants.GESTURE_MIN_MS, ReconnectTapConstants.GESTURE_MAX_MS + 1))) return@repeat
+        delivered = true
         delay(ReconnectTapConstants.SETTLE_DELAY_MS)
         // A slow connect still reads OFF for a few seconds; retap only if every poll read is OFF.
+        var unknown = false
         repeat(ReconnectTapConstants.SETTLE_POLL_READS) { read ->
-            val after = capture() ?: return ReconnectRunResult.FAILED
-            if (after.state == ReconnectState.ON) return ReconnectRunResult.RECONNECTED
+            val after = capture()
+            if (after == null) {
+                unknown = true
+            } else if (after.state == ReconnectState.ON) {
+                return ReconnectRunResult.RECONNECTED
+            }
             if (read < ReconnectTapConstants.SETTLE_POLL_READS - 1) delay(ReconnectTapConstants.SETTLE_POLL_INTERVAL_MS)
         }
+        // An unknown poll may hide an ON control: stop instead of tapping it.
+        if (unknown) return ReconnectRunResult.FAILED
     }
-    return ReconnectRunResult.FAILED
+    return if (delivered) ReconnectRunResult.FAILED else ReconnectRunResult.GATE_CLOSED
 }
 
 /** Loop gate: setting, both disclosures, and a guided path that still shows the feature (docs/features/guided-paths.md). */

@@ -52,6 +52,8 @@ The policy exists to avoid a tap that turns a connected companion off.
 - Tap only when the control reads off, confirmed by two screenshots a short time apart.
 - After a tap, wait, then read the control several times. Stop as soon as it reads on. Tap again only when every read is still off.
 - Take a fresh read right before each tap. A companion that connects during the pause must not be tapped away.
+- A read that returns nothing is unknown, never "connected". Before the first tap it ends the run as `NOT_FOUND`. After a tap it keeps the poll going and never retaps, because the control may already read on. `FAILED` needs a delivered tap and no on read.
+- A tap the system cancels or rejects (for example a finger on the screen) does not count. A run with no delivered tap ends as `GATE_CLOSED`, so it stays neutral.
 - A small maximum number of taps per run. Abort and report after that.
 - The pause, tap position and gesture duration are randomised within bounds, so taps do not repeat the same timing. Tune them only against reliability evidence.
 
@@ -79,7 +81,7 @@ A `FAILED` run means the tap did not bring the companion back, so it is probably
 
 ## Failure notification
 
-The check runs in the background, so the user cannot see it fail. `ReconnectFailureStreak` counts consecutive `FAILED` runs and tells the service to post one notification per streak. `NOT_OFF` is neutral: an absent or unknown control looks the same as "connected" or "left the game", so counting it would warn users who simply closed the game. A `RECONNECTED` run re-arms the streak. The streak is in memory only; a process restart at worst delays one notification. `ReconnectNotFoundStreak` covers the case NOT_OFF hides: the game is in front (the gate) yet the first read finds no control for `NOT_FOUND_NOTIFY_THRESHOLD` checks in a row, which means the HUD moved or the colours changed and reconnect has silently stopped. It posts one notification per streak on the same channel; any other result, including a closed gate, re-arms it. Also in memory only. The notification has its own channel because the foreground-service channels are silent or hidden.
+The check runs in the background, so the user cannot see it fail. `ReconnectFailureStreak` counts consecutive `FAILED` runs and tells the service to post one notification per streak. `NOT_OFF` means the control read on, so it re-arms the streak like `RECONNECTED`: a user who reconnects by hand must not carry old failures into the next outage. `NOT_FOUND` and `GATE_CLOSED` stay neutral, so a closed game never warns. Both streaks also reset when the loop turns off. The service cancels the failed notice on `RECONNECTED` or `NOT_OFF`, and the not-found notice whenever the control is found again. Turning the loop off or unbinding cancels both, so no stale notice outlives its cause. The streak is in memory only; a process restart at worst delays one notification. `ReconnectNotFoundStreak` covers the case NOT_OFF hides: the game is in front (the gate) yet the first read finds no control for `NOT_FOUND_NOTIFY_THRESHOLD` checks in a row, which means the HUD moved or the colours changed and reconnect has silently stopped. It posts one notification per streak on the same channel; any other result, including a closed gate, re-arms it. Also in memory only. The notification has its own channel because the foreground-service channels are silent or hidden.
 
 ## Status line
 

@@ -22,6 +22,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.ScreenAccessibilityServiceBridge
 import com.locationjoystick.core.location.ScreenCaptureSource
 import com.locationjoystick.core.model.GrayImage
+import com.locationjoystick.core.model.ReconnectRunResult
 import com.locationjoystick.core.model.ReconnectStatus
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -44,6 +45,8 @@ class ScreenAccessibilityService :
     ScreenAccessibilityServiceBridge {
     companion object {
         private const val TAG = "ScreenAccessibilitySvc"
+        private const val ID_FAILED = AppConstants.NotificationConstants.ID_RECONNECT_FAILED
+        private const val ID_NOT_FOUND = AppConstants.NotificationConstants.ID_RECONNECT_NOT_FOUND
 
         /**
          * `takeScreenshot(int, Executor, TakeScreenshotCallback)` requires API 30 — no fallback exists.
@@ -111,7 +114,12 @@ class ScreenAccessibilityService :
                 ::reconnectLoopActive,
             ).distinctUntilChanged()
                 .collectLatest { active ->
-                    if (!active) screenCaptureSource.reportReconnect(null)
+                    if (!active) {
+                        screenCaptureSource.reportReconnect(null)
+                        failureStreak.reset()
+                        notFoundStreak.reset()
+                        cancelReconnectNotifications()
+                    }
                     while (active) {
                         delay(backoff.delayMs)
                         guardedReconnectCheck(
@@ -162,20 +170,32 @@ class ScreenAccessibilityService :
         Log.d(TAG, "Reconnect check: $result")
         screenCaptureSource.reportReconnect(ReconnectStatus(result, System.currentTimeMillis()))
         backoff.record(result)
+        // A notice is stale once the accessory is back (ON read) or the control is seen again.
+        if (result == ReconnectRunResult.RECONNECTED || result == ReconnectRunResult.NOT_OFF) cancelReconnectNotification(ID_FAILED)
+        if (result == ReconnectRunResult.RECONNECTED || result == ReconnectRunResult.NOT_OFF || result == ReconnectRunResult.FAILED) {
+            cancelReconnectNotification(ID_NOT_FOUND)
+        }
         if (failureStreak.record(result)) {
             postReconnectNotification(
                 R.string.reconnect_failed_title,
                 R.string.reconnect_failed_text,
-                AppConstants.NotificationConstants.ID_RECONNECT_FAILED,
+                ID_FAILED,
             )
         }
         if (notFoundStreak.record(result)) {
             postReconnectNotification(
                 R.string.reconnect_not_found_title,
                 R.string.reconnect_not_found_text,
-                AppConstants.NotificationConstants.ID_RECONNECT_NOT_FOUND,
+                ID_NOT_FOUND,
             )
         }
+    }
+
+    private fun cancelReconnectNotification(id: Int) = NotificationManagerCompat.from(this).cancel(id)
+
+    private fun cancelReconnectNotifications() {
+        cancelReconnectNotification(ID_FAILED)
+        cancelReconnectNotification(ID_NOT_FOUND)
     }
 
     private fun postReconnectNotification(
@@ -234,6 +254,7 @@ class ScreenAccessibilityService :
 
     override fun onUnbind(intent: android.content.Intent?): Boolean {
         screenCaptureSource.unbind()
+        cancelReconnectNotifications()
         serviceScope.cancel()
         Log.d(TAG, "Service unbound")
         return false
