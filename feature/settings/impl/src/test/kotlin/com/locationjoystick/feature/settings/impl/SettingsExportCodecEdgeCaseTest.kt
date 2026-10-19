@@ -14,6 +14,7 @@ import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.Waypoint
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -402,5 +403,13 @@ class SettingsExportCodecEdgeCaseTest {
         val restored = SettingsExportCodec.parseExportData(SettingsExportCodec.serializeExportData(data))
 
         assertEquals(SpeedUnit.MPH, restored.settings.speedUnit)
+    }
+
+    @Test
+    fun `json without schemaVersion is rejected`() {
+        assertThrows(IllegalArgumentException::class.java) { SettingsExportCodec.parseExportData("{}") }
+        assertThrows(IllegalArgumentException::class.java) {
+            SettingsExportCodec.parseExportData("""{"version":1,"favorites":[],"routes":[]}""")
+        }
     }
 }

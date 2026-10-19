@@ -193,7 +193,8 @@ internal object SettingsExportCodec {
 
     fun parseExportData(json: String): ExportData {
         val root = JSONObject(json)
-        val schemaVersion = root.optInt("schemaVersion", AppConstants.ExportConstants.SCHEMA_VERSION)
+        require(root.has("schemaVersion")) { "Not a backup file: schemaVersion is missing" }
+        val schemaVersion = root.getInt("schemaVersion")
         if (schemaVersion < 1 || schemaVersion > AppConstants.ExportConstants.SCHEMA_VERSION) {
             throw IllegalArgumentException("Unsupported schema version: $schemaVersion")
         }
