@@ -179,6 +179,7 @@ class MockLocationService : Service() {
 
     /** Async job for follower restoration with NSD discovery retries on device boot. */
     private var followerRestorationJob: Job? = null
+    internal var followerRediscoveryJob: Job? = null
 
     private val _state = MutableStateFlow(MockLocationState.IDLE)
     val state: StateFlow<MockLocationState> = _state.asStateFlow()
@@ -926,24 +927,7 @@ class MockLocationService : Service() {
                 groupId,
                 onGroupLost = {
                     Log.w(TAG, "Group $groupId lost — attempting NSD re-discovery before giving up")
-                    serviceScope.launch {
-                        var resolved: Pair<String, Int>? = null
-                        for (attempt in 0..AppConstants.SyncConstants.NSD_REDISCOVERY_RETRY_COUNT) {
-                            resolved = groupNsdManager.discoverByCode(groupId)
-                            if (resolved != null) break
-                            Log.w(TAG, "NSD re-discovery attempt $attempt failed for group $groupId")
-                        }
-                        if (resolved != null) {
-                            val (newHost, newPort) = resolved
-                            Log.i(TAG, "Re-discovered group $groupId at $newHost:$newPort — reconnecting")
-                            enterFollowerMode(newHost, newPort, groupId)
-                        } else {
-                            Log.w(TAG, "NSD re-discovery exhausted for group $groupId — leaving group")
-                            exitFollowerMode()
-                            groupRepository.leaveGroup()
-                            groupRepository.emitGroupLost()
-                        }
-                    }
+                    rediscoverFollowerGroup(groupId)
                 },
             ) { update ->
                 val (lat, lon, speedMs, bearing, active) = update
@@ -985,6 +969,36 @@ class MockLocationService : Service() {
             }
             Log.i(TAG, "Entered FOLLOWER mode for group $groupId at $host:$port")
         }
+    }
+
+    internal fun rediscoverFollowerGroup(
+        groupId: String,
+        reenter: (host: String, port: Int) -> Unit = { host, port -> enterFollowerMode(host, port, groupId) },
+    ) {
+        followerRediscoveryJob =
+            serviceScope.launch {
+                var resolved: Pair<String, Int>? = null
+                for (attempt in 0..AppConstants.SyncConstants.NSD_REDISCOVERY_RETRY_COUNT) {
+                    resolved = groupNsdManager.discoverByCode(groupId)
+                    if (resolved != null) break
+                    Log.w(TAG, "NSD re-discovery attempt $attempt failed for group $groupId")
+                }
+                // Discovery may not be cancellable: the user may have left or joined another group meanwhile.
+                val state = groupRepository.groupState.first()
+                if (state.role != GroupRole.FOLLOWER || state.groupId != groupId) return@launch
+                if (resolved != null) {
+                    val (newHost, newPort) = resolved
+                    Log.i(TAG, "Re-discovered group $groupId at $newHost:$newPort — reconnecting")
+                    reenter(newHost, newPort)
+                } else {
+                    Log.w(TAG, "NSD re-discovery exhausted for group $groupId — leaving group")
+                    // exitFollowerMode cancels this job, which would abort the suspending leaveGroup.
+                    followerRediscoveryJob = null
+                    exitFollowerMode()
+                    groupRepository.leaveGroup()
+                    groupRepository.emitGroupLost()
+                }
+            }
     }
 
     internal fun exitFollowerMode() {
@@ -1091,10 +1105,12 @@ class MockLocationService : Service() {
             }
     }
 
-    /** Cancels any in-flight follower restoration job. */
+    /** Cancels any in-flight follower restoration or rediscovery job. */
     private fun stopFollowerRestoration() {
         followerRestorationJob?.cancel()
         followerRestorationJob = null
+        followerRediscoveryJob?.cancel()
+        followerRediscoveryJob = null
     }
 
     private fun observeGroupState() {

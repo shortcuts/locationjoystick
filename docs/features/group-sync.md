@@ -103,5 +103,6 @@ The Control API switch sits under Sharing and is enabled only once the server's 
 - The leader stops spoofing (not pause): each update carries an active flag. A follower that sees inactive parks itself without stopping its service, so the notification and polling stay alive. When the leader is active again, the follower bootstraps as on first connect. A leader's stop keeps its server alive, so the group survives.
 - The follower moves its own stick: follow turns off and the stick steers from the current position. The device stays in the group. Follow turns back on by itself after a short idle period, and the follower walks back to the leader. The same applies to any manual departure from follow mode, such as a favorite teleport or a route. A stop of spoofing or leaving the group cancels the return.
 - The group no longer exists: a rejected token, or a long run of failed polls, triggers rediscovery first, because the leader may have restarted on a new address. Only after the retries fail does the follower leave the group automatically.
+- The user leaves, or joins another group, during a rediscovery: the rediscovery stops. It never re-enters the old group or wipes the new one, and no group-lost message shows.
 - Discovery timeout: an error appears, and the user can retry.
 - Registration failure: logged. The QR code still works.
