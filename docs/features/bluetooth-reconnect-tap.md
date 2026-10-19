@@ -31,7 +31,9 @@ Gesture use under an accessibility service that does not declare itself an acces
 
 ## Gate
 
-A check (screenshot or tap) runs only while the screen is interactive and the foreground window belongs to the hardcoded game package (`AppConstants.GameConstants`). Without it the loop screenshotted whatever app was in front, which broke the narrow use the disclosure promises, and the shape-based detector could tap a lookalike control in another app. The foreground package comes from window-state-changed events, reading only the event's package name, never the view tree (hard rule above). The gate is re-checked before every capture and every tap, so a tap never lands after the user switched apps. A run cut short by the gate is neutral for the failure streak. No picker: one game, no extra setup.
+A check (screenshot or tap) runs only while the screen is interactive and the foreground window belongs to the hardcoded game package (`AppConstants.GameConstants`). Without it the loop screenshotted whatever app was in front, which broke the narrow use the disclosure promises, and the shape-based detector could tap a lookalike control in another app. The foreground package comes from window-state-changed events, reading only the event's package name, never the view tree (hard rule above). The gate is re-checked before every capture and every tap, so a tap never lands after the user switched apps. Our Tap to Walk overlay also closes the reconnect gate: it takes every touch, so an injected gesture would land on it and walk the player. It does not close the foreground check that auto-fit uses, because learning runs while the overlay is up. A run cut short by the gate is neutral for the failure streak.
+
+No extra event type or window-content capability is subscribed. On a Pixel 5 (Android 14) the game raises a window-state event after the shade closes, and the lock screen raises one from the system UI, so the foreground package already follows both. Other devices are unmeasured; if one raises no event, add a keyguard check. No picker: one game, no extra setup.
 
 ## Recognising the control
 

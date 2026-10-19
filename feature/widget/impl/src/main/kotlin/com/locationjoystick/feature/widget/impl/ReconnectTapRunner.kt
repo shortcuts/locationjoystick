@@ -102,6 +102,13 @@ internal fun reconnectGateOpen(
     foregroundPackage: String?,
 ): Boolean = screenInteractive && foregroundPackage == GameConstants.PACKAGE
 
+/** The reconnect run also stays out while our Tap to Walk overlay is up: it takes every touch, so a gesture would walk the player. */
+internal fun reconnectRunGateOpen(
+    screenInteractive: Boolean,
+    foregroundPackage: String?,
+    ownTouchOverlayShowing: Boolean,
+): Boolean = reconnectGateOpen(screenInteractive, foregroundPackage) && !ownTouchOverlayShowing
+
 /**
  * The foreground package after a window-state event. Our own overlay windows (widget panel, tap overlay) raise events
  * with our package and a view class; they sit on top of the game without taking it off screen, so they must not count.

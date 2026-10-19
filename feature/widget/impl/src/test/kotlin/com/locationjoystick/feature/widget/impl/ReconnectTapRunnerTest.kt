@@ -199,6 +199,15 @@ class ReconnectTapRunnerTest {
     }
 
     @Test
+    fun `gate closes while our touch overlay is showing`() {
+        val game = "com.nianticlabs.pokemongo"
+        assertFalse(reconnectRunGateOpen(true, game, true))
+        assertTrue(reconnectRunGateOpen(true, game, false))
+        assertFalse(reconnectRunGateOpen(false, game, false))
+        assertFalse(reconnectRunGateOpen(true, "com.other.app", false))
+    }
+
+    @Test
     fun `closed gate means no capture and no tap`() =
         runTest {
             var captures = 0

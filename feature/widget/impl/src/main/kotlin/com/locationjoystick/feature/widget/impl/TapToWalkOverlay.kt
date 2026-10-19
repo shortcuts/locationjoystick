@@ -97,6 +97,7 @@ internal class TapToWalkOverlay(
         overlayView = view
         try {
             windowManager.addView(view, overlayLayoutParams())
+            showing = true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show tap-to-walk overlay", e)
             overlayView = null
@@ -115,6 +116,7 @@ internal class TapToWalkOverlay(
             view.disposeComposition()
         }
         overlayView = null
+        showing = false
         if (had) onDismissed()
     }
 
@@ -174,6 +176,11 @@ internal class TapToWalkOverlay(
 
     companion object {
         private const val TAG = "TapToWalkOverlay"
+
+        /** Read by the reconnect gate: a gesture injected while this window is up lands on it. */
+        @Volatile
+        var showing = false
+            private set
 
         /**
          * Ground-map conversion of a full-display tap pixel to a GPS coordinate, or null past the

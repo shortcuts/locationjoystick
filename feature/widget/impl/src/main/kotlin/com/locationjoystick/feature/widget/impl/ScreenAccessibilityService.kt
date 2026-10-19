@@ -140,7 +140,13 @@ class ScreenAccessibilityService :
         val result =
             runReconnectTap(
                 screenWidth = resources.displayMetrics.widthPixels,
-                gate = { reconnectGateOpen(getSystemService(PowerManager::class.java).isInteractive, foregroundPackage) },
+                gate = {
+                    reconnectRunGateOpen(
+                        getSystemService(PowerManager::class.java).isInteractive,
+                        foregroundPackage,
+                        TapToWalkOverlay.showing,
+                    )
+                },
                 capture = {
                     val bitmap = takeScreenshotBitmap()
                     // The main thread draws the overlays: copy, read and scan elsewhere.
