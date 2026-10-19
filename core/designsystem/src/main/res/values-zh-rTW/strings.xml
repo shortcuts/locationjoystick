@@ -63,7 +63,7 @@
     <string name="accessibility_disclosure_intro">"locationjoystick 使用 Android 無障礙（Accessibility）API 提供兩項選用功能：「點擊行走」和「重新連接配件」。如果你不想使用它們，請點擊「拒絕」或「略過」，仍可繼續使用應用程式。"</string>
     <string name="accessibility_disclosure_data">"存取的資料：螢幕截圖。僅在「重新連接配件」開啟時約每分鐘一張；在開啟「點擊行走」並在遊戲中行走時，約每 3 秒一張。"</string>
     <string name="accessibility_disclosure_purpose">"用途：「點擊行走」用截圖學習遊戲地圖的移動方式，使你的點擊落在你點擊的位置；「重新連接配件」用截圖查看你的配件是否顯示為已中斷連線，並點擊其連接按鈕。"</string>
-    <string name="accessibility_disclosure_handling">"收集或分享的資料：無。截圖只保留在你的裝置上，並會立即刪除。不會傳送到任何地方。該服務不讀取文字，僅在「重新連接配件」開啟時點擊配件的連接按鈕。"</string>
+    <string name="accessibility_disclosure_handling">"收集或分享的資料：無。截圖只短暫保留在你的裝置上，之後會刪除。不會傳送到任何地方。該服務不讀取文字，僅在「重新連接配件」開啟時點擊配件的連接按鈕。"</string>
     <string name="accessibility_disclosure_optional">"你可以隨時關閉它。"</string>
     <string name="accessibility_disclosure_guide">"閱讀「點擊行走」指南"</string>
     <string name="accessibility_disclosure_accept">"接受"</string>

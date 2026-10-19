@@ -292,10 +292,14 @@
     <p><a href="https://router.project-osrm.org" target="_blank" rel="noopener">router.project-osrm.org</a></p>
     <p><strong>When used:</strong> Routes and roaming that follow roads.</p>
     <p><strong>What is sent:</strong> The coordinates of your stops or random roaming targets. Nothing that identifies you or your device.</p>
+    <h3 class="item" id="external-services-road-routing-fossgis">Road routing (FOSSGIS)</h3>
+    <p><a href="https://routing.openstreetmap.de" target="_blank" rel="noopener">routing.openstreetmap.de</a></p>
+    <p><strong>When used:</strong> The same road routes as OSRM. The app asks this server as well.</p>
+    <p><strong>What is sent:</strong> The coordinates of your stops or random roaming targets. Nothing that identifies you or your device.</p>
     <h3 class="item" id="search-privacy">Place search (Nominatim)</h3>
     <p><a href="https://nominatim.openstreetmap.org" target="_blank" rel="noopener">nominatim.openstreetmap.org</a></p>
-    <p><strong>When used:</strong> Place search in the route creator and favorites map picker, when you type a search and the setting is on.</p>
-    <p><strong>What is sent:</strong> The text you type. No coordinates and nothing that identifies you.</p>
+    <p><strong>When used:</strong> Place search in the route creator and favorites map picker, when you type a search and the setting is on. Also when the app names the place at your fake position or at a spot you pick on the map.</p>
+    <p><strong>What is sent:</strong> The text you type when you search. For a place name, the coordinates of the spot. Nothing that identifies you.</p>
     <h3 class="item" id="external-services-place-search-backup-photon">Place search backup (Photon)</h3>
     <p><a href="https://photon.komoot.io" target="_blank" rel="noopener">photon.komoot.io</a></p>
     <p><strong>When used:</strong> Place search and place-name lookup when the main search cannot be reached or is off.</p>
@@ -304,6 +308,26 @@
     <p><a href="https://tile.openstreetmap.org" target="_blank" rel="noopener">tile.openstreetmap.org</a></p>
     <p><strong>When used:</strong> Whenever you move or zoom a map.</p>
     <p><strong>What is sent:</strong> Only which part of the map to show. No personal data.</p>
+    <h3 class="item" id="external-services-map-images-amap">Map images (AMap)</h3>
+    <p><a href="https://webrd01.is.autonavi.com" target="_blank" rel="noopener">webrd01.is.autonavi.com</a> to webrd04.is.autonavi.com</p>
+    <p><strong>When used:</strong> Whenever you move or zoom a map, while AMap is the chosen map.</p>
+    <p><strong>What is sent:</strong> Only which part of the map to show. No personal data.</p>
+    <h3 class="item" id="external-services-elevation-open-meteo">Ground height (Open-Meteo)</h3>
+    <p><a href="https://api.open-meteo.com" target="_blank" rel="noopener">api.open-meteo.com</a></p>
+    <p><strong>When used:</strong> While Use real-world elevation is on, to set the height of your fake position.</p>
+    <p><strong>What is sent:</strong> The coordinates of your fake position. Nothing that identifies you or your device.</p>
+    <h3 class="item" id="external-services-update-check-github">Update check (GitHub)</h3>
+    <p><a href="https://api.github.com" target="_blank" rel="noopener">api.github.com</a>, and <a href="https://github.com" target="_blank" rel="noopener">github.com</a> when you open a release or report a bug</p>
+    <p><strong>When used:</strong> About once a day when you open the app, to look for a newer release. You cannot turn it off. Opening a release or a bug report page happens in your browser.</p>
+    <p><strong>What is sent:</strong> A request for the latest release. No routes, favorites, settings, or location.</p>
+    <h3 class="item" id="external-services-hot-lists-website">Hot locations and routes (this website)</h3>
+    <p><a href="https://locationjoystick.shrtcts.fr" target="_blank" rel="noopener">locationjoystick.shrtcts.fr</a></p>
+    <p><strong>When used:</strong> To refresh the hot locations and hot routes lists, about once a day. The app keeps a copy on your phone.</p>
+    <p><strong>What is sent:</strong> A request for the list files. Nothing about you or your location.</p>
+    <h3 class="item" id="external-services-google-short-links">Shortened Google Maps links (Google)</h3>
+    <p><a href="https://goo.gl" target="_blank" rel="noopener">goo.gl</a> and <a href="https://maps.app.goo.gl" target="_blank" rel="noopener">maps.app.goo.gl</a></p>
+    <p><strong>When used:</strong> When you open or share a shortened Google Maps link in the app. The app follows the link to find the place it points to.</p>
+    <p><strong>What is sent:</strong> The short link. The app adds no account or device ID.</p>
 
   </main>
 
