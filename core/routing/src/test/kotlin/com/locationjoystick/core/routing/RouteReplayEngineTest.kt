@@ -1,6 +1,8 @@
 package com.locationjoystick.core.routing
 
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.distanceTo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -212,6 +214,24 @@ class RouteReplayEngineTest {
         // In looping mode, onComplete should never be called
         assertEquals(0, completeCount.get())
         assertTrue("should have collected positions during looping", positions.size >= 2)
+    }
+
+    @Test
+    fun `looping route walks back to first waypoint without a jump`() {
+        val positions = java.util.Collections.synchronizedList(mutableListOf<LatLng>())
+        engine.start(
+            waypoints = listOf(LatLng(0.0, 0.0), LatLng(0.0001, 0.0)),
+            speedMs = 1.4,
+            isLooping = true,
+            onPositionUpdate = { pos -> positions.add(pos) },
+            onComplete = {},
+        )
+        Thread.sleep(14000)
+        kotlinx.coroutines.runBlocking { engine.stop() }
+        val maxStep =
+            positions.toList().zipWithNext { a, b -> a.distanceTo(b) }.max()
+        val limit = 1.4 + AppConstants.RouteConstants.WAYPOINT_SNAP_THRESHOLD_METERS
+        assertTrue("max step $maxStep exceeds $limit", maxStep <= limit)
     }
 
     @Test

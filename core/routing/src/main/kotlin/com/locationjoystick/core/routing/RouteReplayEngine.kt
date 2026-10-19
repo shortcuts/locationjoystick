@@ -356,8 +356,7 @@ class RouteReplayEngine
                     }
                     if (result.reachedEnd) {
                         if (isLooping) {
-                            position = savedWaypointsRef.get().first()
-                            index = 1
+                            index = 0
                             resumePosition = position
                             resumeWaypointIndex = index
                         } else {
