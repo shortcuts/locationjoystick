@@ -72,6 +72,7 @@ object GroundCalibrationSolver {
         val fit = GroundMapFit.fit(moves, feet.x, feet.y, width, height) ?: return SolveResult.TooFewFlows
         val c = fit.calibration
         if (minOf(abs(c.lateralPxPerM), abs(c.forwardPxPerM)) < MIN_SCALE_PX_PER_M) return SolveResult.ImplausibleFit
+        if (c.lateralPxPerM * c.forwardPxPerM <= 0.0) return SolveResult.ImplausibleFit // a mirror image no camera produces
         return SolveResult.Ok(fit, feet)
     }
 }

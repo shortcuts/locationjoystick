@@ -206,6 +206,45 @@ class AutoFitCoordinatorTest {
             assertTrue("frames are gone once the fit is valid, left: $left", left.isEmpty())
         }
 
+    /** Suspect fit, then [bearings] as legs; returns how many full fits ran and the coordinator. */
+    private suspend fun TestScope.refitCalls(
+        fullFit: SolveResult,
+        vararg bearings: Double,
+    ): Pair<Int, AutoFitCoordinator> {
+        fakeWalks()
+        stored.value = storedFit
+        val c = coordinator()
+        var calls = 0
+        c.fullFit = { _, _, _, _ ->
+            calls++
+            fullFit
+        }
+        delay(1)
+        camera = cal.copy(headingDeg = 18.0, lateralPxPerM = 11.0, forwardPxPerM = 9.0, perspective = -0.003)
+        bearings.forEach { walkLeg(it) }
+        return calls to c
+    }
+
+    @Test
+    fun `oppositeLegsDoNotTriggerFullRefit`() =
+        runTest {
+            assertEquals(0, refitCalls(SolveResult.ImplausibleFit, 0.0, 180.0).first)
+            assertEquals(0, refitCalls(SolveResult.ImplausibleFit, 45.0, 225.0).first)
+        }
+
+    @Test
+    fun `legs 0 and 90 still re-fit`() =
+        runTest {
+            assertEquals(1, refitCalls(SolveResult.ImplausibleFit, 0.0, 90.0).first)
+        }
+
+    @Test
+    fun `a failed full fit is not retried with the same legs`() =
+        runTest {
+            // 0 and 90 fail and are dropped; 45 alone cannot span two axes
+            assertEquals(1, refitCalls(SolveResult.ImplausibleFit, 0.0, 90.0, 45.0).first)
+        }
+
     @Test
     fun `a closed gate takes no frame`() =
         runTest {
@@ -487,7 +526,7 @@ class AutoFitCoordinatorTest {
             coordinator(SolveResult.FeetNotFound)
             delay(1)
             walkLeg(0.0)
-            walkLeg(90.0)
+            walkLeg(180.0) // parallel: no full fit runs, so the legs stay buffered
             assertTrue("buffered legs sit on disk", spoolFiles().isNotEmpty())
 
             val from = locationRepository.currentPosition.value!!

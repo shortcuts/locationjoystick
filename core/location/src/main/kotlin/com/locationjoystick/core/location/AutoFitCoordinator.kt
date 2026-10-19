@@ -469,7 +469,7 @@ class AutoFitCoordinator
             fullRefit(w, h)
         }
 
-        /** All four terms from the buffered legs (those since the fit stopped matching), when they span two bearings. */
+        /** All four terms from the buffered legs (those since the fit stopped matching), when they span two non-parallel lines. */
         private suspend fun fullRefit(
             w: Int,
             h: Int,
@@ -496,6 +496,7 @@ class AutoFitCoordinator
                 markValid()
             } else {
                 Log.d(TAG, "full fit from ${legs.size} legs failed: $result")
+                clearBuffer() // the same legs would fail again, and each attempt costs minutes of CPU
             }
         }
 
@@ -526,7 +527,8 @@ class AutoFitCoordinator
             b: Double,
         ): Double {
             val d = Math.abs(a - b) % 360.0
-            return if (d > 180.0) 360.0 - d else d
+            val apart = if (d > 180.0) 360.0 - d else d
+            return minOf(apart, 180.0 - apart) // opposite legs share one line, so they pin one axis
         }
 
         private fun measureMoves(

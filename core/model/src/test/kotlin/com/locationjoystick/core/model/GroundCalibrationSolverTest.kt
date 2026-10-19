@@ -14,7 +14,7 @@ class GroundCalibrationSolverTest {
     private val bearings = CalibrationWalkMath.BEARINGS_DEG
 
     /** Truth: feet px / m scales and heading; perspective 0 so the map is affine and invertible by 2x2. */
-    private val truth = GroundCalibration(20.0, 7.0, 6.0, 0.0, 0.0, 0.0)
+    private var truth = GroundCalibration(20.0, 7.0, 6.0, 0.0, 0.0, 0.0)
 
     private fun legs(
         w: Int,
@@ -118,6 +118,12 @@ class GroundCalibrationSolverTest {
         // the position says the player walked, the screen did not change: all content is leg-static and cleaned
         val ls = legs(540, 1170).map { l -> CapturedLeg(l.bearingDeg, l.timesS, l.positions) { List(9) { frame } } }
         assertEquals(SolveResult.ImplausibleFit, GroundCalibrationSolver.solve(ls, 540, 1170))
+    }
+
+    @Test
+    fun mirroredFitIsImplausible() {
+        truth = truth.copy(forwardPxPerM = -truth.forwardPxPerM) // a mirror image no camera produces
+        assertEquals(SolveResult.ImplausibleFit, GroundCalibrationSolver.solve(legs(540, 1170), 540, 1170))
     }
 
     @Test
