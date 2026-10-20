@@ -3,7 +3,7 @@
     <string name="capture_coordinates_form_clear_captured_locations">"清除已擷取的位置？"</string>
     <string name="capture_coordinates_form_clear">"清除"</string>
     <string name="capture_coordinates_form_keep">"保留"</string>
-    <string name="capture_coordinates_form_capture_coordinates">"擷取座標"</string>
+    <string name="capture_coordinates_form_capture_coordinates">"擷取"</string>
     <string name="capture_coordinates_form_point_order">"點位順序"</string>
     <string name="capture_coordinates_form_route_name">"路線名稱"</string>
     <string name="capture_coordinates_form_save_as_route">"儲存為路線"</string>

@@ -37,6 +37,6 @@
     <string name="settings_spiral_description">从当前位置绕出螺旋形路径，向外展开到外半径后再收拢回内半径。一圈即为一次完整的展开与收拢。</string>
     <string name="menus_paste_coordinates">"粘贴坐标"</string>
     <string name="menus_paste_latitude_and_longitude_to_teleport_walk_or_save_as_a_f">"粘贴经纬度以瞬移、行走或保存为收藏。"</string>
-    <string name="menus_capture_coordinates">"采集坐标"</string>
+    <string name="menus_capture_coordinates">"采集"</string>
     <string name="menus_collect_map_links_from_other_apps_into_a_list_then_save_them">"从其他应用收集地图链接到列表中，然后保存为路线。"</string>
 </resources>

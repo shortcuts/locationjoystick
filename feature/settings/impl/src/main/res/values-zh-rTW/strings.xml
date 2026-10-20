@@ -20,7 +20,7 @@
     <string name="settings_hub_movement_and_gps">"移動與 GPS"</string>
     <string name="settings_hub_movement_and_gps_desc">"所有移動模式的速度預設、訊號真實度與位置隨機性設定。"</string>
     <string name="settings_hub_menus">"選單"</string>
-    <string name="settings_hub_menus_desc">"浮動小工具與地圖按鈕、速度切換及點擊行走。"</string>
+    <string name="settings_hub_menus_desc">"浮動小工具與地圖按鈕、速度切換、點擊行走及重新連線配件。"</string>
     <string name="settings_hub_general">"一般"</string>
     <string name="settings_hub_general_desc">"主題、地圖來源、地點搜尋、隱私、擷取與除錯。"</string>
     <string name="settings_hub_favorites_and_routes">"收藏與路線"</string>
@@ -75,7 +75,7 @@
     <string name="settings_gps_unit">"單位"</string>
     <string name="settings_gps_unit_kmh">"km/h"</string>
     <string name="settings_gps_unit_mph">"mph"</string>
-    <string name="settings_gps_speed_exceeds_8_m_s_may">"速度超過 8 m/s — 可能觸發部分遊戲的防作弊機制"</string>
+    <string name="settings_gps_speed_exceeds_8_m_s_may">"速度超過 %1$.1f %2$s — 可能觸發部分遊戲的防作弊機制"</string>
     <string name="settings_gps_movement_and_gps">"移動與 GPS"</string>
     <string name="settings_gps_remember_last_location">"記住上次位置"</string>
     <string name="settings_gps_remember_last_location_desc">"應用程式重新啟動時恢復上次設定的位置。"</string>
@@ -91,7 +91,7 @@
     <string name="settings_menus_switch_to_a_light_theme_for">"切換至淺色主題，便於在強光或陽光直射下看清螢幕。"</string>
     <string name="settings_menus_light_mode">"淺色模式"</string>
     <string name="settings_menus_reconnect_accessory">"重新連接配件"</string>
-    <string name="settings_menus_reconnect_accessory_description">"每 5 分鐘檢查一次你的配件是否顯示為已中斷連線，並點擊其連接按鈕。"</string>
+    <string name="settings_menus_reconnect_accessory_description">"定期檢查你的配件是否顯示為已中斷連線，並點擊其連接按鈕。"</string>
     <string name="settings_menus_reconnect_accessory_automatically">"自動重新連接配件"</string>
     <string name="settings_menus_reconnect_status_none">"尚未檢查"</string>
     <string name="settings_menus_reconnect_status_line">"上次檢查 %1$s：%2$s"</string>

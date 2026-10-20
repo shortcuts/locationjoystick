@@ -20,7 +20,7 @@
     <string name="settings_hub_movement_and_gps">"Movement &amp; GPS"</string>
     <string name="settings_hub_movement_and_gps_desc">"Speed presets, signal realism, and location randomness for all movement modes."</string>
     <string name="settings_hub_menus">"Menus"</string>
-    <string name="settings_hub_menus_desc">"Widget and map buttons, speed cycle, and Tap to Walk."</string>
+    <string name="settings_hub_menus_desc">"Widget and map buttons, speed cycle, Tap to Walk, and Reconnect accessory."</string>
     <string name="settings_hub_general">"General"</string>
     <string name="settings_hub_general_desc">"Theme, map source, place search, privacy, capture, and debug."</string>
     <string name="settings_hub_favorites_and_routes">"Favorites &amp; Routes"</string>
@@ -75,7 +75,7 @@
     <string name="settings_gps_unit">"Unit"</string>
     <string name="settings_gps_unit_kmh">"km/h"</string>
     <string name="settings_gps_unit_mph">"mph"</string>
-    <string name="settings_gps_speed_exceeds_8_m_s_may">"Speed is over 8 m/s. Some games may flag it as cheating."</string>
+    <string name="settings_gps_speed_exceeds_8_m_s_may">"Speed is over %1$.1f %2$s. Some games may flag it as cheating."</string>
     <string name="settings_gps_movement_and_gps">"Movement &amp; GPS"</string>
     <string name="settings_gps_remember_last_location">"Remember last location"</string>
     <string name="settings_gps_remember_last_location_desc">"Restores your last set position when the app restarts."</string>
@@ -104,7 +104,7 @@
     <string name="settings_menus_map_source_amap_default_city">"Beijing, China"</string>
     <string name="settings_menus_map_source_amap_note">"Amap tiles use the GCJ-02 coordinate system. The app converts positions so markers, routes, and taps line up. It still stores all data in WGS-84."</string>
     <string name="settings_menus_reconnect_accessory">"Reconnect accessory"</string>
-    <string name="settings_menus_reconnect_accessory_description">"Every minute, checks whether your accessory shows as disconnected and taps its connect button."</string>
+    <string name="settings_menus_reconnect_accessory_description">"Regularly checks whether your accessory shows as disconnected and taps its connect button."</string>
     <string name="settings_menus_reconnect_accessory_automatically">"Reconnect accessory automatically"</string>
     <string name="settings_menus_reconnect_status_none">"No checks yet"</string>
     <string name="settings_menus_reconnect_status_line">"Last check %1$s: %2$s"</string>

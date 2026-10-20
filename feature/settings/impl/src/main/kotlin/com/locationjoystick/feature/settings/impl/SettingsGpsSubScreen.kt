@@ -141,18 +141,24 @@ private fun SpeedProfilesSection(
     val profiles = SpeedProfile.defaultProfiles()
     profiles.forEachIndexed { index, profile ->
         val speedMs = uiState.speeds.getValue(profile.id)
+        val unit =
+            if (uiState.speedUnit == SpeedUnit.KMH) {
+                stringResource(R.string.settings_gps_unit_kmh)
+            } else {
+                stringResource(R.string.settings_gps_unit_mph)
+            }
         SpeedProfileInput(
             label = speedProfileLabel(profile.id),
             displaySpeed = convertMsToDisplay(speedMs, uiState.speedUnit),
             onSpeedChange = { onAction(SettingsAction.SetSpeed(profile.id, it)) },
-            unit =
-                if (uiState.speedUnit == SpeedUnit.KMH) {
-                    stringResource(R.string.settings_gps_unit_kmh)
-                } else {
-                    stringResource(R.string.settings_gps_unit_mph)
-                },
+            unit = unit,
         )
-        if (speedMs > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS) AntiCheatWarning()
+        if (speedMs > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS) {
+            AntiCheatWarning(
+                convertMsToDisplay(AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS, uiState.speedUnit),
+                unit,
+            )
+        }
         if (index != profiles.lastIndex) Spacer(modifier = Modifier.height(8.dp))
     }
 }
@@ -209,9 +215,12 @@ private fun SpeedProfileInput(
 }
 
 @Composable
-private fun AntiCheatWarning() {
+private fun AntiCheatWarning(
+    threshold: Double,
+    unit: String,
+) {
     Text(
-        text = stringResource(R.string.settings_gps_speed_exceeds_8_m_s_may),
+        text = stringResource(R.string.settings_gps_speed_exceeds_8_m_s_may, threshold, unit),
         color = MaterialTheme.colorScheme.error,
         style = MaterialTheme.typography.labelSmall,
         modifier = Modifier.padding(start = 4.dp, top = 2.dp),
