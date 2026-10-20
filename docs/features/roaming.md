@@ -77,4 +77,4 @@ The priority rules are in the shared movement-priority code. Read them there.
 
 ## Guided path
 
-On the Pokémon Go path, planting is hidden. Roaming then always starts a walk-around. Stored planting values and a running planting session are untouched. See [guided-paths.md](guided-paths.md).
+On the path that hides planting, planting is hidden. Roaming then always starts a walk-around. Stored planting values and a running planting session are untouched. See [guided-paths.md](guided-paths.md).

@@ -13,7 +13,7 @@
     { "category": "feat", "scope": "Map", "summary": "Map buttons and sheets have a quieter look. A speed strip shows at the top left while spoofing." },
     { "category": "fix", "scope": "Map", "summary": "The first point you add to a walk continues from your current position, not from the walk's start." },
     { "category": "fix", "scope": "Map", "summary": "Switching the map style now takes effect on every map screen right away, without closing and reopening the screen." },
-    { "category": "feat", "scope": "Settings", "summary": "Pick your game during first setup: Default, Pokémon Go or Pikmin Bloom. It only hides features you do not need, such as Planting, Tap to Walk and Reconnect accessory. Change it any time in Settings > General > Game setup." },
+    { "category": "feat", "scope": "Settings", "summary": "Pick your game during first setup. It only hides features you do not need, such as Planting, Tap to Walk and Reconnect accessory. Change it any time in Settings > General > Game setup." },
     { "category": "feat", "scope": "Settings", "summary": "Settings > Menus is split in two. Theme, map source, place search, privacy, capture and debug now live in a new General page. Every option is still there." },
     { "category": "fix", "scope": "Settings", "summary": "Save and Discard buttons no longer cover the last settings entries." },
     { "category": "fix", "scope": "Settings", "summary": "The speed warning uses the unit you picked in Settings." },

@@ -39,7 +39,8 @@ The [wiki](https://locationjoystick.shrtcts.fr/) describes every feature, includ
 - Use a small movable widget map with north lock, or expand it for more room.
 - Preview planting circles and spiral roaming, with optional jumps between route stops.
 - Reconnect your Bluetooth accessory automatically when it drops (optional).
-- Pick Default, Pokémon Go, or Pikmin Bloom during setup to hide the features your game does not need. You can change this in Settings.
+- Pick your game during setup to hide the features it does not need. You can change this in Settings.
+- Tap to Walk: tap the game screen to walk your fake location toward that spot, without opening the app.
 - See an "update available" badge (checked about once a day) and a "What's new" badge on the Home screen.
 
 ## Community

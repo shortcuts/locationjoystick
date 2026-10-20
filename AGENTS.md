@@ -42,13 +42,13 @@ Work is NOT complete until affected docs are updated where they state context. T
 | `docs/design-system.md` | A design rule or a use-when judgement changes (a new token or component needs no edit) |
 | `docs/features/<feature>.md` | The rationale or a constraint of the feature changes |
 | `docs/features/export-import.md` | The import/export scope or its rationale changes |
-| `README.md` — feature table | Adding or removing a user-visible feature |
+| `README.md` — feature list | Adding or removing a user-visible feature |
 | `docs/wiki/<feature>.html` | Adding or changing any user-visible feature |
 | `scripts/screenshot-gallery.sh` | Renaming, moving, or reordering any UI element it taps (labels, content descriptions, screen flow, defaults such as a FAB or setting that ships off). Run the affected step with `make screenshot` args `--auto --steps <N>` and confirm no `Could not find UI element` warning. |
 | `docs/wiki/changelog.html` + `docs/wiki/changelog/<version>.json` (docs/features/whats-new.md) | Any release with user-visible changes — the JSON is now the sole authored source for both: it feeds the in-app What's New popup directly, and the HTML is generated from it via `make wiki-changelog` |
 
 Rules:
-- New feature → create `docs/features/<feature>.md` AND add row to AGENTS.md's Feature Specifications table AND README.md's feature table.
+- New feature → create `docs/features/<feature>.md` AND add row to AGENTS.md's Feature Specifications table AND README.md's feature list.
 - New Gradle module → add row to `docs/architecture.md`'s module table (the single source of truth — README.md links to it, doesn't duplicate it).
 - Deleted feature/module → remove from all tables above.
 - Doc changes go in the same commit as the code change, not a follow-up.
@@ -237,6 +237,7 @@ make wiki-serve   # http://localhost:8080
 | `docs/wiki/settings.html` | Settings + language |
 | `docs/wiki/backup-transfer.html` | Export/import + QR transfer |
 | `docs/wiki/overlays.html` | Joystick + widget overlays + Tap to Walk |
+| `docs/wiki/reconnect-accessory.html` | Reconnect accessory: the reconnect tap and its settings |
 | `docs/wiki/troubleshooting.html` | Troubleshooting (permissions, mock location, map, crash report) |
 | `docs/wiki/control-api.html` | Control API reference for developers |
 | `docs/wiki/tap-to-walk.html`, `language.html`, `share.html`, `capture-coordinates.html` | Redirect stubs (canonical + noindex) |
@@ -245,7 +246,7 @@ make wiki-serve   # http://localhost:8080
 | `docs/wiki/privacy.html` | Privacy policy |
 | `docs/wiki/acknowledgements.html` | Third-party credits |
 | `docs/wiki/style.css` | Single stylesheet — all pages share it |
-| `docs/wiki/screenshots/` | Phone screenshots (PNG, numbered 01–25, number = script step) |
+| `docs/wiki/screenshots/` | Phone screenshots (PNG, numbered 01–27, number = script step) |
 | `docs/wiki/screenshots/marketing/` | 8 curated 1024×500 Play Store marketing images (white bg, catch-phrase + phone screenshot) — **generated**, not hand-edited |
 
 Nav groups (Start / Use / Configure / Help / About), order and labels are the single source of truth in the grouped `NAV_ITEMS` (`docs/wiki/wiki-init.js`) — every HTML page's sidebar renders from that script, so a new page needs an entry there, not a hand-edited `<nav>` block per file.

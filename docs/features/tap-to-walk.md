@@ -173,4 +173,4 @@ Both features share one screenshot budget ([bluetooth-reconnect-tap.md](bluetoot
 
 ## Guided path
 
-On the Pikmin Bloom path the Tap to Walk section is removed from the settings tree. The stored setting is untouched. See [guided-paths.md](guided-paths.md).
+On the path that hides it, the Tap to Walk section is removed from the settings tree. The stored setting is untouched. See [guided-paths.md](guided-paths.md).

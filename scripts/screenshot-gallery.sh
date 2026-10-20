@@ -107,7 +107,7 @@ if [[ -n "$STEPS_FILTER" ]]; then
   done
 else
   # No filter: enable all steps
-  for i in $(seq 1 25); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
+  for i in $(seq 1 25) 27; do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
 fi
 
 # Helper to check if a step should run (e.g. should_run_step "16")

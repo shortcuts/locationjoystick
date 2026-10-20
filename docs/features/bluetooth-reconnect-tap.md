@@ -102,4 +102,4 @@ Both features share one screenshot budget ([tap-to-walk.md](tap-to-walk.md)): ev
 
 ## Guided path
 
-On the Pikmin Bloom path the Reconnect accessory section is hidden. The stored setting is untouched. See [guided-paths.md](guided-paths.md).
+On the path that hides it, the Reconnect accessory section is hidden. The stored setting is untouched. See [guided-paths.md](guided-paths.md).

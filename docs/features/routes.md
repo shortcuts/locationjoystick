@@ -52,7 +52,7 @@ Ordering is either kept as pasted or reordered by nearest neighbour. That reorde
 
 Planting is a switch that combines with any build mode, not a separate mode. Save stores the ordered centres plus a radius. Circles are not baked into the route. Replay expands them at start, so changing the default radius later still applies to saved routes that do not pin their own.
 
-Planting is hidden on the Pokémon Go path ([guided-paths.md](guided-paths.md)). A stored radius is kept, so a planted route still plants when started.
+Planting is hidden on the path that hides it ([guided-paths.md](guided-paths.md)). A stored radius is kept, so a planted route still plants when started.
 
 ## Paste on map and widget
 

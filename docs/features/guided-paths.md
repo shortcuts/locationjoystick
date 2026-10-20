@@ -10,7 +10,7 @@ Key files: `:core:model/GuidedPath.kt` (the path flags), `:core:data/SettingsRep
 - **Pokémon Go:** hides Planting everywhere it is offered. Planting is a walking-around-a-game-map feature the game does not need.
 - **Pikmin Bloom:** hides Tap to Walk and Reconnect Accessory. Neither is useful in that game.
 
-On Pikmin Bloom the reconnect loop stops and the widget crosshair is hidden, since the hidden settings would otherwise leave no way to turn them off. Stored values stay, so switching back restores them.
+On the path that hides Tap to Walk and Reconnect Accessory, the reconnect loop stops and the widget crosshair is hidden, since the hidden settings would otherwise leave no way to turn them off. Stored values stay, so switching back restores them.
 
 The exact screens each path hides are in the flags on `GuidedPath` and the code that reads them.
 
@@ -39,7 +39,7 @@ No default value changes with a path. Per-path presets such as speed caps are no
 ## Related
 
 - [Onboarding](onboarding.md): the picker is one of its steps.
-- [Roaming](roaming.md): Planting is hidden on Pokémon Go.
-- [Tap to Walk](tap-to-walk.md): hidden on Pikmin Bloom.
-- [Reconnect Accessory](bluetooth-reconnect-tap.md): hidden on Pikmin Bloom.
+- [Roaming](roaming.md): Planting is hidden on the path that hides it (see above).
+- [Tap to Walk](tap-to-walk.md): hidden on the path that hides it (see above).
+- [Reconnect Accessory](bluetooth-reconnect-tap.md): hidden on the path that hides it (see above).
 - [Export / Import](export-import.md): the path round-trips with the other settings.

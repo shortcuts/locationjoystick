@@ -19,6 +19,7 @@ All wiki pages are read by **app users, not developers**. Write every sentence a
 - `<code>` is allowed **only** for UI labels the user must type or read verbatim (e.g. `geo:` links, URL parameters like `lat` and `lon`).
 - Active voice, present tense. One idea per sentence.
 - Audience test: could a non-technical friend understand every sentence? If not, rewrite.
+- Game names (Pokémon Go, Pikmin Bloom) are allowed **only** as the option labels in the Game setup page (`game-setup.html`). Everywhere else, write "your game" or "some game setups".
 
 ---
 
