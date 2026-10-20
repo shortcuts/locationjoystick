@@ -10,6 +10,7 @@ import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.overlay.OverlayServiceHelper
 import com.locationjoystick.feature.joystick.impl.JoystickOverlayService
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -45,6 +46,7 @@ internal class WidgetServiceBinder(
         private set
 
     private var joystickBound = false
+    private var joystickCollectors: Job? = null
 
     private val mockLocationServiceConnection =
         object : ServiceConnection {
@@ -70,12 +72,17 @@ internal class WidgetServiceBinder(
             ) {
                 val svc = (binder as JoystickOverlayService.LocalBinder).getService()
                 joystickService = svc
-                serviceScope.launch { svc.isVisible.collect { joystickVisibleFlow.value = it } }
-                serviceScope.launch { svc.isLocked.collect { joystickLockedFlow.value = it } }
+                joystickCollectors?.cancel()
+                joystickCollectors =
+                    serviceScope.launch {
+                        launch { svc.isVisible.collect { joystickVisibleFlow.value = it } }
+                        launch { svc.isLocked.collect { joystickLockedFlow.value = it } }
+                    }
                 Log.d(TAG, "Bound to JoystickOverlayService")
             }
 
             override fun onServiceDisconnected(name: ComponentName) {
+                joystickCollectors?.cancel()
                 joystickService = null
                 joystickBound = false
                 joystickVisibleFlow.value = false
@@ -101,6 +108,7 @@ internal class WidgetServiceBinder(
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Joystick service was not bound when attempting to unbind", e)
         }
+        joystickCollectors?.cancel()
         joystickBound = false
         joystickService = null
         joystickVisibleFlow.value = false
