@@ -16,3 +16,9 @@ data class OnboardingUiState(
 
 val OnboardingUiState.canProceed: Boolean
     get() = locationPermissionGranted && overlayPermissionGranted && mockLocationEnabled
+
+/** Android stops showing the permission dialog after repeated denials, so only app settings can grant it. */
+internal fun shouldOpenAppSettings(
+    fineGranted: Boolean,
+    showRationale: Boolean,
+): Boolean = !fineGranted && !showRationale

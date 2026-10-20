@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -44,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.startSettingsActivity
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
@@ -162,8 +164,20 @@ internal fun OnboardingScreen(
 
     val locationPermissionLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-            onResult = { onCheckPermissions() },
+            contract = ActivityResultContracts.RequestMultiplePermissions(),
+            onResult = { results ->
+                onCheckPermissions()
+                val fineGranted = results[Manifest.permission.ACCESS_FINE_LOCATION] == true
+                val showRationale =
+                    (context as? Activity)?.let {
+                        ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.ACCESS_FINE_LOCATION)
+                    } ?: false
+                if (shouldOpenAppSettings(fineGranted, showRationale)) {
+                    context.startSettingsActivity(
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")),
+                    )
+                }
+            },
         )
 
     LjScaffold(
@@ -287,7 +301,11 @@ internal fun OnboardingScreen(
                 isGranted = uiState.locationPermissionGranted,
                 icon = LjIcons.LocationOn,
                 actionLabel = stringResource(R.string.onboarding_grant_permission),
-                onAction = { locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) },
+                onAction = {
+                    locationPermissionLauncher.launch(
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                    )
+                },
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -299,7 +317,7 @@ internal fun OnboardingScreen(
                 icon = LjIcons.Layers,
                 actionLabel = stringResource(R.string.onboarding_open_settings),
                 onAction = {
-                    context.startActivity(
+                    context.startSettingsActivity(
                         Intent(
                             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                             Uri.parse("package:${context.packageName}"),
@@ -317,7 +335,7 @@ internal fun OnboardingScreen(
                 icon = LjIcons.DeveloperMode,
                 actionLabel = stringResource(R.string.onboarding_open_developer_options),
                 onAction = {
-                    context.startActivity(
+                    context.startSettingsActivity(
                         Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     )

@@ -20,7 +20,7 @@
     <string name="onboarding_display_over_other_apps_desc">"Required for the floating joystick and quick-access widget while other apps are open."</string>
     <string name="onboarding_open_settings">"Open Settings"</string>
     <string name="onboarding_set_as_fake_gps_app">"Set as fake GPS app"</string>
-    <string name="onboarding_set_as_fake_gps_app_desc">"In Developer options, find "Select mock location app" and choose locationjoystick. If you installed the app in a work profile (for example, with Shelter), open Developer options in that same profile. Android does not let a different profile select it."</string>
+    <string name="onboarding_set_as_fake_gps_app_desc">"If you do not see Developer options, open Settings, About phone, and tap Build number seven times. In Developer options, find "Select mock location app" and choose locationjoystick. If you installed the app in a work profile (for example, with Shelter), open Developer options in that same profile. Android does not let a different profile select it."</string>
     <string name="onboarding_open_developer_options">"Open Developer options"</string>
     <string name="onboarding_skip">"Skip"</string>
     <string name="onboarding_start_using_locationjoystick">"Start using locationjoystick"</string>

@@ -103,3 +103,13 @@ private fun Context.startCaptureSetting(intent: Intent) {
         Toast.makeText(this, getString(R.string.capture_browser_intents_couldnt_open_setting), Toast.LENGTH_SHORT).show()
     }
 }
+
+/** Some OEM and Go builds lack a handler for specific settings pages, so fall back to the main Settings app. */
+fun Context.startSettingsActivity(intent: Intent) {
+    try {
+        startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Log.e(TAG, "No settings activity for $intent", e)
+        startCaptureSetting(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+}

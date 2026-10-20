@@ -51,5 +51,5 @@ A cold start with everything already granted goes straight to the main screen. E
 
 ## Edge cases
 
-- Each permission step can be skipped, except the path picker. A banner shows when a required permission is still missing.
+- Only the mock location step can be skipped. Location and overlay must be granted. After a permanent location denial, Grant opens the app settings page, because Android no longer shows the dialog. A banner shows when a required permission is still missing.
 - Permissions are re-checked on resume.
