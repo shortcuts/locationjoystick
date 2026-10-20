@@ -1,6 +1,7 @@
 package com.locationjoystick.app
 
 import android.content.Intent
+import com.locationjoystick.core.common.util.isGoogleMapsHost
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.isValid
@@ -50,11 +51,7 @@ internal fun extractUrlFromText(text: String): String? = URL_REGEX.find(text)?.v
 
 internal fun parseUrlCoords(url: String): Pair<Double, Double>? = parseCoordsFromUri(android.net.Uri.parse(url))
 
-private fun isGoogleMapsUri(uri: android.net.Uri): Boolean {
-    val host = uri.host ?: return false
-    return host == "maps.google.com" ||
-        (host == "www.google.com" && uri.path?.startsWith("/maps") == true)
-}
+private fun isGoogleMapsUri(uri: android.net.Uri): Boolean = uri.host?.let { isGoogleMapsHost(it, uri.path.orEmpty()) } == true
 
 /**
  * Handles the various Google Maps URL shapes: `?q=`, `?daddr=`, `?destination=`,
@@ -120,9 +117,13 @@ private fun parseQueryParameterCoords(uri: android.net.Uri): Pair<Double, Double
  * coordinate is a placeholder, and the real target is in the `q` param. Prefer `q` when present.
  */
 private fun parseGeoUri(schemeSpecificPart: String): Pair<Double, Double>? {
-    val qIndex = schemeSpecificPart.indexOf("?q=")
-    if (qIndex != -1) {
-        parseLatLonString(schemeSpecificPart.substring(qIndex + "?q=".length))?.let { return it }
-    }
-    return parseLatLonString(schemeSpecificPart.substringBefore("?"))
+    val base = parseLatLonString(schemeSpecificPart.substringBefore("?").substringBefore(";"))
+    val q =
+        schemeSpecificPart
+            .substringAfter("?", "")
+            .split("&")
+            .firstOrNull { it.startsWith("q=") }
+            ?.removePrefix("q=") ?: return base
+    parseLatLonString(q)?.let { return it }
+    return base.takeUnless { it == 0.0 to 0.0 }
 }

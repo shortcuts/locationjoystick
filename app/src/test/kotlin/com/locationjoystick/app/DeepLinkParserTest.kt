@@ -160,6 +160,43 @@ class DeepLinkParserTest {
     }
 
     @Test
+    fun `geo uri with placeholder base and text query returns null`() {
+        assertNull(parseDeepLinkCoords(geoUri("0,0?q=1600+Amphitheatre+Parkway")))
+    }
+
+    @Test
+    fun `geo uri with q after another param prefers q`() {
+        assertEquals(35.62 to 139.77, parseDeepLinkCoords(geoUri("0,0?z=10&q=35.62,139.77")))
+    }
+
+    @Test
+    fun `geo uri with uncertainty param parses`() {
+        assertEquals(48.2 to 16.3, parseDeepLinkCoords(geoUri("48.2,16.3;u=35")))
+    }
+
+    @Test
+    fun `google com without www at segment parses`() {
+        val intent =
+            googleMapsUri(
+                host = "google.com",
+                path = "/maps/@48.85,2.35,15z",
+                pathSegments = listOf("maps", "@48.85,2.35,15z"),
+            )
+        assertEquals(48.85 to 2.35, parseDeepLinkCoords(intent))
+    }
+
+    @Test
+    fun `google fr maps at segment parses`() {
+        val intent =
+            googleMapsUri(
+                host = "www.google.fr",
+                path = "/maps/@48.85,2.35,15z",
+                pathSegments = listOf("maps", "@48.85,2.35,15z"),
+            )
+        assertEquals(48.85 to 2.35, parseDeepLinkCoords(intent))
+    }
+
+    @Test
     fun `google navigation scheme returns pair`() {
         val result = parseDeepLinkCoords(navigationUri("q=35.62,139.77"))
         assertEquals(35.62 to 139.77, result)

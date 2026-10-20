@@ -39,16 +39,22 @@ fun shouldPinForConfirmSheet(
     coords: Pair<Double, Double>?,
 ): Boolean = !captureModeEnabled && coords != null
 
+private val GOOGLE_TLD_HOST = Regex("""(www\.)?google\.[a-z]{2,3}(\.[a-z]{2})?""")
+
+fun isGoogleMapsHost(
+    host: String,
+    path: String,
+): Boolean {
+    val h = host.lowercase()
+    return h.startsWith("maps.google.") || (GOOGLE_TLD_HOST.matches(h) && path.startsWith("/maps"))
+}
+
 fun isGoogleMapsWebLink(url: String): Boolean {
     val uri = runCatching { java.net.URI(url) }.getOrNull() ?: return false
     val host = uri.host?.lowercase().orEmpty()
     val path = uri.path.orEmpty()
     return host == "maps.app.goo.gl" ||
-        host == "maps.google.com" ||
-        host == "www.google.com" &&
-        path.startsWith("/maps") ||
-        host == "google.com" &&
-        path.startsWith("/maps") ||
+        isGoogleMapsHost(host, path) ||
         host == "goo.gl" &&
         path.startsWith("/maps")
 }
