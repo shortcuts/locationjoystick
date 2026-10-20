@@ -91,9 +91,9 @@ class FollowerSyncClient
                                     consecutiveFailures = 0
                                     val update = result.update
                                     if (update != null) {
-                                        val nowMs = System.currentTimeMillis()
-                                        val stale =
-                                            nowMs - update.timestamp > AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS
+                                        // ageMs is on the leader's clock; the two device clocks can differ by minutes.
+                                        val ageMs = update.ageMs ?: (System.currentTimeMillis() - update.timestamp)
+                                        val stale = ageMs > AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS
                                         // An inactive leader's last record keeps its old timestamp forever — never drop the pause as stale.
                                         if ((!stale || !update.active) && update.seq > lastSeq) {
                                             lastSeq = update.seq
@@ -206,6 +206,7 @@ class FollowerSyncClient
                     active = obj.optBoolean("active", true),
                     // Old leaders omit it: 0 forever, so the follower never sees a change and just walks.
                     teleportSeq = obj.optLong("teleportSeq", 0L),
+                    ageMs = if (obj.has("ageMs")) obj.getLong("ageMs") else null,
                 )
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to parse position JSON", e)

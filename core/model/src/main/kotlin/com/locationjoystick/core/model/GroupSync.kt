@@ -21,6 +21,7 @@ data class SyncPositionUpdate(
     val seq: Long,
     val active: Boolean = true,
     val teleportSeq: Long = 0L,
+    val ageMs: Long? = null,
 )
 
 data class GroupInvite(

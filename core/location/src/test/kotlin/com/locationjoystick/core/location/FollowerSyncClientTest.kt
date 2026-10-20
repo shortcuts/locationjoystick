@@ -3,6 +3,8 @@ package com.locationjoystick.core.location
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.SyncPositionUpdate
 import kotlinx.coroutines.runBlocking
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -120,6 +122,33 @@ class FollowerSyncClientTest {
 
         val result = results.poll(600, TimeUnit.MILLISECONDS)
         assertNull("Stale update should not be delivered", result)
+    }
+
+    @Test
+    fun `old timestamp with small ageMs is delivered despite follower clock skew`() {
+        assertEquals(1, deliveredFor(ageMs = 100))
+    }
+
+    @Test
+    fun `large ageMs is dropped whatever the timestamp says`() {
+        assertEquals(0, deliveredFor(ageMs = 10_000))
+    }
+
+    private fun deliveredFor(ageMs: Long): Int {
+        val mock = MockWebServer()
+        val body =
+            "{\"ts\":${System.currentTimeMillis() - 60_000L},\"lat\":1.0,\"lon\":2.0,\"seq\":1," +
+                "\"active\":true,\"ageMs\":$ageMs}"
+        mock.enqueue(MockResponse().setBody(body))
+        mock.start()
+        val results = LinkedBlockingQueue<Unit>()
+        try {
+            client.startPolling(mock.hostName, mock.port, "g") { results.offer(Unit) }
+            return if (results.poll(600, TimeUnit.MILLISECONDS) != null) 1 else 0
+        } finally {
+            client.stopPolling()
+            mock.shutdown()
+        }
     }
 
     @Test

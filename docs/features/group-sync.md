@@ -102,6 +102,7 @@ The Control API switch sits under Sharing and is enabled only once the server's 
 ## Edge cases
 
 - The leader pauses a route, roam or walk: sharing continues with the frozen position, refreshed each tick, so followers do not go stale.
+- The two device clocks differ: manual time can put them minutes apart. The leader therefore sends the age of its update, measured on its own clock, and the follower judges staleness by that age. An old leader that sends none falls back to comparing timestamps across the two clocks.
 - The leader stops spoofing (not pause): each update carries an active flag. A follower that sees inactive parks itself without stopping its service, so the notification and polling stay alive. When the leader is active again, the follower bootstraps as on first connect. A leader's stop keeps its server alive, so the group survives.
 - The user leaves the group while spoofing is stopped: the service ends, since nothing keeps it alive any more. Leaving while spoofing keeps spoofing.
 - The follower moves its own stick: follow turns off and the stick steers from the current position. The device stays in the group. Follow turns back on by itself after a short idle period, and the follower walks back to the leader. The same applies to any manual departure from follow mode, such as a favorite teleport or a route. A stop of spoofing or leaving the group cancels the return.
