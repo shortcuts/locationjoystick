@@ -39,7 +39,7 @@ No extra event type or window-content capability is subscribed. On a Pixel 5 (An
 
 The control is located and classified from a screenshot, every run, with no fixed colours.
 
-- The control is found by shape: two stacked half-discs with a dot across the split. Its size is a fraction of the screen width, so it works across screen sizes.
+- The control is found by shape: two stacked half-discs with a dot across the split. Its size is a fraction of the short screen side, not the width. The target app sizes the control in dp, so a width fraction drops below the minimum on an unfolded foldable or a landscape tablet and the control is never found. The short side keeps the fraction stable on phones and wide screens. Measured on a synthetic 2560x1600 landscape canvas (control about 2.3% of the width, 3.8% of the short side): not found by width, found by short side. No real foldable or tablet recording was available.
 - Its state comes from the colours in that same screenshot, so theme, brightness and tint do not matter. There is no per-device calibration.
 - The result is one of on, off, or unknown. Unknown covers "not found" and any colour set that fits neither state. **Unknown never taps.**
 

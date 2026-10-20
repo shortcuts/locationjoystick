@@ -27,7 +27,7 @@ object ReconnectControlDetector {
     private const val FLAT_STEP = 4
     private const val MIN_PIXELS = 12
 
-    // Ball diameter ~7.2% of screen width; a half is a semicircle.
+    // Ball diameter ~7.2% of the short screen side, so wide screens (foldable, tablet) keep the same fraction; a half is a semicircle.
     private const val MIN_HALF_WIDTH = 0.03f
     private const val MAX_HALF_WIDTH = 0.10f
     private const val MIN_HALF_ASPECT = 0.2f
@@ -52,10 +52,11 @@ object ReconnectControlDetector {
         val y1 = searchY1(height)
         require(cropX <= x0) { "cropX $cropX is right of the search window at $x0" }
         val flats = flatRegions(pixels, width, x0, y1, cropX)
+        val shortSide = minOf(width, height)
         val halves =
             flats.filter {
-                it.width >= width * MIN_HALF_WIDTH &&
-                    it.width <= width * MAX_HALF_WIDTH &&
+                it.width >= shortSide * MIN_HALF_WIDTH &&
+                    it.width <= shortSide * MAX_HALF_WIDTH &&
                     it.height >= it.width * MIN_HALF_ASPECT &&
                     it.height <= it.width * MAX_HALF_ASPECT
             }

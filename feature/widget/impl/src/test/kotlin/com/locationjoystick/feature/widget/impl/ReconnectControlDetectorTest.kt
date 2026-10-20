@@ -138,6 +138,23 @@ class ReconnectControlDetectorTest {
     }
 
     @Test
+    fun wideLandscapeScreen_stillReadsOff() {
+        val s = load("reconnect/hud_off_night.png")
+        val w = 2560
+        val h = 1600
+        val px = IntArray(w * h) { 0xFF202020.toInt() }
+        val half = 60
+        val dx = 1800
+        val dy = 200
+        for (y in -half until half) {
+            for (x in -half until half) px[(dy + y) * w + dx + x] = s.pixels[(240 + y) * s.width + 791 + x]
+        }
+        val c = checkNotNull(ReconnectControlDetector.detect(px, w, h))
+        assertEquals(ReconnectState.OFF, c.state)
+        assertTrue("x=${c.centerX}", abs(c.centerX - dx) <= 6)
+    }
+
+    @Test
     fun grayscaleBall_returnsNull() {
         val gray = mapped("reconnect/hud_on_night.png") { r, g, b -> ((r + g + b) / 3).let { Triple(it, it, it) } }
         assertNull(gray.detect())
