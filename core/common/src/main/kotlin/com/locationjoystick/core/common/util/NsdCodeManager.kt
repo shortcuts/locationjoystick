@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import java.net.Inet4Address
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -64,6 +65,7 @@ class NsdCodeManager
             code: String,
             port: Int,
         ) {
+            stopAdvertising()
             val info =
                 NsdServiceInfo().apply {
                     serviceName = code
@@ -151,6 +153,7 @@ class NsdCodeManager
                 suspendCancellableCoroutine { cont ->
                     var discoveryListener: NsdManager.DiscoveryListener? = null
                     var foundName = ""
+                    val resolving = AtomicBoolean(false)
 
                     @Suppress("DEPRECATION")
                     val resolveListener =
@@ -169,10 +172,10 @@ class NsdCodeManager
                                 val port = info.port
                                 Log.i(TAG, "NSD resolved: $host:$port (raw: ${inetAddr?.hostAddress})")
                                 if (host != null && port > 0) {
-                                    cont.resume(DiscoveredLeader(foundName, host, port))
+                                    if (cont.isActive) cont.resume(DiscoveredLeader(foundName, host, port))
                                 } else {
                                     Log.w(TAG, "NSD resolved non-IPv4 or no host — cannot connect")
-                                    cont.resume(null)
+                                    if (cont.isActive) cont.resume(null)
                                 }
                             }
                         }
@@ -201,7 +204,8 @@ class NsdCodeManager
                             override fun onDiscoveryStopped(serviceType: String) {}
 
                             override fun onServiceFound(info: NsdServiceInfo) {
-                                if (matches(info.serviceName)) {
+                                // onServiceFound can fire again before stopServiceDiscovery lands; a second resolve with the same listener throws.
+                                if (matches(info.serviceName) && resolving.compareAndSet(false, true)) {
                                     foundName = info.serviceName
                                     try {
                                         nsdManager.stopServiceDiscovery(this)

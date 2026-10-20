@@ -174,6 +174,7 @@ class MockLocationService : Service() {
 
     /** Guards concurrent access to updateJob to prevent double-start from rapid state emissions. */
     private val updateJobMutex = Mutex()
+    private val leaderModeMutex = Mutex()
 
     @Volatile private var updateJob: Job? = null
 
@@ -677,6 +678,7 @@ class MockLocationService : Service() {
         }
         stopFollowerRestoration()
         leaderSyncServer.stop()
+        groupNsdManager.stopAdvertising()
         followerSyncClient.stopPolling()
         locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
@@ -1044,12 +1046,14 @@ class MockLocationService : Service() {
                         return@launch
                     }
                 val port =
-                    if (!leaderSyncServer.isRunning) {
-                        val newPort = leaderSyncServer.start(groupId)
-                        groupNsdManager.startAdvertising(code = groupId, port = newPort)
-                        newPort
-                    } else {
-                        leaderSyncServer.currentPort
+                    leaderModeMutex.withLock {
+                        if (!leaderSyncServer.isRunning) {
+                            val newPort = leaderSyncServer.start(groupId)
+                            groupNsdManager.startAdvertising(code = groupId, port = newPort)
+                            newPort
+                        } else {
+                            leaderSyncServer.currentPort
+                        }
                     }
                 controlApiRoutes.install()
                 contentApiRoutes.install()

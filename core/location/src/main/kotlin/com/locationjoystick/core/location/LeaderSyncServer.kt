@@ -95,7 +95,9 @@ class LeaderSyncServer
             _apiEnabled.value = false
         }
 
+        @Synchronized
         fun start(groupId: String): Int {
+            if (isRunning) return currentPort
             val port = startServer(groupId)
             val cleanupEx = Executors.newSingleThreadScheduledExecutor()
             cleanupExecutor = cleanupEx
@@ -108,6 +110,7 @@ class LeaderSyncServer
             return port
         }
 
+        @Synchronized
         fun stop() {
             stopServer()
             disableApi()

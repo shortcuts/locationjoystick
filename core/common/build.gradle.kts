@@ -5,6 +5,10 @@ plugins {
 
 android {
     namespace = "com.locationjoystick.core.common"
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -13,6 +17,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
     testImplementation(libs.orgjson)
     testImplementation(libs.kotlinx.coroutines.test)
 }

@@ -23,6 +23,11 @@ class LeaderSyncServerTest {
     }
 
     @Test
+    fun `start twice returns the same port`() {
+        assertEquals(server.start("gid"), server.start("gid"))
+    }
+
+    @Test
     fun `wrong token returns 403`() {
         val port = server.start("correct-id")
         val conn = URL("http://localhost:$port/position?token=wrong").openConnection() as HttpURLConnection
