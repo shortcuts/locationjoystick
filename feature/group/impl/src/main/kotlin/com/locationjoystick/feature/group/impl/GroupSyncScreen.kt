@@ -512,6 +512,7 @@ private fun LeaderContent(
             colors =
                 ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
                 ),
         ) {
             Text(stringResource(R.string.group_sync_leave_group))
@@ -608,6 +609,7 @@ private fun FollowerContent(
             colors =
                 ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
                 ),
         ) {
             Text(stringResource(R.string.group_sync_leave_group_2))

@@ -45,6 +45,11 @@ class LjColorsContrastTest {
     }
 
     @Test
+    fun darkOnErrorMeetsContrast() {
+        assertTrue(contrast(LjDarkColorScheme.onError, LjDarkColorScheme.error) >= 4.5f)
+    }
+
+    @Test
     fun topBarToggleTintsMeetContrastInLightTheme() {
         // Light theme top bar toggle (Start/Stop) tints must meet WCAG AA 4.5:1 on the bar's surface and app background
         val scheme = LjLightColorScheme
