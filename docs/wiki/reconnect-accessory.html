@@ -44,8 +44,10 @@
 
     <h2 id="result">Result</h2>
     <p>About every minute, while your screen is on and the game is open, the app looks at your screen. It taps the connect button only if the accessory shows as disconnected.</p>
-    <p>If the accessory fails to reconnect several times in a row, the app sends you a notification. Tap it to open the app. The notification clears itself once the accessory is back.</p>
+    <p>If the accessory fails to reconnect several times in a row, the app sends you a notification titled <strong>Accessory did not reconnect</strong>. Tap it to open the app. It clears itself once the accessory is back.</p>
+    <p>If the game is open but the connect button stays hidden for a long time, the app sends a notification titled <strong>Accessory control not found</strong>. Reconnect pauses: the app does not tap while the button is hidden, but it keeps checking. It taps again by itself once the button shows. The notification clears itself once the button is found again.</p>
     <p>Under the switch, Settings shows when the last check ran and what it found: no reconnect needed, reconnected, failed, game not in front, or control not found. It starts empty and clears when you turn the switch off.</p>
+    <p>If Settings says the game is not in front while the game is open, switch to another app, then back to the game. The app only learns which app is in front when you switch apps.</p>
 
     <h2 id="limits-and-risks">Limits and risks</h2>
     <ul class="section-bullets">

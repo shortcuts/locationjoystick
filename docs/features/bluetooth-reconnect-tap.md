@@ -35,6 +35,8 @@ A check (screenshot or tap) runs only while the screen is interactive and the fo
 
 No extra event type or window-content capability is subscribed. On a Pixel 5 (Android 14) the game raises a window-state event after the shade closes, and the lock screen raises one from the system UI, so the foreground package already follows both. Other devices are unmeasured; if one raises no event, add a keyguard check. No picker: one game, no extra setup.
 
+Limit: the foreground package is empty after a service start and stays empty until a window-state event arrives. After an app update, a crash or a service toggle while the game is already in front, the gate stays closed until the user switches away and back. Window-content access would remove this, but it is a Play review risk, so the limit stays and the wiki gives the workaround.
+
 ## Recognising the control
 
 The control is located and classified from a screenshot, every run, with no fixed colours.
