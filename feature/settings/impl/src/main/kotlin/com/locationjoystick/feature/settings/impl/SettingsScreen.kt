@@ -25,7 +25,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,6 +49,7 @@ import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.feature.settings.impl.R
@@ -875,14 +875,12 @@ private fun UnsavedChangesConfirmDialog(
         title = { Text(stringResource(R.string.settings_save_changes)) },
         text = { Text(message) },
         confirmButton = {
-            TextButton(onClick = onSave) { Text(stringResource(R.string.settings_save_2)) }
+            LjTextButton(onClick = onSave) { Text(stringResource(R.string.settings_save_2)) }
         },
         dismissButton = {
             Row {
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
-                TextButton(
-                    onClick = onDiscard,
-                ) { Text(stringResource(R.string.settings_discard_2), color = MaterialTheme.colorScheme.error) }
+                LjTextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+                LjTextButton(onClick = onDiscard, destructive = true) { Text(stringResource(R.string.settings_discard_2)) }
             }
         },
     )
@@ -900,9 +898,9 @@ private fun ImportConfirmDialog(
         text = { Text(stringResource(R.string.settings_how_would_you_like_to_handle)) },
         confirmButton = {
             Row {
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
-                TextButton(onClick = onAdd) { Text(stringResource(R.string.settings_add)) }
-                TextButton(onClick = onReplace) { Text(stringResource(R.string.settings_replace), color = MaterialTheme.colorScheme.error) }
+                LjTextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+                LjTextButton(onClick = onAdd) { Text(stringResource(R.string.settings_add)) }
+                LjTextButton(onClick = onReplace, destructive = true) { Text(stringResource(R.string.settings_replace)) }
             }
         },
         dismissButton = {},
@@ -919,12 +917,12 @@ private fun ResetAllDataConfirmDialog(
         title = { Text(stringResource(R.string.settings_reset_all_data_2)) },
         text = { Text(stringResource(R.string.settings_all_favorites_routes_and_settings_will)) },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.settings_reset), color = MaterialTheme.colorScheme.error)
+            LjTextButton(onClick = onConfirm, destructive = true) {
+                Text(stringResource(R.string.settings_reset))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+            LjTextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         },
     )
 }
@@ -959,10 +957,10 @@ private fun EnterExportCodeDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(code) }, enabled = code.length == 6) { Text(stringResource(R.string.settings_import)) }
+            LjTextButton(onClick = { onConfirm(code) }, enabled = code.length == 6) { Text(stringResource(R.string.settings_import)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+            LjTextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         },
     )
 }

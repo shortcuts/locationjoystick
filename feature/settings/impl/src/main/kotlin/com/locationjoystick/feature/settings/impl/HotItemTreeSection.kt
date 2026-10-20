@@ -7,7 +7,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.component.LjSelectionMode
 import com.locationjoystick.core.designsystem.component.LjSelectionRow
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.feature.settings.impl.R
 
 /**
@@ -46,8 +46,8 @@ internal fun HotItemTreeSection(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(headerLabel, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
-        TextButton(onClick = { onSelectionChange(emptySet()) }) { Text(stringResource(R.string.hot_item_tree_uncheck_all)) }
-        TextButton(onClick = { onSelectionChange(tree.allIds) }) { Text(stringResource(R.string.hot_item_tree_check_all)) }
+        LjTextButton(onClick = { onSelectionChange(emptySet()) }) { Text(stringResource(R.string.hot_item_tree_uncheck_all)) }
+        LjTextButton(onClick = { onSelectionChange(tree.allIds) }) { Text(stringResource(R.string.hot_item_tree_check_all)) }
     }
 
     tree.byCountry.forEach { (country, citiesMap) ->

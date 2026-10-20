@@ -20,7 +20,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -53,6 +52,7 @@ import com.locationjoystick.core.designsystem.component.LjGuidedStepCard
 import com.locationjoystick.core.designsystem.component.LjLanguageDropdown
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.WideContentClamp
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.AppLanguage
@@ -237,7 +237,7 @@ internal fun OnboardingScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                TextButton(
+                LjTextButton(
                     onClick = {
                         context.startActivity(
                             Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.AppInfo.DOCS_URL)),
@@ -254,7 +254,7 @@ internal fun OnboardingScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                TextButton(
+                LjTextButton(
                     onClick = {
                         context.startActivity(
                             Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.AppInfo.TROUBLESHOOTING_URL)),
@@ -392,12 +392,12 @@ private fun SkipMockLocationConfirmDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            LjTextButton(onClick = onConfirm) {
                 Text(stringResource(R.string.onboarding_skip_anyway))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            LjTextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.onboarding_cancel))
             }
         },

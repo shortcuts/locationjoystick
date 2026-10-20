@@ -91,6 +91,7 @@ fun LjTextButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    destructive: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -100,6 +101,12 @@ fun LjTextButton(
         modifier = modifier.defaultMinSize(minHeight = 48.dp).scale(scale),
         enabled = enabled,
         shape = MaterialTheme.shapes.small,
+        colors =
+            if (destructive) {
+                ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            } else {
+                ButtonDefaults.textButtonColors()
+            },
         interactionSource = interactionSource,
         content = content,
     )
