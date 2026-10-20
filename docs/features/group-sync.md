@@ -54,7 +54,7 @@ A distance and cooldown hint sits next to the button. It is advisory: it shows h
 
 A follower mirrors the leader's teleports, so a jump on the leader is not left as a long walk on the follower.
 
-- The leader counts explicit teleports only. Walk arrivals and route hops do not count, so followers still walk to those. The follower never guesses a teleport from distance.
+- The leader counts explicit teleports and replay hops that jump farther than a walking step. Walk arrivals do not count, so followers still walk to those. The follower never guesses a teleport from distance.
 - A follower compares the counter with a change check, not an order check, because a leader restart resets it. The first value seen is a baseline, so joining or reconnecting never triggers a snap.
 - A leader stopping, moving and starting again counts as a teleport. With the switch off, the follower restarts at its own position and walks.
 - Hide-teleport features disable the switch, and the follower always walks.

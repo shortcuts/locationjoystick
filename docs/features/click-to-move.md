@@ -22,6 +22,7 @@ Rules that must hold:
 - The stop covers a route that is still planning its road path. The mode has not yet changed to route replay while the routing service is answering, so the stop must not depend on the mode. The pending start is cancelled before the teleport applies.
 - Teleports from favorites, the map, pasted coordinates and captured links all share this path.
 - Starting a route in teleport-between-waypoints mode teleports to the first stop without stopping the replay that follows. Otherwise Start would cancel itself.
+- Route-replay hops (teleport routes, next and previous stop, teleport between waypoints, resume hop) also restart the cooldown clock. The replay tick treats any step longer than one tick of walking plus the snap threshold as a teleport, because these hops bypass the shared teleport path.
 - Cancelling a walk is race-free across threads. Each walk carries a generation token, and every start and cancel bumps it. A tick that was already running when a teleport landed is dropped, and so is a routing answer that arrives after a teleport from any screen. Without this, the position would walk back toward the old target.
 - A parked widget (paused from the widget, mock location idle) does not resume on teleport. Teleport is not a substitute for Start. The feature buttons stay faded until the user starts.
 

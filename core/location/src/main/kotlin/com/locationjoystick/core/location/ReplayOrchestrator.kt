@@ -5,6 +5,7 @@ import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.BearingTracker
 import com.locationjoystick.core.common.util.buildPlantingReplayPath
+import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.common.util.plantingRings
 import com.locationjoystick.core.common.util.stitchRingsWithConnectorsAndBoundaries
 import com.locationjoystick.core.common.util.stitchRingsWithoutConnectors
@@ -72,6 +73,7 @@ internal class ReplayOrchestrator(
     private val onSpeedChange: (speedMs: Float) -> Unit,
     private val pushLocationUpdate: () -> Unit,
     private val startUpdateLoop: () -> Unit,
+    private val onTeleport: () -> Unit = {},
     private val plantingRadiusMeters: () -> Double = { AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS },
 ) {
     /** Tracks the active scope.launch job so new starts can cancel it before launching. */
@@ -88,6 +90,8 @@ internal class ReplayOrchestrator(
     private val lifecycle = ReplayStartLifecycle()
 
     private val bearingTracker = BearingTracker()
+
+    @Volatile private var lastSpeedMs = 0f
 
     /**
      * Cancels an in-flight [handleStart] / [handleEphemeralStart] immediately.
@@ -240,7 +244,7 @@ internal class ReplayOrchestrator(
      * moves at a "speed" — but still reports 0 so speed-cycle UI doesn't show a stale value.
      */
     fun updateSpeed(speedMs: Double) {
-        onSpeedChange(activeReplayer.updateSpeed(speedMs))
+        reportSpeed(activeReplayer.updateSpeed(speedMs))
     }
 
     fun handlePause() {
@@ -326,6 +330,11 @@ internal class ReplayOrchestrator(
         Log.i(TAG, "Jumped to ${if (forward) "next" else "previous"} waypoint")
     }
 
+    private fun reportSpeed(speedMs: Float) {
+        lastSpeedMs = speedMs
+        onSpeedChange(speedMs)
+    }
+
     /**
      * Pushes one position tick: updates the service's reported lat/lon, the shared
      * repository state, and the test-provider location.
@@ -333,6 +342,12 @@ internal class ReplayOrchestrator(
     private fun tickPosition(pos: LatLng) {
         // Mirrors updatePositionWithVector's gate: rejects a stale tick from a replay whose async cancel hasn't landed yet.
         if (locationRepository.currentMode.value != MockMode.ROUTE_REPLAY) return
+        locationRepository.currentPosition.value?.let { prev ->
+            val maxStepMeters =
+                lastSpeedMs * AppConstants.LocationConstants.UPDATE_INTERVAL_MS / 1000.0 +
+                    AppConstants.RouteConstants.WAYPOINT_SNAP_THRESHOLD_METERS
+            if (haversineDistance(prev, pos) > maxStepMeters) onTeleport()
+        }
         onPositionChange(pos.latitude, pos.longitude)
         bearingTracker.advance(pos)?.let { locationRepository.setBearingInternal(it) }
         try {
@@ -390,7 +405,7 @@ internal class ReplayOrchestrator(
         lifecycle.clear()
         locationRepository.setRouteWaypoints(null)
         locationRepository.setRouteProgress(null)
-        onSpeedChange(0f)
+        reportSpeed(0f)
         locationRepository.setMockMode(MockMode.TELEPORT)
         activeReplayer = routeReplayEngine
     }
@@ -413,7 +428,7 @@ internal class ReplayOrchestrator(
         if (locationRepository.currentMode.value == MockMode.ROAMING) roamingRepository.stopRoaming()
         if (waypointCount < 2) return
 
-        onSpeedChange(reportedSpeedMs)
+        reportSpeed(reportedSpeedMs)
 
         // Set mode BEFORE state so the state observer sees ROUTE_REPLAY and
         // correctly skips starting the background update loop.

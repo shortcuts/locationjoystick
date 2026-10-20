@@ -60,6 +60,7 @@ class ReplayOrchestratorTest {
     private val stateChanges = mutableListOf<MockLocationState>()
     private val speedChanges = mutableListOf<Float>()
     private var startUpdateLoopCalled = false
+    private var teleportCount = 0
     private var plantingRadius = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS
 
     private lateinit var orchestrator: ReplayOrchestrator
@@ -69,6 +70,7 @@ class ReplayOrchestratorTest {
         stateChanges.clear()
         speedChanges.clear()
         startUpdateLoopCalled = false
+        teleportCount = 0
         plantingRadius = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS
         orchestrator =
             ReplayOrchestrator(
@@ -87,6 +89,7 @@ class ReplayOrchestratorTest {
                 onSpeedChange = { speedChanges.add(it) },
                 pushLocationUpdate = { },
                 startUpdateLoop = { startUpdateLoopCalled = true },
+                onTeleport = { teleportCount++ },
                 plantingRadiusMeters = { plantingRadius },
             )
     }
@@ -603,6 +606,42 @@ class ReplayOrchestratorTest {
         orchestrator.handleJumpToNextWaypoint()
 
         assertEquals(target, locationRepository.currentPosition.value)
+    }
+
+    @Test
+    fun `teleport route hop invokes onTeleport`() =
+        runTest {
+            coEvery { routeRepository.getRouteWithWaypoints("teleport-1") } returns flowOf(teleportRoute())
+            val onPosition = slot<(LatLng) -> Unit>()
+            every { teleportRouteEngine.start(any(), any(), any(), capture(onPosition), any()) } returns Unit
+            orchestrator.handleStart("teleport-1", 1.4, RouteStartConfig())
+            locationRepository.setPositionInternal(LatLng(1.0, 1.0))
+
+            onPosition.captured(LatLng(2.0, 2.0))
+
+            assertEquals(1, teleportCount)
+        }
+
+    @Test
+    fun `jump to next waypoint invokes onTeleport`() {
+        locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+        locationRepository.setPositionInternal(LatLng(1.0, 1.0))
+        every { routeReplayEngine.jumpToNextWaypoint(any(), any()) } returns LatLng(2.0, 2.0)
+
+        orchestrator.handleJumpToNextWaypoint()
+
+        assertEquals(1, teleportCount)
+    }
+
+    @Test
+    fun `a normal walking tick does not invoke onTeleport`() {
+        locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+        locationRepository.setPositionInternal(LatLng(1.0, 1.0))
+        every { routeReplayEngine.jumpToNextWaypoint(any(), any()) } returns LatLng(1.000001, 1.0)
+
+        orchestrator.handleJumpToNextWaypoint()
+
+        assertEquals(0, teleportCount)
     }
 
     @Test

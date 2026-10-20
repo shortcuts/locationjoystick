@@ -284,6 +284,10 @@ class MockLocationService : Service() {
                 onSpeedChange = { currentSpeedMs = it },
                 pushLocationUpdate = ::pushLocationUpdate,
                 startUpdateLoop = ::startUpdateLoop,
+                onTeleport = {
+                    teleportSeq.incrementAndGet()
+                    serviceScope.launch { settingsRepository.setLastTeleportTime(System.currentTimeMillis()) }
+                },
                 plantingRadiusMeters = { realism.plantingRadiusMeters },
             )
         createNotificationChannel()
