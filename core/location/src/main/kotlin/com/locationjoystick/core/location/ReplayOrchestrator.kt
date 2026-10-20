@@ -128,7 +128,7 @@ internal class ReplayOrchestrator(
                 val orderedWaypoints = if (config.isReverse) route.waypoints.reversed() else route.waypoints
                 val isLooping = isPlanting || config.isLooping
 
-                if (route.routeType == RouteType.TELEPORT && !isPlanted) {
+                if (route.routeType == RouteType.TELEPORT && !isPlanted && config.teleportBetweenWaypoints) {
                     activeReplayer = teleportRouteEngine
                     startTeleportReplayWithWaypoints(
                         state = state,

@@ -38,9 +38,11 @@ class StartRouteReplayUseCase
             // A planted route's style decides travel between circles (docs/features/routes.md "Planting").
             val planted = route?.plantingRadiusMeters != null
             val plantedTeleport = planted && route.routeType == RouteType.TELEPORT
+            // A saved teleport route walks when Hide Teleport is on; the orchestrator picks the engine from the hop flag.
+            val unplantedTeleport = !planted && route?.routeType == RouteType.TELEPORT
             val base =
                 if (!planted) {
-                    config
+                    config.copy(teleportBetweenWaypoints = config.teleportBetweenWaypoints || unplantedTeleport)
                 } else {
                     config.copy(
                         isPlanting = true,
@@ -61,7 +63,7 @@ class StartRouteReplayUseCase
                     teleportBetweenWaypoints = hop,
                     teleportBetweenDelaySeconds = clampTeleportBetweenDelaySeconds(base.teleportBetweenDelaySeconds),
                 )
-            if (hop) {
+            if (hop && !unplantedTeleport) {
                 route?.startWaypoint(config.isReverse)?.let { teleportUseCase.execute(it.position, resetMovement = false) }
             }
             context.startService(MockLocationIntentBuilder.startRouteReplay(context, routeId, speedMs, effective, returnPosition))

@@ -127,6 +127,47 @@ class StartRouteReplayUseCaseTest {
         }
 
     @Test
+    fun execute_unplantedTeleportRoute_hideTeleport_walks() =
+        runTest {
+            every { settingsRepository.getHideTeleportFeatures() } returns flowOf(true)
+            every { routeRepository.getRouteWithWaypoints("route-1") } returns flowOf(route.copy(routeType = RouteType.TELEPORT))
+            val config = captureConfig()
+
+            useCase.execute("route-1")
+
+            assertEquals(false, config.captured.teleportBetweenWaypoints)
+            assertEquals(false, config.captured.teleportToStart)
+            coVerify(exactly = 0) { teleportUseCase.execute(any(), any()) }
+        }
+
+    @Test
+    fun execute_unplantedTeleportRoute_bypassHideTeleport_hops() =
+        runTest {
+            every { settingsRepository.getHideTeleportFeatures() } returns flowOf(true)
+            every { routeRepository.getRouteWithWaypoints("route-1") } returns flowOf(route.copy(routeType = RouteType.TELEPORT))
+            val config = captureConfig()
+
+            useCase.execute("route-1", bypassHideTeleport = true)
+
+            assertEquals(true, config.captured.teleportBetweenWaypoints)
+            assertEquals(true, config.captured.teleportToStart)
+            coVerify(exactly = 0) { teleportUseCase.execute(any(), any()) }
+        }
+
+    @Test
+    fun execute_unplantedTeleportRoute_hopsWhenVisible() =
+        runTest {
+            every { routeRepository.getRouteWithWaypoints("route-1") } returns flowOf(route.copy(routeType = RouteType.TELEPORT))
+            val config = captureConfig()
+
+            useCase.execute("route-1")
+
+            assertEquals(true, config.captured.teleportBetweenWaypoints)
+            assertEquals(true, config.captured.teleportToStart)
+            coVerify(exactly = 0) { teleportUseCase.execute(any(), any()) }
+        }
+
+    @Test
     fun execute_unplantedGuidedRoute_leavesConfigUntouched() =
         runTest {
             every { routeRepository.getRouteWithWaypoints("route-1") } returns

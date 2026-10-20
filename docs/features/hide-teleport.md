@@ -10,6 +10,7 @@ Key files: the settings model and repository, the settings menu, and every scree
 - Lives under Settings → General → Privacy.
 - When on, each teleport control is removed from its composable tree, not just disabled. A visible but inert button is a trap for the user. Affected entry points cover the map's long-press sheets, the favorites and route sheets and pickers, the paste builders, the widget panels, the Group Sync leader teleport and follower snap, and route jump buttons.
 - Teleport-between-waypoints is removed with it. A route start still walks to its first stop instead of teleporting.
+- A saved teleport route walks its waypoints while the setting is on, because only walking and route replay may remain. The Control API bypass still hops it.
 - Starting a route ignores a stale teleport intent. The intent is checked against the setting, so an old value cannot cause a hop.
 
 The Control API bypasses this setting for teleport-between-waypoints only. That is deliberate, so integrators can still drive hop routes. See [group-sync.md](group-sync.md), "Control API".

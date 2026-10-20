@@ -9,6 +9,7 @@
     { "category": "feat", "scope": "Tap to Walk", "summary": "Tap to Walk now learns your game's map by itself. The Calibration step in Settings is gone. If you turn or zoom the game map, the app notices as you walk and adjusts. With no map learned yet, your first tap starts a short walk with a Cancel button in the notification, then walks to the spot you tapped." },
     { "category": "feat", "scope": "Tap to Walk", "summary": "The screen helper now takes a picture about every 3 seconds only while you walk in the game with Tap to Walk on. It takes none when the game is not in front." },
     { "category": "fix", "scope": "Reconnect accessory", "summary": "The failure notice no longer appears after a single missed screen read, and it clears itself once the accessory is back." },
-    { "category": "fix", "scope": "Routes", "summary": "Looping routes no longer jump back to the start. They walk the closing leg to the first point." }
+    { "category": "fix", "scope": "Routes", "summary": "Looping routes no longer jump back to the start. They walk the closing leg to the first point." },
+    { "category": "fix", "scope": "Routes", "summary": "With Hide teleport features on, teleport routes now walk between their points instead of jumping." }
   ]
 }
