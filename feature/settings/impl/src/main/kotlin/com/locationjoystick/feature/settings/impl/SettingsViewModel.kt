@@ -15,6 +15,7 @@ import com.locationjoystick.core.common.util.LocaleContextWrapper
 import com.locationjoystick.core.common.util.NetworkUtils
 import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.common.util.RandomCode
+import com.locationjoystick.core.data.BackupRepository
 import com.locationjoystick.core.data.CaptureCoordinatesRepository
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.HotLocationsRepository
@@ -68,6 +69,7 @@ class SettingsViewModel
         private val hotLocationsRepository: HotLocationsRepository,
         private val hotRoutesRepository: HotRoutesRepository,
         private val routeRepository: RouteRepository,
+        private val backupRepository: BackupRepository,
         private val sensorPermissionBootstrap: SensorPermissionBootstrap,
         private val importExportRepository: ImportExportRepository,
         private val exportSyncServer: ExportSyncServer,
@@ -921,22 +923,7 @@ class SettingsViewModel
             data: ExportData,
             replace: Boolean,
         ) {
-            withContext(Dispatchers.IO) {
-                if (replace) {
-                    favoriteRepository.deleteAllFavorites()
-                    routeRepository.deleteAllRoutes()
-                }
-                data.favoriteLocations.forEach { fav ->
-                    favoriteRepository.addFavorite(
-                        id = fav.id,
-                        name = fav.name,
-                        position = fav.position,
-                        createdAt = fav.createdAt,
-                        category = fav.category,
-                    )
-                }
-                data.routes.forEach { routeRepository.insertRoute(it).getOrNull() }
-            }
+            backupRepository.apply(data.favoriteLocations, data.routes, clearFavorites = replace, clearRoutes = replace)
             // Preserve fields not present in ExportData by reading current persisted values.
             val currentSnapshot = settingsRepository.getSettingsSnapshot().first()
             val profileById = data.speedProfiles.associateBy { it.id }
@@ -1047,21 +1034,7 @@ class SettingsViewModel
                         return@launch
                     }
                     val migration = result.getOrNull() ?: return@launch
-                    withContext(Dispatchers.IO) {
-                        if (replace) {
-                            favoriteRepository.deleteAllFavorites()
-                            routeRepository.deleteAllRoutes()
-                        }
-                        migration.favorites.forEach { fav ->
-                            favoriteRepository.addFavorite(
-                                id = fav.id,
-                                name = fav.name,
-                                position = fav.position,
-                                createdAt = fav.createdAt,
-                            )
-                        }
-                        migration.routes.forEach { routeRepository.insertRoute(it).getOrNull() }
-                    }
+                    backupRepository.apply(migration.favorites, migration.routes, clearFavorites = replace, clearRoutes = replace)
                     Log.i(
                         TAG,
                         "GPS Joystick import complete: ${migration.favorites.size} favorites, " +
@@ -1094,19 +1067,7 @@ class SettingsViewModel
                         return@launch
                     }
                     val migration = result.getOrNull() ?: return@launch
-                    withContext(Dispatchers.IO) {
-                        if (replace) {
-                            favoriteRepository.deleteAllFavorites()
-                        }
-                        migration.favorites.forEach { fav ->
-                            favoriteRepository.addFavorite(
-                                id = fav.id,
-                                name = fav.name,
-                                position = fav.position,
-                                createdAt = fav.createdAt,
-                            )
-                        }
-                    }
+                    backupRepository.apply(migration.favorites, emptyList(), clearFavorites = replace, clearRoutes = false)
                     migration.walkSpeed?.let { settingsRepository.setWalkSpeed(it) }
                     migration.runSpeed?.let { settingsRepository.setRunSpeed(it) }
                     migration.bikeSpeed?.let { settingsRepository.setBikeSpeed(it) }

@@ -15,6 +15,7 @@ import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import com.locationjoystick.core.testing.FakePreferencesDataStore
 import com.locationjoystick.core.testing.FakeRouteDao
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -59,6 +60,7 @@ class SpeedProfileInputTest {
                 hotLocationsRepository = HotLocationsRepository(context),
                 hotRoutesRepository = HotRoutesRepository(context),
                 routeRepository = RouteRepository(routeDao = FakeRouteDao()),
+                backupRepository = mockk(relaxed = true),
                 sensorPermissionBootstrap = SensorPermissionBootstrap(context),
                 importExportRepository = ImportExportRepository(context),
                 exportSyncServer = ExportSyncServer(),

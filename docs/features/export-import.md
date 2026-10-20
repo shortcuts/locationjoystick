@@ -33,7 +33,7 @@ Specific rules that have bitten us:
 
 Export serialises to JSON and shares the file. The QR-code export and import are separate features ([qr-transfer.md](qr-transfer.md)).
 
-Import reads the file, checks the schema version is within the supported range, asks for confirmation, then replaces the stored data. All file and database work runs off the main thread. A file that is malformed, too large, or has the wrong schema shows an error and changes nothing.
+Import reads the file, checks the schema version is within the supported range, asks for confirmation, then replaces the stored data. All file and database work runs off the main thread. A file that is malformed, too large, or has the wrong schema shows an error and changes nothing. An import is all-or-nothing: favorites and routes are written in one database transaction, so a write failure keeps the previous data and shows the import error. Settings apply after that transaction commits, because the database transaction cannot cover them.
 
 ## GPX import (routes only)
 

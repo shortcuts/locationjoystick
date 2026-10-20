@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.root.SensorPermissionBootstrap
 import com.locationjoystick.core.common.util.NsdCodeManager
+import com.locationjoystick.core.data.BackupRepository
 import com.locationjoystick.core.data.CaptureCoordinatesRepository
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.data.HotLocationsRepository
@@ -32,6 +33,8 @@ import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import com.locationjoystick.core.testing.FakePreferencesDataStore
 import com.locationjoystick.core.testing.FakeRouteDao
+import io.mockk.coEvery
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -64,6 +67,7 @@ class SettingsViewModelSaveTest {
     private lateinit var fakeSettingsRepo: SettingsRepository
     private lateinit var fakeFavoriteRepo: FavoriteRepository
     private lateinit var fakeRouteRepo: RouteRepository
+    private lateinit var backupRepository: BackupRepository
     private lateinit var viewModel: SettingsViewModel
     private lateinit var screenCaptureSource: ScreenCaptureSource
 
@@ -75,6 +79,7 @@ class SettingsViewModelSaveTest {
         fakeSettingsRepo = SettingsRepository(fakeDataSource)
         fakeFavoriteRepo = FavoriteRepository(FakeFavoriteDao(), ioDispatcher = testDispatcher)
         fakeRouteRepo = RouteRepository(routeDao = FakeRouteDao(), ioDispatcher = testDispatcher)
+        backupRepository = mockk(relaxed = true)
         screenCaptureSource = ScreenCaptureSource(fakeSettingsRepo)
         viewModel =
             SettingsViewModel(
@@ -84,6 +89,7 @@ class SettingsViewModelSaveTest {
                 hotLocationsRepository = HotLocationsRepository(context),
                 hotRoutesRepository = HotRoutesRepository(context),
                 routeRepository = fakeRouteRepo,
+                backupRepository = backupRepository,
                 sensorPermissionBootstrap = SensorPermissionBootstrap(context),
                 importExportRepository = ImportExportRepository(context),
                 exportSyncServer = ExportSyncServer(),
@@ -222,6 +228,20 @@ class SettingsViewModelSaveTest {
             assertFalse(snapshot.realismRealElevationEnabled)
             assertEquals(2.5, snapshot.altitudeJitterRadiusMeters, 0.001)
             assertTrue(snapshot.altitudeOverrideButtonEnabled)
+        }
+
+    @Test
+    fun `replace import that fails mid-insert keeps old data and reports error`() =
+        runTest(testDispatcher) {
+            coEvery { backupRepository.apply(any(), any(), any(), any()) } throws IllegalStateException("boom")
+
+            viewModel.userFeedback.test {
+                viewModel.importSettings(ExportData(settings = AppSettings(), speedProfiles = emptyList()), replace = true)
+                assertTrue(awaitItem().isError)
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            assertEquals(0, fakeDataSource.applySnapshotCallCount)
         }
 
     @Test
