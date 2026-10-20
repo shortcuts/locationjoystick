@@ -2,6 +2,7 @@ package com.locationjoystick.core.common.util
 
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.isValid
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
 import javax.xml.parsers.DocumentBuilderFactory
@@ -143,7 +144,7 @@ private fun collectGpxPoints(
                 ?.getNamedItem("lon")
                 ?.nodeValue
                 ?.toDoubleOrNull() ?: continue
-        points.add(LatLng(lat, lon))
+        LatLng(lat, lon).takeIf { it.isValid() }?.let(points::add)
     }
     return points
 }

@@ -33,7 +33,7 @@ Specific rules that have bitten us:
 
 Export serialises to JSON and shares the file. The QR-code export and import are separate features ([qr-transfer.md](qr-transfer.md)).
 
-Import reads the file, checks the schema version is within the supported range, asks for confirmation, then replaces the stored data. All file and database work runs off the main thread. A file that is malformed, too large, or has the wrong schema shows an error and changes nothing. An import is all-or-nothing: favorites and routes are written in one database transaction, so a write failure keeps the previous data and shows the import error. Settings apply after that transaction commits, because the database transaction cannot cover them.
+Import reads the file, checks the schema version is within the supported range, asks for confirmation, then replaces the stored data. All file and database work runs off the main thread. A file that is malformed, too large, has the wrong schema, or holds a favorite or waypoint with a non-finite or out-of-range coordinate shows an error and changes nothing. An import is all-or-nothing: favorites and routes are written in one database transaction, so a write failure keeps the previous data and shows the import error. Settings apply after that transaction commits, because the database transaction cannot cover them.
 
 ## GPX import (routes only)
 
@@ -42,6 +42,7 @@ Routes can be imported from GPX files.
 - Every track and route element becomes its own route. Elements are never merged, even if unnamed. Elements with no name take a numbered default.
 - A file with no track or route elements but with bare waypoints imports those waypoints as one route.
 - A file with no points at all shows an import error, rather than an empty route.
+- Points with a non-numeric, non-finite or out-of-range coordinate are skipped. A route left with no points is dropped, which gives the no-points error.
 - Routes over the waypoint limit are skipped, and the user is told how many.
 
 The parser is shared with opening a GPX file from another app. That path shows the paste sheet rather than saving at once ([routes.md](routes.md)).

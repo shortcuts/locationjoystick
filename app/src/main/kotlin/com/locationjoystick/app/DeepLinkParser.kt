@@ -2,6 +2,8 @@ package com.locationjoystick.app
 
 import android.content.Intent
 import com.locationjoystick.core.model.GroupInvite
+import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.isValid
 
 internal fun parseGroupInvite(intent: Intent): GroupInvite? {
     val uri = intent.data ?: return null
@@ -84,7 +86,7 @@ private fun parsePlaceDataCoords(path: String?): Pair<Double, Double>? {
     val match = path?.let { PLACE_DATA_REGEX.find(it) } ?: return null
     val lat = match.groupValues[1].toDoubleOrNull() ?: return null
     val lon = match.groupValues[2].toDoubleOrNull() ?: return null
-    if (lat !in -90.0..90.0 || lon !in -180.0..180.0) return null
+    if (!LatLng(lat, lon).isValid()) return null
     return lat to lon
 }
 
@@ -97,7 +99,7 @@ private fun parseLatLonString(value: String): Pair<Double, Double>? {
     if (parts.size < 2) return null
     val lat = parts[0].toDoubleOrNull() ?: return null
     val lon = parts[1].toDoubleOrNull() ?: return null
-    if (lat !in -90.0..90.0 || lon !in -180.0..180.0) return null
+    if (!LatLng(lat, lon).isValid()) return null
     return lat to lon
 }
 
@@ -107,7 +109,7 @@ private fun parseLatLonString(value: String): Pair<Double, Double>? {
 private fun parseQueryParameterCoords(uri: android.net.Uri): Pair<Double, Double>? {
     val lat = uri.getQueryParameter("lat")?.toDoubleOrNull() ?: return null
     val lon = uri.getQueryParameter("lon")?.toDoubleOrNull() ?: return null
-    if (lat !in -90.0..90.0 || lon !in -180.0..180.0) return null
+    if (!LatLng(lat, lon).isValid()) return null
     return lat to lon
 }
 

@@ -19,6 +19,9 @@ data class LatLng(
     }
 }
 
+/** True when both components are finite and within WGS84 bounds; NaN fails every range check. */
+fun LatLng.isValid(): Boolean = latitude in -90.0..90.0 && longitude in -180.0..180.0
+
 fun LatLng.bearingTo(other: LatLng): Double {
     val lat1 = Math.toRadians(latitude)
     val lat2 = Math.toRadians(other.latitude)

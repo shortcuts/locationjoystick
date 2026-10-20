@@ -263,6 +263,22 @@ class SettingsExportCodecEdgeCaseTest {
         SettingsExportCodec.parseExportData(json)
     }
 
+    @Test
+    fun `favorite with lat 200 is rejected`() {
+        val json =
+            """{"schemaVersion":${AppConstants.ExportConstants.SCHEMA_VERSION},"settings":{},""" +
+                """"favoriteLocations":[{"id":"f","name":"x","lat":200,"lon":2.3}]}"""
+        assertThrows(IllegalArgumentException::class.java) { SettingsExportCodec.parseExportData(json) }
+    }
+
+    @Test
+    fun `waypoint with NaN coordinate is rejected`() {
+        val json =
+            """{"schemaVersion":${AppConstants.ExportConstants.SCHEMA_VERSION},"settings":{},""" +
+                """"routes":[{"id":"r","name":"x","waypoints":[{"id":"w","lat":"NaN","lon":2.3,"orderIndex":0}]}]}"""
+        assertThrows(IllegalArgumentException::class.java) { SettingsExportCodec.parseExportData(json) }
+    }
+
     // -------------------------------------------------------------------------
     // Resilient parsing — unknown enum values fall back gracefully
     // -------------------------------------------------------------------------

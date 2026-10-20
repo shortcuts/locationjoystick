@@ -118,4 +118,25 @@ class LatLngTest {
         val bearing = a.bearingTo(b)
         assertTrue("expected NW bearing, got $bearing", bearing > 270.0 && bearing < 360.0)
     }
+
+    // isValid
+
+    @Test
+    fun `isValid accepts only finite in-range coordinates`() {
+        val cases =
+            listOf(
+                LatLng(0.0, 0.0) to true,
+                LatLng(90.0, 180.0) to true,
+                LatLng(-90.0, -180.0) to true,
+                LatLng(90.1, 0.0) to false,
+                LatLng(-90.1, 0.0) to false,
+                LatLng(0.0, 180.1) to false,
+                LatLng(0.0, -180.1) to false,
+                LatLng(Double.NaN, 0.0) to false,
+                LatLng(0.0, Double.NaN) to false,
+                LatLng(Double.POSITIVE_INFINITY, 0.0) to false,
+                LatLng(0.0, Double.NEGATIVE_INFINITY) to false,
+            )
+        cases.forEach { (point, expected) -> assertEquals("$point", expected, point.isValid()) }
+    }
 }

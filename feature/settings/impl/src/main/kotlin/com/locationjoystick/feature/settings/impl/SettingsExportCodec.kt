@@ -17,6 +17,7 @@ import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.core.model.Waypoint
+import com.locationjoystick.core.model.isValid
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -189,6 +190,12 @@ internal object SettingsExportCodec {
         data.homeFavoriteId?.let { root.put("homeFavoriteId", it) }
 
         return root.toString()
+    }
+
+    private fun parseValidLatLng(obj: JSONObject): LatLng {
+        val point = LatLng(obj.getDouble("lat"), obj.getDouble("lon"))
+        require(point.isValid()) { "Invalid coordinates in backup: ${point.latitude}, ${point.longitude}" }
+        return point
     }
 
     fun parseExportData(json: String): ExportData {
@@ -396,11 +403,7 @@ internal object SettingsExportCodec {
                         waypoints.add(
                             Waypoint(
                                 id = wpObj.getString("id"),
-                                position =
-                                    LatLng(
-                                        latitude = wpObj.getDouble("lat"),
-                                        longitude = wpObj.getDouble("lon"),
-                                    ),
+                                position = parseValidLatLng(wpObj),
                                 orderIndex = wpObj.getInt("orderIndex"),
                                 waitSeconds = wpObj.optInt("waitSeconds", 0),
                             ),
@@ -438,11 +441,7 @@ internal object SettingsExportCodec {
                     FavoriteLocation(
                         id = obj.getString("id"),
                         name = obj.getString("name"),
-                        position =
-                            LatLng(
-                                latitude = obj.getDouble("lat"),
-                                longitude = obj.getDouble("lon"),
-                            ),
+                        position = parseValidLatLng(obj),
                         createdAt = obj.optLong("createdAt", 0),
                         category = if (obj.isNull("category")) null else obj.optString("category").ifEmpty { null },
                     ),
