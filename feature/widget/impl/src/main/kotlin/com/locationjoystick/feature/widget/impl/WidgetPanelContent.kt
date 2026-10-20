@@ -41,6 +41,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.DebugStats
@@ -77,6 +80,7 @@ private fun WidgetIconButton(
     onClick: () -> Unit,
     enabled: Boolean = true,
     onLongClick: (() -> Unit)? = null,
+    stateDescription: String? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -94,6 +98,7 @@ private fun WidgetIconButton(
             modifier =
                 Modifier
                     .size(WidgetTouchTargetSize)
+                    .semantics { stateDescription?.let { this.stateDescription = it } }
                     .combinedClickable(
                         enabled = enabled,
                         interactionSource = interactionSource,
@@ -307,11 +312,13 @@ internal fun WidgetPanel(
                     enter = scaleIn(tween(150)) + fadeIn(tween(150)),
                     exit = scaleOut(tween(150)) + fadeOut(tween(150)),
                 ) {
+                    val completionDescription = stringResource(R.string.widget_panel_completion_pending_cd)
                     Box(
                         modifier =
                             Modifier
                                 .size(10.dp)
-                                .background(LjError, CircleShape),
+                                .background(LjError, CircleShape)
+                                .semantics { contentDescription = completionDescription },
                     )
                 }
             }
@@ -322,13 +329,14 @@ internal fun WidgetPanel(
             val controlsEnabled = masterToggle.spoofingActive
             features.forEach { feature ->
                 if (feature == AppFeature.ROUTES) {
-                    val routeIconTint =
-                        activityTint(activityState(routeControls.isActive, routeControls.isPaused))
+                    val routeState = activityState(routeControls.isActive, routeControls.isPaused)
+                    val routeIconTint = activityTint(routeState)
                     Box {
                         WidgetIconButton(
                             icon = LjIcons.Route,
                             contentDescription = stringResource(R.string.widget_panel_routes_picker_cd),
                             tint = routeIconTint,
+                            stateDescription = activityStateDescription(routeState),
                             enabled = controlsEnabled,
                             onClick = routeControls.onIconClick,
                         )
@@ -401,6 +409,7 @@ internal fun WidgetPanel(
                                     stringResource(R.string.widget_roaming)
                                 },
                             tint = roamingTint,
+                            stateDescription = activityStateDescription(roamingState),
                             enabled = controlsEnabled,
                             onClick = roamingControls.onIconClick,
                         )
@@ -535,6 +544,14 @@ private fun activityTint(state: ActivityState): Color =
         ActivityState.IDLE -> WidgetInactiveTint
         ActivityState.MOVING -> LjSuccess
         ActivityState.PAUSED -> MaterialTheme.colorScheme.primary
+    }
+
+@Composable
+private fun activityStateDescription(state: ActivityState): String? =
+    when (state) {
+        ActivityState.IDLE -> null
+        ActivityState.MOVING -> stringResource(R.string.widget_panel_state_running)
+        ActivityState.PAUSED -> stringResource(R.string.widget_panel_state_paused)
     }
 
 private fun featureIcon(

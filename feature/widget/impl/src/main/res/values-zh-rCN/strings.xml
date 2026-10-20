@@ -29,6 +29,9 @@
     <string name="widget_panel_resume_cd">"继续"</string>
     <string name="widget_panel_pause_cd">"暂停"</string>
     <string name="widget_panel_routes_picker_cd">"路线选择"</string>
+    <string name="widget_panel_state_running">"运行中"</string>
+    <string name="widget_panel_state_paused">"已暂停"</string>
+    <string name="widget_panel_completion_pending_cd">"路线已完成"</string>
     <string name="widget_panel_stop_cd">"停止"</string>
     <string name="overlay_recenter_cd">"回到当前位置"</string>
     <string name="overlay_open_favorites_cd">"打开收藏"</string>

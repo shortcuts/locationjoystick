@@ -29,6 +29,9 @@
     <string name="widget_panel_resume_cd">"Resume"</string>
     <string name="widget_panel_pause_cd">"Pause"</string>
     <string name="widget_panel_routes_picker_cd">"Routes picker"</string>
+    <string name="widget_panel_state_running">"Running"</string>
+    <string name="widget_panel_state_paused">"Paused"</string>
+    <string name="widget_panel_completion_pending_cd">"Route finished"</string>
     <string name="widget_panel_stop_cd">"Stop"</string>
     <string name="overlay_recenter_cd">"Re-center on location"</string>
     <string name="overlay_open_favorites_cd">"Open favorites"</string>
