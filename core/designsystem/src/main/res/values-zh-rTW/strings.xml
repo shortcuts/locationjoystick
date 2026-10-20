@@ -23,6 +23,7 @@
     <string name="route_start_options_cancel">"取消"</string>
     <string name="common_start">"開始"</string>
     <string name="top_bar_open_navigation_menu_cd">"開啟導覽選單"</string>
+    <string name="top_bar_navigate_up_cd">"向上導覽"</string>
     <string name="top_bar_more_actions_cd">"更多操作"</string>
     <string name="search_bar_search_location">"搜尋位置…"</string>
     <string name="search_bar_recent">"最近"</string>

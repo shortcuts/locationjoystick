@@ -1,6 +1,7 @@
 package com.locationjoystick.core.designsystem.component
 
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.LocalIndication
@@ -45,6 +46,10 @@ import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.R
 import com.locationjoystick.core.designsystem.ljSuccessColor
 
+@StringRes
+internal fun navigationIconDescriptionRes(icon: ImageVector): Int =
+    if (icon == LjIcons.Menu) R.string.top_bar_open_navigation_menu_cd else R.string.top_bar_navigate_up_cd
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LjTopBar(
@@ -80,7 +85,7 @@ fun LjTopBar(
                         IconButton(onClick = onNavigationClick) {
                             Icon(
                                 imageVector = navigationIcon,
-                                contentDescription = stringResource(R.string.top_bar_open_navigation_menu_cd),
+                                contentDescription = stringResource(navigationIconDescriptionRes(navigationIcon)),
                                 tint = MaterialTheme.colorScheme.onSurface,
                             )
                         }
