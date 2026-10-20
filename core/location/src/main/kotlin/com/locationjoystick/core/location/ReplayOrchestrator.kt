@@ -13,6 +13,7 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.WalkToEngine
+import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -205,7 +206,7 @@ internal class ReplayOrchestrator(
                 walkToPosition(returnPosition, speedMs, state = state)
             }
             finishReplay()
-            locationRepository.emitCompletion("Route complete")
+            locationRepository.emitCompletion(CompletionKind.ROUTE)
         }
 
     fun handleEphemeralStart(
@@ -278,7 +279,7 @@ internal class ReplayOrchestrator(
                 routeReplayEngine
                     .jumpToNextWaypoint(::tickPosition) {
                         finishReplay()
-                        locationRepository.emitCompletion("Route complete")
+                        locationRepository.emitCompletion(CompletionKind.ROUTE)
                     }?.let(::tickPosition)
             }
             // A hop to the next stop has just set the resume position; steering is irrelevant there.
@@ -289,7 +290,7 @@ internal class ReplayOrchestrator(
                 onPositionUpdate = ::tickReplayPosition,
                 onComplete = {
                     finishReplay()
-                    locationRepository.emitCompletion("Route complete")
+                    locationRepository.emitCompletion(CompletionKind.ROUTE)
                 },
                 resumeFrom = resumeFrom,
             )
@@ -318,7 +319,7 @@ internal class ReplayOrchestrator(
         if (locationRepository.currentMode.value != MockMode.ROUTE_REPLAY) return
         val onReplayComplete: () -> Unit = {
             finishReplay()
-            locationRepository.emitCompletion("Route complete")
+            locationRepository.emitCompletion(CompletionKind.ROUTE)
         }
         val target =
             if (forward) {
@@ -480,7 +481,7 @@ internal class ReplayOrchestrator(
         persistMetadata: (suspend () -> Unit)? = null,
         onComplete: suspend () -> Unit = {
             finishReplay()
-            locationRepository.emitCompletion("Route complete")
+            locationRepository.emitCompletion(CompletionKind.ROUTE)
         },
     ) {
         if (!isStartStillCurrent(state.generation)) return
@@ -538,7 +539,7 @@ internal class ReplayOrchestrator(
         persistMetadata: (suspend () -> Unit)? = null,
         onComplete: suspend () -> Unit = {
             finishReplay()
-            locationRepository.emitCompletion("Route complete")
+            locationRepository.emitCompletion(CompletionKind.ROUTE)
         },
     ) {
         startReplaySetup(

@@ -64,4 +64,8 @@
     <string name="route_paste_need_one_point_planting">"種植模式至少需要 1 個點"</string>
     <string name="route_paste_need_two_points">"此模式至少需要 2 個點"</string>
     <string name="route_paste_could_not_build_route">"無法根據這些點建立路線"</string>
+    <string name="route_creator_import_no_routes">"GPX 檔案中找不到路線"</string>
+    <string name="route_creator_import_all_oversized">"此檔案中的每條路線都超過 %1$d 個點，已被略過"</string>
+    <string name="route_creator_import_too_large">"GPX 檔案過大（%1$d MB）。最大允許 %2$d MB。"</string>
+    <string name="route_creator_import_unreadable">"無法讀取 GPX 檔案"</string>
 </resources>

@@ -58,6 +58,7 @@ import com.locationjoystick.core.map.maplibre.followOrSnapTo
 import com.locationjoystick.core.map.maplibre.rememberMapView
 import com.locationjoystick.core.map.projection.projection
 import com.locationjoystick.core.map.ui.MapAttribution
+import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.MockLocationState
@@ -132,9 +133,18 @@ fun MapRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val walkComplete = stringResource(R.string.map_walk_complete)
+    val routeComplete = stringResource(R.string.map_route_complete)
+    val roamingComplete = stringResource(R.string.map_roaming_complete)
     LaunchedEffect(Unit) {
-        viewModel.completionMessages.collect { msg ->
-            snackbarHostState.showSnackbar(msg)
+        viewModel.completionMessages.collect { kind ->
+            snackbarHostState.showSnackbar(
+                when (kind) {
+                    CompletionKind.WALK -> walkComplete
+                    CompletionKind.ROUTE -> routeComplete
+                    CompletionKind.ROAMING -> roamingComplete
+                },
+            )
         }
     }
     LaunchedEffect(Unit) {

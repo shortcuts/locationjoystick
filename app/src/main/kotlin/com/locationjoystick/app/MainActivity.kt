@@ -21,6 +21,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.GpxImportError
 import com.locationjoystick.core.common.util.LocaleContextWrapper
 import com.locationjoystick.core.common.util.loadGpxForOpen
 import com.locationjoystick.core.data.DeepLinkRepository
@@ -225,14 +226,14 @@ class MainActivity : ComponentActivity() {
         val descriptor = contentResolver.openAssetFileDescriptor(uri, "r")
         val fileSize = descriptor?.use { it.length }
         if (fileSize != null && fileSize > AppConstants.ExportConstants.MAX_GPX_IMPORT_SIZE_BYTES) {
-            throw IllegalArgumentException(
-                "GPX file is too large (${fileSize / 1024 / 1024} MB). Maximum allowed is " +
-                    "${AppConstants.ExportConstants.MAX_GPX_IMPORT_SIZE_BYTES / 1024 / 1024} MB.",
+            throw GpxImportError.TooLarge(
+                fileSize / 1024 / 1024,
+                AppConstants.ExportConstants.MAX_GPX_IMPORT_SIZE_BYTES / 1024 / 1024,
             )
         }
         return contentResolver.openInputStream(uri)?.use { stream ->
             stream.bufferedReader().readText()
-        } ?: throw IllegalArgumentException("Cannot read GPX file")
+        } ?: throw GpxImportError.Unreadable
     }
 
     private fun handleSharedUrl(url: String) {

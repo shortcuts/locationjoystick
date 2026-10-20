@@ -1,6 +1,7 @@
 package com.locationjoystick.core.data
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.SpeedProfile
@@ -8,6 +9,8 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -140,6 +143,21 @@ class WalkCoordinatorTest {
                 "Walk target should be null after arrival",
                 locationRepository.walkTarget.value,
             )
+        }
+
+    @Test
+    fun `arrival emits CompletionKind WALK`() =
+        runTest {
+            val events = mutableListOf<CompletionKind>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                locationRepository.completionEvents.collect { events += it }
+            }
+            locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+
+            walkCoordinator.startWalk(LatLng(48.856604498, 2.3522), backgroundScope)
+            advanceTimeBy(AppConstants.LocationConstants.UPDATE_INTERVAL_MS + 1)
+
+            assertEquals(listOf(CompletionKind.WALK), events)
         }
 
     // Regression coverage for GH-48: currentSpeedMs must not stay frozen at the last

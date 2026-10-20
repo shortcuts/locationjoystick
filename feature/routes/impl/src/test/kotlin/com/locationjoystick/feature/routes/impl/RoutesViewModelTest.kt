@@ -3,6 +3,7 @@ package com.locationjoystick.feature.routes.impl
 import android.content.Context
 import app.cash.turbine.test
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.GpxImportError
 import com.locationjoystick.core.common.util.parseGpxRoutes
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
@@ -290,6 +291,20 @@ class RoutesViewModelUiStateTest {
         val message = buildGpxImportMessage(context, outcome)
 
         assertEquals("2 routes imported. Skipped 3 routes that were too large to import", message)
+    }
+
+    @Test
+    fun gpxImportErrorDetail_mapsEachErrorToItsString() {
+        every { context.getString(R.string.route_creator_import_too_large, 12L, 10L) } returns "too large"
+        every { context.getString(R.string.route_creator_import_all_oversized, 5000) } returns "all oversized"
+        every { context.getString(R.string.route_creator_import_no_routes) } returns "no routes"
+        every { context.getString(R.string.route_creator_import_unreadable) } returns "unreadable"
+
+        assertEquals("too large", gpxImportErrorDetail(context, GpxImportError.TooLarge(12L, 10L)))
+        assertEquals("all oversized", gpxImportErrorDetail(context, GpxImportError.AllOversized(5000)))
+        assertEquals("no routes", gpxImportErrorDetail(context, GpxImportError.NoRoutes))
+        assertEquals("unreadable", gpxImportErrorDetail(context, GpxImportError.Unreadable))
+        assertEquals("boom", gpxImportErrorDetail(context, IllegalStateException("boom")))
     }
 
     private fun route(

@@ -2,6 +2,7 @@ package com.locationjoystick.core.data
 
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -138,11 +139,11 @@ class LocationRepository
         private val _currentMode = MutableStateFlow(MockMode.TELEPORT)
         val currentMode: StateFlow<MockMode> = _currentMode.asStateFlow()
 
-        private val _completionEvents = MutableSharedFlow<String>(extraBufferCapacity = 1)
-        val completionEvents: SharedFlow<String> = _completionEvents.asSharedFlow()
+        private val _completionEvents = MutableSharedFlow<CompletionKind>(extraBufferCapacity = 1)
+        val completionEvents: SharedFlow<CompletionKind> = _completionEvents.asSharedFlow()
 
-        fun emitCompletion(message: String) {
-            _completionEvents.tryEmit(message)
+        fun emitCompletion(kind: CompletionKind) {
+            _completionEvents.tryEmit(kind)
         }
 
         /**

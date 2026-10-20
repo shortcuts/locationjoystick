@@ -143,7 +143,7 @@ private suspend fun shareQrBitmap(
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
             withContext(Dispatchers.Main) {
-                context.startActivity(Intent.createChooser(intent, "Share QR Code"))
+                context.startActivity(Intent.createChooser(intent, context.getString(R.string.qr_share_dialog_share)))
             }
         } catch (e: Exception) {
             Log.e(TAG, "Share QR bitmap failed", e)

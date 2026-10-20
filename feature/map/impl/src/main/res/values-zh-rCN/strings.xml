@@ -49,4 +49,7 @@
     <string name="map_fab_roaming_ignored_route_playing_cd">"漫游已忽略 — 路线正在进行"</string>
     <string name="map_speed_strip_kmh">"%1$.1f km/h"</string>
     <string name="map_speed_strip_mph">"%1$.1f mph"</string>
+    <string name="map_walk_complete">"步行完成"</string>
+    <string name="map_route_complete">"路线完成"</string>
+    <string name="map_roaming_complete">"漫游完成"</string>
 </resources>

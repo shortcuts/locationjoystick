@@ -49,4 +49,7 @@
     <string name="map_fab_roaming_ignored_route_playing_cd">"Roaming ignored. A route is playing."</string>
     <string name="map_speed_strip_kmh">"%1$.1f km/h"</string>
     <string name="map_speed_strip_mph">"%1$.1f mph"</string>
+    <string name="map_walk_complete">"Walk complete"</string>
+    <string name="map_route_complete">"Route complete"</string>
+    <string name="map_roaming_complete">"Roaming complete"</string>
 </resources>

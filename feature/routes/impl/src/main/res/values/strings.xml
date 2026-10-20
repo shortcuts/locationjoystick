@@ -64,4 +64,8 @@
     <string name="route_paste_need_one_point_planting">"Need at least 1 point for Planting mode."</string>
     <string name="route_paste_need_two_points">"Need at least 2 points for this mode."</string>
     <string name="route_paste_could_not_build_route">"Could not build a route from those points."</string>
+    <string name="route_creator_import_no_routes">"No routes found in GPX file"</string>
+    <string name="route_creator_import_all_oversized">"Every route in this file has more than %1$d points and was skipped"</string>
+    <string name="route_creator_import_too_large">"GPX file is too large (%1$d MB). Maximum allowed is %2$d MB."</string>
+    <string name="route_creator_import_unreadable">"Cannot read GPX file"</string>
 </resources>

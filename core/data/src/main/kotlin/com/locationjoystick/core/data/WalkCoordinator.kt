@@ -1,6 +1,7 @@
 package com.locationjoystick.core.data
 
 import android.util.Log
+import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
 import kotlinx.coroutines.CoroutineScope
@@ -118,7 +119,7 @@ class WalkCoordinator
                                     // mode, so this must happen before setMockMode(TELEPORT) below.
                                     onPositionUpdate?.invoke(finalTarget, 0f, lastBearing)
                                     locationRepository.setMockMode(MockMode.TELEPORT)
-                                    locationRepository.emitCompletion("Walk complete")
+                                    locationRepository.emitCompletion(CompletionKind.WALK)
                                 }
                             },
                             onFinished = {

@@ -9,6 +9,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.GpxImportError
 import com.locationjoystick.core.common.util.parseGpxRoutes
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
@@ -253,7 +254,7 @@ class RoutesViewModel
                         Toast
                             .makeText(
                                 context,
-                                context.getString(R.string.route_creator_import_failed, e.message.orEmpty()),
+                                context.getString(R.string.route_creator_import_failed, gpxImportErrorDetail(context, e)),
                                 Toast.LENGTH_SHORT,
                             ).show()
                     }
@@ -266,14 +267,12 @@ class RoutesViewModel
             withContext(Dispatchers.IO) {
                 val gpxContent = readGpxContent(uri)
                 val gpxRoutes = parseGpxRoutes(gpxContent)
-                if (gpxRoutes.isEmpty()) throw IllegalArgumentException("No routes found in GPX file")
+                if (gpxRoutes.isEmpty()) throw GpxImportError.NoRoutes
                 val (importable, oversized) =
                     gpxRoutes.partition { it.waypoints.size <= AppConstants.ExportConstants.MAX_GPX_ROUTE_WAYPOINTS }
                 if (importable.isEmpty()) {
                     val maxPoints = AppConstants.ExportConstants.MAX_GPX_ROUTE_WAYPOINTS
-                    throw IllegalArgumentException(
-                        "Every route in this file has more than $maxPoints points and was skipped",
-                    )
+                    throw GpxImportError.AllOversized(maxPoints)
                 }
                 val routes =
                     importable.map { gpxRoute ->
@@ -303,14 +302,14 @@ class RoutesViewModel
                 val descriptor = context.contentResolver.openAssetFileDescriptor(uri, "r")
                 val fileSize = descriptor?.use { it.length }
                 if (fileSize != null && fileSize > AppConstants.ExportConstants.MAX_GPX_IMPORT_SIZE_BYTES) {
-                    throw IllegalArgumentException(
-                        "GPX file is too large (${fileSize / 1024 / 1024} MB). Maximum allowed is " +
-                            "${AppConstants.ExportConstants.MAX_GPX_IMPORT_SIZE_BYTES / 1024 / 1024} MB.",
+                    throw GpxImportError.TooLarge(
+                        fileSize / 1024 / 1024,
+                        AppConstants.ExportConstants.MAX_GPX_IMPORT_SIZE_BYTES / 1024 / 1024,
                     )
                 }
                 context.contentResolver.openInputStream(uri)?.use { stream ->
                     stream.bufferedReader().readText()
-                } ?: throw IllegalArgumentException("Cannot read GPX file")
+                } ?: throw GpxImportError.Unreadable
             }
     }
 
@@ -318,6 +317,18 @@ internal data class GpxImportOutcome(
     val routes: List<Route>,
     val skippedOversized: Int,
 )
+
+internal fun gpxImportErrorDetail(
+    context: Context,
+    e: Exception,
+): String =
+    when (e) {
+        is GpxImportError.TooLarge -> context.getString(R.string.route_creator_import_too_large, e.sizeMb, e.maxMb)
+        is GpxImportError.AllOversized -> context.getString(R.string.route_creator_import_all_oversized, e.maxPoints)
+        GpxImportError.NoRoutes -> context.getString(R.string.route_creator_import_no_routes)
+        GpxImportError.Unreadable -> context.getString(R.string.route_creator_import_unreadable)
+        else -> e.message.orEmpty()
+    }
 
 internal fun buildGpxImportMessage(
     context: Context,

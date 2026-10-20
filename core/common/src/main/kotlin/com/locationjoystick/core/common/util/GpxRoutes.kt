@@ -95,11 +95,9 @@ fun selectGpxRouteForOpen(
     if (playable.isEmpty()) {
         val maxPoints = maxWaypoints
         if (routes.any { it.waypoints.size > maxPoints }) {
-            throw IllegalArgumentException(
-                "Every route in this file has more than $maxPoints points and was skipped",
-            )
+            throw GpxImportError.AllOversized(maxPoints)
         }
-        throw IllegalArgumentException("No routes found in GPX file")
+        throw GpxImportError.NoRoutes
     }
     return playable.first()
 }

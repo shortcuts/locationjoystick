@@ -2,6 +2,7 @@ package com.locationjoystick.core.data
 
 import android.util.Log
 import com.locationjoystick.core.common.util.BearingTracker
+import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -102,7 +103,7 @@ class RoamingRepository
                 },
                 onComplete = {
                     resetRoamingState()
-                    locationRepository.emitCompletion("Roaming complete")
+                    locationRepository.emitCompletion(CompletionKind.ROAMING)
                     Log.d(TAG, "Roaming completed or cancelled")
                 },
             )
