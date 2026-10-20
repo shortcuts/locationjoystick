@@ -75,13 +75,14 @@ class GroundMapFitTest {
     private fun syntheticMoves(
         cal: GroundCalibration,
         bearings: List<Double>,
+        ys: List<Double> = listOf(600.0, 800.0, 1000.0, 1200.0, 1350.0),
     ): List<LegMove> {
         val map = GroundMap(cal, 1080.0, 2340.0)
         return bearings.flatMap { b ->
             val d = GroundOffset(6.0 * kotlin.math.sin(Math.toRadians(b)), 6.0 * kotlin.math.cos(Math.toRadians(b)))
             List(6) {
                 val bands =
-                    listOf(600.0, 800.0, 1000.0, 1200.0, 1350.0).flatMap { y ->
+                    ys.flatMap { y ->
                         listOf(250.0, 850.0).map { x ->
                             val g = map.pixelToGround(x, y)!!
                             val (qx, qy) = map.groundToPixel(g.eastMeters - d.eastMeters, g.northMeters - d.northMeters)
@@ -109,5 +110,22 @@ class GroundMapFitTest {
         val stored = GroundMapFit.fit(moves("A"), 540.0, 1510.0, 1080, 2340)!!.calibration
         val weak = syntheticMoves(stored, listOf(0.0)).take(1).map { m -> LegMove(m.d, m.bands.map { it.copy(response = 0.1) }) }
         assertNull(GroundMapFit.moveResidualsPx(stored, weak, 1080, 2340)[0])
+    }
+
+    @Test
+    fun moveResidualsIgnoreBandsAboveHorizon() {
+        val forward = 3.0
+        val cal = GroundCalibration(0.0, 7.0, forward, forward / 702.0, 540.0, 1510.0) // horizon row 702 = 0.3 of 2340
+        assertNotNull(GroundMap(cal, 1080.0, 2340.0).pixelToGround(540.0, 900.0))
+        val garbage =
+            listOf(100.0, 200.0, 300.0, 500.0, 700.0).flatMap { y ->
+                listOf(250.0, 850.0).map { x -> BandFlow(40.0, 40.0, 0.9, x, y) }
+            }
+        val moves =
+            syntheticMoves(cal, listOf(0.0, 90.0), listOf(900.0, 1000.0, 1200.0, 1350.0))
+                .map { m -> LegMove(m.d, m.bands + garbage) }
+        val residuals = GroundMapFit.moveResidualsPx(cal, moves, 1080, 2340).filterNotNull()
+        assertEquals(moves.size, residuals.size)
+        assertEquals(0.0, residuals.max(), 0.5)
     }
 }

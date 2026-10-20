@@ -50,14 +50,8 @@ object GroundMapFit {
         val px = feetX * GROUND_MAP_REFERENCE_WIDTH / width
         val py = feetY * GROUND_MAP_REFERENCE_HEIGHT / height
         val first = solve(flows, px, py) ?: return null
-        val hz = if (first.a != 0.0) first.sy / first.a else Double.NaN
-        val refit =
-            if (hz >= 0.0 && hz < GROUND_MAP_REFERENCE_HEIGHT) {
-                val cut = hz + HORIZON_MARGIN * GROUND_MAP_REFERENCE_HEIGHT
-                solve(flows.filter { it.cy > cut }, px, py)
-            } else {
-                null
-            }
+        val cut = horizonCutRow(first.sy, first.a)
+        val refit = if (cut != null) solve(flows.filter { it.cy > cut }, px, py) else null
         val best = refit ?: first
         val cal = GroundCalibration(best.theta, best.s, best.sy, best.a, px, py)
         return GroundFit(cal, best.medianAbs, best.n)
@@ -65,22 +59,35 @@ object GroundMapFit {
 
     /**
      * Median absolute residual (reference px, both components, the measure of [GroundFit.medianAbsPx]) of each move's
-     * kept flows under [cal], null for a move with fewer than 3 usable bands; order follows [moves].
+     * kept flows under [cal], null for a move with fewer than 3 usable bands; order follows [moves]. Bands above the
+     * horizon cut are dropped, as in [fit], so the residual and the stored [GroundFit.medianAbsPx] share one population.
      */
     fun moveResidualsPx(
         cal: GroundCalibration,
         moves: List<LegMove>,
         width: Int,
         height: Int,
-    ): List<Double?> =
-        moves.map { m ->
-            val rows = flowsOf(m, width, height).filter { it.response >= MIN_RESPONSE }
+    ): List<Double?> {
+        val cut = horizonCutRow(cal.forwardPxPerM, cal.perspective)
+        return moves.map { m ->
+            val rows = flowsOf(m, width, height).filter { it.response >= MIN_RESPONSE && (cut == null || it.cy > cut) }
             if (rows.size < MIN_MOVE_FLOWS) {
                 null
             } else {
                 medianAbs(residuals(params(cal), rows, cal.feetX, cal.feetY))
             }
         }
+    }
+
+    /** Reference row under which bands keep a coherent flow, or null when the fitted horizon is off screen. */
+    private fun horizonCutRow(
+        forwardPxPerM: Double,
+        perspective: Double,
+    ): Double? {
+        if (perspective == 0.0) return null
+        val hz = forwardPxPerM / perspective
+        return if (hz >= 0.0 && hz < GROUND_MAP_REFERENCE_HEIGHT) hz + HORIZON_MARGIN * GROUND_MAP_REFERENCE_HEIGHT else null
+    }
 
     private fun params(cal: GroundCalibration) = doubleArrayOf(cal.headingDeg, cal.lateralPxPerM, cal.forwardPxPerM, cal.perspective)
 

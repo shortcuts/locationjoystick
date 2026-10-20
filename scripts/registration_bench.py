@@ -1309,6 +1309,18 @@ def fit_perspective(moves, anchor, min_resp=0.2, theta0s=(-20, 5, 30, -60, 60, 1
             "px": float(anchor[0]), "py": float(anchor[1]), "med_abs_px": med, "n": len(rows) // 2}
 
 
+def horizon_cut(fit, cy_max, margin=0.03):
+    """Row under which bands keep a coherent flow, or None when the fitted horizon is off screen.
+
+    cy_max is the lowest band centre; the frame height follows from it (the lowest band sits at that fraction of it).
+    """
+    if fit is None or fit["a"] == 0.0:
+        return None
+    hz = fit["sy"] / fit["a"]
+    h = cy_max / sum(FLOW_ROWS[-1]) * 2
+    return hz + margin * h if 0.0 <= hz < h else None
+
+
 def fit_perspective_horizon(moves, anchor, margin=0.03, **kw):
     """fit_perspective, then refit without bands at or above the fitted horizon row.
 
@@ -1316,16 +1328,10 @@ def fit_perspective_horizon(moves, anchor, margin=0.03, **kw):
     the bands near and above it have no coherent flow, so they are dropped. Horizon off screen: one pass.
     """
     fit = fit_perspective(moves, anchor, **kw)
-    if fit is None or fit["a"] == 0.0:
-        return fit
-    hz = fit["sy"] / fit["a"]
     cy = [f[4] for _, _, fl in moves for f in fl]
-    if not cy:
+    cut = horizon_cut(fit, max(cy), margin) if cy else None
+    if cut is None:
         return fit
-    h = max(cy) / sum(FLOW_ROWS[-1]) * 2  # frame height: the lowest band centre sits at that fraction of it
-    if not 0.0 <= hz < h:
-        return fit
-    cut = hz + margin * h
     kept = [(b, d, [f for f in fl if f[4] > cut]) for b, d, fl in moves]
     return fit_perspective(kept, anchor, **kw) or fit
 
@@ -1653,9 +1659,10 @@ def move_excess(cal, move, min_resp=0.2):
     h = persp_h(cal)
     hi = np.linalg.inv(h)
     _, d, fl = move[:3]
+    cut = horizon_cut(cal, max((f[4] for f in fl), default=0.0))
     r = []
     for f in fl:
-        if f[2] >= min_resp:
+        if f[2] >= min_resp and (cut is None or f[4] > cut):
             r.extend(np.abs(np.array(f[:2]) - predict_flow(h, hi, d, (f[3], f[4]))))
     return float(np.median(r)) if len(r) >= 6 else None
 
@@ -1716,6 +1723,8 @@ def leg_alarm(cal, moves, k, h):
     """(index into the usable moves of the CUSUM alarm or None, usable moves) for one leg under stored fit cal."""
     used = [(m, move_excess(cal, m)) for m in moves]
     used = [(m, z) for m, z in used if z is not None]
+    if moves and not used:
+        return 0, list(moves)
     return cusum_alarm([z / cal["med_abs_px"] for _, z in used], k, h), [m for m, _ in used]
 
 

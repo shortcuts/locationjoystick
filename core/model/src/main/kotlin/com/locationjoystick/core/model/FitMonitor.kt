@@ -27,7 +27,8 @@ object FitMonitor {
 
     /**
      * Index of the first move whose accumulated excess residual passes [alarm], or null. A move's excess is
-     * its residual over [baseMedianPx] minus one (zero when nothing changed) minus [drift].
+     * its residual over [baseMedianPx] minus one (zero when nothing changed) minus [drift]. A leg with moves but
+     * no usable residual returns 0: no evidence that the fit holds is not a match.
      */
     fun alarmIndex(
         residualsPx: List<Double?>,
@@ -36,6 +37,7 @@ object FitMonitor {
         alarm: Double = ALARM,
     ): Int? {
         require(baseMedianPx > 0.0) { "stored median residual must be positive" }
+        if (residualsPx.isNotEmpty() && residualsPx.all { it == null }) return 0
         var s = 0.0
         for ((i, r) in residualsPx.withIndex()) {
             if (r == null) continue

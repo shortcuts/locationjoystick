@@ -420,6 +420,25 @@ def test_refit_heading_recovers_a_twist_with_scales_fixed():
     assert rb.move_excess(base, moves[0]) > 10 * rb.move_excess(twisted, moves[0])
 
 
+def test_move_excess_ignores_bands_above_horizon():
+    cal = {**CAM, "a": CAM["sy"] / 702.0, "theta_deg": 0.0}  # horizon row 702, on screen
+    h = rb.persp_h(cal)
+    hi = np.linalg.inv(h)
+    d = np.array([0.0, 6.0])
+    good = [tuple(rb.predict_flow(h, hi, d, (x, y))) + (0.9, x, y) for y in (900, 1000, 1200, 1350) for x in (250, 850)]
+    garbage = [(40.0, 40.0, 0.9, x, y) for y in (100, 200, 300, 500, 700) for x in (250, 850)]
+    assert rb.move_excess(cal, (0.0, d, good + garbage, 6.0)) < 0.5
+
+
+def test_leg_alarm_flags_a_leg_with_no_usable_moves():
+    cal = {**CAM, "theta_deg": 0.0, "med_abs_px": 1.0}
+    d = np.array([0.0, 6.0])
+    moves = [(0.0, d, [(1.0, 1.0, 0.1, 500.0, 1000.0)] * 5, 6.0)] * 3
+    idx, used = rb.leg_alarm(cal, moves, 0.25, 8.0)
+    assert idx == 0 and len(used) == 3
+    assert rb.leg_alarm(cal, [], 0.25, 8.0)[0] is None
+
+
 def test_twist_from_frames_reads_the_camera_twist_and_eigenvalues_separate_zoom():
     h0 = rb.persp_h({**CAM, "theta_deg": -20.0})
     h1 = rb.persp_h({**CAM, "theta_deg": 20.0})

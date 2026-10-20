@@ -22,4 +22,19 @@ class FitMonitorTest {
     fun movesWithoutUsableBandsAreSkipped() {
         assertEquals(1, FitMonitor.alarmIndex(listOf(null, 12.0), 1.0))
     }
+
+    @Test
+    fun legWithNoUsableMovesIsNotAMatch() {
+        assertEquals(0, FitMonitor.alarmIndex(listOf(null, null, null), 1.0))
+    }
+
+    @Test
+    fun emptyLegIsNotAlarmed() {
+        assertNull(FitMonitor.alarmIndex(emptyList(), 1.0))
+    }
+
+    @Test
+    fun oneNullAmongValidMovesBehavesAsToday() {
+        assertNull(FitMonitor.alarmIndex(listOf(1.0, null, 1.0), 1.0))
+    }
 }

@@ -280,6 +280,17 @@ in [tap-to-walk-research.md](tap-to-walk-research.md), "Recommendations for entr
 | 3. Zoom as one parameter | Focal length 1498 to 2203 px across four zooms, spread 38% | spread at most 10% | KILL |
 | 12. Two learning legs instead of four | Fit on bearings 0 and 90, landing error on the other legs p50 2.0 m, p90 6.2 m | held-out p90 at most 10 m | PASS |
 
+### Monitor residuals: horizon cut and legs with no usable flow
+
+Bench `monitor` with fixed k 0.25 and h 8, before and after the change, on one fresh `varycap` run (Pixel 5; conditions `1:0 1:8 1.6:0 1:40`, 4 legs of 30 m each, same cached flows for both runs). The grid-search `monitor` default prints the best grid cell, not the cell asked for, so a script scored the fixed cell.
+
+| | False alarms | Unchanged legs |
+|---|---|---|
+| Before | 3 | 8 |
+| After | 3 | 8 |
+
+Every alarm row (including the 1.6x close-up and +40 degree conditions) is identical before and after. The stored fit's horizon sat off screen in this run (negative horizon row), so the horizon cut did not fire, and no leg had zero usable moves. The change is verified on real data only as "no regression"; the cut itself and the all-unusable leg are pinned by unit tests in Kotlin and in the bench. Legs captured with a menu open were not measured: no script drives that.
+
 What the app takes from this:
 
 - The alarm only detects. Any alarm makes the fit suspect and the next legs feed a full four-term re-fit (decision 3 of the plan: the heading-only step is dropped).
