@@ -53,6 +53,49 @@ class PositionJitterCoordinatorTest {
     }
 
     @Test
+    fun `radius shrink moves at most maxStep per tick`() {
+        val coordinator = PositionJitterCoordinator()
+        val random = Random(5)
+        var (prevNorth, prevEast) = coordinator.step(30.0, maxStepMeters = 1.0, bearingDeg = 0f, longitudinalFraction = 1.0, random)
+        while (hypot(prevNorth, prevEast) < 29.9) {
+            val (n, e) = coordinator.step(30.0, maxStepMeters = 1.0, bearingDeg = 0f, longitudinalFraction = 1.0, random)
+            prevNorth = n
+            prevEast = e
+        }
+
+        repeat(40) {
+            val (north, east) = coordinator.step(0.3, maxStepMeters = 1.0, bearingDeg = 0f, longitudinalFraction = 1.0, random)
+            val stepDist = hypot(north - prevNorth, east - prevEast)
+            assertTrue("Step distance $stepDist exceeded maxStepMeters", stepDist <= 1.0 + 1e-9)
+            prevNorth = north
+            prevEast = east
+        }
+        assertTrue("Offset should end inside the new radius", hypot(prevNorth, prevEast) <= 0.3 + 1e-9)
+    }
+
+    @Test
+    fun `radius 0 converges without a jump`() {
+        val coordinator = PositionJitterCoordinator()
+        val random = Random(6)
+        var (prevNorth, prevEast) = coordinator.step(30.0, maxStepMeters = 1.0, bearingDeg = 0f, longitudinalFraction = 1.0, random)
+        while (hypot(prevNorth, prevEast) < 29.9) {
+            val (n, e) = coordinator.step(30.0, maxStepMeters = 1.0, bearingDeg = 0f, longitudinalFraction = 1.0, random)
+            prevNorth = n
+            prevEast = e
+        }
+
+        repeat(40) {
+            val (north, east) = coordinator.step(0.0, maxStepMeters = 1.0, bearingDeg = 0f, longitudinalFraction = 1.0, random)
+            val stepDist = hypot(north - prevNorth, east - prevEast)
+            assertTrue("Step distance $stepDist exceeded maxStepMeters", stepDist <= 1.0 + 1e-9)
+            prevNorth = north
+            prevEast = east
+        }
+        assertEquals(0.0, prevNorth, 0.0)
+        assertEquals(0.0, prevEast, 0.0)
+    }
+
+    @Test
     fun `reset zeroes offset`() {
         val coordinator = PositionJitterCoordinator()
         coordinator.step(10.0, maxStepMeters = 5.0, bearingDeg = 0f, longitudinalFraction = 1.0, Random(1))

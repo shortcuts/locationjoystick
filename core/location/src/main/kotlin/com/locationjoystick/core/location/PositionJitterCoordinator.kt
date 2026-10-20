@@ -28,7 +28,8 @@ internal class PositionJitterCoordinator {
 
     /**
      * Steps the offset one tick in a uniformly random direction, clamped so it never exceeds
-     * [radiusMeters] (or reset to zero, if [radiusMeters] is non-positive — jitter disabled).
+     * [radiusMeters]. An offset already outside a shrunken radius (zero when jitter is off) eases
+     * toward the disc by at most [maxStepMeters] per tick.
      * [bearingDeg]/[longitudinalFraction] squish the deviation disc into an ellipse along the
      * direction of travel, same convention as [gaussianLatLonOffsetLateral]: the offset is worked
      * out in that ellipse's own (lateral, longitudinal) frame, un-squished to a circle for the
@@ -41,11 +42,7 @@ internal class PositionJitterCoordinator {
         longitudinalFraction: Double,
         random: Random,
     ): Pair<Double, Double> {
-        if (radiusMeters <= 0.0) {
-            reset()
-            return Pair(0.0, 0.0)
-        }
-
+        val radius = radiusMeters.coerceAtLeast(0.0)
         val bearingRad = Math.toRadians(bearingDeg.toDouble())
         val northFwd = cos(bearingRad)
         val eastFwd = sin(bearingRad)
@@ -63,15 +60,22 @@ internal class PositionJitterCoordinator {
         var cx = lateral
         var cy = longitudinal / divisionSafeFraction
 
-        val theta = 2.0 * Math.PI * random.nextDouble()
-        cx += maxStepMeters * cos(theta)
-        cy += maxStepMeters * sin(theta)
-
-        val dist = hypot(cx, cy)
-        if (dist > radiusMeters) {
-            val scale = radiusMeters / dist
+        val prevDist = hypot(cx, cy)
+        if (prevDist > radius) {
+            // Radius shrank under the offset: ease toward the disc instead of snapping onto it.
+            val scale = maxOf(radius, prevDist - maxStepMeters) / prevDist
             cx *= scale
             cy *= scale
+        } else {
+            val theta = 2.0 * Math.PI * random.nextDouble()
+            cx += maxStepMeters * cos(theta)
+            cy += maxStepMeters * sin(theta)
+            val dist = hypot(cx, cy)
+            if (dist > radius) {
+                val scale = radius / dist
+                cx *= scale
+                cy *= scale
+            }
         }
 
         val newLongitudinal = cy * longitudinalFraction
