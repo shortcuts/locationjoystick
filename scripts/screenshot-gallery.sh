@@ -158,9 +158,9 @@ switch_is_on() {
 import sys
 data = open(sys.argv[1]).read()
 idx = data.find(sys.argv[2])
-seg = data[idx:idx + 900] if idx >= 0 else ""
-i = seg.find("checkable=\"true\"")
-print("checked=\"true\"" in seg[i:i + 40] if i >= 0 else False)
+# The row node holding the switch state wraps the label, so it precedes it.
+i = data.rfind("checkable=\"true\"", 0, idx) if idx >= 0 else -1
+print("checked=\"true\"" in data[i:i + 40] if i >= 0 else False)
 ' "$dump" "$1")
   rm -f "$dump"
   echo "$result"
@@ -1393,10 +1393,11 @@ if should_run_step "20"; then
     tap_switch_for "Enable Tap to Walk"
     wait_s 1 "Warning dialog opening"
     # Button label is "Accept" when the Accessibility disclosure is unanswered
-    # (API 30+), else "Enable anyway" (below API 30, or already answered).
+    # (API 30+), "Enable anyway" below API 30, and no dialog once it is answered.
     # Exact match: the disclosure body contains "Tap Accept to open…".
     dump=$(ui_dump)
     agree=$(grep -c 'text="Accept"' "$dump" || true)
+    anyway=$(grep -c 'text="Enable anyway"' "$dump" || true)
     rm -f "$dump"
     if (( agree > 0 )); then
       tap_text_exact "Accept"
@@ -1404,7 +1405,7 @@ if should_run_step "20"; then
       wait_s 2 "Accessibility settings opening"
       back
       wait_s 2 "Returning to app"
-    else
+    elif (( anyway > 0 )); then
       tap_text_exact "Enable anyway"
     fi
     wait_s 1 "Enabling Tap to Walk — Screen access section expanding"
