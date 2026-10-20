@@ -94,7 +94,7 @@ fun GroupSyncRoute(
     val lifecycleOwner = LocalLifecycleOwner.current
     val spoofToggle = rememberSpoofToggleState()
 
-    var showQrScanner by remember { mutableStateOf(false) }
+    var showQrScanner by rememberSaveable { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -260,7 +260,7 @@ private fun NoGroupContent(
     nearbyLeader: GroupInvite?,
     onJoinNearby: () -> Unit,
 ) {
-    var showCodeDialog by remember { mutableStateOf(false) }
+    var showCodeDialog by rememberSaveable { mutableStateOf(false) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

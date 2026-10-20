@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -183,7 +184,7 @@ internal fun RoutesScreen(
 ) {
     var deletingRoute by remember { mutableStateOf<com.locationjoystick.core.model.Route?>(null) }
     var sharingRoute by remember { mutableStateOf<com.locationjoystick.core.model.Route?>(null) }
-    var showAddOptionsSheet by remember { mutableStateOf(false) }
+    var showAddOptionsSheet by rememberSaveable { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     val collapsedGroups = rememberCollapsedGroups()
     val groupDialogs = remember { GroupDialogState<com.locationjoystick.core.model.Route>() }

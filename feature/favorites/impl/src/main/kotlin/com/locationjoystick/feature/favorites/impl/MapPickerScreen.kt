@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -120,9 +121,9 @@ internal fun MapPickerScreen(
     val mapRef = remember { mutableStateOf<MapLibreMap?>(null) }
     val markerSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val selectedPosition = remember { mutableStateOf<Pair<Double, Double>?>(null) }
-    var showNameDialog by remember { mutableStateOf(false) }
-    var showSearchBar by remember { mutableStateOf(false) }
-    var suggestedName by remember { mutableStateOf("") }
+    var showNameDialog by rememberSaveable { mutableStateOf(false) }
+    var showSearchBar by rememberSaveable { mutableStateOf(false) }
+    var suggestedName by rememberSaveable { mutableStateOf("") }
     val spoofToggle = rememberSpoofToggleState()
 
     val effectivePosition = { selectedPosition.value ?: initialPosition?.let { it.latitude to it.longitude } }

@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -157,7 +158,7 @@ internal fun RouteCreatorScreen(
     val segmentsSource = remember { mutableStateOf<GeoJsonSource?>(null) }
     val waypointsSource = remember { mutableStateOf<GeoJsonSource?>(null) }
 
-    var showSaveDialog by remember { mutableStateOf(false) }
+    var showSaveDialog by rememberSaveable { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
     var showFavoritesSheet by remember { mutableStateOf(false) }
     var pendingWaitPrompt by remember { mutableStateOf<LatLng?>(null) }
@@ -472,7 +473,7 @@ private fun SaveRouteDialog(
     onDismiss: () -> Unit,
     onSave: (String) -> Unit,
 ) {
-    var name by remember { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf("") }
 
     LjAlertDialog(
         onDismissRequest = onDismiss,

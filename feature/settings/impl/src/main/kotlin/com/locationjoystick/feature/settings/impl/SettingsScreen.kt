@@ -91,9 +91,9 @@ fun SettingsRoute(
     var pendingImport by remember { mutableStateOf<PendingImport?>(null) }
     var showQrShare by remember { mutableStateOf(false) }
     var qrExportSession by remember { mutableStateOf<SettingsViewModel.QrExportSession?>(null) }
-    var showQrScanner by remember { mutableStateOf(false) }
-    var showEnterCodeDialog by remember { mutableStateOf(false) }
-    var showResetConfirm by remember { mutableStateOf(false) }
+    var showQrScanner by rememberSaveable { mutableStateOf(false) }
+    var showEnterCodeDialog by rememberSaveable { mutableStateOf(false) }
+    var showResetConfirm by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     val reportActionLabel = stringResource(R.string.settings_hub_report)

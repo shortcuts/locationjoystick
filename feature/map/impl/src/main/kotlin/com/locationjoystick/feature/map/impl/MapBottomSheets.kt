@@ -21,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -138,7 +139,7 @@ internal fun FavoritesPickerSheet(
     uiState: MapUiState,
     onAction: (MapAction) -> Unit,
 ) {
-    var showSaveDialog by remember { mutableStateOf(false) }
+    var showSaveDialog by rememberSaveable { mutableStateOf(false) }
     val getString = rememberCooldownStringLookup()
 
     LjModalBottomSheet(
@@ -387,7 +388,7 @@ internal fun SaveCurrentLocationDialog(
     onDismiss: () -> Unit,
     onSave: (String) -> Unit,
 ) {
-    var name by remember { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf("") }
 
     LjAlertDialog(
         onDismissRequest = onDismiss,

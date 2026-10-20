@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -235,8 +236,8 @@ fun RouteDetailScreen(
     val spoofToggle = rememberSpoofToggleState()
     val coroutineScope = rememberCoroutineScope()
 
-    var editedName by remember { mutableStateOf("") }
-    var isNameInitialized by remember { mutableStateOf(false) }
+    var editedName by rememberSaveable { mutableStateOf("") }
+    var isNameInitialized by rememberSaveable { mutableStateOf(false) }
     var editingWaypointId by remember { mutableStateOf<String?>(null) }
     var isSettingAllWait by remember { mutableStateOf(false) }
 

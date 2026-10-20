@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -164,7 +165,7 @@ internal fun PasteCoordinatesScreen(
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    var showSaveDialog by remember { mutableStateOf(false) }
+    var showSaveDialog by rememberSaveable { mutableStateOf(false) }
     var mapReady by remember { mutableStateOf(false) }
     var clipboardMessage by remember { mutableStateOf<String?>(null) }
 
@@ -533,7 +534,7 @@ private fun PasteSaveRouteDialog(
     onDismiss: () -> Unit,
     onSave: (String) -> Unit,
 ) {
-    var name by remember { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf("") }
     LjAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.paste_coordinates_screen_save_route)) },

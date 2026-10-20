@@ -166,11 +166,11 @@ internal fun FavoritesScreen(
     getCurrentPosition: () -> com.locationjoystick.core.model.LatLng? = { null },
     bottomBar: @Composable () -> Unit = {},
 ) {
-    var showAddSheet by remember { mutableStateOf(false) }
-    var showAddOptionsSheet by remember { mutableStateOf(false) }
+    var showAddSheet by rememberSaveable { mutableStateOf(false) }
+    var showAddOptionsSheet by rememberSaveable { mutableStateOf(false) }
     var showPasteSheet by rememberSaveable { mutableStateOf(false) }
-    var prefillLat by remember { mutableStateOf("") }
-    var prefillLon by remember { mutableStateOf("") }
+    var prefillLat by rememberSaveable { mutableStateOf("") }
+    var prefillLon by rememberSaveable { mutableStateOf("") }
     var editingFavorite by remember { mutableStateOf<com.locationjoystick.core.model.FavoriteLocation?>(null) }
     var targetFavorite by remember { mutableStateOf<com.locationjoystick.core.model.FavoriteLocation?>(null) }
 
@@ -571,9 +571,9 @@ private fun AddFavoriteSheet(
     initialLat: String = "",
     initialLon: String = "",
 ) {
-    var name by remember { mutableStateOf("") }
-    var lat by remember { mutableStateOf(initialLat) }
-    var lon by remember { mutableStateOf(initialLon) }
+    var name by rememberSaveable { mutableStateOf("") }
+    var lat by rememberSaveable { mutableStateOf(initialLat) }
+    var lon by rememberSaveable { mutableStateOf(initialLon) }
     val latVal = lat.toLocaleDoubleOrNull()
     val lonVal = lon.toLocaleDoubleOrNull()
     val isValid = name.isNotEmpty() && isValidLatLng(latVal, lonVal)

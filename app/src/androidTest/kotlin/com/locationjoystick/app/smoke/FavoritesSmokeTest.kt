@@ -2,8 +2,11 @@ package com.locationjoystick.app.smoke
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.espresso.Espresso
 import com.locationjoystick.core.data.FavoriteRepository
 import com.locationjoystick.core.model.LatLng
@@ -58,6 +61,18 @@ class FavoritesSmokeTest : BaseSmokeTest() {
         composeRule.onNodeWithText("From coordinates").assertIsDisplayed()
         composeRule.onNodeWithText("Paste coordinates").assertIsDisplayed()
         composeRule.onNodeWithText("Use current location").assertIsDisplayed()
+    }
+
+    @Test
+    fun add_sheet_name_survives_recreation() {
+        composeRule.onNodeWithContentDescription("Add favorite").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("From coordinates").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNode(hasText("Name") and hasSetTextAction()).performTextInput("Keep me")
+        composeRule.activityRule.scenario.recreate()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Keep me").assertIsDisplayed()
     }
 
     @Test
