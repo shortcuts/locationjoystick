@@ -103,6 +103,16 @@ class SettingsExportCodecTest {
     }
 
     @Test
+    fun `manual order round-trips`() {
+        val original = minimalExportData().copy(favoritesManualOrder = listOf("b", "a"), routesManualOrder = listOf("r2", "r1"))
+
+        val restored = SettingsExportCodec.parseExportData(SettingsExportCodec.serializeExportData(original))
+
+        assertEquals(listOf("b", "a"), restored.favoritesManualOrder)
+        assertEquals(listOf("r2", "r1"), restored.routesManualOrder)
+    }
+
+    @Test
     fun `old export that still carries the removed map scale imports`() {
         val json = """{"schemaVersion":2,"settings":{"tapToWalkScaleMpx":0.42,"tapToWalkOverlayEnabled":true}}"""
         val settings = SettingsExportCodec.parseExportData(json).settings

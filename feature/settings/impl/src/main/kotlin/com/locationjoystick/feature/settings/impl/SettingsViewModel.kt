@@ -988,13 +988,26 @@ class SettingsViewModel
             } else {
                 routeRepository.removeHotRoutes()
             }
-            settingsRepository.setRoutesSortNewestFirst(data.routesSortNewestFirst)
-            settingsRepository.setFavoritesSortNewestFirst(data.favoritesSortNewestFirst)
-            settingsRepository.setRoutesSortMode(data.routesSortMode)
-            settingsRepository.setFavoritesSortMode(data.favoritesSortMode)
-            // After the sort modes: choosing a mode clears the manual order.
-            settingsRepository.setFavoritesManualOrder(data.favoritesManualOrder)
-            settingsRepository.setRoutesManualOrder(data.routesManualOrder)
+            if (replace) {
+                settingsRepository.setRoutesSortNewestFirst(data.routesSortNewestFirst)
+                settingsRepository.setFavoritesSortNewestFirst(data.favoritesSortNewestFirst)
+                settingsRepository.setRoutesSortMode(data.routesSortMode)
+                settingsRepository.setFavoritesSortMode(data.favoritesSortMode)
+                // After the sort modes: choosing a mode clears the manual order.
+                if (data.favoritesManualOrder.isNotEmpty()) settingsRepository.setFavoritesManualOrder(data.favoritesManualOrder)
+                if (data.routesManualOrder.isNotEmpty()) settingsRepository.setRoutesManualOrder(data.routesManualOrder)
+            } else {
+                val favoritesOrder = settingsRepository.getFavoritesManualOrder().first()
+                if (favoritesOrder.isNotEmpty()) {
+                    val imported = data.favoritesManualOrder + data.favoriteLocations.map { it.id }
+                    settingsRepository.setFavoritesManualOrder((favoritesOrder + imported).distinct())
+                }
+                val routesOrder = settingsRepository.getRoutesManualOrder().first()
+                if (routesOrder.isNotEmpty()) {
+                    val imported = data.routesManualOrder + data.routes.map { it.id }
+                    settingsRepository.setRoutesManualOrder((routesOrder + imported).distinct())
+                }
+            }
             if (replace || data.homeFavoriteId != null) settingsRepository.setHomeFavoriteId(data.homeFavoriteId)
             clearHomeIfMissing()
         }

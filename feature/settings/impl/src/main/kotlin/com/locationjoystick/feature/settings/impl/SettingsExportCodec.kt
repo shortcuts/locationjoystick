@@ -187,6 +187,8 @@ internal object SettingsExportCodec {
         root.put("favoritesSortNewestFirst", data.favoritesSortNewestFirst)
         root.put("routesSortMode", data.routesSortMode.name)
         root.put("favoritesSortMode", data.favoritesSortMode.name)
+        root.put("favoritesManualOrder", JSONArray(data.favoritesManualOrder))
+        root.put("routesManualOrder", JSONArray(data.routesManualOrder))
         data.homeFavoriteId?.let { root.put("homeFavoriteId", it) }
 
         return root.toString()
@@ -501,10 +503,15 @@ internal object SettingsExportCodec {
                     root.optString("favoritesSortMode"),
                     root.optBoolean("favoritesSortNewestFirst", true),
                 ),
+            favoritesManualOrder = root.optStringList("favoritesManualOrder"),
+            routesManualOrder = root.optStringList("routesManualOrder"),
             homeFavoriteId = if (root.isNull("homeFavoriteId")) null else root.optString("homeFavoriteId").ifBlank { null },
         )
     }
 }
+
+private fun JSONObject.optStringList(key: String): List<String> =
+    optJSONArray(key)?.let { arr -> List(arr.length()) { arr.getString(it) } }.orEmpty()
 
 private fun parseSavedItemSortMode(
     raw: String,

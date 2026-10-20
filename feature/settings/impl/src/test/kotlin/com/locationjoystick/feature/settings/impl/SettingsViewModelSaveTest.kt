@@ -20,6 +20,7 @@ import com.locationjoystick.core.location.ScreenCaptureSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
+import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
@@ -242,6 +243,49 @@ class SettingsViewModelSaveTest {
             }
 
             assertEquals(0, fakeDataSource.applySnapshotCallCount)
+        }
+
+    @Test
+    fun `replace import restores the exported manual order`() =
+        runTest(testDispatcher) {
+            viewModel.userFeedback.test {
+                viewModel.importSettings(ExportData(favoritesManualOrder = listOf("b", "a")), replace = true)
+                awaitItem()
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            assertEquals(listOf("b", "a"), fakeDataSource.favoritesManualOrderFlow.value)
+        }
+
+    @Test
+    fun `add import keeps the current order`() =
+        runTest(testDispatcher) {
+            fakeDataSource.favoritesManualOrderFlow.value = listOf("x", "y")
+
+            viewModel.userFeedback.test {
+                viewModel.importSettings(
+                    ExportData(favoriteLocations = listOf(FavoriteLocation("n", "N", LatLng(1.0, 2.0), 0L))),
+                    replace = false,
+                )
+                awaitItem()
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            assertEquals(listOf("x", "y", "n"), fakeDataSource.favoritesManualOrderFlow.value)
+        }
+
+    @Test
+    fun `file without the key keeps the current order`() =
+        runTest(testDispatcher) {
+            fakeDataSource.favoritesManualOrderFlow.value = listOf("x", "y")
+
+            viewModel.userFeedback.test {
+                viewModel.importSettings(ExportData(), replace = true)
+                awaitItem()
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            assertEquals(listOf("x", "y"), fakeDataSource.favoritesManualOrderFlow.value)
         }
 
     @Test
@@ -643,6 +687,14 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getLastLocation(): Flow<LatLng?> = flowOf(null)
 
     override suspend fun setLastLocation(location: LatLng) = Unit
+
+    val favoritesManualOrderFlow = MutableStateFlow<List<String>>(emptyList())
+
+    override fun getFavoritesManualOrder(): Flow<List<String>> = favoritesManualOrderFlow
+
+    override suspend fun setFavoritesManualOrder(ids: List<String>) {
+        favoritesManualOrderFlow.value = ids
+    }
 
     val homeFavoriteIdFlow = MutableStateFlow<String?>(null)
 
