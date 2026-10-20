@@ -52,6 +52,13 @@ class ScreenAccessibilityService :
          * `takeScreenshot(int, Executor, TakeScreenshotCallback)` requires API 30 — no fallback exists.
          */
         fun isSupported(sdkInt: Int = Build.VERSION.SDK_INT): Boolean = sdkInt >= Build.VERSION_CODES.R
+
+        /** Rec. 601 luma, the same weights as the bench's gray conversion. */
+        internal fun lumaOf(pixels: IntArray): ByteArray =
+            ByteArray(pixels.size) {
+                val p = pixels[it]
+                ((0.299 * ((p shr 16) and 0xFF) + 0.587 * ((p shr 8) and 0xFF) + 0.114 * (p and 0xFF)).toInt()).toByte()
+            }
     }
 
     @Inject lateinit var screenCaptureSource: ScreenCaptureSource
@@ -281,13 +288,7 @@ class ScreenAccessibilityService :
         soft.getPixels(pixels, 0, w, 0, 0, w, h)
         if (soft !== bitmap) soft.recycle()
         bitmap.recycle()
-        // Rec. 601 luma, the same weights as the bench's gray conversion.
-        val gray =
-            ByteArray(w * h) {
-                val p = pixels[it]
-                ((0.299 * ((p shr 16) and 0xFF) + 0.587 * ((p shr 8) and 0xFF) + 0.114 * (p and 0xFF)).toInt()).toByte()
-            }
-        return GrayImage(w, h, gray)
+        return GrayImage(w, h, lumaOf(pixels))
     }
 
     private val screenshotPacer =

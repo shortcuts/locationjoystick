@@ -568,6 +568,120 @@ class AutoFitCoordinatorTest {
             assertTrue("spool is $bytes bytes, cap $cap", bytes in 1..(cap + W * H))
         }
 
+    /** Moves the player [meters] north by hand, then waits one tick so the next tick sees the move. */
+    private suspend fun TestScope.step(meters: Double = 2.0) {
+        val p = locationRepository.currentPosition.value!!
+        locationRepository.updatePosition(LatLng(p.latitude + meters / 111_320, p.longitude))
+        delay(AppConstants.TapToWalkConstants.AUTOFIT_FRAME_INTERVAL_MS)
+    }
+
+    @Test
+    fun `a teleport mid-leg closes the leg and starts a new one`() =
+        runTest {
+            stored.value = storedFit
+            val c = coordinator()
+            val legs = mutableListOf<CapturedLeg>()
+            c.measure = { leg, fx, fy, w, h ->
+                legs += leg
+                fakeMeasure(leg, fx, fy, w, h)
+            }
+            delay(1)
+            repeat(8) { step() }
+            step(meters = 500.0)
+            repeat(8) { step() }
+            delay(AppConstants.TapToWalkConstants.AUTOFIT_FRAME_INTERVAL_MS) // an idle tick closes the second leg
+
+            assertEquals(2, legs.size)
+            legs.forEach { leg -> assertTrue(haversineDistance(leg.positions.first(), leg.positions.last()) < 100.0) }
+        }
+
+    @Test
+    fun `a resolution change closes the leg`() =
+        runTest {
+            stored.value = storedFit
+            val c = coordinator()
+            val measured = mutableListOf<Pair<Int, Int>>()
+            c.measure = { leg, fx, fy, w, h ->
+                measured += w to h
+                fakeMeasure(leg, fx, fy, w, h)
+            }
+            var frameSize = W to H
+            coEvery { source.captureGrayFrame() } answers {
+                GrayImage(frameSize.first, frameSize.second, ByteArray(frameSize.first * frameSize.second))
+            }
+            delay(1)
+            repeat(8) { step() }
+            frameSize = W to 2 * H
+            repeat(8) { step() }
+            delay(AppConstants.TapToWalkConstants.AUTOFIT_FRAME_INTERVAL_MS)
+
+            assertEquals(listOf(W to H), measured)
+        }
+
+    @Test
+    fun `more legs than the buffer cap drop the oldest spool`() =
+        runTest {
+            fakeWalks()
+            val c = coordinator()
+            val refitLegs = mutableListOf<Int>()
+            c.fullFit = { legs, _, _, _ ->
+                refitLegs += legs.size
+                SolveResult.FeetNotFound
+            }
+            delay(1)
+            repeat(AppConstants.TapToWalkConstants.AUTOFIT_BUFFER_LEGS + 1) { walkLeg(0.0) } // one bearing: no re-fit yet
+            walkLeg(90.0)
+
+            assertEquals(listOf(AppConstants.TapToWalkConstants.AUTOFIT_BUFFER_LEGS), refitLegs)
+        }
+
+    @Test
+    fun `no frame is taken while a leg is analysed`() =
+        runTest {
+            fakeWalks()
+            val c = coordinator()
+            c.analysisDispatcher = Dispatchers.Default // the fake fit blocks its thread
+            val started = CountDownLatch(1)
+            val release = CountDownLatch(1)
+            c.fullFit = { _, _, _, _ ->
+                started.countDown()
+                release.await()
+                SolveResult.FeetNotFound
+            }
+            var grabs = 0
+            coEvery { source.captureGrayFrame() } answers {
+                grabs++
+                frame()
+            }
+            delay(1)
+            walkLeg(0.0)
+            walkLeg(90.0) // the second bearing starts a full fit that blocks
+            try {
+                withContext(Dispatchers.Default) { assertTrue(started.await(10, TimeUnit.SECONDS)) }
+                val before = grabs
+                walkLeg(45.0)
+                assertEquals(before, grabs)
+            } finally {
+                release.countDown()
+            }
+        }
+
+    @Test
+    fun `awaitArrival times out and reports failure`() =
+        runTest {
+            val c = coordinator() // no fakeWalks: the walk never sets a target, so the leg can only time out
+            delay(1)
+            val started = currentTime
+
+            assertEquals(LearnOutcome.Interrupted, c.learnMap())
+            val timeoutMs =
+                (
+                    AppConstants.TapToWalkConstants.AUTOFIT_LEG_TIMEOUT_FACTOR *
+                        CalibrationWalkMath.LEARNING_LEG_METERS / AppConstants.ProfileConstants.WALK_SPEED_MPS * 1000
+                ).toLong()
+            assertTrue(currentTime - started >= timeoutMs)
+        }
+
     private companion object {
         const val W = 32
         const val H = 64

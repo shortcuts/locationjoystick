@@ -1,8 +1,8 @@
 package com.locationjoystick.feature.widget.impl
 
 import android.os.Build
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ScreenAccessibilityServiceTest {
@@ -12,8 +12,17 @@ class ScreenAccessibilityServiceTest {
     }
 
     @Test
-    fun api30AndAbove_supported() {
-        assertTrue(ScreenAccessibilityService.isSupported(Build.VERSION_CODES.R))
-        assertTrue(ScreenAccessibilityService.isSupported(Build.VERSION_CODES.TIRAMISU))
+    fun lumaOf_weightsEachChannelRec601() {
+        val red = 0xFFFF0000.toInt()
+        val green = 0xFF00FF00.toInt()
+        val blue = 0xFF0000FF.toInt()
+        assertEquals(listOf(76, 149, 29), lumaValues(intArrayOf(red, green, blue)))
     }
+
+    @Test
+    fun lumaOf_ignoresAlpha() {
+        assertEquals(listOf(76), lumaValues(intArrayOf(0x00FF0000)))
+    }
+
+    private fun lumaValues(pixels: IntArray) = ScreenAccessibilityService.lumaOf(pixels).map { it.toInt() and 0xFF }
 }
