@@ -1014,6 +1014,12 @@ class MockLocationService : Service() {
         groupRepository.setLeaderPosition(null)
         locationRepository.setMockMode(MockMode.TELEPORT)
         Log.i(TAG, "Exited FOLLOWER mode")
+        stopSelfIfIdle()
+    }
+
+    /** A leader's Stop or a paused follower keeps the service alive for the group; leaving must end it. */
+    private fun stopSelfIfIdle() {
+        if (_state.value == MockLocationState.IDLE) stopSelf()
     }
 
     /** Manual override: snap straight to the last-known leader position instead of walking there. */
@@ -1068,11 +1074,12 @@ class MockLocationService : Service() {
         }
     }
 
-    private fun exitLeaderMode() {
+    internal fun exitLeaderMode() {
         leaderSyncServer.stop()
         groupNsdManager.stopAdvertising()
         leaderSharingEnabled = false
         Log.i(TAG, "Exited LEADER mode")
+        stopSelfIfIdle()
     }
 
     /**
