@@ -326,6 +326,6 @@ Why it fails:
 - Scale and pitch search (`--ablate`, 9 cells at a 2 degree step) does not help: AUC 0.68, top peak 36%, p90 659 m.
 - Game water is unreliable: the blue of Pokestops and gyms matches the water colours, so water is used only where our map also has water.
 
-Open fact: the game's Licences screen lists "OpenStreetMap, Map data (c) OpenStreetMap Contributors" (Pokemon GO 0.431.0, Pixel 5), so the game uses OSM data. The disagreement above is style and tagging, not the data source.
+Open fact: the game's Licences screen lists "OpenStreetMap, Map data (c) OpenStreetMap Contributors" (game version 0.431.0, Pixel 5), so the game uses OSM data. The disagreement above is style and tagging, not the data source.
 
 For shipping: nothing from entry B ships. A heading check from colour masks is not within the bar, so the automatic motion fit stays the only heading source and no Kotlin port or tap smoke gate run is needed. Only 4 places were covered, so a retry would need new captures with trustworthy truth before any conclusion beyond this colour-mask approach.
