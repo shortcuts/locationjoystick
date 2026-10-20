@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
  */
 internal class WikiJsonCache<T>(
     private val cacheFile: File,
-    seedJson: () -> String,
+    private val seedJson: () -> String,
     private val parse: (String) -> List<T>?,
     internal var url: String,
 ) {
@@ -28,17 +28,23 @@ internal class WikiJsonCache<T>(
             .readTimeout(AppConstants.HotLocationsConstants.READ_TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
             .build()
 
-    private val _items =
-        MutableStateFlow(
-            runCatching { parse(cacheFile.readText()) }.getOrNull()
-                ?: runCatching { parse(seedJson()) }.getOrNull()
-                ?: emptyList(),
-        )
+    private val _items = MutableStateFlow<List<T>>(emptyList())
     val items: StateFlow<List<T>> = _items
+
+    /** Serves the cached copy, else the seed. Reads disk, so it runs on IO. */
+    suspend fun load() {
+        _items.value =
+            withContext(Dispatchers.IO) {
+                runCatching { parse(cacheFile.readText()) }.getOrNull()
+                    ?: runCatching { parse(seedJson()) }.getOrNull()
+                    ?: emptyList()
+            }
+    }
 
     /** True only when a fresh, valid list was fetched and stored. */
     suspend fun refreshIfStale(): Boolean =
         withContext(Dispatchers.IO) {
+            load()
             val now = System.currentTimeMillis()
             val hasCache = cacheFile.exists()
             // ponytail: file mtime as clock; move to DataStore keys if a second consumer needs the timestamp.

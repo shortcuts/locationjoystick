@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -93,12 +94,13 @@ class SettingsViewModelSaveTest {
         fakeRouteRepo = RouteRepository(routeDao = FakeRouteDao(), ioDispatcher = testDispatcher)
         backupRepository = mockk(relaxed = true)
         screenCaptureSource = ScreenCaptureSource(fakeSettingsRepo)
+        val hotLocationsRepository = HotLocationsRepository(context).also { runBlocking { it.load() } }
         viewModel =
             SettingsViewModel(
                 settingsRepository = fakeSettingsRepo,
                 captureCoordinatesRepository = CaptureCoordinatesRepository(FakePreferencesDataStore()),
                 favoriteRepository = fakeFavoriteRepo,
-                hotLocationsRepository = HotLocationsRepository(context),
+                hotLocationsRepository = hotLocationsRepository,
                 hotRoutesRepository = HotRoutesRepository(context),
                 routeRepository = fakeRouteRepo,
                 backupRepository = backupRepository,

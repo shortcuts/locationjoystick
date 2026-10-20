@@ -33,6 +33,8 @@ class HotRoutesRepositoryTest {
 
     private fun repo() = HotRoutesRepository(cache) { body("Seed") }.also { it.url = server.url("/hot/routes.json").toString() }
 
+    private suspend fun loaded(): HotRoutesRepository = repo().also { it.refreshIfStale() }
+
     private fun names(r: HotRoutesRepository) = r.routes.value.map { it.name }
 
     @Before
@@ -45,7 +47,11 @@ class HotRoutesRepositoryTest {
     fun tearDown() = server.shutdown()
 
     @Test
-    fun `seed used when no cache`() = assertEquals(listOf("Seed"), names(repo()))
+    fun `seed used when no cache`() =
+        runTest {
+            server.enqueue(MockResponse().setResponseCode(503))
+            assertEquals(listOf("Seed"), names(loaded()))
+        }
 
     @Test
     fun `valid fetch replaces list and persists`() =
@@ -54,7 +60,7 @@ class HotRoutesRepositoryTest {
             val r = repo()
             assertTrue(r.refreshIfStale())
             assertEquals(listOf("Remote"), names(r))
-            assertEquals(listOf("Remote"), names(repo()))
+            assertEquals(listOf("Remote"), names(loaded()))
         }
 
     @Test

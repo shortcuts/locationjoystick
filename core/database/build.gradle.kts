@@ -6,6 +6,14 @@ plugins {
 
 android {
     namespace = "com.locationjoystick.core.database"
+    sourceSets {
+        getByName("test") {
+            assets.srcDir(projectDir.resolve("schemas"))
+        }
+    }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 ksp {
@@ -20,4 +28,9 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.room.testing)
+    testImplementation(libs.androidx.test.runner)
 }

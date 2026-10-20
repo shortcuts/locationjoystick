@@ -114,6 +114,7 @@ make tap-smoke-selfcheck          # pure verdict logic, no device
 - `randomPointInRadius`: output always within radius
 - Export/import: round-trip full `ExportData` through JSON
 - OSM tile HTTP: required recipe docs/features/map-tiles.md (`MapTileUserAgentTest`)
+- Room schema bump: a `LjDatabase` version change needs `LjDatabaseMigrationTest` updated to the new version (`LjDatabase.ALL_MIGRATIONS` feeds it)
 
 Shared utils in `:core:testing`.
 

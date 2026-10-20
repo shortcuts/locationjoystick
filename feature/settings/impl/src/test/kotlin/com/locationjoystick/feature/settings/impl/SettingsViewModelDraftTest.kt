@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -55,6 +56,7 @@ class SettingsViewModelDraftTest {
         val settingsRepo = SettingsRepository(fakeDataSource)
         captureRepository = CaptureCoordinatesRepository(FakePreferencesDataStore())
         hotLocationsRepository = HotLocationsRepository(context)
+        runBlocking { hotLocationsRepository.load() }
         viewModel =
             SettingsViewModel(
                 settingsRepository = settingsRepo,

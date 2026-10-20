@@ -62,6 +62,8 @@ class HotLocationsRepository
 
         val locations: StateFlow<List<HotLocation>> = cache.items
 
+        suspend fun load() = cache.load()
+
         /** True only when a fresh, valid list was fetched and stored. */
         suspend fun refreshIfStale(): Boolean = cache.refreshIfStale()
     }

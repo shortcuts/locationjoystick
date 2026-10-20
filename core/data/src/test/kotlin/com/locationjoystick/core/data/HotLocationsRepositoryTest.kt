@@ -26,6 +26,8 @@ class HotLocationsRepositoryTest {
     private fun repo(): HotLocationsRepository =
         HotLocationsRepository(cache) { body("Seed") }.also { it.url = server.url("/hot/locations.json").toString() }
 
+    private suspend fun loaded(): HotLocationsRepository = repo().also { it.refreshIfStale() }
+
     private fun names(r: HotLocationsRepository) = r.locations.value.map { it.name }
 
     @Before
@@ -43,13 +45,15 @@ class HotLocationsRepositoryTest {
     }
 
     @Test
-    fun `seed used when no cache, valid cache beats seed, corrupt cache falls back to seed`() {
-        assertEquals(listOf("Seed"), names(repo()))
-        cache.writeText(body("Cached"))
-        assertEquals(listOf("Cached"), names(repo()))
-        cache.writeText("garbage")
-        assertEquals(listOf("Seed"), names(repo()))
-    }
+    fun `seed used when no cache, valid cache beats seed, corrupt cache falls back to seed`() =
+        runTest {
+            server.enqueue(MockResponse().setResponseCode(503))
+            assertEquals(listOf("Seed"), names(loaded()))
+            cache.writeText(body("Cached"))
+            assertEquals(listOf("Cached"), names(loaded()))
+            cache.writeText("garbage")
+            assertEquals(listOf("Seed"), names(loaded()))
+        }
 
     @Test
     fun `valid fetch updates list and persists across instances`() =
@@ -58,7 +62,7 @@ class HotLocationsRepositoryTest {
             val r = repo()
             assertTrue(r.refreshIfStale())
             assertEquals(listOf("Remote"), names(r))
-            assertEquals(listOf("Remote"), names(repo()))
+            assertEquals(listOf("Remote"), names(loaded()))
         }
 
     @Test
