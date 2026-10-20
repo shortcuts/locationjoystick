@@ -1043,6 +1043,7 @@ class MockLocationService : Service() {
                 val host =
                     NetworkUtils.getLocalIpAddress() ?: run {
                         Log.e(TAG, "Cannot determine local IP — ensure Wi-Fi is connected")
+                        groupRepository.emitNoLanAddress()
                         return@launch
                     }
                 val port =

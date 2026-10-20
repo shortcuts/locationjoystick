@@ -26,7 +26,9 @@ Following starts on join. The follow switch is saved, but only for new joins: a 
 
 Network discovery depends on multicast. Many phone hotspots do not forward multicast between clients, so code-based join cannot find the leader there. QR join uses a unicast address and is the workaround. If the hotspot also isolates clients, no app change can fix it.
 
-The leader's advertised address prefers the Wi-Fi or hotspot interface. A cellular address behind carrier NAT is unreachable from another phone, so it must never be put in the QR.
+The leader's advertised address prefers the Wi-Fi or hotspot interface. A cellular address behind carrier NAT is unreachable from another phone, so it must never be put in the QR. With no LAN address the leader shows an error instead of a QR.
+
+The sync server closes any connection from a peer that is not on the local network (private, link-local, loopback, IPv6 ULA). Carriers that allow inbound IPv6 could otherwise expose the server to the internet.
 
 ## State
 

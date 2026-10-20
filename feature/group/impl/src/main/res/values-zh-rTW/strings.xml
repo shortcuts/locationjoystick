@@ -27,6 +27,7 @@
     <string name="group_sync_teleport_to_leader_now">"立即瞬移至隊長位置"</string>
     <string name="group_sync_leave_group_2">"退出群組"</string>
     <string name="group_sync_leader_position_not_yet_known">"尚未取得隊長位置 — 請稍後再試"</string>
+    <string name="group_sync_no_lan_address">"請連線至 Wi-Fi 或熱點"</string>
     <string name="group_sync_disconnected_from_group">"已中斷與群組的連線 — 無法再聯繫到隊長"</string>
     <string name="group_sync_code_must_be_characters">"代碼必須為 %1$d 個字元"</string>
     <string name="group_sync_no_group_found_for_code">"未找到代碼為 %1$s 的群組"</string>

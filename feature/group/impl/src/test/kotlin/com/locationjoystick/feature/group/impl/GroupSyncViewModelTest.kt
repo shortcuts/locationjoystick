@@ -55,6 +55,7 @@ class GroupSyncViewModelTest {
     private lateinit var groupStateFlow: MutableStateFlow<GroupState>
     private lateinit var pendingInviteFlow: MutableSharedFlow<GroupInvite>
     private lateinit var teleportUnavailableFlow: MutableSharedFlow<Unit>
+    private lateinit var noLanAddressFlow: MutableSharedFlow<Unit>
     private lateinit var leaderFollowerCount: MutableStateFlow<Int>
     private lateinit var followerFollowerCount: MutableStateFlow<Int>
     private lateinit var leaderPositionFlow: MutableStateFlow<LatLng?>
@@ -74,6 +75,7 @@ class GroupSyncViewModelTest {
         every {
             context.getString(R.string.group_sync_leader_position_not_yet_known)
         } returns "Leader position not yet known — try again in a moment"
+        every { context.getString(R.string.group_sync_no_lan_address) } returns "Connect to Wi-Fi or a hotspot"
         every {
             context.getString(R.string.group_sync_disconnected_from_group)
         } returns "Disconnected from group — leader is no longer reachable"
@@ -99,6 +101,7 @@ class GroupSyncViewModelTest {
         groupStateFlow = MutableStateFlow(GroupState())
         pendingInviteFlow = MutableSharedFlow(replay = 1)
         teleportUnavailableFlow = MutableSharedFlow(replay = 1)
+        noLanAddressFlow = MutableSharedFlow(replay = 1)
         leaderFollowerCount = MutableStateFlow(0)
         followerFollowerCount = MutableStateFlow(0)
         leaderPositionFlow = MutableStateFlow(null)
@@ -112,6 +115,7 @@ class GroupSyncViewModelTest {
         every { groupRepository.pendingGroupInvite } returns pendingInviteFlow
         every { groupRepository.groupLostEvent } returns MutableSharedFlow()
         every { groupRepository.teleportUnavailableEvent } returns teleportUnavailableFlow
+        every { groupRepository.noLanAddressEvent } returns noLanAddressFlow
         every { groupRepository.leaderPosition } returns leaderPositionFlow
         every { leaderSyncServer.followerCount } returns leaderFollowerCount
         every { followerSyncClient.followerCount } returns followerFollowerCount
@@ -416,6 +420,14 @@ class GroupSyncViewModelTest {
             teleportUnavailableFlow.tryEmit(Unit)
 
             assertEquals("Leader position not yet known — try again in a moment", viewModel.errorMessage.value)
+        }
+
+    @Test
+    fun `noLanAddressEvent from repository sets error message`() =
+        runTest {
+            noLanAddressFlow.tryEmit(Unit)
+
+            assertEquals("Connect to Wi-Fi or a hotspot", viewModel.errorMessage.value)
         }
 
     @Test

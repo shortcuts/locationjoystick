@@ -2,6 +2,7 @@ package com.locationjoystick.core.location
 
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.NetworkUtils
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
@@ -102,6 +103,7 @@ abstract class TokenAuthHttpServer(
         try {
             configureSocket(socket)
             socket.use {
+                if (!NetworkUtils.isLanPeer(it.inetAddress)) return
                 // latin1: one char == one byte, so Content-Length counts chars correctly.
                 val reader = BufferedReader(InputStreamReader(it.getInputStream(), Charsets.ISO_8859_1))
                 val writer = PrintWriter(it.getOutputStream(), true)

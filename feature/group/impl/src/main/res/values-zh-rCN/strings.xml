@@ -27,6 +27,7 @@
     <string name="group_sync_teleport_to_leader_now">"立即瞬移到组长位置"</string>
     <string name="group_sync_leave_group_2">"退出群组"</string>
     <string name="group_sync_leader_position_not_yet_known">"尚未获取组长位置 — 请稍后再试"</string>
+    <string name="group_sync_no_lan_address">"请连接 Wi-Fi 或热点"</string>
     <string name="group_sync_disconnected_from_group">"已断开与群组的连接 — 无法再联系到组长"</string>
     <string name="group_sync_code_must_be_characters">"代码必须为 %1$d 位字符"</string>
     <string name="group_sync_no_group_found_for_code">"未找到代码为 %1$s 的群组"</string>

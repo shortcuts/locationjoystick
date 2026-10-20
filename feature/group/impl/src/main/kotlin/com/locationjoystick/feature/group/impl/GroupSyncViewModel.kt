@@ -197,6 +197,11 @@ class GroupSyncViewModel
                 }
             }
             viewModelScope.launch {
+                groupRepository.noLanAddressEvent.collect {
+                    _errorMessage.value = context.getString(R.string.group_sync_no_lan_address)
+                }
+            }
+            viewModelScope.launch {
                 groupRepository.teleportUnavailableEvent.collect {
                     _errorMessage.value = context.getString(R.string.group_sync_leader_position_not_yet_known)
                 }

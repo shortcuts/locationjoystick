@@ -152,6 +152,13 @@ class GroupRepository
             _groupLostEvent.tryEmit(Unit)
         }
 
+        private val _noLanAddressEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        val noLanAddressEvent = _noLanAddressEvent.asSharedFlow()
+
+        fun emitNoLanAddress() {
+            _noLanAddressEvent.tryEmit(Unit)
+        }
+
         private val _teleportUnavailableEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
         val teleportUnavailableEvent = _teleportUnavailableEvent.asSharedFlow()
 
