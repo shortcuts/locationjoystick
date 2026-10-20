@@ -99,7 +99,7 @@ Browser discovery combines web-link handlers with browser launchers, because a p
 
 Captured points appear as a numbered list. An exact repeat of the last point is skipped. The default order is nearest-neighbour, the same as the paste builder. The user can choose capture order instead.
 
-The user can copy, remove the last point, or clear the list. Saving as a route needs at least two points. The route is added to the routes list under the name the user gives it.
+The user can copy, remove the last point, or clear the list. Clear asks for confirmation first, because a mis-tap would otherwise lose every point with no undo. Saving as a route needs at least two points. The route is added to the routes list under the name the user gives it.
 
 ### After-link launch
 

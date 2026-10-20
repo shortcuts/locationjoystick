@@ -108,6 +108,7 @@ fun CaptureCoordinatesForm(
     val scope = rememberCoroutineScope()
     val copiedMessage = stringResource(R.string.capture_copied_count, capturePoints.orderedPoints.size)
     var showClearPrompt by remember { mutableStateOf(false) }
+    var showClearListConfirm by remember { mutableStateOf(false) }
 
     fun requestCaptureMode(enabled: Boolean) {
         if (enabled && !captureMode.captureModeEnabled && capturePoints.points.isNotEmpty()) {
@@ -140,6 +141,27 @@ fun CaptureCoordinatesForm(
                         showClearPrompt = false
                     },
                 ) {
+                    Text(stringResource(R.string.capture_coordinates_form_keep))
+                }
+            },
+        )
+    }
+    if (showClearListConfirm) {
+        LjAlertDialog(
+            onDismissRequest = { showClearListConfirm = false },
+            title = { Text(stringResource(R.string.capture_coordinates_form_clear_captured_locations)) },
+            confirmButton = {
+                LjButton(
+                    onClick = {
+                        capturePoints.onClearPoints()
+                        showClearListConfirm = false
+                    },
+                ) {
+                    Text(stringResource(R.string.capture_coordinates_form_clear))
+                }
+            },
+            dismissButton = {
+                LjTextButton(onClick = { showClearListConfirm = false }) {
                     Text(stringResource(R.string.capture_coordinates_form_keep))
                 }
             },
@@ -210,7 +232,7 @@ fun CaptureCoordinatesForm(
                             Toast.makeText(context, copiedMessage, Toast.LENGTH_SHORT).show()
                         },
                         onRemoveLast = capturePoints.onRemoveLast,
-                        onClearPoints = capturePoints.onClearPoints,
+                        onClearPoints = { showClearListConfirm = true },
                     )
                     Text(
                         stringResource(R.string.capture_coordinates_form_point_order),
