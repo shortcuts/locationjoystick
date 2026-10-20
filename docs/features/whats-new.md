@@ -26,6 +26,6 @@ The acknowledgement is per device. It is not exported as app data.
 1. Pick the next release version, not the version constant in the app. Release tooling bumps that constant when it merges the release change, so until then it still names the version already shipped. Never edit the JSON of a version that has a git tag, because that text already reached users.
 2. Write one entry per user-visible change, in plain user language.
 3. Run the changelog target to regenerate the wiki changelog page. Never edit the generated page by hand.
-4. Check that the target version has at least one entry. Tests cover parsing and reading the packaged file.
+4. Check that the target version has a JSON file with at least one entry. CI checks that the file exists on the release PR, so a missing file blocks the release PR and never the tagged build. Tests cover parsing and reading the packaged file.
 
 Release tooling controls version bumps. No app-side list or link needs updating for a new release.

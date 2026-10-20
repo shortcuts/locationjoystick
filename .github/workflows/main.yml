@@ -33,6 +33,10 @@ jobs:
               - 'Makefile'
               - 'CHANGELOG.md'
               - '.release-please-manifest.json'
+              - '**/*.xml'
+              - '**/*.pro'
+              - 'docs/wiki/changelog/**'
+              - 'docs/wiki/hot/**'
 
   release-please:
     if: github.event_name == 'push'
@@ -54,6 +58,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -80,14 +86,22 @@ jobs:
       - name: Run Unit Tests
         run: make test
 
-      - name: Verify What's New changelog exists for this release
-        if: ${{ needs.release-please.outputs.release_created == 'true' }}
+      - name: Guard tagged changelog JSON
         run: |
-          TAG=${{ needs.release-please.outputs.tag_name }}
-          VERSION=${TAG#v}
+          PREV_TAG=$(git describe --tags --abbrev=0)
+          FILE="docs/wiki/changelog/${PREV_TAG#v}.json"
+          if ! git diff --quiet "$PREV_TAG" HEAD -- "$FILE"; then
+            echo "::error::$FILE changed after tag $PREV_TAG. Tagged changelog JSON is final (see docs/features/whats-new.md)."
+            exit 1
+          fi
+
+      - name: Verify What's New changelog exists for the release PR
+        if: ${{ startsWith(github.head_ref, 'release-please--') }}
+        run: |
+          VERSION=$(jq -r '."."' .release-please-manifest.json)
           FILE="docs/wiki/changelog/${VERSION}.json"
           if [ ! -f "$FILE" ]; then
-            echo "::error::Missing $FILE — add it before this release ships (see docs/features/whats-new.md)."
+            echo "::error::Missing $FILE — add it to this release PR (see docs/features/whats-new.md)."
             exit 1
           fi
 
