@@ -3,6 +3,7 @@ package com.locationjoystick.feature.settings.impl
 import app.cash.turbine.test
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.root.SensorPermissionBootstrap
+import com.locationjoystick.core.common.util.NetworkUtils
 import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.BackupRepository
 import com.locationjoystick.core.data.CaptureCoordinatesRepository
@@ -35,7 +36,10 @@ import com.locationjoystick.core.testing.FakeFavoriteDao
 import com.locationjoystick.core.testing.FakePreferencesDataStore
 import com.locationjoystick.core.testing.FakeRouteDao
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -47,6 +51,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -57,6 +63,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -71,6 +80,8 @@ class SettingsViewModelSaveTest {
     private lateinit var backupRepository: BackupRepository
     private lateinit var viewModel: SettingsViewModel
     private lateinit var screenCaptureSource: ScreenCaptureSource
+    private val exportSyncServer = mockk<ExportSyncServer>(relaxed = true)
+    private val nsdCodeManager = mockk<NsdCodeManager>(relaxed = true)
 
     @Before
     fun setUp() {
@@ -93,9 +104,9 @@ class SettingsViewModelSaveTest {
                 backupRepository = backupRepository,
                 sensorPermissionBootstrap = SensorPermissionBootstrap(context),
                 importExportRepository = ImportExportRepository(context),
-                exportSyncServer = ExportSyncServer(),
+                exportSyncServer = exportSyncServer,
                 exportSyncClient = ExportSyncClient(),
-                nsdCodeManager = NsdCodeManager(context),
+                nsdCodeManager = nsdCodeManager,
                 screenCaptureSource = screenCaptureSource,
                 context = context,
             )
@@ -459,6 +470,37 @@ class SettingsViewModelSaveTest {
                 assertTrue(awaitItem())
                 assertFalse(awaitItem())
                 cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `stopQrExport during prepare leaves server stopped`() =
+        runTest(testDispatcher) {
+            val inPrepare = CountDownLatch(1)
+            val release = CountDownLatch(1)
+            val calls = CopyOnWriteArrayList<String>()
+            mockkObject(NetworkUtils)
+            try {
+                every { NetworkUtils.getLocalIpAddress() } answers {
+                    inPrepare.countDown()
+                    release.await(5, TimeUnit.SECONDS)
+                    "1.2.3.4"
+                }
+                every { exportSyncServer.start(any(), any()) } answers {
+                    calls += "start"
+                    8080
+                }
+                every { exportSyncServer.stop() } answers { calls += "stop" }
+
+                viewModel.prepareQrExport()
+                assertTrue(inPrepare.await(5, TimeUnit.SECONDS))
+                viewModel.stopQrExport()
+                release.countDown()
+                withContext(Dispatchers.Default) { withTimeout(5_000) { viewModel.isPreparingQrExport.first { !it } } }
+
+                assertFalse(calls.toString(), calls.lastOrNull() == "start")
+            } finally {
+                unmockkObject(NetworkUtils)
             }
         }
 

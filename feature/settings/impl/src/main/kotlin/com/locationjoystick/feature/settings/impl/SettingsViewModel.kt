@@ -37,7 +37,10 @@ import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.feature.settings.impl.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -818,34 +821,49 @@ class SettingsViewModel
             }
         }
 
+        private var qrExportJob: Job? = null
+        private val qrExportLock = Any()
+
         /**
          * Starts [exportSyncServer] (HTTP) and [nsdCodeManager] (NSD advertising), and emits a QR
          * code + typeable code for the same session. Call [stopQrExport] when the share dialog closes.
          */
         fun prepareQrExport() {
             _isPreparingQrExport.value = true
-            viewModelScope.launch(Dispatchers.IO) {
-                try {
-                    val json = SettingsExportCodec.serializeExportData(buildCurrentExportData())
-                    val host =
-                        NetworkUtils.getLocalIpAddress()
-                            ?: error("Cannot determine local IP — ensure Wi-Fi is connected")
-                    val code = RandomCode.generate()
-                    val port = exportSyncServer.start(code, json)
-                    nsdCodeManager.startAdvertising(code, port)
-                    qrExportReady.emit(QrExportSession(qrText = "locationjoystick://export?host=$host&port=$port&token=$code", code = code))
-                } catch (e: Exception) {
-                    Log.e(TAG, "QR export preparation failed", e)
-                    emitFeedback(R.string.settings_viewmodel_failed_to_prepare_qr_export, isError = true)
-                } finally {
-                    _isPreparingQrExport.value = false
+            qrExportJob =
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        val json = SettingsExportCodec.serializeExportData(buildCurrentExportData())
+                        val host =
+                            NetworkUtils.getLocalIpAddress()
+                                ?: error("Cannot determine local IP — ensure Wi-Fi is connected")
+                        val code = RandomCode.generate()
+                        val port =
+                            synchronized(qrExportLock) {
+                                // stopQrExport cancels first, then takes this lock: no start can follow its stop.
+                                ensureActive()
+                                exportSyncServer.start(code, json).also { nsdCodeManager.startAdvertising(code, it) }
+                            }
+                        qrExportReady.emit(
+                            QrExportSession(qrText = "locationjoystick://export?host=$host&port=$port&token=$code", code = code),
+                        )
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Log.e(TAG, "QR export preparation failed", e)
+                        emitFeedback(R.string.settings_viewmodel_failed_to_prepare_qr_export, isError = true)
+                    } finally {
+                        _isPreparingQrExport.value = false
+                    }
                 }
-            }
         }
 
         fun stopQrExport() {
-            exportSyncServer.stop()
-            nsdCodeManager.stopAdvertising()
+            qrExportJob?.cancel()
+            synchronized(qrExportLock) {
+                exportSyncServer.stop()
+                nsdCodeManager.stopAdvertising()
+            }
         }
 
         fun onQrScanned(url: String) {
