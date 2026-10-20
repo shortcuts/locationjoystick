@@ -264,6 +264,13 @@ class GeoUtilsTest {
     }
 
     @Test
+    fun `advancePosition east across antimeridian wraps to negative longitude`() {
+        val (_, newLon) = advancePosition(0.0, 179.9999, 90.0, 100.0)
+        assertTrue("lon $newLon out of range [-180,180)", newLon >= -180.0 && newLon < 180.0)
+        assertEquals(-179.9992, newLon, 0.00005)
+    }
+
+    @Test
     fun `advancePosition zero distance returns same position`() {
         val (newLat, newLon) = advancePosition(51.5, 0.0, 45.0, 0.0)
         assertEquals(51.5, newLat, 0.01)

@@ -672,7 +672,7 @@ class MockLocationService : Service() {
         // Persist last location on external kill (process killed, OOM, etc.)
         // stopSpoofing() handles this on normal stop, but onDestroy may be called without it.
         // Always persist location; the rememberLastLocation setting only controls whether to restore it.
-        if (_state.value == MockLocationState.RUNNING) {
+        if (_state.value == MockLocationState.RUNNING || _state.value == MockLocationState.PAUSED) {
             val pos = positionRef.get()
             CoroutineScope(NonCancellable + Dispatchers.IO).launch { settingsRepository.setLastLocation(pos) }
         }

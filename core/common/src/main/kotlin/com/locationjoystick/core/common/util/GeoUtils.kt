@@ -88,7 +88,7 @@ fun advancePosition(
                 sin(bearing) * sin(angularDist) * cos(latRad),
                 cos(angularDist) - sin(latRad) * sin(newLatRad),
             )
-    return newLatRad.toDegrees() to newLonRad.toDegrees()
+    return newLatRad.toDegrees() to ((newLonRad.toDegrees() + 540.0) % 360.0 - 180.0)
 }
 
 /**
