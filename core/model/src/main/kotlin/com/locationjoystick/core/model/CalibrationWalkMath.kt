@@ -50,6 +50,16 @@ object CalibrationWalkMath {
         return GroundOffset(along * sin(b), along * cos(b))
     }
 
+    /** The raw move [p0] to [p]. Fixes carry no jitter (it is added when the fix is built), so cross-track motion is real. */
+    fun offset(
+        p0: LatLng,
+        p: LatLng,
+        lat0: Double,
+    ) = GroundOffset(
+        (p.longitude - p0.longitude) * METERS_PER_DEGREE * cos(Math.toRadians(lat0)),
+        (p.latitude - p0.latitude) * METERS_PER_DEGREE,
+    )
+
     /** Frame i moves when the speed between frames `i-1` and `i+1` (clamped to the leg) is at least 0.3 m/s. */
     fun movingFlags(
         timesS: DoubleArray,

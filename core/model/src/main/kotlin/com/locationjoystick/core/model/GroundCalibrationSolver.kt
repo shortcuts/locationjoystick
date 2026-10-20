@@ -54,10 +54,7 @@ object GroundCalibrationSolver {
                 val frames = leg.frames()
                 if (frames.isEmpty()) return@flatMap emptyList()
                 val lat0 = leg.positions[0].latitude
-                val offsets =
-                    leg.positions.map {
-                        CalibrationWalkMath.alongTrackOffset(leg.positions[0], it, leg.bearingDeg, lat0)
-                    }
+                val offsets = leg.positions.map { CalibrationWalkMath.offset(leg.positions[0], it, lat0) }
                 val walk = WalkLeg(frames, CalibrationWalkMath.movingFlags(leg.timesS, leg.positions), offsets)
                 FrameFlow.bandMoves(listOf(walk), feet.x, feet.y)
             }

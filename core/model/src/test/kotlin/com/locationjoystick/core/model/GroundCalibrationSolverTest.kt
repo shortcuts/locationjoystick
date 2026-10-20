@@ -20,6 +20,7 @@ class GroundCalibrationSolverTest {
         w: Int,
         h: Int,
         framesLoaded: IntArray? = null,
+        bearingSkewDeg: Double = 0.0,
         scene: SyntheticWalkScene = SyntheticWalkScene(w, h, 0.5 * w, 1500.0 * h / 2340, figure = true, contrast = 0.12),
     ): List<CapturedLeg> {
         val s = w / 1080.0
@@ -45,10 +46,10 @@ class GroundCalibrationSolverTest {
                         lon0 + it * east / (CalibrationWalkMath.METERS_PER_DEGREE * cosLat),
                     )
                 }
-            // bearing of the real move; the solver projects onto the commanded bearing, so command it exactly
+            // bearing of the real move; a skew puts real cross-track motion against the chord, as the ends of an arc do
             val bearing = (Math.toDegrees(Math.atan2(east, north)) + 360.0) % 360.0
             CapturedLeg(
-                bearing,
+                bearing + bearingSkewDeg,
                 DoubleArray(n) { it * 3.0 },
                 positions,
             ) {
@@ -61,8 +62,9 @@ class GroundCalibrationSolverTest {
     private fun check(
         w: Int,
         h: Int,
+        bearingSkewDeg: Double = 0.0,
     ) {
-        val r = GroundCalibrationSolver.solve(legs(w, h), w, h)
+        val r = GroundCalibrationSolver.solve(legs(w, h, bearingSkewDeg = bearingSkewDeg), w, h)
         assertTrue("$r", r is SolveResult.Ok)
         r as SolveResult.Ok
         val c = r.fit.calibration
@@ -76,6 +78,9 @@ class GroundCalibrationSolverTest {
 
     @Test
     fun recoversTruthAtHalfSize() = check(540, 1170)
+
+    @Test
+    fun curvedLegFitsWithoutCrossTrackBias() = check(540, 1170, bearingSkewDeg = 8.0)
 
     @Test
     fun recoversTruthAtTwoThirdsSize() = check(720, 1600)

@@ -541,7 +541,7 @@ class AutoFitCoordinator
         ): List<LegMove> {
             val frames = leg.frames()
             val lat0 = leg.positions[0].latitude
-            val offsets = leg.positions.map { CalibrationWalkMath.alongTrackOffset(leg.positions[0], it, leg.bearingDeg, lat0) }
+            val offsets = leg.positions.map { CalibrationWalkMath.offset(leg.positions[0], it, lat0) }
             val walk = WalkLeg(frames, CalibrationWalkMath.movingFlags(leg.timesS, leg.positions), offsets)
             return FrameFlow.bandMoves(listOf(walk), feetX, feetY, MONITOR_KS)
         }

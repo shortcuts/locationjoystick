@@ -65,6 +65,16 @@ class CalibrationWalkMathTest {
     }
 
     @Test
+    fun offsetKeepsCrossTrackMotionThatTheProjectionDrops() {
+        val p0 = LatLng(0.0, 5.0)
+        val p = LatLng(100.0 / CalibrationWalkMath.METERS_PER_DEGREE, 5.0 + 17.6 / CalibrationWalkMath.METERS_PER_DEGREE)
+        val o = CalibrationWalkMath.offset(p0, p, 0.0)
+        assertEquals(17.6, o.eastMeters, 1e-6)
+        assertEquals(100.0, o.northMeters, 1e-6)
+        assertEquals(0.0, CalibrationWalkMath.alongTrackOffset(p0, p, 0.0, 0.0).eastMeters, 1e-6)
+    }
+
+    @Test
     fun oppositeBearingsReturnToStart() {
         val start = LatLng(52.0, 5.0)
         val there = CalibrationWalkMath.commandedTarget(start, 90.0, 40.0)

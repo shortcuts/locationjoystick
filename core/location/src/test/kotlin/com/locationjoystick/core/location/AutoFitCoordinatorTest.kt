@@ -137,7 +137,7 @@ class AutoFitCoordinatorTest {
         val sx = w / GROUND_W
         val sy = h / GROUND_H
         val lat0 = leg.positions[0].latitude
-        val offsets = leg.positions.map { CalibrationWalkMath.alongTrackOffset(leg.positions[0], it, leg.bearingDeg, lat0) }
+        val offsets = leg.positions.map { CalibrationWalkMath.offset(leg.positions[0], it, lat0) }
         return (0 until leg.positions.size - 4).map { i ->
             val d = GroundOffset(offsets[i + 4].eastMeters - offsets[i].eastMeters, offsets[i + 4].northMeters - offsets[i].northMeters)
             val bands =
