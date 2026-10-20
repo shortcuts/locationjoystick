@@ -262,4 +262,33 @@ class LeaderSyncServerTest {
         port = server.start("gid")
         assertEquals(404, call(port, "/api/v1/status", auth = "Bearer k2").first)
     }
+
+    @Test
+    fun `oversized headers are refused and health still answers`() {
+        val port = server.start("gid")
+        java.net.Socket("localhost", port).use { socket ->
+            val out = socket.getOutputStream()
+            out.write("GET /api/v1/state HTTP/1.1\r\nX-Pad: ".toByteArray())
+            out.write(ByteArray(8_193) { 'a'.code.toByte() })
+            out.flush()
+            val reply = runCatching { socket.getInputStream().bufferedReader().readLine() }.getOrNull()
+            assertTrue(reply, reply?.contains("431") == true)
+        }
+        java.net.Socket("localhost", port).use { socket ->
+            val out = socket.getOutputStream()
+            out.write("GET /x HTTP/1.1\r\n".toByteArray())
+            repeat(101) { out.write("H$it: v\r\n".toByteArray()) }
+            out.flush()
+            assertTrue(
+                socket
+                    .getInputStream()
+                    .bufferedReader()
+                    .readLine()
+                    .contains("431"),
+            )
+        }
+        val conn = URL("http://localhost:$port/position?token=gid").openConnection() as HttpURLConnection
+        assertEquals(204, conn.responseCode)
+        conn.disconnect()
+    }
 }

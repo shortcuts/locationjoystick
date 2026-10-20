@@ -107,7 +107,6 @@
         <div class="param"><dt><code>lat</code></dt><dd><span class="param-type">double</span> <span class="param-flag">required</span> Latitude, -90 to 90.</dd></div>
         <div class="param"><dt><code>lon</code></dt><dd><span class="param-type">double</span> <span class="param-flag">required</span> Longitude, -180 to 180.</dd></div>
       </dl>
-      <p class="endpoint-returns">Returns <code>409 no_position</code> if the device has no position.</p>
     </div>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-post-walk"><span class="method method-post">POST</span><code class="endpoint-path">/walk</code></h3>
@@ -165,8 +164,8 @@
       <dl class="params">
         <div class="param"><dt><code>lat</code></dt><dd><span class="param-type">double</span> <span class="param-flag">optional</span> Latitude, -90 to 90.</dd></div>
         <div class="param"><dt><code>lon</code></dt><dd><span class="param-type">double</span> <span class="param-flag">optional</span> Longitude, -180 to 180.</dd></div>
-        <div class="param"><dt><code>radiusMeters</code></dt><dd><span class="param-type">double</span> <span class="param-flag">optional</span> Meters, app default 500. Roaming stays within this distance of the start.</dd></div>
-        <div class="param"><dt><code>distanceMeters</code></dt><dd><span class="param-type">double</span> <span class="param-flag">optional</span> Meters, app default 1000. Total distance to cover.</dd></div>
+        <div class="param"><dt><code>radiusMeters</code></dt><dd><span class="param-type">double</span> <span class="param-flag">optional</span> Meters, app default 500, clamped to 1 to 100000. Roaming stays within this distance of the start.</dd></div>
+        <div class="param"><dt><code>distanceMeters</code></dt><dd><span class="param-type">double</span> <span class="param-flag">optional</span> Meters, app default 1000, clamped to 50 to 50000. Total distance to cover.</dd></div>
         <div class="param"><dt><code>speedProfileId</code></dt><dd><span class="param-type">string</span> <span class="param-flag">optional</span> App default <code>walk</code>. Speed profile ID.</dd></div>
         <div class="param"><dt><code>followRoads</code></dt><dd><span class="param-type">boolean</span> <span class="param-flag">optional</span> App default <code>true</code>. Follow roads.</dd></div>
         <div class="param"><dt><code>returnToInitialLocation</code></dt><dd><span class="param-type">boolean</span> <span class="param-flag">optional</span> App default <code>true</code>. End back at the start.</dd></div>
@@ -179,7 +178,7 @@
         <div class="param"><dt><code>plantingLoopCount</code></dt><dd><span class="param-type">integer</span> <span class="param-flag">optional</span> App default 1. Number of loops when <code>plantingInfiniteLoops</code> is <code>false</code>.</dd></div>
         <div class="param"><dt><code>plantingSpeedProfileId</code></dt><dd><span class="param-type">string</span> <span class="param-flag">optional</span> Profile ID, app default <code>bike</code>.</dd></div>
       </dl>
-      <p class="endpoint-returns">Returns <code>409 conflict</code> if a route is playing.</p>
+      <p class="endpoint-returns">Returns <code>400 bad_request</code> for a non-finite number or an unknown speed profile, and <code>409 conflict</code> if a route is playing.</p>
     </div>
     <div class="endpoint">
       <h3 class="endpoint-head" id="ep-post-roam-pause"><span class="method method-post">POST</span><code class="endpoint-path">/roam/pause</code></h3>

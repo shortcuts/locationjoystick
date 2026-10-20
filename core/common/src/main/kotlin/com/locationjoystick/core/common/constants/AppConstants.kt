@@ -578,6 +578,8 @@ object AppConstants {
         const val GROUP_CODE_LENGTH = 6
         const val API_KEY_LENGTH = 32
         const val API_MAX_BODY_BYTES = 65_536
+        const val API_MAX_HEADER_LINE_CHARS = 8_192
+        const val API_MAX_HEADER_LINES = 100
 
         /** Cap on one API joystick hold, so a dead client cannot leave the position drifting. */
         const val API_JOYSTICK_MAX_DURATION_MS = 10_000L

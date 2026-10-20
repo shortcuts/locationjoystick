@@ -4,6 +4,7 @@ import android.content.Context
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.di.ApplicationScope
 import com.locationjoystick.core.common.util.advancePosition
+import com.locationjoystick.core.common.util.normalizePlantingRadii
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
@@ -194,17 +195,32 @@ class ControlApiRoutes
             if (!canStartRoaming(locationRepository.currentMode.value, locationRepository.mockLocationState.value)) {
                 return apiError(409, "conflict", "A route is playing; stop it before roaming")
             }
+            if (ROAM_NUMBER_KEYS.any { json.has(it) && !json.optDouble(it, Double.NaN).isFinite() }) {
+                return apiError(400, "bad_request", "Numeric fields must be finite numbers")
+            }
             val base = runBlocking { settingsRepository.getRoamingDefaults().first() }
+            val roaming = AppConstants.RoamingConstants
+            val (plantingStart, plantingEnd) =
+                normalizePlantingRadii(
+                    json.optDouble("plantingStartRadiusMeters", base.plantingStartRadiusMeters),
+                    json.optDouble("plantingEndRadiusMeters", base.plantingEndRadiusMeters),
+                )
             val draft =
                 base.copy(
-                    radiusMeters = json.optDouble("radiusMeters", base.radiusMeters),
-                    distanceMeters = json.optDouble("distanceMeters", base.distanceMeters),
+                    radiusMeters =
+                        json
+                            .optDouble("radiusMeters", base.radiusMeters)
+                            .coerceIn(roaming.ROAMING_MIN_RADIUS_METERS, roaming.RADIUS_MAX_METERS),
+                    distanceMeters =
+                        json
+                            .optDouble("distanceMeters", base.distanceMeters)
+                            .coerceIn(roaming.DISTANCE_MIN_METERS, roaming.DISTANCE_MAX_METERS),
                     speedProfileId = json.optString("speedProfileId", base.speedProfileId),
                     followRoads = json.optBoolean("followRoads", base.followRoads),
                     returnToInitialLocation = json.optBoolean("returnToInitialLocation", base.returnToInitialLocation),
                     kind = kind ?: base.kind,
-                    plantingStartRadiusMeters = json.optDouble("plantingStartRadiusMeters", base.plantingStartRadiusMeters),
-                    plantingEndRadiusMeters = json.optDouble("plantingEndRadiusMeters", base.plantingEndRadiusMeters),
+                    plantingStartRadiusMeters = plantingStart,
+                    plantingEndRadiusMeters = plantingEnd,
                     plantingInfiniteLoops = json.optBoolean("plantingInfiniteLoops", base.plantingInfiniteLoops),
                     plantingLoopCount = json.optInt("plantingLoopCount", base.plantingLoopCount),
                     plantingSpacingMeters =
@@ -214,6 +230,10 @@ class ControlApiRoutes
                     plantingExpandOnly = json.optBoolean("plantingExpandOnly", base.plantingExpandOnly),
                     plantingSpeedProfileId = json.optString("plantingSpeedProfileId", base.plantingSpeedProfileId),
                 )
+            val knownProfiles = runBlocking { settingsRepository.getSpeedProfiles().first() }.map { it.id }
+            if (draft.speedProfileId !in knownProfiles || draft.plantingSpeedProfileId !in knownProfiles) {
+                return apiError(400, "bad_request", "Unknown speed profile")
+            }
             mapController.startRoaming(draft, position)
             return OK
         }
@@ -223,6 +243,7 @@ class ControlApiRoutes
          * [AppConstants.SyncConstants.API_JOYSTICK_MAX_DURATION_MS]. Mirrors JoystickOverlayService:
          * same takeover, same tick cadence, same mode handling and release.
          */
+        @Synchronized
         private fun joystick(json: JSONObject): ApiResponse {
             val force = json.optDouble("force", Double.NaN)
             val durationMs = json.optLong("durationMs", -1L)
@@ -305,6 +326,7 @@ class ControlApiRoutes
         private companion object {
             val OK = ApiResponse(200, "{\"ok\":true}")
             val NO_POSITION = apiError(409, "no_position", "No current position")
+            val ROAM_NUMBER_KEYS = listOf("radiusMeters", "distanceMeters", "plantingStartRadiusMeters", "plantingEndRadiusMeters")
             val BAD_COORDS = apiError(400, "bad_request", "lat must be -90..90 and lon -180..180")
         }
     }

@@ -105,12 +105,21 @@ abstract class TokenAuthHttpServer(
                 // latin1: one char == one byte, so Content-Length counts chars correctly.
                 val reader = BufferedReader(InputStreamReader(it.getInputStream(), Charsets.ISO_8859_1))
                 val writer = PrintWriter(it.getOutputStream(), true)
-                val requestLine = reader.readLine() ?: return
                 val headers = mutableMapOf<String, String>()
-                var line = reader.readLine()
-                while (!line.isNullOrBlank()) {
-                    headers[line.substringBefore(":").trim().lowercase()] = line.substringAfter(":", "").trim()
-                    line = reader.readLine()
+                val requestLine: String
+                try {
+                    requestLine = reader.readLineBounded() ?: return
+                    var line = reader.readLineBounded()
+                    var count = 0
+                    while (!line.isNullOrBlank()) {
+                        if (++count > AppConstants.SyncConstants.API_MAX_HEADER_LINES) throw HeadersTooLarge()
+                        headers[line.substringBefore(":").trim().lowercase()] = line.substringAfter(":", "").trim()
+                        line = reader.readLineBounded()
+                    }
+                } catch (_: HeadersTooLarge) {
+                    writer.print("HTTP/1.1 431 Request Header Fields Too Large\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+                    writer.flush()
+                    return
                 }
 
                 val method = requestLine.substringBefore(" ")
@@ -148,6 +157,20 @@ abstract class TokenAuthHttpServer(
             }
         } catch (e: Exception) {
             Log.w(tag, "Error handling client request", e)
+        }
+    }
+
+    private class HeadersTooLarge : Exception()
+
+    // BufferedReader.readLine buffers a newline-free stream without limit.
+    private fun BufferedReader.readLineBounded(): String? {
+        val sb = StringBuilder()
+        while (true) {
+            val c = read()
+            if (c < 0) return if (sb.isEmpty()) null else sb.toString()
+            if (c == '\n'.code) return sb.toString().trimEnd('\r')
+            if (sb.length >= AppConstants.SyncConstants.API_MAX_HEADER_LINE_CHARS) throw HeadersTooLarge()
+            sb.append(c.toChar())
         }
     }
 

@@ -51,7 +51,7 @@ class ControlApiRoutesTest {
         every { roamingRepository.isRoamingPaused } returns MutableStateFlow(false)
         every { mapController.cooldownForPosition(any()) } returns flowOf(CooldownState.Ready)
         val walk = SpeedProfile("walk", "Walk", 10.0)
-        every { settingsRepository.getSpeedProfiles() } returns flowOf(listOf(walk))
+        every { settingsRepository.getSpeedProfiles() } returns flowOf(listOf(walk, SpeedProfile("bike", "Bike", 20.0)))
         every { settingsRepository.getActiveSpeedProfile() } returns flowOf(walk)
         every { settingsRepository.getRoamingDefaults() } returns flowOf(RoamingDefaults())
         every { routeRepository.getRouteWithWaypoints("r1") } returns flowOf(Route(id = "r1", name = "R", waypoints = emptyList()))
@@ -175,6 +175,39 @@ class ControlApiRoutesTest {
         locationRepository.startSpoofing()
         assertEquals(409, call("roam/start").first)
         verify(exactly = 1) { mapController.startRoaming(any(), any(), any()) }
+    }
+
+    @Test
+    fun `roam start with NaN or huge distance is 400 and never starts roaming`() {
+        locationRepository.setPositionInternal(LatLng(5.0, 6.0))
+        assertEquals(400, call("roam/start", body = """{"distanceMeters":"NaN"}""").first)
+        assertEquals(400, call("roam/start", body = """{"radiusMeters":"Infinity"}""").first)
+        assertEquals(400, call("roam/start", body = """{"speedProfileId":"warp"}""").first)
+        verify(exactly = 0) { mapController.startRoaming(any(), any(), any()) }
+        assertEquals(200, call("roam/start", body = """{"distanceMeters":1e12,"radiusMeters":-5}""").first)
+        verify { mapController.startRoaming(RoamingDefaults(radiusMeters = 1.0, distanceMeters = 50_000.0), LatLng(5.0, 6.0), any()) }
+    }
+
+    @Test
+    fun `two concurrent joystick requests advance only one hold`() {
+        locationRepository.setPositionInternal(LatLng(10.0, 10.0))
+        val start = java.util.concurrent.CountDownLatch(1)
+        val threads =
+            List(64) {
+                Thread {
+                    start.await()
+                    call("joystick", body = """{"bearingDegrees":0,"force":1,"durationMs":1000}""")
+                }.also { it.start() }
+            }
+        start.countDown()
+        threads.forEach { it.join() }
+        // Cancelled holds may have ticked early; what remains after the last request must be one hold.
+        val before = locationRepository.currentPosition.value!!.latitude
+        waitFor { locationRepository.currentMode.value == MockMode.TELEPORT }
+        Thread.sleep(300)
+        // One 1 s hold at 10 m/s is 10 m; leaked holds would multiply it.
+        val movedMeters = (locationRepository.currentPosition.value!!.latitude - before) * 111_000.0
+        assertTrue("moved $movedMeters m", movedMeters <= 12.0)
     }
 
     @Test
