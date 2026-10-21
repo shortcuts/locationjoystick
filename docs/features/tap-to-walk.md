@@ -147,6 +147,9 @@ Accepted state of the no-compass investigation (branch `tap-to-walk-no-compass`;
 - Wide zoom on one device passes the bar. Close-up zoom does not yet.
 - Twist, still-frame twist and one-parameter zoom were benched for the automatic fit: results and thresholds are in the investigation doc, "Automatic fit bench results".
 - Not proven: other devices and screen sizes, close-up zoom, and the end-to-end pass rate of the port. The smoke gate for the pass rate has not been run in full.
+- Smoke gate, run on 2026-10-17 on a Pixel 5 (1080x2340), not complete: 3 of 20 locations pass. Locations 4 to 9 fail: Sydney is below the bar (7 of 9 scored); the five locations after it (5 to 9) fit a static loading screen, so no candidate taps were scored. Locations 10 to 20 did not run because the Control API was unreachable. Per-location counts are in that run's `report.md` (not in the repo).
+- Matching skips most candidate taps: 14 of 26 at New York. Far taps err more than near taps. Both are open work below.
+- A perspective fit from a static screen (flow median under 5 px) is rejected in the bench (`fit_perspective`). The app's Kotlin calibration has no equivalent check yet, and that path is not run on a device.
 
 Open work, in order:
 

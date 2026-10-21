@@ -306,6 +306,17 @@ def test_perspective_fit_recovers_known_camera_and_tap_round_trips():
     assert np.linalg.norm(g - want) < 1.5
 
 
+def test_perspective_fit_rejects_static_screen_with_no_flow():
+    rng = np.random.default_rng(2)
+    moves = []
+    for b in (0, 45, 90, 135, 180, 225, 270, 315):
+        d = 6.0 * np.array([math.sin(math.radians(b)), math.cos(math.radians(b))])
+        fl = [tuple(rng.normal(0, 0.01, 2)) + (0.9, x, y)
+              for y in (600, 800, 1000, 1200, 1350) for x in (250, 850)]
+        moves += [(float(b), d, fl)] * 6
+    assert rb.fit_perspective(moves, (540.0, 1510.0)) is None
+
+
 def _scrolling_legs(w, h, feet_frac, figure=True, ring_frac=None):
     """Two legs of a scrolling blurred-noise world; an optional static, high-contrast figure above feet_frac.
     ring_frac adds a static bar (stand-in for the screen-fixed range ring) 0.04h under the feet, which merges into the figure's sharp run."""

@@ -1266,14 +1266,17 @@ def predict_flow(h, hi, d, u):
     return _h_apply(h, _h_apply(hi, u) - np.asarray(d)) - np.asarray(u)
 
 
-def fit_perspective(moves, anchor, min_resp=0.2, theta0s=(-20, 5, 30, -60, 60, 120, 180)):
+def fit_perspective(moves, anchor, min_resp=0.2, min_flow_px=5.0, theta0s=(-20, 5, 30, -60, 60, 120, 180)):
     """Gauss-Newton fit of (theta_deg, s, sy, a) of ground_to_game to band flows, outliers down-weighted.
 
     anchor is the player's feet pixel (measured per camera zoom). Returns {theta_deg, s, sy, a, px, py,
-    med_abs_px, n} or None when fewer than 40 flows pass min_resp.
+    med_abs_px, n} or None when fewer than 40 flows pass min_resp or the median flow is under min_flow_px.
+    A static screen (loading screen) fits a near-zero scale, so the flow floor rejects it.
     """
     rows = [(d, f) for _, d, fl in moves for f in fl if f[2] >= min_resp]
     if len(rows) < 40:
+        return None
+    if np.median([np.hypot(f[0], f[1]) for _, f in rows]) < min_flow_px:
         return None
 
     def cam(x):
