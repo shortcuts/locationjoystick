@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,16 +56,9 @@ internal fun SettingsGeneralSubScreen(
     onToggleSpoofing: () -> Unit,
     locationLabel: String? = null,
     onAction: (SettingsAction) -> Unit,
-    launchableApps: List<InstalledApp> = emptyList(),
-    scrollToCapture: Boolean = false,
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
-    val captureBringIntoView = remember { BringIntoViewRequester() }
-    LaunchedEffect(scrollToCapture, uiState.isLoading) {
-        if (scrollToCapture && !uiState.isLoading) captureBringIntoView.bringIntoView()
-    }
-
     LjScaffold(
         title = stringResource(R.string.settings_general_general),
         isSpoofing = isSpoofing,
@@ -109,8 +99,6 @@ internal fun SettingsGeneralSubScreen(
                         GeocodingSection(uiState, onAction)
                         SettingsSectionDivider()
                         PrivacySection(uiState, onAction)
-                        SettingsSectionDivider()
-                        CaptureSection(uiState, onAction, launchableApps, Modifier.bringIntoViewRequester(captureBringIntoView))
                         SettingsSectionDivider()
                         DebugSection(uiState, onAction)
                     }

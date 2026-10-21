@@ -54,7 +54,7 @@ import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.feature.settings.impl.R
 
-private enum class SettingsSection { GPS, MENUS, GENERAL, FAVORITES_ROUTES, ROAMING }
+private enum class SettingsSection { GPS, MENUS, GENERAL, FAVORITES_ROUTES, ROAMING, CAPTURE }
 
 private sealed class PendingImport {
     data class File(
@@ -548,9 +548,9 @@ internal fun SettingsScreen(
     snackbarHost: @Composable () -> Unit = {},
     openCaptureSetup: Boolean = false,
 ) {
-    var currentSection by remember { mutableStateOf(if (openCaptureSetup) SettingsSection.GENERAL else null) }
+    var currentSection by remember { mutableStateOf(if (openCaptureSetup) SettingsSection.CAPTURE else null) }
     // Opened from the Capture screen: Back returns there, not to the settings hub.
-    val atRoot = currentSection == null || (openCaptureSetup && currentSection == SettingsSection.GENERAL)
+    val atRoot = currentSection == null || (openCaptureSetup && currentSection == SettingsSection.CAPTURE)
     var pendingUnsavedIntent by remember { mutableStateOf<PendingUnsavedIntent?>(null) }
 
     val guardedBack = {
@@ -656,8 +656,6 @@ internal fun SettingsScreen(
                 onToggleSpoofing = guardedToggleSpoofing,
                 locationLabel = locationLabel,
                 onAction = onAction,
-                launchableApps = launchableApps,
-                scrollToCapture = openCaptureSetup,
                 bottomBar = bottomBar,
                 snackbarHost = snackbarHost,
             )
@@ -687,6 +685,20 @@ internal fun SettingsScreen(
                 onToggleSpoofing = guardedToggleSpoofing,
                 locationLabel = locationLabel,
                 onAction = onAction,
+                bottomBar = bottomBar,
+                snackbarHost = snackbarHost,
+            )
+        }
+
+        SettingsSection.CAPTURE -> {
+            SettingsCaptureSubScreen(
+                uiState = uiState,
+                onNavigateBack = guardedBack,
+                isSpoofing = isSpoofing,
+                onToggleSpoofing = guardedToggleSpoofing,
+                locationLabel = locationLabel,
+                onAction = onAction,
+                launchableApps = launchableApps,
                 bottomBar = bottomBar,
                 snackbarHost = snackbarHost,
             )
@@ -813,6 +825,12 @@ private fun SettingsHubScreen(
                         title = stringResource(R.string.settings_hub_roaming),
                         description = stringResource(R.string.settings_hub_roaming_desc),
                         onClick = { onNavigate(SettingsSection.ROAMING) },
+                    ),
+                    DestinationCardSpec(
+                        icon = LjIcons.Link,
+                        title = stringResource(R.string.settings_hub_capture),
+                        description = stringResource(R.string.settings_hub_capture_desc),
+                        onClick = { onNavigate(SettingsSection.CAPTURE) },
                     ),
                 ),
         )

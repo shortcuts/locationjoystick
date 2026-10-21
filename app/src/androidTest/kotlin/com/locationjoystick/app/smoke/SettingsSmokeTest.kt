@@ -1,6 +1,8 @@
 package com.locationjoystick.app.smoke
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -25,12 +27,14 @@ class SettingsSmokeTest : BaseSmokeTest() {
     }
 
     @Test
-    fun settings_hub_order_is_general_gps_menus_favorites_roaming() {
-        val labels = listOf("General", "Movement & GPS", "Menus", "Favorites & Routes", "Roaming")
+    fun settings_hub_order_is_general_gps_menus_favorites_roaming_capture() {
+        val labels = listOf("General", "Movement & GPS", "Menus", "Favorites & Routes", "Roaming", "Capture")
         val tops =
             labels.map {
+                // The drawer also has a "Capture" tab; the hub card comes first.
                 composeRule
-                    .onNodeWithText(it)
+                    .onAllNodesWithText(it)
+                    .onFirst()
                     .fetchSemanticsNode()
                     .boundsInRoot.top
             }
@@ -132,5 +136,12 @@ class SettingsSmokeTest : BaseSmokeTest() {
         composeRule.onNodeWithText("Roaming").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Starting radius (m)").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun settings_shows_capture_section() {
+        composeRule.onAllNodesWithText("Capture").onFirst().performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Collects map links", substring = true).performScrollTo().assertIsDisplayed()
     }
 }

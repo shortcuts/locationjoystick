@@ -22,11 +22,13 @@
     <string name="settings_hub_menus">"Menus"</string>
     <string name="settings_hub_menus_desc">"Widget and map buttons, speed cycle, Tap to Walk, and Reconnect accessory."</string>
     <string name="settings_hub_general">"General"</string>
-    <string name="settings_hub_general_desc">"Theme, map source, place search, privacy, capture, and debug."</string>
+    <string name="settings_hub_general_desc">"Theme, map source, place search, privacy, and debug."</string>
     <string name="settings_hub_favorites_and_routes">"Favorites &amp; Routes"</string>
     <string name="settings_hub_favorites_and_routes_desc">"Hot locations and ready-made routes you can add to your library."</string>
     <string name="settings_hub_roaming">"Roaming"</string>
     <string name="settings_hub_roaming_desc">"Default area, distance, speed, and routing style for random walks."</string>
+    <string name="settings_hub_capture">"Capture"</string>
+    <string name="settings_hub_capture_desc">"Map link setup, the on/off switch, the browser choice, and the app to open after a link."</string>
     <string name="settings_favorites_routes_title">"Favorites &amp; Routes"</string>
     <string name="settings_favorites_routes_favorites">"Favorites"</string>
     <string name="settings_favorites_routes_options_for_the_favorites_list">"Options for the favorites list."</string>

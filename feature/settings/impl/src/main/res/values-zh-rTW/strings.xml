@@ -22,11 +22,13 @@
     <string name="settings_hub_menus">"選單"</string>
     <string name="settings_hub_menus_desc">"浮動小工具與地圖按鈕、速度切換、點擊行走及重新連線配件。"</string>
     <string name="settings_hub_general">"一般"</string>
-    <string name="settings_hub_general_desc">"主題、地圖來源、地點搜尋、隱私、擷取與除錯。"</string>
+    <string name="settings_hub_general_desc">"主題、地圖來源、地點搜尋、隱私與除錯。"</string>
     <string name="settings_hub_favorites_and_routes">"收藏與路線"</string>
     <string name="settings_hub_favorites_and_routes_desc">"精選熱門地點與內建路線，用於擴充你的收藏與路線庫。"</string>
     <string name="settings_hub_roaming">"漫遊"</string>
     <string name="settings_hub_roaming_desc">"隨機行走的預設區域、距離、速度與路徑選擇方式。"</string>
+    <string name="settings_hub_capture">"擷取"</string>
+    <string name="settings_hub_capture_desc">"地圖連結設定、開關、瀏覽器選擇，以及連結處理後要開啟的應用程式。"</string>
     <string name="settings_favorites_routes_title">"收藏與路線"</string>
     <string name="settings_favorites_routes_favorites">"收藏"</string>
     <string name="settings_favorites_routes_options_for_the_favorites_list">"收藏清單的選項。"</string>

@@ -22,11 +22,13 @@
     <string name="settings_hub_menus">"菜单"</string>
     <string name="settings_hub_menus_desc">"悬浮窗和地图按钮、速度切换、点击行走及重新连接配件。"</string>
     <string name="settings_hub_general">"常规"</string>
-    <string name="settings_hub_general_desc">"主题、地图来源、地点搜索、隐私、捕获和调试。"</string>
+    <string name="settings_hub_general_desc">"主题、地图来源、地点搜索、隐私和调试。"</string>
     <string name="settings_hub_favorites_and_routes">"收藏与路线"</string>
     <string name="settings_hub_favorites_and_routes_desc">"精选热门地点和内置路线，用于填充你的收藏与路线库。"</string>
     <string name="settings_hub_roaming">"漫游"</string>
     <string name="settings_hub_roaming_desc">"随机行走的默认区域、距离、速度和选路方式。"</string>
+    <string name="settings_hub_capture">"采集"</string>
+    <string name="settings_hub_capture_desc">"地图链接设置、开关、浏览器选择，以及链接处理后要打开的应用。"</string>
     <string name="settings_favorites_routes_title">"收藏与路线"</string>
     <string name="settings_favorites_routes_favorites">"收藏"</string>
     <string name="settings_favorites_routes_options_for_the_favorites_list">"收藏列表的选项。"</string>
