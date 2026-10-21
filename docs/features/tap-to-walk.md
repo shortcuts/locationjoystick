@@ -54,7 +54,7 @@ Screenshots require API 30. Below it no map can exist, so the overlay walks nowh
 
 Play's accessibility policy rejected releases that showed the disclosure only in a settings sub-screen, and rejected a release that let the accessibility service run without an in-app accept. The disclosure is therefore a single full-screen surface, shown in the normal usage flow, immediately before Android's own consent screen.
 
-It names the accessibility API, the data it reads (periodic screenshots while walking with Tap to Walk on and the game in front, and during Reconnect accessory), and the purpose. Play's policy requires the periodic screenshots to be named in this text, in the onboarding card and in the service description. The copy lives in string resources, not here; read it there.
+It names the accessibility API, the data it reads (periodic screenshots while walking with Tap to Walk on and the game in front, and during Reconnect accessory), and the purpose. Play's policy requires the periodic screenshots to be named in this text, in the onboarding card and in the service description. The copy lives in string resources, not here; read it there. Every one of those texts says screenshots are taken only while Pokémon GO is on screen, which `ScreenCaptureSource.captureGrayFrame` enforces.
 
 Rules that the code must keep:
 

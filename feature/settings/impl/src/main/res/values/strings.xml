@@ -144,7 +144,7 @@
     <string name="settings_menus_debug_stats">"Debug stats"</string>
     <string name="settings_menus_debug_stats_desc">"Shows live speed, altitude, coordinates, and tick rate in the floating widget panel while spoofing is active."</string>
     <string name="settings_menus_screen_access">"Screen access"</string>
-    <string name="settings_menus_when_enabled_the_app_detects_your">"Lets the app take a picture of your screen. Tap to Walk and Reconnect accessory need it. Uses an Android Accessibility Service. Some games detect accessibility services."</string>
+    <string name="settings_menus_when_enabled_the_app_detects_your">"Lets the app take a picture of your screen. Tap to Walk and Reconnect accessory need it. Only takes pictures while Pokémon GO is on your screen. Uses an Android Accessibility Service. Some games detect accessibility services."</string>
     <string name="settings_menus_accessibility_service">"Accessibility Service"</string>
     <string name="settings_menus_open_settings">"Open Settings"</string>
     <string name="settings_menus_screen_service_enabled">"Enabled"</string>

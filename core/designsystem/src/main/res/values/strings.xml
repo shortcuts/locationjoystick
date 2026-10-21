@@ -62,7 +62,7 @@
     <string name="language_dropdown_cd">"Change language"</string>
     <string name="accessibility_disclosure_title">"Android Accessibility API (optional)"</string>
     <string name="accessibility_disclosure_intro">"locationjoystick uses the Android Accessibility API for two optional features: “Tap to Walk” and “Reconnect accessory”. If you do not want them, tap “Decline” or “Skip”. You can keep using the app."</string>
-    <string name="accessibility_disclosure_data">"Data accessed: screenshots of your screen. About one a minute ONLY while Reconnect accessory is on, and about one every 3 seconds while you walk in the game with Tap to Walk on."</string>
+    <string name="accessibility_disclosure_data">"Data accessed: screenshots of your screen. About one a minute ONLY while Reconnect accessory is on, and about one every 3 seconds while you walk in the game with Tap to Walk on. Screenshots are taken only while Pokémon GO is on your screen."</string>
     <string name="accessibility_disclosure_purpose">"Why: Tap to Walk uses the screenshots to learn how your in-game map moves, so your taps land where you tapped. Reconnect accessory uses them to see whether your accessory shows as disconnected, and taps its connect button."</string>
     <string name="accessibility_disclosure_handling">"Data collected or shared: none. Screenshots stay on your device briefly and are then deleted. Nothing is sent anywhere. The service reads no text. It only taps your accessory’s connect button, and only while Reconnect accessory is on."</string>
     <string name="accessibility_disclosure_optional">"You can turn it off at any time."</string>

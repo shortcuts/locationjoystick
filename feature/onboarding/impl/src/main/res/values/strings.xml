@@ -26,7 +26,7 @@
     <string name="onboarding_start_using_locationjoystick">"Start using locationjoystick"</string>
     <string name="onboarding_optional">"Optional"</string>
     <string name="onboarding_tap_to_walk_access">"Tap to Walk setup (optional)"</string>
-    <string name="onboarding_tap_to_walk_access_desc">"Uses Accessibility to take screenshots of your game."</string>
+    <string name="onboarding_tap_to_walk_access_desc">"Uses Accessibility to take screenshots, only while Pokémon GO is on your screen."</string>
     <string name="onboarding_tap_to_walk_access_review">"Review and turn on"</string>
     <string name="onboarding_continue">"Continue"</string>
     <string name="onboarding_pick_path_title">"How will you use it?"</string>

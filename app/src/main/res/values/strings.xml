@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">locationjoystick</string>
     <string name="accessibility_service_label">locationjoystick screen helper</string>
-    <string name="accessibility_service_description">"Used only by two optional features, after you tap Accept on the in-app Accessibility disclosure: Tap to Walk and Reconnect accessory. Takes screenshots while you walk in the game with Tap to Walk on (about every 3 seconds), and to see whether your accessory is disconnected. Taps its connect button only when you turned Reconnect accessory on. Screenshots stay on your phone and are deleted when done. Nothing is collected or shared. Not an accessibility tool for users with disabilities."</string>
+    <string name="accessibility_service_description">"Used only by two optional features, after you tap Accept on the in-app Accessibility disclosure: Tap to Walk and Reconnect accessory. Takes screenshots while you walk in the game with Tap to Walk on (about every 3 seconds), and to see whether your accessory is disconnected. Only while Pokémon GO is on your screen. Taps its connect button only when you turned Reconnect accessory on. Screenshots stay on your phone and are deleted when done. Nothing is collected or shared. Not an accessibility tool for users with disabilities."</string>
     <string name="app_couldn_t_open_that_link">"Couldn't open that link"</string>
     <string name="drawer_close_menu_cd">"Close menu"</string>
     <string name="drawer_home">"Home"</string>

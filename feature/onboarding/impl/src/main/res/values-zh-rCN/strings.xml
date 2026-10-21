@@ -26,7 +26,7 @@
     <string name="onboarding_start_using_locationjoystick">"开始使用 locationjoystick"</string>
     <string name="onboarding_optional">"可选"</string>
     <string name="onboarding_tap_to_walk_access">"点击行走设置（可选）"</string>
-    <string name="onboarding_tap_to_walk_access_desc">"使用无障碍权限截取游戏的屏幕截图。"</string>
+    <string name="onboarding_tap_to_walk_access_desc">"使用无障碍权限仅在 Pokémon GO 显示在屏幕上时截取屏幕截图。"</string>
     <string name="onboarding_tap_to_walk_access_review">"查看并开启"</string>
     <string name="onboarding_continue">"继续"</string>
     <string name="onboarding_pick_path_title">"你打算怎么使用？"</string>
