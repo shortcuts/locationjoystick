@@ -137,10 +137,4 @@ private fun RoutesSection(
             onSelectionChange = { onAction(SettingsAction.SetSelectedHotRouteIds(it)) },
         )
     }
-    Spacer(modifier = Modifier.height(8.dp))
-    JitterInput(
-        value = uiState.plantingRadiusMeters,
-        onValueChange = { onAction(SettingsAction.SetPlantingRadius(it)) },
-        label = stringResource(R.string.settings_favorites_routes_planting_radius_m),
-    )
 }

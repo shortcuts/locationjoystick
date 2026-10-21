@@ -75,7 +75,13 @@ internal fun SettingsRoamingSubScreen(
                                 .verticalScroll(remember { ScrollState(0) })
                                 .padding(settingsScrollPadding()),
                     ) {
-                        RoamingSection(roamingDefaults, isMph, uiState.guidedPath.showsPlanting, onAction)
+                        RoamingSection(
+                            roamingDefaults,
+                            isMph,
+                            uiState.guidedPath.showsPlanting,
+                            uiState.plantingRadiusMeters,
+                            onAction,
+                        )
                         SettingsSectionDivider()
                     }
                 }
@@ -89,6 +95,7 @@ private fun RoamingSection(
     roamingDefaults: RoamingDefaults,
     isMph: Boolean,
     showPlanting: Boolean,
+    plantingRadiusMeters: Double,
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_roaming_roaming))
@@ -291,6 +298,13 @@ private fun RoamingSection(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+        JitterInput(
+            value = plantingRadiusMeters,
+            onValueChange = { onAction(SettingsAction.SetPlantingRadius(it)) },
+            label = stringResource(R.string.settings_favorites_routes_planting_radius_m),
         )
 
         Spacer(modifier = Modifier.height(8.dp))
