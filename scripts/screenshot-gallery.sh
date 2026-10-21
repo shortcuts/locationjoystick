@@ -952,7 +952,7 @@ $ADB shell am start -n "${PACKAGE}/${ACTIVITY}" >/dev/null
 wait_s 4 "App launching"
 
 dump=$(ui_dump)
-if grep -qi "onboarding\|Welcome\|grant\|permission" "$dump" 2>/dev/null; then
+if grep -qi "onboarding\|Welcome\|grant\|permission\|Accessibility" "$dump" 2>/dev/null; then
   rm -f "$dump"
   if $AUTO; then
     log "App appears to be on onboarding screen — completing via adb..."
