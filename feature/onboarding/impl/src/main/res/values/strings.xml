@@ -20,13 +20,13 @@
     <string name="onboarding_display_over_other_apps_desc">"Shows the joystick and widget over other apps."</string>
     <string name="onboarding_open_settings">"Open Settings"</string>
     <string name="onboarding_set_as_fake_gps_app">"Set as fake GPS app"</string>
-    <string name="onboarding_set_as_fake_gps_app_desc">"Pick locationjoystick as the mock location app in Developer options."</string>
+    <string name="onboarding_set_as_fake_gps_app_desc">"Pick it as the mock location app."</string>
     <string name="onboarding_open_developer_options">"Open Developer options"</string>
     <string name="onboarding_skip">"Skip"</string>
     <string name="onboarding_start_using_locationjoystick">"Start using locationjoystick"</string>
     <string name="onboarding_optional">"Optional"</string>
     <string name="onboarding_tap_to_walk_access">"Tap to Walk setup (optional)"</string>
-    <string name="onboarding_tap_to_walk_access_desc">"Uses Accessibility to take screenshots, only while Pokémon GO is on your screen."</string>
+    <string name="onboarding_tap_to_walk_access_desc">"Takes screenshots only while Pokémon GO is open."</string>
     <string name="onboarding_tap_to_walk_access_review">"Review and turn on"</string>
     <string name="onboarding_continue">"Continue"</string>
     <string name="onboarding_pick_path_title">"How will you use it?"</string>
