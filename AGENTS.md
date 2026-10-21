@@ -80,6 +80,7 @@ Rules:
 - If check fails, fix root cause. Don't suppress unless genuine false positive + inline comment explaining why.
 - Never suppress `Errors` category rules. Never batch-suppress with `@file:Suppress`.
 - Never add co-authoring or "Claude-Sessions" to the commit
+- If the disk is full, run rmgradle or clear the previous gradle builds/caches.
 
 ---
 

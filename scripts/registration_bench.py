@@ -1517,7 +1517,9 @@ def cmd_taptrials(args):
             if np.hypot(*g) > 150:
                 row.update(error_m=None, ncc=None, verdict="unreachable")
             else:
+                w0 = time.monotonic()
                 arrived = _walk_and_wait(host, key, *tgt)
+                row["walk_s"] = round(time.monotonic() - w0, 1)
                 time.sleep(3)
                 _adb_screencap(args.serial, out / f"t{i:02d}_after.png")
                 after = cv2.imread(str(out / f"t{i:02d}_after.png"))
@@ -1539,7 +1541,9 @@ def cmd_taptrials(args):
                     cv2.putText(after, f"err {err:.1f} m ncc {ncc:.2f} {row['verdict']}", (30, 100),
                                 cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
                     cv2.imwrite(str(out / f"t{i:02d}_after.png"), after)
+                b0 = time.monotonic()
                 _walk_and_wait(host, key, lat0, lon0)  # back to the start, unscored
+                row["back_s"] = round(time.monotonic() - b0, 1)
             cv2.circle(before, (int(p[0]), int(p[1])), 40, (0, 255, 0), 6)
             cv2.putText(before, f"tap -> ground E{g[0]:.0f} N{g[1]:.0f} m", (30, 100),
                         cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 5)
