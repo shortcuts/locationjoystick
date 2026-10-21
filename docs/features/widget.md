@@ -106,6 +106,7 @@ An optional block in the expanded panel shows live position, speed, altitude, ac
 
 - Tick rate is measured from the time between ticks, not assumed, so a stalled loop shows up.
 - Bearing shows a dash until the first movement. A made-up zero would look like a real heading.
+- It also carries the last reconnect check result, in memory only. See [bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md).
 - The readout is drawn in its own child window. Drawn inline, it widened the overlay's touch area and blocked taps on the map beside the icons.
 
 ## Completion badge

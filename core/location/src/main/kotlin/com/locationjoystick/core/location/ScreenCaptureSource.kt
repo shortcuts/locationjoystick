@@ -16,7 +16,7 @@ import javax.inject.Singleton
  * Bridge between [ScreenAccessibilityService] (in feature:widget:impl) and consumers
  * (the automatic fit). The service binds/unbinds itself; consumers call
  * [captureGrayFrame] which delegates to the live service instance. It also carries the last
- * reconnect check ([reconnectStatus]) to Settings, in memory only.
+ * reconnect check ([reconnectStatus]) to the widget debug view, in memory only.
  */
 @Singleton
 class ScreenCaptureSource

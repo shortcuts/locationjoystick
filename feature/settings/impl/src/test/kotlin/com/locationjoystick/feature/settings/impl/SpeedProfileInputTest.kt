@@ -10,7 +10,6 @@ import com.locationjoystick.core.data.HotLocationsRepository
 import com.locationjoystick.core.data.HotRoutesRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
-import com.locationjoystick.core.location.ScreenCaptureSource
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import com.locationjoystick.core.testing.FakePreferencesDataStore
@@ -66,7 +65,6 @@ class SpeedProfileInputTest {
                 exportSyncServer = ExportSyncServer(),
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = NsdCodeManager(context),
-                screenCaptureSource = ScreenCaptureSource(SettingsRepository(fakeDataSource)),
                 context = context,
             )
     }

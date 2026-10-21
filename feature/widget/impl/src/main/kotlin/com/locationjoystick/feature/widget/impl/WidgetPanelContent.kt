@@ -56,6 +56,7 @@ import com.locationjoystick.core.designsystem.activityState
 import com.locationjoystick.core.designsystem.component.RouteProgressBadge
 import com.locationjoystick.core.designsystem.component.routeProgressStopContentDescription
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.ReconnectStatus
 import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.feature.widget.impl.R
 import kotlinx.coroutines.coroutineScope
@@ -204,6 +205,8 @@ internal fun WidgetPanel(
     pasteCapture: PasteCaptureState,
     sections: List<WidgetPanelSection>,
     debugStats: DebugStats? = null,
+    reconnectStatus: ReconnectStatus? = null,
+    reconnectEnabled: Boolean = false,
     routeProgress: RouteProgress? = null,
     onDrag: (dx: Float, dy: Float) -> Unit,
 ) {
@@ -530,7 +533,7 @@ internal fun WidgetPanel(
             if (controlsEnabled && debugStats != null) {
                 Box {
                     WidgetSidePopup(visible = true) {
-                        DebugStatsPanel(debugStats)
+                        DebugStatsPanel(debugStats, reconnectStatus, reconnectEnabled)
                     }
                 }
             }

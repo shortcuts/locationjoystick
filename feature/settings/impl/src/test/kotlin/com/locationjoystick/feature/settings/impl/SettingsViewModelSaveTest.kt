@@ -17,7 +17,6 @@ import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.datastore.toAppFeature
-import com.locationjoystick.core.location.ScreenCaptureSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
@@ -26,8 +25,6 @@ import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
-import com.locationjoystick.core.model.ReconnectRunResult
-import com.locationjoystick.core.model.ReconnectStatus
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.SpeedProfile
@@ -80,7 +77,6 @@ class SettingsViewModelSaveTest {
     private lateinit var fakeRouteRepo: RouteRepository
     private lateinit var backupRepository: BackupRepository
     private lateinit var viewModel: SettingsViewModel
-    private lateinit var screenCaptureSource: ScreenCaptureSource
     private val exportSyncServer = mockk<ExportSyncServer>(relaxed = true)
     private val nsdCodeManager = mockk<NsdCodeManager>(relaxed = true)
 
@@ -93,7 +89,6 @@ class SettingsViewModelSaveTest {
         fakeFavoriteRepo = FavoriteRepository(FakeFavoriteDao(), ioDispatcher = testDispatcher)
         fakeRouteRepo = RouteRepository(routeDao = FakeRouteDao(), ioDispatcher = testDispatcher)
         backupRepository = mockk(relaxed = true)
-        screenCaptureSource = ScreenCaptureSource(fakeSettingsRepo)
         val hotLocationsRepository = HotLocationsRepository(context).also { runBlocking { it.load() } }
         viewModel =
             SettingsViewModel(
@@ -109,7 +104,6 @@ class SettingsViewModelSaveTest {
                 exportSyncServer = exportSyncServer,
                 exportSyncClient = ExportSyncClient(),
                 nsdCodeManager = nsdCodeManager,
-                screenCaptureSource = screenCaptureSource,
                 context = context,
             )
     }
@@ -118,17 +112,6 @@ class SettingsViewModelSaveTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
-
-    @Test
-    fun `reported reconnect status reaches uiState and clears`() =
-        runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
-            val status = ReconnectStatus(ReconnectRunResult.GATE_CLOSED, 42L)
-            screenCaptureSource.reportReconnect(status)
-            assertEquals(status, viewModel.uiState.value.reconnectStatus)
-            screenCaptureSource.reportReconnect(null)
-            assertEquals(null, viewModel.uiState.value.reconnectStatus)
-        }
 
     @Test
     fun `saveChanges triggers exactly one applySnapshot call`() =

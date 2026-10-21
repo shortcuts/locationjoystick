@@ -3,7 +3,6 @@ package com.locationjoystick.feature.settings.impl
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
-import android.text.format.DateUtils
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
@@ -56,7 +55,6 @@ import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FeatureSurface
-import com.locationjoystick.core.model.ReconnectRunResult
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.feature.settings.impl.R
 import kotlin.math.roundToInt
@@ -236,25 +234,6 @@ private fun ReconnectTapSection(
             }
         },
     )
-    if (uiState.reconnectTapEnabled && uiState.isScreenServiceGranted) {
-        Spacer(Modifier.height(8.dp))
-        val status = uiState.reconnectStatus
-        Text(
-            if (status == null) {
-                stringResource(R.string.settings_menus_reconnect_status_none)
-            } else {
-                stringResource(
-                    R.string.settings_menus_reconnect_status_line,
-                    DateUtils
-                        .getRelativeTimeSpanString(status.atMillis, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
-                        .toString(),
-                    stringResource(reconnectStatusLabelRes(status.result)),
-                )
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
     if (showsServiceOffHint(uiState.reconnectTapEnabled, uiState.isScreenServiceGranted)) {
         Spacer(Modifier.height(12.dp))
         ServiceOffHint(uiState, onAction)
@@ -298,15 +277,6 @@ internal fun showsReconnectDisclosure(
     reconnectAccepted: Boolean,
     accessibilityAccepted: Boolean,
 ): Boolean = !reconnectAccepted && !accessibilityAccepted
-
-internal fun reconnectStatusLabelRes(result: ReconnectRunResult): Int =
-    when (result) {
-        ReconnectRunResult.NOT_OFF -> R.string.settings_menus_reconnect_status_not_off
-        ReconnectRunResult.RECONNECTED -> R.string.settings_menus_reconnect_status_reconnected
-        ReconnectRunResult.FAILED -> R.string.settings_menus_reconnect_status_failed
-        ReconnectRunResult.GATE_CLOSED -> R.string.settings_menus_reconnect_status_gate_closed
-        ReconnectRunResult.NOT_FOUND -> R.string.settings_menus_reconnect_status_not_found
-    }
 
 internal fun showsScreenAccessBlock(
     sdkInt: Int,

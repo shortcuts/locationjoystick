@@ -1,6 +1,5 @@
 package com.locationjoystick.feature.settings.impl
 
-import com.locationjoystick.core.model.ReconnectRunResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -55,11 +54,5 @@ class SettingsDisclosureGatesTest {
         assertTrue(showsServiceOffHint(featureOn = true, serviceGranted = false))
         assertFalse(showsServiceOffHint(featureOn = true, serviceGranted = true))
         assertFalse(showsServiceOffHint(featureOn = false, serviceGranted = false))
-    }
-
-    @Test
-    fun reconnectStatusLabelsCoverEveryResultWithoutDuplicates() {
-        val labels = ReconnectRunResult.entries.map(::reconnectStatusLabelRes)
-        assertEquals(ReconnectRunResult.entries.size, labels.toSet().size)
     }
 }

@@ -45,4 +45,11 @@
     <string name="widget_search_routes">"搜索路线"</string>
     <string name="widget_paste_coordinates">"粘贴坐标"</string>
     <string name="widget_share_route">"分享路线"</string>
+    <string name="widget_panel_content_reconnect_status_none">"尚未检查"</string>
+    <string name="widget_panel_content_reconnect_status_line">"上次检查 %1$s：%2$s"</string>
+    <string name="widget_panel_content_reconnect_status_not_off">"无需重新连接"</string>
+    <string name="widget_panel_content_reconnect_status_reconnected">"已重新连接"</string>
+    <string name="widget_panel_content_reconnect_status_failed">"失败"</string>
+    <string name="widget_panel_content_reconnect_status_gate_closed">"游戏不在前台"</string>
+    <string name="widget_panel_content_reconnect_status_not_found">"未找到控件"</string>
 </resources>

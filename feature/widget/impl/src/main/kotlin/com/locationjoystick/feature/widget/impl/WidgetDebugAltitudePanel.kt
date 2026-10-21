@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.widget.impl
 
+import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -28,12 +29,18 @@ import com.locationjoystick.core.data.DebugStats
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.LjText
+import com.locationjoystick.core.model.ReconnectRunResult
+import com.locationjoystick.core.model.ReconnectStatus
 import com.locationjoystick.feature.widget.impl.R
 
 internal fun formatBearingText(stats: DebugStats): String = if (stats.hasBearing) "%.0f°".format(stats.bearing) else "—"
 
 @Composable
-internal fun DebugStatsPanel(stats: DebugStats) {
+internal fun DebugStatsPanel(
+    stats: DebugStats,
+    reconnectStatus: ReconnectStatus?,
+    reconnectEnabled: Boolean,
+) {
     Column(
         modifier =
             Modifier
@@ -60,8 +67,34 @@ internal fun DebugStatsPanel(stats: DebugStats) {
             color = LjText,
             style = MaterialTheme.typography.labelSmall,
         )
+        if (reconnectEnabled) {
+            Text(
+                if (reconnectStatus == null) {
+                    stringResource(R.string.widget_panel_content_reconnect_status_none)
+                } else {
+                    stringResource(
+                        R.string.widget_panel_content_reconnect_status_line,
+                        DateUtils
+                            .getRelativeTimeSpanString(reconnectStatus.atMillis, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
+                            .toString(),
+                        stringResource(reconnectStatusLabelRes(reconnectStatus.result)),
+                    )
+                },
+                color = LjText,
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
     }
 }
+
+internal fun reconnectStatusLabelRes(result: ReconnectRunResult): Int =
+    when (result) {
+        ReconnectRunResult.NOT_OFF -> R.string.widget_panel_content_reconnect_status_not_off
+        ReconnectRunResult.RECONNECTED -> R.string.widget_panel_content_reconnect_status_reconnected
+        ReconnectRunResult.FAILED -> R.string.widget_panel_content_reconnect_status_failed
+        ReconnectRunResult.GATE_CLOSED -> R.string.widget_panel_content_reconnect_status_gate_closed
+        ReconnectRunResult.NOT_FOUND -> R.string.widget_panel_content_reconnect_status_not_found
+    }
 
 @Composable
 internal fun AltitudeOverrideInput(

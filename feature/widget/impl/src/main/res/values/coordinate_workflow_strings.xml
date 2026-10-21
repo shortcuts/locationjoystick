@@ -45,4 +45,11 @@
     <string name="widget_search_routes">"Search routes"</string>
     <string name="widget_paste_coordinates">"Paste coordinates"</string>
     <string name="widget_share_route">"Share route"</string>
+    <string name="widget_panel_content_reconnect_status_none">"No checks yet"</string>
+    <string name="widget_panel_content_reconnect_status_line">"Last check %1$s: %2$s"</string>
+    <string name="widget_panel_content_reconnect_status_not_off">"No reconnect needed"</string>
+    <string name="widget_panel_content_reconnect_status_reconnected">"Reconnected"</string>
+    <string name="widget_panel_content_reconnect_status_failed">"Failed"</string>
+    <string name="widget_panel_content_reconnect_status_gate_closed">"Game not in front"</string>
+    <string name="widget_panel_content_reconnect_status_not_found">"Control not found"</string>
 </resources>

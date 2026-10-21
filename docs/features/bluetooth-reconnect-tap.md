@@ -87,7 +87,7 @@ The check runs in the background, so the user cannot see it fail. `ReconnectFail
 
 ## Status line
 
-Settings shows the last check's result because the loop is invisible otherwise. It travels through `ScreenCaptureSource` (the existing service-to-core bridge), in memory only: a persisted "last check" would mislead after a reboot, so it clears when the loop stops or the service unbinds. `GATE_CLOSED` is its own result so "game not in front" is not read as "connected"; both streaks treat it as neutral.
+The widget's Debug stats block shows the last check's result because the loop is invisible otherwise. It appears only while Debug stats and Reconnect accessory are both on. It travels through `ScreenCaptureSource` (the existing service-to-core bridge), in memory only: a persisted "last check" would mislead after a reboot, so it clears when the loop stops or the service unbinds. `GATE_CLOSED` is its own result so "game not in front" is not read as "connected"; both streaks treat it as neutral.
 
 ## Open work
 

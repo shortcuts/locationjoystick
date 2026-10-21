@@ -31,6 +31,7 @@ import com.locationjoystick.core.location.LearnOutcome
 import com.locationjoystick.core.location.LearningState
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationService
+import com.locationjoystick.core.location.ScreenCaptureSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.GroundMap
@@ -140,6 +141,8 @@ class FloatingWidgetService :
     @Inject lateinit var mapController: MapController
 
     @Inject lateinit var autoFit: AutoFitCoordinator
+
+    @Inject lateinit var screenCaptureSource: ScreenCaptureSource
 
     @Inject lateinit var captureCoordinatesRepository: CaptureCoordinatesRepository
 
@@ -375,6 +378,8 @@ class FloatingWidgetService :
             val reportedAltitudeMeters by locationRepository.reportedAltitudeMeters.collectAsStateWithLifecycle(initialValue = null)
             val debugStatsEnabled by settingsRepository.getDebugStatsEnabled().collectAsStateWithLifecycle(initialValue = false)
             val debugStats by locationRepository.debugStats.collectAsStateWithLifecycle(initialValue = null)
+            val reconnectStatus by screenCaptureSource.reconnectStatus.collectAsStateWithLifecycle()
+            val reconnectEnabled by settingsRepository.getReconnectTapEnabled().collectAsStateWithLifecycle(initialValue = false)
             val routeProgress by locationRepository.routeProgress.collectAsStateWithLifecycle(initialValue = null)
 
             val themeMode by settingsRepository.getThemeMode().collectAsStateWithLifecycle(
@@ -483,6 +488,8 @@ class FloatingWidgetService :
                     pasteCapture = pasteCapture,
                     sections = sections,
                     debugStats = if (debugStatsEnabled) debugStats else null,
+                    reconnectStatus = reconnectStatus,
+                    reconnectEnabled = reconnectEnabled,
                     routeProgress = routeProgress,
                     onDrag = { dx, dy ->
                         dragOffsetX += dx

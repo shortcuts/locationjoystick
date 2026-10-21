@@ -23,7 +23,6 @@ import com.locationjoystick.core.data.HotRoutesRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.datastore.SettingsSnapshot
-import com.locationjoystick.core.location.ScreenCaptureSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
@@ -78,7 +77,6 @@ class SettingsViewModel
         private val exportSyncServer: ExportSyncServer,
         private val exportSyncClient: ExportSyncClient,
         private val nsdCodeManager: NsdCodeManager,
-        private val screenCaptureSource: ScreenCaptureSource,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
         companion object {
@@ -240,15 +238,13 @@ class SettingsViewModel
                         settingsRepository.getReconnectTapDisclosureAccepted(),
                     ) { enabled, accepted -> enabled to accepted },
                 ) { choice, reconnect -> choice to reconnect },
-                combine(screenServiceGranted, captureSnapshot, screenCaptureSource.reconnectStatus) { granted, capture, status ->
-                    Triple(granted, capture, status)
-                },
+                combine(screenServiceGranted, captureSnapshot) { granted, capture -> Pair(granted, capture) },
                 settingsRepository.getThemeMode(),
                 settingsRepository.getBaseAltitudeOverride(),
             ) {
                 (snapshot, draftState),
                 (accessibilityDisclosureChoice, reconnectTap),
-                (isServiceGranted, capture, reconnectStatus),
+                (isServiceGranted, capture),
                 themeMode,
                 baseAltitudeOverride,
                 ->
@@ -297,7 +293,6 @@ class SettingsViewModel
                     altitudeOverrideButtonEnabled =
                         draftState.altitudeOverrideButtonEnabled ?: snapshot.altitudeOverrideButtonEnabled,
                     debugStatsEnabled = draftState.debugStatsEnabled ?: snapshot.debugStatsEnabled,
-                    reconnectStatus = reconnectStatus,
                     captureModeEnabled = capture.modeEnabled,
                     captureEnabled = capture.captureEnabled,
                     jumpEnabled = capture.jumpEnabled,
