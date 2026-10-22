@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -420,7 +421,7 @@ class AutoFitCoordinator
                 sp.dir.deleteRecursively()
                 return
             }
-            pending.value++
+            pending.update { it + 1 }
             // ATOMIC: a cancel before the first run must still reach the finally, or pending never returns to zero.
             scope.launch(analysisDispatcher, start = CoroutineStart.ATOMIC) {
                 try {
@@ -434,7 +435,7 @@ class AutoFitCoordinator
                         if (!active.value) clearBuffer() // the gate closed during the analysis
                     }
                 } finally {
-                    pending.value--
+                    pending.update { it - 1 }
                 }
             }
         }
