@@ -495,6 +495,44 @@ class AutoFitCoordinatorTest {
         }
 
     @Test
+    fun `cancel stops a running full fit`() =
+        runTest {
+            fakeWalks()
+            val service = serviceScope()
+            val c = coordinator(serviceScope = service)
+            c.analysisDispatcher = Dispatchers.Default // the fake fit blocks its thread, which a test dispatcher cannot take
+            val started = CountDownLatch(1)
+            val stopped = CountDownLatch(1)
+            val interrupted = AtomicBoolean(false)
+            c.fullFit = { _, _, _, checkCancelled ->
+                started.countDown()
+                try {
+                    while (true) {
+                        checkCancelled()
+                        Thread.sleep(1)
+                    }
+                    @Suppress("UNREACHABLE_CODE")
+                    SolveResult.FeetNotFound
+                } catch (e: CancellationException) {
+                    interrupted.set(true)
+                    throw e
+                } finally {
+                    stopped.countDown()
+                }
+            }
+            delay(1)
+            walkLeg(0.0)
+            walkLeg(90.0)
+
+            withContext(Dispatchers.Default) { assertTrue(started.await(10, TimeUnit.SECONDS)) }
+            c.cancel()
+            withContext(Dispatchers.Default) { assertTrue("the fit kept running", stopped.await(10, TimeUnit.SECONDS)) }
+            assertTrue(interrupted.get())
+            coVerify(exactly = 0) { settings.setGroundCalibration(any()) }
+            assertEquals(emptyList<java.io.File>(), spoolFiles())
+        }
+
+    @Test
     fun `cancelling the observe scope ends the learning walk`() =
         runTest {
             fakeWalks()

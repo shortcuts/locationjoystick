@@ -51,6 +51,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -121,6 +122,7 @@ class AutoFitCoordinator
         /** Legs waiting for or in analysis: the learning walk waits for it to reach zero. */
         private val pending = MutableStateFlow(0)
         private val analysisLock = Mutex()
+        private val analysisJobs = ConcurrentHashMap.newKeySet<Job>()
         private var scope: CoroutineScope = appScope
         private var tapToWalkOn: StateFlow<Boolean> = MutableStateFlow(false)
         private var active: StateFlow<Boolean> = MutableStateFlow(false) // every switch that lets a frame exist
@@ -231,6 +233,7 @@ class AutoFitCoordinator
                     if (locationRepository.walkTarget.value == legTarget) mapController.stopWalk()
                 }
             }
+            analysisJobs.forEach { it.cancel() }
             appScope.launch { analysisLock.withLock { clearBuffer() } }
         }
 
@@ -402,22 +405,24 @@ class AutoFitCoordinator
         /**
          * Drops the oldest buffered legs until one more frame fits under the byte cap and the free-space floor.
          * Runs before the capture: a failed write after segmenter.add would desync frames from samples; tick resyncs if one still fails.
-         * False when nothing is left to drop. No lock: no analysis runs while pending is zero.
+         * False when nothing is left to drop. Locked because cancel() clears the buffer from another coroutine.
          */
-        private fun makeRoom(): Boolean {
-            val next = current.width.toLong() * current.height
-            while (true) {
-                val used = spool.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-                if (used + next <= spoolCapBytes &&
-                    freeBytes() >= AppConstants.TapToWalkConstants.AUTOFIT_MIN_FREE_BYTES + next
-                ) {
-                    return true
+        private suspend fun makeRoom(): Boolean {
+            analysisLock.withLock {
+                val next = current.width.toLong() * current.height
+                while (true) {
+                    val used = spool.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+                    if (used + next <= spoolCapBytes &&
+                        freeBytes() >= AppConstants.TapToWalkConstants.AUTOFIT_MIN_FREE_BYTES + next
+                    ) {
+                        return true
+                    }
+                    if (buffer.isEmpty()) return false
+                    buffer
+                        .removeAt(0)
+                        .spool.dir
+                        .deleteRecursively()
                 }
-                if (buffer.isEmpty()) return false
-                buffer
-                    .removeAt(0)
-                    .spool.dir
-                    .deleteRecursively()
             }
         }
 
@@ -444,21 +449,27 @@ class AutoFitCoordinator
             }
             pending.update { it + 1 }
             // ATOMIC: a cancel before the first run must still reach the finally, or pending never returns to zero.
-            scope.launch(analysisDispatcher, start = CoroutineStart.ATOMIC) {
-                try {
-                    analysisLock.withLock {
-                        val b = Buffered(leg, sp)
-                        runCatching { analyse(b) }.onFailure {
-                            if (buffer.none { x -> x === b }) sp.dir.deleteRecursively()
-                            if (it is CancellationException) throw it
-                            Log.e(TAG, "analysis failed", it)
+            val job =
+                scope.launch(analysisDispatcher, start = CoroutineStart.ATOMIC) {
+                    try {
+                        analysisLock.withLock {
+                            val b = Buffered(leg, sp)
+                            runCatching { analyse(b) }.onFailure {
+                                if (buffer.none { x -> x === b }) sp.dir.deleteRecursively()
+                                if (it is CancellationException) throw it
+                                Log.e(TAG, "analysis failed", it)
+                            }
+                            if (!active.value) clearBuffer() // the gate closed during the analysis
                         }
-                        if (!active.value) clearBuffer() // the gate closed during the analysis
+                    } catch (e: CancellationException) {
+                        sp.dir.deleteRecursively() // cancelled while waiting for the lock: no buffered leg owns these frames
+                        throw e
+                    } finally {
+                        pending.update { it - 1 }
                     }
-                } finally {
-                    pending.update { it - 1 }
                 }
-            }
+            analysisJobs += job
+            job.invokeOnCompletion { analysisJobs -= job }
         }
 
         /**
