@@ -197,7 +197,8 @@ class AutoFitCoordinator
                     cancelledLearning = false
                     routeEnd = null
                     _learning.value = LearningState.Learning(1, LEG_COUNT)
-                    learningJob = appScope.launch { walkLearningRoute() }
+                    // ATOMIC: a cancel before the first run must still reach the finally, or learning never returns to Idle.
+                    learningJob = appScope.launch(start = CoroutineStart.ATOMIC) { walkLearningRoute() }
                     true
                 }
             if (!started) return LearnOutcome.NotReady

@@ -317,6 +317,21 @@ class AutoFitCoordinatorTest {
         }
 
     @Test
+    fun `cancel before the learning job first runs still returns to Idle`() =
+        runTest {
+            fakeWalks()
+            val c = coordinator()
+            delay(1)
+            val outcome = CompletableDeferred<LearnOutcome>()
+            // Unconfined: learnMap launches the job now, but the standard app scope has not run it yet.
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { outcome.complete(c.learnMap()) }
+            assertEquals(LearningState.Learning(1, CalibrationWalkMath.LEARNING_BEARINGS_DEG.size), c.learning.value)
+            c.cancel()
+            assertEquals(LearnOutcome.Cancelled, outcome.await())
+            assertEquals(LearningState.Idle, c.learning.value)
+        }
+
+    @Test
     fun `walk replaced mid-leg returns Interrupted`() =
         runTest {
             fakeWalks()
