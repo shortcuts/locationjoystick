@@ -555,6 +555,31 @@ class AutoFitCoordinatorTest {
         }
 
     @Test
+    fun `a failed analysis leaves no spool and does not block capture`() =
+        runTest {
+            fakeWalks()
+            stored.value = storedFit
+            val c = coordinator()
+            var legFrames = 0
+            c.measure = { leg, _, _, _, _ ->
+                legFrames = leg.frames().size
+                error("boom")
+            }
+            delay(1)
+            walkLeg(0.0)
+            assertEquals(emptyList<java.io.File>(), spoolFiles())
+
+            c.spoolCapBytes = (legFrames + 1L) * W * H // one leg fits only if the failed one left nothing behind
+            val measured = mutableListOf<CapturedLeg>()
+            c.measure = { leg, fx, fy, w, h ->
+                measured += leg
+                fakeMeasure(leg, fx, fy, w, h)
+            }
+            walkLeg(90.0)
+            assertEquals(1, measured.size)
+        }
+
+    @Test
     fun `spool over the byte cap drops the oldest leg`() =
         runTest {
             fakeWalks()

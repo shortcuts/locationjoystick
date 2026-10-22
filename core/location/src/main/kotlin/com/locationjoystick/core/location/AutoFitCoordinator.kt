@@ -424,7 +424,9 @@ class AutoFitCoordinator
             scope.launch(analysisDispatcher, start = CoroutineStart.ATOMIC) {
                 try {
                     analysisLock.withLock {
-                        runCatching { analyse(Buffered(leg, sp)) }.onFailure {
+                        val b = Buffered(leg, sp)
+                        runCatching { analyse(b) }.onFailure {
+                            if (buffer.none { x -> x === b }) sp.dir.deleteRecursively()
                             if (it is CancellationException) throw it
                             Log.e(TAG, "analysis failed", it)
                         }
