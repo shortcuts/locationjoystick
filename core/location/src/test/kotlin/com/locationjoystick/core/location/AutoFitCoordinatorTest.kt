@@ -595,6 +595,57 @@ class AutoFitCoordinatorTest {
         }
 
     @Test
+    fun `a short zig-zag before a long leg keeps one frame per position`() =
+        runTest {
+            fakeWalks()
+            stored.value = storedFit
+            val c = coordinator()
+            val measured = mutableListOf<CapturedLeg>()
+            val frameCounts = mutableListOf<Int>()
+            c.measure = { leg, fx, fy, w, h ->
+                measured += leg
+                frameCounts += leg.frames().size
+                fakeMeasure(leg, fx, fy, w, h)
+            }
+            delay(1)
+
+            repeat(6) {
+                val from = locationRepository.currentPosition.value!!
+                mapController.walkTo(CalibrationWalkMath.commandedTarget(from, if (it % 2 == 0) 0.0 else 90.0, 5.0), null)
+                delay(4_000)
+            }
+            walkLeg(0.0)
+
+            assertEquals(1, measured.size)
+            assertEquals(measured.map { it.positions.size }, frameCounts)
+            assertEquals(emptyList<java.io.File>(), spoolFiles())
+        }
+
+    @Test
+    fun `a failed frame write leaves no orphan spool and the next leg is analysed`() =
+        runTest {
+            fakeWalks()
+            stored.value = storedFit
+            val c = coordinator()
+            val measured = mutableListOf<CapturedLeg>()
+            val frameCounts = mutableListOf<Int>()
+            c.measure = { leg, fx, fy, w, h ->
+                measured += leg
+                frameCounts += leg.frames().size
+                fakeMeasure(leg, fx, fy, w, h)
+            }
+            delay(1)
+            spoolDir.mkdirs()
+            java.io.File(spoolDir, "1").writeText("blocks the first frame write") // the first tick renews spool 0 before any frame
+
+            walkLeg(0.0)
+
+            assertEquals(1, measured.size)
+            assertEquals(measured.map { it.positions.size }, frameCounts)
+            assertEquals(emptyList<java.io.File>(), spoolFiles())
+        }
+
+    @Test
     fun `spool over the byte cap drops the oldest leg`() =
         runTest {
             fakeWalks()

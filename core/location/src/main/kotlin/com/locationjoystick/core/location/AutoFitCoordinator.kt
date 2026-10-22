@@ -349,15 +349,36 @@ class AutoFitCoordinator
             }
             lastSample = at
             lastSampleAtMs = now
-            val closed = segmenter.add(now / 1000.0, at)
-            val belongsToClosed = closed != null && segmenter.size == 0
-            if (closed == null || belongsToClosed) store(frame) // the sample is part of the open or just-closed leg
-            if (closed != null) {
-                val dir = current
-                current = newSpool()
-                onClosed(closed, dir)
-                if (!belongsToClosed) store(frame)
+            try {
+                val held = current.count
+                val closed = segmenter.add(now / 1000.0, at)
+                val belongsToClosed = closed != null && segmenter.size == 0
+                if (closed == null && segmenter.size != held + 1) {
+                    // The segmenter dropped a short leg and opened a new one: the spool frames belong to the dropped leg.
+                    current.dir.deleteRecursively()
+                    current = newSpool()
+                    if (segmenter.size == 1) store(frame)
+                    return
+                }
+                if (closed == null || belongsToClosed) store(frame) // the sample is part of the open or just-closed leg
+                if (closed != null) {
+                    val dir = current
+                    current = newSpool()
+                    onClosed(closed, dir)
+                    if (!belongsToClosed) store(frame)
+                }
+            } catch (e: Throwable) {
+                if (e !is CancellationException) resync()
+                throw e
             }
+        }
+
+        // A failed frame write leaves samples without frames; only dropping the open leg restores the pairing.
+        private fun resync() {
+            segmenter.close()
+            current.dir.deleteRecursively()
+            current = newSpool()
+            lastSample = null
         }
 
         private fun endLeg() {
@@ -380,7 +401,7 @@ class AutoFitCoordinator
 
         /**
          * Drops the oldest buffered legs until one more frame fits under the byte cap and the free-space floor.
-         * Runs before the capture: a failed write after segmenter.add would desync frames from samples.
+         * Runs before the capture: a failed write after segmenter.add would desync frames from samples; tick resyncs if one still fails.
          * False when nothing is left to drop. No lock: no analysis runs while pending is zero.
          */
         private fun makeRoom(): Boolean {
