@@ -59,7 +59,7 @@ internal class TapToWalkOverlay(
 ) {
     private var overlayView: ComposeView? = null
 
-    fun isShowing(): Boolean = overlayView?.isAttachedToWindow == true
+    fun isShowing(): Boolean = overlayView != null
 
     fun show() {
         if (isShowing()) return
@@ -109,7 +109,7 @@ internal class TapToWalkOverlay(
         val had = overlayView != null
         overlayView?.let { view ->
             try {
-                if (view.isAttachedToWindow) windowManager.removeView(view)
+                windowManager.removeView(view)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to dismiss tap-to-walk overlay", e)
             }
