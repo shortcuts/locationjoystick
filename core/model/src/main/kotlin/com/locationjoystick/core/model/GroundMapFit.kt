@@ -24,7 +24,7 @@ object GroundMapFit {
     private const val MIN_FLOWS = 40 // fewer flows cannot pin four parameters robustly
     private const val MIN_MOVE_FLOWS = 3 // a single move's median needs this many bands
     private const val OUTLIER_SCALE = 3 * 1.4826 // 3 MAD, MAD scaled to a standard deviation
-    private const val OUTLIER_FLOOR_PX = 2.0 // cut never tighter than this (sub-pixel flow noise)
+    internal const val OUTLIER_FLOOR_PX = 2.0 // cut never tighter than this (sub-pixel flow noise)
     private val REWEIGHT_AT = setOf(8, 20, 30) // Gauss-Newton iterations that recompute outlier weights
     private const val MAX_ITERS = 40
     private const val STEP_TOL = 1e-7

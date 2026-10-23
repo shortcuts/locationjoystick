@@ -28,7 +28,8 @@ object FitMonitor {
     /**
      * Index of the first move whose accumulated excess residual passes [alarm], or null. A move's excess is
      * its residual over [baseMedianPx] minus one (zero when nothing changed) minus [drift]. A leg with moves but
-     * no usable residual returns 0: no evidence that the fit holds is not a match.
+     * no usable residual returns 0: no evidence that the fit holds is not a match. A baseline at or below
+     * the fit's outlier floor (or NaN) counts as the floor.
      */
     fun alarmIndex(
         residualsPx: List<Double?>,
@@ -36,12 +37,12 @@ object FitMonitor {
         drift: Double = DRIFT,
         alarm: Double = ALARM,
     ): Int? {
-        require(baseMedianPx > 0.0) { "stored median residual must be positive" }
+        val base = if (baseMedianPx > GroundMapFit.OUTLIER_FLOOR_PX) baseMedianPx else GroundMapFit.OUTLIER_FLOOR_PX
         if (residualsPx.isNotEmpty() && residualsPx.all { it == null }) return 0
         var s = 0.0
         for ((i, r) in residualsPx.withIndex()) {
             if (r == null) continue
-            s = maxOf(0.0, s + r / baseMedianPx - 1.0 - drift)
+            s = maxOf(0.0, s + r / base - 1.0 - drift)
             if (s > alarm) return i
         }
         return null
