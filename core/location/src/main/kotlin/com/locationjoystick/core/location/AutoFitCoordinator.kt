@@ -243,6 +243,7 @@ class AutoFitCoordinator
                 val blockers =
                     listOfNotNull(
                         "tap to walk off".takeIf { !tapToWalkOn.value },
+                        "capture not allowed".takeIf { !active.value },
                         "game not in front".takeIf { !screenCaptureSource.gameInFront },
                         "spoofing not running".takeIf { locationRepository.mockLocationState.value != MockLocationState.RUNNING },
                         "mode ${locationRepository.currentMode.value}".takeIf { locationRepository.currentMode.value !in IDLE_MODES },

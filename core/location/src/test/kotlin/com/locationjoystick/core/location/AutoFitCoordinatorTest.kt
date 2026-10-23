@@ -380,6 +380,17 @@ class AutoFitCoordinatorTest {
         }
 
     @Test
+    fun `learning is refused while capture is not allowed`() =
+        runTest {
+            fakeWalks()
+            every { source.captureAllowed } returns MutableStateFlow(false) // service bound, game in front, disclosure withdrawn
+            val c = coordinator()
+            delay(1)
+            assertEquals(LearnOutcome.NotReady, c.learnMap())
+            verify(exactly = 0) { mapController.walkTo(any(), any()) }
+        }
+
+    @Test
     fun `cancel stops the learning walk and drops the buffered frames`() =
         runTest {
             fakeWalks()
