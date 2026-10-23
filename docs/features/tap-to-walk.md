@@ -4,9 +4,7 @@ Two shortcuts for triggering walk-to without a confirmation sheet, useful when y
 
 Key files: the widget module's map view, tap overlay and widget service, and `:core:location/ScreenCaptureSource.kt`. Settings keys and their defaults live in the settings code, not here.
 
-Bench record and measured results: [tap-to-walk-investigation.md](tap-to-walk-investigation.md).
-
-State-of-the-art research for the automatic fit and the superposition retry: [tap-to-walk-research.md](tap-to-walk-research.md).
+Agents: this file is the working memory for Tap to Walk. Read "Ground map: current direction" before any work on it, and record each result there (kills included) before the session ends. Keep only what is still relevant: history and superseded detail go to [tap-to-walk-investigation.md](tap-to-walk-investigation.md), not here.
 
 ## Why the settings sit where they do
 
@@ -24,21 +22,18 @@ Position is read once, at tap time. The tap pixel is in full-display device pixe
 
 ### Pixel to GPS
 
-Primary path: a stored ground map (see "Automatic fit") that matches the current display size converts the tap pixel to a ground offset in metres east and north. The offset is applied to the current position using the flat-earth scale that the walk uses, not the haversine radius. Taps past the horizon of the fitted map yield no target.
+A stored ground map that matches the current display size converts the tap pixel to a ground offset in metres east and north. The offset is applied to the current position with the flat-earth scale that the walk uses, not the haversine radius. A tap past the horizon of the map yields no target. With no usable map (below API 30, or no stored terms for this display), the tap walks nowhere and a toast says why.
 
-No map and no way to learn one (below API 30, spoofing not running idle, game not in front): the tap walks nowhere and a toast says why. A stored map that matches the display but is not valid still resolves when no new map can be learned, because it is the best bearing available. An earlier version fell back to a north-up formula with a hand-set scale. It was removed: the game camera has no north, so the fallback walked a wrong bearing, and the scale asked the player for something they cannot know.
-
-When no valid map exists and learning is possible, the tap does not move the player. The overlay holds the tap pixel and the position it was made at, the coordinator walks its learning route, and the held tap is resolved against the new map and walked. The tap is never resolved against a map the monitor flagged as suspect, when a new one can be learned. `learnMap` returns a `LearnOutcome`, and only a fresh fit walks the held tap. The fit takes minutes (state `Analysing`, cancellable); if the player teleports or moves meanwhile, the tap is dropped with a "tap again" toast, because walking it would send the player back to the tap-time spot. Cancel is silent: the user asked for it.
+An earlier version fell back to a north-up formula with a hand-set scale. It was removed: the game camera has no north, and the scale asked the player for something they cannot know.
 
 Invariants:
 
-- Never read the map orientation or take a screenshot inside the tap callback. The tap reads the cached stored fit only. That fit is written by the coordinator's analysis of earlier walks, never by a user action and never on the tap path. (The old Settings walk made the same rule easy to keep because the user started it; with the automatic fit it is the reason frames are taken on the 3 s tick and analysed at leg close.)
-- The ground frame is flat-earth at 111320 m per degree, the frame the fit is measured in. The haversine radius drifts about 0.1 percent from those measurements.
-- An unfit tap never walks a guessed bearing. A learning walk starts only from a tap, and the overlay is dismissed first, so it never blocks the player's touches during the walk.
+- Never take a screenshot or read the map orientation inside the tap callback. The tap reads stored terms only. Screenshots are taken outside the tap path, while the app walks.
+- The ground frame is flat-earth at 111320 m per degree. The haversine radius drifts about 0.1 percent from it.
 
 ## Screen access
 
-The accessibility service exists for two things: taking screenshots for the automatic fit, and reading and tapping the connect control for Reconnect accessory ([bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)). It captures nothing until the user accepts the disclosure. Where the map points is never read from the screen. It is measured by fitting how the map moves between frames of walks.
+The accessibility service exists for two things: taking screenshots for the automatic fit, and reading and tapping the connect control for Reconnect accessory ([bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)). It captures nothing until the user accepts the disclosure. Where the map points is measured from small screenshots taken while the app walks, never from the tap.
 
 Capture is gated in the bridge that consumers call, not at each call site: disclosure accepted, screen on and the game in front. Android can enable the service from system settings without the app ever opening, so a call-site check would be bypassable. The disclosure names the game in front as the only time frames are taken, so the gate is part of the consent, not only of battery care.
 
@@ -72,7 +67,7 @@ Entry points, each immediately before Android's consent screen, so reviewers alw
 - The Tap to Walk switch in Settings, with the overlay caveat on the same screen.
 - Tapping the widget crosshair, which opens the app to the disclosure.
 - The screen-access row's open-settings button.
-- The automatic fit adds no new consent path. It needs the service granted and the disclosure accepted, both checked in the capture bridge.
+- The ground map adds no new consent path. Its screenshots need the service granted and the disclosure accepted, both checked in the capture bridge. Keep every new screenshot inside the purpose the disclosure names: while walking, Tap to Walk on, the game in front.
 
 The Play Console declaration and store listing are done. Do not re-check them as part of routine work.
 
@@ -86,76 +81,73 @@ Accessibility services running in the background can be detected by some games. 
 
 ## Automatic fit
 
-The app fits and maintains the ground map itself, so a tap maps to a metre offset, for any camera twist, zoom or screen size. There is no calibration step for the user. The earlier Settings walk (8 legs, 10 minutes, one stored record) was removed: it was a chore, it went stale the moment the player twisted or pinched the map, and nothing readable at tap time says the camera changed.
+The app ships a motion fit: it spools screenshots of every straight walk, measures how bands of the screen move, and fits the four ground-map terms. It is being replaced (see below) and deleted once the replacement passes its gate. Do not optimise or extend it. Its design, bench numbers and the 2026-10-23 cost audit are in [tap-to-walk-investigation.md](tap-to-walk-investigation.md). The stored record stays per device and is never exported, because the map depends on the phone's screen and the game's camera. A record is rejected when its screen size differs from the current display.
 
-How it works (class docs and tests are the detail): while Tap to Walk is on and the game is in front, every straight stretch of a walk the app already makes (tap to walk, quick walk, joystick) becomes a leg of screenshots. Positions are the app's own mock fixes, so bearing and length are exact. A leg uses the raw move between fixes, not a projection onto its chord: fixes carry no jitter (the offset is added when the fix is built), and a gently curved leg has real cross-track motion. When a leg closes, its screen motion is compared with what the stored fit predicts. A cumulative-sum test on the residual (CUSUM) decides whether it still matches. Any alarm makes the fit suspect. A leg with no usable flow (close-up zoom, an open menu) counts as a mismatch too, because passing it in silence keeps a stale fit. The comparison scores only the bands the fit used, so bands above the fitted horizon do not inflate the residual. All four terms are then re-fitted from the legs that follow. Re-fitting the heading alone was benched and dropped: see "Automatic fit bench results" in [tap-to-walk-investigation.md](tap-to-walk-investigation.md). Route replay and roaming are not legs: their path is not straight and the jitter offset applies. A full re-fit needs legs whose bearings spread by at least `AUTOFIT_MIN_BEARING_SPREAD_DEG`, because opposite legs lie on one line and pin one axis. A failed full re-fit drops its legs, so the same legs never cost minutes of CPU twice.
+## Ground map: current direction
 
-Why legs, not a calibration route: every walk is a free measurement, and a camera change is noticed within the walk that follows it. The accepted cost is that a tap made between a twist and the next closed leg uses a stale fit.
+### Constraints (user, 2026-10-23)
 
-Why scale is searched and never asked: a fixed or hand-set scale cannot follow a pinch. The fit solves scale together with heading.
+- No user training, no user configuration, no calibration step and no user action. Every constant comes from pre-release work.
+- A landing error up to 15 m is acceptable.
+- Cost must fit the problem: a few small screenshots and milliseconds of CPU. No frame spool, no analysis that takes minutes.
+- The released app must work out of the box: no configuration, no extra walk, no message asking the user to move. Tests and the bench may do anything (teleports, probe walks, Control API) to prove the implementation.
 
-Why a tap with no valid map walks first: with no fit there is nothing to resolve the tap against, and a wrong guess is a wrong teleport target. The learning route walks at walking speed, never a teleport, so it does not touch the teleport cooldown and does not look like a jump to the game. Progress and a Cancel action are on the foreground notification, not in the tap overlay, because the overlay takes every touch and would lock the player out of the game for minutes. The widget crosshair is the second surface, because the notification may never show (notifications denied on API 33+): it takes the active tint while learning and a click cancels instead of opening the overlay. Opening the overlay mid-learning would walk a tap and replace the learning leg, which fails the learn. The learning route is two perpendicular legs. Two legs replaced the bench's four: held-out landing error p90 6.2 m, under the 10 m bar ([investigation](tap-to-walk-investigation.md), decision 12).
+### Killed, do not retry
 
-Why one stored record and not one per zoom or rotation: the game exposes no signal the app can read at tap time. A record keyed by zoom or rotation could never be looked up, so there is a single latest record per device, overwritten by every re-fit.
+- Screenshot registration against the app's own map: p50 221 m, no score separates a right match from a wrong one.
+- Road and water colour masks against OSM tiles (entry B): true heading top peak on 32% of frames, p90 646 m. The game styles roads differently from OSM, and its colours change with day, night and weather.
+- Zoom as one scale parameter: the focal length spread 38% across four zooms, because a zoom also changes the pitch.
 
-Why per device and not exported: the map depends on the phone's screen and the game's camera. A backup restored on another device would give wrong taps. The record is rejected when its screen size differs from the current display.
+Details are in the investigation doc.
 
-Frames spool to the app cache, one leg at a time, because a leg does not fit in the heap. A leg's spool is deleted as soon as the fit is valid; while the fit is not valid, the last few legs are kept for the full re-fit, so a twist or zoom from before is never mixed with legs after it. The cache is user storage, so the spool is bounded and short-lived:
+### Model
 
-- The capture gate lives in `ScreenCaptureSource`, not in callers. It includes the Tap to Walk switch, so no frame exists while the feature is off.
-- The spool is wiped when that gate closes (switch off, disclosure withdrawn, service unbound). A leg already in analysis finishes, and its frames are deleted as soon as it ends.
-- The spool is also wiped when observing starts. A process kill skips the cleanup on exit, so the previous session may have left frames.
-- A byte cap and a free-space floor apply before each frame. Over either, the oldest buffered leg goes first, because a refit that loses an old leg only waits for a newer one.
-- Frames are deleted on every exit path, including the service ending.
+The ground map has four terms: heading, lateral scale, forward scale and perspective.
 
-At most one analysis runs at a time, never on the tap path.
+- Scale and perspective come from latitude. The game draws OSM in Web Mercator, so at a fixed zoom, screen pixels per metre scale with 1/cos(lat). Per-device terms are stored in equator units and divided by cos(lat) at tap time.
+- The range ring gives the same terms on devices with no pre-release record. The ring is a ground circle of known radius centred on the feet, so its fitted ellipse gives scale and perspective from one screenshot. At default zoom, position alone predicts the ring; a ring that differs from the prediction means the user zoomed.
+- Zoom: a pre-release table of terms per zoom step, per device. The ring picks the row.
+- Heading: a circle cannot give it, so it is the only term measured at run time. During any walk the app already makes, two small low-resolution crops near the feet give the screen direction of the ground flow (one phase correlation), and the mock bearing is known. The heading is stored until a measurement says it changed. The game keeps the camera heading across teleports until the user twists it.
+- The tap walk carries the measurement. With a stored heading the walk starts at once, and its flow confirms the heading or corrects it. With no heading (fresh install), the walk starts under a provisional heading (the game's start-up heading if the bench shows it is fixed, an open fact below), and the same tap is re-aimed from its tap-time position as soon as the first flow gives the heading. The cost is a few metres in the wrong direction, never an extra walk.
 
-Invariants a change must not break:
+### Facts from PokeMiners and the community
 
-1. Learning walks at the walking speed constant, not the user's walk profile.
-2. Geometry uses the flat-earth metres-per-degree constant. Do not swap in the haversine radius.
-3. The feet pixel goes into the flow code in device pixels. Only the fit converts to the 1080x2340 reference frame. That reference is fixed; stored fits are in reference pixels.
-4. Opposite legs in the synthetic test must differ in scroll size. Identical frame sets give identical temporal medians, which defeat the rejection of repeated world texture. Real walks never repeat terrain exactly.
-5. A stored map is valid only for the screenshot size it was fitted at.
-6. No frame is taken unless the disclosure is accepted, the screen is on and the game is in front. The check lives in the capture bridge.
-7. An alarm makes the fit suspect until a full re-fit succeeds. Never silently keep a map that does not explain the screen.
+- Game master ([PokeMiners/game_masters](https://github.com/PokeMiners/game_masters), `latest`, timestamp 1787902550208, read 2026-10-23), template `MAP_OBJECTS_INTERACTION_RANGE_SETTINGS`: `interactionRangeMeters` 80, `whitePulseRadiusMeters` 50, `farInteractionRangeMeters` 2000, `remoteInteractionRangeMeters` 3500. `previous_game_masters` holds the history, so a radius change can be dated. The game master has no camera pitch, field of view or zoom setting.
+- [pogo_assets](https://github.com/PokeMiners/pogo_assets) has no camera or ring geometry. Folders worth using as detector templates and test material: `Images/Loading Screens` (a static loading screen fooled five smoke locations), `Images/Warnings` (the speed warning), `Images/Pokestops and Gyms` (objects that cover the ring), `Images/Weather` (weather changes the map colours) and `3D Assets/Characters` (the avatar).
+- [Interaction range post](https://www.reddit.com/r/TheSilphRoad/comments/od48zr/clearing_up_some_misconceptions_regarding_the/) (2021): the radius is 80 m and its real distance does not vary with latitude. Only its on-screen size does.
+- [Rings and map size post](https://www.reddit.com/r/TheSilphRoad/comments/1vytd28/your_rings_of_influence_and_map_size_gets_larger/) (2026): the rings and the visible map grow on screen with latitude (Web Mercator). Its screenshots at 35.5 to 69.6 degrees N show two rings centred on the feet, drawn as ellipses. At 69.6 degrees the outer ring runs off both sides of the screen.
 
-### Ground map
+Measured on the existing smoke fits (Pixel 5, run `20261017T132945Z`, one zoom, camera untouched between teleports):
 
-The ground map is a pure-Kotlin perspective model in the model module. It maps device pixels to ground offsets and back, and it has no Android dependency so the math can be tested on the host. A device pixel is scaled into the reference frame, so one fit serves any screen size. Its valid range was checked only on part of the screen and up to about 31 m; outside that it is extrapolated, not rejected.
+| Place | Latitude | Lateral px/m | Lateral x cos(lat) | Forward x cos(lat) |
+|---|---|---|---|---|
+| Tokyo | 35.7 | 5.60 | 4.55 | 1.94 |
+| New York | 40.8 | 6.25 | 4.73 | 1.90 |
+| London | 51.5 | 7.74 | 4.82 | 1.92 |
+| Sydney | -33.9 | 6.30 | 5.23 | 2.05 |
 
-### Feet detection and frame flow
+The raw scale spreads about 16%; after the cos(lat) correction, about 7%. A 7% scale error at a 30 m tap is about 2 m. The heading stayed near -16 degrees across all four teleports (Sydney's 162.9 degrees is the same map with the sign flipped). This is one device and one zoom.
 
-Feet detection finds the player's feet pixel by removing the moving world (a per-pixel temporal median over a leg), then looking for the sharp edges of the figure in a central column. Taking the minimum over legs drops roads that run parallel to one walk. The row prior exists because the detector can be pulled up by a range ring or a shadow. The prior is a fallback, and each use of it counts as a failed registration.
+### Open facts
 
-Frame flow removes static content (HUD, range rings, companion sprite) from the frames, then measures how each horizontal band of the screen shifted between frames a known distance apart. The perspective fit uses those shifts with robust weighting and rejects bands near the horizon.
+Check these on the bench before writing app code for them:
 
-Constants here are tuned values with a reason attached. Do not "fix" one back to a value from an older bench version. Known deviations from the bench, each covered by a test:
+- Which drawn ring is 80 m and which is 50 m, and whether the 50 m white pulse changes size over time.
+- Ring detection at close-up zoom, at high latitude (partial arcs) and under map objects.
+- Whether the game restores a fixed zoom and a fixed heading on each start.
+- Whether zoom is stepped or continuous. Continuous zoom needs the table interpolated.
+- How the terms carry to another screen size. Pixel 7 (1080x2400) bench data exists.
+- How exact one-move heading is. The two-move prototype had a standard deviation of 1.7 to 3 degrees. One degree is about 6 m at the top of the frame, so 15 m allows about 2.5 degrees for far taps.
 
-- Hole filling is a smoothed fill, not the library inpainting. Without the smoothing, boundary streaks copy inward and pull flows to zero.
-- Bands that overlap the player disc are down-weighted, because the bench gave them full weight and they biased the forward scale.
-- The reported camera is always the positive-scale solution. Both signs describe the same homography.
-- The phase correlation shifts by a true cyclic shift with an integer centre. OpenCV's `fftShift` differs for odd padded sizes (1080x1920 bands pad to 135 rows), by up to 0.5 px. The Kotlin side is the correct one.
+### Gate
 
-Parity: each recorded device has a fixture of bench numbers, and a test checks the port's fit and tap offsets against them. Fixtures hold numbers only, never frames. Frames are not committed because the game HUD shows the player's name.
+p90 landing error at most 15 m with at most 20% of taps rejected, first on recorded frames with truth from commanded bearings, then with the tap smoke command in [testing.md](../testing.md). Kill this direction if the ring is not found on more than 20% of default-zoom frames, or if the one-move heading alone exceeds the 15 m budget. Record a kill here and move its detail to the investigation doc.
 
-### Status and open work
+### Test material
 
-Accepted state of the no-compass investigation (branch `tap-to-walk-no-compass`; the bench record is in [tap-to-walk-investigation.md](tap-to-walk-investigation.md)):
-
-- Heading and scale come from the walked-leg fit. No north is assumed.
-- Wide zoom on one device passes the bar. Close-up zoom does not yet.
-- Twist, still-frame twist and one-parameter zoom were benched for the automatic fit: results and thresholds are in the investigation doc, "Automatic fit bench results".
-- Not proven: other devices and screen sizes, close-up zoom, and the end-to-end pass rate of the port. The smoke gate for the pass rate has not been run in full.
-- Smoke gate, run on 2026-10-17 on a Pixel 5 (1080x2340), not complete: 3 of 20 locations pass. Locations 4 to 9 fail: Sydney is below the bar (7 of 9 scored); the five locations after it (5 to 9) fit a static loading screen, so no candidate taps were scored. Locations 10 to 20 did not run because the Control API was unreachable. Per-location counts are in that run's `report.md` (not in the repo).
-- Matching skips most candidate taps: 14 of 26 at New York. Far taps err more than near taps. Both are open work below.
-- A perspective fit from a static screen (flow median under 5 px) is rejected in the bench (`fit_perspective`). The app's solver rejects a fit with a non-finite term or a median residual above a ceiling (`GroundCalibrationSolver`), but the bench's static-screen check is not ported, and that path is not run on a device.
-
-Open work, in order:
-
-1. Lower the skip rate of the matcher. It skips most taps as ambiguous, and the pass rate only covers the taps it could match.
-2. Close-up zoom. The fit and the match step fail there, not the feet anchor alone. Needs a second device and a cause for the ambiguity before another attempt.
-3. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes. The gate is the tap smoke command in [testing.md](../testing.md).
+- Real frames may be committed only as map crops with the HUD rows blanked (the username is at the bottom of the screen), at reduced resolution. A check must prove the blanked rows are empty. Full frames stay under the git-ignored `scripts/registration-bench/`.
+- The smoke fits are under `scripts/registration-bench/smoke/` (git-ignored, local only). A fit with a scale near 0 is a static loading screen and carries no truth.
+- Reddit blocks plain curl and the fetch tool. Read posts and comments through the Arctic Shift API (`https://arctic-shift.photon-reddit.com/api/posts/ids?ids=<id>` and `/api/comments/tree?link_id=<id>`). Download images with a browser user agent.
 
 ## Anti-patterns to avoid
 
@@ -163,7 +155,7 @@ Open work, in order:
 - Do not read position again inside the tap callback. Capture it once at tap time.
 - Do not persist the active state of Tap to Walk. It is session state.
 - Do not capture a screenshot or read a heading inside the tap callback.
-- Do not mix legs from before and after a camera change in one re-fit.
+- Do not search heading, scale and zoom together in one free fit. Latitude gives the scale, the ring gives the zoom, and only the heading is measured.
 - Do not use the overlay window size as the screen size.
 - Do not use the haversine radius for the ground-map offset.
 - Do not read pixels from a hardware bitmap. Copy it to a software config first.

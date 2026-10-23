@@ -103,7 +103,7 @@ make tap-smoke-selfcheck          # pure verdict logic, no device
   The report files contain numbers only.
 - **Resolution-agnostic.** No size is passed; the bench reads the attached device's size and the report records it.
 - **Gate.** A failing run blocks the Kotlin port entry and the "Prove tap-to-walk 100% reliable" entry
-  (docs/features/tap-to-walk.md, "Status and open work").
+  (docs/features/tap-to-walk.md, "Ground map: current direction").
 
 ## Unit Tests (`:core:*`)
 
