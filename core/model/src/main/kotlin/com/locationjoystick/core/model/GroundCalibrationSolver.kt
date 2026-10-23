@@ -33,6 +33,9 @@ object GroundCalibrationSolver {
     // a screen that did not scroll fits ~0.003 with a perfect residual.
     private const val MIN_SCALE_PX_PER_M = 1.0
 
+    // reference px; the worst real-device fit is 5.2, a noisy map is tens
+    private const val MAX_MEDIAN_PX = 15.0
+
     fun solve(
         legs: List<CapturedLeg>,
         width: Int,
@@ -59,9 +62,15 @@ object GroundCalibrationSolver {
                 FrameFlow.bandMoves(listOf(walk), feet.x, feet.y)
             }
         val fit = GroundMapFit.fit(moves, feet.x, feet.y, width, height) ?: return SolveResult.TooFewFlows
-        val c = fit.calibration
-        if (minOf(abs(c.lateralPxPerM), abs(c.forwardPxPerM)) < MIN_SCALE_PX_PER_M) return SolveResult.ImplausibleFit
-        if (c.lateralPxPerM * c.forwardPxPerM <= 0.0) return SolveResult.ImplausibleFit // a mirror image no camera produces
+        if (!isPlausible(fit)) return SolveResult.ImplausibleFit
         return SolveResult.Ok(fit, feet)
+    }
+
+    internal fun isPlausible(fit: GroundFit): Boolean {
+        val c = fit.calibration
+        if (!listOf(c.headingDeg, c.lateralPxPerM, c.forwardPxPerM, c.perspective).all { it.isFinite() }) return false
+        if (!(fit.medianAbsPx <= MAX_MEDIAN_PX)) return false
+        if (minOf(abs(c.lateralPxPerM), abs(c.forwardPxPerM)) < MIN_SCALE_PX_PER_M) return false
+        return c.lateralPxPerM * c.forwardPxPerM > 0.0 // a mirror image no camera produces
     }
 }

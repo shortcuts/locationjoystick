@@ -3,6 +3,7 @@ package com.locationjoystick.core.model
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GroundMapFitTest {
@@ -127,5 +128,45 @@ class GroundMapFitTest {
         val residuals = GroundMapFit.moveResidualsPx(cal, moves, 1080, 2340).filterNotNull()
         assertEquals(moves.size, residuals.size)
         assertEquals(0.0, residuals.max(), 0.5)
+    }
+
+    @Test
+    fun nonFiniteInputNeverYieldsNonFiniteFit() {
+        val stored = GroundMapFit.fit(moves("A"), 540.0, 1510.0, 1080, 2340)!!.calibration
+        val huge = syntheticMoves(stored, listOf(0.0, 90.0)).map { m -> LegMove(m.d, m.bands.map { it.copy(fx = 1e200, fy = 1e200) }) }
+        val fit = GroundMapFit.fit(huge, 540.0, 1510.0, 1080, 2340) ?: return
+        val c = fit.calibration
+        for (v in listOf(c.headingDeg, c.lateralPxPerM, c.forwardPxPerM, c.perspective, fit.medianAbsPx)) assertTrue("$v", v.isFinite())
+    }
+
+    @Test
+    fun emptyMovesReturnsNull() {
+        assertNull(GroundMapFit.fit(emptyList(), 540.0, 1510.0, 1080, 2340))
+    }
+
+    @Test
+    fun horizonRefitDropsBandsAboveTheHorizon() {
+        val forward = 3.0
+        val cal = GroundCalibration(0.0, 7.0, forward, forward / 702.0, 540.0, 1510.0)
+        val garbage =
+            listOf(100.0, 200.0, 300.0, 500.0, 700.0).flatMap { y ->
+                listOf(250.0, 850.0).map { x -> BandFlow(40.0, 40.0, 0.9, x, y) }
+            }
+        val moves =
+            syntheticMoves(cal, listOf(0.0, 90.0), listOf(900.0, 1000.0, 1200.0, 1350.0))
+                .map { m -> LegMove(m.d, m.bands + garbage) }
+        val fit = GroundMapFit.fit(moves, 540.0, 1510.0, 1080, 2340)!!
+        assertTrue("median ${fit.medianAbsPx}", fit.medianAbsPx < 1.0)
+        assertEquals(0.0, fit.calibration.headingDeg, 1.0)
+    }
+
+    @Test
+    fun fitMedianMatchesMoveResidualsOnTheSameFlows() {
+        // the golden file holds one band per move; group them so each move has the 3 bands a residual needs
+        val moves = moves("A").groupBy { it.d }.map { (d, ms) -> LegMove(d, ms.flatMap { it.bands }) }
+        val fit = GroundMapFit.fit(moves, 540.0, 1510.0, 1080, 2340)!!
+        val residuals = GroundMapFit.moveResidualsPx(fit.calibration, moves, 1080, 2340).filterNotNull().sorted()
+        val median = (residuals[(residuals.size - 1) / 2] + residuals[residuals.size / 2]) / 2
+        assertEquals(fit.medianAbsPx, median, 1.0)
     }
 }

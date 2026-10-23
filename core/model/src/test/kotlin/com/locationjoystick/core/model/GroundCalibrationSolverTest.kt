@@ -1,6 +1,7 @@
 package com.locationjoystick.core.model
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.cos
@@ -129,6 +130,16 @@ class GroundCalibrationSolverTest {
     fun mirroredFitIsImplausible() {
         truth = truth.copy(forwardPxPerM = -truth.forwardPxPerM) // a mirror image no camera produces
         assertEquals(SolveResult.ImplausibleFit, GroundCalibrationSolver.solve(legs(540, 1170), 540, 1170))
+    }
+
+    @Test
+    fun isPlausibleRejectsNonFiniteAndNoisyFits() {
+        val cal = GroundCalibration(10.0, 7.0, 3.0, -0.0024, 540.0, 1510.0)
+        assertTrue(GroundCalibrationSolver.isPlausible(GroundFit(cal, 5.2, 100)))
+        assertFalse(GroundCalibrationSolver.isPlausible(GroundFit(cal, 20.0, 100)))
+        assertFalse(GroundCalibrationSolver.isPlausible(GroundFit(cal, Double.NaN, 100)))
+        assertFalse(GroundCalibrationSolver.isPlausible(GroundFit(cal.copy(headingDeg = Double.NaN), 5.2, 100)))
+        assertFalse(GroundCalibrationSolver.isPlausible(GroundFit(cal.copy(lateralPxPerM = Double.NaN), 5.2, 100)))
     }
 
     @Test

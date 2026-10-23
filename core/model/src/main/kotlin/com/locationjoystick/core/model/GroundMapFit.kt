@@ -150,6 +150,7 @@ object GroundMapFit {
                 for (j in 0 until 4) x[j] += dx[j]
                 if (dx.maxOf { abs(it) } < STEP_TOL) break
             }
+            if (x.any { !it.isFinite() }) continue
             val r = residuals(x, rows, px, py)
             val score = sqrt(r.sumOf { min(it * it, SCORE_CAP) } / m)
             if (score < bestScore) {
