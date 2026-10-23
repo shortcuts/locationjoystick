@@ -601,6 +601,10 @@ object AppConstants {
     }
 
     object TapToWalkConstants {
+        // Game master radii. TapToWalkRingConstantsTest pins them to the PokeMiners fixture.
+        const val INTERACTION_RANGE_METERS = 80.0
+        const val WHITE_PULSE_RADIUS_METERS = 50.0
+
         // Automatic fit (docs/features/tap-to-walk.md, "Automatic fit"). Values come from the bench walks.
         const val AUTOFIT_FRAME_INTERVAL_MS = 3000L // one screenshot per tick, as the bench's --every 3
         const val AUTOFIT_MAX_SPEED_MPS = 3.0 // faster steps are a teleport or a vehicle profile, not a leg to learn from

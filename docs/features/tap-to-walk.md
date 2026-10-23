@@ -113,6 +113,8 @@ The ground map has four terms: heading, lateral scale, forward scale and perspec
 ### Facts from PokeMiners and the community
 
 - Game master ([PokeMiners/game_masters](https://github.com/PokeMiners/game_masters), `latest`, timestamp 1787902550208, read 2026-10-23), template `MAP_OBJECTS_INTERACTION_RANGE_SETTINGS`: `interactionRangeMeters` 80, `whitePulseRadiusMeters` 50, `farInteractionRangeMeters` 2000, `remoteInteractionRangeMeters` 3500. `previous_game_masters` holds the history, so a radius change can be dated. The game master has no camera pitch, field of view or zoom setting.
+- The committed copy is `core/common/src/test/resources/pokeminers/interaction_range_settings.json`, written by `scripts/pokeminers_fetch.py`. `TapToWalkRingConstantsTest` pins the ring constants in `TapToWalkConstants` to it.
+- Radius history (`scripts/pokeminers_fetch.py --history`, 240 versions from 2021-06 to 2026-08, three of them without the template): the interaction range is the same in every version that carries it. The white pulse first appears at 40 m in the 2024-01-23 version and becomes 50 m on 2024-02-07. No version before 2021-06 is in the repo, so the "40 m before 2020" premise cannot be checked here.
 - [pogo_assets](https://github.com/PokeMiners/pogo_assets) has no camera or ring geometry. Folders worth using as detector templates and test material: `Images/Loading Screens` (a static loading screen fooled five smoke locations), `Images/Warnings` (the speed warning), `Images/Pokestops and Gyms` (objects that cover the ring), `Images/Weather` (weather changes the map colours) and `3D Assets/Characters` (the avatar).
 - [Interaction range post](https://www.reddit.com/r/TheSilphRoad/comments/od48zr/clearing_up_some_misconceptions_regarding_the/) (2021): the radius is 80 m and its real distance does not vary with latitude. Only its on-screen size does.
 - [Rings and map size post](https://www.reddit.com/r/TheSilphRoad/comments/1vytd28/your_rings_of_influence_and_map_size_gets_larger/) (2026): the rings and the visible map grow on screen with latitude (Web Mercator). Its screenshots at 35.5 to 69.6 degrees N show two rings centred on the feet, drawn as ellipses. At 69.6 degrees the outer ring runs off both sides of the screen.
@@ -146,6 +148,7 @@ p90 landing error at most 15 m with at most 20% of taps rejected, first on recor
 ### Test material
 
 - Real frames may be committed only as map crops with the HUD rows blanked (the username is at the bottom of the screen), at reduced resolution. A check must prove the blanked rows are empty. Full frames stay under the git-ignored `scripts/registration-bench/`.
+- Detector templates from `pogo_assets` are downloaded, not committed: `scripts/pokeminers_fetch.py --assets` writes them to the git-ignored `scripts/registration-bench/pokeminers/assets/`. Its `MANIFEST.json` records the commit read.
 - The smoke fits are under `scripts/registration-bench/smoke/` (git-ignored, local only). A fit with a scale near 0 is a static loading screen and carries no truth.
 - Reddit blocks plain curl and the fetch tool. Read posts and comments through the Arctic Shift API (`https://arctic-shift.photon-reddit.com/api/posts/ids?ids=<id>` and `/api/comments/tree?link_id=<id>`). Download images with a browser user agent.
 

@@ -1,0 +1,12 @@
+{
+  "source": "https://github.com/PokeMiners/game_masters",
+  "commit": "8e227be44f288d34463e23bf04e9b564d3c16f79",
+  "timestamp": 1787902550208,
+  "templateId": "MAP_OBJECTS_INTERACTION_RANGE_SETTINGS",
+  "settings": {
+    "interactionRangeMeters": 80.0,
+    "farInteractionRangeMeters": 2000.0,
+    "remoteInteractionRangeMeters": 3500.0,
+    "whitePulseRadiusMeters": 50.0
+  }
+}
