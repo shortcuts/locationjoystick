@@ -25,7 +25,7 @@ class TapToWalkOverlayTest {
             windowManager = windowManager,
             lifecycleOwner = mockk<LifecycleOwner>(relaxed = true),
             savedStateRegistryOwner = mockk<SavedStateRegistryOwner>(relaxed = true),
-            onWalkTo = {},
+            onGroundTap = {},
             getPosition = { null },
             onDismissed = {},
         )

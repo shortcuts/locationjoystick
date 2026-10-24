@@ -102,8 +102,8 @@ make tap-smoke-selfcheck          # pure verdict logic, no device
   images stay under the gitignored `scripts/registration-bench/`; never copy or commit one without masking that region.
   The report files contain numbers only.
 - **Resolution-agnostic.** No size is passed; the bench reads the attached device's size and the report records it.
-- **Gate.** A failing run blocks the Kotlin port entry and the "Prove tap-to-walk 100% reliable" entry
-  (docs/features/tap-to-walk.md, "Ground map: current direction").
+- **Gate.** A failing run blocks the tap-to-walk-flow-fit epic from closing
+  (docs/features/tap-to-walk.md, "Ground map: flow-measured").
 
 ## Unit Tests (`:core:*`)
 
@@ -118,32 +118,9 @@ make tap-smoke-selfcheck          # pure verdict logic, no device
 
 Shared utils in `:core:testing`.
 
-### Bench parity fixtures
+### Tap to Walk ground map
 
-`DeviceParityTest` (`:core:model`) checks the ground-map port against numbers exported from the bench, one fixture
-directory per device under `core/model/src/test/resources/device_golden/` (Pixel 5 1080x2340 and Pixel 7 1080x2400
-today). Each fixture records where its numbers came from. Scope limits are in [features/tap-to-walk.md](features/tap-to-walk.md).
-
-Regenerate one device (bench venv, legs already captured; `--density` is the screen density in dpi from
-`adb shell wm density`; `--camera` names the game camera state the legs were walked in):
-
-```bash
-scripts/registration-bench/.venv/bin/python scripts/export_device_golden.py pixel5_1080x2340 \
-    scripts/registration-bench/data --model "Pixel 5" --density 440 --camera "wide zoom, no twist" \
-    --captured-on 2026-10-13
-```
-
-`--captured-on` is the day the legs were captured; it is never derived from file timestamps.
-
-Then run `./gradlew :core:model:test --tests '*DeviceParityTest*'`. Rerun the exporter when `clean_leg`,
-`band_moves`, `detect_feet`, `_feat`, `fit_perspective*` or `tap_to_ground_persp` change in
-`scripts/registration_bench.py`, or when the legs are recaptured. Commit the regenerated text files with the change
-that caused them.
-
-Tolerances are fixed in the test and must not be widened to pass. A failing parity test means the port drifted from the bench: fix the port, or record the finding with `/radin-record`.
-
-The fixtures hold numbers only. Game frames are never committed (the HUD shows the player's name, and the bench
-folder is git-ignored), so `FrameFlow` and `FeetDetector` on real frames are not covered here.
+`GroundFlowFitTest` (`:core:model`) and `AutoFitCoordinatorTest` (`:core:location`) render value-noise ground through a known map and check that a straight walk recovers its heading and scale. The old bench parity fixtures were deleted with the motion fit.
 
 ## Integration Tests (`:feature:*`)
 

@@ -100,6 +100,8 @@ Rules:
 
 → See docs/features/
 
+Working memory for long-running features: a feature doc that has a "Status" line (today: Tap to Walk, in docs/features/tap-to-walk.md, "Ground map: flow-measured") is the memory between sessions. Before work on it, read that section and its backlog epic (`radin backlog show`). Before a session ends, update the status, the measured numbers, the open work and any kill there, and update the epic's entries through `radin backlog`. Move superseded detail to the feature's investigation doc so the main doc stays short.
+
 | Feature | Doc |
 |---------|-----|
 | Mock Location Engine + GPS Realism | docs/features/mock-location.md |
@@ -172,13 +174,10 @@ Rules:
 | `MockLocationServiceStarter` | `:core:data` (interface), `:core:location` (impl) | Class (`@Singleton`) | Single start path for `MockLocationService`. Checks location permission first; see [features/foreground-service.md](docs/features/foreground-service.md). |
 | `StartRouteReplayUseCase` | `:core:location` | Class (`@Singleton`) | Shared route-replay start for the map and the widget. `bypassHideTeleport` is Control API only. |
 | `ControlApiRoutes` | `:core:location` | Class (`@Singleton`) | Control API routes. Each calls the same controller method as the UI; see [features/group-sync.md](docs/features/group-sync.md). |
-| `FeetDetector` | `:core:model` | Object | Pure-Kotlin feet detection for the tap to walk fit. |
-| `FrameFlow` / `PhaseCorrelation` | `:core:model` | Objects | Pure-Kotlin frame flow for the tap to walk fit. |
-| `GroundMapFit` | `:core:model` | Object | Pure-Kotlin ground map fit and the per-move residuals the monitor reads. |
-| `FitMonitor` / `LegSegmenter` | `:core:model` | Objects/Class | Twist and zoom detection (CUSUM on the flow residual) and the straight-leg rule. See [features/tap-to-walk.md](docs/features/tap-to-walk.md). |
+| `GroundFlowFit` / `PhaseCorrelation` | `:core:model` | Objects | Pure-Kotlin tap to walk ground map: crop flow and the two-term heading and scale fit. See [features/tap-to-walk.md](docs/features/tap-to-walk.md). |
 | `ReconnectControlDetector` | `:feature:widget:impl` | Object | Classifies the target app's reconnect control from screenshot pixels. See [features/bluetooth-reconnect-tap.md](docs/features/bluetooth-reconnect-tap.md). |
 | `Geocoding` / `GeocodingProvider` | `:core:common` | Object + interface | Search and reverse lookup entry point. Falls back between providers with a shared cooldown. |
-| `AutoFitCoordinator` | `:core:location` | Class (`@Singleton`) | Keeps the tap to walk ground map fitted from the walks the app already makes, and walks a learning route when no fit exists. See [features/tap-to-walk.md](docs/features/tap-to-walk.md). |
+| `AutoFitCoordinator` | `:core:location` | Class (`@Singleton`) | Measures the tap to walk ground map from the walks the app already makes. Keeps crops in memory only. See [features/tap-to-walk.md](docs/features/tap-to-walk.md). |
 | `ScreenCaptureSource` | `:core:location` | Class (`@Singleton`) | Bridges the screen accessibility service to consumers. Capture is gated on the in-app disclosure. Also carries the in-memory reconnect status for Settings. |
 
 ---

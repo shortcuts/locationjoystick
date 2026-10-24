@@ -176,7 +176,6 @@ internal data class PasteCaptureState(
 internal sealed interface WidgetPanelSection {
     data class TapToWalk(
         val active: Boolean,
-        val learning: Boolean,
         val onClick: () -> Unit,
     ) : WidgetPanelSection
 
@@ -482,14 +481,12 @@ internal fun WidgetPanel(
             sections.forEach { section ->
                 when (section) {
                     is WidgetPanelSection.TapToWalk -> {
-                        val crosshairTint = if (section.active || section.learning) LjSuccess else WidgetInactiveTint
+                        val crosshairTint = if (section.active) LjSuccess else WidgetInactiveTint
                         WidgetIconButton(
                             icon = LjIcons.MyLocation,
                             contentDescription =
                                 stringResource(
-                                    if (section.learning) {
-                                        R.string.tap_to_walk_cancel_learning_cd
-                                    } else if (section.active) {
+                                    if (section.active) {
                                         R.string.tap_to_walk_overlay_cancel_tap_to_walk_cd
                                     } else {
                                         R.string.widget_panel_tap_to_walk_cd

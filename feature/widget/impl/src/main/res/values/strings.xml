@@ -15,7 +15,6 @@
     <string name="map_floating_do_nothing">"Do nothing"</string>
     <string name="tap_to_walk_overlay_tap_anywhere_to_walk_there">"Tap anywhere to walk there"</string>
     <string name="tap_to_walk_overlay_cancel_tap_to_walk_cd">"Cancel tap-to-walk"</string>
-    <string name="tap_to_walk_cancel_learning_cd">"Learning the map, tap to cancel"</string>
     <string name="widget_panel_altitude_m">"Altitude (m)"</string>
     <string name="widget_panel_confirm_altitude_cd">"Confirm altitude"</string>
     <string name="widget_panel_back_cd">"Back"</string>
@@ -58,13 +57,11 @@
     <string name="widget_feature_favorites_cd">"Favorites picker"</string>
     <string name="widget_feature_speed_cycle_cd">"Speed cycle"</string>
     <string name="widget_feature_open_map_cd">"Open map"</string>
-    <string name="tap_to_walk_overlay_cannot_learn_hint">"Map not learned yet. Open the game and stay idle, then tap."</string>
-    <string name="tap_to_walk_learning_failed">"Could not learn the map. Keep the game open and try again."</string>
-    <string name="tap_to_walk_learning_interrupted">"Learning stopped because you moved. Tap again."</string>
-    <string name="tap_to_walk_learning_started">"Learning the map for Tap to Walk. Your tap follows after a short walk."</string>
     <string name="reconnect_failed_channel_name">"Accessory reconnect"</string>
     <string name="reconnect_failed_title">"Accessory did not reconnect"</string>
     <string name="reconnect_failed_text">"Reconnecting your accessory failed several times in a row. Open the app to check."</string>
     <string name="reconnect_not_found_title">"Accessory control not found"</string>
     <string name="reconnect_not_found_text">"Your game is open, but the reconnect button could not be found for a long time. The game may have changed. Reconnect is paused."</string>
+    <string name="tap_to_walk_past_horizon">"That spot is too far away. Tap closer to your player."</string>
+    <string name="tap_to_walk_overlay_unavailable_hint">"Tap to Walk needs Android 11 or newer."</string>
 </resources>

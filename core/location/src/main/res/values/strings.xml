@@ -10,9 +10,6 @@
     <string name="notification_text_permission_error">"Open the app and complete setup to start spoofing."</string>
     <string name="notification_title_active">"Mock location active"</string>
     <string name="notification_text_active">"locationjoystick is spoofing your GPS position"</string>
-    <string name="notification_text_learning">"Learning the map for Tap to Walk, leg %1$d of %2$d"</string>
-    <string name="notification_text_analysing">"Analysing the map for Tap to Walk…"</string>
-    <string name="notification_action_cancel_learning">"Cancel"</string>
     <string name="notification_action_stop">"Stop"</string>
     <string name="notification_action_map">"Map"</string>
     <string name="notification_action_favorites">"Favorites"</string>

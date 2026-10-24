@@ -20,7 +20,6 @@ private data class NotificationInputs(
     val mode: MockMode,
     val state: MockLocationState,
     val hideNotification: Boolean,
-    val learning: LearningState,
 ) {
     // Double-guarded: walk-to PAUSED never triggers replayPaused=true
     val replayActive get() = mode == MockMode.ROUTE_REPLAY
@@ -39,7 +38,6 @@ internal class OverlayNotificationReactor(
     private val notificationManager: NotificationManager,
     private val locationRepository: LocationRepository,
     private val settingsRepository: SettingsRepository,
-    private val learning: StateFlow<LearningState>,
 ) {
     /**
      * Mirrors the current hideNotification setting so [MockLocationService.onStartCommand]'s
@@ -53,8 +51,7 @@ internal class OverlayNotificationReactor(
 
     /**
      * Builds the notification from the last inputs the collector saw. [MockLocationService.onStartCommand]
-     * re-posts through this, so a walk tick cannot reset the learning progress or replay actions
-     * to the defaults.
+     * re-posts through this, so a walk tick cannot reset the replay actions to the defaults.
      */
     fun buildCurrent(): Notification {
         val inputs = latest
@@ -63,7 +60,6 @@ internal class OverlayNotificationReactor(
             replayActive = inputs?.replayActive ?: false,
             replayPaused = inputs?.replayPaused ?: false,
             hideNotification = hideNotificationSetting,
-            learning = inputs?.learning ?: LearningState.Idle,
         )
     }
 
@@ -84,8 +80,7 @@ internal class OverlayNotificationReactor(
                 locationRepository.currentMode,
                 locationRepository.mockLocationState,
                 settingsRepository.getHideForegroundNotification(),
-                learning,
-            ) { mode, state, hideNotification, learningState -> NotificationInputs(mode, state, hideNotification, learningState) }
+            ) { mode, state, hideNotification -> NotificationInputs(mode, state, hideNotification) }
                 .distinctUntilChanged()
                 .collect { inputs ->
                     hideNotificationSetting = inputs.hideNotification

@@ -258,7 +258,6 @@ class MockLocationService : Service() {
                 notificationManager = notificationManager,
                 locationRepository = locationRepository,
                 settingsRepository = settingsRepository,
-                learning = autoFit.learning,
             )
         altitudeAnchor =
             AltitudeAnchorCoordinator(
@@ -560,10 +559,6 @@ class MockLocationService : Service() {
                     stopSelf()
                     return START_NOT_STICKY
                 }
-            }
-
-            ServiceConstants.ACTION_CANCEL_AUTOFIT -> {
-                autoFit.cancel()
             }
 
             ACTION_PARK_KEEP_WIDGET -> {

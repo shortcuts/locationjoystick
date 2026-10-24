@@ -179,7 +179,7 @@
       <img class="phone-shot" src="screenshots/21_screen_access.png" alt="Screen access settings">
     </aside>
     <p>
-      Tap to Walk learns how your game's map moves (see Learning the map below), so the walk target lands correctly on a turned map.
+      Tap to Walk works out how your game's map is turned and zoomed (see How taps find their spot below), so the walk target lands correctly on a turned map.
       That needs the accessibility feature below.
     </p>
 
@@ -205,17 +205,18 @@
     </section>
 
     <section>
-    <h3 id="learning-the-map">Learning the map</h3>
+    <h3 id="learning-the-map">How taps find their spot</h3>
     <p>
-      Tap to Walk needs to know how your game's map is turned and zoomed, so a tap lands where you tapped. There is nothing to set up: the app learns it by itself.
+      Tap to Walk needs to know how your game's map is turned and zoomed, so a tap lands where you tapped. There is nothing to set up and no extra walk.
       While Tap to Walk is on and your game is in front, the app takes a picture of your screen about every 3 seconds as you walk, with a tap, the joystick or a quick walk.
-      It uses those pictures to check that it still understands the map. The pictures stay on your phone and are deleted as soon as they are used.
+      It looks at a few small parts of each picture to see how the map slides under your player. Only those small parts are kept, in memory, until the next picture.
     </p>
     <ul class="section-bullets">
-      <li>If you turn the map or zoom in or out, the app notices after a short walk and learns the new view. Taps made before it has learned may land a little off.</li>
-      <li>If the app does not know the map yet, your first tap starts a short walk of about two minutes. A notice shows the progress, with a Cancel button. The crosshair button on the widget also lights up while the app learns. Tap it again to stop learning. Stopping drops your tap, so nothing walks. If you move while the app learns, your tap is dropped and a message asks you to tap again. When the walk finishes, your location walks to the spot you tapped.</li>
+      <li>Your first tap walks at once. On a new phone the app starts from a typical view of the game. A few seconds into the walk it has measured your map, and if your tap was off it corrects the walk toward the spot you tapped.</li>
+      <li>If you turn the map or zoom in or out, the next walk measures the new view and later taps follow it.</li>
       <li>The walk is a normal walking pace, never a jump.</li>
-      <li>It only works while the game is open and in front. If the app cannot learn the map, your tap does nothing and a message tells you to open the game and try again.</li>
+      <li>A tap close to the top of the screen can be too far away to walk to. A message then asks you to tap closer to your player.</li>
+      <li>Tap to Walk needs Android 11 or newer. On older phones, the overlay tells you so and does not walk.</li>
     </ul>
     </section>
   </main>
