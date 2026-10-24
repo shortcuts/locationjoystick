@@ -2,7 +2,6 @@
 """Self-check for tap_smoke.py. Run directly: python3 scripts/test_tap_smoke.py"""
 
 import importlib.util
-import json
 import sys
 from pathlib import Path
 
@@ -10,34 +9,34 @@ HERE = Path(__file__).parent
 spec = importlib.util.spec_from_file_location("tap_smoke", HERE / "tap_smoke.py")
 ts = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ts)
+INF = float("inf")
 
 
-def trials(passes, fails=0, unverified=0, ambiguous=0):
-    rows = [{"verdict": "pass", "error_m": 2.0 + i} for i in range(passes)]
-    rows += [{"verdict": "fail", "error_m": 20.0 + i} for i in range(fails)]
-    rows += [{"verdict": "unverified", "error_m": 5.0} for _ in range(unverified)]
-    rows += [{"verdict": "ambiguous", "error_m": None} for _ in range(ambiguous)]
-    return rows
+def test_row_passes_when_p90_is_exactly_15m():
+    assert ts.row_verdict([1.0] * 10 + [15.0] * 2, rejected=0, ambiguous=0) == ("PASS", "")
 
 
-def test_location_passes_with_11_of_12():
-    assert ts.location_verdict(trials(11, fails=1), True) == ("PASS", "")
-    assert ts.location_verdict(trials(12, ambiguous=5), True) == ("PASS", "")
+def test_row_fails_when_p90_is_over_15m():
+    assert ts.row_verdict([1.0] * 10 + [15.1] * 2, rejected=0, ambiguous=0) == ("FAIL", "p90_over_15m")
 
 
-def test_location_fails_with_10_of_12():
-    assert ts.location_verdict(trials(10, fails=2), True) == ("FAIL", "below_bar")
-    assert ts.location_verdict(trials(11, unverified=1), True) == ("PASS", "")
-    assert ts.location_verdict(trials(10, unverified=2), True) == ("FAIL", "below_bar")
+def test_row_passes_at_20_percent_rejected_and_fails_at_21():
+    assert ts.row_verdict([1.0] * 12, rejected=3, ambiguous=0) == ("PASS", "")
+    assert ts.row_verdict([1.0] * 79, rejected=21, ambiguous=0) == ("FAIL", "rejected_over_20pct")
 
 
-def test_location_fails_when_too_few_scored():
-    assert ts.location_verdict(trials(11), True) == ("FAIL", "insufficient_scored")
+def test_row_skips_ambiguous_taps_and_counts_them_in_no_rate():
+    assert ts.row_verdict([1.0] * 12, rejected=0, ambiguous=5) == ("PASS", "")
 
 
-def test_location_fails_without_calibration():
-    assert ts.location_verdict(trials(12), False) == ("FAIL", "no_calibration")
-    assert ts.location_verdict([], False) == ("FAIL", "no_calibration")
+def test_low_ncc_tap_is_a_miss_that_fails_the_row():
+    assert ts.tap_error_m(0.39, 2.0) == INF
+    assert ts.tap_error_m(0.4, 2.0) == 2.0
+    assert ts.row_verdict([1.0] * 10 + [INF] * 2, rejected=0, ambiguous=0) == ("FAIL", "p90_over_15m")
+
+
+def test_row_fails_when_fewer_than_12_scored():
+    assert ts.row_verdict([1.0] * 11, rejected=0, ambiguous=0) == ("FAIL", "insufficient_scored")
 
 
 def test_suite_bar_is_19_of_20():
@@ -45,6 +44,11 @@ def test_suite_bar_is_19_of_20():
     assert ts.suite_verdict(rows) == (19, 20, True)
     rows = [{"verdict": "PASS"}] * 18 + [{"verdict": "FAIL"}] * 2
     assert ts.suite_verdict(rows) == (18, 20, False)
+
+
+def test_suite_fails_when_an_extra_scenario_row_fails():
+    rows = [{"verdict": "PASS", "scenario": "normal"}] * 20 + [{"verdict": "FAIL", "scenario": "twist"}]
+    assert ts.suite_verdict(rows) == (20, 20, False)
 
 
 def test_percentile_matches_bench_index_rule():
@@ -89,17 +93,13 @@ def test_prior_fallbacks_counts_the_bench_fallback_lines():
     assert ts.prior_fallbacks("feet pixel detected: 540 1400\n") == 0
 
 
-def test_unverified_and_ambiguous_counts():
-    assert ts.trial_counts(trials(10, fails=1, unverified=2, ambiguous=3)) == (2, 3)
-    assert ts.trial_counts([]) == (0, 0)
-
-
-def test_report_has_unverified_ambiguous_and_fallback_columns():
+def test_report_line_has_scenario_and_rate_columns():
     row = {"index": 1, "name": "X", "lat": 1.0, "lon": 2.0, "kind": "dense", "device": "P", "resolution": "1x2",
-           "density": "420", "scored": 12, "passes": 11, "p50": 6.0, "p90": 9.0, "verdict": "PASS", "reason": "",
-           "unverified": 1, "ambiguous": 2, "prior_fallback": 3}
+           "density": "420", "scenario": "normal", "scored": 12, "rejected": 1, "ambiguous": 2, "unverified": 1,
+           "p50": 6.0, "p90": 9.0, "reaim_m": 3.5, "verdict": "PASS", "reason": "", "prior_fallback": 3}
     line = ts.render_report([row]).splitlines()[2]
-    assert line == "| 1 | X | 1.0 | 2.0 | dense | P | 1x2 | 420 | 12 | 11 | 1 | 2 | 3 | 6.0 | 9.0 | PASS |  |"
+    assert line == ("| 1 | X | 1.0 | 2.0 | dense | P | 1x2 | 420 | normal | 12 | 1 | 2 | 1 | 3 | 6.0 | 9.0 | 3.5 "
+                    "| PASS |  |")
 
 
 if __name__ == "__main__":
