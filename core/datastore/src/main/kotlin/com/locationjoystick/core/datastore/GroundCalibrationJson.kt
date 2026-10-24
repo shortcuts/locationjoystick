@@ -4,7 +4,8 @@ import com.locationjoystick.core.model.GroundCalibration
 import com.locationjoystick.core.model.StoredGroundCalibration
 import org.json.JSONObject
 
-private const val VERSION = 1
+// 2: flow-measured map. A version 1 record came from the old motion fit and may be one its monitor rejected.
+private const val VERSION = 2
 
 internal fun serializeGroundCalibration(value: StoredGroundCalibration): String =
     JSONObject()
@@ -21,7 +22,6 @@ internal fun serializeGroundCalibration(value: StoredGroundCalibration): String 
             put("calibratedAtMs", value.calibratedAtMs)
             put("flowCount", value.flowCount)
             put("medianAbsPx", value.medianAbsPx)
-            put("suspect", value.suspect)
         }.toString()
 
 /** Null for an unknown version, a missing field or malformed JSON: a stale map must never throw. */
@@ -46,7 +46,6 @@ internal fun deserializeGroundCalibration(raw: String): StoredGroundCalibration?
                 calibratedAtMs = o.getLong("calibratedAtMs"),
                 flowCount = o.getInt("flowCount"),
                 medianAbsPx = o.getDouble("medianAbsPx"),
-                suspect = o.optBoolean("suspect", false),
             )
         }
     } catch (e: org.json.JSONException) {

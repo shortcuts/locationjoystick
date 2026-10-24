@@ -490,3 +490,17 @@ Ushuaia's `sy` is about 0.2, and its sign differs from `s`. The fit is weak here
 The feet anchor fell back to the prior at Anchorage, Reykjavik and Ushuaia (detected row outside the prior). At Tromso the anchor was detected.
 
 Open: the cause of the spread is still unknown. Candidates: the feet anchor fallback, low flow per leg (a slow game walk at high latitude, or a short frame gap), and whether the game's zoom changes with latitude. Frames are needed to tell these apart before the rule can be judged.
+
+## Superseded: ring and Mercator direction (2026-10-23 to 2026-10-24)
+
+The plan was: scale and perspective from latitude (Web Mercator, 1/cos(lat) at a fixed zoom), zoom from the drawn range ring (a ground circle of known radius), and only the heading measured. Both scale sources failed.
+
+Ring check (2026-10-24, Python prototype in the session scratchpad, not committed): a lavender-line detector along 90 rays from the feet plus a RANSAC ellipse fit, on bench frames.
+
+- New York walk frames 3 s apart alternate between a ring of about 110 px and one of about 500 px radius. London finds a ring of about 300 px on every other frame. The ring is the white pulse growing over time, not a fixed circle.
+- Mumbai, Moscow and Nairobi walks: no ring found. Sydney at night: none visible.
+- So the ring fails the kill rule of that plan (ring missing on more than 20% of default-zoom frames).
+
+Mercator check: see the three sections above. The scale times cos(lat) spread 1.96 to 10.57.
+
+Crop-flow prototype (same day, `flowfit.py` in the session scratchpad): heading and lateral scale fitted from five crops per frame pair, forward scale 0.40 and perspective -2.2e-4 times the lateral scale. Against the old four-term fits as reference, one 8-frame leg per fit: London legs p90 14 to 27 m, New York 20 to 38 m, Tokyo 21 to 50 m, Sydney 12 to 60 m, Nairobi and Moscow 26 to 75 m. The reference fits are noisy (their own scale spread 2x), so this is a sanity check, not a gate. The user chose to ship this design as a first draft and bench it after.

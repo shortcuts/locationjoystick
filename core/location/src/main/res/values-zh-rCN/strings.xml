@@ -10,9 +10,6 @@
     <string name="notification_text_permission_error">"请打开应用并完成设置，然后开始模拟定位。"</string>
     <string name="notification_title_active">"模拟定位已启用"</string>
     <string name="notification_text_active">"locationjoystick 正在模拟你的 GPS 位置"</string>
-    <string name="notification_text_learning">"正在为点击行走学习地图，第 %1$d 段，共 %2$d 段"</string>
-    <string name="notification_text_analysing">"正在为点击行走分析地图…"</string>
-    <string name="notification_action_cancel_learning">"取消"</string>
     <string name="notification_action_stop">"停止"</string>
     <string name="notification_action_map">"地图"</string>
     <string name="notification_action_favorites">"收藏"</string>

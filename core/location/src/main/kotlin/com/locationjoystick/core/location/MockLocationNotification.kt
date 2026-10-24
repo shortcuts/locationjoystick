@@ -20,7 +20,6 @@ internal enum class NotificationAction {
     RESUME,
     NAV_MAP,
     NAV_FAVORITES,
-    CANCEL_LEARNING,
 }
 
 internal data class ActionSpec(
@@ -31,16 +30,8 @@ internal data class ActionSpec(
 internal fun selectNotificationActions(
     replayActive: Boolean,
     replayPaused: Boolean,
-    learning: Boolean = false,
 ): List<ActionSpec> =
     when {
-        learning -> {
-            listOf(
-                ActionSpec(R.string.notification_action_stop, NotificationAction.STOP),
-                ActionSpec(R.string.notification_action_cancel_learning, NotificationAction.CANCEL_LEARNING),
-            )
-        }
-
         !replayActive -> {
             listOf(
                 ActionSpec(R.string.notification_action_stop, NotificationAction.STOP),
@@ -123,7 +114,6 @@ internal fun buildMockLocationNotification(
     replayActive: Boolean = false,
     replayPaused: Boolean = false,
     hideNotification: Boolean = false,
-    learning: LearningState = LearningState.Idle,
 ): Notification {
     val openAppIntent =
         context.packageManager
@@ -167,16 +157,6 @@ internal fun buildMockLocationNotification(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-    val cancelLearningPendingIntent =
-        PendingIntent.getService(
-            context,
-            6,
-            Intent(context, MockLocationService::class.java).apply {
-                action = AppConstants.ServiceConstants.ACTION_CANCEL_AUTOFIT
-            },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-
     val mapPendingIntent = activityPendingIntent(context, 2, AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_MAP)
     val favoritesPendingIntent =
         activityPendingIntent(context, 3, AppConstants.ServiceConstants.EXTRA_NAVIGATE_TO_FAVORITES)
@@ -185,19 +165,13 @@ internal fun buildMockLocationNotification(
         NotificationCompat
             .Builder(context, notificationChannelId(hideNotification))
             .setContentTitle(context.getString(R.string.notification_title_active))
-            .setContentText(
-                when (learning) {
-                    is LearningState.Learning ->
-                        context.getString(R.string.notification_text_learning, learning.leg, learning.legCount)
-                    LearningState.Analysing -> context.getString(R.string.notification_text_analysing)
-                    LearningState.Idle -> context.getString(R.string.notification_text_active)
-                },
-            ).setSmallIcon(android.R.drawable.ic_menu_mylocation)
+            .setContentText(context.getString(R.string.notification_text_active))
+            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
             .setContentIntent(openAppIntent)
             .setOngoing(true)
             .setSilent(true)
 
-    for (action in selectNotificationActions(replayActive, replayPaused, learning != LearningState.Idle)) {
+    for (action in selectNotificationActions(replayActive, replayPaused)) {
         val pendingIntent =
             when (action.action) {
                 NotificationAction.STOP -> stopPendingIntent
@@ -205,7 +179,6 @@ internal fun buildMockLocationNotification(
                 NotificationAction.RESUME -> resumePendingIntent
                 NotificationAction.NAV_MAP -> mapPendingIntent
                 NotificationAction.NAV_FAVORITES -> favoritesPendingIntent
-                NotificationAction.CANCEL_LEARNING -> cancelLearningPendingIntent
             }
         if (pendingIntent != null) {
             builder.addAction(0, context.getString(action.labelRes), pendingIntent)

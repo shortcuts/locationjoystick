@@ -26,12 +26,11 @@ class OverlayNotificationReactorTest {
     private val context = mockk<Context>(relaxed = true)
     private val mode = MutableStateFlow(MockMode.JOYSTICK)
     private val state = MutableStateFlow(MockLocationState.RUNNING)
-    private val learning = MutableStateFlow<LearningState>(LearningState.Idle)
 
     @Before
     fun setUp() {
         mockkStatic("com.locationjoystick.core.location.MockLocationNotificationKt")
-        every { buildMockLocationNotification(any(), any(), any(), any(), any()) } returns mockk(relaxed = true)
+        every { buildMockLocationNotification(any(), any(), any(), any()) } returns mockk(relaxed = true)
     }
 
     @After
@@ -48,16 +47,15 @@ class OverlayNotificationReactorTest {
                 every { getHideForegroundNotification() } returns flowOf(hide)
                 every { getHideWidgetOverlay() } returns flowOf(false)
             }
-        return OverlayNotificationReactor(context, mockk<NotificationManager>(relaxed = true), locationRepository, settings, learning)
+        return OverlayNotificationReactor(context, mockk<NotificationManager>(relaxed = true), locationRepository, settings)
             .also { it.observe(backgroundScope, MutableStateFlow(MockLocationState.RUNNING)) }
     }
 
     @Test
-    fun `buildCurrent keeps learning progress`() =
+    fun `buildCurrent keeps the hidden channel`() =
         runTest(UnconfinedTestDispatcher()) {
-            learning.value = LearningState.Learning(1, 2)
             reactor(hide = true).buildCurrent()
-            verify { buildMockLocationNotification(any(), false, false, true, LearningState.Learning(1, 2)) }
+            verify { buildMockLocationNotification(any(), false, false, true) }
         }
 
     @Test
@@ -66,6 +64,6 @@ class OverlayNotificationReactorTest {
             mode.value = MockMode.ROUTE_REPLAY
             state.value = MockLocationState.PAUSED
             reactor(hide = false).buildCurrent()
-            verify { buildMockLocationNotification(any(), true, true, false, LearningState.Idle) }
+            verify { buildMockLocationNotification(any(), true, true, false) }
         }
 }

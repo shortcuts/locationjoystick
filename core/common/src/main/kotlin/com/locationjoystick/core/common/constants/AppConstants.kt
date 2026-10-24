@@ -322,7 +322,6 @@ object AppConstants {
         const val WIDGET_SERVICE_CLASS = "com.locationjoystick.feature.widget.impl.FloatingWidgetService"
         const val ACTION_START = "com.locationjoystick.core.location.ACTION_START"
         const val ACTION_STOP = "com.locationjoystick.core.location.ACTION_STOP"
-        const val ACTION_CANCEL_AUTOFIT = "com.locationjoystick.core.location.ACTION_CANCEL_AUTOFIT"
         const val ACTION_PARK_KEEP_WIDGET = "com.locationjoystick.core.location.ACTION_PARK_KEEP_WIDGET"
         const val ACTION_CLEAR_MOTION_VECTOR = "com.locationjoystick.core.location.ACTION_CLEAR_MOTION_VECTOR"
         const val ACTION_UPDATE_POSITION = "com.locationjoystick.core.location.ACTION_UPDATE_POSITION"
@@ -605,15 +604,11 @@ object AppConstants {
         const val INTERACTION_RANGE_METERS = 80.0
         const val WHITE_PULSE_RADIUS_METERS = 50.0
 
-        // Automatic fit (docs/features/tap-to-walk.md, "Automatic fit"). Values come from the bench walks.
-        const val AUTOFIT_FRAME_INTERVAL_MS = 3000L // one screenshot per tick, as the bench's --every 3
-        const val AUTOFIT_MAX_SPEED_MPS = 3.0 // faster steps are a teleport or a vehicle profile, not a leg to learn from
-        const val AUTOFIT_LEG_TIMEOUT_FACTOR = 2.0 // a learning leg may take twice its nominal time
-        const val AUTOFIT_ARRIVAL_SLACK_M = 5.0 // a learning leg that ended farther than this from its target was cancelled
-        const val AUTOFIT_BUFFER_LEGS = 4 // closed legs kept for a full re-fit while the fit is not valid
-        const val AUTOFIT_MIN_BEARING_SPREAD_DEG = 40.0 // a full re-fit needs legs this far apart in bearing
-        const val AUTOFIT_SPOOL_CAP_BYTES = 150L * 1024 * 1024 // the spool lives in the user's cache: a few legs, never hundreds of MB
-        const val AUTOFIT_MIN_FREE_BYTES = 300L * 1024 * 1024 // keep this much free: a full disk breaks the user's other apps
+        // Flow-measured ground map (docs/features/tap-to-walk.md, "Ground map: flow-measured").
+        const val FLOW_FRAME_INTERVAL_MS = 3000L // one screenshot per tick while walking: about 4 m at walking speed
+        const val FLOW_MAX_SPEED_MPS = 3.0 // faster steps are a teleport or a vehicle profile, not a move to measure
+        const val FLOW_WINDOW_MOVES = 8 // moves of the current walk the fit uses; older ones may predate a camera twist
+        const val REAIM_MIN_METERS = 3.0 // a newer map moves a walked tap's target at least this far before it is re-aimed
     }
 
     object AccessibilityConstants {

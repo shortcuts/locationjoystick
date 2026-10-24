@@ -1,8 +1,8 @@
 package com.locationjoystick.core.model
 
 /**
- * The latest successful automatic fit: the fitted map plus the screen it was fitted on. Valid only on
- * that screen size and the camera state that produced it, so it is never exported (per-device).
+ * The latest flow-measured map plus the screen it was measured on. Valid only on that screen size and the
+ * camera state that produced it, so it is never exported (per-device).
  */
 data class StoredGroundCalibration(
     val calibration: GroundCalibration,
@@ -10,11 +10,9 @@ data class StoredGroundCalibration(
     val screenWidth: Int,
     val screenHeight: Int,
     val calibratedAtMs: Long,
-    /** Fit quality for staleness checks: kept band flows and their median absolute residual (reference px). */
+    /** Fit quality: crop flows used and their median absolute residual (device px). */
     val flowCount: Int,
     val medianAbsPx: Double,
-    /** The monitor rejected this fit; kept so a process kill does not make it look valid again. */
-    val suspect: Boolean = false,
 ) {
     fun matches(
         width: Int,

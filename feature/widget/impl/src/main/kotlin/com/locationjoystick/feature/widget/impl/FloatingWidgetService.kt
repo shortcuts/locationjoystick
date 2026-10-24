@@ -26,15 +26,11 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjTheme
-import com.locationjoystick.core.location.AutoFitCoordinator
-import com.locationjoystick.core.location.LearnOutcome
-import com.locationjoystick.core.location.LearningState
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.location.ScreenCaptureSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
-import com.locationjoystick.core.model.GroundMap
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -42,6 +38,7 @@ import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.ThemeMode
+import com.locationjoystick.core.model.distanceTo
 import com.locationjoystick.core.model.isRoutePlaying
 import com.locationjoystick.core.model.shouldIgnoreJoystickInput
 import com.locationjoystick.core.overlay.OverlayService
@@ -140,8 +137,6 @@ class FloatingWidgetService :
 
     @Inject lateinit var mapController: MapController
 
-    @Inject lateinit var autoFit: AutoFitCoordinator
-
     @Inject lateinit var screenCaptureSource: ScreenCaptureSource
 
     @Inject lateinit var captureCoordinatesRepository: CaptureCoordinatesRepository
@@ -225,6 +220,7 @@ class FloatingWidgetService :
             settingsRepository
                 .getGroundCalibration()
                 .stateIn(lifecycleScope, SharingStarted.Eagerly, null)
+        lifecycleScope.launch { groundCalibration.collect { reaimOnNewMap() } }
         accessibilityDisclosureChoice =
             settingsRepository
                 .getAccessibilityDisclosureChoice()
@@ -367,7 +363,6 @@ class FloatingWidgetService :
             val hasPendingCompletion by pendingCompletionFlow.collectAsStateWithLifecycle()
             val isTapToWalkEnabled by tapToWalkVisible.collectAsStateWithLifecycle(initialValue = false)
             val isTapToWalkActive by isTapToWalkActiveFlow.collectAsStateWithLifecycle()
-            val learning by autoFit.learning.collectAsStateWithLifecycle()
             val hideTeleportFeatures by settingsRepository.getHideTeleportFeatures().collectAsStateWithLifecycle(initialValue = false)
             val showRouteJumpButtons by settingsRepository.getShowRouteJumpButtons().collectAsStateWithLifecycle(
                 initialValue = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
@@ -448,7 +443,7 @@ class FloatingWidgetService :
                         if (isTapToWalkEnabled) {
                             add(
                                 WidgetPanelSection
-                                    .TapToWalk(active = isTapToWalkActive, learning = learning != LearningState.Idle, onClick = {
+                                    .TapToWalk(active = isTapToWalkActive, onClick = {
                                         onTapToWalkClicked()
                                     }),
                             )
@@ -600,8 +595,7 @@ class FloatingWidgetService :
 
     private fun onTapToWalkClicked() {
         if (!isSpoofingActive()) return
-        when (tapToWalkClick(autoFit.learning.value, tapToWalkOverlay?.isShowing() == true, needsAccessibilityDisclosure())) {
-            TapToWalkClick.CANCEL_LEARNING -> autoFit.cancel()
+        when (tapToWalkClick(tapToWalkOverlay?.isShowing() == true, needsAccessibilityDisclosure())) {
             TapToWalkClick.DISMISS_OVERLAY -> dismissTapToWalkOverlay()
             TapToWalkClick.SHOW_DISCLOSURE -> showAccessibilityDisclosure()
             TapToWalkClick.OPEN_OVERLAY -> openTapToWalkOverlay()
@@ -615,58 +609,50 @@ class FloatingWidgetService :
                 windowManager = windowManager,
                 lifecycleOwner = this,
                 savedStateRegistryOwner = this,
-                onWalkTo = { pos -> mapController.walkTo(pos) },
+                onGroundTap = ::walkGroundTap,
                 getPosition = { mapController.sharedState.value.currentPosition },
                 onDismissed = { isTapToWalkActiveFlow.value = false },
-                getGroundCalibration = { groundCalibration.value },
-                getFitHealth = { autoFit.health.value },
-                canLearn = { autoFit.canLearn },
-                onLearnThenWalk = ::learnThenWalk,
             )
         tapToWalkOverlay = overlay
         isTapToWalkActiveFlow.value = true
         overlay.show()
     }
 
-    /**
-     * A tap with no valid map: the tap pixel is held, [AutoFitCoordinator.learnMap] walks the short learning route
-     * (progress and cancel are on the foreground notification and the crosshair button), then the held tap is resolved from the position it was
-     * made at and walked. Only a fit with the player still at the route end walks it; a move during the analysis would send the player back.
-     */
-    private fun learnThenWalk(
-        pos: LatLng,
-        x: Double,
-        y: Double,
-    ) {
-        Toast.makeText(this, R.string.tap_to_walk_learning_started, Toast.LENGTH_LONG).show()
-        lifecycleScope.launch {
-            val outcome = autoFit.learnMap()
-            if (outcome is LearnOutcome.Cancelled) return@launch // the user asked for it
-            if (outcome is LearnOutcome.Interrupted) {
-                Toast.makeText(this@FloatingWidgetService, R.string.tap_to_walk_learning_interrupted, Toast.LENGTH_LONG).show()
-                return@launch
-            }
-            val target =
-                if (outcome is LearnOutcome.Fitted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    val bounds = windowManager.maximumWindowMetrics.bounds
-                    outcome.calibration.takeIf { it.matches(bounds.width(), bounds.height()) }?.let {
-                        TapToWalkOverlay.computeGroundWalkTarget(
-                            pos,
-                            GroundMap(it.calibration, bounds.width().toDouble(), bounds.height().toDouble()),
-                            x,
-                            y,
-                        )
-                    }
-                } else {
-                    null
-                }
-            if (target != null) {
-                Log.d(TAG, "held tap resolved after learning")
-                mapController.walkTo(target)
-            } else {
-                Toast.makeText(this@FloatingWidgetService, R.string.tap_to_walk_learning_failed, Toast.LENGTH_LONG).show()
-            }
+    /** The tap being walked and its target, so a newer map can re-aim it from the position it was made at. */
+    private var aimedTap: Pair<GroundTap, LatLng>? = null
+
+    private fun walkGroundTap(tap: GroundTap) {
+        val target = resolveGroundTap(tap)
+        if (target == null) {
+            Toast.makeText(this, R.string.tap_to_walk_past_horizon, Toast.LENGTH_LONG).show()
+            return
         }
+        aimedTap = tap to target
+        mapController.walkTo(target)
+    }
+
+    private fun resolveGroundTap(tap: GroundTap): LatLng? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
+        val bounds = windowManager.maximumWindowMetrics.bounds
+        val map = TapToWalkOverlay.groundMapFor(groundCalibration.value, bounds.width(), bounds.height())
+        return TapToWalkOverlay.computeGroundWalkTarget(tap.from, map, tap.x, tap.y)
+    }
+
+    /**
+     * A fresh map measured while a tap is walked (the first flow of a fresh install, or a corrected heading) re-aims that
+     * tap from its tap-time position. A walk that already ended or was replaced is left alone.
+     */
+    private fun reaimOnNewMap() {
+        val (tap, target) = aimedTap ?: return
+        if (locationRepository.walkTarget.value != target) {
+            aimedTap = null
+            return
+        }
+        val next = resolveGroundTap(tap) ?: return
+        if (next.distanceTo(target) < AppConstants.TapToWalkConstants.REAIM_MIN_METERS) return
+        Log.d(TAG, "tap re-aimed under the new map")
+        aimedTap = tap to next
+        mapController.walkTo(next)
     }
 
     /**

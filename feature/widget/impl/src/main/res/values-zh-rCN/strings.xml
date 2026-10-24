@@ -15,7 +15,6 @@
     <string name="map_floating_do_nothing">"不做任何操作"</string>
     <string name="tap_to_walk_overlay_tap_anywhere_to_walk_there">"点击任意位置即可走向那里"</string>
     <string name="tap_to_walk_overlay_cancel_tap_to_walk_cd">"取消点击行走"</string>
-    <string name="tap_to_walk_cancel_learning_cd">"正在学习地图，点按取消"</string>
     <string name="widget_panel_altitude_m">"海拔（米）"</string>
     <string name="widget_panel_confirm_altitude_cd">"确认海拔"</string>
     <string name="widget_panel_back_cd">"返回"</string>
@@ -58,13 +57,11 @@
     <string name="widget_feature_favorites_cd">"收藏选择"</string>
     <string name="widget_feature_speed_cycle_cd">"速度切换"</string>
     <string name="widget_feature_open_map_cd">"打开地图"</string>
-    <string name="tap_to_walk_overlay_cannot_learn_hint">"尚未学习地图。请打开游戏并保持静止，然后点按。"</string>
-    <string name="tap_to_walk_learning_failed">"无法学习地图。请保持游戏打开并重试。"</string>
-    <string name="tap_to_walk_learning_interrupted">"学习已停止，因为你移动了。请再点一次。"</string>
-    <string name="tap_to_walk_learning_started">"正在为点击行走学习地图。短暂行走后会前往你点击的位置。"</string>
     <string name="reconnect_failed_channel_name">"配件重新连接"</string>
     <string name="reconnect_failed_title">"配件未能重新连接"</string>
     <string name="reconnect_failed_text">"连续多次重新连接配件失败。请打开应用查看。"</string>
     <string name="reconnect_not_found_title">"找不到配件控件"</string>
     <string name="reconnect_not_found_text">"游戏已打开，但长时间找不到重新连接按钮。游戏可能已更新，自动重新连接已暂停。"</string>
+    <string name="tap_to_walk_past_horizon">"那个位置太远了。请点击离角色更近的地方。"</string>
+    <string name="tap_to_walk_overlay_unavailable_hint">"点击行走需要 Android 11 或更高版本。"</string>
 </resources>
