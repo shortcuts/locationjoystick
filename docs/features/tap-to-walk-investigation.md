@@ -446,3 +446,26 @@ Bench notes:
 
 - The game shows a news popup over the map on the first and second start. The cycle 1 walk ran under it, and its fit was rejected (too few usable flows). The popup was closed with a tap on its close button, and cycle 1 was walked again.
 - The rejected first walk moved the mock position about 30 m per leg. Its frames are not used.
+
+## 2026-10-24: Mercator re-check, six locations (bench 4/8, part 1)
+
+Question: does s times cos(lat) and sy times cos(lat) stay within 7 percent across Singapore, Nairobi, Mumbai, Moscow, Sao Paulo and Cape Town? Pixel 5, one zoom, `walkcap` legs 0, 90, 180, 270 at 40 m every 3 s, then `persp`. Teleport, settle 45 s, no cooldown wait. Frames are under the git-ignored `scripts/registration-bench/smoke/20261024T120000Z_sg_retry/`.
+
+First attempt (20261024T062712Z_mercator_recheck) failed for every location. The walk frames were a static loading screen with a location error banner, all 204 KB. The game was back on the map at the retry, and every retry walk frame was 1.7 to 2.1 MB.
+
+| Place | Latitude | s | sy | theta | n flows | anchor | s x cos(lat) | sy x cos(lat) |
+|---|---|---|---|---|---|---|---|---|
+| Singapore Botanic | 1.31 | -9.33 | -1.13 | 174.23 | 1773 | prior | 9.33 | 1.13 |
+| Nairobi Uhuru Park | -1.29 | -9.30 | 0.02 | 172.82 | 2280 | prior | 9.29 | 0.02 |
+| Mumbai Marine Drive | 18.94 | 9.80 | 0.52 | -4.44 | 1885 | prior | 9.27 | 0.49 |
+| Moscow Gorky Park | 55.73 | 8.00 | 1.65 | 0.39 | 1784 | prior | 4.51 | 0.93 |
+| Sao Paulo Ibirapuera | -23.59 | rejected | | | | | | |
+| Cape Town Company's Garden | -33.93 | rejected | | | | | | |
+
+Negative `s` is the same map with both signs flipped, so `|s|` gives the scale (see the table note above on the inverted-sign form).
+
+Spread: the four accepted fits span 4.51 to 9.33, far over 7 percent. With the four existing valid fits (Tokyo 4.55, New York 4.73, London 4.82, Sydney 5.23), the scale splits into two bands: about 4.5 to 5.2 at 35 to 56 degrees, and about 9.3 at 19 degrees or less. This fails the 7 percent rule.
+
+Every accepted fit used the prior for the feet anchor, so the `sy` values are not usable. The logs show "outside the prior" or "no figure found" for each of them. Sao Paulo and Cape Town were rejected with "too few usable flows".
+
+Open: the cause of the 2x scale at low latitude is not known. The prior-fallback anchor is the first suspect because it applies to all four. The anchor and the flow step must be checked before the rule can be judged.
