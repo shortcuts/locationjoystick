@@ -469,3 +469,24 @@ Spread: the four accepted fits span 4.51 to 9.33, far over 7 percent. With the f
 Every accepted fit used the prior for the feet anchor, so the `sy` values are not usable. The logs show "outside the prior" or "no figure found" for each of them. Sao Paulo and Cape Town were rejected with "too few usable flows".
 
 Open: the cause of the 2x scale at low latitude is not known. The prior-fallback anchor is the first suspect because it applies to all four. The anchor and the flow step must be checked before the rule can be judged.
+
+## 2026-10-24: Mercator re-check, four high-latitude and south-edge places (bench 5/8, part 2)
+
+Question: do s times cos(lat) and sy times cos(lat) stay within 7 percent at Anchorage, Reykjavik, Tromso and Ushuaia? Pixel 5, one zoom, teleport, settle 45 s, no cooldown wait. `walkcap` legs 0, 90, 180, 270 at 40 m every 3 s (the tap smoke gate's setting), then `persp`. Frames and fits are under the scratchpad `bench58/<place>/`, not committed.
+
+Anchorage needed two redos. The first run (30 m legs) gave s = -0.047, and a second run (30 m legs) gave s = 0.189. Both walks ran and moved about 29 m per leg, but the frame-to-frame flow was small (median 1.8 px), so the fit did not hold. The third run (40 m legs) gave a usable fit. The first two frames are real map views, not loading screens.
+
+| Place | Latitude | s | sy | theta | n flows | anchor | s x cos(lat) | sy x cos(lat) |
+|---|---|---|---|---|---|---|---|---|
+| Anchorage (run 3) | 61.22 | -4.08 | -1.24 | 178.43 | 1540 | prior | 1.96 | 0.60 |
+| Reykjavik | 64.15 | 16.05 | 1.28 | -3.19 | 1519 | prior | 7.00 | 0.56 |
+| Tromso | 69.65 | -11.20 | -2.41 | -178.35 | 1309 | detected | 3.90 | 0.84 |
+| Ushuaia | -54.80 | 18.34 | -0.22 | -2.93 | 1581 | prior | 10.57 | 0.13 |
+
+Spread of |s| x cos(lat) across these four, with the earlier six-location values: 1.96 to 10.57, far over 7 percent. Earlier values (Singapore 9.33, Nairobi 9.29, Mumbai 9.27, Moscow 4.51, Tokyo 4.55, New York 4.73, London 4.82, Sydney 5.23) already split into two bands. The four new values add a third spread: 1.96 (Anchorage) and 3.90 (Tromso) sit below the mid-latitude band, while 7.00 (Reykjavik) and 10.57 (Ushuaia) sit above it. No single cos(lat) correction brings the places together.
+
+Ushuaia's `sy` is about 0.2, and its sign differs from `s`. The fit is weak here, and `sy x cos(lat)` values are not usable.
+
+The feet anchor fell back to the prior at Anchorage, Reykjavik and Ushuaia (detected row outside the prior). At Tromso the anchor was detected.
+
+Open: the cause of the spread is still unknown. Candidates: the feet anchor fallback, low flow per leg (a slow game walk at high latitude, or a short frame gap), and whether the game's zoom changes with latitude. Frames are needed to tell these apart before the rule can be judged.
