@@ -419,3 +419,30 @@ Open work, in order:
 1. Lower the skip rate of the matcher. It skips most taps as ambiguous, and the pass rate only covers the taps it could match.
 2. Close-up zoom. The fit and the match step fail there, not the feet anchor alone. Needs a second device and a cause for the ambiguity before another attempt.
 3. Prove the pass rate across devices, screen sizes, zooms and rotations before the epic closes. The gate is the tap smoke command in [testing.md](../testing.md).
+
+## Relaunch bench: fixed zoom and heading on start (2026-10-24)
+
+Question: does the game restore a fixed zoom and heading on each start? Pixel 5 (1080x2340, game 0.433.1), New York (40.758, -73.9855), default zoom at the first cycle. Each cycle: `am force-stop`, `am start` of the game activity, `walkcap` with legs 0, 90, 180, 270 at 30 m, then `persp`. Before cycle 3 (after cycle 2's fit) one `varycap` gesture ran: pinch 1.3 and twist 40 degrees. No teleport was used.
+
+`persp` returns the same map with both signs flipped when `s` is negative (`theta_deg` is 180 degrees off). The table gives the positive-scale form.
+
+| Cycle | Before cycle | theta (reported) | s (reported) | sy (reported) | theta | s | sy |
+|---|---|---|---|---|---|---|---|
+| 1 | nothing | -4.51 | 10.47 | 1.52 | -4.51 | 10.47 | 1.52 |
+| 2 | nothing | 175.96 | -11.45 | -1.38 | -4.04 | 11.45 | 1.38 |
+| 3 | pinch 1.3, twist 40 | -3.70 | 13.91 | 1.22 | -3.70 | 13.91 | 1.22 |
+| 4 | nothing | 177.67 | -10.35 | -1.44 | -2.33 | 10.35 | 1.44 |
+| 5 | nothing | 174.21 | -10.97 | -1.70 | -5.79 | 10.97 | 1.70 |
+
+Spreads across the five cycles:
+
+- Heading: 3.46 degrees (range -5.79 to -2.33). Gate: under 2 degrees.
+- Scale `s`: 34 percent of the minimum (10.35 to 13.91). Gate: under 3 percent.
+- Scale `sy`: 39 percent of the minimum (1.22 to 1.70).
+
+Answer: no. The game does not restore a fixed zoom or a fixed heading on start, by the gate in this section. Cycle 3 shows the pinch as a 1.33 times larger scale. Cycle 4 returns to the cycle 1 and 2 level, so the change does not persist over the next start. Five cycles cannot say why, and the heading is within about 3.5 degrees of -4 in all five.
+
+Bench notes:
+
+- The game shows a news popup over the map on the first and second start. The cycle 1 walk ran under it, and its fit was rejected (too few usable flows). The popup was closed with a tap on its close button, and cycle 1 was walked again.
+- The rejected first walk moved the mock position about 30 m per leg. Its frames are not used.
