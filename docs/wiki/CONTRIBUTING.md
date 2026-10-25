@@ -98,10 +98,11 @@ This applies to prose edits only. Screenshot regeneration, nav wiring in `wiki-i
 
 ### Sidebar structure
 
-The sidebar is organized into five groups in fixed order:
+The sidebar is organized into six groups in fixed order:
 
 - **Start.** First-time setup and getting going. Pages: Getting Started.
-- **Use.** Goal-based task pages first, then everyday features you navigate while using the app. Pages: Common tasks (hub plus goal pages), Map, Overlays, Tap to Walk, Routes, Favorites, Location Links, Group Sync.
+- **Guides.** Goal-based task pages. Pages: Common tasks (the hub) and the how-to pages it links.
+- **Features.** One page per everyday feature you navigate while using the app. Pages: Map, Overlays, Reconnect accessory, Routes, Favorites, Location Links, Capture, Group Sync.
 - **Configure.** Settings and data backup or transfer. Pages: Settings, Backup & Transfer.
 - **Help.** Fixing problems and integrations for developers. Pages: Troubleshooting, Control API.
 - **About.** Meta pages for the project. Pages: Changelog, Privacy, Acknowledgements.
@@ -127,7 +128,7 @@ Worked examples:
 - Routes and Favorites are two pages. Routes is over 2000 words on its own, so Favorites is not merged into it.
 - Language/Localization (a setting) merges into Settings.
 
-Add a new page only if the feature is a distinct user goal that does not fit an existing group item. A new group needs explicit reasoning and a user decision — do not add one on your own. The **Common tasks** group in the Use group is the decided exception: it holds goal-based pages (a user arrives with a goal and needs the page that answers it), and it sits at the top of Use.
+Add a new page only if the feature is a distinct user goal that does not fit an existing group item. A new group needs explicit reasoning and a user decision — do not add one on your own. The **Guides** group is the decided exception: it holds goal-based pages (a user arrives with a goal and needs the page that answers it).
 
 ### Redirect stubs for moved or merged pages
 

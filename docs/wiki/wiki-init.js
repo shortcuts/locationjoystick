@@ -3,7 +3,7 @@
     { group: 'Start', items: [
       { href: 'index.html', label: 'Getting Started' },
     ] },
-    { group: 'Use', items: [
+    { group: 'Guides', items: [
       { href: 'tasks.html', label: 'Common tasks' },
       { href: 'teleport-to-a-place.html', label: 'Teleport to a place' },
       { href: 'loop-a-route.html', label: 'Loop a route' },
@@ -11,6 +11,8 @@
       { href: 'move-to-a-new-phone.html', label: 'Move to a new phone' },
       { href: 'tap-to-walk-in-a-game.html', label: 'Tap to walk in a game' },
       { href: 'collect-links-into-a-route.html', label: 'Collect links into a route' },
+    ] },
+    { group: 'Features', items: [
       { href: 'map.html', label: 'Map' },
       { href: 'overlays.html', label: 'Overlays' },
       { href: 'reconnect-accessory.html', label: 'Reconnect accessory' },
