@@ -179,4 +179,29 @@ class GroundFlowFitTest {
         assertNull(GroundFlowFit.move(a, a, GroundOffset(0.5, 0.5)))
         assertNull(GroundFlowFit.move(a, b, GroundOffset(4.0, 0.0)))
     }
+
+    @Test
+    fun cropsReadOnlyTheFiveCropRectangles() {
+        val image = GrayImage(w, h, ByteArray(w * h) { (it % 7 * 30).toByte() })
+        var area = 0
+        var reads = 0
+        val frame =
+            object : GrayFrame by image {
+                override fun read(
+                    x: Int,
+                    y: Int,
+                    w: Int,
+                    h: Int,
+                    out: ByteArray,
+                ) {
+                    reads++
+                    area += w * h
+                    image.read(x, y, w, h, out)
+                }
+            }
+        val moved = GroundFlowFit.move(GroundFlowFit.crops(frame), GroundFlowFit.crops(image), GroundOffset(4.0, 0.0))
+        assertEquals(5, reads)
+        assertEquals(true, area < w * h / 4)
+        assertNull(moved)
+    }
 }

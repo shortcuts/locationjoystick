@@ -2,6 +2,7 @@ package com.locationjoystick.core.location
 
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.GrayImage
+import com.locationjoystick.core.model.GroundFlowFit
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.ReconnectRunResult
 import com.locationjoystick.core.model.ReconnectStatus
@@ -30,7 +31,7 @@ class ScreenCaptureSourceTest {
                     object : ScreenAccessibilityServiceBridge {
                         override val gameInFront = gameInFront
 
-                        override suspend fun captureGrayFrame(): GrayImage = GrayImage(2, 2, ByteArray(4))
+                        override suspend fun captureCrops() = GroundFlowFit.crops(GrayImage(100, 200, ByteArray(100 * 200)))
                     },
                 )
             }
@@ -38,42 +39,42 @@ class ScreenCaptureSourceTest {
     }
 
     @Test
-    fun `no gray frame until the disclosure is accepted`() =
+    fun `no crops until the disclosure is accepted`() =
         runTest {
-            assertNull(source(accepted = false).captureGrayFrame())
+            assertNull(source(accepted = false).captureCrops())
         }
 
     @Test
-    fun `gray frame comes from the bound service once accepted`() =
+    fun `crops comes from the bound service once accepted`() =
         runTest {
-            val frame = source(accepted = true).captureGrayFrame()
-            assertEquals(2, frame!!.width)
+            val frame = source(accepted = true).captureCrops()
+            assertEquals(100, frame!!.width)
         }
 
     @Test
-    fun `no gray frame while the game is not in front`() =
+    fun `no crops while the game is not in front`() =
         runTest {
-            assertNull(source(accepted = true, gameInFront = false).captureGrayFrame())
+            assertNull(source(accepted = true, gameInFront = false).captureCrops())
         }
 
     @Test
-    fun `no gray frame while the Tap to Walk switch is off`() =
+    fun `no crops while the Tap to Walk switch is off`() =
         runTest {
-            assertNull(source(accepted = true, tapToWalk = false).captureGrayFrame())
+            assertNull(source(accepted = true, tapToWalk = false).captureCrops())
         }
 
     @Test
-    fun `no gray frame after unbind`() =
+    fun `no crops after unbind`() =
         runTest {
             val source = source(accepted = true)
             source.unbind()
-            assertNull(source.captureGrayFrame())
+            assertNull(source.captureCrops())
         }
 
     @Test
     fun `unbound returns null`() =
         runTest {
-            assertNull(source(accepted = true, bound = false).captureGrayFrame())
+            assertNull(source(accepted = true, bound = false).captureCrops())
         }
 
     @Test

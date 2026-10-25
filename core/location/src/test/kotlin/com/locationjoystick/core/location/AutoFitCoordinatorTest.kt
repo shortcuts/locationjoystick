@@ -52,7 +52,8 @@ class AutoFitCoordinatorTest {
         locationRepository.setMockMode(MockMode.WALK_TO)
         source = mockk()
         every { source.captureAllowed } returns tapToWalk
-        coEvery { source.captureGrayFrame() } answers { popup ?: render(scene, locationRepository.currentPosition.value!!) }
+        coEvery { source.captureCrops() } answers
+            { GroundFlowFit.crops(popup ?: render(scene, locationRepository.currentPosition.value!!)) }
         settings = mockk(relaxed = true)
         every { settings.getGroundCalibration() } returns stored
         coEvery { settings.setGroundCalibration(any()) } answers { stored.value = firstArg() }
@@ -134,7 +135,7 @@ class AutoFitCoordinatorTest {
         runTest {
             val c = coordinator()
             repeat(3) { c.tick() }
-            coVerify(exactly = 0) { source.captureGrayFrame() }
+            coVerify(exactly = 0) { source.captureCrops() }
         }
 
     @Test
@@ -144,7 +145,7 @@ class AutoFitCoordinatorTest {
             tapToWalk.value = false
             runCurrent()
             primeAndWalk(c, 0.0, 3)
-            coVerify(exactly = 0) { source.captureGrayFrame() }
+            coVerify(exactly = 0) { source.captureCrops() }
             assertNull(stored.value)
         }
 

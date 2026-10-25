@@ -8,6 +8,7 @@ import android.app.PendingIntent
 import android.graphics.Bitmap
 import android.graphics.Path
 import android.os.Build
+import android.os.Debug
 import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
@@ -21,7 +22,8 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.ScreenAccessibilityServiceBridge
 import com.locationjoystick.core.location.ScreenCaptureSource
-import com.locationjoystick.core.model.GrayImage
+import com.locationjoystick.core.model.GrayFrame
+import com.locationjoystick.core.model.GroundFlowFit
 import com.locationjoystick.core.model.ReconnectRunResult
 import com.locationjoystick.core.model.ReconnectStatus
 import dagger.hilt.android.AndroidEntryPoint
@@ -53,12 +55,17 @@ class ScreenAccessibilityService :
          */
         fun isSupported(sdkInt: Int = Build.VERSION.SDK_INT): Boolean = sdkInt >= Build.VERSION_CODES.R
 
-        /** Rec. 601 luma, the same weights as the bench's gray conversion. */
-        internal fun lumaOf(pixels: IntArray): ByteArray =
-            ByteArray(pixels.size) {
-                val p = pixels[it]
-                ((0.299 * ((p shr 16) and 0xFF) + 0.587 * ((p shr 8) and 0xFF) + 0.114 * (p and 0xFF)).toInt()).toByte()
+        /** Rec. 601 luma of the first [count] [pixels] into [out], the same weights as the bench's gray conversion. */
+        internal fun lumaInto(
+            pixels: IntArray,
+            out: ByteArray,
+            count: Int = pixels.size,
+        ) {
+            for (i in 0 until count) {
+                val p = pixels[i]
+                out[i] = ((0.299 * ((p shr 16) and 0xFF) + 0.587 * ((p shr 8) and 0xFF) + 0.114 * (p and 0xFF)).toInt()).toByte()
             }
+        }
     }
 
     @Inject lateinit var screenCaptureSource: ScreenCaptureSource
@@ -289,11 +296,41 @@ class ScreenAccessibilityService :
     override val gameInFront: Boolean
         get() = reconnectGateOpen(getSystemService(PowerManager::class.java).isInteractive, foregroundPackage)
 
-    override suspend fun captureGrayFrame(): GrayImage? {
+    override suspend fun captureCrops(): GroundFlowFit.Crops? {
         val bitmap = takeScreenshotBitmap() ?: return null
-        val w = bitmap.width
-        val h = bitmap.height
-        return GrayImage(w, h, lumaOf(readPixels(bitmap, 0, h)))
+        val cpu0 = Debug.threadCpuTimeNanos()
+        // A hardware bitmap has no pixel access, so one software copy stays; only the crop rectangles become gray.
+        val soft = if (bitmap.config == Bitmap.Config.HARDWARE) bitmap.copy(Bitmap.Config.ARGB_8888, false) else bitmap
+        try {
+            val cpu1 = Debug.threadCpuTimeNanos()
+            return GroundFlowFit.crops(BitmapGrayFrame(soft)).also {
+                val end = Debug.threadCpuTimeNanos()
+                Log.d(TAG, "tick cpu copy ${(cpu1 - cpu0) / 1000} us, crops ${(end - cpu1) / 1000} us")
+            }
+        } finally {
+            if (soft !== bitmap) soft.recycle()
+            bitmap.recycle()
+        }
+    }
+
+    private class BitmapGrayFrame(
+        private val bitmap: Bitmap,
+    ) : GrayFrame {
+        override val width = bitmap.width
+        override val height = bitmap.height
+        private var argb = IntArray(0)
+
+        override fun read(
+            x: Int,
+            y: Int,
+            w: Int,
+            h: Int,
+            out: ByteArray,
+        ) {
+            if (argb.size < w * h) argb = IntArray(w * h)
+            bitmap.getPixels(argb, 0, w, x, y, w, h)
+            lumaInto(argb, out, w * h)
+        }
     }
 
     private val screenshotPacer =

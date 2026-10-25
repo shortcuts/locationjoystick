@@ -1,7 +1,7 @@
 package com.locationjoystick.core.location
 
 import com.locationjoystick.core.data.SettingsRepository
-import com.locationjoystick.core.model.GrayImage
+import com.locationjoystick.core.model.GroundFlowFit
 import com.locationjoystick.core.model.ReconnectStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +15,7 @@ import javax.inject.Singleton
 /**
  * Bridge between [ScreenAccessibilityService] (in feature:widget:impl) and consumers
  * (the automatic fit). The service binds/unbinds itself; consumers call
- * [captureGrayFrame] which delegates to the live service instance. It also carries the last
+ * [captureCrops] which delegates to the live service instance. It also carries the last
  * reconnect check ([reconnectStatus]) to the widget debug view, in memory only.
  */
 @Singleton
@@ -56,7 +56,7 @@ class ScreenCaptureSource
             ) { accepted, on, path, svc -> accepted && on && path.showsTapToWalk && svc != null }
 
         /**
-         * One 8-bit luma screenshot for the automatic tap-to-walk fit, or null (unbound, disclosure
+         * The fit crops of one screenshot for the automatic tap-to-walk fit, or null (unbound, disclosure
          * not accepted, game not in front, or the screenshot was rejected). Play's Accessibility API
          * policy: no screenshot may be taken before the user accepts the in-app disclosure, and the
          * disclosure names the game in front as the only time frames are taken. The Tap to Walk
@@ -65,11 +65,11 @@ class ScreenCaptureSource
          * check lives here rather than at each call site. No retry, the 3 s cadence already
          * tolerates a missed frame.
          */
-        suspend fun captureGrayFrame(): GrayImage? {
+        suspend fun captureCrops(): GroundFlowFit.Crops? {
             if (!captureAllowed.first()) return null
             val svc = service.value ?: return null
             if (!svc.gameInFront) return null
-            return svc.captureGrayFrame()
+            return svc.captureCrops()
         }
     }
 
@@ -78,5 +78,5 @@ interface ScreenAccessibilityServiceBridge {
     /** Screen on and the game window in front: the only state in which a frame may be taken. */
     val gameInFront: Boolean
 
-    suspend fun captureGrayFrame(): GrayImage?
+    suspend fun captureCrops(): GroundFlowFit.Crops?
 }

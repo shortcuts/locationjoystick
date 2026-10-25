@@ -49,7 +49,7 @@ Screenshots require API 30. Below it no map can exist, so the overlay walks nowh
 
 Play's accessibility policy rejected releases that showed the disclosure only in a settings sub-screen, and rejected a release that let the accessibility service run without an in-app accept. The disclosure is therefore a single full-screen surface, shown in the normal usage flow, immediately before Android's own consent screen.
 
-It names the accessibility API, the data it reads (periodic screenshots while walking with Tap to Walk on and the game in front, and during Reconnect accessory), and the purpose. Play's policy requires the periodic screenshots to be named in this text, in the onboarding card and in the service description. The copy lives in string resources, not here; read it there. Every one of those texts says screenshots are taken only while Pokémon GO is on screen, which `ScreenCaptureSource.captureGrayFrame` enforces.
+It names the accessibility API, the data it reads (periodic screenshots while walking with Tap to Walk on and the game in front, and during Reconnect accessory), and the purpose. Play's policy requires the periodic screenshots to be named in this text, in the onboarding card and in the service description. The copy lives in string resources, not here; read it there. Every one of those texts says screenshots are taken only while Pokémon GO is on screen, which `ScreenCaptureSource.captureCrops` enforces.
 
 Rules that the code must keep:
 
@@ -130,9 +130,18 @@ A tap on the game screen walks to the spot under the finger, out of the box, on 
 
 Accuracy on synthetic frames (unit tests): heading within 2.5 degrees, scale within 5%, tap error under 5% of the tap distance. On the bench (Python prototype, one 8-frame leg per fit, 2026-10-24): heading usually within 8 degrees of the old four-term fit, landing p90 12 to 75 m against that fit. The old fit is itself noisy, so these numbers are not truth.
 
+CPU per tick (Pixel 5, 1080x2340, Pokémon GO in front, thread CPU time from `Debug.threadCpuTimeNanos`, median of 8 to 12 ticks, 2026-10-25). The service logs it as `tick cpu` under `ScreenAccessibilitySvc`.
+
+| Version | Software copy | Gray + crops | Total |
+|---|---|---|---|
+| Before: whole frame to gray, then crops | included below | 113 ms gray, 70 ms crops | 188 ms |
+| After: `GrayFrame.read` per crop rectangle | 22 ms | 101 ms | 123 ms |
+
+The screenshot is a hardware bitmap with no pixel access, so one software copy stays. Only the five crop rectangles (about 13% of the pixels) become gray now; no full-frame gray buffer exists. The remaining cost is mostly the phase-correlation transform per crop, not the gray conversion, so "a few milliseconds" is not met yet.
+
 ### Open work
 
-None scheduled. Ideas that were not needed to finish: tune `FORWARD_RATIO` from the measured fits, real-game crop fixtures for a regression test, a second screen size, pruning the bench of the deleted motion fit, reading only the crop rows from the screenshot, and zoom changes within a walk.
+None scheduled. Ideas that were not needed to finish: tune `FORWARD_RATIO` from the measured fits, real-game crop fixtures for a regression test, a second screen size, pruning the bench of the deleted motion fit, and zoom changes within a walk.
 
 ### Rejected, do not retry
 

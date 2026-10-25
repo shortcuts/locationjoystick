@@ -89,11 +89,10 @@ class AutoFitCoordinator
             val moved = gate && pos != null && lastTick?.let { it.distanceTo(pos) >= MIN_STEP_M } == true
             lastTick = pos
             if (!moved) return endWalk()
-            val frame = screenCaptureSource.captureGrayFrame() ?: return endWalk()
+            val crops = withContext(analysisDispatcher) { screenCaptureSource.captureCrops() } ?: return endWalk()
             val after = locationRepository.currentPosition.value ?: return endWalk()
             val at = LatLng((pos!!.latitude + after.latitude) / 2, (pos.longitude + after.longitude) / 2)
             val now = nowMs()
-            val crops = withContext(analysisDispatcher) { GroundFlowFit.crops(frame) }
             val prev = last
             last = Sample(crops, at, now)
             if (prev == null) return

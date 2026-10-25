@@ -12,7 +12,7 @@ class ScreenAccessibilityServiceTest {
     }
 
     @Test
-    fun lumaOf_weightsEachChannelRec601() {
+    fun lumaInto_weightsEachChannelRec601() {
         val red = 0xFFFF0000.toInt()
         val green = 0xFF00FF00.toInt()
         val blue = 0xFF0000FF.toInt()
@@ -20,9 +20,13 @@ class ScreenAccessibilityServiceTest {
     }
 
     @Test
-    fun lumaOf_ignoresAlpha() {
+    fun lumaInto_ignoresAlpha() {
         assertEquals(listOf(76), lumaValues(intArrayOf(0x00FF0000)))
     }
 
-    private fun lumaValues(pixels: IntArray) = ScreenAccessibilityService.lumaOf(pixels).map { it.toInt() and 0xFF }
+    private fun lumaValues(pixels: IntArray): List<Int> {
+        val out = ByteArray(pixels.size)
+        ScreenAccessibilityService.lumaInto(pixels, out)
+        return out.map { it.toInt() and 0xFF }
+    }
 }

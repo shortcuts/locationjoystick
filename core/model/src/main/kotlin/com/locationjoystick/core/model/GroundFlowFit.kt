@@ -5,14 +5,39 @@ import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.sqrt
 
-/** Row-major 8-bit gray image (luma 0.299R + 0.587G + 0.114B), device pixels. */
+/** A screenshot whose 8-bit gray (luma 0.299R + 0.587G + 0.114B) is read one rectangle at a time, device pixels. */
+interface GrayFrame {
+    val width: Int
+    val height: Int
+
+    /** Writes the [w] x [h] rectangle at ([x], [y]) into [out], row-major. */
+    fun read(
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int,
+        out: ByteArray,
+    )
+}
+
+/** Row-major 8-bit gray image held whole. */
 class GrayImage(
-    val width: Int,
-    val height: Int,
+    override val width: Int,
+    override val height: Int,
     val pixels: ByteArray,
-) {
+) : GrayFrame {
     init {
         require(width > 0 && height > 0 && pixels.size == width * height) { "pixels must be width * height" }
+    }
+
+    override fun read(
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int,
+        out: ByteArray,
+    ) {
+        for (row in 0 until h) pixels.copyInto(out, row * w, (y + row) * width + x, (y + row) * width + x + w)
     }
 }
 
@@ -108,23 +133,25 @@ object GroundFlowFit {
         internal val centres: List<Pair<Double, Double>>,
     )
 
-    fun crops(frame: GrayImage): Crops {
+    fun crops(frame: GrayFrame): Crops {
         val w = frame.width
         val h = frame.height
         val half = (CROP_HALF * w).toInt()
         val side = (2 * half) / DOWNSAMPLE
+        val region = ByteArray(4 * half * half)
         val centres = CROPS.map { (fx, fy) -> fx * w to fy * h }
         val spectra =
             centres.map { (cx, cy) ->
                 val x0 = (cx - half).toInt().coerceIn(0, w - 2 * half)
                 val y0 = (cy - half).toInt().coerceIn(0, h - 2 * half)
+                frame.read(x0, y0, 2 * half, 2 * half, region)
                 val out = FloatArray(side * side)
                 for (y in 0 until side) {
                     for (x in 0 until side) {
                         var sum = 0
                         for (dy in 0 until DOWNSAMPLE) {
-                            val row = (y0 + y * DOWNSAMPLE + dy) * w + x0 + x * DOWNSAMPLE
-                            for (dx in 0 until DOWNSAMPLE) sum += frame.pixels[row + dx].toInt() and 0xFF
+                            val row = (y * DOWNSAMPLE + dy) * 2 * half + x * DOWNSAMPLE
+                            for (dx in 0 until DOWNSAMPLE) sum += region[row + dx].toInt() and 0xFF
                         }
                         out[y * side + x] = sum.toFloat() / (DOWNSAMPLE * DOWNSAMPLE)
                     }
