@@ -68,6 +68,14 @@ object GroundFlowFit {
     private const val MIN_SCALE = 1.5 // px/m (reference): smaller is a static loading screen
     private const val MAX_SCALE = 30.0
     private const val MAX_MEDIAN_PX = 8.0
+    private const val MIN_FLOW_PX = 1.0 // a crop that moved less is the same picture: a loading screen or a popup
+    private const val STORE_MIN_FLOWS = 6
+    private const val STORE_MAX_MEDIAN_PX = 4.0
+    private const val AGREE_HEADING_DEG = 20.0
+    private const val AGREE_SCALE_RATIO = 1.4
+    private const val CHANGE_MIN_MOVES = 3 // a camera change must outlast one bad pair of screenshots
+    private const val CHANGE_MIN_FLOWS = 10
+    private const val CHANGE_MAX_MEDIAN_PX = 2.0
     private const val MAX_ITERS = 30
     private const val OUTLIER_SCALE = 3 * 1.4826
     private const val OUTLIER_FLOOR_PX = 2.0
@@ -140,7 +148,7 @@ object GroundFlowFit {
                     BandFlow(f.fx * DOWNSAMPLE, f.fy * DOWNSAMPLE, f.response, a.centres[i].first, a.centres[i].second)
                 }
             }
-        return LegMove(d, bands)
+        return if (bands.any { hypot(it.fx, it.fy) >= MIN_FLOW_PX }) LegMove(d, bands) else null
     }
 
     /** Heading and lateral scale that best explain [moves] on a [width] x [height] screen, or null when nothing plausible fits. */
@@ -179,6 +187,20 @@ object GroundFlowFit {
         if (x[1] !in MIN_SCALE..MAX_SCALE || med > MAX_MEDIAN_PX) return null
         val heading = ((x[0] + 180.0) % 360.0 + 360.0) % 360.0 - 180.0
         return GroundFit(calibration(heading, x[1]), med, flows.size)
+    }
+
+    /** Whether [fit], made from [moves] moves, may replace the [stored] map (null: none for this screen). */
+    fun replaces(
+        stored: GroundCalibration?,
+        fit: GroundFit,
+        moves: Int,
+    ): Boolean {
+        if (fit.flowCount < STORE_MIN_FLOWS || fit.medianAbsPx > STORE_MAX_MEDIAN_PX) return false
+        if (stored == null) return true
+        val gap = abs(fit.calibration.headingDeg - stored.headingDeg) % 360.0
+        val ratio = fit.calibration.lateralPxPerM / stored.lateralPxPerM
+        if (min(gap, 360.0 - gap) <= AGREE_HEADING_DEG && ratio in 1 / AGREE_SCALE_RATIO..AGREE_SCALE_RATIO) return true
+        return moves >= CHANGE_MIN_MOVES && fit.flowCount >= CHANGE_MIN_FLOWS && fit.medianAbsPx <= CHANGE_MAX_MEDIAN_PX
     }
 
     /** Measured flow minus the flow the trial map predicts, interleaved (x, y) per crop. */

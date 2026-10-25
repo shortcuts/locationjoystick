@@ -43,6 +43,8 @@ class AutoFitCoordinatorTest {
 
     /** The camera the fake game shows. */
     private val camera = GroundFlowFit.calibration(-12.0, 7.0)
+    private var scene = camera
+    private var popup: GrayImage? = null
 
     @Before
     fun setUp() {
@@ -52,7 +54,7 @@ class AutoFitCoordinatorTest {
         locationRepository.setMockMode(MockMode.WALK_TO)
         source = mockk()
         every { source.captureAllowed } returns tapToWalk
-        coEvery { source.captureGrayFrame() } answers { render(camera, locationRepository.currentPosition.value!!) }
+        coEvery { source.captureGrayFrame() } answers { popup ?: render(scene, locationRepository.currentPosition.value!!) }
         settings = mockk(relaxed = true)
         every { settings.getTapToWalkOverlayEnabled() } returns tapToWalk
         every { settings.getGuidedPath() } returns flowOf(GuidedPath.POKEMON_GO)
@@ -131,6 +133,38 @@ class AutoFitCoordinatorTest {
             step(c, 0.0, 60.0)
             step(c, 0.0, 4.0)
             assertNull(stored.value)
+        }
+
+    private fun storedCamera() = StoredGroundCalibration(camera, W, H, 1L, 10, 0.5).also { stored.value = it }
+
+    @Test
+    fun `a walk over a static screen keeps the stored map`() =
+        runTest {
+            val keep = storedCamera()
+            popup = GrayImage(W, H, ByteArray(W * H) { (it % 7 * 30).toByte() })
+            val c = coordinator()
+            primeAndWalk(c, 70.0, 8)
+            assertEquals(keep, stored.value)
+        }
+
+    @Test
+    fun `a two-move walk under another camera keeps the stored map`() =
+        runTest {
+            val keep = storedCamera()
+            scene = GroundFlowFit.calibration(60.0, 7.0)
+            val c = coordinator()
+            primeAndWalk(c, 70.0, 3)
+            assertEquals(keep, stored.value)
+        }
+
+    @Test
+    fun `a camera twist replaces the stored map within one walk`() =
+        runTest {
+            storedCamera()
+            scene = GroundFlowFit.calibration(60.0, 7.0)
+            val c = coordinator()
+            primeAndWalk(c, 70.0, 5)
+            assertEquals(0.0, angleGap(60.0, stored.value!!.calibration.headingDeg), 2.5)
         }
 
     private fun angleGap(
