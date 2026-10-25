@@ -192,6 +192,16 @@ class AutoFitCoordinatorTest {
             assertEquals(0.0, angleGap(60.0, stored.value!!.calibration.headingDeg), 2.5)
         }
 
+    @Test
+    fun `a camera twist in the middle of a walk stores the second camera`() =
+        runTest {
+            val c = coordinator()
+            primeAndWalk(c, 70.0, 4)
+            scene = GroundFlowFit.calibration(60.0, 7.0)
+            repeat(5) { step(c, 70.0, 4.0) }
+            assertEquals(0.0, angleGap(60.0, stored.value!!.calibration.headingDeg), 2.5)
+        }
+
     private fun angleGap(
         a: Double,
         b: Double,

@@ -124,7 +124,7 @@ A tap on the game screen walks to the spot under the finger, out of the box, on 
 - Forward scale and perspective are fixed ratios of the lateral scale (`FORWARD_RATIO`, `PERSPECTIVE_RATIO`). The game camera's pitch does not change with the place, so these ratios held across the good bench fits (0.39 to 0.44, and -1.3e-4 to -2.5e-4). The lateral scale varied 2x across places and sessions, which is why it is measured and not tabled.
 - The feet sit at a fixed screen fraction (`FEET_X`, `FEET_Y`). The game keeps the player centred.
 - A fresh install has no stored map. Taps then use the provisional map (`PROVISIONAL_HEADING_DEG`, `PROVISIONAL_LATERAL_PX_PER_M`). The walk the tap starts is measured, and the widget service re-aims the same tap from its tap-time position once a new map is stored and moves the target by at least `REAIM_MIN_METERS`. The same re-aim corrects a stored heading after a camera twist.
-- `AutoFitCoordinator` fits the moves of the current walk only (at most `FLOW_WINDOW_MOVES`), and needs two moves before it stores a map. A stop, a teleport-speed step or a closed gate ends the walk and drops its crops. So a twist between walks never mixes two cameras.
+- `AutoFitCoordinator` fits the moves of the current walk only (at most `FLOW_WINDOW_MOVES`), and needs two moves before it stores a map. A stop, a teleport-speed step or a closed gate ends the walk and drops its crops. So a twist between walks never mixes two cameras. A twist or pinch inside a walk shows as a move whose residual against the running fit is far above the fit's median (`GroundFlowFit.changesCamera`); the coordinator then drops the earlier moves and refits from the new one. The thresholds are unmeasured guesses.
 - A walk replaces the stored map only through `GroundFlowFit.replaces`: the fit must be self-consistent (flow count, residual); one that agrees with the stored map is written only when heading drifts over `REWRITE_HEADING_DEG` or scale over `REWRITE_SCALE_FRACTION`, so a walk on an unchanged camera writes once, and one that disagrees (a camera change) needs more moves and a tighter residual. `move` drops screenshot pairs where no crop moved (loading screens, popups). The thresholds are only partly measured: Walk and Slow Walk are covered by the rows above. Tests use PokeMiners loading and warning screens (`core/model/src/test/resources/pokeminers/`) as static-frame fixtures.
 - The stored record is per device, never exported, and rejected when the display size differs. Version 2 of the record rejects maps from the old motion fit.
 
@@ -141,7 +141,7 @@ The screenshot is a hardware bitmap with no pixel access, so one software copy s
 
 ### Open work
 
-None scheduled. Ideas that were not needed to finish: tune `FORWARD_RATIO` from the measured fits, real-game crop fixtures for a regression test, a second screen size, pruning the bench of the deleted motion fit, and zoom changes within a walk.
+None scheduled. Ideas that were not needed to finish: tune `FORWARD_RATIO` from the measured fits, real-game crop fixtures for a regression test, a second screen size, pruning the bench of the deleted motion fit, reading only the crop rows from the screenshot, and measuring the camera-change thresholds.
 
 ### Rejected, do not retry
 

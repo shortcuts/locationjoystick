@@ -103,6 +103,8 @@ object GroundFlowFit {
     private const val CHANGE_MIN_MOVES = 3 // a camera change must outlast one bad pair of screenshots
     private const val CHANGE_MIN_FLOWS = 10
     private const val CHANGE_MAX_MEDIAN_PX = 2.0
+    private const val CAMERA_JUMP_FACTOR = 3.0 // a move this many times worse than the fit's median came from another camera
+    private const val CAMERA_JUMP_FLOOR_PX = 4.0
     private const val MAX_ITERS = 30
     private const val OUTLIER_SCALE = 3 * 1.4826
     private const val OUTLIER_FLOOR_PX = 2.0
@@ -216,6 +218,18 @@ object GroundFlowFit {
         if (x[1] !in MIN_SCALE..MAX_SCALE || med > MAX_MEDIAN_PX) return null
         val heading = ((x[0] + 180.0) % 360.0 + 360.0) % 360.0 - 180.0
         return GroundFit(calibration(heading, x[1]), med, flows.size)
+    }
+
+    /** Whether [move] disagrees with [fit] so much that the camera changed between the moves of [fit] and [move]. */
+    fun changesCamera(
+        fit: GroundFit,
+        move: LegMove,
+        width: Int,
+        height: Int,
+    ): Boolean {
+        val x = doubleArrayOf(fit.calibration.headingDeg, fit.calibration.lateralPxPerM)
+        val r = residuals(x, move.bands.map { move.d to it }, width, height)
+        return median(DoubleArray(r.size) { abs(r[it]) }) > maxOf(CAMERA_JUMP_FACTOR * fit.medianAbsPx, CAMERA_JUMP_FLOOR_PX)
     }
 
     /** Whether [fit], made from [moves] moves, may replace the [stored] map (null: none for this screen). */

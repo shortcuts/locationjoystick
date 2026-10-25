@@ -5,6 +5,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.CalibrationWalkMath
+import com.locationjoystick.core.model.GroundFit
 import com.locationjoystick.core.model.GroundFlowFit
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.LegMove
@@ -50,6 +51,7 @@ class AutoFitCoordinator
         private var lastTick: LatLng? = null
         private var last: Sample? = null
         private val moves = ArrayDeque<LegMove>()
+        private var runningFit: GroundFit? = null
 
         private class Sample(
             val crops: GroundFlowFit.Crops,
@@ -101,10 +103,15 @@ class AutoFitCoordinator
                 return
             }
             val move = GroundFlowFit.move(prev.crops, crops, CalibrationWalkMath.offset(prev.at, at, prev.at.latitude)) ?: return
+            if (runningFit?.let { GroundFlowFit.changesCamera(it, move, crops.width, crops.height) } == true) {
+                moves.clear() // a pinch or twist: the moves before it belong to another camera
+                runningFit = null
+            }
             moves.addLast(move)
             while (moves.size > AppConstants.TapToWalkConstants.FLOW_WINDOW_MOVES) moves.removeFirst()
             if (moves.size < MIN_MOVES) return
             val fit = withContext(analysisDispatcher) { GroundFlowFit.fit(moves.toList(), crops.width, crops.height) } ?: return
+            runningFit = fit
             val keep = settingsRepository.getGroundCalibration().first()?.takeIf { it.matches(crops.width, crops.height) }
             if (!GroundFlowFit.replaces(keep?.calibration, fit, moves.size)) return
             Log.d(TAG, "flow fit ${fit.calibration.headingDeg} deg, ${fit.calibration.lateralPxPerM} px/m from ${moves.size} moves")
@@ -124,6 +131,7 @@ class AutoFitCoordinator
         private fun endWalk() {
             last = null
             moves.clear()
+            runningFit = null
         }
 
         private companion object {
