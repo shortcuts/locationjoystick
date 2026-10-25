@@ -81,7 +81,9 @@ Accessibility services running in the background can be detected by some games. 
 
 ## Ground map: flow-measured
 
-Status (2026-10-24): first draft on branch `tap-to-walk-flow-fit`. Unit tests pass on synthetic frames. Not yet measured on the device or against the gate. The backlog epic `tap-to-walk-flow-fit` lists the work left to reach feature complete. Agents: update this section and that epic after every session, kills included.
+Status (2026-10-25): the gate runs on the device through `make tap-smoke`, and the first row fails the bar. Pixel 5, 1080x2340, build of this branch, New York (Times Square), normal scenario: 12 scored, 0 rejected, 8 ambiguous, 1 unverified, p50 21.4 m, p90 23.8 m, re-aim median 0.0 m. Verdict FAIL (`p90_over_15m`). The other 19 locations and the six extra rows (fresh, twist, zoom at New York and Reykjavik) are not run: one row takes about an hour. Fresh, twist and zoom code exists in `scripts/tap_smoke.py` and is not proven live. The backlog epic `tap-to-walk-flow-fit` lists the work left. Agents: update this section and that epic after every session, kills included.
+
+An earlier run on 2026-10-25 scored 0 taps because the phone still ran the APK of 2026-10-23 (old learning-walk app). Always run `./gradlew installDebug` from the branch before the gate, then restart spoofing and re-enable the Control API (the port changes on each toggle).
 
 ### Goal
 
