@@ -66,30 +66,43 @@ Pass: the first sample after Resume equals the steered position and later sample
 
 ## Tap-to-walk global smoke gate
 
-On-device regression gate for tap-to-walk landing: 20 fixed locations across the globe, 12 scored taps each.
-It drives the bench (`scripts/registration_bench.py` `walkcap`, `persp`, `taptrials`) per location, so scoring is the
-same masked-NCC landing error as the bench.
+On-device gate for tap-to-walk landing with the flow-measured ground map. It drives the real app: each tap goes
+through the tap-to-walk overlay with `adb input tap`, and the script reads where the app walks from the Control API.
 
 ```bash
 export LJ_CONTROL_API_KEY=... LJ_CONTROL_API_HOST=<phone ip>:<port>
-make tap-smoke                    # all 20 locations, roughly 3 hours
-make tap-smoke SERIAL=<adb serial> ONLY="1 2"   # a subset; a subset never meets the 19 of 20 bar
-make tap-smoke-selfcheck          # pure verdict logic, no device
+make tap-smoke                                  # 20 locations, normal scenario
+make tap-smoke SERIAL=<adb serial> ONLY="1"     # one row
+make tap-smoke SCENARIOS=all                    # adds fresh, twist and zoom at locations 1 and 7
+make tap-smoke-selfcheck                        # pure verdict logic, no device
 ```
 
 - **Throwaway account only.** The run teleports across the globe through the Control API (`POST /teleport`, so
   `TeleportUseCase` persists last location and cooldown). The script refuses to start without
   `--ack-throwaway-account`, which `make tap-smoke` passes: running it is the acknowledgement. Never use the main account.
-- **Cooldown.** The app's cooldown is advisory. By default the run does not wait; pass `--respect-cooldown` to the script
-  to sleep the advised time before each teleport. `--settle <s>` (default 45) is the wait for tiles after each teleport.
-- **Per location.** Teleport, wait for the position and tiles, walk eight 40 m legs (bearings 0, 180, 90, 270, 45, 225, 135, 315) from the host, fit the
-  perspective ground map, then score 12 taps 5 to 40 m away. Tap order is seeded, so a failure reproduces.
-- **Pass bar.** A location passes with at least 11 of 12 scored taps within 15 m. Ambiguous matches are skipped, not
-  counted. A rejected fit (`no_calibration`) or fewer than 12 scored taps (`insufficient_scored`) fails; so do
-  more than one miss (`below_bar`). The suite passes with at least 19 of 20 locations. Exit code is 0 only on suite PASS.
+- **Truth is the walk, not the reference camera.** After the app walks to its own target, the script measures where the
+  tapped pixel ended up relative to the feet. That residual is small, so a noisy reference ruler scales only a few
+  metres. Scoring the target against the reference camera would put the whole tap distance through the noisy fit.
+- **Per location.** Teleport, wait for tiles, measure the reference ruler (eight 40 m legs, then the perspective fit), walk
+  one 40 m leg north so the app stores its own map, then tap 12 scored points 5 to 40 m away. Each tap reopens the overlay,
+  because it closes after every tap. A tap is rejected when the app starts no walk within 3 s.
+- **Pass bar.** A row passes when the 90th percentile error is at most 15 m, at most 20% of taps are rejected, and 12 taps
+  score. Ambiguous taps (no pixel match) are skipped and counted. The suite passes with at least 19 of 20 normal rows.
+  Every extra scenario row must also pass. A failing extra row is recorded and is not retried.
 - **Unverified taps are misses.** A tap whose match confidence is too low to confirm the landing (NCC below 0.4) counts as a
   miss, not as unscored. Its error is reported but never passes. Skipping it would let a weak verifier raise the pass rate,
-  so the gate does not do that. Ambiguous taps (no match at all) are the only ones skipped, and they stay visible as a count.
+  so the gate does not do that.
+- **Scenarios.** `fresh` forgets the stored map after the reference legs and taps with no app leg, so the provisional map and
+  the re-aim path run. `twist` rotates the camera 45 degrees after the app leg. `zoom` pinches out to 1.6x before the reference.
+  Both gestures are two-finger input sent with `sendevent`, because `adb shell input` has no multi-touch.
+- **Locations.** `scripts/tap_smoke_locations.json`, ordered `{name, lat, lon, kind}`, committed and never regenerated at
+  run time. To add one, append an entry (keep names and coordinates unique) and update the bar constants in
+  `scripts/tap_smoke.py` and `scripts/test_tap_smoke.py` if the count changes. Rural and polar entries may fail
+  honestly: record the result, do not tune thresholds to pass.
+- **Report.** `scripts/registration-bench/smoke/<UTC stamp>/report.md` (and `report.json`): one row per run, with
+  location, device, resolution, density, scenario, scored, rejected, ambiguous, unverified and prior-anchor fallback counts,
+  p50 and p90 error in metres, the median re-aim distance, verdict and reason, then
+  `TAP SMOKE: <p>/<n> locations pass (bar 19/20) -> PASS|FAIL`. Per-location frames live beside it.
 - **Locations.** `scripts/tap_smoke_locations.json`, ordered `{name, lat, lon, kind}`, committed and never regenerated at
   run time. To add one, append an entry (keep names and coordinates unique) and update the bar constants in
   `scripts/tap_smoke.py` and `scripts/test_tap_smoke.py` if the count changes. Rural and polar entries may fail

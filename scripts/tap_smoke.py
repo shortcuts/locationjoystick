@@ -20,6 +20,7 @@ import re
 import statistics
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 from datetime import datetime, timezone
@@ -40,6 +41,8 @@ STEP_TIMEOUT_S = {"walkcap": 1800, "persp": 600}
 LEG_BEARINGS = ["0", "180", "90", "270", "45", "225", "135", "315"]
 # UI strings the device path finds by content description (feature/widget/impl/src/main/res/values/strings.xml).
 TAP_ICON_DESC, EXPAND_DESC, CANCEL_DESC = "Tap to walk", "Expand widget", "Cancel tap-to-walk"
+# DataStore key of the stored flow map (core/datastore AppPreferencesDataSource).
+TAP_CALIBRATION_KEY = "tap_to_walk_ground_calibration"
 
 
 # ---- pure logic (pinned by test_tap_smoke.py) ----
@@ -161,13 +164,13 @@ def _tap(serial, xy):
     subprocess.run(["adb", "-s", serial, "shell", "input", "tap", str(int(xy[0])), str(int(xy[1]))], check=True)
 
 
-def _node_centre(serial, desc):
-    """Centre of the first UI node with this content description, or None."""
-    xml = subprocess.run(["adb", "-s", serial, "shell", "uiautomator", "dump", "/dev/tty"], check=True,
-                         capture_output=True, text=True).stdout
+def _node_centre(serial, desc, attr="content-desc"):
+    """Centre of the first UI node whose attr equals desc, or None. --windows sees the overlay widget."""
+    _adb(serial, "uiautomator", "dump", "--windows", "/sdcard/ljui.xml")
+    xml = _adb(serial, "cat", "/sdcard/ljui.xml")
     for node in re.findall(r"<node [^>]*>", xml):
         attrs = dict(re.findall(r'([\w-]+)="([^"]*)"', node))
-        if attrs.get("content-desc") == desc:
+        if attrs.get(attr) == desc:
             x1, y1, x2, y2 = map(int, re.findall(r"\d+", attrs["bounds"]))
             return (x1 + x2) // 2, (y1 + y2) // 2
     return None
@@ -189,6 +192,74 @@ def open_overlay(serial):
     time.sleep(1)
     if _node_centre(serial, CANCEL_DESC) is None:
         raise RuntimeError("tap-to-walk overlay did not open")
+
+
+def _varint(b, i):
+    value = shift = 0
+    while True:
+        c = b[i]
+        i += 1
+        value |= (c & 0x7F) << shift
+        shift += 7
+        if not c & 0x80:
+            return value, i
+
+
+def _map_entry_key(entry):
+    """The key string of a MapEntry, the only message in the file whose fields are all length-delimited."""
+    i = 0
+    while i < len(entry):
+        tag, i = _varint(entry, i)
+        n, i = _varint(entry, i)
+        if tag >> 3 == 1:
+            return entry[i:i + n].decode()
+        i += n
+    return None
+
+
+def drop_pref(data, key):
+    """Removes one map entry from a DataStore PreferencesMap (field 1 = repeated MapEntry)."""
+    out, i, removed = bytearray(), 0, False
+    while i < len(data):
+        start = i
+        tag, i = _varint(data, i)
+        if tag & 7 == 0:
+            _, i = _varint(data, i)
+            out += data[start:i]
+        elif tag & 7 == 2:
+            n, i = _varint(data, i)
+            entry = data[i:i + n]
+            i += n
+            if tag >> 3 == 1 and _map_entry_key(entry) == key:
+                removed = True
+            else:
+                out += data[start:i]
+        else:
+            raise ValueError(f"unexpected wire type {tag & 7} in DataStore file")
+    if not removed:
+        raise RuntimeError(f"no {key!r} entry in the DataStore file")
+    return bytes(out)
+
+
+def forget_stored_map(serial, host, key, loc, settle):
+    """Forces the app to forget its stored map, then starts spoofing again at the same place."""
+    pkg, path = "com.locationjoystick.app", "files/datastore/app_preferences.preferences_pb"
+    _adb(serial, "am", "force-stop", pkg)
+    raw = subprocess.run(["adb", "-s", serial, "exec-out", "run-as", pkg, "cat", path], check=True,
+                         capture_output=True).stdout
+    local = Path(tempfile.mkdtemp()) / "prefs.pb"
+    local.write_bytes(drop_pref(raw, TAP_CALIBRATION_KEY))
+    subprocess.run(["adb", "-s", serial, "push", str(local), "/data/local/tmp/ljprefs.pb"], check=True,
+                   capture_output=True)
+    _adb(serial, "run-as", pkg, "cp", "/data/local/tmp/ljprefs.pb", path)
+    _adb(serial, "am", "start", "-n", f"{pkg}/.MainActivity")
+    time.sleep(3)
+    if _api(host, key, "GET", "/state")["spoofState"] != "RUNNING":
+        start = _node_centre(serial, "Start", attr="text")
+        if start is None:
+            raise RuntimeError("Start button not on screen")
+        _tap(serial, start)
+    teleport_and_settle(host, key, loc, settle, respect_cooldown=False)
 
 
 def _frame(serial, path):
@@ -244,7 +315,8 @@ def candidate_taps(serial, cal):
     import registration_bench as rb
 
     w, h = rb._device_size(serial)
-    pts = [(rb._sx(x, w), rb._sy(y, h)) for x in np.linspace(150, 930, 10) for y in np.linspace(1000, 1900, 19)]
+    # Dense on purpose: a 50 px grid found no 5 to 40 m point for the 2026-10-25 New York ruler (about 3 px per m).
+    pts = [(rb._sx(x, w), rb._sy(y, h)) for x in np.arange(150, 931, 20) for y in np.arange(1000, 1901, 10)]
     random.Random(0).shuffle(pts)
     return [p for p in pts if rb.TRIAL_MIN_M <= math.hypot(*rb.tap_to_ground_persp(cal, p)) <= MAX_M]
 
@@ -302,7 +374,10 @@ def run_row(py, serial, host, key, loc, i, scenario, out, settle, respect_cooldo
             rb._twist(serial, rb.pinch_events(cx, cy, rb.PINCH_BASE_PX, rb.PINCH_BASE_PX * ZOOM))
             undo.append(rb.pinch_events(cx, cy, rb.PINCH_BASE_PX * ZOOM, rb.PINCH_BASE_PX))
             cal = reference(py, serial, d / "reference_zoomed")
-        app_leg(host, key, loc)
+        if scenario == "fresh":
+            forget_stored_map(serial, host, key, loc, settle)
+        else:
+            app_leg(host, key, loc)
         if scenario == "twist":
             rb._twist(serial, rb.twist_events(cx, cy, 250, 0.0, TWIST_DEG))
             undo.append(rb.twist_events(cx, cy, 250, TWIST_DEG, -TWIST_DEG))

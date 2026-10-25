@@ -93,6 +93,25 @@ def test_prior_fallbacks_counts_the_bench_fallback_lines():
     assert ts.prior_fallbacks("feet pixel detected: 540 1400\n") == 0
 
 
+def _pref_entry(key, value):
+    """One DataStore PreferencesMap entry holding a string value (lengths stay under 128 bytes)."""
+    k, v = key.encode(), value.encode()
+    inner = bytes([0x2A, len(v)]) + v
+    body = bytes([0x0A, len(k)]) + k + bytes([0x12, len(inner)]) + inner
+    return bytes([0x0A, len(body)]) + body
+
+
+def test_drop_pref_removes_only_the_named_entry():
+    data = _pref_entry("a", "1") + _pref_entry(ts.TAP_CALIBRATION_KEY, "2") + _pref_entry("b", "3")
+    assert ts.drop_pref(data, ts.TAP_CALIBRATION_KEY) == _pref_entry("a", "1") + _pref_entry("b", "3")
+    try:
+        ts.drop_pref(_pref_entry("a", "1"), ts.TAP_CALIBRATION_KEY)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("missing key must raise")
+
+
 def test_report_line_has_scenario_and_rate_columns():
     row = {"index": 1, "name": "X", "lat": 1.0, "lon": 2.0, "kind": "dense", "device": "P", "resolution": "1x2",
            "density": "420", "scenario": "normal", "scored": 12, "rejected": 1, "ambiguous": 2, "unverified": 1,
