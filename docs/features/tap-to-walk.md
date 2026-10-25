@@ -81,7 +81,7 @@ Accessibility services running in the background can be detected by some games. 
 
 ## Ground map: flow-measured
 
-Status (2026-10-24): first draft on branch `tap-to-walk-flow-fit`. Unit tests pass on synthetic frames. Not yet measured on the device or against the gate. The backlog epic `tap-to-walk-flow-fit` lists the work left to reach feature complete. Agents: update this section and that epic after every session, kills included.
+Status (2026-10-25): first draft on branch `tap-to-walk-flow-fit`. Unit tests pass on synthetic frames. A weak walk no longer replaces a stored map (`GroundFlowFit.replaces`, thresholds unmeasured). Not yet measured on the device or against the gate. The backlog epic `tap-to-walk-flow-fit` lists the work left to reach feature complete. Agents: update this section and that epic after every session, kills included.
 
 ### Goal
 
