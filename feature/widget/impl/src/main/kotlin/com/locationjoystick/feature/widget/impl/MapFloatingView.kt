@@ -865,7 +865,7 @@ private fun BoxScope.OverlayPasteCoordinatesSheet(
 }
 
 @Composable
-private fun BoxScope.TapActionPanel(
+internal fun BoxScope.TapActionPanel(
     tap: LatLng,
     isRouteReplay: Boolean,
     isEphemeralReplay: Boolean,
@@ -904,6 +904,7 @@ private fun BoxScope.TapActionPanel(
                         R.string.map_floating_move_to_this_location
                     },
                 ),
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f),
             )
