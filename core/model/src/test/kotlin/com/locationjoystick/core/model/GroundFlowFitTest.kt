@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
+import javax.imageio.ImageIO
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.floor
@@ -109,6 +110,57 @@ class GroundFlowFitTest {
         val c = GroundFlowFit.crops(still)
         val moves = (0 until 3).mapNotNull { GroundFlowFit.move(c, c, GroundOffset(4.0, 0.0)) }
         assertNull(GroundFlowFit.fit(moves, w, h))
+    }
+
+    /** A PokeMiners loading or warning screen stretched over the phone screen: what the game shows while it is not moving. */
+    private fun fixtureScreen(name: String): GrayImage {
+        val img = ImageIO.read(javaClass.getResourceAsStream("/pokeminers/$name")!!)
+        val px = ByteArray(w * h)
+        for (y in 0 until h) {
+            for (x in 0 until w) {
+                val rgb = img.getRGB(x * img.width / w, y * img.height / h)
+                px[y * w + x] = (0.299 * (rgb shr 16 and 0xFF) + 0.587 * (rgb shr 8 and 0xFF) + 0.114 * (rgb and 0xFF)).toInt().toByte()
+            }
+        }
+        return GrayImage(w, h, px)
+    }
+
+    @Test
+    fun loadingAndWarningScreensGiveNoMove() {
+        val names = (1..6).map { "warning_screen_$it.png" } + "loading_0_215_0.png"
+        for (name in names) {
+            val c = GroundFlowFit.crops(fixtureScreen(name))
+            assertNull(name, GroundFlowFit.move(c, c, GroundOffset(4.0, 0.0)))
+        }
+    }
+
+    private fun fit(
+        heading: Double,
+        flows: Int = 12,
+        median: Double = 1.0,
+        scale: Double = 7.0,
+    ) = GroundFit(GroundFlowFit.calibration(heading, scale), median, flows)
+
+    @Test
+    fun withoutAStoredMapAGoodFitIsKeptAndAWeakOneIsNot() {
+        assertEquals(true, GroundFlowFit.replaces(null, fit(-12.0), 2))
+        assertEquals(false, GroundFlowFit.replaces(null, fit(-12.0, flows = 4), 2))
+        assertEquals(false, GroundFlowFit.replaces(null, fit(-12.0, median = 5.0), 2))
+    }
+
+    @Test
+    fun aFitThatAgreesWithTheStoredMapRefreshesIt() {
+        val stored = GroundFlowFit.calibration(-12.0, 7.0)
+        assertEquals(true, GroundFlowFit.replaces(stored, fit(-3.0, scale = 8.0), 2))
+    }
+
+    @Test
+    fun aDisagreeingFitReplacesOnlyWhenTheWalkIsLongAndTight() {
+        val stored = GroundFlowFit.calibration(-12.0, 7.0)
+        assertEquals(false, GroundFlowFit.replaces(stored, fit(60.0), 2))
+        assertEquals(false, GroundFlowFit.replaces(stored, fit(60.0, median = 3.0), 4))
+        assertEquals(false, GroundFlowFit.replaces(stored, fit(-12.0, scale = 14.0), 2))
+        assertEquals(true, GroundFlowFit.replaces(stored, fit(60.0), 3))
     }
 
     @Test

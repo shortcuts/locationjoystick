@@ -81,7 +81,7 @@ Accessibility services running in the background can be detected by some games. 
 
 ## Ground map: flow-measured
 
-Status (2026-10-24): first draft on branch `tap-to-walk-flow-fit`. Unit tests pass on synthetic frames. Not yet measured on the device or against the gate. The backlog epic `tap-to-walk-flow-fit` lists the work left to reach feature complete. Agents: update this section and that epic after every session, kills included.
+Status (2026-10-25): first draft on branch `tap-to-walk-flow-fit`. Unit tests pass on synthetic frames. A weak walk no longer replaces a stored map (`GroundFlowFit.replaces`, thresholds unmeasured). Not yet measured on the device or against the gate. The backlog epic `tap-to-walk-flow-fit` lists the work left to reach feature complete. Agents: update this section and that epic after every session, kills included.
 
 ### Goal
 
@@ -104,6 +104,7 @@ A tap on the game screen walks to the spot under the finger, out of the box, on 
 - The feet sit at a fixed screen fraction (`FEET_X`, `FEET_Y`). The game keeps the player centred.
 - A fresh install has no stored map. Taps then use the provisional map (`PROVISIONAL_HEADING_DEG`, `PROVISIONAL_LATERAL_PX_PER_M`). The walk the tap starts is measured, and the widget service re-aims the same tap from its tap-time position once a new map is stored and moves the target by at least `REAIM_MIN_METERS`. The same re-aim corrects a stored heading after a camera twist.
 - `AutoFitCoordinator` fits the moves of the current walk only (at most `FLOW_WINDOW_MOVES`), and needs two moves before it stores a map. A stop, a teleport-speed step or a closed gate ends the walk and drops its crops. So a twist between walks never mixes two cameras.
+- A walk replaces the stored map only through `GroundFlowFit.replaces`: the fit must be self-consistent (flow count, residual); one that agrees with the stored map refreshes it, and one that disagrees (a camera change) needs more moves and a tighter residual. `move` drops screenshot pairs where no crop moved (loading screens, popups). The thresholds are unmeasured guesses; tune them from the device gate. Tests use PokeMiners loading and warning screens (`core/model/src/test/resources/pokeminers/`) as static-frame fixtures.
 - The stored record is per device, never exported, and rejected when the display size differs. Version 2 of the record rejects maps from the old motion fit.
 
 Accuracy on synthetic frames (unit tests): heading within 2.5 degrees, scale within 5%, tap error under 5% of the tap distance. On the bench (Python prototype, one 8-frame leg per fit, 2026-10-24): heading usually within 8 degrees of the old four-term fit, landing p90 12 to 75 m against that fit. The old fit is itself noisy, so these numbers are not truth. The device gate is the next step.

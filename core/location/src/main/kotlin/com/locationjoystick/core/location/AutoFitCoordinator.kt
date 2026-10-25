@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -112,6 +113,8 @@ class AutoFitCoordinator
             while (moves.size > AppConstants.TapToWalkConstants.FLOW_WINDOW_MOVES) moves.removeFirst()
             if (moves.size < MIN_MOVES) return
             val fit = withContext(analysisDispatcher) { GroundFlowFit.fit(moves.toList(), crops.width, crops.height) } ?: return
+            val keep = settingsRepository.getGroundCalibration().first()?.takeIf { it.matches(crops.width, crops.height) }
+            if (!GroundFlowFit.replaces(keep?.calibration, fit, moves.size)) return
             Log.d(TAG, "flow fit ${fit.calibration.headingDeg} deg, ${fit.calibration.lateralPxPerM} px/m from ${moves.size} moves")
             settingsRepository.setGroundCalibration(
                 StoredGroundCalibration(
