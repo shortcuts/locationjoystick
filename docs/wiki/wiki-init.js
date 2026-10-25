@@ -38,6 +38,18 @@
     ] },
   ];
 
+  var GROUP_ICONS = {'Start': '<path d=\'M3 8.5 8 3l5 5.5M4.5 7.5V13h7V7.5\'/>',
+    'Guides': '<path d=\'M3 3.5h4a1 1 0 0 1 1 1V13a1 1 0 0 0-1-1H3zM13 3.5H9a1 1 0 0 0-1 1V13a1 1 0 0 1 1-1h4z\'/>',
+    'Features': '<path d=\'M8 2l1.8 3.7 4 .6-2.9 2.8.7 4L8 11.2 4.4 13.1l.7-4L2.200 6.300l4-.6z\'/>',
+    'Configure': '<path d=\'M3 5h10M3 11h10\'/><circle cx=\'6\' cy=\'5\' r=\'1.5\'/><circle cx=\'10\' cy=\'11\' r=\'1.5\'/>',
+    'Help': '<circle cx=\'8\' cy=\'8\' r=\'5.5\'/><path d=\'M6.300 6.300a1.800 1.800 0 1 1 2.500 1.700c-.5.300-.8.700-.8 1.200M8 11.300v.2\'/>',
+    'About': '<circle cx=\'8\' cy=\'8\' r=\'5.5\'/><path d=\'M8 7.500v3.500M8 5.200v.1\'/>',
+    'Community': '<circle cx=\'6\' cy=\'6\' r=\'2\'/><path d=\'M2.500 12.500c0-2 1.600-3.200 3.500-3.200s3.500 1.200 3.500 3.200M10.500 4.300a2 2 0 0 1 0 3.400M11.500 9.500c1.200.4 2 1.400 2 3\'/>'};
+  var svg = function (body) {
+    return '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + body + '</svg>';
+  };
+  var EXT_ICON = svg('<path d="M6.500 3.500h-3v9h9v-3M9 3h4v4M13 3 7.500 8.500"/>');
+
   var EXT_ITEMS = [
     { href: 'https://github.com/shortcuts/locationjoystick/blob/main/CONTRIBUTING.md', label: 'Contributing' },
     { href: 'https://github.com/shortcuts/locationjoystick/issues/new?labels=enhancement', label: 'Request a feature' },
@@ -49,16 +61,17 @@
 
   var navHtml = NAV_ITEMS.map(function (g) {
     var gid = 'nav-group-' + g.group.toLowerCase();
-    return '<div role="group" aria-labelledby="' + gid + '"><span class="nav-group" id="' + gid + '">' + g.group + '</span>' + g.items.map(function (item) {
+    return '<div role="group" aria-labelledby="' + gid + '"><span class="nav-group" id="' + gid + '">' + svg(GROUP_ICONS[g.group]) + g.group + '</span>' + g.items.map(function (item) {
       var cls = item.href === currentFile ? ' class="active" aria-current="page"' : '';
       return '<a href="' + item.href + '"' + cls + '>' + item.label + '</a>';
     }).join('') + '</div>';
   }).join('');
 
   navHtml += '<span class="nav-sep"></span>';
-  navHtml += EXT_ITEMS.map(function (item) {
-    return '<a class="nav-ext" href="' + item.href + '" target="_blank" rel="noopener">' + item.label + '</a>';
-  }).join('');
+  navHtml += '<div role="group" aria-labelledby="nav-group-community"><span class="nav-group" id="nav-group-community">' + svg(GROUP_ICONS.Community) + 'Community</span>'
+    + EXT_ITEMS.map(function (item) {
+      return '<a class="nav-ext" href="' + item.href + '" target="_blank" rel="noopener">' + item.label + EXT_ICON + '</a>';
+    }).join('') + '</div>';
 
   var aside = '<aside class="sidebar">'
     + '<a class="brand" href="index.html">'
