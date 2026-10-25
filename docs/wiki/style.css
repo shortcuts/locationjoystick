@@ -175,6 +175,13 @@ h4{
   margin:22px 0 6px;
 }
 
+h3.item,h4.item{
+  font-size:0.95rem;
+  margin:16px 0 6px;
+  padding-top:12px;
+  border-top:1px solid var(--rule);
+}
+
 h5{
   font-size:0.85rem;
   font-weight:600;
