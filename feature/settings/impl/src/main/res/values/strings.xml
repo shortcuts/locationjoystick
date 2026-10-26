@@ -40,7 +40,7 @@
     <string name="settings_favorites_routes_show_hot_routes">"Show hot routes"</string>
     <string name="settings_favorites_routes_show_hot_routes_desc">"Adds ready-made routes to your routes list. Select which ones to include below."</string>
     <string name="settings_favorites_routes_planting_radius_m">"Planting circle radius (m)"</string>
-    <string name="settings_gps_section_location_randomness">"Location Randomness"</string>
+    <string name="settings_gps_section_location_randomness">"Location randomness"</string>
     <string name="settings_gps_section_adds_small_random_shifts_to_your">"Adds small random shifts to your fake location, like real GPS drift. Set 0 to turn it off."</string>
     <string name="settings_gps_section_position_jitter">"Position jitter"</string>
     <string name="settings_gps_section_wobble_when_still_ft">"Wobble when still (ft)"</string>
@@ -70,10 +70,10 @@
     <string name="settings_gps_section_realistic_satellite_count_desc">"Reports 7 to 14 visible satellites and 6 to 12 in use, instead of zero. Some apps treat zero satellites as a sign of spoofing."</string>
     <string name="settings_gps_section_simulate_signal_dropouts">"Simulate signal dropouts"</string>
     <string name="settings_gps_section_simulate_signal_dropouts_desc">"Freezes the fake location signal for a moment about every 10 seconds, like a real GPS losing signal. Off by default because most apps show the freeze. Does not run during route replay."</string>
-    <string name="settings_gps_location_memory">"Location Memory"</string>
+    <string name="settings_gps_location_memory">"Location memory"</string>
     <string name="settings_gps_controls_whether_the_app_remembers_where">"Controls whether the app remembers where you left off when reopened."</string>
-    <string name="settings_gps_speed_profiles">"Speed Profiles"</string>
-    <string name="settings_gps_movement_speed_used_by_the_joystick">"Movement speed used by the joystick, route replay, and roaming. Select a unit, then set each preset."</string>
+    <string name="settings_gps_speed_profiles">"Speed profiles"</string>
+    <string name="settings_gps_movement_speed_used_by_the_joystick">"Movement speed used by the joystick, route replay, and roaming. Select a unit, then set each speed profile."</string>
     <string name="settings_gps_unit">"Unit"</string>
     <string name="settings_gps_unit_kmh">"km/h"</string>
     <string name="settings_gps_unit_mph">"mph"</string>
@@ -140,12 +140,12 @@
     <string name="settings_menus_debug_stats_desc">"Shows live speed, altitude, coordinates, and tick rate in the floating widget panel while spoofing is active."</string>
     <string name="settings_menus_screen_access">"Screen access"</string>
     <string name="settings_menus_when_enabled_the_app_detects_your">"Lets the app take a picture of your screen. Tap to Walk and Reconnect accessory need it. Only takes pictures while Pokémon GO is on your screen. Uses an Android Accessibility Service. Some games detect accessibility services."</string>
-    <string name="settings_menus_accessibility_service">"Accessibility Service"</string>
-    <string name="settings_menus_open_settings">"Open Settings"</string>
+    <string name="settings_menus_accessibility_service">"Accessibility service"</string>
+    <string name="settings_menus_open_settings">"Open settings"</string>
     <string name="settings_menus_screen_service_enabled">"Enabled"</string>
     <string name="settings_menus_screen_service_not_enabled">"Not enabled. Tap to open Android Settings."</string>
     <string name="settings_menus_screen_service_off_hint">"The screen helper is off, so this does nothing yet."</string>
-    <string name="settings_menus_app_features">"App Features"</string>
+    <string name="settings_menus_app_features">"App features"</string>
     <string name="settings_menus_choose_which_quick_access_features_appea">"Choose which quick-access features appear in the floating widget and on the map screen, and drag to reorder them. Both surfaces share the same order by default."</string>
     <string name="settings_menus_widget">"Widget"</string>
     <string name="settings_menus_map">"Map"</string>
@@ -168,7 +168,7 @@
     <string name="settings_menus_drag_to_reorder_cd">"Drag to reorder %1$s"</string>
     <string name="settings_menus_feature_on_widget_cd">"%1$s on widget"</string>
     <string name="settings_menus_feature_on_map_cd">"%1$s on map"</string>
-    <string name="settings_menus_speed_cycle">"Speed Cycle"</string>
+    <string name="settings_menus_speed_cycle">"Speed cycle"</string>
     <string name="settings_menus_choose_which_speed_profiles_the_widget">"Choose which speed profiles the widget's Speed Cycle button cycles through."</string>
     <string name="settings_roaming_roaming">"Roaming"</string>
     <string name="settings_roaming_default_settings_used_when_starting_a">"Default settings used when starting a roaming session from the map."</string>

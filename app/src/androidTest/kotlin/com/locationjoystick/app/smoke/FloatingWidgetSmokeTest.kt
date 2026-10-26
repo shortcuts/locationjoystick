@@ -23,7 +23,7 @@ class FloatingWidgetSmokeTest : BaseSmokeTest() {
 
     @Test
     fun app_features_section_is_displayed() {
-        composeRule.onNodeWithText("App Features").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("App features").performScrollTo().assertIsDisplayed()
     }
 
     @Test
