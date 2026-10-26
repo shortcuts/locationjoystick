@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjSelectionMode
 import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.LjTextButton
@@ -110,7 +111,7 @@ internal fun HotItemTreeSection(
                     }
 
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(start = 24.dp, top = 2.dp, bottom = 2.dp),
+                    modifier = Modifier.fillMaxWidth().padding(start = LjSpacing.lg, top = 2.dp, bottom = 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     TriStateCheckbox(

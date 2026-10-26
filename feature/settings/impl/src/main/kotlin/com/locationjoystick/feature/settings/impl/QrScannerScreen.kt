@@ -40,6 +40,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LoadingIndicator
 import com.locationjoystick.feature.settings.impl.R
@@ -113,7 +114,7 @@ fun QrScannerScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(LjSpacing.md),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -182,7 +183,7 @@ fun QrScannerScreen(
             modifier =
                 Modifier
                     .align(Alignment.TopCenter)
-                    .padding(16.dp),
+                    .padding(LjSpacing.md),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val label =
@@ -195,7 +196,7 @@ fun QrScannerScreen(
                 modifier =
                     Modifier
                         .background(Color.Black.copy(alpha = 0.7f), MaterialTheme.shapes.extraSmall)
-                        .padding(8.dp),
+                        .padding(LjSpacing.sm),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
@@ -204,7 +205,7 @@ fun QrScannerScreen(
                     style = MaterialTheme.typography.labelSmall,
                 )
                 if (isFetching) {
-                    LoadingIndicator(modifier = Modifier.padding(top = 4.dp).size(20.dp), size = 16.dp)
+                    LoadingIndicator(modifier = Modifier.padding(top = LjSpacing.xs).size(20.dp), size = LjSpacing.md)
                 }
             }
         }

@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.util.formatCapturedPointsForClipboard
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.DeleteItemType
 import com.locationjoystick.core.designsystem.component.EmptyState
 import com.locationjoystick.core.designsystem.component.GroupDialogState
@@ -224,7 +225,7 @@ internal fun RoutesScreen(
                         query = searchQuery,
                         onQueryChange = { searchQuery = it },
                         label = stringResource(R.string.routes_screen_search_routes),
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
                     )
                 }
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -271,7 +272,7 @@ internal fun RoutesScreen(
                                 state = listState,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
                             ) {
                                 groupedItems(
                                     groups = if (searching) filteredSections else reorder.groups,
@@ -346,7 +347,7 @@ internal fun RoutesScreen(
         LjModalBottomSheet(
             onDismissRequest = { showAddOptionsSheet = false },
         ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm)) {
                 Text(stringResource(R.string.routes_screen_add_a_route), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(12.dp))
                 LjActionSheetRow(
@@ -389,7 +390,7 @@ internal fun RoutesScreen(
                         onImportGpx()
                     },
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(LjSpacing.sm))
             }
         }
     }
@@ -559,9 +560,9 @@ private fun RouteCard(
             onDismissRequest = { showStartDialog = false },
             sheetState = startSheetState,
         ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm)) {
                 Text(stringResource(R.string.routes_screen_start_route), style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(LjSpacing.sm))
                 RouteStartSheetContent(
                     key = route.id,
                     onTeleport = { reverse ->

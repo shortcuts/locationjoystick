@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSegmentedControl
 import com.locationjoystick.core.designsystem.component.LjSelectionMode
@@ -84,13 +85,13 @@ internal fun SettingsGpsSubScreen(
                         GpsRealismSection(uiState, isMph, onAction)
                         SettingsSectionDivider()
                         SettingsSectionHeader(stringResource(R.string.settings_gps_location_memory))
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(LjSpacing.xs))
                         Text(
                             stringResource(R.string.settings_gps_controls_whether_the_app_remembers_where),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(LjSpacing.sm))
                         LjSelectionRow(
                             mode = LjSelectionMode.Multi,
                             checked = uiState.rememberLastLocation,
@@ -111,13 +112,13 @@ private fun SpeedProfilesSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_gps_speed_profiles))
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_gps_movement_speed_used_by_the_joystick),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -136,7 +137,7 @@ private fun SpeedProfilesSection(
         )
     }
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.md))
 
     val profiles = SpeedProfile.defaultProfiles()
     profiles.forEachIndexed { index, profile ->
@@ -159,7 +160,7 @@ private fun SpeedProfilesSection(
                 unit,
             )
         }
-        if (index != profiles.lastIndex) Spacer(modifier = Modifier.height(8.dp))
+        if (index != profiles.lastIndex) Spacer(modifier = Modifier.height(LjSpacing.sm))
     }
 }
 
@@ -190,7 +191,7 @@ private fun SpeedProfileInput(
         Text(label, modifier = Modifier.weight(0.2f))
 
         Row(
-            modifier = Modifier.weight(0.8f).padding(horizontal = 8.dp),
+            modifier = Modifier.weight(0.8f).padding(horizontal = LjSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             OutlinedTextField(
@@ -208,7 +209,7 @@ private fun SpeedProfileInput(
                 isError = localValue.isNotBlank() && !isValid,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(LjSpacing.xs))
             Text(unit, modifier = Modifier.widthIn(min = 40.dp))
         }
     }
@@ -223,7 +224,7 @@ private fun AntiCheatWarning(
         text = stringResource(R.string.settings_gps_speed_exceeds_8_m_s_may, threshold, unit),
         color = MaterialTheme.colorScheme.error,
         style = MaterialTheme.typography.labelSmall,
-        modifier = Modifier.padding(start = 4.dp, top = 2.dp),
+        modifier = Modifier.padding(start = LjSpacing.xs, top = 2.dp),
     )
 }
 

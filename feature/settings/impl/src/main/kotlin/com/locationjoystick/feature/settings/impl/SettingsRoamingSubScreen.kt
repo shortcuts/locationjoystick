@@ -23,10 +23,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSegmentedControl
 import com.locationjoystick.core.designsystem.component.LjSelectionMode
@@ -99,22 +99,22 @@ private fun RoamingSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_roaming_roaming))
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_roaming_default_settings_used_when_starting_a),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.md))
 
     Text(stringResource(R.string.settings_roaming_sub_screen_walk_around_the_block), style = MaterialTheme.typography.titleMedium)
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_roaming_sub_screen_picks_random_spots_within_a_radius_and_walks_between_them),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
 
     var radiusText by remember(isMph) {
         mutableStateOf(
@@ -148,7 +148,7 @@ private fun RoamingSection(
         modifier = Modifier.fillMaxWidth(),
     )
 
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
 
     var distanceText by remember(isMph) {
         mutableStateOf(
@@ -182,10 +182,10 @@ private fun RoamingSection(
         modifier = Modifier.fillMaxWidth(),
     )
 
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
 
     Text(stringResource(R.string.settings_roaming_speed_profile), style = MaterialTheme.typography.labelLarge)
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
     LjSegmentedControl(
         options = SpeedProfile.defaultProfiles().map { it.id to speedProfileLabel(it.id) },
         selected = roamingDefaults.speedProfileId,
@@ -211,13 +211,13 @@ private fun RoamingSection(
     if (showPlanting) {
         SettingsSectionDivider()
         Text(stringResource(R.string.settings_roaming_sub_screen_planting), style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.xs))
         Text(
             stringResource(R.string.settings_spiral_description),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.sm))
 
         var startRadiusText by remember {
             mutableStateOf(roamingDefaults.plantingStartRadiusMeters.toInt().toString())
@@ -246,7 +246,7 @@ private fun RoamingSection(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.xs))
 
         var endRadiusText by remember {
             mutableStateOf(roamingDefaults.plantingEndRadiusMeters.toInt().toString())
@@ -275,7 +275,7 @@ private fun RoamingSection(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.xs))
 
         var spacingText by remember {
             mutableStateOf(roamingDefaults.plantingSpacingMeters.toString())
@@ -300,16 +300,16 @@ private fun RoamingSection(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.xs))
         JitterInput(
             value = plantingRadiusMeters,
             onValueChange = { onAction(SettingsAction.SetPlantingRadius(it)) },
             label = stringResource(R.string.settings_favorites_routes_planting_radius_m),
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.sm))
         Text(stringResource(R.string.settings_roaming_sub_screen_speed_profile), style = MaterialTheme.typography.labelLarge)
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.xs))
         LjSegmentedControl(
             options =
                 listOf(

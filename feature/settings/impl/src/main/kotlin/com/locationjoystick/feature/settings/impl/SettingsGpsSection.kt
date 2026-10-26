@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjSelectionMode
 import com.locationjoystick.core.designsystem.component.LjSelectionRow
@@ -107,16 +108,16 @@ internal fun GpsJitterSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_gps_section_location_randomness))
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_gps_section_adds_small_random_shifts_to_your),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
     Text(stringResource(R.string.settings_gps_section_position_jitter), style = MaterialTheme.typography.labelLarge)
-    Spacer(modifier = Modifier.height(4.dp))
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm)) {
         JitterInput(
             value = if (isMph) uiState.jitterIdleRadiusMeters * 3.28084 else uiState.jitterIdleRadiusMeters,
             onValueChange = { onAction(SettingsAction.SetJitterIdleRadius(if (isMph) it / 3.28084 else it)) },
@@ -140,17 +141,17 @@ internal fun GpsJitterSection(
             modifier = Modifier.weight(1f),
         )
     }
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
     JitterInput(
         value = uiState.jitterMaxStepMeters,
         onValueChange = { onAction(SettingsAction.SetJitterMaxStepMeters(it)) },
         label = stringResource(R.string.settings_gps_section_max_step_per_tick_m),
         modifier = Modifier.fillMaxWidth(),
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
     Text(stringResource(R.string.settings_gps_section_speed_variation), style = MaterialTheme.typography.labelLarge)
-    Spacer(modifier = Modifier.height(4.dp))
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm)) {
         JitterInput(
             value = uiState.jitterSpeedIdleVariationPct.toDouble(),
             onValueChange = { onAction(SettingsAction.SetJitterSpeedIdleVariationPct(it.toInt())) },
@@ -164,7 +165,7 @@ internal fun GpsJitterSection(
             modifier = Modifier.weight(1f),
         )
     }
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
     JitterInput(
         value = uiState.jitterSpeedIdleWobbleProbabilityPct,
         onValueChange = { onAction(SettingsAction.SetJitterSpeedIdleWobbleProbabilityPct(it)) },
@@ -180,13 +181,13 @@ internal fun GpsRealismSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_gps_section_gps_realism))
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_gps_section_controls_how_the_fake_gps_signal),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
         checked = uiState.realismBearingHoldIdle,
@@ -213,7 +214,7 @@ internal fun GpsRealismSection(
                 },
             modifier = Modifier.fillMaxWidth().padding(start = 40.dp),
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.xs))
     }
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
@@ -222,7 +223,7 @@ internal fun GpsRealismSection(
         title = stringResource(R.string.settings_gps_section_use_real_world_elevation),
         description = stringResource(R.string.settings_gps_section_use_real_world_elevation_desc),
     )
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
     LjButton(
         onClick = { onAction(SettingsAction.ResetAltitudeOverride) },
         enabled = uiState.hasAltitudeOverride,
@@ -234,7 +235,7 @@ internal fun GpsRealismSection(
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
         checked = uiState.realismWarmupEnabled,

@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.DestinationCardSpec
 import com.locationjoystick.core.designsystem.component.DestinationHub
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
@@ -843,7 +844,7 @@ private fun SettingsHubScreen(
  * can scroll fully above them.
  */
 internal fun settingsScrollPadding(): PaddingValues =
-    PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = SETTINGS_FAB_CLEARANCE)
+    PaddingValues(start = LjSpacing.md, top = LjSpacing.md, end = LjSpacing.md, bottom = SETTINGS_FAB_CLEARANCE)
 
 internal val SETTINGS_FAB_CLEARANCE = 120.dp
 
@@ -861,7 +862,7 @@ internal fun SettingsSaveDiscardFab(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(LjSpacing.md),
         ) {
             ExtendedFloatingActionButton(
                 onClick = { onAction(SettingsAction.DiscardChanges) },
@@ -956,7 +957,7 @@ private fun EnterExportCodeDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.settings_enter_export_code)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(LjSpacing.sm)) {
                 Text(
                     text = stringResource(R.string.settings_ask_the_sender_for_their_6),
                     style = MaterialTheme.typography.bodySmall,

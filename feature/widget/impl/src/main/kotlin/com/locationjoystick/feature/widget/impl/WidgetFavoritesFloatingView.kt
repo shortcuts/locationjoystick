@@ -31,6 +31,7 @@ import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.common.util.shareCurrentLocationCoordinates
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
 import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjButton
@@ -137,12 +138,12 @@ internal fun FavoritesFloatingView(
                     },
                 ) {
                     Icon(LjIcons.Edit, contentDescription = null)
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(LjSpacing.xs))
                     Text(stringResource(R.string.widget_panel_content_rename))
                 }
                 TextButton(onClick = { deletingFavorite = selected }) {
                     Icon(LjIcons.Delete, contentDescription = null)
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(LjSpacing.xs))
                     Text(stringResource(R.string.widget_panel_content_delete))
                 }
             }
@@ -189,7 +190,7 @@ internal fun FavoritesFloatingView(
                             ),
                         modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(LjSpacing.sm))
                     Row(
                         horizontalArrangement = Arrangement.End,
                         modifier = Modifier.fillMaxWidth(),
@@ -200,7 +201,7 @@ internal fun FavoritesFloatingView(
                         }) {
                             Text(stringResource(R.string.widget_panel_cancel))
                         }
-                        Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.width(LjSpacing.sm))
                         LjButton(
                             onClick = {
                                 if (newFavName.isNotBlank()) {
@@ -219,7 +220,7 @@ internal fun FavoritesFloatingView(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Icon(LjIcons.Add, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.width(LjSpacing.sm))
                         Text(stringResource(R.string.widget_panel_add_from_current_location))
                     }
                 }

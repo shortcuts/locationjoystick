@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.component.ListSearchField
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
@@ -96,7 +97,7 @@ internal fun FloatingPickerShell(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
+                    .padding(LjSpacing.md)
                     .background(colors.background, MaterialTheme.shapes.medium)
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                     .clickable { /* consume touches inside panel */ },
@@ -106,7 +107,7 @@ internal fun FloatingPickerShell(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
+                            .padding(LjSpacing.md),
                 ) {
                     FloatingPickerTitleRow(
                         title = title,
@@ -130,7 +131,7 @@ internal fun FloatingPickerShell(
                             onQueryChange = onSearchQueryChange,
                             label = searchLabel,
                             autoFocus = true,
-                            modifier = Modifier.padding(top = 8.dp),
+                            modifier = Modifier.padding(top = LjSpacing.sm),
                         )
                     }
                     Spacer(Modifier.height(12.dp))
@@ -160,7 +161,7 @@ private fun CompactFloatingPickerShell(
                     overlaySheetShape(),
                 ).navigationBarsPadding()
                 .imePadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
     ) {
         CompositionLocalProvider(LocalContentColor provides colors.onBackground) {
             FloatingPickerTitleRow(
@@ -182,10 +183,10 @@ private fun CompactFloatingPickerShell(
                     text = stringResource(R.string.widget_panel_content_switch_apps_to_copy_then_expand_to_paste),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp),
+                    modifier = Modifier.padding(bottom = LjSpacing.sm),
                 )
             } else {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(LjSpacing.sm))
             }
             // Keep the form composed while shrunk so pasted text is not reset.
             Column(

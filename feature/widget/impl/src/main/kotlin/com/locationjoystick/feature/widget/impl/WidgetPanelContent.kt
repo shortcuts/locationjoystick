@@ -50,6 +50,7 @@ import com.locationjoystick.core.data.DebugStats
 import com.locationjoystick.core.designsystem.ActivityState
 import com.locationjoystick.core.designsystem.LjError
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.activityState
@@ -520,7 +521,7 @@ internal fun WidgetPanel(
                     label = progress.label,
                     contentDescription = routeProgressStopContentDescription(progress.current, progress.total),
                     // Same 4.dp inset as WidgetIconButton so the chip's left edge matches the icon column.
-                    modifier = Modifier.padding(4.dp),
+                    modifier = Modifier.padding(LjSpacing.xs),
                 )
             }
             // In a side popup rather than inline: a wide child inside this Column widens the

@@ -47,6 +47,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.AccessibilityDisclosureDialog
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
@@ -143,13 +144,13 @@ private fun TapToWalkSection(
         showsFullAccessibilityDisclosure(Build.VERSION.SDK_INT, uiState.accessibilityDisclosureAccepted)
 
     SettingsSectionHeader(stringResource(R.string.settings_menus_tap_to_walk))
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_menus_walk_to_a_location_by_tapping),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Toggle,
         title = stringResource(R.string.settings_menus_enable_tap_to_walk),
@@ -210,13 +211,13 @@ private fun ReconnectTapSection(
     var showDisclosure by rememberSaveable { mutableStateOf(false) }
 
     SettingsSectionHeader(stringResource(R.string.settings_menus_reconnect_accessory))
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_menus_reconnect_accessory_description),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Toggle,
         title = stringResource(R.string.settings_menus_reconnect_accessory_automatically),
@@ -308,13 +309,13 @@ private fun ScreenAccessSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_menus_screen_access))
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_menus_when_enabled_the_app_detects_your),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(LjSpacing.sm))
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -338,7 +339,7 @@ private fun ScreenAccessSection(
             )
         }
         if (!uiState.isScreenServiceGranted) {
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(LjSpacing.sm))
             OpenSettingsButton(uiState, onAction)
         }
     }
@@ -391,7 +392,7 @@ private fun ServiceOffHint(
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.weight(1f),
         )
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(LjSpacing.sm))
         OpenSettingsButton(uiState, onAction)
     }
 }
@@ -497,13 +498,13 @@ private fun AppFeaturesSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_menus_app_features))
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_menus_choose_which_quick_access_features_appea),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
 
     Row(modifier = Modifier.fillMaxWidth().padding(start = 48.dp), horizontalArrangement = Arrangement.End) {
         Text(
@@ -579,7 +580,7 @@ private fun AppFeaturesSection(
             }
         }
     }
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
         checked = uiState.showRouteJumpButtons,
@@ -587,7 +588,7 @@ private fun AppFeaturesSection(
         title = stringResource(R.string.settings_menus_show_route_jump_buttons),
         description = stringResource(R.string.settings_menus_show_route_jump_buttons_desc),
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
         checked = uiState.altitudeOverrideButtonEnabled,
@@ -605,13 +606,13 @@ private fun SpeedCycleSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_menus_speed_cycle))
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_menus_choose_which_speed_profiles_the_widget),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
 
     Column {
         SpeedProfile.defaultProfiles().forEach { profile ->
@@ -650,14 +651,14 @@ private fun FeatureRow(
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = dragModifier.size(24.dp),
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(LjSpacing.sm))
         Icon(
             imageVector = meta.icon,
             contentDescription = null,
             tint = if (rowEnabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
             modifier = Modifier.size(20.dp),
         )
-        Column(modifier = Modifier.weight(1f).padding(start = 12.dp, end = 8.dp)) {
+        Column(modifier = Modifier.weight(1f).padding(start = 12.dp, end = LjSpacing.sm)) {
             Text(
                 text = meta.label,
                 style = MaterialTheme.typography.bodyLarge,

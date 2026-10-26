@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -90,8 +89,8 @@ fun QrShareDialog(
                         modifier =
                             Modifier
                                 .size(QR_IMAGE_SIZE)
-                                .clip(RoundedCornerShape(12.dp))
-                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
+                                .clip(MaterialTheme.shapes.medium)
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium),
                     )
                 } else {
                     Text(stringResource(R.string.qr_share_dialog_failed_to_encode_qr))

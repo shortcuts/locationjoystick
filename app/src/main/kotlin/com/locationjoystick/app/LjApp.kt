@@ -17,7 +17,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -29,6 +28,7 @@ import com.locationjoystick.app.navigation.LjDrawerContent
 import com.locationjoystick.app.navigation.LjNavHost
 import com.locationjoystick.app.navigation.NavGateViewModel
 import com.locationjoystick.app.navigation.entryRouteFor
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.feature.favorites.api.FAVORITES_ROUTE
 import com.locationjoystick.feature.map.api.CAPTURE_ROUTE
@@ -180,10 +180,10 @@ fun LjApp(
                 ?.route
         if (currentRoute == IDLE_ROUTE) {
             WhatsNewPopup(
-                modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
+                modifier = Modifier.align(Alignment.BottomStart).padding(LjSpacing.md),
             )
             UpdateAvailablePopup(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(LjSpacing.md),
             )
         }
     }

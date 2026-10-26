@@ -39,6 +39,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
@@ -345,7 +346,7 @@ internal fun RouteCreatorScreen(
 
             MapAttribution(
                 tileSource = tileSource,
-                modifier = Modifier.align(Alignment.BottomStart).padding(4.dp),
+                modifier = Modifier.align(Alignment.BottomStart).padding(LjSpacing.xs),
             )
 
             if (state.isLoadingSegment) {
@@ -370,7 +371,7 @@ internal fun RouteCreatorScreen(
                         Modifier
                             .align(Alignment.TopCenter)
                             .padding(
-                                top = paddingValues.calculateTopPadding() + 8.dp,
+                                top = paddingValues.calculateTopPadding() + LjSpacing.sm,
                                 start = 12.dp,
                                 end = 12.dp,
                             ),
@@ -454,8 +455,8 @@ private fun FavoriteStopConfirmSheet(
 ) {
     LjModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(LjSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
         ) {
             Text(favoriteName, style = MaterialTheme.typography.titleMedium)
             LjButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) {

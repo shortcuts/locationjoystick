@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.data.DebugStats
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.model.ReconnectRunResult
@@ -44,10 +45,10 @@ internal fun DebugStatsPanel(
     Column(
         modifier =
             Modifier
-                .padding(4.dp)
+                .padding(LjSpacing.xs)
                 .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.7f), MaterialTheme.shapes.small)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.small)
-                .padding(8.dp),
+                .padding(LjSpacing.sm),
     ) {
         val tickHz = if (stats.tickIntervalMs > 0) 1000f / stats.tickIntervalMs else 0f
         Text(

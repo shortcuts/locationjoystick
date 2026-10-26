@@ -35,6 +35,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.locationjoystick.app.R
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjTextButton
 
@@ -142,7 +143,7 @@ private fun WhatsNewDialog(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 scopeGroup.entries.forEach { entry ->
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm)) {
                                         Text(stringResource(R.string.whats_new_bullet), style = MaterialTheme.typography.bodyMedium)
                                         Text(entry.summary, style = MaterialTheme.typography.bodyMedium)
                                     }
