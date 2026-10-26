@@ -26,7 +26,6 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -40,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.ljSuccessColor
 import com.locationjoystick.core.designsystem.component.ListSearchField
-import com.locationjoystick.core.designsystem.component.LjAlertDialog
+import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.SavedItemSortMenu
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.feature.widget.impl.R
@@ -310,32 +309,12 @@ internal fun WidgetRenameDialog(
             )
         },
         confirmButton = {
-            TextButton(enabled = text.isNotBlank(), onClick = { onConfirm(text.trim()) }) {
+            LjTextButton(enabled = text.isNotBlank(), onClick = { onConfirm(text.trim()) }) {
                 Text(stringResource(R.string.widget_panel_content_save))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.widget_panel_content_cancel)) }
-        },
-    )
-}
-
-@Composable
-internal fun WidgetDeleteDialog(
-    title: String,
-    itemName: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    LjAlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(itemName) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) { Text(stringResource(R.string.widget_panel_content_delete)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.widget_panel_content_cancel)) }
+            LjTextButton(onClick = onDismiss) { Text(stringResource(R.string.widget_panel_content_cancel)) }
         },
     )
 }

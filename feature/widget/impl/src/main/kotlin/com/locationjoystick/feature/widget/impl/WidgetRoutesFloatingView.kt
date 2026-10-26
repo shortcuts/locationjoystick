@@ -21,6 +21,8 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.formatCapturedPointsForClipboard
 import com.locationjoystick.core.common.util.parseTeleportBetweenDelaySeconds
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.component.DeleteItemType
+import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjRouteStartOptions
 import com.locationjoystick.core.designsystem.component.RoutesPickerList
 import com.locationjoystick.core.model.LatLng
@@ -203,9 +205,9 @@ internal fun RoutesFloatingView(
         )
     }
     deletingRoute?.let { route ->
-        WidgetDeleteDialog(
-            title = stringResource(R.string.widget_delete_route_title),
-            itemName = route.name,
+        LjDeleteConfirmDialog(
+            name = route.name,
+            itemType = DeleteItemType.ROUTE,
             onConfirm = {
                 onDelete(route)
                 selectedRouteId = null

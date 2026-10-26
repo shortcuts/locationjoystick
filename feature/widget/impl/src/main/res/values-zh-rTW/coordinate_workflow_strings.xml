@@ -26,13 +26,11 @@
     <string name="widget_panel_content_name">"名稱"</string>
     <string name="widget_panel_content_save">"儲存"</string>
     <string name="widget_panel_content_cancel">"取消"</string>
-    <string name="widget_panel_content_delete_favorite">"刪除收藏？"</string>
     <string name="widget_panel_content_rename_route">"重新命名路線"</string>
     <string name="widget_panel_content_share_route">"分享路線"</string>
     <string name="widget_panel_content_delete_route">"刪除路線"</string>
     <string name="widget_panel_content_paste_coordinates">"貼上座標"</string>
     <string name="widget_panel_content_roaming">"漫遊"</string>
-    <string name="widget_delete_route_title">刪除路線？</string>
     <string name="widget_roaming_ignored_a_route_is_playing">"漫遊已忽略 — 路線正在進行"</string>
     <string name="widget_roaming">"漫遊"</string>
     <string name="widget_resume_roaming">"繼續漫遊"</string>

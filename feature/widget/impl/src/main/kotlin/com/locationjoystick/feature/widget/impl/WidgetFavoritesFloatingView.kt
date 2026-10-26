@@ -12,7 +12,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,10 +30,11 @@ import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.common.util.shareCurrentLocationCoordinates
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.LjSpacing
+import com.locationjoystick.core.designsystem.component.DeleteItemType
 import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
 import com.locationjoystick.core.designsystem.component.FavoritesList
 import com.locationjoystick.core.designsystem.component.LjButton
+import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.cooldownBadgeText
 import com.locationjoystick.core.designsystem.component.rememberCooldownStringLookup
@@ -131,7 +131,7 @@ internal fun FavoritesFloatingView(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
             ) {
-                TextButton(
+                LjTextButton(
                     onClick = {
                         renameText = selected.name
                         renamingFavorite = selected
@@ -141,7 +141,7 @@ internal fun FavoritesFloatingView(
                     Spacer(Modifier.width(LjSpacing.xs))
                     Text(stringResource(R.string.widget_panel_content_rename))
                 }
-                TextButton(onClick = { deletingFavorite = selected }) {
+                LjTextButton(onClick = { deletingFavorite = selected }) {
                     Icon(LjIcons.Delete, contentDescription = null)
                     Spacer(Modifier.width(LjSpacing.xs))
                     Text(stringResource(R.string.widget_panel_content_delete))
@@ -241,9 +241,9 @@ internal fun FavoritesFloatingView(
         )
     }
     deletingFavorite?.let { favorite ->
-        WidgetDeleteDialog(
-            title = stringResource(R.string.widget_panel_content_delete_favorite),
-            itemName = favorite.name,
+        LjDeleteConfirmDialog(
+            name = favorite.name,
+            itemType = DeleteItemType.FAVORITE,
             onConfirm = {
                 onDelete(favorite)
                 selectedFavorite = null
