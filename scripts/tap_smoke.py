@@ -270,6 +270,18 @@ def _frame(serial, path):
     return cv2.imread(str(path))
 
 
+def dismiss_speed_warning(serial):
+    """Taps the game's "too fast" card away: it hides the map after a far teleport, so no flow can be measured."""
+    import tempfile as tf
+
+    img = _frame(serial, Path(tf.mkdtemp()) / "popup.png")
+    h, w = img.shape[:2]
+    white = lambda fx, fy: bool((img[int(fy * h), int(fx * w)] >= 250).all())
+    if white(0.09, 0.30) and white(0.91, 0.30) and white(0.09, 0.705) and not white(0.5, 0.24):
+        _tap(serial, (0.5 * w, 0.661 * h))
+        time.sleep(2)
+
+
 def _target(host, key):
     return _api(host, key, "GET", "/state")["walk"]["target"]
 
@@ -339,6 +351,8 @@ def measure_taps(host, key, serial, cal, d):
 def reference(py, serial, d):
     """Walks the eight calibration legs and fits the ruler. The app's flow fit also reads these legs."""
     d.mkdir(parents=True, exist_ok=True)
+    if (d / "calibration_persp.json").exists():  # --out of an earlier run: same place, same camera, same ruler
+        return json.loads((d / "calibration_persp.json").read_text())
     walk = ["walkcap", str(d), "--serial", serial, "--legs", *LEG_BEARINGS, "--dist", "40", "--every", "3"]
     for step in (walk, ["persp", str(d)]):
         ok, log = _bench(py, serial, *step)
@@ -369,6 +383,7 @@ def run_row(py, serial, host, key, loc, i, scenario, out, settle, respect_cooldo
     cx, cy = rb.GESTURE_CENTER
     try:
         cooldown = teleport_and_settle(host, key, loc, settle, respect_cooldown)
+        dismiss_speed_warning(serial)
         cal = reference(py, serial, d / "reference")
         if scenario == "zoom":
             rb._twist(serial, rb.pinch_events(cx, cy, rb.PINCH_BASE_PX, rb.PINCH_BASE_PX * ZOOM))
