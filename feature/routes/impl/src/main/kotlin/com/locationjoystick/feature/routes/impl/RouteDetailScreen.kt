@@ -38,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -333,7 +332,6 @@ fun RouteDetailScreen(
                                 Text(
                                     stringResource(R.string.route_detail_speed_profile),
                                     style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
                                 Spacer(Modifier.height(8.dp))
@@ -441,7 +439,6 @@ fun RouteDetailScreen(
                         Text(
                             stringResource(R.string.route_detail_waypoints),
                             style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
@@ -470,8 +467,7 @@ fun RouteDetailScreen(
                             Text(
                                 stringResource(R.string.route_detail_waypoint_number, waypoint.orderIndex + 1),
                                 color = MaterialTheme.colorScheme.onSurface,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium,
+                                style = MaterialTheme.typography.titleSmall,
                             )
                             Text(
                                 "${String.format("%.4f", waypoint.position.latitude)}, " +
