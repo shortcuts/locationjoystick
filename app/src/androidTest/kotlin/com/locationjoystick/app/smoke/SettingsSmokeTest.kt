@@ -61,14 +61,14 @@ class SettingsSmokeTest : BaseSmokeTest() {
     fun settings_shows_speed_profiles_section() {
         composeRule.onNodeWithText("Movement & GPS").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Speed Profiles").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Speed profiles").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_gps_jitter_section() {
         composeRule.onNodeWithText("Movement & GPS").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Location Randomness").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Location randomness").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -89,7 +89,7 @@ class SettingsSmokeTest : BaseSmokeTest() {
     fun settings_shows_app_features_section() {
         composeRule.onNodeWithText("Menus").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("App Features").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("App features").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -103,7 +103,7 @@ class SettingsSmokeTest : BaseSmokeTest() {
     fun settings_shows_location_memory_section() {
         composeRule.onNodeWithText("Movement & GPS").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Location Memory").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Location memory").performScrollTo().assertIsDisplayed()
     }
 
     @Test

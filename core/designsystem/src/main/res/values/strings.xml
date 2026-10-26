@@ -35,7 +35,7 @@
     <string name="roaming_sheet_distance_mi">"Distance (mi)"</string>
     <string name="roaming_sheet_distance_m">"Distance (m)"</string>
     <string name="roaming_sheet_speed_profile">"Speed profile"</string>
-    <string name="speed_profile_slow_walk">"Slow Walk"</string>
+    <string name="speed_profile_slow_walk">"Slow walk"</string>
     <string name="speed_profile_walk">"Walk"</string>
     <string name="speed_profile_run">"Run"</string>
     <string name="speed_profile_bike">"Bike"</string>
@@ -47,8 +47,8 @@
     <string name="routes_picker_no_routes_saved">"No routes saved"</string>
     <string name="routes_picker_start_route_cd">"Start route"</string>
     <string name="theme_preview_lj">"Lj"</string>
-    <string name="theme_preview_design_system_preview">"Design System Preview"</string>
-    <string name="theme_preview_mock_location_active">"Mock Location Active"</string>
+    <string name="theme_preview_design_system_preview">"Design system preview"</string>
+    <string name="theme_preview_mock_location_active">"Mock location active"</string>
     <string name="theme_preview_48_8566_n_2_3522_e">"48.8566° N, 2.3522° E"</string>
     <string name="theme_preview_stop">"Stop"</string>
     <string name="top_bar_stop">"Stop"</string>

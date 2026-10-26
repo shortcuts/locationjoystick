@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="notification_channel_name_active">"Location Spoofing"</string>
+    <string name="notification_channel_name_active">"Location spoofing"</string>
     <string name="notification_channel_desc_active">"Active while mock location is running"</string>
-    <string name="notification_channel_name_active_minimized">"Location Spoofing (Minimized)"</string>
+    <string name="notification_channel_name_active_minimized">"Location spoofing (minimized)"</string>
     <string name="notification_channel_desc_active_minimized">"Active while mock location is running. Hidden from the status bar."</string>
-    <string name="notification_channel_name_permission_error">"Permission Errors"</string>
+    <string name="notification_channel_name_permission_error">"Permission errors"</string>
     <string name="notification_channel_desc_permission_error">"Shown when required permissions are missing"</string>
     <string name="notification_title_permission_error">"Permissions missing"</string>
     <string name="notification_text_permission_error">"Open the app and complete setup to start spoofing."</string>

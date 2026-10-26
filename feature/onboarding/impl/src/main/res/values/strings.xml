@@ -3,7 +3,7 @@
     <string name="onboarding_set_up_locationjoystick">"Set up locationjoystick"</string>
     <string name="onboarding_complete_the_steps_below_to_start">"Complete the steps below to get started."</string>
     <string name="onboarding_trouble_setting_up">"Trouble setting up?"</string>
-    <string name="onboarding_getting_started">"Getting Started"</string>
+    <string name="onboarding_getting_started">"Getting started"</string>
     <string name="onboarding_separator_dot">"·"</string>
     <string name="onboarding_troubleshooting">"Troubleshooting"</string>
     <string name="onboarding_debug_build_permissions_optional">"Debug build: permissions optional"</string>
@@ -18,7 +18,7 @@
     <string name="onboarding_grant_permission">"Grant permission"</string>
     <string name="onboarding_display_over_other_apps">"Display over other apps"</string>
     <string name="onboarding_display_over_other_apps_desc">"Shows the joystick and widget over other apps."</string>
-    <string name="onboarding_open_settings">"Open Settings"</string>
+    <string name="onboarding_open_settings">"Open settings"</string>
     <string name="onboarding_set_as_fake_gps_app">"Set as fake GPS app"</string>
     <string name="onboarding_set_as_fake_gps_app_desc">"Pick it as the mock location app."</string>
     <string name="onboarding_open_developer_options">"Open Developer options"</string>
