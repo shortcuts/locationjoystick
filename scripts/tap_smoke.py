@@ -29,9 +29,9 @@ from pathlib import Path
 HERE = Path(__file__).parent
 BENCH = HERE / "registration_bench.py"
 INF = float("inf")
-N_TAPS, TOL_M, MAX_REJECT, NCC_MIN, MAX_M = 12, 15.0, 0.2, 0.4, 40.0
+N_TAPS, TOL_M, MAX_REJECT, MAX_M = 12, 15.0, 0.2, 40.0
 NEED_LOCATIONS = 19
-TAP_WAIT_S, WALK_TIMEOUT_S = 3.0, 300.0
+TAP_WAIT_S, REAIM_WAIT_S = 3.0, 12.0
 ZOOM, TWIST_DEG, LEG_M = 1.6, 45.0, 40.0
 EXTRA_LOCATIONS = (1, 7)  # 1-based: New York (dense) and Reykjavik (high latitude)
 EXTRA_SCENARIOS = ("fresh", "twist", "zoom")
@@ -41,6 +41,7 @@ STEP_TIMEOUT_S = {"walkcap": 1800, "persp": 600}
 LEG_BEARINGS = ["0", "180", "90", "270", "45", "225", "135", "315"]
 # UI strings the device path finds by content description (feature/widget/impl/src/main/res/values/strings.xml).
 TAP_ICON_DESC, EXPAND_DESC, CANCEL_DESC = "Tap to walk", "Expand widget", "Cancel tap-to-walk"
+GAME_ACTIVITY = "com.nianticlabs.pokemongo/com.nianticproject.holoholo.libholoholo.unity.UnityMainActivity"
 # DataStore key of the stored flow map (core/datastore AppPreferencesDataSource).
 TAP_CALIBRATION_KEY = "tap_to_walk_ground_calibration"
 
@@ -55,11 +56,6 @@ def percentile(errs, q):
     """Same index rule as registration_bench.cmd_taptrials; NaN when empty."""
     errs = sorted(errs)
     return errs[min(len(errs) - 1, int(q * len(errs)))] if errs else float("nan")
-
-
-def tap_error_m(ncc, err_m):
-    """A tap the matcher cannot verify is a miss, so a weak matcher cannot raise the pass rate."""
-    return INF if ncc < NCC_MIN else err_m
 
 
 def row_verdict(errs, rejected, ambiguous):
@@ -178,6 +174,10 @@ def _node_centre(serial, desc, attr="content-desc"):
 
 def open_overlay(serial):
     """Opens the tap-to-walk overlay from the widget. The overlay closes itself after every tap."""
+    cancel = _node_centre(serial, CANCEL_DESC)
+    if cancel is not None:  # a killed run left it open
+        _tap(serial, cancel)
+        time.sleep(1)
     icon = _node_centre(serial, TAP_ICON_DESC)
     if icon is None:
         expand = _node_centre(serial, EXPAND_DESC)
@@ -270,17 +270,37 @@ def _frame(serial, path):
     return cv2.imread(str(path))
 
 
+def dismiss_speed_warning(serial):
+    """Taps the game's "too fast" card away: it hides the map after a far teleport, so no flow can be measured."""
+    import tempfile as tf
+
+    img = _frame(serial, Path(tf.mkdtemp()) / "popup.png")
+    h, w = img.shape[:2]
+    white = lambda fx, fy: bool((img[int(fy * h), int(fx * w)] >= 250).all())
+    if white(0.09, 0.30) and white(0.91, 0.30) and white(0.09, 0.705) and not white(0.5, 0.24):
+        _tap(serial, (0.5 * w, 0.661 * h))
+        time.sleep(2)
+
+
 def _target(host, key):
     return _api(host, key, "GET", "/state")["walk"]["target"]
 
 
-def score_tap(host, key, serial, cal, p, frames, n):
-    """One overlay tap at pixel p: {"kind": scored|rejected|ambiguous, ...}. Errors are in metres."""
+def _enu_m(origin, target):
+    """East, north metres from origin to target, on the flat-earth scale the app walks with."""
+    return ((target["lon"] - origin["lon"]) * 111320 * math.cos(math.radians(origin["lat"])),
+            (target["lat"] - origin["lat"]) * 111320)
+
+
+def score_tap(host, key, serial, cal, p):
+    """One overlay tap at pixel p: {"kind": scored|rejected, ...}. The truth is the reference ruler's ground point for p.
+
+    The target is read from the tap-time position, first after the tap and again after the re-aim window.
+    """
     import numpy as np
     import registration_bench as rb
 
-    anchor = (cal["px"], cal["py"])
-    before = _frame(serial, frames / f"t{n:02d}_before.png")
+    start = _api(host, key, "GET", "/state")["position"]
     open_overlay(serial)
     _tap(serial, p)
     first, deadline = None, time.time() + TAP_WAIT_S
@@ -289,24 +309,13 @@ def score_tap(host, key, serial, cal, p, frames, n):
         time.sleep(0.5)
     if first is None:
         return {"kind": "rejected"}
-    last, deadline = first, time.time() + WALK_TIMEOUT_S
-    while True:
-        target = _target(host, key)
-        if target is None:
-            break
-        last = target
-        if time.time() > deadline:
-            _api(host, key, "POST", "/walk/stop")
-            return {"kind": "ambiguous", "reason": "walk_timeout"}
-        time.sleep(1)
-    after = _frame(serial, frames / f"t{n:02d}_after.png")
-    off, ncc = rb.patch_offset(before, after, p, anchor)
-    if off is None:
-        return {"kind": "ambiguous", "reason": "no_patch"}
-    hi = np.linalg.inv(rb.persp_h(cal))
-    err = float(np.linalg.norm(rb._h_apply(hi, (anchor[0] + off[0], anchor[1] + off[1])) - rb._h_apply(hi, anchor)))
-    reaim = _metres((first["lat"], first["lon"]), (last["lat"], last["lon"]))
-    return {"kind": "scored", "error_m": tap_error_m(ncc, err), "ncc": float(ncc), "reaim_m": reaim}
+    time.sleep(REAIM_WAIT_S)
+    last = _target(host, key) or first
+    _api(host, key, "POST", "/walk/stop")
+    truth = rb.tap_to_ground_persp(cal, p)
+    err = float(np.linalg.norm(np.subtract(_enu_m(start, last), truth)))
+    return {"kind": "scored", "error_m": err, "first_error_m": float(np.linalg.norm(np.subtract(_enu_m(start, first), truth))),
+            "reaim_m": _metres((first["lat"], first["lon"]), (last["lat"], last["lon"]))}
 
 
 def candidate_taps(serial, cal):
@@ -322,13 +331,11 @@ def candidate_taps(serial, cal):
 
 
 def measure_taps(host, key, serial, cal, d):
-    frames = d / "frames"
-    frames.mkdir(parents=True, exist_ok=True)
     trials, scored = [], 0
     for n, p in enumerate(candidate_taps(serial, cal)):
         if scored == N_TAPS:
             break
-        t = {**score_tap(host, key, serial, cal, p, frames, n), "tap": [float(p[0]), float(p[1])]}
+        t = {**score_tap(host, key, serial, cal, p), "tap": [float(p[0]), float(p[1])]}
         trials.append(t)
         scored += t["kind"] == "scored"
         (d / "trials.json").write_text(json.dumps(trials, indent=1))  # an aborted run keeps its numbers
@@ -339,6 +346,8 @@ def measure_taps(host, key, serial, cal, d):
 def reference(py, serial, d):
     """Walks the eight calibration legs and fits the ruler. The app's flow fit also reads these legs."""
     d.mkdir(parents=True, exist_ok=True)
+    if (d / "calibration_persp.json").exists():  # --out of an earlier run: same place, same camera, same ruler
+        return json.loads((d / "calibration_persp.json").read_text())
     walk = ["walkcap", str(d), "--serial", serial, "--legs", *LEG_BEARINGS, "--dist", "40", "--every", "3"]
     for step in (walk, ["persp", str(d)]):
         ok, log = _bench(py, serial, *step)
@@ -352,9 +361,13 @@ def app_leg(host, key, loc):
     """One 40 m leg north. The last walk before the taps, so the stored map is this one-leg map."""
     import registration_bench as rb
 
-    arrived = rb._walk_and_wait(host, key, loc["lat"] + LEG_M / 111320, loc["lon"])
-    if not arrived:
-        raise RuntimeError("app leg did not arrive")
+    for _ in range(2):  # the bench exits on one fast sample; position jitter can cause one
+        try:
+            if rb._walk_and_wait(host, key, loc["lat"] + LEG_M / 111320, loc["lon"]):
+                return
+        except SystemExit:
+            continue
+    raise RuntimeError("app leg did not arrive")
 
 
 def run_row(py, serial, host, key, loc, i, scenario, out, settle, respect_cooldown):
@@ -368,7 +381,9 @@ def run_row(py, serial, host, key, loc, i, scenario, out, settle, respect_cooldo
     cooldown, undo = 0, []
     cx, cy = rb.GESTURE_CENTER
     try:
+        rb._focus(serial, GAME_ACTIVITY)  # another app can take the screen during a long run
         cooldown = teleport_and_settle(host, key, loc, settle, respect_cooldown)
+        dismiss_speed_warning(serial)
         cal = reference(py, serial, d / "reference")
         if scenario == "zoom":
             rb._twist(serial, rb.pinch_events(cx, cy, rb.PINCH_BASE_PX, rb.PINCH_BASE_PX * ZOOM))

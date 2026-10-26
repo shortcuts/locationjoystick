@@ -29,12 +29,6 @@ def test_row_skips_ambiguous_taps_and_counts_them_in_no_rate():
     assert ts.row_verdict([1.0] * 12, rejected=0, ambiguous=5) == ("PASS", "")
 
 
-def test_low_ncc_tap_is_a_miss_that_fails_the_row():
-    assert ts.tap_error_m(0.39, 2.0) == INF
-    assert ts.tap_error_m(0.4, 2.0) == 2.0
-    assert ts.row_verdict([1.0] * 10 + [INF] * 2, rejected=0, ambiguous=0) == ("FAIL", "p90_over_15m")
-
-
 def test_row_fails_when_fewer_than_12_scored():
     assert ts.row_verdict([1.0] * 11, rejected=0, ambiguous=0) == ("FAIL", "insufficient_scored")
 
