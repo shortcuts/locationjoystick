@@ -22,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -33,6 +32,7 @@ import com.locationjoystick.core.common.util.launchCaptureDefaultBrowser
 import com.locationjoystick.core.common.util.launchCaptureMapsLinks
 import com.locationjoystick.core.common.util.launchCaptureRestoreDefaultApps
 import com.locationjoystick.core.common.util.resolvePreferredBrowserPackage
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.CapturePassThroughRow
 import com.locationjoystick.core.designsystem.component.CaptureRestoreDialog
 import com.locationjoystick.core.designsystem.component.CaptureSetupState
@@ -110,7 +110,7 @@ internal fun CaptureSection(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(LjSpacing.sm))
         if (setupDone) {
             CaptureToggleStep(
                 captureModeEnabled = uiState.captureModeEnabled,
@@ -124,7 +124,7 @@ internal fun CaptureSection(
             LjOutlinedButton(onClick = { showRestoreDialog = true }, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(DesignR.string.capture_restore_default_browser), modifier = Modifier.weight(1f))
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(LjSpacing.sm))
         } else {
             CaptureSetupSteps(state = setupState)
         }

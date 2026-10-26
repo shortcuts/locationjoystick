@@ -7,8 +7,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.activityState
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
@@ -39,11 +39,11 @@ internal fun MapFloatingRouteControlsRow(
 ) {
     if (AppFeature.ROUTES in enabledMapFabFeatures || isRouteReplay) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(LjSpacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AnimatedVisibility(visible = isRouteReplay && isRouteControlsExpanded) {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(LjSpacing.xs)) {
                     LjMapIconButton(
                         icon = LjIcons.Stop,
                         contentDescription = stringResource(R.string.overlay_stop_route_cd),

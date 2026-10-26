@@ -34,6 +34,7 @@ import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.common.util.shareLocationLink
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
 import com.locationjoystick.core.designsystem.component.FavoritesList
@@ -72,7 +73,7 @@ internal fun RoutesPickerSheet(
         val routeId = selectedRouteId
         if (routeId != null) {
             val route = uiState.routes.find { it.id == routeId }
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { selectedRouteId = null }) {
                         Icon(LjIcons.ArrowBack, contentDescription = stringResource(R.string.map_sheet_back_cd))
@@ -82,7 +83,7 @@ internal fun RoutesPickerSheet(
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(LjSpacing.sm))
                 RouteStartSheetContent(
                     key = routeId,
                     onTeleport = { reverse ->
@@ -257,7 +258,7 @@ internal fun PendingTapSheet(
         onDismissRequest = { onAction(MapAction.ClearPendingTap) },
     ) {
         val context = LocalContext.current
-        Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     stringResource(
@@ -278,7 +279,7 @@ internal fun PendingTapSheet(
                 )
             }
             if (isRouteReplay && !isEphemeralReplay) {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(LjSpacing.md))
                 if (!hideTeleportFeatures) {
                     LjButton(
                         onClick = { onAction(MapAction.StopRouteAndTeleport(position)) },
@@ -286,7 +287,7 @@ internal fun PendingTapSheet(
                     ) {
                         Text(stringResource(R.string.map_sheet_stop_route_and_teleport))
                     }
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(LjSpacing.sm))
                 }
                 LjOutlinedButton(
                     onClick = { onAction(MapAction.StopRouteAndWalkTo(position)) },
@@ -294,7 +295,7 @@ internal fun PendingTapSheet(
                 ) {
                     Text(stringResource(R.string.map_sheet_stop_route_and_walk_here))
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(LjSpacing.sm))
                 LjOutlinedButton(
                     onClick = { onAction(MapAction.FinishRouteAndWalkTo(position)) },
                     modifier = Modifier.fillMaxWidth(),
@@ -308,7 +309,7 @@ internal fun PendingTapSheet(
                         ?.let { cooldownAdvisoryLabel(it.remainingSeconds, it.distanceMeters, rememberCooldownStringLookup()) }
                         ?: stringResource(R.string.map_sheet_no_wait_needed),
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(LjSpacing.sm))
                 if (!hideTeleportFeatures) {
                     LjButton(
                         onClick = { onAction(MapAction.ConfirmTeleport(position)) },
@@ -316,11 +317,11 @@ internal fun PendingTapSheet(
                     ) {
                         Text(stringResource(R.string.map_sheet_teleport_here))
                     }
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(LjSpacing.sm))
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm),
                 ) {
                     LjOutlinedButton(
                         onClick = {
@@ -347,10 +348,10 @@ internal fun PendingTapSheet(
                     }
                 }
                 if (isWalkActive) {
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(LjSpacing.sm))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm),
                     ) {
                         LjOutlinedButton(
                             onClick = { onAction(MapAction.AddEphemeralWaypoint(position, followRoads = false)) },
@@ -372,7 +373,7 @@ internal fun PendingTapSheet(
                     }
                 }
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(LjSpacing.xs))
             LjTextButton(
                 onClick = { onAction(MapAction.ClearPendingTap) },
                 modifier = Modifier.fillMaxWidth(),

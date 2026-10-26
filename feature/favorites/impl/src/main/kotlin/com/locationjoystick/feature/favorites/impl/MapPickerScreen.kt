@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.geocoding.Geocoding
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
@@ -272,7 +273,7 @@ internal fun MapPickerScreen(
 
             MapAttribution(
                 tileSource = tileSource,
-                modifier = Modifier.align(Alignment.BottomStart).padding(4.dp),
+                modifier = Modifier.align(Alignment.BottomStart).padding(LjSpacing.xs),
             )
 
             // Search bar — top overlay, shown when toggled
@@ -294,7 +295,7 @@ internal fun MapPickerScreen(
                         Modifier
                             .align(Alignment.TopCenter)
                             .padding(
-                                top = paddingValues.calculateTopPadding() + 8.dp,
+                                top = paddingValues.calculateTopPadding() + LjSpacing.sm,
                                 start = 12.dp,
                                 end = 12.dp,
                             ),

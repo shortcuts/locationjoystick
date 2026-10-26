@@ -52,6 +52,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjButton
@@ -201,7 +202,7 @@ internal fun GroupSyncScreen(
             contentModifier = Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.lg))
 
             when (groupState.role) {
                 GroupRole.NONE -> {
@@ -246,7 +247,7 @@ internal fun GroupSyncScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.lg))
         }
     }
 }
@@ -283,7 +284,7 @@ private fun NoGroupContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.sm))
 
         LjPrimaryButton(
             onClick = onCreateGroup,
@@ -293,7 +294,7 @@ private fun NoGroupContent(
         if (nearbyLeader != null) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -318,7 +319,7 @@ private fun NoGroupContent(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm),
         ) {
             LjOutlinedButton(
                 onClick = onJoinViaQr,
@@ -365,7 +366,7 @@ private fun EnterCodeDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.group_sync_enter_group_code)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(LjSpacing.sm)) {
                 Text(
                     text = stringResource(R.string.group_sync_ask_the_leader_for_their_6),
                     style = MaterialTheme.typography.bodySmall,
@@ -412,7 +413,7 @@ private fun LeaderContent(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(LjSpacing.md),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
@@ -427,14 +428,14 @@ private fun LeaderContent(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                modifier = Modifier.padding(LjSpacing.md).fillMaxWidth(),
             ) {
                 Text(
                     text = stringResource(R.string.group_sync_group_code),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(LjSpacing.xs))
                 Text(
                     text = code,
                     style = MaterialTheme.typography.displaySmall,
@@ -447,7 +448,7 @@ private fun LeaderContent(
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     textAlign = TextAlign.Center,
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(LjSpacing.sm))
                 Text(
                     text = pluralStringResource(R.plurals.group_sync_followers_connected, followerCount, followerCount),
                     style = MaterialTheme.typography.labelMedium,
@@ -504,7 +505,7 @@ private fun LeaderContent(
             onRegenerateApiKey = onRegenerateApiKey,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.sm))
 
         LjButton(
             onClick = onLeaveGroup,
@@ -535,7 +536,7 @@ private fun FollowerContent(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(LjSpacing.md),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
@@ -601,7 +602,7 @@ private fun FollowerContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.sm))
 
         LjButton(
             onClick = onLeaveGroup,
@@ -633,7 +634,7 @@ private fun SwitchRow(
             checked = checked,
             onCheckedChange = onCheckedChange,
             enabled = enabled,
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = LjSpacing.md),
         )
     }
 }
@@ -658,7 +659,7 @@ private fun ApiAccessSection(
         LjCard(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(modifier = Modifier.padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm)) {
                 ApiCredentialRow(stringResource(R.string.group_sync_api_host), host.orEmpty())
                 ApiCredentialRow(stringResource(R.string.group_sync_api_port), port?.toString().orEmpty())
                 ApiCredentialRow(stringResource(R.string.group_sync_api_key), apiKey.orEmpty())

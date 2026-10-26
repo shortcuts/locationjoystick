@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.location.rememberSpoofToggleState
@@ -440,7 +441,7 @@ internal fun MapScreen(
 
             MapAttribution(
                 tileSource = tileSource,
-                modifier = Modifier.align(Alignment.BottomStart).padding(4.dp),
+                modifier = Modifier.align(Alignment.BottomStart).padding(LjSpacing.xs),
             )
 
             if (uiState.walkTarget == null && !uiState.isRouteReplay && !uiState.isRoaming) {
@@ -460,7 +461,7 @@ internal fun MapScreen(
                     modifier =
                         Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = 12.dp, start = 16.dp, end = 16.dp)
+                            .padding(bottom = 12.dp, start = LjSpacing.md, end = LjSpacing.md)
                             .background(
                                 MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
                                 MaterialTheme.shapes.small,
@@ -478,7 +479,7 @@ internal fun MapScreen(
                     modifier =
                         Modifier
                             .align(Alignment.TopStart)
-                            .padding(top = paddingValues.calculateTopPadding() + 8.dp, start = 12.dp),
+                            .padding(top = paddingValues.calculateTopPadding() + LjSpacing.sm, start = 12.dp),
                 )
             }
 
@@ -501,7 +502,7 @@ internal fun MapScreen(
                         Modifier
                             .align(Alignment.TopCenter)
                             .padding(
-                                top = paddingValues.calculateTopPadding() + 8.dp,
+                                top = paddingValues.calculateTopPadding() + LjSpacing.sm,
                                 start = 12.dp,
                                 end = 12.dp,
                             ),

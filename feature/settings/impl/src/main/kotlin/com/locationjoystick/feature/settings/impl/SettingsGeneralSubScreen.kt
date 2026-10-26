@@ -32,7 +32,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjLanguageDropdown
@@ -114,14 +113,14 @@ private fun GuidedPathSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_menus_guided_path))
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_menus_guided_path_desc),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(Modifier.height(8.dp))
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Spacer(Modifier.height(LjSpacing.sm))
+    Column(verticalArrangement = Arrangement.spacedBy(LjSpacing.sm)) {
         GuidedPath.entries.forEach { path ->
             LjSelectionRow(
                 mode = LjSelectionMode.Single,
@@ -155,15 +154,15 @@ private fun MapSourceSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_menus_map_section))
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_menus_map_source_desc),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(LjSpacing.sm))
     Text(stringResource(R.string.settings_menus_map_source), style = MaterialTheme.typography.bodyLarge)
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(LjSpacing.xs))
     var sourcePickerExpanded by remember { mutableStateOf(false) }
     var sourcePickerWidth by remember { mutableStateOf(0) }
     val density = LocalDensity.current
@@ -217,7 +216,7 @@ private fun MapSourceSection(
         }
     }
     if (uiState.mapTileSource == MapTileSource.AMAP) {
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(LjSpacing.sm))
         Text(
             stringResource(R.string.settings_menus_map_source_amap_note),
             style = MaterialTheme.typography.bodySmall,
@@ -250,13 +249,13 @@ private fun ThemeSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_menus_appearance))
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_menus_switch_to_a_light_theme_for),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Toggle,
         title = stringResource(R.string.settings_menus_light_mode),
@@ -273,7 +272,7 @@ private fun PrivacySection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_menus_privacy))
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(LjSpacing.xs))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
         checked = uiState.hideTeleportFeatures,
@@ -281,7 +280,7 @@ private fun PrivacySection(
         title = stringResource(R.string.settings_menus_hide_teleport_features),
         description = stringResource(R.string.settings_menus_hide_teleport_features_desc),
     )
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
         checked = uiState.floatingMapQuickWalk,
@@ -289,7 +288,7 @@ private fun PrivacySection(
         title = stringResource(R.string.settings_menus_floating_map_quick_walk),
         description = stringResource(R.string.settings_menus_floating_map_quick_walk_desc),
     )
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
         checked = uiState.hideWidgetOverlay,
@@ -297,7 +296,7 @@ private fun PrivacySection(
         title = stringResource(R.string.settings_menus_hide_floating_widget),
         description = stringResource(R.string.settings_menus_hide_floating_widget_desc),
     )
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
         checked = uiState.hideForegroundNotification,
@@ -313,7 +312,7 @@ private fun DebugSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_menus_debug))
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(LjSpacing.xs))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
         checked = uiState.debugStatsEnabled,

@@ -8,7 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.designsystem.LjSpacing
 
 /** Quiet-utility section label shared by every Settings sub-screen. */
 @Composable
@@ -19,6 +19,6 @@ internal fun SettingsSectionHeader(title: String) {
 /** Hairline separator between Settings sections. */
 @Composable
 internal fun SettingsSectionDivider() {
-    Spacer(Modifier.height(16.dp))
-    HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+    Spacer(Modifier.height(LjSpacing.md))
+    HorizontalDivider(modifier = Modifier.padding(bottom = LjSpacing.md))
 }

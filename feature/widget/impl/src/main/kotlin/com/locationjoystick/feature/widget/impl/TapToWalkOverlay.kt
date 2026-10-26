@@ -33,6 +33,7 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjOnScrim
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.model.CalibrationWalkMath
 import com.locationjoystick.core.model.GroundFlowFit
@@ -189,7 +190,7 @@ private fun TapToWalkOverlayContent(
                     .align(Alignment.TopCenter)
                     .padding(top = 64.dp)
                     .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f), MaterialTheme.shapes.small)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
         )
         // Cancel button — drawn on top; consumes taps in its bounds before background does
         Box(
@@ -197,7 +198,7 @@ private fun TapToWalkOverlayContent(
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(24.dp)
+                    .padding(LjSpacing.lg)
                     .size(48.dp)
                     .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f), MaterialTheme.shapes.medium)
                     .clip(MaterialTheme.shapes.medium)

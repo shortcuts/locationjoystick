@@ -35,6 +35,7 @@ import com.locationjoystick.app.IDLE_ROUTE
 import com.locationjoystick.app.R
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.feature.favorites.api.FAVORITES_ROUTE
 import com.locationjoystick.feature.favorites.api.MAP_PICKER_ROUTE
@@ -57,14 +58,14 @@ fun LjDrawerContent(
 
     ModalDrawerSheet(modifier = Modifier.widthIn(max = 320.dp).semantics { testTag = "nav_drawer" }) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = LjSpacing.sm, vertical = 6.dp),
             horizontalArrangement = Arrangement.End,
         ) {
             IconButton(onClick = { scope.launch { drawerState.close() } }) {
                 Icon(LjIcons.Close, contentDescription = stringResource(R.string.drawer_close_menu_cd))
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.md))
         NavigationDrawerItem(
             icon = { Icon(LjIcons.Home, contentDescription = null) },
             label = { Text(stringResource(R.string.drawer_home)) },
@@ -193,7 +194,7 @@ private fun ExternalLinkDrawerItem(
         label = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(label)
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(LjSpacing.xs))
                 Icon(
                     imageVector = LjIcons.OpenInNew,
                     contentDescription = null,

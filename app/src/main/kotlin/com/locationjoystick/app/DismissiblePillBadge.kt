@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 
 /**
  * Shared home-screen badge pill (What's New, update available): icon, label and an inline
@@ -45,7 +46,7 @@ internal fun DismissiblePillBadge(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(LjSpacing.xs),
         modifier =
             Modifier
                 .scale(scale)
@@ -53,7 +54,7 @@ internal fun DismissiblePillBadge(
                 .background(MaterialTheme.colorScheme.primary)
                 .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
                 .semantics { this.contentDescription = contentDescription }
-                .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 8.dp),
+                .padding(start = 12.dp, top = LjSpacing.sm, bottom = LjSpacing.sm, end = LjSpacing.sm),
     ) {
         Icon(
             imageVector = icon,

@@ -51,6 +51,7 @@ import com.locationjoystick.core.common.util.clampPlantingRadius
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
@@ -300,9 +301,9 @@ fun RouteDetailScreen(
             } else {
                 val isTeleportRoute = route!!.routeType == RouteType.TELEPORT
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                    modifier = Modifier.fillMaxSize().padding(horizontal = LjSpacing.md),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
-                    contentPadding = PaddingValues(vertical = 16.dp),
+                    contentPadding = PaddingValues(vertical = LjSpacing.md),
                 ) {
                     // Editable name field
                     item {
@@ -320,7 +321,7 @@ fun RouteDetailScreen(
                                     stringResource(R.string.route_detail_name_cannot_be_empty),
                                     color = MaterialTheme.colorScheme.error,
                                     style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.padding(top = 4.dp, start = 4.dp),
+                                    modifier = Modifier.padding(top = LjSpacing.xs, start = LjSpacing.xs),
                                 )
                             }
                         }
@@ -336,7 +337,7 @@ fun RouteDetailScreen(
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
-                                Spacer(Modifier.height(8.dp))
+                                Spacer(Modifier.height(LjSpacing.sm))
 
                                 val options = listOf<SpeedProfile?>(null) + speedProfiles
                                 var expanded by remember { mutableStateOf(false) }
@@ -406,7 +407,7 @@ fun RouteDetailScreen(
                                     label = { Text(stringResource(R.string.route_detail_planting_radius_meters)) },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                     singleLine = true,
-                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(top = LjSpacing.sm),
                                 )
                             }
                         }
@@ -431,7 +432,7 @@ fun RouteDetailScreen(
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
                                 Icon(LjIcons.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(8.dp))
+                                Spacer(Modifier.width(LjSpacing.sm))
                                 Text(stringResource(R.string.route_detail_set_all_wait_cd))
                             }
                         }

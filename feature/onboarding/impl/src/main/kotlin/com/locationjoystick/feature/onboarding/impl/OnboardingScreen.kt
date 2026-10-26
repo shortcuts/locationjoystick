@@ -46,6 +46,7 @@ import androidx.navigation.compose.composable
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.startSettingsActivity
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjGuidedStepCard
@@ -201,7 +202,7 @@ internal fun OnboardingScreen(
             contentModifier = Modifier.verticalScroll(remember { ScrollState(0) }).padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.sm))
 
             Text(
                 text = stringResource(R.string.onboarding_set_up_locationjoystick),
@@ -210,7 +211,7 @@ internal fun OnboardingScreen(
                 textAlign = TextAlign.Center,
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.xs))
 
             Text(
                 text = stringResource(R.string.onboarding_version, AppConstants.AppInfo.VERSION_NAME),
@@ -219,7 +220,7 @@ internal fun OnboardingScreen(
                 textAlign = TextAlign.Center,
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.xs))
 
             Text(
                 text = stringResource(R.string.onboarding_complete_the_steps_below_to_start),
@@ -268,7 +269,7 @@ internal fun OnboardingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.xs))
 
             val grantedStepCount =
                 listOf(
@@ -284,7 +285,7 @@ internal fun OnboardingScreen(
                 textAlign = TextAlign.Center,
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.xs))
 
             LinearProgressIndicator(
                 progress = { grantedStepCount / 4f },
@@ -293,7 +294,7 @@ internal fun OnboardingScreen(
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.sm))
 
             LjGuidedStepCard(
                 title = stringResource(R.string.onboarding_location_permission),
@@ -308,7 +309,7 @@ internal fun OnboardingScreen(
                 },
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.sm))
 
             LjGuidedStepCard(
                 title = stringResource(R.string.onboarding_display_over_other_apps),
@@ -326,7 +327,7 @@ internal fun OnboardingScreen(
                 },
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.sm))
 
             LjGuidedStepCard(
                 title = stringResource(R.string.onboarding_set_as_fake_gps_app),
@@ -344,7 +345,7 @@ internal fun OnboardingScreen(
                 onExtraAction = { showSkipMockLocationDialog = true },
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.md))
 
             LjPrimaryButton(
                 text = stringResource(R.string.onboarding_continue),
@@ -354,7 +355,7 @@ internal fun OnboardingScreen(
             )
 
             if (uiState.isDebugBuild && !uiState.canProceed) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(LjSpacing.sm))
                 Text(
                     text = stringResource(R.string.onboarding_debug_build_permissions_optional),
                     style = MaterialTheme.typography.labelSmall,

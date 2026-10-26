@@ -52,6 +52,7 @@ import com.locationjoystick.core.common.util.shareLocationLink
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.ActivityState
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.activityState
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.LjButton
@@ -311,7 +312,7 @@ internal fun MapFloatingView(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(if (compact) 4.dp else 16.dp)
+                .padding(if (compact) LjSpacing.xs else LjSpacing.md)
                 .background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
                 .clip(MaterialTheme.shapes.medium),
     ) {
@@ -412,7 +413,7 @@ internal fun MapFloatingView(
 
         MapAttribution(
             tileSource = tileSource,
-            modifier = Modifier.align(Alignment.BottomStart).padding(4.dp),
+            modifier = Modifier.align(Alignment.BottomStart).padding(LjSpacing.xs),
         )
 
         if (showSearch) {
@@ -432,7 +433,7 @@ internal fun MapFloatingView(
                 modifier =
                     Modifier
                         .align(Alignment.TopCenter)
-                        .padding(top = 8.dp, start = 12.dp, end = 12.dp),
+                        .padding(top = LjSpacing.sm, start = 12.dp, end = 12.dp),
             )
         }
 
@@ -442,7 +443,7 @@ internal fun MapFloatingView(
                 modifier =
                     Modifier
                         .align(Alignment.TopStart)
-                        .padding(8.dp)
+                        .padding(LjSpacing.sm)
                         .background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                         .pointerInput(Unit) {
@@ -465,7 +466,7 @@ internal fun MapFloatingView(
             modifier =
                 Modifier
                     .align(Alignment.TopEnd)
-                    .padding(8.dp)
+                    .padding(LjSpacing.sm)
                     .background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium),
         ) {
@@ -493,8 +494,8 @@ internal fun MapFloatingView(
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 8.dp, bottom = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(end = LjSpacing.sm, bottom = LjSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
             horizontalAlignment = Alignment.End,
         ) {
             LjMapIconButton(
@@ -557,9 +558,9 @@ internal fun MapFloatingView(
                 onOpenRoutes = onOpenRoutes,
             )
             val roamState = activityState(isRoaming, isRoamingPaused)
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(LjSpacing.xs)) {
                 androidx.compose.animation.AnimatedVisibility(visible = isRoaming) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(LjSpacing.xs)) {
                         LjMapIconButton(
                             icon = LjIcons.Stop,
                             contentDescription = stringResource(R.string.overlay_stop_roaming_cd),
@@ -768,7 +769,7 @@ private fun BoxScope.OverlayRoamingSheet(
             modifier =
                 Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = 8.dp)
+                    .padding(top = LjSpacing.sm)
                     .width(32.dp)
                     .height(4.dp)
                     .background(
@@ -837,7 +838,7 @@ private fun BoxScope.OverlayPasteCoordinatesSheet(
             modifier =
                 Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = 8.dp)
+                    .padding(top = LjSpacing.sm)
                     .width(32.dp)
                     .height(4.dp)
                     .background(
@@ -846,7 +847,7 @@ private fun BoxScope.OverlayPasteCoordinatesSheet(
                     ),
         )
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-            Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(top = LjSpacing.sm)) {
                 PasteCoordinatesForm(
                     onDismiss = onDismiss,
                     onTeleport = onTeleport,
@@ -892,7 +893,7 @@ private fun BoxScope.TapActionPanel(
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface)
                 .clickable {}
-                .padding(16.dp),
+                .padding(LjSpacing.md),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -915,7 +916,7 @@ private fun BoxScope.TapActionPanel(
             )
         }
         if (isRouteReplay && !isEphemeralReplay) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(LjSpacing.md))
             if (!hideTeleportFeatures) {
                 LjButton(
                     onClick = {
@@ -924,7 +925,7 @@ private fun BoxScope.TapActionPanel(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text(stringResource(R.string.map_floating_stop_route_and_teleport)) }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(LjSpacing.sm))
             }
             LjOutlinedButton(
                 onClick = {
@@ -933,7 +934,7 @@ private fun BoxScope.TapActionPanel(
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.map_floating_stop_route_and_walk_here)) }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(LjSpacing.sm))
             LjOutlinedButton(
                 onClick = {
                     onFinishRouteAndWalkTo(tap)
@@ -945,13 +946,13 @@ private fun BoxScope.TapActionPanel(
             val cooldownState by remember(tap) {
                 cooldownForPosition?.invoke(tap) ?: flowOf(CooldownState.Ready)
             }.collectAsStateWithLifecycle(initialValue = CooldownState.Ready)
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(LjSpacing.sm))
             CooldownAdvisoryBadge(
                 (cooldownState as? CooldownState.Cooling)
                     ?.let { cooldownAdvisoryLabel(it.remainingSeconds, it.distanceMeters, rememberCooldownStringLookup()) }
                     ?: stringResource(R.string.map_floating_no_wait_needed),
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(LjSpacing.md))
             if (!hideTeleportFeatures) {
                 LjButton(
                     onClick = {
@@ -960,7 +961,7 @@ private fun BoxScope.TapActionPanel(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text(stringResource(R.string.map_floating_teleport_here)) }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(LjSpacing.sm))
             }
             LjOutlinedButton(
                 onClick = {
@@ -969,7 +970,7 @@ private fun BoxScope.TapActionPanel(
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.map_floating_walk_here)) }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(LjSpacing.sm))
             LjOutlinedButton(
                 onClick = {
                     onWalkViaRoads(tap)
@@ -978,7 +979,7 @@ private fun BoxScope.TapActionPanel(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.map_floating_walk_here_via_roads)) }
             if (isWalkActive) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(LjSpacing.sm))
                 LjOutlinedButton(
                     onClick = {
                         onAddEphemeralWaypoint(tap, false)
@@ -986,7 +987,7 @@ private fun BoxScope.TapActionPanel(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text(stringResource(R.string.map_floating_add_next_point)) }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(LjSpacing.sm))
                 LjOutlinedButton(
                     onClick = {
                         onAddEphemeralWaypoint(tap, true)
@@ -996,7 +997,7 @@ private fun BoxScope.TapActionPanel(
                 ) { Text(stringResource(R.string.map_floating_add_next_point_via_roads)) }
             }
         }
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(LjSpacing.xs))
         LjTextButton(
             onClick = { onDismiss() },
             modifier = Modifier.fillMaxWidth(),

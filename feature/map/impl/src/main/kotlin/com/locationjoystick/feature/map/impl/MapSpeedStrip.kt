@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.model.SpeedUnit
 
 private const val MPS_TO_KMH = 3.6
@@ -40,6 +41,6 @@ internal fun MapSpeedStrip(
             modifier
                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f), MaterialTheme.shapes.small)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.small)
-                .padding(horizontal = 10.dp, vertical = 4.dp),
+                .padding(horizontal = 10.dp, vertical = LjSpacing.xs),
     )
 }

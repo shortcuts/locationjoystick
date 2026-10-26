@@ -50,6 +50,7 @@ import com.locationjoystick.core.common.util.shareCurrentLocationCoordinates
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.DeleteItemType
 import com.locationjoystick.core.designsystem.component.EmptyState
@@ -215,7 +216,7 @@ internal fun FavoritesScreen(
                         query = searchQuery,
                         onQueryChange = { searchQuery = it },
                         label = stringResource(R.string.favorites_screen_search_favorites),
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
                     )
                 }
 
@@ -269,7 +270,7 @@ internal fun FavoritesScreen(
                                 state = listState,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
                             ) {
                                 groupedItems(
                                     groups = if (searching) filteredSections else reorder.groups,
@@ -330,7 +331,7 @@ internal fun FavoritesScreen(
         LjModalBottomSheet(
             onDismissRequest = { showAddOptionsSheet = false },
         ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm)) {
                 Text(stringResource(R.string.favorites_screen_add_a_favorite), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(12.dp))
                 LjActionSheetRow(
@@ -370,7 +371,7 @@ internal fun FavoritesScreen(
                         showAddSheet = true
                     },
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(LjSpacing.sm))
             }
         }
     }
@@ -580,7 +581,7 @@ private fun AddFavoriteSheet(
 
     WideContentClamp(
         modifier = Modifier.fillMaxWidth(),
-        contentModifier = Modifier.fillMaxWidth().padding(16.dp).imePadding(),
+        contentModifier = Modifier.fillMaxWidth().padding(LjSpacing.md).imePadding(),
     ) {
         Text(
             stringResource(R.string.favorites_screen_add_favorite_location),
@@ -595,7 +596,7 @@ private fun AddFavoriteSheet(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp),
+                    .padding(top = LjSpacing.md),
         )
 
         Row(
@@ -603,7 +604,7 @@ private fun AddFavoriteSheet(
                 Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm),
         ) {
             OutlinedTextField(
                 value = lat,
@@ -627,7 +628,7 @@ private fun AddFavoriteSheet(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp),
+                    .padding(top = LjSpacing.lg),
             horizontalArrangement = Arrangement.End,
         ) {
             LjTextButton(onClick = onDismiss) {
@@ -668,7 +669,7 @@ private fun PasteFavoriteSheet(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(LjSpacing.md)
                 .imePadding(),
     ) {
         Text(
@@ -684,7 +685,7 @@ private fun PasteFavoriteSheet(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp),
+                    .padding(top = LjSpacing.md),
         )
 
         OutlinedTextField(
@@ -724,7 +725,7 @@ private fun PasteFavoriteSheet(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp),
+                    .padding(top = LjSpacing.lg),
             horizontalArrangement = Arrangement.End,
         ) {
             LjTextButton(onClick = onDismiss) {
@@ -759,7 +760,7 @@ private fun EditFavoriteDialog(
     val isValid = name.isNotEmpty() && isValidLatLng(latVal, lonVal)
 
     LjModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(Modifier.fillMaxWidth().padding(16.dp)) {
+        Column(Modifier.fillMaxWidth().padding(LjSpacing.md)) {
             Text(stringResource(R.string.favorites_screen_edit_favorite), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(
@@ -769,7 +770,7 @@ private fun EditFavoriteDialog(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 8.dp),
+                        .padding(bottom = LjSpacing.sm),
             )
             OutlinedTextField(
                 value = lat,
@@ -778,7 +779,7 @@ private fun EditFavoriteDialog(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 8.dp),
+                        .padding(bottom = LjSpacing.sm),
             )
             OutlinedTextField(
                 value = lon,

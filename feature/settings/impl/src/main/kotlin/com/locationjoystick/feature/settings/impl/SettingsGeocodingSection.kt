@@ -7,7 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjSelectionMode
 import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.model.GeocodingProviderId
@@ -19,13 +19,13 @@ internal fun GeocodingSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_menus_geocoding_section))
-    Spacer(Modifier.height(4.dp))
+    Spacer(Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_menus_geocoding_desc),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(LjSpacing.sm))
     val enabledCount = GeocodingProviderId.entries.count { it !in uiState.disabledGeocodingProviders }
     GeocodingProviderId.entries.forEach { id ->
         val checked = id !in uiState.disabledGeocodingProviders

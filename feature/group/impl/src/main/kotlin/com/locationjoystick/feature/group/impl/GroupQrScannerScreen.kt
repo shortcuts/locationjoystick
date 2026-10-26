@@ -45,6 +45,7 @@ import com.google.zxing.NotFoundException
 import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.common.HybridBinarizer
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.feature.group.impl.R
 import java.util.concurrent.Executors
 
@@ -137,7 +138,7 @@ fun GroupQrScannerScreen(
                         .align(Alignment.TopCenter)
                         .padding(top = 48.dp)
                         .background(Color.Black.copy(alpha = 0.5f))
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
             ) {
                 Text(
                     text = stringResource(R.string.group_qr_scanner_point_at_the_leader_s_group),
@@ -148,13 +149,13 @@ fun GroupQrScannerScreen(
         } else {
             Text(
                 text = stringResource(R.string.group_qr_scanner_camera_permission_required_to_scan_qr),
-                modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                modifier = Modifier.align(Alignment.Center).padding(LjSpacing.lg),
             )
         }
 
         IconButton(
             onClick = onNavigateBack,
-            modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
+            modifier = Modifier.align(Alignment.TopStart).padding(LjSpacing.sm),
         ) {
             Icon(LjIcons.ArrowBack, contentDescription = stringResource(R.string.group_qr_scanner_back_cd), tint = Color.White)
         }

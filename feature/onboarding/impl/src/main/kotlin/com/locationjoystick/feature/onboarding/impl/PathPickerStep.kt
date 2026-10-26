@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.component.AccessibilityDisclosureDialog
 import com.locationjoystick.core.designsystem.component.LjGuidedStepCard
@@ -92,28 +93,28 @@ internal fun PathPickerStep(
             contentModifier = Modifier.verticalScroll(remember { ScrollState(0) }).padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.sm))
             Text(
                 text = stringResource(R.string.onboarding_pick_path_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.xs))
             Text(
                 text = stringResource(R.string.onboarding_pick_path_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.sm))
             Text(
                 text = stringResource(R.string.onboarding_step_x_of_4, 4),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.xs))
             LinearProgressIndicator(
                 progress = { 1f },
                 modifier = Modifier.fillMaxWidth(),
@@ -131,18 +132,18 @@ internal fun PathPickerStep(
                     checked = path == uiState.selectedPath,
                     onCheckedChange = { onSelectPath(path) },
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(LjSpacing.sm))
             }
 
             if (showsTapToWalk) {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(LjSpacing.xs))
                 Text(
                     text = stringResource(R.string.onboarding_optional),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(LjSpacing.xs))
                 LjGuidedStepCard(
                     title = stringResource(R.string.onboarding_tap_to_walk_access),
                     description = stringResource(R.string.onboarding_tap_to_walk_access_desc),
@@ -153,7 +154,7 @@ internal fun PathPickerStep(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(LjSpacing.md))
             LjPrimaryButton(
                 text = stringResource(R.string.onboarding_start_using_locationjoystick),
                 onClick = onFinish,

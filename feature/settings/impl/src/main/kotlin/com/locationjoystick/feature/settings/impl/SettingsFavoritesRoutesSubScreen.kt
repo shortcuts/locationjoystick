@@ -17,8 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSelectionMode
 import com.locationjoystick.core.designsystem.component.LjSelectionRow
@@ -82,13 +82,13 @@ private fun FavoritesSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_favorites_routes_favorites))
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_favorites_routes_options_for_the_favorites_list),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
         checked = uiState.hotLocationsEnabled,
@@ -97,7 +97,7 @@ private fun FavoritesSection(
         description = stringResource(R.string.settings_favorites_routes_show_hot_locations_desc),
     )
     if (uiState.hotLocationsEnabled && hotLocationTree.allIds.isNotEmpty()) {
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.sm))
         HotItemTreeSection(
             headerLabel = stringResource(R.string.settings_favorites_routes_locations),
             tree = hotLocationTree,
@@ -114,13 +114,13 @@ private fun RoutesSection(
     onAction: (SettingsAction) -> Unit,
 ) {
     SettingsSectionHeader(stringResource(R.string.settings_favorites_routes_routes))
-    Spacer(modifier = Modifier.height(4.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.xs))
     Text(
         stringResource(R.string.settings_favorites_routes_options_for_the_routes_list),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
         checked = uiState.hotRoutesEnabled,
@@ -129,7 +129,7 @@ private fun RoutesSection(
         description = stringResource(R.string.settings_favorites_routes_show_hot_routes_desc),
     )
     if (uiState.hotRoutesEnabled && hotRouteTree.allIds.isNotEmpty()) {
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(LjSpacing.sm))
         HotItemTreeSection(
             headerLabel = stringResource(R.string.settings_favorites_routes_routes),
             tree = hotRouteTree,
