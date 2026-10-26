@@ -41,6 +41,7 @@ STEP_TIMEOUT_S = {"walkcap": 1800, "persp": 600}
 LEG_BEARINGS = ["0", "180", "90", "270", "45", "225", "135", "315"]
 # UI strings the device path finds by content description (feature/widget/impl/src/main/res/values/strings.xml).
 TAP_ICON_DESC, EXPAND_DESC, CANCEL_DESC = "Tap to walk", "Expand widget", "Cancel tap-to-walk"
+GAME_ACTIVITY = "com.nianticlabs.pokemongo/com.nianticproject.holoholo.libholoholo.unity.UnityMainActivity"
 # DataStore key of the stored flow map (core/datastore AppPreferencesDataSource).
 TAP_CALIBRATION_KEY = "tap_to_walk_ground_calibration"
 
@@ -360,9 +361,13 @@ def app_leg(host, key, loc):
     """One 40 m leg north. The last walk before the taps, so the stored map is this one-leg map."""
     import registration_bench as rb
 
-    arrived = rb._walk_and_wait(host, key, loc["lat"] + LEG_M / 111320, loc["lon"])
-    if not arrived:
-        raise RuntimeError("app leg did not arrive")
+    for _ in range(2):  # the bench exits on one fast sample; position jitter can cause one
+        try:
+            if rb._walk_and_wait(host, key, loc["lat"] + LEG_M / 111320, loc["lon"]):
+                return
+        except SystemExit:
+            continue
+    raise RuntimeError("app leg did not arrive")
 
 
 def run_row(py, serial, host, key, loc, i, scenario, out, settle, respect_cooldown):
@@ -376,6 +381,7 @@ def run_row(py, serial, host, key, loc, i, scenario, out, settle, respect_cooldo
     cooldown, undo = 0, []
     cx, cy = rb.GESTURE_CENTER
     try:
+        rb._focus(serial, GAME_ACTIVITY)  # another app can take the screen during a long run
         cooldown = teleport_and_settle(host, key, loc, settle, respect_cooldown)
         dismiss_speed_warning(serial)
         cal = reference(py, serial, d / "reference")
