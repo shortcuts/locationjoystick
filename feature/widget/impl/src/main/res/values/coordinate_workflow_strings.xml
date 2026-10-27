@@ -50,6 +50,6 @@
     <string name="widget_panel_content_reconnect_status_not_off">"No reconnect needed"</string>
     <string name="widget_panel_content_reconnect_status_reconnected">"Reconnected"</string>
     <string name="widget_panel_content_reconnect_status_failed">"Failed"</string>
-    <string name="widget_panel_content_reconnect_status_gate_closed">"Game not in front"</string>
+    <string name="widget_panel_content_reconnect_status_gate_closed">"Paused: game not in front or Tap to Walk on"</string>
     <string name="widget_panel_content_reconnect_status_not_found">"Control not found"</string>
 </resources>

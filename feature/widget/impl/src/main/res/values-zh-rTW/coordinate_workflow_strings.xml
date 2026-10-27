@@ -50,6 +50,6 @@
     <string name="widget_panel_content_reconnect_status_not_off">"無需重新連接"</string>
     <string name="widget_panel_content_reconnect_status_reconnected">"已重新連接"</string>
     <string name="widget_panel_content_reconnect_status_failed">"失敗"</string>
-    <string name="widget_panel_content_reconnect_status_gate_closed">"遊戲不在前景"</string>
+    <string name="widget_panel_content_reconnect_status_gate_closed">"已暫停：遊戲不在前景或點擊行走已開啟"</string>
     <string name="widget_panel_content_reconnect_status_not_found">"找不到控制項"</string>
 </resources>

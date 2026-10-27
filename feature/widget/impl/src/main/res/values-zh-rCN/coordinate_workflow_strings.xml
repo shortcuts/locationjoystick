@@ -50,6 +50,6 @@
     <string name="widget_panel_content_reconnect_status_not_off">"无需重新连接"</string>
     <string name="widget_panel_content_reconnect_status_reconnected">"已重新连接"</string>
     <string name="widget_panel_content_reconnect_status_failed">"失败"</string>
-    <string name="widget_panel_content_reconnect_status_gate_closed">"游戏不在前台"</string>
+    <string name="widget_panel_content_reconnect_status_gate_closed">"已暂停：游戏不在前台或点击行走已开启"</string>
     <string name="widget_panel_content_reconnect_status_not_found">"未找到控件"</string>
 </resources>
