@@ -136,17 +136,27 @@ class ScreenAccessibilityService :
         }
     }
 
-    /** Reads only the detector's search window (~16% of the frame) so the heap stays free for the auto-fit analysis. */
-    private fun detectControl(bitmap: Bitmap): ReconnectControl? {
+    private fun readPixels(
+        bitmap: Bitmap,
+        x0: Int,
+        y1: Int,
+    ): IntArray {
         val soft = if (bitmap.config == Bitmap.Config.HARDWARE) bitmap.copy(Bitmap.Config.ARGB_8888, false) else bitmap
         val w = soft.width
-        val x0 = ReconnectControlDetector.searchX0(w)
-        val h = soft.height
-        val y1 = ReconnectControlDetector.searchY1(h)
         val pixels = IntArray((w - x0) * y1)
         soft.getPixels(pixels, 0, w - x0, x0, 0, w - x0, y1)
         if (soft !== bitmap) soft.recycle()
         bitmap.recycle()
+        return pixels
+    }
+
+    /** Reads only the detector's search window (~16% of the frame) so the heap stays free for the auto-fit analysis. */
+    private fun detectControl(bitmap: Bitmap): ReconnectControl? {
+        val w = bitmap.width
+        val x0 = ReconnectControlDetector.searchX0(w)
+        val h = bitmap.height
+        val y1 = ReconnectControlDetector.searchY1(h)
+        val pixels = readPixels(bitmap, x0, y1)
         return ReconnectControlDetector.detect(pixels, w, h, cropX = x0)
     }
 
@@ -281,14 +291,9 @@ class ScreenAccessibilityService :
 
     override suspend fun captureGrayFrame(): GrayImage? {
         val bitmap = takeScreenshotBitmap() ?: return null
-        val soft = if (bitmap.config == Bitmap.Config.HARDWARE) bitmap.copy(Bitmap.Config.ARGB_8888, false) else bitmap
-        val w = soft.width
-        val h = soft.height
-        val pixels = IntArray(w * h)
-        soft.getPixels(pixels, 0, w, 0, 0, w, h)
-        if (soft !== bitmap) soft.recycle()
-        bitmap.recycle()
-        return GrayImage(w, h, lumaOf(pixels))
+        val w = bitmap.width
+        val h = bitmap.height
+        return GrayImage(w, h, lumaOf(readPixels(bitmap, 0, h)))
     }
 
     private val screenshotPacer =
