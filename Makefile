@@ -91,15 +91,15 @@ reconnect-already-on:
 # local debug keystore, 12 already-on checks, auto blocks a-e x 20 cycles, then the summary.
 # Blocks run with a leading '-' so a crashed block does not skip the rest; failed cycles are rows in
 # scripts/reconnect-matrix/cycles.jsonl and are listed by the summary. Takes hours.
-SERIAL ?= 0A061FDD4000JF
+MATRIX_SERIAL ?= 0A061FDD4000JF
 MAC_SUFFIX ?= D3:24
 DEVICE_SLUG ?= pixel5
-MATRIX_ARGS = --serial $(SERIAL) --mac-suffix $(MAC_SUFFIX) --device-slug $(DEVICE_SLUG)
+MATRIX_ARGS = --serial $(MATRIX_SERIAL) --mac-suffix $(MAC_SUFFIX) --device-slug $(DEVICE_SLUG)
 
 reconnect-matrix:
-	ANDROID_SERIAL=$(SERIAL) KEYSTORE_PATH=$$HOME/.android/debug.keystore STORE_PASSWORD=android \
+	ANDROID_SERIAL=$(MATRIX_SERIAL) KEYSTORE_PATH=$$HOME/.android/debug.keystore STORE_PASSWORD=android \
 		KEY_ALIAS=androiddebugkey KEY_PASSWORD=android ./gradlew installRelease
-	@if adb -s $(SERIAL) shell dumpsys package com.locationjoystick.app | grep -q 'flags=\[.*DEBUGGABLE'; then \
+	@if adb -s $(MATRIX_SERIAL) shell dumpsys package com.locationjoystick.app | grep -q 'flags=\[.*DEBUGGABLE'; then \
 		echo "ERROR: installed build is debuggable (10 s loop), not release cadence"; exit 1; fi
 	-$(RECONNECT) already-on $(MATRIX_ARGS) --checks 12
 	-$(RECONNECT) auto $(MATRIX_ARGS) --block a --cycles 20

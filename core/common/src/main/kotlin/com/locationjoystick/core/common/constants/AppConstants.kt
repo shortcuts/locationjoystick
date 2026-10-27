@@ -536,20 +536,11 @@ object AppConstants {
     }
 
     /**
-     * Curated "what's new" highlights for the current [AppInfo.VERSION_NAME], shown in the
-     * in-app What's New popup (see docs/features/whats-new.md). Update alongside every release
-     * that has user-visible changes — mirrors the curation already done for docs/wiki/changelog.html.
+     * Packaged "what's new" JSON for the current [AppInfo.VERSION_NAME], shown in the in-app
+     * What's New popup (see docs/features/whats-new.md). Update alongside every release that
+     * has user-visible changes.
      */
     object WhatsNewConstants {
-        // Per-version JSON, authored alongside docs/wiki/changelog.html — see docs/features/whats-new.md.
-        const val BASE_URL = "https://locationjoystick.shrtcts.fr/changelog/"
-        const val CONNECT_TIMEOUT_MS = 5000
-        const val READ_TIMEOUT_MS = 5000
-
-        // Strips a pre-release suffix (e.g. "0.19.0-alpha1" -> "0.19.0") since changelog JSON
-        // is authored per release version, not per alpha/beta tag.
-        fun buildUrl(version: String) = "$BASE_URL${version.substringBefore("-")}.json"
-
         // Packed into the APK for offline release highlights.
         // Strips a pre-release suffix (e.g. "0.20.0-alpha1" -> "0.20.0.json").
         fun assetFileName(version: String) = "${version.substringBefore("-")}.json"
