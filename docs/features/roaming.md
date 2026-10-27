@@ -1,6 +1,6 @@
 # Roaming Mode
 
-Automatic wandering, started from the roaming sheet on the map, the floating widget, or settings. Only one roaming session can run at a time.
+Automatic wandering, started from the roaming sheet on the map, the floating widget, or settings. Only one roaming session can run at a time. A walk to a tapped point stops roaming first. The walk starts only after the stop finishes, because the stop resets the mode and would otherwise erase the walk.
 
 There are two modes. The roaming sheet shows one mode's settings at a time, with a toggle to switch. Settings shows both modes' defaults at once, because it pre-configures what either mode starts with.
 

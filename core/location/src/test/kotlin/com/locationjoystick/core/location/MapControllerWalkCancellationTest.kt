@@ -193,6 +193,56 @@ class MapControllerWalkCancellationTest {
         }
 
     @Test
+    fun `walkTo during roaming stops roaming before the walk starts`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = buildHarness(backgroundScope, mockk(relaxed = true))
+            harness.locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+            harness.setRoamingActive()
+            val target = LatLng(48.9000, 2.3522)
+
+            harness.mapController.walkTo(target)
+
+            coVerify(exactly = 1) { harness.roamingRepository.stopRoaming() }
+            assertEquals(MockMode.WALK_TO, harness.locationRepository.currentMode.value)
+            assertEquals(target, harness.locationRepository.walkTarget.value)
+        }
+
+    @Test
+    fun `walkViaRoads during roaming stops roaming before routing and then walks`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val routeResult = CompletableDeferred<Result<List<LatLng>>>()
+            val osrmClient =
+                mockk<OsrmClient>(relaxed = true).also {
+                    coEvery { it.getRoute(any(), any()) } coAnswers { routeResult.await() }
+                }
+            val harness = buildHarness(backgroundScope, osrmClient)
+            val start = LatLng(48.8566, 2.3522)
+            val target = LatLng(48.9000, 2.3522)
+            harness.locationRepository.setPositionInternal(start)
+            harness.setRoamingActive()
+
+            harness.mapController.walkViaRoads(target)
+
+            coVerify(exactly = 1) { harness.roamingRepository.stopRoaming() }
+            assertEquals(MockMode.TELEPORT, harness.locationRepository.currentMode.value)
+            routeResult.complete(Result.success(listOf(start, target)))
+            assertEquals(MockMode.WALK_TO, harness.locationRepository.currentMode.value)
+            assertEquals(target, harness.locationRepository.walkTarget.value)
+        }
+
+    @Test
+    fun `walkTo without roaming never stops roaming`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val harness = buildHarness(backgroundScope, mockk(relaxed = true))
+            harness.locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+
+            harness.mapController.walkTo(LatLng(48.9000, 2.3522))
+
+            coVerify(exactly = 0) { harness.roamingRepository.stopRoaming() }
+            assertEquals(MockMode.WALK_TO, harness.locationRepository.currentMode.value)
+        }
+
+    @Test
     fun `joystick takeover in follower mode turns Follow leader off once`() =
         runTest(UnconfinedTestDispatcher()) {
             every { MockLocationIntentBuilder.exitFollower(any()) } returns mockk(relaxed = true)
@@ -435,7 +485,18 @@ class MapControllerWalkCancellationTest {
         val teleportUseCase: TeleportUseCase,
         val groupRepository: GroupRepository,
         val context: Context,
-    )
+        val roamingRepository: RoamingRepository,
+        val isRoaming: MutableStateFlow<Boolean>,
+    ) {
+        fun setRoamingActive() {
+            locationRepository.setMockMode(MockMode.ROAMING)
+            isRoaming.value = true
+            coEvery { roamingRepository.stopRoaming() } answers {
+                isRoaming.value = false
+                locationRepository.setMockMode(MockMode.TELEPORT)
+            }
+        }
+    }
 
     private fun buildHarness(
         scope: CoroutineScope,
@@ -513,6 +574,8 @@ class MapControllerWalkCancellationTest {
             teleportUseCase,
             groupRepository,
             context,
+            roamingRepository,
+            isRoaming,
         )
     }
 }

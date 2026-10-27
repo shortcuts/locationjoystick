@@ -439,8 +439,19 @@ class MapController
 
         fun walkTo(position: LatLng) {
             cancelAnyActiveMovement()
-            startStraightWalk(position, walkCoordinator.currentGeneration())
+            val generation = walkCoordinator.currentGeneration()
+            if (isRoamingActive()) {
+                appScope.launch {
+                    roamingRepository.stopRoaming()
+                    startStraightWalk(position, generation)
+                }
+            } else {
+                startStraightWalk(position, generation)
+            }
         }
+
+        private fun isRoamingActive(): Boolean =
+            locationRepository.currentMode.value == MockMode.ROAMING || roamingRepository.isRoaming.value
 
         /**
          * Starts a straight walk unless [expectedGeneration] went stale — i.e. a teleport, stop
@@ -481,6 +492,7 @@ class MapController
             val generation = walkCoordinator.currentGeneration()
             pendingRoadWalkJob =
                 appScope.launch {
+                    if (isRoamingActive()) roamingRepository.stopRoaming()
                     val current = locationRepository.currentPosition.value
                     if (current == null) {
                         Log.w(TAG, "walkViaRoads: no current position, straight walk")
