@@ -149,7 +149,11 @@
     var outline = document.createElement('div');
     outline.className = 'nav-outline';
     var outlineLinks = [];
-    outlineHeads.forEach(function (h) {
+    var outlineParent = [];
+    var parentIdx = -1;
+    outlineHeads.forEach(function (h, i) {
+      if (h.tagName === 'H2') parentIdx = i;
+      outlineParent.push(parentIdx);
       var a = document.createElement('a');
       a.className = 'nav-' + h.tagName.toLowerCase();
       a.href = '#' + h.id;
@@ -181,6 +185,9 @@
       next.classList.add('active');
       next.setAttribute('aria-current', 'true');
       activeLink = next;
+      outlineLinks.forEach(function (l, i) {
+        if (l.classList.contains('nav-h3')) l.classList.toggle('open', outlineParent[i] === outlineParent[idx]);
+      });
       if (window.innerWidth > 680) next.scrollIntoView({ block: 'nearest' });
     };
     var io = new IntersectionObserver(spy, { rootMargin: '0px 0px -70% 0px' });
