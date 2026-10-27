@@ -3,7 +3,6 @@
     <string name="capture_coordinates_form_clear_captured_locations">"Clear captured locations?"</string>
     <string name="capture_coordinates_form_clear">"Clear"</string>
     <string name="capture_coordinates_form_keep">"Keep"</string>
-    <string name="capture_coordinates_form_capture_coordinates">"Capture"</string>
     <string name="capture_coordinates_form_point_order">"Point order"</string>
     <string name="capture_coordinates_form_route_name">"Route name"</string>
     <string name="capture_coordinates_form_save_as_route">"Save as route"</string>
