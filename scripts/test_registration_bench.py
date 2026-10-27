@@ -317,6 +317,35 @@ def test_perspective_fit_rejects_static_screen_with_no_flow():
     assert rb.fit_perspective(moves, (540.0, 1510.0)) is None
 
 
+def test_near_feet_moves_keep_only_low_rows_that_moved():
+    fl = [(5.0, 5.0, 0.9, 200, 600), (5.0, 5.0, 0.9, 200, 1300), (0.5, 0.5, 0.9, 200, 1500), (3.0, 0.0, 0.9, 800, 1500)]
+    kept = rb.near_feet_moves([(0.0, np.array([0.0, 6.0]), fl)], 2340)
+    assert [(f[3], f[4]) for f in kept[0][2]] == [(200, 1300), (800, 1500)]
+
+
+def test_canonical_camera_is_the_same_map_with_positive_scale():
+    fit = {"theta_deg": 1.1, "s": -6.3, "sy": -3.0, "a": 0.0015, "px": 540.0, "py": 1485.0}
+    c = rb.canonical_camera(fit)
+    assert c["s"] > 0 and c["a"] < 0 and abs(c["theta_deg"] - (-178.9)) < 1e-9
+    assert np.allclose(rb.tap_to_ground_persp(c, (700, 1300)), rb.tap_to_ground_persp(fit, (700, 1300)))
+
+
+def test_over_speed_ignores_jitter_on_short_gaps():
+    m = 1 / 111320  # degrees of latitude per metre
+    run = [(i * 2.2 * m + (0.9 * m if i % 2 else 0.0), 0.0, float(i)) for i in range(6)]  # 2.2 m/s plus 0.9 m jitter
+    assert not rb.over_speed(run[:2]) and not rb.over_speed(run)
+    assert rb.over_speed([(i * 4.0 * m, 0.0, float(i)) for i in range(5)])
+
+
+def test_ruler_rejection_names_the_failed_check():
+    good = {"s": 6.0, "a": -0.001}
+    assert rb.ruler_rejection(good, {"s": 6.5, "a": -0.001}) is None
+    assert rb.ruler_rejection(None, None) == "too_few_flows"
+    assert rb.ruler_rejection({"s": 6.0, "a": 0.0005}, good) == "positive_perspective"
+    assert rb.ruler_rejection(good, {"s": 3.0, "a": -0.001}) == "half_legs_disagree"
+    assert rb.ruler_rejection(good, None) == "half_legs_disagree"
+
+
 def _scrolling_legs(w, h, feet_frac, figure=True, ring_frac=None):
     """Two legs of a scrolling blurred-noise world; an optional static, high-contrast figure above feet_frac.
     ring_frac adds a static bar (stand-in for the screen-fixed range ring) 0.04h under the feet, which merges into the figure's sharp run."""

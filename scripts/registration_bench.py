@@ -971,10 +971,28 @@ def _preflight():
     if not key or not host:
         raise SystemExit("set LJ_CONTROL_API_KEY and LJ_CONTROL_API_HOST (host:port)")
     st = _api(host, key, "GET", "/state")
-    if (st["spoofState"] != "RUNNING" or st["walk"]["target"] or st["speedProfileId"] != "walk"
+    # run (2.2 m/s) is the fastest profile under the 3 m/s abort and the app's flow limit
+    if (st["spoofState"] != "RUNNING" or st["walk"]["target"] or st["speedProfileId"] not in ("walk", "run")
             or st["mode"] in ("ROUTE_REPLAY", "ROAMING", "FOLLOWER") or not st["position"]):
-        raise SystemExit("preflight: need RUNNING, no walk target, walk profile, not replay/roam/follower")
+        raise SystemExit("preflight: need RUNNING, no walk target, walk or run profile, not replay/roam/follower")
     return host, key
+
+
+SPEED_CAP_MPS, SPEED_WINDOW_S = 3.0, 3.0
+
+
+def over_speed(track, cap=SPEED_CAP_MPS, window=SPEED_WINDOW_S):
+    """True when the last (lat, lon, t) of track moved faster than cap since the newest sample at least window s older.
+
+    Over a shorter gap the position jitter alone reads as a speed (about 1 m in 1 s at the Run profile).
+    """
+    lat, lon, t = track[-1]
+    old = [s for s in track if t - s[2] >= window]
+    if not old:
+        return False
+    la, lo, ta = old[-1]
+    dn, de = (lat - la) * 111320, (lon - lo) * 111320 * math.cos(math.radians(lat))
+    return math.hypot(dn, de) / (t - ta) > cap
 
 
 def _capture_leg(host, key, serial, leg, b, lat, lon, every, timeout, extra=None):
@@ -991,12 +1009,10 @@ def _capture_leg(host, key, serial, leg, b, lat, lon, every, timeout, extra=None
         _adb_screencap(serial, leg / f"w{len(rows):02d}.png")
         s1 = _api(host, key, "GET", "/state")
         rows.append({**frame_meta(len(rows), tick - t0, b, s0, s1), **(extra or {})})
-        if len(rows) > 1:  # /state speedMs reads 0 during a walk-to, so derive speed from positions
-            q, c = rows[-2]["pos"], rows[-1]["pos"]
-            dn, de = (c[0] - q[0]) * 111320, (c[1] - q[1]) * 111320 * math.cos(math.radians(c[0]))
-            if math.hypot(dn, de) / max(rows[-1]["t"] - rows[-2]["t"], 1e-6) > 3.0:
-                _api(host, key, "POST", "/walk/stop")
-                raise SystemExit("speed above 3 m/s, aborting")
+        # /state speedMs reads 0 during a walk-to, so derive speed from positions
+        if over_speed([(*r["pos"], r["t"]) for r in rows]):
+            _api(host, key, "POST", "/walk/stop")
+            raise SystemExit("speed above 3 m/s, aborting")
         seen = seen or s1["walk"]["target"] is not None
         if seen and s1["walk"]["target"] is None:
             break
@@ -1307,9 +1323,15 @@ def fit_perspective(moves, anchor, min_resp=0.2, min_flow_px=5.0, theta0s=(-20, 
         if best is None or score < best[0]:
             best = (score, x, float(np.median(np.abs(r))))
     _, x, med = best
-    th = (x[0] + 180.0) % 360.0 - 180.0
-    return {"theta_deg": float(th), "s": float(x[1]), "sy": float(x[2]), "a": float(x[3]),
-            "px": float(anchor[0]), "py": float(anchor[1]), "med_abs_px": med, "n": len(rows) // 2}
+    return canonical_camera({"theta_deg": float(x[0]), "s": float(x[1]), "sy": float(x[2]), "a": float(x[3]),
+                             "px": float(anchor[0]), "py": float(anchor[1]), "med_abs_px": med, "n": len(rows) // 2})
+
+
+def canonical_camera(fit):
+    """The same homography with s > 0: (s, sy, a, theta) and (-s, -sy, -a, theta + 180) are one map, so signs compare."""
+    if fit["s"] < 0:
+        fit = {**fit, "s": -fit["s"], "sy": -fit["sy"], "a": -fit["a"], "theta_deg": fit["theta_deg"] + 180.0}
+    return {**fit, "theta_deg": (fit["theta_deg"] + 180.0) % 360.0 - 180.0}
 
 
 def horizon_cut(fit, cy_max, margin=0.03):
@@ -1337,6 +1359,28 @@ def fit_perspective_horizon(moves, anchor, margin=0.03, **kw):
         return fit
     kept = [(b, d, [f for f in fl if f[4] > cut]) for b, d, fl in moves]
     return fit_perspective(kept, anchor, **kw) or fit
+
+
+# Tap smoke ruler: fit near the feet only. One perspective term over the whole band misreads the scale at the
+# feet, where every tap lands (docs/features/tap-to-walk.md, "Gate error cause"). Row 1200 of a 2340 px frame.
+RULER_MIN_ROW_FRAC, RULER_MIN_FLOW_PX, RULER_HALF_TOL = 1200 / 2340, 2.0, 0.25
+
+
+def near_feet_moves(moves, h):
+    """Band flows at or below the ruler row that moved at least RULER_MIN_FLOW_PX (the HUD reads as zero flow)."""
+    return [(b, d, [f for f in fl if f[4] >= RULER_MIN_ROW_FRAC * h and math.hypot(f[0], f[1]) >= RULER_MIN_FLOW_PX])
+            for b, d, fl in moves]
+
+
+def ruler_rejection(fit, half):
+    """Why the ruler fit is not trusted, or None. half is the same fit on every other leg."""
+    if fit is None:
+        return "too_few_flows"
+    if fit["a"] > 0:  # scale growing with distance is not a pitched camera
+        return "positive_perspective"
+    if half is None or abs(abs(half["s"]) - abs(fit["s"])) > RULER_HALF_TOL * abs(fit["s"]):
+        return "half_legs_disagree"
+    return None
 
 
 def persp_h(cal):
@@ -1379,11 +1423,17 @@ def cmd_persp(args):
     anchor = _anchor(args, legs)
     if anchor is None:
         return
-    fit = fit_perspective_horizon(band_moves(legs, anchor), anchor)
-    if fit is None:
-        print("calibration REJECTED (too few usable flows)")
+    h = next(iter(legs.values()))[0]["img"].shape[0]
+    moves = near_feet_moves(band_moves(legs, anchor), h)
+    fit = fit_perspective_horizon(moves, anchor)
+    half_legs = set(sorted(legs)[::2])
+    half = fit_perspective_horizon([m for m in moves if m[0] in half_legs], anchor)
+    reason = ruler_rejection(fit, half)
+    if reason:
+        print(f"calibration REJECTED ({reason})")
+        (Path(args.data) / "calibration_persp.json").write_text(json.dumps({**(fit or {}), "rejected": reason}, indent=1))
         return
-    fit["model"] = "perspective"
+    fit.update(model="perspective", half_s=half["s"])
     (Path(args.data) / "calibration_persp.json").write_text(json.dumps(fit, indent=1))
     print(json.dumps(fit))
 
@@ -1440,17 +1490,14 @@ def _walk_and_wait(host, key, lat, lon, timeout=300.0, every=2.0):
     import time
 
     _api(host, key, "POST", "/walk", {"lat": lat, "lon": lon, "viaRoads": False})
-    t0, seen, last = time.time(), False, None
+    t0, seen, track = time.time(), False, []
     while time.time() - t0 < timeout:
         time.sleep(every)
         st = _api(host, key, "GET", "/state")
-        pos, now = (st["position"]["lat"], st["position"]["lon"]), time.time()
-        if last:
-            dn, de = (pos[0] - last[0][0]) * 111320, (pos[1] - last[0][1]) * 111320 * math.cos(math.radians(pos[0]))
-            if math.hypot(dn, de) / max(now - last[1], 1e-6) > 3.0:
-                _api(host, key, "POST", "/walk/stop")
-                raise SystemExit("speed above 3 m/s, aborting")
-        last = (pos, now)
+        track.append((st["position"]["lat"], st["position"]["lon"], time.time()))
+        if over_speed(track):
+            _api(host, key, "POST", "/walk/stop")
+            raise SystemExit("speed above 3 m/s, aborting")
         seen = seen or st["walk"]["target"] is not None
         if seen and st["walk"]["target"] is None:
             return True
