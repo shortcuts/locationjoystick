@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.settings.impl
 
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.clampPlantingRadius
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
@@ -144,6 +145,7 @@ internal object SettingsExportCodec {
             obj.put("speedProfileId", route.speedProfileId ?: JSONObject.NULL)
             obj.put("randomizeTeleportOrder", route.randomizeTeleportOrder)
             route.plantingRadiusMeters?.let { obj.put("plantingRadiusMeters", it) }
+            obj.put("category", route.category ?: JSONObject.NULL)
             obj.put("createdAt", route.createdAt)
             val wpArray = JSONArray()
             route.waypoints.forEach { wp ->
@@ -425,11 +427,12 @@ internal object SettingsExportCodec {
                             if (obj.has("plantingRadiusMeters") &&
                                 !obj.isNull("plantingRadiusMeters")
                             ) {
-                                obj.getDouble("plantingRadiusMeters")
+                                clampPlantingRadius(obj.getDouble("plantingRadiusMeters"))
                             } else {
                                 null
                             },
                         createdAt = obj.optLong("createdAt", 0),
+                        category = if (obj.isNull("category")) null else obj.optString("category").ifEmpty { null },
                     ),
                 )
             }

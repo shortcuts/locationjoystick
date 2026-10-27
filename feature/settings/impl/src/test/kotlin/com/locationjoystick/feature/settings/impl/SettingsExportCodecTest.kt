@@ -32,6 +32,8 @@ private fun route(
     isLooping: Boolean = false,
     createdAt: Long = 0L,
     speedProfileId: String? = null,
+    plantingRadiusMeters: Double? = null,
+    category: String? = null,
 ): Route =
     Route(
         id = id,
@@ -40,7 +42,9 @@ private fun route(
         isLooping = isLooping,
         routeType = routeType,
         speedProfileId = speedProfileId,
+        plantingRadiusMeters = plantingRadiusMeters,
         createdAt = createdAt,
+        category = category,
     )
 
 private fun waypoint(
@@ -286,6 +290,58 @@ class SettingsExportCodecTest {
         val parsed = SettingsExportCodec.parseExportData(json)
 
         assertEquals(null, parsed.routes[0].speedProfileId)
+    }
+
+    @Test
+    fun `round-trip preserves route category and plantingRadiusMeters`() {
+        val data =
+            minimalExportData().copy(
+                routes = listOf(route(category = "Morning", plantingRadiusMeters = 20.0)),
+            )
+        val json = SettingsExportCodec.serializeExportData(data)
+
+        val parsed = SettingsExportCodec.parseExportData(json)
+
+        assertEquals("Morning", parsed.routes[0].category)
+        assertEquals(20.0, parsed.routes[0].plantingRadiusMeters!!, 0.001)
+    }
+
+    @Test
+    fun `round-trip keeps ungrouped route category null`() {
+        val data = minimalExportData().copy(routes = listOf(route(category = null)))
+        val json = SettingsExportCodec.serializeExportData(data)
+
+        val parsed = SettingsExportCodec.parseExportData(json)
+
+        assertEquals(null, parsed.routes[0].category)
+    }
+
+    @Test
+    fun `parse defaults missing route category to null`() {
+        @Suppress("ktlint:standard:max-line-length") // JSON string literal cannot be split without changing its value
+        val json = """{"schemaVersion":1,"exportedAt":0,"settings":{"speedUnit":"KMH","enabledWidgetFeatures":[]},"speedProfiles":[],"routes":[{"id":"r1","name":"test","isLooping":false,"createdAt":0,"waypoints":[]}],"favoriteLocations":[],"jitterIdleRadius":0.0,"jitterMovingRadius":1.0,"jitterIntervalSeconds":3}"""
+
+        val parsed = SettingsExportCodec.parseExportData(json)
+
+        assertEquals(null, parsed.routes[0].category)
+    }
+
+    @Test
+    fun `parse clamps out-of-range route plantingRadiusMeters`() {
+        val data =
+            minimalExportData().copy(
+                routes =
+                    listOf(
+                        route(id = "small", plantingRadiusMeters = 0.5),
+                        route(id = "large", plantingRadiusMeters = 9999.0),
+                    ),
+            )
+        val json = SettingsExportCodec.serializeExportData(data)
+
+        val parsed = SettingsExportCodec.parseExportData(json)
+
+        assertEquals(5.0, parsed.routes[0].plantingRadiusMeters!!, 0.001)
+        assertEquals(200.0, parsed.routes[1].plantingRadiusMeters!!, 0.001)
     }
 
     @Test
