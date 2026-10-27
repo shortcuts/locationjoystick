@@ -47,4 +47,25 @@ class GroupedListTest {
         assertEquals(1, result.size)
         assertEquals(2, result[0].items.size)
     }
+
+    private fun moved(
+        items: List<Item>,
+        key: String,
+        delta: Int,
+    ) = movedKeys(group(items), { it.id }, key, delta)
+
+    @Test
+    fun `row moves within its own section`() {
+        val items = listOf(Item("a", "G"), Item("b", "G"), Item("c", null))
+        assertEquals(listOf("b", "a", "c"), moved(items, "b", -1))
+        assertEquals(null, moved(items, "b", 1))
+        assertEquals(null, moved(items, "c", -1))
+    }
+
+    @Test
+    fun `user group header moves among user groups`() {
+        val items = listOf(Item("a", "X"), Item("b", "Y"), Item("c", null))
+        assertEquals(listOf("b", "a", "c"), moved(items, "group_header_u:Y", -1))
+        assertEquals(null, moved(items, "group_header_u:Y", 1))
+    }
 }

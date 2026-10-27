@@ -18,6 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -32,6 +33,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.R
@@ -94,6 +98,7 @@ class GroupReorder<T> internal constructor(
     internal val state: ReorderableLazyListState,
     internal val dragging: MutableState<Boolean>,
     internal val commit: () -> Unit,
+    internal val move: (key: String, delta: Int) -> Boolean,
 ) {
     val isDraggingGroup: Boolean get() = dragging.value
 }
@@ -154,7 +159,53 @@ fun <T> rememberGroupReorder(
         state = reorderState,
         dragging = dragging,
         commit = { onCommit(current.value.flatMap { g -> g.items.map(itemKey) }) },
+        move = { key, delta -> movedKeys(current.value, itemKey, key, delta)?.also(onCommit) != null },
     )
+}
+
+/**
+ * Every item key in display order after moving the row or user-group header [key] by [delta]
+ * places inside its own section list; null when the move leaves the list.
+ */
+internal fun <T> movedKeys(
+    sections: List<ListGroup<T>>,
+    itemKey: (T) -> String,
+    key: String,
+    delta: Int,
+): List<String>? {
+    val userHeader = "${HEADER_KEY_PREFIX}u:"
+    val ordered =
+        if (key.startsWith(userHeader)) {
+            val user = sections.filter { it.isUserGroup }
+            val from = user.indexOfFirst { it.name == key.removePrefix(userHeader) }
+            val to = from + delta
+            if (from < 0 || to !in user.indices) return null
+            user.toMutableList().apply { add(to, removeAt(from)) } + sections.filter { !it.isUserGroup }
+        } else {
+            val section = sections.firstOrNull { g -> g.items.any { itemKey(it) == key } } ?: return null
+            val from = section.items.indexOfFirst { itemKey(it) == key }
+            val to = from + delta
+            if (to !in section.items.indices) return null
+            val moved = section.items.toMutableList().apply { add(to, removeAt(from)) }
+            sections.map { if (it === section) it.copy(items = moved) else it }
+        }
+    return ordered.flatMap { g -> g.items.map(itemKey) }
+}
+
+@Composable
+private fun <T> Modifier.moveActions(
+    reorder: GroupReorder<T>,
+    key: String,
+): Modifier {
+    val up = stringResource(R.string.grouped_list_move_up)
+    val down = stringResource(R.string.grouped_list_move_down)
+    return semantics {
+        customActions =
+            listOf(
+                CustomAccessibilityAction(up) { reorder.move(key, -1) },
+                CustomAccessibilityAction(down) { reorder.move(key, 1) },
+            )
+    }
 }
 
 // "u:"/"h:" keeps a user group and a same-named hot country distinct.
@@ -201,13 +252,14 @@ fun <T> LazyListScope.groupedItems(
                 if (reorder != null && group.isUserGroup) {
                     ReorderableItem(reorder.state, key = HEADER_KEY_PREFIX + key) {
                         header(
-                            Modifier.draggableHandle(
-                                onDragStarted = { reorder.dragging.value = true },
-                                onDragStopped = {
-                                    reorder.commit()
-                                    reorder.dragging.value = false
-                                },
-                            ),
+                            Modifier
+                                .draggableHandle(
+                                    onDragStarted = { reorder.dragging.value = true },
+                                    onDragStopped = {
+                                        reorder.commit()
+                                        reorder.dragging.value = false
+                                    },
+                                ).moveActions(reorder, HEADER_KEY_PREFIX + key),
                         )
                     }
                 } else {
@@ -226,7 +278,11 @@ fun <T> LazyListScope.groupedItems(
                             Icon(
                                 LjIcons.DragHandle,
                                 contentDescription = stringResource(R.string.grouped_list_drag_cd),
-                                modifier = Modifier.draggableHandle(onDragStopped = reorder.commit).size(28.dp).padding(end = 4.dp),
+                                modifier =
+                                    Modifier
+                                        .draggableHandle(onDragStopped = reorder.commit)
+                                        .moveActions(reorder, itemKey(row))
+                                        .minimumInteractiveComponentSize(),
                             )
                             Box(Modifier.weight(1f)) { scope.itemContent(row) }
                         }
@@ -257,7 +313,7 @@ private fun GroupHeader(
             Icon(
                 LjIcons.DragHandle,
                 contentDescription = stringResource(R.string.grouped_list_drag_group_cd, title),
-                modifier = dragHandle.size(28.dp).padding(end = 4.dp),
+                modifier = dragHandle.minimumInteractiveComponentSize(),
             )
         }
         Icon(

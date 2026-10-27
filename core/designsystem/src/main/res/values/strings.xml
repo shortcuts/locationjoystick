@@ -84,4 +84,6 @@
     <string name="grouped_list_save">"Save"</string>
     <string name="grouped_list_drag_cd">"Drag to reorder"</string>
     <string name="grouped_list_drag_group_cd">"Drag to reorder group %1$s"</string>
+    <string name="grouped_list_move_up">"Move up"</string>
+    <string name="grouped_list_move_down">"Move down"</string>
 </resources>

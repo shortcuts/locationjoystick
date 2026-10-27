@@ -84,4 +84,6 @@
     <string name="grouped_list_save">"儲存"</string>
     <string name="grouped_list_drag_cd">"拖曳以重新排序"</string>
     <string name="grouped_list_drag_group_cd">"拖曳以重新排序群組 %1$s"</string>
+    <string name="grouped_list_move_up">"上移"</string>
+    <string name="grouped_list_move_down">"下移"</string>
 </resources>
