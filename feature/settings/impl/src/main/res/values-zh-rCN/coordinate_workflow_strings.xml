@@ -8,6 +8,7 @@
     <string name="settings_viewmodel_failed_to_export">"导出失败"</string>
     <string name="settings_viewmodel_failed_to_import_empty_file">"导入失败：文件为空"</string>
     <string name="settings_viewmodel_import_complete">"导入完成"</string>
+    <string name="settings_viewmodel_import_complete_reconnect_consent">"导入完成。请在“设置”“菜单”“重新连接配件”中允许屏幕访问。"</string>
     <string name="settings_viewmodel_failed_to_import">"导入失败"</string>
     <string name="settings_viewmodel_failed_to_prepare_qr_export">"准备二维码导出失败 — 请确保已连接 Wi-Fi"</string>
     <string name="settings_viewmodel_invalid_qr_code">"无效的二维码 — 不是 Location Joystick 导出文件"</string>

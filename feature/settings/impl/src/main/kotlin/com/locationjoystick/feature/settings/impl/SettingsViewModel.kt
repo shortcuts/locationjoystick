@@ -796,7 +796,7 @@ class SettingsViewModel
                         return@launch
                     }
                     applyExportData(SettingsExportCodec.parseExportData(json), replace)
-                    emitFeedback(R.string.settings_viewmodel_import_complete)
+                    emitImportComplete()
                 } catch (e: Exception) {
                     Log.e(TAG, "Import failed", e)
                     emitFeedback(R.string.settings_viewmodel_failed_to_import, isError = true)
@@ -917,12 +917,25 @@ class SettingsViewModel
             viewModelScope.launch {
                 try {
                     applyExportData(exportData, replace)
-                    emitFeedback(R.string.settings_viewmodel_import_complete)
+                    emitImportComplete()
                 } catch (e: Exception) {
                     Log.e(TAG, "Import from ExportData failed", e)
                     emitFeedback(R.string.settings_viewmodel_failed_to_import, isError = true)
                 }
             }
+        }
+
+        private suspend fun emitImportComplete() {
+            val accepted =
+                settingsRepository.getAccessibilityDisclosureChoice().first() == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED
+            val needsConsent = showsReconnectConsentPrompt(settingsRepository.getReconnectTapEnabled().first(), accepted)
+            val message =
+                if (needsConsent) {
+                    R.string.settings_viewmodel_import_complete_reconnect_consent
+                } else {
+                    R.string.settings_viewmodel_import_complete
+                }
+            emitFeedback(message)
         }
 
         private suspend fun applyExportData(

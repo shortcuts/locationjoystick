@@ -234,7 +234,7 @@ private fun ReconnectTapSection(
         Spacer(Modifier.height(12.dp))
         ServiceOffHint(uiState, onAction)
     }
-    if (showDisclosure) {
+    if (showDisclosure || showsReconnectConsentPrompt(uiState.reconnectTapEnabled, uiState.accessibilityDisclosureAccepted)) {
         AccessibilityDisclosureDialog(
             title = stringResource(R.string.settings_menus_reconnect_accessory),
             onAccept = {
@@ -243,7 +243,10 @@ private fun ReconnectTapSection(
                 onAction(SettingsAction.SetReconnectTapEnabled(true))
                 if (!uiState.isScreenServiceGranted) openAccessibilitySettings(context)
             },
-            onDecline = { showDisclosure = false },
+            onDecline = {
+                showDisclosure = false
+                if (uiState.reconnectTapEnabled) onAction(SettingsAction.SetReconnectTapEnabled(false))
+            },
         )
     }
 }
@@ -270,6 +273,12 @@ internal fun showsScreenAccessBlock(
     tapToWalkOn: Boolean,
     reconnectOn: Boolean,
 ): Boolean = sdkInt >= Build.VERSION_CODES.R && (tapToWalkOn || reconnectOn)
+
+/** An import can restore Reconnect on without consent, which the backup never carries. */
+internal fun showsReconnectConsentPrompt(
+    reconnectOn: Boolean,
+    accepted: Boolean,
+): Boolean = reconnectOn && !accepted
 
 internal fun showsServiceOffHint(
     featureOn: Boolean,

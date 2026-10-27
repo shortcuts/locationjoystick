@@ -254,6 +254,19 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
+    fun `import that restores reconnect on without consent points to the disclosure`() =
+        runTest(testDispatcher) {
+            viewModel.userFeedback.test {
+                viewModel.importSettings(ExportData(settings = AppSettings(reconnectTapEnabled = true)), replace = true)
+                assertEquals(
+                    "Import complete. Open Settings, Menus, Reconnect accessory to allow screen access.",
+                    awaitItem().message,
+                )
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `replace import restores the exported manual order`() =
         runTest(testDispatcher) {
             viewModel.userFeedback.test {
@@ -921,9 +934,13 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setAccessibilityDisclosureChoice(choice: String) = Unit
 
-    override fun getReconnectTapEnabled(): Flow<Boolean> = flowOf(false)
+    private var reconnectTapEnabledValue = false
 
-    override suspend fun setReconnectTapEnabled(enabled: Boolean) = Unit
+    override fun getReconnectTapEnabled(): Flow<Boolean> = flowOf(reconnectTapEnabledValue)
+
+    override suspend fun setReconnectTapEnabled(enabled: Boolean) {
+        reconnectTapEnabledValue = enabled
+    }
 
     var clearAllExceptOnboardingCallCount = 0
 

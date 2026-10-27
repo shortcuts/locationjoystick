@@ -31,6 +31,13 @@ class SettingsDisclosureGatesTest {
     }
 
     @Test
+    fun reconnectConsentPromptOnlyWhenReconnectOnWithoutConsent() {
+        assertTrue(showsReconnectConsentPrompt(reconnectOn = true, accepted = false))
+        assertFalse(showsReconnectConsentPrompt(reconnectOn = true, accepted = true))
+        assertFalse(showsReconnectConsentPrompt(reconnectOn = false, accepted = false))
+    }
+
+    @Test
     fun serviceOffHintOnlyWhenFeatureOnAndServiceNotGranted() {
         assertTrue(showsServiceOffHint(featureOn = true, serviceGranted = false))
         assertFalse(showsServiceOffHint(featureOn = true, serviceGranted = true))

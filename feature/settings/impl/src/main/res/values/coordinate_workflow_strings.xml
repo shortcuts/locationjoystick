@@ -8,6 +8,7 @@
     <string name="settings_viewmodel_failed_to_export">"Failed to export"</string>
     <string name="settings_viewmodel_failed_to_import_empty_file">"Failed to import: empty file"</string>
     <string name="settings_viewmodel_import_complete">"Import complete"</string>
+    <string name="settings_viewmodel_import_complete_reconnect_consent">"Import complete. Open Settings, Menus, Reconnect accessory to allow screen access."</string>
     <string name="settings_viewmodel_failed_to_import">"Failed to import"</string>
     <string name="settings_viewmodel_failed_to_prepare_qr_export">"Failed to prepare QR export. Make sure Wi-Fi is connected."</string>
     <string name="settings_viewmodel_invalid_qr_code">"Invalid QR code. It is not a Location Joystick export."</string>

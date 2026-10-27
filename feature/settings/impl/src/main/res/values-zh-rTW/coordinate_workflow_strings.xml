@@ -8,6 +8,7 @@
     <string name="settings_viewmodel_failed_to_export">"匯出失敗"</string>
     <string name="settings_viewmodel_failed_to_import_empty_file">"匯入失敗：檔案為空"</string>
     <string name="settings_viewmodel_import_complete">"匯入完成"</string>
+    <string name="settings_viewmodel_import_complete_reconnect_consent">"匯入完成。請在「設定」「選單」「重新連接配件」中允許螢幕存取。"</string>
     <string name="settings_viewmodel_failed_to_import">"匯入失敗"</string>
     <string name="settings_viewmodel_failed_to_prepare_qr_export">"準備 QR 碼匯出失敗 — 請確保已連線 Wi-Fi"</string>
     <string name="settings_viewmodel_invalid_qr_code">"無效的 QR 碼 — 不是 Location Joystick 匯出檔案"</string>
