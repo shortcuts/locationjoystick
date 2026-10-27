@@ -115,8 +115,8 @@ make tap-smoke-selfcheck                        # pure verdict logic, no device
   images stay under the gitignored `scripts/registration-bench/`; never copy or commit one without masking that region.
   The report files contain numbers only.
 - **Resolution-agnostic.** No size is passed; the bench reads the attached device's size and the report records it.
-- **Gate.** A failing run blocks the tap-to-walk-flow-fit epic from closing
-  (docs/features/tap-to-walk.md, "Ground map: flow-measured").
+- **Gate.** The lead accepted the gate on 2026-10-27 (docs/features/tap-to-walk.md, "Ground map: flow-measured"). After a
+  change to the ground map or the overlay tap path, rerun a 4-row batch and compare it with the numbers there.
 
 ## Unit Tests (`:core:*`)
 

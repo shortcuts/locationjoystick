@@ -100,7 +100,7 @@ Rules:
 
 → See docs/features/
 
-Working memory for long-running features: a feature doc that has a "Status" line (today: Tap to Walk, in docs/features/tap-to-walk.md, "Ground map: flow-measured") is the memory between sessions. Before work on it, read that section and its backlog epic (`radin backlog show`). Before a session ends, update the status, the measured numbers, the open work and any kill there, and update the epic's entries through `radin backlog`. Move superseded detail to the feature's investigation doc so the main doc stays short.
+Working memory for long-running features: a feature doc that has a "Status" line (none is open today; Tap to Walk, in docs/features/tap-to-walk.md, closed on 2026-10-27) is the memory between sessions. Before work on it, read that section and its backlog epic (`radin backlog show`). Before a session ends, update the status, the measured numbers, the open work and any kill there, and update the epic's entries through `radin backlog`. Move superseded detail to the feature's investigation doc so the main doc stays short.
 
 | Feature | Doc |
 |---------|-----|

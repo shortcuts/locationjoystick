@@ -81,24 +81,24 @@ Accessibility services running in the background can be detected by some games. 
 
 ## Ground map: flow-measured
 
-Status (2026-10-27): 3 of 4 subset rows pass on the near-feet ruler. Pixel 5, 1080x2340, Pokémon GO, normal scenario, 12 scored taps per row, 0 rejected, `make tap-smoke ONLY="1 3 4 7"`. Each row took 303 to 316 s.
+Status (2026-10-27): done. The lead accepted the 4-row subset below as the gate pass, Reykjavik included, and closed the backlog epic. The measured rows: Pixel 5, 1080x2340, Pokémon GO, normal scenario, 12 scored taps per row, 0 rejected, `make tap-smoke ONLY="1 3 4 7"`. Each row took 303 to 316 s.
 
 | Row | p50 m | p90 m | App distance / ruler distance (median) | Verdict |
 |---|---|---|---|---|
 | New York | 4.6 | 8.1 | 0.88 | PASS |
 | Tokyo | 6.3 | 12.0 | 0.91 | PASS |
 | Sydney | 6.5 | 11.8 | 0.85 | PASS |
-| Reykjavik | 10.9 | 17.5 | 1.35 | FAIL (p90 over 15 m) |
+| Reykjavik | 10.9 | 17.5 | 1.35 | accepted (p90 over 15 m) |
 
-An earlier New York row on the same build gave p50 4.1 m, p90 7.0 m. The median angle error is -2 to -8.5 degrees in every row, so the heading is good. The scale is the open error: the app walks 9 to 15% short in three rows and 35% too far in Reykjavik. Three rows used the prior feet anchor (the report's prior fallback count).
+An earlier New York row on the same build gave p50 4.1 m, p90 7.0 m. The median angle error is -2 to -8.5 degrees in every row, so the heading is good. The remaining error is scale: the app walks 9 to 15% short in three rows and 35% too far in Reykjavik. Three rows used the prior feet anchor (the report's prior fallback count).
 
 The 2026-10-26 failures (11 of 12 rows) came from the old full-band ruler, not the app. See "Gate error cause" in [tap-to-walk-investigation.md](tap-to-walk-investigation.md). Refitted near the feet, the 12 stored references of run `20261026T160909Z` all pass the ruler checks. Their lateral scale is within 3% of the near-feet fits in that section. Those taps cannot be rescored, because the old `trials.json` kept only the error length.
 
-Gate cost: about 5 min per row (Run profile, short reference legs, teleport back after each tap; see docs/testing.md). Open: rows 2, 5, 6 and 8 to 20, and the fresh, twist and zoom rows, which are not proven live. The backlog epic `tap-to-walk-flow-fit` lists the work. Agents: update this section and that epic after every session, kills included.
+Gate cost: about 5 min per row (Run profile, short reference legs, teleport back after each tap; see docs/testing.md). Not run: rows 2, 5, 6 and 8 to 20, and the fresh, twist and zoom rows. If tap to walk work reopens, start there.
 
 Always run `./gradlew installDebug` before the gate when app code changed since the phone's install, then start spoofing and turn on the Control API (the port changes on each toggle). A stale APK once scored 0 taps.
 
-Forward ratio. The near-feet refit of the 12 stored references gives forward / lateral 0.47 to 0.67 (10 of 12 within 0.53 to 0.59), against `FORWARD_RATIO` 0.40. Most taps land beside the player, so this costs little today. It matters once taps spread up the screen. The tuning task in the epic owns the change.
+Forward ratio. The near-feet refit of the 12 stored references gives forward / lateral 0.47 to 0.67 (10 of 12 within 0.53 to 0.59), against `FORWARD_RATIO` 0.40. Most taps land beside the player, so this costs little today. It matters once taps spread up the screen. Raising it is the first candidate if the scale error needs work.
 
 ### Goal
 
@@ -128,7 +128,7 @@ Accuracy on synthetic frames (unit tests): heading within 2.5 degrees, scale wit
 
 ### Open work
 
-The backlog epic holds the tasks. In short: run the gate on the device, tune the constants from it, decide whether to keep a heading across walks when one walk is weak, read only the crop rows from the screenshot, and handle zoom changes within a walk.
+None scheduled. Ideas that were not needed to finish: tune `FORWARD_RATIO` from the measured fits, real-game crop fixtures for a regression test, a second screen size, pruning the bench of the deleted motion fit, keeping a heading across walks when one walk is weak, reading only the crop rows from the screenshot, and zoom changes within a walk.
 
 ### Rejected, do not retry
 
