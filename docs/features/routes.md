@@ -79,14 +79,14 @@ Replay of the temporary route is a route replay, not the walk-and-add-point ephe
 - Bearing is recomputed from the previous to the next interpolated position, so it follows the path, including road-following and planting circles.
 - Each tick consumes the whole distance budget, even across several close waypoints. Carrying leftover distance one segment at a time dropped the remainder and lost progress on dense routes.
 - A waypoint counts as reached inside the arrival threshold.
-- Loops interpolate smoothly from the last waypoint back to the first.
+- A loop on a walking route turns around at each end and walks back along the same stops. Restarting at the first stop cut a straight line across the map, which reads as a jump. Planting and teleport routes keep their restart-at-first loop.
 - Pause keeps pushing the frozen position on every tick. Stopping ticks would make the mock fix go stale, and other apps would fall back to the real GPS until the replay resumed.
 - Route replay takes precedence over roaming. Starting roaming during a replay is a no-op. A paused route is stopped before roaming starts, so the two engines never write at the same time.
 - Moving the joystick pauses the route and keeps its progress. Releasing the stick leaves it paused, so the user decides when to resume. See [joystick.md](joystick.md).
 
 ### Progress
 
-While replay is active, a `current / total` chip shows the last named stop reached. Only named stops count. Road vertices and planting vertices do not, so the number matches what the user sees on the route.
+While replay is active, a `current / total` chip shows the last named stop reached. Only named stops count. Road vertices and planting vertices do not, so the number matches what the user sees on the route. On the return leg of a loop the chip counts down from the last stop, so it keeps the route's own stop numbers.
 
 ### Speed profile per route
 
@@ -102,7 +102,7 @@ Jumps snap to named stops, not to road or planting vertices. Otherwise one tap w
 
 Starting a route opens a sheet with options and a Start button. Options:
 
-- **Loop:** on by default. Exclusive with return to location.
+- **Loop:** on by default. Exclusive with return to location. A walking route goes back and forth until stopped. Planting restarts at the first circle.
 - **Planting:** each saved point is replaced by a circle around it, and replay walks the circles. Planting always loops. Planting forces loop on and return off.
 - **Reverse:** replays the points in reverse order.
 - **Return to location:** goes back to where replay started. Exclusive with loop.

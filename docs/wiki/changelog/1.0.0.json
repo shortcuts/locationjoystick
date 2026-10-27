@@ -2,6 +2,7 @@
   "version": "1.0.0",
   "date": "2026-10-27",
   "entries": [
+    { "category": "feat", "scope": "Routes", "summary": "A looping route now walks back along the route at each end instead of jumping to the start. Planting and teleport routes loop as before." },
     { "category": "feat", "scope": "Reconnect accessory", "summary": "Reconnect accessory taps your game's reconnect control for you. It is off by default. Turn it on in Settings > Menus. It needs the screen helper." },
     { "category": "feat", "scope": "Reconnect accessory", "summary": "Reconnect checks run once a minute, only while the screen is on and the game is in front. After failed checks, the app waits longer, up to 5 minutes." },
     { "category": "feat", "scope": "Reconnect accessory", "summary": "After 3 failed reconnect runs in a row, the app sends a notice. The notice clears itself once the accessory is back." },

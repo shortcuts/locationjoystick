@@ -169,6 +169,7 @@ internal class ReplayOrchestrator(
                         waypoints = replayWaypoints,
                         speedMs = speedMs,
                         isLooping = isLooping,
+                        bounceAtEnds = !isPlanting && config.isLooping,
                         followRoadsToStart = config.followRoadsToStart,
                         boundaryIndices = boundaryIndices,
                         persistMetadata = buildPersistMetadata(routeId, config.isReverse, replayWaypoints),
@@ -462,6 +463,7 @@ internal class ReplayOrchestrator(
      * @param waypoints Ordered list of positions to replay (≥2).
      * @param speedMs Playback speed in m/s.
      * @param isLooping Whether to loop at the end.
+     * @param bounceAtEnds Whether a loop walks back along the route instead of restarting.
      * @param followRoadsToStart When true, between-waypoint legs are already expanded;
      *   if [teleportToStart] is false, the walk to the first waypoint also follows roads.
      * @param teleportToStart When true, snap to the first waypoint instead of walking there.
@@ -473,6 +475,7 @@ internal class ReplayOrchestrator(
         waypoints: List<LatLng>,
         speedMs: Double,
         isLooping: Boolean,
+        bounceAtEnds: Boolean = false,
         followRoadsToStart: Boolean = false,
         teleportToStart: Boolean = false,
         boundaryIndices: List<Int>? = null,
@@ -513,6 +516,7 @@ internal class ReplayOrchestrator(
                         boundaryIndices = boundaryIndices,
                         teleportBetweenWaypoints = teleportBetweenWaypoints,
                         teleportBetweenDelaySeconds = teleportBetweenDelaySeconds,
+                        bounceAtEnds = bounceAtEnds,
                     )
                     publishProgress()
                 }

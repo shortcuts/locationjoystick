@@ -235,6 +235,36 @@ class RouteReplayEngineTest {
     }
 
     @Test
+    fun `bouncing loop turns around at each end without a jump`() {
+        val positions = java.util.Collections.synchronizedList(mutableListOf<LatLng>())
+        val progress = java.util.Collections.synchronizedList(mutableListOf<String?>())
+        engine.start(
+            waypoints = listOf(LatLng(0.0, 0.0), LatLng(0.0001, 0.0)),
+            speedMs = 5.5,
+            isLooping = true,
+            bounceAtEnds = true,
+            onPositionUpdate = { pos ->
+                positions.add(pos)
+                progress.add(engine.currentProgress()?.label)
+            },
+            onComplete = {},
+        )
+        Thread.sleep(8000)
+        kotlinx.coroutines.runBlocking { engine.stop() }
+        val lats = positions.toList().map { it.latitude }
+        val firstEnd = lats.indexOfFirst { it >= 0.0001 - 1e-9 }
+        assertTrue("never reached the end", firstEnd >= 0)
+        val backAtStart = lats.withIndex().indexOfFirst { (i, lat) -> i > firstEnd && lat <= 1e-9 }
+        assertTrue("never walked back to the start", backAtStart >= 0)
+        assertTrue("never headed out again", lats.drop(backAtStart + 1).any { it > 0.00005 })
+        val maxStep = positions.toList().zipWithNext { a, b -> a.distanceTo(b) }.max()
+        val limit = 5.5 + AppConstants.RouteConstants.WAYPOINT_SNAP_THRESHOLD_METERS
+        assertTrue("max step $maxStep exceeds $limit", maxStep <= limit)
+        assertTrue("return leg should read 2/2", progress.drop(firstEnd).contains("2/2"))
+        assertTrue("return leg should end at 1/2", progress.drop(firstEnd).contains("1/2"))
+    }
+
+    @Test
     fun `appendWaypoint adds to saved waypoints`() {
         val waypoints = listOf(LatLng(0.0, 0.0), LatLng(1.0, 0.0))
         engine.start(

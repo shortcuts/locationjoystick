@@ -20,7 +20,7 @@ private const val TAG = "RouteReplayEngine"
  *
  * Interpolates between waypoints at a given speed, supporting:
  * - Forward and backward playback
- * - Looping (wraps from last waypoint back to first)
+ * - Looping (restarts at the first waypoint, or walks back along the route when bouncing)
  * - Pause/resume
  * - Dynamic waypoint appending (for recording)
  *
@@ -66,6 +66,12 @@ class RouteReplayEngine
         /** Whether looping is enabled. */
         @Volatile private var isLooping: Boolean = false
 
+        /** Whether the end of a loop turns around instead of restarting at the first waypoint. */
+        @Volatile private var bounceAtEnds: Boolean = false
+
+        /** True while the saved waypoints are the reverse of the route as started. */
+        @Volatile private var legReversed: Boolean = false
+
         /**
          * Indices into the (possibly road-expanded) waypoint list that correspond to the
          * route's real, named stops. Defaults to the identity list (every index is a
@@ -106,6 +112,8 @@ class RouteReplayEngine
          * @param teleportBetweenWaypoints When true, hop to each named-stop / next-ring
          *   boundary instead of walking the connector. Forced off by hide-teleport at start.
          * @param teleportBetweenDelaySeconds Seconds to linger at each hopped stop (default 8).
+         * @param bounceAtEnds When true and [isLooping], walk back along the route at each end
+         *   instead of restarting at the first waypoint.
          */
         fun start(
             waypoints: List<LatLng>,
@@ -116,10 +124,13 @@ class RouteReplayEngine
             boundaryIndices: List<Int>? = null,
             teleportBetweenWaypoints: Boolean = false,
             teleportBetweenDelaySeconds: Int = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
+            bounceAtEnds: Boolean = false,
         ) {
             savedWaypointsRef.set(waypoints)
             savedSpeedMs = speedMs
             this.isLooping = isLooping
+            this.bounceAtEnds = isLooping && bounceAtEnds
+            legReversed = false
             this.boundaryIndices = boundaryIndices ?: waypoints.indices.toList()
             this.teleportBetweenWaypoints = teleportBetweenWaypoints
             this.teleportBetweenDelaySeconds = teleportBetweenDelaySeconds
@@ -172,6 +183,8 @@ class RouteReplayEngine
             resumePosition = null
             resumeWaypointIndex = 1
             lingerBeforeNextHop = false
+            bounceAtEnds = false
+            legReversed = false
             boundaryIndices = emptyList()
             teleportBetweenWaypoints = false
             teleportBetweenDelaySeconds = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS
@@ -189,7 +202,11 @@ class RouteReplayEngine
         }
 
         /** Named-stop progress for the active replay, or null when no replay is loaded. */
-        fun currentProgress(): RouteProgress? = computeRouteProgress(resumeWaypointIndex, boundaryIndices)
+        fun currentProgress(): RouteProgress? =
+            computeRouteProgress(resumeWaypointIndex, boundaryIndices)?.let {
+                // The return leg counts down from the last stop, so the chip keeps the route's own numbers.
+                if (legReversed) RouteProgress(it.total + 1 - it.current, it.total) else it
+            }
 
         /**
          * Whether the active replay hops between stops instead of interpolating (planting's
@@ -237,6 +254,14 @@ class RouteReplayEngine
             }
             Log.i(TAG, "Jumped to waypoint $clamped")
             return waypoints[clamped]
+        }
+
+        /** Reverses the saved route in place so the interpolator keeps walking forward from the current end. */
+        private fun turnAround() {
+            val reversed = savedWaypointsRef.updateAndGet { it.reversed() }
+            boundaryIndices = boundaryIndices.map { reversed.size - 1 - it }.reversed()
+            legReversed = !legReversed
+            resumeWaypointIndex = 1
         }
 
         /** Jumps to the waypoint currently being walked toward (index unchanged if already at the last one). */
@@ -311,7 +336,10 @@ class RouteReplayEngine
                         }
                         lingerAfterHop(position, onPositionUpdate)
                         if (index >= waypoints.size) {
-                            if (isLooping) {
+                            if (bounceAtEnds) {
+                                turnAround()
+                                index = 1
+                            } else if (isLooping) {
                                 position = waypoints.first()
                                 index = 1
                                 resumePosition = position
@@ -358,7 +386,10 @@ class RouteReplayEngine
                         Log.e(TAG, "onPositionUpdate failed", e)
                     }
                     if (result.reachedEnd) {
-                        if (isLooping) {
+                        if (bounceAtEnds) {
+                            turnAround()
+                            index = 1
+                        } else if (isLooping) {
                             index = 0
                             resumePosition = position
                             resumeWaypointIndex = index

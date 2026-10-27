@@ -174,6 +174,30 @@ class ReplayOrchestratorTest {
         }
 
     @Test
+    fun handleStart_loopingWalkingRoute_bouncesAtEnds() =
+        runTest {
+            val first = LatLng(1.0, 1.0)
+            val last = LatLng(2.0, 2.0)
+            val route = Route("loop", "Loop", waypoints = listOf(Waypoint("a", first, 0), Waypoint("b", last, 1)))
+            locationRepository.setPositionInternal(first)
+            coEvery { routeRepository.getRouteWithWaypoints("loop") } returns flowOf(route)
+
+            orchestrator.handleStart("loop", 1.4, RouteStartConfig(isLooping = true, teleportToStart = true))
+
+            verify {
+                routeReplayEngine.start(
+                    waypoints = listOf(first, last),
+                    speedMs = 1.4,
+                    isLooping = true,
+                    onPositionUpdate = any(),
+                    onComplete = any(),
+                    boundaryIndices = null,
+                    bounceAtEnds = true,
+                )
+            }
+        }
+
+    @Test
     fun handlePause_duringApproach_keepsManualPositionUntilResume_withoutStartingEmptyReplay() =
         runTest {
             val nextTick = CompletableDeferred<Unit>()
