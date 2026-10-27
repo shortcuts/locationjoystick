@@ -43,14 +43,9 @@ class ScreenCaptureSource
             _reconnectStatus.value = status
         }
 
-        val isAvailable: Boolean get() = service.value != null
-
-        /** Bound, and the screen is on with the game in front (the gate [captureGrayFrame] applies). */
-        val gameInFront: Boolean get() = service.value?.gameInFront == true
-
         /**
          * Every switch that lets a tap-to-walk frame exist: disclosure accepted, Tap to Walk on for the guided
-         * path, service bound. The spool owner deletes its frames when this turns false (storage and consent).
+         * path, service bound. AutoFitCoordinator drops its crops when this turns false (storage and consent).
          */
         val captureAllowed: Flow<Boolean> =
             combine(

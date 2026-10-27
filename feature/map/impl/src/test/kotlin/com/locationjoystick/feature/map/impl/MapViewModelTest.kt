@@ -94,8 +94,8 @@ class MapViewModelTest {
         roamingRepository = mockk(relaxed = true)
         startRouteReplayUseCase = mockk(relaxed = true)
         walkCoordinator = mockk(relaxed = true)
-        every { walkCoordinator.startWalk(any(), any(), any(), any(), any()) } returns true
-        every { walkCoordinator.startWalkAlongRoute(any(), any(), any(), any(), any()) } returns true
+        every { walkCoordinator.startWalk(any(), any(), any(), any()) } returns true
+        every { walkCoordinator.startWalkAlongRoute(any(), any(), any(), any()) } returns true
         teleportUseCase = mockk(relaxed = true)
         ephemeralReplayController = mockk(relaxed = true)
         osrmClient = mockk(relaxed = true)
@@ -702,8 +702,8 @@ class MapViewModelTest {
             viewModel.onAction(MapAction.WalkViaRoadsTo(target))
             testDispatcher.scheduler.advanceUntilIdle()
 
-            verify { walkCoordinator.startWalkAlongRoute(osrmWaypoints, any(), any(), any(), any()) }
-            verify(exactly = 0) { walkCoordinator.startWalk(any(), any(), any(), any(), any()) }
+            verify { walkCoordinator.startWalkAlongRoute(osrmWaypoints, any(), any(), any()) }
+            verify(exactly = 0) { walkCoordinator.startWalk(any(), any(), any(), any()) }
         }
 
     @Test
@@ -722,8 +722,8 @@ class MapViewModelTest {
             viewModel.onAction(MapAction.WalkViaRoadsTo(target))
             testDispatcher.scheduler.advanceUntilIdle()
 
-            verify { walkCoordinator.startWalk(target, any(), any(), any(), any()) }
-            verify(exactly = 0) { walkCoordinator.startWalkAlongRoute(any(), any(), any(), any(), any()) }
+            verify { walkCoordinator.startWalk(target, any(), any(), any()) }
+            verify(exactly = 0) { walkCoordinator.startWalkAlongRoute(any(), any(), any(), any()) }
         }
 
     // Sheet visibility tests
@@ -1372,7 +1372,7 @@ class MapViewModelTest {
             assertEquals(false, viewModel.uiState.value.showPasteCoordinatesSheet)
             assertNull(viewModel.uiState.value.pendingTapPosition)
             assertEquals(false, viewModel.uiState.value.isPendingTapSheetOpen)
-            verify { walkCoordinator.startWalk(eq(point), any(), any(), any(), any()) }
+            verify { walkCoordinator.startWalk(eq(point), any(), any(), any()) }
         }
 
     @Test

@@ -73,15 +73,13 @@ class WalkCoordinator
             target: LatLng,
             scope: CoroutineScope,
             expectedGeneration: Long? = null,
-            speedMsOverride: Double? = null,
             onPositionUpdate: (suspend (LatLng, Float, Float) -> Unit)? = null,
-        ): Boolean = startWalkAlongRoute(listOf(target), scope, expectedGeneration, speedMsOverride, onPositionUpdate)
+        ): Boolean = startWalkAlongRoute(listOf(target), scope, expectedGeneration, onPositionUpdate)
 
         fun startWalkAlongRoute(
             waypoints: List<LatLng>,
             scope: CoroutineScope,
             expectedGeneration: Long? = null,
-            speedMsOverride: Double? = null,
             onPositionUpdate: (suspend (LatLng, Float, Float) -> Unit)? = null,
         ): Boolean {
             require(waypoints.isNotEmpty()) { "Waypoints must not be empty" }
@@ -101,7 +99,6 @@ class WalkCoordinator
                     activeWalkJob =
                         scope.launchWalkAlongRoute(
                             waypoints = waypoints,
-                            speedMsOverride = speedMsOverride,
                             onPositionUpdate = { newPos, speedMs, bearing ->
                                 // A tick already running when cancel() lands must not write the
                                 // old path back over a teleport.

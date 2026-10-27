@@ -141,7 +141,7 @@ Details for each are in [tap-to-walk-investigation.md](tap-to-walk-investigation
 
 ### Facts from PokeMiners and the community
 
-- Game master ([PokeMiners/game_masters](https://github.com/PokeMiners/game_masters)), template `MAP_OBJECTS_INTERACTION_RANGE_SETTINGS`: `interactionRangeMeters` 80, `whitePulseRadiusMeters` 50. The committed copy is `core/common/src/test/resources/pokeminers/interaction_range_settings.json`, written by `scripts/pokeminers_fetch.py`. `TapToWalkRingConstantsTest` pins `TapToWalkConstants` to it. The game master has no camera pitch, field of view or zoom setting.
+- Game master ([PokeMiners/game_masters](https://github.com/PokeMiners/game_masters)), template `MAP_OBJECTS_INTERACTION_RANGE_SETTINGS`: `interactionRangeMeters` 80, `whitePulseRadiusMeters` 50. The committed copy is `core/common/src/test/resources/pokeminers/interaction_range_settings.json`, written by `scripts/pokeminers_fetch.py`. The ring radii are recorded here only; no code reads them. The game master has no camera pitch, field of view or zoom setting.
 - The 50 m white pulse explains why the ring changes size: the drawn ring grows over time.
 - Reddit blocks plain curl and the fetch tool. Read posts through the Arctic Shift API (`https://arctic-shift.photon-reddit.com/api/posts/ids?ids=<id>`).
 

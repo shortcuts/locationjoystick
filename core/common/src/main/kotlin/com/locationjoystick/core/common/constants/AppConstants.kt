@@ -600,12 +600,8 @@ object AppConstants {
     }
 
     object TapToWalkConstants {
-        // Game master radii. TapToWalkRingConstantsTest pins them to the PokeMiners fixture.
-        const val INTERACTION_RANGE_METERS = 80.0
-        const val WHITE_PULSE_RADIUS_METERS = 50.0
-
         // Flow-measured ground map (docs/features/tap-to-walk.md, "Ground map: flow-measured").
-        const val FLOW_FRAME_INTERVAL_MS = 3000L // one screenshot per tick while walking: about 4 m at walking speed
+        const val FLOW_FRAME_INTERVAL_MS = 3000L // one screenshot per tick while walking: about 1.7 m at Walk speed
         const val FLOW_MAX_SPEED_MPS = 3.0 // faster steps are a teleport or a vehicle profile, not a move to measure
         const val FLOW_WINDOW_MOVES = 8 // moves of the current walk the fit uses; older ones may predate a camera twist
         const val REAIM_MIN_METERS = 3.0 // a newer map moves a walked tap's target at least this far before it is re-aimed

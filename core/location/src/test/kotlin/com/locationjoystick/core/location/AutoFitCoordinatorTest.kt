@@ -7,7 +7,6 @@ import com.locationjoystick.core.model.GrayImage
 import com.locationjoystick.core.model.GroundCalibration
 import com.locationjoystick.core.model.GroundFlowFit
 import com.locationjoystick.core.model.GroundMap
-import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.StoredGroundCalibration
@@ -18,7 +17,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -56,8 +54,6 @@ class AutoFitCoordinatorTest {
         every { source.captureAllowed } returns tapToWalk
         coEvery { source.captureGrayFrame() } answers { popup ?: render(scene, locationRepository.currentPosition.value!!) }
         settings = mockk(relaxed = true)
-        every { settings.getTapToWalkOverlayEnabled() } returns tapToWalk
-        every { settings.getGuidedPath() } returns flowOf(GuidedPath.POKEMON_GO)
         every { settings.getGroundCalibration() } returns stored
         coEvery { settings.setGroundCalibration(any()) } answers { stored.value = firstArg() }
     }

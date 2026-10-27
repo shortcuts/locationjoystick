@@ -20,7 +20,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -47,7 +46,6 @@ class AutoFitCoordinator
         internal var nowMs: () -> Long = { System.nanoTime() / 1_000_000 }
         internal var analysisDispatcher: CoroutineDispatcher = Dispatchers.Default
 
-        private var tapToWalkOn: StateFlow<Boolean> = MutableStateFlow(false)
         private var active: StateFlow<Boolean> = MutableStateFlow(false) // every switch that lets a frame exist
         private var lastTick: LatLng? = null
         private var last: Sample? = null
@@ -61,10 +59,6 @@ class AutoFitCoordinator
 
         /** Starts watching walks on [scope] (the service scope: the loop and its crops end with the service). */
         fun observe(scope: CoroutineScope) {
-            tapToWalkOn =
-                combine(settingsRepository.getTapToWalkOverlayEnabled(), settingsRepository.getGuidedPath()) { on, path ->
-                    on && path.showsTapToWalk
-                }.stateIn(scope, SharingStarted.Eagerly, false)
             active = screenCaptureSource.captureAllowed.stateIn(scope, SharingStarted.Eagerly, false)
             scope.launch { loop() }
         }
@@ -90,7 +84,6 @@ class AutoFitCoordinator
             val pos = locationRepository.currentPosition.value
             val gate =
                 active.value &&
-                    tapToWalkOn.value &&
                     locationRepository.mockLocationState.value == MockLocationState.RUNNING &&
                     locationRepository.currentMode.value in CAPTURE_MODES
             val moved = gate && pos != null && lastTick?.let { it.distanceTo(pos) >= MIN_STEP_M } == true
