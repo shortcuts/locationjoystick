@@ -154,6 +154,7 @@ class ScreenAccessibilityService :
         val result =
             runReconnectTap(
                 screenWidth = resources.displayMetrics.widthPixels,
+                screenHeight = resources.displayMetrics.heightPixels,
                 gate = {
                     reconnectRunGateOpen(
                         getSystemService(PowerManager::class.java).isInteractive,

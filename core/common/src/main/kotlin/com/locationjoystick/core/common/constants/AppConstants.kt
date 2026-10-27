@@ -657,12 +657,12 @@ object AppConstants {
         // CHECK_INTERVAL_MS, long enough to rule out a loading screen or a menu hiding the HUD.
         const val NOT_FOUND_NOTIFY_THRESHOLD = 30
 
-        // Gesture stroke length and tap offset spread, as fractions of the screen width (the ball
-        // is ~7.2% wide, so sigma 1.1% / clamp 2.5% keeps the tap inside it).
+        // Gesture stroke length and tap offset spread, as fractions of the short screen side (the
+        // ball is ~7.2% of it, so sigma 1.1% / clamp 2.5% keeps the tap inside it).
         const val GESTURE_MIN_MS = 45L
         const val GESTURE_MAX_MS = 130L
-        const val TAP_SIGMA_WIDTH_FRACTION = 0.011f
-        const val TAP_CLAMP_WIDTH_FRACTION = 0.025f
+        const val TAP_SIGMA_SHORT_SIDE_FRACTION = 0.011f
+        const val TAP_CLAMP_SHORT_SIDE_FRACTION = 0.025f
     }
 
     object ScreenshotConstants {

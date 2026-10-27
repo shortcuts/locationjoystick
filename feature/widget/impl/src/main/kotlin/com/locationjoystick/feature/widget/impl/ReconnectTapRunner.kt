@@ -91,10 +91,12 @@ internal class ReconnectBackoff(
 internal fun jitteredTapPoint(
     control: ReconnectControl,
     screenWidth: Int,
+    screenHeight: Int,
     random: Random,
 ): Pair<Int, Int> {
-    val sigma = ReconnectTapConstants.TAP_SIGMA_WIDTH_FRACTION * screenWidth
-    val clamp = ReconnectTapConstants.TAP_CLAMP_WIDTH_FRACTION * screenWidth
+    val shortSide = minOf(screenWidth, screenHeight)
+    val sigma = ReconnectTapConstants.TAP_SIGMA_SHORT_SIDE_FRACTION * shortSide
+    val clamp = ReconnectTapConstants.TAP_CLAMP_SHORT_SIDE_FRACTION * shortSide
 
     fun offset(): Int {
         // Box-Muller; 1 - nextDouble() keeps ln() away from zero.
@@ -139,6 +141,7 @@ private class GateClosed : RuntimeException()
  */
 internal suspend fun runReconnectTap(
     screenWidth: Int,
+    screenHeight: Int,
     capture: suspend () -> ReconnectControl?,
     tap: suspend (x: Int, y: Int, durationMs: Long) -> Boolean,
     random: Random = Random.Default,
@@ -147,6 +150,7 @@ internal suspend fun runReconnectTap(
     try {
         runGated(
             screenWidth,
+            screenHeight,
             { if (!gate()) throw GateClosed() else capture() },
             { x, y, d -> if (!gate()) throw GateClosed() else tap(x, y, d) },
             random,
@@ -158,6 +162,7 @@ internal suspend fun runReconnectTap(
 
 private suspend fun runGated(
     screenWidth: Int,
+    screenHeight: Int,
     capture: suspend () -> ReconnectControl?,
     tap: suspend (x: Int, y: Int, durationMs: Long) -> Boolean,
     random: Random,
@@ -176,7 +181,7 @@ private suspend fun runGated(
             capture()
                 ?: return if (delivered) ReconnectRunResult.FAILED else ReconnectRunResult.NOT_FOUND
         if (control.state == ReconnectState.ON) return ReconnectRunResult.RECONNECTED
-        val (x, y) = jitteredTapPoint(control, screenWidth, random)
+        val (x, y) = jitteredTapPoint(control, screenWidth, screenHeight, random)
         // A cancelled or rejected gesture never touched the game: no settle, no polls, no count.
         if (!tap(x, y, random.nextLong(ReconnectTapConstants.GESTURE_MIN_MS, ReconnectTapConstants.GESTURE_MAX_MS + 1))) return@repeat
         delivered = true
