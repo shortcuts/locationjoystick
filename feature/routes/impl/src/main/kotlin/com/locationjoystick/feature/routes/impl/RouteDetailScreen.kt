@@ -37,6 +37,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -405,7 +406,11 @@ fun RouteDetailScreen(
                                     label = { Text(stringResource(R.string.route_detail_planting_radius_meters)) },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                     singleLine = true,
-                                    modifier = Modifier.fillMaxWidth().padding(top = LjSpacing.sm),
+                                    modifier =
+                                        Modifier
+                                            .onFocusChanged { if (!it.isFocused) radiusText = "" }
+                                            .fillMaxWidth()
+                                            .padding(top = LjSpacing.sm),
                                 )
                             }
                         }

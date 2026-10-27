@@ -34,6 +34,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -108,6 +109,7 @@ fun PasteCoordinatesRoute(
         onBuildModeChange = viewModel::onBuildModeChange,
         onPlantingEnabledChange = viewModel::onPlantingEnabledChange,
         onPlantingRadiusTextChange = viewModel::onPlantingRadiusTextChange,
+        onPlantingRadiusFocusLost = viewModel::onPlantingRadiusFocusLost,
         onTeleportDelayTextChange = viewModel::onTeleportDelayTextChange,
         onBuildPreview = viewModel::buildPreview,
         onSaveRoute = viewModel::saveRoute,
@@ -132,6 +134,7 @@ private fun PasteCoordinatesScreenPreview() {
         onBuildModeChange = {},
         onPlantingEnabledChange = {},
         onPlantingRadiusTextChange = {},
+        onPlantingRadiusFocusLost = {},
         onTeleportDelayTextChange = {},
         onBuildPreview = {},
         onSaveRoute = {},
@@ -149,6 +152,7 @@ internal fun PasteCoordinatesScreen(
     onBuildModeChange: (PasteBuildMode) -> Unit,
     onPlantingEnabledChange: (Boolean) -> Unit,
     onPlantingRadiusTextChange: (String) -> Unit,
+    onPlantingRadiusFocusLost: () -> Unit,
     onTeleportDelayTextChange: (String) -> Unit,
     onBuildPreview: () -> Unit,
     onSaveRoute: (String) -> Unit,
@@ -460,7 +464,10 @@ internal fun PasteCoordinatesScreen(
                             OutlinedTextField(
                                 value = state.plantingRadiusText,
                                 onValueChange = onPlantingRadiusTextChange,
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier =
+                                    Modifier.fillMaxWidth().onFocusChanged {
+                                        if (!it.isFocused) onPlantingRadiusFocusLost()
+                                    },
                                 label = { Text(stringResource(R.string.paste_coordinates_screen_circle_radius_meters)) },
                                 supportingText = {
                                     Text(

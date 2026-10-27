@@ -334,6 +334,19 @@ class PasteCoordinatesViewModelTest {
         }
 
     @Test
+    fun `planting radius field shows the clamped value after focus loss`() =
+        runTest {
+            viewModel.onPlantingRadiusTextChange("9999")
+            viewModel.onPlantingRadiusFocusLost()
+            assertEquals(
+                AppConstants.RouteConstants.PLANTING_MAX_RADIUS_METERS
+                    .toInt()
+                    .toString(),
+                viewModel.uiState.value.plantingRadiusText,
+            )
+        }
+
+    @Test
     fun `planting with teleport style saves TELEPORT centers with wait and radius`() =
         runTest {
             coEvery { routeRepository.insertRoute(any()) } returns Result.success(Unit)

@@ -140,7 +140,7 @@ class PasteCoordinatesViewModel
                     }
                 }
             }
-            // ponytail: a user typing exactly the default text before the first DataStore read is overwritten.
+            // shortcut: a user typing exactly the default text before the first DataStore read is overwritten, seed the radius before the UI shows if this bites.
             viewModelScope.launch {
                 val radius = settingsRepository.getPlantingRadius().first()
                 val defaultText = PasteCoordinatesUiState().plantingRadiusText
@@ -197,6 +197,10 @@ class PasteCoordinatesViewModel
                     previewWaypoints = emptyList(),
                 )
             }
+        }
+
+        fun onPlantingRadiusFocusLost() {
+            _uiState.update { it.copy(plantingRadiusText = it.plantingRadiusMeters.toInt().toString()) }
         }
 
         fun loadPoints() {
