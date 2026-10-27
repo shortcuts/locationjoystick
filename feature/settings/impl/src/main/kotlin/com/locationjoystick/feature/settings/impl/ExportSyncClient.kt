@@ -35,7 +35,11 @@ class ExportSyncClient
                         .build()
                 client.newCall(request).execute().use { response ->
                     check(response.isSuccessful) { "Export fetch failed: HTTP ${response.code}" }
-                    response.body?.string() ?: error("Empty export response")
+                    val source = (response.body ?: error("Empty export response")).source()
+                    val limit = AppConstants.ExportConstants.MAX_IMPORT_SIZE_BYTES
+                    source.request(limit + 1)
+                    require(source.buffer.size <= limit) { "Export response is larger than ${limit / 1024 / 1024} MB" }
+                    source.readUtf8()
                 }
             }
     }
