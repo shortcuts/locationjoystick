@@ -3,6 +3,7 @@ package com.locationjoystick.core.location
 import android.content.Context
 import com.locationjoystick.core.common.util.clampTeleportBetweenDelaySeconds
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.MockLocationServiceStarter
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
@@ -23,6 +24,7 @@ class StartRouteReplayUseCase
         private val locationRepository: LocationRepository,
         private val routeRepository: RouteRepository,
         private val teleportUseCase: TeleportUseCase,
+        private val serviceStarter: MockLocationServiceStarter,
     ) {
         suspend fun execute(
             routeId: String,
@@ -66,6 +68,6 @@ class StartRouteReplayUseCase
             if (hop && !unplantedTeleport) {
                 route?.startWaypoint(config.isReverse)?.let { teleportUseCase.execute(it.position, resetMovement = false) }
             }
-            context.startService(MockLocationIntentBuilder.startRouteReplay(context, routeId, speedMs, effective, returnPosition))
+            serviceStarter.start(MockLocationIntentBuilder.startRouteReplay(context, routeId, speedMs, effective, returnPosition))
         }
     }

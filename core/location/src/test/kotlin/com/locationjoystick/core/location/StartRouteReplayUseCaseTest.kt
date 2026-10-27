@@ -3,6 +3,7 @@ package com.locationjoystick.core.location
 import android.content.Context
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.MockLocationServiceStarter
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
@@ -32,6 +33,7 @@ class StartRouteReplayUseCaseTest {
     private val locationRepository = LocationRepository()
     private val routeRepository: RouteRepository = mockk(relaxed = true)
     private val teleportUseCase: TeleportUseCase = mockk(relaxed = true)
+    private val serviceStarter: MockLocationServiceStarter = mockk(relaxed = true)
     private lateinit var useCase: StartRouteReplayUseCase
 
     private val start = LatLng(2.0, 2.0)
@@ -60,6 +62,7 @@ class StartRouteReplayUseCaseTest {
                 locationRepository,
                 routeRepository,
                 teleportUseCase,
+                serviceStarter,
             )
     }
 
@@ -186,7 +189,16 @@ class StartRouteReplayUseCaseTest {
             useCase.execute("route-1")
 
             coVerify(exactly = 0) { teleportUseCase.execute(any(), any()) }
-            verify { context.startService(any()) }
+            verify { serviceStarter.start(any()) }
+        }
+
+    @Test
+    fun execute_fromIdle_startsServiceOnlyThroughStarter() =
+        runTest {
+            useCase.execute("route-1")
+
+            verify(exactly = 0) { context.startService(any()) }
+            verify(exactly = 1) { serviceStarter.start(any()) }
         }
 
     @Test
@@ -195,7 +207,7 @@ class StartRouteReplayUseCaseTest {
             useCase.execute("route-1", RouteStartConfig(isPlanting = true))
 
             coVerify(exactly = 0) { teleportUseCase.execute(any(), any()) }
-            verify { context.startService(any()) }
+            verify { serviceStarter.start(any()) }
         }
 
     @Test
@@ -204,7 +216,7 @@ class StartRouteReplayUseCaseTest {
             useCase.execute("route-1", RouteStartConfig(teleportBetweenWaypoints = true))
 
             coVerify { teleportUseCase.execute(start, resetMovement = false) }
-            verify { context.startService(any()) }
+            verify { serviceStarter.start(any()) }
         }
 
     @Test
@@ -223,7 +235,7 @@ class StartRouteReplayUseCaseTest {
             useCase.execute("route-1", RouteStartConfig(teleportBetweenWaypoints = true))
 
             coVerify(exactly = 0) { teleportUseCase.execute(any(), any()) }
-            verify { context.startService(any()) }
+            verify { serviceStarter.start(any()) }
         }
 
     @Test
@@ -246,7 +258,7 @@ class StartRouteReplayUseCaseTest {
             useCase.execute("route-1")
 
             coVerify { settingsRepository.activateSessionSpeed("bike") }
-            verify { context.startService(any()) }
+            verify { serviceStarter.start(any()) }
         }
 
     @Test
