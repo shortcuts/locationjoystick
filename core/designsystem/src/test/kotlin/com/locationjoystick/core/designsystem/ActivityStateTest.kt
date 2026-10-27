@@ -24,4 +24,10 @@ class ActivityStateTest {
         assertEquals(scheme.primary, ActivityState.PAUSED.containerColor(scheme))
         assertEquals(LjBg, ActivityState.PAUSED.contentColor(scheme))
     }
+
+    @Test
+    fun `moving uses the light success green with light content in light theme`() {
+        assertEquals(LjLightSuccess, ActivityState.MOVING.containerColor(LjLightColorScheme))
+        assertEquals(LjLightBg, ActivityState.MOVING.contentColor(LjLightColorScheme))
+    }
 }

@@ -8,8 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.LjSpacing
-import com.locationjoystick.core.designsystem.LjSuccess
+import com.locationjoystick.core.designsystem.ljSuccessColor
 import com.locationjoystick.core.designsystem.activityState
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.containerColor
@@ -73,14 +72,14 @@ internal fun MapFloatingRouteControlsRow(
                             icon = LjIcons.SkipPrevious,
                             contentDescription = stringResource(R.string.overlay_previous_waypoint_cd),
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = LjSuccess,
+                            contentColor = ljSuccessColor(),
                             onClick = onJumpToPreviousWaypoint,
                         )
                         LjMapIconButton(
                             icon = LjIcons.SkipNext,
                             contentDescription = stringResource(R.string.overlay_next_waypoint_cd),
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = LjSuccess,
+                            contentColor = ljSuccessColor(),
                             onClick = onJumpToNextWaypoint,
                         )
                     }

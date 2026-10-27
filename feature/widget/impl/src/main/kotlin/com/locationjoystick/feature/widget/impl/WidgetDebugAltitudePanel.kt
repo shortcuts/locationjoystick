@@ -27,8 +27,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.data.DebugStats
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.LjSpacing
-import com.locationjoystick.core.designsystem.LjSuccess
+import com.locationjoystick.core.designsystem.ljSuccessColor
 import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.model.ReconnectRunResult
 import com.locationjoystick.core.model.ReconnectStatus
@@ -117,7 +116,7 @@ internal fun AltitudeOverrideInput(
             keyboardActions = KeyboardActions(onDone = { value.toDoubleOrNull()?.let(onConfirm) }),
         )
         IconButton(onClick = { value.toDoubleOrNull()?.let(onConfirm) }) {
-            Icon(LjIcons.Check, contentDescription = stringResource(R.string.widget_panel_confirm_altitude_cd), tint = LjSuccess)
+            Icon(LjIcons.Check, contentDescription = stringResource(R.string.widget_panel_confirm_altitude_cd), tint = ljSuccessColor())
         }
     }
 }

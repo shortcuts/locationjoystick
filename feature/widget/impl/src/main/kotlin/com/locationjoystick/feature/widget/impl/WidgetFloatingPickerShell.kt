@@ -38,8 +38,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.LjSpacing
-import com.locationjoystick.core.designsystem.LjSuccess
+import com.locationjoystick.core.designsystem.ljSuccessColor
 import com.locationjoystick.core.designsystem.component.ListSearchField
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.SavedItemSortMenu
@@ -263,7 +262,7 @@ private fun FloatingPickerTitleRow(
                         } else {
                             stringResource(R.string.widget_search)
                         },
-                    tint = if (searchVisible) LjSuccess else colors.onBackground,
+                    tint = if (searchVisible) ljSuccessColor() else colors.onBackground,
                 )
             }
         }

@@ -14,7 +14,7 @@ import com.locationjoystick.core.common.util.shareLocationLink
 import com.locationjoystick.core.designsystem.ActivityState
 import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.LjSuccess
+import com.locationjoystick.core.designsystem.ljSuccessColor
 import com.locationjoystick.core.designsystem.UiConstants
 import com.locationjoystick.core.designsystem.activityState
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
@@ -187,14 +187,14 @@ internal fun MapFabColumn(
                                             icon = LjIcons.SkipPrevious,
                                             contentDescription = stringResource(R.string.map_fab_previous_waypoint_cd),
                                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                            contentColor = LjSuccess,
+                                            contentColor = ljSuccessColor(),
                                             onClick = { onAction(MapAction.JumpToPreviousWaypoint) },
                                         )
                                         LjMapIconButton(
                                             icon = LjIcons.SkipNext,
                                             contentDescription = stringResource(R.string.map_fab_next_waypoint_cd),
                                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                            contentColor = LjSuccess,
+                                            contentColor = ljSuccessColor(),
                                             onClick = { onAction(MapAction.JumpToNextWaypoint) },
                                         )
                                     }
