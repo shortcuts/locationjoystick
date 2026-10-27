@@ -374,7 +374,12 @@ class FloatingWidgetService :
             val debugStatsEnabled by settingsRepository.getDebugStatsEnabled().collectAsStateWithLifecycle(initialValue = false)
             val debugStats by locationRepository.debugStats.collectAsStateWithLifecycle(initialValue = null)
             val reconnectStatus by screenCaptureSource.reconnectStatus.collectAsStateWithLifecycle()
-            val reconnectEnabled by settingsRepository.getReconnectTapEnabled().collectAsStateWithLifecycle(initialValue = false)
+            val reconnectEnabled by combine(
+                settingsRepository.getReconnectTapEnabled(),
+                settingsRepository.getAccessibilityDisclosureAccepted(),
+                settingsRepository.getGuidedPath(),
+                ::reconnectLoopActive,
+            ).collectAsStateWithLifecycle(initialValue = false)
             val routeProgress by locationRepository.routeProgress.collectAsStateWithLifecycle(initialValue = null)
 
             val themeMode by settingsRepository.getThemeMode().collectAsStateWithLifecycle(

@@ -223,15 +223,10 @@ private fun ReconnectTapSection(
         title = stringResource(R.string.settings_menus_reconnect_accessory_automatically),
         checked = uiState.reconnectTapEnabled,
         onCheckedChange = { on ->
-            val acceptReconnect = {
-                onAction(SettingsAction.AcceptReconnectTapDisclosure)
-                if (!uiState.isScreenServiceGranted) openAccessibilitySettings(context)
-            }
-            when {
-                on && showsReconnectDisclosure(uiState.reconnectTapDisclosureAccepted, uiState.accessibilityDisclosureAccepted) ->
-                    showDisclosure = true
-                on && !uiState.reconnectTapDisclosureAccepted -> acceptReconnect()
-                else -> onAction(SettingsAction.SetReconnectTapEnabled(on))
+            if (on && !uiState.accessibilityDisclosureAccepted) {
+                showDisclosure = true
+            } else {
+                onAction(SettingsAction.SetReconnectTapEnabled(on))
             }
         },
     )
@@ -244,18 +239,14 @@ private fun ReconnectTapSection(
             title = stringResource(R.string.settings_menus_reconnect_accessory),
             onAccept = {
                 showDisclosure = false
-                onAction(SettingsAction.AcceptReconnectTapDisclosure)
+                onAction(SettingsAction.SetAccessibilityDisclosureAccepted(true))
+                onAction(SettingsAction.SetReconnectTapEnabled(true))
                 if (!uiState.isScreenServiceGranted) openAccessibilitySettings(context)
             },
             onDecline = { showDisclosure = false },
         )
     }
 }
-
-// Per-feature disclosure dialogs are re-entry points for consent that is not yet given. Once the
-// relevant accepted flag is set they are skipped. The reconnect gate also accepts accessibility consent,
-// because reconnect is only allowed while accessibility consent is on.
-internal fun showsTapToWalkEnableDisclosure(accessibilityAccepted: Boolean): Boolean = !accessibilityAccepted
 
 /** Service state is deliberately not an input: enabling the service in Android settings records no consent. */
 internal fun showsFullAccessibilityDisclosure(
@@ -270,14 +261,9 @@ internal fun tapToWalkToggleResult(
 ): Boolean? =
     when {
         !on -> false
-        showsTapToWalkEnableDisclosure(accessibilityAccepted) -> null
+        !accessibilityAccepted -> null
         else -> true
     }
-
-internal fun showsReconnectDisclosure(
-    reconnectAccepted: Boolean,
-    accessibilityAccepted: Boolean,
-): Boolean = !reconnectAccepted && !accessibilityAccepted
 
 internal fun showsScreenAccessBlock(
     sdkInt: Int,
@@ -294,8 +280,6 @@ internal fun showsServiceOffHint(
 private fun tapToWalkOn(ui: SettingsUiState) = ui.guidedPath.showsTapToWalk && ui.tapToWalkOverlayEnabled
 
 private fun reconnectOn(ui: SettingsUiState) = ui.guidedPath.showsReconnectAccessory && ui.reconnectTapEnabled
-
-internal fun showsAccessibilityOpenSettingsDisclosure(accessibilityAccepted: Boolean): Boolean = !accessibilityAccepted
 
 private fun openAccessibilitySettings(context: android.content.Context) {
     context.startActivity(
@@ -354,7 +338,7 @@ private fun OpenSettingsButton(
     var showDisclosure by rememberSaveable { mutableStateOf(false) }
     LjButton(
         onClick = {
-            if (showsAccessibilityOpenSettingsDisclosure(uiState.accessibilityDisclosureAccepted)) {
+            if (!uiState.accessibilityDisclosureAccepted) {
                 showDisclosure = true
             } else {
                 openAccessibilitySettings(context)

@@ -233,10 +233,7 @@ class SettingsViewModel
                 combine(snapshotFlow, draftStateFlow) { snapshot, draft -> Pair(snapshot, draft) },
                 combine(
                     settingsRepository.getAccessibilityDisclosureChoice(),
-                    combine(
-                        settingsRepository.getReconnectTapEnabled(),
-                        settingsRepository.getReconnectTapDisclosureAccepted(),
-                    ) { enabled, accepted -> enabled to accepted },
+                    settingsRepository.getReconnectTapEnabled(),
                 ) { choice, reconnect -> choice to reconnect },
                 combine(screenServiceGranted, captureSnapshot) { granted, capture -> Pair(granted, capture) },
                 settingsRepository.getThemeMode(),
@@ -302,8 +299,7 @@ class SettingsViewModel
                     isScreenServiceGranted = isServiceGranted,
                     accessibilityDisclosureAccepted =
                         accessibilityDisclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
-                    reconnectTapEnabled = reconnectTap.first,
-                    reconnectTapDisclosureAccepted = reconnectTap.second,
+                    reconnectTapEnabled = reconnectTap,
                     themeMode = themeMode,
                     isDirty = isDirty,
                 )
@@ -544,15 +540,6 @@ class SettingsViewModel
 
         fun setReconnectTapEnabled(enabled: Boolean) {
             viewModelScope.launch { settingsRepository.setReconnectTapEnabled(enabled) }
-        }
-
-        /** Accepting the notice is what grants the tap; it also covers the screenshot capability. */
-        fun acceptReconnectTapDisclosure() {
-            viewModelScope.launch {
-                settingsRepository.setReconnectTapDisclosureAccepted(true)
-                settingsRepository.recordAccessibilityDisclosure(true)
-                settingsRepository.setReconnectTapEnabled(true)
-            }
         }
 
         /** Launchable apps for the Capture launch-after-link picker, queried once on first access. */

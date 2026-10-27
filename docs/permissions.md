@@ -25,5 +25,5 @@
 - `SYSTEM_ALERT_WINDOW` not via `requestPermissions`. Need `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`.
 - API 34+: `FOREGROUND_SERVICE_LOCATION` must be in manifest or `startForeground` crashes.
 - `ACCESS_MOCK_LOCATION` dev-options only. `tools:ignore="MockLocation"` intentional — app IS mock loc provider.
-- `BIND_ACCESSIBILITY_SERVICE`: the in-app disclosure gates it, not just the system grant. The screenshot consent and the tap consent are separate, and the tap needs its own acceptance. See docs/features/tap-to-walk.md and docs/features/bluetooth-reconnect-tap.md.
+- `BIND_ACCESSIBILITY_SERVICE`: the in-app disclosure gates it, not just the system grant. One disclosure covers the screenshots and the tap. The Reconnect switch is a separate opt-in. See docs/features/tap-to-walk.md and docs/features/bluetooth-reconnect-tap.md.
 - `POST_NOTIFICATIONS`: asked once on a fresh launch, not on recreation such as rotation. Denied, the foreground notification may not show, and reconnect notices do not show either.

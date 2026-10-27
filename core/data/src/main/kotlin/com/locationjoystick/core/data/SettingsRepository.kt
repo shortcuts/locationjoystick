@@ -406,10 +406,6 @@ class SettingsRepository
 
         suspend fun setReconnectTapEnabled(enabled: Boolean) = dataSource.setReconnectTapEnabled(enabled)
 
-        fun getReconnectTapDisclosureAccepted(): Flow<Boolean> = dataSource.getReconnectTapDisclosureAccepted()
-
-        suspend fun setReconnectTapDisclosureAccepted(accepted: Boolean) = dataSource.setReconnectTapDisclosureAccepted(accepted)
-
         fun getSettingsSnapshot(): Flow<SettingsSnapshot> = dataSource.getSettingsSnapshot()
 
         suspend fun applySnapshot(snapshot: SettingsSnapshot) = dataSource.applySnapshot(snapshot)

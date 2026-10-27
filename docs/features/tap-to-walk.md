@@ -164,7 +164,7 @@ Details for each are in [tap-to-walk-investigation.md](tap-to-walk-investigation
 
 ## Shared disclosure
 
-The accessibility disclosure also covers Reconnect accessory ([bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)). Accepting from the Tap to Walk switch does not set the reconnect acceptance. Reconnect asks for its own acceptance only while neither is accepted; once the accessibility choice is accepted, it records the reconnect acceptance without a dialog.
+The accessibility disclosure also covers Reconnect accessory ([bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)). Accepting it from either switch covers both. Reconnect stays a separate opt-in: its switch must still be turned on.
 
 Both features share one screenshot budget ([bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)): every screenshot is serialized and spaced, because the platform rejects shots taken too close together.
 

@@ -27,7 +27,7 @@ What the target app can observe on the chosen path: the enabled-services list (a
 
 ## Play policy
 
-Gesture use under an accessibility service that does not declare itself an accessibility tool is a review risk. Mitigations: off by default, a separate explicit acceptance, a disclosure that names the periodic screenshot, the tap and the game-only rule (enforced by Gate below), and no tap on any state other than a confident "off".
+Gesture use under an accessibility service that does not declare itself an accessibility tool is a review risk. Mitigations: off by default, a separate opt-in switch, one disclosure that names the periodic screenshot, the tap and the game-only rule (enforced by Gate below), and no tap on any state other than a confident "off".
 
 ## Gate
 

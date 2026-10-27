@@ -198,13 +198,12 @@ private suspend fun runGated(
     return if (delivered) ReconnectRunResult.FAILED else ReconnectRunResult.GATE_CLOSED
 }
 
-/** Loop gate: setting, both disclosures, and a guided path that still shows the feature (docs/features/guided-paths.md). */
+/** Loop gate: setting, accessibility disclosure, and a guided path that still shows the feature (docs/features/guided-paths.md). */
 internal fun reconnectLoopActive(
     enabled: Boolean,
-    reconnectOk: Boolean,
     accessibilityOk: Boolean,
     path: GuidedPath,
-): Boolean = enabled && reconnectOk && accessibilityOk && path.showsReconnectAccessory
+): Boolean = enabled && accessibilityOk && path.showsReconnectAccessory
 
 /**
  * Runs one periodic check so a throwing screenshot, bitmap copy, detector or gesture only skips this

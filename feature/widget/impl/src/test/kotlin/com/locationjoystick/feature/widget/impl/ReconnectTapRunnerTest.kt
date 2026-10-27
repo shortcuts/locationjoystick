@@ -222,12 +222,11 @@ class ReconnectTapRunnerTest {
 
     @Test
     fun loopGate_pikminBloomStopsLoopButOtherPathsKeepIt() {
-        assertTrue(reconnectLoopActive(true, true, true, GuidedPath.DEFAULT))
-        assertTrue(reconnectLoopActive(true, true, true, GuidedPath.POKEMON_GO))
-        assertFalse(reconnectLoopActive(true, true, true, GuidedPath.PIKMIN_BLOOM))
-        assertFalse(reconnectLoopActive(false, true, true, GuidedPath.DEFAULT))
-        assertFalse(reconnectLoopActive(true, false, true, GuidedPath.DEFAULT))
-        assertFalse(reconnectLoopActive(true, true, false, GuidedPath.DEFAULT))
+        assertTrue(reconnectLoopActive(true, true, GuidedPath.DEFAULT))
+        assertTrue(reconnectLoopActive(true, true, GuidedPath.POKEMON_GO))
+        assertFalse(reconnectLoopActive(true, true, GuidedPath.PIKMIN_BLOOM))
+        assertFalse(reconnectLoopActive(false, true, GuidedPath.DEFAULT))
+        assertFalse(reconnectLoopActive(true, false, GuidedPath.DEFAULT))
     }
 
     @Test

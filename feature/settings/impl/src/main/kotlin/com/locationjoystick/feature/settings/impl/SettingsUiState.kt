@@ -42,7 +42,6 @@ data class SettingsUiState(
     val isScreenServiceGranted: Boolean = false,
     val accessibilityDisclosureAccepted: Boolean = false,
     val reconnectTapEnabled: Boolean = false,
-    val reconnectTapDisclosureAccepted: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.DARK,
     val hideTeleportFeatures: Boolean = false,
     val hideWidgetOverlay: Boolean = false,

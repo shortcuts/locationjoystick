@@ -1197,16 +1197,13 @@ class SettingsRepositoryTest {
     // reconnect tap flags
 
     @Test
-    fun `reconnect tap flags default false and round trip`() =
+    fun `reconnect tap enabled defaults false and round trips`() =
         runTest {
             assertFalse(repository.getReconnectTapEnabled().first())
-            assertFalse(repository.getReconnectTapDisclosureAccepted().first())
 
             repository.setReconnectTapEnabled(true)
-            repository.setReconnectTapDisclosureAccepted(true)
 
             assertTrue(repository.getReconnectTapEnabled().first())
-            assertTrue(repository.getReconnectTapDisclosureAccepted().first())
         }
 
     // resetAllData
@@ -1720,14 +1717,6 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setReconnectTapEnabled(enabled: Boolean) {
         reconnectTapEnabledFlow.value = enabled
-    }
-
-    val reconnectTapDisclosureAcceptedFlow = MutableStateFlow(false)
-
-    override fun getReconnectTapDisclosureAccepted(): Flow<Boolean> = reconnectTapDisclosureAcceptedFlow
-
-    override suspend fun setReconnectTapDisclosureAccepted(accepted: Boolean) {
-        reconnectTapDisclosureAcceptedFlow.value = accepted
     }
 
     val recentSearchesFlow = MutableStateFlow<List<RecentSearch>>(emptyList())

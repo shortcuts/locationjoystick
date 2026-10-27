@@ -8,30 +8,11 @@ import org.junit.Test
 
 class SettingsDisclosureGatesTest {
     @Test
-    fun tapToWalkEnableDialogSkippedOnceAccessibilityAccepted() {
-        assertTrue(showsTapToWalkEnableDisclosure(accessibilityAccepted = false))
-        assertFalse(showsTapToWalkEnableDisclosure(accessibilityAccepted = true))
-    }
-
-    @Test
     fun tapToWalkToggleEnablesWhenAccessibilityAccepted() {
         assertEquals(true, tapToWalkToggleResult(on = true, accessibilityAccepted = true))
         assertNull(tapToWalkToggleResult(on = true, accessibilityAccepted = false))
         assertEquals(false, tapToWalkToggleResult(on = false, accessibilityAccepted = true))
         assertEquals(false, tapToWalkToggleResult(on = false, accessibilityAccepted = false))
-    }
-
-    @Test
-    fun reconnectDialogSkippedWhenEitherFlagAccepted() {
-        assertTrue(showsReconnectDisclosure(reconnectAccepted = false, accessibilityAccepted = false))
-        assertFalse(showsReconnectDisclosure(reconnectAccepted = true, accessibilityAccepted = false))
-        assertFalse(showsReconnectDisclosure(reconnectAccepted = false, accessibilityAccepted = true))
-    }
-
-    @Test
-    fun accessibilityOpenSettingsDialogSkippedOnceAccepted() {
-        assertTrue(showsAccessibilityOpenSettingsDisclosure(accessibilityAccepted = false))
-        assertFalse(showsAccessibilityOpenSettingsDisclosure(accessibilityAccepted = true))
     }
 
     @Test
