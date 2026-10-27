@@ -26,9 +26,9 @@ Routes use the same grouping as favorites ([favorites.md](favorites.md)). Hot ro
 
 ## Search and sort
 
-Search matches the route name. It is shared by the Routes screen, the map sheet and the widget panel, so the three stay consistent.
+Search matches the route name or its group name. It is shared by the Routes screen, the map sheet and the widget panel, so the three stay consistent.
 
-Sort order is shared too. The selected order also controls route ordering on the map and the widget. Saved-time sorts use the time the route was added, so the order is stable.
+Sort order is shared too. The selected order also controls route ordering on the map and the widget. Dragging a route or a group sets a manual order, and choosing a sort mode replaces it. Saved-time sorts use the time the route was added, so the order is stable.
 
 ## Paste coordinates
 

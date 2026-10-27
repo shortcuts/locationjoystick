@@ -4,7 +4,7 @@ Settings exports all user data to a JSON file, and imports a file from a previou
 
 Export and import is the supported way to move data to another phone. `allowBackup="false"` alone does not stop Android 12+ device-to-device transfer, so the app excludes its data there and in cloud backup through `data_extraction_rules.xml`. The group token, the ground fit and the Room database would otherwise move unchecked.
 
-Key files: the settings feature module, the settings repository, and the export codec in `:core:data`.
+Key files: the settings feature module, the settings repository, and the export codec in `:feature:settings:impl`.
 
 ## Scope
 

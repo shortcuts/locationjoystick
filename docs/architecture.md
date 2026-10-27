@@ -67,6 +67,6 @@ Kotlin Flow everywhere. No RxJava. No LiveData.
 ## Coroutines
 
 - `viewModelScope` for UI-bound work
-- `ServiceScope` (service lifecycle) for background work
+- A private `serviceScope` in each service for background work
 - Never `GlobalScope`
 - Always `SupervisorJob()` in service scopes

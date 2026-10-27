@@ -14,7 +14,7 @@ Every favorites picker uses the same filter: the map sheet, the route creator's 
 
 ## Sort
 
-The sort menu is shared by the Favorites screen, the widget panel and the floating map's panel. The chosen order is kept and shared.
+The sort menu is shared by the Favorites screen, the widget panel and the floating map's panel. The chosen order is kept and shared. Dragging a favorite or a group sets a manual order, and choosing a sort mode replaces it.
 
 ## Groups
 
@@ -24,7 +24,7 @@ A favorite's group is a plain name. No group is stored as a separate table: a gr
 - Renaming a group renames it on every member. Deleting a group keeps its members and makes them ungrouped.
 - Collapsing is not saved. An active search expands every group, so matches stay visible.
 - Order: user groups first, then ungrouped favorites, then hot-list groups. Local places stay above the curated list. A user group may share a name with a hot-list country, and the two stay as separate sections.
-- Groups are alphabetical. Drag reordering is not supported.
+- Drag a row or a group header to set your own order. Picking a sort mode replaces it.
 
 Hot-list favorites are read-only and cannot be moved. Their group is their country.
 
