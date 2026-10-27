@@ -47,7 +47,7 @@ Once onboarding is complete, revoking the overlay permission does not send the u
 
 The gate is one pure function: the app is reachable only when core permissions are granted and onboarding is complete. A first-run user cannot jump past the path picker by granting permissions, because only finishing the picker sets the flag.
 
-A cold start with everything already granted goes straight to the main screen. Existing installs never see the picker.
+A cold start with everything already granted still shows onboarding until the picker is finished. Installs that already finished it go straight to the main screen.
 
 ## Edge cases
 

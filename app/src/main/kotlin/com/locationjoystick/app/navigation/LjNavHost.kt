@@ -96,6 +96,11 @@ internal fun isNavGateReachable(
     coreGranted: Boolean,
 ): Boolean = coreGranted && onboardingComplete
 
+internal fun shouldReturnToOnboarding(
+    startDestination: String,
+    onboardingComplete: Boolean,
+): Boolean = startDestination != ONBOARDING_ROUTE && !onboardingComplete
+
 /**
  * Where the app opens (cold start, or returning from background while on Home): the Map while
  * spoofing is running or paused, Home otherwise (issue #82). Exhaustive so a new state must choose.
@@ -113,8 +118,7 @@ fun LjNavHost(
 ) {
     val context = LocalContext.current
     val navGateViewModel: NavGateViewModel = hiltViewModel()
-    // Default false for the first frame — the DataStore-backed value below settles a moment
-    // later and, if it flips this decision, corrects it via the LaunchedEffect below.
+    // The onboarding flag loads from DataStore after the first frame; the effect below corrects the start.
     val startDestination =
         remember {
             if (corePermissionsGranted(context, bypassMockLocationCheck = false) &&
@@ -139,6 +143,14 @@ fun LjNavHost(
                 navController.navigate(IDLE_ROUTE) {
                     popUpTo(ONBOARDING_ROUTE) { inclusive = true }
                 }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (shouldReturnToOnboarding(startDestination, navGateViewModel.isOnboardingComplete())) {
+            navController.navigate(ONBOARDING_ROUTE) {
+                popUpTo(startDestination) { inclusive = true }
             }
         }
     }

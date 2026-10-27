@@ -8,6 +8,7 @@ import com.locationjoystick.core.model.MockLocationState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -19,10 +20,12 @@ import javax.inject.Inject
 class NavGateViewModel
     @Inject
     constructor(
-        settingsRepository: SettingsRepository,
+        private val settingsRepository: SettingsRepository,
         locationRepository: LocationRepository,
     ) : ViewModel() {
         val mockLocationState: StateFlow<MockLocationState> = locationRepository.mockLocationState
+
+        suspend fun isOnboardingComplete(): Boolean = settingsRepository.getOnboardingComplete().first()
 
         val bypassMockLocationCheck: StateFlow<Boolean> =
             settingsRepository.getBypassMockLocationCheck().stateIn(
