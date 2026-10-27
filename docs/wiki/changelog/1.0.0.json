@@ -1,6 +1,6 @@
 {
-  "version": "0.28.0",
-  "date": "2026-10-15",
+  "version": "1.0.0",
+  "date": "2026-10-27",
   "entries": [
     { "category": "feat", "scope": "Reconnect accessory", "summary": "Reconnect accessory taps your game's reconnect control for you. It is off by default. Turn it on in Settings > Menus. It needs the screen helper." },
     { "category": "feat", "scope": "Reconnect accessory", "summary": "Reconnect checks run once a minute, only while the screen is on and the game is in front. After failed checks, the app waits longer, up to 5 minutes." },
@@ -14,7 +14,7 @@
     { "category": "fix", "scope": "Map", "summary": "The first point you add to a walk continues from your current position, not from the walk's start." },
     { "category": "fix", "scope": "Map", "summary": "Switching the map style now takes effect on every map screen right away, without closing and reopening the screen." },
     { "category": "feat", "scope": "Settings", "summary": "Pick your game during first setup. It only hides features you do not need, such as Planting, Tap to Walk and Reconnect accessory. Change it any time in Settings > General > Game setup." },
-    { "category": "feat", "scope": "Settings", "summary": "Settings > Menus is split in two. Theme, map source, place search, privacy, capture and debug now live in a new General page. Every option is still there." },
+    { "category": "feat", "scope": "Settings", "summary": "Settings > Menus is split in two. Theme, map source, place search, privacy and debug now live in a new General page. Every option is still there." },
     { "category": "fix", "scope": "Settings", "summary": "Save and Discard buttons no longer cover the last settings entries." },
     { "category": "fix", "scope": "Settings", "summary": "The speed warning uses the unit you picked in Settings." },
     { "category": "fix", "scope": "Settings", "summary": "The route jump buttons and the altitude override button now live in Settings > Menus." },
@@ -38,7 +38,7 @@
     { "category": "feat", "scope": "Favorite Locations", "summary": "While spoofing, tapping a favorite offers Teleport, Walk, or Walk via roads." },
     { "category": "feat", "scope": "Favorite Locations", "summary": "Saved favorites are grouped, and you can sort them." },
     { "category": "feat", "scope": "Search", "summary": "Place search now tries a second service when the first one fails. A service that has just failed is skipped for ten minutes." },
-    { "category": "feat", "scope": "Capture", "summary": "You can now pick an app to open after the app handles a map link. Set it in Settings > General > Capture. It opens after you teleport or walk to the link's point." },
+    { "category": "feat", "scope": "Capture", "summary": "You can now pick an app to open after the app handles a map link. Set it in Settings > Capture. It opens after you teleport or walk to the link's point." },
     { "category": "fix", "scope": "Capture", "summary": "Capture asks for confirmation before it clears the points you collected." },
     { "category": "feat", "scope": "Floating Widget", "summary": "Controls now show their state by color. They are grey when idle, green when moving, and orange when a walk, route, or roam is paused." },
     { "category": "fix", "scope": "Floating Widget", "summary": "Starting a roam, walk, teleport, or route from the floating widget no longer sends this app to the background. The app you are using stays in front." },

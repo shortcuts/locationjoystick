@@ -2,6 +2,7 @@
   "release-type": "simple",
   "packages": {
     ".": {
+      "release-as": "1.0.0",
       "extra-files": [
         {
           "type": "generic",
