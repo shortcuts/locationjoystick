@@ -63,7 +63,7 @@ object GroundFlowFit {
     private const val CROP_HALF = 0.12 // of the width
     private const val DOWNSAMPLE = 2
     private const val MIN_RESPONSE = 0.15 // weaker peaks are noise, not map content
-    const val MIN_MOVE_M = 1.5 // shorter moves give flows too small to fit
+    const val MIN_MOVE_M = 0.8 // shorter moves give flows too small to fit
     private const val MIN_FLOWS = 4
     private const val MIN_SCALE = 1.5 // px/m (reference): smaller is a static loading screen
     private const val MAX_SCALE = 30.0

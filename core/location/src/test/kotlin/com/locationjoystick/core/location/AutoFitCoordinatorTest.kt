@@ -102,6 +102,26 @@ class AutoFitCoordinatorTest {
         }
 
     @Test
+    fun `a slow walk stores the camera heading and scale`() =
+        runTest {
+            val c = coordinator()
+            c.tick()
+            repeat(6) { step(c, 70.0, 0.9) }
+            val fit = stored.value!!
+            assertEquals(0.0, angleGap(camera.headingDeg, fit.calibration.headingDeg), 10.0)
+            assertEquals(camera.lateralPxPerM, fit.calibration.lateralPxPerM, camera.lateralPxPerM * 0.1)
+        }
+
+    @Test
+    fun `a step under half a metre is standing still`() =
+        runTest {
+            val c = coordinator()
+            c.tick()
+            repeat(4) { step(c, 70.0, 0.4) }
+            coVerify(exactly = 0) { source.captureGrayFrame() }
+        }
+
+    @Test
     fun `a straight walk writes the stored map once`() =
         runTest {
             val c = coordinator()

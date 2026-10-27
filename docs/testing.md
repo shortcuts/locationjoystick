@@ -81,8 +81,8 @@ make tap-smoke-selfcheck                        # pure verdict logic, no device
   `TeleportUseCase` persists last location and cooldown). The script refuses to start without
   `--ack-throwaway-account`, which `make tap-smoke` passes: running it is the acknowledgement. Never use the main account.
 - **Minutes, not hours.** The account is a throwaway, so the run never waits for walking pace or cooldowns. Every walk
-  uses the Run profile, the fastest one under the app's flow speed limit; slower walks only cost device time. Each tap
-  teleports back to its start. One row takes about 5 minutes. Never start a run that takes hours: split it into rows.
+  uses the Run profile, the fastest one under the app's flow speed limit; slower walks only cost device time: one Walk row (`make tap-smoke ONLY=1 SPEED_PROFILE=walk`) took 703 s and passed (p90 8.1 m). Each tap
+  teleports back to its start. One Run row takes about 5 minutes. Never start a run that takes hours: split it into rows.
 - **Truth is the reference ruler.** The bench's eight-leg perspective fit is a rich fit (hundreds of flows) and only
   scores the tap; the app under test measures its own map from one 40 m leg. The ruler fits only the band flows at or
   below row 1200 of a 2340 px frame, because one perspective term over the whole band misread the scale at the feet,

@@ -129,7 +129,7 @@ class AutoFitCoordinator
 
         private companion object {
             const val TAG = "AutoFit"
-            const val MIN_STEP_M = 1.0 // moved less than this since the last tick: standing still
+            const val MIN_STEP_M = 0.5 // moved less than this since the last tick: standing still
             const val MIN_MOVES = 2 // one move's crops can fit, but one bad pair would then replace a good stored map
             val CAPTURE_MODES = setOf(MockMode.JOYSTICK, MockMode.TELEPORT, MockMode.WALK_TO) // replay and roaming are not measured
         }

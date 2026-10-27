@@ -117,10 +117,11 @@ reconnect-selfcheck:
 	python3 scripts/test_reconnect_matrix.py
 
 # Tap-to-walk global smoke gate (docs/testing.md). Throwaway game account only.
-# make tap-smoke SERIAL=<adb serial> ONLY="1 2" SCENARIOS=all   (needs LJ_CONTROL_API_KEY, LJ_CONTROL_API_HOST)
+# make tap-smoke SERIAL=<adb serial> ONLY="1 2" SCENARIOS=all SPEED_PROFILE=walk   (needs LJ_CONTROL_API_KEY, LJ_CONTROL_API_HOST)
 tap-smoke:
 	scripts/registration-bench/.venv/bin/python scripts/tap_smoke.py --ack-throwaway-account \
-		$(if $(SERIAL),--serial $(SERIAL)) $(if $(ONLY),--only $(ONLY)) $(if $(SCENARIOS),--scenarios $(SCENARIOS))
+		$(if $(SERIAL),--serial $(SERIAL)) $(if $(ONLY),--only $(ONLY)) $(if $(SCENARIOS),--scenarios $(SCENARIOS)) \
+		$(if $(SPEED_PROFILE),--speed-profile $(SPEED_PROFILE))
 
 tap-smoke-selfcheck:
 	python3 scripts/test_tap_smoke.py

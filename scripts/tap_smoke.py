@@ -34,7 +34,7 @@ N_TAPS, TOL_M, MAX_REJECT, MAX_M = 12, 15.0, 0.2, 40.0
 NEED_LOCATIONS = 19
 TAP_WAIT_S, REAIM_WAIT_S = 3.0, 12.0
 ZOOM, TWIST_DEG, LEG_M = 1.6, 45.0, 40.0
-# Fastest built-in profile under the app's flow limit (FLOW_MAX_SPEED_MPS 3.0); the account is a throwaway.
+# Default: fastest built-in profile under the app's flow limit (FLOW_MAX_SPEED_MPS 3.0); --speed-profile walk gates the shipped default.
 SPEED_PROFILE = "run"
 REF_LEG_M, REF_EVERY_S = "24", "1"
 REAIM_SCENARIOS = ("fresh", "twist")  # the stored map is re-measured only here; elsewhere the first target is final
@@ -439,6 +439,7 @@ def main(argv=None):
     p.add_argument("--only", type=int, nargs="+", help="1-based location numbers to run")
     p.add_argument("--scenarios", choices=("normal", "all"), default="normal",
                    help="all adds fresh, twist and zoom at locations 1 and 7")
+    p.add_argument("--speed-profile", default=SPEED_PROFILE, choices=("slow_walk", "walk", "run"), help="speed profile for the walks")
     p.add_argument("--settle", type=float, default=45.0, help="seconds to let the game load tiles")
     p.add_argument("--respect-cooldown", action="store_true", help="sleep the app's advised cooldown between teleports")
     p.add_argument("--ack-throwaway-account", action="store_true", help="required: global teleports risk a ban")
@@ -466,7 +467,7 @@ def main(argv=None):
         jobs += [(i, s) for i in EXTRA_LOCATIONS for s in EXTRA_SCENARIOS]
     rows, wait = [], 0
     profile = _api(host, key, "GET", "/state")["speedProfileId"]
-    _api(host, key, "POST", "/speed-profile", {"id": SPEED_PROFILE})
+    _api(host, key, "POST", "/speed-profile", {"id": a.speed_profile})
     try:
         for i, scenario in jobs:
             if a.only and i not in a.only:

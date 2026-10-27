@@ -166,6 +166,13 @@ class GroundFlowFitTest {
     }
 
     @Test
+    fun aSlowWalkStepIsMeasuredAndHalfAMetreIsNot() {
+        val cal = GroundFlowFit.calibration(-12.0, 7.0)
+        assertEquals(3, walk(cal, 70.0, 3, stepM = 0.9).size)
+        assertEquals(0, walk(cal, 70.0, 3, stepM = 0.5).size)
+    }
+
+    @Test
     fun shortMoveAndSizeChangeAreSkipped() {
         val a = GroundFlowFit.crops(GrayImage(w, h, ByteArray(w * h)))
         val b = GroundFlowFit.crops(GrayImage(w + 2, h, ByteArray((w + 2) * h)))
