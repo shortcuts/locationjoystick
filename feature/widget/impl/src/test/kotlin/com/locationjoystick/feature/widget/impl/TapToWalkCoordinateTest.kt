@@ -87,4 +87,37 @@ class TapToWalkCoordinateTest {
         assertEquals(30.0, east, 0.5)
         assertEquals(-20.0, north, 0.5)
     }
+
+    @Test
+    fun reaimedTarget_movesTheWalkedTapUnderTheNewMapFromItsTapTimePosition() {
+        val tap = GroundTap(feet, 540.0, 1000.0)
+        val old = TapToWalkOverlay.computeGroundWalkTarget(feet, groundMap(0.0), tap.x, tap.y)!!
+        val newMap = groundMap(90.0)
+        val expected = TapToWalkOverlay.computeGroundWalkTarget(feet, newMap, tap.x, tap.y)!!
+        assertEquals(expected, TapToWalkOverlay.reaimedTarget(tap, old, old, newMap))
+    }
+
+    @Test
+    fun reaimedTarget_leavesAWalkThatEndedOrWasReplaced() {
+        val tap = GroundTap(feet, 540.0, 1000.0)
+        val old = TapToWalkOverlay.computeGroundWalkTarget(feet, groundMap(0.0), tap.x, tap.y)!!
+        assertNull(TapToWalkOverlay.reaimedTarget(tap, old, null, groundMap(90.0)))
+        assertNull(TapToWalkOverlay.reaimedTarget(tap, old, LatLng(41.0, -74.0), groundMap(90.0)))
+    }
+
+    @Test
+    fun reaimedTarget_ignoresMovesUnderTheThreshold() {
+        val tap = GroundTap(feet, 540.0, 1000.0)
+        val map = groundMap(0.0)
+        val old = TapToWalkOverlay.computeGroundWalkTarget(feet, map, tap.x, tap.y)!!
+        assertNull(TapToWalkOverlay.reaimedTarget(tap, old, old, map))
+    }
+
+    @Test
+    fun reaimedTarget_noMapOrPastHorizon_returnsNull() {
+        val tap = GroundTap(feet, 540.0, 1000.0)
+        val old = TapToWalkOverlay.computeGroundWalkTarget(feet, groundMap(0.0), tap.x, tap.y)!!
+        assertNull(TapToWalkOverlay.reaimedTarget(tap, old, old, null))
+        assertNull(TapToWalkOverlay.reaimedTarget(GroundTap(feet, 540.0, -3000.0), old, old, groundMap(90.0)))
+    }
 }

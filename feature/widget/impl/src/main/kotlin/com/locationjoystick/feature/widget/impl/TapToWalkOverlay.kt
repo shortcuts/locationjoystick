@@ -31,6 +31,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjOnScrim
 import com.locationjoystick.core.designsystem.LjSpacing
@@ -40,6 +41,7 @@ import com.locationjoystick.core.model.GroundFlowFit
 import com.locationjoystick.core.model.GroundMap
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.StoredGroundCalibration
+import com.locationjoystick.core.model.distanceTo
 import com.locationjoystick.feature.widget.impl.R
 import kotlin.math.atan2
 import kotlin.math.hypot
@@ -156,6 +158,18 @@ internal class TapToWalkOverlay(
             val o = map.pixelToGround(tapX, tapY) ?: return null
             val bearing = Math.toDegrees(atan2(o.eastMeters, o.northMeters))
             return CalibrationWalkMath.commandedTarget(currentPos, bearing, hypot(o.eastMeters, o.northMeters))
+        }
+
+        /** The tap's new target under [map], or null when its walk ended or was replaced, or the move is under the threshold. */
+        fun reaimedTarget(
+            tap: GroundTap,
+            aimed: LatLng,
+            walkTarget: LatLng?,
+            map: GroundMap?,
+        ): LatLng? {
+            if (walkTarget != aimed || map == null) return null
+            val next = computeGroundWalkTarget(tap.from, map, tap.x, tap.y) ?: return null
+            return next.takeIf { it.distanceTo(aimed) >= AppConstants.TapToWalkConstants.REAIM_MIN_METERS }
         }
     }
 }
