@@ -30,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -44,8 +43,7 @@ import com.google.zxing.MultiFormatReader
 import com.google.zxing.NotFoundException
 import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.common.HybridBinarizer
-import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.LjSpacing
+import com.locationjoystick.core.designsystem.LjIcons import com.locationjoystick.core.designsystem.LjOnScrim
 import com.locationjoystick.feature.group.impl.R
 import java.util.concurrent.Executors
 
@@ -137,12 +135,12 @@ fun GroupQrScannerScreen(
                     Modifier
                         .align(Alignment.TopCenter)
                         .padding(top = 48.dp)
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
+                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
                 Text(
                     text = stringResource(R.string.group_qr_scanner_point_at_the_leader_s_group),
-                    color = Color.White,
+                    color = LjOnScrim,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -157,7 +155,7 @@ fun GroupQrScannerScreen(
             onClick = onNavigateBack,
             modifier = Modifier.align(Alignment.TopStart).padding(LjSpacing.sm),
         ) {
-            Icon(LjIcons.ArrowBack, contentDescription = stringResource(R.string.group_qr_scanner_back_cd), tint = Color.White)
+            Icon(LjIcons.ArrowBack, contentDescription = stringResource(R.string.group_qr_scanner_back_cd), tint = LjOnScrim)
         }
     }
 }
