@@ -135,7 +135,7 @@ internal fun PathPickerStep(
                 Spacer(modifier = Modifier.height(LjSpacing.sm))
             }
 
-            if (showsTapToWalk) {
+            if (showsTapToWalkAccessCard(showsTapToWalk, Build.VERSION.SDK_INT)) {
                 Spacer(modifier = Modifier.height(LjSpacing.xs))
                 Text(
                     text = stringResource(R.string.onboarding_optional),
@@ -202,6 +202,11 @@ internal fun OnboardingAccessibilityDisclosure(
         },
     )
 }
+
+internal fun showsTapToWalkAccessCard(
+    showsTapToWalk: Boolean,
+    sdkInt: Int,
+): Boolean = showsTapToWalk && sdkInt >= Build.VERSION_CODES.R
 
 private fun GuidedPath.titleRes(): Int =
     when (this) {
