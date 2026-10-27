@@ -652,7 +652,8 @@ class FloatingWidgetService :
     private fun reaimOnNewMap() {
         val (tap, target) = aimedTap ?: return
         val walkTarget = locationRepository.walkTarget.value
-        if (walkTarget != target) {
+        // Paused means the joystick took over; walkTo would resume the walk, so drop the re-aim.
+        if (walkTarget != target || mapController.sharedState.value.isWalkPaused) {
             aimedTap = null
             return
         }
