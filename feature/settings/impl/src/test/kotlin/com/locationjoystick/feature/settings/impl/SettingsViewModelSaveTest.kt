@@ -228,6 +228,18 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
+    fun `saveChanges keeps the mock location check bypass`() =
+        runTest(testDispatcher) {
+            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            fakeSettingsRepo.setBypassMockLocationCheck(true)
+            viewModel.setSpeed("walk", 2.0)
+
+            viewModel.saveChanges()
+
+            assertTrue(fakeDataSource.lastAppliedSnapshot!!.bypassMockLocationCheck)
+        }
+
+    @Test
     fun `replace import that fails mid-insert keeps old data and reports error`() =
         runTest(testDispatcher) {
             coEvery { backupRepository.apply(any(), any(), any(), any()) } throws IllegalStateException("boom")
@@ -570,6 +582,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     private val mapItemsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_MAP_FAB_ITEMS)
     private val featureOrderFlow = MutableStateFlow(AppFeature.DEFAULT_ORDER)
     private val enabledSpeedProfileIdsFlow = MutableStateFlow(AppPreferencesDataSource.DEFAULT_ENABLED_SPEED_PROFILE_IDS)
+    private val bypassMockLocationCheckFlow = MutableStateFlow(false)
     private val roamingDefaultsFlow =
         MutableStateFlow(
             RoamingDefaults(
@@ -840,9 +853,11 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setShowRouteJumpButtons(enabled: Boolean) = Unit
 
-    override fun getBypassMockLocationCheck(): Flow<Boolean> = flowOf(false)
+    override fun getBypassMockLocationCheck(): Flow<Boolean> = bypassMockLocationCheckFlow
 
-    override suspend fun setBypassMockLocationCheck(enabled: Boolean) = Unit
+    override suspend fun setBypassMockLocationCheck(enabled: Boolean) {
+        bypassMockLocationCheckFlow.value = enabled
+    }
 
     override fun getRealismRealElevationEnabled(): Flow<Boolean> = flowOf(true)
 

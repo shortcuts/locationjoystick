@@ -628,6 +628,7 @@ class SettingsViewModel
                             hideWidgetOverlay = state.hideWidgetOverlay,
                             hideForegroundNotification = state.hideForegroundNotification,
                             showRouteJumpButtons = state.showRouteJumpButtons,
+                            bypassMockLocationCheck = settingsRepository.getBypassMockLocationCheck().first(),
                             realismRealElevationEnabled = state.realismRealElevationEnabled,
                             altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
                             plantingRadiusMeters = state.plantingRadiusMeters,
