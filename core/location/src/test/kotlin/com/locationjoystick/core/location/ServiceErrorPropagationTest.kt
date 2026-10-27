@@ -3,10 +3,15 @@ package com.locationjoystick.core.location
 import android.location.LocationManager
 import android.os.PowerManager
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.RoamingRepository
+import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.model.MockLocationState
+import com.locationjoystick.core.model.MockMode
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -54,4 +59,26 @@ class ServiceErrorPropagationTest {
         service.setupTestProvider()
         verify(exactly = 2) { locationManager.setTestProviderEnabled(any(), true) }
     }
+
+    @Test
+    fun `ERROR cancels walk, replay and roaming and resets mode to TELEPORT`() =
+        runBlocking {
+            val walk = mockk<WalkCoordinator>(relaxed = true)
+            val orchestrator = mockk<ReplayOrchestrator>(relaxed = true)
+            val roaming = mockk<RoamingRepository>(relaxed = true)
+            val service =
+                newService().apply {
+                    walkCoordinator = walk
+                    replayOrchestrator = orchestrator
+                    roamingRepository = roaming
+                }
+            service.locationRepository.setMockMode(MockMode.WALK_TO)
+
+            service.stopMovementOnError()
+
+            verify { walk.cancel() }
+            coVerify { orchestrator.handleCancel() }
+            coVerify { roaming.stopRoaming() }
+            assertEquals(MockMode.TELEPORT, service.locationRepository.currentMode.value)
+        }
 }

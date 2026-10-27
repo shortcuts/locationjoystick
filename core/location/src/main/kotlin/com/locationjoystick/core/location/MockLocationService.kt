@@ -27,6 +27,7 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.data.WalkToEngine
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.LatLng
@@ -125,6 +126,8 @@ class MockLocationService : Service() {
 
     @Inject lateinit var walkToEngine: WalkToEngine
 
+    @Inject lateinit var walkCoordinator: WalkCoordinator
+
     @Inject lateinit var osrmClient: OsrmClient
 
     @Inject lateinit var routingErrorReporter: RoutingErrorReporter
@@ -166,7 +169,7 @@ class MockLocationService : Service() {
         }
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + exceptionHandler)
 
-    private lateinit var replayOrchestrator: ReplayOrchestrator
+    internal lateinit var replayOrchestrator: ReplayOrchestrator
 
     private lateinit var overlayNotificationReactor: OverlayNotificationReactor
 
@@ -335,6 +338,7 @@ class MockLocationService : Service() {
                     }
 
                     MockLocationState.IDLE, MockLocationState.ERROR -> {
+                        if (state == MockLocationState.ERROR) stopMovementOnError()
                         updateJobMutex.withLock {
                             when (computeIdleOrErrorLoopAction(state, leaderSharingEnabled, updateJob != null)) {
                                 IdleOrErrorLoopAction.KEEP_ALIVE -> {
@@ -749,6 +753,13 @@ class MockLocationService : Service() {
         _state.value = MockLocationState.ERROR
         if (::locationRepository.isInitialized) locationRepository.reportError()
         releaseWakeLock()
+    }
+
+    internal suspend fun stopMovementOnError() {
+        walkCoordinator.cancel()
+        replayOrchestrator.handleCancel()
+        roamingRepository.stopRoaming()
+        locationRepository.setMockMode(MockMode.TELEPORT)
     }
 
     private fun releaseWakeLock() {
