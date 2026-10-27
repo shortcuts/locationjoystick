@@ -522,11 +522,21 @@ class MapViewModel
                 }
 
                 is MapAction.UpdatePlantingStartRadius -> {
-                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingStartRadiusMeters = action.meters)) }
+                    _uiState.update { s ->
+                        s.copy(
+                            roamingDraft = s.roamingDraft?.copy(plantingStartRadiusMeters = action.meters),
+                            roamingPreviewWaypoints = null,
+                        )
+                    }
                 }
 
                 is MapAction.UpdatePlantingEndRadius -> {
-                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingEndRadiusMeters = action.meters)) }
+                    _uiState.update { s ->
+                        s.copy(
+                            roamingDraft = s.roamingDraft?.copy(plantingEndRadiusMeters = action.meters),
+                            roamingPreviewWaypoints = null,
+                        )
+                    }
                 }
 
                 is MapAction.TogglePlantingInfiniteLoops -> {
@@ -547,7 +557,12 @@ class MapViewModel
                 }
 
                 is MapAction.UpdatePlantingSpacing -> {
-                    _uiState.update { s -> s.copy(roamingDraft = s.roamingDraft?.copy(plantingSpacingMeters = action.meters)) }
+                    _uiState.update { s ->
+                        s.copy(
+                            roamingDraft = s.roamingDraft?.copy(plantingSpacingMeters = action.meters),
+                            roamingPreviewWaypoints = null,
+                        )
+                    }
                 }
 
                 MapAction.StartRoaming -> {

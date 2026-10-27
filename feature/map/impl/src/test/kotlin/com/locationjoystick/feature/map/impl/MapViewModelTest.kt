@@ -1061,6 +1061,26 @@ class MapViewModelTest {
         }
 
     @Test
+    fun `UpdatePlantingSpacing clears roaming preview`() =
+        runTest {
+            val center = LatLng(48.8, 2.3)
+            every { locationRepository.currentPosition } returns MutableStateFlow(center)
+            coEvery { roamingRepository.planRoute(any()) } returns listOf(center, LatLng(48.9, 2.4))
+            viewModel = createViewModel()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            viewModel.onAction(MapAction.OpenRoamingSheet)
+            viewModel.onAction(MapAction.UpdateRoamingKind(com.locationjoystick.core.model.RoamingKind.PLANTING))
+            viewModel.onAction(MapAction.GenerateRoamingPreview)
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertNotNull(viewModel.uiState.value.roamingPreviewWaypoints)
+
+            viewModel.onAction(MapAction.UpdatePlantingSpacing(5))
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertNull(viewModel.uiState.value.roamingPreviewWaypoints)
+        }
+
+    @Test
     fun `MinimizeRoamingSheet sets isRoamingSheetMinimized true`() =
         runTest {
             viewModel.onAction(MapAction.OpenRoamingSheet)
