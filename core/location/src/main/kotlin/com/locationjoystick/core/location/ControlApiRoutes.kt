@@ -140,7 +140,7 @@ class ControlApiRoutes
                     .put("mode", locationRepository.currentMode.value.name)
                     .put("position", locationRepository.currentPosition.value?.let(::latLngJson) ?: JSONObject.NULL)
                     .put("bearing", locationRepository.currentBearing.value?.finiteOrNull() ?: JSONObject.NULL)
-                    .put("speedMs", locationRepository.currentSpeedMps.value?.finiteOrNull() ?: JSONObject.NULL)
+                    .put("speedMs", locationRepository.reportedSpeedMps.value?.finiteOrNull() ?: JSONObject.NULL)
                     .put("activeRouteId", locationRepository.activeRouteId.value ?: JSONObject.NULL)
                     .put(
                         "walk",

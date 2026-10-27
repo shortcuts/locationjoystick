@@ -231,6 +231,13 @@ class ControlApiRoutesTest {
     }
 
     @Test
+    fun `state speedMs reflects reported speed`() {
+        locationRepository.setReportedSpeed(2.5f)
+        val state = JSONObject(call("state", method = "GET").second)
+        assertEquals(2.5, state.getDouble("speedMs"), 0.0)
+    }
+
+    @Test
     fun `joystick hold moves the position, takes over, then releases to teleport mode`() {
         locationRepository.setPositionInternal(LatLng(10.0, 10.0))
         assertEquals(200, call("joystick", body = """{"bearingDegrees":0,"force":1,"durationMs":300}""").first)

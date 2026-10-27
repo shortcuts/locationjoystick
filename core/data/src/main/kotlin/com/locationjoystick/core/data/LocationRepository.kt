@@ -72,15 +72,22 @@ class LocationRepository
         private val _currentSpeedMps = MutableStateFlow<Float?>(null)
 
         /**
-         * Speed published by movement engines that don't go through
-         * MockLocationService's updatePositionWithVector directly (route replay, roaming).
-         * Null until the first real movement of a session. Consumed by
-         * MockLocationService's reactive collector to update its own `currentSpeedMs` field.
+         * Input from roaming. Consumed by MockLocationService's reactive collector to update its own
+         * `currentSpeedMs` field. The UI reads [reportedSpeedMps].
          */
         val currentSpeedMps: StateFlow<Float?> = _currentSpeedMps.asStateFlow()
 
         fun setSpeedInternal(speedMps: Float) {
             _currentSpeedMps.value = speedMps
+        }
+
+        private val _reportedSpeedMps = MutableStateFlow<Float?>(null)
+
+        /** Speed the service reports this tick, in every movement mode. Zero while paused or stopped. */
+        val reportedSpeedMps: StateFlow<Float?> = _reportedSpeedMps.asStateFlow()
+
+        fun setReportedSpeed(speedMps: Float) {
+            _reportedSpeedMps.value = speedMps
         }
 
         private val _reportedAltitudeMeters = MutableStateFlow<Double?>(null)
@@ -208,6 +215,7 @@ class LocationRepository
 
         fun stopSpoofing() {
             Log.d(TAG, "stopSpoofing requested")
+            _reportedSpeedMps.value = 0f
             _mockLocationState.value = MockLocationState.IDLE
         }
 

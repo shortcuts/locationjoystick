@@ -79,7 +79,7 @@ class MapViewModelTest {
 
     private val walkTargetFlow = MutableStateFlow<LatLng?>(null)
     private val isWalkPausedFlow = MutableStateFlow(false)
-    private val currentSpeedMpsFlow = MutableStateFlow<Float?>(null)
+    private val reportedSpeedMpsFlow = MutableStateFlow<Float?>(null)
     private val pendingWaypointsFlow = MutableStateFlow<List<LatLng>>(emptyList())
 
     @Before
@@ -110,7 +110,7 @@ class MapViewModelTest {
         every { locationRepository.currentPosition } returns MutableStateFlow(null)
         every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.IDLE)
         every { locationRepository.isWalkPaused } returns isWalkPausedFlow
-        every { locationRepository.currentSpeedMps } returns currentSpeedMpsFlow
+        every { locationRepository.reportedSpeedMps } returns reportedSpeedMpsFlow
         every { locationRepository.walkTarget } returns walkTargetFlow
         every { locationRepository.currentMode } returns MutableStateFlow(MockMode.JOYSTICK)
         every { locationRepository.routeWaypoints } returns MutableStateFlow(null)
@@ -439,7 +439,7 @@ class MapViewModelTest {
             testDispatcher.scheduler.advanceUntilIdle()
             assertNull(viewModel.uiState.value.currentSpeedMps)
 
-            currentSpeedMpsFlow.value = 1.5f
+            reportedSpeedMpsFlow.value = 1.5f
             testDispatcher.scheduler.advanceUntilIdle()
 
             assertEquals(1.5f, viewModel.uiState.value.currentSpeedMps)

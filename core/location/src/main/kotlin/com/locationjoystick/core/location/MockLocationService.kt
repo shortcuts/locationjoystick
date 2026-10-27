@@ -1399,6 +1399,11 @@ class MockLocationService : Service() {
         writeCurrentPosition(result.latitude, result.longitude, syncRepository = true)
     }
 
+    internal fun publishReportedSpeed(speedMs: Float) {
+        val running = locationRepository.mockLocationState.value == MockLocationState.RUNNING
+        locationRepository.setReportedSpeed(if (running) speedMs else 0f)
+    }
+
     private fun pushLocationUpdate() {
         if (!providerAdded) return
         try {
@@ -1407,6 +1412,7 @@ class MockLocationService : Service() {
             val nowNanos = SystemClock.elapsedRealtimeNanos()
             val nowMs = nowNanos / 1_000_000L
             val snapshot = captureSnapshot(nowMs)
+            publishReportedSpeed(snapshot.speedMs)
             val fix = buildLocation(snapshot, nowMs, Random.Default)
             currentAltitudeMeters = fix.altitudeMeters
             locationRepository.setReportedAltitude(fix.altitudeMeters)

@@ -97,7 +97,7 @@ class MapController
 
         val completionMessages = locationRepository.completionEvents
 
-        val currentSpeedMps get() = locationRepository.currentSpeedMps
+        val currentSpeedMps get() = locationRepository.reportedSpeedMps
 
         val isSpoofing: StateFlow<Boolean> =
             locationRepository.mockLocationState

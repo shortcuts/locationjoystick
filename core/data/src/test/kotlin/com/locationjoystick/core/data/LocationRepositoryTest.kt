@@ -123,6 +123,30 @@ class LocationRepositoryTest {
             }
         }
 
+    // setReportedSpeed
+
+    @Test
+    fun `setReportedSpeed emits new speed via reportedSpeedMps`() =
+        runTest {
+            repository.reportedSpeedMps.test {
+                assertNull(awaitItem())
+
+                repository.setReportedSpeed(2.5f)
+
+                assertEquals(2.5f, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `stopSpoofing zeroes reportedSpeedMps`() {
+        repository.setReportedSpeed(2f)
+
+        repository.stopSpoofing()
+
+        assertEquals(0f, repository.reportedSpeedMps.value)
+    }
+
     // setReportedAltitude
 
     @Test
