@@ -81,47 +81,24 @@ Accessibility services running in the background can be detected by some games. 
 
 ## Ground map: flow-measured
 
-Status (2026-10-26): the gate runs on the device through `make tap-smoke`. Pixel 5, 1080x2340, Pokémon GO, normal scenario, 12 locations, 12 scored taps each, scored against the reference ruler (see docs/testing.md), run `20261026T160909Z`. Verdict FAIL: 11 of 12 rows miss the 15 m bar. Only Sydney passes (p50 9.3 m, p90 14.9 m). p90 per row, metres: New York 23.4, London 19.3, Tokyo 22.0, Sydney 14.9, Sao Paulo 24.2, Cape Town 27.6, Reykjavik 28.0, Tromso 26.2, Ushuaia 17.6, Singapore 27.2, Nairobi 23.7, Mumbai 25.6. Typical p50 is 13 to 22 m. The earlier New York PASS (p90 4.6 m, a run before this one) does not reproduce on this run, and the second earlier run was above 8 m. The earlier New York PASS (p90 4.6 m) and these failures come from the ruler, not the app (see "Gate error cause"). The old 23.8 m patch-match figure was dropped earlier because the matcher left most taps ambiguous. Open: rows 13 to 20 not run (run stopped by the user after 12 rows); fresh, twist and zoom rows have code in `scripts/tap_smoke.py` and are not proven live. Next: replace the ruler fit (the follow-up task in the epic), then rescore before any new full gate, because one full pass costs about 8 h. The backlog epic `tap-to-walk-flow-fit` lists the work left. Agents: update this section and that epic after every session, kills included.
+Status (2026-10-27): 3 of 4 subset rows pass on the near-feet ruler. Pixel 5, 1080x2340, Pokémon GO, normal scenario, 12 scored taps per row, 0 rejected, `make tap-smoke ONLY="1 3 4 7"`. Each row took 303 to 316 s.
 
-New York noise repeat (same build, `make tap-smoke ONLY=1`, normal scenario, 12 scored taps, Pixel 5): run 1 of 3 on 2026-10-27 gave p50 20.8 m, p90 25.2 m, first tap error 11.4 m, FAIL. This matches the gate run (p90 23.4 m), not the 4.6 m pass, so the 4.6 m pass is not app noise around 4 m. Runs 2 and 3 not done (stopped by the lead).
+| Row | p50 m | p90 m | App distance / ruler distance (median) | Verdict |
+|---|---|---|---|---|
+| New York | 4.6 | 8.1 | 0.88 | PASS |
+| Tokyo | 6.3 | 12.0 | 0.91 | PASS |
+| Sydney | 6.5 | 11.8 | 0.85 | PASS |
+| Reykjavik | 10.9 | 17.5 | 1.35 | FAIL (p90 over 15 m) |
 
-An earlier run on 2026-10-25 scored 0 taps because the phone still ran the APK of 2026-10-23 (old learning-walk app). Always run `./gradlew installDebug` from the branch before the gate, then restart spoofing and re-enable the Control API (the port changes on each toggle).
+An earlier New York row on the same build gave p50 4.1 m, p90 7.0 m. The median angle error is -2 to -8.5 degrees in every row, so the heading is good. The scale is the open error: the app walks 9 to 15% short in three rows and 35% too far in Reykjavik. Three rows used the prior feet anchor (the report's prior fallback count).
 
-### Gate error cause (2026-10-26, offline)
+The 2026-10-26 failures (11 of 12 rows) came from the old full-band ruler, not the app. See "Gate error cause" in [tap-to-walk-investigation.md](tap-to-walk-investigation.md). Refitted near the feet, the 12 stored references of run `20261026T160909Z` all pass the ruler checks. Their lateral scale is within 3% of the near-feet fits in that section. Those taps cannot be rescored, because the old `trials.json` kept only the error length.
 
-Cause: the reference ruler, not the app. The ruler fits the whole ground band (rows 490 to 1640) with one perspective term. That model misses the rows near the feet, where every tap lands. In 10 of 12 rows the ruler's perspective term has the wrong sign (scale grows with distance) and its lateral scale at the feet is 1.2 to 3.3 times too low. A tap offset of 70 px reads as about 22 m on the ruler and about 11 m in the flow. The app walks the shorter, flow-measured distance, so the scorer counts the gap as app error.
+Gate cost: about 5 min per row (Run profile, short reference legs, teleport back after each tap; see docs/testing.md). Open: rows 2, 5, 6 and 8 to 20, and the fresh, twist and zoom rows, which are not proven live. The backlog epic `tap-to-walk-flow-fit` lists the work. Agents: update this section and that epic after every session, kills included.
 
-Evidence, from the 12 `trials.json` files, the 12 reference leg sets and a Python surrogate of the app (two-term fit, same fixed ratios, north leg only, on the bench's band flows):
+Always run `./gradlew installDebug` before the gate when app code changed since the phone's install, then start spoofing and turn on the Control API (the port changes on each toggle). A stale APK once scored 0 taps.
 
-- Error grows with distance. `error_m` over the ruler's tap distance is 0.39 to 0.73, and `error_m` correlates with that distance at +0.83 to +0.99. A constant offset (feet anchor, ratio) would not do that. Slope of error against tap y is under 0.13 m/px with mixed sign.
-- Flow per metre near the feet (rows 1392 and 1556, New York) is 6 to 7 px/m. The ruler predicts 2.5 px/m there. Far bands (row 573) agree at 3 px/m, which is why the full fit looks good (median residual 3 to 9 px).
-- A ruler fitted only on rows 1200 and below has a lower residual on its own rows (1.8 to 4.2 px), a physical perspective sign (-1e-4 to -2.6e-4 per lateral px/m, close to `PERSPECTIVE_RATIO`) and a lateral scale close to the app's (Tromso 14.7 and 15.0). The surrogate lands 0.6 to 5.0 m (p90 0.8 to 6.6 m) from it in every row. Against the full ruler it lands 5 to 19 m away. That is within 4 m of the observed p50 in 10 of 12 rows and within 6.2 m in all (New York 19.3 against 20.6, London 16.5 against 15.3, Tokyo 17.3 against 19.2).
-- The ruler is unstable between runs. New York fits at the same place, one per run, gave a lateral scale of 2.0 to 3.2 in five runs, 5.96 in one and 11.3 in one, and a perspective term from -1.5e-3 to +2.8e-3. The 4.6 m PASS (`ny3`) reused a stored reference (`reference()` returns an existing `calibration_persp.json`; `full` and `ny2` share the file) with lateral 5.96 and perspective -1.5e-3. That ruler agrees with the near-feet ruler (6.66). The surrogate lands 5.2 m (p90 6.7) from it, against the observed 3.9 m (p90 4.6). Same app, a good ruler, a pass. The failing run refit its ruler with lateral 3.18.
-
-Error direction per row. `trials.json` stores only the error length, so the split below comes from the surrogate against the ruler. Along-ray is the share of the ruler's tap distance the app walks too short (negative) or too far; across-ray is the sideways share (heading and skew). Observed ratio and correlation come from `trials.json`.
-
-| Row | Observed p50 / p90 m | Observed error / distance | Corr(error, distance) | Ruler lateral | Near-feet lateral | App-fit lateral | Along-ray % | Across-ray % |
-|---|---|---|---|---|---|---|---|---|
-| New York | 20.6 / 23.4 | 0.69 | +0.87 | 3.18 | 6.30 | 7.34 | -64 | +4 |
-| London | 15.3 / 19.3 | 0.56 | +0.97 | 4.08 | 8.04 | 9.11 | -61 | +5 |
-| Tokyo | 19.2 / 22.0 | 0.61 | +0.98 | 3.57 | 6.33 | 7.02 | -54 | +5 |
-| Sydney | 9.3 / 14.9 | 0.39 | +0.98 | 5.22 | 6.06 | 6.20 | -20 | +4 |
-| Sao Paulo | 18.8 / 24.2 | 0.66 | +0.99 | 3.08 | 5.43 | 6.20 | -56 | +4 |
-| Cape Town | 22.0 / 27.6 | 0.73 | +0.97 | 2.34 | 5.47 | 6.01 | -64 | +10 |
-| Reykjavik | 14.0 / 28.0 | 0.66 | +0.93 | 4.01 | 11.59 | 12.18 | -76 | +2 |
-| Tromso | 15.5 / 26.2 | 0.67 | +0.83 | 4.45 | 14.74 | 15.04 | -80 | 0 |
-| Ushuaia | 13.0 / 17.6 | 0.44 | +0.84 | 5.19 | 8.97 | 9.38 | -51 | +8 |
-| Singapore | 22.4 / 27.2 | 0.72 | +0.85 | 2.88 | 4.79 | 5.10 | -54 | +2 |
-| Nairobi | 18.6 / 23.7 | 0.64 | +0.92 | 3.23 | 4.79 | 5.22 | -43 | +3 |
-| Mumbai | 20.9 / 25.6 | 0.70 | +0.97 | 2.56 | 5.03 | 5.02 | -52 | +2 |
-
-Reading: the error is a scale error along the tap ray (the app walks about half the ruler's distance), with a small sideways part. The heading is a minor part: the app-fit heading is within 9 degrees of the near-feet ruler in every row, and the full ruler is 1 to 10 degrees off the near-feet one. Sydney passes because its full ruler happens to have lateral 5.22, close to the near-feet 6.06.
-
-Caveats. The near-feet ruler is also flow-based, so this shows the full ruler disagrees with the flow, not that the flow is the truth. An independent check (patch landing on the tapped pixel) is still open. The surrogate uses the bench's 9-band flows, not the app's five crops, and the north leg only. The app's stored map is not in the gate data.
-
-Second finding. Near the feet the forward / lateral ratio is 0.46 to 0.62 (median 0.55) in the near-feet fits, against `FORWARD_RATIO` 0.40. Taps here are mostly sideways, so it costs 1 to 5 m now; it matters once taps spread up the screen.
-
-Proposed fix (the tuning task, not done here): fit the ruler on rows 1200 and below, drop flows under 2 px (the bottom-left HUD reads as zero flow), and reject a fit whose perspective term is positive or whose lateral scale differs from a second fit of half the legs by more than 25%. Rescore the 12 stored rows offline before any device time. Then consider raising `FORWARD_RATIO` toward 0.55 from the measured fits.
+Forward ratio. The near-feet refit of the 12 stored references gives forward / lateral 0.47 to 0.67 (10 of 12 within 0.53 to 0.59), against `FORWARD_RATIO` 0.40. Most taps land beside the player, so this costs little today. It matters once taps spread up the screen. The tuning task in the epic owns the change.
 
 ### Goal
 

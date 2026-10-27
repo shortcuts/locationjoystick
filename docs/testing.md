@@ -80,15 +80,23 @@ make tap-smoke-selfcheck                        # pure verdict logic, no device
 - **Throwaway account only.** The run teleports across the globe through the Control API (`POST /teleport`, so
   `TeleportUseCase` persists last location and cooldown). The script refuses to start without
   `--ack-throwaway-account`, which `make tap-smoke` passes: running it is the acknowledgement. Never use the main account.
-- **Truth is the reference ruler.** The bench's eight-leg perspective fit is a rich fit (thousands of flows) and only
-  scores the tap; the app under test measures its own map from one 40 m leg. The script reads the target from the
+- **Minutes, not hours.** The account is a throwaway, so the run never waits for walking pace or cooldowns. Every walk
+  uses the Run profile, the fastest one under the app's flow speed limit; slower walks only cost device time. Each tap
+  teleports back to its start. One row takes about 5 minutes. Never start a run that takes hours: split it into rows.
+- **Truth is the reference ruler.** The bench's eight-leg perspective fit is a rich fit (hundreds of flows) and only
+  scores the tap; the app under test measures its own map from one 40 m leg. The ruler fits only the band flows at or
+  below row 1200 of a 2340 px frame, because one perspective term over the whole band misread the scale at the feet,
+  where every tap lands. A fit with a positive perspective term, or whose lateral scale differs by more than 25% from a
+  fit on every other leg, is rejected. Each scored tap keeps the app target and the ruler truth, so a later ruler can
+  rescore a run offline. The script reads the target from the
   tap-time position and compares it with the ruler's ground point for the tapped pixel. A first version walked to
   arrival and matched the tapped patch against the frame after the walk; 8 to 11 of 12 taps came back ambiguous
   (repeating street content, the sprite and the animated rings in the patch), so it could not score a row.
-- **Per location.** Teleport, wait for tiles, measure the reference ruler (eight 40 m legs, then the perspective fit), walk
+- **Per location.** Teleport, wait for tiles, measure the reference ruler (eight short legs with a frame every second, then the perspective fit), walk
   one 40 m leg north so the app stores its own map, then tap 12 scored points 5 to 40 m away. Each tap reopens the overlay,
-  because it closes after every tap. A tap is rejected when the app starts no walk within 3 s. The script waits 12 s so the
-  re-aim can land, reads the target again, then stops the walk.
+  because it closes after every tap. A tap is rejected when the app starts no walk within 3 s. In the fresh and twist scenarios the
+  script waits 12 s so the re-aim can land and reads the target again; elsewhere the first target is final. It then stops
+  the walk and teleports back.
 - **Pass bar.** A row passes when the 90th percentile error is at most 15 m, at most 20% of taps are rejected, and 12 taps
   score. The suite passes with at least 19 of 20 normal rows.
   Every extra scenario row must also pass. A failing extra row is recorded and is not retried.

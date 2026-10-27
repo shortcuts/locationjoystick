@@ -3,7 +3,8 @@
 
 For each location in scripts/tap_smoke_locations.json: teleport through the Control API, measure the reference
 ruler with registration_bench.py's walkcap and persp steps, walk one 40 m leg so the app stores its own map, then
-tap ground points through the tap-to-walk overlay and score where the app walked. Writes report.md and report.json
+tap ground points through the tap-to-walk overlay and score where the app walked. Every walk runs at the Run
+profile and each tap teleports back to its start, so a row takes minutes. Writes report.md and report.json
 (numbers only, no frames) under scripts/registration-bench/smoke/<UTC stamp>/ (gitignored). Exit 0 iff the gate passes.
 
 Run with the bench venv python (make tap-smoke). Needs LJ_CONTROL_API_KEY and LJ_CONTROL_API_HOST.
@@ -33,6 +34,10 @@ N_TAPS, TOL_M, MAX_REJECT, MAX_M = 12, 15.0, 0.2, 40.0
 NEED_LOCATIONS = 19
 TAP_WAIT_S, REAIM_WAIT_S = 3.0, 12.0
 ZOOM, TWIST_DEG, LEG_M = 1.6, 45.0, 40.0
+# Fastest built-in profile under the app's flow limit (FLOW_MAX_SPEED_MPS 3.0); the account is a throwaway.
+SPEED_PROFILE = "run"
+REF_LEG_M, REF_EVERY_S = "24", "1"
+REAIM_SCENARIOS = ("fresh", "twist")  # the stored map is re-measured only here; elsewhere the first target is final
 EXTRA_LOCATIONS = (1, 7)  # 1-based: New York (dense) and Reykjavik (high latitude)
 EXTRA_SCENARIOS = ("fresh", "twist", "zoom")
 # Per-step wall-clock bound: a hang fails the row, not the run.
@@ -292,10 +297,11 @@ def _enu_m(origin, target):
             (target["lat"] - origin["lat"]) * 111320)
 
 
-def score_tap(host, key, serial, cal, p):
+def score_tap(host, key, serial, cal, p, reaim):
     """One overlay tap at pixel p: {"kind": scored|rejected, ...}. The truth is the reference ruler's ground point for p.
 
-    The target is read from the tap-time position, first after the tap and again after the re-aim window.
+    The target is read from the tap-time position, first after the tap and, when reaim, again after the re-aim
+    window. The player is teleported back to the tap-time position afterwards, so every tap starts from one spot.
     """
     import numpy as np
     import registration_bench as rb
@@ -307,15 +313,20 @@ def score_tap(host, key, serial, cal, p):
     while first is None and time.time() < deadline:
         first = _target(host, key)
         time.sleep(0.5)
+    if first is not None and reaim:
+        time.sleep(REAIM_WAIT_S)
+    last = (_target(host, key) if first is not None else None) or first
+    _api(host, key, "POST", "/walk/stop")
+    _api(host, key, "POST", "/teleport", {"lat": start["lat"], "lon": start["lon"]})
     if first is None:
         return {"kind": "rejected"}
-    time.sleep(REAIM_WAIT_S)
-    last = _target(host, key) or first
-    _api(host, key, "POST", "/walk/stop")
     truth = rb.tap_to_ground_persp(cal, p)
-    err = float(np.linalg.norm(np.subtract(_enu_m(start, last), truth)))
+    target = _enu_m(start, last)
+    err = float(np.linalg.norm(np.subtract(target, truth)))
+    # target and truth kept so a later ruler can rescore the run offline
     return {"kind": "scored", "error_m": err, "first_error_m": float(np.linalg.norm(np.subtract(_enu_m(start, first), truth))),
-            "reaim_m": _metres((first["lat"], first["lon"]), (last["lat"], last["lon"]))}
+            "reaim_m": _metres((first["lat"], first["lon"]), (last["lat"], last["lon"])),
+            "target_m": [float(v) for v in target], "truth_m": [float(v) for v in truth]}
 
 
 def candidate_taps(serial, cal):
@@ -330,12 +341,12 @@ def candidate_taps(serial, cal):
     return [p for p in pts if rb.TRIAL_MIN_M <= math.hypot(*rb.tap_to_ground_persp(cal, p)) <= MAX_M]
 
 
-def measure_taps(host, key, serial, cal, d):
+def measure_taps(host, key, serial, cal, d, reaim):
     trials, scored = [], 0
     for n, p in enumerate(candidate_taps(serial, cal)):
         if scored == N_TAPS:
             break
-        t = {**score_tap(host, key, serial, cal, p), "tap": [float(p[0]), float(p[1])]}
+        t = {**score_tap(host, key, serial, cal, p, reaim), "tap": [float(p[0]), float(p[1])]}
         trials.append(t)
         scored += t["kind"] == "scored"
         (d / "trials.json").write_text(json.dumps(trials, indent=1))  # an aborted run keeps its numbers
@@ -348,7 +359,7 @@ def reference(py, serial, d):
     d.mkdir(parents=True, exist_ok=True)
     if (d / "calibration_persp.json").exists():  # --out of an earlier run: same place, same camera, same ruler
         return json.loads((d / "calibration_persp.json").read_text())
-    walk = ["walkcap", str(d), "--serial", serial, "--legs", *LEG_BEARINGS, "--dist", "40", "--every", "3"]
+    walk = ["walkcap", str(d), "--serial", serial, "--legs", *LEG_BEARINGS, "--dist", REF_LEG_M, "--every", REF_EVERY_S]
     for step in (walk, ["persp", str(d)]):
         ok, log = _bench(py, serial, *step)
         (d / f"{step[0]}.log").write_text(log)  # kept whole: the report counts fallbacks from it
@@ -358,7 +369,7 @@ def reference(py, serial, d):
 
 
 def app_leg(host, key, loc):
-    """One 40 m leg north. The last walk before the taps, so the stored map is this one-leg map."""
+    """One LEG_M leg north. The last walk before the taps, so the stored map is this one-leg map."""
     import registration_bench as rb
 
     for _ in range(2):  # the bench exits on one fast sample; position jitter can cause one
@@ -399,7 +410,7 @@ def run_row(py, serial, host, key, loc, i, scenario, out, settle, respect_cooldo
         if cal.get("rejected"):
             row.update(verdict="FAIL", reason="no_calibration")
             return row, cooldown
-        trials = measure_taps(host, key, serial, cal, d)
+        trials = measure_taps(host, key, serial, cal, d, scenario in REAIM_SCENARIOS)
     except (RuntimeError, OSError, KeyError, ValueError, subprocess.SubprocessError) as e:
         print(f"[{i}] {loc['name']} ({scenario}): {e}", file=sys.stderr)
         row.update(verdict="FAIL", reason="bench_error")
@@ -454,15 +465,22 @@ def main(argv=None):
     if a.scenarios == "all":
         jobs += [(i, s) for i in EXTRA_LOCATIONS for s in EXTRA_SCENARIOS]
     rows, wait = [], 0
-    for i, scenario in jobs:
-        if a.only and i not in a.only:
-            continue
-        time.sleep(wait)
-        row, wait = run_row(sys.executable, serial, host, key, locs[i - 1], i, scenario, out, a.settle,
-                            a.respect_cooldown)
-        row.update(device=model, resolution=size, density=dens)
-        rows.append(row)
-        print(f"[{i}] {row['name']} ({scenario}): {row['verdict']} {row['scored']} scored {row['reason']}", flush=True)
+    profile = _api(host, key, "GET", "/state")["speedProfileId"]
+    _api(host, key, "POST", "/speed-profile", {"id": SPEED_PROFILE})
+    try:
+        for i, scenario in jobs:
+            if a.only and i not in a.only:
+                continue
+            time.sleep(wait)
+            t0 = time.time()
+            row, wait = run_row(sys.executable, serial, host, key, locs[i - 1], i, scenario, out, a.settle,
+                                a.respect_cooldown)
+            row.update(device=model, resolution=size, density=dens, seconds=round(time.time() - t0))
+            rows.append(row)
+            print(f"[{i}] {row['name']} ({scenario}): {row['verdict']} {row['scored']} scored {row['reason']} "
+                  f"in {row['seconds']} s", flush=True)
+    finally:
+        _api(host, key, "POST", "/speed-profile", {"id": profile})
     (out / "report.json").write_text(json.dumps(rows, indent=1))
     (out / "report.md").write_text(render_report(rows))
     print((out / "report.md").read_text())
