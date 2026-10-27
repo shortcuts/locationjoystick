@@ -39,6 +39,7 @@
       <li>Request and response bodies are JSON, up to 64 KiB.</li>
       <li>A wrong or missing key returns <code>401</code> with <code>WWW-Authenticate: Bearer</code>.</li>
       <li>While the Control API is off, every path returns <code>404</code>.</li>
+      <li>Requests from outside the local network get no response. The server closes the connection.</li>
     </ul>
     <pre><code>curl -H "Authorization: Bearer abcdef123456..." \
   http://192.168.1.100:8080/api/v1/status</code></pre>
@@ -68,6 +69,8 @@
     <p>A route is playing, so you cannot start roaming or edit that route.</p>
     <h3 class="item" id="errors-413-payload-too-large"><code>413</code> <code>payload_too_large</code></h3>
     <p>Body is over 64 KiB.</p>
+    <h3 class="item" id="errors-431-request-header-fields-too-large"><code>431</code> (no body)</h3>
+    <p>The request has too many header lines. The response has no body and no error code.</p>
     <h3 class="item" id="errors-500-internal-error"><code>500</code> <code>internal_error</code></h3>
     <p>Server error. Try again.</p>
 
@@ -142,7 +145,7 @@
         <div class="param"><dt><code>followRoadsToStart</code></dt><dd><span class="param-type">boolean</span> <span class="param-flag">optional</span> Default <code>false</code>. Follow roads on the way to the first waypoint.</dd></div>
         <div class="param"><dt><code>planting</code></dt><dd><span class="param-type">boolean</span> <span class="param-flag">optional</span> Default <code>false</code>. Use the planting pattern.</dd></div>
         <div class="param"><dt><code>teleportBetweenWaypoints</code></dt><dd><span class="param-type">boolean</span> <span class="param-flag">optional</span> Default <code>false</code>. Jump between waypoints instead of walking.</dd></div>
-        <div class="param"><dt><code>teleportBetweenDelaySeconds</code></dt><dd><span class="param-type">integer</span> <span class="param-flag">optional</span> Default 8. Seconds to wait between jumps.</dd></div>
+        <div class="param"><dt><code>teleportBetweenDelaySeconds</code></dt><dd><span class="param-type">integer</span> <span class="param-flag">optional</span> Default 8. Seconds to wait between jumps. Clamped to 0 to 600.</dd></div>
       </dl>
       <p class="endpoint-returns">Returns <code>404 route_not_found</code> if the route does not exist.</p>
     </div>

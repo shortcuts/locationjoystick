@@ -4,6 +4,7 @@ import android.content.Context
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.di.ApplicationScope
 import com.locationjoystick.core.common.util.advancePosition
+import com.locationjoystick.core.common.util.clampTeleportBetweenDelaySeconds
 import com.locationjoystick.core.common.util.normalizePlantingRadii
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.LocationRepository
@@ -171,7 +172,10 @@ class ControlApiRoutes
                     followRoadsToStart = json.optBoolean("followRoadsToStart", d.followRoadsToStart),
                     isPlanting = json.optBoolean("planting", d.isPlanting),
                     teleportBetweenWaypoints = json.optBoolean("teleportBetweenWaypoints", d.teleportBetweenWaypoints),
-                    teleportBetweenDelaySeconds = json.optInt("teleportBetweenDelaySeconds", d.teleportBetweenDelaySeconds),
+                    teleportBetweenDelaySeconds =
+                        clampTeleportBetweenDelaySeconds(
+                            json.optInt("teleportBetweenDelaySeconds", d.teleportBetweenDelaySeconds),
+                        ),
                 )
             // API bypasses Hide Teleport: the user opted into the API's risk.
             mapController.startRouteReplay(routeId, config, bypassHideTeleport = true)

@@ -158,10 +158,14 @@ class ControlApiRoutesTest {
     fun `route start maps the body and bypasses hide teleport, unknown route is 404`() {
         assertEquals(200, call("route/start", body = """{"routeId":"r1","loop":true,"teleportBetweenWaypoints":true}""").first)
         verify { mapController.startRouteReplay("r1", RouteStartConfig(isLooping = true, teleportBetweenWaypoints = true), true) }
+        assertEquals(200, call("route/start", body = """{"routeId":"r1","teleportBetweenDelaySeconds":9999}""").first)
+        verify { mapController.startRouteReplay("r1", RouteStartConfig(teleportBetweenDelaySeconds = 600), true) }
+        assertEquals(200, call("route/start", body = """{"routeId":"r1","teleportBetweenDelaySeconds":-5}""").first)
+        verify { mapController.startRouteReplay("r1", RouteStartConfig(teleportBetweenDelaySeconds = 0), true) }
         val (code, body) = call("route/start", body = """{"routeId":"nope"}""")
         assertEquals(404, code)
         assertTrue(body.contains("route_not_found"))
-        verify(exactly = 1) { mapController.startRouteReplay(any(), any(), any()) }
+        verify(exactly = 3) { mapController.startRouteReplay(any(), any(), any()) }
     }
 
     @Test
@@ -171,10 +175,19 @@ class ControlApiRoutesTest {
         assertEquals(200, call("roam/start", body = """{"radiusMeters":250}""").first)
         verify { mapController.startRoaming(RoamingDefaults(radiusMeters = 250.0), LatLng(5.0, 6.0), any()) }
 
+        assertEquals(200, call("roam/start", body = """{"plantingSpacingMeters":0,"plantingExpandOnly":true}""").first)
+        verify {
+            mapController.startRoaming(
+                RoamingDefaults(plantingSpacingMeters = 1, plantingExpandOnly = true),
+                LatLng(5.0, 6.0),
+                any(),
+            )
+        }
+
         locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
         locationRepository.startSpoofing()
         assertEquals(409, call("roam/start").first)
-        verify(exactly = 1) { mapController.startRoaming(any(), any(), any()) }
+        verify(exactly = 2) { mapController.startRoaming(any(), any(), any()) }
     }
 
     @Test

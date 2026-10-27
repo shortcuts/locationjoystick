@@ -169,6 +169,17 @@ class ContentApiRoutesTest {
     }
 
     @Test
+    fun `route update keeps planting radius and category unless the body sets the radius`() {
+        every { routeRepository.getRouteWithWaypoints("r1") } returns flowOf(route.copy(category = "c", plantingRadiusMeters = 20.0))
+        assertEquals(200, call("PUT", "routes/r1", """{"name":"Z","waypoints":$wp}""").first)
+        coVerify { routeRepository.updateRoute(match { it.plantingRadiusMeters == 20.0 && it.category == "c" }) }
+        assertEquals(200, call("PUT", "routes/r1", """{"name":"Z","waypoints":$wp,"plantingRadiusMeters":null}""").first)
+        coVerify { routeRepository.updateRoute(match { it.plantingRadiusMeters == null && it.category == "c" }) }
+        assertEquals(400, call("PUT", "routes/r1", """{"name":"Z","waypoints":$wp,"plantingRadiusMeters":4}""").first)
+        coVerify(exactly = 2) { routeRepository.updateRoute(any()) }
+    }
+
+    @Test
     fun `speed profiles list five with active and enabled flags`() {
         val list = JSONArray(call("GET", "speed-profiles").second)
         assertEquals(5, list.length())
