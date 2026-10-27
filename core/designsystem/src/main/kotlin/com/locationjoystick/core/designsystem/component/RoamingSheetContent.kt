@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.LjSpacing
-import com.locationjoystick.core.designsystem.LjText
 import com.locationjoystick.core.designsystem.R
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RoamingKind
@@ -112,7 +111,11 @@ fun RoamingSheetContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.roaming_sheet_roaming), style = MaterialTheme.typography.headlineSmall, color = LjText)
+            Text(
+                stringResource(R.string.roaming_sheet_roaming),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
             if (showPlanting) {
                 LjTextButton(
                     onClick = {

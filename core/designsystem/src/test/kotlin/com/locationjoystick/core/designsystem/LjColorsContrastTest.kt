@@ -45,6 +45,15 @@ class LjColorsContrastTest {
     }
 
     @Test
+    fun segmentedControlAndSheetTitlePairsMeetContrastInBothThemes() {
+        listOf(LjDarkColorScheme, LjLightColorScheme).forEach { scheme ->
+            assertTrue("onPrimary on primary", contrast(scheme.onPrimary, scheme.primary) >= 4.5f)
+            assertTrue("onSurfaceVariant on surfaceVariant", contrast(scheme.onSurfaceVariant, scheme.surfaceVariant) >= 4.5f)
+            assertTrue("onSurface on surface", contrast(scheme.onSurface, scheme.surface) >= 4.5f)
+        }
+    }
+
+    @Test
     fun darkOnErrorMeetsContrast() {
         assertTrue(contrast(LjDarkColorScheme.onError, LjDarkColorScheme.error) >= 4.5f)
     }

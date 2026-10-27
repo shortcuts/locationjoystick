@@ -30,10 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
-import com.locationjoystick.core.designsystem.LjAccent
-import com.locationjoystick.core.designsystem.LjBg
 import com.locationjoystick.core.designsystem.LjSpacing
-import com.locationjoystick.core.designsystem.LjText
 
 /** Press feedback shared by every LjButton variant: 0.96 scale, never lower (feels exaggerated below). */
 @Composable
@@ -158,12 +155,12 @@ fun <T> LjSegmentedControl(
         options.forEach { (value, label) ->
             val isSelected = value == selected
             val containerColor by animateColorAsState(
-                targetValue = if (isSelected) LjAccent else MaterialTheme.colorScheme.surfaceVariant,
+                targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                 animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
                 label = "segmentedControlContainerColor",
             )
             val contentColor by animateColorAsState(
-                targetValue = if (isSelected) LjBg else LjText,
+                targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                 animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
                 label = "segmentedControlContentColor",
             )
