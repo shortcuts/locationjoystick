@@ -73,6 +73,8 @@ object GroundFlowFit {
     private const val STORE_MAX_MEDIAN_PX = 4.0
     private const val AGREE_HEADING_DEG = 20.0
     private const val AGREE_SCALE_RATIO = 1.4
+    private const val REWRITE_HEADING_DEG = 2.0 // a smaller drift is not worth a DataStore write
+    private const val REWRITE_SCALE_FRACTION = 0.05
     private const val CHANGE_MIN_MOVES = 3 // a camera change must outlast one bad pair of screenshots
     private const val CHANGE_MIN_FLOWS = 10
     private const val CHANGE_MAX_MEDIAN_PX = 2.0
@@ -197,9 +199,12 @@ object GroundFlowFit {
     ): Boolean {
         if (fit.flowCount < STORE_MIN_FLOWS || fit.medianAbsPx > STORE_MAX_MEDIAN_PX) return false
         if (stored == null) return true
-        val gap = abs(fit.calibration.headingDeg - stored.headingDeg) % 360.0
+        val raw = abs(fit.calibration.headingDeg - stored.headingDeg) % 360.0
+        val gap = min(raw, 360.0 - raw)
         val ratio = fit.calibration.lateralPxPerM / stored.lateralPxPerM
-        if (min(gap, 360.0 - gap) <= AGREE_HEADING_DEG && ratio in 1 / AGREE_SCALE_RATIO..AGREE_SCALE_RATIO) return true
+        if (gap <= AGREE_HEADING_DEG && ratio in 1 / AGREE_SCALE_RATIO..AGREE_SCALE_RATIO) {
+            return gap > REWRITE_HEADING_DEG || abs(ratio - 1) > REWRITE_SCALE_FRACTION
+        }
         return moves >= CHANGE_MIN_MOVES && fit.flowCount >= CHANGE_MIN_FLOWS && fit.medianAbsPx <= CHANGE_MAX_MEDIAN_PX
     }
 

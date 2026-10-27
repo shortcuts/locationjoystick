@@ -106,6 +106,14 @@ class AutoFitCoordinatorTest {
         }
 
     @Test
+    fun `a straight walk writes the stored map once`() =
+        runTest {
+            val c = coordinator()
+            primeAndWalk(c, 70.0, 8)
+            coVerify(exactly = 1) { settings.setGroundCalibration(any()) }
+        }
+
+    @Test
     fun `standing still takes no screenshot`() =
         runTest {
             val c = coordinator()

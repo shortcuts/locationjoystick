@@ -149,9 +149,11 @@ class GroundFlowFitTest {
     }
 
     @Test
-    fun aFitThatAgreesWithTheStoredMapRefreshesIt() {
+    fun aFitThatAgreesWithTheStoredMapReplacesItOnlyPastASmallDrift() {
         val stored = GroundFlowFit.calibration(-12.0, 7.0)
-        assertEquals(true, GroundFlowFit.replaces(stored, fit(-3.0, scale = 8.0), 2))
+        assertEquals(false, GroundFlowFit.replaces(stored, fit(-11.0, scale = 7.2), 2))
+        assertEquals(true, GroundFlowFit.replaces(stored, fit(-3.0, scale = 7.0), 2))
+        assertEquals(true, GroundFlowFit.replaces(stored, fit(-12.0, scale = 8.0), 2))
     }
 
     @Test
