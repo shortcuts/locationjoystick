@@ -35,7 +35,7 @@ class NsdCodeManager
         @param:ApplicationContext private val context: Context,
     ) {
         private val nsdManager = context.getSystemService(Context.NSD_SERVICE) as NsdManager
-        private var registrationListener: NsdManager.RegistrationListener? = null
+        private val registrationListeners = mutableMapOf<String, NsdManager.RegistrationListener>()
 
         // Some OEM Wi-Fi drivers filter incoming multicast unless a lock is held, silently
         // breaking mDNS advertise/discovery. Reference-counted: advertising and discovery
@@ -64,13 +64,15 @@ class NsdCodeManager
         fun startAdvertising(
             code: String,
             port: Int,
+            export: Boolean = false,
         ) {
-            stopAdvertising()
+            stopAdvertising(code)
             val info =
                 NsdServiceInfo().apply {
                     serviceName = code
                     serviceType = AppConstants.SyncConstants.NSD_SERVICE_TYPE
                     this.port = port
+                    if (export) setAttribute(AppConstants.SyncConstants.NSD_ATTR_ROLE, AppConstants.SyncConstants.NSD_ROLE_EXPORT)
                 }
             val listener =
                 object : NsdManager.RegistrationListener {
@@ -96,7 +98,7 @@ class NsdCodeManager
                         Log.e(TAG, "NSD unregistration failed: $errorCode")
                     }
                 }
-            registrationListener = listener
+            synchronized(registrationListeners) { registrationListeners[code] = listener }
             acquireMulticastLock()
             try {
                 nsdManager.registerService(info, NsdManager.PROTOCOL_DNS_SD, listener)
@@ -105,14 +107,13 @@ class NsdCodeManager
             }
         }
 
-        fun stopAdvertising() {
-            registrationListener?.let { listener ->
+        fun stopAdvertising(code: String) {
+            synchronized(registrationListeners) { registrationListeners.remove(code) }?.let { listener ->
                 try {
                     nsdManager.unregisterService(listener)
                 } catch (e: Exception) {
                     Log.w(TAG, "NSD unregister error", e)
                 }
-                registrationListener = null
                 releaseMulticastLock()
             }
         }
@@ -129,17 +130,21 @@ class NsdCodeManager
          * [AppConstants.SyncConstants.GROUP_CODE_LENGTH]-char code; other services of the type are skipped.
          */
         suspend fun discoverAnyLeader(): DiscoveredLeader? =
-            discover(AppConstants.SyncConstants.NSD_LEADER_PROBE_TIMEOUT_MS) {
+            discover(
+                AppConstants.SyncConstants.NSD_LEADER_PROBE_TIMEOUT_MS,
+                accept = { it.attributes?.containsKey(AppConstants.SyncConstants.NSD_ATTR_ROLE) != true },
+            ) {
                 it.length == AppConstants.SyncConstants.GROUP_CODE_LENGTH
             }
 
         private suspend fun discover(
             timeoutMs: Long,
+            accept: (NsdServiceInfo) -> Boolean = { true },
             matches: (String) -> Boolean,
         ): DiscoveredLeader? {
             acquireMulticastLock()
             try {
-                return discoverLocked(timeoutMs, matches)
+                return discoverLocked(timeoutMs, accept, matches)
             } finally {
                 releaseMulticastLock()
             }
@@ -147,6 +152,7 @@ class NsdCodeManager
 
         private suspend fun discoverLocked(
             timeoutMs: Long,
+            accept: (NsdServiceInfo) -> Boolean,
             matches: (String) -> Boolean,
         ): DiscoveredLeader? =
             withTimeoutOrNull(timeoutMs) {
@@ -171,7 +177,9 @@ class NsdCodeManager
                                 val host = (inetAddr as? Inet4Address)?.hostAddress
                                 val port = info.port
                                 Log.i(TAG, "NSD resolved: $host:$port (raw: ${inetAddr?.hostAddress})")
-                                if (host != null && port > 0) {
+                                if (!accept(info)) {
+                                    if (cont.isActive) cont.resume(null)
+                                } else if (host != null && port > 0) {
                                     if (cont.isActive) cont.resume(DiscoveredLeader(foundName, host, port))
                                 } else {
                                     Log.w(TAG, "NSD resolved non-IPv4 or no host — cannot connect")

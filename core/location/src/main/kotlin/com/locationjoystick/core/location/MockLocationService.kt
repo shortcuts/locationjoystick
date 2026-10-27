@@ -178,6 +178,7 @@ class MockLocationService : Service() {
     /** Guards concurrent access to updateJob to prevent double-start from rapid state emissions. */
     private val updateJobMutex = Mutex()
     private val leaderModeMutex = Mutex()
+    private var advertisedGroupId: String? = null
 
     @Volatile private var updateJob: Job? = null
 
@@ -677,7 +678,8 @@ class MockLocationService : Service() {
         }
         stopFollowerRestoration()
         leaderSyncServer.stop()
-        groupNsdManager.stopAdvertising()
+        advertisedGroupId?.let(groupNsdManager::stopAdvertising)
+        advertisedGroupId = null
         followerSyncClient.stopPolling()
         locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
@@ -1063,6 +1065,7 @@ class MockLocationService : Service() {
                         if (!leaderSyncServer.isRunning) {
                             val newPort = leaderSyncServer.start(groupId)
                             groupNsdManager.startAdvertising(code = groupId, port = newPort)
+                            advertisedGroupId = groupId
                             newPort
                         } else {
                             leaderSyncServer.currentPort
@@ -1082,7 +1085,8 @@ class MockLocationService : Service() {
 
     internal fun exitLeaderMode() {
         leaderSyncServer.stop()
-        groupNsdManager.stopAdvertising()
+        advertisedGroupId?.let(groupNsdManager::stopAdvertising)
+        advertisedGroupId = null
         leaderSharingEnabled = false
         Log.i(TAG, "Exited LEADER mode")
         stopSelfIfIdle()

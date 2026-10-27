@@ -806,6 +806,7 @@ class SettingsViewModel
 
         private var qrExportJob: Job? = null
         private val qrExportLock = Any()
+        private var qrExportCode: String? = null
 
         /**
          * Starts [exportSyncServer] (HTTP) and [nsdCodeManager] (NSD advertising), and emits a QR
@@ -825,7 +826,10 @@ class SettingsViewModel
                             synchronized(qrExportLock) {
                                 // stopQrExport cancels first, then takes this lock: no start can follow its stop.
                                 ensureActive()
-                                exportSyncServer.start(code, json).also { nsdCodeManager.startAdvertising(code, it) }
+                                exportSyncServer.start(code, json).also {
+                                    nsdCodeManager.startAdvertising(code, it, export = true)
+                                    qrExportCode = code
+                                }
                             }
                         qrExportReady.emit(
                             QrExportSession(qrText = "locationjoystick://export?host=$host&port=$port&token=$code", code = code),
@@ -845,7 +849,8 @@ class SettingsViewModel
             qrExportJob?.cancel()
             synchronized(qrExportLock) {
                 exportSyncServer.stop()
-                nsdCodeManager.stopAdvertising()
+                qrExportCode?.let(nsdCodeManager::stopAdvertising)
+                qrExportCode = null
             }
         }
 

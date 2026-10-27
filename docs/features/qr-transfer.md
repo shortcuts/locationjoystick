@@ -11,6 +11,8 @@ The QR code holds only the address of a short-lived local server. The export its
 ## Flow
 
 1. **Sender:** opens the share dialog. The app serialises the current settings, generates a short code, and starts a local server on a free port that serves the export only under that code. The server and the discovery advertisement run only while the dialog is open. Closing the dialog stops both.
+
+The export advertisement keeps the group advertisement's service type, name format and code length, so a typed-code import on an older app still finds it. A TXT role mark tells the Group nearby hint to skip it; older apps ignore the mark.
 2. **Receiver:** either scans the QR code, or types the short code. Both give the same host, port and code. The receiver fetches the export over HTTP, parses it, and shows the same add-or-replace confirmation as a file import.
 
 The shown code and QR are only ready once the server and discovery are up. The dialog shows a loading state until then.
