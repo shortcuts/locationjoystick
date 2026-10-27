@@ -24,8 +24,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,6 +60,7 @@ import com.locationjoystick.core.designsystem.component.LjModalBottomSheet
 import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjSnackbarHost
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.MoveToGroupMenuItem
 import com.locationjoystick.core.designsystem.component.RouteStartSheetContent
@@ -197,9 +196,7 @@ internal fun RoutesScreen(
         locationLabel = locationLabel,
         onNavigationClick = onOpenDrawer,
         bottomBar = bottomBar,
-        snackbarHost = {
-            SnackbarHost(snackbarHostState) { data -> Snackbar(data, shape = MaterialTheme.shapes.small) }
-        },
+        snackbarHost = { LjSnackbarHost(snackbarHostState) },
         actions = {
             SavedItemSortMenu(selected = uiState.sortMode, onSelected = onSortModeSelected)
         },

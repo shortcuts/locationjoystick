@@ -21,8 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,6 +60,7 @@ import com.locationjoystick.core.designsystem.component.LjPrimaryButton
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSelectionMode
 import com.locationjoystick.core.designsystem.component.LjSelectionRow
+import com.locationjoystick.core.designsystem.component.LjSnackbarHost
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.WideContentClamp
 import com.locationjoystick.core.designsystem.component.cooldownBadgeText
@@ -195,7 +194,7 @@ internal fun GroupSyncScreen(
         onToggleSpoofing = onToggleSpoofing,
         locationLabel = locationLabel,
         onNavigationClick = onOpenDrawer,
-        snackbarHost = { SnackbarHost(snackbarHostState) { Snackbar(it) } },
+        snackbarHost = { LjSnackbarHost(snackbarHostState) },
     ) { paddingValues ->
         WideContentClamp(
             modifier = Modifier.fillMaxSize().padding(paddingValues),

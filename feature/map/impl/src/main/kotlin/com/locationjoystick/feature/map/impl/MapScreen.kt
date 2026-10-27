@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +41,7 @@ import androidx.navigation.compose.composable
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjScaffold
+import com.locationjoystick.core.designsystem.component.LjSnackbarHost
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.map.geojson.buildCirclePolygonGeoJson
@@ -304,9 +303,7 @@ internal fun MapScreen(
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = bottomBar,
-        snackbarHost = {
-            SnackbarHost(snackbarHostState) { data -> Snackbar(data, shape = MaterialTheme.shapes.small) }
-        },
+        snackbarHost = { LjSnackbarHost(snackbarHostState) },
         floatingActionButton = {
             MapFabColumn(
                 uiState = uiState,
