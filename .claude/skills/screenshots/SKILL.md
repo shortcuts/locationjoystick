@@ -1,11 +1,11 @@
 ---
 name: screenshots
-description: Refresh all wiki/Play Store gallery screenshots from a connected Android device. Use this skill whenever the user asks to update, regenerate, recapture, or refresh screenshots for the wiki, docs, or Play Store. Also triggers on "run screenshot script", "capture gallery", "update docs screenshots", "screenshot-gallery", or any mention of refreshing the 01_idle through 25_accessibility_disclosure PNGs. Always use this skill for screenshot-related tasks — don't attempt to run screenshot-gallery.sh manually without it.
+description: Refresh all wiki/Play Store gallery screenshots from a connected Android device. Use this skill whenever the user asks to update, regenerate, recapture, or refresh screenshots for the wiki, docs, or Play Store. Also triggers on "run screenshot script", "capture gallery", "update docs screenshots", "screenshot-gallery", or any mention of refreshing the 01_idle through 26_onboarding_path_picker PNGs. Always use this skill for screenshot-related tasks — don't attempt to run screenshot-gallery.sh manually without it.
 ---
 
 # Screenshots Skill
 
-Captures the 25 numbered gallery screenshots from a connected Android device using
+Captures the 26 numbered gallery screenshots from a connected Android device using
 `scripts/screenshot-gallery.sh --auto`, saving them to `docs/wiki/screenshots/`.
 The script header lists every file; each file number is its step number.
 
@@ -216,7 +216,7 @@ steps 03–10 always show data if selected.
 ## Step 3 — Script output (automatic)
 
 The script automatically:
-1. Captures the numbered screenshots to `docs/wiki/screenshots/` (25 PNGs; the
+1. Captures the numbered screenshots to `docs/wiki/screenshots/` (26 PNGs; the
    script header comment is the list of files and the step each one comes from)
 2. Re-saves any PNG over 1 MB as a 256-colour palette PNG (needs Pillow; skipped if absent)
 3. Generates the Play Store images: `marketing/feature_graphic.png` and the

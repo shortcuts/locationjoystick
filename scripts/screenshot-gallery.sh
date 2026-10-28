@@ -34,7 +34,7 @@
 #   --steps 01,03,05     (run steps 1, 3, 5)
 # Seeding (routes, favorites) always runs before the first selected step.
 #
-# Output files (25 canonical PNGs). Each file's number prefix is its step
+# Output files (26 canonical PNGs). Each file's number prefix is its step
 # number, so --steps N writes N_*.png (step 19 runs out of order, see below):
 #   01_idle, 02_map, 03_routes, 04_favorites (with a "Local spots" group), 05_settings,
 #   06_map_routes_sheet, 07_map_favorites_sheet, 08_map_roaming_sheet,
@@ -43,7 +43,7 @@
 #   13_joystick_overlay, 14_widget_overlay,
 #   15_routes_add_button, 16_favorites_add_button,
 #   17_group_sync, 18_debug_stats,
-#   19_onboarding_mock_location, 27_onboarding_path_picker,
+#   19_onboarding_mock_location, 26_onboarding_path_picker,
 #   20_tap_to_walk_settings, 21_screen_access,
 #   22_capture_coordinates, 23_map_paste_coordinates, 24_roaming_planting,
 #   25_accessibility_disclosure
@@ -51,9 +51,9 @@
 # 19_onboarding_mock_location ("Set as fake GPS app" onboarding step) is only
 # captured on a genuinely fresh install — it's taken mid-onboarding, before
 # mock_location is granted, inside the onboarding auto-complete branch above.
-# 27_onboarding_path_picker (the last onboarding screen, Game setup) is captured
+# 26_onboarding_path_picker (the last onboarding screen, Game setup) is captured
 # in the same branch on a fresh install only. The branch then taps "Start using
-# locationjoystick" to finish onboarding, with or without step 27 requested.
+# locationjoystick" to finish onboarding, with or without step 26 requested.
 # If the app is already past onboarding when the script runs, that branch
 # never executes and step 19 is silently skipped, no matter --steps. Run
 # `make reinstall-on-phone` right before `make screenshot` to guarantee it.
@@ -107,7 +107,7 @@ if [[ -n "$STEPS_FILTER" ]]; then
   done
 else
   # No filter: enable all steps
-  for i in $(seq 1 25) 27; do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
+  for i in $(seq 1 26); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
 fi
 
 # Helper to check if a step should run (e.g. should_run_step "16")
@@ -995,9 +995,9 @@ if grep -qi "onboarding\|Welcome\|grant\|permission\|Accessibility" "$dump" 2>/d
     tap_text_exact "Continue" 2>/dev/null || log "Continue button not found; the check below will catch it"
     wait_s 2 "Opening path picker"
 
-    if should_run_step "27"; then
-      log "=== 27 ONBOARDING PATH PICKER ==="
-      screenshot "27_onboarding_path_picker"
+    if should_run_step "26"; then
+      log "=== 26 ONBOARDING PATH PICKER ==="
+      screenshot "26_onboarding_path_picker"
     fi
     # The path picker is the last onboarding screen; finish it with its button.
     tap_text_exact "Start using locationjoystick" 2>/dev/null || log "Start button not found; the check below will catch it"
