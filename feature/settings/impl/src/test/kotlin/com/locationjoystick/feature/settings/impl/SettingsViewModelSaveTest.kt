@@ -36,6 +36,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.slot
 import io.mockk.unmockkObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -509,6 +510,28 @@ class SettingsViewModelSaveTest {
                 withContext(Dispatchers.Default) { withTimeout(5_000) { viewModel.isPreparingQrExport.first { !it } } }
 
                 assertFalse(calls.toString(), calls.lastOrNull() == "start")
+            } finally {
+                unmockkObject(NetworkUtils)
+            }
+        }
+
+    @Test
+    fun `prepareQrExport exports the unsaved draft and the active speed profile`() =
+        runTest(testDispatcher) {
+            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            viewModel.setMapFollowsLocation(false)
+            mockkObject(NetworkUtils)
+            try {
+                every { NetworkUtils.getLocalIpAddress() } returns "1.2.3.4"
+                val json = slot<String>()
+                every { exportSyncServer.start(any(), capture(json)) } returns 8080
+
+                viewModel.prepareQrExport()
+                withContext(Dispatchers.Default) { withTimeout(5_000) { viewModel.isPreparingQrExport.first { !it } } }
+
+                val settings = SettingsExportCodec.parseExportData(json.captured).settings
+                assertFalse(settings.mapFollowsLocation)
+                assertEquals("walk", settings.activeSpeedProfileId)
             } finally {
                 unmockkObject(NetworkUtils)
             }

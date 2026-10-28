@@ -2,6 +2,7 @@ package com.locationjoystick.feature.settings.impl
 
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.MapTileSource
@@ -59,5 +60,43 @@ data class SettingsUiState(
     val capturePreviousBrowserPackage: String? = null,
     val captureSetupReset: Boolean = false,
     val launchAfterLinkPackage: String? = null,
+    val activeSpeedProfileId: String = AppConstants.ProfileConstants.DEFAULT_ACTIVE_PROFILE_ID,
+    val keepWidgetOnIdle: Boolean = false,
+    val bypassMockLocationCheck: Boolean = false,
     val isDirty: Boolean = false,
 )
+
+internal fun SettingsUiState.toAppSettings(): AppSettings =
+    AppSettings(
+        speedUnit = speedUnit,
+        mapTileSource = mapTileSource,
+        guidedPath = guidedPath,
+        disabledGeocodingProviders = disabledGeocodingProviders,
+        featureOrder = featureOrder,
+        enabledWidgetFeatures = enabledWidgetFeatures,
+        enabledMapFeatures = enabledMapFeatures,
+        enabledSpeedProfileIds = enabledSpeedProfileIds,
+        bearingHoldOnIdle = realismBearingHoldIdle,
+        altitudeEnabled = realismAltitudeEnabled,
+        warmupEnabled = realismWarmupEnabled,
+        satelliteExtrasEnabled = realismSatelliteExtrasEnabled,
+        suspendedMockingEnabled = realismSuspendedMockingEnabled,
+        hideTeleportFeatures = hideTeleportFeatures,
+        hideWidgetOverlay = hideWidgetOverlay,
+        hideForegroundNotification = hideForegroundNotification,
+        showRouteJumpButtons = showRouteJumpButtons,
+        bypassMockLocationCheck = bypassMockLocationCheck,
+        realElevationEnabled = realismRealElevationEnabled,
+        altitudeJitterRadiusMeters = altitudeJitterRadiusMeters,
+        plantingRadiusMeters = plantingRadiusMeters,
+        altitudeOverrideButtonEnabled = altitudeOverrideButtonEnabled,
+        debugStatsEnabled = debugStatsEnabled,
+        activeSpeedProfileId = activeSpeedProfileId,
+        mapFollowsLocation = mapFollowsLocation,
+        rememberLastLocation = rememberLastLocation,
+        floatingMapQuickWalk = floatingMapQuickWalk,
+        tapToWalkOverlayEnabled = tapToWalkOverlayEnabled,
+        reconnectTapEnabled = reconnectTapEnabled,
+        keepWidgetOnIdle = keepWidgetOnIdle,
+        themeMode = themeMode,
+    )

@@ -24,7 +24,6 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.model.AppFeature
-import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.GuidedPath
@@ -170,6 +169,15 @@ class SettingsViewModel
             userFeedback.emit(UserFeedback(message, isError))
         }
 
+        /** Settings written by their own setters, not saved from the draft. */
+        private data class LiveSettings(
+            val disclosureChoice: String,
+            val reconnectTap: Boolean,
+            val keepWidgetOnIdle: Boolean,
+            val bypassMockLocationCheck: Boolean,
+            val activeSpeedProfileId: String,
+        )
+
         private data class DraftState(
             val speedOverrides: Map<String, Double> = emptyMap(),
             val speedUnit: SpeedUnit? = null,
@@ -232,13 +240,18 @@ class SettingsViewModel
                 combine(
                     settingsRepository.getAccessibilityDisclosureChoice(),
                     settingsRepository.getReconnectTapEnabled(),
-                ) { choice, reconnect -> choice to reconnect },
+                    settingsRepository.getKeepWidgetOnIdle(),
+                    settingsRepository.getBypassMockLocationCheck(),
+                    settingsRepository.getActiveSpeedProfile().map { it.id },
+                ) { choice, reconnect, keepWidgetOnIdle, bypassMockLocationCheck, activeSpeedProfileId ->
+                    LiveSettings(choice, reconnect, keepWidgetOnIdle, bypassMockLocationCheck, activeSpeedProfileId)
+                },
                 combine(screenServiceGranted, captureSnapshot) { granted, capture -> Pair(granted, capture) },
                 settingsRepository.getThemeMode(),
                 settingsRepository.getBaseAltitudeOverride(),
             ) {
                 (snapshot, draftState),
-                (accessibilityDisclosureChoice, reconnectTap),
+                live,
                 (isServiceGranted, capture),
                 themeMode,
                 baseAltitudeOverride,
@@ -296,8 +309,11 @@ class SettingsViewModel
                     launchAfterLinkPackage = capture.launchAfterLinkPackage,
                     isScreenServiceGranted = isServiceGranted,
                     accessibilityDisclosureAccepted =
-                        accessibilityDisclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
-                    reconnectTapEnabled = reconnectTap,
+                        live.disclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
+                    reconnectTapEnabled = live.reconnectTap,
+                    keepWidgetOnIdle = live.keepWidgetOnIdle,
+                    bypassMockLocationCheck = live.bypassMockLocationCheck,
+                    activeSpeedProfileId = live.activeSpeedProfileId,
                     themeMode = themeMode,
                     isDirty = isDirty,
                 )
@@ -626,7 +642,7 @@ class SettingsViewModel
                             hideWidgetOverlay = state.hideWidgetOverlay,
                             hideForegroundNotification = state.hideForegroundNotification,
                             showRouteJumpButtons = state.showRouteJumpButtons,
-                            bypassMockLocationCheck = settingsRepository.getBypassMockLocationCheck().first(),
+                            bypassMockLocationCheck = state.bypassMockLocationCheck,
                             realismRealElevationEnabled = state.realismRealElevationEnabled,
                             altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
                             plantingRadiusMeters = state.plantingRadiusMeters,
@@ -704,47 +720,12 @@ class SettingsViewModel
 
         private suspend fun buildCurrentExportData(): ExportData {
             val state = uiState.value
-            val snapshot = settingsRepository.getSettingsSnapshot().first()
             val speedProfiles =
                 SpeedProfile.defaultProfiles().map { it.copy(speedMetersPerSecond = state.speeds.getValue(it.id)) }
-            val settings =
-                AppSettings(
-                    speedUnit = state.speedUnit,
-                    mapTileSource = state.mapTileSource,
-                    guidedPath = state.guidedPath,
-                    disabledGeocodingProviders = state.disabledGeocodingProviders,
-                    featureOrder = state.featureOrder,
-                    enabledWidgetFeatures = state.enabledWidgetFeatures,
-                    enabledMapFeatures = state.enabledMapFeatures,
-                    enabledSpeedProfileIds = state.enabledSpeedProfileIds,
-                    bearingHoldOnIdle = state.realismBearingHoldIdle,
-                    altitudeEnabled = state.realismAltitudeEnabled,
-                    warmupEnabled = state.realismWarmupEnabled,
-                    satelliteExtrasEnabled = state.realismSatelliteExtrasEnabled,
-                    suspendedMockingEnabled = state.realismSuspendedMockingEnabled,
-                    hideTeleportFeatures = state.hideTeleportFeatures,
-                    hideWidgetOverlay = state.hideWidgetOverlay,
-                    hideForegroundNotification = state.hideForegroundNotification,
-                    showRouteJumpButtons = state.showRouteJumpButtons,
-                    bypassMockLocationCheck = settingsRepository.getBypassMockLocationCheck().first(),
-                    realElevationEnabled = state.realismRealElevationEnabled,
-                    altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
-                    plantingRadiusMeters = state.plantingRadiusMeters,
-                    altitudeOverrideButtonEnabled = state.altitudeOverrideButtonEnabled,
-                    debugStatsEnabled = state.debugStatsEnabled,
-                    activeSpeedProfileId = settingsRepository.getActiveSpeedProfile().first().id,
-                    mapFollowsLocation = snapshot.mapFollowsLocation,
-                    rememberLastLocation = snapshot.rememberLastLocation,
-                    floatingMapQuickWalk = snapshot.floatingMapQuickWalk,
-                    tapToWalkOverlayEnabled = snapshot.tapToWalkOverlayEnabled,
-                    reconnectTapEnabled = settingsRepository.getReconnectTapEnabled().first(),
-                    keepWidgetOnIdle = settingsRepository.getKeepWidgetOnIdle().first(),
-                    themeMode = settingsRepository.getThemeMode().first(),
-                )
             return ExportData(
                 schemaVersion = AppConstants.ExportConstants.SCHEMA_VERSION,
                 exportedAt = System.currentTimeMillis(),
-                settings = settings,
+                settings = state.toAppSettings(),
                 speedProfiles = speedProfiles,
                 routes = routeRepository.getRoutes().first(),
                 favoriteLocations = favoriteRepository.getFavorites().first(),
