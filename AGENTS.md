@@ -155,6 +155,9 @@ Working memory for long-running features: a feature doc that has a "Status" line
 | `ReplayOrchestrator` | `:core:location` | Class (not service) | Owns route-replay and walk-to orchestration, extracted from the service. Reports back through callbacks rather than holding UI state. |
 | `FollowerCatchUpCoordinator` | `:core:location` | Class (not service) | Owns follower catch-up state so the service does not hold it in loose fields. Mirrors `WalkCoordinator`. |
 | `FollowerResumeCoordinator` | `:core:location` | Class (not service) | Owns the wait that returns a follower to Follow leader after a manual mode. Owned by `MapController`; the service still performs the re-entry. |
+| `GroupModeController` | `:core:location` | Class (not service) | Owns leader advertising and the follower restoration and rediscovery jobs. Reports back through lambdas. |
+| `TestProviderController` | `:core:location` | Class (not service) | Owns the GPS test provider registration. Reports a refused provider or revoked mock app through `onError`. |
+| `SpoofingErrorHandler` | `:core:location` | Class (not service) | Moves the service to ERROR, releases the wake lock and stops walk, replay and roaming. |
 | `ReplayStartLifecycle` | `:core:location` | Class (not service) | Owns route-start sessions and the lifecycle lock, so pause, resume and abort live in one place. |
 | `AltitudeAnchorCoordinator` | `:core:location` | Class (not service) | Owns altitude convergence state. Same pattern as `FollowerCatchUpCoordinator`. |
 | `PositionJitterCoordinator` | `:core:location` | Class (not service) | Owns the jitter offset. Its motion model is a constraint: it must not teleport between draws. See [features/mock-location.md](docs/features/mock-location.md). |

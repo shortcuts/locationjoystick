@@ -20,13 +20,22 @@ class ServiceErrorPropagationTest {
     private val powerManager =
         mockk<PowerManager> { every { newWakeLock(any(), any()) } returns wakeLock }
     private val locationManager = mockk<LocationManager>(relaxed = true)
-
-    private fun newService(): MockLocationService =
-        MockLocationService().apply {
-            locationRepository = LocationRepository()
-            locationManager = this@ServiceErrorPropagationTest.locationManager
-            powerManagerOverride = powerManager
-        }
+    private val locationRepository = LocationRepository()
+    private val holder = SpoofingWakeLockHolder { powerManager }
+    private var state = MockLocationState.IDLE
+    private val walk = mockk<WalkCoordinator>(relaxed = true)
+    private val orchestrator = mockk<ReplayOrchestrator>(relaxed = true)
+    private val roaming = mockk<RoamingRepository>(relaxed = true)
+    private val handler =
+        SpoofingErrorHandler(
+            setState = { state = it },
+            locationRepository = locationRepository,
+            wakeLock = holder,
+            walkCoordinator = walk,
+            replayOrchestrator = orchestrator,
+            roamingRepository = roaming,
+        )
+    private val provider = TestProviderController(locationManager, onError = handler::setError)
 
     private val fix =
         LocationFix(1.0, 2.0, 3.0, 0f, 0f, false, 5f, 3f, 0f, 1f, null, null)
@@ -36,49 +45,38 @@ class ServiceErrorPropagationTest {
         every { locationManager.addTestProvider(any(), any<android.location.provider.ProviderProperties>()) } throws SecurityException()
         every { locationManager.addTestProvider(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } throws
             SecurityException()
-        val service = newService()
-        service.acquireWakeLock()
+        holder.acquire()
 
-        service.setupTestProvider()
+        provider.setup()
 
-        assertEquals(MockLocationState.ERROR, service.state.value)
-        assertEquals(MockLocationState.ERROR, service.locationRepository.mockLocationState.value)
+        assertEquals(MockLocationState.ERROR, state)
+        assertEquals(MockLocationState.ERROR, locationRepository.mockLocationState.value)
         verify(exactly = 1) { wakeLock.release() }
     }
 
     @Test
     fun `revoked mock app on a tick reaches ERROR and a retry re-registers`() {
-        val service = newService()
-        service.setupTestProvider()
+        provider.setup()
         every { locationManager.setTestProviderLocation(any(), any()) } throws SecurityException()
 
-        service.applyFixOrFail(fix, 1L)
+        provider.applyFix(fix, 1L)
 
-        assertEquals(MockLocationState.ERROR, service.state.value)
-        assertEquals(MockLocationState.ERROR, service.locationRepository.mockLocationState.value)
-        service.setupTestProvider()
+        assertEquals(MockLocationState.ERROR, state)
+        assertEquals(MockLocationState.ERROR, locationRepository.mockLocationState.value)
+        provider.setup()
         verify(exactly = 2) { locationManager.setTestProviderEnabled(any(), true) }
     }
 
     @Test
     fun `ERROR cancels walk, replay and roaming and resets mode to TELEPORT`() =
         runBlocking {
-            val walk = mockk<WalkCoordinator>(relaxed = true)
-            val orchestrator = mockk<ReplayOrchestrator>(relaxed = true)
-            val roaming = mockk<RoamingRepository>(relaxed = true)
-            val service =
-                newService().apply {
-                    walkCoordinator = walk
-                    replayOrchestrator = orchestrator
-                    roamingRepository = roaming
-                }
-            service.locationRepository.setMockMode(MockMode.WALK_TO)
+            locationRepository.setMockMode(MockMode.WALK_TO)
 
-            service.stopMovementOnError()
+            handler.stopMovementOnError()
 
             verify { walk.cancel() }
             coVerify { orchestrator.handleCancel() }
             coVerify { roaming.stopRoaming() }
-            assertEquals(MockMode.TELEPORT, service.locationRepository.currentMode.value)
+            assertEquals(MockMode.TELEPORT, locationRepository.currentMode.value)
         }
 }

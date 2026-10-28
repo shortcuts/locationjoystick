@@ -4,11 +4,8 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.location.Location
 import android.location.LocationManager
-import android.location.provider.ProviderProperties
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.os.SystemClock
@@ -18,7 +15,6 @@ import androidx.core.app.ServiceCompat
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.common.util.LocaleContextWrapper
-import com.locationjoystick.core.common.util.NetworkUtils
 import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.DebugStats
 import com.locationjoystick.core.data.ElevationRepository
@@ -57,7 +53,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
@@ -153,24 +148,24 @@ class MockLocationService : Service() {
         getSystemService(android.app.NotificationManager::class.java)
     }
 
-    internal var powerManagerOverride: PowerManager? = null
+    private val powerManager: PowerManager by lazy { getSystemService(PowerManager::class.java) }
 
-    private val powerManager: PowerManager by lazy {
-        powerManagerOverride ?: getSystemService(PowerManager::class.java)
-    }
-
-    /** Held only while actively spoofing (RUNNING/PAUSED) — works around Doze/Adaptive Battery
-     * throttling the update loop on some devices (e.g. Android 15 Pixel) when the screen locks. */
-    @Volatile private var wakeLock: PowerManager.WakeLock? = null
+    private val wakeLock = SpoofingWakeLockHolder { powerManager }
 
     private val exceptionHandler =
         CoroutineExceptionHandler { _, throwable ->
             Log.e(TAG, "MockLocationService coroutine crashed", throwable)
-            setError()
+            reportError()
         }
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + exceptionHandler)
 
-    internal lateinit var replayOrchestrator: ReplayOrchestrator
+    private lateinit var replayOrchestrator: ReplayOrchestrator
+
+    private lateinit var testProvider: TestProviderController
+
+    private lateinit var errorHandler: SpoofingErrorHandler
+
+    private lateinit var groupMode: GroupModeController
 
     private lateinit var overlayNotificationReactor: OverlayNotificationReactor
 
@@ -178,14 +173,8 @@ class MockLocationService : Service() {
 
     /** Guards concurrent access to updateJob to prevent double-start from rapid state emissions. */
     private val updateJobMutex = Mutex()
-    private val leaderModeMutex = Mutex()
-    private var advertisedGroupId: String? = null
 
     @Volatile private var updateJob: Job? = null
-
-    /** Async job for follower restoration with NSD discovery retries on device boot. */
-    private var followerRestorationJob: Job? = null
-    internal var followerRediscoveryJob: Job? = null
 
     private val _state = MutableStateFlow(MockLocationState.IDLE)
     val state: StateFlow<MockLocationState> = _state.asStateFlow()
@@ -199,8 +188,6 @@ class MockLocationService : Service() {
     @Volatile private var currentSpeedMs: Float = 0.0f
 
     @Volatile private var currentBearing: Float = 0.0f
-
-    @Volatile private var providerAdded = false
 
     /** Realism settings observed from [SettingsRepository] and read each tick in [captureSnapshot]. */
     private val realism = RealismSettingsState()
@@ -295,6 +282,31 @@ class MockLocationService : Service() {
                 },
                 plantingRadiusMeters = { realism.plantingRadiusMeters },
             )
+        testProvider = TestProviderController(locationManager, onError = ::reportError)
+        errorHandler =
+            SpoofingErrorHandler(
+                setState = { _state.value = it },
+                locationRepository = locationRepository,
+                wakeLock = wakeLock,
+                walkCoordinator = walkCoordinator,
+                replayOrchestrator = replayOrchestrator,
+                roamingRepository = roamingRepository,
+            )
+        groupMode =
+            GroupModeController(
+                scope = serviceScope,
+                leaderSyncServer = leaderSyncServer,
+                controlApiRoutes = controlApiRoutes,
+                contentApiRoutes = contentApiRoutes,
+                groupNsdManager = groupNsdManager,
+                groupRepository = groupRepository,
+                enterFollowerMode = ::enterFollowerMode,
+                exitFollowerMode = ::exitFollowerMode,
+                onLeaderExited = {
+                    leaderSharingEnabled = false
+                    stopSelfIfIdle()
+                },
+            )
         createNotificationChannel()
         observeLocationState()
         observeGroupState()
@@ -314,12 +326,12 @@ class MockLocationService : Service() {
                                 RunningLoopAction.STOP_IDLE_LOOP_FOR_REPLAY -> {
                                     updateJob?.cancel()
                                     updateJob = null
-                                    setupTestProvider()
+                                    testProvider.setup()
                                     Log.i(TAG, "State changed to RUNNING (route replay) - stopped idle loop")
                                 }
 
                                 RunningLoopAction.START_IDLE_LOOP -> {
-                                    setupTestProvider()
+                                    testProvider.setup()
                                     startUpdateLoop()
                                     Log.i(TAG, "State changed to RUNNING - started update loop")
                                 }
@@ -340,7 +352,7 @@ class MockLocationService : Service() {
                     }
 
                     MockLocationState.IDLE, MockLocationState.ERROR -> {
-                        if (state == MockLocationState.ERROR) stopMovementOnError()
+                        if (state == MockLocationState.ERROR) errorHandler.stopMovementOnError()
                         updateJobMutex.withLock {
                             when (computeIdleOrErrorLoopAction(state, leaderSharingEnabled, updateJob != null)) {
                                 IdleOrErrorLoopAction.KEEP_ALIVE -> {
@@ -353,7 +365,7 @@ class MockLocationService : Service() {
                                 IdleOrErrorLoopAction.TEAR_DOWN -> {
                                     updateJob?.cancel()
                                     updateJob = null
-                                    removeTestProvider()
+                                    testProvider.remove()
                                     Log.i(TAG, "State changed to $state - stopped update loop")
                                 }
 
@@ -484,7 +496,7 @@ class MockLocationService : Service() {
                 serviceScope.launch {
                     val gs = groupRepository.groupState.first()
                     val id = gs.groupId
-                    if (gs.role == GroupRole.LEADER && id != null && !leaderSyncServer.isRunning) enterLeaderMode(id)
+                    if (gs.role == GroupRole.LEADER && id != null && !leaderSyncServer.isRunning) groupMode.enterLeaderMode(id)
                 }
             }
 
@@ -504,17 +516,17 @@ class MockLocationService : Service() {
                 serviceScope.launch {
                     val gs = groupRepository.groupState.first()
                     val id = gs.groupId
-                    if (gs.role == GroupRole.FOLLOWER && gs.followerModeEnabled && id != null) startFollowerRestoration(id)
+                    if (gs.role == GroupRole.FOLLOWER && gs.followerModeEnabled && id != null) groupMode.startFollowerRestoration(id)
                 }
             }
 
             AppConstants.ServiceConstants.ACTION_START_LEADER -> {
                 val groupId = intent.getStringExtra(AppConstants.ServiceConstants.EXTRA_LEADER_GROUP_ID) ?: return START_STICKY
-                enterLeaderMode(groupId)
+                groupMode.enterLeaderMode(groupId)
             }
 
             AppConstants.ServiceConstants.ACTION_EXIT_LEADER -> {
-                exitLeaderMode()
+                groupMode.exitLeaderMode()
             }
 
             null -> {
@@ -532,7 +544,7 @@ class MockLocationService : Service() {
                     if (groupState.role == GroupRole.LEADER) {
                         val id = groupState.groupId ?: return@launch
                         Log.i(TAG, "OS restart: resuming leader mode for group $id")
-                        enterLeaderMode(id)
+                        groupMode.enterLeaderMode(id)
                         return@launch
                     }
                     if (groupState.role == GroupRole.FOLLOWER && groupState.followerModeEnabled) {
@@ -541,7 +553,7 @@ class MockLocationService : Service() {
                         // with retries rather than a synchronous NSD call that may timeout if the leader
                         // hasn't advertised yet. Don't block onStartCommand.
                         Log.i(TAG, "OS restart: starting async follower restoration for group $id")
-                        startFollowerRestoration(id)
+                        groupMode.startFollowerRestoration(id)
                         return@launch
                     }
                     val remember = settingsRepository.getRememberLastLocation().first()
@@ -668,8 +680,8 @@ class MockLocationService : Service() {
         // Don't call stopSpoofing() here — it calls stopSelf() which re-triggers onDestroy.
         // serviceScope.cancel() below cancels updateJob (child of the scope) automatically.
         updateJob = null
-        removeTestProvider()
-        releaseWakeLock()
+        testProvider.remove()
+        wakeLock.release()
         // Persist last location on external kill (process killed, OOM, etc.)
         // stopSpoofing() handles this on normal stop, but onDestroy may be called without it.
         // Always persist location; the rememberLastLocation setting only controls whether to restore it.
@@ -677,10 +689,9 @@ class MockLocationService : Service() {
             val pos = positionRef.get()
             CoroutineScope(NonCancellable + Dispatchers.IO).launch { settingsRepository.setLastLocation(pos) }
         }
-        stopFollowerRestoration()
+        groupMode.stopFollowerRestoration()
         leaderSyncServer.stop()
-        advertisedGroupId?.let(groupNsdManager::stopAdvertising)
-        advertisedGroupId = null
+        groupMode.stopAdvertising()
         followerSyncClient.stopPolling()
         locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
@@ -738,36 +749,17 @@ class MockLocationService : Service() {
         locationRepository.setMockMode(MockMode.TELEPORT)
 
         // Setting state to RUNNING triggers observeLocationState(), which calls
-        // setupTestProvider() + startUpdateLoop(). Do NOT call them here to avoid
+        // testProvider.setup() + startUpdateLoop(). Do NOT call them here to avoid
         // a double-invocation race.
-        acquireWakeLock()
+        wakeLock.acquire()
         _state.value = MockLocationState.RUNNING
         locationRepository.startSpoofing()
         Log.i(TAG, "Spoofing started at ($lat, $lon)")
     }
 
-    internal fun acquireWakeLock() {
-        if (wakeLock?.isHeld == true) return
-        wakeLock = acquireSpoofingWakeLock(powerManager)
-    }
-
-    // The crash handler can fire before Hilt injects the repository.
-    private fun setError() {
-        _state.value = MockLocationState.ERROR
-        if (::locationRepository.isInitialized) locationRepository.reportError()
-        releaseWakeLock()
-    }
-
-    internal suspend fun stopMovementOnError() {
-        walkCoordinator.cancel()
-        replayOrchestrator.handleCancel()
-        roamingRepository.stopRoaming()
-        locationRepository.setMockMode(MockMode.TELEPORT)
-    }
-
-    private fun releaseWakeLock() {
-        releaseSpoofingWakeLock(wakeLock)
-        wakeLock = null
+    // The crash handler can fire before onCreate builds the handler.
+    private fun reportError() {
+        if (::errorHandler.isInitialized) errorHandler.setError() else _state.value = MockLocationState.ERROR
     }
 
     fun updatePosition(
@@ -895,8 +887,8 @@ class MockLocationService : Service() {
         // Always persist location; the rememberLastLocation setting only controls whether to restore it.
         val pos = positionRef.get()
         serviceScope.launch { settingsRepository.setLastLocation(pos) }
-        removeTestProvider()
-        releaseWakeLock()
+        testProvider.remove()
+        wakeLock.release()
         _state.value = MockLocationState.IDLE
         locationRepository.setMockMode(MockMode.TELEPORT)
         locationRepository.stopSpoofing()
@@ -913,7 +905,7 @@ class MockLocationService : Service() {
      * next active tick can resume the mirror automatically (see [enterFollowerMode]).
      */
     private fun pauseFollowerForInactiveLeader() {
-        releaseWakeLock()
+        wakeLock.release()
         locationRepository.stopSpoofing()
         _state.value = MockLocationState.IDLE
         Log.i(TAG, "Leader stopped spoofing — pausing follower mirror")
@@ -926,7 +918,7 @@ class MockLocationService : Service() {
         port: Int,
         groupId: String,
     ) {
-        stopFollowerRestoration()
+        groupMode.stopFollowerRestoration()
         serviceScope.launch {
             // Await both cancellations before activating follower mode to avoid a race where
             // a completing replay/roam tick sets the mode back after we set FOLLOWER.
@@ -942,7 +934,7 @@ class MockLocationService : Service() {
                 groupId,
                 onGroupLost = {
                     Log.w(TAG, "Group $groupId lost — attempting NSD re-discovery before giving up")
-                    rediscoverFollowerGroup(groupId)
+                    groupMode.rediscoverFollowerGroup(groupId)
                 },
             ) { update ->
                 val (lat, lon, speedMs, bearing, active) = update
@@ -986,39 +978,8 @@ class MockLocationService : Service() {
         }
     }
 
-    internal fun rediscoverFollowerGroup(
-        groupId: String,
-        reenter: (host: String, port: Int) -> Unit = { host, port -> enterFollowerMode(host, port, groupId) },
-    ) {
-        followerRediscoveryJob =
-            serviceScope.launch {
-                var resolved: Pair<String, Int>? = null
-                for (attempt in 0..AppConstants.SyncConstants.NSD_REDISCOVERY_RETRY_COUNT) {
-                    resolved = groupNsdManager.discoverByCode(groupId)
-                    if (resolved != null) break
-                    Log.w(TAG, "NSD re-discovery attempt $attempt failed for group $groupId")
-                }
-                // Discovery may not be cancellable: the user may have left or joined another group meanwhile.
-                val state = groupRepository.groupState.first()
-                if (state.role != GroupRole.FOLLOWER || state.groupId != groupId) return@launch
-                if (resolved != null) {
-                    val (newHost, newPort) = resolved
-                    Log.i(TAG, "Re-discovered group $groupId at $newHost:$newPort — reconnecting")
-                    reenter(newHost, newPort)
-                } else {
-                    Log.w(TAG, "NSD re-discovery exhausted for group $groupId — leaving group")
-                    // exitFollowerMode cancels this job, which would abort the suspending leaveGroup.
-                    withContext(NonCancellable) {
-                        exitFollowerMode()
-                        groupRepository.leaveGroup()
-                        groupRepository.emitGroupLost()
-                    }
-                }
-            }
-    }
-
     internal fun exitFollowerMode() {
-        stopFollowerRestoration()
+        groupMode.stopFollowerRestoration()
         followerSyncClient.stopPolling()
         followerCatchUp.clear()
         groupRepository.setLeaderPosition(null)
@@ -1050,95 +1011,6 @@ class MockLocationService : Service() {
         // see CooldownEngine/settingsRepository.getLastTeleportTime().
         serviceScope.launch { settingsRepository.setLastTeleportTime(System.currentTimeMillis()) }
         Log.i(TAG, "Follower teleported to leader at (${target.latitude}, ${target.longitude})")
-    }
-
-    private fun enterLeaderMode(groupId: String) {
-        stopFollowerRestoration()
-        serviceScope.launch {
-            try {
-                val host =
-                    NetworkUtils.getLocalIpAddress() ?: run {
-                        Log.e(TAG, "Cannot determine local IP — ensure Wi-Fi is connected")
-                        groupRepository.emitNoLanAddress()
-                        return@launch
-                    }
-                val port =
-                    leaderModeMutex.withLock {
-                        if (!leaderSyncServer.isRunning) {
-                            val newPort = leaderSyncServer.start(groupId)
-                            groupNsdManager.startAdvertising(code = groupId, port = newPort)
-                            advertisedGroupId = groupId
-                            newPort
-                        } else {
-                            leaderSyncServer.currentPort
-                        }
-                    }
-                controlApiRoutes.install()
-                contentApiRoutes.install()
-                // Always call createGroup to ensure the VM picks up the current host:port
-                // (covers both fresh start and idempotent re-entry when already running).
-                groupRepository.createGroup(host = host, port = port, groupId = groupId)
-                Log.i(TAG, "Entered LEADER mode: $groupId at $host:$port")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to start leader mode", e)
-            }
-        }
-    }
-
-    internal fun exitLeaderMode() {
-        leaderSyncServer.stop()
-        advertisedGroupId?.let(groupNsdManager::stopAdvertising)
-        advertisedGroupId = null
-        leaderSharingEnabled = false
-        Log.i(TAG, "Exited LEADER mode")
-        stopSelfIfIdle()
-    }
-
-    /**
-     * Starts an async follower restoration job with exponential backoff + jitter.
-     * On device boot (START_STICKY), the leader may not have advertised yet, so this job
-     * retries NSD discovery over a ~60-second window rather than giving up immediately.
-     * Automatically stops on success, exhaustion, or [stopFollowerRestoration].
-     */
-    private fun startFollowerRestoration(groupId: String) {
-        stopFollowerRestoration()
-        followerRestorationJob =
-            serviceScope.launch {
-                val maxAttempts = AppConstants.FollowerRestorationConstants.MAX_RETRY_ATTEMPTS
-                var delayMs = AppConstants.FollowerRestorationConstants.INITIAL_RETRY_DELAY_MS
-                val maxDelayMs = AppConstants.FollowerRestorationConstants.MAX_RETRY_DELAY_MS
-                val jitterRangeMs = AppConstants.FollowerRestorationConstants.RETRY_JITTER_MS
-
-                for (attempt in 0 until maxAttempts) {
-                    if (!isActive) return@launch
-                    try {
-                        val resolved = groupNsdManager.discoverByCode(groupId)
-                        if (resolved != null) {
-                            val (host, port) = resolved
-                            Log.i(TAG, "Follower restoration succeeded on attempt $attempt for group $groupId at $host:$port")
-                            enterFollowerMode(host, port, groupId)
-                            return@launch
-                        }
-                    } catch (e: Exception) {
-                        Log.w(TAG, "Follower restoration attempt $attempt failed for group $groupId", e)
-                    }
-
-                    if (attempt < maxAttempts - 1) {
-                        val jitterMs = Random.nextLong(-jitterRangeMs, jitterRangeMs)
-                        delay(delayMs + jitterMs)
-                        delayMs = minOf(delayMs * 2, maxDelayMs)
-                    }
-                }
-                Log.w(TAG, "Follower restoration exhausted after $maxAttempts attempts for group $groupId — staying idle")
-            }
-    }
-
-    /** Cancels any in-flight follower restoration or rediscovery job. */
-    private fun stopFollowerRestoration() {
-        followerRestorationJob?.cancel()
-        followerRestorationJob = null
-        followerRediscoveryJob?.cancel()
-        followerRediscoveryJob = null
     }
 
     private fun observeGroupState() {
@@ -1175,82 +1047,6 @@ class MockLocationService : Service() {
     private fun handleReplayJumpNext() = replayOrchestrator.handleJumpToNextWaypoint()
 
     private fun handleReplayJumpPrevious() = replayOrchestrator.handleJumpToPreviousWaypoint()
-
-    internal fun setupTestProvider() {
-        if (providerAdded) return
-        // Attempt to remove any ghost provider left by a previous crash. If the process was killed
-        // mid-run the provider may still be registered under our package, causing addTestProvider
-        // to throw IllegalArgumentException. Removing first clears the slot safely.
-        try {
-            locationManager.removeTestProvider(LocationManager.GPS_PROVIDER)
-            Log.i(TAG, "Removed stale test provider before re-registering")
-        } catch (_: IllegalArgumentException) {
-            // Not registered — nothing to clear
-        } catch (e: Exception) {
-            Log.w(TAG, "Unexpected error clearing stale test provider", e)
-        }
-
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val properties =
-                    ProviderProperties
-                        .Builder()
-                        .setHasAltitudeSupport(true)
-                        .setHasSpeedSupport(true)
-                        .setHasBearingSupport(true)
-                        .setPowerUsage(ProviderProperties.POWER_USAGE_HIGH)
-                        .setAccuracy(ProviderProperties.ACCURACY_FINE)
-                        .build()
-
-                locationManager.addTestProvider(
-                    LocationManager.GPS_PROVIDER,
-                    properties,
-                )
-            } else {
-                addLegacyTestProvider()
-            }
-            locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
-            providerAdded = true
-            Log.i(TAG, "Test provider registered")
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Failed to add test provider — another app may hold the slot", e)
-            setError()
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Missing mock location permission", e)
-            setError()
-        }
-    }
-
-    // Pre-31 devices lack ProviderProperties.Builder + the ProviderProperties addTestProvider
-    // overload — same property values as the API 31+ Builder path above.
-    @Suppress("DEPRECATION")
-    private fun addLegacyTestProvider() {
-        locationManager.addTestProvider(
-            LocationManager.GPS_PROVIDER,
-            false,
-            false,
-            false,
-            false,
-            true,
-            true,
-            true,
-            ProviderProperties.POWER_USAGE_HIGH,
-            ProviderProperties.ACCURACY_FINE,
-        )
-    }
-
-    private fun removeTestProvider() {
-        if (!providerAdded) return
-        try {
-            locationManager.removeTestProvider(LocationManager.GPS_PROVIDER)
-            providerAdded = false
-            Log.i(TAG, "Test provider removed")
-        } catch (e: IllegalArgumentException) {
-            Log.e(TAG, "Test provider was already removed", e)
-        } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error removing test provider", e)
-        }
-    }
 
     private fun startUpdateLoop() {
         updateJob?.cancel()
@@ -1359,51 +1155,6 @@ class MockLocationService : Service() {
         )
     }
 
-    internal fun applyFixOrFail(
-        fix: LocationFix,
-        nowNanos: Long,
-    ) {
-        try {
-            applyToProvider(fix, nowNanos)
-        } catch (e: SecurityException) {
-            // Not unregistered: removeTestProvider would throw the same SecurityException.
-            Log.e(TAG, "Mock location app revoked mid-session", e)
-            providerAdded = false
-            setError()
-        }
-    }
-
-    /**
-     * Android adapter — the only place that touches [android.location.Location] APIs. Translates
-     * the pure [LocationFix] into a test provider location update.
-     */
-    private fun applyToProvider(
-        fix: LocationFix,
-        nowNanos: Long,
-    ) {
-        val loc =
-            Location(LocationManager.GPS_PROVIDER).apply {
-                latitude = fix.latitude
-                longitude = fix.longitude
-                altitude = fix.altitudeMeters
-                accuracy = fix.accuracyMeters
-                speed = fix.speedMs
-                if (fix.hasBearing) bearing = fix.bearing
-                time = System.currentTimeMillis()
-                elapsedRealtimeNanos = nowNanos
-                verticalAccuracyMeters = fix.verticalAccuracyMeters
-                if (fix.hasBearing) bearingAccuracyDegrees = fix.bearingAccuracyDegrees
-                speedAccuracyMetersPerSecond = fix.speedAccuracyMps
-                if (fix.satelliteCount != null && fix.usedInFixCount != null) {
-                    val extras = android.os.Bundle()
-                    extras.putInt("satellites", fix.satelliteCount)
-                    extras.putInt("usedInFix", fix.usedInFixCount)
-                    this.extras = extras
-                }
-            }
-        locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, loc)
-    }
-
     /**
      * Applies one [FollowerCatchUpCoordinator.advance] step. Called once per tick, before
      * [captureSnapshot] reads [positionRef]. FOLLOWER mode has no other in-process writer of its
@@ -1422,7 +1173,7 @@ class MockLocationService : Service() {
     }
 
     private fun pushLocationUpdate() {
-        if (!providerAdded) return
+        if (!testProvider.isAdded) return
         try {
             advanceFollowerCatchUp()
             updateSuspendedPhase()
@@ -1452,7 +1203,7 @@ class MockLocationService : Service() {
                 lastNonZeroBearing = snapshot.bearing
                 hasEverMoved = true
             }
-            applyFixOrFail(fix, nowNanos)
+            testProvider.applyFix(fix, nowNanos)
             if (shouldPersistLastLocation(lastPersistedLocationMs, nowMs)) {
                 lastPersistedLocationMs = nowMs
                 val pos = positionRef.get()

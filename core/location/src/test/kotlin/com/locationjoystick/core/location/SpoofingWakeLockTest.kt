@@ -65,13 +65,13 @@ class SpoofingWakeLockTest {
     }
 
     @Test
-    fun `service acquiring twice keeps one held lock`() {
+    fun `holder acquiring twice keeps one held lock`() {
         val wakeLock = mockk<PowerManager.WakeLock>(relaxed = true) { every { isHeld } returns true }
         val pm = mockk<PowerManager> { every { newWakeLock(any(), any()) } returns wakeLock }
-        val service = MockLocationService().apply { powerManagerOverride = pm }
+        val holder = SpoofingWakeLockHolder { pm }
 
-        service.acquireWakeLock()
-        service.acquireWakeLock()
+        holder.acquire()
+        holder.acquire()
 
         verify(exactly = 1) { pm.newWakeLock(any(), any()) }
     }

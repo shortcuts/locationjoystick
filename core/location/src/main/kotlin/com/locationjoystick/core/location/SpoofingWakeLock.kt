@@ -20,3 +20,20 @@ internal fun acquireSpoofingWakeLock(powerManager: PowerManager): PowerManager.W
 internal fun releaseSpoofingWakeLock(wakeLock: PowerManager.WakeLock?) {
     wakeLock?.let { if (it.isHeld) it.release() }
 }
+
+/** Holds the spoofing wake lock only while actively spoofing (RUNNING/PAUSED). */
+internal class SpoofingWakeLockHolder(
+    private val powerManager: () -> PowerManager,
+) {
+    @Volatile private var wakeLock: PowerManager.WakeLock? = null
+
+    fun acquire() {
+        if (wakeLock?.isHeld == true) return
+        wakeLock = acquireSpoofingWakeLock(powerManager())
+    }
+
+    fun release() {
+        releaseSpoofingWakeLock(wakeLock)
+        wakeLock = null
+    }
+}

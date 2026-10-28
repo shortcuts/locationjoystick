@@ -14,8 +14,6 @@ class LeaveGroupStopsIdleServiceTest {
         val service =
             spyk(MockLocationService()).apply {
                 locationRepository = LocationRepository()
-                leaderSyncServer = mockk(relaxed = true)
-                groupNsdManager = mockk(relaxed = true)
                 followerSyncClient = mockk(relaxed = true)
                 groupRepository = mockk(relaxed = true)
             }
@@ -23,14 +21,8 @@ class LeaveGroupStopsIdleServiceTest {
         @Suppress("UNCHECKED_CAST")
         val field = MockLocationService::class.java.getDeclaredField("_state").apply { isAccessible = true }
         (field.get(service) as MutableStateFlow<MockLocationState>).value = state
+        service.stubGroupMode()
         return service
-    }
-
-    @Test
-    fun `exit leader while idle stops the service`() {
-        val service = newService(MockLocationState.IDLE)
-        service.exitLeaderMode()
-        verify { service.stopSelf() }
     }
 
     @Test
@@ -43,7 +35,6 @@ class LeaveGroupStopsIdleServiceTest {
     @Test
     fun `leaving while spoofing keeps spoofing`() {
         val service = newService(MockLocationState.RUNNING)
-        service.exitLeaderMode()
         service.exitFollowerMode()
         verify(exactly = 0) { service.stopSelf() }
     }
