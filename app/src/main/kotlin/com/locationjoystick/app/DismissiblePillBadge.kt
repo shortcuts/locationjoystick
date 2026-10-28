@@ -54,7 +54,7 @@ internal fun DismissiblePillBadge(
                 .background(MaterialTheme.colorScheme.primary)
                 .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
                 .semantics { this.contentDescription = contentDescription }
-                .padding(start = 12.dp),
+                .padding(start = 12.dp, top = LjSpacing.sm, bottom = LjSpacing.sm, end = LjSpacing.sm),
     ) {
         Icon(
             imageVector = icon,
@@ -71,8 +71,10 @@ internal fun DismissiblePillBadge(
             contentAlignment = Alignment.Center,
             modifier =
                 Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
+                    // ponytail: 32dp trades below Material's 48dp full touch-target guidance for a
+                    // visibly smaller pill; still clears WCAG 2.5.8's 24dp AA minimum for a secondary action.
+                    .size(32.dp)
+                    .clip(MaterialTheme.shapes.small)
                     .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }, onClick = onDismiss),
         ) {
             Icon(

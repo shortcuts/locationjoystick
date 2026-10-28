@@ -30,6 +30,7 @@ import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.common.util.shareCurrentLocationCoordinates
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.DeleteItemType
 import com.locationjoystick.core.designsystem.component.FavoriteTargetDetail
 import com.locationjoystick.core.designsystem.component.FavoritesList

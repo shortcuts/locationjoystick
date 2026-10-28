@@ -749,6 +749,14 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
         favoritesManualOrderFlow.value = ids
     }
 
+    val routesManualOrderFlow = MutableStateFlow<List<String>>(emptyList())
+
+    override fun getRoutesManualOrder(): Flow<List<String>> = routesManualOrderFlow
+
+    override suspend fun setRoutesManualOrder(ids: List<String>) {
+        routesManualOrderFlow.value = ids
+    }
+
     val homeFavoriteIdFlow = MutableStateFlow<String?>(null)
 
     override fun getHomeFavoriteId(): Flow<String?> = homeFavoriteIdFlow

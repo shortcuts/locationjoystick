@@ -323,14 +323,14 @@ interface PreferencesDataSource {
      * Manual favorites order (ids, top first) set by drag. Empty = follow the sort mode. Choosing a
      * sort mode clears it, so the last action wins.
      */
-    fun getFavoritesManualOrder(): Flow<List<String>> = kotlinx.coroutines.flow.flowOf(emptyList())
+    fun getFavoritesManualOrder(): Flow<List<String>>
 
-    suspend fun setFavoritesManualOrder(ids: List<String>) {}
+    suspend fun setFavoritesManualOrder(ids: List<String>)
 
     /** Same as [getFavoritesManualOrder] for routes. */
-    fun getRoutesManualOrder(): Flow<List<String>> = kotlinx.coroutines.flow.flowOf(emptyList())
+    fun getRoutesManualOrder(): Flow<List<String>>
 
-    suspend fun setRoutesManualOrder(ids: List<String>) {}
+    suspend fun setRoutesManualOrder(ids: List<String>)
 
     /** Gets the GPS jitter idle speed variation percentage (0 = off). */
     fun getJitterSpeedIdleVariationPct(): Flow<Int>
@@ -1096,16 +1096,15 @@ class AppPreferencesDataSource
 
         override suspend fun setRoutesManualOrder(ids: List<String>) = setManualOrder(Keys.ROUTES_MANUAL_ORDER, ids)
 
-        // Unit separator: cannot appear in the uuid / hot ids that make up the list.
         private fun manualOrder(key: Preferences.Key<String>): Flow<List<String>> =
-            dataStore.data.map { prefs -> prefs[key]?.split('\u001F')?.filter { it.isNotEmpty() }.orEmpty() }
+            dataStore.data.map { prefs -> deserializeManualOrder(prefs[key]) }
 
         private suspend fun setManualOrder(
             key: Preferences.Key<String>,
             ids: List<String>,
         ) {
             dataStore.edit { prefs ->
-                if (ids.isEmpty()) prefs.remove(key) else prefs[key] = ids.joinToString("\u001F")
+                if (ids.isEmpty()) prefs.remove(key) else prefs[key] = serializeManualOrder(ids)
             }
         }
 

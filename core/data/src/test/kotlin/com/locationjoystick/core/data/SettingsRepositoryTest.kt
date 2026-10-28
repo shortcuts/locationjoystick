@@ -1517,6 +1517,20 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     private val routesSortNewestFirstFlow = MutableStateFlow(true)
     private val favoritesSortNewestFirstFlow = MutableStateFlow(true)
+    private val routesManualOrderFlow = MutableStateFlow<List<String>>(emptyList())
+    private val favoritesManualOrderFlow = MutableStateFlow<List<String>>(emptyList())
+
+    override fun getRoutesManualOrder(): Flow<List<String>> = routesManualOrderFlow
+
+    override suspend fun setRoutesManualOrder(ids: List<String>) {
+        routesManualOrderFlow.value = ids
+    }
+
+    override fun getFavoritesManualOrder(): Flow<List<String>> = favoritesManualOrderFlow
+
+    override suspend fun setFavoritesManualOrder(ids: List<String>) {
+        favoritesManualOrderFlow.value = ids
+    }
 
     override fun getRoutesSortNewestFirst(): Flow<Boolean> = routesSortNewestFirstFlow
 

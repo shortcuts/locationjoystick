@@ -32,13 +32,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.locationjoystick.core.designsystem.LjIcons import com.locationjoystick.core.designsystem.LjOnScrim
+import com.locationjoystick.core.designsystem.LjIcons
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LoadingIndicator
 import com.locationjoystick.feature.settings.impl.R
@@ -193,13 +195,13 @@ fun QrScannerScreen(
             Column(
                 modifier =
                     Modifier
-                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.7f), MaterialTheme.shapes.extraSmall)
-                        .padding(8.dp),
+                        .background(Color.Black.copy(alpha = 0.7f), MaterialTheme.shapes.extraSmall)
+                        .padding(LjSpacing.sm),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
                     label,
-                    color = LjOnScrim,
+                    color = Color.White,
                     style = MaterialTheme.typography.labelSmall,
                 )
                 if (isFetching) {

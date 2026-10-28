@@ -27,8 +27,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.data.DebugStats
 import com.locationjoystick.core.designsystem.LjIcons
-import com.locationjoystick.core.designsystem.LjOnScrim
+import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjSuccess
+import com.locationjoystick.core.designsystem.LjText
+import com.locationjoystick.core.model.ReconnectRunResult
+import com.locationjoystick.core.model.ReconnectStatus
 import com.locationjoystick.feature.widget.impl.R
 
 internal fun formatBearingText(stats: DebugStats): String = if (stats.hasBearing) "%.0f°".format(stats.bearing) else "—"
@@ -50,19 +53,19 @@ internal fun DebugStatsPanel(
         val tickHz = if (stats.tickIntervalMs > 0) 1000f / stats.tickIntervalMs else 0f
         Text(
             stringResource(R.string.widget_panel_content_2f_6f).format(stats.latitude, stats.longitude),
-            color = LjOnScrim,
+            color = LjText,
             style = MaterialTheme.typography.labelSmall,
         )
         Text(
             stringResource(R.string.widget_panel_content_speed_2f_m_s_alt_ellipsoidal_2f_m).format(stats.speedMs, stats.altitudeMeters),
-            color = LjOnScrim,
+            color = LjText,
             style = MaterialTheme.typography.labelSmall,
         )
         Text(
             stringResource(
                 R.string.widget_panel_content_acc_1f_m_bearing_s_1f_hz,
             ).format(stats.accuracyMeters, formatBearingText(stats), tickHz),
-            color = LjOnScrim,
+            color = LjText,
             style = MaterialTheme.typography.labelSmall,
         )
         if (reconnectEnabled) {
@@ -114,7 +117,7 @@ internal fun AltitudeOverrideInput(
             keyboardActions = KeyboardActions(onDone = { value.toDoubleOrNull()?.let(onConfirm) }),
         )
         IconButton(onClick = { value.toDoubleOrNull()?.let(onConfirm) }) {
-            Icon(LjIcons.Check, contentDescription = stringResource(R.string.widget_panel_confirm_altitude_cd), tint = ljSuccessColor())
+            Icon(LjIcons.Check, contentDescription = stringResource(R.string.widget_panel_confirm_altitude_cd), tint = LjSuccess)
         }
     }
 }
