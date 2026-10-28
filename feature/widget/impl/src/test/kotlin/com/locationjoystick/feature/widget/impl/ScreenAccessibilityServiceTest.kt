@@ -26,7 +26,7 @@ class ScreenAccessibilityServiceTest {
 
     private fun lumaValues(pixels: IntArray): List<Int> {
         val out = ByteArray(pixels.size)
-        ScreenAccessibilityService.lumaInto(pixels, out)
+        lumaInto(pixels, out)
         return out.map { it.toInt() and 0xFF }
     }
 }
