@@ -3,9 +3,11 @@ package com.locationjoystick.app.smoke
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.rules.ActivityScenarioRule
@@ -21,6 +23,18 @@ fun SmokeRule.waitForIdleScreen() {
     activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
     waitForIdle()
     waitForIdle()
+}
+
+fun SmokeRule.completeOnboarding() {
+    waitUntil(10_000) { onAllNodesWithText("Skip").fetchSemanticsNodes().isNotEmpty() }
+    onAllNodesWithText("Skip").filterToOne(hasAnyAncestor(isDialog())).performClick()
+    waitForIdle()
+    onNodeWithText("Continue").performClick()
+    waitForIdle()
+    onNodeWithText("Start using locationjoystick").performClick()
+    waitUntil(10_000) { onAllNodesWithText("Set up locationjoystick").fetchSemanticsNodes().isEmpty() }
+    waitForIdle()
+    Thread.sleep(3000) // DIAG
 }
 
 fun SmokeRule.openDrawer() {

@@ -1,7 +1,6 @@
 package com.locationjoystick.app.smoke
 
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithText
@@ -80,9 +79,8 @@ class ControlApiDocsSmokeTest : BaseSmokeTest() {
         // Documented: "If the Control API is off, all /api/v1/ paths return 404".
         assertEquals(404, request(port, "/status", "GET", null).responseCode)
 
-        // Only the Switch is clickable, not its label; the Sharing switch has a different label sibling.
         composeRule
-            .onNode(isToggleable() and hasAnySibling(hasText("Control API")))
+            .onNode(isToggleable() and hasText("Control API"))
             .performScrollTo()
             .assertIsEnabled()
             .performClick()

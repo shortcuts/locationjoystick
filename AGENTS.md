@@ -44,6 +44,7 @@ Work is NOT complete until affected docs are updated where they state context. T
 | `docs/features/export-import.md` | The import/export scope or its rationale changes |
 | `README.md` — feature list | Adding or removing a user-visible feature |
 | `docs/wiki/<feature>.html` | Adding or changing any user-visible feature |
+| `app/src/androidTest/kotlin/com/locationjoystick/app/smoke/` (docs/testing.md) | Any app UI or flow change: a label, content description, screen, onboarding step or default the smoke tests tap or assert. Update the test in the same commit; `make smoke-test` must stay green. |
 | `scripts/screenshot-gallery.sh` | Renaming, moving, or reordering any UI element it taps (labels, content descriptions, screen flow, defaults such as a FAB or setting that ships off). Run the affected step with `make screenshot` args `--auto --steps <N>` and confirm no `Could not find UI element` warning. |
 | `docs/wiki/changelog.html` + `docs/wiki/changelog/<version>.json` (docs/features/whats-new.md) | Any release with user-visible changes — the JSON is now the sole authored source for both: it feeds the in-app What's New popup directly, and the HTML is generated from it via `make wiki-changelog` |
 

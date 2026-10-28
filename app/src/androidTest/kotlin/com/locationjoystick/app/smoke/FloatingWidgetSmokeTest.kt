@@ -53,7 +53,7 @@ class FloatingWidgetSmokeTest : BaseSmokeTest() {
 
     @Test
     fun app_features_shows_speed_cycle_feature() {
-        composeRule.onNodeWithText("Speed cycle").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Cycles through all speed profiles with a single tap.").performScrollTo().assertIsDisplayed()
     }
 
     // Toggling flips the row to dirty, which summons the Save/Discard FABs over the bottom of
