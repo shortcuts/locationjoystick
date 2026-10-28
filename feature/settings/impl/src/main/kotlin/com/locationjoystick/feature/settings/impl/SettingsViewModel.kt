@@ -38,8 +38,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -804,9 +802,7 @@ class SettingsViewModel
             }
         }
 
-        private var qrExportJob: Job? = null
-        private val qrExportLock = Any()
-        private var qrExportCode: String? = null
+        private val exportShare = ExportShareSession(exportSyncServer, nsdCodeManager, viewModelScope)
 
         /**
          * Starts [exportSyncServer] (HTTP) and [nsdCodeManager] (NSD advertising), and emits a QR
@@ -814,45 +810,29 @@ class SettingsViewModel
          */
         fun prepareQrExport() {
             _isPreparingQrExport.value = true
-            qrExportJob =
-                viewModelScope.launch(Dispatchers.IO) {
-                    try {
-                        val json = SettingsExportCodec.serializeExportData(buildCurrentExportData())
-                        val host =
-                            NetworkUtils.getLocalIpAddress()
-                                ?: error("Cannot determine local IP — ensure Wi-Fi is connected")
-                        val code = RandomCode.generate()
-                        val port =
-                            synchronized(qrExportLock) {
-                                // stopQrExport cancels first, then takes this lock: no start can follow its stop.
-                                ensureActive()
-                                exportSyncServer.start(code, json).also {
-                                    nsdCodeManager.startAdvertising(code, it, export = true)
-                                    qrExportCode = code
-                                }
-                            }
-                        qrExportReady.emit(
-                            QrExportSession(qrText = "locationjoystick://export?host=$host&port=$port&token=$code", code = code),
-                        )
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Log.e(TAG, "QR export preparation failed", e)
-                        emitFeedback(R.string.settings_viewmodel_failed_to_prepare_qr_export, isError = true)
-                    } finally {
-                        _isPreparingQrExport.value = false
-                    }
+            exportShare.start { serve ->
+                try {
+                    val json = SettingsExportCodec.serializeExportData(buildCurrentExportData())
+                    val host =
+                        NetworkUtils.getLocalIpAddress()
+                            ?: error("Cannot determine local IP — ensure Wi-Fi is connected")
+                    val code = RandomCode.generate()
+                    val port = serve(code, json)
+                    qrExportReady.emit(
+                        QrExportSession(qrText = "locationjoystick://export?host=$host&port=$port&token=$code", code = code),
+                    )
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "QR export preparation failed", e)
+                    emitFeedback(R.string.settings_viewmodel_failed_to_prepare_qr_export, isError = true)
+                } finally {
+                    _isPreparingQrExport.value = false
                 }
-        }
-
-        fun stopQrExport() {
-            qrExportJob?.cancel()
-            synchronized(qrExportLock) {
-                exportSyncServer.stop()
-                qrExportCode?.let(nsdCodeManager::stopAdvertising)
-                qrExportCode = null
             }
         }
+
+        fun stopQrExport() = exportShare.stop()
 
         fun onQrScanned(url: String) {
             val uri = Uri.parse(url)
