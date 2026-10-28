@@ -15,7 +15,6 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.data.WalkCoordinator
-import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -35,7 +34,6 @@ import com.locationjoystick.core.routing.osrmFailureMessage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -111,7 +109,7 @@ class MapController
 
         /** Deduplicates requests to turn Follow leader off while the setting is being persisted. */
         private var followerExitJob: Job? = null
-        private var followerResumeJob: Job? = null
+        private val followerResume = FollowerResumeCoordinator(context, locationRepository, groupRepository, appScope)
 
         init {
             observeLocationState()
@@ -128,7 +126,7 @@ class MapController
             observeRoamingDefaults()
             observeMapFabFeatures()
             observeModeCompletions()
-            observeFollowerDeparture()
+            followerResume.observeDeparture()
             restoreLastLocationIfNeeded()
         }
 
@@ -571,7 +569,7 @@ class MapController
                             appScope.launch {
                                 groupRepository.setFollowerModeEnabled(false)
                                 context.startService(MockLocationIntentBuilder.exitFollower(context))
-                                resumeFollowAfterIdle()
+                                followerResume.resumeAfterIdle()
                             }
                     }
                 }
@@ -586,56 +584,6 @@ class MapController
                         // Mark this synchronously so repeated touch events do not queue more pause commands.
                         locationRepository.pauseSpoofing()
                         pauseRouteReplay()
-                    }
-                }
-            }
-        }
-
-        /**
-         * A follower that left FOLLOWER mode by hand (joystick, teleport, walk, route, roam) goes
-         * back to Follow leader once the position has been still for
-         * [AppConstants.SyncConstants.FOLLOWER_RESUME_IDLE_MS] with no activity running. A paused or
-         * playing activity just keeps the wait going. Ends when spoofing stops, the user turns
-         * following back on, or the device leaves the group.
-         */
-        private fun resumeFollowAfterIdle() {
-            followerResumeJob?.cancel()
-            followerResumeJob =
-                appScope.launch {
-                    while (true) {
-                        val before = locationRepository.currentPosition.value
-                        delay(AppConstants.SyncConstants.FOLLOWER_RESUME_IDLE_MS)
-                        val mode = locationRepository.currentMode.value
-                        if (mode == MockMode.FOLLOWER ||
-                            locationRepository.mockLocationState.value == MockLocationState.IDLE ||
-                            groupRepository.groupState.first().role != GroupRole.FOLLOWER
-                        ) {
-                            return@launch
-                        }
-                        val manual = mode == MockMode.JOYSTICK || mode == MockMode.TELEPORT
-                        if (manual && locationRepository.currentPosition.value == before) {
-                            groupRepository.setFollowerModeEnabled(true)
-                            context.startService(MockLocationIntentBuilder.resumeFollower(context))
-                            return@launch
-                        }
-                    }
-                }
-        }
-
-        /**
-         * Teleports, walks and route starts leave FOLLOWER mode without touching the Follow leader
-         * flag, so nothing would ever re-enter it. The joystick takeover clears the flag itself and
-         * starts the same wait directly.
-         */
-        private fun observeFollowerDeparture() {
-            appScope.launch {
-                var previous = locationRepository.currentMode.value
-                locationRepository.currentMode.collect { mode ->
-                    val left = previous == MockMode.FOLLOWER && mode != MockMode.FOLLOWER
-                    previous = mode
-                    if (left) {
-                        val gs = groupRepository.groupState.first()
-                        if (gs.role == GroupRole.FOLLOWER && gs.followerModeEnabled) resumeFollowAfterIdle()
                     }
                 }
             }
