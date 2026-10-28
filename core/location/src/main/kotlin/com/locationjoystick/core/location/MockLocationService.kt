@@ -57,6 +57,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
@@ -1007,10 +1008,11 @@ class MockLocationService : Service() {
                 } else {
                     Log.w(TAG, "NSD re-discovery exhausted for group $groupId — leaving group")
                     // exitFollowerMode cancels this job, which would abort the suspending leaveGroup.
-                    followerRediscoveryJob = null
-                    exitFollowerMode()
-                    groupRepository.leaveGroup()
-                    groupRepository.emitGroupLost()
+                    withContext(NonCancellable) {
+                        exitFollowerMode()
+                        groupRepository.leaveGroup()
+                        groupRepository.emitGroupLost()
+                    }
                 }
             }
     }

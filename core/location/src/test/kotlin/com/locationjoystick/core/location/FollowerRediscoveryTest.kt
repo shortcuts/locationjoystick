@@ -13,6 +13,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.junit.Test
 
 /** A rediscovery in progress must not outlive the group it was started for (group-sync.md, Edge cases). */
@@ -35,8 +36,9 @@ class FollowerRediscoveryTest {
 
     private fun MockLocationService.rediscoverAndSettle(afterStart: () -> Unit) {
         rediscoverFollowerGroup("AAA111") { host, _ -> reentered += host }
+        val started = followerRediscoveryJob
         afterStart()
-        runBlocking { followerRediscoveryJob?.join() }
+        runBlocking { started?.join() }
     }
 
     @Test
@@ -65,6 +67,8 @@ class FollowerRediscoveryTest {
     @Test
     fun `exhausted rediscovery for the current group leaves it and reports loss`() {
         val service = newService(GroupState(role = GroupRole.FOLLOWER, groupId = "AAA111"))
+        // A real leaveGroup suspends, so a cancelled caller aborts it before emitGroupLost.
+        coEvery { service.groupRepository.leaveGroup() } coAnswers { yield() }
 
         service.rediscoverAndSettle { gate.complete(null) }
 
