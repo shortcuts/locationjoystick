@@ -1499,7 +1499,9 @@ fi
 if should_run_step "25"; then
   log "=== 25 ACCESSIBILITY DISCLOSURE ==="
   # Step 20 (or an earlier run) leaves the choice "accepted", which skips the dialog.
+  # The app caches the choice in memory, so the patch must land before go_idle starts it.
   # "declined" has the same length, so patching the stored value keeps the file valid.
+  $ADB shell am force-stop "$PACKAGE"
   prefs=files/datastore/app_preferences.preferences_pb
   $ADB exec-out run-as "$PACKAGE" cat "$prefs" \
     | python3 -c 'import sys; k=b"accessibility_disclosure_choice\x12\x0a\x2a\x08"; sys.stdout.buffer.write(sys.stdin.buffer.read().replace(k+b"accepted", k+b"declined"))' \
