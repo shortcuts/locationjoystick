@@ -440,7 +440,7 @@ class MapController
         fun walkTo(position: LatLng) {
             cancelAnyActiveMovement()
             val generation = walkCoordinator.currentGeneration()
-            if (isRoamingActive()) {
+            if (roamingRepository.isRoaming.value) {
                 appScope.launch {
                     roamingRepository.stopRoaming()
                     startStraightWalk(position, generation)
@@ -449,9 +449,6 @@ class MapController
                 startStraightWalk(position, generation)
             }
         }
-
-        private fun isRoamingActive(): Boolean =
-            locationRepository.currentMode.value == MockMode.ROAMING || roamingRepository.isRoaming.value
 
         /**
          * Starts a straight walk unless [expectedGeneration] went stale — i.e. a teleport, stop
@@ -492,7 +489,7 @@ class MapController
             val generation = walkCoordinator.currentGeneration()
             pendingRoadWalkJob =
                 appScope.launch {
-                    if (isRoamingActive()) roamingRepository.stopRoaming()
+                    if (roamingRepository.isRoaming.value) roamingRepository.stopRoaming()
                     val current = locationRepository.currentPosition.value
                     if (current == null) {
                         Log.w(TAG, "walkViaRoads: no current position, straight walk")
@@ -581,7 +578,7 @@ class MapController
                 mode == MockMode.WALK_TO || pendingRoadWalkJob?.isActive == true -> {
                     if (!locationRepository.isWalkPaused.value) pauseWalk()
                 }
-                mode == MockMode.ROAMING || roamingRepository.isRoaming.value -> {
+                roamingRepository.isRoaming.value -> {
                     if (!roamingRepository.isRoamingPaused.value) roamingRepository.pauseRoaming()
                 }
                 mode == MockMode.ROUTE_REPLAY || locationRepository.isRoadRouteFetchInFlight.value -> {
