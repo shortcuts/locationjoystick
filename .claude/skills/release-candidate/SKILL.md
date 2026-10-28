@@ -16,12 +16,10 @@ Done when every step below has run and every failure it found is logged.
 
 ## Step 0: Baseline
 
-Resolve radin's per-project namespace to locate `BACKLOG_FILE`. Read-only here — the
-count detects net-new entries at the end:
+Count the backlog entries. Read-only here — the count detects net-new entries at the end:
 
 ```bash
-bash "$HOME/.claude/radin-lib/radin-namespace.sh"
-grep -c '^### ' "$BACKLOG_FILE" 2>/dev/null || echo "0"
+radin backlog count
 ```
 
 Identify the last release tag, which bounds "since last release" everywhere below:
@@ -32,18 +30,17 @@ git describe --tags --abbrev=0 2>/dev/null || git log --oneline | tail -1 | awk 
 
 ## Step 1: Build pipeline
 
-Each step is a hard gate. A non-zero exit stops the pipeline there.
+Run each gate alone, in this order. A non-zero exit stops the pipeline there.
 
-```bash
-make format 2>&1
-make lint   2>&1
-make build  2>&1
-```
+- `make format 2>&1`
+- `make lint 2>&1`
+- `make build 2>&1`
 
-Per failure, invoke `radin-record`:
+Per failed gate, invoke `radin-record`:
 
-> Log a fix: build pipeline failure in `make <step>`. Exit code <N>. Output:
-> <last 30 lines>
+> Log a fix: `make <target>` failed. Exit code <N>. Output: <last 30 lines>
+
+Done when all three gates exit 0, or the failing gate is logged.
 
 ## Step 2: Tests
 
@@ -55,18 +52,30 @@ On failure, invoke `radin-record`:
 
 > Log a fix: `make test` failed. Failures: <failing test names / error summary>
 
-**Smoke tests.** Check for a connected Android device:
+**Live checks.** The maintainer runs `make smoke-test` by hand on a connected device. This
+audit never asks whether to run it and never waits for its result.
+
+Done when `make test` exits 0, or its failure is logged.
+
+## Step 3: CI
+
+Local gates do not prove the pipeline is green. Check the latest run on `main`:
 
 ```bash
-adb devices 2>/dev/null | grep -v "List of devices" | grep -v "^$"
+gh run list --branch main --limit 1 --json conclusion,headSha,url
 ```
 
-A device appears: ask whether to run `make smoke-test` — it covers all navigation paths
-and takes a few minutes. On a yes and a failure, invoke `radin-record`:
+Done when the run's `headSha` equals `git rev-parse HEAD` and its `conclusion` is
+`success`. An empty `conclusion` means the run is still in progress: it does not pass.
 
-> Log a fix: `make smoke-test` failed. Failing tests: <failing test names>
+An older SHA or a failure: invoke `radin-record` with the run URL. For a failure, add the
+failing job:
 
-## Step 3: Documentation consistency
+```bash
+gh run view <run-id> --json jobs --jq '.jobs[] | select(.conclusion == "failure") | .name'
+```
+
+## Step 4: Documentation consistency
 
 The codebase is the source of truth. Every user-facing change since the last release
 appears in at least one of: `README.md`, `AGENTS.md`, `docs/`, `docs/wiki/`.
@@ -99,12 +108,12 @@ Per gap, invoke `radin-record`:
 A doc that exists and covers the change passes. A user-visible feature with no doc is a
 gap. Skip cosmetic nits.
 
-## Step 4: Intermediate verdict
+## Step 5: Intermediate verdict
 
-Count entries again and compare to the Step 0 baseline. New entries: report the ❌
-verdict below and stop. No new entries: continue to Step 5.
+Run `radin backlog count` and compare it to the Step 0 baseline. New entries: report the ❌
+verdict below and stop. No new entries: continue to Step 6.
 
-## Step 5: Thermo-nuclear code quality review
+## Step 6: Thermo-nuclear code quality review
 
 Invoke `radin-review` — it runs the review and logs each finding itself:
 
@@ -114,16 +123,36 @@ Invoke `radin-review` — it runs the review and logs each finding itself:
 Log only findings that meet the thermo-nuclear bar: structural regressions, missed
 code-judo, spaghetti growth, bad abstractions, file-size explosions.
 
-## Step 6: Verdict
+## Step 7: Release PR
 
-Count entries and compare to the Step 0 baseline.
+Merging the release-please PR tags the release and ships it. Inspect it before the verdict:
 
-No new entries across Steps 1–5:
+```bash
+gh pr list --search 'chore(main): release in:title' --json number,title,headRefName,url
+gh pr view <PR#> --json body,mergeable,statusCheckRollup
+```
 
-> ✅ Release is ready. All checks passed: format, lint, build, tests, documentation
-> consistency, and thermo-nuclear code quality review.
+1. The PR exists. None means no `feat` or `fix` commit landed since the tag: nothing to release.
+2. The proposed version matches the commits under the rules in `release-please-config.json`.
+3. The PR body lists every user-facing `feat` and `fix` since the tag. Compare it with
+   `git log <last-release-tag>..HEAD --oneline`.
+4. The PR is mergeable and every check in `statusCheckRollup` passes.
 
-Then do Step 7.
+Per defect, invoke `radin-record` with the PR URL. A wrong version is a bad commit message:
+fix it at the source, never by editing `CHANGELOG.md` or `.release-please-manifest.json`.
+
+Done when items 2–4 hold, or each defect is logged.
+
+## Step 8: Verdict
+
+Run `radin backlog count` and compare it to the Step 0 baseline.
+
+No new entries across Steps 1–7:
+
+> ✅ Release is ready. All checks passed: format, lint, build, tests, CI, documentation
+> consistency, thermo-nuclear code quality review, and release PR.
+
+Then do Step 9.
 
 New entries:
 
@@ -133,7 +162,7 @@ New entries:
 > Issues logged:
 > - [headings of the items added during this run]
 
-## Step 7: Changelog (✅ verdict only)
+## Step 9: Changelog (✅ verdict only)
 
 Tell the user, verbatim in substance:
 
