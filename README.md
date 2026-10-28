@@ -41,6 +41,10 @@ The [wiki](https://locationjoystick.shrtcts.fr/) describes every feature, includ
 - Reconnect your Bluetooth accessory automatically when it drops (optional).
 - Pick your game during setup to hide the features it does not need. You can change this in Settings.
 - Tap to Walk: tap the game screen to walk your fake location toward that spot, without opening the app.
+- Back up your routes, favorites, and settings to a file, and restore them later or on a new phone. [Backup and transfer](https://locationjoystick.shrtcts.fr/backup-transfer.html)
+- Copy your data to another phone with a QR code or a short code. [Backup and transfer](https://locationjoystick.shrtcts.fr/backup-transfer.html#transfer-to-another-phone)
+- Import routes from GPX files and other apps. [Backup and transfer](https://locationjoystick.shrtcts.fr/backup-transfer.html#import-from-other-apps)
+- Group Sync: make other phones on the same Wi-Fi follow one leader phone. [Group Sync](https://locationjoystick.shrtcts.fr/group.html)
 - See an "update available" badge (checked about once a day) and a "What's new" badge on the Home screen.
 
 ## Community
