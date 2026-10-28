@@ -1498,7 +1498,6 @@ fi
 
 if should_run_step "25"; then
   log "=== 25 ACCESSIBILITY DISCLOSURE ==="
-  go_idle
   # Step 20 (or an earlier run) leaves the choice "accepted", which skips the dialog.
   # "declined" has the same length, so patching the stored value keeps the file valid.
   prefs=files/datastore/app_preferences.preferences_pb
@@ -1507,6 +1506,8 @@ if should_run_step "25"; then
     > "$TMPDIR/prefs.pb"
   $ADB shell run-as "$PACKAGE" sh -c "'cat > $prefs'" < "$TMPDIR/prefs.pb"
   rm -f "$TMPDIR/prefs.pb"
+  # The running app caches the old choice; go_idle restarts it so it reads the patched file.
+  go_idle
   tap_text_below "Settings" "$CARD_Y_MIN"
   wait_s 2 "Settings loading"
   tap_text "Menus"
