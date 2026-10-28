@@ -84,25 +84,25 @@ class AutoFitCoordinator
         /** One tick: a screenshot only while the gate is open and the player moved since the last tick. */
         internal suspend fun tick() {
             val pos = locationRepository.currentPosition.value
-            val gate =
-                active.value &&
-                    locationRepository.mockLocationState.value == MockLocationState.RUNNING &&
-                    locationRepository.currentMode.value in CAPTURE_MODES
-            val moved = gate && pos != null && lastTick?.let { it.distanceTo(pos) >= MIN_STEP_M } == true
+            val from = shouldSample(pos)
             lastTick = pos
-            if (!moved) return endWalk()
+            if (from == null) return endWalk()
             val crops = withContext(analysisDispatcher) { screenCaptureSource.captureCrops() } ?: return endWalk()
             val after = locationRepository.currentPosition.value ?: return endWalk()
-            val at = LatLng((pos!!.latitude + after.latitude) / 2, (pos.longitude + after.longitude) / 2)
-            val now = nowMs()
+            val cur =
+                Sample(
+                    crops,
+                    LatLng((from.latitude + after.latitude) / 2, (from.longitude + after.longitude) / 2),
+                    nowMs(),
+                )
             val prev = last
-            last = Sample(crops, at, now)
+            last = cur
             if (prev == null) return
-            if (prev.at.distanceTo(at) / maxOf((now - prev.atMs) / 1000.0, 1e-3) > AppConstants.TapToWalkConstants.FLOW_MAX_SPEED_MPS) {
+            if (isTeleport(prev, cur)) {
                 moves.clear() // a teleport or a vehicle: the camera may have changed, and the flow is too large to measure
                 return
             }
-            val move = GroundFlowFit.move(prev.crops, crops, CalibrationWalkMath.offset(prev.at, at, prev.at.latitude)) ?: return
+            val move = nextMove(prev, cur) ?: return
             if (runningFit?.let { GroundFlowFit.changesCamera(it, move, crops.width, crops.height) } == true) {
                 moves.clear() // a pinch or twist: the moves before it belong to another camera
                 runningFit = null
@@ -112,6 +112,34 @@ class AutoFitCoordinator
             if (moves.size < MIN_MOVES) return
             val fit = withContext(analysisDispatcher) { GroundFlowFit.fit(moves.toList(), crops.width, crops.height) } ?: return
             runningFit = fit
+            maybePersist(fit, crops)
+        }
+
+        private fun shouldSample(pos: LatLng?): LatLng? {
+            val gate =
+                active.value &&
+                    locationRepository.mockLocationState.value == MockLocationState.RUNNING &&
+                    locationRepository.currentMode.value in CAPTURE_MODES
+            val moved = gate && pos != null && lastTick?.let { it.distanceTo(pos) >= MIN_STEP_M } == true
+            return pos.takeIf { moved }
+        }
+
+        private fun isTeleport(
+            prev: Sample,
+            cur: Sample,
+        ): Boolean =
+            prev.at.distanceTo(cur.at) / maxOf((cur.atMs - prev.atMs) / 1000.0, 1e-3) >
+                AppConstants.TapToWalkConstants.FLOW_MAX_SPEED_MPS
+
+        private fun nextMove(
+            prev: Sample,
+            cur: Sample,
+        ): LegMove? = GroundFlowFit.move(prev.crops, cur.crops, CalibrationWalkMath.offset(prev.at, cur.at, prev.at.latitude))
+
+        private suspend fun maybePersist(
+            fit: GroundFit,
+            crops: GroundFlowFit.Crops,
+        ) {
             val keep = settingsRepository.getGroundCalibration().first()?.takeIf { it.matches(crops.width, crops.height) }
             if (!GroundFlowFit.replaces(keep?.calibration, fit, moves.size)) return
             Log.d(TAG, "flow fit ${fit.calibration.headingDeg} deg, ${fit.calibration.lateralPxPerM} px/m from ${moves.size} moves")

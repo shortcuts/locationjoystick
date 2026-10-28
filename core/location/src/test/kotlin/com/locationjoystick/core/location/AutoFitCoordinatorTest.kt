@@ -119,7 +119,7 @@ class AutoFitCoordinatorTest {
             val c = coordinator()
             c.tick()
             repeat(4) { step(c, 70.0, 0.4) }
-            coVerify(exactly = 0) { source.captureGrayFrame() }
+            coVerify(exactly = 0) { source.captureCrops() }
         }
 
     @Test
