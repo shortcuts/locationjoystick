@@ -21,8 +21,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
@@ -80,18 +78,13 @@ class ScreenAccessibilityService :
     }
 
     /**
-     * Periodic reconnect check (docs/features/bluetooth-reconnect-tap.md). Runs only while the
-     * setting, the accessibility disclosure and the guided path allow it; `collectLatest` cancels a run in flight the
-     * moment any of them turns off.
+     * Periodic reconnect check (docs/features/bluetooth-reconnect-tap.md). Runs only while
+     * `ScreenFeatureGates` allows it; `collectLatest` cancels a run in flight the moment it turns off.
      */
     private fun startReconnectLoop() {
         serviceScope.launch {
-            combine(
-                settingsRepository.getReconnectTapEnabled(),
-                settingsRepository.getAccessibilityDisclosureAccepted(),
-                settingsRepository.getGuidedPath(),
-                ::reconnectLoopActive,
-            ).distinctUntilChanged()
+            settingsRepository
+                .getEffectiveReconnect()
                 .collectLatest { active ->
                     if (!active) {
                         screenCaptureSource.reportReconnect(null)

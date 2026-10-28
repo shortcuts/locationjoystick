@@ -48,12 +48,7 @@ class ScreenCaptureSource
          * path, service bound. AutoFitCoordinator drops its crops when this turns false (storage and consent).
          */
         val captureAllowed: Flow<Boolean> =
-            combine(
-                settingsRepository.getAccessibilityDisclosureAccepted(),
-                settingsRepository.getTapToWalkOverlayEnabled(),
-                settingsRepository.getGuidedPath(),
-                service,
-            ) { accepted, on, path, svc -> accepted && on && path.showsTapToWalk && svc != null }
+            combine(settingsRepository.getEffectiveTapToWalk(), service) { active, svc -> active && svc != null }
 
         /**
          * The fit crops of one screenshot for the automatic tap-to-walk fit, or null (unbound, disclosure

@@ -38,6 +38,7 @@ import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RouteStartConfig
+import com.locationjoystick.core.model.ScreenFeatureGates
 import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.core.model.isRoutePlaying
@@ -215,7 +216,7 @@ class FloatingWidgetService :
             )
         tapToWalkVisible =
             combine(settingsRepository.getTapToWalkOverlayEnabled(), settingsRepository.getGuidedPath()) { enabled, path ->
-                enabled && path.showsTapToWalk
+                ScreenFeatureGates.tapToWalkShown(enabled, path)
             }.stateIn(lifecycleScope, SharingStarted.Eagerly, false)
         groundCalibration =
             settingsRepository
@@ -375,12 +376,7 @@ class FloatingWidgetService :
             val debugStatsEnabled by settingsRepository.getDebugStatsEnabled().collectAsStateWithLifecycle(initialValue = false)
             val debugStats by locationRepository.debugStats.collectAsStateWithLifecycle(initialValue = null)
             val reconnectStatus by screenCaptureSource.reconnectStatus.collectAsStateWithLifecycle()
-            val reconnectEnabled by combine(
-                settingsRepository.getReconnectTapEnabled(),
-                settingsRepository.getAccessibilityDisclosureAccepted(),
-                settingsRepository.getGuidedPath(),
-                ::reconnectLoopActive,
-            ).collectAsStateWithLifecycle(initialValue = false)
+            val reconnectEnabled by settingsRepository.getEffectiveReconnect().collectAsStateWithLifecycle(initialValue = false)
             val routeProgress by locationRepository.routeProgress.collectAsStateWithLifecycle(initialValue = null)
 
             val themeMode by settingsRepository.getThemeMode().collectAsStateWithLifecycle(

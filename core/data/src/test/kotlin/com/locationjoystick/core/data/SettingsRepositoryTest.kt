@@ -1206,6 +1206,23 @@ class SettingsRepositoryTest {
             assertTrue(repository.getReconnectTapEnabled().first())
         }
 
+    @Test
+    fun `effective flows follow their inputs and the sdk floor`() =
+        runTest {
+            fakeDataSource.accessibilityDisclosureChoiceFlow.value = AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED
+            repository.setTapToWalkOverlayEnabled(true)
+            repository.setReconnectTapEnabled(true)
+
+            assertFalse(repository.getEffectiveTapToWalk(sdkInt = 29).first())
+            assertFalse(repository.getEffectiveReconnect(sdkInt = 29).first())
+            assertTrue(repository.getEffectiveTapToWalk(sdkInt = 30).first())
+            assertTrue(repository.getEffectiveReconnect(sdkInt = 30).first())
+
+            repository.setGuidedPath(GuidedPath.PIKMIN_BLOOM)
+            assertFalse(repository.getEffectiveTapToWalk(sdkInt = 30).first())
+            assertFalse(repository.getEffectiveReconnect(sdkInt = 30).first())
+        }
+
     // resetAllData
 
     @Test
@@ -1705,9 +1722,13 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override fun getFloatingMapQuickWalk(): Flow<Boolean> = flowOf(false)
 
-    override fun getTapToWalkOverlayEnabled(): Flow<Boolean> = flowOf(false)
+    val tapToWalkOverlayEnabledFlow = MutableStateFlow(false)
 
-    override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) = Unit
+    override fun getTapToWalkOverlayEnabled(): Flow<Boolean> = tapToWalkOverlayEnabledFlow
+
+    override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) {
+        tapToWalkOverlayEnabledFlow.value = enabled
+    }
 
     val groundCalibrationFlow = MutableStateFlow<StoredGroundCalibration?>(null)
 

@@ -3,7 +3,6 @@ package com.locationjoystick.core.location
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.GrayImage
 import com.locationjoystick.core.model.GroundFlowFit
-import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.ReconnectRunResult
 import com.locationjoystick.core.model.ReconnectStatus
 import io.mockk.every
@@ -22,9 +21,7 @@ class ScreenCaptureSourceTest {
         tapToWalk: Boolean = true,
     ): ScreenCaptureSource {
         val repository = mockk<SettingsRepository>()
-        every { repository.getAccessibilityDisclosureAccepted() } returns flowOf(accepted)
-        every { repository.getTapToWalkOverlayEnabled() } returns flowOf(tapToWalk)
-        every { repository.getGuidedPath() } returns flowOf(GuidedPath.POKEMON_GO)
+        every { repository.getEffectiveTapToWalk(any()) } returns flowOf(accepted && tapToWalk)
         return ScreenCaptureSource(repository).apply {
             if (bound) {
                 bind(

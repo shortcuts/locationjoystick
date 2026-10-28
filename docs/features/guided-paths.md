@@ -1,6 +1,6 @@
 # Guided Paths (Game Setup)
 
-A guided path is a setup choice that hides features a given game does not need. It never changes a stored value, a default, or a running session. Beyond hiding UI, it gates the runtime of Tap to Walk and Reconnect Accessory.
+A guided path is a setup choice that hides features a given game does not need. It never changes a stored value, a default, or a running session. Beyond hiding UI, it gates the runtime of Tap to Walk and Reconnect Accessory. That rule lives once in `ScreenFeatureGates`, with the API 30 floor, so the settings, widget and service cannot drift.
 
 Key files: `:core:model/GuidedPath.kt` (the path flags), `:core:data/SettingsRepository.kt`, the onboarding picker, and the Game setup section of General settings.
 

@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.widget.impl
 
 import android.os.Build
+import com.locationjoystick.core.model.ScreenFeatureGates
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -9,6 +10,11 @@ class ScreenAccessibilityServiceTest {
     @Test
     fun belowApi30_unsupported() {
         assertFalse(ScreenAccessibilityService.isSupported(Build.VERSION_CODES.Q))
+    }
+
+    @Test
+    fun gateFloor_matchesPlatformR() {
+        assertEquals(Build.VERSION_CODES.R, ScreenFeatureGates.MIN_SDK)
     }
 
     @Test

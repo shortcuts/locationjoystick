@@ -1,6 +1,5 @@
 package com.locationjoystick.feature.widget.impl
 
-import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.ReconnectRunResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.currentTime
@@ -229,15 +228,6 @@ class ReconnectTapRunnerTest {
                 kotlinx.coroutines.runBlocking { guardedReconnectCheck({}) { throw kotlinx.coroutines.CancellationException("c") } }
             }
         }
-
-    @Test
-    fun loopGate_pikminBloomStopsLoopButOtherPathsKeepIt() {
-        assertTrue(reconnectLoopActive(true, true, GuidedPath.DEFAULT))
-        assertTrue(reconnectLoopActive(true, true, GuidedPath.POKEMON_GO))
-        assertFalse(reconnectLoopActive(true, true, GuidedPath.PIKMIN_BLOOM))
-        assertFalse(reconnectLoopActive(false, true, GuidedPath.DEFAULT))
-        assertFalse(reconnectLoopActive(true, false, GuidedPath.DEFAULT))
-    }
 
     @Test
     fun `gate opens only for screen on and game package`() {

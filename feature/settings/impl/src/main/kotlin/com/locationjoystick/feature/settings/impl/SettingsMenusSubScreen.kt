@@ -56,6 +56,7 @@ import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FeatureSurface
+import com.locationjoystick.core.model.ScreenFeatureGates
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.feature.settings.impl.R
 import kotlin.math.roundToInt
@@ -121,7 +122,7 @@ internal fun SettingsMenusSubScreen(
                             TapToWalkSection(uiState, onAction)
                         }
                         // Same API 30 floor as the screenshot the check depends on.
-                        if (uiState.guidedPath.showsReconnectAccessory && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        if (uiState.guidedPath.showsReconnectAccessory && Build.VERSION.SDK_INT >= ScreenFeatureGates.MIN_SDK) {
                             SettingsSectionDivider()
                             ReconnectTapSection(uiState, onAction)
                         }
@@ -286,9 +287,9 @@ internal fun showsServiceOffHint(
 ): Boolean = featureOn && !serviceGranted
 
 // A switch on a section the guided path hides does not count: the user cannot see it.
-private fun tapToWalkOn(ui: SettingsUiState) = ui.guidedPath.showsTapToWalk && ui.tapToWalkOverlayEnabled
+private fun tapToWalkOn(ui: SettingsUiState) = ScreenFeatureGates.tapToWalkShown(ui.tapToWalkOverlayEnabled, ui.guidedPath)
 
-private fun reconnectOn(ui: SettingsUiState) = ui.guidedPath.showsReconnectAccessory && ui.reconnectTapEnabled
+private fun reconnectOn(ui: SettingsUiState) = ScreenFeatureGates.reconnectShown(ui.reconnectTapEnabled, ui.guidedPath)
 
 private fun openAccessibilitySettings(context: android.content.Context) {
     context.startActivity(

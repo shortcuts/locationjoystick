@@ -1,5 +1,6 @@
 package com.locationjoystick.core.data
 
+import android.os.Build
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.datastore.PreferencesDataSource
 import com.locationjoystick.core.datastore.SettingsSnapshot
@@ -13,12 +14,14 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.core.model.ScreenFeatureGates
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -405,6 +408,22 @@ class SettingsRepository
         fun getReconnectTapEnabled(): Flow<Boolean> = dataSource.getReconnectTapEnabled()
 
         suspend fun setReconnectTapEnabled(enabled: Boolean) = dataSource.setReconnectTapEnabled(enabled)
+
+        fun getEffectiveTapToWalk(sdkInt: Int = Build.VERSION.SDK_INT): Flow<Boolean> =
+            combine(
+                getTapToWalkOverlayEnabled(),
+                getAccessibilityDisclosureAccepted(),
+                getGuidedPath(),
+            ) { enabled, accepted, path -> ScreenFeatureGates.tapToWalkActive(enabled, accepted, path, sdkInt) }
+                .distinctUntilChanged()
+
+        fun getEffectiveReconnect(sdkInt: Int = Build.VERSION.SDK_INT): Flow<Boolean> =
+            combine(
+                getReconnectTapEnabled(),
+                getAccessibilityDisclosureAccepted(),
+                getGuidedPath(),
+            ) { enabled, accepted, path -> ScreenFeatureGates.reconnectActive(enabled, accepted, path, sdkInt) }
+                .distinctUntilChanged()
 
         fun getSettingsSnapshot(): Flow<SettingsSnapshot> = dataSource.getSettingsSnapshot()
 
