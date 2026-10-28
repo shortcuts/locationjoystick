@@ -991,6 +991,10 @@ if grep -qi "onboarding\|Welcome\|grant\|permission\|Accessibility" "$dump" 2>/d
     $ADB shell am start -n "${PACKAGE}/${ACTIVITY}" >/dev/null
     wait_s 3 "App starting"
 
+    # The restart lands on permission screen 1; its Continue button opens the path picker.
+    tap_text_exact "Continue" 2>/dev/null || log "Continue button not found; the check below will catch it"
+    wait_s 2 "Opening path picker"
+
     if should_run_step "27"; then
       log "=== 27 ONBOARDING PATH PICKER ==="
       screenshot "27_onboarding_path_picker"
