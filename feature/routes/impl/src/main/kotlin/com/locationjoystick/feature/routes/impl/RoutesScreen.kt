@@ -294,7 +294,6 @@ internal fun RoutesScreen(
                                         onResumeReplay = onResumeReplay,
                                         onStopReplay = onStopReplay,
                                         hideTeleportFeatures = uiState.hideTeleportFeatures,
-                                        showPlanting = uiState.showPlanting,
                                     )
                                 }
                             }
@@ -409,7 +408,6 @@ private fun RouteCard(
     onStopReplay: () -> Unit,
     modifier: Modifier = Modifier,
     hideTeleportFeatures: Boolean = false,
-    showPlanting: Boolean = true,
     isRoadRouteFetchInFlight: Boolean = false,
     onMoveToGroup: (() -> Unit)? = null,
 ) {
@@ -590,7 +588,6 @@ private fun RouteCard(
                     },
                     onCancel = { showStartDialog = false },
                     hideTeleport = hideTeleportFeatures,
-                    showPlanting = showPlanting,
                     isTeleportRoute = route.routeType == RouteType.TELEPORT,
                     isPlantedRoute = route.plantingRadiusMeters != null,
                     isRoadRoute = route.routeType == RouteType.GUIDED,

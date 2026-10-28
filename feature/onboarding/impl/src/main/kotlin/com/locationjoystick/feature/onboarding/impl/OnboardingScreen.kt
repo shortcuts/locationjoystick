@@ -57,6 +57,7 @@ import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.WideContentClamp
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.AppLanguage
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.feature.onboarding.api.ONBOARDING_ROUTE
 import com.locationjoystick.feature.onboarding.impl.R
 
@@ -408,7 +409,7 @@ private fun SkipMockLocationConfirmDialog(
 @Preview(showBackground = true)
 @Composable
 private fun OnboardingScreenPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         OnboardingScreen(
             uiState =
                 OnboardingUiState(
@@ -425,7 +426,7 @@ private fun OnboardingScreenPreview() {
 @Preview(showBackground = true, name = "Debug — permissions missing")
 @Composable
 private fun OnboardingScreenDebugPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         OnboardingScreen(
             uiState =
                 OnboardingUiState(

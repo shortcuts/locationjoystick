@@ -52,6 +52,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
+import com.locationjoystick.core.designsystem.LocalGuidedPath
 import com.locationjoystick.core.designsystem.component.LjAlertDialog
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjCard
@@ -451,7 +452,7 @@ internal fun PasteCoordinatesScreen(
                             )
                         }
 
-                        if (state.showPlanting) {
+                        if (LocalGuidedPath.current.showsPlanting) {
                             LjSelectionRow(
                                 mode = LjSelectionMode.Toggle,
                                 title = stringResource(R.string.paste_planting_toggle),

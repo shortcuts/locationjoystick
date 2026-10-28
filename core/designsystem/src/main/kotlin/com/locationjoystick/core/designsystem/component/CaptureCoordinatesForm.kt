@@ -43,6 +43,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.R
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import kotlinx.coroutines.launch
 
@@ -523,7 +524,7 @@ private fun PointActionButton(
 @Preview
 @Composable
 private fun CaptureCoordinatesFormPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         CaptureCoordinatesForm(
             captureMode =
                 CaptureModeState(
@@ -565,7 +566,7 @@ private fun CaptureCoordinatesFormPreview() {
 @Preview
 @Composable
 private fun CaptureCoordinatesFormSetupPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         CaptureCoordinatesForm(
             captureMode =
                 CaptureModeState(
@@ -607,7 +608,7 @@ private fun CaptureCoordinatesFormSetupPreview() {
 @Preview
 @Composable
 private fun CaptureSetupStepsPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         CaptureSetupSteps(
             state =
                 CaptureSetupState(

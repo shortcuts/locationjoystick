@@ -48,6 +48,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.R
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RouteStartConfig
 import kotlinx.coroutines.launch
@@ -73,7 +74,6 @@ fun PasteCoordinatesForm(
     onStartRoute: (points: List<LatLng>, config: RouteStartConfig) -> Unit,
     modifier: Modifier = Modifier,
     hideTeleportFeatures: Boolean = false,
-    showPlanting: Boolean = true,
     showTitle: Boolean = true,
     title: String? = null,
     initialText: String = "",
@@ -383,7 +383,6 @@ fun PasteCoordinatesForm(
                         teleportBetweenDelaySecondsText = teleportBetweenDelaySecondsText,
                         onTeleportBetweenDelaySecondsTextChange = { teleportBetweenDelaySecondsText = it },
                         hideTeleport = hideTeleportFeatures,
-                        showPlanting = showPlanting,
                     )
                     Button(
                         onClick = {
@@ -456,7 +455,7 @@ private fun Modifier.verticalEdgeFade(
 @Preview(showBackground = true)
 @Composable
 private fun PasteCoordinatesFormPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         PasteCoordinatesForm(
             onDismiss = {},
             onTeleport = {},
@@ -472,7 +471,7 @@ private fun PasteCoordinatesFormPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun PasteCoordinatesFormHideTeleportPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         PasteCoordinatesForm(
             onDismiss = {},
             onTeleport = {},

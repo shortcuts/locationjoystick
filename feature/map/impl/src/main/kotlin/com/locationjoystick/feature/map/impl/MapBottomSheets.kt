@@ -117,7 +117,6 @@ internal fun RoutesPickerSheet(
                         onAction(MapAction.CloseRoutesSheet)
                     },
                     hideTeleport = uiState.hideTeleportFeatures,
-                    showPlanting = uiState.showPlanting,
                     isTeleportRoute = route?.routeType == RouteType.TELEPORT,
                     isPlantedRoute = route?.plantingRadiusMeters != null,
                     isRoadRoute = route?.routeType == RouteType.GUIDED,
@@ -204,7 +203,6 @@ internal fun PasteCoordinatesSheet(
     onSaveRoute: (name: String, points: List<LatLng>) -> Unit,
     onStartRoute: (points: List<LatLng>, config: RouteStartConfig) -> Unit,
     hideTeleportFeatures: Boolean = false,
-    showPlanting: Boolean = true,
     title: String? = null,
     initialText: String = "",
     initialRouteName: String = "",
@@ -226,7 +224,6 @@ internal fun PasteCoordinatesSheet(
             onSaveRoute = onSaveRoute,
             onStartRoute = onStartRoute,
             hideTeleportFeatures = hideTeleportFeatures,
-            showPlanting = showPlanting,
             title = title,
             initialText = initialText,
             initialRouteName = initialRouteName,

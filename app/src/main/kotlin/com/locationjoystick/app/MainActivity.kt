@@ -93,6 +93,7 @@ class MainActivity : ComponentActivity() {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val themeMode by themeViewModel.themeMode.collectAsStateWithLifecycle()
             val darkTheme = themeMode == ThemeMode.DARK
+            val guidedPath by themeViewModel.guidedPath.collectAsStateWithLifecycle()
             // The default auto style follows the system theme, not the in-app choice.
             LaunchedEffect(darkTheme) {
                 val barStyle =
@@ -103,7 +104,7 @@ class MainActivity : ComponentActivity() {
                     }
                 enableEdgeToEdge(statusBarStyle = barStyle, navigationBarStyle = barStyle)
             }
-            LjTheme(darkTheme = darkTheme) {
+            LjTheme(guidedPath = guidedPath, darkTheme = darkTheme) {
                 val accessibilityViewModel: AccessibilityDisclosureViewModel = hiltViewModel()
                 val showAccessibilityDisclosure by showAccessibilityDisclosureFlow.collectAsStateWithLifecycle()
                 // The first-run disclosure lives in onboarding; this serves the widget/intent path.

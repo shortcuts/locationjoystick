@@ -21,7 +21,6 @@ internal fun PasteCoordinatesFloatingView(
     onSaveRoute: (name: String, points: List<LatLng>) -> Unit,
     onStartRoute: (points: List<LatLng>, config: RouteStartConfig) -> Unit,
     hideTeleport: Boolean = false,
-    showPlanting: Boolean = true,
     minimized: Boolean = false,
     onToggleMinimize: () -> Unit = {},
 ) {
@@ -43,7 +42,6 @@ internal fun PasteCoordinatesFloatingView(
             onSaveRoute = onSaveRoute,
             onStartRoute = onStartRoute,
             hideTeleportFeatures = hideTeleport,
-            showPlanting = showPlanting,
             showTitle = false,
             contentPadding = PaddingValues(0.dp),
         )

@@ -39,6 +39,7 @@ import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.model.CalibrationWalkMath
 import com.locationjoystick.core.model.GroundFlowFit
 import com.locationjoystick.core.model.GroundMap
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.distanceTo
@@ -69,7 +70,7 @@ internal class TapToWalkOverlay(
                 setViewTreeLifecycleOwner(lifecycleOwner)
                 setViewTreeSavedStateRegistryOwner(savedStateRegistryOwner)
                 setContent {
-                    LjTheme {
+                    LjTheme(guidedPath = GuidedPath.DEFAULT) {
                         TapToWalkOverlayContent(
                             hint = hint,
                             onTap = { x, y ->

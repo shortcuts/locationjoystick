@@ -44,7 +44,6 @@ internal fun BoxScope.OverlayRoamingSheet(
     speedUnit: SpeedUnit,
     mockLocationState: MockLocationState,
     routePlaying: Boolean,
-    showPlanting: Boolean,
     hasPreview: Boolean,
     onGeneratePreviewRoute: suspend (RoamingConfig) -> List<LatLng>?,
     onPreviewGenerated: (List<LatLng>?) -> Unit,
@@ -92,7 +91,6 @@ internal fun BoxScope.OverlayRoamingSheet(
                     hasPreview = hasPreview,
                     isPreviewLoading = isPreviewLoading,
                     routePlaying = routePlaying,
-                    showPlanting = showPlanting,
                     onDraftChange = { draft = it },
                     onGenerate = { kind ->
                         val next = draft.copy(kind = kind)
@@ -125,7 +123,6 @@ internal fun BoxScope.OverlayPasteCoordinatesSheet(
     onSaveRoute: (name: String, points: List<LatLng>) -> Unit,
     onStartRoute: (points: List<LatLng>, config: RouteStartConfig) -> Unit,
     hideTeleportFeatures: Boolean = false,
-    showPlanting: Boolean = true,
 ) {
     Box(modifier = Modifier.fillMaxSize().clickable { onDismiss() })
     Box(
@@ -160,7 +157,6 @@ internal fun BoxScope.OverlayPasteCoordinatesSheet(
                     onSaveRoute = onSaveRoute,
                     onStartRoute = onStartRoute,
                     hideTeleportFeatures = hideTeleportFeatures,
-                    showPlanting = showPlanting,
                 )
             }
         }

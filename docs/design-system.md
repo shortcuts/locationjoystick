@@ -19,6 +19,7 @@ Uber and Airbnb guidance (VoltAgent `awesome-design-md`) was a reference for den
 - Use the type, shape and spacing tokens rather than literals. Never set font size inline.
 - Prefer the `Lj*` components over raw Material components. Raw Material is a last resort, and the components exist to hold these rules in one place.
 - Overlay windows (joystick, widget) sit outside the activity theme, so they must be wrapped in the app theme. Without it they render with the wrong colours.
+- The guided path reaches composables through `LocalGuidedPath`, which `LjTheme` provides. Read it there; never pass a path flag down as a parameter, because a forgotten call site then shows the wrong controls.
 - Motion must be short, carry meaning, and respect the system's reduce-motion setting. There is no motion token file on purpose: the app has little motion, and a token file would invite more.
 - Icons come from the shared icon set, not from the platform icon package in features. Icon-only buttons always need a content description.
 

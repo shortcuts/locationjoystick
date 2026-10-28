@@ -28,7 +28,6 @@ fun RouteStartSheetContent(
     ) -> Unit,
     onCancel: () -> Unit,
     hideTeleport: Boolean = false,
-    showPlanting: Boolean = true,
     isTeleportRoute: Boolean = false,
     isRoadRouteFetchInFlight: Boolean = false,
     /** Route carries its own Planting setting: the Planting option is shown on and locked. */
@@ -89,7 +88,6 @@ fun RouteStartSheetContent(
         hideTeleport = hideTeleport,
         isTeleportRoute = isTeleportRoute,
         plantingLocked = isPlantedRoute,
-        showPlanting = showPlanting,
         followRoadsLocked = isPlantedRoute && isRoadRoute,
         isStarting = isAwaitingRoadStart,
     )

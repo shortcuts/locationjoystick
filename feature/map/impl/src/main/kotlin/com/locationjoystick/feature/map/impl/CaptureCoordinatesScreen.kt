@@ -33,6 +33,7 @@ import com.locationjoystick.core.designsystem.component.CaptureSetupState
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.location.rememberSpoofToggleState
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.feature.map.impl.R
 
@@ -168,7 +169,7 @@ internal fun CaptureCoordinatesScreen(
 @Preview(showBackground = true)
 @Composable
 private fun CaptureCoordinatesScreenPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         CaptureCoordinatesScreen(
             uiState =
                 CaptureCoordinatesUiState(

@@ -35,6 +35,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.R
+import com.locationjoystick.core.model.GuidedPath
 
 /**
  * Play's Accessibility API policy requires a full-screen, in-flow disclosure that names the
@@ -161,11 +162,11 @@ private fun DisclosureFact(text: String) {
 @Preview(showBackground = true)
 @Composable
 private fun AccessibilityDisclosureDialogPreview() {
-    LjTheme { AccessibilityDisclosureDialog(onAccept = {}, onDecline = {}) }
+    LjTheme(guidedPath = GuidedPath.DEFAULT) { AccessibilityDisclosureDialog(onAccept = {}, onDecline = {}) }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun AccessibilityDisclosureDialogWithSkipPreview() {
-    LjTheme { AccessibilityDisclosureDialog(onAccept = {}, onDecline = {}, onSkip = {}) }
+    LjTheme(guidedPath = GuidedPath.DEFAULT) { AccessibilityDisclosureDialog(onAccept = {}, onDecline = {}, onSkip = {}) }
 }

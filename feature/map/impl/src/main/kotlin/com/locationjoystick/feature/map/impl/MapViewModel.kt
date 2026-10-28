@@ -141,12 +141,6 @@ class MapViewModel
                     .distinctUntilChanged()
                     .collect { source -> _uiState.update { it.copy(mapTileSource = source) } }
             }
-            viewModelScope.launch {
-                settingsRepository
-                    .getGuidedPath()
-                    .distinctUntilChanged()
-                    .collect { path -> _uiState.update { it.copy(showPlanting = path.showsPlanting) } }
-            }
         }
 
         private fun observeSharedState() {

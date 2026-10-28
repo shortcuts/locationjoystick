@@ -52,6 +52,7 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
+import com.locationjoystick.core.designsystem.LocalGuidedPath
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjOverflowMenu
@@ -71,7 +72,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -102,13 +102,6 @@ class RouteDetailViewModel
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = emptyList(),
-            )
-
-        val showPlanting: StateFlow<Boolean> =
-            settingsRepository.getGuidedPath().map { it.showsPlanting }.stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = true,
             )
 
         private val _nameError = MutableStateFlow(false)
@@ -233,7 +226,7 @@ fun RouteDetailScreen(
     val route by viewModel.route.collectAsStateWithLifecycle()
     val nameError by viewModel.nameError.collectAsStateWithLifecycle()
     val speedProfiles by viewModel.speedProfiles.collectAsStateWithLifecycle()
-    val showPlanting by viewModel.showPlanting.collectAsStateWithLifecycle()
+    val showPlanting = LocalGuidedPath.current.showsPlanting
     val spoofToggle = rememberSpoofToggleState()
     val coroutineScope = rememberCoroutineScope()
 

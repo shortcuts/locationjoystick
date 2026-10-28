@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.LjSpacing
+import com.locationjoystick.core.designsystem.LocalGuidedPath
 import com.locationjoystick.core.designsystem.R
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RoamingKind
@@ -55,7 +56,6 @@ fun RoamingSheetContent(
     isPreviewLoading: Boolean = false,
     showViewOnMap: Boolean = true,
     routePlaying: Boolean = false,
-    showPlanting: Boolean = true,
     onDraftChange: (RoamingDefaults) -> Unit,
     onGenerate: (RoamingKind) -> Unit,
     onStart: (RoamingKind) -> Unit,
@@ -63,7 +63,7 @@ fun RoamingSheetContent(
 ) {
     val isMph = speedUnit == SpeedUnit.MPH
     // Hidden planting must not strand a stored PLANTING draft: coerce to the only visible mode.
-    val kind = if (showPlanting) draft.kind else RoamingKind.WALK_AROUND
+    val kind = if (LocalGuidedPath.current.showsPlanting) draft.kind else RoamingKind.WALK_AROUND
 
     var radiusText by remember(isMph) {
         mutableStateOf(
@@ -116,7 +116,7 @@ fun RoamingSheetContent(
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            if (showPlanting) {
+            if (LocalGuidedPath.current.showsPlanting) {
                 LjTextButton(
                     onClick = {
                         val nextKind = if (kind == RoamingKind.PLANTING) RoamingKind.WALK_AROUND else RoamingKind.PLANTING

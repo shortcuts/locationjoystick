@@ -3,6 +3,7 @@ package com.locationjoystick.app
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.data.SettingsRepository
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,5 +23,11 @@ class ThemeViewModel
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = ThemeMode.DARK,
+            )
+        val guidedPath: StateFlow<GuidedPath> =
+            settingsRepository.getGuidedPath().stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = GuidedPath.DEFAULT,
             )
     }

@@ -24,11 +24,12 @@ import com.locationjoystick.core.designsystem.component.LjCard
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjOutlinedCard
+import com.locationjoystick.core.model.GuidedPath
 
 @PreviewLightDark
 @Composable
 private fun ThemePreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         Surface(color = MaterialTheme.colorScheme.background) {
             Column(
                 modifier =

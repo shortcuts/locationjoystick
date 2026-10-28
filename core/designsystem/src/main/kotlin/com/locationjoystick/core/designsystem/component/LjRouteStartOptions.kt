@@ -26,7 +26,9 @@ import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.designsystem.LocalGuidedPath
 import com.locationjoystick.core.designsystem.R
+import com.locationjoystick.core.model.GuidedPath
 
 @Composable
 fun LjRouteStartCheckboxes(
@@ -49,7 +51,6 @@ fun LjRouteStartCheckboxes(
     enabled: Boolean = true,
     isTeleportRoute: Boolean = false,
     plantingLocked: Boolean = false,
-    showPlanting: Boolean = true,
     followRoadsLocked: Boolean = false,
     textColor: Color = Color.Unspecified,
 ) {
@@ -65,7 +66,7 @@ fun LjRouteStartCheckboxes(
                 onCheckedChange = onLoopChange,
                 textColor = textColor,
             )
-            if (showPlanting) {
+            if (LocalGuidedPath.current.showsPlanting) {
                 LjSelectionRow(
                     mode = LjSelectionMode.Multi,
                     title = stringResource(R.string.lj_route_start_options_planting),
@@ -154,7 +155,6 @@ fun LjRouteStartOptions(
     hideTeleport: Boolean = false,
     isTeleportRoute: Boolean = false,
     plantingLocked: Boolean = false,
-    showPlanting: Boolean = true,
     followRoadsLocked: Boolean = false,
     textColor: Color = Color.Unspecified,
     isStarting: Boolean = false,
@@ -171,7 +171,6 @@ fun LjRouteStartOptions(
             onFollowRoadsChange = onFollowRoadsChange,
             isTeleportRoute = isTeleportRoute,
             plantingLocked = plantingLocked,
-            showPlanting = showPlanting,
             followRoadsLocked = followRoadsLocked,
             planting = planting,
             onPlantingChange = onPlantingChange,
@@ -207,7 +206,7 @@ fun LjRouteStartOptions(
 @Preview(showBackground = true, name = "Dark")
 @Composable
 private fun LjRouteStartOptionsPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         LjRouteStartOptions(
             loop = true,
             onLoopChange = {},
@@ -229,7 +228,7 @@ private fun LjRouteStartOptionsPreview() {
 @Preview(showBackground = true, name = "Light")
 @Composable
 private fun LjRouteStartOptionsLightPreview() {
-    LjTheme(darkTheme = false) {
+    LjTheme(guidedPath = GuidedPath.DEFAULT, darkTheme = false) {
         LjRouteStartOptions(
             loop = true,
             onLoopChange = {},
@@ -251,7 +250,7 @@ private fun LjRouteStartOptionsLightPreview() {
 @Preview(showBackground = true, name = "Dark")
 @Composable
 private fun LjRouteStartCheckboxesPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         LjRouteStartCheckboxes(
             loop = true,
             onLoopChange = {},

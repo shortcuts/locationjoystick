@@ -27,6 +27,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.toLocaleDoubleOrNull
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
+import com.locationjoystick.core.designsystem.LocalGuidedPath
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSegmentedControl
 import com.locationjoystick.core.designsystem.component.LjSelectionMode
@@ -77,7 +78,6 @@ internal fun SettingsRoamingSubScreen(
                     ) {
                         RoamingSection(
                             roamingDefaults,
-                            isMph,
                             uiState.guidedPath.showsPlanting,
                             uiState.plantingRadiusMeters,
                             onAction,
@@ -94,7 +94,6 @@ internal fun SettingsRoamingSubScreen(
 private fun RoamingSection(
     roamingDefaults: RoamingDefaults,
     isMph: Boolean,
-    showPlanting: Boolean,
     plantingRadiusMeters: Double,
     onAction: (SettingsAction) -> Unit,
 ) {
@@ -208,7 +207,7 @@ private fun RoamingSection(
         description = stringResource(R.string.settings_roaming_return_to_start_desc),
     )
 
-    if (showPlanting) {
+    if (LocalGuidedPath.current.showsPlanting) {
         SettingsSectionDivider()
         Text(stringResource(R.string.settings_roaming_sub_screen_planting), style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(LjSpacing.xs))

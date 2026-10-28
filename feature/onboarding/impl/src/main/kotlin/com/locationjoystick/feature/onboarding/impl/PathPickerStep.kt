@@ -225,7 +225,7 @@ private fun GuidedPath.descriptionRes(): Int =
 @Preview(showBackground = true)
 @Composable
 private fun PathPickerStepPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         PathPickerStep(
             uiState = OnboardingUiState(),
             onSelectPath = {},

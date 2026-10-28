@@ -7,6 +7,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.component.LjModalBottomSheet
 import com.locationjoystick.core.designsystem.component.RoamingSheetContent
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
 
@@ -20,7 +21,6 @@ fun RoamingSheet(
     hasPreview: Boolean = false,
     isPreviewLoading: Boolean = false,
     routePlaying: Boolean = false,
-    showPlanting: Boolean = true,
     onAction: (MapAction) -> Unit,
     onGeneratePreview: () -> Unit = {},
     onMinimize: () -> Unit = {},
@@ -37,7 +37,6 @@ fun RoamingSheet(
             hasPreview = hasPreview,
             isPreviewLoading = isPreviewLoading,
             routePlaying = routePlaying,
-            showPlanting = showPlanting,
             onDraftChange = { updated ->
                 if (updated.kind != draft.kind) {
                     onAction(MapAction.UpdateRoamingKind(updated.kind))
@@ -95,7 +94,7 @@ fun RoamingSheet(
 @Preview(showBackground = true)
 @Composable
 private fun RoamingSheetPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         RoamingSheet(
             draft =
                 RoamingDefaults(

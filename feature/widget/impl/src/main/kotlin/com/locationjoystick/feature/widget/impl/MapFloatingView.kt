@@ -114,7 +114,6 @@ internal fun MapFloatingView(
     isRoamingPaused: Boolean,
     favorites: List<FavoriteLocation>,
     roamingDefaults: RoamingDefaults,
-    showPlanting: Boolean = true,
     speedUnit: SpeedUnit,
     onResumeRoaming: () -> Unit,
     onPauseRoaming: () -> Unit,
@@ -643,7 +642,6 @@ internal fun MapFloatingView(
                 onSaveRoute = { name, points -> savePastedRoute?.invoke(name, points) },
                 onStartRoute = { points, config -> startPastedRoute?.invoke(points, config) },
                 hideTeleportFeatures = hideTeleportFeatures,
-                showPlanting = showPlanting,
             )
         }
 
@@ -654,7 +652,6 @@ internal fun MapFloatingView(
                 speedUnit = speedUnit,
                 mockLocationState = mockLocationState,
                 routePlaying = routePlaying,
-                showPlanting = showPlanting,
                 hasPreview = roamingPreviewWaypoints != null,
                 onGeneratePreviewRoute = onGeneratePreviewRoute,
                 onPreviewGenerated = { roamingPreviewWaypoints = it },

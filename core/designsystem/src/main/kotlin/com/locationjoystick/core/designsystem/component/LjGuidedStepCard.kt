@@ -31,6 +31,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.ljWarningColor
 import com.locationjoystick.core.designsystem.ljWarningContainerColor
+import com.locationjoystick.core.model.GuidedPath
 
 @Composable
 fun LjGuidedStepCard(
@@ -135,7 +136,7 @@ fun LjGuidedStepCard(
 @Preview(showBackground = true)
 @Composable
 private fun LjGuidedStepCardPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         LjGuidedStepCard(
             title = "Example step",
             description = "Description of what this step does.",

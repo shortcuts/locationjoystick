@@ -22,7 +22,6 @@ internal fun RoamingFloatingView(
     hasCurrentPosition: Boolean,
     isSpoofingActive: Boolean,
     routePlaying: Boolean = false,
-    showPlanting: Boolean = true,
     onDismiss: () -> Unit,
     onDraftChange: (RoamingDefaults) -> Unit,
     onGenerate: suspend (RoamingDefaults) -> List<LatLng>?,
@@ -46,7 +45,6 @@ internal fun RoamingFloatingView(
             isPreviewLoading = isPreviewLoading,
             showViewOnMap = false,
             routePlaying = routePlaying,
-            showPlanting = showPlanting,
             onDraftChange = onDraftChange,
             onGenerate = { kind ->
                 val next = draft.copy(kind = kind)

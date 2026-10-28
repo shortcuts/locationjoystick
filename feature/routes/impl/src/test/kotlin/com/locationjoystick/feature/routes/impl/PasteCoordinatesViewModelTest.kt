@@ -75,15 +75,13 @@ class PasteCoordinatesViewModelTest {
     }
 
     @Test
-    fun `pokemon go path hides planting and disarms it`() {
+    fun `pokemon go path disarms planting`() {
         val path = MutableStateFlow(GuidedPath.DEFAULT)
         every { settingsRepository.getGuidedPath() } returns path
         val vm = PasteCoordinatesViewModel(routeRepository, osrmClient, routingErrorReporter, settingsRepository, context)
         vm.onPlantingEnabledChange(true)
-        assertTrue(vm.uiState.value.showPlanting)
         assertTrue(vm.uiState.value.plantingEnabled)
         path.value = GuidedPath.POKEMON_GO
-        assertFalse(vm.uiState.value.showPlanting)
         assertFalse(vm.uiState.value.plantingEnabled)
     }
 

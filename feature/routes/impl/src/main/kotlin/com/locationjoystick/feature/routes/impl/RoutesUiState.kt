@@ -8,6 +8,5 @@ data class RoutesUiState(
     val isLoading: Boolean = false,
     val sortMode: SavedItemSortMode = SavedItemSortMode.NEWEST_FIRST,
     val hideTeleportFeatures: Boolean = false,
-    val showPlanting: Boolean = true,
     val isRoadRouteFetchInFlight: Boolean = false,
 )

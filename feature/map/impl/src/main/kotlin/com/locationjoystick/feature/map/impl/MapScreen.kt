@@ -533,7 +533,6 @@ internal fun MapScreen(
                 onSaveRoute = onSavePastedRoute,
                 onStartRoute = onStartPastedRoute,
                 hideTeleportFeatures = uiState.hideTeleportFeatures,
-                showPlanting = uiState.showPlanting,
                 title =
                     when (uiState.pasteSheetTitle) {
                         PasteSheetTitle.GPX -> stringResource(R.string.map_paste_sheet_title_gpx)
@@ -575,7 +574,6 @@ internal fun MapScreen(
             hasPreview = uiState.roamingPreviewWaypoints != null,
             isPreviewLoading = uiState.isRoamingPreviewLoading,
             routePlaying = uiState.isRouteReplay && uiState.mockLocationState == MockLocationState.RUNNING,
-            showPlanting = uiState.showPlanting,
             onAction = onAction,
             onGeneratePreview = { onAction(MapAction.GenerateRoamingPreview) },
             onMinimize = { onAction(MapAction.MinimizeRoamingSheet) },

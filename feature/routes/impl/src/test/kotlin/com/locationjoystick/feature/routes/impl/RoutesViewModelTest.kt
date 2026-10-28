@@ -10,7 +10,6 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.location.StartRouteReplayUseCase
-import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteStartConfig
@@ -45,7 +44,6 @@ class RoutesViewModelUiStateTest {
     private val context: Context = mockk(relaxed = true)
     private val routesFlow = MutableStateFlow<List<Route>>(emptyList())
     private val sortFlow = MutableStateFlow(SavedItemSortMode.NEWEST_FIRST)
-    private val guidedPathFlow = MutableStateFlow(GuidedPath.DEFAULT)
     private lateinit var viewModel: RoutesViewModel
 
     @Before
@@ -55,7 +53,6 @@ class RoutesViewModelUiStateTest {
         every { settingsRepository.getRoutesSortMode() } returns sortFlow
         every { settingsRepository.getRoutesManualOrder() } returns MutableStateFlow(emptyList())
         every { settingsRepository.getHideTeleportFeatures() } returns MutableStateFlow(false)
-        every { settingsRepository.getGuidedPath() } returns guidedPathFlow
         viewModel =
             RoutesViewModel(
                 routeRepository,
@@ -71,16 +68,6 @@ class RoutesViewModelUiStateTest {
     fun teardown() {
         Dispatchers.resetMain()
     }
-
-    @Test
-    fun uiState_showPlanting_follows_guided_path() =
-        runTest {
-            viewModel.uiState.test {
-                assertTrue(awaitItem().showPlanting)
-                guidedPathFlow.value = GuidedPath.POKEMON_GO
-                assertFalse(expectMostRecentItem().showPlanting)
-            }
-        }
 
     @Test
     fun uiState_emits_empty_routes_initially() =

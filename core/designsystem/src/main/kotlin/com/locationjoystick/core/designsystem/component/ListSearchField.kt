@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.R
+import com.locationjoystick.core.model.GuidedPath
 
 /** Single-line list filter field. Query is caller-owned so closing a panel drops it. */
 @Composable
@@ -72,7 +73,7 @@ fun ListSearchField(
 @Preview(showBackground = true)
 @Composable
 private fun ListSearchFieldPreview() {
-    LjTheme {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
         ListSearchField(
             query = "",
             onQueryChange = {},
