@@ -218,6 +218,8 @@ make coverage        # generate HTML + XML reports
 make coverage-open   # open HTML report in browser
 ```
 
+Agents that need a device (smoke tests, screenshots, live checks) follow "Driving the app on a device" in docs/testing.md. Never ask the user for device state.
+
 ---
 
 ## Website (GitHub Pages)

@@ -35,6 +35,31 @@ One smoke test class per screen, each checking that the screen loads, its main a
 
 Helpers are in the smoke test helper file.
 
+## Driving the app on a device (agents)
+
+Use any attached `adb devices` entry. Never ask the user for device state: every step below runs over adb. `scripts/screenshot-gallery.sh` and the smoke `BaseSmokeTest.setup` encode the same flow; the code wins if this section disagrees.
+
+1. **Unlock.** `adb shell input keyevent KEYCODE_WAKEUP`, then a full-height swipe up, for example `adb shell input swipe 540 1900 540 400 300` on a 1080x2340 screen. Check `adb shell dumpsys window | grep isKeyguardShowing` reads `false`. `wm dismiss-keyguard` and short swipes fail on a PIN-less lock screen.
+2. **Run a smoke test.** `make smoke-test-one TEST_FILE=app/src/androidTest/kotlin/com/locationjoystick/app/smoke/<Name>.kt`. No other device state is needed. `HiltTestRunner` clears the app's DataStore and grants location, overlay, mock location and notifications over adb, then `BaseSmokeTest.setup` taps through onboarding once per run. An unlocked, awake screen is the only precondition. In a git worktree, copy `local.properties` from the main checkout first, or Gradle reports "SDK location not found".
+3. **Launch by hand.** `make start-on-phone`, or `adb shell am start -n com.locationjoystick.app/com.locationjoystick.app.MainActivity`. Confirm with `adb shell dumpsys window | grep mCurrentFocus`.
+4. **Read the screen.** `adb shell uiautomator dump /sdcard/u.xml && adb pull /sdcard/u.xml`, then search `text=` and `content-desc=`. Tap the centre of a node's `bounds`. The `ui_dump`, `tap_text` and `tap_text_exact` helpers in the screenshot script do this.
+5. **Pass onboarding.** A screen with "Set up locationjoystick" is onboarding. Grant over adb:
+   ```bash
+   adb shell pm grant com.locationjoystick.app android.permission.ACCESS_FINE_LOCATION
+   adb shell pm grant com.locationjoystick.app android.permission.ACCESS_COARSE_LOCATION
+   adb shell pm grant com.locationjoystick.app android.permission.POST_NOTIFICATIONS
+   adb shell appops set com.locationjoystick.app SYSTEM_ALERT_WINDOW allow
+   adb shell appops set com.locationjoystick.app android:mock_location allow
+   ```
+   Then `am force-stop` and relaunch. Tap "Decline" if the accessibility disclosure shows, "Continue" on screen 1, then "Start using locationjoystick" on the path picker. `./scripts/screenshot-gallery.sh --auto` does this on a fresh install; a full reset is `make reinstall-on-phone`.
+6. **Reach a screen.** The app opens on the Home hub (cards such as "Settings", "Routes", "Favorites"). Other screens open from a Home card or from the drawer: tap the "Open navigation menu" content description, then the label. Match drawer labels inside the `nav_drawer` test tag, because the cards reuse the same text.
+7. **Recover from a wrong screen.** Back keeps the Compose nav stack, so it can land anywhere. The reliable reset is `adb shell am force-stop com.locationjoystick.app`, then relaunch (step 3). A session that was running at kill time restores onto the map: tap "Stop", then drawer, then "Home". Home is confirmed by the "Replay saved routes" text. `go_idle` in the screenshot script is this recovery.
+8. **App not in the foreground.** The launch command above brings it forward. If `mCurrentFocus` shows another window (lock screen, a permission dialog, the system settings), unlock first (step 1), dismiss the dialog with Back, and relaunch.
+9. **App sits on onboarding after a restart.** Onboarding stays until the path picker finishes, even with every permission granted. Repeat step 5.
+10. **A force-stop clears the Tap to Walk accessibility grant.** See "Test phone setup" above.
+
+Check: with an unlocked device, `make smoke-test-one TEST_FILE=app/src/androidTest/kotlin/com/locationjoystick/app/smoke/IdleSmokeTest.kt` ends `BUILD SUCCESSFUL`.
+
 ## Test phone setup (screenshot harness)
 
 Tap to Walk's Screen access block in Settings (screenshot steps 21 and 22) only renders the service state when the Tap to Walk accessibility service is granted and Tap to Walk is on. A force-stop clears the grant, so `scripts/screenshot-gallery.sh` re-grants it over adb after its own force-stop (`grant_tap_to_walk_accessibility`). Test devices only. To repeat the grant by hand:
