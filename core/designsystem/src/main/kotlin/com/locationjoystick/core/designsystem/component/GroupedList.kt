@@ -43,50 +43,9 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
-/**
- * One section of a grouped list. [name] null = ungrouped. [isUserGroup] is true only for
- * groups the user made, so only those offer rename/delete (hot country groups are read-only).
- */
-data class ListGroup<T>(
-    val name: String?,
-    val items: List<T>,
-    val isUserGroup: Boolean,
-)
-
-/**
- * Splits [items] into display sections: user groups first so local favorites sit above the
- * hot-location country lists, then ungrouped, then hot country groups (A–Z). Ungrouped items go
- * before the country groups so they cannot read as part of the last country header. User groups
- * keep the order in which their first item appears in [items], so the active sort (or a drag-set
- * manual order) decides group order.
- */
-fun <T> groupForDisplay(
-    items: List<T>,
-    categoryOf: (T) -> String?,
-    isHot: (T) -> Boolean,
-): List<ListGroup<T>> {
-    val (hot, user) = items.partition(isHot)
-    val userByName = user.groupBy { categoryOf(it) }
-    val hotByName = hot.groupBy { categoryOf(it) }
-    val ungrouped = userByName[null].orEmpty() + hotByName[null].orEmpty()
-    // A user group may share a hot country's name; they stay separate sections.
-    return buildList {
-        userByName.keys
-            .filterNotNull()
-            .forEach { add(ListGroup(it, userByName.getValue(it), isUserGroup = true)) }
-        if (ungrouped.isNotEmpty()) add(ListGroup(null, ungrouped, isUserGroup = false))
-        hotByName.keys
-            .filterNotNull()
-            .sorted()
-            .forEach { add(ListGroup(it, hotByName.getValue(it), isUserGroup = false)) }
-    }
-}
-
 /** Collapsed section keys (internal to [groupedItems]). `remember`d so leaving the screen resets it. */
 @Composable
 fun rememberCollapsedGroups(): SnapshotStateList<String> = remember { mutableStateListOf() }
-
-private const val HEADER_KEY_PREFIX = "group_header_"
 
 /**
  * Drag-to-reorder state for a [groupedItems] list. Group headers drag among user groups (all
@@ -98,7 +57,7 @@ class GroupReorder<T> internal constructor(
     internal val state: ReorderableLazyListState,
     internal val dragging: MutableState<Boolean>,
     internal val commit: () -> Unit,
-    internal val move: (key: String, delta: Int) -> Boolean,
+    internal val move: (key: Any, delta: Int) -> Boolean,
 ) {
     val isDraggingGroup: Boolean get() = dragging.value
 }
@@ -114,45 +73,15 @@ fun <T> rememberGroupReorder(
     itemKey: (T) -> String,
     onCommit: (List<String>) -> Unit,
 ): GroupReorder<T> {
-    var groupOverride by remember { mutableStateOf<List<String>?>(null) }
-    var itemOverride by remember { mutableStateOf<Map<String, List<T>>>(emptyMap()) }
+    var reordered by remember { mutableStateOf<List<ListGroup<T>>?>(null) }
     val dragging = remember { mutableStateOf(false) }
     // The persisted order flowing back replaces the optimistic drag state.
-    LaunchedEffect(groups) {
-        groupOverride = null
-        itemOverride = emptyMap()
-    }
-    val effective =
-        remember(groups, groupOverride, itemOverride) {
-            val user = groups.filter { it.isUserGroup }
-            val ordered = groupOverride?.mapNotNull { n -> user.firstOrNull { it.name == n } } ?: user
-            (ordered + groups.filter { !it.isUserGroup }).map { g ->
-                itemOverride[sectionKey(g)]?.let { g.copy(items = it) } ?: g
-            }
-        }
+    LaunchedEffect(groups) { reordered = null }
+    val effective = reordered ?: groups
     val current = rememberUpdatedState(effective)
     val reorderState =
         rememberReorderableLazyListState(listState) { from, to ->
-            val fromKey = from.key as? String
-            val toKey = to.key as? String
-            if (fromKey == null || toKey == null) return@rememberReorderableLazyListState
-            val sections = current.value
-            if (dragging.value) {
-                val userHeader = "${HEADER_KEY_PREFIX}u:"
-                if (!fromKey.startsWith(userHeader) || !toKey.startsWith(userHeader)) return@rememberReorderableLazyListState
-                val names = sections.filter { it.isUserGroup }.mapNotNull { it.name }.toMutableList()
-                val fi = names.indexOf(fromKey.removePrefix(userHeader))
-                val ti = names.indexOf(toKey.removePrefix(userHeader))
-                if (fi < 0 || ti < 0) return@rememberReorderableLazyListState
-                names.add(ti, names.removeAt(fi))
-                groupOverride = names
-            } else {
-                val section = sections.firstOrNull { g -> g.items.any { itemKey(it) == fromKey } }
-                if (section == null || section.items.none { itemKey(it) == toKey }) return@rememberReorderableLazyListState
-                val list = section.items.toMutableList()
-                list.add(list.indexOfFirst { itemKey(it) == toKey }, list.removeAt(list.indexOfFirst { itemKey(it) == fromKey }))
-                itemOverride = itemOverride + (sectionKey(section) to list)
-            }
+            moveKey(current.value, itemKey, from.key, to.key)?.let { reordered = it }
         }
     return GroupReorder(
         groups = effective,
@@ -163,39 +92,10 @@ fun <T> rememberGroupReorder(
     )
 }
 
-/**
- * Every item key in display order after moving the row or user-group header [key] by [delta]
- * places inside its own section list; null when the move leaves the list.
- */
-internal fun <T> movedKeys(
-    sections: List<ListGroup<T>>,
-    itemKey: (T) -> String,
-    key: String,
-    delta: Int,
-): List<String>? {
-    val userHeader = "${HEADER_KEY_PREFIX}u:"
-    val ordered =
-        if (key.startsWith(userHeader)) {
-            val user = sections.filter { it.isUserGroup }
-            val from = user.indexOfFirst { it.name == key.removePrefix(userHeader) }
-            val to = from + delta
-            if (from < 0 || to !in user.indices) return null
-            user.toMutableList().apply { add(to, removeAt(from)) } + sections.filter { !it.isUserGroup }
-        } else {
-            val section = sections.firstOrNull { g -> g.items.any { itemKey(it) == key } } ?: return null
-            val from = section.items.indexOfFirst { itemKey(it) == key }
-            val to = from + delta
-            if (to !in section.items.indices) return null
-            val moved = section.items.toMutableList().apply { add(to, removeAt(from)) }
-            sections.map { if (it === section) it.copy(items = moved) else it }
-        }
-    return ordered.flatMap { g -> g.items.map(itemKey) }
-}
-
 @Composable
 private fun <T> Modifier.moveActions(
     reorder: GroupReorder<T>,
-    key: String,
+    key: Any,
 ): Modifier {
     val up = stringResource(R.string.grouped_list_move_up)
     val down = stringResource(R.string.grouped_list_move_down)
@@ -234,9 +134,10 @@ fun <T> LazyListScope.groupedItems(
     val showHeaders = groups.size > 1 || groups.firstOrNull()?.name != null
     groups.forEach { group ->
         val key = sectionKey(group)
+        val headerKey = group.headerKey()
         val expanded = (forceExpanded || key !in collapsed) && reorder?.isDraggingGroup != true
         if (showHeaders) {
-            item(key = HEADER_KEY_PREFIX + key) {
+            item(key = headerKey) {
                 val header: @Composable (Modifier?) -> Unit = { handle ->
                     GroupHeader(
                         title = group.name ?: stringResource(R.string.grouped_list_ungrouped),
@@ -250,7 +151,7 @@ fun <T> LazyListScope.groupedItems(
                     )
                 }
                 if (reorder != null && group.isUserGroup) {
-                    ReorderableItem(reorder.state, key = HEADER_KEY_PREFIX + key) {
+                    ReorderableItem(reorder.state, key = headerKey) {
                         header(
                             Modifier
                                 .draggableHandle(
@@ -259,7 +160,7 @@ fun <T> LazyListScope.groupedItems(
                                         reorder.commit()
                                         reorder.dragging.value = false
                                     },
-                                ).moveActions(reorder, HEADER_KEY_PREFIX + key),
+                                ).moveActions(reorder, headerKey),
                         )
                     }
                 } else {

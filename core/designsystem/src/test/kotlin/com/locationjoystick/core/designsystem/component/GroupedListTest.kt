@@ -50,7 +50,7 @@ class GroupedListTest {
 
     private fun moved(
         items: List<Item>,
-        key: String,
+        key: Any,
         delta: Int,
     ) = movedKeys(group(items), { it.id }, key, delta)
 
@@ -65,7 +65,14 @@ class GroupedListTest {
     @Test
     fun `user group header moves among user groups`() {
         val items = listOf(Item("a", "X"), Item("b", "Y"), Item("c", null))
-        assertEquals(listOf("b", "a", "c"), moved(items, "group_header_u:Y", -1))
-        assertEquals(null, moved(items, "group_header_u:Y", 1))
+        assertEquals(listOf("b", "a", "c"), moved(items, GroupHeaderKey(true, "Y"), -1))
+        assertEquals(null, moved(items, GroupHeaderKey(true, "Y"), 1))
+    }
+
+    @Test
+    fun `moveKey rejects a row dropped on another section`() {
+        val sections = group(listOf(Item("a", "G"), Item("b", "H")))
+        assertEquals(null, moveKey(sections, { it.id }, "a", "b"))
+        assertEquals(null, moveKey(sections, { it.id }, "a", GroupHeaderKey(true, "H")))
     }
 }
