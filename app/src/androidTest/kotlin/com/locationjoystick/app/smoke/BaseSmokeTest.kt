@@ -1,8 +1,8 @@
 package com.locationjoystick.app.smoke
 
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import com.locationjoystick.app.MainActivity
-import androidx.compose.ui.test.printToLog
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Before
@@ -24,6 +24,8 @@ abstract class BaseSmokeTest {
             composeRule.completeOnboarding()
             onboarded = true
         }
+        // The onboarding flag loads from DataStore after the first frame, so a later test opens on onboarding first.
+        composeRule.waitUntil(10_000) { composeRule.onAllNodesWithText("Set up locationjoystick").fetchSemanticsNodes().isEmpty() }
     }
 
     private companion object {

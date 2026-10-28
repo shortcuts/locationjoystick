@@ -104,10 +104,7 @@ fun OnboardingRoute(
             onSelectPath = viewModel::selectPath,
             onAccessibilityDisclosureAnswered = viewModel::recordAccessibilityDisclosure,
             onAccessibilityDisclosureSkipped = viewModel::skipAccessibilityDisclosure,
-            onFinish = {
-                viewModel.onSetupComplete()
-                onSetupComplete()
-            },
+            onFinish = { viewModel.onSetupComplete(onSetupComplete) },
             isSpoofing = spoofToggle.isSpoofing,
             onToggleSpoofing = spoofToggle.onToggle,
             locationLabel = spoofToggle.locationLabel,

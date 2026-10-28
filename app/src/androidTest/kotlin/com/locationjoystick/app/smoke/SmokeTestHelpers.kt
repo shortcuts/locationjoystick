@@ -32,9 +32,6 @@ fun SmokeRule.completeOnboarding() {
     onNodeWithText("Continue").performClick()
     waitForIdle()
     onNodeWithText("Start using locationjoystick").performClick()
-    waitUntil(10_000) { onAllNodesWithText("Set up locationjoystick").fetchSemanticsNodes().isEmpty() }
-    waitForIdle()
-    Thread.sleep(3000) // DIAG
 }
 
 fun SmokeRule.openDrawer() {

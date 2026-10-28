@@ -91,10 +91,12 @@ class OnboardingViewModel
             _uiState.update { it.copy(selectedPath = path) }
         }
 
-        fun onSetupComplete() {
+        /** Runs [onDone] after the flag is written: navigating first clears this ViewModel and cancels the write. */
+        fun onSetupComplete(onDone: () -> Unit) {
             viewModelScope.launch {
                 settingsRepository.setGuidedPath(_uiState.value.selectedPath)
                 settingsRepository.setOnboardingComplete(true)
+                onDone()
             }
         }
 
