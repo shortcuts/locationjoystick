@@ -10,6 +10,9 @@ The models live in `:core:model`, which is pure Kotlin: no Android, no Room. The
 - `StoredGroundCalibration` is per device. It is deliberately not in `ExportData`: the fit depends on the phone's screen and camera, so a copy made on another device would be wrong.
 - `GroundMap`, `GroundFlowFit` and `PhaseCorrelation` are pure-Kotlin fit code in `:core:model`, so they can be tested without a device. `AutoFitCoordinator` in `:core:location` runs the automatic fit during a walk.
 - `ExportData` is the backup contract. Adding a field there is a schema decision, not a routine model change; see [features/export-import.md](features/export-import.md).
+- `CalibrationWalkMath` holds the flat-earth ground math for tap to walk. Its name is historical. The dedicated calibration walk was dropped, and `AutoFitCoordinator` still uses this object to fit the ground map from ordinary walks.
+- The Room schema went from 6 to 8 in two steps. Schema 7 adds `routes.category`. Schema 8 adds `routes.plantingRadiusMeters`. Both columns are nullable, so existing rows read as null and need no backfill. Migrations live in `LjDatabase`.
+- A route pins its own planting radius in `routes.plantingRadiusMeters`. `null` means no pin: replay falls back to the default radius in settings. The column exists so a pinned route keeps its radius when the default changes.
 
 ## Mapping
 
