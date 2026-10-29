@@ -523,6 +523,13 @@ internal fun MapFloatingView(
                     },
                 )
             }
+            LjShareLocationAction(
+                onCopyCoordinates = { copyCoordinatesToClipboard(shareContext, currentPosition) },
+                onShareLink = {
+                    shareLocationLink(shareContext, currentPosition)
+                    if (currentPosition != null) onDismiss()
+                },
+            )
             LjMapIconButton(
                 icon = LjIcons.Favorite,
                 contentDescription = stringResource(R.string.overlay_open_favorites_cd),
@@ -602,13 +609,6 @@ internal fun MapFloatingView(
                 onClick = {
                     showPasteCoordinates = false
                     showSearch = !showSearch
-                },
-            )
-            LjShareLocationAction(
-                onCopyCoordinates = { copyCoordinatesToClipboard(shareContext, currentPosition) },
-                onShareLink = {
-                    shareLocationLink(shareContext, currentPosition)
-                    if (currentPosition != null) onDismiss()
                 },
             )
             if (AppFeature.PASTE_COORDINATES in enabledMapFabFeatures) {
