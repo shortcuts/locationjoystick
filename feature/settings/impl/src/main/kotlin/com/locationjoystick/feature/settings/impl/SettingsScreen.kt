@@ -246,7 +246,7 @@ fun SettingsRoute(
         onToggleSpoofing = spoofToggle.onToggle,
         locationLabel = spoofToggle.locationLabel,
         onCheckScreenService = { viewModel.checkScreenServiceGranted() },
-        launchableApps = viewModel.launchableApps,
+        launchableApps = viewModel.launchableApps.collectAsStateWithLifecycle().value,
         onNavigateUp = onNavigateUp,
         openCaptureSetup = openCaptureSetup,
         onAction = { action ->

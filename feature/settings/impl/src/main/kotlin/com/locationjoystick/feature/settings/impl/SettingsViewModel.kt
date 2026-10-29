@@ -52,6 +52,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -586,11 +588,16 @@ class SettingsViewModel
             viewModelScope.launch { settingsRepository.setReconnectTapEnabled(enabled) }
         }
 
-        /** Launchable apps for the Capture launch-after-link picker, queried once on first access. */
-        internal val launchableApps: List<InstalledApp> by lazy {
+        /** Launchable apps for the Capture launch-after-link picker; empty until the off-main query finishes. */
+        internal val launchableApps: StateFlow<List<InstalledApp>> =
+            flow { emit(queryLaunchableApps()) }
+                .flowOn(Dispatchers.Default)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+        private fun queryLaunchableApps(): List<InstalledApp> {
             val pm = context.packageManager
             val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-            pm
+            return pm
                 .queryIntentActivities(launcherIntent, 0)
                 .filter { it.activityInfo.packageName != context.packageName }
                 .map {
