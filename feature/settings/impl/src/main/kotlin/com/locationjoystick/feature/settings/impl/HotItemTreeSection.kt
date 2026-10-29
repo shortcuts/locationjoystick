@@ -39,6 +39,7 @@ internal fun HotItemTreeSection(
     selectedIds: Set<String>,
     onSelectionChange: (Set<String>) -> Unit,
 ) {
+    var isSectionExpanded by remember { mutableStateOf(false) }
     var expandedCountries by remember { mutableStateOf(emptySet<String>()) }
     var expandedCities by remember { mutableStateOf(emptySet<String>()) }
 
@@ -49,7 +50,22 @@ internal fun HotItemTreeSection(
         Text(headerLabel, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
         LjTextButton(onClick = { onSelectionChange(emptySet()) }) { Text(stringResource(R.string.hot_item_tree_uncheck_all)) }
         LjTextButton(onClick = { onSelectionChange(tree.allIds) }) { Text(stringResource(R.string.hot_item_tree_check_all)) }
+        IconButton(onClick = { isSectionExpanded = !isSectionExpanded }) {
+            Icon(
+                imageVector = if (isSectionExpanded) LjIcons.KeyboardArrowUp else LjIcons.KeyboardArrowDown,
+                contentDescription =
+                    stringResource(
+                        if (isSectionExpanded) {
+                            R.string.hot_item_tree_collapse_cd
+                        } else {
+                            R.string.hot_item_tree_expand_cd
+                        },
+                    ),
+            )
+        }
     }
+
+    if (!isSectionExpanded) return
 
     tree.byCountry.forEach { (country, citiesMap) ->
         val countryIds =
