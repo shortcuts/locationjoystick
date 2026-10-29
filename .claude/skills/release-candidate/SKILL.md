@@ -14,6 +14,10 @@ audit. Route every finding through the `radin-record` skill — it is the only w
 
 Done when every step below has run and every failure it found is logged.
 
+Never stop at the first failure. Run every step, log every failure, and decide the verdict
+once, in the last step. One run then lists every blocker, so the maintainer fixes them in one
+pass.
+
 ## Step 0: Baseline
 
 Count the backlog entries. Read-only here — the count detects net-new entries at the end:
@@ -30,7 +34,7 @@ git describe --tags --abbrev=0 2>/dev/null || git log --oneline | tail -1 | awk 
 
 ## Step 1: Build pipeline
 
-Run each gate alone, in this order. A non-zero exit stops the pipeline there.
+Run each gate alone, in this order. A non-zero exit gets logged, then the next gate still runs.
 
 - `make format 2>&1`
 - `make lint 2>&1`
@@ -108,12 +112,7 @@ Per gap, invoke `radin-record`:
 A doc that exists and covers the change passes. A user-visible feature with no doc is a
 gap. Skip cosmetic nits.
 
-## Step 5: Intermediate verdict
-
-Run `radin backlog count` and compare it to the Step 0 baseline. New entries: report the ❌
-verdict below and stop. No new entries: continue to Step 6.
-
-## Step 6: Thermo-nuclear code quality review
+## Step 5: Thermo-nuclear code quality review
 
 Invoke `radin-review` — it runs the review and logs each finding itself:
 
@@ -123,12 +122,13 @@ Invoke `radin-review` — it runs the review and logs each finding itself:
 Log only findings that meet the thermo-nuclear bar: structural regressions, missed
 code-judo, spaghetti growth, bad abstractions, file-size explosions.
 
-## Step 7: Release PR
+## Step 6: Release PR
 
 Merging the release-please PR tags the release and ships it. Inspect it before the verdict:
 
 ```bash
 gh pr list --search 'chore(main): release in:title' --json number,title,headRefName,url
+gh pr list --head release-please--branches--main --json number,title,url   # title has no colon in practice
 gh pr view <PR#> --json body,mergeable,statusCheckRollup
 ```
 
@@ -143,16 +143,16 @@ fix it at the source, never by editing `CHANGELOG.md` or `.release-please-manife
 
 Done when items 2–4 hold, or each defect is logged.
 
-## Step 8: Verdict
+## Step 7: Verdict
 
 Run `radin backlog count` and compare it to the Step 0 baseline.
 
-No new entries across Steps 1–7:
+No new entries across Steps 1–6:
 
 > ✅ Release is ready. All checks passed: format, lint, build, tests, CI, documentation
 > consistency, thermo-nuclear code quality review, and release PR.
 
-Then do Step 9.
+Then do Step 8.
 
 New entries:
 
@@ -162,7 +162,7 @@ New entries:
 > Issues logged:
 > - [headings of the items added during this run]
 
-## Step 9: Changelog (✅ verdict only)
+## Step 8: Changelog (✅ verdict only)
 
 Tell the user, verbatim in substance:
 
