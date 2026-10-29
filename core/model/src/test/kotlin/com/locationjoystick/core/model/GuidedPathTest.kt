@@ -19,5 +19,13 @@ class GuidedPathTest {
         assertEquals(listOf(true, false, false), GuidedPath.PIKMIN_BLOOM.visibility())
     }
 
+    @Test
+    fun `game package is set only on game paths`() {
+        assertEquals(
+            listOf(null, "com.nianticlabs.pokemongo", "com.nianticlabs.pikmin"),
+            GuidedPath.entries.map { it.gamePackage },
+        )
+    }
+
     private fun GuidedPath.visibility() = listOf(showsPlanting, showsTapToWalk, showsReconnectAccessory)
 }

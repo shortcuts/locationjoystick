@@ -7,6 +7,9 @@ import android.net.Uri
 import android.util.Log
 import android.view.accessibility.AccessibilityManager
 import androidx.annotation.StringRes
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
@@ -58,9 +61,12 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+private const val LAUNCH_ICON_PX = 96
+
 internal data class InstalledApp(
     val packageName: String,
     val label: String,
+    val icon: ImageBitmap? = null,
 )
 
 @HiltViewModel
@@ -115,6 +121,7 @@ class SettingsViewModel
             val jumpEnabled: Boolean,
             val previousBrowserPackage: String?,
             val launchAfterLinkPackage: String?,
+            val launchAfterLinkChosen: Boolean,
             val setupReset: Boolean,
         )
 
@@ -125,6 +132,7 @@ class SettingsViewModel
                 captureCoordinatesRepository.jumpEnabled,
                 captureCoordinatesRepository.previousBrowserPackage,
                 captureCoordinatesRepository.launchAfterLinkPackage,
+                captureCoordinatesRepository.launchAfterLinkChosen,
                 captureCoordinatesRepository.setupReset,
             ) { values ->
                 CaptureSnapshot(
@@ -133,7 +141,8 @@ class SettingsViewModel
                     jumpEnabled = values[2] as Boolean,
                     previousBrowserPackage = values[3] as String?,
                     launchAfterLinkPackage = values[4] as String?,
-                    setupReset = values[5] as Boolean,
+                    launchAfterLinkChosen = values[5] as Boolean,
+                    setupReset = values[6] as Boolean,
                 )
             }
 
@@ -322,6 +331,7 @@ class SettingsViewModel
                     capturePreviousBrowserPackage = capture.previousBrowserPackage,
                     captureSetupReset = capture.setupReset,
                     launchAfterLinkPackage = capture.launchAfterLinkPackage,
+                    launchAfterLinkChosen = capture.launchAfterLinkChosen,
                     isScreenServiceGranted = isServiceGranted,
                     accessibilityDisclosureAccepted =
                         live.disclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
@@ -577,8 +587,13 @@ class SettingsViewModel
             pm
                 .queryIntentActivities(launcherIntent, 0)
                 .filter { it.activityInfo.packageName != context.packageName }
-                .map { InstalledApp(it.activityInfo.packageName, it.loadLabel(pm).toString()) }
-                .distinctBy { it.packageName }
+                .map {
+                    InstalledApp(
+                        it.activityInfo.packageName,
+                        it.loadLabel(pm).toString(),
+                        it.loadIcon(pm).toBitmap(LAUNCH_ICON_PX, LAUNCH_ICON_PX).asImageBitmap(),
+                    )
+                }.distinctBy { it.packageName }
                 .sortedBy { it.label.lowercase() }
         }
 

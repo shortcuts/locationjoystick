@@ -133,7 +133,7 @@
     <string name="settings_menus_capture">"Capture"</string>
     <string name="settings_menus_capture_desc">"Collects map links from other apps into a list, jumps to them, or both. These are the same settings as the Capture page. Deep links (geo:, google.navigation:, and share-to-app links) always work and need no setup here."</string>
     <string name="settings_menus_capture_browser_automatic">"Automatic"</string>
-    <string name="settings_menus_capture_launch_after">"After a map link, open: %1$s"</string>
+    <string name="settings_menus_capture_launch_after_title">"After a map link, open"</string>
     <string name="settings_menus_capture_launch_after_none">"None"</string>
     <string name="settings_menus_debug">"Debug"</string>
     <string name="settings_menus_debug_stats">"Debug stats"</string>

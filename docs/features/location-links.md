@@ -105,6 +105,8 @@ The user can copy, remove the last point, or clear the list. Clear asks for conf
 
 The user can pick an installed app to open after a link is handled. Focus then returns to the game, rather than staying in this app. It runs after a capture jump, and after a teleport or walk confirmed from a link. It never runs for list-only captures, for "do nothing", or for taps and pasted coordinates. The choice is per device and survives the browser restore.
 
+The picker is a sheet of installed apps with their icons. With no stored choice, the guided path's game is used when installed (see [Guided Paths](guided-paths.md)). None is stored as an explicit choice, so a user can opt out of the path's game; an unset choice and None must stay distinct.
+
 The app list uses the launcher query only, so the app does not need broad package-listing permission.
 
 ## Implementation map

@@ -2,14 +2,20 @@ package com.locationjoystick.feature.settings.impl
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -19,9 +25,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -32,13 +41,17 @@ import com.locationjoystick.core.common.util.launchCaptureDefaultBrowser
 import com.locationjoystick.core.common.util.launchCaptureMapsLinks
 import com.locationjoystick.core.common.util.launchCaptureRestoreDefaultApps
 import com.locationjoystick.core.common.util.resolvePreferredBrowserPackage
+import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.component.CapturePassThroughRow
 import com.locationjoystick.core.designsystem.component.CaptureRestoreDialog
 import com.locationjoystick.core.designsystem.component.CaptureSetupState
 import com.locationjoystick.core.designsystem.component.CaptureSetupSteps
 import com.locationjoystick.core.designsystem.component.CaptureToggleStep
+import com.locationjoystick.core.designsystem.component.LjCard
+import com.locationjoystick.core.designsystem.component.LjModalBottomSheet
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
+import com.locationjoystick.core.model.effectiveLaunchPackage
 import com.locationjoystick.feature.settings.impl.R
 import com.locationjoystick.core.designsystem.R as DesignR
 
@@ -54,8 +67,11 @@ internal fun CaptureSection(
     launchableApps: List<InstalledApp>,
     modifier: Modifier = Modifier,
 ) {
-    var launchPickerExpanded by remember { mutableStateOf(false) }
-    val launchApp = launchableApps.find { it.packageName == uiState.launchAfterLinkPackage }
+    var showLaunchSheet by rememberSaveable { mutableStateOf(false) }
+    val launchApp =
+        effectiveLaunchPackage(uiState.launchAfterLinkPackage, uiState.launchAfterLinkChosen, uiState.guidedPath) { pkg ->
+            launchableApps.any { it.packageName == pkg }
+        }?.let { pkg -> launchableApps.find { it.packageName == pkg } }
     val context = LocalContext.current
     val browserChoices = remember(context) { captureBrowserChoices(context) }
     val preferredBrowserPackage = resolvePreferredBrowserPackage(uiState.capturePreviousBrowserPackage, context.packageName)
@@ -104,13 +120,24 @@ internal fun CaptureSection(
         )
     }
 
-    Column(modifier = modifier) {
+    if (showLaunchSheet) {
+        LaunchAppSheet(
+            apps = launchableApps,
+            selectedPackage = launchApp?.packageName,
+            onSelect = { pkg ->
+                showLaunchSheet = false
+                onAction(SettingsAction.SetLaunchAfterLinkPackage(pkg))
+            },
+            onDismiss = { showLaunchSheet = false },
+        )
+    }
+
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(LjSpacing.md)) {
         Text(
             stringResource(R.string.settings_menus_capture_desc),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.height(LjSpacing.sm))
         if (setupDone) {
             CaptureToggleStep(
                 captureModeEnabled = uiState.captureModeEnabled,
@@ -120,42 +147,101 @@ internal fun CaptureSection(
                 onCaptureEnabledChange = { onAction(SettingsAction.SetCaptureEnabled(it)) },
                 onJumpEnabledChange = { onAction(SettingsAction.SetJumpEnabled(it)) },
             )
-            CapturePassThroughRow(state = setupState)
-            LjOutlinedButton(onClick = { showRestoreDialog = true }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(DesignR.string.capture_restore_default_browser), modifier = Modifier.weight(1f))
+            LjCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(LjSpacing.md), verticalArrangement = Arrangement.spacedBy(LjSpacing.sm)) {
+                    CapturePassThroughRow(state = setupState)
+                    LjOutlinedButton(onClick = { showRestoreDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(DesignR.string.capture_restore_default_browser), modifier = Modifier.weight(1f))
+                    }
+                }
             }
-            Spacer(Modifier.height(LjSpacing.sm))
         } else {
             CaptureSetupSteps(state = setupState)
         }
-        Box {
-            LjOutlinedButton(onClick = { launchPickerExpanded = true }, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    stringResource(
-                        R.string.settings_menus_capture_launch_after,
+        LjCard(onClick = { showLaunchSheet = true }, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.padding(LjSpacing.md),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(LjSpacing.md),
+            ) {
+                AppIcon(launchApp)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.settings_menus_capture_launch_after_title),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
                         launchApp?.label ?: stringResource(R.string.settings_menus_capture_launch_after_none),
-                    ),
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            DropdownMenu(expanded = launchPickerExpanded, onDismissRequest = { launchPickerExpanded = false }) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.settings_menus_capture_launch_after_none)) },
-                    onClick = {
-                        onAction(SettingsAction.SetLaunchAfterLinkPackage(null))
-                        launchPickerExpanded = false
-                    },
-                )
-                launchableApps.forEach { app ->
-                    DropdownMenuItem(
-                        text = { Text(app.label) },
-                        onClick = {
-                            onAction(SettingsAction.SetLaunchAfterLinkPackage(app.packageName))
-                            launchPickerExpanded = false
-                        },
+                        style = MaterialTheme.typography.titleSmall,
                     )
                 }
+                Icon(LjIcons.ExpandMore, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+    }
+}
+
+@Composable
+private fun AppIcon(app: InstalledApp?) {
+    val icon = app?.icon
+    if (icon != null) {
+        Image(bitmap = icon, contentDescription = null, modifier = Modifier.size(40.dp))
+    } else {
+        Icon(
+            LjIcons.OpenInNew,
+            contentDescription = null,
+            modifier = Modifier.size(40.dp).padding(LjSpacing.sm),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LaunchAppSheet(
+    apps: List<InstalledApp>,
+    selectedPackage: String?,
+    onSelect: (String?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    LjModalBottomSheet(onDismissRequest = onDismiss) {
+        Text(
+            stringResource(R.string.settings_menus_capture_launch_after_title),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
+        )
+        LazyColumn {
+            item {
+                LaunchAppRow(null, stringResource(R.string.settings_menus_capture_launch_after_none), selectedPackage == null) {
+                    onSelect(null)
+                }
+            }
+            items(apps, key = { it.packageName }) { app ->
+                LaunchAppRow(app, app.label, app.packageName == selectedPackage) { onSelect(app.packageName) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LaunchAppRow(
+    app: InstalledApp?,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+                .padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(LjSpacing.md),
+    ) {
+        AppIcon(app)
+        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        RadioButton(selected = selected, onClick = null)
     }
 }

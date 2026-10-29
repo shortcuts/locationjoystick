@@ -120,7 +120,7 @@
     <string name="settings_menus_capture">"擷取"</string>
     <string name="settings_menus_capture_desc">"將其他應用程式中的地圖連結收集到清單、立即跳轉，或兩者皆有 — 與擷取頁面上的設定相同。深層連結（geo:、google.navigation: 以及分享到本應用程式的連結）一律自動生效，此處無需任何設定。"</string>
     <string name="settings_menus_capture_browser_automatic">"自動"</string>
-    <string name="settings_menus_capture_launch_after">"連結處理後開啟：%1$s"</string>
+    <string name="settings_menus_capture_launch_after_title">"連結處理後開啟"</string>
     <string name="settings_menus_capture_launch_after_none">"無"</string>
     <string name="settings_menus_debug">"偵錯"</string>
     <string name="settings_menus_debug_stats">"偵錯資訊"</string>

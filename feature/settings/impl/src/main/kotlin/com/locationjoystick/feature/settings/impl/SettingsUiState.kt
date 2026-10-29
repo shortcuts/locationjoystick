@@ -60,6 +60,7 @@ data class SettingsUiState(
     val capturePreviousBrowserPackage: String? = null,
     val captureSetupReset: Boolean = false,
     val launchAfterLinkPackage: String? = null,
+    val launchAfterLinkChosen: Boolean = false,
     val activeSpeedProfileId: String = AppConstants.ProfileConstants.DEFAULT_ACTIVE_PROFILE_ID,
     val keepWidgetOnIdle: Boolean = false,
     val bypassMockLocationCheck: Boolean = false,

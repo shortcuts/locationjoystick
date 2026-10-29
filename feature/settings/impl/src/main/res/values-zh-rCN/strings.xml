@@ -133,7 +133,7 @@
     <string name="settings_menus_capture">"采集"</string>
     <string name="settings_menus_capture_desc">"将其他应用中的地图链接收集到列表、立即跳转，或两者兼有 — 与捕获页面上的设置相同。深层链接（geo:、google.navigation: 以及分享到本应用的链接）始终自动生效，此处无需任何设置。"</string>
     <string name="settings_menus_capture_browser_automatic">"自动"</string>
-    <string name="settings_menus_capture_launch_after">"链接处理后打开：%1$s"</string>
+    <string name="settings_menus_capture_launch_after_title">"链接处理后打开"</string>
     <string name="settings_menus_capture_launch_after_none">"无"</string>
     <string name="settings_menus_debug">"调试"</string>
     <string name="settings_menus_debug_stats">"调试信息"</string>

@@ -39,10 +39,13 @@ class CaptureCoordinatesRepositoryTest {
     fun `launch-after-link package round-trips and clears`() =
         runTest {
             assertNull(repository.launchAfterLinkPackage.first())
+            assertFalse(repository.launchAfterLinkChosen.first())
             repository.setLaunchAfterLinkPackage(" pogo ")
             assertEquals("pogo", repository.launchAfterLinkPackage.first())
+            assertTrue(repository.launchAfterLinkChosen.first())
             repository.setLaunchAfterLinkPackage(null)
             assertNull(repository.launchAfterLinkPackage.first())
+            assertTrue(repository.launchAfterLinkChosen.first())
             repository.setLaunchAfterLinkPackage("pogo")
             repository.setLaunchAfterLinkPackage(" ")
             assertNull(repository.launchAfterLinkPackage.first())

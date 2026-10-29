@@ -16,6 +16,15 @@ enum class GuidedPath {
     /** Reconnect Accessory is a Pokémon Go feature: hidden on Pikmin Bloom. */
     val showsReconnectAccessory: Boolean get() = this != PIKMIN_BLOOM
 
+    /** Game this path sets up; the launch-after-link app defaults to it. Literals because `:core:model` cannot read `AppConstants`. */
+    val gamePackage: String?
+        get() =
+            when (this) {
+                DEFAULT -> null
+                POKEMON_GO -> "com.nianticlabs.pokemongo"
+                PIKMIN_BLOOM -> "com.nianticlabs.pikmin"
+            }
+
     companion object {
         /** Lenient parse for persisted/imported values — unknown names fall back to [DEFAULT]. */
         fun fromName(name: String?): GuidedPath = entries.firstOrNull { it.name == name } ?: DEFAULT

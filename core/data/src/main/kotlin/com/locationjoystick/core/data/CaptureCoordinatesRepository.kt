@@ -83,15 +83,18 @@ class CaptureCoordinatesRepository
         val previousBrowserPackage: Flow<String?> =
             safeData.map { prefs -> prefs[Keys.PREVIOUS_BROWSER]?.takeIf { it.isNotBlank() } }
 
-        /** App to open after a handled map link; null means none. Survives [resetSetup]. */
+        /** App to open after a handled map link; null means none. Survives [resetSetup]. See [launchAfterLinkChosen]. */
         val launchAfterLinkPackage: Flow<String?> =
             safeData.map { prefs -> prefs[Keys.LAUNCH_AFTER_PACKAGE]?.takeIf { it.isNotBlank() } }
 
+        /** True once the user picked an app or None; until then the guided path's game applies. */
+        val launchAfterLinkChosen: Flow<Boolean> =
+            safeData.map { prefs -> Keys.LAUNCH_AFTER_PACKAGE in prefs }
+
+        /** Null stores a blank value: an explicit None, not an unset choice. */
         suspend fun setLaunchAfterLinkPackage(packageName: String?) {
             val trimmed = packageName?.trim().orEmpty()
-            dataStore.edit { prefs ->
-                if (trimmed.isEmpty()) prefs.remove(Keys.LAUNCH_AFTER_PACKAGE) else prefs[Keys.LAUNCH_AFTER_PACKAGE] = trimmed
-            }
+            dataStore.edit { prefs -> prefs[Keys.LAUNCH_AFTER_PACKAGE] = trimmed }
         }
 
         suspend fun setCaptureEnabled(enabled: Boolean) {

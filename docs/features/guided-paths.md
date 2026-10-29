@@ -12,6 +12,8 @@ Key files: `:core:model/GuidedPath.kt` (the path flags), `:core:data/SettingsRep
 
 On the path that hides Tap to Walk and Reconnect Accessory, the reconnect loop stops and the widget crosshair is hidden, since the hidden settings would otherwise leave no way to turn them off. Stored values stay, so switching back restores them.
 
+A path with a game also preselects it as the after-link launch app when none is chosen and the game is installed. It writes nothing, so a later path change re-targets it and an explicit choice always wins.
+
 The exact screens each path hides are in the flags on `GuidedPath` and the code that reads them.
 
 ## Why it is UI-only
