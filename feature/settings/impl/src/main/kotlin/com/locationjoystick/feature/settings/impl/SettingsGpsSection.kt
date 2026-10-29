@@ -223,18 +223,21 @@ internal fun GpsRealismSection(
         title = stringResource(R.string.settings_gps_section_use_real_world_elevation),
         description = stringResource(R.string.settings_gps_section_use_real_world_elevation_desc),
     )
-    Spacer(modifier = Modifier.height(LjSpacing.xs))
-    LjButton(
-        onClick = { onAction(SettingsAction.ResetAltitudeOverride) },
-        enabled = uiState.hasAltitudeOverride,
-    ) {
-        Text(stringResource(R.string.settings_gps_section_reset_elevation_override))
+    if (uiState.hasAltitudeOverride) {
+        Spacer(modifier = Modifier.height(LjSpacing.xs))
+        LjButton(
+            onClick = { onAction(SettingsAction.ResetAltitudeOverride) },
+            modifier = Modifier.padding(start = 40.dp),
+        ) {
+            Text(stringResource(R.string.settings_gps_section_reset_elevation_override))
+        }
+        Text(
+            stringResource(R.string.settings_gps_section_clears_a_manually_set_altitude_floating),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 40.dp),
+        )
     }
-    Text(
-        stringResource(R.string.settings_gps_section_clears_a_manually_set_altitude_floating),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
     Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
