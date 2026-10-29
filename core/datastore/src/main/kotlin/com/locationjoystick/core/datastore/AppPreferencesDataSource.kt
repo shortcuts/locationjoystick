@@ -453,7 +453,6 @@ data class SettingsSnapshot(
     val selectedHotRouteIds: Set<String>,
     val roamingDefaults: RoamingDefaults,
     val floatingMapQuickWalk: Boolean = false,
-    val tapToWalkOverlayEnabled: Boolean = false,
     val enabledSpeedProfileIds: Set<String> = AppConstants.ProfileConstants.DEFAULT_ENABLED_SPEED_PROFILE_IDS,
     val hideTeleportFeatures: Boolean = false,
     val hideWidgetOverlay: Boolean = false,
@@ -1295,7 +1294,6 @@ class AppPreferencesDataSource
                 prefs[Keys.HOT_ROUTES_ENABLED] = snapshot.hotRoutesEnabled
                 prefs[Keys.HOT_ROUTE_SELECTED_IDS] = snapshot.selectedHotRouteIds
                 prefs[Keys.FLOATING_MAP_QUICK_WALK] = snapshot.floatingMapQuickWalk
-                prefs[Keys.TAP_TO_WALK_OVERLAY_ENABLED] = snapshot.tapToWalkOverlayEnabled
                 prefs.writeRoamingDefaults(snapshot.roamingDefaults)
             }
         }
@@ -1390,7 +1388,6 @@ class AppPreferencesDataSource
                         selectedHotRouteIds = prefs[Keys.HOT_ROUTE_SELECTED_IDS] ?: emptySet(),
                         roamingDefaults = prefs.toRoamingDefaults(),
                         floatingMapQuickWalk = prefs[Keys.FLOATING_MAP_QUICK_WALK] ?: false,
-                        tapToWalkOverlayEnabled = prefs[Keys.TAP_TO_WALK_OVERLAY_ENABLED] ?: false,
                     )
                 }
 

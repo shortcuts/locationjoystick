@@ -449,7 +449,7 @@ class SettingsViewModelSaveTest {
             val snapshot = fakeDataSource.lastAppliedSnapshot!!
             assertTrue(snapshot.rememberLastLocation)
             assertFalse(snapshot.mapFollowsLocation)
-            assertTrue(snapshot.tapToWalkOverlayEnabled)
+            assertEquals(true, fakeDataSource.tapToWalkEnabledWrite)
             assertTrue(snapshot.floatingMapQuickWalk)
         }
 

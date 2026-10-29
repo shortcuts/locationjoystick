@@ -264,7 +264,11 @@ class SettingsViewModel
 
         val uiState: StateFlow<SettingsUiState> =
             combine(
-                combine(snapshotFlow, draftStateFlow) { snapshot, draft -> Pair(snapshot, draft) },
+                combine(
+                    snapshotFlow,
+                    draftStateFlow,
+                    settingsRepository.getTapToWalkOverlayEnabled(),
+                ) { snapshot, draft, tapToWalk -> Triple(snapshot, draft, tapToWalk) },
                 combine(
                     settingsRepository.getAccessibilityDisclosureChoice(),
                     settingsRepository.getReconnectTapEnabled(),
@@ -278,7 +282,7 @@ class SettingsViewModel
                 settingsRepository.getThemeMode(),
                 settingsRepository.getBaseAltitudeOverride(),
             ) {
-                (snapshot, draftState),
+                (snapshot, draftState, tapToWalk),
                 live,
                 (isServiceGranted, capture),
                 themeMode,
@@ -314,7 +318,7 @@ class SettingsViewModel
                     hotRoutesEnabled = draftState.hotRoutesEnabled ?: snapshot.hotRoutesEnabled,
                     selectedHotRouteIds = draftState.selectedHotRouteIds ?: snapshot.selectedHotRouteIds,
                     floatingMapQuickWalk = draftState.floatingMapQuickWalk ?: snapshot.floatingMapQuickWalk,
-                    tapToWalkOverlayEnabled = snapshot.tapToWalkOverlayEnabled,
+                    tapToWalkOverlayEnabled = tapToWalk,
                     hideTeleportFeatures = draftState.hideTeleportFeatures ?: snapshot.hideTeleportFeatures,
                     hideWidgetOverlay = draftState.hideWidgetOverlay ?: snapshot.hideWidgetOverlay,
                     hideForegroundNotification =
@@ -687,7 +691,6 @@ class SettingsViewModel
                         hotRoutesEnabled = state.hotRoutesEnabled,
                         selectedHotRouteIds = state.selectedHotRouteIds,
                         floatingMapQuickWalk = state.floatingMapQuickWalk,
-                        tapToWalkOverlayEnabled = state.tapToWalkOverlayEnabled,
                         hideTeleportFeatures = state.hideTeleportFeatures,
                         hideWidgetOverlay = state.hideWidgetOverlay,
                         hideForegroundNotification = state.hideForegroundNotification,
@@ -997,9 +1000,9 @@ class SettingsViewModel
                     rememberLastLocation = data.settings.rememberLastLocation,
                     mapFollowsLocation = data.settings.mapFollowsLocation,
                     floatingMapQuickWalk = data.settings.floatingMapQuickWalk,
-                    tapToWalkOverlayEnabled = data.settings.tapToWalkOverlayEnabled,
                 ),
             )
+            settingsRepository.setTapToWalkOverlayEnabled(data.settings.tapToWalkOverlayEnabled)
             settingsRepository.setActiveProfileId(data.settings.activeSpeedProfileId)
             settingsRepository.setReconnectTapEnabled(data.settings.reconnectTapEnabled)
             settingsRepository.setKeepWidgetOnIdle(data.settings.keepWidgetOnIdle)

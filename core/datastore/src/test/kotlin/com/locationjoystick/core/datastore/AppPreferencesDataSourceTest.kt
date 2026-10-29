@@ -88,6 +88,15 @@ class AppPreferencesDataSourceTest {
         }
 
     @Test
+    fun `applySnapshot keeps tap to walk when the snapshot predates the immediate setter`() =
+        runTest {
+            val staleSnapshot = dataSource.getSettingsSnapshot().first()
+            dataSource.setTapToWalkOverlayEnabled(true)
+            dataSource.applySnapshot(staleSnapshot)
+            assertTrue(dataSource.getTapToWalkOverlayEnabled().first())
+        }
+
+    @Test
     fun `plantingRadius defaults to 35 and clamps to 5-200`() =
         runTest {
             assertEquals(35.0, dataSource.getPlantingRadius().first(), 0.0)
