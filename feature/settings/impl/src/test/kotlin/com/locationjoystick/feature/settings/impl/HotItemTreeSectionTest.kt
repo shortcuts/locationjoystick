@@ -19,13 +19,13 @@ class HotItemTreeSectionTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val tree =
+    private fun treeOf(count: Int) =
         HotItemTree(
-            allIds = setOf("a"),
-            byCountry = mapOf("Japan" to mapOf("Tokyo" to listOf(HotItemEntry("a", "Shibuya")))),
+            allIds = (1..count).map { "id$it" }.toSet(),
+            byCountry = mapOf("Japan" to (1..count).associate { "City$it" to listOf(HotItemEntry("id$it", "Spot$it")) }),
         )
 
-    private fun setSection() {
+    private fun setSection(tree: HotItemTree) {
         composeRule.setContent {
             HotItemTreeSection(
                 headerLabel = "Hot locations",
@@ -37,15 +37,21 @@ class HotItemTreeSectionTest {
     }
 
     @Test
-    fun `tree starts collapsed`() {
-        setSection()
+    fun `tree at the threshold starts expanded`() {
+        setSection(treeOf(8))
+        composeRule.onNodeWithText("Japan").assertIsDisplayed()
+    }
+
+    @Test
+    fun `tree above the threshold starts collapsed`() {
+        setSection(treeOf(9))
         composeRule.onAllNodesWithText("Japan").assertCountEquals(0)
         composeRule.onNodeWithText("Hot locations").assertIsDisplayed()
     }
 
     @Test
-    fun `header toggle expands the tree`() {
-        setSection()
+    fun `header toggle expands a long tree`() {
+        setSection(treeOf(9))
         composeRule.onNodeWithContentDescription("Expand").performClick()
         composeRule.onNodeWithContentDescription("Collapse").assertIsDisplayed()
         composeRule.onNodeWithText("Japan").assertIsDisplayed()

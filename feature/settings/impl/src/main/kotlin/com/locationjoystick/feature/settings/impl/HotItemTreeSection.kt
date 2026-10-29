@@ -25,6 +25,8 @@ import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.feature.settings.impl.R
 
+private const val MAX_ITEMS_EXPANDED_BY_DEFAULT = 8
+
 /**
  * Generic collapsible country → city → item tree for selecting subsets of hot items.
  *
@@ -39,7 +41,7 @@ internal fun HotItemTreeSection(
     selectedIds: Set<String>,
     onSelectionChange: (Set<String>) -> Unit,
 ) {
-    var isSectionExpanded by remember { mutableStateOf(false) }
+    var isSectionExpanded by remember { mutableStateOf(tree.allIds.size <= MAX_ITEMS_EXPANDED_BY_DEFAULT) }
     var expandedCountries by remember { mutableStateOf(emptySet<String>()) }
     var expandedCities by remember { mutableStateOf(emptySet<String>()) }
 
