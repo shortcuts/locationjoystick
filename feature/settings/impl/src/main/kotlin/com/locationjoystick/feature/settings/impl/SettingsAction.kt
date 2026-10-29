@@ -222,9 +222,5 @@ internal sealed class SettingsAction {
         val tag: String?,
     ) : SettingsAction()
 
-    data object SaveChanges : SettingsAction()
-
-    data object DiscardChanges : SettingsAction()
-
     data object ResetAllData : SettingsAction()
 }

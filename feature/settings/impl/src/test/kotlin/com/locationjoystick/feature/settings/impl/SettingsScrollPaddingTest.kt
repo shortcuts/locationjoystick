@@ -7,10 +7,9 @@ import org.junit.Test
 
 class SettingsScrollPaddingTest {
     @Test
-    fun bottomPaddingClearsSaveDiscardFabs() {
+    fun paddingIsUniform() {
         val p = settingsScrollPadding()
-        // 56dp FAB + 16dp scaffold margin must fit, with slack for large font scale.
-        assertEquals(120.dp, p.calculateBottomPadding())
+        assertEquals(16.dp, p.calculateBottomPadding())
         assertEquals(16.dp, p.calculateTopPadding())
         assertEquals(16.dp, p.calculateLeftPadding(LayoutDirection.Ltr))
     }

@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -115,47 +116,90 @@ class SettingsViewModelSaveTest {
     }
 
     @Test
-    fun `saveChanges triggers exactly one applySnapshot call`() =
+    fun `flushChanges triggers exactly one applySnapshot call`() =
         runTest(testDispatcher) {
             viewModel.setSpeed("walk", 2.0)
 
-            viewModel.saveChanges()
+            viewModel.flushChanges()
 
             assertEquals(1, fakeDataSource.applySnapshotCallCount)
         }
 
     @Test
-    fun `saveChanges on success clears draft and emits Settings saved`() =
+    fun `flushChanges on success writes the value and emits no feedback`() =
         runTest(testDispatcher) {
             // Subscribe to uiState so WhileSubscribed flows activate
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.userFeedback.test {
                 viewModel.setSpeed("walk", 2.0)
-                assertTrue(viewModel.uiState.value.isDirty)
 
-                viewModel.saveChanges()
+                viewModel.flushChanges()
 
-                assertFalse(viewModel.uiState.value.isDirty)
-                val feedback = awaitItem()
-                assertFalse(feedback.isError)
-                assertTrue(feedback.message.contains("saved", ignoreCase = true))
+                assertEquals(1, fakeDataSource.applySnapshotCallCount)
+                assertEquals(2.0 / 3.6, fakeDataSource.lastAppliedSnapshot!!.walkSpeedMs, 0.001)
+                expectNoEvents()
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `saveChanges on failure retains draft and emits error feedback`() =
+    fun `a setter writes once after the quiet period and not before`() =
+        runTest(testDispatcher) {
+            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            viewModel.setSpeed("walk", 2.0)
+
+            advanceTimeBy(100)
+            assertEquals(0, fakeDataSource.applySnapshotCallCount)
+
+            advanceTimeBy(300)
+            assertEquals(1, fakeDataSource.applySnapshotCallCount)
+        }
+
+    @Test
+    fun `an edit made during a write stays pending`() =
+        runTest(testDispatcher) {
+            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            fakeDataSource.onApplySnapshot = { viewModel.setSpeed("run", 18.0) }
+            viewModel.setSpeed("walk", 2.0)
+
+            viewModel.flushChanges()
+
+            assertEquals(
+                5.0,
+                viewModel.uiState.value.speeds
+                    .getValue("run"),
+                0.001,
+            )
+        }
+
+    @Test
+    fun `flushChanges with no pending change writes nothing`() =
+        runTest(testDispatcher) {
+            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+
+            viewModel.flushChanges()
+            advanceTimeBy(1_000)
+
+            assertEquals(0, fakeDataSource.applySnapshotCallCount)
+        }
+
+    @Test
+    fun `flushChanges on failure retains draft and emits error feedback`() =
         runTest(testDispatcher) {
             // Subscribe to uiState so WhileSubscribed flows activate
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.userFeedback.test {
                 fakeDataSource.shouldThrowOnApplySnapshot = true
                 viewModel.setSpeed("walk", 2.0)
-                assertTrue(viewModel.uiState.value.isDirty)
 
-                viewModel.saveChanges()
+                viewModel.flushChanges()
 
-                assertTrue(viewModel.uiState.value.isDirty)
+                assertEquals(
+                    2.0 / 3.6,
+                    viewModel.uiState.value.speeds
+                        .getValue("walk"),
+                    0.001,
+                )
                 val feedback = awaitItem()
                 assertTrue(feedback.isError)
                 cancelAndIgnoreRemainingEvents()
@@ -163,7 +207,7 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
-    fun `saveChanges includes roamingDefaults in the single applySnapshot call`() =
+    fun `flushChanges includes roamingDefaults in the single applySnapshot call`() =
         runTest(testDispatcher) {
             val customRoaming =
                 RoamingDefaults(
@@ -175,7 +219,7 @@ class SettingsViewModelSaveTest {
                 )
             viewModel.updateRoamingDefaults(customRoaming)
 
-            viewModel.saveChanges()
+            viewModel.flushChanges()
 
             assertEquals(1, fakeDataSource.applySnapshotCallCount)
             val snapshot = fakeDataSource.lastAppliedSnapshot!!
@@ -185,13 +229,13 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
-    fun `saveChanges writes disabled geocoding providers and refuses to disable all`() =
+    fun `flushChanges writes disabled geocoding providers and refuses to disable all`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setDisabledGeocodingProviders(setOf(GeocodingProviderId.NOMINATIM))
             viewModel.setDisabledGeocodingProviders(GeocodingProviderId.entries.toSet())
 
-            viewModel.saveChanges()
+            viewModel.flushChanges()
 
             assertEquals(
                 setOf(GeocodingProviderId.NOMINATIM),
@@ -200,18 +244,18 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
-    fun `saveChanges includes planting radius in the applied snapshot`() =
+    fun `flushChanges includes planting radius in the applied snapshot`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setPlantingRadius(60.0)
 
-            viewModel.saveChanges()
+            viewModel.flushChanges()
 
             assertEquals(60.0, fakeDataSource.lastAppliedSnapshot!!.plantingRadiusMeters, 0.001)
         }
 
     @Test
-    fun `saveChanges includes altitude fields in the single applySnapshot call`() =
+    fun `flushChanges includes altitude fields in the single applySnapshot call`() =
         runTest(testDispatcher) {
             // Subscribe to uiState so WhileSubscribed flows activate
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
@@ -219,7 +263,7 @@ class SettingsViewModelSaveTest {
             viewModel.setAltitudeJitterRadius(2.5)
             viewModel.setAltitudeOverrideButtonEnabled(true)
 
-            viewModel.saveChanges()
+            viewModel.flushChanges()
 
             assertEquals(1, fakeDataSource.applySnapshotCallCount)
             val snapshot = fakeDataSource.lastAppliedSnapshot!!
@@ -229,13 +273,13 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
-    fun `saveChanges keeps the mock location check bypass`() =
+    fun `flushChanges keeps the mock location check bypass`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             fakeSettingsRepo.setBypassMockLocationCheck(true)
             viewModel.setSpeed("walk", 2.0)
 
-            viewModel.saveChanges()
+            viewModel.flushChanges()
 
             assertTrue(fakeDataSource.lastAppliedSnapshot!!.bypassMockLocationCheck)
         }
@@ -409,14 +453,13 @@ class SettingsViewModelSaveTest {
         }
 
     @Test
-    fun `saveChanges with hotLocationsEnabled true upserts hot favorites`() =
+    fun `flushChanges with hotLocationsEnabled true upserts hot favorites`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.userFeedback.test {
                 viewModel.setHotLocationsEnabled(true)
-                viewModel.saveChanges()
-                val feedback = awaitItem()
-                assertFalse(feedback.isError)
+                viewModel.flushChanges()
+                expectNoEvents()
                 cancelAndIgnoreRemainingEvents()
             }
             // At least one hot favorite should be persisted
@@ -430,8 +473,7 @@ class SettingsViewModelSaveTest {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.userFeedback.test {
                 viewModel.setHotLocationsEnabled(true)
-                viewModel.saveChanges()
-                awaitItem()
+                viewModel.flushChanges()
                 fakeSettingsRepo.setHomeFavoriteId(
                     fakeFavoriteRepo
                         .getFavorites()
@@ -441,29 +483,24 @@ class SettingsViewModelSaveTest {
                 )
 
                 viewModel.setHotLocationsEnabled(false)
-                viewModel.saveChanges()
-                awaitItem()
+                viewModel.flushChanges()
                 cancelAndIgnoreRemainingEvents()
             }
             assertEquals(null, fakeSettingsRepo.getHomeFavoriteId().first())
         }
 
     @Test
-    fun `saveChanges with hotLocationsEnabled false removes hot favorites`() =
+    fun `flushChanges with hotLocationsEnabled false removes hot favorites`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.userFeedback.test {
                 viewModel.setHotLocationsEnabled(true)
-                viewModel.saveChanges()
-                val upsertFeedback = awaitItem()
-                assertFalse(upsertFeedback.isError)
+                viewModel.flushChanges()
                 val afterUpsert = fakeFavoriteRepo.getFavorites().first()
                 assertTrue("Precondition: hot favorites upserted", afterUpsert.isNotEmpty())
 
                 viewModel.setHotLocationsEnabled(false)
-                viewModel.saveChanges()
-                val removeFeedback = awaitItem()
-                assertFalse(removeFeedback.isError)
+                viewModel.flushChanges()
                 cancelAndIgnoreRemainingEvents()
             }
             val afterRemove = fakeFavoriteRepo.getFavorites().first().filter { it.id.startsWith("hot_") }
@@ -585,8 +622,7 @@ class SettingsViewModelSaveTest {
 
             viewModel.userFeedback.test {
                 viewModel.resetAllData()
-                val feedback = awaitItem()
-                assertFalse(feedback.isError)
+                awaitItem()
                 cancelAndIgnoreRemainingEvents()
             }
 
@@ -604,6 +640,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     var applySnapshotCallCount = 0
     var lastAppliedSnapshot: SettingsSnapshot? = null
     var shouldThrowOnApplySnapshot = false
+    var onApplySnapshot: (() -> Unit)? = null
 
     private val speedProfilesFlow =
         MutableStateFlow(
@@ -666,6 +703,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
         if (shouldThrowOnApplySnapshot) throw RuntimeException("Simulated DataStore failure")
         applySnapshotCallCount++
+        onApplySnapshot?.invoke()
         lastAppliedSnapshot = snapshot
         speedProfilesFlow.value =
             speedProfilesFlow.value.copy(

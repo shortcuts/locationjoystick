@@ -189,11 +189,6 @@
     <string name="settings_import_from_gps_joystick">"Import from GPS Joystick"</string>
     <string name="settings_import_from_yamla">"Import from YAMLA"</string>
     <string name="settings_reset_all_data">"Reset all data"</string>
-    <string name="settings_discard">"Discard"</string>
-    <string name="settings_save">"Save"</string>
-    <string name="settings_save_changes">"Save changes?"</string>
-    <string name="settings_save_2">"Save"</string>
-    <string name="settings_discard_2">"Discard"</string>
     <string name="settings_import_data">"Import data"</string>
     <string name="settings_how_would_you_like_to_handle">"How would you like to handle existing data?"</string>
     <string name="settings_add">"Add"</string>
@@ -205,8 +200,6 @@
     <string name="settings_ask_the_sender_for_their_6">"Ask the sender for their 6-character code shown in the QR share dialog."</string>
     <string name="settings_code">"Code"</string>
     <string name="settings_import">"Import"</string>
-    <string name="settings_unsaved_changes_leave">"You have unsaved settings changes. Save them before leaving?"</string>
-    <string name="settings_unsaved_changes_start_spoofing">"You have unsaved settings changes. Save them before starting location spoofing?"</string>
     <string name="qr_scanner_connecting_to_sender">"Connecting to sender. Make sure both devices are on the same Wi-Fi."</string>
     <string name="qr_scanner_point_camera_at_qr">"Point camera at QR code"</string>
     <string name="qr_share_or_enter_code">"Or enter code: %1$s"</string>

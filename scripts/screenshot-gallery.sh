@@ -892,13 +892,7 @@ set_app_feature() {
   fi
   if [[ "$state" != "$want" ]]; then
     tap_text "$cd"
-    wait_s 1 "Setting \"$cd\" to $want"
-    # App Features is a draft setting — without Save the change never reaches DataStore.
-    # The Save FAB never appears in the uiautomator dump (Compose AnimatedVisibility),
-    # so tap its fixed bottom-right slot instead of searching for its label.
-    log "Tapping Save FAB at ($(( SCREEN_W * 83 / 100 )), $(( SCREEN_H * 926 / 1000 )))"
-    $ADB shell input tap "$(( SCREEN_W * 83 / 100 ))" "$(( SCREEN_H * 926 / 1000 ))"
-    wait_s 2 "Saving settings"
+    wait_s 2 "Setting \"$cd\" to $want"
   fi
 }
 
@@ -1317,11 +1311,6 @@ set_debug_stats() {
   if [[ "$want" == "True" && "$DEBUG_STATS_FLIPPED" == "0" ]] || [[ "$want" == "False" && "$DEBUG_STATS_FLIPPED" == "1" ]]; then
     tap_text "Debug stats"
     wait_s 2 "Setting debug stats to $want"
-    # This settings page buffers changes behind a Save/Discard FAB —
-    # force-stopping via go_idle without saving would discard the toggle.
-    # The FAB exposes no text or content-desc to uiautomator, so tap its fixed spot.
-    $ADB shell input tap "$(( SCREEN_W * 83 / 100 ))" "$(( SCREEN_H * 92 / 100 ))"
-    wait_s 1 "Saving setting"
     if [[ "$want" == "True" ]]; then DEBUG_STATS_FLIPPED=1; else DEBUG_STATS_FLIPPED=0; fi
   else
     log "Debug stats already $want — skipping toggle tap."
@@ -1515,9 +1504,6 @@ if should_run_step "25"; then
   tap_text "Menus"
   wait_s 2 "Menus loading"
   scroll_until_text "Enable Tap to Walk" || true
-  # The row first appears under the Save/Discard bar, which swallows the switch tap.
-  $ADB shell input swipe 540 1600 540 1000 500
-  wait_s 1 "Clearing Save bar"
   if [[ "$(switch_is_on "Enable Tap to Walk")" == "True" ]]; then
     tap_switch_for "Enable Tap to Walk"
     wait_s 1 "Turning Tap to Walk off"

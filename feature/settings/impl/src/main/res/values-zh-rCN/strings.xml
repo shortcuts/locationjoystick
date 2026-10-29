@@ -189,11 +189,6 @@
     <string name="settings_import_from_gps_joystick">"从 GPS Joystick 导入"</string>
     <string name="settings_import_from_yamla">"从 YAMLA 导入"</string>
     <string name="settings_reset_all_data">"重置所有数据"</string>
-    <string name="settings_discard">"放弃"</string>
-    <string name="settings_save">"保存"</string>
-    <string name="settings_save_changes">"保存更改？"</string>
-    <string name="settings_save_2">"保存"</string>
-    <string name="settings_discard_2">"放弃"</string>
     <string name="settings_import_data">"导入数据"</string>
     <string name="settings_how_would_you_like_to_handle">"你希望如何处理现有数据？"</string>
     <string name="settings_add">"添加"</string>
@@ -205,8 +200,6 @@
     <string name="settings_ask_the_sender_for_their_6">"请向发送方索取二维码分享对话框中显示的 6 位代码。"</string>
     <string name="settings_code">"代码"</string>
     <string name="settings_import">"导入"</string>
-    <string name="settings_unsaved_changes_leave">"设置有未保存的更改。离开前要保存吗？"</string>
-    <string name="settings_unsaved_changes_start_spoofing">"设置有未保存的更改。开始模拟定位前要保存吗？"</string>
     <string name="qr_scanner_connecting_to_sender">"正在连接发送方 — 请确保两台设备连接同一 Wi-Fi"</string>
     <string name="qr_scanner_point_camera_at_qr">"将相机对准二维码"</string>
     <string name="qr_share_or_enter_code">"或输入代码：%1$s"</string>

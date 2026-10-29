@@ -95,15 +95,14 @@ class SettingsViewModelDraftTest {
     }
 
     // -------------------------------------------------------------------------
-    // Simple draft setters — each should mark dirty
+    // Simple draft setters
     // -------------------------------------------------------------------------
 
     @Test
-    fun `setSpeed marks dirty and stores speed in ms`() =
+    fun `setSpeed stores speed in ms`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setSpeed("run", 3.6) // 3.6 km/h = 1.0 m/s
-            assertTrue(viewModel.uiState.value.isDirty)
             assertEquals(
                 1.0,
                 viewModel.uiState.value.speeds
@@ -113,11 +112,10 @@ class SettingsViewModelDraftTest {
         }
 
     @Test
-    fun `setSpeed for a second profile marks dirty and stores speed in ms`() =
+    fun `setSpeed for a second profile stores speed in ms`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setSpeed("bike", 18.0) // 18 km/h = 5.0 m/s
-            assertTrue(viewModel.uiState.value.isDirty)
             assertEquals(
                 5.0,
                 viewModel.uiState.value.speeds
@@ -127,57 +125,51 @@ class SettingsViewModelDraftTest {
         }
 
     @Test
-    fun `setGuidedPath writes immediately and does not mark dirty`() =
+    fun `setGuidedPath writes immediately and does not`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setGuidedPath(GuidedPath.POKEMON_GO)
             assertEquals("POKEMON_GO", fakeDataSource.lastSetGuidedPath)
-            assertFalse(viewModel.uiState.value.isDirty)
         }
 
     @Test
-    fun `setSpeedUnit marks dirty`() =
+    fun `setSpeedUnit`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setSpeedUnit(SpeedUnit.MPH)
-            assertTrue(viewModel.uiState.value.isDirty)
             assertEquals(SpeedUnit.MPH, viewModel.uiState.value.speedUnit)
         }
 
     @Test
-    fun `setWidgetFeatures marks dirty`() =
+    fun `setWidgetFeatures`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             val features = setOf(AppFeature.JOYSTICK_TOGGLE, AppFeature.SPEED_CYCLE)
             viewModel.setWidgetFeatures(features)
-            assertTrue(viewModel.uiState.value.isDirty)
             assertEquals(features, viewModel.uiState.value.enabledWidgetFeatures)
         }
 
     @Test
-    fun `setRememberLastLocation marks dirty`() =
+    fun `setRememberLastLocation`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setRememberLastLocation(true)
-            assertTrue(viewModel.uiState.value.isDirty)
             assertTrue(viewModel.uiState.value.rememberLastLocation)
         }
 
     @Test
-    fun `setMapFollowsLocation marks dirty`() =
+    fun `setMapFollowsLocation`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setMapFollowsLocation(false)
-            assertTrue(viewModel.uiState.value.isDirty)
             assertFalse(viewModel.uiState.value.mapFollowsLocation)
         }
 
     @Test
-    fun `jitter setters mark dirty`() =
+    fun `jitter setters`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setJitterIdleRadius(3.0)
-            assertTrue(viewModel.uiState.value.isDirty)
             assertEquals(3.0, viewModel.uiState.value.jitterIdleRadiusMeters, 0.001)
 
             viewModel.setJitterMovingRadius(5.0)
@@ -188,7 +180,7 @@ class SettingsViewModelDraftTest {
         }
 
     @Test
-    fun `realism setters mark dirty`() =
+    fun `realism setters`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setRealismBearingHoldIdle(false)
@@ -205,30 +197,26 @@ class SettingsViewModelDraftTest {
 
             viewModel.setRealismSuspendedMockingEnabled(true)
             assertTrue(viewModel.uiState.value.realismSuspendedMockingEnabled)
-
-            assertTrue(viewModel.uiState.value.isDirty)
         }
 
     @Test
-    fun `setHideTeleportFeatures marks dirty`() =
+    fun `setHideTeleportFeatures`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setHideTeleportFeatures(true)
             assertTrue(viewModel.uiState.value.hideTeleportFeatures)
-            assertTrue(viewModel.uiState.value.isDirty)
         }
 
     @Test
-    fun `setShowRouteJumpButtons marks dirty`() =
+    fun `setShowRouteJumpButtons`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setShowRouteJumpButtons(true)
             assertTrue(viewModel.uiState.value.showRouteJumpButtons)
-            assertTrue(viewModel.uiState.value.isDirty)
         }
 
     @Test
-    fun `jitter speed variation setters mark dirty`() =
+    fun `jitter speed variation setters`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setJitterSpeedIdleVariationPct(15)
@@ -239,8 +227,6 @@ class SettingsViewModelDraftTest {
 
             viewModel.setJitterSpeedIdleWobbleProbabilityPct(30)
             assertEquals(30, viewModel.uiState.value.jitterSpeedIdleWobbleProbabilityPct)
-
-            assertTrue(viewModel.uiState.value.isDirty)
         }
 
     // -------------------------------------------------------------------------
@@ -252,7 +238,6 @@ class SettingsViewModelDraftTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setHotLocationsEnabled(true)
-            assertTrue(viewModel.uiState.value.isDirty)
             assertTrue(viewModel.uiState.value.hotLocationsEnabled)
             // All hot location IDs should be selected when enabling with empty selection
             val expectedIds =
@@ -268,7 +253,6 @@ class SettingsViewModelDraftTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setHotLocationsEnabled(false)
-            assertTrue(viewModel.uiState.value.isDirty)
             assertFalse(viewModel.uiState.value.hotLocationsEnabled)
         }
 
@@ -278,7 +262,6 @@ class SettingsViewModelDraftTest {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             val ids = setOf("hot_paris", "hot_tokyo")
             viewModel.setSelectedHotLocationIds(ids)
-            assertTrue(viewModel.uiState.value.isDirty)
             assertEquals(ids, viewModel.uiState.value.selectedHotLocationIds)
         }
 
@@ -287,20 +270,18 @@ class SettingsViewModelDraftTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `setFloatingMapQuickWalk marks dirty and updates state`() =
+    fun `setFloatingMapQuickWalk updates state`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setFloatingMapQuickWalk(true)
-            assertTrue(viewModel.uiState.value.isDirty)
             assertTrue(viewModel.uiState.value.floatingMapQuickWalk)
         }
 
     @Test
-    fun `setTapToWalkOverlayEnabled saves at once without a draft`() =
+    fun `setTapToWalkOverlayEnabled saves at once`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setTapToWalkOverlayEnabled(true)
-            assertFalse(viewModel.uiState.value.isDirty)
             assertEquals(true, fakeDataSource.tapToWalkEnabledWrite)
         }
 
@@ -310,12 +291,11 @@ class SettingsViewModelDraftTest {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `setCaptureModeEnabled writes through the shared capture repository without marking dirty`() =
+    fun `setCaptureModeEnabled writes through the shared capture repository`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setCaptureModeEnabled(true)
             assertTrue(viewModel.uiState.value.captureModeEnabled)
-            assertFalse(viewModel.uiState.value.isDirty)
             assertTrue(captureRepository.captureModeEnabled.first())
         }
 
@@ -327,7 +307,6 @@ class SettingsViewModelDraftTest {
             viewModel.setJumpEnabled(true)
             assertTrue(viewModel.uiState.value.captureEnabled)
             assertTrue(viewModel.uiState.value.jumpEnabled)
-            assertFalse(viewModel.uiState.value.isDirty)
         }
 
     @Test
@@ -372,30 +351,12 @@ class SettingsViewModelDraftTest {
         }
 
     @Test
-    fun `setLaunchAfterLinkPackage persists without marking dirty`() =
+    fun `setLaunchAfterLinkPackage persists`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setLaunchAfterLinkPackage("com.example.game")
             assertEquals("com.example.game", viewModel.uiState.value.launchAfterLinkPackage)
-            assertFalse(viewModel.uiState.value.isDirty)
             viewModel.setLaunchAfterLinkPackage(null)
             assertNull(viewModel.uiState.value.launchAfterLinkPackage)
-        }
-
-    // -------------------------------------------------------------------------
-    // discardChanges
-    // -------------------------------------------------------------------------
-
-    @Test
-    fun `discardChanges clears dirty state`() =
-        runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
-            viewModel.setSpeed("run", 5.0)
-            viewModel.setSpeedUnit(SpeedUnit.MPH)
-            assertTrue(viewModel.uiState.value.isDirty)
-
-            viewModel.discardChanges()
-
-            assertFalse(viewModel.uiState.value.isDirty)
         }
 }

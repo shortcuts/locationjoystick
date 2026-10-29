@@ -47,7 +47,6 @@ internal fun SettingsFavoritesRoutesSubScreen(
         navigationIcon = LjIcons.ArrowBack,
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
-        floatingActionButton = { SettingsSaveDiscardFab(uiState.isDirty, onAction) },
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             when {

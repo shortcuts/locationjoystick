@@ -63,7 +63,6 @@ data class SettingsUiState(
     val activeSpeedProfileId: String = AppConstants.ProfileConstants.DEFAULT_ACTIVE_PROFILE_ID,
     val keepWidgetOnIdle: Boolean = false,
     val bypassMockLocationCheck: Boolean = false,
-    val isDirty: Boolean = false,
 )
 
 internal fun SettingsUiState.toAppSettings(): AppSettings =

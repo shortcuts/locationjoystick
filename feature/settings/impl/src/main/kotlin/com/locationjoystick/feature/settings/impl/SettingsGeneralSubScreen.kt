@@ -67,7 +67,6 @@ internal fun SettingsGeneralSubScreen(
         navigationIcon = LjIcons.ArrowBack,
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
-        floatingActionButton = { SettingsSaveDiscardFab(uiState.isDirty, onAction) },
         actions = {
             LjLanguageDropdown(
                 selected = AppLanguage.fromTag(languageTag),

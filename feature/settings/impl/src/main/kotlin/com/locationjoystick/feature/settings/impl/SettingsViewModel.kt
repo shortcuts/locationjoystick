@@ -37,6 +37,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,11 +47,14 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -78,6 +83,7 @@ class SettingsViewModel
     ) : ViewModel() {
         companion object {
             private const val TAG = "SettingsViewModel"
+            private const val AUTOSAVE_DEBOUNCE_MS = 250L
 
             fun convertMsToDisplay(
                 ms: Double,
@@ -131,6 +137,8 @@ class SettingsViewModel
                 )
             }
 
+        private val flushMutex = Mutex()
+
         init {
             _isRooted.value = sensorPermissionBootstrap.isGranted()
         }
@@ -169,7 +177,7 @@ class SettingsViewModel
             userFeedback.emit(UserFeedback(message, isError))
         }
 
-        /** Settings written by their own setters, not saved from the draft. */
+        /** Settings written by their own setters, not flushed from the draft. */
         private data class LiveSettings(
             val disclosureChoice: String,
             val reconnectTap: Boolean,
@@ -178,6 +186,7 @@ class SettingsViewModel
             val activeSpeedProfileId: String,
         )
 
+        /** Pending-write buffer: [flushChanges] persists it after a quiet period. */
         private data class DraftState(
             val speedOverrides: Map<String, Double> = emptyMap(),
             val speedUnit: SpeedUnit? = null,
@@ -219,6 +228,13 @@ class SettingsViewModel
 
         private val mutableDraft = MutableStateFlow(DraftState())
 
+        // Declared after mutableDraft: the collector reads it at once.
+        init {
+            @OptIn(FlowPreview::class)
+            val pending = mutableDraft.debounce(AUTOSAVE_DEBOUNCE_MS)
+            viewModelScope.launch { pending.collect { flushChanges() } }
+        }
+
         private val snapshotFlow = settingsRepository.getSettingsSnapshot()
 
         private val draftStateFlow = mutableDraft.asStateFlow()
@@ -256,7 +272,6 @@ class SettingsViewModel
                 themeMode,
                 baseAltitudeOverride,
                 ->
-                val isDirty = draftState != DraftState()
                 SettingsUiState(
                     isLoading = false,
                     speeds = snapshotSpeeds(snapshot) + draftState.speedOverrides,
@@ -315,7 +330,6 @@ class SettingsViewModel
                     bypassMockLocationCheck = live.bypassMockLocationCheck,
                     activeSpeedProfileId = live.activeSpeedProfileId,
                     themeMode = themeMode,
-                    isDirty = isDirty,
                 )
             }.stateIn(
                 scope = viewModelScope,
@@ -599,86 +613,88 @@ class SettingsViewModel
                     )
                 }.stateIn(viewModelScope, SharingStarted.Eagerly, HotItemTree.Empty)
 
-        fun saveChanges() {
+        fun flushChanges() {
             viewModelScope.launch {
-                try {
-                    val state = uiState.value
-                    val d = mutableDraft.value
-                    settingsRepository.applySnapshot(
-                        SettingsSnapshot(
-                            slowWalkSpeedMs = state.speeds.getValue("slow_walk"),
-                            walkSpeedMs = state.speeds.getValue("walk"),
-                            runSpeedMs = state.speeds.getValue("run"),
-                            bikeSpeedMs = state.speeds.getValue("bike"),
-                            driveSpeedMs = state.speeds.getValue("drive"),
-                            speedUnit = state.speedUnit,
-                            featureOrder = state.featureOrder,
-                            enabledWidgetFeatures = state.enabledWidgetFeatures,
-                            enabledMapFeatures = state.enabledMapFeatures,
-                            enabledSpeedProfileIds = state.enabledSpeedProfileIds,
-                            rememberLastLocation = state.rememberLastLocation,
-                            mapFollowsLocation = state.mapFollowsLocation,
-                            mapTileSource = state.mapTileSource,
-                            guidedPath = state.guidedPath,
-                            disabledGeocodingProviders = state.disabledGeocodingProviders,
-                            jitterIdleRadius = state.jitterIdleRadiusMeters,
-                            jitterMovingRadius = state.jitterMovingRadiusMeters,
-                            jitterMaxStepMeters = state.jitterMaxStepMeters,
-                            realismBearingHoldIdle = state.realismBearingHoldIdle,
-                            realismAltitudeEnabled = state.realismAltitudeEnabled,
-                            realismWarmupEnabled = state.realismWarmupEnabled,
-                            realismSatelliteExtrasEnabled = state.realismSatelliteExtrasEnabled,
-                            realismSuspendedMockingEnabled = state.realismSuspendedMockingEnabled,
-                            jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
-                            jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
-                            jitterSpeedIdleWobbleProbabilityPct = state.jitterSpeedIdleWobbleProbabilityPct,
-                            hotLocationsEnabled = state.hotLocationsEnabled,
-                            selectedHotLocationIds = state.selectedHotLocationIds,
-                            hotRoutesEnabled = state.hotRoutesEnabled,
-                            selectedHotRouteIds = state.selectedHotRouteIds,
-                            floatingMapQuickWalk = state.floatingMapQuickWalk,
-                            tapToWalkOverlayEnabled = state.tapToWalkOverlayEnabled,
-                            hideTeleportFeatures = state.hideTeleportFeatures,
-                            hideWidgetOverlay = state.hideWidgetOverlay,
-                            hideForegroundNotification = state.hideForegroundNotification,
-                            showRouteJumpButtons = state.showRouteJumpButtons,
-                            bypassMockLocationCheck = state.bypassMockLocationCheck,
-                            realismRealElevationEnabled = state.realismRealElevationEnabled,
-                            altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
-                            plantingRadiusMeters = state.plantingRadiusMeters,
-                            altitudeOverrideButtonEnabled = state.altitudeOverrideButtonEnabled,
-                            debugStatsEnabled = state.debugStatsEnabled,
-                            roamingDefaults =
-                                d.roamingDefaults
-                                    ?: settingsRepository.getRoamingDefaults().first(),
-                        ),
-                    )
-                    if (d.hotLocationsEnabled != null || d.selectedHotLocationIds != null) {
-                        if (state.hotLocationsEnabled) {
-                            favoriteRepository.upsertHotLocations(hotLocationsRepository.locations.value, state.selectedHotLocationIds)
-                        } else {
-                            favoriteRepository.removeHotLocations()
-                        }
-                        clearHomeIfMissing()
-                    }
-                    if (d.hotRoutesEnabled != null || d.selectedHotRouteIds != null) {
-                        if (state.hotRoutesEnabled) {
-                            routeRepository.upsertHotRoutes(hotRoutesRepository.routes.value, state.selectedHotRouteIds)
-                        } else {
-                            routeRepository.removeHotRoutes()
-                        }
-                    }
-                    mutableDraft.value = DraftState()
-                    emitFeedback(R.string.settings_viewmodel_settings_saved)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Save failed", e)
-                    emitFeedback(R.string.settings_viewmodel_failed_to_save_settings, isError = true)
+                withContext(NonCancellable) {
+                    flushMutex.withLock { writeDraft() }
                 }
             }
         }
 
-        fun discardChanges() {
-            mutableDraft.value = DraftState()
+        private suspend fun writeDraft() {
+            val d = mutableDraft.value
+            if (d == DraftState()) return
+            try {
+                val state = uiState.value
+                settingsRepository.applySnapshot(
+                    SettingsSnapshot(
+                        slowWalkSpeedMs = state.speeds.getValue("slow_walk"),
+                        walkSpeedMs = state.speeds.getValue("walk"),
+                        runSpeedMs = state.speeds.getValue("run"),
+                        bikeSpeedMs = state.speeds.getValue("bike"),
+                        driveSpeedMs = state.speeds.getValue("drive"),
+                        speedUnit = state.speedUnit,
+                        featureOrder = state.featureOrder,
+                        enabledWidgetFeatures = state.enabledWidgetFeatures,
+                        enabledMapFeatures = state.enabledMapFeatures,
+                        enabledSpeedProfileIds = state.enabledSpeedProfileIds,
+                        rememberLastLocation = state.rememberLastLocation,
+                        mapFollowsLocation = state.mapFollowsLocation,
+                        mapTileSource = state.mapTileSource,
+                        guidedPath = state.guidedPath,
+                        disabledGeocodingProviders = state.disabledGeocodingProviders,
+                        jitterIdleRadius = state.jitterIdleRadiusMeters,
+                        jitterMovingRadius = state.jitterMovingRadiusMeters,
+                        jitterMaxStepMeters = state.jitterMaxStepMeters,
+                        realismBearingHoldIdle = state.realismBearingHoldIdle,
+                        realismAltitudeEnabled = state.realismAltitudeEnabled,
+                        realismWarmupEnabled = state.realismWarmupEnabled,
+                        realismSatelliteExtrasEnabled = state.realismSatelliteExtrasEnabled,
+                        realismSuspendedMockingEnabled = state.realismSuspendedMockingEnabled,
+                        jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
+                        jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
+                        jitterSpeedIdleWobbleProbabilityPct = state.jitterSpeedIdleWobbleProbabilityPct,
+                        hotLocationsEnabled = state.hotLocationsEnabled,
+                        selectedHotLocationIds = state.selectedHotLocationIds,
+                        hotRoutesEnabled = state.hotRoutesEnabled,
+                        selectedHotRouteIds = state.selectedHotRouteIds,
+                        floatingMapQuickWalk = state.floatingMapQuickWalk,
+                        tapToWalkOverlayEnabled = state.tapToWalkOverlayEnabled,
+                        hideTeleportFeatures = state.hideTeleportFeatures,
+                        hideWidgetOverlay = state.hideWidgetOverlay,
+                        hideForegroundNotification = state.hideForegroundNotification,
+                        showRouteJumpButtons = state.showRouteJumpButtons,
+                        bypassMockLocationCheck = state.bypassMockLocationCheck,
+                        realismRealElevationEnabled = state.realismRealElevationEnabled,
+                        altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
+                        plantingRadiusMeters = state.plantingRadiusMeters,
+                        altitudeOverrideButtonEnabled = state.altitudeOverrideButtonEnabled,
+                        debugStatsEnabled = state.debugStatsEnabled,
+                        roamingDefaults =
+                            d.roamingDefaults
+                                ?: settingsRepository.getRoamingDefaults().first(),
+                    ),
+                )
+                if (d.hotLocationsEnabled != null || d.selectedHotLocationIds != null) {
+                    if (state.hotLocationsEnabled) {
+                        favoriteRepository.upsertHotLocations(hotLocationsRepository.locations.value, state.selectedHotLocationIds)
+                    } else {
+                        favoriteRepository.removeHotLocations()
+                    }
+                    clearHomeIfMissing()
+                }
+                if (d.hotRoutesEnabled != null || d.selectedHotRouteIds != null) {
+                    if (state.hotRoutesEnabled) {
+                        routeRepository.upsertHotRoutes(hotRoutesRepository.routes.value, state.selectedHotRouteIds)
+                    } else {
+                        routeRepository.removeHotRoutes()
+                    }
+                }
+                mutableDraft.update { if (it == d) DraftState() else it }
+            } catch (e: Exception) {
+                Log.e(TAG, "Save failed", e)
+                emitFeedback(R.string.settings_viewmodel_failed_to_save_settings, isError = true)
+            }
         }
 
         /** Clears all favorites, routes, and settings. Preserves onboarding-completion state. */
