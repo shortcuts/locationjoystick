@@ -25,7 +25,7 @@
     <string name="top_bar_open_navigation_menu_cd">"Open navigation menu"</string>
     <string name="top_bar_navigate_up_cd">"Navigate up"</string>
     <string name="top_bar_more_actions_cd">"More actions"</string>
-    <string name="search_bar_search_location">"Search location..."</string>
+    <string name="search_bar_search_location">"Search location…"</string>
     <string name="search_bar_recent">"Recent"</string>
     <string name="search_bar_no_results_found">"No results found"</string>
     <string name="roaming_sheet_roaming">"Roaming"</string>

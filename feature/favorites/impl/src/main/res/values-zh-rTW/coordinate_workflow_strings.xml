@@ -9,7 +9,6 @@
     <string name="favorites_screen_coordinates">"座標"</string>
     <string name="favorites_screen_paste_from_clipboard">"從剪貼簿貼上"</string>
     <string name="favorites_screen_cancel">"取消"</string>
-    <string name="favorite_coordinate_example" translatable="false">11.0127769, 79.48065</string>
     <string name="favorites_no_saved_locations_yet">"尚未儲存任何位置"</string>
     <string name="favorites_add_a_favorite">"新增收藏"</string>
     <string name="favorites_no_favorites_match_your_search">"沒有相符的收藏"</string>

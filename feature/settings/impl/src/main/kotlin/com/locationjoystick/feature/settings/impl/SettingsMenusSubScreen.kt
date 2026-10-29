@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -517,7 +518,7 @@ private fun AppFeaturesSection(
     val order = uiState.featureOrder
     val rowHeightPx = with(LocalDensity.current) { (FEATURE_ROW_HEIGHT + FEATURE_ROW_SPACING).toPx() }
     var draggingIndex by remember { mutableStateOf<Int?>(null) }
-    var dragDeltaY by remember { mutableStateOf(0f) }
+    var dragDeltaY by remember { mutableFloatStateOf(0f) }
 
     Column(verticalArrangement = Arrangement.spacedBy(FEATURE_ROW_SPACING)) {
         order.forEachIndexed { index, feature ->

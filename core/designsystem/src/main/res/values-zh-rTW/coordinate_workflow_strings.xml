@@ -69,7 +69,6 @@
     <string name="saved_sort_newest">最新儲存</string>
     <string name="saved_sort_oldest">最早儲存</string>
     <string name="paste_form_title">貼上座標</string>
-    <string name="paste_form_coordinate_example" translatable="false">11.0127769, 79.48065</string>
     <string name="capture_empty">"尚未擷取任何點"</string>
     <string name="capture_original_order">"保留原始順序"</string>
     <string name="capture_optimize_order">"最佳化路徑順序"</string>

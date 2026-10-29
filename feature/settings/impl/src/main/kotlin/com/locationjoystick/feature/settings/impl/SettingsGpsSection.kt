@@ -13,6 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,11 +40,11 @@ internal fun JitterInput(
     value: Double,
     onValueChange: (Double) -> Unit,
     label: String,
-    modifier: Modifier = Modifier.fillMaxWidth(),
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
     var localValue by remember { mutableStateOf(formatJitterDouble(value)) }
-    var lastSentValue by remember { mutableStateOf(value) }
+    var lastSentValue by remember { mutableDoubleStateOf(value) }
 
     LaunchedEffect(value) {
         if (value != lastSentValue) {
@@ -62,7 +64,7 @@ internal fun JitterInput(
         },
         label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = modifier,
+        modifier = Modifier.fillMaxWidth().then(modifier),
         enabled = enabled,
     )
 }
@@ -72,11 +74,11 @@ private fun JitterInput(
     value: Int,
     onValueChange: (Int) -> Unit,
     label: String,
-    modifier: Modifier = Modifier.fillMaxWidth(),
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
     var localValue by remember { mutableStateOf(value.toString()) }
-    var lastSentValue by remember { mutableStateOf(value) }
+    var lastSentValue by remember { mutableIntStateOf(value) }
 
     LaunchedEffect(value) {
         if (value != lastSentValue) {
@@ -96,7 +98,7 @@ private fun JitterInput(
         },
         label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = modifier,
+        modifier = Modifier.fillMaxWidth().then(modifier),
         enabled = enabled,
     )
 }

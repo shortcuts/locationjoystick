@@ -59,6 +59,7 @@ import com.locationjoystick.core.designsystem.component.LjOverflowMenu
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSelectionMode
 import com.locationjoystick.core.designsystem.component.LjSelectionRow
+import com.locationjoystick.core.designsystem.component.formatLatLng
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.Route
@@ -469,8 +470,7 @@ fun RouteDetailScreen(
                                 style = MaterialTheme.typography.titleSmall,
                             )
                             Text(
-                                "${String.format("%.4f", waypoint.position.latitude)}, " +
-                                    "${String.format("%.4f", waypoint.position.longitude)}",
+                                formatLatLng(waypoint.position.latitude, waypoint.position.longitude),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall,
                             )

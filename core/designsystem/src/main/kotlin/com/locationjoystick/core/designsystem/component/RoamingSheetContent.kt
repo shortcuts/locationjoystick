@@ -38,6 +38,7 @@ import com.locationjoystick.core.designsystem.R
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RoamingKind
 import com.locationjoystick.core.model.SpeedUnit
+import java.util.Locale
 import kotlin.math.roundToInt
 
 private val SPEED_PROFILES = listOf("walk", "run", "bike")
@@ -68,7 +69,7 @@ fun RoamingSheetContent(
     var radiusText by remember(isMph) {
         mutableStateOf(
             if (isMph) {
-                String.format("%.2f", draft.radiusMeters / 1609.344)
+                String.format(Locale.US, "%.2f", draft.radiusMeters / 1609.344)
             } else {
                 draft.radiusMeters.roundToInt().toString()
             },
@@ -78,7 +79,7 @@ fun RoamingSheetContent(
     var distanceText by remember(isMph) {
         mutableStateOf(
             if (isMph) {
-                String.format("%.2f", draft.distanceMeters / 1609.344)
+                String.format(Locale.US, "%.2f", draft.distanceMeters / 1609.344)
             } else {
                 draft.distanceMeters.roundToInt().toString()
             },

@@ -73,6 +73,7 @@ import com.locationjoystick.core.designsystem.component.MoveToGroupMenuItem
 import com.locationjoystick.core.designsystem.component.SavedItemSortMenu
 import com.locationjoystick.core.designsystem.component.WideContentClamp
 import com.locationjoystick.core.designsystem.component.cooldownBadgeText
+import com.locationjoystick.core.designsystem.component.formatLatLng
 import com.locationjoystick.core.designsystem.component.groupForDisplay
 import com.locationjoystick.core.designsystem.component.groupedItems
 import com.locationjoystick.core.designsystem.component.readPlainText
@@ -595,7 +596,7 @@ private fun FavoriteCard(
     ) {
         Text(favorite.name, style = MaterialTheme.typography.titleMedium)
         Text(
-            "${String.format("%.4f", favorite.position.latitude)}, ${String.format("%.4f", favorite.position.longitude)}",
+            formatLatLng(favorite.position.latitude, favorite.position.longitude),
             style = MaterialTheme.typography.bodySmall,
         )
         Spacer(Modifier.height(6.dp))

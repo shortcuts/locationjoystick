@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -163,7 +164,7 @@ private fun MapSourceSection(
     Text(stringResource(R.string.settings_menus_map_source), style = MaterialTheme.typography.bodyLarge)
     Spacer(Modifier.height(LjSpacing.xs))
     var sourcePickerExpanded by remember { mutableStateOf(false) }
-    var sourcePickerWidth by remember { mutableStateOf(0) }
+    var sourcePickerWidth by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
     Box(modifier = Modifier.fillMaxWidth()) {
         val chevronRotation by animateFloatAsState(

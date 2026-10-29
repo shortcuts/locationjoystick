@@ -37,6 +37,7 @@ import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.feature.settings.impl.R
+import java.util.Locale
 
 @Composable
 internal fun SettingsRoamingSubScreen(
@@ -117,7 +118,7 @@ private fun RoamingSection(
     var radiusText by remember(isMph) {
         mutableStateOf(
             if (isMph) {
-                String.format("%.2f", roamingDefaults.radiusMeters / 1609.344)
+                String.format(Locale.US, "%.2f", roamingDefaults.radiusMeters / 1609.344)
             } else {
                 roamingDefaults.radiusMeters.toInt().toString()
             },
@@ -151,7 +152,7 @@ private fun RoamingSection(
     var distanceText by remember(isMph) {
         mutableStateOf(
             if (isMph) {
-                String.format("%.2f", roamingDefaults.distanceMeters / 1609.344)
+                String.format(Locale.US, "%.2f", roamingDefaults.distanceMeters / 1609.344)
             } else {
                 roamingDefaults.distanceMeters.toInt().toString()
             },

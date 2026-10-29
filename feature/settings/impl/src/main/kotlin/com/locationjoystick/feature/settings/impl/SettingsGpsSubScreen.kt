@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,6 +41,7 @@ import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.feature.settings.impl.R
+import java.util.Locale
 
 @Composable
 internal fun SettingsGpsSubScreen(
@@ -170,12 +172,12 @@ private fun SpeedProfileInput(
     onSpeedChange: (Double) -> Unit,
     unit: String,
 ) {
-    var localValue by remember { mutableStateOf(String.format("%.1f", displaySpeed)) }
-    var lastSentValue by remember { mutableStateOf(displaySpeed) }
+    var localValue by remember { mutableStateOf(String.format(Locale.US, "%.1f", displaySpeed)) }
+    var lastSentValue by remember { mutableDoubleStateOf(displaySpeed) }
 
     LaunchedEffect(displaySpeed) {
         if (displaySpeed != lastSentValue) {
-            localValue = String.format("%.1f", displaySpeed)
+            localValue = String.format(Locale.US, "%.1f", displaySpeed)
             lastSentValue = displaySpeed
         }
     }
