@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.locationjoystick.jvm.library)
 }
@@ -55,4 +57,16 @@ tasks.withType<Test>().configureEach {
         "--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
         "--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
     )
+}
+
+// lint-tests aborts when ANDROID_SDK_ROOT points to a missing directory, so fall back to local.properties.
+tasks.withType<Test>().configureEach {
+    val sdkDir =
+        rootProject.file("local.properties").takeIf { it.exists() }?.let { file ->
+            Properties().apply { file.reader().use(::load) }.getProperty("sdk.dir")
+        }
+    if (sdkDir != null && File(sdkDir).isDirectory) {
+        environment("ANDROID_SDK_ROOT", sdkDir)
+        environment("ANDROID_HOME", sdkDir)
+    }
 }
