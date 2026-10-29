@@ -7,9 +7,6 @@ import android.net.Uri
 import android.util.Log
 import android.view.accessibility.AccessibilityManager
 import androidx.annotation.StringRes
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
@@ -63,12 +60,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-private const val LAUNCH_ICON_PX = 96
-
 internal data class InstalledApp(
     val packageName: String,
     val label: String,
-    val icon: ImageBitmap? = null,
 )
 
 @HiltViewModel
@@ -604,13 +598,8 @@ class SettingsViewModel
             return pm
                 .queryIntentActivities(launcherIntent, 0)
                 .filter { it.activityInfo.packageName != context.packageName }
-                .map {
-                    InstalledApp(
-                        it.activityInfo.packageName,
-                        it.loadLabel(pm).toString(),
-                        it.loadIcon(pm).toBitmap(LAUNCH_ICON_PX, LAUNCH_ICON_PX).asImageBitmap(),
-                    )
-                }.distinctBy { it.packageName }
+                .map { InstalledApp(it.activityInfo.packageName, it.loadLabel(pm).toString()) }
+                .distinctBy { it.packageName }
                 .sortedBy { it.label.lowercase() }
         }
 

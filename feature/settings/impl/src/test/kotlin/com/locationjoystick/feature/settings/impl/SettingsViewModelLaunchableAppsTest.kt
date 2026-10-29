@@ -31,7 +31,7 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -74,7 +74,7 @@ class SettingsViewModelLaunchableAppsTest {
     }
 
     @Test
-    fun `launchableApps starts empty and decodes icons off the calling thread`() {
+    fun `launchableApps starts empty and lists apps without decoding icons`() {
         val context = RuntimeEnvironment.getApplication()
         val pkg = "com.example.game"
         val icon = ThreadRecordingIcon()
@@ -86,13 +86,15 @@ class SettingsViewModelLaunchableAppsTest {
                 applicationInfo = appInfo
             },
         )
-        pmShadow.setApplicationIcon(pkg, icon)
+        val iconResId = 42
+        pmShadow.addDrawableResolution(pkg, iconResId, icon)
         val resolve =
             ResolveInfo().apply {
                 activityInfo =
                     ActivityInfo().apply {
                         packageName = pkg
                         name = "Main"
+                        this.icon = iconResId
                         applicationInfo = appInfo
                     }
             }
@@ -121,6 +123,6 @@ class SettingsViewModelLaunchableAppsTest {
         val apps = runBlocking { withTimeout(10_000) { viewModel.launchableApps.first { it.isNotEmpty() } } }
 
         assertEquals(listOf(pkg), apps.map { it.packageName })
-        assertNotEquals(Thread.currentThread(), icon.drawThread)
+        assertNull(icon.drawThread)
     }
 }
