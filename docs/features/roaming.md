@@ -13,7 +13,7 @@ Key files: the routing module's roaming engine and OSRM client, the roaming repo
 
 ## Why the route is planned up front
 
-The whole path is planned before walking starts. The map shows the complete wandering path at once, and the preview is the plan. Walking then follows the plan, so what the user sees is what runs.
+The whole path is planned before walking starts. The map shows the complete wandering path at once, and the preview is the plan. Walking then follows the plan, so what the user sees is what runs. The widget roaming panel follows the same rule: it embeds a read-only map for the generated path, because a panel with no map would hide the plan, and Start hands that path to the engine.
 
 If no preview exists at start, or the mode changed since the last preview, planning runs at start.
 

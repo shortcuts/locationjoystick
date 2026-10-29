@@ -90,7 +90,7 @@ The floating map's button column shows a route button when the routes feature is
 
 Paste coordinates is off by default and must be enabled in settings. Roaming is on by default on the widget. Capture is on by default on the map. Each has its own merge rule for existing installs, so a feature is added once and never silently re-enabled.
 
-Roaming on the widget: a tap while idle opens the roaming panel. A tap while roaming expands pause and stop. A playing route blocks a roam start, and the roam icon fades when that is the case.
+Roaming on the widget: a tap while idle opens the roaming panel. A tap while roaming expands pause and stop. A playing route blocks a roam start, and the roam icon fades when that is the case. Generate in the panel shows the path on a read-only map, and Start walks that path.
 
 The joystick toggle shows or hides the stick on its own. It does not need the stick to be locked. The lock button toggles locking. Moving the stick pauses the walk, route or roam, and releasing it leaves that paused until the user resumes.
 

@@ -107,7 +107,10 @@ internal class WidgetPanelPresenter(
             followRoads: Boolean,
         )
 
-        fun startRoamingWith(defaults: RoamingDefaults)
+        fun startRoamingWith(
+            defaults: RoamingDefaults,
+            plannedWaypoints: List<LatLng>?,
+        )
 
         fun saveCurrentLocation(name: String)
 
@@ -356,8 +359,11 @@ internal class WidgetPanelPresenter(
             val shared by mapController.sharedState.collectAsStateWithLifecycle()
             val initialDefaults = remember { shared.roamingDefaults }
             var draft by remember { mutableStateOf(initialDefaults) }
+            val mapTileSource by settingsRepository.getMapTileSource().collectAsStateWithLifecycle(initialValue = MapTileSource.DEFAULT)
             RoamingFloatingView(
                 draft = draft,
+                currentPosition = shared.currentPosition,
+                tileSource = mapTileSource,
                 speedUnit = shared.speedUnit,
                 hasCurrentPosition = shared.currentPosition != null,
                 isSpoofingActive =
@@ -374,7 +380,7 @@ internal class WidgetPanelPresenter(
                         mapController.generateRoamingPreview(defaults.toConfig(pos))
                     }
                 },
-                onStart = { defaults -> callbacks.startRoamingWith(defaults) },
+                onStart = { defaults, planned -> callbacks.startRoamingWith(defaults, planned) },
             )
         }
     }
@@ -490,7 +496,7 @@ internal class WidgetPanelPresenter(
                 onStopRouteAndWalkTo = { pos -> callbacks.stopRouteAndWalkTo(pos) },
                 onFinishRouteAndWalkTo = { pos -> callbacks.finishRouteAndWalkTo(pos) },
                 onAddEphemeralWaypoint = { pos, followRoads -> callbacks.addEphemeralWaypoint(pos, followRoads) },
-                onStartRoaming = { defaults -> callbacks.startRoamingWith(defaults) },
+                onStartRoaming = { defaults -> callbacks.startRoamingWith(defaults, null) },
                 enabledMapFabFeatures = shared.enabledMapFeatures,
                 onStopRoaming = { mapController.stopRoaming() },
                 onStopRouteReplay = { mapController.stopRouteReplay() },

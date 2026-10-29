@@ -856,13 +856,16 @@ class FloatingWidgetService :
                 followRoads: Boolean,
             ) = mapController.addEphemeralWaypoint(pos, followRoads)
 
-            override fun startRoamingWith(defaults: RoamingDefaults) {
+            override fun startRoamingWith(
+                defaults: RoamingDefaults,
+                plannedWaypoints: List<LatLng>?,
+            ) {
                 val pos =
                     mapController.sharedState.value.currentPosition ?: run {
                         Log.w(TAG, "Cannot start roaming: no current position")
                         return
                     }
-                mapController.startRoaming(defaults, pos)
+                mapController.startRoaming(defaults, pos, plannedWaypoints)
             }
 
             override fun saveCurrentLocation(name: String) = mapController.saveCurrentLocation(name)
