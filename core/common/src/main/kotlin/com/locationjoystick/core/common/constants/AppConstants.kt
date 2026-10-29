@@ -30,6 +30,7 @@ object AppConstants {
         const val ANTI_CHEAT_WARNING_THRESHOLD_MS = 8.0
         const val DEFAULT_SPEED_UNIT = "KMH"
         const val SHOW_ROUTE_JUMP_BUTTONS_DEFAULT = false
+        const val LAST_KNOWN_POSITION_ENABLED_DEFAULT = false
         val DEFAULT_ENABLED_SPEED_PROFILE_IDS = setOf(PROFILE_ID_WALK, PROFILE_ID_RUN, PROFILE_ID_BIKE)
     }
 

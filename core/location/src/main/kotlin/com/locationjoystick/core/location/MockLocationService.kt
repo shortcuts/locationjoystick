@@ -20,6 +20,7 @@ import com.locationjoystick.core.data.DebugStats
 import com.locationjoystick.core.data.ElevationRepository
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.data.LocationRepository
+import com.locationjoystick.core.data.RealPositionSnapshotter
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
@@ -115,6 +116,8 @@ class MockLocationService : Service() {
     @Inject lateinit var routeRepository: RouteRepository
 
     @Inject lateinit var settingsRepository: SettingsRepository
+
+    @Inject lateinit var realPositionSnapshotter: RealPositionSnapshotter
 
     @Inject lateinit var routeReplayEngine: RouteReplayEngine
 
@@ -326,11 +329,13 @@ class MockLocationService : Service() {
                                 RunningLoopAction.STOP_IDLE_LOOP_FOR_REPLAY -> {
                                     updateJob?.cancel()
                                     updateJob = null
+                                    if (!testProvider.isAdded) realPositionSnapshotter.capture()
                                     testProvider.setup()
                                     Log.i(TAG, "State changed to RUNNING (route replay) - stopped idle loop")
                                 }
 
                                 RunningLoopAction.START_IDLE_LOOP -> {
+                                    if (!testProvider.isAdded) realPositionSnapshotter.capture()
                                     testProvider.setup()
                                     startUpdateLoop()
                                     Log.i(TAG, "State changed to RUNNING - started update loop")

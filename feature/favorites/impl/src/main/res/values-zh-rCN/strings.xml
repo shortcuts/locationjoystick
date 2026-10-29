@@ -3,6 +3,7 @@
     <string name="favorites_screen_title">"收藏"</string>
     <string name="favorites_screen_set_home">"设为主页位置"</string>
     <string name="favorites_screen_remove_home">"取消主页位置"</string>
+    <string name="favorites_screen_last_known_position">"上次已知位置"</string>
     <string name="favorites_screen_no_saved_favorites_yet">"暂无收藏"</string>
     <string name="favorites_screen_no_favorites_match_search">"没有匹配的收藏"</string>
     <string name="favorites_screen_from_map">"从地图选择"</string>

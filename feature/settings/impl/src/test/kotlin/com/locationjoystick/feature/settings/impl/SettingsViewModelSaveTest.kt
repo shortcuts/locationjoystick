@@ -24,6 +24,7 @@ import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
+import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.Route
@@ -930,6 +931,14 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getHideForegroundNotification(): Flow<Boolean> = flowOf(false)
 
     override suspend fun setHideForegroundNotification(enabled: Boolean) = Unit
+
+    override fun getLastKnownPositionEnabled(): Flow<Boolean> = flowOf(false)
+
+    override suspend fun setLastKnownPositionEnabled(enabled: Boolean) = Unit
+
+    override fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?> = flowOf(null)
+
+    override suspend fun setRealPositionSnapshot(snapshot: RealPositionSnapshot) = Unit
 
     override fun getShowRouteJumpButtons(): Flow<Boolean> = flowOf(false)
 

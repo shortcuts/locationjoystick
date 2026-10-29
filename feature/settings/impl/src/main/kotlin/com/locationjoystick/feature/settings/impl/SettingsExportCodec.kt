@@ -94,6 +94,7 @@ internal object SettingsExportCodec {
         settingsObj.put("hideWidgetOverlay", data.settings.hideWidgetOverlay)
         settingsObj.put("hideForegroundNotification", data.settings.hideForegroundNotification)
         settingsObj.put("showRouteJumpButtons", data.settings.showRouteJumpButtons)
+        settingsObj.put("lastKnownPositionEnabled", data.settings.lastKnownPositionEnabled)
         settingsObj.put("bypassMockLocationCheck", data.settings.bypassMockLocationCheck)
         settingsObj.put("realElevationEnabled", data.settings.realElevationEnabled)
         settingsObj.put("altitudeJitterRadiusMeters", data.settings.altitudeJitterRadiusMeters)
@@ -276,6 +277,11 @@ internal object SettingsExportCodec {
                 "showRouteJumpButtons",
                 AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
             )
+        val lastKnownPositionEnabled =
+            settingsObj.optBoolean(
+                "lastKnownPositionEnabled",
+                AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT,
+            )
         val bypassMockLocationCheck = settingsObj.optBoolean("bypassMockLocationCheck", false)
         val realElevationEnabled =
             settingsObj.optBoolean("realElevationEnabled", AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT)
@@ -359,6 +365,7 @@ internal object SettingsExportCodec {
                 hideWidgetOverlay = hideWidgetOverlay,
                 hideForegroundNotification = hideForegroundNotification,
                 showRouteJumpButtons = showRouteJumpButtons,
+                lastKnownPositionEnabled = lastKnownPositionEnabled,
                 bypassMockLocationCheck = bypassMockLocationCheck,
                 roamingDefaults = roamingDefaults,
                 realElevationEnabled = realElevationEnabled,

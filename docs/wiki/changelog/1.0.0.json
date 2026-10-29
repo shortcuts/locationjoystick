@@ -37,6 +37,7 @@
     { "category": "fix", "scope": "Routes", "summary": "Moving between route stops no longer counts as a teleport, so it does not restart the teleport cooldown." },
     { "category": "fix", "scope": "Routes", "summary": "The teleport delay field in the start sheet fits on its own row." },
     { "category": "fix", "scope": "Joystick", "summary": "After you steer with the joystick, Resume continues from where you steered, not from where you paused." },
+    { "category": "feat", "scope": "Favorite Locations", "summary": "Settings > Favorites & Routes has a new Show last known position switch. It pins where your phone was before spoofing started to the top of Favorites." },
     { "category": "feat", "scope": "Favorite Locations", "summary": "While spoofing, tapping a favorite offers Teleport, Walk, or Walk via roads." },
     { "category": "feat", "scope": "Favorite Locations", "summary": "Saved favorites are grouped, and you can sort them." },
     { "category": "feat", "scope": "Search", "summary": "Place search now tries a second service when the first one fails. A service that has just failed is skipped for ten minutes." },

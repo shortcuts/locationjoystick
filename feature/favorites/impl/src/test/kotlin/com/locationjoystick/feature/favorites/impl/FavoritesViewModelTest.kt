@@ -8,6 +8,7 @@ import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import io.mockk.coVerify
@@ -52,6 +53,8 @@ class FavoritesViewModelTest {
         every { settingsRepository.getHideTeleportFeatures() } returns flowOf(false)
         every { settingsRepository.getHomeFavoriteId() } returns homeFlow
         every { settingsRepository.getFavoritesManualOrder() } returns flowOf(emptyList())
+        every { settingsRepository.getLastKnownPositionEnabled() } returns flowOf(false)
+        every { settingsRepository.getRealPositionSnapshot() } returns flowOf(null)
         viewModel = FavoritesViewModel(favoriteRepository, locationRepository, settingsRepository, teleportUseCase, mapController)
     }
 
@@ -124,6 +127,36 @@ class FavoritesViewModelTest {
             vm.uiState.test {
                 val state = awaitItem()
                 assertEquals("Old", state.favorites[0].name)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun uiState_exposes_last_known_position_when_enabled() =
+        runTest {
+            val snapshot = RealPositionSnapshot(LatLng(5.0, 6.0), 100L)
+            every { settingsRepository.getLastKnownPositionEnabled() } returns flowOf(true)
+            every { settingsRepository.getRealPositionSnapshot() } returns flowOf(snapshot)
+            val vm = FavoritesViewModel(favoriteRepository, locationRepository, settingsRepository, teleportUseCase, mapController)
+
+            vm.uiState.test {
+                assertEquals(snapshot, awaitItem().lastKnownPosition)
+                cancelAndIgnoreRemainingEvents()
+            }
+            vm.cooldownStates.test {
+                assertEquals(true, awaitItem().containsKey(LAST_KNOWN_ID))
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun uiState_hides_last_known_position_when_disabled() =
+        runTest {
+            every { settingsRepository.getRealPositionSnapshot() } returns flowOf(RealPositionSnapshot(LatLng(5.0, 6.0), 100L))
+            val vm = FavoritesViewModel(favoriteRepository, locationRepository, settingsRepository, teleportUseCase, mapController)
+
+            vm.uiState.test {
+                assertNull(awaitItem().lastKnownPosition)
                 cancelAndIgnoreRemainingEvents()
             }
         }

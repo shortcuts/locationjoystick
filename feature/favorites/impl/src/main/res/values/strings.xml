@@ -3,6 +3,7 @@
     <string name="favorites_screen_title">"Favorites"</string>
     <string name="favorites_screen_set_home">"Set as home"</string>
     <string name="favorites_screen_remove_home">"Remove home"</string>
+    <string name="favorites_screen_last_known_position">"Last known position"</string>
     <string name="favorites_screen_no_saved_favorites_yet">"No saved favorites yet"</string>
     <string name="favorites_screen_no_favorites_match_search">"No favorites match your search"</string>
     <string name="favorites_screen_from_map">"From map"</string>

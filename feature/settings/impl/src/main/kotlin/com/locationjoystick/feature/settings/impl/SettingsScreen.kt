@@ -375,6 +375,10 @@ fun SettingsRoute(
                     viewModel.setShowRouteJumpButtons(action.enabled)
                 }
 
+                is SettingsAction.SetLastKnownPositionEnabled -> {
+                    viewModel.setLastKnownPositionEnabled(action.enabled)
+                }
+
                 is SettingsAction.SetRealismRealElevationEnabled -> {
                     viewModel.setRealismRealElevationEnabled(action.enabled)
                 }

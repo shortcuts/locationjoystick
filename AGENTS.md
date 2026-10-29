@@ -171,6 +171,7 @@ Working memory for long-running features: a feature doc that has a "Status" line
 | `TeleportUseCase` | `:core:data` | Class (`@Singleton`) | Single entry point for teleports, so every path shares persistence and cooldown. |
 | `CaptureCoordinatesRepository` | `:core:data` | Repository (`@Singleton`) | Owns Capture mode state. Jumps go through `TeleportUseCase`. |
 | `RealLocationRepository` | `:core:data` | Repository (`@Singleton`) | Reads a real GPS fix without touching the mock-position cache or cooldown. |
+| `RealPositionSnapshotter` | `:core:data` | Class (`@Singleton`) | Retakes the real last known position at each fresh spoofing start, for the favorites card. Never runs while the provider is registered. |
 | `LaunchAfterLinkUseCase` | `:core:data` | Class (`@Singleton`) | Opens the user's chosen app after a handled map link. |
 | `GpxOpenRepository` | `:core:data` | Repository (`@Singleton`) | Holds externally opened GPX files until the map consumes them. |
 | `HotLocationsRepository` | `:core:data` | Repository (`@Singleton`) | Hot-location list from a cached wiki JSON with a bundled seed. Sibling of `UpdateCheckRepository`. |

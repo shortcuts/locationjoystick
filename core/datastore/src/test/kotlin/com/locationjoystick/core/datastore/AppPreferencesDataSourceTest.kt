@@ -6,6 +6,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.GroundCalibration
+import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.testing.FakePreferencesDataStore
@@ -169,6 +171,24 @@ class AppPreferencesDataSourceTest {
             assertFalse(dataSource.getShowRouteJumpButtons().first())
             dataSource.setShowRouteJumpButtons(true)
             assertTrue(dataSource.getShowRouteJumpButtons().first())
+        }
+
+    @Test
+    fun `lastKnownPositionEnabled defaults to false and round-trips true`() =
+        runTest {
+            assertFalse(dataSource.getLastKnownPositionEnabled().first())
+            dataSource.setLastKnownPositionEnabled(true)
+            assertTrue(dataSource.getLastKnownPositionEnabled().first())
+        }
+
+    @Test
+    fun `real position snapshot is null by default, round-trips and is replaced`() =
+        runTest {
+            assertNull(dataSource.getRealPositionSnapshot().first())
+            dataSource.setRealPositionSnapshot(RealPositionSnapshot(LatLng(1.5, 2.5), 10L))
+            assertEquals(RealPositionSnapshot(LatLng(1.5, 2.5), 10L), dataSource.getRealPositionSnapshot().first())
+            dataSource.setRealPositionSnapshot(RealPositionSnapshot(LatLng(3.5, 4.5), 20L))
+            assertEquals(RealPositionSnapshot(LatLng(3.5, 4.5), 20L), dataSource.getRealPositionSnapshot().first())
         }
 
     @Test

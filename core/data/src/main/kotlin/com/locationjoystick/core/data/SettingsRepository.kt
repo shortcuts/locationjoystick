@@ -12,6 +12,7 @@ import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
+import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.ScreenFeatureGates
@@ -346,6 +347,14 @@ class SettingsRepository
         fun getShowRouteJumpButtons(): Flow<Boolean> = dataSource.getShowRouteJumpButtons()
 
         suspend fun setShowRouteJumpButtons(enabled: Boolean) = dataSource.setShowRouteJumpButtons(enabled)
+
+        fun getLastKnownPositionEnabled(): Flow<Boolean> = dataSource.getLastKnownPositionEnabled()
+
+        suspend fun setLastKnownPositionEnabled(enabled: Boolean) = dataSource.setLastKnownPositionEnabled(enabled)
+
+        fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?> = dataSource.getRealPositionSnapshot()
+
+        suspend fun setRealPositionSnapshot(snapshot: RealPositionSnapshot) = dataSource.setRealPositionSnapshot(snapshot)
 
         fun getBypassMockLocationCheck(): Flow<Boolean> = dataSource.getBypassMockLocationCheck()
 

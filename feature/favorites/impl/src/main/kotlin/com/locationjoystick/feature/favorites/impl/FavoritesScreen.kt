@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.favorites.impl
 
 import android.content.Intent
+import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -208,6 +209,22 @@ internal fun FavoritesScreen(
                     .padding(scaffoldPadding),
         ) {
             WideContentClamp(modifier = Modifier.fillMaxSize()) {
+                uiState.lastKnownPosition?.takeIf { searchQuery.isBlank() }?.let { snapshot ->
+                    val favorite =
+                        com.locationjoystick.core.model.FavoriteLocation(
+                            id = LAST_KNOWN_ID,
+                            name = stringResource(R.string.favorites_screen_last_known_position),
+                            position = snapshot.position,
+                        )
+                    LastKnownPositionCard(
+                        favorite = favorite,
+                        takenAtMs = snapshot.takenAtMs,
+                        cooldownState = cooldownStates[LAST_KNOWN_ID] ?: CooldownState.Ready,
+                        currentPosition = getCurrentPosition(),
+                        onClick = { if (isSpoofing) targetFavorite = favorite else onTeleport(favorite) },
+                        modifier = Modifier.padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
+                    )
+                }
                 if (uiState.favorites.isNotEmpty()) {
                     ListSearchField(
                         query = searchQuery,
@@ -449,6 +466,36 @@ internal fun FavoritesScreen(
                 },
             )
         }
+    }
+}
+
+@Composable
+private fun LastKnownPositionCard(
+    favorite: com.locationjoystick.core.model.FavoriteLocation,
+    takenAtMs: Long,
+    cooldownState: CooldownState,
+    currentPosition: LatLng?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LjListItemCard(modifier = modifier, onClick = onClick, trailing = {}) {
+        Text(favorite.name, style = MaterialTheme.typography.titleMedium)
+        Text(formatCapturedPoint(favorite.position), style = MaterialTheme.typography.bodySmall)
+        Text(
+            DateUtils
+                .getRelativeTimeSpanString(takenAtMs, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
+                .toString(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(6.dp))
+        CooldownAdvisoryBadge(
+            cooldownBadgeText(
+                (cooldownState as? CooldownState.Cooling)?.let { it.remainingSeconds to it.distanceMeters },
+                currentPosition?.let { haversineDistance(it, favorite.position) },
+                rememberCooldownStringLookup(),
+            ),
+        )
     }
 }
 

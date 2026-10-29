@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.favorites.impl
 
 import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.SavedItemSortMode
 
 data class FavoritesUiState(
@@ -11,4 +12,7 @@ data class FavoritesUiState(
     val hideTeleportFeatures: Boolean = false,
     val homeFavoriteId: String? = null,
     val isRoadRouteFetchInFlight: Boolean = false,
+    val lastKnownPosition: RealPositionSnapshot? = null,
 )
+
+const val LAST_KNOWN_ID = "last_known_position"

@@ -59,6 +59,14 @@ class FavoritesViewModel
                 )
             }.combine(locationRepository.isRoadRouteFetchInFlight) { state, isRoadRouteFetchInFlight ->
                 state.copy(isRoadRouteFetchInFlight = isRoadRouteFetchInFlight)
+            }.combine(
+                settingsRepository.getLastKnownPositionEnabled().combine(
+                    settingsRepository.getRealPositionSnapshot(),
+                ) { enabled, snapshot ->
+                    snapshot.takeIf { enabled }
+                },
+            ) { state, lastKnownPosition ->
+                state.copy(lastKnownPosition = lastKnownPosition)
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -85,9 +93,10 @@ class FavoritesViewModel
                 settingsRepository.getLastLocation(),
                 tickerFlow(30_000L),
             ) { teleportTime, lastLoc, _ ->
-                uiState.value.favorites.associate { fav ->
-                    fav.id to CooldownEngine.computeState(teleportTime, lastLoc, fav.position)
-                }
+                val positions =
+                    uiState.value.favorites.associate { it.id to it.position } +
+                        listOfNotNull(uiState.value.lastKnownPosition?.let { LAST_KNOWN_ID to it.position })
+                positions.mapValues { (_, position) -> CooldownEngine.computeState(teleportTime, lastLoc, position) }
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),

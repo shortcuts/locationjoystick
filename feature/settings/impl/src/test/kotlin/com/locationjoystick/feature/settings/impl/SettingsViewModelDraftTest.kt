@@ -216,6 +216,14 @@ class SettingsViewModelDraftTest {
         }
 
     @Test
+    fun `setLastKnownPositionEnabled`() =
+        runTest(testDispatcher) {
+            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            viewModel.setLastKnownPositionEnabled(true)
+            assertTrue(viewModel.uiState.value.lastKnownPositionEnabled)
+        }
+
+    @Test
     fun `jitter speed variation setters`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }

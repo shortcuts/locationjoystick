@@ -11,6 +11,7 @@ import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
+import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
@@ -1027,6 +1028,30 @@ class SettingsRepositoryTest {
             }
         }
 
+    // last known position
+
+    @Test
+    fun `getLastKnownPositionEnabled returns false by default`() =
+        runTest {
+            assertFalse(repository.getLastKnownPositionEnabled().first())
+        }
+
+    @Test
+    fun `setLastKnownPositionEnabled persists true`() =
+        runTest {
+            repository.setLastKnownPositionEnabled(true)
+            assertTrue(repository.getLastKnownPositionEnabled().first())
+        }
+
+    @Test
+    fun `setRealPositionSnapshot persists the snapshot`() =
+        runTest {
+            assertNull(repository.getRealPositionSnapshot().first())
+            val snapshot = RealPositionSnapshot(LatLng(1.5, 2.5), 42L)
+            repository.setRealPositionSnapshot(snapshot)
+            assertEquals(snapshot, repository.getRealPositionSnapshot().first())
+        }
+
     // real elevation / altitude override
 
     @Test
@@ -1648,6 +1673,23 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         showRouteJumpButtonsFlow.value = enabled
     }
 
+    private val lastKnownPositionEnabledFlow =
+        MutableStateFlow(AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT)
+
+    override fun getLastKnownPositionEnabled(): Flow<Boolean> = lastKnownPositionEnabledFlow
+
+    override suspend fun setLastKnownPositionEnabled(enabled: Boolean) {
+        lastKnownPositionEnabledFlow.value = enabled
+    }
+
+    private val realPositionSnapshotFlow = MutableStateFlow<RealPositionSnapshot?>(null)
+
+    override fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?> = realPositionSnapshotFlow
+
+    override suspend fun setRealPositionSnapshot(snapshot: RealPositionSnapshot) {
+        realPositionSnapshotFlow.value = snapshot
+    }
+
     private val bypassMockLocationCheckFlow = MutableStateFlow(false)
 
     override fun getBypassMockLocationCheck(): Flow<Boolean> = bypassMockLocationCheckFlow
@@ -1837,6 +1879,8 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         hideWidgetOverlayFlow.value = false
         hideForegroundNotificationFlow.value = false
         showRouteJumpButtonsFlow.value = false
+        lastKnownPositionEnabledFlow.value = false
+        realPositionSnapshotFlow.value = null
         bypassMockLocationCheckFlow.value = false
         onboardingCompleteFlow.value = onboardingComplete
     }

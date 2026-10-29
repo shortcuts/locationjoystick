@@ -18,6 +18,7 @@ import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
+import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RoamingKind
@@ -246,6 +247,18 @@ interface PreferencesDataSource {
     /** Sets whether the route-replay jump-to-waypoint buttons are shown. */
     suspend fun setShowRouteJumpButtons(enabled: Boolean)
 
+    /** Gets whether the last known real position is pinned to the favorites list. */
+    fun getLastKnownPositionEnabled(): Flow<Boolean>
+
+    /** Sets whether the last known real position is pinned to the favorites list. */
+    suspend fun setLastKnownPositionEnabled(enabled: Boolean)
+
+    /** Gets the real position saved at the last fresh spoofing start, or null if none. */
+    fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?>
+
+    /** Replaces the saved real position. */
+    suspend fun setRealPositionSnapshot(snapshot: RealPositionSnapshot)
+
     /** Gets whether the AppOpsManager mock-location check is bypassed. */
     fun getBypassMockLocationCheck(): Flow<Boolean>
 
@@ -446,6 +459,7 @@ data class SettingsSnapshot(
     val hideWidgetOverlay: Boolean = false,
     val hideForegroundNotification: Boolean = false,
     val showRouteJumpButtons: Boolean = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
+    val lastKnownPositionEnabled: Boolean = AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT,
     val bypassMockLocationCheck: Boolean = false,
     val realismRealElevationEnabled: Boolean = AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
     val altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
@@ -613,6 +627,10 @@ class AppPreferencesDataSource
             val HIDE_WIDGET_OVERLAY = booleanPreferencesKey("hide_widget_overlay")
             val HIDE_FOREGROUND_NOTIFICATION = booleanPreferencesKey("hide_foreground_notification")
             val SHOW_ROUTE_JUMP_BUTTONS = booleanPreferencesKey("show_route_jump_buttons")
+            val LAST_KNOWN_POSITION_ENABLED = booleanPreferencesKey("last_known_position_enabled")
+            val REAL_SNAPSHOT_LATITUDE = doublePreferencesKey("real_snapshot_latitude")
+            val REAL_SNAPSHOT_LONGITUDE = doublePreferencesKey("real_snapshot_longitude")
+            val REAL_SNAPSHOT_TAKEN_AT_MS = longPreferencesKey("real_snapshot_taken_at_ms")
             val BYPASS_MOCK_LOCATION_CHECK = booleanPreferencesKey("bypass_mock_location_check")
             val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
             val ROUTES_SORT_NEWEST_FIRST = booleanPreferencesKey("routes_sort_newest_first")
@@ -971,6 +989,35 @@ class AppPreferencesDataSource
 
         override suspend fun setShowRouteJumpButtons(enabled: Boolean) = setPref(Keys.SHOW_ROUTE_JUMP_BUTTONS, enabled)
 
+        override fun getLastKnownPositionEnabled(): Flow<Boolean> =
+            pref(Keys.LAST_KNOWN_POSITION_ENABLED, AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT)
+
+        override suspend fun setLastKnownPositionEnabled(enabled: Boolean) = setPref(Keys.LAST_KNOWN_POSITION_ENABLED, enabled)
+
+        override fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading real position snapshot", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs ->
+                    val lat = prefs[Keys.REAL_SNAPSHOT_LATITUDE]
+                    val lon = prefs[Keys.REAL_SNAPSHOT_LONGITUDE]
+                    val takenAt = prefs[Keys.REAL_SNAPSHOT_TAKEN_AT_MS]
+                    if (lat != null && lon != null && takenAt != null) RealPositionSnapshot(LatLng(lat, lon), takenAt) else null
+                }
+
+        override suspend fun setRealPositionSnapshot(snapshot: RealPositionSnapshot) {
+            dataStore.edit { prefs ->
+                prefs[Keys.REAL_SNAPSHOT_LATITUDE] = snapshot.position.latitude
+                prefs[Keys.REAL_SNAPSHOT_LONGITUDE] = snapshot.position.longitude
+                prefs[Keys.REAL_SNAPSHOT_TAKEN_AT_MS] = snapshot.takenAtMs
+            }
+        }
+
         override fun getBypassMockLocationCheck(): Flow<Boolean> = pref(Keys.BYPASS_MOCK_LOCATION_CHECK, false)
 
         override suspend fun setBypassMockLocationCheck(enabled: Boolean) = setPref(Keys.BYPASS_MOCK_LOCATION_CHECK, enabled)
@@ -1220,6 +1267,7 @@ class AppPreferencesDataSource
                 prefs[Keys.HIDE_WIDGET_OVERLAY] = snapshot.hideWidgetOverlay
                 prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] = snapshot.hideForegroundNotification
                 prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] = snapshot.showRouteJumpButtons
+                prefs[Keys.LAST_KNOWN_POSITION_ENABLED] = snapshot.lastKnownPositionEnabled
                 prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] = snapshot.bypassMockLocationCheck
                 prefs[Keys.REALISM_REAL_ELEVATION_ENABLED] = snapshot.realismRealElevationEnabled
                 prefs[Keys.ALTITUDE_JITTER_RADIUS_METERS] =
@@ -1315,6 +1363,9 @@ class AppPreferencesDataSource
                         showRouteJumpButtons =
                             prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS]
                                 ?: AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
+                        lastKnownPositionEnabled =
+                            prefs[Keys.LAST_KNOWN_POSITION_ENABLED]
+                                ?: AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT,
                         bypassMockLocationCheck = prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] ?: false,
                         realismRealElevationEnabled =
                             prefs[Keys.REALISM_REAL_ELEVATION_ENABLED]

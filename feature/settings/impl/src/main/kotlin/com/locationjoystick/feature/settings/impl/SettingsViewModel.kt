@@ -228,6 +228,7 @@ class SettingsViewModel
             val hideWidgetOverlay: Boolean? = null,
             val hideForegroundNotification: Boolean? = null,
             val showRouteJumpButtons: Boolean? = null,
+            val lastKnownPositionEnabled: Boolean? = null,
             val realismRealElevationEnabled: Boolean? = null,
             val altitudeJitterRadiusMeters: Double? = null,
             val plantingRadiusMeters: Double? = null,
@@ -317,6 +318,7 @@ class SettingsViewModel
                     hideForegroundNotification =
                         draftState.hideForegroundNotification ?: snapshot.hideForegroundNotification,
                     showRouteJumpButtons = draftState.showRouteJumpButtons ?: snapshot.showRouteJumpButtons,
+                    lastKnownPositionEnabled = draftState.lastKnownPositionEnabled ?: snapshot.lastKnownPositionEnabled,
                     realismRealElevationEnabled =
                         draftState.realismRealElevationEnabled ?: snapshot.realismRealElevationEnabled,
                     hasAltitudeOverride = baseAltitudeOverride != null,
@@ -509,6 +511,10 @@ class SettingsViewModel
             mutableDraft.update { it.copy(showRouteJumpButtons = enabled) }
         }
 
+        fun setLastKnownPositionEnabled(enabled: Boolean) {
+            mutableDraft.update { it.copy(lastKnownPositionEnabled = enabled) }
+        }
+
         fun setRealismRealElevationEnabled(enabled: Boolean) {
             mutableDraft.update { it.copy(realismRealElevationEnabled = enabled) }
         }
@@ -679,6 +685,7 @@ class SettingsViewModel
                         hideWidgetOverlay = state.hideWidgetOverlay,
                         hideForegroundNotification = state.hideForegroundNotification,
                         showRouteJumpButtons = state.showRouteJumpButtons,
+                        lastKnownPositionEnabled = state.lastKnownPositionEnabled,
                         bypassMockLocationCheck = state.bypassMockLocationCheck,
                         realismRealElevationEnabled = state.realismRealElevationEnabled,
                         altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
@@ -965,6 +972,7 @@ class SettingsViewModel
                     hideWidgetOverlay = data.settings.hideWidgetOverlay,
                     hideForegroundNotification = data.settings.hideForegroundNotification,
                     showRouteJumpButtons = data.settings.showRouteJumpButtons,
+                    lastKnownPositionEnabled = data.settings.lastKnownPositionEnabled,
                     bypassMockLocationCheck = data.settings.bypassMockLocationCheck,
                     realismRealElevationEnabled = data.settings.realElevationEnabled,
                     altitudeJitterRadiusMeters = data.settings.altitudeJitterRadiusMeters,

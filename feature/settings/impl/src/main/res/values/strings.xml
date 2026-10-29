@@ -32,6 +32,8 @@
     <string name="settings_favorites_routes_title">"Favorites &amp; Routes"</string>
     <string name="settings_favorites_routes_favorites">"Favorites"</string>
     <string name="settings_favorites_routes_options_for_the_favorites_list">"Options for the favorites list."</string>
+    <string name="settings_favorites_routes_show_last_known_position">"Show last known position"</string>
+    <string name="settings_favorites_routes_show_last_known_position_desc">"Pins the position the phone had before spoofing started to the top of your favorites. It is the last real position the phone knew. If you moved since, it is out of date."</string>
     <string name="settings_favorites_routes_show_hot_locations">"Show hot locations"</string>
     <string name="settings_favorites_routes_show_hot_locations_desc">"Adds popular locations to your favorites. Select which ones to include below."</string>
     <string name="settings_favorites_routes_locations">"Locations"</string>

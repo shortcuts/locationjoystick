@@ -32,6 +32,8 @@
     <string name="settings_favorites_routes_title">"收藏与路线"</string>
     <string name="settings_favorites_routes_favorites">"收藏"</string>
     <string name="settings_favorites_routes_options_for_the_favorites_list">"收藏列表的选项。"</string>
+    <string name="settings_favorites_routes_show_last_known_position">"显示上次已知位置"</string>
+    <string name="settings_favorites_routes_show_last_known_position_desc">"将开始模拟定位之前手机所在的位置固定在收藏列表顶部。这是手机最后知道的真实位置。如果你之后移动过，该位置就已过时。"</string>
     <string name="settings_favorites_routes_show_hot_locations">"显示热门地点"</string>
     <string name="settings_favorites_routes_show_hot_locations_desc">"向你的收藏添加一份精选的热门地点列表。可在下方选择要包含哪些地点。"</string>
     <string name="settings_favorites_routes_locations">"地点"</string>

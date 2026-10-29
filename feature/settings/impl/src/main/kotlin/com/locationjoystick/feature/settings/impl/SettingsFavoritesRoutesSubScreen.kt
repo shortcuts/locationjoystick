@@ -90,6 +90,14 @@ private fun FavoritesSection(
     Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
+        checked = uiState.lastKnownPositionEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetLastKnownPositionEnabled(it)) },
+        title = stringResource(R.string.settings_favorites_routes_show_last_known_position),
+        description = stringResource(R.string.settings_favorites_routes_show_last_known_position_desc),
+    )
+    Spacer(modifier = Modifier.height(LjSpacing.sm))
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
         checked = uiState.hotLocationsEnabled,
         onCheckedChange = { onAction(SettingsAction.SetHotLocationsEnabled(it)) },
         title = stringResource(R.string.settings_favorites_routes_show_hot_locations),

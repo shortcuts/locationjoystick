@@ -57,6 +57,17 @@ One favorite can be marked as Home. The app then starts there, instead of at the
 
 Favorites are a flat table with no relations. Sorting by time is the default, and the other sorts are applied above the repository.
 
+## Last known position
+
+Real GPS is unreadable while the mock provider runs, so the app cannot offer a return to the real place later. `RealPositionSnapshotter` saves the real last known position instead, and the favorites list pins it as a card that is not a Room row.
+
+- The capture runs once per fresh start, just before the test provider registers. A pause and resume, or a restart while the provider is still registered, never retakes it.
+- A start with no real fix keeps the previous snapshot. An old guess beats none, and the card shows its age.
+- The snapshot lives in DataStore, because Android can kill the process while spoofing continues. It is per-device and not exported.
+- Turning the setting off hides the card and stops captures. The stored snapshot stays and shows again, with its age, when the setting is back on.
+- The time is the capture time, not the fix time. The cached fix can be older, and the position is wrong if the user moved while spoofing.
+- Tapping the card goes through the same teleport, walk and cooldown path as a favorite, so hide-teleport still applies.
+
 ## Hot locations
 
 Settings has a toggle to show a curated list of popular places. When on, the list is inserted into the favorites table. When off, only the inserted entries are removed.
