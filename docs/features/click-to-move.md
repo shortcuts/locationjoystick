@@ -1,8 +1,8 @@
 # Click-to-Move / Teleport
 
-Long-press the map to open a sheet with "Walk here" or "Teleport here". The sheet's title row has a share action for the tapped point ([location-links.md](location-links.md)).
+Tapping the map while spoofing is on opens a sheet with "Walk here" or "Teleport here". With spoofing off, a tap teleports at once. Long-pressing the map walks straight to the point with no sheet. The sheet's title row has a share action for the tapped point ([location-links.md](location-links.md)).
 
-Tapping the map while spoofing, and opening a deep link, both pin a point and show this same sheet. The paste sheet does not pin. Its walk and teleport buttons act directly on the first valid point. Extra points do not change that. A future "open in Maps" intent should pin a point the same way as a deep link.
+A map search result and opening a deep link also pin a point and show this same sheet. The paste sheet does not pin. Its walk and teleport buttons act directly on the first valid point. Extra points do not change that. A future "open in Maps" intent should pin a point the same way as a deep link.
 
 With two or more valid points, the sheet can also save a route, or start a named route replay from the reserved temporary route. Start is real route replay, not the ephemeral "add next point" mode. See [routes.md](routes.md). Teleport is hidden when hide-teleport is on. Start still walks to the first stop.
 
