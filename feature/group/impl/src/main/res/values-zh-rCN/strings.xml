@@ -13,7 +13,8 @@
     <string name="group_sync_ask_the_leader_for_their_6">"请向组长索取 6 位群组代码。"</string>
     <string name="group_sync_code">"代码"</string>
     <string name="group_sync_join">"加入"</string>
-    <string name="group_sync_nearby_group_found">"此网络上有活跃群组：%1$s"</string>
+    <string name="group_sync_nearby_groups_header">"此网络上的群组"</string>
+    <string name="group_sync_nearby_group_row_description">"加入群组 %1$s"</string>
     <string name="group_sync_cancel">"取消"</string>
     <string name="group_sync_role_leader">"角色：组长"</string>
     <string name="group_sync_group_code">"群组代码"</string>

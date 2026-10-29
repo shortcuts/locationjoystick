@@ -13,7 +13,8 @@
     <string name="group_sync_ask_the_leader_for_their_6">"Ask the leader for their 6-character group code."</string>
     <string name="group_sync_code">"Code"</string>
     <string name="group_sync_join">"Join"</string>
-    <string name="group_sync_nearby_group_found">"Active group on this network: %1$s"</string>
+    <string name="group_sync_nearby_groups_header">"Groups on this network"</string>
+    <string name="group_sync_nearby_group_row_description">"Join group %1$s"</string>
     <string name="group_sync_cancel">"Cancel"</string>
     <string name="group_sync_role_leader">"Role: Leader"</string>
     <string name="group_sync_group_code">"Group code"</string>

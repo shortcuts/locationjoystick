@@ -176,54 +176,76 @@ class GroupSyncViewModelTest {
         }
 
     @Test
-    fun `watchNearbyLeader publishes a leader then clears it when the next probe finds none`() =
+    fun `watchNearbyLeaders publishes sorted leaders then clears them when the next probe finds none`() =
         runTest {
-            coEvery { groupNsdManager.discoverAnyLeader() } returnsMany
-                listOf(DiscoveredLeader("ABC123", "10.0.0.5", 4000), null)
+            coEvery { groupNsdManager.discoverAllLeaders() } returnsMany
+                listOf(
+                    listOf(DiscoveredLeader("ZZZ999", "10.0.0.6", 4001), DiscoveredLeader("ABC123", "10.0.0.5", 4000)),
+                    emptyList(),
+                )
 
-            backgroundScope.launch { viewModel.watchNearbyLeader() }
+            backgroundScope.launch { viewModel.watchNearbyLeaders() }
             runCurrent()
-            assertEquals(GroupInvite(host = "10.0.0.5", port = 4000, groupId = "ABC123"), viewModel.nearbyLeader.value)
+            assertEquals(
+                listOf(
+                    GroupInvite(host = "10.0.0.5", port = 4000, groupId = "ABC123"),
+                    GroupInvite(host = "10.0.0.6", port = 4001, groupId = "ZZZ999"),
+                ),
+                viewModel.nearbyLeaders.value,
+            )
 
             advanceTimeBy(30_001L)
-            assertNull(viewModel.nearbyLeader.value)
-            coVerify(exactly = 2) { groupNsdManager.discoverAnyLeader() }
+            assertEquals(emptyList<GroupInvite>(), viewModel.nearbyLeaders.value)
+            coVerify(exactly = 2) { groupNsdManager.discoverAllLeaders() }
         }
 
     @Test
-    fun `watchNearbyLeader does not probe when the role is not NONE`() =
+    fun `watchNearbyLeaders does not probe when the role is not NONE`() =
         runTest {
             groupStateFlow.value = GroupState(role = GroupRole.FOLLOWER, groupId = "abc")
 
-            viewModel.watchNearbyLeader()
+            viewModel.watchNearbyLeaders()
 
-            coVerify(exactly = 0) { groupNsdManager.discoverAnyLeader() }
+            coVerify(exactly = 0) { groupNsdManager.discoverAllLeaders() }
         }
 
     @Test
-    fun `joinNearbyLeader joins the published leader`() =
+    fun `joinNearbyLeader joins the leader with the given groupId`() =
         runTest {
-            coEvery { groupNsdManager.discoverAnyLeader() } returns DiscoveredLeader("ABC123", "10.0.0.5", 4000)
-            backgroundScope.launch { viewModel.watchNearbyLeader() }
+            coEvery { groupNsdManager.discoverAllLeaders() } returns
+                listOf(DiscoveredLeader("ABC123", "10.0.0.5", 4000), DiscoveredLeader("ZZZ999", "10.0.0.6", 4001))
+            backgroundScope.launch { viewModel.watchNearbyLeaders() }
             runCurrent()
 
-            viewModel.joinNearbyLeader()
+            viewModel.joinNearbyLeader("ZZZ999")
 
-            coVerify { groupRepository.joinGroup(GroupInvite(host = "10.0.0.5", port = 4000, groupId = "ABC123")) }
+            coVerify { groupRepository.joinGroup(GroupInvite(host = "10.0.0.6", port = 4001, groupId = "ZZZ999")) }
         }
 
     @Test
-    fun `cancelling watchNearbyLeader clears the leader`() =
+    fun `joinNearbyLeader with an unknown groupId joins nothing`() =
         runTest {
-            coEvery { groupNsdManager.discoverAnyLeader() } returns DiscoveredLeader("ABC123", "10.0.0.5", 4000)
-            val job = backgroundScope.launch { viewModel.watchNearbyLeader() }
+            coEvery { groupNsdManager.discoverAllLeaders() } returns listOf(DiscoveredLeader("ABC123", "10.0.0.5", 4000))
+            backgroundScope.launch { viewModel.watchNearbyLeaders() }
             runCurrent()
-            assertEquals("ABC123", viewModel.nearbyLeader.value?.groupId)
+
+            viewModel.joinNearbyLeader("NOPE00")
+
+            coVerify(exactly = 0) { groupRepository.joinGroup(any()) }
+        }
+
+    @Test
+    fun `cancelling watchNearbyLeaders clears the leaders`() =
+        runTest {
+            coEvery { groupNsdManager.discoverAllLeaders() } returns listOf(DiscoveredLeader("ABC123", "10.0.0.5", 4000))
+            val job = backgroundScope.launch { viewModel.watchNearbyLeaders() }
+            runCurrent()
+            assertEquals(listOf("ABC123"), viewModel.nearbyLeaders.value.map { it.groupId })
 
             job.cancel()
             runCurrent()
 
-            assertNull(viewModel.nearbyLeader.value)
+            assertEquals(emptyList<GroupInvite>(), viewModel.nearbyLeaders.value)
         }
 
     @Test

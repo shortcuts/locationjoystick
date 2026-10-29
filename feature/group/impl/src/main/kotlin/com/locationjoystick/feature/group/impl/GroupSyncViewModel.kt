@@ -68,8 +68,8 @@ class GroupSyncViewModel
         private val _isDiscovering = MutableStateFlow(false)
         val isDiscovering: StateFlow<Boolean> = _isDiscovering.asStateFlow()
 
-        private val _nearbyLeader = MutableStateFlow<GroupInvite?>(null)
-        val nearbyLeader: StateFlow<GroupInvite?> = _nearbyLeader.asStateFlow()
+        private val _nearbyLeaders = MutableStateFlow<List<GroupInvite>>(emptyList())
+        val nearbyLeaders: StateFlow<List<GroupInvite>> = _nearbyLeaders.asStateFlow()
 
         val apiEnabled: StateFlow<Boolean> = leaderSyncServer.apiEnabled
 
@@ -237,27 +237,29 @@ class GroupSyncViewModel
         }
 
         /**
-         * Probes for a leader on the network while idle. The screen scopes this to its visible
+         * Probes for leaders on the network while idle. The screen scopes this to its visible
          * lifetime so nothing polls in the background.
          */
-        suspend fun watchNearbyLeader() {
+        suspend fun watchNearbyLeaders() {
             try {
                 while (_groupState.value.role == GroupRole.NONE) {
                     if (!_isDiscovering.value) {
-                        _nearbyLeader.value =
-                            groupNsdManager.discoverAnyLeader()?.let {
-                                GroupInvite(host = it.host, port = it.port, groupId = it.code)
-                            }
+                        // Sorted so the list keeps its order between probes.
+                        _nearbyLeaders.value =
+                            groupNsdManager
+                                .discoverAllLeaders()
+                                .map { GroupInvite(host = it.host, port = it.port, groupId = it.code) }
+                                .sortedBy { it.groupId }
                     }
                     delay(AppConstants.SyncConstants.NSD_LEADER_POLL_INTERVAL_MS)
                 }
             } finally {
-                _nearbyLeader.value = null
+                _nearbyLeaders.value = emptyList()
             }
         }
 
-        fun joinNearbyLeader() {
-            _nearbyLeader.value?.let(::handlePendingInvite)
+        fun joinNearbyLeader(groupId: String) {
+            _nearbyLeaders.value.firstOrNull { it.groupId == groupId }?.let(::handlePendingInvite)
         }
 
         fun joinViaScannedUrl(url: String) {

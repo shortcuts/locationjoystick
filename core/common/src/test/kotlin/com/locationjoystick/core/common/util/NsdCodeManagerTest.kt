@@ -12,10 +12,10 @@ import io.mockk.unmockkConstructor
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 import java.net.Inet4Address
 
@@ -96,55 +96,112 @@ class NsdCodeManagerTest {
     }
 
     @Test
-    fun `discoverAnyLeader skips an export advert`() =
+    fun `discoverAllLeaders skips an export advert`() =
         runTest {
-            assertNull(probe(attributes = mapOf("role" to "export".toByteArray()), probeAny = true))
+            assertEquals(emptyList<DiscoveredLeader>(), probeAll(listOf("ABC123" to mapOf("role" to "export".toByteArray()))))
         }
 
     @Test
-    fun `discoverAnyLeader returns a leader without a role`() =
+    fun `discoverAllLeaders returns a leader without a role`() =
         runTest {
-            assertEquals("ABC123", probe(attributes = emptyMap(), probeAny = true)?.code)
+            assertEquals(listOf("ABC123"), probeAll(listOf("ABC123" to emptyMap())).map { it.code })
+        }
+
+    @Test
+    fun `discoverAllLeaders resolves services one at a time and returns both`() =
+        runTest {
+            val discovery = slot<NsdManager.DiscoveryListener>()
+            val resolvers = mutableListOf<NsdManager.ResolveListener>()
+            every { nsdManager.discoverServices(any<String>(), any<Int>(), capture(discovery)) } returns Unit
+
+            @Suppress("DEPRECATION")
+            every { nsdManager.resolveService(any<NsdServiceInfo>(), capture(resolvers)) } returns Unit
+            val job = async { manager.discoverAllLeaders() }
+            runCurrent()
+            discovery.captured.onServiceFound(found("ABC123"))
+            discovery.captured.onServiceFound(found("DEF456"))
+            assertEquals(1, resolvers.size)
+
+            resolvers[0].onServiceResolved(resolved("192.168.1.5", 1234))
+            assertEquals(2, resolvers.size)
+            resolvers[1].onServiceResolved(resolved("192.168.1.6", 1235))
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(DiscoveredLeader("ABC123", "192.168.1.5", 1234), DiscoveredLeader("DEF456", "192.168.1.6", 1235)),
+                job.await(),
+            )
+        }
+
+    @Test
+    fun `discoverAllLeaders skips a failed resolve and keeps the other`() =
+        runTest {
+            val discovery = slot<NsdManager.DiscoveryListener>()
+            val resolvers = mutableListOf<NsdManager.ResolveListener>()
+            every { nsdManager.discoverServices(any<String>(), any<Int>(), capture(discovery)) } returns Unit
+
+            @Suppress("DEPRECATION")
+            every { nsdManager.resolveService(any<NsdServiceInfo>(), capture(resolvers)) } returns Unit
+            val job = async { manager.discoverAllLeaders() }
+            runCurrent()
+            discovery.captured.onServiceFound(found("ABC123"))
+            discovery.captured.onServiceFound(found("DEF456"))
+
+            resolvers[0].onResolveFailed(found("ABC123"), 0)
+            resolvers[1].onServiceResolved(resolved("192.168.1.6", 1235))
+            advanceUntilIdle()
+
+            assertEquals(listOf(DiscoveredLeader("DEF456", "192.168.1.6", 1235)), job.await())
         }
 
     @Test
     fun `discoverByCode returns an export advert`() =
         runTest {
-            assertEquals("ABC123", probe(attributes = mapOf("role" to "export".toByteArray()), probeAny = false)?.code)
+            assertEquals("ABC123", probe(attributes = mapOf("role" to "export".toByteArray()))?.code)
         }
 
-    private suspend fun kotlinx.coroutines.test.TestScope.probe(
-        attributes: Map<String, ByteArray>,
-        probeAny: Boolean,
-    ): DiscoveredLeader? {
+    private fun found(name: String) = mockk<NsdServiceInfo> { every { serviceName } returns name }
+
+    private fun resolved(
+        ip: String,
+        servicePort: Int,
+        attrs: Map<String, ByteArray> = emptyMap(),
+    ) = mockk<NsdServiceInfo> {
+        every { host } returns mockk<Inet4Address> { every { hostAddress } returns ip }
+        every { port } returns servicePort
+        every { this@mockk.attributes } returns attrs
+    }
+
+    private suspend fun kotlinx.coroutines.test.TestScope.probeAll(
+        services: List<Pair<String, Map<String, ByteArray>>>,
+    ): List<DiscoveredLeader> {
+        val discovery = slot<NsdManager.DiscoveryListener>()
+        val resolvers = mutableListOf<NsdManager.ResolveListener>()
+        every { nsdManager.discoverServices(any<String>(), any<Int>(), capture(discovery)) } returns Unit
+
+        @Suppress("DEPRECATION")
+        every { nsdManager.resolveService(any<NsdServiceInfo>(), capture(resolvers)) } returns Unit
+        val job = async { manager.discoverAllLeaders() }
+        runCurrent()
+        services.forEachIndexed { i, (name, attrs) ->
+            discovery.captured.onServiceFound(found(name))
+            resolvers[i].onServiceResolved(resolved("192.168.1.5", 1234, attrs))
+        }
+        advanceUntilIdle()
+        return job.await()
+    }
+
+    private suspend fun kotlinx.coroutines.test.TestScope.probe(attributes: Map<String, ByteArray>): DiscoveredLeader? {
         val discovery = slot<NsdManager.DiscoveryListener>()
         val resolver = slot<NsdManager.ResolveListener>()
         every { nsdManager.discoverServices(any<String>(), any<Int>(), capture(discovery)) } returns Unit
 
         @Suppress("DEPRECATION")
         every { nsdManager.resolveService(any<NsdServiceInfo>(), capture(resolver)) } returns Unit
-        val job =
-            async {
-                if (probeAny) {
-                    manager.discoverAnyLeader()
-                } else {
-                    manager
-                        .discoverByCode(
-                            "ABC123",
-                        )?.let { DiscoveredLeader("ABC123", it.first, it.second) }
-                }
-            }
+        val job = async { manager.discoverByCode("ABC123")?.let { DiscoveredLeader("ABC123", it.first, it.second) } }
         runCurrent()
-        val found = mockk<NsdServiceInfo> { every { serviceName } returns "ABC123" }
-        discovery.captured.onServiceFound(found)
-        val address = mockk<Inet4Address> { every { hostAddress } returns "192.168.1.5" }
-        resolver.captured.onServiceResolved(
-            mockk<NsdServiceInfo> {
-                every { host } returns address
-                every { port } returns 1234
-                every { this@mockk.attributes } returns attributes
-            },
-        )
+        discovery.captured.onServiceFound(found("ABC123"))
+        resolver.captured.onServiceResolved(resolved("192.168.1.5", 1234, attributes))
         runCurrent()
         return job.await()
     }

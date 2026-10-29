@@ -13,7 +13,8 @@
     <string name="group_sync_ask_the_leader_for_their_6">"請向隊長索取 6 位群組代碼。"</string>
     <string name="group_sync_code">"代碼"</string>
     <string name="group_sync_join">"加入"</string>
-    <string name="group_sync_nearby_group_found">"此網路上有活躍群組：%1$s"</string>
+    <string name="group_sync_nearby_groups_header">"此網路上的群組"</string>
+    <string name="group_sync_nearby_group_row_description">"加入群組 %1$s"</string>
     <string name="group_sync_cancel">"取消"</string>
     <string name="group_sync_role_leader">"角色：隊長"</string>
     <string name="group_sync_group_code">"群組代碼"</string>

@@ -37,8 +37,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -90,7 +92,7 @@ fun GroupSyncRoute(
     val cooldownState by viewModel.cooldownState.collectAsStateWithLifecycle()
     val apiEnabled by viewModel.apiEnabled.collectAsStateWithLifecycle()
     val apiKey by viewModel.apiKey.collectAsStateWithLifecycle()
-    val nearbyLeader by viewModel.nearbyLeader.collectAsStateWithLifecycle()
+    val nearbyLeaders by viewModel.nearbyLeaders.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val spoofToggle = rememberSpoofToggleState()
 
@@ -112,7 +114,7 @@ fun GroupSyncRoute(
     // Poll only while the idle view is on screen and started; the QR scanner replaces that view.
     LaunchedEffect(groupState.role == GroupRole.NONE && !showQrScanner) {
         if (groupState.role == GroupRole.NONE && !showQrScanner) {
-            lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.watchNearbyLeader() }
+            lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.watchNearbyLeaders() }
         }
     }
 
@@ -137,8 +139,8 @@ fun GroupSyncRoute(
             onCreateGroup = viewModel::createGroup,
             onJoinViaQr = { showQrScanner = true },
             onJoinByCode = viewModel::joinByCode,
-            nearbyLeader = nearbyLeader,
-            onJoinNearby = viewModel::joinNearbyLeader,
+            nearbyLeaders = nearbyLeaders,
+            onJoinNearby = { viewModel.joinNearbyLeader(it.groupId) },
             onSetFollowerModeEnabled = viewModel::setFollowerModeEnabled,
             onSetFollowLeaderTeleports = viewModel::setFollowLeaderTeleports,
             onSetSharingEnabled = viewModel::setSharingEnabled,
@@ -177,8 +179,8 @@ internal fun GroupSyncScreen(
     onTeleportToLeaderNow: () -> Unit,
     onLeaveGroup: () -> Unit,
     onRegenerateQr: () -> Unit,
-    nearbyLeader: GroupInvite? = null,
-    onJoinNearby: () -> Unit = {},
+    nearbyLeaders: List<GroupInvite> = emptyList(),
+    onJoinNearby: (GroupInvite) -> Unit = {},
     hideTeleportFeatures: Boolean = false,
     leaderPosition: LatLng? = null,
     currentPosition: LatLng? = null,
@@ -210,7 +212,7 @@ internal fun GroupSyncScreen(
                         onCreateGroup = onCreateGroup,
                         onJoinViaQr = onJoinViaQr,
                         onJoinByCode = onJoinByCode,
-                        nearbyLeader = nearbyLeader,
+                        nearbyLeaders = nearbyLeaders,
                         onJoinNearby = onJoinNearby,
                     )
                 }
@@ -257,8 +259,8 @@ private fun NoGroupContent(
     onCreateGroup: () -> Unit,
     onJoinViaQr: () -> Unit,
     onJoinByCode: (String) -> Unit,
-    nearbyLeader: GroupInvite?,
-    onJoinNearby: () -> Unit,
+    nearbyLeaders: List<GroupInvite>,
+    onJoinNearby: (GroupInvite) -> Unit,
 ) {
     var showCodeDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -290,23 +292,45 @@ private fun NoGroupContent(
             text = stringResource(R.string.group_sync_create_group_i_m_the_leader),
         )
 
-        if (nearbyLeader != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.group_sync_nearby_group_found, nearbyLeader.groupId),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.weight(1f),
-                )
-                LjPrimaryButton(
-                    onClick = onJoinNearby,
-                    text = stringResource(R.string.group_sync_join),
-                    modifier = Modifier.weight(1f),
-                    enabled = !isDiscovering,
-                )
+        if (nearbyLeaders.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.group_sync_nearby_groups_header),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            LjCard(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
+                    modifier = Modifier.padding(LjSpacing.md),
+                ) {
+                    nearbyLeaders.forEach { leader ->
+                        val rowDescription = stringResource(R.string.group_sync_nearby_group_row_description, leader.groupId)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = leader.groupId,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Text(
+                                    text = leader.host,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            LjPrimaryButton(
+                                onClick = { onJoinNearby(leader) },
+                                text = stringResource(R.string.group_sync_join),
+                                modifier = Modifier.weight(1f).semantics { contentDescription = rowDescription },
+                                enabled = !isDiscovering,
+                            )
+                        }
+                    }
+                }
             }
         }
 

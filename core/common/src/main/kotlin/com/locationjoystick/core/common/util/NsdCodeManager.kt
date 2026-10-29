@@ -7,6 +7,7 @@ import android.net.wifi.WifiManager
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import java.net.Inet4Address
@@ -126,16 +127,127 @@ class NsdCodeManager
             discover(AppConstants.SyncConstants.NSD_DISCOVERY_TIMEOUT_MS) { it == code }?.let { it.host to it.port }
 
         /**
-         * Finds any leader on the network, for the idle-view hint. Leaders advertise a
-         * [AppConstants.SyncConstants.GROUP_CODE_LENGTH]-char code; other services of the type are skipped.
+         * Finds every leader on the network within one probe window, for the idle-view hint. Leaders
+         * advertise a [AppConstants.SyncConstants.GROUP_CODE_LENGTH]-char code; other services of the type are skipped.
          */
-        suspend fun discoverAnyLeader(): DiscoveredLeader? =
-            discover(
-                AppConstants.SyncConstants.NSD_LEADER_PROBE_TIMEOUT_MS,
-                accept = { it.attributes?.containsKey(AppConstants.SyncConstants.NSD_ATTR_ROLE) != true },
-            ) {
-                it.length == AppConstants.SyncConstants.GROUP_CODE_LENGTH
+        suspend fun discoverAllLeaders(): List<DiscoveredLeader> {
+            acquireMulticastLock()
+            try {
+                return probeLeaders()
+            } finally {
+                releaseMulticastLock()
             }
+        }
+
+        private suspend fun probeLeaders(): List<DiscoveredLeader> {
+            val lock = Any()
+            val pending = ArrayDeque<NsdServiceInfo>()
+            val seen = mutableSetOf<String>()
+            val leaders = mutableListOf<DiscoveredLeader>()
+            var resolving = false
+            var resolvingName = ""
+            val startFailed = CompletableDeferred<Unit>()
+
+            // Before API 34 only one resolveService may be active; a second fails with FAILURE_ALREADY_ACTIVE.
+            lateinit var resolveListener: NsdManager.ResolveListener
+
+            fun resolveNext() {
+                val next =
+                    synchronized(lock) {
+                        if (resolving) return
+                        pending.removeFirstOrNull()?.also {
+                            resolving = true
+                            resolvingName = it.serviceName
+                        }
+                    } ?: return
+                try {
+                    @Suppress("DEPRECATION")
+                    nsdManager.resolveService(next, resolveListener)
+                } catch (e: Exception) {
+                    Log.w(TAG, "NSD resolve error", e)
+                    synchronized(lock) { resolving = false }
+                    resolveNext()
+                }
+            }
+
+            @Suppress("DEPRECATION")
+            resolveListener =
+                object : NsdManager.ResolveListener {
+                    override fun onResolveFailed(
+                        info: NsdServiceInfo,
+                        errorCode: Int,
+                    ) {
+                        Log.e(TAG, "NSD resolve failed: $errorCode")
+                        synchronized(lock) { resolving = false }
+                        resolveNext()
+                    }
+
+                    override fun onServiceResolved(info: NsdServiceInfo) {
+                        val host = (info.host as? Inet4Address)?.hostAddress
+                        if (info.attributes?.containsKey(AppConstants.SyncConstants.NSD_ATTR_ROLE) == true) {
+                            Log.d(TAG, "NSD skipped export advert")
+                        } else if (host != null && info.port > 0) {
+                            synchronized(lock) { leaders += DiscoveredLeader(resolvingName, host, info.port) }
+                        } else {
+                            Log.w(TAG, "NSD resolved non-IPv4 or no host — cannot connect")
+                        }
+                        synchronized(lock) { resolving = false }
+                        resolveNext()
+                    }
+                }
+
+            val discoveryListener =
+                object : NsdManager.DiscoveryListener {
+                    override fun onStartDiscoveryFailed(
+                        serviceType: String,
+                        errorCode: Int,
+                    ) {
+                        Log.e(TAG, "NSD discovery start failed: $errorCode")
+                        startFailed.complete(Unit)
+                    }
+
+                    override fun onStopDiscoveryFailed(
+                        serviceType: String,
+                        errorCode: Int,
+                    ) {
+                        Log.w(TAG, "NSD discovery stop failed: $errorCode")
+                    }
+
+                    override fun onDiscoveryStarted(serviceType: String) {
+                        Log.d(TAG, "NSD discovery started")
+                    }
+
+                    override fun onDiscoveryStopped(serviceType: String) {}
+
+                    override fun onServiceFound(info: NsdServiceInfo) {
+                        if (info.serviceName.length != AppConstants.SyncConstants.GROUP_CODE_LENGTH) return
+                        if (synchronized(lock) { seen.add(info.serviceName) && pending.add(info) }) resolveNext()
+                    }
+
+                    override fun onServiceLost(info: NsdServiceInfo) {}
+                }
+
+            try {
+                nsdManager.discoverServices(
+                    AppConstants.SyncConstants.NSD_SERVICE_TYPE,
+                    NsdManager.PROTOCOL_DNS_SD,
+                    discoveryListener,
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "NSD discover error", e)
+                return emptyList()
+            }
+            try {
+                withTimeoutOrNull(AppConstants.SyncConstants.NSD_LEADER_PROBE_TIMEOUT_MS) { startFailed.await() }
+            } finally {
+                try {
+                    nsdManager.stopServiceDiscovery(discoveryListener)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Stop discovery error", e)
+                }
+            }
+            return synchronized(lock) { leaders.toList() }
+        }
 
         private suspend fun discover(
             timeoutMs: Long,
