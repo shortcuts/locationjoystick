@@ -3,14 +3,8 @@ package com.locationjoystick.core.datastore
 import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.clampPlantingRadius
 import com.locationjoystick.core.model.AppFeature
@@ -18,14 +12,11 @@ import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
-import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RoamingKind
-import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.model.StoredGroundCalibration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -42,7 +33,12 @@ import javax.inject.Singleton
  *
  * Keys are defined in [AppConstants.DataStoreConstants].
  */
-interface PreferencesDataSource {
+interface PreferencesDataSource :
+    GuidedPathPreferences,
+    RealPositionPreferences,
+    SavedItemOrderPreferences,
+    TapToWalkPreferences,
+    ReconnectPreferences {
     /** Gets the current speed profiles (slow walk/walk/run/bike/drive speeds and active profile ID). */
     fun getSpeedProfiles(): Flow<SpeedProfilePreferences>
 
@@ -196,10 +192,6 @@ interface PreferencesDataSource {
     /** Gets the raster base-map provider name (see `MapTileSource`). */
     fun getMapTileSource(): Flow<String>
 
-    fun getGuidedPath(): Flow<String>
-
-    suspend fun setGuidedPath(name: String)
-
     /** Sets the raster base-map provider name. */
     suspend fun setMapTileSource(name: String)
 
@@ -246,18 +238,6 @@ interface PreferencesDataSource {
 
     /** Sets whether the route-replay jump-to-waypoint buttons are shown. */
     suspend fun setShowRouteJumpButtons(enabled: Boolean)
-
-    /** Gets whether the last known real position is pinned to the favorites list. */
-    fun getLastKnownPositionEnabled(): Flow<Boolean>
-
-    /** Sets whether the last known real position is pinned to the favorites list. */
-    suspend fun setLastKnownPositionEnabled(enabled: Boolean)
-
-    /** Gets the real position saved at the last fresh spoofing start, or null if none. */
-    fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?>
-
-    /** Replaces the saved real position. */
-    suspend fun setRealPositionSnapshot(snapshot: RealPositionSnapshot)
 
     /** Gets whether the AppOpsManager mock-location check is bypassed. */
     fun getBypassMockLocationCheck(): Flow<Boolean>
@@ -314,37 +294,6 @@ interface PreferencesDataSource {
         lon: Double,
     )
 
-    fun getRoutesSortNewestFirst(): Flow<Boolean>
-
-    suspend fun setRoutesSortNewestFirst(newestFirst: Boolean)
-
-    fun getFavoritesSortNewestFirst(): Flow<Boolean>
-
-    suspend fun setFavoritesSortNewestFirst(newestFirst: Boolean)
-
-    fun getRoutesSortMode(): Flow<SavedItemSortMode> =
-        getRoutesSortNewestFirst().map { if (it) SavedItemSortMode.NEWEST_FIRST else SavedItemSortMode.OLDEST_FIRST }
-
-    suspend fun setRoutesSortMode(mode: SavedItemSortMode) = setRoutesSortNewestFirst(mode != SavedItemSortMode.OLDEST_FIRST)
-
-    fun getFavoritesSortMode(): Flow<SavedItemSortMode> =
-        getFavoritesSortNewestFirst().map { if (it) SavedItemSortMode.NEWEST_FIRST else SavedItemSortMode.OLDEST_FIRST }
-
-    suspend fun setFavoritesSortMode(mode: SavedItemSortMode) = setFavoritesSortNewestFirst(mode != SavedItemSortMode.OLDEST_FIRST)
-
-    /**
-     * Manual favorites order (ids, top first) set by drag. Empty = follow the sort mode. Choosing a
-     * sort mode clears it, so the last action wins.
-     */
-    fun getFavoritesManualOrder(): Flow<List<String>>
-
-    suspend fun setFavoritesManualOrder(ids: List<String>)
-
-    /** Same as [getFavoritesManualOrder] for routes. */
-    fun getRoutesManualOrder(): Flow<List<String>>
-
-    suspend fun setRoutesManualOrder(ids: List<String>)
-
     /** Gets the GPS jitter idle speed variation percentage (0 = off). */
     fun getJitterSpeedIdleVariationPct(): Flow<Int>
 
@@ -389,28 +338,6 @@ interface PreferencesDataSource {
 
     /** Gets whether the floating map skips the confirmation panel and walks immediately on tap. */
     fun getFloatingMapQuickWalk(): Flow<Boolean>
-
-    /** Gets whether the screen tap-to-walk overlay is enabled. */
-    fun getTapToWalkOverlayEnabled(): Flow<Boolean>
-
-    suspend fun setTapToWalkOverlayEnabled(enabled: Boolean)
-
-    fun getAccessibilityDisclosureChoice(): Flow<String>
-
-    /**
-     * The latest tap-to-walk automatic fit result, or null. Per-device: a standalone key outside
-     * [SettingsSnapshot] on purpose, so it is never exported or imported.
-     */
-    fun getGroundCalibration(): Flow<StoredGroundCalibration?>
-
-    /** Stores [value]; null removes it. */
-    suspend fun setGroundCalibration(value: StoredGroundCalibration?)
-
-    suspend fun setAccessibilityDisclosureChoice(choice: String)
-
-    fun getReconnectTapEnabled(): Flow<Boolean>
-
-    suspend fun setReconnectTapEnabled(enabled: Boolean)
 
     /** Returns all settings needed by the settings UI in a single DataStore scan. */
     fun getSettingsSnapshot(): Flow<SettingsSnapshot>
@@ -573,115 +500,23 @@ class AppPreferencesDataSource
     @Inject
     constructor(
         private val dataStore: DataStore<Preferences>,
-    ) : PreferencesDataSource {
-        private object Keys {
-            val SLOW_WALK_SPEED_MS = doublePreferencesKey("slow_walk_speed_ms")
-            val WALK_SPEED_MS = doublePreferencesKey("walk_speed_ms")
-            val RUN_SPEED_MS = doublePreferencesKey("run_speed_ms")
-            val BIKE_SPEED_MS = doublePreferencesKey("bike_speed_ms")
-            val DRIVE_SPEED_MS = doublePreferencesKey("drive_speed_ms")
-            val ACTIVE_PROFILE_ID = stringPreferencesKey("active_profile_id")
-            val WIDGET_ITEMS = stringSetPreferencesKey("widget_items")
-            val WIDGET_SEEN_DEFAULTS = stringSetPreferencesKey("widget_seen_defaults")
-            val ROAMING_RADIUS_METERS = doublePreferencesKey("roaming_radius_meters")
-            val ROAMING_DISTANCE_METERS = doublePreferencesKey("roaming_distance_meters")
-            val ROAMING_ROAD_FOLLOWING = booleanPreferencesKey("roaming_road_following")
-            val ROAMING_TRANSPORT_MODE = stringPreferencesKey("roaming_transport_mode")
-            val ROAMING_RETURN_TO_START = booleanPreferencesKey("roaming_return_to_start")
-            val ROAMING_SPEED_PROFILE_ID = stringPreferencesKey("roaming_speed_profile_id")
-            val ROAMING_KIND = stringPreferencesKey("roaming_kind")
-            val ROAMING_PLANTING_START_RADIUS_METERS = doublePreferencesKey("roaming_planting_start_radius_meters")
-            val ROAMING_PLANTING_END_RADIUS_METERS = doublePreferencesKey("roaming_planting_end_radius_meters")
-            val ROAMING_PLANTING_INFINITE_LOOPS = booleanPreferencesKey("roaming_planting_infinite_loops")
-            val ROAMING_PLANTING_LOOP_COUNT = intPreferencesKey("roaming_planting_loop_count")
-            val ROAMING_PLANTING_SPACING_METERS = intPreferencesKey("roaming_planting_spacing_meters")
-            val ROAMING_PLANTING_EXPAND_ONLY = booleanPreferencesKey("roaming_planting_expand_only")
-            val ROAMING_PLANTING_SPEED_PROFILE_ID = stringPreferencesKey("roaming_planting_speed_profile_id")
-            val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
-            val SPEED_UNIT = stringPreferencesKey("speed_unit")
-            val THEME_MODE = stringPreferencesKey("theme_mode")
-            val MAP_TILE_SOURCE = stringPreferencesKey("map_tile_source")
-            val GUIDED_PATH = stringPreferencesKey("guided_path")
-            val DISABLED_GEOCODING_PROVIDERS = stringSetPreferencesKey("disabled_geocoding_providers")
-            val KEEP_WIDGET_ON_IDLE = booleanPreferencesKey("keep_widget_on_idle")
-            val WHATS_NEW_LAST_SEEN_VERSION = stringPreferencesKey("whats_new_last_seen_version")
-            val UPDATE_CHECK_LAST_CHECKED_AT_MS = longPreferencesKey("update_check_last_checked_at_ms")
-            val UPDATE_CHECK_CACHED_LATEST_VERSION = stringPreferencesKey("update_check_cached_latest_version")
-            val UPDATE_CHECK_DISMISSED_VERSION = stringPreferencesKey("update_check_dismissed_version")
-            val REMEMBER_LAST_LOCATION = booleanPreferencesKey("remember_last_location")
-            val LAST_LATITUDE = doublePreferencesKey("last_latitude")
-            val LAST_LONGITUDE = doublePreferencesKey("last_longitude")
-            val HOME_FAVORITE_ID = stringPreferencesKey("home_favorite_id")
-            val JITTER_IDLE_RADIUS_METERS = doublePreferencesKey("jitter_idle_radius_meters")
-            val JITTER_MOVING_RADIUS_METERS = doublePreferencesKey("jitter_moving_radius_meters")
-            val JITTER_MAX_STEP_METERS = doublePreferencesKey("jitter_max_step_meters")
-            val LAST_TELEPORT_TIME_MS = longPreferencesKey("last_teleport_time_ms")
-            val MAP_FOLLOWS_LOCATION = booleanPreferencesKey("map_follows_location")
-            val REALISM_BEARING_HOLD_IDLE = booleanPreferencesKey("realism_bearing_hold_idle")
-            val REALISM_ALTITUDE_ENABLED = booleanPreferencesKey("realism_altitude_enabled")
-            val REALISM_WARMUP_ENABLED = booleanPreferencesKey("realism_warmup_enabled")
-            val REALISM_SATELLITE_EXTRAS_ENABLED = booleanPreferencesKey("realism_satellite_extras_enabled")
-            val REALISM_SUSPENDED_MOCKING_ENABLED = booleanPreferencesKey("realism_suspended_mocking_enabled")
-            val HIDE_TELEPORT_FEATURES = booleanPreferencesKey("hide_teleport_features")
-            val HIDE_WIDGET_OVERLAY = booleanPreferencesKey("hide_widget_overlay")
-            val HIDE_FOREGROUND_NOTIFICATION = booleanPreferencesKey("hide_foreground_notification")
-            val SHOW_ROUTE_JUMP_BUTTONS = booleanPreferencesKey("show_route_jump_buttons")
-            val LAST_KNOWN_POSITION_ENABLED = booleanPreferencesKey("last_known_position_enabled")
-            val REAL_SNAPSHOT_LATITUDE = doublePreferencesKey("real_snapshot_latitude")
-            val REAL_SNAPSHOT_LONGITUDE = doublePreferencesKey("real_snapshot_longitude")
-            val REAL_SNAPSHOT_TAKEN_AT_MS = longPreferencesKey("real_snapshot_taken_at_ms")
-            val BYPASS_MOCK_LOCATION_CHECK = booleanPreferencesKey("bypass_mock_location_check")
-            val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
-            val ROUTES_SORT_NEWEST_FIRST = booleanPreferencesKey("routes_sort_newest_first")
-            val FAVORITES_SORT_NEWEST_FIRST = booleanPreferencesKey("favorites_sort_newest_first")
-            val ROUTES_SORT_MODE = stringPreferencesKey("routes_sort_mode")
-            val FAVORITES_SORT_MODE = stringPreferencesKey("favorites_sort_mode")
-            val ROUTES_MANUAL_ORDER = stringPreferencesKey("routes_manual_order")
-            val FAVORITES_MANUAL_ORDER = stringPreferencesKey("favorites_manual_order")
-            val JITTER_SPEED_IDLE_VARIATION_PCT = intPreferencesKey("jitter_speed_idle_variation_pct")
-            val JITTER_SPEED_MOVING_VARIATION_PCT = intPreferencesKey("jitter_speed_moving_variation_pct")
-            val JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT =
-                intPreferencesKey("jitter_speed_idle_wobble_probability_pct")
-            val HOT_LOCATIONS_ENABLED = booleanPreferencesKey("hot_locations_enabled")
-            val HOT_LOCATION_SELECTED_IDS = stringSetPreferencesKey("hot_location_selected_ids")
-            val HOT_ROUTES_ENABLED = booleanPreferencesKey("hot_routes_enabled")
-            val HOT_ROUTE_SELECTED_IDS = stringSetPreferencesKey("hot_route_selected_ids")
-            val MAP_FAB_ITEMS = stringSetPreferencesKey("map_fab_items")
-            val MAP_FAB_SEEN_DEFAULTS = stringSetPreferencesKey("map_fab_seen_defaults")
-            val FEATURE_ORDER = stringPreferencesKey("feature_order")
-            val ENABLED_SPEED_PROFILE_IDS = stringSetPreferencesKey("enabled_speed_profile_ids")
-            val FLOATING_MAP_QUICK_WALK = booleanPreferencesKey("floating_map_quick_walk")
-            val TAP_TO_WALK_OVERLAY_ENABLED = booleanPreferencesKey("tap_to_walk_overlay_enabled")
-            val ACCESSIBILITY_DISCLOSURE_CHOICE = stringPreferencesKey("accessibility_disclosure_choice")
-            val TAP_TO_WALK_GROUND_CALIBRATION = stringPreferencesKey("tap_to_walk_ground_calibration")
-            val RECONNECT_TAP_ENABLED = booleanPreferencesKey("reconnect_tap_enabled")
-            val REALISM_REAL_ELEVATION_ENABLED = booleanPreferencesKey("realism_real_elevation_enabled")
-            val BASE_ALTITUDE_OVERRIDE_METERS = doublePreferencesKey("base_altitude_override_meters")
-            val ALTITUDE_JITTER_RADIUS_METERS = doublePreferencesKey("altitude_jitter_radius_meters")
-            val PLANTING_RADIUS_METERS = doublePreferencesKey("planting_radius_meters")
-            val ALTITUDE_OVERRIDE_BUTTON_ENABLED = booleanPreferencesKey("altitude_override_button_enabled")
-            val DEBUG_STATS_ENABLED = booleanPreferencesKey("debug_stats_enabled")
-        }
-
+    ) : PreferencesDataSource,
+        GuidedPathPreferences by GuidedPathStore(dataStore),
+        RealPositionPreferences by RealPositionStore(dataStore),
+        SavedItemOrderPreferences by SavedItemOrderStore(dataStore),
+        TapToWalkPreferences by TapToWalkStore(dataStore),
+        ReconnectPreferences by ReconnectStore(dataStore) {
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
-            dataStore.data
-                .catch { e ->
-                    if (e is IOException) {
-                        Log.e(TAG, "Error reading speed profile preferences", e)
-                        emit(emptyPreferences())
-                    } else {
-                        throw e
-                    }
-                }.map { prefs ->
-                    SpeedProfilePreferences(
-                        slowWalkSpeedMs = prefs[Keys.SLOW_WALK_SPEED_MS] ?: DEFAULT_SLOW_WALK_SPEED_MS,
-                        walkSpeedMs = prefs[Keys.WALK_SPEED_MS] ?: DEFAULT_WALK_SPEED_MS,
-                        runSpeedMs = prefs[Keys.RUN_SPEED_MS] ?: DEFAULT_RUN_SPEED_MS,
-                        bikeSpeedMs = prefs[Keys.BIKE_SPEED_MS] ?: DEFAULT_BIKE_SPEED_MS,
-                        driveSpeedMs = prefs[Keys.DRIVE_SPEED_MS] ?: DEFAULT_DRIVE_SPEED_MS,
-                        activeProfileId = prefs[Keys.ACTIVE_PROFILE_ID] ?: DEFAULT_ACTIVE_PROFILE_ID,
-                    )
-                }
+            dataStore.safeData("speed profile preferences").map { prefs ->
+                SpeedProfilePreferences(
+                    slowWalkSpeedMs = prefs[Keys.SLOW_WALK_SPEED_MS] ?: DEFAULT_SLOW_WALK_SPEED_MS,
+                    walkSpeedMs = prefs[Keys.WALK_SPEED_MS] ?: DEFAULT_WALK_SPEED_MS,
+                    runSpeedMs = prefs[Keys.RUN_SPEED_MS] ?: DEFAULT_RUN_SPEED_MS,
+                    bikeSpeedMs = prefs[Keys.BIKE_SPEED_MS] ?: DEFAULT_BIKE_SPEED_MS,
+                    driveSpeedMs = prefs[Keys.DRIVE_SPEED_MS] ?: DEFAULT_DRIVE_SPEED_MS,
+                    activeProfileId = prefs[Keys.ACTIVE_PROFILE_ID] ?: DEFAULT_ACTIVE_PROFILE_ID,
+                )
+            }
 
         override suspend fun setSlowWalkSpeed(ms: Double) = setPref(Keys.SLOW_WALK_SPEED_MS, ms.coerceAtLeast(MIN_SPEED_MS))
 
@@ -698,34 +533,14 @@ class AppPreferencesDataSource
         private suspend fun <T> setPref(
             key: Preferences.Key<T>,
             value: T,
-        ) {
-            dataStore.edit { prefs -> prefs[key] = value }
-        }
+        ) = dataStore.setPref(key, value)
 
         private fun <T> pref(
             key: Preferences.Key<T>,
             default: T,
-        ): Flow<T> =
-            dataStore.data
-                .catch { e ->
-                    if (e is IOException) {
-                        Log.e(TAG, "Error reading preference '${key.name}'", e)
-                        emit(emptyPreferences())
-                    } else {
-                        throw e
-                    }
-                }.map { prefs -> prefs[key] ?: default }
+        ): Flow<T> = dataStore.pref(key, default)
 
-        override fun getWidgetItems(): Flow<Set<String>> =
-            dataStore.data
-                .catch { e ->
-                    if (e is IOException) {
-                        Log.e(TAG, "Error reading widget items", e)
-                        emit(emptyPreferences())
-                    } else {
-                        throw e
-                    }
-                }.map { prefs -> resolveWidgetItems(prefs) }
+        override fun getWidgetItems(): Flow<Set<String>> = dataStore.safeData("widget items").map { prefs -> resolveWidgetItems(prefs) }
 
         override suspend fun setWidgetItems(items: Set<String>) {
             dataStore.edit { prefs ->
@@ -937,10 +752,6 @@ class AppPreferencesDataSource
 
         override fun getMapTileSource(): Flow<String> = pref(Keys.MAP_TILE_SOURCE, MapTileSource.DEFAULT.name)
 
-        override fun getGuidedPath(): Flow<String> = pref(Keys.GUIDED_PATH, GuidedPath.DEFAULT.name)
-
-        override suspend fun setGuidedPath(name: String) = setPref(Keys.GUIDED_PATH, name)
-
         override suspend fun setMapTileSource(name: String) = setPref(Keys.MAP_TILE_SOURCE, name)
 
         override fun getRealismBearingHoldIdle(): Flow<Boolean> = pref(Keys.REALISM_BEARING_HOLD_IDLE, true)
@@ -987,35 +798,6 @@ class AppPreferencesDataSource
             pref(Keys.SHOW_ROUTE_JUMP_BUTTONS, AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT)
 
         override suspend fun setShowRouteJumpButtons(enabled: Boolean) = setPref(Keys.SHOW_ROUTE_JUMP_BUTTONS, enabled)
-
-        override fun getLastKnownPositionEnabled(): Flow<Boolean> =
-            pref(Keys.LAST_KNOWN_POSITION_ENABLED, AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT)
-
-        override suspend fun setLastKnownPositionEnabled(enabled: Boolean) = setPref(Keys.LAST_KNOWN_POSITION_ENABLED, enabled)
-
-        override fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?> =
-            dataStore.data
-                .catch { e ->
-                    if (e is IOException) {
-                        Log.e(TAG, "Error reading real position snapshot", e)
-                        emit(emptyPreferences())
-                    } else {
-                        throw e
-                    }
-                }.map { prefs ->
-                    val lat = prefs[Keys.REAL_SNAPSHOT_LATITUDE]
-                    val lon = prefs[Keys.REAL_SNAPSHOT_LONGITUDE]
-                    val takenAt = prefs[Keys.REAL_SNAPSHOT_TAKEN_AT_MS]
-                    if (lat != null && lon != null && takenAt != null) RealPositionSnapshot(LatLng(lat, lon), takenAt) else null
-                }
-
-        override suspend fun setRealPositionSnapshot(snapshot: RealPositionSnapshot) {
-            dataStore.edit { prefs ->
-                prefs[Keys.REAL_SNAPSHOT_LATITUDE] = snapshot.position.latitude
-                prefs[Keys.REAL_SNAPSHOT_LONGITUDE] = snapshot.position.longitude
-                prefs[Keys.REAL_SNAPSHOT_TAKEN_AT_MS] = snapshot.takenAtMs
-            }
-        }
 
         override fun getBypassMockLocationCheck(): Flow<Boolean> = pref(Keys.BYPASS_MOCK_LOCATION_CHECK, false)
 
@@ -1090,70 +872,6 @@ class AppPreferencesDataSource
             }
         }
 
-        override fun getRoutesSortNewestFirst(): Flow<Boolean> = pref(Keys.ROUTES_SORT_NEWEST_FIRST, true)
-
-        override suspend fun setRoutesSortNewestFirst(newestFirst: Boolean) = setPref(Keys.ROUTES_SORT_NEWEST_FIRST, newestFirst)
-
-        override fun getFavoritesSortNewestFirst(): Flow<Boolean> = pref(Keys.FAVORITES_SORT_NEWEST_FIRST, true)
-
-        override suspend fun setFavoritesSortNewestFirst(newestFirst: Boolean) = setPref(Keys.FAVORITES_SORT_NEWEST_FIRST, newestFirst)
-
-        override fun getRoutesSortMode(): Flow<SavedItemSortMode> =
-            dataStore.data.map { prefs ->
-                prefs[Keys.ROUTES_SORT_MODE]?.let(::savedItemSortModeOrNull)
-                    ?: if (prefs[Keys.ROUTES_SORT_NEWEST_FIRST] != false) {
-                        SavedItemSortMode.NEWEST_FIRST
-                    } else {
-                        SavedItemSortMode.OLDEST_FIRST
-                    }
-            }
-
-        override suspend fun setRoutesSortMode(mode: SavedItemSortMode) {
-            dataStore.edit { prefs ->
-                prefs[Keys.ROUTES_SORT_MODE] = mode.name
-                prefs.remove(Keys.ROUTES_MANUAL_ORDER)
-                prefs[Keys.ROUTES_SORT_NEWEST_FIRST] = mode != SavedItemSortMode.OLDEST_FIRST
-            }
-        }
-
-        override fun getFavoritesSortMode(): Flow<SavedItemSortMode> =
-            dataStore.data.map { prefs ->
-                prefs[Keys.FAVORITES_SORT_MODE]?.let(::savedItemSortModeOrNull)
-                    ?: if (prefs[Keys.FAVORITES_SORT_NEWEST_FIRST] != false) {
-                        SavedItemSortMode.NEWEST_FIRST
-                    } else {
-                        SavedItemSortMode.OLDEST_FIRST
-                    }
-            }
-
-        override suspend fun setFavoritesSortMode(mode: SavedItemSortMode) {
-            dataStore.edit { prefs ->
-                prefs[Keys.FAVORITES_SORT_MODE] = mode.name
-                prefs.remove(Keys.FAVORITES_MANUAL_ORDER)
-                prefs[Keys.FAVORITES_SORT_NEWEST_FIRST] = mode != SavedItemSortMode.OLDEST_FIRST
-            }
-        }
-
-        override fun getFavoritesManualOrder(): Flow<List<String>> = manualOrder(Keys.FAVORITES_MANUAL_ORDER)
-
-        override suspend fun setFavoritesManualOrder(ids: List<String>) = setManualOrder(Keys.FAVORITES_MANUAL_ORDER, ids)
-
-        override fun getRoutesManualOrder(): Flow<List<String>> = manualOrder(Keys.ROUTES_MANUAL_ORDER)
-
-        override suspend fun setRoutesManualOrder(ids: List<String>) = setManualOrder(Keys.ROUTES_MANUAL_ORDER, ids)
-
-        private fun manualOrder(key: Preferences.Key<String>): Flow<List<String>> =
-            dataStore.data.map { prefs -> deserializeManualOrder(prefs[key]) }
-
-        private suspend fun setManualOrder(
-            key: Preferences.Key<String>,
-            ids: List<String>,
-        ) {
-            dataStore.edit { prefs ->
-                if (ids.isEmpty()) prefs.remove(key) else prefs[key] = serializeManualOrder(ids)
-            }
-        }
-
         override fun getJitterSpeedIdleVariationPct(): Flow<Int> =
             pref(Keys.JITTER_SPEED_IDLE_VARIATION_PCT, DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT)
 
@@ -1207,32 +925,6 @@ class AppPreferencesDataSource
         override suspend fun setSelectedHotRouteIds(ids: Set<String>) = setPref(Keys.HOT_ROUTE_SELECTED_IDS, ids)
 
         override fun getFloatingMapQuickWalk(): Flow<Boolean> = pref(Keys.FLOATING_MAP_QUICK_WALK, false)
-
-        override fun getTapToWalkOverlayEnabled(): Flow<Boolean> = pref(Keys.TAP_TO_WALK_OVERLAY_ENABLED, false)
-
-        override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) = setPref(Keys.TAP_TO_WALK_OVERLAY_ENABLED, enabled)
-
-        override fun getAccessibilityDisclosureChoice(): Flow<String> =
-            pref(Keys.ACCESSIBILITY_DISCLOSURE_CHOICE, AppConstants.AccessibilityConstants.DISCLOSURE_UNANSWERED)
-
-        override suspend fun setAccessibilityDisclosureChoice(choice: String) = setPref(Keys.ACCESSIBILITY_DISCLOSURE_CHOICE, choice)
-
-        override fun getGroundCalibration(): Flow<StoredGroundCalibration?> =
-            pref(Keys.TAP_TO_WALK_GROUND_CALIBRATION, "").map { if (it.isEmpty()) null else deserializeGroundCalibration(it) }
-
-        override suspend fun setGroundCalibration(value: StoredGroundCalibration?) {
-            dataStore.edit { prefs ->
-                if (value == null) {
-                    prefs.remove(Keys.TAP_TO_WALK_GROUND_CALIBRATION)
-                } else {
-                    prefs[Keys.TAP_TO_WALK_GROUND_CALIBRATION] = serializeGroundCalibration(value)
-                }
-            }
-        }
-
-        override fun getReconnectTapEnabled(): Flow<Boolean> = pref(Keys.RECONNECT_TAP_ENABLED, false)
-
-        override suspend fun setReconnectTapEnabled(enabled: Boolean) = setPref(Keys.RECONNECT_TAP_ENABLED, enabled)
 
         override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
             dataStore.edit { prefs ->
@@ -1488,10 +1180,6 @@ class AppPreferencesDataSource
             const val DEFAULT_PLANTING_RADIUS_METERS = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS
         }
     }
-
-private const val TAG = "AppPreferencesDataSource"
-
-private fun savedItemSortModeOrNull(raw: String): SavedItemSortMode? = runCatching { SavedItemSortMode.valueOf(raw) }.getOrNull()
 
 private fun serializeRecentSearches(searches: List<RecentSearch>): String {
     val array = JSONArray()

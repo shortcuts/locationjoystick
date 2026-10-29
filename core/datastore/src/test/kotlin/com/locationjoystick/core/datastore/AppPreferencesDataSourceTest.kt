@@ -4,8 +4,10 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.GroundCalibration
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.SavedItemSortMode
@@ -198,6 +200,22 @@ class AppPreferencesDataSourceTest {
             assertEquals(RealPositionSnapshot(LatLng(1.5, 2.5), 10L), dataSource.getRealPositionSnapshot().first())
             dataSource.setRealPositionSnapshot(RealPositionSnapshot(LatLng(3.5, 4.5), 20L))
             assertEquals(RealPositionSnapshot(LatLng(3.5, 4.5), 20L), dataSource.getRealPositionSnapshot().first())
+        }
+
+    @Test
+    fun `guided path, accessibility disclosure and reconnect tap default and round-trip`() =
+        runTest {
+            assertEquals(GuidedPath.DEFAULT.name, dataSource.getGuidedPath().first())
+            dataSource.setGuidedPath(GuidedPath.POKEMON_GO.name)
+            assertEquals(GuidedPath.POKEMON_GO.name, dataSource.getGuidedPath().first())
+
+            assertEquals(AppConstants.AccessibilityConstants.DISCLOSURE_UNANSWERED, dataSource.getAccessibilityDisclosureChoice().first())
+            dataSource.setAccessibilityDisclosureChoice(AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED)
+            assertEquals(AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED, dataSource.getAccessibilityDisclosureChoice().first())
+
+            assertFalse(dataSource.getReconnectTapEnabled().first())
+            dataSource.setReconnectTapEnabled(true)
+            assertTrue(dataSource.getReconnectTapEnabled().first())
         }
 
     @Test
