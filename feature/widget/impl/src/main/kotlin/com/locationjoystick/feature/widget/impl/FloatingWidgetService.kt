@@ -1,7 +1,6 @@
 package com.locationjoystick.feature.widget.impl
 
 import android.content.Intent
-import android.os.Build
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -31,15 +30,12 @@ import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.location.ScreenCaptureSource
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FavoriteLocation
-import com.locationjoystick.core.model.GroundMap
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RouteStartConfig
-import com.locationjoystick.core.model.ScreenFeatureGates
-import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.core.model.isRoutePlaying
 import com.locationjoystick.core.model.shouldIgnoreJoystickInput
@@ -53,10 +49,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.view.WindowManager as AndroidWindowManager
@@ -167,18 +160,13 @@ class FloatingWidgetService :
     // Red dot badge — set when a route/walk completes, cleared when panel is opened
     private val pendingCompletionFlow = MutableStateFlow(false)
 
-    private val isTapToWalkActiveFlow = MutableStateFlow(false)
-    private lateinit var tapToWalkVisible: StateFlow<Boolean>
-    private lateinit var groundCalibration: StateFlow<StoredGroundCalibration?>
-    private lateinit var accessibilityDisclosureChoice: StateFlow<String>
-    private var tapToWalkOverlay: TapToWalkOverlay? = null
-
     // Drag position — class-level so onConfigurationChanged can read them after rotation.
     private var dragOffsetX = 0f
     private var dragOffsetY = 0f
 
     private lateinit var serviceBinder: WidgetServiceBinder
     private lateinit var panelPresenter: WidgetPanelPresenter
+    private lateinit var tapToWalk: TapToWalkController
 
     private val mockLocationService: MockLocationService?
         get() = serviceBinder.mockLocationService
@@ -214,23 +202,18 @@ class FloatingWidgetService :
                 favoriteRepository = favoriteRepository,
                 routeRepository = routeRepository,
             )
-        tapToWalkVisible =
-            combine(settingsRepository.getTapToWalkOverlayEnabled(), settingsRepository.getGuidedPath()) { enabled, path ->
-                ScreenFeatureGates.tapToWalkShown(enabled, path)
-            }.stateIn(lifecycleScope, SharingStarted.Eagerly, false)
-        groundCalibration =
-            settingsRepository
-                .getGroundCalibration()
-                .stateIn(lifecycleScope, SharingStarted.Eagerly, null)
-        lifecycleScope.launch { groundCalibration.collect { reaimOnNewMap() } }
-        accessibilityDisclosureChoice =
-            settingsRepository
-                .getAccessibilityDisclosureChoice()
-                .stateIn(
-                    lifecycleScope,
-                    SharingStarted.Eagerly,
-                    AppConstants.AccessibilityConstants.DISCLOSURE_UNANSWERED,
-                )
+        tapToWalk =
+            TapToWalkController(
+                context = this,
+                windowManager = windowManager,
+                lifecycleOwner = this,
+                savedStateRegistryOwner = this,
+                scope = lifecycleScope,
+                settingsRepository = settingsRepository,
+                locationRepository = locationRepository,
+                mapController = mapController,
+                onShowDisclosure = ::showAccessibilityDisclosure,
+            )
         serviceBinder.bind()
         if (isSpoofingActive()) {
             serviceBinder.bindJoystick()
@@ -241,7 +224,7 @@ class FloatingWidgetService :
                     MockLocationState.IDLE, MockLocationState.ERROR -> {
                         serviceBinder.unbindJoystick()
                         panelPresenter.hidePanelView()
-                        dismissTapToWalkOverlay()
+                        tapToWalk.dismiss()
                         panelExpand.collapseAll()
                     }
 
@@ -285,11 +268,6 @@ class FloatingWidgetService :
         lifecycleScope.launch {
             panelExpand.flow(PanelExpandKey.ALTITUDE).collect { expanded -> setOverlayFocusable(expanded) }
         }
-        lifecycleScope.launch {
-            tapToWalkVisible.collect { visible ->
-                if (!visible) dismissTapToWalkOverlay()
-            }
-        }
     }
 
     override fun onStartCommand(
@@ -306,7 +284,7 @@ class FloatingWidgetService :
         mapController.stopWalk()
         serviceScope.cancel()
         panelPresenter.hidePanelView()
-        dismissTapToWalkOverlay()
+        tapToWalk.dismiss()
         // Tear down the FAB composition so the Recomposer and any captured state holders are
         // released. The base OverlayService.onDestroy() removes the view from the WindowManager.
         composeView?.disposeComposition()
@@ -363,8 +341,8 @@ class FloatingWidgetService :
             val pasteCaptureExpanded by panelExpand.flow(PanelExpandKey.PASTE_CAPTURE).collectAsStateWithLifecycle()
             val isPanelExpanded by isPanelExpandedFlow.collectAsStateWithLifecycle()
             val hasPendingCompletion by pendingCompletionFlow.collectAsStateWithLifecycle()
-            val isTapToWalkEnabled by tapToWalkVisible.collectAsStateWithLifecycle(initialValue = false)
-            val isTapToWalkActive by isTapToWalkActiveFlow.collectAsStateWithLifecycle()
+            val isTapToWalkEnabled by tapToWalk.visible.collectAsStateWithLifecycle(initialValue = false)
+            val isTapToWalkActive by tapToWalk.isActive.collectAsStateWithLifecycle()
             val hideTeleportFeatures by settingsRepository.getHideTeleportFeatures().collectAsStateWithLifecycle(initialValue = false)
             val showRouteJumpButtons by settingsRepository.getShowRouteJumpButtons().collectAsStateWithLifecycle(
                 initialValue = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
@@ -506,7 +484,7 @@ class FloatingWidgetService :
         // would restart the overlay while the widget stays on screen.
         serviceBinder.unbindJoystick()
         panelPresenter.hidePanelView()
-        dismissTapToWalkOverlay()
+        tapToWalk.dismiss()
         mapController.parkSpoofingKeepWidget()
     }
 
@@ -598,76 +576,8 @@ class FloatingWidgetService :
 
     private fun onTapToWalkClicked() {
         if (!isSpoofingActive()) return
-        when (tapToWalkClick(tapToWalkOverlay?.isShowing() == true, needsAccessibilityDisclosure())) {
-            TapToWalkClick.DISMISS_OVERLAY -> dismissTapToWalkOverlay()
-            TapToWalkClick.SHOW_DISCLOSURE -> showAccessibilityDisclosure()
-            TapToWalkClick.OPEN_OVERLAY -> openTapToWalkOverlay()
-        }
+        tapToWalk.onClicked()
     }
-
-    private fun openTapToWalkOverlay() {
-        val overlay =
-            TapToWalkOverlay(
-                context = this,
-                windowManager = windowManager,
-                lifecycleOwner = this,
-                savedStateRegistryOwner = this,
-                onGroundTap = ::walkGroundTap,
-                getPosition = { mapController.sharedState.value.currentPosition },
-                onDismissed = { isTapToWalkActiveFlow.value = false },
-            )
-        tapToWalkOverlay = overlay
-        isTapToWalkActiveFlow.value = true
-        overlay.show()
-    }
-
-    /** The tap being walked and its target, so a newer map can re-aim it from the position it was made at. */
-    private var aimedTap: Pair<GroundTap, LatLng>? = null
-
-    private fun walkGroundTap(tap: GroundTap) {
-        val target = resolveGroundTap(tap)
-        if (target == null) {
-            Toast.makeText(this, R.string.tap_to_walk_past_horizon, Toast.LENGTH_LONG).show()
-            return
-        }
-        aimedTap = tap to target
-        mapController.walkTo(target)
-    }
-
-    private fun groundMapNow(): GroundMap? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
-        val bounds = windowManager.maximumWindowMetrics.bounds
-        return TapToWalkOverlay.groundMapFor(groundCalibration.value, bounds.width(), bounds.height())
-    }
-
-    private fun resolveGroundTap(tap: GroundTap): LatLng? =
-        groundMapNow()?.let { TapToWalkOverlay.computeGroundWalkTarget(tap.from, it, tap.x, tap.y) }
-
-    /**
-     * A fresh map measured while a tap is walked (the first flow of a fresh install, or a corrected heading) re-aims that
-     * tap from its tap-time position. A walk that already ended or was replaced is left alone.
-     */
-    private fun reaimOnNewMap() {
-        val (tap, target) = aimedTap ?: return
-        val walkTarget = locationRepository.walkTarget.value
-        if (walkTarget != target) {
-            aimedTap = null
-            return
-        }
-        val next = TapToWalkOverlay.reaimedTarget(tap, target, walkTarget, groundMapNow()) ?: return
-        Log.d(TAG, "tap re-aimed under the new map")
-        aimedTap = tap to next
-        mapController.walkTo(next)
-    }
-
-    /**
-     * The first screenshot is what the overlay's tap would trigger, so Play's Accessibility
-     * API policy puts the disclosure here — in the feature's own usage flow — not only in Settings.
-     * Re-shown until accepted: decline and skip are persisted but the next tap asks again.
-     */
-    private fun needsAccessibilityDisclosure(): Boolean =
-        ScreenAccessibilityService.isSupported() &&
-            accessibilityDisclosureChoice.value != AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED
 
     private fun showAccessibilityDisclosure() {
         panelPresenter.hidePanelView()
@@ -683,11 +593,6 @@ class FloatingWidgetService :
         } catch (e: Exception) {
             Log.e(TAG, "Failed to open accessibility disclosure", e)
         }
-    }
-
-    private fun dismissTapToWalkOverlay() {
-        tapToWalkOverlay?.dismiss()
-        tapToWalkOverlay = null
     }
 
     private fun onRouteIconClicked() {
