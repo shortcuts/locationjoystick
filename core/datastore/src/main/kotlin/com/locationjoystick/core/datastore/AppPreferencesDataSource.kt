@@ -339,10 +339,13 @@ interface PreferencesDataSource :
     /** Gets whether the floating map skips the confirmation panel and walks immediately on tap. */
     fun getFloatingMapQuickWalk(): Flow<Boolean>
 
+    /** Sets whether the floating map skips the confirmation panel and walks immediately on tap. */
+    suspend fun setFloatingMapQuickWalk(enabled: Boolean)
+
     /** Returns all settings needed by the settings UI in a single DataStore scan. */
     fun getSettingsSnapshot(): Flow<SettingsSnapshot>
 
-    /** Writes all settings from [snapshot] atomically in a single DataStore transaction. */
+    /** Bulk import write: writes all settings from [snapshot] atomically in a single DataStore transaction. */
     suspend fun applySnapshot(snapshot: SettingsSnapshot)
 
     /** Clears every preference except [Keys.ONBOARDING_COMPLETE], so the user isn't forced to re-onboard. */
@@ -925,6 +928,8 @@ class AppPreferencesDataSource
         override suspend fun setSelectedHotRouteIds(ids: Set<String>) = setPref(Keys.HOT_ROUTE_SELECTED_IDS, ids)
 
         override fun getFloatingMapQuickWalk(): Flow<Boolean> = pref(Keys.FLOATING_MAP_QUICK_WALK, false)
+
+        override suspend fun setFloatingMapQuickWalk(enabled: Boolean) = setPref(Keys.FLOATING_MAP_QUICK_WALK, enabled)
 
         override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
             dataStore.edit { prefs ->

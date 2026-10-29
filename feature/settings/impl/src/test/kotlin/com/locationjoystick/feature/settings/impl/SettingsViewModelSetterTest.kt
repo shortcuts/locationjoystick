@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -39,7 +40,7 @@ import org.robolectric.annotation.Config
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
-class SettingsViewModelDraftTest {
+class SettingsViewModelSetterTest {
     private val testDispatcher = UnconfinedTestDispatcher()
 
     private lateinit var viewModel: SettingsViewModel
@@ -95,7 +96,7 @@ class SettingsViewModelDraftTest {
     }
 
     // -------------------------------------------------------------------------
-    // Simple draft setters
+    // Setters write straight to the data source
     // -------------------------------------------------------------------------
 
     @Test
@@ -103,6 +104,7 @@ class SettingsViewModelDraftTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setSpeed("run", 3.6) // 3.6 km/h = 1.0 m/s
+            advanceUntilIdle()
             assertEquals(
                 1.0,
                 viewModel.uiState.value.speeds
@@ -116,6 +118,7 @@ class SettingsViewModelDraftTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
             viewModel.setSpeed("bike", 18.0) // 18 km/h = 5.0 m/s
+            advanceUntilIdle()
             assertEquals(
                 5.0,
                 viewModel.uiState.value.speeds
@@ -295,7 +298,7 @@ class SettingsViewModelDraftTest {
 
     // -------------------------------------------------------------------------
     // Capture — live keys shared with CaptureCoordinatesRepository (Settings > Menus section),
-    // no draft/save step, same as the top-level Capture screen.
+    // same as the top-level Capture screen.
     // -------------------------------------------------------------------------
 
     @Test

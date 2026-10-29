@@ -19,7 +19,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,8 +31,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
@@ -78,8 +75,6 @@ fun SettingsRoute(
     openCaptureSetup: Boolean = false,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    DisposableEffect(viewModel) { onDispose { viewModel.flushChanges() } }
-    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.flushChanges() }
     val roamingDefaults by viewModel.roamingDefaults.collectAsStateWithLifecycle()
     val isRooted by viewModel.isRooted.collectAsStateWithLifecycle()
     val languageTag by viewModel.languageTag.collectAsStateWithLifecycle()

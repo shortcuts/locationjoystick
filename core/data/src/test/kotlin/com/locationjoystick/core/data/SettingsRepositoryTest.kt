@@ -1762,7 +1762,13 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setSelectedHotRouteIds(ids: Set<String>) = Unit
 
-    override fun getFloatingMapQuickWalk(): Flow<Boolean> = flowOf(false)
+    val floatingMapQuickWalkFlow = MutableStateFlow(false)
+
+    override fun getFloatingMapQuickWalk(): Flow<Boolean> = floatingMapQuickWalkFlow
+
+    override suspend fun setFloatingMapQuickWalk(enabled: Boolean) {
+        floatingMapQuickWalkFlow.value = enabled
+    }
 
     val tapToWalkOverlayEnabledFlow = MutableStateFlow(false)
 

@@ -17,7 +17,9 @@ import com.locationjoystick.core.testing.FakeRouteDao
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -85,9 +87,9 @@ class SpeedProfileInputTest {
                 awaitItem() // consume initial loading state
                 viewModel.userFeedback.test {
                     viewModel.setSpeed("walk", 50.0) // 50 km/h — was rejected by old 0.1..15.0 range
-                    viewModel.flushChanges()
+                    advanceUntilIdle()
 
-                    val saved = fakeDataSource.lastAppliedSnapshot!!.walkSpeedMs
+                    val saved = fakeDataSource.getSpeedProfiles().first().walkSpeedMs
                     assertEquals(50.0 / 3.6, saved, 0.01)
                     cancelAndIgnoreRemainingEvents()
                 }
@@ -102,9 +104,9 @@ class SpeedProfileInputTest {
                 awaitItem() // consume initial loading state
                 viewModel.userFeedback.test {
                     viewModel.setSpeed("bike", 100.0) // 100 km/h ≈ 27.8 m/s
-                    viewModel.flushChanges()
+                    advanceUntilIdle()
 
-                    val saved = fakeDataSource.lastAppliedSnapshot!!.bikeSpeedMs
+                    val saved = fakeDataSource.getSpeedProfiles().first().bikeSpeedMs
                     assertEquals(100.0 / 3.6, saved, 0.01)
                     cancelAndIgnoreRemainingEvents()
                 }
@@ -119,9 +121,9 @@ class SpeedProfileInputTest {
                 awaitItem() // consume initial loading state
                 viewModel.userFeedback.test {
                     viewModel.setSpeed("run", 20.0) // 20 km/h — also above old 15.0 cap
-                    viewModel.flushChanges()
+                    advanceUntilIdle()
 
-                    val saved = fakeDataSource.lastAppliedSnapshot!!.runSpeedMs
+                    val saved = fakeDataSource.getSpeedProfiles().first().runSpeedMs
                     assertEquals(20.0 / 3.6, saved, 0.01)
                     cancelAndIgnoreRemainingEvents()
                 }
@@ -141,9 +143,9 @@ class SpeedProfileInputTest {
                 viewModel.userFeedback.test {
                     // 40 km/h = 11.1 m/s > ANTI_CHEAT_WARNING_THRESHOLD_MS (8.0 m/s)
                     viewModel.setSpeed("walk", 40.0)
-                    viewModel.flushChanges()
+                    advanceUntilIdle()
 
-                    val savedMs = fakeDataSource.lastAppliedSnapshot!!.walkSpeedMs
+                    val savedMs = fakeDataSource.getSpeedProfiles().first().walkSpeedMs
                     assertTrue(savedMs > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS)
                     cancelAndIgnoreRemainingEvents()
                 }
@@ -159,9 +161,9 @@ class SpeedProfileInputTest {
                 viewModel.userFeedback.test {
                     // 10 km/h = 2.78 m/s < ANTI_CHEAT_WARNING_THRESHOLD_MS (8.0 m/s)
                     viewModel.setSpeed("walk", 10.0)
-                    viewModel.flushChanges()
+                    advanceUntilIdle()
 
-                    val savedMs = fakeDataSource.lastAppliedSnapshot!!.walkSpeedMs
+                    val savedMs = fakeDataSource.getSpeedProfiles().first().walkSpeedMs
                     assertFalse(savedMs > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS)
                     cancelAndIgnoreRemainingEvents()
                 }
@@ -178,9 +180,9 @@ class SpeedProfileInputTest {
                     // Threshold is 8.0 m/s = 28.8 km/h — strict > so boundary value must NOT trigger
                     val thresholdKmh = AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS * 3.6
                     viewModel.setSpeed("bike", thresholdKmh)
-                    viewModel.flushChanges()
+                    advanceUntilIdle()
 
-                    val savedMs = fakeDataSource.lastAppliedSnapshot!!.bikeSpeedMs
+                    val savedMs = fakeDataSource.getSpeedProfiles().first().bikeSpeedMs
                     assertFalse(savedMs > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS)
                     cancelAndIgnoreRemainingEvents()
                 }

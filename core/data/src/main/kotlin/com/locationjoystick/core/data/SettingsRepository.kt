@@ -328,6 +328,12 @@ class SettingsRepository
 
         suspend fun setHotLocationsEnabled(enabled: Boolean) = dataSource.setHotLocationsEnabled(enabled)
 
+        suspend fun setSelectedHotLocationIds(ids: Set<String>) = dataSource.setSelectedHotLocationIds(ids)
+
+        suspend fun setHotRoutesEnabled(enabled: Boolean) = dataSource.setHotRoutesEnabled(enabled)
+
+        suspend fun setSelectedHotRouteIds(ids: Set<String>) = dataSource.setSelectedHotRouteIds(ids)
+
         fun getHideTeleportFeatures(): Flow<Boolean> = dataSource.getHideTeleportFeatures()
 
         suspend fun setHideTeleportFeatures(enabled: Boolean) = dataSource.setHideTeleportFeatures(enabled)
@@ -387,6 +393,8 @@ class SettingsRepository
         suspend fun setPlantingRadius(meters: Double) = dataSource.setPlantingRadius(meters)
 
         fun getFloatingMapQuickWalk(): Flow<Boolean> = dataSource.getFloatingMapQuickWalk()
+
+        suspend fun setFloatingMapQuickWalk(enabled: Boolean) = dataSource.setFloatingMapQuickWalk(enabled)
 
         fun getTapToWalkOverlayEnabled(): Flow<Boolean> = dataSource.getTapToWalkOverlayEnabled()
 

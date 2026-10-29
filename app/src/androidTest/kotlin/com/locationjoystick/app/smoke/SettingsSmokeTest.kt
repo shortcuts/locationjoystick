@@ -46,7 +46,8 @@ class SettingsSmokeTest : BaseSmokeTest() {
         composeRule.onNodeWithText("Movement & GPS").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("mph").performClick()
-        composeRule.waitForIdle()
+        // The unit is written to DataStore, so the speed fields switch a moment after the tap.
+        composeRule.waitUntil(5_000) { composeRule.onAllNodesWithText("km/h").fetchSemanticsNodes().size == 1 }
         composeRule.onNodeWithText("km/h").performClick()
         composeRule.waitForIdle()
     }

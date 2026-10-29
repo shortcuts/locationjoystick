@@ -230,7 +230,8 @@ A backlog task (radin) never ends `blocked`, `inconclusive` or "needs a live che
 2. Device attached: the agent runs the check. Run `make smoke-test-one` for the affected screen, drive the flow over adb (docs/testing.md), and read `adb logcat` and `dumpsys` for the result. Unlock, grant, relaunch and recover without asking.
 3. No device: the test harness is the proof. Write or extend the unit or integration test so it goes red, then green. Run `make format`, `make lint` and `make test`. Mark the limit in the commit body ("not run on a device"). Do not park the task.
 4. A step the agent cannot do over adb (for example tapping Accept on the accessibility disclosure) is not a blocker. Test the layer below it, or state the exact limit in the task note and finish the rest.
-5. Ask the user only for a product decision that code, docs and tests cannot settle. Never ask for a device action, a screenshot, a log paste or a "does it look right" confirmation.
+5. A force-stop or fresh install can land on onboarding. The agent completes it over adb (docs/testing.md, "Driving the app on a device") and never asks the user.
+6. Ask the user only for a product decision that code, docs and tests cannot settle. Never ask for a device action, a screenshot, a log paste or a "does it look right" confirmation.
 
 ---
 

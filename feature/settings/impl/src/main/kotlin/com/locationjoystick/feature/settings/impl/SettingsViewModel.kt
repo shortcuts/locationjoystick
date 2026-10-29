@@ -37,8 +37,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,13 +47,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -110,7 +108,7 @@ class SettingsViewModel
 
         private val screenServiceGranted = MutableStateFlow(false)
 
-        /** Live mirror of [CaptureCoordinatesRepository] — same source the top-level Capture screen reads, no draft/save step. */
+        /** Live mirror of [CaptureCoordinatesRepository] — same source the top-level Capture screen reads. */
         private data class CaptureSnapshot(
             val modeEnabled: Boolean,
             val captureEnabled: Boolean,
@@ -121,28 +119,49 @@ class SettingsViewModel
             val setupReset: Boolean,
         )
 
+        private data class CaptureToggles(
+            val modeEnabled: Boolean,
+            val captureEnabled: Boolean,
+            val jumpEnabled: Boolean,
+        )
+
+        private data class CaptureLinkSetup(
+            val previousBrowserPackage: String?,
+            val launchAfterLinkPackage: String?,
+            val launchAfterLinkChosen: Boolean,
+            val setupReset: Boolean,
+        )
+
         private val captureSnapshot: Flow<CaptureSnapshot> =
             combine(
-                captureCoordinatesRepository.captureModeEnabled,
-                captureCoordinatesRepository.captureEnabled,
-                captureCoordinatesRepository.jumpEnabled,
-                captureCoordinatesRepository.previousBrowserPackage,
-                captureCoordinatesRepository.launchAfterLinkPackage,
-                captureCoordinatesRepository.launchAfterLinkChosen,
-                captureCoordinatesRepository.setupReset,
-            ) { values ->
+                combine(
+                    captureCoordinatesRepository.captureModeEnabled,
+                    captureCoordinatesRepository.captureEnabled,
+                    captureCoordinatesRepository.jumpEnabled,
+                    ::CaptureToggles,
+                ),
+                combine(
+                    captureCoordinatesRepository.previousBrowserPackage,
+                    captureCoordinatesRepository.launchAfterLinkPackage,
+                    captureCoordinatesRepository.launchAfterLinkChosen,
+                    captureCoordinatesRepository.setupReset,
+                    ::CaptureLinkSetup,
+                ),
+            ) { toggles, link ->
                 CaptureSnapshot(
-                    modeEnabled = values[0] as Boolean,
-                    captureEnabled = values[1] as Boolean,
-                    jumpEnabled = values[2] as Boolean,
-                    previousBrowserPackage = values[3] as String?,
-                    launchAfterLinkPackage = values[4] as String?,
-                    launchAfterLinkChosen = values[5] as Boolean,
-                    setupReset = values[6] as Boolean,
+                    modeEnabled = toggles.modeEnabled,
+                    captureEnabled = toggles.captureEnabled,
+                    jumpEnabled = toggles.jumpEnabled,
+                    previousBrowserPackage = link.previousBrowserPackage,
+                    launchAfterLinkPackage = link.launchAfterLinkPackage,
+                    launchAfterLinkChosen = link.launchAfterLinkChosen,
+                    setupReset = link.setupReset,
                 )
             }
 
-        private val flushMutex = Mutex()
+        private val writeMutex = Mutex()
+
+        private val speedWriteVersion = mutableMapOf<String, Int>()
 
         init {
             _isRooted.value = sensorPermissionBootstrap.isGranted()
@@ -182,74 +201,39 @@ class SettingsViewModel
             userFeedback.emit(UserFeedback(message, isError))
         }
 
-        /** Settings written by their own setters, not flushed from the draft. */
+        /** Runs [block] to completion even if the screen closes, one write at a time. */
+        private fun save(block: suspend () -> Unit) {
+            viewModelScope.launch { persist(block) }
+        }
+
+        private suspend fun persist(block: suspend () -> Unit) {
+            withContext(NonCancellable) {
+                writeMutex.withLock {
+                    try {
+                        block()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Save failed", e)
+                        emitFeedback(R.string.settings_viewmodel_failed_to_save_settings, isError = true)
+                    }
+                }
+            }
+        }
+
         private data class LiveSettings(
             val disclosureChoice: String,
             val reconnectTap: Boolean,
             val keepWidgetOnIdle: Boolean,
-            val bypassMockLocationCheck: Boolean,
             val activeSpeedProfileId: String,
+            val tapToWalk: Boolean,
         )
-
-        /** Pending-write buffer: [flushChanges] persists it after a quiet period. */
-        private data class DraftState(
-            val speedOverrides: Map<String, Double> = emptyMap(),
-            val speedUnit: SpeedUnit? = null,
-            val featureOrder: List<AppFeature>? = null,
-            val widgetFeatures: Set<AppFeature>? = null,
-            val enabledSpeedProfileIds: Set<String>? = null,
-            val mapFeatures: Set<AppFeature>? = null,
-            val rememberLastLocation: Boolean? = null,
-            val mapFollowsLocation: Boolean? = null,
-            val mapTileSource: MapTileSource? = null,
-            val disabledGeocodingProviders: Set<GeocodingProviderId>? = null,
-            val jitterIdleRadius: Double? = null,
-            val jitterMovingRadius: Double? = null,
-            val jitterMaxStepMeters: Double? = null,
-            val roamingDefaults: RoamingDefaults? = null,
-            val realismBearingHoldIdle: Boolean? = null,
-            val realismAltitudeEnabled: Boolean? = null,
-            val realismWarmupEnabled: Boolean? = null,
-            val realismSatelliteExtrasEnabled: Boolean? = null,
-            val realismSuspendedMockingEnabled: Boolean? = null,
-            val jitterSpeedIdleVariationPct: Int? = null,
-            val jitterSpeedMovingVariationPct: Int? = null,
-            val jitterSpeedIdleWobbleProbabilityPct: Int? = null,
-            val hotLocationsEnabled: Boolean? = null,
-            val selectedHotLocationIds: Set<String>? = null,
-            val hotRoutesEnabled: Boolean? = null,
-            val selectedHotRouteIds: Set<String>? = null,
-            val floatingMapQuickWalk: Boolean? = null,
-            val hideTeleportFeatures: Boolean? = null,
-            val hideWidgetOverlay: Boolean? = null,
-            val hideForegroundNotification: Boolean? = null,
-            val showRouteJumpButtons: Boolean? = null,
-            val lastKnownPositionEnabled: Boolean? = null,
-            val realismRealElevationEnabled: Boolean? = null,
-            val altitudeJitterRadiusMeters: Double? = null,
-            val plantingRadiusMeters: Double? = null,
-            val altitudeOverrideButtonEnabled: Boolean? = null,
-            val debugStatsEnabled: Boolean? = null,
-        )
-
-        private val mutableDraft = MutableStateFlow(DraftState())
-
-        // Declared after mutableDraft: the collector reads it at once.
-        init {
-            @OptIn(FlowPreview::class)
-            val pending = mutableDraft.debounce(AUTOSAVE_DEBOUNCE_MS)
-            viewModelScope.launch { pending.collect { flushChanges() } }
-        }
 
         private val snapshotFlow = settingsRepository.getSettingsSnapshot()
 
-        private val draftStateFlow = mutableDraft.asStateFlow()
-
         val roamingDefaults: StateFlow<RoamingDefaults> =
-            combine(
-                settingsRepository.getRoamingDefaults(),
-                mutableDraft,
-            ) { repo, draft -> draft.roamingDefaults ?: repo }
+            settingsRepository
+                .getRoamingDefaults()
                 .stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(5_000),
@@ -258,25 +242,20 @@ class SettingsViewModel
 
         val uiState: StateFlow<SettingsUiState> =
             combine(
-                combine(
-                    snapshotFlow,
-                    draftStateFlow,
-                    settingsRepository.getTapToWalkOverlayEnabled(),
-                ) { snapshot, draft, tapToWalk -> Triple(snapshot, draft, tapToWalk) },
+                snapshotFlow,
                 combine(
                     settingsRepository.getAccessibilityDisclosureChoice(),
                     settingsRepository.getReconnectTapEnabled(),
                     settingsRepository.getKeepWidgetOnIdle(),
-                    settingsRepository.getBypassMockLocationCheck(),
                     settingsRepository.getActiveSpeedProfile().map { it.id },
-                ) { choice, reconnect, keepWidgetOnIdle, bypassMockLocationCheck, activeSpeedProfileId ->
-                    LiveSettings(choice, reconnect, keepWidgetOnIdle, bypassMockLocationCheck, activeSpeedProfileId)
-                },
+                    settingsRepository.getTapToWalkOverlayEnabled(),
+                    ::LiveSettings,
+                ),
                 combine(screenServiceGranted, captureSnapshot) { granted, capture -> Pair(granted, capture) },
                 settingsRepository.getThemeMode(),
                 settingsRepository.getBaseAltitudeOverride(),
             ) {
-                (snapshot, draftState, tapToWalk),
+                snapshot,
                 live,
                 (isServiceGranted, capture),
                 themeMode,
@@ -284,49 +263,45 @@ class SettingsViewModel
                 ->
                 SettingsUiState(
                     isLoading = false,
-                    speeds = snapshotSpeeds(snapshot) + draftState.speedOverrides,
-                    speedUnit = draftState.speedUnit ?: snapshot.speedUnit,
-                    featureOrder = draftState.featureOrder ?: snapshot.featureOrder,
-                    enabledWidgetFeatures = draftState.widgetFeatures ?: snapshot.enabledWidgetFeatures,
-                    enabledSpeedProfileIds = draftState.enabledSpeedProfileIds ?: snapshot.enabledSpeedProfileIds,
-                    enabledMapFeatures = draftState.mapFeatures ?: snapshot.enabledMapFeatures,
-                    rememberLastLocation = draftState.rememberLastLocation ?: snapshot.rememberLastLocation,
-                    mapFollowsLocation = draftState.mapFollowsLocation ?: snapshot.mapFollowsLocation,
-                    mapTileSource = draftState.mapTileSource ?: snapshot.mapTileSource,
+                    speeds = snapshotSpeeds(snapshot),
+                    speedUnit = snapshot.speedUnit,
+                    featureOrder = snapshot.featureOrder,
+                    enabledWidgetFeatures = snapshot.enabledWidgetFeatures,
+                    enabledSpeedProfileIds = snapshot.enabledSpeedProfileIds,
+                    enabledMapFeatures = snapshot.enabledMapFeatures,
+                    rememberLastLocation = snapshot.rememberLastLocation,
+                    mapFollowsLocation = snapshot.mapFollowsLocation,
+                    mapTileSource = snapshot.mapTileSource,
                     guidedPath = snapshot.guidedPath,
-                    disabledGeocodingProviders = draftState.disabledGeocodingProviders ?: snapshot.disabledGeocodingProviders,
-                    jitterIdleRadiusMeters = draftState.jitterIdleRadius ?: snapshot.jitterIdleRadius,
-                    jitterMovingRadiusMeters = draftState.jitterMovingRadius ?: snapshot.jitterMovingRadius,
-                    jitterMaxStepMeters = draftState.jitterMaxStepMeters ?: snapshot.jitterMaxStepMeters,
-                    realismBearingHoldIdle = draftState.realismBearingHoldIdle ?: snapshot.realismBearingHoldIdle,
-                    realismAltitudeEnabled = draftState.realismAltitudeEnabled ?: snapshot.realismAltitudeEnabled,
-                    realismWarmupEnabled = draftState.realismWarmupEnabled ?: snapshot.realismWarmupEnabled,
-                    realismSatelliteExtrasEnabled = draftState.realismSatelliteExtrasEnabled ?: snapshot.realismSatelliteExtrasEnabled,
-                    realismSuspendedMockingEnabled = draftState.realismSuspendedMockingEnabled ?: snapshot.realismSuspendedMockingEnabled,
-                    jitterSpeedIdleVariationPct = draftState.jitterSpeedIdleVariationPct ?: snapshot.jitterSpeedIdleVariationPct,
-                    jitterSpeedMovingVariationPct = draftState.jitterSpeedMovingVariationPct ?: snapshot.jitterSpeedMovingVariationPct,
-                    jitterSpeedIdleWobbleProbabilityPct =
-                        draftState.jitterSpeedIdleWobbleProbabilityPct ?: snapshot.jitterSpeedIdleWobbleProbabilityPct,
-                    hotLocationsEnabled = draftState.hotLocationsEnabled ?: snapshot.hotLocationsEnabled,
-                    selectedHotLocationIds = draftState.selectedHotLocationIds ?: snapshot.selectedHotLocationIds,
-                    hotRoutesEnabled = draftState.hotRoutesEnabled ?: snapshot.hotRoutesEnabled,
-                    selectedHotRouteIds = draftState.selectedHotRouteIds ?: snapshot.selectedHotRouteIds,
-                    floatingMapQuickWalk = draftState.floatingMapQuickWalk ?: snapshot.floatingMapQuickWalk,
-                    tapToWalkOverlayEnabled = tapToWalk,
-                    hideTeleportFeatures = draftState.hideTeleportFeatures ?: snapshot.hideTeleportFeatures,
-                    hideWidgetOverlay = draftState.hideWidgetOverlay ?: snapshot.hideWidgetOverlay,
-                    hideForegroundNotification =
-                        draftState.hideForegroundNotification ?: snapshot.hideForegroundNotification,
-                    showRouteJumpButtons = draftState.showRouteJumpButtons ?: snapshot.showRouteJumpButtons,
-                    lastKnownPositionEnabled = draftState.lastKnownPositionEnabled ?: snapshot.lastKnownPositionEnabled,
-                    realismRealElevationEnabled =
-                        draftState.realismRealElevationEnabled ?: snapshot.realismRealElevationEnabled,
+                    disabledGeocodingProviders = snapshot.disabledGeocodingProviders,
+                    jitterIdleRadiusMeters = snapshot.jitterIdleRadius,
+                    jitterMovingRadiusMeters = snapshot.jitterMovingRadius,
+                    jitterMaxStepMeters = snapshot.jitterMaxStepMeters,
+                    realismBearingHoldIdle = snapshot.realismBearingHoldIdle,
+                    realismAltitudeEnabled = snapshot.realismAltitudeEnabled,
+                    realismWarmupEnabled = snapshot.realismWarmupEnabled,
+                    realismSatelliteExtrasEnabled = snapshot.realismSatelliteExtrasEnabled,
+                    realismSuspendedMockingEnabled = snapshot.realismSuspendedMockingEnabled,
+                    jitterSpeedIdleVariationPct = snapshot.jitterSpeedIdleVariationPct,
+                    jitterSpeedMovingVariationPct = snapshot.jitterSpeedMovingVariationPct,
+                    jitterSpeedIdleWobbleProbabilityPct = snapshot.jitterSpeedIdleWobbleProbabilityPct,
+                    hotLocationsEnabled = snapshot.hotLocationsEnabled,
+                    selectedHotLocationIds = snapshot.selectedHotLocationIds,
+                    hotRoutesEnabled = snapshot.hotRoutesEnabled,
+                    selectedHotRouteIds = snapshot.selectedHotRouteIds,
+                    floatingMapQuickWalk = snapshot.floatingMapQuickWalk,
+                    tapToWalkOverlayEnabled = live.tapToWalk,
+                    hideTeleportFeatures = snapshot.hideTeleportFeatures,
+                    hideWidgetOverlay = snapshot.hideWidgetOverlay,
+                    hideForegroundNotification = snapshot.hideForegroundNotification,
+                    showRouteJumpButtons = snapshot.showRouteJumpButtons,
+                    lastKnownPositionEnabled = snapshot.lastKnownPositionEnabled,
+                    realismRealElevationEnabled = snapshot.realismRealElevationEnabled,
                     hasAltitudeOverride = baseAltitudeOverride != null,
-                    altitudeJitterRadiusMeters = draftState.altitudeJitterRadiusMeters ?: snapshot.altitudeJitterRadiusMeters,
-                    plantingRadiusMeters = draftState.plantingRadiusMeters ?: snapshot.plantingRadiusMeters,
-                    altitudeOverrideButtonEnabled =
-                        draftState.altitudeOverrideButtonEnabled ?: snapshot.altitudeOverrideButtonEnabled,
-                    debugStatsEnabled = draftState.debugStatsEnabled ?: snapshot.debugStatsEnabled,
+                    altitudeJitterRadiusMeters = snapshot.altitudeJitterRadiusMeters,
+                    plantingRadiusMeters = snapshot.plantingRadiusMeters,
+                    altitudeOverrideButtonEnabled = snapshot.altitudeOverrideButtonEnabled,
+                    debugStatsEnabled = snapshot.debugStatsEnabled,
                     captureModeEnabled = capture.modeEnabled,
                     captureEnabled = capture.captureEnabled,
                     jumpEnabled = capture.jumpEnabled,
@@ -339,7 +314,7 @@ class SettingsViewModel
                         live.disclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
                     reconnectTapEnabled = live.reconnectTap,
                     keepWidgetOnIdle = live.keepWidgetOnIdle,
-                    bypassMockLocationCheck = live.bypassMockLocationCheck,
+                    bypassMockLocationCheck = snapshot.bypassMockLocationCheck,
                     activeSpeedProfileId = live.activeSpeedProfileId,
                     themeMode = themeMode,
                 )
@@ -354,95 +329,116 @@ class SettingsViewModel
             displaySpeed: Double,
         ) {
             val speedMs = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)
-            mutableDraft.update { it.copy(speedOverrides = it.speedOverrides + (id to speedMs)) }
+            val version = (speedWriteVersion[id] ?: 0) + 1
+            speedWriteVersion[id] = version
+            // Each keystroke calls this; writing "1" while the user types "15" would set the live pace to 1 km/h.
+            viewModelScope.launch {
+                withContext(NonCancellable) {
+                    delay(AUTOSAVE_DEBOUNCE_MS)
+                    if (speedWriteVersion[id] == version) persist { writeSpeed(id, speedMs) }
+                }
+            }
+        }
+
+        private suspend fun writeSpeed(
+            id: String,
+            speedMs: Double,
+        ) {
+            when (id) {
+                "slow_walk" -> settingsRepository.setSlowWalkSpeed(speedMs)
+                "walk" -> settingsRepository.setWalkSpeed(speedMs)
+                "run" -> settingsRepository.setRunSpeed(speedMs)
+                "bike" -> settingsRepository.setBikeSpeed(speedMs)
+                "drive" -> settingsRepository.setDriveSpeed(speedMs)
+            }
         }
 
         fun setSpeedUnit(unit: SpeedUnit) {
-            mutableDraft.update { it.copy(speedUnit = unit) }
+            save { settingsRepository.setSpeedUnit(unit) }
         }
 
         fun setWidgetFeatures(features: Set<AppFeature>) {
-            mutableDraft.update { it.copy(widgetFeatures = features) }
+            save { settingsRepository.setWidgetFeatures(features) }
         }
 
         /** No-op if [ids] is empty — at least one speed profile must stay enabled for cycling to work. */
         fun setEnabledSpeedProfileIds(ids: Set<String>) {
             if (ids.isEmpty()) return
-            mutableDraft.update { it.copy(enabledSpeedProfileIds = ids) }
+            save { settingsRepository.setEnabledSpeedProfileIds(ids) }
         }
 
         fun setMapFeatures(features: Set<AppFeature>) {
-            mutableDraft.update { it.copy(mapFeatures = features) }
+            save { settingsRepository.setMapFeatures(features) }
         }
 
         fun setFeatureOrder(order: List<AppFeature>) {
-            mutableDraft.update { it.copy(featureOrder = order) }
+            save { settingsRepository.setFeatureOrder(order) }
         }
 
         fun setRememberLastLocation(enabled: Boolean) {
-            mutableDraft.update { it.copy(rememberLastLocation = enabled) }
+            save { settingsRepository.setRememberLastLocation(enabled) }
         }
 
         fun setMapFollowsLocation(enabled: Boolean) {
-            mutableDraft.update { it.copy(mapFollowsLocation = enabled) }
+            save { settingsRepository.setMapFollowsLocation(enabled) }
         }
 
         /** No-op if [ids] disables every provider — at least one geocoding provider must stay on. */
         fun setDisabledGeocodingProviders(ids: Set<GeocodingProviderId>) {
             if (ids.containsAll(GeocodingProviderId.entries)) return
-            mutableDraft.update { it.copy(disabledGeocodingProviders = ids) }
+            save { settingsRepository.setDisabledGeocodingProviders(ids) }
         }
 
         fun setMapTileSource(source: MapTileSource) {
-            mutableDraft.update { it.copy(mapTileSource = source) }
+            save { settingsRepository.setMapTileSource(source) }
         }
 
         fun setJitterIdleRadius(meters: Double) {
-            mutableDraft.update { it.copy(jitterIdleRadius = meters) }
+            save { settingsRepository.setJitterIdleRadius(meters) }
         }
 
         fun setJitterMovingRadius(meters: Double) {
-            mutableDraft.update { it.copy(jitterMovingRadius = meters) }
+            save { settingsRepository.setJitterMovingRadius(meters) }
         }
 
         fun setJitterMaxStepMeters(meters: Double) {
-            mutableDraft.update { it.copy(jitterMaxStepMeters = meters) }
+            save { settingsRepository.setJitterMaxStepMeters(meters) }
         }
 
         fun updateRoamingDefaults(defaults: RoamingDefaults) {
-            mutableDraft.update { it.copy(roamingDefaults = defaults) }
+            save { settingsRepository.updateRoamingDefaults(defaults) }
         }
 
         fun setRealismBearingHoldIdle(v: Boolean) {
-            mutableDraft.update { it.copy(realismBearingHoldIdle = v) }
+            save { settingsRepository.setRealismBearingHoldIdle(v) }
         }
 
         fun setRealismAltitudeEnabled(v: Boolean) {
-            mutableDraft.update { it.copy(realismAltitudeEnabled = v) }
+            save { settingsRepository.setRealismAltitudeEnabled(v) }
         }
 
         fun setRealismWarmupEnabled(v: Boolean) {
-            mutableDraft.update { it.copy(realismWarmupEnabled = v) }
+            save { settingsRepository.setRealismWarmupEnabled(v) }
         }
 
         fun setRealismSatelliteExtrasEnabled(v: Boolean) {
-            mutableDraft.update { it.copy(realismSatelliteExtrasEnabled = v) }
+            save { settingsRepository.setRealismSatelliteExtrasEnabled(v) }
         }
 
         fun setRealismSuspendedMockingEnabled(v: Boolean) {
-            mutableDraft.update { it.copy(realismSuspendedMockingEnabled = v) }
+            save { settingsRepository.setRealismSuspendedMockingEnabled(v) }
         }
 
         fun setJitterSpeedIdleVariationPct(pct: Int) {
-            mutableDraft.update { it.copy(jitterSpeedIdleVariationPct = pct) }
+            save { settingsRepository.setJitterSpeedIdleVariationPct(pct) }
         }
 
         fun setJitterSpeedMovingVariationPct(pct: Int) {
-            mutableDraft.update { it.copy(jitterSpeedMovingVariationPct = pct) }
+            save { settingsRepository.setJitterSpeedMovingVariationPct(pct) }
         }
 
         fun setJitterSpeedIdleWobbleProbabilityPct(pct: Int) {
-            mutableDraft.update { it.copy(jitterSpeedIdleWobbleProbabilityPct = pct) }
+            save { settingsRepository.setJitterSpeedIdleWobbleProbabilityPct(pct) }
         }
 
         fun setHotLocationsEnabled(enabled: Boolean) {
@@ -450,15 +446,36 @@ class SettingsViewModel
                 hotLocationsRepository.locations.value
                     .map { FavoriteRepository.idForLocation(it.name, it.city) }
                     .toSet()
-            mutableDraft.update { draft ->
-                val currentSelectedIds = draft.selectedHotLocationIds ?: uiState.value.selectedHotLocationIds
-                val newSelectedIds = if (enabled && currentSelectedIds.isEmpty()) allIds else draft.selectedHotLocationIds
-                draft.copy(hotLocationsEnabled = enabled, selectedHotLocationIds = newSelectedIds)
+            save {
+                if (enabled &&
+                    settingsRepository
+                        .getSettingsSnapshot()
+                        .first()
+                        .selectedHotLocationIds
+                        .isEmpty()
+                ) {
+                    settingsRepository.setSelectedHotLocationIds(allIds)
+                }
+                settingsRepository.setHotLocationsEnabled(enabled)
+                syncHotLocations()
             }
         }
 
         fun setSelectedHotLocationIds(ids: Set<String>) {
-            mutableDraft.update { it.copy(selectedHotLocationIds = ids) }
+            save {
+                settingsRepository.setSelectedHotLocationIds(ids)
+                syncHotLocations()
+            }
+        }
+
+        private suspend fun syncHotLocations() {
+            val saved = settingsRepository.getSettingsSnapshot().first()
+            if (saved.hotLocationsEnabled) {
+                favoriteRepository.upsertHotLocations(hotLocationsRepository.locations.value, saved.selectedHotLocationIds)
+            } else {
+                favoriteRepository.removeHotLocations()
+            }
+            clearHomeIfMissing()
         }
 
         val hotLocationTree: StateFlow<HotItemTree> =
@@ -480,89 +497,109 @@ class SettingsViewModel
                 hotRoutesRepository.routes.value
                     .map { RouteRepository.idForRoute(it.name, it.city) }
                     .toSet()
-            mutableDraft.update { draft ->
-                val currentSelectedIds = draft.selectedHotRouteIds ?: uiState.value.selectedHotRouteIds
-                val newSelectedIds = if (enabled && currentSelectedIds.isEmpty()) allIds else draft.selectedHotRouteIds
-                draft.copy(hotRoutesEnabled = enabled, selectedHotRouteIds = newSelectedIds)
+            save {
+                if (enabled &&
+                    settingsRepository
+                        .getSettingsSnapshot()
+                        .first()
+                        .selectedHotRouteIds
+                        .isEmpty()
+                ) {
+                    settingsRepository.setSelectedHotRouteIds(allIds)
+                }
+                settingsRepository.setHotRoutesEnabled(enabled)
+                syncHotRoutes()
             }
         }
 
         fun setSelectedHotRouteIds(ids: Set<String>) {
-            mutableDraft.update { it.copy(selectedHotRouteIds = ids) }
+            save {
+                settingsRepository.setSelectedHotRouteIds(ids)
+                syncHotRoutes()
+            }
+        }
+
+        private suspend fun syncHotRoutes() {
+            val saved = settingsRepository.getSettingsSnapshot().first()
+            if (saved.hotRoutesEnabled) {
+                routeRepository.upsertHotRoutes(hotRoutesRepository.routes.value, saved.selectedHotRouteIds)
+            } else {
+                routeRepository.removeHotRoutes()
+            }
         }
 
         fun setFloatingMapQuickWalk(enabled: Boolean) {
-            mutableDraft.update { it.copy(floatingMapQuickWalk = enabled) }
+            save { settingsRepository.setFloatingMapQuickWalk(enabled) }
         }
 
         fun setHideTeleportFeatures(enabled: Boolean) {
-            mutableDraft.update { it.copy(hideTeleportFeatures = enabled) }
+            save { settingsRepository.setHideTeleportFeatures(enabled) }
         }
 
         fun setHideWidgetOverlay(enabled: Boolean) {
-            mutableDraft.update { it.copy(hideWidgetOverlay = enabled) }
+            save { settingsRepository.setHideWidgetOverlay(enabled) }
         }
 
         fun setHideForegroundNotification(enabled: Boolean) {
-            mutableDraft.update { it.copy(hideForegroundNotification = enabled) }
+            save { settingsRepository.setHideForegroundNotification(enabled) }
         }
 
         fun setShowRouteJumpButtons(enabled: Boolean) {
-            mutableDraft.update { it.copy(showRouteJumpButtons = enabled) }
+            save { settingsRepository.setShowRouteJumpButtons(enabled) }
         }
 
         fun setLastKnownPositionEnabled(enabled: Boolean) {
-            mutableDraft.update { it.copy(lastKnownPositionEnabled = enabled) }
+            save { settingsRepository.setLastKnownPositionEnabled(enabled) }
         }
 
         fun setRealismRealElevationEnabled(enabled: Boolean) {
-            mutableDraft.update { it.copy(realismRealElevationEnabled = enabled) }
+            save { settingsRepository.setRealismRealElevationEnabled(enabled) }
         }
 
-        /** Clears the manual altitude override immediately — a live key, no save step. */
+        /** Clears the manual altitude override immediately immediately. */
         fun resetAltitudeOverride() {
-            viewModelScope.launch { settingsRepository.clearBaseAltitudeOverride() }
+            save { settingsRepository.clearBaseAltitudeOverride() }
         }
 
         fun setAltitudeJitterRadius(meters: Double) {
-            mutableDraft.update { it.copy(altitudeJitterRadiusMeters = meters) }
+            save { settingsRepository.setAltitudeJitterRadius(meters) }
         }
 
         fun setPlantingRadius(meters: Double) {
-            mutableDraft.update { it.copy(plantingRadiusMeters = meters) }
+            save { settingsRepository.setPlantingRadius(meters) }
         }
 
         fun setAltitudeOverrideButtonEnabled(enabled: Boolean) {
-            mutableDraft.update { it.copy(altitudeOverrideButtonEnabled = enabled) }
+            save { settingsRepository.setAltitudeOverrideButtonEnabled(enabled) }
         }
 
         fun setDebugStatsEnabled(enabled: Boolean) {
-            mutableDraft.update { it.copy(debugStatsEnabled = enabled) }
+            save { settingsRepository.setDebugStatsEnabled(enabled) }
         }
 
-        /** Live keys, no save step — same [CaptureCoordinatesRepository] the top-level Capture screen writes. */
+        /** Same [CaptureCoordinatesRepository] the top-level Capture screen writes. */
         fun setCaptureModeEnabled(enabled: Boolean) {
-            viewModelScope.launch { captureCoordinatesRepository.setCaptureModeEnabled(enabled) }
+            save { captureCoordinatesRepository.setCaptureModeEnabled(enabled) }
         }
 
         fun setCaptureEnabled(enabled: Boolean) {
-            viewModelScope.launch { captureCoordinatesRepository.setCaptureEnabled(enabled) }
+            save { captureCoordinatesRepository.setCaptureEnabled(enabled) }
         }
 
         fun setJumpEnabled(enabled: Boolean) {
-            viewModelScope.launch { captureCoordinatesRepository.setJumpEnabled(enabled) }
+            save { captureCoordinatesRepository.setJumpEnabled(enabled) }
         }
 
         fun setCapturePreviousBrowserPackage(packageName: String) {
-            viewModelScope.launch { captureCoordinatesRepository.setPreviousBrowserPackage(packageName) }
+            save { captureCoordinatesRepository.setPreviousBrowserPackage(packageName) }
         }
 
         fun restoreCaptureDefaultBrowser() {
-            viewModelScope.launch { captureCoordinatesRepository.resetSetup() }
+            save { captureCoordinatesRepository.resetSetup() }
         }
 
         fun clearCaptureSetupReset() {
-            viewModelScope.launch { captureCoordinatesRepository.clearSetupReset() }
+            save { captureCoordinatesRepository.clearSetupReset() }
         }
 
         /** A reset only holds while this app still owns the browser role; once it does not, setup is due anyway. */
@@ -571,19 +608,19 @@ class SettingsViewModel
         }
 
         fun setLaunchAfterLinkPackage(packageName: String?) {
-            viewModelScope.launch { captureCoordinatesRepository.setLaunchAfterLinkPackage(packageName) }
+            save { captureCoordinatesRepository.setLaunchAfterLinkPackage(packageName) }
         }
 
         fun setTapToWalkOverlayEnabled(enabled: Boolean) {
-            viewModelScope.launch { settingsRepository.setTapToWalkOverlayEnabled(enabled) }
+            save { settingsRepository.setTapToWalkOverlayEnabled(enabled) }
         }
 
         fun setAccessibilityDisclosureAccepted(accepted: Boolean) {
-            viewModelScope.launch { settingsRepository.recordAccessibilityDisclosure(accepted) }
+            save { settingsRepository.recordAccessibilityDisclosure(accepted) }
         }
 
         fun setReconnectTapEnabled(enabled: Boolean) {
-            viewModelScope.launch { settingsRepository.setReconnectTapEnabled(enabled) }
+            save { settingsRepository.setReconnectTapEnabled(enabled) }
         }
 
         /** Launchable apps for the Capture launch-after-link picker; empty until the off-main query finishes. */
@@ -604,11 +641,11 @@ class SettingsViewModel
         }
 
         fun setGuidedPath(path: GuidedPath) {
-            viewModelScope.launch { settingsRepository.setGuidedPath(path) }
+            save { settingsRepository.setGuidedPath(path) }
         }
 
         fun setThemeMode(mode: ThemeMode) {
-            viewModelScope.launch { settingsRepository.setThemeMode(mode) }
+            save { settingsRepository.setThemeMode(mode) }
         }
 
         fun checkScreenServiceGranted() {
@@ -634,90 +671,6 @@ class SettingsViewModel
                     )
                 }.stateIn(viewModelScope, SharingStarted.Eagerly, HotItemTree.Empty)
 
-        fun flushChanges() {
-            viewModelScope.launch {
-                withContext(NonCancellable) {
-                    flushMutex.withLock { writeDraft() }
-                }
-            }
-        }
-
-        private suspend fun writeDraft() {
-            val d = mutableDraft.value
-            if (d == DraftState()) return
-            try {
-                val state = uiState.value
-                settingsRepository.applySnapshot(
-                    SettingsSnapshot(
-                        slowWalkSpeedMs = state.speeds.getValue("slow_walk"),
-                        walkSpeedMs = state.speeds.getValue("walk"),
-                        runSpeedMs = state.speeds.getValue("run"),
-                        bikeSpeedMs = state.speeds.getValue("bike"),
-                        driveSpeedMs = state.speeds.getValue("drive"),
-                        speedUnit = state.speedUnit,
-                        featureOrder = state.featureOrder,
-                        enabledWidgetFeatures = state.enabledWidgetFeatures,
-                        enabledMapFeatures = state.enabledMapFeatures,
-                        enabledSpeedProfileIds = state.enabledSpeedProfileIds,
-                        rememberLastLocation = state.rememberLastLocation,
-                        mapFollowsLocation = state.mapFollowsLocation,
-                        mapTileSource = state.mapTileSource,
-                        guidedPath = state.guidedPath,
-                        disabledGeocodingProviders = state.disabledGeocodingProviders,
-                        jitterIdleRadius = state.jitterIdleRadiusMeters,
-                        jitterMovingRadius = state.jitterMovingRadiusMeters,
-                        jitterMaxStepMeters = state.jitterMaxStepMeters,
-                        realismBearingHoldIdle = state.realismBearingHoldIdle,
-                        realismAltitudeEnabled = state.realismAltitudeEnabled,
-                        realismWarmupEnabled = state.realismWarmupEnabled,
-                        realismSatelliteExtrasEnabled = state.realismSatelliteExtrasEnabled,
-                        realismSuspendedMockingEnabled = state.realismSuspendedMockingEnabled,
-                        jitterSpeedIdleVariationPct = state.jitterSpeedIdleVariationPct,
-                        jitterSpeedMovingVariationPct = state.jitterSpeedMovingVariationPct,
-                        jitterSpeedIdleWobbleProbabilityPct = state.jitterSpeedIdleWobbleProbabilityPct,
-                        hotLocationsEnabled = state.hotLocationsEnabled,
-                        selectedHotLocationIds = state.selectedHotLocationIds,
-                        hotRoutesEnabled = state.hotRoutesEnabled,
-                        selectedHotRouteIds = state.selectedHotRouteIds,
-                        floatingMapQuickWalk = state.floatingMapQuickWalk,
-                        hideTeleportFeatures = state.hideTeleportFeatures,
-                        hideWidgetOverlay = state.hideWidgetOverlay,
-                        hideForegroundNotification = state.hideForegroundNotification,
-                        showRouteJumpButtons = state.showRouteJumpButtons,
-                        lastKnownPositionEnabled = state.lastKnownPositionEnabled,
-                        bypassMockLocationCheck = state.bypassMockLocationCheck,
-                        realismRealElevationEnabled = state.realismRealElevationEnabled,
-                        altitudeJitterRadiusMeters = state.altitudeJitterRadiusMeters,
-                        plantingRadiusMeters = state.plantingRadiusMeters,
-                        altitudeOverrideButtonEnabled = state.altitudeOverrideButtonEnabled,
-                        debugStatsEnabled = state.debugStatsEnabled,
-                        roamingDefaults =
-                            d.roamingDefaults
-                                ?: settingsRepository.getRoamingDefaults().first(),
-                    ),
-                )
-                if (d.hotLocationsEnabled != null || d.selectedHotLocationIds != null) {
-                    if (state.hotLocationsEnabled) {
-                        favoriteRepository.upsertHotLocations(hotLocationsRepository.locations.value, state.selectedHotLocationIds)
-                    } else {
-                        favoriteRepository.removeHotLocations()
-                    }
-                    clearHomeIfMissing()
-                }
-                if (d.hotRoutesEnabled != null || d.selectedHotRouteIds != null) {
-                    if (state.hotRoutesEnabled) {
-                        routeRepository.upsertHotRoutes(hotRoutesRepository.routes.value, state.selectedHotRouteIds)
-                    } else {
-                        routeRepository.removeHotRoutes()
-                    }
-                }
-                mutableDraft.update { if (it == d) DraftState() else it }
-            } catch (e: Exception) {
-                Log.e(TAG, "Save failed", e)
-                emitFeedback(R.string.settings_viewmodel_failed_to_save_settings, isError = true)
-            }
-        }
-
         /** Clears all favorites, routes, and settings. Preserves onboarding-completion state. */
         fun resetAllData() {
             viewModelScope.launch {
@@ -727,7 +680,6 @@ class SettingsViewModel
                         routeRepository.deleteAllRoutes()
                     }
                     settingsRepository.resetAllData()
-                    mutableDraft.value = DraftState()
                     emitFeedback(R.string.settings_viewmodel_all_data_reset)
                 } catch (e: Exception) {
                     Log.e(TAG, "Reset all data failed", e)

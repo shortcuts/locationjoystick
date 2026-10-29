@@ -161,6 +161,14 @@ class AppPreferencesDataSourceTest {
         }
 
     @Test
+    fun `floatingMapQuickWalk defaults to false and round-trips true`() =
+        runTest {
+            assertFalse(dataSource.getFloatingMapQuickWalk().first())
+            dataSource.setFloatingMapQuickWalk(true)
+            assertTrue(dataSource.getFloatingMapQuickWalk().first())
+        }
+
+    @Test
     fun `keepWidgetOnIdle defaults to false and round-trips true`() =
         runTest {
             assertFalse(dataSource.getKeepWidgetOnIdle().first())
