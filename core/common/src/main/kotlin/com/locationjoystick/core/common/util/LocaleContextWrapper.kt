@@ -15,6 +15,8 @@ import java.util.Locale
  * back to the base context, i.e. system language).
  */
 object LocaleContextWrapper {
+    // Lint checks this module alone; the app module sets bundle.language.enableSplit = false.
+    @Suppress("AppBundleLocaleChanges")
     fun wrap(base: Context): Context {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) return base
 
