@@ -101,7 +101,7 @@ class LeaderSyncServer
             val port = startServer(groupId)
             val cleanupEx = Executors.newSingleThreadScheduledExecutor()
             cleanupExecutor = cleanupEx
-            cleanupEx.scheduleAtFixedRate(
+            cleanupEx.scheduleWithFixedDelay(
                 ::pruneStaleFollowers,
                 AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS,
                 AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS,
