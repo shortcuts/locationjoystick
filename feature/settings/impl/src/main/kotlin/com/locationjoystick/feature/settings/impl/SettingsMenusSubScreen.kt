@@ -625,6 +625,8 @@ private fun SpeedCycleSection(
     }
 }
 
+// dragModifier targets the drag icon, not the root, so it cannot be named modifier.
+@Suppress("ModifierParameter")
 @Composable
 private fun FeatureRow(
     feature: AppFeature,
@@ -632,11 +634,12 @@ private fun FeatureRow(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
     dragModifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     val meta = featureMeta(feature)
     val rowEnabled = !meta.isRootGated || isRooted
     Row(
-        modifier = Modifier.fillMaxWidth().height(FEATURE_ROW_HEIGHT),
+        modifier = modifier.fillMaxWidth().height(FEATURE_ROW_HEIGHT),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(

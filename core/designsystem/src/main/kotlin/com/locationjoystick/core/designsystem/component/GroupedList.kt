@@ -203,11 +203,12 @@ private fun GroupHeader(
     onToggle: () -> Unit,
     onRename: (() -> Unit)?,
     onDelete: (() -> Unit)?,
+    modifier: Modifier = Modifier,
     dragHandle: Modifier? = null,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(vertical = 4.dp),
+        modifier = modifier.fillMaxWidth().clickable(onClick = onToggle).padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (dragHandle != null) {
