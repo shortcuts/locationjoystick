@@ -3,6 +3,7 @@ package com.locationjoystick.feature.settings.impl
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.util.Log
+import androidx.core.graphics.createBitmap
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
@@ -31,7 +32,7 @@ object QrEncoder {
     private fun createBitmapFromBitMatrix(bitMatrix: BitMatrix): Bitmap {
         val width = bitMatrix.width
         val height = bitMatrix.height
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        val bitmap = createBitmap(width, height, Bitmap.Config.RGB_565)
         val pixels = IntArray(width * height)
 
         for (y in 0 until height) {

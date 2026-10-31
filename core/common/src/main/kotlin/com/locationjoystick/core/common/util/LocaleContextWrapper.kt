@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import android.os.LocaleList
+import androidx.core.content.edit
 import com.locationjoystick.core.common.constants.AppConstants.LocaleConstants
 import java.util.Locale
 
@@ -41,9 +42,9 @@ object LocaleContextWrapper {
             val localeManager = context.getSystemService(LocaleManager::class.java)
             localeManager.applicationLocales = if (tag == null) LocaleList.getEmptyLocaleList() else LocaleList.forLanguageTags(tag)
         } else {
-            val editor = context.getSharedPreferences(LocaleConstants.PREFS_NAME, Context.MODE_PRIVATE).edit()
-            if (tag == null) editor.remove(LocaleConstants.KEY_LANGUAGE_TAG) else editor.putString(LocaleConstants.KEY_LANGUAGE_TAG, tag)
-            editor.apply()
+            context.getSharedPreferences(LocaleConstants.PREFS_NAME, Context.MODE_PRIVATE).edit {
+                if (tag == null) remove(LocaleConstants.KEY_LANGUAGE_TAG) else putString(LocaleConstants.KEY_LANGUAGE_TAG, tag)
+            }
         }
     }
 

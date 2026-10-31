@@ -67,6 +67,7 @@ dependencies {
     implementation(project(":feature:group:api"))
     implementation(project(":feature:group:impl"))
 
+    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

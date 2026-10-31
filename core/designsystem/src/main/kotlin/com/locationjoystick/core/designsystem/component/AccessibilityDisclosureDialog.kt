@@ -1,7 +1,6 @@
 package com.locationjoystick.core.designsystem.component
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.net.toUri
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjTheme
@@ -101,7 +101,7 @@ fun AccessibilityDisclosureDialog(
                     TextButton(
                         onClick = {
                             context.startActivity(
-                                Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.AppInfo.TAP_TO_WALK_GUIDE_URL)),
+                                Intent(Intent.ACTION_VIEW, AppConstants.AppInfo.TAP_TO_WALK_GUIDE_URL.toUri()),
                             )
                         },
                         contentPadding = PaddingValues(0.dp),

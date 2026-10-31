@@ -1,7 +1,6 @@
 package com.locationjoystick.feature.settings.impl
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -113,7 +113,7 @@ internal fun CaptureSection(
             },
             onOpenMapsLinks = { context.launchCaptureMapsLinks() },
             onOpenSetupGuide = {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.AppInfo.CAPTURE_GUIDE_URL)))
+                context.startActivity(Intent(Intent.ACTION_VIEW, AppConstants.AppInfo.CAPTURE_GUIDE_URL.toUri()))
             },
         )
 

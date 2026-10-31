@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:location"))
 
+    implementation(libs.androidx.core.ktx)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.activity.compose)

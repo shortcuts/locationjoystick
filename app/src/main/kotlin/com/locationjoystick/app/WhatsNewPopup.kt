@@ -1,7 +1,6 @@
 package com.locationjoystick.app
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -31,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.locationjoystick.app.R
 import com.locationjoystick.core.common.constants.AppConstants
@@ -73,7 +73,7 @@ fun WhatsNewPopup(modifier: Modifier = Modifier) {
             onDismiss = { showModal = false },
             onViewFullChangelog = {
                 showModal = false
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.AppInfo.CHANGELOG_URL)))
+                context.startActivity(Intent(Intent.ACTION_VIEW, AppConstants.AppInfo.CHANGELOG_URL.toUri()))
             },
         )
     }

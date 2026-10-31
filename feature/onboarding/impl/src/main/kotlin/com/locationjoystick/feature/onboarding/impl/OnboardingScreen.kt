@@ -3,7 +3,6 @@ package com.locationjoystick.feature.onboarding.impl
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
-import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -36,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -173,7 +173,7 @@ internal fun OnboardingScreen(
                     } ?: false
                 if (shouldOpenAppSettings(fineGranted, showRationale)) {
                     context.startSettingsActivity(
-                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")),
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${context.packageName}".toUri()),
                     )
                 }
             },
@@ -239,7 +239,7 @@ internal fun OnboardingScreen(
                 LjTextButton(
                     onClick = {
                         context.startActivity(
-                            Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.AppInfo.DOCS_URL)),
+                            Intent(Intent.ACTION_VIEW, AppConstants.AppInfo.DOCS_URL.toUri()),
                         )
                     },
                 ) {
@@ -256,7 +256,7 @@ internal fun OnboardingScreen(
                 LjTextButton(
                     onClick = {
                         context.startActivity(
-                            Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.AppInfo.TROUBLESHOOTING_URL)),
+                            Intent(Intent.ACTION_VIEW, AppConstants.AppInfo.TROUBLESHOOTING_URL.toUri()),
                         )
                     },
                 ) {
@@ -319,7 +319,7 @@ internal fun OnboardingScreen(
                     context.startSettingsActivity(
                         Intent(
                             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            Uri.parse("package:${context.packageName}"),
+                            "package:${context.packageName}".toUri(),
                         ),
                     )
                 },

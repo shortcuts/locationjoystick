@@ -1,6 +1,7 @@
 package com.locationjoystick.app
 
 import android.content.Intent
+import androidx.core.net.toUri
 import com.locationjoystick.core.common.util.isGoogleMapsHost
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.LatLng
@@ -49,7 +50,7 @@ private val URL_REGEX = Regex("""https?://\S+""")
  */
 internal fun extractUrlFromText(text: String): String? = URL_REGEX.find(text)?.value
 
-internal fun parseUrlCoords(url: String): Pair<Double, Double>? = parseCoordsFromUri(android.net.Uri.parse(url))
+internal fun parseUrlCoords(url: String): Pair<Double, Double>? = parseCoordsFromUri(url.toUri())
 
 private fun isGoogleMapsUri(uri: android.net.Uri): Boolean = uri.host?.let { isGoogleMapsHost(it, uri.path.orEmpty()) } == true
 

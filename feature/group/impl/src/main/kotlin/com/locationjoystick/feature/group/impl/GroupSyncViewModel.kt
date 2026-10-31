@@ -3,8 +3,8 @@ package com.locationjoystick.feature.group.impl
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.zxing.BarcodeFormat
@@ -414,7 +414,7 @@ class GroupSyncViewModel
 
         private fun parseGroupUrl(url: String): GroupInvite? {
             return try {
-                val uri = Uri.parse(url)
+                val uri = url.toUri()
                 if (uri.scheme != "locationjoystick" || uri.host != "group") return null
                 val host = uri.getQueryParameter("host") ?: return null
                 val port = uri.getQueryParameter("port")?.toIntOrNull() ?: return null

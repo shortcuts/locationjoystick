@@ -1,6 +1,7 @@
 package com.locationjoystick.core.routing
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.locationjoystick.core.common.constants.AppConstants
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
@@ -43,7 +44,7 @@ internal class BackendCooldowns(
             synchronized(until) {
                 maxOf(until[key] ?: 0L, expiry).also { until[key] = it }
             }
-        prefs?.edit()?.putLong(key, kept)?.apply()
+        prefs?.edit { putLong(key, kept) }
     }
 
     // ponytail: unparseable base URL keys by itself, so a bad URL only cools that exact string.

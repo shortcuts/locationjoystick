@@ -6,11 +6,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
+import androidx.core.net.toUri
 import com.locationjoystick.core.common.R
 
 private const val TAG = "CaptureBrowserIntents"
@@ -26,7 +26,7 @@ data class CaptureBrowserChoice(
  */
 fun captureBrowserChoices(context: Context): List<CaptureBrowserChoice> {
     val webIntent =
-        Intent(Intent.ACTION_VIEW, Uri.parse("https://www.example.com/")).apply {
+        Intent(Intent.ACTION_VIEW, "https://www.example.com/".toUri()).apply {
             addCategory(Intent.CATEGORY_DEFAULT)
             addCategory(Intent.CATEGORY_BROWSABLE)
         }
@@ -58,11 +58,11 @@ fun captureAppOpenByDefaultIntent(packageName: String): Intent {
     val intent =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Intent(Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS).apply {
-                data = Uri.parse("package:$packageName")
+                data = "package:$packageName".toUri()
             }
         } else {
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.parse("package:$packageName")
+                data = "package:$packageName".toUri()
             }
         }
     return intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -75,7 +75,7 @@ fun captureSetDefaultBrowserIntent(): Intent = captureManageDefaultAppsIntent()
 
 fun currentBrowserRoleHolder(context: Context): String? {
     val intent =
-        Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com")).addCategory(Intent.CATEGORY_BROWSABLE)
+        Intent(Intent.ACTION_VIEW, "https://example.com".toUri()).addCategory(Intent.CATEGORY_BROWSABLE)
     val resolved = context.packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
     return resolved?.activityInfo?.packageName
 }

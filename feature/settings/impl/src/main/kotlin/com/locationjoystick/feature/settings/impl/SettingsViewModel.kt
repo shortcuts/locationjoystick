@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.accessibility.AccessibilityManager
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
@@ -817,7 +818,7 @@ class SettingsViewModel
         fun stopQrExport() = exportShare.stop()
 
         fun onQrScanned(url: String) {
-            val uri = Uri.parse(url)
+            val uri = url.toUri()
             val host = uri.getQueryParameter("host")
             val port = uri.getQueryParameter("port")?.toIntOrNull()
             val token = uri.getQueryParameter("token")

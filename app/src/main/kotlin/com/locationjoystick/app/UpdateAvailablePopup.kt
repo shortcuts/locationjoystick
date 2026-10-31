@@ -1,7 +1,6 @@
 package com.locationjoystick.app
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -13,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.locationjoystick.app.R
 import com.locationjoystick.core.common.constants.AppConstants
@@ -39,7 +39,7 @@ fun UpdateAvailablePopup(modifier: Modifier = Modifier) {
             onClick = {
                 viewModel.dismiss(uiState.latestVersion)
                 val url = AppConstants.UpdateCheckConstants.releaseUrl(uiState.latestVersion)
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
             },
             onDismiss = { viewModel.dismiss(uiState.latestVersion) },
         )
