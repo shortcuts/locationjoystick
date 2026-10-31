@@ -15,7 +15,7 @@ class LjApplicationConventionPlugin : Plugin<Project> {
             }
 
             extensions.configure<ApplicationExtension> {
-                compileSdk = 36
+                compileSdk = 37
 
                 val releaseKeystorePath = System.getenv("KEYSTORE_PATH")
 

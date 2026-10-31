@@ -1,70 +1,70 @@
 [versions]
 # Kotlin & Android
-kotlin = "2.2.21"
-agp = "9.4.0"
-ksp = "2.3.6"
+kotlin = "2.4.21"
+agp = "9.5.0"
+ksp = "2.3.13"
 
 # AndroidX Core
-core-ktx = "1.12.0"
-lifecycle = "2.7.0"
-activity-compose = "1.8.2"
-appcompat = "1.6.1"
+core-ktx = "1.19.1"
+lifecycle = "2.11.0"
+activity-compose = "1.13.0"
+appcompat = "1.8.0"
 
 # Compose
-compose-bom = "2026.05.01"
-compose-compiler = "1.5.15"
+compose-bom = "2026.09.00"
 
 # DI
 hilt = "2.60.1"
-hilt-navigation-compose = "1.3.0"
+hilt-navigation-compose = "1.4.0"
 
 # Room
-room = "2.8.4"
+room = "2.8.5"
 
 # DataStore
-datastore = "1.0.0"
+datastore = "1.3.0"
 
 # Navigation
-navigation-compose = "2.7.7"
+navigation-compose = "2.10.2"
 
 # Coroutines
-coroutines = "1.7.3"
+coroutines = "1.11.0"
 
 # Serialization
-kotlinx-serialization-json = "1.6.3"
+kotlinx-serialization-json = "1.12.0"
 
 # Map
-maplibre = "13.2.0"
+maplibre = "13.7.1"
 
 # Drag-and-drop reordering
-reorderable = "2.4.3"
+reorderable = "3.1.0"
 
 # Joystick
 
 # Networking (for routing)
+# MapLibre 13.7.1 is built against okhttp 4.12.0; okhttp 5 is unverified with the tile client on a device.
 okhttp = "4.12.0"
 
 # QR Code & Camera
-zxing = "3.5.3"
-camerax = "1.6.1"
+zxing = "3.5.4"
+camerax = "1.6.2"
 
 # Coverage
-kover = "0.9.9"
+kover = "0.9.11"
 
 # Lint / format
 ktlint-gradle = "14.2.0"
-lint-tools = "32.4.0"
+lint-tools = "32.5.0"
 
 # Testing
 junit = "4.13.2"
-junit5 = "5.10.1"
-androidx-test-core = "1.5.0"
-androidx-test-ext = "1.1.5"
-espresso = "3.5.1"
-mockk = "1.13.9"
-turbine = "1.0.0"
-robolectric = "4.11.1"
-orgjson = "20240303"
+junit5 = "6.1.3"
+androidx-test-core = "1.7.0"
+androidx-test-ext = "1.3.0"
+espresso = "3.7.0"
+mockk = "1.14.11"
+turbine = "1.2.1"
+robolectric = "4.17"
+orgjson = "20260814"
 
 [libraries]
 # Kotlin

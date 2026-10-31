@@ -34,7 +34,7 @@ class NsdCodeManagerTest {
     @Test
     fun `startAdvertising twice unregisters the first listener`() {
         val listeners = mutableListOf<NsdManager.RegistrationListener>()
-        every { nsdManager.registerService(any(), any(), capture(listeners)) } returns Unit
+        every { nsdManager.registerService(any<NsdServiceInfo>(), any<Int>(), capture(listeners)) } returns Unit
 
         manager.startAdvertising("ABC123", 1000)
         manager.startAdvertising("ABC123", 2000)
@@ -62,7 +62,7 @@ class NsdCodeManagerTest {
     @Test
     fun `stopping the export advert keeps the leader advert registered`() {
         val listeners = mutableListOf<NsdManager.RegistrationListener>()
-        every { nsdManager.registerService(any(), any(), capture(listeners)) } returns Unit
+        every { nsdManager.registerService(any<NsdServiceInfo>(), any<Int>(), capture(listeners)) } returns Unit
 
         manager.startAdvertising("LEADER", 1000)
         manager.startAdvertising("EXPORT", 2000, export = true)
@@ -84,9 +84,9 @@ class NsdCodeManagerTest {
     fun `only the export advert carries the role attribute`() {
         mockkConstructor(NsdServiceInfo::class)
         try {
-            every { anyConstructed<NsdServiceInfo>().setAttribute(any(), any()) } returns Unit
+            every { anyConstructed<NsdServiceInfo>().setAttribute(any<String>(), any<String>()) } returns Unit
             manager.startAdvertising("LEADER", 1000)
-            verify(exactly = 0) { anyConstructed<NsdServiceInfo>().setAttribute(any(), any()) }
+            verify(exactly = 0) { anyConstructed<NsdServiceInfo>().setAttribute(any<String>(), any<String>()) }
 
             manager.startAdvertising("EXPORT", 2000, export = true)
             verify(exactly = 1) { anyConstructed<NsdServiceInfo>().setAttribute("role", "export") }
