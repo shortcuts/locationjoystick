@@ -1,5 +1,6 @@
 package com.locationjoystick.core.common.util
 
+import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -43,6 +44,8 @@ fun captureBrowserChoices(context: Context): List<CaptureBrowserChoice> {
 
 fun Context.captureBrowserPackages(): List<String> = captureBrowserChoices(this).map { it.packageName }
 
+// The app manifest <queries> block declares these intents; library lint cannot see it.
+@SuppressLint("QueryPermissionsNeeded")
 @Suppress("DEPRECATION")
 private fun PackageManager.queryAllActivities(intent: Intent): List<ResolveInfo> =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

@@ -63,7 +63,7 @@ internal class TestProviderController(
 
     // Pre-31 devices lack ProviderProperties.Builder + the ProviderProperties addTestProvider
     // overload — same property values as the API 31+ Builder path above.
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION", "InlinedApi")
     private fun addLegacyTestProvider() {
         locationManager.addTestProvider(
             LocationManager.GPS_PROVIDER,

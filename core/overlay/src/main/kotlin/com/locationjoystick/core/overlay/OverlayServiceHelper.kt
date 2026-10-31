@@ -1,5 +1,6 @@
 package com.locationjoystick.core.overlay
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -26,7 +27,9 @@ class OverlayServiceHelper(
     /**
      * Registers a [BroadcastReceiver] that delegates overlay hide/show broadcasts to [overlayService].
      * Must be called from [OverlayService.onCreate].
+     * Below API 33 the not-exported flag is ignored; the receiver only handles overlay hide/show.
      */
+    @SuppressLint("InlinedApi")
     fun registerOverlayVisibilityReceiver(
         context: Context,
         overlayService: OverlayService,

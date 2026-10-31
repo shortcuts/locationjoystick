@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.settings.impl
 
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -629,6 +630,8 @@ class SettingsViewModel
                 .flowOn(Dispatchers.Default)
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+        // The app manifest <queries> block declares MAIN/LAUNCHER; library lint cannot see it.
+        @SuppressLint("QueryPermissionsNeeded")
         private fun queryLaunchableApps(): List<InstalledApp> {
             val pm = context.packageManager
             val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)

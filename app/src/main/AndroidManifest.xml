@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -34,6 +35,7 @@
     </queries>
 
     <application
+        tools:ignore="DataExtractionRules"
         android:name=".LjApplication"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -96,14 +98,13 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="content" android:host="*" android:pathPattern=".*\\.gpx" />
-                <data android:scheme="content" android:host="*" android:pathPattern=".*\\..*\\.gpx" />
-                <data android:scheme="content" android:host="*" android:pathPattern=".*\\..*\\..*\\.gpx" />
-                <data android:scheme="content" android:host="*" android:pathPattern=".*\\..*\\..*\\..*\\.gpx" />
-                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.gpx" />
-                <data android:scheme="file" android:host="*" android:pathPattern=".*\\..*\\.gpx" />
-                <data android:scheme="file" android:host="*" android:pathPattern=".*\\..*\\..*\\.gpx" />
-                <data android:scheme="file" android:host="*" android:pathPattern=".*\\..*\\..*\\..*\\.gpx" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:pathPattern=".*\\.gpx" />
+                <data android:pathPattern=".*\\..*\\.gpx" />
+                <data android:pathPattern=".*\\..*\\..*\\.gpx" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.gpx" />
             </intent-filter>
             <!-- Chat apps such as LINE often VIEW a GPX as application/octet-stream (or XML)
                  with no .gpx in the path. Do not register */* or a scheme-only content/file
@@ -135,21 +136,29 @@
             android:noHistory="true"
             android:taskAffinity=""
             android:theme="@style/Theme.Locationjoystick.Transparent">
-            <intent-filter>
+            <intent-filter tools:ignore="AppLinkWarning">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="http" />
                 <data android:scheme="https" />
             </intent-filter>
-            <intent-filter>
+            <intent-filter tools:ignore="AppLinkWarning">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="maps.google.com" />
-                <data android:scheme="http" android:host="maps.google.com" />
-                <data android:scheme="https" android:host="www.google.com" android:pathPrefix="/maps" />
-                <data android:scheme="http" android:host="www.google.com" android:pathPrefix="/maps" />
+                <data android:scheme="https" />
+                <data android:scheme="http" />
+                <data android:host="maps.google.com" />
+            </intent-filter>
+            <intent-filter tools:ignore="AppLinkWarning">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:scheme="http" />
+                <data android:host="www.google.com" />
+                <data android:pathPrefix="/maps" />
             </intent-filter>
         </activity>
 

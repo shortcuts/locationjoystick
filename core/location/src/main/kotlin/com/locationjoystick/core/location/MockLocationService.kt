@@ -1,5 +1,6 @@
 package com.locationjoystick.core.location
 
+import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -485,11 +486,14 @@ class MockLocationService : Service() {
         }
         // Android enforces a 5-second window from onStartCommand, so this must come before
         // any other work.
+        // ServiceCompat ignores the type below API 29, so the inlined constant is safe.
+        @SuppressLint("InlinedApi")
+        val foregroundType = ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
         ServiceCompat.startForeground(
             this,
             NOTIFICATION_ID,
             overlayNotificationReactor.buildCurrent(),
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
+            foregroundType,
         )
 
         when (intent?.action) {
