@@ -78,11 +78,23 @@
     <string name="capture_passthrough_label">"Pass-through: %1$s"</string>
     <string name="capture_setup_form_pass_through_browser">"Pass-through browser"</string>
     <string name="capture_setup_form_cancel">"Cancel"</string>
-    <string name="capture_previous_points">"Previously captured locations: %1$d."</string>
-    <string name="capture_point_count">"Captured locations: %1$d"</string>
-    <string name="capture_copied_count">"Copied locations: %1$d"</string>
+    <plurals name="capture_previous_points">
+        <item quantity="one">"Previously captured location: %1$d."</item>
+        <item quantity="other">"Previously captured locations: %1$d."</item>
+    </plurals>
+    <plurals name="capture_point_count">
+        <item quantity="one">"Captured location: %1$d"</item>
+        <item quantity="other">"Captured locations: %1$d"</item>
+    </plurals>
+    <plurals name="capture_copied_count">
+        <item quantity="one">"Copied location: %1$d"</item>
+        <item quantity="other">"Copied locations: %1$d"</item>
+    </plurals>
     <string name="paste_no_coordinates">"No valid coordinates"</string>
-    <string name="paste_route_count">"%1$d valid points · Route actions"</string>
+    <plurals name="paste_route_count">
+        <item quantity="one">"%1$d valid point · Route actions"</item>
+        <item quantity="other">"%1$d valid points · Route actions"</item>
+    </plurals>
     <string name="paste_first_favorite">"Save first as favorite"</string>
     <string name="paste_save_favorite">"Save favorite"</string>
     <string name="roaming_spiral_description">Walks a spiral around where you are now, opening out then tightening in. One loop is one full expand and contract. This is separate from circling around stops on a saved route.</string>

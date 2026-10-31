@@ -220,7 +220,11 @@ class GroupSyncViewModel
             val normalized = code.uppercase().trim()
             if (normalized.length != AppConstants.SyncConstants.GROUP_CODE_LENGTH) {
                 _errorMessage.value =
-                    context.getString(R.string.group_sync_code_must_be_characters, AppConstants.SyncConstants.GROUP_CODE_LENGTH)
+                    context.resources.getQuantityString(
+                        R.plurals.group_sync_code_must_be_characters,
+                        AppConstants.SyncConstants.GROUP_CODE_LENGTH,
+                        AppConstants.SyncConstants.GROUP_CODE_LENGTH,
+                    )
                 return
             }
             viewModelScope.launch {

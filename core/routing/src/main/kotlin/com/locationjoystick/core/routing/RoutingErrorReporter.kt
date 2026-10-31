@@ -39,7 +39,12 @@ class RoutingErrorReporter
         ) {
             if (fallbackCount > 0) {
                 report(
-                    context.getString(R.string.routing_road_following_partial_fallback, fallbackCount, totalLegs),
+                    context.resources.getQuantityString(
+                        R.plurals.routing_road_following_partial_fallback,
+                        fallbackCount,
+                        fallbackCount,
+                        totalLegs,
+                    ),
                 )
             }
         }

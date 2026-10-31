@@ -15,7 +15,15 @@ data class MigrationResult(
     val skippedOversizedRouteCount: Int = 0,
 ) {
     fun toImportMessage(context: Context): String {
-        val base = context.getString(R.string.settings_migration_imported_gps_joystick, favorites.size, routes.size)
+        val favoritesText =
+            context.resources.getQuantityString(
+                R.plurals.settings_migration_imported_favorites,
+                favorites.size,
+                favorites.size,
+            )
+        val routesText =
+            context.resources.getQuantityString(R.plurals.settings_migration_imported_routes, routes.size, routes.size)
+        val base = context.getString(R.string.settings_migration_imported_gps_joystick, favoritesText, routesText)
         if (skippedOversizedRouteCount <= 0) return base
         val skipped =
             context.resources.getQuantityString(

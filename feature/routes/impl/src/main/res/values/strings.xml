@@ -48,10 +48,15 @@
     <string name="routes_screen_danger">"Danger"</string>
     <string name="routes_screen_start_route">"Start route"</string>
     <string name="route_creator_route_imported">"Route imported: %1$s"</string>
-    <string name="route_creator_routes_imported">"%1$d routes imported"</string>
+    <plurals name="route_creator_routes_imported">
+        <item quantity="one">"%1$d route imported"</item>
+        <item quantity="other">"%1$d routes imported"</item>
+    </plurals>
     <string name="route_creator_import_failed">"Import failed: %1$s"</string>
-    <string name="route_creator_skipped_oversized_one">"Skipped %1$d route that was too large to import"</string>
-    <string name="route_creator_skipped_oversized_other">"Skipped %1$d routes that were too large to import"</string>
+    <plurals name="route_creator_skipped_oversized">
+        <item quantity="one">"Skipped %1$d route that was too large to import"</item>
+        <item quantity="other">"Skipped %1$d routes that were too large to import"</item>
+    </plurals>
     <string name="route_creator_share_gpx">"Share GPX"</string>
     <string name="route_creator_export_failed">"Export failed: %1$s"</string>
     <string name="routes_screen_pause">"Pause"</string>
@@ -65,7 +70,10 @@
     <string name="route_paste_need_two_points">"Need at least 2 points for this mode."</string>
     <string name="route_paste_could_not_build_route">"Could not build a route from those points."</string>
     <string name="route_creator_import_no_routes">"No routes found in GPX file"</string>
-    <string name="route_creator_import_all_oversized">"Every route in this file has more than %1$d points and was skipped"</string>
+    <plurals name="route_creator_import_all_oversized">
+        <item quantity="one">"Every route in this file has more than %1$d point and was skipped"</item>
+        <item quantity="other">"Every route in this file has more than %1$d points and was skipped"</item>
+    </plurals>
     <string name="route_creator_import_too_large">"GPX file is too large (%1$d MB). Maximum allowed is %2$d MB."</string>
     <string name="route_creator_import_unreadable">"Cannot read GPX file"</string>
 </resources>

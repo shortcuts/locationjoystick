@@ -1,6 +1,7 @@
 package com.locationjoystick.core.routing
 
 import android.content.Context
+import android.content.res.Resources
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,8 +15,10 @@ import org.junit.Test
 class RoutingErrorReporterTest {
     private fun fakeContext(): Context {
         val context: Context = mockk()
+        val resources: Resources = mockk()
+        every { context.resources } returns resources
         every {
-            context.getString(R.string.routing_road_following_partial_fallback, 2, 5)
+            resources.getQuantityString(R.plurals.routing_road_following_partial_fallback, 2, 2, 5)
         } returns "Road-following partially unavailable — 2 of 5 legs used straight-line paths"
         return context
     }

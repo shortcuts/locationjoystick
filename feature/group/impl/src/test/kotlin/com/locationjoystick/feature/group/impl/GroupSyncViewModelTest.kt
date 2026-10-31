@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.group.impl
 
 import android.content.Context
+import android.content.res.Resources
 import android.net.Uri
 import app.cash.turbine.test
 import com.locationjoystick.core.common.util.DiscoveredLeader
@@ -45,6 +46,7 @@ class GroupSyncViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
 
     private lateinit var context: Context
+    private val resources: Resources = mockk()
     private lateinit var groupRepository: GroupRepository
     private lateinit var groupNsdManager: NsdCodeManager
     private lateinit var leaderSyncServer: LeaderSyncServer
@@ -72,6 +74,7 @@ class GroupSyncViewModelTest {
         every { Uri.parse(any()) } answers { fakeUri(firstArg()) }
 
         context = mockk(relaxed = true)
+        every { context.resources } returns resources
         every {
             context.getString(R.string.group_sync_leader_position_not_yet_known)
         } returns "Leader position not yet known — try again in a moment"
@@ -80,8 +83,8 @@ class GroupSyncViewModelTest {
             context.getString(R.string.group_sync_disconnected_from_group)
         } returns "Disconnected from group — leader is no longer reachable"
         every {
-            context.getString(R.string.group_sync_code_must_be_characters, any())
-        } answers { "Code must be ${(it.invocation.args[1] as Array<*>)[0]} characters" }
+            resources.getQuantityString(R.plurals.group_sync_code_must_be_characters, any(), any())
+        } answers { "Code must be ${(it.invocation.args[2] as Array<*>)[0]} characters" }
         every {
             context.getString(R.string.group_sync_no_group_found_for_code, any())
         } answers { "No group found for code ${(it.invocation.args[1] as Array<*>)[0]}" }

@@ -30,7 +30,9 @@
     <string name="group_sync_leader_position_not_yet_known">"尚未获取组长位置 — 请稍后再试"</string>
     <string name="group_sync_no_lan_address">"请连接 Wi-Fi 或热点"</string>
     <string name="group_sync_disconnected_from_group">"已断开与群组的连接 — 无法再联系到组长"</string>
-    <string name="group_sync_code_must_be_characters">"代码必须为 %1$d 位字符"</string>
+    <plurals name="group_sync_code_must_be_characters">
+        <item quantity="other">"代码必须为 %1$d 位字符"</item>
+    </plurals>
     <string name="group_sync_no_group_found_for_code">"未找到代码为 %1$s 的群组"</string>
     <string name="group_sync_invalid_group_qr_code">"无效的群组二维码"</string>
     <string name="group_sync_unknown">"未知"</string>

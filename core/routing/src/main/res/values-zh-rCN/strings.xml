@@ -6,5 +6,7 @@
     <string name="osrm_failure_no_route_found">"未找到道路路线"</string>
     <string name="osrm_failure_network_unavailable">"无网络连接"</string>
     <string name="osrm_failure_unknown">"道路路线不可用"</string>
-    <string name="routing_road_following_partial_fallback">"沿道路行走部分不可用 — %2$d 段路段中有 %1$d 段改用直线路径"</string>
+    <plurals name="routing_road_following_partial_fallback">
+        <item quantity="other">"沿道路行走部分不可用 — %2$d 段路段中有 %1$d 段改用直线路径"</item>
+    </plurals>
 </resources>

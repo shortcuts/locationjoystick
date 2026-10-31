@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -107,7 +108,12 @@ fun CaptureCoordinatesForm(
     val context = LocalContext.current
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
-    val copiedMessage = stringResource(R.string.capture_copied_count, capturePoints.orderedPoints.size)
+    val copiedMessage =
+        pluralStringResource(
+            R.plurals.capture_copied_count,
+            capturePoints.orderedPoints.size,
+            capturePoints.orderedPoints.size,
+        )
     var showClearPrompt by remember { mutableStateOf(false) }
     var showClearListConfirm by remember { mutableStateOf(false) }
 
@@ -123,7 +129,7 @@ fun CaptureCoordinatesForm(
         LjAlertDialog(
             onDismissRequest = { showClearPrompt = false },
             title = { Text(stringResource(R.string.capture_coordinates_form_clear_captured_locations)) },
-            text = { Text(stringResource(R.string.capture_previous_points, capturePoints.points.size)) },
+            text = { Text(pluralStringResource(R.plurals.capture_previous_points, capturePoints.points.size, capturePoints.points.size)) },
             confirmButton = {
                 LjButton(
                     onClick = {
@@ -202,7 +208,7 @@ fun CaptureCoordinatesForm(
                             if (capturePoints.points.isEmpty()) {
                                 stringResource(R.string.capture_empty)
                             } else {
-                                stringResource(R.string.capture_point_count, capturePoints.points.size)
+                                pluralStringResource(R.plurals.capture_point_count, capturePoints.points.size, capturePoints.points.size)
                             },
                         style = MaterialTheme.typography.titleSmall,
                     )

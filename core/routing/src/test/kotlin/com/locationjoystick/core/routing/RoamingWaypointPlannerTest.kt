@@ -25,10 +25,12 @@ class RoamingWaypointPlannerTest {
     private val mockOsrmClient = mockk<OsrmClient>(relaxed = true)
     private val fakeContext: android.content.Context =
         mockk<android.content.Context>(relaxed = true).also { ctx ->
+            val resources = mockk<android.content.res.Resources>()
+            every { ctx.resources } returns resources
             every {
-                ctx.getString(R.string.routing_road_following_partial_fallback, any(), any())
+                resources.getQuantityString(R.plurals.routing_road_following_partial_fallback, any(), any(), any())
             } answers {
-                val args = it.invocation.args[1] as Array<*>
+                val args = it.invocation.args[2] as Array<*>
                 "Road-following partially unavailable — ${args[0]} of ${args[1]} legs used straight-line paths"
             }
         }

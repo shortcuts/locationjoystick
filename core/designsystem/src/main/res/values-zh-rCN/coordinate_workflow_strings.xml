@@ -77,11 +77,19 @@
     <string name="capture_passthrough_label">"其他链接打开方式：%1$s"</string>
     <string name="capture_setup_form_pass_through_browser">"用于打开其他链接的浏览器"</string>
     <string name="capture_setup_form_cancel">"取消"</string>
-    <string name="capture_previous_points">"此前采集的位置：%1$d 个。"</string>
-    <string name="capture_point_count">"已采集位置：%1$d 个"</string>
-    <string name="capture_copied_count">"已复制位置：%1$d 个"</string>
+    <plurals name="capture_previous_points">
+        <item quantity="other">"此前采集的位置：%1$d 个。"</item>
+    </plurals>
+    <plurals name="capture_point_count">
+        <item quantity="other">"已采集位置：%1$d 个"</item>
+    </plurals>
+    <plurals name="capture_copied_count">
+        <item quantity="other">"已复制位置：%1$d 个"</item>
+    </plurals>
     <string name="paste_no_coordinates">"没有有效坐标"</string>
-    <string name="paste_route_count">"%1$d 个有效点 · 路线操作"</string>
+    <plurals name="paste_route_count">
+        <item quantity="other">"%1$d 个有效点 · 路线操作"</item>
+    </plurals>
     <string name="paste_first_favorite">"先保存为收藏"</string>
     <string name="paste_save_favorite">"保存收藏"</string>
     <string name="roaming_spiral_description">从当前所在位置绕出螺旋形路径，先向外展开再收拢回来。一圈即为一次完整的展开与收拢，与沿保存路线站点绕圈不同。</string>

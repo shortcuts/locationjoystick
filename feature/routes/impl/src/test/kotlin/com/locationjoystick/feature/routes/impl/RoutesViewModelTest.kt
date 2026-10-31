@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.routes.impl
 
 import android.content.Context
+import android.content.res.Resources
 import app.cash.turbine.test
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.GpxImportError
@@ -41,7 +42,8 @@ class RoutesViewModelUiStateTest {
     private val settingsRepository: SettingsRepository = mockk(relaxed = true)
     private val teleportUseCase: TeleportUseCase = mockk(relaxed = true)
     private val startRouteReplayUseCase: StartRouteReplayUseCase = mockk(relaxed = true)
-    private val context: Context = mockk(relaxed = true)
+    private val resources: Resources = mockk()
+    private val context: Context = mockk<Context>(relaxed = true).also { every { it.resources } returns resources }
     private val routesFlow = MutableStateFlow<List<Route>>(emptyList())
     private val sortFlow = MutableStateFlow(SavedItemSortMode.NEWEST_FIRST)
     private lateinit var viewModel: RoutesViewModel
@@ -258,7 +260,7 @@ class RoutesViewModelUiStateTest {
         val outcome = GpxImportOutcome(listOf(route("id1", "Trail")), skippedOversized = 1)
         every { context.getString(R.string.route_creator_route_imported, "Trail") } returns "Route imported: Trail"
         every {
-            context.getString(R.string.route_creator_skipped_oversized_one, 1)
+            resources.getQuantityString(R.plurals.route_creator_skipped_oversized, 1, 1)
         } returns "Skipped 1 route that was too large to import"
 
         val message = buildGpxImportMessage(context, outcome)
@@ -270,9 +272,9 @@ class RoutesViewModelUiStateTest {
     fun buildGpxImportMessage_multipleSkippedRoutes_appendsPluralSkippedCount() {
         val routes = listOf(route("id1", "A"), route("id2", "B"))
         val outcome = GpxImportOutcome(routes, skippedOversized = 3)
-        every { context.getString(R.string.route_creator_routes_imported, 2) } returns "2 routes imported"
+        every { resources.getQuantityString(R.plurals.route_creator_routes_imported, 2, 2) } returns "2 routes imported"
         every {
-            context.getString(R.string.route_creator_skipped_oversized_other, 3)
+            resources.getQuantityString(R.plurals.route_creator_skipped_oversized, 3, 3)
         } returns "Skipped 3 routes that were too large to import"
 
         val message = buildGpxImportMessage(context, outcome)
@@ -283,7 +285,7 @@ class RoutesViewModelUiStateTest {
     @Test
     fun gpxImportErrorDetail_mapsEachErrorToItsString() {
         every { context.getString(R.string.route_creator_import_too_large, 12L, 10L) } returns "too large"
-        every { context.getString(R.string.route_creator_import_all_oversized, 5000) } returns "all oversized"
+        every { resources.getQuantityString(R.plurals.route_creator_import_all_oversized, 5000, 5000) } returns "all oversized"
         every { context.getString(R.string.route_creator_import_no_routes) } returns "no routes"
         every { context.getString(R.string.route_creator_import_unreadable) } returns "unreadable"
 

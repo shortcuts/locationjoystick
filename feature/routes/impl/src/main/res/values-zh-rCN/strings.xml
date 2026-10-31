@@ -48,10 +48,13 @@
     <string name="routes_screen_danger">"危险操作"</string>
     <string name="routes_screen_start_route">"开始路线"</string>
     <string name="route_creator_route_imported">"已导入路线：%1$s"</string>
-    <string name="route_creator_routes_imported">"已导入 %1$d 条路线"</string>
+    <plurals name="route_creator_routes_imported">
+        <item quantity="other">"已导入 %1$d 条路线"</item>
+    </plurals>
     <string name="route_creator_import_failed">"导入失败：%1$s"</string>
-    <string name="route_creator_skipped_oversized_one">"已跳过 %1$d 条因过大而无法导入的路线"</string>
-    <string name="route_creator_skipped_oversized_other">"已跳过 %1$d 条因过大而无法导入的路线"</string>
+    <plurals name="route_creator_skipped_oversized">
+        <item quantity="other">"已跳过 %1$d 条因过大而无法导入的路线"</item>
+    </plurals>
     <string name="route_creator_share_gpx">"分享 GPX"</string>
     <string name="route_creator_export_failed">"导出失败：%1$s"</string>
     <string name="routes_screen_pause">"暂停"</string>
@@ -65,7 +68,9 @@
     <string name="route_paste_need_two_points">"此模式至少需要 2 个点"</string>
     <string name="route_paste_could_not_build_route">"无法根据这些点构建路线"</string>
     <string name="route_creator_import_no_routes">"GPX 文件中未找到路线"</string>
-    <string name="route_creator_import_all_oversized">"此文件中的每条路线都超过 %1$d 个点，已被跳过"</string>
+    <plurals name="route_creator_import_all_oversized">
+        <item quantity="other">"此文件中的每条路线都超过 %1$d 个点，已被跳过"</item>
+    </plurals>
     <string name="route_creator_import_too_large">"GPX 文件过大（%1$d MB）。最大允许 %2$d MB。"</string>
     <string name="route_creator_import_unreadable">"无法读取 GPX 文件"</string>
 </resources>

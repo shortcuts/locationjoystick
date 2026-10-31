@@ -77,11 +77,19 @@
     <string name="capture_passthrough_label">"其他連結開啟方式：%1$s"</string>
     <string name="capture_setup_form_pass_through_browser">"用來開啟其他連結的瀏覽器"</string>
     <string name="capture_setup_form_cancel">"取消"</string>
-    <string name="capture_previous_points">"先前擷取的位置：%1$d 個。"</string>
-    <string name="capture_point_count">"已擷取位置：%1$d 個"</string>
-    <string name="capture_copied_count">"已複製位置：%1$d 個"</string>
+    <plurals name="capture_previous_points">
+        <item quantity="other">"先前擷取的位置：%1$d 個。"</item>
+    </plurals>
+    <plurals name="capture_point_count">
+        <item quantity="other">"已擷取位置：%1$d 個"</item>
+    </plurals>
+    <plurals name="capture_copied_count">
+        <item quantity="other">"已複製位置：%1$d 個"</item>
+    </plurals>
     <string name="paste_no_coordinates">"沒有有效座標"</string>
-    <string name="paste_route_count">"%1$d 個有效點 · 路線操作"</string>
+    <plurals name="paste_route_count">
+        <item quantity="other">"%1$d 個有效點 · 路線操作"</item>
+    </plurals>
     <string name="paste_first_favorite">"將第一個點儲存為收藏"</string>
     <string name="paste_save_favorite">"儲存收藏"</string>
     <string name="roaming_spiral_description">從目前所在位置繞出螺旋形路徑，先向外展開再收攏回來。一圈即為一次完整的展開與收攏，與沿已儲存路線的站點繞圈不同。</string>

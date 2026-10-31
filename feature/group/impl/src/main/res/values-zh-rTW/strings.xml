@@ -30,7 +30,9 @@
     <string name="group_sync_leader_position_not_yet_known">"尚未取得隊長位置 — 請稍後再試"</string>
     <string name="group_sync_no_lan_address">"請連線至 Wi-Fi 或熱點"</string>
     <string name="group_sync_disconnected_from_group">"已中斷與群組的連線 — 無法再聯繫到隊長"</string>
-    <string name="group_sync_code_must_be_characters">"代碼必須為 %1$d 個字元"</string>
+    <plurals name="group_sync_code_must_be_characters">
+        <item quantity="other">"代碼必須為 %1$d 個字元"</item>
+    </plurals>
     <string name="group_sync_no_group_found_for_code">"未找到代碼為 %1$s 的群組"</string>
     <string name="group_sync_invalid_group_qr_code">"無效的群組 QR 碼"</string>
     <string name="group_sync_unknown">"未知"</string>

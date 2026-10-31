@@ -322,7 +322,12 @@ internal fun gpxImportErrorDetail(
 ): String =
     when (e) {
         is GpxImportError.TooLarge -> context.getString(R.string.route_creator_import_too_large, e.sizeMb, e.maxMb)
-        is GpxImportError.AllOversized -> context.getString(R.string.route_creator_import_all_oversized, e.maxPoints)
+        is GpxImportError.AllOversized ->
+            context.resources.getQuantityString(
+                R.plurals.route_creator_import_all_oversized,
+                e.maxPoints,
+                e.maxPoints,
+            )
         GpxImportError.NoRoutes -> context.getString(R.string.route_creator_import_no_routes)
         GpxImportError.Unreadable -> context.getString(R.string.route_creator_import_unreadable)
         else -> e.message.orEmpty()
@@ -336,14 +341,18 @@ internal fun buildGpxImportMessage(
         if (outcome.routes.size == 1) {
             context.getString(R.string.route_creator_route_imported, outcome.routes.first().name)
         } else {
-            context.getString(R.string.route_creator_routes_imported, outcome.routes.size)
+            context.resources.getQuantityString(
+                R.plurals.route_creator_routes_imported,
+                outcome.routes.size,
+                outcome.routes.size,
+            )
         }
     if (outcome.skippedOversized <= 0) return base
-    val skippedRes =
-        if (outcome.skippedOversized == 1) {
-            R.string.route_creator_skipped_oversized_one
-        } else {
-            R.string.route_creator_skipped_oversized_other
-        }
-    return "$base. ${context.getString(skippedRes, outcome.skippedOversized)}"
+    val skipped =
+        context.resources.getQuantityString(
+            R.plurals.route_creator_skipped_oversized,
+            outcome.skippedOversized,
+            outcome.skippedOversized,
+        )
+    return "$base. $skipped"
 }

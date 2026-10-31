@@ -11,14 +11,31 @@
     <string name="settings_viewmodel_failed_to_import">"Failed to import"</string>
     <string name="settings_viewmodel_failed_to_prepare_qr_export">"Failed to prepare QR export. Make sure Wi-Fi is connected."</string>
     <string name="settings_viewmodel_invalid_qr_code">"Invalid QR code. It is not a Location Joystick export."</string>
-    <string name="settings_viewmodel_code_must_be_n_characters">"Code must be %1$d characters"</string>
+    <plurals name="settings_viewmodel_code_must_be_n_characters">
+        <item quantity="one">"Code must be %1$d character"</item>
+        <item quantity="other">"Code must be %1$d characters"</item>
+    </plurals>
     <string name="settings_viewmodel_no_sender_found_for_code">"No sender found for code %1$s"</string>
     <string name="settings_viewmodel_failed_to_fetch_export">"Failed to fetch export. Make sure both devices are on the same Wi-Fi."</string>
     <string name="settings_viewmodel_failed_to_import_from_gps_joystick">"Failed to import from GPS Joystick"</string>
     <string name="settings_viewmodel_failed_to_import_from_yamla">"Failed to import from YAMLA"</string>
-    <string name="settings_viewmodel_imported_favorites_from_yamla">"Imported %1$d favorites from YAMLA"</string>
-    <string name="settings_viewmodel_imported_favorites_from_yamla_speeds_updated">"Imported %1$d favorites from YAMLA, speeds updated"</string>
-    <string name="settings_migration_imported_gps_joystick">"Imported %1$d favorites, %2$d routes from GPS Joystick"</string>
+    <plurals name="settings_viewmodel_imported_favorites_from_yamla">
+        <item quantity="one">"Imported %1$d favorite from YAMLA"</item>
+        <item quantity="other">"Imported %1$d favorites from YAMLA"</item>
+    </plurals>
+    <plurals name="settings_viewmodel_imported_favorites_from_yamla_speeds_updated">
+        <item quantity="one">"Imported %1$d favorite from YAMLA, speeds updated"</item>
+        <item quantity="other">"Imported %1$d favorites from YAMLA, speeds updated"</item>
+    </plurals>
+    <plurals name="settings_migration_imported_favorites">
+        <item quantity="one">"Imported %1$d favorite"</item>
+        <item quantity="other">"Imported %1$d favorites"</item>
+    </plurals>
+    <plurals name="settings_migration_imported_routes">
+        <item quantity="one">"%1$d route"</item>
+        <item quantity="other">"%1$d routes"</item>
+    </plurals>
+    <string name="settings_migration_imported_gps_joystick">"%1$s, %2$s from GPS Joystick"</string>
     <plurals name="settings_migration_skipped_oversized">
         <item quantity="one">Skipped %1$d route that was too large to import</item>
         <item quantity="other">Skipped %1$d routes that were too large to import</item>

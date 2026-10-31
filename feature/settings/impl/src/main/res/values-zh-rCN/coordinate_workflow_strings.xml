@@ -11,14 +11,26 @@
     <string name="settings_viewmodel_failed_to_import">"导入失败"</string>
     <string name="settings_viewmodel_failed_to_prepare_qr_export">"准备二维码导出失败 — 请确保已连接 Wi-Fi"</string>
     <string name="settings_viewmodel_invalid_qr_code">"无效的二维码 — 不是 Location Joystick 导出文件"</string>
-    <string name="settings_viewmodel_code_must_be_n_characters">"代码必须为 %1$d 个字符"</string>
+    <plurals name="settings_viewmodel_code_must_be_n_characters">
+        <item quantity="other">"代码必须为 %1$d 个字符"</item>
+    </plurals>
     <string name="settings_viewmodel_no_sender_found_for_code">"未找到代码为 %1$s 的发送方"</string>
     <string name="settings_viewmodel_failed_to_fetch_export">"获取导出数据失败 — 请确保两台设备在同一 Wi-Fi 下"</string>
     <string name="settings_viewmodel_failed_to_import_from_gps_joystick">"从 GPS Joystick 导入失败"</string>
     <string name="settings_viewmodel_failed_to_import_from_yamla">"从 YAMLA 导入失败"</string>
-    <string name="settings_viewmodel_imported_favorites_from_yamla">"已从 YAMLA 导入 %1$d 个收藏"</string>
-    <string name="settings_viewmodel_imported_favorites_from_yamla_speeds_updated">"已从 YAMLA 导入 %1$d 个收藏，速度已更新"</string>
-    <string name="settings_migration_imported_gps_joystick">"已从 GPS Joystick 导入 %1$d 个收藏、%2$d 条路线"</string>
+    <plurals name="settings_viewmodel_imported_favorites_from_yamla">
+        <item quantity="other">"已从 YAMLA 导入 %1$d 个收藏"</item>
+    </plurals>
+    <plurals name="settings_viewmodel_imported_favorites_from_yamla_speeds_updated">
+        <item quantity="other">"已从 YAMLA 导入 %1$d 个收藏，速度已更新"</item>
+    </plurals>
+    <plurals name="settings_migration_imported_favorites">
+        <item quantity="other">"已导入 %1$d 个收藏"</item>
+    </plurals>
+    <plurals name="settings_migration_imported_routes">
+        <item quantity="other">"%1$d 条路线"</item>
+    </plurals>
+    <string name="settings_migration_imported_gps_joystick">"已从 GPS Joystick 导入 %1$s、%2$s"</string>
     <plurals name="settings_migration_skipped_oversized">
         <item quantity="other">已跳过 %1$d 条因过大无法导入的路线</item>
     </plurals>

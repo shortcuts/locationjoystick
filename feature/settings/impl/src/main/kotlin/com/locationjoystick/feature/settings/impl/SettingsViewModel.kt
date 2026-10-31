@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.view.accessibility.AccessibilityManager
+import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -200,6 +201,14 @@ class SettingsViewModel
         ) {
             val message = if (args.isEmpty()) context.getString(id) else context.getString(id, *args)
             userFeedback.emit(UserFeedback(message, isError))
+        }
+
+        private suspend fun emitQuantityFeedback(
+            @PluralsRes id: Int,
+            count: Int,
+            isError: Boolean = false,
+        ) {
+            userFeedback.emit(UserFeedback(context.resources.getQuantityString(id, count, count), isError))
         }
 
         /** Runs [block] to completion even if the screen closes, one write at a time. */
@@ -827,8 +836,8 @@ class SettingsViewModel
             val normalized = code.uppercase().trim()
             viewModelScope.launch {
                 if (normalized.length != AppConstants.SyncConstants.GROUP_CODE_LENGTH) {
-                    emitFeedback(
-                        R.string.settings_viewmodel_code_must_be_n_characters,
+                    emitQuantityFeedback(
+                        R.plurals.settings_viewmodel_code_must_be_n_characters,
                         AppConstants.SyncConstants.GROUP_CODE_LENGTH,
                         isError = true,
                     )
@@ -1063,11 +1072,11 @@ class SettingsViewModel
                         "YAMLA import complete: ${migration.favorites.size} favorites" +
                             if (speedsUpdated) ", speeds updated" else "",
                     )
-                    emitFeedback(
+                    emitQuantityFeedback(
                         if (speedsUpdated) {
-                            R.string.settings_viewmodel_imported_favorites_from_yamla_speeds_updated
+                            R.plurals.settings_viewmodel_imported_favorites_from_yamla_speeds_updated
                         } else {
-                            R.string.settings_viewmodel_imported_favorites_from_yamla
+                            R.plurals.settings_viewmodel_imported_favorites_from_yamla
                         },
                         migration.favorites.size,
                     )
