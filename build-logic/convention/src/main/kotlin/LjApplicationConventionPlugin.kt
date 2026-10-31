@@ -92,6 +92,8 @@ class LjApplicationConventionPlugin : Plugin<Project> {
 
                 lint {
                     error += "HardcodedComposeString"
+                    // The project logs with android.util.Log, not Timber (docs/code-style.md).
+                    disable += "LogNotTimber"
                 }
             }
 
