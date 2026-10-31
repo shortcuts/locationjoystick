@@ -21,6 +21,8 @@ Route replay and walk-to can slow down when the screen locks, because some devic
 
 The lock is taken when spoofing starts, and released on stop, on park, on destroy, and when spoofing ends in an error. A second acquire keeps the first lock, so a retry from error or pause never leaks one. Holding it while idle would drain the battery for nothing.
 
+The lock has no timeout, and lint's `WakelockTimeout` is suppressed on purpose. A session has no fixed length, and a timeout would end the lock mid-session. Renewing it would need a timer that can itself fail. The release paths above are the bound.
+
 Parking keeps the service running. A parked widget must not race a dead service when the user taps Start again. A restart of a parked service stays parked, so the phone does not start spoofing on its own. A group leader's stop keeps the service running too, because the sync server must keep serving followers. See [widget.md](widget.md), "Pause and stop".
 
 ## Missing location permission
