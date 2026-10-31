@@ -142,6 +142,8 @@ internal fun FloatingPickerShell(
     }
 }
 
+// Overlay window is wrap-content, so LocalWindowInfo reports the window, not the screen.
+@Suppress("ConfigurationScreenWidthHeight")
 @Composable
 private fun CompactFloatingPickerShell(
     title: String,

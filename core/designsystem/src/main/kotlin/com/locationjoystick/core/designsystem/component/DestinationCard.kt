@@ -29,7 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -106,7 +107,11 @@ fun DestinationHub(
     cards: List<DestinationCardSpec>,
     modifier: Modifier = Modifier,
 ) {
-    val isWide = LocalConfiguration.current.screenWidthDp >= 600
+    val isWide =
+        with(LocalDensity.current) {
+            LocalWindowInfo.current.containerSize.width
+                .toDp()
+        } >= 600.dp
     if (isWide) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),

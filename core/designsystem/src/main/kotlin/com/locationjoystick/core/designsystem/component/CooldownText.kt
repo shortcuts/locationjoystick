@@ -2,7 +2,7 @@ package com.locationjoystick.core.designsystem.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.R
 
@@ -11,7 +11,7 @@ typealias StringLookup = (Int, Array<Any>) -> String
 
 @Composable
 fun rememberCooldownStringLookup(): StringLookup {
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
     return remember(resources) { { id, args -> resources.getString(id, *args) } }
 }
 
