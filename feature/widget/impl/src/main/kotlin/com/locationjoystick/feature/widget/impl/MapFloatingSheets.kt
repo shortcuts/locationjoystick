@@ -8,11 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -25,7 +22,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.designsystem.LjSheetShape
 import com.locationjoystick.core.designsystem.LjSpacing
+import com.locationjoystick.core.designsystem.component.LjSheetHandle
 import com.locationjoystick.core.designsystem.component.PasteCoordinatesForm
 import com.locationjoystick.core.designsystem.component.RoamingSheetContent
 import com.locationjoystick.core.model.LatLng
@@ -63,22 +62,11 @@ internal fun BoxScope.OverlayRoamingSheet(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .fillMaxHeight(0.8f)
-                .background(MaterialTheme.colorScheme.surface, overlaySheetShape())
+                .background(MaterialTheme.colorScheme.surface, LjSheetShape)
                 .clickable {},
     ) {
         // Drag handle — matches ModalBottomSheet visual
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = LjSpacing.sm)
-                    .width(32.dp)
-                    .height(4.dp)
-                    .background(
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                        RoundedCornerShape(2.dp),
-                    ),
-        )
+        LjSheetHandle(Modifier.align(Alignment.TopCenter).padding(top = LjSpacing.sm))
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
             Column(modifier = Modifier.fillMaxSize().padding(top = 28.dp)) {
                 RoamingSheetContent(
@@ -130,22 +118,11 @@ internal fun BoxScope.OverlayPasteCoordinatesSheet(
             Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, overlaySheetShape())
+                .background(MaterialTheme.colorScheme.surface, LjSheetShape)
                 .clickable {}
                 .imePadding(),
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = LjSpacing.sm)
-                    .width(32.dp)
-                    .height(4.dp)
-                    .background(
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                        RoundedCornerShape(2.dp),
-                    ),
-        )
+        LjSheetHandle(Modifier.align(Alignment.TopCenter).padding(top = LjSpacing.sm))
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
             Column(modifier = Modifier.fillMaxWidth().padding(top = LjSpacing.sm)) {
                 PasteCoordinatesForm(
