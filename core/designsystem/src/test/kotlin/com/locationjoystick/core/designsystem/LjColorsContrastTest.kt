@@ -1,6 +1,8 @@
 package com.locationjoystick.core.designsystem
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import com.locationjoystick.core.designsystem.component.LJ_OVERLAY_PILL_ALPHA
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -81,6 +83,17 @@ class LjColorsContrastTest {
         // Light theme warning pair must meet WCAG AA 4.5:1 on the container and on white card surfaces
         assertTrue("LjLightWarning on LjLightWarningContainer", contrast(LjLightWarning, LjLightWarningContainer) >= 4.5f)
         assertTrue("LjLightWarning on LjLightSurface", contrast(LjLightWarning, LjLightSurface) >= 4.5f)
+    }
+
+    @Test
+    fun overlayPillTextMeetsContrastOverAnyMapBackdrop() {
+        // The pill surface is translucent, so the worst case is pure white or pure black map behind it.
+        listOf(LjDarkColorScheme, LjLightColorScheme).forEach { scheme ->
+            listOf(Color.White, Color.Black).forEach { backdrop ->
+                val composite = lerp(scheme.surface, backdrop, 1f - LJ_OVERLAY_PILL_ALPHA)
+                assertTrue("onSurfaceVariant over pill on $backdrop", contrast(scheme.onSurfaceVariant, composite) >= 4.5f)
+            }
+        }
     }
 
     private fun contrast(

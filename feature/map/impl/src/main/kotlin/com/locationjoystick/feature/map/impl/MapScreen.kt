@@ -7,8 +7,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -28,7 +25,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -40,6 +36,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjSpacing
+import com.locationjoystick.core.designsystem.component.LjOverlayPill
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjSnackbarHost
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
@@ -442,7 +439,7 @@ internal fun MapScreen(
             )
 
             if (uiState.walkTarget == null && !uiState.isRouteReplay && !uiState.isRoaming) {
-                Text(
+                LjOverlayPill(
                     text =
                         stringResource(
                             if (uiState.hideTeleportFeatures) {
@@ -451,19 +448,10 @@ internal fun MapScreen(
                                 R.string.map_hint_tap_to_teleport_long_press
                             },
                         ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
                     modifier =
                         Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = 12.dp, start = LjSpacing.md, end = LjSpacing.md)
-                            .background(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                                MaterialTheme.shapes.small,
-                            ).border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.small)
-                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                            .padding(bottom = LjSpacing.smMd, start = LjSpacing.md, end = LjSpacing.md),
                 )
             }
 
