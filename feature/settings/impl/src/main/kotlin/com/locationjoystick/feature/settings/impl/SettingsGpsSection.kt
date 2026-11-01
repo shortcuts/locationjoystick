@@ -30,6 +30,8 @@ import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.feature.settings.impl.R
 import kotlin.math.roundToInt
 
+private val CONTROL_TEXT_INDENT = 40.dp
+
 private fun formatJitterDouble(d: Double): String {
     val rounded = (d * 100).roundToInt() / 100.0
     return if (rounded % 1.0 == 0.0) rounded.toInt().toString() else rounded.toString()
@@ -214,7 +216,7 @@ internal fun GpsRealismSection(
                 } else {
                     stringResource(R.string.settings_gps_section_vary_altitude_m)
                 },
-            modifier = Modifier.fillMaxWidth().padding(start = 40.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = CONTROL_TEXT_INDENT),
         )
         Spacer(modifier = Modifier.height(LjSpacing.xs))
     }
@@ -229,7 +231,7 @@ internal fun GpsRealismSection(
         Spacer(modifier = Modifier.height(LjSpacing.xs))
         LjButton(
             onClick = { onAction(SettingsAction.ResetAltitudeOverride) },
-            modifier = Modifier.padding(start = 40.dp),
+            modifier = Modifier.padding(start = CONTROL_TEXT_INDENT),
         ) {
             Text(stringResource(R.string.settings_gps_section_reset_elevation_override))
         }
@@ -237,7 +239,7 @@ internal fun GpsRealismSection(
             stringResource(R.string.settings_gps_section_clears_a_manually_set_altitude_floating),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 40.dp),
+            modifier = Modifier.padding(start = CONTROL_TEXT_INDENT),
         )
     }
     Spacer(modifier = Modifier.height(LjSpacing.sm))

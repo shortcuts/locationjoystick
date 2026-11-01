@@ -169,7 +169,7 @@ private fun TapToWalkSection(
         // takeScreenshot(int, Executor, TakeScreenshotCallback) requires API 30 — no fallback exists.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (showsServiceOffHint(enabled, uiState.isScreenServiceGranted)) {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(LjSpacing.smMd))
                 ServiceOffHint(uiState, onAction)
             }
         }
@@ -232,7 +232,7 @@ private fun ReconnectTapSection(
         },
     )
     if (showsServiceOffHint(uiState.reconnectTapEnabled, uiState.isScreenServiceGranted)) {
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(LjSpacing.smMd))
         ServiceOffHint(uiState, onAction)
     }
     if (showDisclosure || showsReconnectConsentPrompt(uiState.reconnectTapEnabled, uiState.accessibilityDisclosureAccepted)) {
@@ -483,7 +483,8 @@ private fun featureMeta(feature: AppFeature): FeatureMeta =
     }
 
 private val FEATURE_ROW_HEIGHT = 64.dp
-private val FEATURE_ROW_SPACING = 8.dp
+private val FEATURE_ROW_SPACING = LjSpacing.sm
+private val FEATURE_TOGGLE_INDENT = 48.dp
 
 @Composable
 private fun AppFeaturesSection(
@@ -500,7 +501,7 @@ private fun AppFeaturesSection(
     )
     Spacer(modifier = Modifier.height(LjSpacing.sm))
 
-    Row(modifier = Modifier.fillMaxWidth().padding(start = 48.dp), horizontalArrangement = Arrangement.End) {
+    Row(modifier = Modifier.fillMaxWidth().padding(start = FEATURE_TOGGLE_INDENT), horizontalArrangement = Arrangement.End) {
         Text(
             stringResource(R.string.settings_menus_widget),
             style = MaterialTheme.typography.labelSmall,
@@ -655,7 +656,7 @@ private fun FeatureRow(
             tint = if (rowEnabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
             modifier = Modifier.size(20.dp),
         )
-        Column(modifier = Modifier.weight(1f).padding(start = 12.dp, end = LjSpacing.sm)) {
+        Column(modifier = Modifier.weight(1f).padding(start = LjSpacing.smMd, end = LjSpacing.sm)) {
             Text(
                 text = meta.label,
                 style = MaterialTheme.typography.bodyLarge,

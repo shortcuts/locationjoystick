@@ -26,6 +26,7 @@ import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.feature.settings.impl.R
 
 private const val MAX_ITEMS_EXPANDED_BY_DEFAULT = 8
+private val CONTROL_TEXT_INDENT = 48.dp
 
 /**
  * Generic collapsible country → city → item tree for selecting subsets of hot items.
@@ -171,7 +172,7 @@ internal fun HotItemTreeSection(
                                 onSelectionChange(updated)
                             },
                             title = entry.name,
-                            modifier = Modifier.padding(start = 48.dp),
+                            modifier = Modifier.padding(start = CONTROL_TEXT_INDENT),
                         )
                     }
                 }
