@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.R
+import com.locationjoystick.core.designsystem.tabular
 import com.locationjoystick.core.model.FavoriteLocation
 
 /**
@@ -46,7 +47,7 @@ fun FavoriteTargetDetail(
         Text(favorite.name, style = MaterialTheme.typography.titleMedium, color = textColor)
         Text(
             formatLatLng(favorite.position.latitude, favorite.position.longitude),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium.tabular(),
             color = textColor,
             modifier = Modifier.padding(top = LjSpacing.xs),
         )

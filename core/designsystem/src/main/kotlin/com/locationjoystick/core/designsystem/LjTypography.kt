@@ -2,15 +2,28 @@ package com.locationjoystick.core.designsystem
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+
+// One variable file: the bundled subset covers weights 400 to 600 only.
+val InterFontFamily =
+    FontFamily(
+        listOf(FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold).map { weight ->
+            Font(R.font.inter, weight, variationSettings = FontVariation.Settings(weight, FontStyle.Normal))
+        },
+    )
+
+fun TextStyle.tabular(): TextStyle = copy(fontFeatureSettings = "tnum")
 
 val LjTypography =
     Typography(
         displayLarge =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 57.sp,
                 lineHeight = 64.sp,
@@ -18,7 +31,7 @@ val LjTypography =
             ),
         displayMedium =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 45.sp,
                 lineHeight = 52.sp,
@@ -26,7 +39,7 @@ val LjTypography =
             ),
         displaySmall =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 32.sp,
                 lineHeight = 40.sp,
@@ -34,7 +47,7 @@ val LjTypography =
             ),
         headlineLarge =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 32.sp,
                 lineHeight = 40.sp,
@@ -42,7 +55,7 @@ val LjTypography =
             ),
         headlineMedium =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 26.sp,
                 lineHeight = 32.sp,
@@ -50,7 +63,7 @@ val LjTypography =
             ),
         headlineSmall =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 22.sp,
                 lineHeight = 28.sp,
@@ -58,7 +71,7 @@ val LjTypography =
             ),
         titleLarge =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 20.sp,
                 lineHeight = 26.sp,
@@ -66,7 +79,7 @@ val LjTypography =
             ),
         titleMedium =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 lineHeight = 22.sp,
@@ -74,7 +87,7 @@ val LjTypography =
             ),
         titleSmall =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
@@ -82,7 +95,7 @@ val LjTypography =
             ),
         bodyLarge =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.Normal,
                 fontSize = 16.sp,
                 lineHeight = 24.sp,
@@ -90,7 +103,7 @@ val LjTypography =
             ),
         bodyMedium =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.Normal,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
@@ -98,7 +111,7 @@ val LjTypography =
             ),
         bodySmall =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.Normal,
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
@@ -106,7 +119,7 @@ val LjTypography =
             ),
         labelLarge =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
@@ -114,7 +127,7 @@ val LjTypography =
             ),
         labelMedium =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
@@ -122,7 +135,7 @@ val LjTypography =
             ),
         labelSmall =
             TextStyle(
-                fontFamily = FontFamily.Default,
+                fontFamily = InterFontFamily,
                 fontWeight = FontWeight.Medium,
                 fontSize = 11.sp,
                 lineHeight = 16.sp,

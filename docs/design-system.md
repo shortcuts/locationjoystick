@@ -31,6 +31,7 @@ Until the migration epic in the radin backlog (`design-modernization`) is done, 
 - Features read colour roles from the theme, never raw hex. Status colours and the map palette have their own helpers; use them rather than inventing colours.
 - No elevation. Cards are separated by fill and spacing. Only the outlined variants draw a hairline.
 - Use the type, shape and spacing tokens rather than literals. Never set font size inline.
+- Text is set in the bundled Inter font through the theme typography; a feature never names a font family. Inter has no CJK glyphs, so the zh locales fall back to the system font per glyph. Numbers that change or line up (coordinates, speed, distance, counters) use the `tabular()` text style so digits keep one width.
 - Prefer the `Lj*` components over raw Material components. Raw Material is a last resort, and the components exist to hold these rules in one place.
 - Overlay windows (joystick, widget) sit outside the activity theme, so they must be wrapped in the app theme. Without it they render with the wrong colours.
 - The guided path reaches composables through `LocalGuidedPath`, which `LjTheme` provides. Read it there; never pass a path flag down as a parameter, because a forgotten call site then shows the wrong controls.

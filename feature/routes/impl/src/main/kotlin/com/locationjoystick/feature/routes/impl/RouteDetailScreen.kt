@@ -61,6 +61,7 @@ import com.locationjoystick.core.designsystem.component.LjSelectionMode
 import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.formatLatLng
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
+import com.locationjoystick.core.designsystem.tabular
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
@@ -472,7 +473,7 @@ fun RouteDetailScreen(
                             Text(
                                 formatLatLng(waypoint.position.latitude, waypoint.position.longitude),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodySmall.tabular(),
                             )
                             if (isTeleportRoute) {
                                 Text(

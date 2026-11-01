@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.R
+import com.locationjoystick.core.designsystem.tabular
 import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.isHot
@@ -150,7 +151,7 @@ fun FavoritesList(
                             Text(favorite.name, style = MaterialTheme.typography.titleMedium, color = textColor)
                             Text(
                                 formatLatLng(favorite.position.latitude, favorite.position.longitude),
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodySmall.tabular(),
                                 color = textColor,
                             )
                             if (cooldownBadgeText != null) {
@@ -201,7 +202,7 @@ fun CooldownAdvisoryBadge(
 ) {
     Text(
         text = label,
-        style = MaterialTheme.typography.bodySmall,
+        style = MaterialTheme.typography.bodySmall.tabular(),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.fillMaxWidth(),
     )

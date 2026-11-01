@@ -30,6 +30,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjSuccess
 import com.locationjoystick.core.designsystem.LjText
+import com.locationjoystick.core.designsystem.tabular
 import com.locationjoystick.core.model.ReconnectRunResult
 import com.locationjoystick.core.model.ReconnectStatus
 import com.locationjoystick.feature.widget.impl.R
@@ -54,19 +55,19 @@ internal fun DebugStatsPanel(
         Text(
             stringResource(R.string.widget_panel_content_2f_6f).format(stats.latitude, stats.longitude),
             color = LjText,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelSmall.tabular(),
         )
         Text(
             stringResource(R.string.widget_panel_content_speed_2f_m_s_alt_ellipsoidal_2f_m).format(stats.speedMs, stats.altitudeMeters),
             color = LjText,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelSmall.tabular(),
         )
         Text(
             stringResource(
                 R.string.widget_panel_content_acc_1f_m_bearing_s_1f_hz,
             ).format(stats.accuracyMeters, formatBearingText(stats), tickHz),
             color = LjText,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelSmall.tabular(),
         )
         if (reconnectEnabled) {
             Text(

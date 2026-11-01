@@ -44,6 +44,7 @@ import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.R
+import com.locationjoystick.core.designsystem.tabular
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import kotlinx.coroutines.launch
@@ -225,7 +226,7 @@ fun CaptureCoordinatesForm(
                                 capturePoints.points.forEachIndexed { index, point ->
                                     Text(
                                         text = "${index + 1}. ${formatCapturedPoint(point)}",
-                                        style = MaterialTheme.typography.bodyMedium,
+                                        style = MaterialTheme.typography.bodyMedium.tabular(),
                                     )
                                 }
                             }

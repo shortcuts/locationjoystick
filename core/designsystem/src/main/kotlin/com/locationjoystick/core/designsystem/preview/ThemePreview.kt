@@ -24,6 +24,7 @@ import com.locationjoystick.core.designsystem.component.LjCard
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
 import com.locationjoystick.core.designsystem.component.LjOutlinedCard
+import com.locationjoystick.core.designsystem.tabular
 import com.locationjoystick.core.model.GuidedPath
 
 @PreviewLightDark
@@ -58,7 +59,7 @@ private fun ThemePreview() {
                         )
                         Text(
                             text = stringResource(R.string.theme_preview_48_8566_n_2_3522_e),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.tabular(),
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                     }

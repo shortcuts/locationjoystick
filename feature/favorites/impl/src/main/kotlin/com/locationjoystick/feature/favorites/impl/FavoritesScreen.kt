@@ -80,6 +80,7 @@ import com.locationjoystick.core.designsystem.component.readPlainText
 import com.locationjoystick.core.designsystem.component.rememberCollapsedGroups
 import com.locationjoystick.core.designsystem.component.rememberCooldownStringLookup
 import com.locationjoystick.core.designsystem.component.rememberGroupReorder
+import com.locationjoystick.core.designsystem.tabular
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.isHot
@@ -481,7 +482,7 @@ private fun LastKnownPositionCard(
 ) {
     LjListItemCard(modifier = modifier, onClick = onClick, trailing = {}) {
         Text(favorite.name, style = MaterialTheme.typography.titleMedium)
-        Text(formatCapturedPoint(favorite.position), style = MaterialTheme.typography.bodySmall)
+        Text(formatCapturedPoint(favorite.position), style = MaterialTheme.typography.bodySmall.tabular())
         Text(
             DateUtils
                 .getRelativeTimeSpanString(takenAtMs, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
@@ -597,7 +598,7 @@ private fun FavoriteCard(
         Text(favorite.name, style = MaterialTheme.typography.titleMedium)
         Text(
             formatLatLng(favorite.position.latitude, favorite.position.longitude),
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodySmall.tabular(),
         )
         Spacer(Modifier.height(6.dp))
         CooldownAdvisoryBadge(
