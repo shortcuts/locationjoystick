@@ -12,3 +12,7 @@ val LjShapes =
         large = RoundedCornerShape(16.dp),
         extraLarge = RoundedCornerShape(20.dp),
     )
+
+val LjPillShape = RoundedCornerShape(percent = 50)
+
+val LjSheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
