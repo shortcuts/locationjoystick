@@ -73,6 +73,7 @@ private fun LjListItemCardSkeleton(
 ) {
     LjListItemCard(
         modifier = modifier,
+        leading = { LjShimmerBlock(modifier = Modifier.size(24.dp), shape = CircleShape) },
         trailing = {
             repeat(trailingIconCount) {
                 LjShimmerBlock(modifier = Modifier.size(40.dp), shape = CircleShape)

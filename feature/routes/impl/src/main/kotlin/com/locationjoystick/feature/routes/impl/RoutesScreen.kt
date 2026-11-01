@@ -56,6 +56,7 @@ import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjFloatingActionButton
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjListItemCardSkeletonList
+import com.locationjoystick.core.designsystem.component.LjListItemLeadingIcon
 import com.locationjoystick.core.designsystem.component.LjModalBottomSheet
 import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
@@ -440,6 +441,7 @@ private fun RouteCard(
         modifier = modifier.fillMaxWidth(),
     ) {
         LjListItemCard(
+            leading = { LjListItemLeadingIcon(LjIcons.Route) },
             trailing = {
                 when {
                     isPlaying -> {

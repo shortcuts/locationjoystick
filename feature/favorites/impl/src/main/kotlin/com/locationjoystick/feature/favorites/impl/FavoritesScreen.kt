@@ -63,6 +63,7 @@ import com.locationjoystick.core.designsystem.component.LjDeleteConfirmDialog
 import com.locationjoystick.core.designsystem.component.LjFloatingActionButton
 import com.locationjoystick.core.designsystem.component.LjListItemCard
 import com.locationjoystick.core.designsystem.component.LjListItemCardSkeletonList
+import com.locationjoystick.core.designsystem.component.LjListItemLeadingIcon
 import com.locationjoystick.core.designsystem.component.LjModalBottomSheet
 import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLabel
 import com.locationjoystick.core.designsystem.component.LjPrimaryButton
@@ -480,7 +481,12 @@ private fun LastKnownPositionCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LjListItemCard(modifier = modifier, onClick = onClick, trailing = {}) {
+    LjListItemCard(
+        modifier = modifier,
+        onClick = onClick,
+        leading = { LjListItemLeadingIcon(LjIcons.MyLocation) },
+        trailing = {},
+    ) {
         Text(favorite.name, style = MaterialTheme.typography.titleMedium)
         Text(formatCapturedPoint(favorite.position), style = MaterialTheme.typography.bodySmall.tabular())
         Text(
@@ -521,6 +527,7 @@ private fun FavoriteCard(
     LjListItemCard(
         modifier = modifier,
         onClick = { onRowClick(favorite) },
+        leading = { LjListItemLeadingIcon(if (isHome) LjIcons.Home else LjIcons.Favorite) },
         trailing = {
             HomeToggleButton(isHome = isHome, onClick = { onToggleHome(favorite) })
             Box {
