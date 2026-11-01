@@ -1,3 +1,10 @@
+@font-face{
+  font-family:"Inter";
+  src:url("fonts/inter.woff2") format("woff2");
+  font-weight:400 600;
+  font-display:swap;
+}
+
 :root {
   color-scheme:dark light;
   --bg:       #1E1E24;
@@ -11,7 +18,7 @@
   --info:     #6EA8FE;
   --danger:   #EF4444;
   --mono: ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-  --sans: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --sans: Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --nav-w: 240px;
   --r: 12px;
   --r-sm: 8px;
@@ -44,6 +51,8 @@ body{
   color:var(--text);
   background:var(--bg);
 }
+
+table{font-variant-numeric:tabular-nums}
 
 /* ── Layout ── */
 .layout{
