@@ -12,6 +12,20 @@ Why: the app is a tool used one-handed, often outdoors, over a map. Chrome must 
 
 Uber and Airbnb guidance (VoltAgent `awesome-design-md`) was a reference for density and restraint, not a template. Do not copy their marks, type or layouts.
 
+## Provenance
+
+Modernization decided 2026-11-01 with the owner. Colours stay as they are. Three aspects changed:
+
+- **Typeface:** Inter, bundled, OFL licence. Why: it has tabular figures, so coordinates, speeds and distances stay aligned. It covers Latin only; CJK locales fall back to the system font.
+- **Shape:** pill buttons and chips, soft cards, larger top corners on sheets (Uber: one pill shape for every interactive element). The 8 dp button corner of the old system is retired.
+- **Density:** comfortable two-line rows with a leading icon, plus one spacing step between `sm` and `md`. Why: the old code used a 12 dp literal about 15 times, so the scale was missing a step.
+
+The wiki follows the same three changes (typeface self-hosted, no CDN). Colours stay.
+
+Elevation stays flat. The owner confirmed it. Hairlines (Linear) separate outlined surfaces.
+
+Until the migration epic in the radin backlog (`design-modernization`) is done, code may still show the old values. The code wins in a mismatch: fix this file, not the code, unless the entry says otherwise.
+
 ## Rules
 
 - Features read colour roles from the theme, never raw hex. Status colours and the map palette have their own helpers; use them rather than inventing colours.
@@ -22,6 +36,11 @@ Uber and Airbnb guidance (VoltAgent `awesome-design-md`) was a reference for den
 - The guided path reaches composables through `LocalGuidedPath`, which `LjTheme` provides. Read it there; never pass a path flag down as a parameter, because a forgotten call site then shows the wrong controls.
 - Motion must be short, carry meaning, and respect the system's reduce-motion setting. There is no motion token file on purpose: the app has little motion, and a token file would invite more.
 - Icons come from the shared icon set, not from the platform icon package in features. Icon-only buttons always need a content description.
+- Text uses the bundled typeface through the type tokens only. Never name a font family in a feature.
+- Numbers that change or line up (coordinates, speed, distance, counters) use tabular figures. Prose does not.
+- Interactive controls (buttons, chips, filter pills) use the full-round shape token. Containers (cards, sheets, dialogs) use the shape tokens by size. No feature builds its own corner radius.
+- Spacing comes from the `LjSpacing` scale. A literal padding or gap that fits a step is a bug; a literal that fits no step means the scale needs a step, not a literal.
+- A row in a saved-item list has a leading icon, a title and one secondary line. A second secondary line is a sign the row is carrying a detail view's content.
 
 ## Component choice
 
@@ -62,7 +81,7 @@ The wiki is user-facing and is written under `docs/wiki/CONTRIBUTING.md`. Keep i
 - Wiki colours, radii and fonts are defined once in the `:root` block of `docs/wiki/style.css`. Change them there, not per page, and take the values from the app's colour definitions so the two stay the same.
 - Light variants go under the light colour-scheme media query.
 - Hairline borders and flat surfaces only. No box shadows.
-- The wiki uses system fonts only. Do not add web or CDN fonts.
+- The wiki uses the same typeface as the app, self-hosted inside `docs/wiki`. Never load a font from a CDN or web-font service. Keep the system stack as fallback.
 - Verify with `make wiki-serve`.
 
 ## Maintenance
