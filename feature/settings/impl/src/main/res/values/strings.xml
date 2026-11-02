@@ -181,7 +181,7 @@
     <string name="settings_roaming_radius_m">"Radius (m)"</string>
     <string name="settings_roaming_route_distance_mi">"Route distance (mi)"</string>
     <string name="settings_roaming_route_distance_m">"Route distance (m)"</string>
-    <string name="settings_roaming_speed_profile">"Speed profile"</string>
+    <string name="settings_roaming_speed_profile">"Walk around the block speed"</string>
     <string name="settings_roaming_follow_roads">"Follow roads"</string>
     <string name="settings_roaming_follow_roads_desc">"Follows actual roads and paths instead of cutting straight across. Uses straight lines if the road service is unavailable."</string>
     <string name="settings_roaming_return_to_start">"Return to start"</string>

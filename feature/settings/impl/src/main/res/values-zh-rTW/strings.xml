@@ -168,7 +168,7 @@
     <string name="settings_roaming_radius_m">"半徑（公尺）"</string>
     <string name="settings_roaming_route_distance_mi">"路線距離（英里）"</string>
     <string name="settings_roaming_route_distance_m">"路線距離（公尺）"</string>
-    <string name="settings_roaming_speed_profile">"速度預設"</string>
+    <string name="settings_roaming_speed_profile">"繞街區行走速度"</string>
     <string name="settings_roaming_follow_roads">"沿道路行走"</string>
     <string name="settings_roaming_follow_roads_desc">"沿實際道路與路徑行走，而不是直接穿過。部分地區可能不支援。"</string>
     <string name="settings_roaming_return_to_start">"返回起點"</string>

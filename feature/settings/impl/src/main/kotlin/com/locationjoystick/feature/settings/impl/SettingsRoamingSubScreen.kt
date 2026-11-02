@@ -78,7 +78,7 @@ internal fun SettingsRoamingSubScreen(
                     ) {
                         RoamingSection(
                             roamingDefaults,
-                            uiState.guidedPath.showsPlanting,
+                            isMph,
                             uiState.plantingRadiusMeters,
                             onAction,
                         )
