@@ -3,7 +3,6 @@ package com.locationjoystick.feature.settings.impl
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
@@ -107,7 +107,7 @@ internal fun SettingsMenusSubScreen(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .verticalScroll(remember { ScrollState(0) })
+                                .verticalScroll(rememberScrollState())
                                 .padding(settingsScrollPadding()),
                     ) {
                         AppFeaturesSection(uiState, isRooted, onAction)

@@ -526,7 +526,7 @@ internal fun SettingsScreen(
     snackbarHost: @Composable () -> Unit = {},
     openCaptureSetup: Boolean = false,
 ) {
-    var currentSection by remember { mutableStateOf(if (openCaptureSetup) SettingsSection.CAPTURE else null) }
+    var currentSection by rememberSaveable { mutableStateOf(if (openCaptureSetup) SettingsSection.CAPTURE else null) }
     // Opened from the Capture screen: Back returns there, not to the settings hub.
     val atRoot = currentSection == null || (openCaptureSetup && currentSection == SettingsSection.CAPTURE)
 
