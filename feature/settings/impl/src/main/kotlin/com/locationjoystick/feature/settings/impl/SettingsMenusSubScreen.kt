@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,6 +58,7 @@ import com.locationjoystick.core.designsystem.component.LjSelectionRow
 import com.locationjoystick.core.designsystem.component.speedProfileLabel
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FeatureSurface
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.ScreenFeatureGates
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.feature.settings.impl.R
@@ -67,6 +69,33 @@ import com.locationjoystick.core.designsystem.R as DesignR
 internal fun SettingsMenusSubScreen(
     uiState: SettingsUiState,
     isRooted: Boolean,
+    onNavigateBack: () -> Unit,
+    isSpoofing: Boolean,
+    onToggleSpoofing: () -> Unit,
+    locationLabel: String? = null,
+    onAction: (SettingsAction) -> Unit,
+    bottomBar: @Composable () -> Unit,
+    snackbarHost: @Composable () -> Unit,
+) {
+    SettingsScrollScaffold(
+        title = stringResource(R.string.settings_menus_menus),
+        uiState = uiState,
+        onNavigateBack = onNavigateBack,
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
+        locationLabel = locationLabel,
+        bottomBar = bottomBar,
+        snackbarHost = snackbarHost,
+    ) {
+        AppFeaturesSection(uiState, isRooted, onAction)
+        SettingsSectionDivider()
+        SpeedCycleSection(uiState, onAction)
+    }
+}
+
+@Composable
+internal fun SettingsScreenHelpersSubScreen(
+    uiState: SettingsUiState,
     onNavigateBack: () -> Unit,
     isSpoofing: Boolean,
     onToggleSpoofing: () -> Unit,
@@ -86,8 +115,45 @@ internal fun SettingsMenusSubScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    SettingsScrollScaffold(
+        title = stringResource(R.string.settings_hub_screen_helpers),
+        uiState = uiState,
+        onNavigateBack = onNavigateBack,
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
+        locationLabel = locationLabel,
+        bottomBar = bottomBar,
+        snackbarHost = snackbarHost,
+    ) {
+        if (uiState.guidedPath.showsTapToWalk) {
+            TapToWalkSection(uiState, onAction)
+        }
+        // Same API 30 floor as the screenshot the check depends on.
+        if (uiState.guidedPath.showsReconnectAccessory && Build.VERSION.SDK_INT >= ScreenFeatureGates.MIN_SDK) {
+            if (uiState.guidedPath.showsTapToWalk) SettingsSectionDivider()
+            ReconnectTapSection(uiState, onAction)
+        }
+        if (showsScreenAccessBlock(Build.VERSION.SDK_INT, tapToWalkOn(uiState), reconnectOn(uiState))) {
+            SettingsSectionDivider()
+            ScreenAccessSection(uiState, onAction)
+        }
+    }
+}
+
+@Composable
+private fun SettingsScrollScaffold(
+    title: String,
+    uiState: SettingsUiState,
+    onNavigateBack: () -> Unit,
+    isSpoofing: Boolean,
+    onToggleSpoofing: () -> Unit,
+    locationLabel: String?,
+    bottomBar: @Composable () -> Unit,
+    snackbarHost: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     LjScaffold(
-        title = stringResource(R.string.settings_menus_menus),
+        title = title,
         isSpoofing = isSpoofing,
         onToggleSpoofing = onToggleSpoofing,
         locationLabel = locationLabel,
@@ -97,37 +163,17 @@ internal fun SettingsMenusSubScreen(
         snackbarHost = snackbarHost,
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-
-                else -> {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(settingsScrollPadding()),
-                    ) {
-                        AppFeaturesSection(uiState, isRooted, onAction)
-                        SettingsSectionDivider()
-                        SpeedCycleSection(uiState, onAction)
-                        if (showsScreenAccessBlock(Build.VERSION.SDK_INT, tapToWalkOn(uiState), reconnectOn(uiState))) {
-                            SettingsSectionDivider()
-                            ScreenAccessSection(uiState, onAction)
-                        }
-                        if (uiState.guidedPath.showsTapToWalk) {
-                            SettingsSectionDivider()
-                            TapToWalkSection(uiState, onAction)
-                        }
-                        // Same API 30 floor as the screenshot the check depends on.
-                        if (uiState.guidedPath.showsReconnectAccessory && Build.VERSION.SDK_INT >= ScreenFeatureGates.MIN_SDK) {
-                            SettingsSectionDivider()
-                            ReconnectTapSection(uiState, onAction)
-                        }
-                    }
-                }
+            if (uiState.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(settingsScrollPadding()),
+                    content = content,
+                )
             }
         }
     }
@@ -713,3 +759,5 @@ private fun FeatureRow(
         }
     }
 }
+
+internal fun showsScreenHelpersCard(path: GuidedPath): Boolean = path.showsTapToWalk || path.showsReconnectAccessory

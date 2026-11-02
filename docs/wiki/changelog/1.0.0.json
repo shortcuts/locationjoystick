@@ -4,7 +4,7 @@
   "entries": [
     { "category": "feat", "scope": "Capture", "summary": "After a map link, pick the app to open from a list with icons. If you chose Pokémon Go or Pikmin Bloom in setup, that game is picked for you." },
     { "category": "feat", "scope": "Routes", "summary": "A looping route now walks back along the route at each end instead of jumping to the start. Planting and teleport routes loop as before." },
-    { "category": "feat", "scope": "Reconnect accessory", "summary": "Reconnect accessory taps your game's reconnect control for you. It is off by default. Turn it on in Settings > Menus. It needs the screen helper." },
+    { "category": "feat", "scope": "Reconnect accessory", "summary": "Reconnect accessory taps your game's reconnect control for you. It is off by default. Turn it on in Settings > Screen helpers. It needs the screen helper." },
     { "category": "feat", "scope": "Reconnect accessory", "summary": "Reconnect checks run once a minute, only while the screen is on and the game is in front. After failed checks, the app waits longer, up to 5 minutes." },
     { "category": "feat", "scope": "Reconnect accessory", "summary": "After 3 failed reconnect runs in a row, the app sends a notice. The notice clears itself once the accessory is back." },
     { "category": "feat", "scope": "Reconnect accessory", "summary": "If the game is in front but the reconnect control is not found, you get one notice, not one per check." },
@@ -16,6 +16,7 @@
     { "category": "fix", "scope": "Map", "summary": "The first point you add to a walk continues from your current position, not from the walk's start." },
     { "category": "fix", "scope": "Map", "summary": "Switching the map style now takes effect on every map screen right away, without closing and reopening the screen." },
     { "category": "feat", "scope": "Settings", "summary": "Pick your game during first setup. It only hides features you do not need, such as Planting, Tap to Walk and Reconnect accessory. Change it any time in Settings > General > Game setup." },
+    { "category": "feat", "scope": "Settings", "summary": "Tap to Walk and Reconnect accessory now have their own Screen helpers page in Settings, instead of sitting at the bottom of Menus." },
     { "category": "feat", "scope": "Settings", "summary": "Settings > Menus is split in two. Theme, map source, place search, privacy and debug now live in a new General page. Every option is still there." },
     { "category": "fix", "scope": "Settings", "summary": "Save and Discard buttons no longer cover the last settings entries." },
     { "category": "fix", "scope": "Settings", "summary": "The speed warning uses the unit you picked in Settings." },

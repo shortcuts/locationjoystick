@@ -1364,15 +1364,15 @@ if should_run_step "18"; then
   if $AUTO; then set_debug_stats False; fi
 fi
 
-# ── 20. Settings → Menus → Tap to Walk section ───────────────────────────────
+# ── 20. Settings → Screen helpers → Tap to Walk section ──
 
 if should_run_step "20"; then
   log "=== 20 TAP TO WALK SETTINGS ==="
   go_idle
   tap_text_below "Settings" "$CARD_Y_MIN"
   wait_s 2 "Settings loading"
-  tap_text "Menus"
-  wait_s 2 "Menus loading"
+  tap_text "Screen helpers"
+  wait_s 2 "Screen helpers loading"
   # Scroll until the row is on screen; a fixed swipe count overshoots on tall devices.
   for _ in 1 2 3 4 5 6 7 8; do
     dump=$(ui_dump)
@@ -1406,7 +1406,7 @@ if should_run_step "20"; then
   screenshot "20_tap_to_walk_settings"
 fi
 
-# ── 21. Settings → Menus → Screen access section ──────────────────────
+# ── 21. Settings → Screen helpers → Screen access section ──
 # ScreenAccessSection renders below the Tap to Walk switch (API 30+ only)
 # — off-screen in step 20's screenshot. Scroll further to capture the Game
 # status block on its own.
@@ -1416,8 +1416,8 @@ if should_run_step "21"; then
   go_idle
   tap_text_below "Settings" "$CARD_Y_MIN"
   wait_s 2 "Settings loading"
-  tap_text "Menus"
-  wait_s 2 "Menus loading"
+  tap_text "Screen helpers"
+  wait_s 2 "Screen helpers loading"
   for _ in 1 2 3 4 5 6 7 8; do
     dump=$(ui_dump)
     found=$(grep -c 'text="Screen access"' "$dump" || true)
@@ -1501,8 +1501,8 @@ if should_run_step "25"; then
   go_idle
   tap_text_below "Settings" "$CARD_Y_MIN"
   wait_s 2 "Settings loading"
-  tap_text "Menus"
-  wait_s 2 "Menus loading"
+  tap_text "Screen helpers"
+  wait_s 2 "Screen helpers loading"
   scroll_until_text "Enable Tap to Walk" || true
   if [[ "$(switch_is_on "Enable Tap to Walk")" == "True" ]]; then
     tap_switch_for "Enable Tap to Walk"

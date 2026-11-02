@@ -23,7 +23,9 @@
     <string name="settings_hub_realism">"Randomness &amp; realism"</string>
     <string name="settings_hub_realism_desc">"Location randomness, speed variation, GPS signal realism, and location memory."</string>
     <string name="settings_hub_menus">"Menus"</string>
-    <string name="settings_hub_menus_desc">"Widget and map buttons, speed cycle, Tap to Walk, and Reconnect accessory."</string>
+    <string name="settings_hub_menus_desc">"Widget and map buttons and speed cycle."</string>
+    <string name="settings_hub_screen_helpers">"Screen helpers"</string>
+    <string name="settings_hub_screen_helpers_desc">"Tap to Walk, Reconnect accessory, and the screen access they need."</string>
     <string name="settings_hub_general">"General"</string>
     <string name="settings_hub_general_desc">"Game setup, language, theme, map source, place search, privacy, and debug."</string>
     <string name="settings_hub_favorites_and_routes">"Favorites &amp; Routes"</string>

@@ -23,7 +23,9 @@
     <string name="settings_hub_realism">"隨機性與真實度"</string>
     <string name="settings_hub_realism_desc">"位置隨機性、速度波動、GPS 訊號真實度與位置記憶。"</string>
     <string name="settings_hub_menus">"選單"</string>
-    <string name="settings_hub_menus_desc">"浮動小工具與地圖按鈕、速度切換、點擊行走及重新連線配件。"</string>
+    <string name="settings_hub_menus_desc">"浮動小工具與地圖按鈕及速度切換。"</string>
+    <string name="settings_hub_screen_helpers">"螢幕助手"</string>
+    <string name="settings_hub_screen_helpers_desc">"點擊行走、重新連線配件及其所需的螢幕存取。"</string>
     <string name="settings_hub_general">"一般"</string>
     <string name="settings_hub_general_desc">"遊戲設定、語言、主題、地圖來源、地點搜尋、隱私與除錯。"</string>
     <string name="settings_hub_favorites_and_routes">"收藏與路線"</string>

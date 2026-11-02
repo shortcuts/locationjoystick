@@ -47,7 +47,7 @@ import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.feature.settings.impl.R
 
-private enum class SettingsSection { GPS, REALISM, MENUS, GENERAL, FAVORITES_ROUTES, ROAMING, CAPTURE }
+private enum class SettingsSection { GPS, REALISM, MENUS, SCREEN_HELPERS, GENERAL, FAVORITES_ROUTES, ROAMING, CAPTURE }
 
 private sealed class PendingImport {
     data class File(
@@ -586,6 +586,19 @@ internal fun SettingsScreen(
                 onToggleSpoofing = onToggleSpoofing,
                 locationLabel = locationLabel,
                 onAction = onAction,
+                bottomBar = bottomBar,
+                snackbarHost = snackbarHost,
+            )
+        }
+
+        SettingsSection.SCREEN_HELPERS -> {
+            SettingsScreenHelpersSubScreen(
+                uiState = uiState,
+                onNavigateBack = back,
+                isSpoofing = isSpoofing,
+                onToggleSpoofing = onToggleSpoofing,
+                locationLabel = locationLabel,
+                onAction = onAction,
                 onCheckScreenService = onCheckScreenService,
                 bottomBar = bottomBar,
                 snackbarHost = snackbarHost,
@@ -765,25 +778,35 @@ private fun SettingsHubScreen(
                         description = stringResource(R.string.settings_hub_menus_desc),
                         onClick = { onNavigate(SettingsSection.MENUS) },
                     ),
-                    DestinationCardSpec(
-                        icon = LjIcons.Favorite,
-                        title = stringResource(R.string.settings_hub_favorites_and_routes),
-                        description = stringResource(R.string.settings_hub_favorites_and_routes_desc),
-                        onClick = { onNavigate(SettingsSection.FAVORITES_ROUTES) },
+                ) +
+                    listOfNotNull(
+                        DestinationCardSpec(
+                            icon = LjIcons.Visibility,
+                            title = stringResource(R.string.settings_hub_screen_helpers),
+                            description = stringResource(R.string.settings_hub_screen_helpers_desc),
+                            onClick = { onNavigate(SettingsSection.SCREEN_HELPERS) },
+                        ).takeIf { showsScreenHelpersCard(uiState.guidedPath) },
+                    ) +
+                    listOf(
+                        DestinationCardSpec(
+                            icon = LjIcons.Favorite,
+                            title = stringResource(R.string.settings_hub_favorites_and_routes),
+                            description = stringResource(R.string.settings_hub_favorites_and_routes_desc),
+                            onClick = { onNavigate(SettingsSection.FAVORITES_ROUTES) },
+                        ),
+                        DestinationCardSpec(
+                            icon = LjIcons.Explore,
+                            title = stringResource(R.string.settings_hub_roaming),
+                            description = stringResource(R.string.settings_hub_roaming_desc),
+                            onClick = { onNavigate(SettingsSection.ROAMING) },
+                        ),
+                        DestinationCardSpec(
+                            icon = LjIcons.Link,
+                            title = stringResource(R.string.settings_hub_capture),
+                            description = stringResource(R.string.settings_hub_capture_desc),
+                            onClick = { onNavigate(SettingsSection.CAPTURE) },
+                        ),
                     ),
-                    DestinationCardSpec(
-                        icon = LjIcons.Explore,
-                        title = stringResource(R.string.settings_hub_roaming),
-                        description = stringResource(R.string.settings_hub_roaming_desc),
-                        onClick = { onNavigate(SettingsSection.ROAMING) },
-                    ),
-                    DestinationCardSpec(
-                        icon = LjIcons.Link,
-                        title = stringResource(R.string.settings_hub_capture),
-                        description = stringResource(R.string.settings_hub_capture_desc),
-                        onClick = { onNavigate(SettingsSection.CAPTURE) },
-                    ),
-                ),
         )
     }
 }
