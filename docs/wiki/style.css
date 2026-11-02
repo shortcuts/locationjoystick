@@ -372,17 +372,26 @@ blockquote p, blockquote em{margin:0}
   border-radius:var(--r);
 }
 
-/* Wide screens: the screenshot hangs in the right margin and stays in view while its section scrolls. */
-@media(min-width:1320px){
+/* Below 1000px the text column is too narrow for a side shot, so the shot stays under the heading. */
+@media(min-width:1000px){
   .has-shot{
     display:grid;
     grid-template-columns:minmax(0,1fr) 200px;
     column-gap:32px;
-    margin-right:-232px;
   }
   .has-shot > *{grid-column:1}
   .has-shot > .shot{grid-column:2;grid-row:1 / span 100;margin-top:8px}
   .shot img{position:sticky;top:24px;margin:0}
+}
+
+/* Keeps the text column near 430px beside the 200px shot. */
+@media(min-width:1000px) and (max-width:1319px){
+  main{max-width:800px}
+}
+
+/* Only 1320px and up leaves room for the 232px overhang into the right margin. */
+@media(min-width:1320px){
+  .has-shot{margin-right:-232px}
 }
 
 .section-bullets{

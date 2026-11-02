@@ -50,7 +50,55 @@ def test_code_blocks_wrap_long_urls_on_phones():
     assert "overflow-wrap:anywhere" in rule.group(1), rule.group(1)
 
 
+def media_bodies(query):
+    target = re.sub(r"\s", "", query)
+    bodies = []
+    for match in re.finditer(r"@media([^{]*)\{", CSS):
+        if re.sub(r"\s", "", match.group(1)) != target:
+            continue
+        depth, i = 1, match.end()
+        while depth:
+            depth += {"{": 1, "}": -1}.get(CSS[i], 0)
+            i += 1
+        bodies.append(CSS[match.end():i - 1])
+    return bodies
+
+
+def has_shot_rule(body):
+    found = re.search(r"\.has-shot\{([^}]*)\}", body)
+    return found.group(1) if found else ""
+
+
+GRID_QUERY = "(min-width:1000px)"
+TEXT_BAND_QUERY = "(min-width:1000px) and (max-width:1319px)"
+WIDE_QUERY = "(min-width:1320px)"
+
+
+def test_shot_floats_beside_text_from_1000px():
+    bodies = media_bodies(GRID_QUERY)
+    assert bodies, "no @media(min-width:1000px) block"
+    rules = [has_shot_rule(b) for b in bodies]
+    assert any("grid-template-columns:minmax(0,1fr) 200px" in r for r in rules), rules
+
+
+def test_right_margin_shot_only_from_1320px():
+    assert "margin-right:-232px" in has_shot_rule(media_bodies(WIDE_QUERY)[0])
+    bodies = media_bodies(GRID_QUERY)
+    assert bodies, "no @media(min-width:1000px) block"
+    for body in bodies:
+        assert "margin-right" not in has_shot_rule(body), body
+
+
+def test_text_column_stays_wide_beside_shot_1000_to_1319px():
+    bodies = media_bodies(TEXT_BAND_QUERY)
+    assert bodies, "no @media(min-width:1000px) and (max-width:1319px) block"
+    assert any(re.search(r"main\{[^}]*max-width:800px", b) for b in bodies)
+
+
 if __name__ == "__main__":
     test_item_headings_are_not_smaller_than_body()
     test_code_blocks_wrap_long_urls_on_phones()
+    test_shot_floats_beside_text_from_1000px()
+    test_right_margin_shot_only_from_1320px()
+    test_text_column_stays_wide_beside_shot_1000_to_1319px()
     print("ok")
