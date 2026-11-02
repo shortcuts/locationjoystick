@@ -44,6 +44,8 @@ Do not mix types on one page. If content fits multiple types (e.g. an explanatio
 
 Put a screenshot in the section it illustrates. Wrap the section in `<section class="has-shot">` and place `<aside class="shot"><img class="phone-shot" …></aside>` right after the section heading. On wide screens the screenshot floats in the right margin and scrolls with that section only. On narrow screens it sits under the heading. Use one screenshot per section.
 
+Only the landing page carries a hero (`.hero`). Use `.btn` for the one primary action on a page, never two.
+
 ### Length and clarity
 
 - Sentences must be under 20 words. One idea per sentence.

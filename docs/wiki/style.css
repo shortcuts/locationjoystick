@@ -532,6 +532,41 @@ ul.trouble li{
 .gh-star-count{font-weight:600}
 .sidebar-foot-lic{margin-left:4px}
 
+/* ── Landing hero ── */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  min-height:48px;
+  padding:0 24px;
+  border-radius:var(--r-pill);
+  background:var(--accent);
+  color:var(--bg);
+  font-weight:600;
+  text-decoration:none;
+}
+.btn:hover{filter:brightness(1.1);text-decoration:none}
+.btn:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.hero{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 200px;
+  gap:32px;
+  align-items:center;
+  margin-bottom:32px;
+}
+.hero-shot{
+  display:block;
+  width:100%;
+  max-width:200px;
+  height:auto;
+  border:1px solid var(--border);
+  border-radius:var(--r);
+}
+.hero-actions{display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px}
+.hero-alt{color:var(--muted)}
+@media(max-width:680px){
+  .hero{grid-template-columns:minmax(0,1fr)}
+}
+
 /* ── Nav extras ── */
 .nav-outline{display:flex;flex-direction:column;margin:2px 0 8px 26px;border-left:1px solid color-mix(in srgb,var(--border) 45%,transparent)}
 .nav-outline a{display:block;padding:4px 16px 4px 12px;margin-left:-1px;font-size:0.75rem;font-weight:400;line-height:1.35;color:var(--muted);background:none;border-left:2px solid transparent}
