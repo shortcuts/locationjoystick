@@ -301,13 +301,15 @@ internal fun MapScreen(
         bottomBar = bottomBar,
         snackbarHost = { LjSnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            MapFabColumn(
-                uiState = uiState,
-                isFollowingCamera = isFollowingCamera.value,
-                lastFollowedPosition = lastFollowedPosition.value,
-                onAction = onAction,
-                onToggleSearch = { showSearch.value = !showSearch.value },
-            )
+            if (!uiState.hasModalSheetOpen) {
+                MapFabColumn(
+                    uiState = uiState,
+                    isFollowingCamera = isFollowingCamera.value,
+                    lastFollowedPosition = lastFollowedPosition.value,
+                    onAction = onAction,
+                    onToggleSearch = { showSearch.value = !showSearch.value },
+                )
+            }
         },
     ) { paddingValues ->
         Box(

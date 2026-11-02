@@ -83,3 +83,12 @@ val MapUiState.isRoutePaused: Boolean
 
 val MapUiState.showJitterRadiusOverlay: Boolean
     get() = debugStatsEnabled && currentPosition != null && jitterRadiusMeters > 0.0
+
+// Mirrors the modal sheets rendered in MapScreen; a minimized roaming sheet is not modal.
+val MapUiState.hasModalSheetOpen: Boolean
+    get() =
+        showRoutesSheet ||
+            showFavoritesSheet ||
+            showPasteCoordinatesSheet ||
+            (isPendingTapSheetOpen && pendingTapPosition != null) ||
+            (showRoamingSheet && !isRoamingSheetMinimized && roamingDraft != null)
