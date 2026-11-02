@@ -2,6 +2,7 @@ package com.locationjoystick.feature.settings.impl
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,8 +55,78 @@ internal fun SettingsGpsSubScreen(
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
 ) {
-    LjScaffold(
+    SettingsGpsScaffold(
         title = stringResource(R.string.settings_gps_movement_and_gps),
+        uiState = uiState,
+        onNavigateBack = onNavigateBack,
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
+        locationLabel = locationLabel,
+        bottomBar = bottomBar,
+        snackbarHost = snackbarHost,
+    ) {
+        SpeedProfilesSection(uiState, onAction)
+    }
+}
+
+@Composable
+internal fun SettingsRealismSubScreen(
+    uiState: SettingsUiState,
+    onNavigateBack: () -> Unit,
+    isSpoofing: Boolean,
+    onToggleSpoofing: () -> Unit,
+    locationLabel: String? = null,
+    onAction: (SettingsAction) -> Unit,
+    bottomBar: @Composable () -> Unit,
+    snackbarHost: @Composable () -> Unit,
+) {
+    SettingsGpsScaffold(
+        title = stringResource(R.string.settings_hub_realism),
+        uiState = uiState,
+        onNavigateBack = onNavigateBack,
+        isSpoofing = isSpoofing,
+        onToggleSpoofing = onToggleSpoofing,
+        locationLabel = locationLabel,
+        bottomBar = bottomBar,
+        snackbarHost = snackbarHost,
+    ) {
+        val isMph = uiState.speedUnit == SpeedUnit.MPH
+        GpsJitterSection(uiState, isMph, onAction)
+        SettingsSectionDivider()
+        GpsRealismSection(uiState, isMph, onAction)
+        SettingsSectionDivider()
+        SettingsSectionHeader(stringResource(R.string.settings_gps_location_memory))
+        Spacer(modifier = Modifier.height(LjSpacing.xs))
+        Text(
+            stringResource(R.string.settings_gps_controls_whether_the_app_remembers_where),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(LjSpacing.sm))
+        LjSelectionRow(
+            mode = LjSelectionMode.Multi,
+            checked = uiState.rememberLastLocation,
+            onCheckedChange = { onAction(SettingsAction.SetRememberLastLocation(it)) },
+            title = stringResource(R.string.settings_gps_remember_last_location),
+            description = stringResource(R.string.settings_gps_remember_last_location_desc),
+        )
+    }
+}
+
+@Composable
+private fun SettingsGpsScaffold(
+    title: String,
+    uiState: SettingsUiState,
+    onNavigateBack: () -> Unit,
+    isSpoofing: Boolean,
+    onToggleSpoofing: () -> Unit,
+    locationLabel: String?,
+    bottomBar: @Composable () -> Unit,
+    snackbarHost: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    LjScaffold(
+        title = title,
         isSpoofing = isSpoofing,
         onToggleSpoofing = onToggleSpoofing,
         locationLabel = locationLabel,
@@ -65,43 +136,17 @@ internal fun SettingsGpsSubScreen(
         snackbarHost = snackbarHost,
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-
-                else -> {
-                    val isMph = uiState.speedUnit == SpeedUnit.MPH
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(settingsScrollPadding()),
-                    ) {
-                        SpeedProfilesSection(uiState, onAction)
-                        SettingsSectionDivider()
-                        GpsJitterSection(uiState, isMph, onAction)
-                        SettingsSectionDivider()
-                        GpsRealismSection(uiState, isMph, onAction)
-                        SettingsSectionDivider()
-                        SettingsSectionHeader(stringResource(R.string.settings_gps_location_memory))
-                        Spacer(modifier = Modifier.height(LjSpacing.xs))
-                        Text(
-                            stringResource(R.string.settings_gps_controls_whether_the_app_remembers_where),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(modifier = Modifier.height(LjSpacing.sm))
-                        LjSelectionRow(
-                            mode = LjSelectionMode.Multi,
-                            checked = uiState.rememberLastLocation,
-                            onCheckedChange = { onAction(SettingsAction.SetRememberLastLocation(it)) },
-                            title = stringResource(R.string.settings_gps_remember_last_location),
-                            description = stringResource(R.string.settings_gps_remember_last_location_desc),
-                        )
-                    }
-                }
+            if (uiState.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(settingsScrollPadding()),
+                    content = content,
+                )
             }
         }
     }

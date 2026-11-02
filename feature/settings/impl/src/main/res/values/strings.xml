@@ -19,7 +19,9 @@
     <string name="settings_hub_report">"Report"</string>
     <string name="settings_hub_menu_hint">"Export, import, and reset are in the ⋮ menu at the top. Use them to move to a new phone."</string>
     <string name="settings_hub_movement_and_gps">"Movement &amp; GPS"</string>
-    <string name="settings_hub_movement_and_gps_desc">"Speed presets, signal realism, and location randomness for all movement modes."</string>
+    <string name="settings_hub_movement_and_gps_desc">"Speed presets and the km/h or mph unit for all movement modes."</string>
+    <string name="settings_hub_realism">"Randomness &amp; realism"</string>
+    <string name="settings_hub_realism_desc">"Location randomness, speed variation, GPS signal realism, and location memory."</string>
     <string name="settings_hub_menus">"Menus"</string>
     <string name="settings_hub_menus_desc">"Widget and map buttons, speed cycle, Tap to Walk, and Reconnect accessory."</string>
     <string name="settings_hub_general">"General"</string>

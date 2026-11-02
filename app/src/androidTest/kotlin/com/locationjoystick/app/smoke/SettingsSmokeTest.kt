@@ -28,7 +28,7 @@ class SettingsSmokeTest : BaseSmokeTest() {
 
     @Test
     fun settings_hub_order_is_general_gps_menus_favorites_roaming_capture() {
-        val labels = listOf("General", "Movement & GPS", "Menus", "Favorites & Routes", "Roaming", "Capture")
+        val labels = listOf("General", "Movement & GPS", "Randomness & realism", "Menus", "Favorites & Routes", "Roaming", "Capture")
         val tops =
             labels.map {
                 // The drawer also has a "Capture" tab; the hub card comes first.
@@ -67,21 +67,21 @@ class SettingsSmokeTest : BaseSmokeTest() {
 
     @Test
     fun settings_shows_gps_jitter_section() {
-        composeRule.onNodeWithText("Movement & GPS").performClick()
+        composeRule.onNodeWithText("Randomness & realism").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Location randomness").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_gps_realism_section() {
-        composeRule.onNodeWithText("Movement & GPS").performClick()
+        composeRule.onNodeWithText("Randomness & realism").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("GPS Realism").performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun settings_shows_map_section() {
-        composeRule.onNodeWithText("Movement & GPS").performClick()
+        composeRule.onNodeWithText("Randomness & realism").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Remember last location").performScrollTo().assertIsDisplayed()
     }
@@ -102,7 +102,7 @@ class SettingsSmokeTest : BaseSmokeTest() {
 
     @Test
     fun settings_shows_location_memory_section() {
-        composeRule.onNodeWithText("Movement & GPS").performClick()
+        composeRule.onNodeWithText("Randomness & realism").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Location memory").performScrollTo().assertIsDisplayed()
     }

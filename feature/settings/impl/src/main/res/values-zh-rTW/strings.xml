@@ -19,7 +19,9 @@
     <string name="settings_hub_report">"意見反應"</string>
     <string name="settings_hub_menu_hint">"匯出、匯入和重設位於頂端的 ⋮ 選單。換新手機時請使用。"</string>
     <string name="settings_hub_movement_and_gps">"移動與 GPS"</string>
-    <string name="settings_hub_movement_and_gps_desc">"所有移動模式的速度預設、訊號真實度與位置隨機性設定。"</string>
+    <string name="settings_hub_movement_and_gps_desc">"所有移動模式的速度預設與 km/h、mph 單位。"</string>
+    <string name="settings_hub_realism">"隨機性與真實度"</string>
+    <string name="settings_hub_realism_desc">"位置隨機性、速度波動、GPS 訊號真實度與位置記憶。"</string>
     <string name="settings_hub_menus">"選單"</string>
     <string name="settings_hub_menus_desc">"浮動小工具與地圖按鈕、速度切換、點擊行走及重新連線配件。"</string>
     <string name="settings_hub_general">"一般"</string>

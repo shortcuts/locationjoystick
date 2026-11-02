@@ -47,7 +47,7 @@ import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.feature.settings.impl.R
 
-private enum class SettingsSection { GPS, MENUS, GENERAL, FAVORITES_ROUTES, ROAMING, CAPTURE }
+private enum class SettingsSection { GPS, REALISM, MENUS, GENERAL, FAVORITES_ROUTES, ROAMING, CAPTURE }
 
 private sealed class PendingImport {
     data class File(
@@ -564,6 +564,19 @@ internal fun SettingsScreen(
             )
         }
 
+        SettingsSection.REALISM -> {
+            SettingsRealismSubScreen(
+                uiState = uiState,
+                onNavigateBack = back,
+                isSpoofing = isSpoofing,
+                onToggleSpoofing = onToggleSpoofing,
+                locationLabel = locationLabel,
+                onAction = onAction,
+                bottomBar = bottomBar,
+                snackbarHost = snackbarHost,
+            )
+        }
+
         SettingsSection.MENUS -> {
             SettingsMenusSubScreen(
                 uiState = uiState,
@@ -739,6 +752,12 @@ private fun SettingsHubScreen(
                         title = stringResource(R.string.settings_hub_movement_and_gps),
                         description = stringResource(R.string.settings_hub_movement_and_gps_desc),
                         onClick = { onNavigate(SettingsSection.GPS) },
+                    ),
+                    DestinationCardSpec(
+                        icon = LjIcons.MyLocation,
+                        title = stringResource(R.string.settings_hub_realism),
+                        description = stringResource(R.string.settings_hub_realism_desc),
+                        onClick = { onNavigate(SettingsSection.REALISM) },
                     ),
                     DestinationCardSpec(
                         icon = LjIcons.Joystick,
