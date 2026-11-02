@@ -632,7 +632,10 @@ nav details > a{display:block}
   .layout{grid-template-columns:minmax(0,1fr)}
 
   .sidebar{
-    position:relative;
+    position:sticky;
+    top:0;
+    z-index:10;
+    background:var(--bg);
     height:auto;
     border-right:none;
     border-bottom:1px solid var(--rule);
@@ -662,8 +665,14 @@ nav details > a{display:block}
 
   nav{
     display:none;
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    overflow-y:auto;
     flex-direction:column;
     padding:8px 0 4px;
+    background:var(--bg);
     border-top:1px solid var(--rule);
   }
 

@@ -108,8 +108,24 @@
     + '<div class="sr-only" id="live-status" role="status"></div>');
 
   var toggle = document.querySelector('.nav-toggle-btn');
+  var siteNav = document.getElementById('site-nav');
+  // Fixed panel sits under the sticky header, whose height varies, so measure it on open.
+  var setNavOpen = function (open) {
+    if (open) siteNav.style.top = document.querySelector('.sidebar').getBoundingClientRect().bottom + 'px';
+    siteNav.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+  };
   toggle.addEventListener('click', function () {
-    toggle.setAttribute('aria-expanded', String(document.getElementById('site-nav').classList.toggle('open')));
+    setNavOpen(!siteNav.classList.contains('open'));
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && siteNav.classList.contains('open')) {
+      setNavOpen(false);
+      toggle.focus();
+    }
+  });
+  siteNav.addEventListener('click', function (e) {
+    if (e.target.closest('a')) setNavOpen(false);
   });
 
   // Unauthenticated GitHub API allows 60 requests/hour per IP; cache the count for the tab session.
