@@ -95,10 +95,41 @@ def test_text_column_stays_wide_beside_shot_1000_to_1319px():
     assert any(re.search(r"main\{[^}]*max-width:800px", b) for b in bodies)
 
 
+def mobile_rules():
+    marker = "@media(max-width:680px){"
+    rules = {}
+    position = CSS.find(marker)
+    while position != -1:
+        start = position + len(marker)
+        depth, end = 1, start
+        while depth:
+            depth += {"{": 1, "}": -1}.get(CSS[end], 0)
+            end += 1
+        block = re.sub(r"/\*.*?\*/", "", CSS[start:end], flags=re.S)
+        for selector_list, declarations in re.findall(r"([^{}]+)\{([^{}]*)\}", block):
+            selector = " ".join(selector_list.split())
+            rules.setdefault(selector, []).append(declarations)
+        position = CSS.find(marker, end)
+    return rules
+
+
+def min_height_px(declarations):
+    found = re.findall(r"min-height:([\d.]+)px", declarations)
+    return float(found[-1]) if found else 0.0
+
+
+def test_mobile_nav_and_toc_links_are_tall_enough_to_tap():
+    rules = mobile_rules()
+    for selector in ("nav a", ".nav-outline a", ".page-toc a"):
+        heights = [min_height_px(d) for d in rules.get(selector, [])]
+        assert max(heights, default=0.0) >= 48, f"{selector} min-height at 680px: {heights}"
+
+
 if __name__ == "__main__":
     test_item_headings_are_not_smaller_than_body()
     test_code_blocks_wrap_long_urls_on_phones()
     test_shot_floats_beside_text_from_1000px()
     test_right_margin_shot_only_from_1320px()
     test_text_column_stays_wide_beside_shot_1000_to_1319px()
+    test_mobile_nav_and_toc_links_are_tall_enough_to_tap()
     print("ok")

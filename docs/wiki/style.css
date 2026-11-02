@@ -306,7 +306,7 @@ blockquote p, blockquote em{margin:0}
 
 @media(max-width:680px){
   .page-toc{display:block}
-  .page-toc a{display:block;padding:8px 0}
+  .page-toc a{display:block;padding:8px 0;min-height:48px}
 }
 
 /* ── API reference endpoint cards ── */
@@ -689,9 +689,10 @@ nav details > a{display:block}
 
   nav a{
     padding:9px 12px 9px 32px;
+    min-height:48px;
   }
 
-  .nav-outline a{padding:7px 16px 7px 12px}
+  .nav-outline a{padding:7px 16px 7px 12px;min-height:48px}
 
   .sidebar-foot{display:none}
 
