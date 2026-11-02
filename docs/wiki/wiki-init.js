@@ -61,10 +61,11 @@
 
   var navHtml = NAV_ITEMS.map(function (g) {
     var gid = 'nav-group-' + g.group.toLowerCase();
-    return '<div role="group" aria-labelledby="' + gid + '"><span class="nav-group" id="' + gid + '">' + svg(GROUP_ICONS[g.group]) + g.group + '</span>' + g.items.map(function (item) {
+    var hasCurrent = g.items.some(function (item) { return item.href === currentFile; });
+    return '<div role="group" aria-labelledby="' + gid + '"><details' + (hasCurrent ? ' open' : '') + '><summary class="nav-group" id="' + gid + '">' + svg(GROUP_ICONS[g.group]) + g.group + '</summary>' + g.items.map(function (item) {
       var cls = item.href === currentFile ? ' class="active" aria-current="page"' : '';
       return '<a href="' + item.href + '"' + cls + '>' + item.label + '</a>';
-    }).join('') + '</div>';
+    }).join('') + '</details></div>';
   }).join('');
 
   navHtml += '<span class="nav-sep"></span>';

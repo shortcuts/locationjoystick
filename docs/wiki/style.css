@@ -556,12 +556,29 @@ h2[id],h3[id]{scroll-margin-top:16px}
   padding:24px 24px 8px;
 }
 .nav-group svg{flex-shrink:0;color:var(--muted)}
-nav [role=group]:first-child > .nav-group{padding-top:8px}
+summary.nav-group{cursor:pointer;list-style:none}
+summary.nav-group::-webkit-details-marker{display:none}
+summary.nav-group::after{
+  content:"";
+  flex-shrink:0;
+  width:6px;
+  height:6px;
+  margin-left:auto;
+  border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor;
+  color:var(--muted);
+  transform:rotate(-45deg);
+  transition:transform 0.15s;
+}
+summary.nav-group:hover::after{color:var(--text)}
+details[open] > summary.nav-group::after{transform:rotate(45deg)}
+nav [role=group]:first-child > details > .nav-group{padding-top:8px}
 
 nav a.nav-ext{font-size:0.8125rem;font-weight:400;display:flex;align-items:center;justify-content:space-between;gap:8px}
 nav a.nav-ext svg{flex-shrink:0;opacity:0.7}
 
 nav [role=group]{display:flex;flex-direction:column}
+nav details > a{display:block}
 
 .skip-link{position:absolute;left:8px;top:-60px;z-index:10;padding:8px 12px;background:var(--accent);color:var(--bg);border-radius:var(--r)}
 .skip-link:focus{top:8px}
