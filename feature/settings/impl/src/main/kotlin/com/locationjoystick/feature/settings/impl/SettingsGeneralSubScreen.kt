@@ -96,7 +96,9 @@ internal fun SettingsGeneralSubScreen(
                         SettingsSectionDivider()
                         GeocodingSection(uiState, onAction)
                         SettingsSectionDivider()
-                        PrivacySection(uiState, onAction)
+                        TeleportWalkingSection(uiState, onAction)
+                        SettingsSectionDivider()
+                        HideAppSection(uiState, onAction)
                         SettingsSectionDivider()
                         DebugSection(uiState, onAction)
                     }
@@ -266,11 +268,11 @@ private fun ThemeSection(
 }
 
 @Composable
-private fun PrivacySection(
+private fun TeleportWalkingSection(
     uiState: SettingsUiState,
     onAction: (SettingsAction) -> Unit,
 ) {
-    SettingsSectionHeader(stringResource(R.string.settings_menus_privacy))
+    SettingsSectionHeader(stringResource(R.string.settings_menus_teleport_walking))
     Spacer(Modifier.height(LjSpacing.xs))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
@@ -287,7 +289,15 @@ private fun PrivacySection(
         title = stringResource(R.string.settings_menus_floating_map_quick_walk),
         description = stringResource(R.string.settings_menus_floating_map_quick_walk_desc),
     )
-    Spacer(Modifier.height(LjSpacing.sm))
+}
+
+@Composable
+private fun HideAppSection(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    SettingsSectionHeader(stringResource(R.string.settings_menus_hide_app))
+    Spacer(Modifier.height(LjSpacing.xs))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
         checked = uiState.hideWidgetOverlay,

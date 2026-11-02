@@ -120,7 +120,8 @@
     <string name="settings_menus_a_screen_overlay_that_intercepts_taps">"A screen overlay that intercepts taps can make some games more likely to detect it. Use at your own risk."</string>
     <string name="settings_menus_enable_anyway">"Enable anyway"</string>
     <string name="common_cancel">"Cancel"</string>
-    <string name="settings_menus_privacy">"Privacy"</string>
+    <string name="settings_menus_teleport_walking">"Teleport and walking"</string>
+    <string name="settings_menus_hide_app">"Hide the app"</string>
     <string name="settings_menus_hide_teleport_features">"Hide teleport features"</string>
     <string name="settings_menus_hide_teleport_features_desc">"Removes every teleport option from the map, favorites, routes, Group Sync, and the widget. Only walking and route replay remain."</string>
     <string name="settings_menus_floating_map_quick_walk">"Floating map quick walk"</string>

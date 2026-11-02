@@ -7,7 +7,7 @@ Key files: the settings model and repository, the settings menu, and every scree
 ## Behaviour
 
 - Off by default. It is saved with the settings and round-trips through export.
-- Lives under Settings → General → Privacy.
+- Lives under Settings → General → Teleport and walking.
 - When on, each teleport control is removed from its composable tree, not just disabled. A visible but inert button is a trap for the user. Affected entry points cover the map's long-press sheets, the favorites and route sheets and pickers, the paste builders, the widget panels, the Group Sync leader teleport and follower snap, and route jump buttons.
 - Teleport-between-waypoints is removed with it. A route start still walks to its first stop instead of teleporting.
 - A saved teleport route walks its waypoints while the setting is on, because only walking and route replay may remain. The Control API bypass still hops it.

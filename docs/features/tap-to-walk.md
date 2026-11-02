@@ -8,7 +8,7 @@ Agents: this file is the working memory for Tap to Walk. Read "Ground map: flow-
 
 ## Why the settings sit where they do
 
-Tier 1's toggle is in the Privacy group, next to Hide Teleport Features, because Floating Map Quick Walk is a standalone feature. It is not one of the features that setting hides ([hide-teleport.md](hide-teleport.md)). Tier 2 lives under the Tap to Walk menu. Screen access has no toggle of its own: it is on whenever the accessibility service is granted.
+Tier 1's toggle is in the Teleport and walking group, next to Hide Teleport Features, because Floating Map Quick Walk is a standalone feature. It is not one of the features that setting hides ([hide-teleport.md](hide-teleport.md)). Tier 2 lives under the Tap to Walk menu. Screen access has no toggle of its own: it is on whenever the accessibility service is granted.
 
 ## Tier 1 — Floating Map Quick Walk
 

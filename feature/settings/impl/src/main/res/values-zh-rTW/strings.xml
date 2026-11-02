@@ -107,7 +107,8 @@
     <string name="settings_menus_a_screen_overlay_that_intercepts_taps">"攔截點擊的螢幕懸浮層可能會提高部分遊戲的偵測機率。請自行承擔風險。"</string>
     <string name="settings_menus_enable_anyway">"仍然啟用"</string>
     <string name="common_cancel">"取消"</string>
-    <string name="settings_menus_privacy">"隱私權"</string>
+    <string name="settings_menus_teleport_walking">"瞬移與行走"</string>
+    <string name="settings_menus_hide_app">"隱藏應用程式"</string>
     <string name="settings_menus_hide_teleport_features">"隱藏瞬移功能"</string>
     <string name="settings_menus_hide_teleport_features_desc">"移除應用程式內所有瞬移入口 — 地圖、收藏、路線、群組同步與浮動小工具。僅保留步行與路線重播。"</string>
     <string name="settings_menus_floating_map_quick_walk">"懸浮地圖快速行走"</string>
