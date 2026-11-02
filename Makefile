@@ -44,6 +44,8 @@ tail-log-on-phone:
 
 test:
 	./gradlew testRelease
+	python3 scripts/test_wiki_style.py
+	python3 scripts/test_wiki_nav.py
 
 coverage:
 	./gradlew koverHtmlReport koverXmlReport
