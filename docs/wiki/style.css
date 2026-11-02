@@ -22,6 +22,7 @@
   --nav-w: 240px;
   --r: 12px;
   --r-sm: 8px;
+  --r-pill: 999px;
 }
 
 @media(prefers-color-scheme:light){
@@ -75,8 +76,8 @@ table{font-variant-numeric:tabular-nums}
 .brand{
   display:flex;
   align-items:center;
-  gap:10px;
-  padding:20px 20px 18px;
+  gap:12px;
+  padding:24px 24px 16px;
   border-bottom:1px solid var(--rule);
   text-decoration:none;
   color:var(--text);
@@ -105,8 +106,8 @@ nav a{
   line-height:1.35;
   color:var(--muted);
   text-decoration:none;
-  padding:6px 10px 6px 34px;
-  margin:1px 10px;
+  padding:8px 12px 8px 32px;
+  margin:1px 12px;
   border-radius:var(--r-sm);
   transition:color 0.1s,background 0.1s;
 }
@@ -120,7 +121,7 @@ nav a.active{
 }
 
 .sidebar-foot{
-  padding:14px 20px;
+  padding:16px 24px;
   border-top:1px solid var(--rule);
   font-size:0.72rem;
   color:var(--muted);
@@ -146,7 +147,7 @@ h1{
   font-weight:700;
   line-height:1.15;
   color:var(--text);
-  margin:0 0 18px;
+  margin:0 0 16px;
   text-wrap:balance;
 }
 
@@ -155,8 +156,8 @@ h2{
   font-weight:600;
   line-height:1.25;
   color:var(--text);
-  margin:56px 0 18px;
-  padding-top:28px;
+  margin:56px 0 16px;
+  padding-top:32px;
   border-top:1px solid var(--border);
   text-wrap:balance;
 }
@@ -181,12 +182,12 @@ h4{
   font-weight:600;
   line-height:1.4;
   color:var(--text);
-  margin:22px 0 6px;
+  margin:24px 0 8px;
 }
 
 h3.item,h4.item{
   font-size:0.95rem;
-  margin:16px 0 6px;
+  margin:16px 0 8px;
   padding-top:12px;
   border-top:1px solid var(--rule);
 }
@@ -195,7 +196,7 @@ h5{
   font-size:0.85rem;
   font-weight:600;
   color:var(--muted);
-  margin:14px 0 4px;
+  margin:16px 0 4px;
 }
 
 h1,h2,h3{position:relative}
@@ -204,7 +205,7 @@ h1,h2,h3{position:relative}
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  margin-left:6px;
+  margin-left:8px;
   padding:0;
   width:24px;
   height:24px;
@@ -233,7 +234,7 @@ h1:hover .heading-link,h2:hover .heading-link,h3:hover .heading-link,.heading-li
 p{
   color:var(--muted);
   line-height:1.72;
-  margin-bottom:14px;
+  margin-bottom:16px;
 }
 
 p:last-child{margin-bottom:0}
@@ -241,8 +242,8 @@ p:last-child{margin-bottom:0}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
 
-ul,ol{padding-left:18px;color:var(--muted)}
-li{margin-bottom:6px;line-height:1.65}
+ul,ol{padding-left:16px;color:var(--muted)}
+li{margin-bottom:8px;line-height:1.65}
 
 strong{color:var(--text);font-weight:600}
 
@@ -272,8 +273,8 @@ pre code{
 }
 
 blockquote{
-  margin:4px 0 20px;
-  padding:10px 16px;
+  margin:4px 0 24px;
+  padding:12px 16px;
   background:var(--surface);
   border:1px solid var(--border);
   border-left:3px solid var(--accent);
@@ -286,8 +287,8 @@ blockquote p, blockquote em{margin:0}
 .page-toc{
   display:none;
   flex-wrap:wrap;
-  gap:6px 16px;
-  margin:0 0 28px;
+  gap:8px 16px;
+  margin:0 0 32px;
   padding:12px 16px;
   background:var(--surface);
   border:1px solid var(--border);
@@ -304,21 +305,21 @@ blockquote p, blockquote em{margin:0}
 
 @media(max-width:680px){
   .page-toc{display:flex;flex-direction:column;gap:2px}
-  .page-toc a{padding:6px 0}
+  .page-toc a{padding:8px 0}
 }
 
 /* ── API reference endpoint cards ── */
 .endpoint{
   min-width:0;
   margin:0 0 16px;
-  padding:14px 16px;
+  padding:16px 16px;
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:var(--r);
   scroll-margin-top:16px;
 }
 .endpoint > p{margin:8px 0 0;font-size:0.88rem;color:var(--muted);line-height:1.55}
-.endpoint-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0;font-size:inherit}
+.endpoint-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0;font-size:inherit}
 .endpoint-path{
   font-family:var(--mono);
   font-size:0.9rem;
@@ -353,7 +354,7 @@ blockquote p, blockquote em{margin:0}
 .param dt code{overflow-wrap:anywhere}
 .param dd{min-width:0;overflow-wrap:anywhere}
 .param-type{font-family:var(--mono);font-size:0.76rem;color:var(--text)}
-.param-flag{font-family:var(--mono);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;margin-right:6px}
+.param-flag{font-family:var(--mono);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;margin-right:8px}
 .endpoint-returns{padding-top:8px;border-top:1px solid var(--border)}
 .endpoint code{overflow-wrap:anywhere}
 @media(max-width:680px){
@@ -371,7 +372,7 @@ blockquote p, blockquote em{margin:0}
 }
 
 /* Wide screens: the screenshot hangs in the right margin and stays in view while its section scrolls. */
-@media(min-width:1280px){
+@media(min-width:1320px){
   .has-shot{
     display:grid;
     grid-template-columns:minmax(0,1fr) 200px;
@@ -392,7 +393,7 @@ blockquote p, blockquote em{margin:0}
 .section-bullets li{
   position:relative;
   padding-left:16px;
-  margin-bottom:10px;
+  margin-bottom:12px;
   font-size:0.875rem;
   color:var(--muted);
   line-height:1.62;
@@ -410,7 +411,7 @@ blockquote p, blockquote em{margin:0}
 .card-grid{
   display:flex;
   flex-direction:column;
-  margin:20px 0;
+  margin:24px 0;
 }
 
 .card{
@@ -440,18 +441,18 @@ blockquote p, blockquote em{margin:0}
 
 /* ── Quick start ── */
 ol.quickstart{
-  padding-left:20px;
+  padding-left:24px;
 }
 
 ol.quickstart li{
   color:var(--muted);
-  margin-bottom:10px;
+  margin-bottom:12px;
   line-height:1.68;
   font-size:0.9rem;
 }
 
 /* ── Troubleshooting list ── */
-ul.trouble{padding-left:18px}
+ul.trouble{padding-left:16px}
 ul.trouble li{
   color:var(--muted);
   margin-bottom:12px;
@@ -502,7 +503,7 @@ ul.trouble li{
   gap:4px;
   padding:3px 7px 3px 5px;
   border:1px solid var(--border);
-  border-radius:var(--r-sm);
+  border-radius:var(--r-pill);
   background:var(--surface);
   color:var(--muted);
   text-decoration:none;
@@ -532,7 +533,7 @@ ul.trouble li{
 .sidebar-foot-lic{margin-left:4px}
 
 /* ── Nav extras ── */
-.nav-outline{display:flex;flex-direction:column;margin:2px 0 6px 26px;border-left:1px solid color-mix(in srgb,var(--border) 45%,transparent)}
+.nav-outline{display:flex;flex-direction:column;margin:2px 0 8px 26px;border-left:1px solid color-mix(in srgb,var(--border) 45%,transparent)}
 .nav-outline a{display:block;padding:4px 16px 4px 12px;margin-left:-1px;font-size:0.75rem;font-weight:400;line-height:1.35;color:var(--muted);background:none;border-left:2px solid transparent}
 .nav-outline a:hover{color:var(--text);background:none}
 .nav-outline a.nav-h3{display:none;padding-left:24px;font-size:0.6875rem}
@@ -552,10 +553,10 @@ h2[id],h3[id]{scroll-margin-top:16px}
   font-size:0.875rem;
   font-weight:700;
   color:var(--text);
-  padding:24px 20px 6px;
+  padding:24px 24px 8px;
 }
 .nav-group svg{flex-shrink:0;color:var(--muted)}
-nav [role=group]:first-child > .nav-group{padding-top:6px}
+nav [role=group]:first-child > .nav-group{padding-top:8px}
 
 nav a.nav-ext{font-size:0.8125rem;font-weight:400;display:flex;align-items:center;justify-content:space-between;gap:8px}
 nav a.nav-ext svg{flex-shrink:0;opacity:0.7}
@@ -584,7 +585,7 @@ nav [role=group]{display:flex;flex-direction:column}
     border-bottom:1px solid var(--rule);
   }
 
-  .brand{padding:14px 66px 12px 16px;min-height:60px}
+  .brand{padding:16px 66px 12px 16px;min-height:60px}
 
   .nav-toggle-btn{
     display:flex;
@@ -597,7 +598,7 @@ nav [role=group]{display:flex;flex-direction:column}
     height:36px;
     background:none;
     border:1px solid var(--border);
-    border-radius:var(--r-sm);
+    border-radius:var(--r-pill);
     cursor:pointer;
     color:var(--muted);
     transition:color 0.1s,border-color 0.1s,transform 0.1s;
@@ -616,17 +617,17 @@ nav [role=group]{display:flex;flex-direction:column}
   nav.open{display:flex}
 
   nav a{
-    padding:9px 10px 9px 34px;
+    padding:9px 12px 9px 32px;
   }
 
   .nav-outline a{padding:7px 16px 7px 12px}
 
   .sidebar-foot{display:none}
 
-  main{padding:28px 16px 56px;min-width:0;overflow-wrap:anywhere}
+  main{padding:32px 16px 56px;min-width:0;overflow-wrap:anywhere}
 
   h1{font-size:1.75rem}
-  h2{font-size:1.25rem;margin-top:44px;padding-top:22px}
+  h2{font-size:1.25rem;margin-top:44px;padding-top:24px}
   h3{font-size:1.05rem}
   nav a{font-size:0.9375rem}
   .nav-outline a{font-size:0.8125rem}
@@ -636,10 +637,10 @@ nav [role=group]{display:flex;flex-direction:column}
 
   .section-bullets li{font-size:0.92rem}
 
-  pre{padding:10px 12px;font-size:0.85rem}
+  pre{padding:12px 12px;font-size:0.85rem}
   .nav-toggle-btn{width:44px;height:44px;top:8px}
 
-  #docsearch{padding:6px 10px;border-bottom:1px solid var(--rule)}
+  #docsearch{padding:8px 12px;border-bottom:1px solid var(--rule)}
   .DocSearch-Button{height:32px}
 }
 
@@ -675,8 +676,8 @@ nav [role=group]{display:flex;flex-direction:column}
   box-sizing:border-box !important;
   width:100% !important;
   margin:0 !important;
-  padding:0 10px !important;
-  border-radius:var(--r-sm) !important;
+  padding:0 12px !important;
+  border-radius:var(--r-pill) !important;
   background:var(--surface) !important;
   border:1px solid var(--border) !important;
   color:var(--muted) !important;
@@ -702,7 +703,7 @@ nav [role=group]{display:flex;flex-direction:column}
   font-family:var(--sans) !important;
   font-size:0.72rem !important;
   color:var(--muted) !important;
-  padding:0 6px !important;
+  padding:0 8px !important;
 }
 
 .DocSearch-Button-Keys{
