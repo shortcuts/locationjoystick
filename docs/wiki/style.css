@@ -296,16 +296,17 @@ blockquote p, blockquote em{margin:0}
   font-size:0.84rem;
 }
 
-.page-toc-title{
-  flex-basis:100%;
+.page-toc summary{
+  padding:8px 0;
   font-size:0.8125rem;
   font-weight:700;
   color:var(--text);
+  cursor:pointer;
 }
 
 @media(max-width:680px){
-  .page-toc{display:flex;flex-direction:column;gap:2px}
-  .page-toc a{padding:8px 0}
+  .page-toc{display:block}
+  .page-toc a{display:block;padding:8px 0}
 }
 
 /* ── API reference endpoint cards ── */

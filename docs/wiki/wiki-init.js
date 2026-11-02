@@ -208,13 +208,15 @@
     var toc = document.createElement('nav');
     toc.className = 'page-toc';
     toc.setAttribute('aria-label', 'On this page');
-    toc.innerHTML = '<span class="page-toc-title">On this page</span>';
+    var details = document.createElement('details');
+    details.innerHTML = '<summary>On this page</summary>';
     tocHeads.forEach(function (h) {
       var a = document.createElement('a');
       a.href = '#' + h.id;
       a.textContent = h.textContent.trim();
-      toc.appendChild(a);
+      details.appendChild(a);
     });
+    toc.appendChild(details);
     lead.after(toc);
   }
 
