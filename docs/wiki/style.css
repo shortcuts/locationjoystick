@@ -140,7 +140,7 @@ main{
 }
 
 /* ── Type ── */
-/* Descending scale: h1 2rem > h2 1.4rem > h3 1.1rem > h4 0.95rem > body 15px.
+/* Descending scale: h1 2rem > h2 1.4rem > h3 1.1rem > h4 1rem = body 16px.
    h2 is plain text with a rule above it: orange is reserved for links and state. */
 h1{
   font-size:1.875rem;
@@ -178,7 +178,7 @@ h3:first-child{margin-top:0}
 h2 + h3{margin-top:0}
 
 h4{
-  font-size:0.95rem;
+  font-size:1rem;
   font-weight:600;
   line-height:1.4;
   color:var(--text);
@@ -186,7 +186,7 @@ h4{
 }
 
 h3.item,h4.item{
-  font-size:0.95rem;
+  font-size:1rem;
   margin:16px 0 8px;
   padding-top:12px;
   border-top:1px solid var(--rule);
