@@ -28,7 +28,17 @@ class SettingsSmokeTest : BaseSmokeTest() {
 
     @Test
     fun settings_hub_order_is_general_gps_menus_screen_helpers_favorites_roaming_capture() {
-        val labels = listOf("General", "Movement & GPS", "Randomness & realism", "Menus", "Screen helpers", "Favorites & Routes", "Roaming", "Capture")
+        val labels =
+            listOf(
+                "General",
+                "Movement & GPS",
+                "Randomness & realism",
+                "Menus",
+                "Screen helpers",
+                "Favorites & Routes",
+                "Roaming",
+                "Capture",
+            )
         val tops =
             labels.map {
                 // The drawer also has a "Capture" tab; the hub card comes first.
