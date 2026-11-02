@@ -22,7 +22,7 @@ Rules that third-party tools rely on:
 
 ### Generating share links
 
-The share action appears beside the recenter and search buttons on the map, on the floating map, and in the long-press and tap sheets. Share copies the coordinates or sends the link. The floating map closes its overlay before the system share sheet opens, so the sheet is not hidden behind it.
+The share action appears in the long-press and tap sheets and on the floating map. The in-app map column has no share button. Share copies the coordinates or sends the link. The floating map closes its overlay before the system share sheet opens, so the sheet is not hidden behind it.
 
 Favorites copy plain coordinates instead of a link. A link for a saved place is not needed, because the place already has a name in the app.
 

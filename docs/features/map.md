@@ -60,7 +60,7 @@ The library's own attribution button is hidden on every map. Each surface shows 
 
 ## Floating action buttons
 
-- The share icon sits under the centre button. It is not part of the configurable set ([location-links.md](location-links.md)).
+- Share is not in the column. It is rarely used, and the column covers much of the right edge. The tap sheet shares a tapped point. Favorites and the widget share the current position ([location-links.md](location-links.md)).
 - Every button is neutral when idle. Walk, routes and roaming use the activity colour rule: green while moving, orange while paused.
 - Routes and roaming buttons stay visible while their session runs, even if the user turned them off. A running session must always be controllable.
 - Paste coordinates is off by default. It is a bottom sheet that accepts decimal or degree-minute-second text. Lines with prose are ignored whole, so a note with numbers in it is not misread as coordinates.
