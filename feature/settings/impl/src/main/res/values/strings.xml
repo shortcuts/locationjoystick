@@ -23,9 +23,9 @@
     <string name="settings_hub_menus">"Menus"</string>
     <string name="settings_hub_menus_desc">"Widget and map buttons, speed cycle, Tap to Walk, and Reconnect accessory."</string>
     <string name="settings_hub_general">"General"</string>
-    <string name="settings_hub_general_desc">"Theme, map source, place search, privacy, and debug."</string>
+    <string name="settings_hub_general_desc">"Game setup, language, theme, map source, place search, privacy, and debug."</string>
     <string name="settings_hub_favorites_and_routes">"Favorites &amp; Routes"</string>
-    <string name="settings_hub_favorites_and_routes_desc">"Hot locations and ready-made routes you can add to your library."</string>
+    <string name="settings_hub_favorites_and_routes_desc">"Last known position, hot locations, and ready-made routes you can add to your library."</string>
     <string name="settings_hub_roaming">"Roaming"</string>
     <string name="settings_hub_roaming_desc">"Default area, distance, speed, and routing style for random walks."</string>
     <string name="settings_hub_capture">"Capture"</string>
