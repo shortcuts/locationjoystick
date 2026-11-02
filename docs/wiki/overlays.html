@@ -94,7 +94,7 @@
     <p>Moving the joystick pauses walk, route, roam, or planting. Destination and progress are kept.</p>
     <ul>
       <li>Tap Resume to continue, or choose a new destination to start over.</li>
-      <li>If you moved with the joystick while paused, Resume walks you back to the route, roam, or walk from where you are. You do not jump.</li>
+      <li>If you moved with the joystick while paused, Resume walks you back to the route, roam, or walk. The walk starts from where you are. You do not jump.</li>
       <li>If you follow a leader, following turns off and you stay in the group.</li>
       <li>Touching the very center, or dragging the outer ring, pauses nothing.</li>
     </ul>
@@ -179,7 +179,7 @@
       <img class="phone-shot" src="screenshots/21_screen_access.png" alt="Screen access settings">
     </aside>
     <p>
-      Tap to Walk works out how your game's map is turned and zoomed (see How taps find their spot below), so the walk target lands correctly on a turned map.
+      Tap to Walk measures how your game's map is turned and zoomed (see How taps find their spot below). That lets the walk target land correctly on a turned map.
       That needs the accessibility feature below.
     </p>
 
@@ -207,13 +207,13 @@
     <section>
     <h3 id="learning-the-map">How taps find their spot</h3>
     <p>
-      Tap to Walk needs to know how your game's map is turned and zoomed, so a tap lands where you tapped. There is nothing to set up and no extra walk.
-      While Tap to Walk is on and your game is in front, the app takes a picture of your screen about every 3 seconds as you walk, with a tap, the joystick or a quick walk.
+      Tap to Walk needs to know how your game's map is turned and zoomed. That way, a tap lands where you tapped. There is nothing to set up and no extra walk.
+      With Tap to Walk on and your game in front, the app takes a picture of your screen. It takes one about every 3 seconds as you walk. This covers walks started by a tap, the joystick or a quick walk.
       It looks at a few small parts of each picture to see how the map slides under your player. Only those small parts are kept, in memory, until the next picture.
     </p>
     <ul class="section-bullets">
-      <li>Your first tap walks at once. On a new phone the app starts from a typical view of the game. A few seconds into the walk it has measured your map, and if your tap was off it corrects the walk toward the spot you tapped.</li>
-      <li>If you turn the map or zoom in or out, the next walk measures the new view and later taps follow it.</li>
+      <li>Your first tap walks at once. On a new phone the app starts from a typical view of the game. A few seconds into the walk, the app has measured your map. If your tap was off, it corrects the walk toward the spot you tapped.</li>
+      <li>If you turn the map or zoom in or out, the next walk measures the new view. Later taps follow that view.</li>
       <li>The walk uses your chosen speed, never a jump.</li>
       <li>The app measures your map at walking speeds. On Bike and Drive it keeps the last map it measured.</li>
       <li>A tap close to the top of the screen can be too far away to walk to. A message then asks you to tap closer to your player.</li>

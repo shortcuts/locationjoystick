@@ -31,10 +31,27 @@
     <p id="no-cloud">The app keeps all your data on your device: routes, favorites, speeds, and settings. There is no account and no cloud. The app never sends this data to a server. Group Sync and QR transfer send data directly from one device to another over your local network. See <a href="group.html">Group Sync</a>.</p>
 
     <h2 id="network-requests">Internet use</h2>
-    <p>Some features load information from public services: map images, road routes, place search, place names, ground height, shared Google Maps links, and the hot locations and routes lists. To do this, the app sends these services the coordinates it needs: the map area you view, the points of a route, the place you search for, and your fake position. These can be exact coordinates. The app attaches no account, name, or device ID to these requests. The services only use the coordinates to answer the request. The update check and the hot lists send no location. The <a href="settings.html#external-services">full list of services</a> is in Settings.</p>
+    <p>Some features load information from public services:</p>
+    <ul>
+      <li>Map images.</li>
+      <li>Road routes.</li>
+      <li>Place search.</li>
+      <li>Place names.</li>
+      <li>Ground height.</li>
+      <li>Shared Google Maps links.</li>
+      <li>The hot locations and routes lists.</li>
+    </ul>
+    <p>To do this, the app sends these services the coordinates it needs:</p>
+    <ul>
+      <li>The map area you view.</li>
+      <li>The points of a route.</li>
+      <li>The place you search for.</li>
+      <li>Your fake position.</li>
+    </ul>
+    <p>These can be exact coordinates. The app attaches no account, name, or device ID to these requests. The services only use the coordinates to answer the request. The update check and the hot lists send no location. The <a href="settings.html#external-services">full list of services</a> is in Settings.</p>
 
     <h2 id="location-permission">Location permission</h2>
-    <p>The app uses your real location only to center the map and to record routes. It never uploads your real location on its own. A coordinate is sent to the services in "Internet use" only when a feature you use needs it, such as a route, a search, or elevation.</p>
+    <p>The app uses your real location only to center the map and to record routes. It never uploads your real location on its own. A coordinate is sent to the services in "Internet use" only when a feature you use needs it. Examples are a route, a search, or elevation.</p>
 
     <h2 id="update-check">Update check</h2>
     <p>About once a day, when you open the app, it asks GitHub if a newer release exists. It uses the answer for the "update available" badge on the Home screen. The request does not include your routes, favorites, settings, or location. You cannot turn this check off. It does nothing when you are offline.</p>
@@ -43,9 +60,9 @@
     <p>The app uses the camera only to scan QR codes when you transfer data between devices. It does not store or send photos or video.</p>
 
     <h2 id="accessibility-service">Screen access</h2>
-    <p>"Tap to Walk" is an optional feature (Settings &rarr; Menus &rarr; Tap to Walk). It is off by default. To work out how your game's map moves, it takes a picture of your screen about every 3 seconds, only while you walk in your game with Tap to Walk on and Pokémon GO in front. This keeps your taps accurate when the map does not point north or you zoom in or out.</p>
-    <p>The app reads the picture on your device and never sends it anywhere. For Tap to Walk, the app keeps only a few small parts of each picture, in memory, until the next picture. It drops them when you stop walking, when Tap to Walk or screen access is turned off, and when the app stops. It never saves a picture as a file. What the app keeps is how your game's map is turned and zoomed, as a few numbers. This feature is not an accessibility tool for people with disabilities.</p>
-    <p>"Reconnect accessory" is a second optional feature (Settings &rarr; Menus &rarr; Reconnect accessory). It is off by default. When you turn it on, the app takes a picture of your screen about every minute, only while Pokémon GO is in front. It looks for your accessory's connect button and taps it only when the accessory shows as disconnected. The picture is checked on your device and is never saved or sent.</p>
+    <p>"Tap to Walk" is an optional feature (Settings &rarr; Menus &rarr; Tap to Walk). It is off by default. To work out how your game's map moves, the app takes a picture of your screen. It does this about every 3 seconds, only while you walk. This needs Tap to Walk on and your game in front. Taking these pictures keeps your taps accurate when the map does not point north or you zoom in or out.</p>
+    <p>The app reads the picture on your device and never sends it anywhere. For Tap to Walk, the app keeps only a few small parts of each picture, in memory. Each new picture replaces them. It drops them when you stop walking. It also drops them when Tap to Walk or screen access is turned off, and when the app stops. It never saves a picture as a file. What the app keeps is how your game's map is turned and zoomed, as a few numbers. This feature is not an accessibility tool for people with disabilities.</p>
+    <p>"Reconnect accessory" is a second optional feature (Settings &rarr; Menus &rarr; Reconnect accessory). It is off by default. When you turn it on, the app takes a picture of your screen about every minute. It does so only while Pokémon GO is in front. It looks for your accessory's connect button and taps it only when the accessory shows as disconnected. The picture is checked on your device and is never saved or sent.</p>
 
     <h2 id="website">This website</h2>
     <p>This policy covers the app. The website you are reading is separate. Its sidebar shows the GitHub star count, which it loads from GitHub. Its search box sends what you type to Algolia, the search provider.</p>
