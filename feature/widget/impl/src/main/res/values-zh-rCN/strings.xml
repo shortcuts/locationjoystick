@@ -47,7 +47,6 @@
     <string name="overlay_pause_roaming_cd">"暂停漫游"</string>
     <string name="overlay_start_roaming_cd">"开始漫游"</string>
     <string name="overlay_roaming_active_cd">"漫游进行中"</string>
-    <string name="overlay_roaming_ignored_route_playing_cd">"漫游已忽略 — 路线正在进行"</string>
     <string name="widget_panel_tap_to_walk_cd">"点击行走"</string>
     <string name="widget_panel_altitude_override_cd">"海拔覆盖"</string>
     <string name="widget_panel_routes_title">"路线"</string>

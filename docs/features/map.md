@@ -63,6 +63,7 @@ The library's own attribution button is hidden on every map. Each surface shows 
 - Share is not in the column. It is rarely used, and the column covers much of the right edge. The tap sheet shares a tapped point. Favorites and the widget share the current position ([location-links.md](location-links.md)).
 - Every button is neutral when idle. Walk, routes and roaming use the activity colour rule: green while moving, orange while paused.
 - Routes and roaming buttons stay visible while their session runs, even if the user turned them off. A running session must always be controllable.
+- The roaming button hides while a route plays and roaming is off, because roaming is ignored then. The routes button keeps its place when its controls expand, so Stop never lands under the finger that tapped it.
 - Paste coordinates is off by default. It is a bottom sheet that accepts decimal or degree-minute-second text. Lines with prose are ignored whole, so a note with numbers in it is not misread as coordinates.
 - With one valid point, the sheet offers teleport, walk and walk via roads, and the buttons act at once. With several points, the single-point actions are replaced by route actions. This stops input from silently acting on only the first point.
 - Invalid text does nothing. Saving a favorite from several points saves the first, and the label says so.

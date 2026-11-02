@@ -123,26 +123,6 @@ internal fun MapFabColumn(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4),
                         ) {
-                            LjMapIconButton(
-                                icon = LjIcons.Route,
-                                contentDescription =
-                                    stringResource(
-                                        if (uiState.isRouteReplay) {
-                                            R.string.map_fab_route_active_cd
-                                        } else {
-                                            R.string.map_fab_open_routes_cd
-                                        },
-                                    ),
-                                containerColor = routeState.containerColor(MaterialTheme.colorScheme),
-                                contentColor = routeState.contentColor(MaterialTheme.colorScheme),
-                                onClick = {
-                                    if (uiState.isRouteReplay) {
-                                        onAction(MapAction.ToggleRouteControls)
-                                    } else {
-                                        onAction(MapAction.OpenRoutesSheet)
-                                    }
-                                },
-                            )
                             AnimatedVisibility(visible = uiState.isRouteReplay && uiState.isRouteControlsExpanded) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(UiConstants.FAB_CONTAINER_SIZE / 4)) {
                                     LjMapIconButton(
@@ -190,6 +170,26 @@ internal fun MapFabColumn(
                                     }
                                 }
                             }
+                            LjMapIconButton(
+                                icon = LjIcons.Route,
+                                contentDescription =
+                                    stringResource(
+                                        if (uiState.isRouteReplay) {
+                                            R.string.map_fab_route_active_cd
+                                        } else {
+                                            R.string.map_fab_open_routes_cd
+                                        },
+                                    ),
+                                containerColor = routeState.containerColor(MaterialTheme.colorScheme),
+                                contentColor = routeState.contentColor(MaterialTheme.colorScheme),
+                                onClick = {
+                                    if (uiState.isRouteReplay) {
+                                        onAction(MapAction.ToggleRouteControls)
+                                    } else {
+                                        onAction(MapAction.OpenRoutesSheet)
+                                    }
+                                },
+                            )
                         }
                     }
                 }
@@ -198,7 +198,9 @@ internal fun MapFabColumn(
                 AppFeature.ROAMING -> {
                     val routePlaying =
                         uiState.isRouteReplay && uiState.mockLocationState == MockLocationState.RUNNING
-                    if (enabled || uiState.isRoaming || uiState.isRoamingSheetMinimized) {
+                    if ((enabled || uiState.isRoaming || uiState.isRoamingSheetMinimized) &&
+                        (uiState.isRoaming || !routePlaying)
+                    ) {
                         val roamState = activityState(uiState.isRoaming, uiState.isRoamingPaused)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -240,7 +242,6 @@ internal fun MapFabColumn(
                                 contentDescription =
                                     when {
                                         uiState.isRoaming -> stringResource(R.string.map_fab_roaming_active_cd)
-                                        routePlaying -> stringResource(R.string.map_fab_roaming_ignored_route_playing_cd)
                                         uiState.isRoamingSheetMinimized ->
                                             stringResource(R.string.map_fab_expand_roaming_sheet_cd)
                                         else -> stringResource(R.string.map_fab_start_roaming_cd)
@@ -254,7 +255,6 @@ internal fun MapFabColumn(
                                 contentColor =
                                     when {
                                         uiState.isRoaming -> roamState.contentColor(MaterialTheme.colorScheme)
-                                        routePlaying -> roamState.contentColor(MaterialTheme.colorScheme).copy(alpha = 0.22f)
                                         uiState.isRoamingSheetMinimized -> MaterialTheme.colorScheme.onTertiary
                                         else -> roamState.contentColor(MaterialTheme.colorScheme)
                                     },

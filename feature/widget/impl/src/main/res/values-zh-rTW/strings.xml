@@ -56,7 +56,6 @@
     <string name="widget_feature_favorites_cd">"收藏選取"</string>
     <string name="widget_feature_speed_cycle_cd">"速度切換"</string>
     <string name="widget_feature_open_map_cd">"開啟地圖"</string>
-    <string name="overlay_roaming_ignored_route_playing_cd">"漫遊已忽略 — 路線正在進行"</string>
     <string name="reconnect_failed_channel_name">"配件重新連線"</string>
     <string name="reconnect_failed_title">"配件未能重新連線"</string>
     <string name="reconnect_failed_text">"連續多次重新連線配件失敗。請開啟應用程式查看。"</string>

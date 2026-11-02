@@ -528,53 +528,45 @@ internal fun MapFloatingView(
                 onOpenRoutes = onOpenRoutes,
             )
             val roamState = activityState(isRoaming, isRoamingPaused)
-            Row(horizontalArrangement = Arrangement.spacedBy(LjSpacing.xs)) {
-                androidx.compose.animation.AnimatedVisibility(visible = isRoaming) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(LjSpacing.xs)) {
-                        LjMapIconButton(
-                            icon = LjIcons.Stop,
-                            contentDescription = stringResource(R.string.overlay_stop_roaming_cd),
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError,
-                            onClick = { onStopRoaming() },
-                        )
-                        LjMapIconButton(
-                            icon = if (isRoamingPaused) LjIcons.PlayArrow else LjIcons.Pause,
-                            contentDescription =
-                                stringResource(
-                                    if (isRoamingPaused) {
-                                        R.string.overlay_resume_roaming_cd
-                                    } else {
-                                        R.string.overlay_pause_roaming_cd
-                                    },
-                                ),
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            onClick = { if (isRoamingPaused) onResumeRoaming() else onPauseRoaming() },
-                        )
+            if (isRoaming || !routePlaying) {
+                Row(horizontalArrangement = Arrangement.spacedBy(LjSpacing.xs)) {
+                    androidx.compose.animation.AnimatedVisibility(visible = isRoaming) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(LjSpacing.xs)) {
+                            LjMapIconButton(
+                                icon = LjIcons.Stop,
+                                contentDescription = stringResource(R.string.overlay_stop_roaming_cd),
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError,
+                                onClick = { onStopRoaming() },
+                            )
+                            LjMapIconButton(
+                                icon = if (isRoamingPaused) LjIcons.PlayArrow else LjIcons.Pause,
+                                contentDescription =
+                                    stringResource(
+                                        if (isRoamingPaused) {
+                                            R.string.overlay_resume_roaming_cd
+                                        } else {
+                                            R.string.overlay_pause_roaming_cd
+                                        },
+                                    ),
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                onClick = { if (isRoamingPaused) onResumeRoaming() else onPauseRoaming() },
+                            )
+                        }
                     }
+                    LjMapIconButton(
+                        icon = LjIcons.Explore,
+                        contentDescription =
+                            when {
+                                isRoaming -> stringResource(R.string.overlay_roaming_active_cd)
+                                else -> stringResource(R.string.overlay_start_roaming_cd)
+                            },
+                        containerColor = roamState.containerColor(MaterialTheme.colorScheme),
+                        contentColor = roamState.contentColor(MaterialTheme.colorScheme),
+                        onClick = { if (!isRoaming) showRoamingSheet = true },
+                    )
                 }
-                LjMapIconButton(
-                    icon = LjIcons.Explore,
-                    contentDescription =
-                        when {
-                            isRoaming -> stringResource(R.string.overlay_roaming_active_cd)
-                            routePlaying -> stringResource(R.string.overlay_roaming_ignored_route_playing_cd)
-                            else -> stringResource(R.string.overlay_start_roaming_cd)
-                        },
-                    containerColor = roamState.containerColor(MaterialTheme.colorScheme),
-                    contentColor =
-                        roamState.contentColor(MaterialTheme.colorScheme).let {
-                            if (!isRoaming &&
-                                routePlaying
-                            ) {
-                                it.copy(alpha = 0.22f)
-                            } else {
-                                it
-                            }
-                        },
-                    onClick = { if (!isRoaming) showRoamingSheet = true },
-                )
             }
             LjMapIconButton(
                 icon = LjIcons.Search,
