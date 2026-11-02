@@ -69,31 +69,9 @@
       A shared link did nothing? See <a href="troubleshooting.html">Troubleshooting</a>.
     </p>
 
-    <h2 id="url-format">Build a link by hand (for developers)</h2>
     <p>
-      You can build a link by hand for scripts or automation.
-      The share icon produces the <code>https://</code> form below.
+      Developers can build a link by hand. See <a href="control-api.html#deep-link-format">Build a link by hand</a> in the developer reference.
     </p>
-    <pre><code>https://locationjoystick.shrtcts.fr/?lat=LAT&amp;lon=LON</code></pre>
-
-    <h3 class="item" id="url-format-lat"><code>lat</code></h3>
-    <p><strong>Type:</strong> decimal</p>
-    <p><strong>Valid range:</strong> −90 to 90</p>
-    <p>Latitude</p>
-    <h3 class="item" id="url-format-lon"><code>lon</code></h3>
-    <p><strong>Type:</strong> decimal</p>
-    <p><strong>Valid range:</strong> −180 to 180</p>
-    <p>Longitude</p>
-
-    <p>Example:</p>
-    <pre><code>https://locationjoystick.shrtcts.fr/?lat=35.6762&amp;lon=139.6503</code></pre>
-
-    <ul class="section-bullets">
-      <li>Both <code>lat</code> and <code>lon</code> are required. The app ignores a link lacking either one.</li>
-      <li>The app ignores a link with coordinates outside the valid range.</li>
-      <li>No key or sign-in is needed.</li>
-      <li>A second format also works: <code>locationjoystick://open?lat=LAT&amp;lon=LON</code>. Use the <code>https://</code> link when sharing with other people.</li>
-    </ul>
   </main>
 
 </div>
