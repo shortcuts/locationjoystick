@@ -61,12 +61,19 @@ The policy exists to avoid a tap that turns a connected companion off.
 
 ## Reliability proof
 
-**Result: incomplete.** The proof has not been run to completion.
+**Result: incomplete.** One device passes on the current build; the multi-device target is open. Open items are in the `reconnect-stable` backlog epic.
 
-- A pilot run on one device failed its gate. Some adapter toggles did not report success, so the toggle is not yet shown to be a faithful stand-in for a real disconnect.
-- Two recorded cycles tapped while the control read on. The rule is zero taps when on. Both runs predate the current re-read logic, which closes that window, so the full matrix must be rerun on the current build.
-- The target is at least three devices. Only one device was available, so the one-device run cannot close the task.
-- The full matrix is five blocks of twenty cycles per device. Some blocks need an operator to disconnect the companion, so it cannot run fully unattended on every device.
+Current build, 2026-11-02, Pixel 5 with the original Pokemon GO Plus, debug build:
+
+- Block a, tap disconnect: 19/20. The fail was a connect that showed ON 16 s after the tap, after the post-tap read window had closed.
+- Already on: 12/12 checks with zero taps.
+- Block c, screen off: 10/10 reconnected, but with zero taps. The game reconnects by itself when it resumes, so this block does not test the tap.
+- A typical connect reads ON 8 to 9 s after the tap.
+- A retap while the game still connects did not cancel the connect (6/6). A slow connect therefore costs a longer read window, not a lost link.
+- While the game searches, it draws a ring around the ball, and the detector reads OFF. Taps during the game's own search right after a disconnect often do nothing.
+- After Recents and then Back, the gate stayed closed in some attempts (it never received a new window event from the game) until the game was relaunched.
+
+Earlier runs (2026-10-13, Pixel 7 rows included) predate the re-read logic and the null-read fixes. Their taps-while-on failures do not apply to the current build. The target is still at least three devices, and Pokemon GO Plus + is untested.
 
 The earlier failures were diagnosed as a timing fault, not a detection fault. The first tap run read the control too soon after a tap, so a slow connection looked like a failure and was tapped again, toggling the companion away. The fix is the repeated read after a tap.
 
