@@ -28,7 +28,7 @@
     <string name="settings_hub_roaming">"Roaming"</string>
     <string name="settings_hub_roaming_desc">"Default area, distance, speed, and routing style for random walks."</string>
     <string name="settings_hub_capture">"Capture"</string>
-    <string name="settings_hub_capture_desc">"Map link setup, the on/off switch, the browser choice, and the app to open after a link."</string>
+    <string name="settings_hub_capture_desc">"Map link setup. Once it is done, the on/off switch, the browser choice, and the app to open after a link."</string>
     <string name="settings_favorites_routes_title">"Favorites &amp; Routes"</string>
     <string name="settings_favorites_routes_favorites">"Favorites"</string>
     <string name="settings_favorites_routes_options_for_the_favorites_list">"Options for the favorites list."</string>
