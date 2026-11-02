@@ -24,8 +24,6 @@ The wiki follows the same three changes (typeface self-hosted, no CDN). Colours 
 
 Elevation stays flat. The owner confirmed it. Hairlines (Linear) separate outlined surfaces.
 
-Until the migration epic in the radin backlog (`design-modernization`) is done, code may still show the old values. The code wins in a mismatch: fix this file, not the code, unless the entry says otherwise.
-
 ## Rules
 
 - Features read colour roles from the theme, never raw hex. Status colours and the map palette have their own helpers; use them rather than inventing colours.

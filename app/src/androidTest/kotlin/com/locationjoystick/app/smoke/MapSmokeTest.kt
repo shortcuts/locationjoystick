@@ -23,7 +23,7 @@ class MapSmokeTest : BaseSmokeTest() {
 
     @Test
     fun map_screen_loads() {
-        composeRule.onNodeWithText("Start").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Start location simulation").assertIsDisplayed()
     }
 
     @Test
