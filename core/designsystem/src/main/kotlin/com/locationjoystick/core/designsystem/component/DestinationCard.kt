@@ -106,6 +106,7 @@ fun DestinationHub(
     paddingValues: PaddingValues,
     cards: List<DestinationCardSpec>,
     modifier: Modifier = Modifier,
+    footer: String? = null,
 ) {
     val isWide =
         with(LocalDensity.current) {
@@ -131,6 +132,7 @@ fun DestinationHub(
             items(cards) { card ->
                 DestinationCard(card.icon, card.title, card.description, card.onClick)
             }
+            footer?.let { item(span = { GridItemSpan(maxLineSpan) }) { DestinationHubFooter(it) } }
         }
     } else {
         Column(
@@ -151,9 +153,24 @@ fun DestinationHub(
                     Spacer(modifier = Modifier.height(LjSpacing.sm))
                 }
             }
+            footer?.let {
+                Spacer(modifier = Modifier.height(LjSpacing.md))
+                DestinationHubFooter(it)
+            }
             Spacer(modifier = Modifier.height(LjSpacing.lg))
         }
     }
+}
+
+@Composable
+private fun DestinationHubFooter(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable

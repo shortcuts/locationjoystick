@@ -17,6 +17,7 @@
     <string name="settings_hub_import">"导入"</string>
     <string name="settings_hub_danger">"危险操作"</string>
     <string name="settings_hub_report">"反馈"</string>
+    <string name="settings_hub_menu_hint">"导出、导入和重置位于顶部的 ⋮ 菜单。换新手机时请使用它们。"</string>
     <string name="settings_hub_movement_and_gps">"移动与 GPS"</string>
     <string name="settings_hub_movement_and_gps_desc">"所有移动模式的速度预设、信号真实度与位置随机性设置。"</string>
     <string name="settings_hub_menus">"菜单"</string>

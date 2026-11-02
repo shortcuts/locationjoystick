@@ -725,6 +725,7 @@ private fun SettingsHubScreen(
     ) { paddingValues ->
         DestinationHub(
             paddingValues = paddingValues,
+            footer = stringResource(R.string.settings_hub_menu_hint),
             cards =
                 listOf(
                     DestinationCardSpec(
