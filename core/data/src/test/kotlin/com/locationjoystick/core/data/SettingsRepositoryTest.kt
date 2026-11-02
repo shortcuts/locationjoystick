@@ -14,6 +14,7 @@ import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.StoredGroundCalibration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -1329,6 +1330,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
     val lastTeleportTimeFlow = MutableStateFlow(0L)
 
     val mapFollowsLocationFlow = MutableStateFlow(true)
+
+    val routeStartConfigFlow = MutableStateFlow<RouteStartConfig?>(null)
+
+    override fun getRouteStartConfig(): Flow<RouteStartConfig?> = routeStartConfigFlow
+
+    override suspend fun setRouteStartConfig(config: RouteStartConfig) {
+        routeStartConfigFlow.value = config
+    }
 
     override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> = speedProfilesFlow
 

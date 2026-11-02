@@ -768,6 +768,10 @@ nav details > a{display:block}
   padding:0 8px !important;
 }
 
+@media(max-width:768px){
+  .DocSearch-Button-Placeholder{display:inline-block !important}
+}
+
 .DocSearch-Button-Keys{
   display:flex;
   gap:2px;
