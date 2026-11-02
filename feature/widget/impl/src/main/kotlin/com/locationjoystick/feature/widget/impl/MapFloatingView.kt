@@ -396,7 +396,7 @@ internal fun MapFloatingView(
                 modifier =
                     Modifier
                         .align(Alignment.TopCenter)
-                        .padding(top = LjSpacing.sm, start = 12.dp, end = 12.dp),
+                        .padding(top = LjSpacing.sm, start = LjSpacing.smMd, end = LjSpacing.smMd),
             )
         }
 

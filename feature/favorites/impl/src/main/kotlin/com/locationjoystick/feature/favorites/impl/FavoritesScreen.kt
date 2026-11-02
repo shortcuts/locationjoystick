@@ -286,7 +286,7 @@ internal fun FavoritesScreen(
                             LazyColumn(
                                 state = listState,
                                 modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(12.dp),
+                                contentPadding = PaddingValues(LjSpacing.smMd),
                                 verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
                             ) {
                                 groupedItems(
@@ -350,7 +350,7 @@ internal fun FavoritesScreen(
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm)) {
                 Text(stringResource(R.string.favorites_screen_add_a_favorite), style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(LjSpacing.smMd))
                 LjActionSheetRow(
                     icon = LjIcons.Map,
                     title = stringResource(R.string.favorites_screen_from_map),
@@ -656,7 +656,7 @@ private fun AddFavoriteSheet(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp),
+                    .padding(top = LjSpacing.smMd),
             horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm),
         ) {
             OutlinedTextField(
@@ -756,7 +756,7 @@ private fun PasteFavoriteSheet(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp),
+                    .padding(top = LjSpacing.smMd),
             trailingIcon = {
                 IconButton(
                     onClick = {
@@ -815,7 +815,7 @@ private fun EditFavoriteDialog(
     LjModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.fillMaxWidth().padding(LjSpacing.md)) {
             Text(stringResource(R.string.favorites_screen_edit_favorite), style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(LjSpacing.smMd))
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -840,7 +840,7 @@ private fun EditFavoriteDialog(
                 label = { Text(stringResource(R.string.favorites_screen_longitude_2)) },
                 modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(LjSpacing.smMd))
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                 LjTextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.common_cancel))

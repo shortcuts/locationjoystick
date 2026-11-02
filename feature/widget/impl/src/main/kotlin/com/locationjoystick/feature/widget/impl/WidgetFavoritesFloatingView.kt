@@ -169,7 +169,7 @@ internal fun FavoritesFloatingView(
                 },
             )
             if (onAddFromHere != null) {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(LjSpacing.smMd))
                 if (showAddForm) {
                     val focusRequester = remember { FocusRequester() }
                     LaunchedEffect(Unit) { focusRequester.requestFocus() }

@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -296,8 +295,8 @@ internal fun MapPickerScreen(
                             .align(Alignment.TopCenter)
                             .padding(
                                 top = paddingValues.calculateTopPadding() + LjSpacing.sm,
-                                start = 12.dp,
-                                end = 12.dp,
+                                start = LjSpacing.smMd,
+                                end = LjSpacing.smMd,
                             ),
                 )
             }

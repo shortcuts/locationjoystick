@@ -134,7 +134,7 @@ internal fun FloatingPickerShell(
                             modifier = Modifier.padding(top = LjSpacing.sm),
                         )
                     }
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(LjSpacing.smMd))
                     content()
                 }
             }

@@ -266,7 +266,7 @@ private fun NoGroupContent(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(LjSpacing.smMd),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Icon(
@@ -484,7 +484,7 @@ private fun LeaderContent(
             LjCard(containerColor = MaterialTheme.colorScheme.surface) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier.padding(LjSpacing.smMd),
                 ) {
                     Image(
                         bitmap = qrBitmap.asImageBitmap(),

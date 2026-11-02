@@ -25,7 +25,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -464,7 +463,7 @@ internal fun MapScreen(
                     modifier =
                         Modifier
                             .align(Alignment.TopStart)
-                            .padding(top = paddingValues.calculateTopPadding() + LjSpacing.sm, start = 12.dp),
+                            .padding(top = paddingValues.calculateTopPadding() + LjSpacing.sm, start = LjSpacing.smMd),
                 )
             }
 
@@ -488,8 +487,8 @@ internal fun MapScreen(
                             .align(Alignment.TopCenter)
                             .padding(
                                 top = paddingValues.calculateTopPadding() + LjSpacing.sm,
-                                start = 12.dp,
-                                end = 12.dp,
+                                start = LjSpacing.smMd,
+                                end = LjSpacing.smMd,
                             ),
                 )
             }

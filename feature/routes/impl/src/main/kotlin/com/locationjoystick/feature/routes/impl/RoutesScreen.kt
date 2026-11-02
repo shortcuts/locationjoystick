@@ -269,7 +269,7 @@ internal fun RoutesScreen(
                             LazyColumn(
                                 state = listState,
                                 modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(12.dp),
+                                contentPadding = PaddingValues(LjSpacing.smMd),
                                 verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
                             ) {
                                 groupedItems(
@@ -346,7 +346,7 @@ internal fun RoutesScreen(
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm)) {
                 Text(stringResource(R.string.routes_screen_add_a_route), style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(LjSpacing.smMd))
                 LjActionSheetRow(
                     icon = LjIcons.Map,
                     title = stringResource(R.string.routes_screen_draw_on_map),

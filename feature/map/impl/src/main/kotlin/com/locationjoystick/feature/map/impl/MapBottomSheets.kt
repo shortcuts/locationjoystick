@@ -300,7 +300,7 @@ internal fun PendingTapSheet(
                     Text(stringResource(R.string.map_sheet_finish_route_and_walk_here))
                 }
             } else {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(LjSpacing.smMd))
                 CooldownAdvisoryBadge(
                     (cooldownState as? CooldownState.Cooling)
                         ?.let { cooldownAdvisoryLabel(it.remainingSeconds, it.distanceMeters, rememberCooldownStringLookup()) }
