@@ -437,7 +437,7 @@ internal fun MapScreen(
                 modifier = Modifier.align(Alignment.BottomStart).padding(LjSpacing.xs),
             )
 
-            if (uiState.walkTarget == null && !uiState.isRouteReplay && !uiState.isRoaming) {
+            if (uiState.walkTarget == null && !uiState.isRouteReplay && !uiState.isRoaming && uiState.showMapHint) {
                 LjOverlayPill(
                     text =
                         stringResource(

@@ -73,6 +73,9 @@ val MapUiState.isWalkActive: Boolean get() = walkMode !is WalkMode.Idle
 val MapUiState.isSpoofing: Boolean
     get() = mockLocationState == MockLocationState.RUNNING
 
+val MapUiState.showMapHint: Boolean
+    get() = hideTeleportFeatures || isSpoofing
+
 val MapUiState.isRoutePaused: Boolean
     get() = isRouteReplay && mockLocationState == MockLocationState.PAUSED
 
