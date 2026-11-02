@@ -85,6 +85,7 @@
     <string name="settings_gps_remember_last_location">"記住上次位置"</string>
     <string name="settings_gps_remember_last_location_desc">"應用程式重新啟動時恢復上次設定的位置。"</string>
     <string name="settings_menus_appearance">"外觀"</string>
+    <string name="settings_menus_language">"語言"</string>
     <string name="settings_menus_guided_path">"遊戲設定"</string>
     <string name="settings_menus_guided_path_desc">"這只會隱藏你用不到的功能，隨時可以變更。"</string>
     <string name="settings_menus_guided_path_default">"預設"</string>

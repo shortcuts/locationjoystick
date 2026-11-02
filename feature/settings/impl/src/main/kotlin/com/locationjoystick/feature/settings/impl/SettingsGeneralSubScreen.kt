@@ -67,12 +67,6 @@ internal fun SettingsGeneralSubScreen(
         navigationIcon = LjIcons.ArrowBack,
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
-        actions = {
-            LjLanguageDropdown(
-                selected = AppLanguage.fromTag(languageTag),
-                onSelect = { language -> onAction(SettingsAction.SetLanguage(language.languageTag)) },
-            )
-        },
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             when {
@@ -90,6 +84,8 @@ internal fun SettingsGeneralSubScreen(
                     ) {
                         GuidedPathSection(uiState, onAction)
                         SettingsSectionDivider()
+                        LanguageSection(languageTag, onAction)
+                        SettingsSectionDivider()
                         ThemeSection(uiState, onAction)
                         SettingsSectionDivider()
                         MapSourceSection(uiState, onAction)
@@ -106,6 +102,19 @@ internal fun SettingsGeneralSubScreen(
             }
         }
     }
+}
+
+@Composable
+internal fun LanguageSection(
+    languageTag: String?,
+    onAction: (SettingsAction) -> Unit,
+) {
+    SettingsSectionHeader(stringResource(R.string.settings_menus_language))
+    Spacer(Modifier.height(LjSpacing.xs))
+    LjLanguageDropdown(
+        selected = AppLanguage.fromTag(languageTag),
+        onSelect = { language -> onAction(SettingsAction.SetLanguage(language.languageTag)) },
+    )
 }
 
 @Composable

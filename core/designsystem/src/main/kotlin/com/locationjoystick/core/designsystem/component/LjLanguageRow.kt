@@ -28,8 +28,8 @@ import com.locationjoystick.core.designsystem.R
 import com.locationjoystick.core.model.AppLanguage
 
 /**
- * Compact top-right dropdown language switcher, used in both the onboarding header and the
- * Settings top bar's [LjTopBar] `actions` slot — replaces the old full-width language row.
+ * Compact dropdown language switcher, used in the onboarding header's [LjTopBar] `actions` slot
+ * and in the Settings General language section.
  */
 @Composable
 fun LjLanguageDropdown(
