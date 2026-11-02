@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
+import com.locationjoystick.core.designsystem.LjPillShape
 import com.locationjoystick.core.designsystem.LjSpacing
 
 /** Press feedback shared by every LjButton variant: 0.96 scale, never lower (feels exaggerated below). */
@@ -54,7 +55,7 @@ fun LjButton(
         onClick = onClick,
         modifier = modifier.defaultMinSize(minHeight = 48.dp).scale(scale),
         enabled = enabled,
-        shape = MaterialTheme.shapes.small,
+        shape = LjPillShape,
         colors = colors,
         interactionSource = interactionSource,
         contentPadding = PaddingValues(horizontal = LjSpacing.lg, vertical = 12.dp),
@@ -75,7 +76,7 @@ fun LjOutlinedButton(
         onClick = onClick,
         modifier = modifier.defaultMinSize(minHeight = 48.dp).scale(scale),
         enabled = enabled,
-        shape = MaterialTheme.shapes.small,
+        shape = LjPillShape,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         interactionSource = interactionSource,
         contentPadding = PaddingValues(horizontal = LjSpacing.lg, vertical = 12.dp),
@@ -97,7 +98,7 @@ fun LjTextButton(
         onClick = onClick,
         modifier = modifier.defaultMinSize(minHeight = 48.dp).scale(scale),
         enabled = enabled,
-        shape = MaterialTheme.shapes.small,
+        shape = LjPillShape,
         colors =
             if (destructive) {
                 ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -167,7 +168,7 @@ fun <T> LjSegmentedControl(
             Button(
                 onClick = { onSelect(value) },
                 modifier = Modifier.padding(horizontal = 2.dp).defaultMinSize(minHeight = 48.dp),
-                shape = MaterialTheme.shapes.small,
+                shape = LjPillShape,
                 border = if (isSelected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 colors =
                     ButtonDefaults.buttonColors(
