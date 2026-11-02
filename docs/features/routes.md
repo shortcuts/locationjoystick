@@ -110,7 +110,7 @@ Starting a route opens a sheet with options and a Start button. Options:
 - **Teleport between waypoints:** hop to each named stop instead of walking, with a linger time at each stop. Not stored on the route, so it is a per-start choice.
 - **Teleport:** jump to the first point without starting replay. The sheet stays open.
 
-The sheet opens fully expanded. The Control API starts routes with hide-teleport bypassed, so teleport-between-waypoints still applies there ([group-sync.md](group-sync.md)).
+The sheet opens collapsed, so it covers little of the map and Start stays one tap. A summary line shows the options of the last Start; Options reveals the list. The Routes screen and the map picker save those options on Start (not Planting, which belongs to the route). The shared start use case does not save them, so Control API, widget and paste starts leave the memory alone. The widget panel keeps the full list. The Control API starts routes with hide-teleport bypassed, so teleport-between-waypoints still applies there ([group-sync.md](group-sync.md)).
 
 ### Interactions that must hold
 

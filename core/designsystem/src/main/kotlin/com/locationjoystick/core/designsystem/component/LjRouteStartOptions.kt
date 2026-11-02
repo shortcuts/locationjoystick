@@ -12,18 +12,22 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.LocalGuidedPath
@@ -158,29 +162,49 @@ fun LjRouteStartOptions(
     followRoadsLocked: Boolean = false,
     textColor: Color = Color.Unspecified,
     isStarting: Boolean = false,
+    optionsSummary: String? = null,
+    optionsExpanded: Boolean = true,
+    onOptionsExpandedChange: ((Boolean) -> Unit)? = null,
 ) {
     Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-        LjRouteStartCheckboxes(
-            loop = loop,
-            onLoopChange = onLoopChange,
-            reverse = reverse,
-            onReverseChange = onReverseChange,
-            returnToLocation = returnToLocation,
-            onReturnToLocationChange = onReturnToLocationChange,
-            followRoads = followRoads,
-            onFollowRoadsChange = onFollowRoadsChange,
-            isTeleportRoute = isTeleportRoute,
-            plantingLocked = plantingLocked,
-            followRoadsLocked = followRoadsLocked,
-            planting = planting,
-            onPlantingChange = onPlantingChange,
-            teleportBetweenWaypoints = teleportBetweenWaypoints,
-            onTeleportBetweenWaypointsChange = onTeleportBetweenWaypointsChange,
-            teleportBetweenDelaySecondsText = teleportBetweenDelaySecondsText,
-            onTeleportBetweenDelaySecondsTextChange = onTeleportBetweenDelaySecondsTextChange,
-            hideTeleport = hideTeleport,
-            textColor = textColor,
-        )
+        if (onOptionsExpandedChange != null) {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    optionsSummary.orEmpty(),
+                    color = textColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                LjTextButton(onClick = { onOptionsExpandedChange(!optionsExpanded) }) {
+                    Text(stringResource(R.string.route_start_options_toggle))
+                    Icon(if (optionsExpanded) LjIcons.ExpandLess else LjIcons.ExpandMore, contentDescription = null)
+                }
+            }
+        }
+        if (optionsExpanded) {
+            LjRouteStartCheckboxes(
+                loop = loop,
+                onLoopChange = onLoopChange,
+                reverse = reverse,
+                onReverseChange = onReverseChange,
+                returnToLocation = returnToLocation,
+                onReturnToLocationChange = onReturnToLocationChange,
+                followRoads = followRoads,
+                onFollowRoadsChange = onFollowRoadsChange,
+                isTeleportRoute = isTeleportRoute,
+                plantingLocked = plantingLocked,
+                followRoadsLocked = followRoadsLocked,
+                planting = planting,
+                onPlantingChange = onPlantingChange,
+                teleportBetweenWaypoints = teleportBetweenWaypoints,
+                onTeleportBetweenWaypointsChange = onTeleportBetweenWaypointsChange,
+                teleportBetweenDelaySecondsText = teleportBetweenDelaySecondsText,
+                onTeleportBetweenDelaySecondsTextChange = onTeleportBetweenDelaySecondsTextChange,
+                hideTeleport = hideTeleport,
+                textColor = textColor,
+            )
+        }
         if (!hideTeleport) {
             Spacer(Modifier.height(LjSpacing.sm))
             LjOutlinedButton(onClick = onTeleport, modifier = Modifier.fillMaxWidth()) {
@@ -221,6 +245,31 @@ private fun LjRouteStartOptionsPreview() {
             onTeleport = {},
             onCancel = {},
             onStart = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Collapsed")
+@Composable
+private fun LjRouteStartOptionsCollapsedPreview() {
+    LjTheme(guidedPath = GuidedPath.DEFAULT) {
+        LjRouteStartOptions(
+            loop = true,
+            onLoopChange = {},
+            reverse = false,
+            onReverseChange = {},
+            returnToLocation = false,
+            onReturnToLocationChange = {},
+            followRoads = false,
+            onFollowRoadsChange = {},
+            planting = false,
+            onPlantingChange = {},
+            onTeleport = {},
+            onCancel = {},
+            onStart = {},
+            optionsSummary = "Loop, Follow roads",
+            optionsExpanded = false,
+            onOptionsExpandedChange = {},
         )
     }
 }

@@ -11,6 +11,7 @@ import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteProgress
+import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SpeedUnit
 
 data class MapUiState(
@@ -52,6 +53,7 @@ data class MapUiState(
     val homeFavoriteId: String? = null,
     val isPendingTapSheetOpen: Boolean = false,
     val hideTeleportFeatures: Boolean = false,
+    val lastRouteStartConfig: RouteStartConfig? = null,
     val mapTileSource: MapTileSource = MapTileSource.DEFAULT,
     val showRouteJumpButtons: Boolean = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
     val jitterRadiusMeters: Double = 0.0,

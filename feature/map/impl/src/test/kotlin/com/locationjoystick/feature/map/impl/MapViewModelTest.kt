@@ -887,6 +887,39 @@ class MapViewModelTest {
         }
 
     @Test
+    fun `StartRouteReplay remembers the sheet options`() =
+        runTest {
+            viewModel.onAction(
+                MapAction.StartRouteReplay(
+                    routeId = "route-1",
+                    isLooping = true,
+                    isReverse = true,
+                    isReturnToLocation = false,
+                    followRoadsToStart = true,
+                    teleportBetweenDelaySeconds = 12,
+                ),
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify {
+                settingsRepository.setRouteStartConfig(
+                    RouteStartConfig(isLooping = true, isReverse = true, followRoadsToStart = true, teleportBetweenDelaySeconds = 12),
+                )
+            }
+        }
+
+    @Test
+    fun `remembered start config reaches ui state`() =
+        runTest {
+            val config = RouteStartConfig(isReverse = true)
+            every { settingsRepository.getRouteStartConfig() } returns flowOf(config)
+            viewModel = createViewModel()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(config, viewModel.uiState.value.lastRouteStartConfig)
+        }
+
+    @Test
     fun `StartRouteReplay with followRoadsToStart keeps routes sheet open`() =
         runTest {
             viewModel.onAction(MapAction.OpenRoutesSheet)

@@ -69,6 +69,8 @@ class RoutesViewModel
                     hideTeleportFeatures = hideTeleportFeatures,
                     isRoadRouteFetchInFlight = isRoadRouteFetchInFlight,
                 )
+            }.let { base ->
+                combine(base, settingsRepository.getRouteStartConfig()) { state, last -> state.copy(lastRouteStartConfig = last) }
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -148,6 +150,7 @@ class RoutesViewModel
             config: RouteStartConfig = RouteStartConfig(),
         ) {
             viewModelScope.launch {
+                settingsRepository.setRouteStartConfig(config)
                 startRouteReplayUseCase.execute(routeId = route.id, config = config)
             }
         }

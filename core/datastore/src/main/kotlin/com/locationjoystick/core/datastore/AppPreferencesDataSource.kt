@@ -36,6 +36,7 @@ import javax.inject.Singleton
 interface PreferencesDataSource :
     GuidedPathPreferences,
     RealPositionPreferences,
+    RouteStartPreferences,
     SavedItemOrderPreferences,
     TapToWalkPreferences,
     ReconnectPreferences {
@@ -506,6 +507,7 @@ class AppPreferencesDataSource
     ) : PreferencesDataSource,
         GuidedPathPreferences by GuidedPathStore(dataStore),
         RealPositionPreferences by RealPositionStore(dataStore),
+        RouteStartPreferences by RouteStartStore(dataStore),
         SavedItemOrderPreferences by SavedItemOrderStore(dataStore),
         TapToWalkPreferences by TapToWalkStore(dataStore),
         ReconnectPreferences by ReconnectStore(dataStore) {

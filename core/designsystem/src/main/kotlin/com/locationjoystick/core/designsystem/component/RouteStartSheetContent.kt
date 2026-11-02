@@ -6,12 +6,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.parseTeleportBetweenDelaySeconds
+import com.locationjoystick.core.designsystem.LocalGuidedPath
+import com.locationjoystick.core.designsystem.R
+import com.locationjoystick.core.model.RouteStartConfig
 
 /**
  * Shared route options, including planting and optional hops between stops.
  * Road-following starts keep their loading state until route planning finishes.
+ * The sheet opens collapsed: a summary line seeded from [remembered], with the checkboxes behind Options.
  */
 @Composable
 fun RouteStartSheetContent(
@@ -34,17 +39,37 @@ fun RouteStartSheetContent(
     isPlantedRoute: Boolean = false,
     /** Route style is Walkable (roads): with [isPlantedRoute], Follow roads is shown on and locked. */
     isRoadRoute: Boolean = false,
+    /** Options of the last Start; null keeps the stock defaults. */
+    remembered: RouteStartConfig? = null,
 ) {
-    var loop by remember(key) { mutableStateOf(true) }
-    var reverse by remember(key) { mutableStateOf(false) }
-    var returnToLocation by remember(key) { mutableStateOf(false) }
-    var followRoads by remember(key) { mutableStateOf(isPlantedRoute && isRoadRoute) }
+    var loop by remember(key) { mutableStateOf(remembered?.isLooping ?: true) }
+    var reverse by remember(key) { mutableStateOf(remembered?.isReverse ?: false) }
+    var returnToLocation by remember(key) { mutableStateOf(remembered?.isReturnToLocation == true && !isPlantedRoute) }
+    var followRoads by remember(key) {
+        mutableStateOf((isPlantedRoute && isRoadRoute) || (remembered?.followRoadsToStart == true && !isTeleportRoute))
+    }
     var planting by remember(key) { mutableStateOf(isPlantedRoute) }
-    var teleportBetweenWaypoints by remember(key) { mutableStateOf(false) }
+    var teleportBetweenWaypoints by remember(key) {
+        mutableStateOf(remembered?.teleportBetweenWaypoints == true && !isTeleportRoute)
+    }
     var teleportBetweenDelaySecondsText by remember(key) {
-        mutableStateOf(AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS.toString())
+        mutableStateOf(
+            (remembered?.teleportBetweenDelaySeconds ?: AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS).toString(),
+        )
     }
     var isAwaitingRoadStart by remember(key) { mutableStateOf(false) }
+    var optionsExpanded by remember(key) { mutableStateOf(false) }
+    val showsPlanting = LocalGuidedPath.current.showsPlanting
+    val summary =
+        listOfNotNull(
+            stringResource(R.string.route_start_options_loop).takeIf { loop || planting },
+            stringResource(R.string.lj_route_start_options_planting).takeIf { showsPlanting && planting },
+            stringResource(R.string.route_start_options_reverse).takeIf { reverse },
+            stringResource(R.string.lj_route_start_options_return_to_location).takeIf { returnToLocation && !loop && !planting },
+            stringResource(R.string.lj_route_start_options_follow_roads).takeIf { followRoads && !isTeleportRoute },
+            stringResource(R.string.lj_route_start_options_teleport_between_waypoints)
+                .takeIf { teleportBetweenWaypoints && !hideTeleport && !isTeleportRoute },
+        ).joinToString(", ").ifEmpty { stringResource(R.string.route_start_options_summary_none) }
 
     LaunchedEffect(isRoadRouteFetchInFlight) {
         if (isAwaitingRoadStart && !isRoadRouteFetchInFlight) {
@@ -90,5 +115,8 @@ fun RouteStartSheetContent(
         plantingLocked = isPlantedRoute,
         followRoadsLocked = isPlantedRoute && isRoadRoute,
         isStarting = isAwaitingRoadStart,
+        optionsSummary = summary,
+        optionsExpanded = optionsExpanded,
+        onOptionsExpandedChange = { optionsExpanded = it },
     )
 }

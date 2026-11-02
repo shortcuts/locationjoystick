@@ -35,6 +35,7 @@ internal object Keys {
     val THEME_MODE = stringPreferencesKey("theme_mode")
     val MAP_TILE_SOURCE = stringPreferencesKey("map_tile_source")
     val GUIDED_PATH = stringPreferencesKey("guided_path")
+    val ROUTE_START_CONFIG = stringPreferencesKey("route_start_config")
     val DISABLED_GEOCODING_PROVIDERS = stringSetPreferencesKey("disabled_geocoding_providers")
     val KEEP_WIDGET_ON_IDLE = booleanPreferencesKey("keep_widget_on_idle")
     val WHATS_NEW_LAST_SEEN_VERSION = stringPreferencesKey("whats_new_last_seen_version")

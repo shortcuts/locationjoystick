@@ -1,5 +1,6 @@
 package com.locationjoystick.app.smoke
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
@@ -74,7 +75,11 @@ class RoutesSmokeTest : BaseSmokeTest() {
     fun start_route_dialog_shows_all_options() {
         composeRule.onNodeWithContentDescription("Start route").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Loop").assertIsDisplayed()
+        // The sheet opens collapsed: the summary reads "Loop" and the checkboxes sit behind Options.
+        composeRule.onNodeWithText("Planting").assertDoesNotExist()
+        composeRule.onNodeWithText("Options").performClick()
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithText("Loop").assertCountEquals(2)
         composeRule.onNodeWithText("Planting").assertIsDisplayed()
         composeRule.onNodeWithText("Reverse").assertIsDisplayed()
         composeRule.onNodeWithText("Return to location").assertIsDisplayed()

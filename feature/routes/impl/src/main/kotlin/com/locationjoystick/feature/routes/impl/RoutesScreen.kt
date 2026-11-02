@@ -295,6 +295,7 @@ internal fun RoutesScreen(
                                         onResumeReplay = onResumeReplay,
                                         onStopReplay = onStopReplay,
                                         hideTeleportFeatures = uiState.hideTeleportFeatures,
+                                        lastRouteStartConfig = uiState.lastRouteStartConfig,
                                     )
                                 }
                             }
@@ -410,6 +411,7 @@ private fun RouteCard(
     modifier: Modifier = Modifier,
     hideTeleportFeatures: Boolean = false,
     isRoadRouteFetchInFlight: Boolean = false,
+    lastRouteStartConfig: RouteStartConfig? = null,
     onMoveToGroup: (() -> Unit)? = null,
 ) {
     val isActiveRoute = playbackState.activeRouteId == route.id
@@ -594,6 +596,7 @@ private fun RouteCard(
                     isPlantedRoute = route.plantingRadiusMeters != null,
                     isRoadRoute = route.routeType == RouteType.GUIDED,
                     isRoadRouteFetchInFlight = isRoadRouteFetchInFlight,
+                    remembered = lastRouteStartConfig,
                 )
             }
         }

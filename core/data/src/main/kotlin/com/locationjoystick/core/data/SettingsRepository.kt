@@ -15,6 +15,7 @@ import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.ScreenFeatureGates
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
@@ -248,6 +249,10 @@ class SettingsRepository
         fun getGuidedPath(): Flow<GuidedPath> = dataSource.getGuidedPath().map { GuidedPath.fromName(it) }
 
         suspend fun setGuidedPath(path: GuidedPath) = dataSource.setGuidedPath(path.name)
+
+        fun getRouteStartConfig() = dataSource.getRouteStartConfig()
+
+        suspend fun setRouteStartConfig(config: RouteStartConfig) = dataSource.setRouteStartConfig(config)
 
         suspend fun setMapTileSource(source: MapTileSource) = dataSource.setMapTileSource(source.name)
 

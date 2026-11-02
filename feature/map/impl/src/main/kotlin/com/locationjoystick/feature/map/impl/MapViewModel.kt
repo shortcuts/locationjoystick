@@ -124,6 +124,11 @@ class MapViewModel
                     }
             }
             viewModelScope.launch {
+                settingsRepository.getRouteStartConfig().distinctUntilChanged().collect { last ->
+                    _uiState.update { it.copy(lastRouteStartConfig = last) }
+                }
+            }
+            viewModelScope.launch {
                 combine(
                     settingsRepository.getHideTeleportFeatures(),
                     settingsRepository.getShowRouteJumpButtons(),
@@ -404,8 +409,7 @@ class MapViewModel
                 }
 
                 is MapAction.StartRouteReplay -> {
-                    mapController.startRouteReplay(
-                        action.routeId,
+                    val config =
                         RouteStartConfig(
                             isLooping = action.isLooping,
                             isReverse = action.isReverse,
@@ -414,8 +418,9 @@ class MapViewModel
                             isPlanting = action.isPlanting,
                             teleportBetweenWaypoints = action.teleportBetweenWaypoints,
                             teleportBetweenDelaySeconds = action.teleportBetweenDelaySeconds,
-                        ),
-                    )
+                        )
+                    viewModelScope.launch { settingsRepository.setRouteStartConfig(config) }
+                    mapController.startRouteReplay(action.routeId, config)
                     if (!action.followRoadsToStart) {
                         _uiState.update { it.copy(showRoutesSheet = false) }
                     }

@@ -10,6 +10,7 @@ import com.locationjoystick.core.model.GroundCalibration
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RealPositionSnapshot
+import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.testing.FakePreferencesDataStore
@@ -208,6 +209,28 @@ class AppPreferencesDataSourceTest {
             assertEquals(RealPositionSnapshot(LatLng(1.5, 2.5), 10L), dataSource.getRealPositionSnapshot().first())
             dataSource.setRealPositionSnapshot(RealPositionSnapshot(LatLng(3.5, 4.5), 20L))
             assertEquals(RealPositionSnapshot(LatLng(3.5, 4.5), 20L), dataSource.getRealPositionSnapshot().first())
+        }
+
+    @Test
+    fun `route start config round-trips without planting and ignores a malformed value`() =
+        runTest {
+            assertNull(dataSource.getRouteStartConfig().first())
+            val config =
+                RouteStartConfig(
+                    isLooping = true,
+                    isReverse = true,
+                    followRoadsToStart = true,
+                    isPlanting = true,
+                    teleportToStart = true,
+                    teleportBetweenWaypoints = true,
+                    teleportBetweenDelaySeconds = 15,
+                )
+            dataSource.setRouteStartConfig(config)
+            assertEquals(config.copy(isPlanting = false, teleportToStart = false), dataSource.getRouteStartConfig().first())
+            fakeDataStore.edit { it[stringPreferencesKey("route_start_config")] = "1|0|x" }
+            assertNull(dataSource.getRouteStartConfig().first())
+            fakeDataStore.edit { it[stringPreferencesKey("route_start_config")] = "1|0|0|0|0|abc" }
+            assertNull(dataSource.getRouteStartConfig().first())
         }
 
     @Test

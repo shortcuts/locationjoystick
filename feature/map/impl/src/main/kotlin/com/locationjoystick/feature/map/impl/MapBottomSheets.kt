@@ -121,6 +121,7 @@ internal fun RoutesPickerSheet(
                     isPlantedRoute = route?.plantingRadiusMeters != null,
                     isRoadRoute = route?.routeType == RouteType.GUIDED,
                     isRoadRouteFetchInFlight = uiState.isRoadRouteFetchInFlight,
+                    remembered = uiState.lastRouteStartConfig,
                 )
             }
         } else {

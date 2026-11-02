@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.routes.impl
 
 import com.locationjoystick.core.model.Route
+import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SavedItemSortMode
 
 data class RoutesUiState(
@@ -9,4 +10,5 @@ data class RoutesUiState(
     val sortMode: SavedItemSortMode = SavedItemSortMode.NEWEST_FIRST,
     val hideTeleportFeatures: Boolean = false,
     val isRoadRouteFetchInFlight: Boolean = false,
+    val lastRouteStartConfig: RouteStartConfig? = null,
 )

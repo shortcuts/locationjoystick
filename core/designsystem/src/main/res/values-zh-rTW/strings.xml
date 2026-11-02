@@ -15,6 +15,8 @@
     <string name="delete_confirm_dialog_message_route">"此路線將被永久刪除，且無法復原。"</string>
     <string name="delete_confirm_dialog_delete">"刪除"</string>
     <string name="delete_confirm_dialog_cancel">"取消"</string>
+    <string name="route_start_options_summary_none">"無選項"</string>
+    <string name="route_start_options_toggle">"選項"</string>
     <string name="route_start_options_loop">"循環"</string>
     <string name="route_start_options_reverse">"反向"</string>
     <string name="route_start_options_return_to_location">"返回原位置"</string>

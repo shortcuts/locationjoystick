@@ -48,6 +48,8 @@ class RoutesViewModelUiStateTest {
     private val sortFlow = MutableStateFlow(SavedItemSortMode.NEWEST_FIRST)
     private lateinit var viewModel: RoutesViewModel
 
+    private val lastConfigFlow = MutableStateFlow<RouteStartConfig?>(null)
+
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
@@ -55,6 +57,7 @@ class RoutesViewModelUiStateTest {
         every { settingsRepository.getRoutesSortMode() } returns sortFlow
         every { settingsRepository.getRoutesManualOrder() } returns MutableStateFlow(emptyList())
         every { settingsRepository.getHideTeleportFeatures() } returns MutableStateFlow(false)
+        every { settingsRepository.getRouteStartConfig() } returns lastConfigFlow
         viewModel =
             RoutesViewModel(
                 routeRepository,
@@ -193,6 +196,26 @@ class RoutesViewModelUiStateTest {
                             teleportBetweenDelaySeconds = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
                         ),
                 )
+            }
+        }
+
+    @Test
+    fun startReplay_remembers_the_start_config() =
+        runTest {
+            val config = RouteStartConfig(isLooping = true, followRoadsToStart = true, teleportBetweenDelaySeconds = 12)
+            viewModel.startReplay(route("r1", "A", createdAt = 1000L), config)
+
+            coVerify { settingsRepository.setRouteStartConfig(config) }
+        }
+
+    @Test
+    fun uiState_exposes_the_remembered_start_config() =
+        runTest {
+            val config = RouteStartConfig(isReverse = true)
+            lastConfigFlow.value = config
+            viewModel.uiState.test {
+                assertEquals(config, expectMostRecentItem().lastRouteStartConfig)
+                cancelAndIgnoreRemainingEvents()
             }
         }
 
