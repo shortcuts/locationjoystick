@@ -699,7 +699,7 @@ nav details > a{display:block}
 
   .section-bullets li{font-size:0.92rem}
 
-  pre{padding:12px 12px;font-size:0.85rem}
+  pre{padding:12px 12px;font-size:0.85rem;white-space:pre-wrap;overflow-wrap:anywhere}
   .nav-toggle-btn{width:44px;height:44px;top:8px}
 
   #docsearch{padding:8px 12px;border-bottom:1px solid var(--rule)}

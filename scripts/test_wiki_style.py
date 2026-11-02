@@ -41,6 +41,16 @@ def test_item_headings_are_not_smaller_than_body():
     assert all(size >= body for size in sizes), f"body {body}px, heading sizes {sizes}px"
 
 
+def test_code_blocks_wrap_long_urls_on_phones():
+    start = CSS.rindex("@media(max-width:680px){")
+    end = CSS.index("/* ── DocSearch theme ── */", start)
+    rule = re.search(r"(?<![\w-])pre\{([^}]*)\}", CSS[start:end])
+    assert rule, "no pre rule in the phone media block"
+    assert "white-space:pre-wrap" in rule.group(1), rule.group(1)
+    assert "overflow-wrap:anywhere" in rule.group(1), rule.group(1)
+
+
 if __name__ == "__main__":
     test_item_headings_are_not_smaller_than_body()
+    test_code_blocks_wrap_long_urls_on_phones()
     print("ok")
