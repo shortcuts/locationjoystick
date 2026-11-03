@@ -86,4 +86,19 @@ class OfflineCityProviderTest {
         runTest {
             assertNull(provider(munich).reverse(48.1, 11.5))
         }
+
+    @Test
+    fun `cjk characters in query do not match`() =
+        runTest {
+            assertTrue(provider(munich).search("北京").isEmpty())
+        }
+
+    @Test
+    fun `large city by population is returned even if name is short`() =
+        runTest {
+            val largecity = "Paris\t48.853\t2.349\tFR\t2138551"
+            val result = provider(largecity).search("paris")
+            assertEquals(1, result.size)
+            assertEquals("Paris, France", result[0].displayName)
+        }
 }

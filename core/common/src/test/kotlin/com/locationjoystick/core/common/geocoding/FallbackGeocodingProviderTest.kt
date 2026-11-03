@@ -128,4 +128,18 @@ class FallbackGeocodingProviderTest {
             assertEquals(emptyList<GeocodeResult>(), s.search("x"))
             assertEquals(0, a.calls)
         }
+
+    @Test
+    fun `offline provider answers when both online services fail`() =
+        runTest {
+            a.failure = IOException("network unreachable")
+            b.failure = IOException("network unreachable")
+            val offline = Fake(GeocodeResult(48.0, 2.0, "Paris, France"))
+            val s = FallbackGeocodingProvider(listOf(a, b, offline)) { now }
+            val result = s.search("paris")
+            assertEquals("Paris, France", result.single().displayName)
+            assertEquals(1, a.calls)
+            assertEquals(1, b.calls)
+            assertEquals(1, offline.calls)
+        }
 }
