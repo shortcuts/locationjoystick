@@ -18,6 +18,9 @@ internal class ReconnectNotifier(
     private val notFoundStreak = ReconnectNotFoundStreak()
     private val gateClosedStreak = ReconnectGateClosedStreak()
 
+    // Ids we posted and have not cancelled, so the per-check cancels skip the system call when nothing is up.
+    private val posted = mutableSetOf<Int>()
+
     fun createChannel() {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(
@@ -44,7 +47,12 @@ internal class ReconnectNotifier(
             post(R.string.reconnect_not_found_title, R.string.reconnect_not_found_text, ID_NOT_FOUND)
         }
         if (gateClosedStreak.record(result, screenInteractive)) {
-            post(R.string.reconnect_gate_closed_title, R.string.reconnect_gate_closed_text, ID_GATE_CLOSED)
+            post(
+                R.string.reconnect_gate_closed_title,
+                R.string.reconnect_gate_closed_text,
+                ID_GATE_CLOSED,
+                AppConstants.GameConstants.PACKAGE,
+            )
         }
     }
 
@@ -55,24 +63,27 @@ internal class ReconnectNotifier(
         cancelAll()
     }
 
+    // Unconditional: a notice from a previous process is not in [posted].
     fun cancelAll() {
-        cancel(ID_FAILED)
-        cancel(ID_NOT_FOUND)
-        cancel(ID_GATE_CLOSED)
+        posted.clear()
+        listOf(ID_FAILED, ID_NOT_FOUND, ID_GATE_CLOSED).forEach { NotificationManagerCompat.from(context).cancel(it) }
     }
 
-    private fun cancel(id: Int) = NotificationManagerCompat.from(context).cancel(id)
+    private fun cancel(id: Int) {
+        if (posted.remove(id)) NotificationManagerCompat.from(context).cancel(id)
+    }
 
     private fun post(
         @StringRes title: Int,
         @StringRes text: Int,
         id: Int,
+        launchPackage: String = context.packageName,
     ) {
         val manager = NotificationManagerCompat.from(context)
         if (!manager.areNotificationsEnabled()) return
         val openApp =
-            context.packageManager.getLaunchIntentForPackage(context.packageName)?.let {
-                PendingIntent.getActivity(context, 0, it, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            context.packageManager.getLaunchIntentForPackage(launchPackage)?.let {
+                PendingIntent.getActivity(context, id, it, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
             }
         val notification =
             NotificationCompat
@@ -86,6 +97,7 @@ internal class ReconnectNotifier(
         // areNotificationsEnabled() above covers the POST_NOTIFICATIONS check lint cannot trace.
         @Suppress("MissingPermission")
         manager.notify(id, notification)
+        posted += id
     }
 
     private companion object {
