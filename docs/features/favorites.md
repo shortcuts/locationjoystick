@@ -75,6 +75,7 @@ Real GPS is unreadable while the mock provider runs, so the app cannot offer a r
 - The list is a capped, newest-first JSON string in DataStore, like recent searches. It is per-device and not exported, so no schema or backup change.
 - Entries match when their coordinates agree to about 1 m. Pasted links carry different trailing digits for the same spot, so exact equality would miss repeats. The newer entry replaces the older one.
 - It opens from a toolbar sheet, not a list section. A section would collide with the group reorder and the empty-favorites state, and the entry point stays visible with zero favorites.
+- The toolbar button is removed while Hide teleport features is on. The list exists to re-teleport, and a visible row that does nothing is a trap.
 - A row stores coordinates and time only. Resolving a place name needs the network, and the app stays offline-first.
 - Clear acts at once with no confirmation. The data is cheap to recreate.
 

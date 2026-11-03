@@ -3,15 +3,18 @@ package com.locationjoystick.app.smoke
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.espresso.Espresso
 import com.locationjoystick.core.data.FavoriteRepository
+import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.LatLng
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import javax.inject.Inject
@@ -19,6 +22,8 @@ import javax.inject.Inject
 @HiltAndroidTest
 class FavoritesSmokeTest : BaseSmokeTest() {
     @Inject lateinit var favoriteRepository: FavoriteRepository
+
+    @Inject lateinit var settingsRepository: SettingsRepository
 
     @Before
     override fun setup() {
@@ -44,6 +49,17 @@ class FavoritesSmokeTest : BaseSmokeTest() {
         composeRule.onNodeWithContentDescription("History").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("No teleports yet").assertIsDisplayed()
+    }
+
+    @Test
+    fun history_button_is_hidden_when_hide_teleport_is_on() {
+        runBlocking { settingsRepository.setHideTeleportFeatures(true) }
+        try {
+            composeRule.waitForIdle()
+            assertTrue(composeRule.onAllNodesWithContentDescription("History").fetchSemanticsNodes().isEmpty())
+        } finally {
+            runBlocking { settingsRepository.setHideTeleportFeatures(false) }
+        }
     }
 
     @Test
