@@ -235,7 +235,7 @@ internal fun FavoritesScreen(
                         takenAtMs = snapshot.takenAtMs,
                         cooldownState = cooldownStates[LAST_KNOWN_ID] ?: CooldownState.Ready,
                         currentPosition = getCurrentPosition(),
-                        onClick = { if (isSpoofing) targetFavorite = favorite else onTeleport(favorite) },
+                        onClick = { if (isSpoofing || uiState.hideTeleportFeatures) targetFavorite = favorite else onTeleport(favorite) },
                         modifier = Modifier.padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
                     )
                 }
@@ -316,7 +316,15 @@ internal fun FavoritesScreen(
                                         cooldownState = cooldownStates[favorite.id] ?: CooldownState.Ready,
                                         currentPosition = getCurrentPosition(),
                                         // Spoofing off: no movement to interrupt, so keep the instant teleport.
-                                        onRowClick = { if (isSpoofing) targetFavorite = favorite else onTeleport(favorite) },
+                                        onRowClick = {
+                                            if (isSpoofing ||
+                                                uiState.hideTeleportFeatures
+                                            ) {
+                                                targetFavorite = favorite
+                                            } else {
+                                                onTeleport(favorite)
+                                            }
+                                        },
                                         onEdit = { editingFavorite = it },
                                         onMoveToGroup = if (favorite.isHot()) null else ({ groupDialogs.moving = it }),
                                         onDelete = { onSetPendingDeleteId(it.id) },
@@ -390,7 +398,7 @@ internal fun FavoritesScreen(
                                 entry = entry,
                                 onClick = {
                                     showHistorySheet = false
-                                    if (isSpoofing) targetFavorite = favorite else onTeleport(favorite)
+                                    if (isSpoofing || uiState.hideTeleportFeatures) targetFavorite = favorite else onTeleport(favorite)
                                 },
                                 onSave = {
                                     prefillLat = entry.lat.toString()
