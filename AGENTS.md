@@ -267,6 +267,7 @@ make wiki-serve   # http://localhost:8080
 | `docs/wiki/tap-to-walk.html`, `language.html`, `share.html`, `capture-coordinates.html` | Redirect stubs (canonical + noindex) |
 | `docs/wiki/changelog.html` | Curated, user-facing release notes — **generated**, not hand-edited (see "Regenerating the changelog" below) |
 | `docs/wiki/changelog/<version>.json` | Per-version changelog source — feeds both `changelog.html` (via `make wiki-changelog`) and the in-app What's New popup |
+| `docs/wiki/compare.html` | Comparison with other fake GPS apps. Every cell cites the seller's own page; re-read them before editing |
 | `docs/wiki/privacy.html` | Privacy policy |
 | `docs/wiki/acknowledgements.html` | Third-party credits |
 | `docs/wiki/style.css` | Single stylesheet — all pages share it |

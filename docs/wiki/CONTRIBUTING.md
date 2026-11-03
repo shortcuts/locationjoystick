@@ -107,7 +107,7 @@ The sidebar is organized into six groups in fixed order:
 - **Features.** One page per everyday feature you navigate while using the app. Pages: Map, Overlays, Reconnect accessory, Routes, Favorites, Location Links, Capture, Group Sync.
 - **Configure.** Settings and data backup or transfer. Pages: Settings, Backup & Transfer.
 - **Help.** Fixing problems and integrations for developers. Pages: Troubleshooting, Control API.
-- **About.** Meta pages for the project. Pages: Changelog, Privacy, Acknowledgements.
+- **About.** Meta pages for the project. Pages: Compare apps, Changelog, Privacy, Acknowledgements.
 
 All nav items live in `docs/wiki/wiki-init.js`, in the `NAV_ITEMS` array. Each group is an object with a `group` name and an `items` array. See the current `NAV_ITEMS` at the top of `docs/wiki/wiki-init.js` for the live list and label wording — don't copy an example here, it drifts.
 

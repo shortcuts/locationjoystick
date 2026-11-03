@@ -32,6 +32,7 @@
       { href: 'control-api.html', label: 'Control API' },
     ] },
     { group: 'About', items: [
+      { href: 'compare.html', label: 'Compare apps' },
       { href: 'changelog.html', label: 'Changelog' },
       { href: 'privacy.html', label: 'Privacy' },
       { href: 'acknowledgements.html', label: 'Acknowledgements' },
