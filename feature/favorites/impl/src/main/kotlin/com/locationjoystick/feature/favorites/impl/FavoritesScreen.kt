@@ -201,10 +201,8 @@ internal fun FavoritesScreen(
         actions = {
             val context = LocalContext.current
             SavedItemSortMenu(selected = uiState.sortMode, onSelected = onSortModeSelected)
-            if (!uiState.hideTeleportFeatures) {
-                IconButton(onClick = { showHistorySheet = true }) {
-                    Icon(LjIcons.History, contentDescription = stringResource(R.string.favorites_screen_history))
-                }
+            IconButton(onClick = { showHistorySheet = true }) {
+                Icon(LjIcons.History, contentDescription = stringResource(R.string.favorites_screen_history))
             }
             IconButton(
                 onClick = { shareCurrentLocationCoordinates(context, getCurrentPosition()) },
