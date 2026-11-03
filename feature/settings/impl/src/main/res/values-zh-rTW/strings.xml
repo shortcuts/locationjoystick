@@ -210,8 +210,11 @@
     <string name="settings_menus_map_source">"地圖來源"</string>
     <string name="settings_menus_map_source_osm">"OpenStreetMap"</string>
     <string name="settings_menus_map_source_amap">"高德地圖"</string>
+    <string name="settings_menus_map_source_satellite">"衛星影像 (Sentinel-2)"</string>
     <string name="settings_menus_map_source_item">"%1$s — %2$s"</string>
     <string name="settings_menus_map_source_osm_default_city">"法國巴黎"</string>
     <string name="settings_menus_map_source_amap_default_city">"中國北京"</string>
+    <string name="settings_menus_map_source_satellite_default_city">"法國巴黎"</string>
     <string name="settings_menus_map_source_amap_note">"高德圖磚使用 GCJ-02 座標系。應用程式會自動換算座標，確保標記、路線與點擊位置對齊；所有資料仍以 WGS-84 儲存。"</string>
+    <string name="settings_menus_map_source_satellite_note">"衛星影像來自 Sentinel-2，每像素 10 公尺。放大到街道級別以上會變得模糊。"</string>
 </resources>

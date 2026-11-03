@@ -2,4 +2,5 @@
 <resources>
     <string name="map_attribution_osm">"© OpenStreetMap contributors"</string>
     <string name="map_attribution_amap">"© Amap (AutoNavi) · GCJ-02"</string>
+    <string name="map_attribution_satellite">"© EOX · Contains modified Copernicus Sentinel data 2016"</string>
 </resources>

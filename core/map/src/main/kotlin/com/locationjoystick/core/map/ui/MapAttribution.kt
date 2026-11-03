@@ -18,6 +18,7 @@ fun mapAttributionText(tileSource: MapTileSource): String =
         when (tileSource) {
             MapTileSource.OSM -> R.string.map_attribution_osm
             MapTileSource.AMAP -> R.string.map_attribution_amap
+            MapTileSource.SATELLITE -> R.string.map_attribution_satellite
         },
     )
 

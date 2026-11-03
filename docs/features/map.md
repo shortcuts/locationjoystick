@@ -17,14 +17,15 @@ MapLibre Android SDK. Not osmdroid, not Google Maps.
 
 Settings picks the raster provider for every map surface: the main map, the floating widget map, the favorites picker, the route creator and the paste-coordinates screen. Each surface re-applies its style when the setting changes, keeping the camera on the same real-world point.
 
-Two sources exist, and the code holds their tile URLs, zoom ranges and default centres:
+Three sources exist, and the code holds their tile URLs, zoom ranges and default centres:
 
 - **OSM** (default): the standard tile service, WGS-84.
 - **AMap:** a community raster endpoint with no key. It is faster from mainland China, where OSM tiles are throttled. Its coverage is mainland China only, and it uses a different datum.
+- **Satellite:** EOX Sentinel-2 cloudless imagery, WGS-84, global. It uses the 2016 layer because later years carry a non-commercial licence and the app ships on Play. Sentinel-2 is 10 m per pixel, so the tiles stop at z14 and look blurry past street level. The camera overzooms like OSM. EOX is a third-party server with no stated service level, so an outage shows the empty background.
 
 No custom-URL option, by design. The setting stays a simple choice, and the app does not ship a free-form network field.
 
-Only AMap clamps the camera to its served zoom range. Without the clamp it shows blank tiles when zoomed past its range. OSM keeps the library's default range, since its tiles overzoom.
+Only AMap clamps the camera to its served zoom range. Without the clamp it shows blank tiles when zoomed past its range. OSM and Satellite keep the library's default range, since their tiles overzoom.
 
 ### GCJ-02 boundary
 

@@ -43,6 +43,11 @@ A camera animation across a large distance makes the library request every tile 
 
 Do not bump the cache marker for camera changes. The marker is only for user-agent and blocked-placeholder wipes.
 
+## Satellite source
+
+- Layer: EOX `s2cloudless_3857`, the 2016 mosaic. The EOX::Maps page (read 2026-11-03) lets applications use its maps freely, with a link back to EOX::Maps and attribution. The link is on the wiki acknowledgements page, the credit is in `map_attribution_satellite`. The EOX licence summary (cloudless.eox.at/documentation/license) puts later years under CC BY-NC-SA, so do not switch to a newer year without a commercial licence.
+- No tile usage limit is stated. The host needs no User-Agent rewrite and shares the process-wide client.
+
 ## Do not
 
 - Remove the tile install from application startup.

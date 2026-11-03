@@ -2,4 +2,5 @@
 <resources>
     <string name="map_attribution_osm">"© OpenStreetMap 貢獻者"</string>
     <string name="map_attribution_amap">"© 高德地圖 · GCJ-02"</string>
+    <string name="map_attribution_satellite">"© EOX · 含經修改的哥白尼 Sentinel 資料 2016"</string>
 </resources>

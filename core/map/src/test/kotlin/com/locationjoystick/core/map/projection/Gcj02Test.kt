@@ -104,4 +104,14 @@ class Gcj02Test {
         }
         assertEquals(4, urls.toSet().size)
     }
+
+    @Test
+    fun `satellite is WGS84 with a single EOX template`() {
+        assertSame(MapProjection.Identity, MapTileSource.SATELLITE.projection)
+        assertSame(MapTileSource.SATELLITE, MapTileSource.fromName("SATELLITE"))
+        assertEquals(
+            listOf("https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg"),
+            MapTileSource.SATELLITE.tileUrlTemplates,
+        )
+    }
 }

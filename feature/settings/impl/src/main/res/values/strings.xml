@@ -109,10 +109,13 @@
     <string name="settings_menus_map_source">"Map source"</string>
     <string name="settings_menus_map_source_osm">"OpenStreetMap"</string>
     <string name="settings_menus_map_source_amap">"Amap (高德)"</string>
+    <string name="settings_menus_map_source_satellite">"Satellite (Sentinel-2)"</string>
     <string name="settings_menus_map_source_item">"%1$s (%2$s)"</string>
     <string name="settings_menus_map_source_osm_default_city">"Paris, France"</string>
     <string name="settings_menus_map_source_amap_default_city">"Beijing, China"</string>
+    <string name="settings_menus_map_source_satellite_default_city">"Paris, France"</string>
     <string name="settings_menus_map_source_amap_note">"Amap tiles use the GCJ-02 coordinate system. The app converts positions so markers, routes, and taps line up. It still stores all data in WGS-84."</string>
+    <string name="settings_menus_map_source_satellite_note">"Satellite images come from Sentinel-2 at 10 m per pixel. Zoomed in past street level they look blurry."</string>
     <string name="settings_menus_reconnect_accessory">"Reconnect accessory"</string>
     <string name="settings_menus_reconnect_accessory_description">"Regularly checks whether your accessory shows as disconnected and taps its connect button."</string>
     <string name="settings_menus_reconnect_accessory_automatically">"Reconnect accessory automatically"</string>

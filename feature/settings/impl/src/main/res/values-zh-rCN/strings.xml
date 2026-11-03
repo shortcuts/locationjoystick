@@ -109,10 +109,13 @@
     <string name="settings_menus_map_source">"地图源"</string>
     <string name="settings_menus_map_source_osm">"OpenStreetMap"</string>
     <string name="settings_menus_map_source_amap">"高德地图"</string>
+    <string name="settings_menus_map_source_satellite">"卫星影像 (Sentinel-2)"</string>
     <string name="settings_menus_map_source_item">"%1$s — %2$s"</string>
     <string name="settings_menus_map_source_osm_default_city">"法国巴黎"</string>
     <string name="settings_menus_map_source_amap_default_city">"中国北京"</string>
+    <string name="settings_menus_map_source_satellite_default_city">"法国巴黎"</string>
     <string name="settings_menus_map_source_amap_note">"高德瓦片使用 GCJ-02 坐标系。应用会自动换算坐标，确保标记、路线与点击位置对齐；所有数据仍以 WGS-84 保存。"</string>
+    <string name="settings_menus_map_source_satellite_note">"卫星影像来自 Sentinel-2，每像素 10 米。放大到街道级别以上会变得模糊。"</string>
     <string name="settings_menus_reconnect_accessory">"重新连接配件"</string>
     <string name="settings_menus_reconnect_accessory_description">"定期检查你的配件是否显示为已断开，并点击其连接按钮。"</string>
     <string name="settings_menus_reconnect_accessory_automatically">"自动重新连接配件"</string>

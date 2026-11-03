@@ -22,4 +22,12 @@ class MapZoomBoundsTest {
     fun `AMAP camera clamped to served tile range`() {
         assertEquals(3f..18f, cameraZoomBounds(MapTileSource.AMAP))
     }
+
+    @Test
+    fun `SATELLITE keeps MapLibre default camera range and serves tiles to z14`() {
+        val bounds = cameraZoomBounds(MapTileSource.SATELLITE)
+        assertEquals(MapLibreConstants.MINIMUM_ZOOM.toFloat(), bounds.start, 0f)
+        assertEquals(MapLibreConstants.MAXIMUM_ZOOM.toFloat(), bounds.endInclusive, 0f)
+        assertEquals(14f, MapTileSource.SATELLITE.maxZoom, 0f)
+    }
 }

@@ -58,6 +58,20 @@ enum class MapTileSource(
         // Beijing, centre of Tian'anmen Square (Monument to the People's Heroes), WGS-84.
         defaultCenter = LatLng(latitude = 39.9033, longitude = 116.3915),
     ),
+
+    /**
+     * EOX Sentinel-2 cloudless mosaic. The unsuffixed layer is the 2016 one, the only year under
+     * CC BY 4.0; later years are non-commercial. Sentinel-2 is 10 m per pixel, so z14 is the
+     * finest real detail and the camera overzooms past it.
+     */
+    SATELLITE(
+        tileUrlTemplates = listOf("https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg"),
+        minZoom = 0f,
+        maxZoom = 14f,
+        clampCamera = false,
+        coordinateSystem = MapCoordinateSystem.WGS84,
+        defaultCenter = LatLng(latitude = 48.8566, longitude = 2.3522),
+    ),
     ;
 
     companion object {

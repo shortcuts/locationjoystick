@@ -225,10 +225,16 @@ private fun MapSourceSection(
             }
         }
     }
-    if (uiState.mapTileSource == MapTileSource.AMAP) {
+    val sourceNote =
+        when (uiState.mapTileSource) {
+            MapTileSource.AMAP -> R.string.settings_menus_map_source_amap_note
+            MapTileSource.SATELLITE -> R.string.settings_menus_map_source_satellite_note
+            MapTileSource.OSM -> null
+        }
+    if (sourceNote != null) {
         Spacer(Modifier.height(LjSpacing.sm))
         Text(
-            stringResource(R.string.settings_menus_map_source_amap_note),
+            stringResource(sourceNote),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -250,6 +256,12 @@ private fun mapTileSourceLabel(source: MapTileSource): String =
                 R.string.settings_menus_map_source_item,
                 stringResource(R.string.settings_menus_map_source_amap),
                 stringResource(R.string.settings_menus_map_source_amap_default_city),
+            )
+        MapTileSource.SATELLITE ->
+            stringResource(
+                R.string.settings_menus_map_source_item,
+                stringResource(R.string.settings_menus_map_source_satellite),
+                stringResource(R.string.settings_menus_map_source_satellite_default_city),
             )
     }
 
