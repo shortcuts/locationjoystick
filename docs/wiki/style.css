@@ -55,13 +55,17 @@ body{
 
 table{font-variant-numeric:tabular-nums}
 
-/* Comparison table: the wrapper scrolls on phones and the feature column stays pinned. */
-.table-scroll{overflow-x:auto;margin:16px 0;border:1px solid var(--border);border-radius:var(--r-sm)}
-.compare{border-collapse:collapse;min-width:640px;width:100%;font-size:14px;line-height:1.4}
-.compare th,.compare td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
-.compare thead th{background:var(--surface);font-weight:600}
-.compare tbody th{position:sticky;left:0;background:var(--bg);font-weight:500;min-width:140px}
-.compare tbody tr:last-child th,.compare tbody tr:last-child td{border-bottom:0}
+/* Comparison table: same card and row look as .endpoint/.param; the wrapper scrolls on phones with the feature column pinned. */
+.table-scroll{overflow-x:auto;margin:16px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)}
+.compare{border-collapse:collapse;min-width:760px;width:100%;font-size:0.84rem;line-height:1.5}
+.compare th,.compare td{padding:8px 16px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+.compare tr:last-child > *{border-bottom:none}
+.compare thead th{font-family:var(--mono);font-size:0.66rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)}
+.compare tbody th{position:sticky;left:0;background:var(--surface);font-weight:600;color:var(--text);min-width:11rem}
+.compare td{color:var(--text)}
+.compare .na{color:var(--muted)}
+.compare .ours{background:var(--accent-bg)}
+.compare thead .ours{color:var(--accent)}
 
 /* ── Layout ── */
 .layout{
