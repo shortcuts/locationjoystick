@@ -38,7 +38,8 @@ internal class TestProviderController(
     private val sdkAtLeastS = sdkInt >= Build.VERSION_CODES.S
 
     // Specs actually registered; extras that Android refuses stay out so they never receive fixes.
-    private val active = mutableListOf<ProviderSpec>()
+    // Copy-on-write: the update loop iterates while the service may remove from another thread.
+    private val active = java.util.concurrent.CopyOnWriteArrayList<ProviderSpec>()
 
     fun setup() {
         if (isAdded) return

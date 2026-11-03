@@ -47,10 +47,12 @@
       <li>Settings &gt; Favorites &amp; Routes has a new Show last known position switch. It pins where your phone was before spoofing started to the top of Favorites.</li>
       <li>While spoofing, tapping a favorite offers Teleport, Walk, or Walk via roads.</li>
       <li>Saved favorites are grouped, and you can sort them.</li>
+      <li>A History icon at the top of Favorites lists the last 50 places you jumped to. Tap one to teleport or walk there, or save it as a favorite. It is hidden while Hide teleport features is on.</li>
     </ul>
     <h5>Floating Widget</h5>
     <ul>
       <li>Controls now show their state by color. They are grey when idle, green when moving, and orange when a walk, route, or roam is paused.</li>
+      <li>The floating roaming sheet shows the generated path on a small map before you start.</li>
     </ul>
     <h5>General</h5>
     <ul>
@@ -62,6 +64,11 @@
     <h5>Group Sync</h5>
     <ul>
       <li>When a leader is on your Wi-Fi, you can tap Join once. The app never joins a group by itself.</li>
+      <li>Group Sync lists every group running on your Wi-Fi, each with its own Join button.</li>
+    </ul>
+    <h5>Location</h5>
+    <ul>
+      <li>Spoofing now also covers the network and fused location sources, so apps that read them no longer see your real position.</li>
     </ul>
     <h5>Map</h5>
     <ul>
@@ -94,16 +101,21 @@
       <li>Paste coordinates can build a teleport route. Each stop has its own wait time. The option is hidden when Hide teleport features is on.</li>
       <li>You can add a favorite as a stop when you build a route.</li>
       <li>Saved routes are grouped, and you can sort them.</li>
+      <li>The route start sheet is collapsed and remembers the options you used last.</li>
     </ul>
     <h5>Search</h5>
     <ul>
       <li>Place search now tries a second service when the first one fails. A service that has just failed is skipped for ten minutes.</li>
+      <li>Place search now works with no network. It finds towns of 5,000 people or more from a list stored in the app.</li>
     </ul>
     <h5>Settings</h5>
     <ul>
       <li>Pick your game during first setup. It only hides features you do not need, such as Planting, Tap to Walk and Reconnect accessory. Change it any time in Settings &gt; General &gt; Game setup.</li>
       <li>Tap to Walk and Reconnect accessory now have their own Screen helpers page in Settings, instead of sitting at the bottom of Menus.</li>
       <li>Settings &gt; Menus is split in two. Theme, map source, place search, privacy and debug now live in a new General page. Every option is still there.</li>
+      <li>Every setting saves as you change it. There is no Save button.</li>
+      <li>Long hot location and hot route lists start collapsed.</li>
+      <li>Movement &amp; GPS is split into Speeds and Randomness &amp; realism.</li>
     </ul>
     <h5>Tap to Walk</h5>
     <ul>
@@ -185,12 +197,14 @@
       <li>With Hide teleport features on, teleport routes now walk between their points instead of jumping.</li>
       <li>Moving between route stops no longer counts as a teleport, so it does not restart the teleport cooldown.</li>
       <li>The teleport delay field in the start sheet fits on its own row.</li>
+      <li>A route name with special characters no longer breaks GPX export.</li>
     </ul>
     <h5>Settings</h5>
     <ul>
       <li>Save and Discard buttons no longer cover the last settings entries.</li>
       <li>The speed warning uses the unit you picked in Settings.</li>
       <li>The route jump buttons and the altitude override button now live in Settings &gt; Menus.</li>
+      <li>Roaming distances follow the speed unit you picked.</li>
     </ul>
     <h5>Tap to Walk</h5>
     <ul>

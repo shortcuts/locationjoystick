@@ -74,6 +74,17 @@
     { "category": "fix", "scope": "Export and Import", "summary": "Import rejects GPX and backup coordinates that are not valid numbers or are out of range." },
     { "category": "fix", "scope": "Location Links", "summary": "Map links with a place name no longer open at 0, 0." },
     { "category": "fix", "scope": "Localization", "summary": "Completion messages, the QR chooser and GPX import errors now show in your language." },
+    { "category": "feat", "scope": "Favorite Locations", "summary": "A History icon at the top of Favorites lists the last 50 places you jumped to. Tap one to teleport or walk there, or save it as a favorite. It is hidden while Hide teleport features is on." },
+    { "category": "feat", "scope": "Search", "summary": "Place search now works with no network. It finds towns of 5,000 people or more from a list stored in the app." },
+    { "category": "feat", "scope": "Location", "summary": "Spoofing now also covers the network and fused location sources, so apps that read them no longer see your real position." },
+    { "category": "feat", "scope": "Group Sync", "summary": "Group Sync lists every group running on your Wi-Fi, each with its own Join button." },
+    { "category": "feat", "scope": "Floating Widget", "summary": "The floating roaming sheet shows the generated path on a small map before you start." },
+    { "category": "feat", "scope": "Settings", "summary": "Every setting saves as you change it. There is no Save button." },
+    { "category": "feat", "scope": "Settings", "summary": "Long hot location and hot route lists start collapsed." },
+    { "category": "feat", "scope": "Routes", "summary": "The route start sheet is collapsed and remembers the options you used last." },
+    { "category": "feat", "scope": "Settings", "summary": "Movement & GPS is split into Speeds and Randomness & realism." },
+    { "category": "fix", "scope": "Settings", "summary": "Roaming distances follow the speed unit you picked." },
+    { "category": "fix", "scope": "Routes", "summary": "A route name with special characters no longer breaks GPX export." },
     { "category": "fix", "scope": "Control API", "summary": "The Control API rejects invalid roam settings and oversized requests." }
   ]
 }
