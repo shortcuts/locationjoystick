@@ -225,21 +225,23 @@ internal fun FavoritesScreen(
                     .padding(scaffoldPadding),
         ) {
             WideContentClamp(modifier = Modifier.fillMaxSize()) {
-                uiState.lastKnownPosition?.takeIf { searchQuery.isBlank() }?.let { snapshot ->
-                    val favorite =
-                        com.locationjoystick.core.model.FavoriteLocation(
-                            id = LAST_KNOWN_ID,
-                            name = stringResource(R.string.favorites_screen_last_known_position),
-                            position = snapshot.position,
+                if (!uiState.hideTeleportFeatures || isSpoofing) {
+                    uiState.lastKnownPosition?.takeIf { searchQuery.isBlank() }?.let { snapshot ->
+                        val favorite =
+                            com.locationjoystick.core.model.FavoriteLocation(
+                                id = LAST_KNOWN_ID,
+                                name = stringResource(R.string.favorites_screen_last_known_position),
+                                position = snapshot.position,
+                            )
+                        LastKnownPositionCard(
+                            favorite = favorite,
+                            takenAtMs = snapshot.takenAtMs,
+                            cooldownState = cooldownStates[LAST_KNOWN_ID] ?: CooldownState.Ready,
+                            currentPosition = getCurrentPosition(),
+                            onClick = { if (isSpoofing) targetFavorite = favorite else onTeleport(favorite) },
+                            modifier = Modifier.padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
                         )
-                    LastKnownPositionCard(
-                        favorite = favorite,
-                        takenAtMs = snapshot.takenAtMs,
-                        cooldownState = cooldownStates[LAST_KNOWN_ID] ?: CooldownState.Ready,
-                        currentPosition = getCurrentPosition(),
-                        onClick = { if (isSpoofing) targetFavorite = favorite else onTeleport(favorite) },
-                        modifier = Modifier.padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
-                    )
+                    }
                 }
                 if (uiState.favorites.isNotEmpty()) {
                     ListSearchField(
@@ -286,43 +288,52 @@ internal fun FavoritesScreen(
                         else -> {
                             val listState = rememberLazyListState()
                             val searching = searchQuery.isNotBlank()
+                            val displayFavorites = if (uiState.hideTeleportFeatures && !isSpoofing) emptyList() else filteredFavorites
                             val allSections =
                                 remember(uiState.favorites) {
                                     groupForDisplay(uiState.favorites, { it.category }, { it.isHot() })
                                 }
                             val filteredSections =
-                                remember(filteredFavorites) {
-                                    groupForDisplay(filteredFavorites, { it.category }, { it.isHot() })
+                                remember(displayFavorites) {
+                                    groupForDisplay(displayFavorites, { it.category }, { it.isHot() })
                                 }
                             val reorder = rememberGroupReorder(listState, allSections, { it.id }, onReorder)
 
-                            LazyColumn(
-                                state = listState,
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(LjSpacing.smMd),
-                                verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
-                            ) {
-                                groupedItems(
-                                    groups = if (searching) filteredSections else reorder.groups,
-                                    collapsed = collapsedGroups,
-                                    forceExpanded = searching,
-                                    reorder = if (searching) null else reorder,
-                                    itemKey = { it.id },
-                                    onRenameGroup = { groupDialogs.renaming = it },
-                                    onDeleteGroup = { groupDialogs.deleting = it },
-                                ) { favorite ->
-                                    FavoriteCard(
-                                        favorite = favorite,
-                                        isHome = favorite.id == uiState.homeFavoriteId,
-                                        onToggleHome = { onToggleHome(it.id) },
-                                        cooldownState = cooldownStates[favorite.id] ?: CooldownState.Ready,
-                                        currentPosition = getCurrentPosition(),
-                                        // Spoofing off: no movement to interrupt, so keep the instant teleport.
-                                        onRowClick = { if (isSpoofing) targetFavorite = favorite else onTeleport(favorite) },
-                                        onEdit = { editingFavorite = it },
-                                        onMoveToGroup = if (favorite.isHot()) null else ({ groupDialogs.moving = it }),
-                                        onDelete = { onSetPendingDeleteId(it.id) },
-                                    )
+                            if (displayFavorites.isEmpty() && uiState.hideTeleportFeatures && !isSpoofing) {
+                                EmptyState(
+                                    icon = LjIcons.LocationOn,
+                                    message = stringResource(R.string.favorites_no_saved_locations_yet),
+                                    modifier = Modifier.align(Alignment.Center),
+                                )
+                            } else {
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(LjSpacing.smMd),
+                                    verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
+                                ) {
+                                    groupedItems(
+                                        groups = if (searching) filteredSections else reorder.groups,
+                                        collapsed = collapsedGroups,
+                                        forceExpanded = searching,
+                                        reorder = if (searching) null else reorder,
+                                        itemKey = { it.id },
+                                        onRenameGroup = { groupDialogs.renaming = it },
+                                        onDeleteGroup = { groupDialogs.deleting = it },
+                                    ) { favorite ->
+                                        FavoriteCard(
+                                            favorite = favorite,
+                                            isHome = favorite.id == uiState.homeFavoriteId,
+                                            onToggleHome = { onToggleHome(it.id) },
+                                            cooldownState = cooldownStates[favorite.id] ?: CooldownState.Ready,
+                                            currentPosition = getCurrentPosition(),
+                                            // Spoofing off: no movement to interrupt, so keep the instant teleport.
+                                            onRowClick = { if (isSpoofing) targetFavorite = favorite else onTeleport(favorite) },
+                                            onEdit = { editingFavorite = it },
+                                            onMoveToGroup = if (favorite.isHot()) null else ({ groupDialogs.moving = it }),
+                                            onDelete = { onSetPendingDeleteId(it.id) },
+                                        )
+                                    }
                                 }
                             }
                         }
