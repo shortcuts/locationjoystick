@@ -83,6 +83,20 @@ class TestProviderControllerTest {
     }
 
     @Test
+    fun `extra enable failure removes the half-registered provider and skips it`() {
+        every { locationManager.setTestProviderEnabled("network", true) } throws IllegalArgumentException()
+        val provider = controller(34)
+
+        provider.setup()
+        provider.applyFix(fix, 1L)
+
+        assertEquals(0, errors)
+        verify(exactly = 2) { locationManager.removeTestProvider("network") }
+        verify(exactly = 0) { locationManager.setTestProviderLocation("network", any()) }
+        verify(exactly = 1) { locationManager.setTestProviderLocation("gps", any()) }
+    }
+
+    @Test
     fun `gps refusal reports the error`() {
         every { locationManager.addTestProvider("gps", any<ProviderProperties>()) } throws IllegalArgumentException()
 

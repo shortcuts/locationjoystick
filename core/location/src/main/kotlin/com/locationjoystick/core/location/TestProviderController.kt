@@ -75,6 +75,11 @@ internal class TestProviderController(
                 active.add(spec)
             } catch (e: Exception) {
                 Log.w(TAG, "Skipping test provider ${spec.name}", e)
+                try {
+                    locationManager.removeTestProvider(spec.name)
+                } catch (cleanup: Exception) {
+                    Log.w(TAG, "Could not remove test provider ${spec.name}", cleanup)
+                }
             }
         }
         isAdded = true
