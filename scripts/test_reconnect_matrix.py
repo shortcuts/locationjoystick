@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Self-check for reconnect_matrix.py. Run directly: python3 scripts/test_reconnect_matrix.py"""
+"""Self-check for reconnect_matrix.py. Run: uv run --with numpy --with pillow python -I scripts/test_reconnect_matrix.py"""
 
 import importlib.util
 import io
@@ -131,6 +131,54 @@ def test_locate_control_returns_state_and_centre_inside_search_region():
         assert state == want, name
         assert centre is not None and centre[0] >= 0.55 * w and centre[1] < 0.35 * h, (name, centre)
     assert rm.locate_control(_png(None, size=(864, 1920))) == ("NONE", None)
+
+
+# Lines copied from a real Pixel 5 `dumpsys bluetooth_manager` btm history (address masked).
+BTM = """\
+shim::legacy::btm  2026-11-02 23:29:55.635 API    Create bond              : xx:xx:xx:xx:d3:24 transport:BT_TRANSPORT_AUTO
+shim::legacy::btm  2026-11-02 23:29:55.652 ACL    Connection successful    : xx:xx:xx:xx:d3:24[public] Le
+shim::legacy::btm  2026-11-02 23:30:00.758 API    Discovered GATT services : xx:xx:xx:xx:d3:24 
+shim::legacy::btm  2026-11-02 23:31:26.100 ACL    Connection successful    : xx:xx:xx:xx:ab:cd[public] Le
+"""
+TAP_LINE = "11-02 23:29:54.152 I/ScreenAccessibilitySvc( 4242): Reconnect tap: 791,240,120"
+
+
+def test_first_tap_time_reads_logcat_time_prefix():
+    t = rm.first_tap_time(["11-02 23:29:50.000 I/ScreenAccessibilitySvc( 4242): Reconnect read: OFF", TAP_LINE])
+    assert (t.month, t.day, t.hour, t.minute, t.second) == (11, 2, 23, 29, 54)
+    assert rm.first_tap_time(["11-02 23:29:50.000 I/ScreenAccessibilitySvc( 4242): Reconnect read: ON"]) is None
+
+
+def test_tap_timings_seconds_from_first_tap():
+    got = rm.tap_timings(BTM, "D3:24", rm.first_tap_time([TAP_LINE]))
+    assert got == {"tap_to_link_s": 1.5, "tap_to_services_s": 6.6}
+    assert rm.tap_timings(BTM, "00:00", rm.first_tap_time([TAP_LINE])) == {"tap_to_link_s": None, "tap_to_services_s": None}
+    assert rm.tap_timings(BTM, "D3:24", None) == {"tap_to_link_s": None, "tap_to_services_s": None}
+
+
+def test_cycle_passes_zero_tap_not_off_is_no_failure():
+    assert rm.cycle_passes("NOT_OFF", True, 0)
+    assert not rm.cycle_passes("NOT_OFF", False, 0)
+    assert not rm.cycle_passes("NOT_OFF", True, 2)
+    assert rm.cycle_passes("RECONNECTED", True, 0)
+
+
+def test_summarize_counts_self_reconnects():
+    rows = [
+        {"device": "p5", "block": "c", "cycle": 1, "pass": True, "self_reconnect": True},
+        {"device": "p5", "block": "c", "cycle": 2, "pass": True, "self_reconnect": False},
+        {"device": "p5", "block": "c", "cycle": 3, "pass": False, "outcome": "FAILED"},
+    ]
+    counts, failed = rm.summarize(rows)
+    assert counts == {("p5", "c"): (2, 3, 1)}
+    assert failed == ["p5 c cycle 3: outcome=FAILED"]
+
+
+def test_crop_bottom_drops_five_percent():
+    from PIL import Image
+
+    out = Image.open(io.BytesIO(rm.crop_bottom(_png(None, size=(100, 200)))))
+    assert out.size == (100, 190)
 
 
 if __name__ == "__main__":

@@ -79,7 +79,7 @@ smoke-test-one:
 
 # Bluetooth reconnect tap matrix (docs/features/bluetooth-reconnect-tap.md).
 # make reconnect-auto CYCLES=10   (SERIAL, DEVICE, MAC, BLOCK optional: script picks)
-RECONNECT = python3 scripts/reconnect_matrix.py
+RECONNECT = uv run --with numpy --with pillow python -I scripts/reconnect_matrix.py
 CYCLES ?= 100
 DEVICE_ARGS = $(if $(SERIAL),--serial $(SERIAL)) $(if $(DEVICE),--device-slug $(DEVICE)) $(if $(MAC),--mac-suffix $(MAC)) $(if $(BLOCK),--block $(BLOCK))
 
@@ -116,7 +116,7 @@ reconnect-summary:
 	$(RECONNECT) summary
 
 reconnect-selfcheck:
-	python3 scripts/test_reconnect_matrix.py
+	uv run --with numpy --with pillow python -I scripts/test_reconnect_matrix.py
 
 # Tap-to-walk global smoke gate (docs/testing.md). Throwaway game account only.
 # make tap-smoke SERIAL=<adb serial> ONLY="1 2" SCENARIOS=all SPEED_PROFILE=walk   (needs LJ_CONTROL_API_KEY, LJ_CONTROL_API_HOST)

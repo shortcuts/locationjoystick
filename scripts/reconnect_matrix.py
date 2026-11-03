@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Reliability-proof harness for the Bluetooth reconnect tap (docs/features/bluetooth-reconnect-tap.md).
 
-Subcommands (stdlib plus adb on PATH; `auto` also needs numpy and Pillow; raw results go to
-scripts/reconnect-matrix/, gitignored):
+Run it as `uv run --with numpy --with pillow python -I scripts/reconnect_matrix.py <subcommand> ...`
+(the Makefile reconnect-* targets do). Stdlib plus adb on PATH is enough for `run`, `already-on` and
+`summary`; `auto` and `corpus` need numpy and Pillow. Raw results go to scripts/reconnect-matrix/, gitignored.
+Saved screenshots drop the bottom 5% so the in-game username never lands on disk.
+
+Subcommands:
     run [--serial S] [--mac-suffix D3:24] [--device-slug pixel7] --block a|b|c|d|e --cycles 20
         Operator disconnects the companion and presses Enter; the harness waits for the app's
         check (one per loop, 10 s debug / 60 s release), then confirms the link with dumpsys. One row per cycle.
@@ -20,7 +24,9 @@ scripts/reconnect-matrix/, gitignored):
     corpus [--serial S] [--device-slug pixel7] --state on|off --theme day|night --brightness min|max
         Captures one labelled screencap into scripts/reconnect-matrix/corpus/.
     summary
-        Prints per-device/per-block pass counts as a markdown table, then lists each failed cycle.
+        Prints per-device/per-block pass counts as a markdown table, with how many cycles the game
+        reconnected by itself (0 taps, so the tap was not tested), then lists each failed cycle.
+        Each row also stores tap_to_link_s and tap_to_services_s from `dumpsys bluetooth_manager`.
 
 --serial omitted: the only connected device is used, or you pick from a list.
     --device-slug omitted: taken from the phone's model name.
@@ -28,7 +34,7 @@ scripts/reconnect-matrix/, gitignored):
     --block omitted: a.
 
 Self-check:
-    python3 scripts/test_reconnect_matrix.py
+    uv run --with numpy --with pillow python -I scripts/test_reconnect_matrix.py
 """
 
 import argparse
@@ -55,6 +61,11 @@ READ_RE = re.compile(r"Reconnect read: (ON|OFF|NONE)")
 TAP_RE = re.compile(r"Reconnect tap: ")
 CHECK_RE = re.compile(r"Reconnect check: (NOT_OFF|RECONNECTED|FAILED)")
 TERMINAL_RE = re.compile(r"Reconnect check: (RECONNECTED|FAILED)")
+TAP_TIME_RE = re.compile(r"^(\d\d-\d\d \d\d:\d\d:\d\d\.\d{3}) .*Reconnect tap: ")
+BT_EVENT_RE = re.compile(
+    r"btm\s+(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{3})\s+\w+\s+(Connection successful|Discovered GATT services)\s*:\s*\S*"
+)
+BOTTOM_CROP_PCT = 0.05
 TOGGLE_SETTLE_S = 5  # the app needs at least 3 s to load after each connect or disconnect
 SHOTS = OUT / "shots"
 
@@ -96,9 +107,72 @@ def classify_logs(lines):
     return {"outcome": outcome, "taps": taps, "reads": reads}
 
 
-def cycle_passes(outcome, connected):
-    """Plan rule 7: the app reports RECONNECTED and dumpsys confirms the companion is Connected."""
+def cycle_passes(outcome, connected, taps=None):
+    """Plan rule 7: the app reports RECONNECTED and dumpsys confirms the companion is Connected.
+
+    A cycle with 0 taps where the game reconnected by itself may end NOT_OFF; that is no failure.
+    """
+    if taps == 0 and outcome == "NOT_OFF":
+        return connected is True
     return outcome == "RECONNECTED" and connected is True
+
+
+def first_tap_time(lines):
+    """Phone-clock time of the first `Reconnect tap` line (needs `logcat -v time`), or None."""
+    for line in lines:
+        if (m := TAP_TIME_RE.match(line)):
+            return datetime.strptime(f"{datetime.now().year}-{m.group(1)}", "%Y-%m-%d %H:%M:%S.%f")
+    return None
+
+
+def tap_timings(dump, mac_suffix, first_tap):
+    """Seconds from the first tap to the companion's link and GATT services, from `dumpsys bluetooth_manager`.
+
+    Reads the btm history, which survives the per-cycle `logcat -c`; the dump lists events oldest first. None when absent.
+    """
+    out = {"tap_to_link_s": None, "tap_to_services_s": None}
+    if first_tap is None:
+        return out
+    keys = {"Connection successful": "tap_to_link_s", "Discovered GATT services": "tap_to_services_s"}
+    for line in dump.splitlines():
+        m = BT_EVENT_RE.search(line)
+        if not m or not re.search(rf"(?i){re.escape(mac_suffix)}", line):
+            continue
+        at = datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S.%f")
+        key = keys[m.group(2)]
+        if at >= first_tap and out[key] is None:
+            out[key] = round((at - first_tap).total_seconds(), 1)
+    return out
+
+
+def cycle_extras(serial, mac_suffix, lines, taps):
+    """Row fields shared by every cycle: self-reconnect flag and the Bluetooth timings."""
+    dump = adb(serial, "shell", "dumpsys", "bluetooth_manager")
+    return {"self_reconnect": taps == 0, **tap_timings(dump, mac_suffix, first_tap_time(lines))}
+
+
+def summarize(rows):
+    """Per (device, block): (passed, total, self-reconnected), plus a line for each failed row."""
+    counts, failed = {}, []
+    for row in rows:
+        if not row["pass"]:
+            failed.append(f"{row['device']} {row['block']} cycle {row['cycle']}: outcome={row.get('outcome')}")
+        key = (row["device"], row["block"])
+        passed, total, selfs = counts.get(key, (0, 0, 0))
+        counts[key] = (passed + bool(row["pass"]), total + 1, selfs + bool(row.get("self_reconnect")))
+    return counts, failed
+
+
+def crop_bottom(png_bytes):
+    """Drop the bottom BOTTOM_CROP_PCT of a PNG, where the game shows the player's username."""
+    import io
+
+    from PIL import Image
+
+    img = Image.open(io.BytesIO(png_bytes))
+    buf = io.BytesIO()
+    img.crop((0, 0, img.width, int(img.height * (1 - BOTTOM_CROP_PCT)))).save(buf, format="PNG")
+    return buf.getvalue()
 
 
 # Port of ReconnectControlDetector.kt (same rules: flat regions, ball by shape, state by relative
@@ -235,7 +309,7 @@ def open_log_stream(serial):
     """Clear the app's log and start streaming it. Lines queue up until collect_until reads them."""
     subprocess.run(["adb", "-s", serial, "logcat", "-c"], check=False)
     proc = subprocess.Popen(
-        ["adb", "-s", serial, "logcat", "-v", "brief", "-s", f"{TAG}:D"],
+        ["adb", "-s", serial, "logcat", "-v", "time", "-s", f"{TAG}:D"],
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
         text=True,
@@ -347,7 +421,7 @@ def take_screenshot(serial):
 def save_shot(png, device, block, cycle, phase, cls):
     SHOTS.mkdir(parents=True, exist_ok=True)
     path = SHOTS / f"{device}_{block}_{cycle:03d}_{phase}_{cls}.png"
-    path.write_bytes(png)
+    path.write_bytes(crop_bottom(png))
     return str(path.relative_to(ROOT))
 
 
@@ -381,13 +455,15 @@ def cmd_auto(args):
         after = take_screenshot(args.serial)
         after_class = classify_screenshot(after)
         after_shot = save_shot(after, args.device_slug, args.block, cycle, "after", after_class)
+        extras = cycle_extras(args.serial, args.mac_suffix, lines, info["taps"])
         row = {
             "device": args.device_slug, "block": args.block, "cycle": cycle,
             "outcome": info["outcome"], "taps": info["taps"], "reads": info["reads"],
             "seconds": seconds, "connected": connected, "acl_dropped": acl_dropped,
             "toggle_ok": toggle_ok, "disconnect": method, "before_class": before_class, "before_shot": before_shot,
             "after_class": after_class, "after_shot": after_shot,
-            "pass": toggle_ok and cycle_passes(info["outcome"], connected) and after_class == "ON",
+            "pass": toggle_ok and cycle_passes(info["outcome"], connected, info["taps"]) and after_class == "ON",
+            **extras,
             "at": datetime.now(timezone.utc).isoformat(),
         }
         append_row(row)
@@ -411,11 +487,13 @@ def cmd_run(args):
         seconds = round(time.monotonic() - started, 1)
         info = classify_logs(lines)
         connected = wait_for_link(args.serial, args.mac_suffix, "Connected", 30)
+        time.sleep(TOGGLE_SETTLE_S)
         row = {
             "device": args.device_slug, "block": args.block, "cycle": cycle,
             "outcome": info["outcome"], "taps": info["taps"], "reads": info["reads"],
             "seconds": seconds, "connected": connected,
-            "pass": cycle_passes(info["outcome"], connected),
+            "pass": cycle_passes(info["outcome"], connected, info["taps"]),
+            **cycle_extras(args.serial, args.mac_suffix, lines, info["taps"]),
             "at": datetime.now(timezone.utc).isoformat(),
         }
         append_row(row)
@@ -447,25 +525,18 @@ def cmd_corpus(args):
     corpus.mkdir(parents=True, exist_ok=True)
     name = f"{args.state}_{args.theme}_{args.brightness}_{args.device_slug}.png"
     with (corpus / name).open("wb") as f:
-        f.write(subprocess.run(["adb", "-s", args.serial, "exec-out", "screencap", "-p"], capture_output=True, check=True).stdout)
+        f.write(crop_bottom(take_screenshot(args.serial)))
     print(f"wrote {corpus / name}")
 
 
 def cmd_summary(_args):
     if not ROWS.exists():
         sys.exit("no results yet")
-    counts, failed = {}, []
-    for line in ROWS.read_text().splitlines():
-        row = json.loads(line)
-        if not row["pass"]:
-            failed.append(f"{row['device']} {row['block']} cycle {row['cycle']}: outcome={row.get('outcome')}")
-        key = (row["device"], row["block"])
-        passed, total = counts.get(key, (0, 0))
-        counts[key] = (passed + bool(row["pass"]), total + 1)
-    print("| device | block | pass / total |")
-    print("|---|---|---|")
-    for (device, block), (passed, total) in sorted(counts.items()):
-        print(f"| {device} | {block} | {passed} / {total} |")
+    counts, failed = summarize(json.loads(line) for line in ROWS.read_text().splitlines())
+    print("| device | block | pass / total | self-reconnect (0 taps) |")
+    print("|---|---|---|---|")
+    for (device, block), (passed, total, selfs) in sorted(counts.items()):
+        print(f"| {device} | {block} | {passed} / {total} | {selfs} |")
     if failed:
         print("\nFailed cycles:")
         print("\n".join(f"- {f}" for f in failed))

@@ -78,7 +78,7 @@ Earlier runs (2026-10-13, Pixel 7 rows included) predate the re-read logic and t
 
 The earlier failures were diagnosed as a timing fault, not a detection fault. The first tap run read the control too soon after a tap, so a slow connection looked like a failure and was tapped again, toggling the companion away. The fix is the repeated read after a tap.
 
-The proof is run by the reconnect matrix script in `scripts/`. Its raw rows are not committed.
+The proof is run by the reconnect matrix script in `scripts/`. Its raw rows are not committed. Each row stores the tap-to-link and tap-to-services seconds, read from the phone's Bluetooth history, because the per-cycle `logcat -c` erases the log.
 
 ## Backoff
 
