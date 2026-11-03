@@ -1,6 +1,9 @@
 package com.locationjoystick.app.smoke
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.filter
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -41,12 +44,14 @@ class SettingsSmokeTest : BaseSmokeTest() {
             )
         val tops =
             labels.map {
-                // The drawer also has a "Capture" tab; the hub card comes first.
+                // The drawer also has a "Capture" tab and can come first in the tree; skip it.
                 composeRule
                     .onAllNodesWithText(it)
+                    .filter(!hasAnyAncestor(hasTestTag("nav_drawer")))
                     .onFirst()
                     .fetchSemanticsNode()
-                    .boundsInRoot.top
+                    // boundsInRoot clips to the viewport, so a card below the fold reads 0.0.
+                    .positionInRoot.y
             }
         assertEquals("hub card order", tops.sorted(), tops)
     }
@@ -151,8 +156,21 @@ class SettingsSmokeTest : BaseSmokeTest() {
 
     @Test
     fun settings_shows_capture_section() {
-        composeRule.onAllNodesWithText("Capture").onFirst().performClick()
+        composeRule
+            .onAllNodesWithText("Capture")
+            .filter(!hasAnyAncestor(hasTestTag("nav_drawer")))
+            .onFirst()
+            .performScrollTo()
+            .performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Collects map links", substring = true).performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun settings_shows_screen_helpers_section() {
+        composeRule.onNodeWithText("Screen helpers").performScrollTo().performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Tap to Walk").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Reconnect accessory").performScrollTo().assertIsDisplayed()
     }
 }
