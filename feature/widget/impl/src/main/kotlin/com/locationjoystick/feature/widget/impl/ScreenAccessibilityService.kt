@@ -51,10 +51,12 @@ class ScreenAccessibilityService :
             ReconnectBackoff(
                 AppConstants.ReconnectTapConstants.DEBUG_CHECK_INTERVAL_MS,
                 AppConstants.ReconnectTapConstants.DEBUG_CHECK_INTERVAL_MS,
+                AppConstants.ReconnectTapConstants.DEBUG_CHECK_INTERVAL_MS,
             )
         } else {
             ReconnectBackoff(
                 AppConstants.ReconnectTapConstants.CHECK_INTERVAL_MS,
+                AppConstants.ReconnectTapConstants.FAILED_RUN_BACKOFF_START_MS,
                 AppConstants.ReconnectTapConstants.MAX_CHECK_INTERVAL_MS,
             )
         }

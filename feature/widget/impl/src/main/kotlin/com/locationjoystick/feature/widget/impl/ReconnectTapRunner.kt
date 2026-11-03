@@ -94,21 +94,30 @@ internal class ReconnectGateClosedStreak(
 }
 
 /**
- * Delay before the next check. A FAILED run doubles it up to [maxMs]: a companion that stays
- * unreachable after a tap is likely away, so retrying at the base rate wastes taps and battery.
- * RECONNECTED and NOT_OFF reset it; NOT_FOUND and GATE_CLOSED are neutral, as in the streaks.
+ * Delay before the next check. The first FAILED run sets [firstFailedMs]; each further FAILED run
+ * doubles it up to [maxMs]: a companion that stays unreachable after a tap is likely away, so
+ * retrying at the base rate wastes taps and battery. RECONNECTED and NOT_OFF reset it to [baseMs];
+ * NOT_FOUND and GATE_CLOSED are neutral, as in the streaks.
  */
 internal class ReconnectBackoff(
     private val baseMs: Long,
+    private val firstFailedMs: Long,
     private val maxMs: Long,
 ) {
     var delayMs = baseMs
         private set
+    private var failing = false
 
     fun record(result: ReconnectRunResult) {
         when (result) {
-            ReconnectRunResult.FAILED -> delayMs = (delayMs * 2).coerceAtMost(maxMs)
-            ReconnectRunResult.RECONNECTED, ReconnectRunResult.NOT_OFF -> delayMs = baseMs
+            ReconnectRunResult.FAILED -> {
+                delayMs = if (failing) (delayMs * 2).coerceAtMost(maxMs) else firstFailedMs
+                failing = true
+            }
+            ReconnectRunResult.RECONNECTED, ReconnectRunResult.NOT_OFF -> {
+                delayMs = baseMs
+                failing = false
+            }
             ReconnectRunResult.NOT_FOUND, ReconnectRunResult.GATE_CLOSED -> Unit
         }
     }
@@ -213,8 +222,10 @@ private suspend fun runGated(
     if (confirmed != ReconnectState.OFF) return ReconnectRunResult.NOT_OFF
 
     var delivered = false
-    repeat(ReconnectTapConstants.MAX_TAPS) { _ ->
-        delay(random.nextLong(ReconnectTapConstants.PRE_TAP_DELAY_MIN_MS, ReconnectTapConstants.PRE_TAP_DELAY_MAX_MS + 1))
+    repeat(ReconnectTapConstants.MAX_TAPS) { tapIndex ->
+        val jitterMs =
+            random.nextLong(ReconnectTapConstants.PRE_TAP_DELAY_MAX_MS - ReconnectTapConstants.PRE_TAP_DELAY_MIN_MS + 1)
+        delay((ReconnectTapConstants.PRE_TAP_DELAY_MIN_MS shl tapIndex) + jitterMs)
         // The companion may have connected during the pause: re-read so a tap never lands on ON.
         val control =
             capture()

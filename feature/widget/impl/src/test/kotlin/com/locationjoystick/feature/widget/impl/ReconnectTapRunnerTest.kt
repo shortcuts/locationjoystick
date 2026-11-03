@@ -180,9 +180,29 @@ class ReconnectTapRunnerTest {
                 })
             assertEquals(ReconnectRunResult.FAILED, result)
             assertEquals(3, taps.count)
-            // Gap between taps: settle 4s + 7 poll gaps of 2s + pre-tap delay 0.7..2.2s.
+            // Gap between taps: settle 4s + 7 poll gaps of 2s + pre-tap delay 1.4..2.9s for the second tap.
             val gap = taps.times[1] - taps.times[0]
-            assertTrue("gap $gap", gap in 18_700..20_200)
+            assertTrue("gap $gap", gap in 19_400..20_900)
+        }
+
+    @Test
+    fun `pre-tap pause doubles with each tap and keeps its jitter`() =
+        runTest {
+            val taps = Taps()
+            runReconnectTap(1080, 2400, reads(off), { _, _, _ ->
+                taps.count++
+                taps.times += currentTime
+                true
+            }, random = Random(7))
+            assertEquals(3, taps.times.size)
+            // The first confirm read sits 400 ms in, so the first tap lands after 400 ms plus its pause.
+            val pause1 = taps.times[0] - 400
+            // Between taps: settle 4s + 7 poll gaps of 2s, then the next pre-tap pause.
+            val pause2 = taps.times[1] - taps.times[0] - 18_000
+            val pause3 = taps.times[2] - taps.times[1] - 18_000
+            assertTrue("pause1 $pause1", pause1 in 700..2_200)
+            assertTrue("pause2 $pause2", pause2 in 1_400..2_900)
+            assertTrue("pause3 $pause3", pause3 in 2_800..4_300)
         }
 
     @Test

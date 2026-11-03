@@ -58,7 +58,7 @@ The policy exists to avoid a tap that turns a connected companion off.
 - A null read in the confirm phase (before any tap) waits once, then repeats both confirm reads. A popup that slides over the ball, or fades in, can hide the control for a moment. Only a second null ends the run as `NOT_FOUND`.
 - A tap the system cancels or rejects (for example a finger on the screen) does not count. A run with no delivered tap ends as `GATE_CLOSED`, so it stays neutral.
 - A small maximum number of taps per run. Abort and report after that.
-- The pause, tap position and gesture duration are randomised within bounds, so taps do not repeat the same timing. Tune them only against reliability evidence.
+- The pause before each tap doubles with every tap in the run, so a fault that lasts a few seconds (such as the game's search spinner) has time to clear. A random jitter stays on top of each pause. The tap position and gesture duration are randomised within bounds, so taps do not repeat the same timing. Tune them only against reliability evidence.
 
 ## Reliability proof
 
@@ -82,7 +82,7 @@ The proof is run by the reconnect matrix script in `scripts/`. Its raw rows are 
 
 ## Backoff
 
-A `FAILED` run means the tap did not bring the companion back, so it is probably away. `ReconnectBackoff` doubles the wait after each `FAILED`, from the base interval up to `MAX_CHECK_INTERVAL_MS`. Retrying at the base rate would repeat taps and screenshots that cannot succeed.
+A `FAILED` run means the tap did not bring the companion back, so it is probably away. `ReconnectBackoff` waits `FAILED_RUN_BACKOFF_START_MS` after the first `FAILED` run, then doubles the wait after each further `FAILED`, up to `MAX_CHECK_INTERVAL_MS`. Retrying at the base rate would repeat taps and screenshots that cannot succeed. The loop never stops retrying while the setting is on.
 
 - `RECONNECTED` and `NOT_OFF` reset the wait to base: the companion is connected, or the control is not off.
 - `NOT_FOUND` and `GATE_CLOSED` keep the wait, the same neutral rule as the streaks.

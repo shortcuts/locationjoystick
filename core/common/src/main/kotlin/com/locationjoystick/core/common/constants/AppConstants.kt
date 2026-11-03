@@ -624,15 +624,16 @@ object AppConstants {
         // interval after the loop (re)starts so enabling the setting never taps immediately.
         const val CHECK_INTERVAL_MS = 60_000L
 
-        // Each FAILED check doubles the wait from CHECK_INTERVAL_MS up to this cap (ReconnectBackoff).
+        // Wait after the first FAILED run. Each further FAILED run doubles it up to MAX_CHECK_INTERVAL_MS.
+        const val FAILED_RUN_BACKOFF_START_MS = 30_000L
         const val MAX_CHECK_INTERVAL_MS = 5 * 60_000L
 
         // Debug builds only: the reliability matrix (scripts/reconnect_matrix.py) needs hundreds of
         // cycles, so the wait per cycle is short.
         const val DEBUG_CHECK_INTERVAL_MS = 10_000L
 
-        // Policy: two OFF reads this far apart, then up to MAX_TAPS taps, each after a human-like
-        // pause. After a tap: settle, then up to SETTLE_POLL_READS reads; retap only when all are OFF.
+        // Policy: two OFF reads this far apart, then up to MAX_TAPS taps, each after a pause that doubles per tap.
+        // After a tap: settle, then up to SETTLE_POLL_READS reads; retap only when all are OFF.
         const val CONFIRM_DELAY_MS = 400L
 
         // A null confirm read may be a popup sliding over the ball: give it time to leave before re-reading.
