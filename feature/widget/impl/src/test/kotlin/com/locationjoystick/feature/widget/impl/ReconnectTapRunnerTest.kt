@@ -110,6 +110,65 @@ class ReconnectTapRunnerTest {
         }
 
     @Test
+    fun `no control twice waits 20s then is not found and never taps`() =
+        runTest {
+            val taps = Taps()
+            val result =
+                runReconnectTap(1080, 2400, reads(null), { _, _, _ ->
+                    taps.count++
+                    true
+                })
+            assertEquals(ReconnectRunResult.NOT_FOUND, result)
+            assertEquals(0, taps.count)
+            assertEquals(20_000L, currentTime)
+        }
+
+    @Test
+    fun `null first read then the retry confirms and reconnects with one tap`() =
+        runTest {
+            val taps = Taps()
+            val result =
+                runReconnectTap(1080, 2400, reads(null, off, off, off, on), { _, _, _ ->
+                    taps.count++
+                    true
+                })
+            assertEquals(ReconnectRunResult.RECONNECTED, result)
+            assertEquals(1, taps.count)
+            assertTrue("elapsed $currentTime", currentTime >= 20_000L)
+        }
+
+    @Test
+    fun `null second read then the retry confirms and reconnects with one tap`() =
+        runTest {
+            val taps = Taps()
+            val result =
+                runReconnectTap(1080, 2400, reads(off, null, off, off, off, on), { _, _, _ ->
+                    taps.count++
+                    true
+                })
+            assertEquals(ReconnectRunResult.RECONNECTED, result)
+            assertEquals(1, taps.count)
+        }
+
+    @Test
+    fun `null then on during the retry is not off and never taps`() =
+        runTest {
+            val taps = Taps()
+            val result = runReconnectTap(1080, 2400, reads(null, on), { _, _, _ -> taps.count++ >= 0 })
+            assertEquals(ReconnectRunResult.NOT_OFF, result)
+            assertEquals(0, taps.count)
+        }
+
+    @Test
+    fun `gate closing during the 20s wait ends gate closed`() =
+        runTest {
+            var gateCalls = 0
+            val result =
+                runReconnectTap(1080, 2400, reads(null), { _, _, _ -> true }, gate = { ++gateCalls < 2 })
+            assertEquals(ReconnectRunResult.GATE_CLOSED, result)
+        }
+
+    @Test
     fun `off forever fails after exactly three taps`() =
         runTest {
             val taps = Taps()

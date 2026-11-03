@@ -55,6 +55,7 @@ The policy exists to avoid a tap that turns a connected companion off.
 - After a tap, wait, then read the control several times. Stop as soon as it reads on. Tap again only when every read is still off.
 - Take a fresh read right before each tap. A companion that connects during the pause must not be tapped away.
 - A read that returns nothing is unknown, never "connected". Before the first tap it ends the run as `NOT_FOUND`. After a tap it keeps the poll going and never retaps, because the control may already read on. `FAILED` needs a delivered tap and no on read.
+- A null read in the confirm phase (before any tap) waits once, then repeats both confirm reads. A popup that slides over the ball, or fades in, can hide the control for a moment. Only a second null ends the run as `NOT_FOUND`.
 - A tap the system cancels or rejects (for example a finger on the screen) does not count. A run with no delivered tap ends as `GATE_CLOSED`, so it stays neutral.
 - A small maximum number of taps per run. Abort and report after that.
 - The pause, tap position and gesture duration are randomised within bounds, so taps do not repeat the same timing. Tune them only against reliability evidence.
@@ -103,6 +104,7 @@ The widget's Debug stats block shows the last check's result because the loop is
 ## Open risks
 
 - Play review of the gesture capability (see above).
+- A popup that is already open and static, with the control still visible, reads OFF on both confirm reads and can be tapped. The detector reads a dimmed control as OFF by design, and no popup detector is planned.
 - Target app changes: a HUD move or colour change needs the region re-measured. Unknown prevents false taps, but reconnect stops until fixed; the not-found notification (see "Failure notification") tells the user.
 
 Both features share one screenshot budget ([tap-to-walk.md](tap-to-walk.md)): every screenshot is serialized and spaced, because the platform rejects shots taken too close together. Reconnect reads only the detector's search region, off the main thread.

@@ -133,7 +133,8 @@ internal fun foregroundAfterWindowEvent(
 private class GateClosed : RuntimeException()
 
 /**
- * One reconnect run. Taps only on a fresh OFF read: two OFF reads, then up to MAX_TAPS taps, each
+ * One reconnect run. Taps only on a fresh OFF read: two OFF reads (a null read waits UNSURE_RETRY_DELAY_MS
+ * and repeats both reads once), then up to MAX_TAPS taps, each
  * preceded by a read taken after the pre-tap pause (ON ends the run, null never taps) and followed by
  * a poll window; a retap needs every poll read OFF. A null read before a delivered tap is NOT_FOUND, so NOT_OFF always
  * means the control read ON. A null poll is unknown: it never retaps. Undelivered taps do not count; a run with none is GATE_CLOSED.
@@ -159,6 +160,14 @@ internal suspend fun runReconnectTap(
         ReconnectRunResult.GATE_CLOSED
     }
 
+/** The state of the first read, or of the second read after the confirm delay. Null when either read finds no control. */
+private suspend fun confirmState(capture: suspend () -> ReconnectControl?): ReconnectState? {
+    val first = capture() ?: return null
+    if (first.state != ReconnectState.OFF) return first.state
+    delay(ReconnectTapConstants.CONFIRM_DELAY_MS)
+    return capture()?.state
+}
+
 private suspend fun runGated(
     screenWidth: Int,
     screenHeight: Int,
@@ -166,11 +175,14 @@ private suspend fun runGated(
     tap: suspend (x: Int, y: Int, durationMs: Long) -> Boolean,
     random: Random,
 ): ReconnectRunResult {
-    val first = capture() ?: return ReconnectRunResult.NOT_FOUND
-    if (first.state != ReconnectState.OFF) return ReconnectRunResult.NOT_OFF
-    delay(ReconnectTapConstants.CONFIRM_DELAY_MS)
-    val second = capture() ?: return ReconnectRunResult.NOT_FOUND
-    if (second.state != ReconnectState.OFF) return ReconnectRunResult.NOT_OFF
+    val confirmed =
+        confirmState(capture)
+            ?: run {
+                delay(ReconnectTapConstants.UNSURE_RETRY_DELAY_MS)
+                confirmState(capture)
+            }
+            ?: return ReconnectRunResult.NOT_FOUND
+    if (confirmed != ReconnectState.OFF) return ReconnectRunResult.NOT_OFF
 
     var delivered = false
     repeat(ReconnectTapConstants.MAX_TAPS) { _ ->
