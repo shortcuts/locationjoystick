@@ -61,6 +61,8 @@
     <string name="reconnect_failed_text">"連續多次重新連線配件失敗。請開啟應用程式查看。"</string>
     <string name="reconnect_not_found_title">"找不到配件控制項"</string>
     <string name="reconnect_not_found_text">"遊戲已開啟，但長時間找不到重新連線按鈕。遊戲可能已更新，自動重新連線已暫停。"</string>
+    <string name="reconnect_gate_closed_title">"重新連線已暫停"</string>
+    <string name="reconnect_gate_closed_text">"遊戲長時間不在前景，或已開啟點擊行走，因此未執行重新連線。請切換到其他應用程式再切回遊戲即可恢復。"</string>
     <string name="tap_to_walk_past_horizon">"那個位置太遠了。請點擊離角色更近的地方。"</string>
     <string name="tap_to_walk_overlay_unavailable_hint">"點擊行走需要 Android 11 或更新版本。"</string>
 </resources>

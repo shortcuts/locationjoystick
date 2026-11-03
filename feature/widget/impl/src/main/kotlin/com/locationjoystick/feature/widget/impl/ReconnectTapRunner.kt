@@ -65,6 +65,34 @@ internal class ReconnectNotFoundStreak {
     }
 }
 
+/** Times GATE_CLOSED with the screen on; [record] returns true once when the wait reaches the threshold. */
+internal class ReconnectGateClosedStreak(
+    private val now: () -> Long = System::currentTimeMillis,
+) {
+    private var startedAt: Long? = null
+    private var notified = false
+
+    fun reset() {
+        startedAt = null
+        notified = false
+    }
+
+    fun record(
+        result: ReconnectRunResult,
+        screenInteractive: Boolean,
+    ): Boolean {
+        if (result != ReconnectRunResult.GATE_CLOSED || !screenInteractive) {
+            reset()
+            return false
+        }
+        val current = now()
+        val start = startedAt ?: current.also { startedAt = it }
+        if (notified || current - start < ReconnectTapConstants.GATE_CLOSED_NOTIFY_MS) return false
+        notified = true
+        return true
+    }
+}
+
 /**
  * Delay before the next check. A FAILED run doubles it up to [maxMs]: a companion that stays
  * unreachable after a tap is likely away, so retrying at the base rate wastes taps and battery.

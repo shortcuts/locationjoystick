@@ -308,6 +308,7 @@ object AppConstants {
         const val ID_PERMISSION_ERROR = 1002
         const val ID_RECONNECT_FAILED = 1003
         const val ID_RECONNECT_NOT_FOUND = 1004
+        const val ID_RECONNECT_GATE_CLOSED = 1005
         const val CHANNEL_ID_ACTIVE = "location_spoof_channel"
         const val CHANNEL_ID_PERMISSION_ERROR = "location_perm_error_channel"
         const val CHANNEL_ID_ACTIVE_MINIMIZED = "location_spoof_channel_minimized"
@@ -649,6 +650,9 @@ object AppConstants {
         // Consecutive in-game checks that find no control before the user is told: 30 minutes at
         // CHECK_INTERVAL_MS, long enough to rule out a loading screen or a menu hiding the HUD.
         const val NOT_FOUND_NOTIFY_THRESHOLD = 30
+
+        // A closed gate lasts until the game relaunches, so the user hears about it after this long.
+        const val GATE_CLOSED_NOTIFY_MS = 15 * 60_000L
 
         // Gesture stroke length and tap offset spread, as fractions of the short screen side (the
         // ball is ~7.2% of it, so sigma 1.1% / clamp 2.5% keeps the tap inside it).

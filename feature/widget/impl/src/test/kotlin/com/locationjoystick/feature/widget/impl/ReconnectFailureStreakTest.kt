@@ -76,4 +76,61 @@ class ReconnectFailureStreakTest {
         val second = List(n) { streak.record(NOT_FOUND) }
         assertEquals(List(n - 1) { false } + true, second)
     }
+
+    @Test
+    fun `gate closed notifies once after the threshold with the screen on`() {
+        var clock = 0L
+        val streak = ReconnectGateClosedStreak { clock }
+        val threshold = AppConstants.ReconnectTapConstants.GATE_CLOSED_NOTIFY_MS
+        assertEquals(false, streak.record(GATE_CLOSED, true))
+        clock = threshold - 1
+        assertEquals(false, streak.record(GATE_CLOSED, true))
+        clock = threshold
+        assertEquals(true, streak.record(GATE_CLOSED, true))
+        clock = threshold + 1
+        assertEquals(false, streak.record(GATE_CLOSED, true))
+    }
+
+    @Test
+    fun `any other result re-arms the gate closed streak`() {
+        var clock = 0L
+        val streak = ReconnectGateClosedStreak { clock }
+        val threshold = AppConstants.ReconnectTapConstants.GATE_CLOSED_NOTIFY_MS
+        streak.record(GATE_CLOSED, true)
+        clock = threshold
+        assertEquals(true, streak.record(GATE_CLOSED, true))
+        assertEquals(false, streak.record(FAILED, true))
+        clock = threshold + 1
+        assertEquals(false, streak.record(GATE_CLOSED, true))
+        clock = threshold * 2 + 1
+        assertEquals(true, streak.record(GATE_CLOSED, true))
+    }
+
+    @Test
+    fun `screen off gate closed resets the gate closed streak`() {
+        var clock = 0L
+        val streak = ReconnectGateClosedStreak { clock }
+        val threshold = AppConstants.ReconnectTapConstants.GATE_CLOSED_NOTIFY_MS
+        streak.record(GATE_CLOSED, true)
+        clock = threshold - 1
+        assertEquals(false, streak.record(GATE_CLOSED, false))
+        clock = threshold
+        assertEquals(false, streak.record(GATE_CLOSED, true))
+        clock = threshold * 2
+        assertEquals(true, streak.record(GATE_CLOSED, true))
+    }
+
+    @Test
+    fun `reset re-arms the gate closed streak`() {
+        var clock = 0L
+        val streak = ReconnectGateClosedStreak { clock }
+        val threshold = AppConstants.ReconnectTapConstants.GATE_CLOSED_NOTIFY_MS
+        streak.record(GATE_CLOSED, true)
+        clock = threshold
+        assertEquals(true, streak.record(GATE_CLOSED, true))
+        streak.reset()
+        assertEquals(false, streak.record(GATE_CLOSED, true))
+        clock = threshold * 2
+        assertEquals(true, streak.record(GATE_CLOSED, true))
+    }
 }

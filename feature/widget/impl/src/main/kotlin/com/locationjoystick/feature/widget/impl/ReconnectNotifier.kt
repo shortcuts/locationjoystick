@@ -16,6 +16,7 @@ internal class ReconnectNotifier(
 ) {
     private val failureStreak = ReconnectFailureStreak()
     private val notFoundStreak = ReconnectNotFoundStreak()
+    private val gateClosedStreak = ReconnectGateClosedStreak()
 
     fun createChannel() {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(
@@ -27,28 +28,37 @@ internal class ReconnectNotifier(
         )
     }
 
-    fun onResult(result: ReconnectRunResult) {
+    fun onResult(
+        result: ReconnectRunResult,
+        screenInteractive: Boolean,
+    ) {
         // A notice is stale once the accessory is back (ON read) or the control is seen again.
         val accessoryBack = result == ReconnectRunResult.RECONNECTED || result == ReconnectRunResult.NOT_OFF
         if (accessoryBack) cancel(ID_FAILED)
         if (accessoryBack || result == ReconnectRunResult.FAILED) cancel(ID_NOT_FOUND)
+        if (result != ReconnectRunResult.GATE_CLOSED) cancel(ID_GATE_CLOSED)
         if (failureStreak.record(result)) {
             post(R.string.reconnect_failed_title, R.string.reconnect_failed_text, ID_FAILED)
         }
         if (notFoundStreak.record(result)) {
             post(R.string.reconnect_not_found_title, R.string.reconnect_not_found_text, ID_NOT_FOUND)
         }
+        if (gateClosedStreak.record(result, screenInteractive)) {
+            post(R.string.reconnect_gate_closed_title, R.string.reconnect_gate_closed_text, ID_GATE_CLOSED)
+        }
     }
 
     fun reset() {
         failureStreak.reset()
         notFoundStreak.reset()
+        gateClosedStreak.reset()
         cancelAll()
     }
 
     fun cancelAll() {
         cancel(ID_FAILED)
         cancel(ID_NOT_FOUND)
+        cancel(ID_GATE_CLOSED)
     }
 
     private fun cancel(id: Int) = NotificationManagerCompat.from(context).cancel(id)
@@ -81,5 +91,6 @@ internal class ReconnectNotifier(
     private companion object {
         const val ID_FAILED = AppConstants.NotificationConstants.ID_RECONNECT_FAILED
         const val ID_NOT_FOUND = AppConstants.NotificationConstants.ID_RECONNECT_NOT_FOUND
+        const val ID_GATE_CLOSED = AppConstants.NotificationConstants.ID_RECONNECT_GATE_CLOSED
     }
 }

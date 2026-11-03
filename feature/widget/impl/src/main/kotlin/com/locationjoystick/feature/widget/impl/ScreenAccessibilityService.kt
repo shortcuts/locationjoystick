@@ -136,7 +136,7 @@ class ScreenAccessibilityService :
         Log.d(TAG, "Reconnect check: $result")
         screenCaptureSource.reportReconnect(ReconnectStatus(result, System.currentTimeMillis()))
         backoff.record(result)
-        notifier.onResult(result)
+        notifier.onResult(result, getSystemService(PowerManager::class.java).isInteractive)
     }
 
     private suspend fun dispatchTap(
