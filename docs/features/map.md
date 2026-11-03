@@ -12,7 +12,6 @@ MapLibre Android SDK. Not osmdroid, not Google Maps.
 - OSM tile HTTP has a required recipe. Skipping any part blanks or slows the map. **Read [map-tiles.md](map-tiles.md) before changing maps.**
 - The location marker updates its coordinates in place. Removing and re-adding it causes flicker and loses state.
 - Route lines and the jitter overlay are GeoJSON layers. The jitter overlay is drawn in metres, not screen pixels, because a pixel-radius circle would not match the real jitter.
-- Offline tile download uses the library's region download.
 
 ## Map source
 
