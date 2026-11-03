@@ -105,6 +105,7 @@ The widget's Debug stats block shows the last check's result because the loop is
 
 - Play review of the gesture capability (see above).
 - A popup that is already open and static, with the control still visible, reads OFF on both confirm reads and can be tapped. The detector reads a dimmed control as OFF by design, and no popup detector is planned.
+- Heads-up notification over the ball: the ball sits where heads-up banners slide in, and the service listens only to window-state events, which a banner may not raise. A tap between the last read and the gesture could open the banner. Not measured yet: `scripts/reconnect_matrix.py headsup` (debug build, `HeadsUpProbeReceiver`) posts a banner at 0 to 2 s after the first OFF read and records hits. Run it before deciding on a fix.
 - Target app changes: a HUD move or colour change needs the region re-measured. Unknown prevents false taps, but reconnect stops until fixed; the not-found notification (see "Failure notification") tells the user.
 
 Both features share one screenshot budget ([tap-to-walk.md](tap-to-walk.md)): every screenshot is serialized and spaced, because the platform rejects shots taken too close together. Reconnect reads only the detector's search region, off the main thread.

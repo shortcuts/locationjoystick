@@ -23,6 +23,10 @@ Subcommands:
         At 10 s per loop (debug build) a 100-cycle block takes about 30 minutes.
     corpus [--serial S] [--device-slug pixel7] --state on|off --theme day|night --brightness min|max
         Captures one labelled screencap into scripts/reconnect-matrix/corpus/.
+    headsup [--serial S] [--mac-suffix D3:24] [--device-slug pixel7] --trials 5
+        Needs the debug build. Per trial: drops the companion link, waits for the app's first OFF read,
+        waits 0 to 2 s (250 ms steps, --trials per offset), broadcasts a high-importance notification,
+        then records the check result, the taps and whether the game stayed in front. Block "headsup".
     summary
         Prints per-device/per-block pass counts as a markdown table, with how many cycles the game
         reconnected by itself (0 taps, so the tap was not tested), then lists each failed cycle.
@@ -520,6 +524,46 @@ def cmd_already_on(args):
     print(f"{sum(1 for i in checks if i['taps'] == 0)}/{len(checks)} checks with zero taps; wanted {args.checks}")
 
 
+HEADSUP_ACTION = "com.locationjoystick.app.debug.HEADS_UP"
+HEADSUP_OFFSETS_S = [i * 0.25 for i in range(9)]
+OFF_READ_RE = re.compile(r"Reconnect read: OFF")
+
+
+def game_in_front(serial):
+    return GAME_PACKAGE in adb(serial, "shell", "dumpsys", "activity", "activities").split("topResumedActivity", 1)[-1].split("\n", 1)[0]
+
+
+def cmd_headsup(args):
+    cycle = 0
+    for offset in HEADSUP_OFFSETS_S:
+        for _ in range(args.trials):
+            cycle += 1
+            dropped, _method = disconnect_companion(args.serial, args.mac_suffix)
+            if not dropped:
+                print("  could not drop the companion link; row not recorded", file=sys.stderr)
+                continue
+            stream = open_log_stream(args.serial)
+            try:
+                lines = collect_until(stream, lambda l: OFF_READ_RE.search(l) is not None, CYCLE_TIMEOUT_S)
+                time.sleep(offset)
+                adb(args.serial, "shell", "am", "broadcast", "-a", HEADSUP_ACTION, "-p", "com.locationjoystick.app")
+                lines += collect_until(stream, lambda l: TERMINAL_RE.search(l) is not None, CYCLE_TIMEOUT_S)
+            finally:
+                stream[0].terminate()
+            info = classify_logs(lines)
+            front = game_in_front(args.serial)
+            connected = wait_for_link(args.serial, args.mac_suffix, "Connected", 30)
+            row = {
+                "device": args.device_slug, "block": "headsup", "cycle": cycle, "offset_s": offset,
+                "outcome": info["outcome"], "taps": info["taps"], "reads": info["reads"],
+                "game_in_front": front, "connected": connected,
+                "pass": cycle_passes(info["outcome"], connected) and front,
+                "at": datetime.now(timezone.utc).isoformat(),
+            }
+            append_row(row)
+            print(f"  -> offset={offset} outcome={row['outcome']} taps={row['taps']} front={front} pass={row['pass']}")
+
+
 def cmd_corpus(args):
     corpus = OUT / "corpus"
     corpus.mkdir(parents=True, exist_ok=True)
@@ -635,6 +679,13 @@ def main():
     a.add_argument("--device-slug")
     a.add_argument("--checks", type=int, default=12)
     a.set_defaults(fn=cmd_already_on)
+
+    h = sub.add_parser("headsup")
+    h.add_argument("--serial")
+    h.add_argument("--mac-suffix")
+    h.add_argument("--device-slug")
+    h.add_argument("--trials", type=int, default=5)
+    h.set_defaults(fn=cmd_headsup)
 
     c = sub.add_parser("corpus")
     c.add_argument("--serial")
