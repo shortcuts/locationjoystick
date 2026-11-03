@@ -45,6 +45,7 @@ class LjApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         MapTileHttp.install(this)
+        Geocoding.installOfflineCities { assets.open("geonames/cities5000.tsv") }
         resumeActiveGroupRole()
         applicationScope.launch {
             settingsRepository.getDisabledGeocodingProviders().collect { Geocoding.disabled = it }

@@ -1,6 +1,7 @@
 package com.locationjoystick.core.common.geocoding
 
 import com.locationjoystick.core.model.GeocodingProviderId
+import java.io.InputStream
 
 /** One forward-geocoding hit in the app's own shape, independent of the provider that returned it. */
 data class GeocodeResult(
@@ -35,6 +36,12 @@ interface GeocodingProvider {
 object Geocoding {
     private val nominatim = NominatimProvider()
     private val photon = PhotonProvider()
+
+    @Volatile
+    private var offlineCities: () -> InputStream? = { null }
+
+    // No id: it makes no network call, so Settings has nothing to switch off.
+    private val offline = OfflineCityProvider { offlineCities() }
     private val ids =
         mapOf<GeocodingProvider, GeocodingProviderId>(
             nominatim to GeocodingProviderId.NOMINATIM,
@@ -45,6 +52,11 @@ object Geocoding {
     @Volatile
     var disabled: Set<GeocodingProviderId> = emptySet()
 
+    /** Supplies the bundled city list stream; `LjApplication` calls this because the object has no Context. */
+    fun installOfflineCities(open: () -> InputStream?) {
+        offlineCities = open
+    }
+
     val provider: GeocodingProvider =
-        FallbackGeocodingProvider(listOf(nominatim, photon), enabled = { ids[it] !in disabled })
+        FallbackGeocodingProvider(listOf(nominatim, photon, offline), enabled = { ids[it] !in disabled })
 }

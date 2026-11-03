@@ -78,6 +78,8 @@ A small strip at the top left shows the current speed while spoofing runs or is 
 
 Place search goes through a process-wide geocoder that tries providers in order, with a shared cooldown after a provider fails. Providers that the user has unchecked in settings are never called. The UI refuses to uncheck the last one, since a search with no provider would be useless.
 
+The chain ends with an offline provider that searches a bundled GeoNames list of towns with 5,000+ people (CC BY 4.0), so search still answers with no network. It has no toggle: it sends nothing, so there is no privacy or timeout reason to switch it off. It matches the start of Latin-script names only, and has no reverse lookup. `scripts/build-city-index.sh` rebuilds the asset. The 5,000 threshold costs about 1.2 MB of APK; 15,000 would halve that but miss towns players use.
+
 Results are cached briefly. Requests are spaced to respect the public geocoder's usage limit, because a burst gets the app blocked. The reverse lookup for place names uses the same chain.
 
 ## Jitter radius overlay
