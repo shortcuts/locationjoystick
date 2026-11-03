@@ -15,6 +15,7 @@ import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.SavedItemSortMode
+import com.locationjoystick.core.model.SpoofHistoryEntry
 import com.locationjoystick.core.model.sortedBySavedItemMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -78,6 +79,11 @@ class FavoritesViewModel
                 .getRecentSearches()
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+        val spoofHistory: StateFlow<List<SpoofHistoryEntry>> =
+            settingsRepository
+                .getSpoofHistory()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
         val mapTileSource: StateFlow<MapTileSource> =
             settingsRepository
                 .getMapTileSource()
@@ -120,6 +126,10 @@ class FavoritesViewModel
             lon: Double,
         ) {
             viewModelScope.launch { settingsRepository.addRecentSearch(displayName, lat, lon) }
+        }
+
+        fun clearSpoofHistory() {
+            viewModelScope.launch { settingsRepository.clearSpoofHistory() }
         }
 
         fun teleportTo(favorite: FavoriteLocation) {

@@ -38,6 +38,7 @@ interface PreferencesDataSource :
     RealPositionPreferences,
     RouteStartPreferences,
     SavedItemOrderPreferences,
+    SpoofHistoryPreferences,
     TapToWalkPreferences,
     ReconnectPreferences {
     /** Gets the current speed profiles (slow walk/walk/run/bike/drive speeds and active profile ID). */
@@ -509,6 +510,7 @@ class AppPreferencesDataSource
         RealPositionPreferences by RealPositionStore(dataStore),
         RouteStartPreferences by RouteStartStore(dataStore),
         SavedItemOrderPreferences by SavedItemOrderStore(dataStore),
+        SpoofHistoryPreferences by SpoofHistoryStore(dataStore),
         TapToWalkPreferences by TapToWalkStore(dataStore),
         ReconnectPreferences by ReconnectStore(dataStore) {
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =

@@ -192,6 +192,32 @@ class TeleportUseCaseTest {
         }
 
     @Test
+    fun `execute records spoof history once`() =
+        runTest {
+            useCase.execute(LatLng(10.0, 20.0))
+
+            coVerify(exactly = 1) { settingsRepository.addSpoofHistory(10.0, 20.0, any()) }
+        }
+
+    @Test
+    fun `execute does not record spoof history when resetMovement is false`() =
+        runTest {
+            useCase.execute(LatLng(10.0, 20.0), resetMovement = false)
+
+            coVerify(exactly = 0) { settingsRepository.addSpoofHistory(any(), any(), any()) }
+        }
+
+    @Test
+    fun `execute does not record spoof history when the service start fails`() =
+        runTest {
+            every { serviceStarter.start(any()) } throws IllegalStateException("denied")
+
+            useCase.execute(LatLng(10.0, 20.0))
+
+            coVerify(exactly = 0) { settingsRepository.addSpoofHistory(any(), any(), any()) }
+        }
+
+    @Test
     fun `execute aborts in-flight replay even when mode is not ROUTE_REPLAY`() =
         runTest {
             every { roamingRepository.isRoaming } returns MutableStateFlow(false)

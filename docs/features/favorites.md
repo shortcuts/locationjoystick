@@ -68,6 +68,16 @@ Real GPS is unreadable while the mock provider runs, so the app cannot offer a r
 - The time is the capture time, not the fix time. The cached fix can be older, and the position is wrong if the user moved while spoofing.
 - Tapping the card goes through the same teleport, walk and cooldown path as a favorite, so hide-teleport still applies.
 
+## Spoof history
+
+`TeleportUseCase.execute` records every user-initiated jump, so a long-press, a link and a favorite all leave a trail without each caller doing it. A jump with `resetMovement=false` is the prelude to a route start, not a user choice, so it is skipped. A failed service start records nothing.
+
+- The list is a capped, newest-first JSON string in DataStore, like recent searches. It is per-device and not exported, so no schema or backup change.
+- Entries match when their coordinates agree to about 1 m. Pasted links carry different trailing digits for the same spot, so exact equality would miss repeats. The newer entry replaces the older one.
+- It opens from a toolbar sheet, not a list section. A section would collide with the group reorder and the empty-favorites state, and the entry point stays visible with zero favorites.
+- A row stores coordinates and time only. Resolving a place name needs the network, and the app stays offline-first.
+- Clear acts at once with no confirmation. The data is cheap to recreate.
+
 ## Hot locations
 
 Settings has a toggle to show a curated list of popular places. When on, the list is inserted into the favorites table. When off, only the inserted entries are removed.

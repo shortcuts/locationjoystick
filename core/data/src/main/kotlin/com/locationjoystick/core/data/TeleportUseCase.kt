@@ -27,6 +27,7 @@ private const val TAG = "TeleportUseCase"
  * 1. Fire an [AppConstants.ServiceConstants.ACTION_UPDATE_POSITION] intent to MockLocationService.
  * 2. Persist [SettingsRepository.setLastLocation] so the last position is remembered.
  * 3. Persist [SettingsRepository.setLastTeleportTime] for cooldown tracking.
+ * 4. Record [SettingsRepository.addSpoofHistory] for user-initiated jumps (not route-start preludes).
  *
  * Both [com.locationjoystick.feature.map.impl.MapViewModel] and
  * [com.locationjoystick.feature.favorites.impl.FavoritesViewModel] inject this use case so all
@@ -73,7 +74,11 @@ class TeleportUseCase
                     }
                 serviceStarter.start(intent)
                 settingsRepository.setLastLocation(position)
-                settingsRepository.setLastTeleportTime(System.currentTimeMillis())
+                val now = System.currentTimeMillis()
+                settingsRepository.setLastTeleportTime(now)
+                if (resetMovement) {
+                    settingsRepository.addSpoofHistory(position.latitude, position.longitude, now)
+                }
                 Log.d(TAG, "Teleport to ${position.latitude}, ${position.longitude}")
             } catch (e: Exception) {
                 Log.e(TAG, "Teleport failed", e)

@@ -10,6 +10,7 @@ import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.SavedItemSortMode
+import com.locationjoystick.core.model.SpoofHistoryEntry
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import io.mockk.coVerify
 import io.mockk.every
@@ -55,6 +56,7 @@ class FavoritesViewModelTest {
         every { settingsRepository.getFavoritesManualOrder() } returns flowOf(emptyList())
         every { settingsRepository.getLastKnownPositionEnabled() } returns flowOf(false)
         every { settingsRepository.getRealPositionSnapshot() } returns flowOf(null)
+        every { settingsRepository.getSpoofHistory() } returns flowOf(listOf(SpoofHistoryEntry(1.0, 2.0, 3L)))
         viewModel = FavoritesViewModel(favoriteRepository, locationRepository, settingsRepository, teleportUseCase, mapController)
     }
 
@@ -159,6 +161,17 @@ class FavoritesViewModelTest {
                 assertNull(awaitItem().lastKnownPosition)
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+
+    @Test
+    fun spoofHistory_mirrors_repository_and_clear_delegates() =
+        runTest {
+            viewModel.spoofHistory.test {
+                assertEquals(listOf(SpoofHistoryEntry(1.0, 2.0, 3L)), expectMostRecentItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+            viewModel.clearSpoofHistory()
+            coVerify { settingsRepository.clearSpoofHistory() }
         }
 
     @Test

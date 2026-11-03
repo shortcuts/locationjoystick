@@ -3,6 +3,10 @@
     <string name="favorites_screen_title">"Favorites"</string>
     <string name="favorites_screen_set_home">"Set as home"</string>
     <string name="favorites_screen_remove_home">"Remove home"</string>
+    <string name="favorites_screen_history">"History"</string>
+    <string name="favorites_screen_history_empty">"No teleports yet"</string>
+    <string name="favorites_screen_clear_history">"Clear history"</string>
+    <string name="favorites_screen_save_history_cd">"Save as favorite"</string>
     <string name="favorites_screen_last_known_position">"Last known position"</string>
     <string name="favorites_screen_no_saved_favorites_yet">"No saved favorites yet"</string>
     <string name="favorites_screen_no_favorites_match_search">"No favorites match your search"</string>

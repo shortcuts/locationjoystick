@@ -40,6 +40,13 @@ class FavoritesSmokeTest : BaseSmokeTest() {
     }
 
     @Test
+    fun history_sheet_opens_with_empty_message() {
+        composeRule.onNodeWithContentDescription("History").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("No teleports yet").assertIsDisplayed()
+    }
+
+    @Test
     fun seeded_favorite_is_visible() {
         composeRule.onNodeWithText("Smoke Favorite").assertIsDisplayed()
     }

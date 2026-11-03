@@ -19,6 +19,7 @@ import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.ScreenFeatureGates
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.SpoofHistoryEntry
 import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
@@ -366,6 +367,16 @@ class SettingsRepository
         fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?> = dataSource.getRealPositionSnapshot()
 
         suspend fun setRealPositionSnapshot(snapshot: RealPositionSnapshot) = dataSource.setRealPositionSnapshot(snapshot)
+
+        fun getSpoofHistory(): Flow<List<SpoofHistoryEntry>> = dataSource.getSpoofHistory()
+
+        suspend fun addSpoofHistory(
+            lat: Double,
+            lon: Double,
+            atMs: Long,
+        ) = dataSource.addSpoofHistory(lat, lon, atMs)
+
+        suspend fun clearSpoofHistory() = dataSource.clearSpoofHistory()
 
         fun getBypassMockLocationCheck(): Flow<Boolean> = dataSource.getBypassMockLocationCheck()
 

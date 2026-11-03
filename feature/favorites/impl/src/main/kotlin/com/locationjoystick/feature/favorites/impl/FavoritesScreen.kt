@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
@@ -84,6 +85,7 @@ import com.locationjoystick.core.designsystem.component.rememberGroupReorder
 import com.locationjoystick.core.designsystem.tabular
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.SpoofHistoryEntry
 import com.locationjoystick.core.model.isHot
 import com.locationjoystick.core.model.matchesSearch
 import com.locationjoystick.feature.favorites.impl.R
@@ -98,12 +100,15 @@ fun FavoritesRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cooldownStates by viewModel.cooldownStates.collectAsStateWithLifecycle()
+    val spoofHistory by viewModel.spoofHistory.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val spoofToggle = rememberSpoofToggleState()
 
     FavoritesScreen(
         uiState = uiState,
         cooldownStates = cooldownStates,
+        spoofHistory = spoofHistory,
+        onClearHistory = viewModel::clearSpoofHistory,
         snackbarHostState = snackbarHostState,
         onTeleport = viewModel::teleportTo,
         onWalk = viewModel::walkTo,
@@ -157,6 +162,8 @@ internal fun FavoritesScreen(
     onWalk: (com.locationjoystick.core.model.FavoriteLocation) -> Unit = {},
     onWalkViaRoads: (com.locationjoystick.core.model.FavoriteLocation) -> Unit = {},
     cooldownStates: Map<String, CooldownState> = emptyMap(),
+    spoofHistory: List<SpoofHistoryEntry> = emptyList(),
+    onClearHistory: () -> Unit = {},
     onNavigateToMapPicker: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
     isSpoofing: Boolean = false,
@@ -173,6 +180,7 @@ internal fun FavoritesScreen(
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
     var showAddOptionsSheet by rememberSaveable { mutableStateOf(false) }
     var showPasteSheet by rememberSaveable { mutableStateOf(false) }
+    var showHistorySheet by rememberSaveable { mutableStateOf(false) }
     var prefillLat by rememberSaveable { mutableStateOf("") }
     var prefillLon by rememberSaveable { mutableStateOf("") }
     var editingFavorite by remember { mutableStateOf<com.locationjoystick.core.model.FavoriteLocation?>(null) }
@@ -193,6 +201,9 @@ internal fun FavoritesScreen(
         actions = {
             val context = LocalContext.current
             SavedItemSortMenu(selected = uiState.sortMode, onSelected = onSortModeSelected)
+            IconButton(onClick = { showHistorySheet = true }) {
+                Icon(LjIcons.History, contentDescription = stringResource(R.string.favorites_screen_history))
+            }
             IconButton(
                 onClick = { shareCurrentLocationCoordinates(context, getCurrentPosition()) },
             ) {
@@ -344,6 +355,58 @@ internal fun FavoritesScreen(
         }
     }
 
+    if (showHistorySheet) {
+        LjModalBottomSheet(onDismissRequest = { showHistorySheet = false }) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        stringResource(R.string.favorites_screen_history),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (spoofHistory.isNotEmpty()) {
+                        LjTextButton(onClick = onClearHistory, destructive = true) {
+                            Text(stringResource(R.string.favorites_screen_clear_history))
+                        }
+                    }
+                }
+                Spacer(Modifier.height(LjSpacing.smMd))
+                if (spoofHistory.isEmpty()) {
+                    EmptyState(
+                        icon = LjIcons.History,
+                        message = stringResource(R.string.favorites_screen_history_empty),
+                    )
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(LjSpacing.sm)) {
+                        items(spoofHistory) { entry ->
+                            val position = LatLng(entry.lat, entry.lon)
+                            val favorite =
+                                com.locationjoystick.core.model.FavoriteLocation(
+                                    id = "history-${entry.atMs}",
+                                    name = formatCapturedPoint(position),
+                                    position = position,
+                                )
+                            HistoryRow(
+                                entry = entry,
+                                onClick = {
+                                    showHistorySheet = false
+                                    if (isSpoofing) targetFavorite = favorite else onTeleport(favorite)
+                                },
+                                onSave = {
+                                    prefillLat = entry.lat.toString()
+                                    prefillLon = entry.lon.toString()
+                                    showHistorySheet = false
+                                    showAddSheet = true
+                                },
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(LjSpacing.sm))
+            }
+        }
+    }
+
     if (showAddOptionsSheet) {
         LjModalBottomSheet(
             onDismissRequest = { showAddOptionsSheet = false },
@@ -469,6 +532,32 @@ internal fun FavoritesScreen(
                 },
             )
         }
+    }
+}
+
+@Composable
+private fun HistoryRow(
+    entry: SpoofHistoryEntry,
+    onClick: () -> Unit,
+    onSave: () -> Unit,
+) {
+    LjListItemCard(
+        onClick = onClick,
+        leading = { LjListItemLeadingIcon(LjIcons.History) },
+        trailing = {
+            IconButton(onClick = onSave) {
+                Icon(LjIcons.FavoriteBorder, contentDescription = stringResource(R.string.favorites_screen_save_history_cd))
+            }
+        },
+    ) {
+        Text(formatCapturedPoint(LatLng(entry.lat, entry.lon)), style = MaterialTheme.typography.bodyMedium.tabular())
+        Text(
+            DateUtils
+                .getRelativeTimeSpanString(entry.atMs, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
+                .toString(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

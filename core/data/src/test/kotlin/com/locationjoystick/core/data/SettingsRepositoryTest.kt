@@ -16,6 +16,7 @@ import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.SpoofHistoryEntry
 import com.locationjoystick.core.model.StoredGroundCalibration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -1045,6 +1046,15 @@ class SettingsRepositoryTest {
         }
 
     @Test
+    fun `spoof history forwards add and clear to the data source`() =
+        runTest {
+            repository.addSpoofHistory(1.0, 2.0, 5L)
+            assertEquals(listOf(SpoofHistoryEntry(1.0, 2.0, 5L)), repository.getSpoofHistory().first())
+            repository.clearSpoofHistory()
+            assertEquals(emptyList<SpoofHistoryEntry>(), repository.getSpoofHistory().first())
+        }
+
+    @Test
     fun `setRealPositionSnapshot persists the snapshot`() =
         runTest {
             assertNull(repository.getRealPositionSnapshot().first())
@@ -1697,6 +1707,22 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setRealPositionSnapshot(snapshot: RealPositionSnapshot) {
         realPositionSnapshotFlow.value = snapshot
+    }
+
+    private val spoofHistoryFlow = MutableStateFlow<List<SpoofHistoryEntry>>(emptyList())
+
+    override fun getSpoofHistory(): Flow<List<SpoofHistoryEntry>> = spoofHistoryFlow
+
+    override suspend fun addSpoofHistory(
+        lat: Double,
+        lon: Double,
+        atMs: Long,
+    ) {
+        spoofHistoryFlow.value = listOf(SpoofHistoryEntry(lat, lon, atMs)) + spoofHistoryFlow.value
+    }
+
+    override suspend fun clearSpoofHistory() {
+        spoofHistoryFlow.value = emptyList()
     }
 
     private val bypassMockLocationCheckFlow = MutableStateFlow(false)

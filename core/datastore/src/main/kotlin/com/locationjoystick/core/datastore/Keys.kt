@@ -66,6 +66,7 @@ internal object Keys {
     val REAL_SNAPSHOT_TAKEN_AT_MS = longPreferencesKey("real_snapshot_taken_at_ms")
     val BYPASS_MOCK_LOCATION_CHECK = booleanPreferencesKey("bypass_mock_location_check")
     val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
+    val SPOOF_HISTORY = stringPreferencesKey("spoof_history")
     val ROUTES_SORT_NEWEST_FIRST = booleanPreferencesKey("routes_sort_newest_first")
     val FAVORITES_SORT_NEWEST_FIRST = booleanPreferencesKey("favorites_sort_newest_first")
     val ROUTES_SORT_MODE = stringPreferencesKey("routes_sort_mode")

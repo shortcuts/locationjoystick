@@ -12,6 +12,7 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SavedItemSortMode
+import com.locationjoystick.core.model.SpoofHistoryEntry
 import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.testing.FakePreferencesDataStore
 import kotlinx.coroutines.flow.first
@@ -209,6 +210,49 @@ class AppPreferencesDataSourceTest {
             assertEquals(RealPositionSnapshot(LatLng(1.5, 2.5), 10L), dataSource.getRealPositionSnapshot().first())
             dataSource.setRealPositionSnapshot(RealPositionSnapshot(LatLng(3.5, 4.5), 20L))
             assertEquals(RealPositionSnapshot(LatLng(3.5, 4.5), 20L), dataSource.getRealPositionSnapshot().first())
+        }
+
+    @Test
+    fun `spoof history is empty by default, newest first, and clear empties it`() =
+        runTest {
+            assertEquals(emptyList<SpoofHistoryEntry>(), dataSource.getSpoofHistory().first())
+            dataSource.addSpoofHistory(1.0, 2.0, 10L)
+            dataSource.addSpoofHistory(3.0, 4.0, 20L)
+            assertEquals(
+                listOf(SpoofHistoryEntry(3.0, 4.0, 20L), SpoofHistoryEntry(1.0, 2.0, 10L)),
+                dataSource.getSpoofHistory().first(),
+            )
+            dataSource.clearSpoofHistory()
+            assertEquals(emptyList<SpoofHistoryEntry>(), dataSource.getSpoofHistory().first())
+        }
+
+    @Test
+    fun `spoof history collapses coordinates within one metre to the newer entry`() =
+        runTest {
+            dataSource.addSpoofHistory(1.000001, 2.000001, 10L)
+            dataSource.addSpoofHistory(5.0, 6.0, 15L)
+            dataSource.addSpoofHistory(1.000002, 2.000002, 20L)
+            assertEquals(
+                listOf(SpoofHistoryEntry(1.000002, 2.000002, 20L), SpoofHistoryEntry(5.0, 6.0, 15L)),
+                dataSource.getSpoofHistory().first(),
+            )
+        }
+
+    @Test
+    fun `spoof history keeps only the newest 50 entries`() =
+        runTest {
+            repeat(51) { dataSource.addSpoofHistory(it.toDouble(), 0.0, it.toLong()) }
+            val history = dataSource.getSpoofHistory().first()
+            assertEquals(AppConstants.ProfileConstants.SPOOF_HISTORY_MAX_COUNT, history.size)
+            assertEquals(50.0, history.first().lat, 0.0)
+            assertEquals(1.0, history.last().lat, 0.0)
+        }
+
+    @Test
+    fun `spoof history reads a corrupt value as empty`() =
+        runTest {
+            fakeDataStore.edit { it[stringPreferencesKey("spoof_history")] = "not json" }
+            assertEquals(emptyList<SpoofHistoryEntry>(), dataSource.getSpoofHistory().first())
         }
 
     @Test
