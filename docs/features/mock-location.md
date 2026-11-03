@@ -16,7 +16,8 @@ The control reads the spoofing state from one controller method. Feature view mo
 
 - The position is pushed once per second, matching the cadence of real GPS.
 - A teleport pushes one fix at once, so the map and other apps do not wait up to a second for the new position. Walking and joystick ticks stay on the one-second loop.
-- On stop, the test provider must be removed. Leaving it behind is a ghost provider that breaks real GPS until the next reboot.
+- Apps read the network and fused providers directly, so a GPS-only mock leaks the real position around it. The service registers test providers for all three and feeds each the same fix. Network and fused are best-effort: Android may refuse them, and that must not stop spoofing. Fused needs API 31.
+- On stop, every test provider the service registered must be removed. Leaving it behind is a ghost provider that breaks real GPS until the next reboot.
 - Another app may hold the mock slot. The start must catch that and show a clear error rather than crash. The same failure mid-session (the user changes the mock app) must also surface as the error state and stop the loop, because swallowing it leaks the real GPS to other apps.
 - The elapsed-time stamp must increase on every fix. A fixed value makes apps discard the fixes.
 - Accuracy must stay within a range. A value below the minimum is a known anti-cheat signal.

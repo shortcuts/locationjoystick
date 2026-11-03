@@ -64,7 +64,7 @@ class ServiceErrorPropagationTest {
         assertEquals(MockLocationState.ERROR, state)
         assertEquals(MockLocationState.ERROR, locationRepository.mockLocationState.value)
         provider.setup()
-        verify(exactly = 2) { locationManager.setTestProviderEnabled(any(), true) }
+        verify(exactly = 2) { locationManager.setTestProviderEnabled("gps", true) }
     }
 
     @Test
