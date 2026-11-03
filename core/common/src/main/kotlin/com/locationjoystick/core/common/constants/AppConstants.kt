@@ -640,7 +640,7 @@ object AppConstants {
         const val PRE_TAP_DELAY_MIN_MS = 700L
         const val PRE_TAP_DELAY_MAX_MS = 2200L
         const val SETTLE_DELAY_MS = 4000L
-        const val SETTLE_POLL_READS = 5
+        const val SETTLE_POLL_READS = 8
         const val SETTLE_POLL_INTERVAL_MS = 2000L
         const val MAX_TAPS = 3
 

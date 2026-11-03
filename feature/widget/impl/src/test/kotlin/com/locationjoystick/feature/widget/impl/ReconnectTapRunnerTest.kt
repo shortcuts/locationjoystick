@@ -180,9 +180,9 @@ class ReconnectTapRunnerTest {
                 })
             assertEquals(ReconnectRunResult.FAILED, result)
             assertEquals(3, taps.count)
-            // Gap between taps: settle 4s + 4 poll gaps of 2s + pre-tap delay 0.7..2.2s.
+            // Gap between taps: settle 4s + 7 poll gaps of 2s + pre-tap delay 0.7..2.2s.
             val gap = taps.times[1] - taps.times[0]
-            assertTrue("gap $gap", gap in 12_700..14_200)
+            assertTrue("gap $gap", gap in 18_700..20_200)
         }
 
     @Test
@@ -199,12 +199,28 @@ class ReconnectTapRunnerTest {
         }
 
     @Test
+    fun `connect that reads on 16 s after the tap reconnects with one tap`() =
+        runTest {
+            val taps = Taps()
+            val result =
+                runReconnectTap(1080, 2400, {
+                    if (taps.times.isNotEmpty() && currentTime - taps.times[0] >= 16_000) on else off
+                }, { _, _, _ ->
+                    taps.count++
+                    taps.times += currentTime
+                    true
+                })
+            assertEquals(ReconnectRunResult.RECONNECTED, result)
+            assertEquals(1, taps.count)
+        }
+
+    @Test
     fun `retap only after every poll read is off`() =
         runTest {
             val taps = Taps()
-            // 2 confirm + pre-tap + 5 poll reads all OFF, pre-tap of tap 2 OFF, second tap, then ON.
+            // 2 confirm + pre-tap + 8 poll reads all OFF, pre-tap of tap 2 OFF, second tap, then ON.
             val result =
-                runReconnectTap(1080, 2400, reads(off, off, off, off, off, off, off, off, off, on), { _, _, _ ->
+                runReconnectTap(1080, 2400, reads(*Array(12) { off }, on), { _, _, _ ->
                     taps.count++
                     true
                 })
@@ -238,9 +254,9 @@ class ReconnectTapRunnerTest {
     fun `control turning on during the pre-tap pause of a retap never taps`() =
         runTest {
             val taps = Taps()
-            // 2 confirm + pre-tap + 5 polls OFF, then ON at the retap's pre-tap read.
+            // 2 confirm + pre-tap + 8 polls OFF, then ON at the retap's pre-tap read.
             val result =
-                runReconnectTap(1080, 2400, reads(off, off, off, off, off, off, off, off, on), { _, _, _ -> taps.count++ >= 0 })
+                runReconnectTap(1080, 2400, reads(*Array(11) { off }, on), { _, _, _ -> taps.count++ >= 0 })
             assertEquals(ReconnectRunResult.RECONNECTED, result)
             assertEquals(1, taps.count)
         }
