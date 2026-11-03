@@ -11,6 +11,10 @@ import java.io.File
 import javax.imageio.ImageIO
 import kotlin.math.abs
 
+// 486x819 top-right crops of a 1080x2340 screen: 819 rows is searchY1 and 486 columns is the width past searchX0.
+private const val SEARCH_SCREEN_WIDTH = 1080
+private const val SEARCH_SCREEN_HEIGHT = 2340
+
 /** Real night-map screenshots, 864x1920, control at about (791, 240) in both states. */
 class ReconnectControlDetectorTest {
     private class Shot(
@@ -60,6 +64,35 @@ class ReconnectControlDetectorTest {
             assertEquals(path, full, crop)
         }
     }
+
+    private fun detectCrop(path: String): ReconnectControl? {
+        val s = load(path)
+        return ReconnectControlDetector.detect(
+            s.pixels,
+            SEARCH_SCREEN_WIDTH,
+            SEARCH_SCREEN_HEIGHT,
+            cropX = ReconnectControlDetector.searchX0(SEARCH_SCREEN_WIDTH),
+        )
+    }
+
+    private fun assertCropControl(
+        path: String,
+        state: ReconnectState,
+    ) {
+        val c = checkNotNull(detectCrop(path))
+        assertEquals(state, c.state)
+        assertTrue("x=${c.centerX}", abs(c.centerX - 987) <= 6)
+        assertTrue("y=${c.centerY}", abs(c.centerY - 299) <= 6)
+    }
+
+    @Test
+    fun searchRing_readsSearching_wherever_theArcIs() {
+        assertCropControl("reconnect/ring_a.png", ReconnectState.SEARCHING)
+        assertCropControl("reconnect/ring_b.png", ReconnectState.SEARCHING)
+    }
+
+    @Test
+    fun idleOffBesideBusyMap_readsOff() = assertCropControl("reconnect/ring_idle_off.png", ReconnectState.OFF)
 
     private fun mapped(
         path: String,
@@ -172,7 +205,7 @@ class ReconnectControlDetectorTest {
 
     /**
      * Device corpus from scripts/reconnect_matrix.py corpus. Runs only when RECONNECT_FIXTURE_DIR is set.
-     * Filenames are `<on|off>_<day|night>_<min|max>_<device>.png`; the prefix is the expected state.
+     * Filenames are `<on|off|search>_<day|night>_<min|max>_<device>.png`; the prefix is the expected state.
      */
     @Test
     fun deviceCorpus_classifiesEveryFileAsItsLabel() {
@@ -182,7 +215,12 @@ class ReconnectControlDetectorTest {
         assumeTrue("no .png files in $dir", files.isNotEmpty())
         val misclassified =
             files.mapNotNull { f ->
-                val expected = if (f.name.startsWith("on_")) ReconnectState.ON else ReconnectState.OFF
+                val expected =
+                    when {
+                        f.name.startsWith("on_") -> ReconnectState.ON
+                        f.name.startsWith("search_") -> ReconnectState.SEARCHING
+                        else -> ReconnectState.OFF
+                    }
                 val img = ImageIO.read(f)
                 val px = IntArray(img.width * img.height)
                 img.getRGB(0, 0, img.width, img.height, px, 0, img.width)

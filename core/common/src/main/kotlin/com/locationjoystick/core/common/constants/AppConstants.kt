@@ -638,6 +638,10 @@ object AppConstants {
 
         // A null confirm read may be a popup sliding over the ball: give it time to leave before re-reading.
         const val UNSURE_RETRY_DELAY_MS = 20_000L
+
+        // The game's own search ring lasts 4 to 5 s after a disconnect and 7 to 8 s after a tap; a connect once read ON 16 s after a tap.
+        const val SEARCH_POLL_INTERVAL_MS = 1_000L
+        const val SEARCH_MAX_WAIT_MS = 20_000L
         const val PRE_TAP_DELAY_MIN_MS = 700L
         const val PRE_TAP_DELAY_MAX_MS = 2200L
         const val SETTLE_DELAY_MS = 4000L

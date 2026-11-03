@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.widget.impl
 
+import com.locationjoystick.core.common.constants.AppConstants.ReconnectTapConstants
 import com.locationjoystick.core.model.ReconnectRunResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.currentTime
@@ -16,6 +17,7 @@ import kotlin.random.Random
 class ReconnectTapRunnerTest {
     private val off = ReconnectControl(ReconnectState.OFF, 900, 200)
     private val on = ReconnectControl(ReconnectState.ON, 900, 200)
+    private val search = ReconnectControl(ReconnectState.SEARCHING, 900, 200)
 
     private class Taps {
         var count = 0
@@ -166,6 +168,57 @@ class ReconnectTapRunnerTest {
             val result =
                 runReconnectTap(1080, 2400, reads(null), { _, _, _ -> true }, gate = { ++gateCalls < 2 })
             assertEquals(ReconnectRunResult.GATE_CLOSED, result)
+        }
+
+    @Test
+    fun `search ring before the first read ends then off taps once after the ring`() =
+        runTest {
+            val taps = Taps()
+            val result =
+                runReconnectTap(1080, 2400, reads(search, search, search, off, off, off, on), { _, _, _ ->
+                    taps.count++
+                    taps.times += currentTime
+                    true
+                })
+            assertEquals(ReconnectRunResult.RECONNECTED, result)
+            assertEquals(1, taps.count)
+            assertTrue("tap at ${taps.times[0]}", taps.times[0] >= 3 * ReconnectTapConstants.SEARCH_POLL_INTERVAL_MS)
+        }
+
+    @Test
+    fun `search ring on the pre tap read never taps`() =
+        runTest {
+            val taps = Taps()
+            val result = runReconnectTap(1080, 2400, reads(off, off, search, search, on), { _, _, _ -> taps.count++ >= 0 })
+            assertEquals(ReconnectRunResult.RECONNECTED, result)
+            assertEquals(0, taps.count)
+        }
+
+    @Test
+    fun `search ring after a tap then on reconnects with one tap`() =
+        runTest {
+            val taps = Taps()
+            val result = runReconnectTap(1080, 2400, reads(off, off, off, search, search, on), { _, _, _ -> taps.count++ >= 0 })
+            assertEquals(ReconnectRunResult.RECONNECTED, result)
+            assertEquals(1, taps.count)
+        }
+
+    @Test
+    fun `search ring that outlasts the cap before any tap is not found`() =
+        runTest {
+            val taps = Taps()
+            val result = runReconnectTap(1080, 2400, reads(search), { _, _, _ -> taps.count++ >= 0 })
+            assertEquals(ReconnectRunResult.NOT_FOUND, result)
+            assertEquals(0, taps.count)
+        }
+
+    @Test
+    fun `search ring that outlasts the cap after a tap fails without a retap`() =
+        runTest {
+            val taps = Taps()
+            val result = runReconnectTap(1080, 2400, reads(off, off, off, search), { _, _, _ -> taps.count++ >= 0 })
+            assertEquals(ReconnectRunResult.FAILED, result)
+            assertEquals(1, taps.count)
         }
 
     @Test

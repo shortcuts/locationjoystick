@@ -1,9 +1,12 @@
 package com.locationjoystick.feature.widget.impl
 
 import com.locationjoystick.core.common.constants.AppConstants.ReconnectTapConstants
+import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.hypot
 
-enum class ReconnectState { ON, OFF }
+enum class ReconnectState { ON, OFF, SEARCHING }
 
 /** [centerX]/[centerY] are screen pixels at the ball's center; [state] is what its colors say. */
 data class ReconnectControl(
@@ -19,7 +22,8 @@ data class ReconnectControl(
  * in every UI language, theme and brightness. It finds the ball by shape (an upper half and a lower
  * half stacked into a circle, with a dot across the split line) among the window's flat-color
  * regions, then classifies from the colors it measures there: ON is a green dot under a red top, OFF
- * is a dark dot with a rose top over a blue bottom. Returns null for anything it cannot positively
+ * is a dark dot with a rose top over a blue bottom. An OFF ball inside the game's own search ring (a
+ * near-white arc that spins around it) reads SEARCHING instead: the game is already connecting. Returns null for anything it cannot positively
  * read; null never means "tap".
  */
 object ReconnectControlDetector {
@@ -32,6 +36,17 @@ object ReconnectControlDetector {
     private const val MAX_HALF_WIDTH = 0.10f
     private const val MIN_HALF_ASPECT = 0.2f
     private const val MAX_HALF_ASPECT = 0.6f
+
+    // Search ring: a near-white arc at this many ball radii that spins, so it is counted in sectors, not at one angle.
+    private const val RING_INNER = 1.15f
+    private const val RING_OUTER = 1.55f
+    private const val RING_SECTORS = 24
+    private const val RING_WHITE_MIN = 190
+    private const val RING_WHITE_SPREAD = 45
+    private const val RING_SECTOR_SHARE = 0.3f
+
+    // Measured on 2026-11-02 frames: ring frames fill 9 to 12 sectors, idle OFF frames 0.
+    private const val RING_MIN_SECTORS = 6
 
     /** First screen column and one past the last row of the search window; the caller crops to these. */
     fun searchX0(width: Int): Int = (width * ReconnectTapConstants.SEARCH_X_MIN_PCT).toInt()
@@ -68,12 +83,47 @@ object ReconnectControlDetector {
                 val dot = flats.firstOrNull { isDot(it, l, split) } ?: continue
                 when (stateOf(u, l, dot)) {
                     ReconnectState.ON -> return ReconnectControl(ReconnectState.ON, dot.centerX, dot.centerY)
-                    ReconnectState.OFF -> if (off == null) off = ReconnectControl(ReconnectState.OFF, dot.centerX, split)
+                    ReconnectState.SEARCHING -> Unit
+                    ReconnectState.OFF ->
+                        if (off == null) {
+                            val ring = hasSearchRing(pixels, width, y1, cropX, dot.centerX, split, l.width / 2f)
+                            off = ReconnectControl(if (ring) ReconnectState.SEARCHING else ReconnectState.OFF, dot.centerX, split)
+                        }
                     null -> Unit
                 }
             }
         }
         return off
+    }
+
+    /** True when the band around the ball holds near-white pixels in at least [RING_MIN_SECTORS] sectors. */
+    private fun hasSearchRing(
+        pixels: IntArray,
+        width: Int,
+        y1: Int,
+        cropX: Int,
+        cx: Int,
+        cy: Int,
+        radius: Float,
+    ): Boolean {
+        val stride = width - cropX
+        val total = IntArray(RING_SECTORS)
+        val white = IntArray(RING_SECTORS)
+        val reach = (radius * RING_OUTER).toInt() + 1
+        for (y in maxOf(cy - reach, 0)..minOf(cy + reach, y1 - 1)) {
+            for (x in maxOf(cx - reach, cropX)..minOf(cx + reach, width - 1)) {
+                val d = hypot((x - cx).toFloat(), (y - cy).toFloat())
+                if (d < radius * RING_INNER || d > radius * RING_OUTER) continue
+                val sector = (atan2((y - cy).toFloat(), (x - cx).toFloat()) / (2 * PI) * RING_SECTORS).toInt().mod(RING_SECTORS)
+                val p = pixels[y * stride + (x - cropX)]
+                val r = (p shr 16) and 0xFF
+                val g = (p shr 8) and 0xFF
+                val b = p and 0xFF
+                total[sector]++
+                if (minOf(r, g, b) >= RING_WHITE_MIN && maxOf(r, g, b) - minOf(r, g, b) <= RING_WHITE_SPREAD) white[sector]++
+            }
+        }
+        return total.indices.count { total[it] > 0 && white[it] >= RING_SECTOR_SHARE * total[it] } >= RING_MIN_SECTORS
     }
 
     /** [u] sits directly above [l], both about as wide and as centered as one ball's halves, forming a circle. */

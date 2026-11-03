@@ -43,7 +43,8 @@ The control is located and classified from a screenshot, every run, with no fixe
 
 - The control is found by shape: two stacked half-discs with a dot across the split. Its size is a fraction of the short screen side, not the width. The target app sizes the control in dp, so a width fraction drops below the minimum on an unfolded foldable or a landscape tablet and the control is never found. The short side keeps the fraction stable on phones and wide screens. Measured on a synthetic 2560x1600 landscape canvas (control about 2.3% of the width, 3.8% of the short side): not found by width, found by short side. No real foldable or tablet recording was available.
 - Its state comes from the colours in that same screenshot, so theme, brightness and tint do not matter. There is no per-device calibration.
-- The result is one of on, off, or unknown. Unknown covers "not found" and any colour set that fits neither state. **Unknown never taps.**
+- The game's own search draws a near-white arc that spins around an OFF ball. The detector reads it as searching, from near-white pixels in a band of 1.15 to 1.55 ball radii, counted in 24 sectors because the arc moves. Thresholds sit between 9 to 12 sectors (ring frames) and 0 (idle OFF frames), measured on one device (Pixel 5, 2026-11-02, `RING_MIN_SECTORS`). Searching is checked only on a ball that already reads OFF, so it never hides ON.
+- The result is one of on, off, searching or unknown. Unknown covers "not found" and any colour set that fits neither state. **Unknown never taps.**
 
 The search region is the top-right of the screen, where the target app puts the control. The target app's HUD moves between versions, so the region must be re-measured when it changes. A moved HUD makes classification fail safely (unknown), but reconnect then stops until the region is updated.
 
@@ -71,7 +72,7 @@ Current build, 2026-11-02, Pixel 5 with the original Pokemon GO Plus, debug buil
 - Block c, screen off: 10/10 reconnected, but with zero taps. The game reconnects by itself when it resumes, so this block does not test the tap.
 - A typical connect reads ON 8 to 9 s after the tap.
 - A retap while the game still connects did not cancel the connect (6/6). A slow connect therefore costs a longer read window, not a lost link.
-- While the game searches, it draws a ring around the ball, and the detector reads OFF. Taps during the game's own search right after a disconnect often do nothing.
+- While the game searches, it draws a ring around the ball. Taps during that search right after a disconnect often did nothing, so the runner now waits the ring out (`readSettled`, `SEARCH_MAX_WAIT_MS`) and never taps or counts it. This is safe because a tap during our own ring did not cancel the connect (6/6), so the wait only costs time. Past the cap a read counts as unknown.
 - After Recents and then Back, the gate stayed closed in some attempts (it never received a new window event from the game) until the game was relaunched. The gate-closed notice in "Failure notification" covers this case.
 
 Earlier runs (2026-10-13, Pixel 7 rows included) predate the re-read logic and the null-read fixes. Their taps-while-on failures do not apply to the current build. The target is still at least three devices, and Pokemon GO Plus + is untested.

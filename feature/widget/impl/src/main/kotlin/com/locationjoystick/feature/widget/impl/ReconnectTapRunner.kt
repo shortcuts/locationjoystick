@@ -174,7 +174,7 @@ private class GateClosed : RuntimeException()
  * and repeats both reads once), then up to MAX_TAPS taps, each
  * preceded by a read taken after the pre-tap pause (ON ends the run, null never taps) and followed by
  * a poll window; a retap needs every poll read OFF. A null read before a delivered tap is NOT_FOUND, so NOT_OFF always
- * means the control read ON. A null poll is unknown: it never retaps. Undelivered taps do not count; a run with none is GATE_CLOSED.
+ * means the control read ON. A SEARCHING read is polled until it settles; past SEARCH_MAX_WAIT_MS it counts as null. A null poll is unknown: it never retaps. Undelivered taps do not count; a run with none is GATE_CLOSED.
  */
 internal suspend fun runReconnectTap(
     screenWidth: Int,
@@ -188,13 +188,26 @@ internal suspend fun runReconnectTap(
         runGated(
             screenWidth,
             screenHeight,
-            { if (!gate()) throw GateClosed() else capture() },
+            readSettled { if (!gate()) throw GateClosed() else capture() },
             { x, y, d -> if (!gate()) throw GateClosed() else tap(x, y, d) },
             random,
         )
     } catch (_: GateClosed) {
         // Left the game or screen off mid-run: neutral, so it never counts toward the failure streak.
         ReconnectRunResult.GATE_CLOSED
+    }
+
+/** Waits out the game's search ring: a read that stays SEARCHING past the cap is null, which never taps. */
+private fun readSettled(capture: suspend () -> ReconnectControl?): suspend () -> ReconnectControl? =
+    {
+        var read = capture()
+        var waited = 0L
+        while (read?.state == ReconnectState.SEARCHING && waited < ReconnectTapConstants.SEARCH_MAX_WAIT_MS) {
+            delay(ReconnectTapConstants.SEARCH_POLL_INTERVAL_MS)
+            waited += ReconnectTapConstants.SEARCH_POLL_INTERVAL_MS
+            read = capture()
+        }
+        read.takeUnless { it?.state == ReconnectState.SEARCHING }
     }
 
 /** The state of the first read, or of the second read after the confirm delay. Null when either read finds no control. */
