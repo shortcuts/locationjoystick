@@ -48,6 +48,22 @@ fun parseGpxRoutes(
     }
 }
 
+/** Inverse of [parseGpxRoutes] for one route. The name is escaped because `&` or `<` would make the file unreadable. */
+fun buildGpx(
+    name: String,
+    points: List<LatLng>,
+): String =
+    buildString {
+        appendLine("""<?xml version="1.0" encoding="UTF-8"?>""")
+        appendLine("""<gpx version="${AppConstants.ExportConstants.GPX_VERSION}" creator="${AppConstants.ExportConstants.GPX_CREATOR}">""")
+        appendLine("  <trk><name>${escapeXml(name)}</name><trkseg>")
+        points.forEach { appendLine("""    <trkpt lat="${it.latitude}" lon="${it.longitude}"/>""") }
+        appendLine("  </trkseg></trk>")
+        append("</gpx>")
+    }
+
+private fun escapeXml(text: String): String = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
 fun isGpxMimeType(mimeType: String?): Boolean {
     val mime = mimeType?.lowercase()?.substringBefore(';')?.trim() ?: return false
     return mime == "application/gpx+xml" || mime == "application/gpx"

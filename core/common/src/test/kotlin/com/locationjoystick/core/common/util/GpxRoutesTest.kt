@@ -1,5 +1,6 @@
 package com.locationjoystick.core.common.util
 
+import com.locationjoystick.core.model.LatLng
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -28,5 +29,15 @@ class GpxRoutesTest {
         val gpx = """<gpx version="1.1"><trk><trkseg><trkpt lat="NaN" lon="2.3"/></trkseg></trk></gpx>"""
 
         assertEquals(0, parseGpxRoutes(gpx).size)
+    }
+
+    @Test
+    fun `exported gpx imports back to the same name and waypoints`() {
+        val points = listOf(LatLng(48.8566, 2.3522), LatLng(-33.8688, 151.2093), LatLng(0.0, -0.000001))
+
+        val routes = parseGpxRoutes(buildGpx("Tom & <Jerry's> \"loop\"", points))
+
+        assertEquals("Tom & <Jerry's> \"loop\"", routes.single().name)
+        assertEquals(points, routes.single().waypoints)
     }
 }

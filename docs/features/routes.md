@@ -16,6 +16,8 @@ A route is stored as one row with its waypoints in a child table. Waypoints keep
 
 Routes can also come from GPX files. The sizes and point limits are constants in the code. Points beyond the limit are dropped, and the user is told how many.
 
+Export writes one GPX track per route through the same file that parses it, and escapes the name: an unescaped `&` made the file unreadable on re-import.
+
 Opening a GPX file from another app is supported. Chat apps often send GPX as a generic binary type on a content link with no extension, so the app sniffs the content rather than trusting the type.
 
 Why a pending GPX file waits in a buffer until the paste sheet consumes it: the map is torn down when the app stops, and an early read used to wipe a replay that a later open still needed. The file is consumed only when the user acts on it.

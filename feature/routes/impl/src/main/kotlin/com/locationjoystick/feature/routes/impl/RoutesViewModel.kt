@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.GpxImportError
+import com.locationjoystick.core.common.util.buildGpx
 import com.locationjoystick.core.common.util.parseGpxRoutes
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
@@ -193,10 +194,14 @@ class RoutesViewModel
         ) {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
-                    val gpx = buildGpxString(route)
+                    val gpx = buildGpx(route.name, route.waypoints.map { it.position })
                     val dir = context.getExternalFilesDir("gpx") ?: return@launch
                     dir.mkdirs()
-                    val filename = route.name.replace(" ", "_").replace(Regex("[^a-zA-Z0-9_]"), "")
+                    val filename =
+                        route.name
+                            .replace(" ", "_")
+                            .replace(Regex("[^a-zA-Z0-9_]"), "")
+                            .ifEmpty { "route" }
                     val file = File(dir, "$filename.gpx")
                     file.writeText(gpx)
 
@@ -223,20 +228,6 @@ class RoutesViewModel
                 }
             }
         }
-
-        private fun buildGpxString(route: Route): String =
-            buildString {
-                appendLine("""<?xml version="1.0" encoding="UTF-8"?>""")
-                appendLine(
-                    """<gpx version="${AppConstants.ExportConstants.GPX_VERSION}" creator="${AppConstants.ExportConstants.GPX_CREATOR}">""",
-                )
-                appendLine("  <trk><name>${route.name}</name><trkseg>")
-                route.waypoints.forEach { wp ->
-                    appendLine("""    <trkpt lat="${wp.position.latitude}" lon="${wp.position.longitude}"/>""")
-                }
-                appendLine("  </trkseg></trk>")
-                append("</gpx>")
-            }
 
         fun importRouteFromGpxAsync(
             uri: Uri,
