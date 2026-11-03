@@ -34,7 +34,7 @@
 #   --steps 01,03,05     (run steps 1, 3, 5)
 # Seeding (routes, favorites) always runs before the first selected step.
 #
-# Output files (26 canonical PNGs). Each file's number prefix is its step
+# Output files (29 canonical PNGs). Each file's number prefix is its step
 # number, so --steps N writes N_*.png (step 19 runs out of order, see below):
 #   01_idle, 02_map, 03_routes, 04_favorites (with a "Local spots" group), 05_settings,
 #   06_map_routes_sheet, 07_map_favorites_sheet, 08_map_roaming_sheet,
@@ -46,7 +46,8 @@
 #   19_onboarding_mock_location, 26_onboarding_path_picker,
 #   20_tap_to_walk_settings, 21_screen_access,
 #   22_capture_coordinates, 23_map_paste_coordinates, 24_roaming_planting,
-#   25_accessibility_disclosure
+#   25_accessibility_disclosure, 27_favorites_history,
+#   28_screen_helpers, 29_randomness_realism
 #
 # 19_onboarding_mock_location ("Set as fake GPS app" onboarding step) is only
 # captured on a genuinely fresh install — it's taken mid-onboarding, before
@@ -107,7 +108,7 @@ if [[ -n "$STEPS_FILTER" ]]; then
   done
 else
   # No filter: enable all steps
-  for i in $(seq 1 26); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
+  for i in $(seq 1 29); do ENABLED_STEPS="${ENABLED_STEPS}$(printf '%02d' "$i") "; done
 fi
 
 # Helper to check if a step should run (e.g. should_run_step "16")
@@ -1515,6 +1516,48 @@ if should_run_step "25"; then
   # state it had before this step.
   tap_text_exact "Decline"
   wait_s 1 "Dismissing disclosure"
+fi
+
+# ── 27. Favorites → History sheet ────────────────────────────────────────────
+
+if should_run_step "27"; then
+  log "=== 27 FAVORITES HISTORY ==="
+  go_idle
+  tap_text_below "Favorites" "$CARD_Y_MIN"
+  wait_s 2 "Favorites loading"
+  tap_text_exact "Tokyo" || true
+  wait_s 2 "Teleporting"
+  tap_text_exact "Paris" || true
+  wait_s 2 "Teleporting"
+  tap_text "History"
+  wait_s 2 "History sheet opening"
+  screenshot "27_favorites_history"
+  back
+  wait_s 1 "Dismissing sheet"
+fi
+
+# ── 28. Settings → Screen helpers page ───────────────────────────────────────
+
+if should_run_step "28"; then
+  log "=== 28 SCREEN HELPERS ==="
+  go_idle
+  tap_text_below "Settings" "$CARD_Y_MIN"
+  wait_s 2 "Settings loading"
+  tap_text "Screen helpers"
+  wait_s 2 "Screen helpers loading"
+  screenshot "28_screen_helpers"
+fi
+
+# ── 29. Settings → Randomness & realism page ─────────────────────────────────
+
+if should_run_step "29"; then
+  log "=== 29 RANDOMNESS REALISM ==="
+  go_idle
+  tap_text_below "Settings" "$CARD_Y_MIN"
+  wait_s 2 "Settings loading"
+  tap_text "Randomness"
+  wait_s 2 "Randomness & realism loading"
+  screenshot "29_randomness_realism"
 fi
 
 # ── Done ─────────────────────────────────────────────
