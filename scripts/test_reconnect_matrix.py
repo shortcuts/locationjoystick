@@ -24,6 +24,21 @@ def test_parse_acl_state_returns_last_state_for_suffix():
     assert rm.parse_acl_state(DUMP, "00:00") is None
 
 
+BONDED_DUMP = """\
+  Bonded devices: 1
+    XX:XX:XX:XX:D3:24(Public) => XX:XX:XX:XX:D3:24(Public) [  LE  ] [ACL BR/EDR:N LE:Y] Pokemon GO Plus
+
+  Other devices: 1
+    XX:XX:XX:XX:6C:AD(Public) => XX:XX:XX:XX:XX:XX(Unknown) [  LE  ] [ACL BR/EDR:N LE:N] Furbo3-S3
+"""
+
+
+def test_bonded_suffixes_reads_only_the_bonded_section():
+    assert rm.bonded_suffixes(BONDED_DUMP) == {"D3:24"}
+    assert rm.bonded_suffixes("  Bonded devices: 0\n\n  Other devices: 1\n    XX:XX:XX:XX:6C:AD(Public)\n") == set()
+    assert rm.bonded_suffixes("") == set()
+
+
 def test_classify_logs_reconnected_run():
     lines = [
         "I ScreenAccessibilitySvc: Reconnect read: OFF",

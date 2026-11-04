@@ -388,19 +388,27 @@ def toggle_adapter(serial):
         return False
 
 
-def disconnect_companion(serial, mac_suffix):
-    """Drop the companion link as a user would: tap the connect control while a fresh read says ON.
+def bonded_suffixes(dumpsys_text):
+    """Masked address tails of the 'Bonded devices' section, upper-case."""
+    section = re.search(r"Bonded devices:.*?(?=\n\s*Other devices:|\Z)", dumpsys_text, re.S)
+    return {m.group(1).upper() for m in re.finditer(r"XX:XX:XX:XX:(\w\w:\w\w)\(", section.group(0))} if section else set()
 
-    Falls back to cycling the phone's Bluetooth adapter when the control does not read ON or the
-    tap does not drop the link. Returns (link dropped, method).
+
+def require_bond(serial, mac_suffix):
+    """Abort when the companion is unbonded: every later trial would run against nothing."""
+    if mac_suffix.upper() not in bonded_suffixes(adb(serial, "shell", "dumpsys", "bluetooth_manager")):
+        sys.exit(f"companion ...{mac_suffix} is not bonded: re-pair the Pokemon GO Plus, then rerun")
+
+
+def disconnect_companion(serial, mac_suffix):
+    """Drop the companion link by cycling the phone's Bluetooth adapter. Returns (link dropped, method).
+
+    The game calls removeBond on the Plus after either path: tapping its connect control off, or the
+    adapter coming back on (measured 2026-11-04). The Plus then needs a physical re-pair, so a run
+    aborts through require_bond after one trial. No scripted disconnect keeps the bond.
     """
-    state, centre = locate_control(take_screenshot(serial))
-    if state == "ON":
-        adb(serial, "shell", "input", "tap", str(centre[0]), str(centre[1]))
-        if wait_for_link(serial, mac_suffix, "Disconnected", 60):
-            return True, "tap"
-    toggle_ok = toggle_adapter(serial)
-    return toggle_ok and wait_for_link(serial, mac_suffix, "Disconnected", 60), "adapter"
+    require_bond(serial, mac_suffix)
+    return toggle_adapter(serial) and wait_for_link(serial, mac_suffix, "Disconnected", 60), "adapter"
 
 
 GAME_PACKAGE = "com.nianticlabs.pokemongo"
