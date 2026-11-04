@@ -294,9 +294,7 @@ internal fun MapFabColumn(
                     }
                 }
 
-                else -> {
-                    Unit
-                }
+                else -> {}
             }
         }
 

@@ -85,11 +85,11 @@ internal class ScreenshotReader(
                     object : AccessibilityService.TakeScreenshotCallback {
                         override fun onSuccess(screenshot: AccessibilityService.ScreenshotResult) {
                             val bmp =
-                                screenshot.hardwareBuffer?.let {
+                                screenshot.hardwareBuffer.let {
                                     Bitmap.wrapHardwareBuffer(it, null)
                                 }
-                            screenshot.hardwareBuffer?.close()
-                            cont.resume(bmp) { bmp?.recycle() }
+                            screenshot.hardwareBuffer.close()
+                            cont.resume(bmp) { _, value, _ -> value?.recycle() }
                         }
 
                         override fun onFailure(errorCode: Int) {

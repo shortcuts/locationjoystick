@@ -370,9 +370,7 @@ class GroupSyncViewModel
                         sendServiceAction(AppConstants.ServiceConstants.ACTION_EXIT_LEADER)
                     }
 
-                    GroupRole.NONE -> {
-                        Unit
-                    }
+                    GroupRole.NONE -> {}
                 }
                 groupRepository.leaveGroup()
                 _qrBitmap.value = null

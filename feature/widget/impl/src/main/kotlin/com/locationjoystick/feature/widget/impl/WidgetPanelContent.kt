@@ -228,7 +228,7 @@ internal fun WidgetPanel(
                                 var accumulatedDistance = 0f
                                 val longPressJob =
                                     jobScope.launch {
-                                        delay(viewConfiguration.longPressTimeoutMillis.toLong())
+                                        delay(viewConfiguration.longPressTimeoutMillis)
                                         if (!isDragging) {
                                             longPressFired = true
                                             masterToggle.onLongPress()
