@@ -51,7 +51,7 @@ internal fun cameraZoomBounds(tileSource: MapTileSource): ClosedFloatingPointRan
     if (tileSource.clampCamera) {
         tileSource.minZoom..tileSource.maxZoom
     } else {
-        MapLibreConstants.MINIMUM_ZOOM.toFloat()..MapLibreConstants.MAXIMUM_ZOOM.toFloat()
+        MapLibreConstants.MINIMUM_ZOOM..MapLibreConstants.MAXIMUM_ZOOM
     }
 
 /**

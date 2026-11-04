@@ -342,7 +342,7 @@ class NsdCodeManager
 
                     cont.invokeOnCancellation {
                         try {
-                            discoveryListener?.let { nsdManager.stopServiceDiscovery(it) }
+                            discoveryListener.let { nsdManager.stopServiceDiscovery(it) }
                         } catch (e: Exception) {
                             Log.w(TAG, "Cancellation stop discovery error", e)
                         }

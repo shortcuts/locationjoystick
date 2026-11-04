@@ -529,9 +529,7 @@ class FloatingWidgetService :
                 onRoamingIconClicked()
             }
 
-            AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES -> {
-                Unit
-            }
+            AppFeature.SEARCH, AppFeature.CAPTURE_COORDINATES -> {}
         }
     }
 
@@ -619,9 +617,7 @@ class FloatingWidgetService :
                 }
             }
 
-            else -> {
-                Unit
-            }
+            else -> {}
         }
     }
 
