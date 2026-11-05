@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/shortcuts/locationjoystick/compare/v1.0.0...v1.0.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* **wiki:** theme DocSearch box with wiki tokens in both schemes ([9200052](https://github.com/shortcuts/locationjoystick/commit/92000522338f382ab42850757ead8baa0ed5d839))
+
 ## [1.0.0](https://github.com/shortcuts/locationjoystick/compare/v0.27.0...v1.0.0) (2026-11-04)
 
 
