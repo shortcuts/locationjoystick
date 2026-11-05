@@ -125,6 +125,32 @@ def test_mobile_nav_and_toc_links_are_tall_enough_to_tap():
         assert max(heights, default=0.0) >= 48, f"{selector} min-height at 680px: {heights}"
 
 
+DOCSEARCH_THEME_VARS = [
+    "--docsearch-primary-color", "--docsearch-secondary-text-color", "--docsearch-text-color",
+    "--docsearch-highlight-color", "--docsearch-focus-color", "--docsearch-muted-color",
+    "--docsearch-muted-color-darker", "--docsearch-subtle-color", "--docsearch-soft-primary-color",
+    "--docsearch-background-color", "--docsearch-container-background", "--docsearch-icon-color",
+    "--docsearch-logo-color", "--docsearch-error-color", "--docsearch-success-color",
+    "--docsearch-modal-background", "--docsearch-modal-shadow", "--docsearch-searchbox-background",
+    "--docsearch-searchbox-focus-background", "--docsearch-hit-color", "--docsearch-hit-highlight-color",
+    "--docsearch-hit-background", "--docsearch-hit-shadow", "--docsearch-key-background",
+    "--docsearch-key-color", "--docsearch-key-pressed-shadow", "--docsearch-footer-background",
+    "--docsearch-footer-shadow", "--docsearch-search-button-background",
+    "--docsearch-search-button-text-color", "--docsearch-dropdown-menu-background",
+    "--docsearch-dropdown-menu-item-hover-background", "--docsearch-border-radius",
+]
+
+
+def test_docsearch_theme_vars_are_set_on_body_not_root():
+    css = re.sub(r"/\*.*?\*/", "", CSS, flags=re.S)
+    match = re.search(r"([^{}]+)\{([^{}]*--docsearch-primary-color:[^{}]*)\}", css)
+    assert match, "no DocSearch theme block"
+    selector, body = match.group(1).strip(), match.group(2)
+    assert selector == "body", f"DocSearch :root values load after this file and win: {selector!r}"
+    missing = [name for name in DOCSEARCH_THEME_VARS if f"{name}:" not in body]
+    assert not missing, f"DocSearch theme vars not set: {missing}"
+
+
 if __name__ == "__main__":
     test_item_headings_are_not_smaller_than_body()
     test_code_blocks_wrap_long_urls_on_phones()
@@ -132,4 +158,5 @@ if __name__ == "__main__":
     test_right_margin_shot_only_from_1320px()
     test_text_column_stays_wide_beside_shot_1000_to_1319px()
     test_mobile_nav_and_toc_links_are_tall_enough_to_tap()
+    test_docsearch_theme_vars_are_set_on_body_not_root()
     print("ok")

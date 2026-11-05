@@ -729,26 +729,41 @@ nav details > a{display:block}
 }
 
 /* ── DocSearch theme ── */
-:root{
+/* body, not :root: DocSearch sets its :root values later in the cascade. */
+body{
   --docsearch-primary-color:var(--accent);
+  --docsearch-secondary-text-color:var(--muted);
   --docsearch-text-color:var(--text);
   --docsearch-highlight-color:var(--accent);
+  --docsearch-focus-color:var(--accent);
   --docsearch-muted-color:var(--muted);
+  --docsearch-muted-color-darker:var(--rule);
+  --docsearch-subtle-color:var(--rule);
+  --docsearch-soft-primary-color:var(--accent-bg);
+  --docsearch-background-color:var(--bg);
   --docsearch-container-background:color-mix(in srgb,var(--bg) 85%,transparent);
+  --docsearch-icon-color:var(--muted);
+  --docsearch-logo-color:var(--muted);
+  --docsearch-error-color:var(--danger);
+  --docsearch-success-color:var(--surface);
   --docsearch-modal-background:var(--surface);
   --docsearch-modal-shadow:none;
   --docsearch-searchbox-background:var(--bg);
   --docsearch-searchbox-focus-background:var(--bg);
-  --docsearch-searchbox-shadow:inset 0 0 0 1px var(--accent);
   --docsearch-hit-color:var(--text);
-  --docsearch-hit-active-color:var(--bg);
+  --docsearch-hit-highlight-color:var(--accent-bg);
   --docsearch-hit-background:var(--bg);
   --docsearch-hit-shadow:none;
-  --docsearch-key-gradient:none;
-  --docsearch-key-shadow:none;
+  --docsearch-key-background:var(--bg);
+  --docsearch-key-color:var(--muted);
+  --docsearch-key-pressed-shadow:none;
   --docsearch-footer-background:var(--surface);
   --docsearch-footer-shadow:none;
-  --docsearch-logo-color:var(--muted);
+  --docsearch-search-button-background:var(--surface);
+  --docsearch-search-button-text-color:var(--muted);
+  --docsearch-dropdown-menu-background:var(--bg);
+  --docsearch-dropdown-menu-item-hover-background:var(--surface);
+  --docsearch-border-radius:var(--r-sm);
 }
 
 #docsearch{
