@@ -1,6 +1,6 @@
 .PHONY: stop clean build bundle format lint install-on-phone reinstall-on-phone start-on-phone tail-log-on-phone \
 	test coverage coverage-open screenshot screenshot-playstore accessibility-video wiki-changelog wiki-serve \
-	smoke-test smoke-test-one reconnect-matrix reconnect-auto reconnect-already-on reconnect-summary reconnect-selfcheck tap-smoke tap-smoke-selfcheck
+	smoke-test smoke-test-one release-smoke reconnect-matrix reconnect-auto reconnect-already-on reconnect-summary reconnect-selfcheck tap-smoke tap-smoke-selfcheck
 
 stop:
 	pkill -f gradlew || true
@@ -49,6 +49,7 @@ test:
 	python3 scripts/test_wiki_style.py
 	python3 scripts/test_wiki_nav.py
 	python3 scripts/test_check_release_hilt.py
+	python3 scripts/test_release_smoke.py
 
 coverage:
 	./gradlew koverHtmlReport koverXmlReport
@@ -79,6 +80,12 @@ smoke-test:
 
 smoke-test-one:
 	./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=$(SMOKE_TEST_CLASS)
+
+# Uninstalls the app first, which deletes its data (docs/testing.md).
+release-smoke:
+	./gradlew :app:packageReleaseUniversalApk
+	python3 scripts/check_release_hilt.py "$$(ls -t app/build/outputs/apk_from_bundle/release/*.apk | head -1)"
+	python3 scripts/release_smoke.py "$$(ls -t app/build/outputs/apk_from_bundle/release/*.apk | head -1)"
 
 # Bluetooth reconnect tap matrix (docs/features/bluetooth-reconnect-tap.md).
 # make reconnect-auto CYCLES=10   (SERIAL, DEVICE, MAC, BLOCK optional: script picks)

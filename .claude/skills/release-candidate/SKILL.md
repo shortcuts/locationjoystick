@@ -56,10 +56,25 @@ On failure, invoke `radin-record`:
 
 > Log a fix: `make test` failed. Failures: <failing test names / error summary>
 
+**Release artifact.** Debug builds and `make smoke-test` never run what users install: release
+1.0.0 passed every gate and crashed on Settings (issue 117). Run `adb devices`. With any device
+attached, run this. It uninstalls the app first, which deletes the app's data on that phone:
+
+```bash
+make release-smoke 2>&1
+```
+
+On failure, invoke `radin-record`:
+
+> Log a fix: `make release-smoke` failed. Failing screens: <the lines it printed>
+
+No device: skip the run and name the skip in the verdict. It does not flip the verdict.
+
 **Live checks.** The maintainer runs `make smoke-test` by hand on a connected device. This
 audit never asks whether to run it and never waits for its result.
 
-Done when `make test` exits 0, or its failure is logged.
+Done when `make test` exits 0 or its failure is logged, and `make release-smoke` exits 0, its
+failure is logged, or no device is attached.
 
 ## Step 3: CI
 
@@ -149,8 +164,11 @@ Run `radin backlog count` and compare it to the Step 0 baseline.
 
 No new entries across Steps 1–6:
 
-> ✅ Release is ready. All checks passed: format, lint, build, tests, CI, documentation
-> consistency, thermo-nuclear code quality review, and release PR.
+> ✅ Release is ready. All checks passed: format, lint, build, tests, release artifact smoke,
+> CI, documentation consistency, thermo-nuclear code quality review, and release PR.
+
+If no device was attached in Step 2, replace "release artifact smoke" with a separate line:
+"Release artifact smoke not run: no device attached."
 
 Then do Step 8.
 

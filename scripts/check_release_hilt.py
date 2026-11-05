@@ -72,25 +72,25 @@ def source_view_models():
     return found
 
 
-def find_dexdump():
+def find_build_tool(name):
     # Same order as Gradle: local.properties wins over a possibly stale environment.
     properties = REPO / "local.properties"
     configured = properties.read_text(encoding="utf-8") if properties.exists() else ""
     match = re.search(r"^sdk\.dir=(.+)$", configured, re.MULTILINE)
     sdk = match.group(1) if match else environ.get("ANDROID_HOME") or environ.get("ANDROID_SDK_ROOT")
     if not sdk:
-        sys.exit("error: set ANDROID_HOME to locate dexdump")
+        sys.exit(f"error: set ANDROID_HOME to locate {name}")
     tools = sorted(
-        Path(sdk, "build-tools").glob("*/dexdump"),
+        Path(sdk, "build-tools").glob(f"*/{name}"),
         key=lambda path: [int(part) for part in re.findall(r"\d+", path.parent.name)],
     )
     if not tools:
-        sys.exit(f"error: no dexdump under {sdk}/build-tools")
+        sys.exit(f"error: no {name} under {sdk}/build-tools")
     return tools[-1]
 
 
 def artifact_references(artifact):
-    dexdump = find_dexdump()
+    dexdump = find_build_tool("dexdump")
     instantiated, strings = set(), set()
     with zipfile.ZipFile(artifact) as archive, tempfile.TemporaryDirectory() as scratch:
         entries = [name for name in archive.namelist() if DEX_ENTRY.search(name)]
