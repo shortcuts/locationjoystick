@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/shortcuts/locationjoystick/compare/v1.0.1...v1.0.2) (2026-11-05)
+
+
+### Bug Fixes
+
+* **build:** pin KSP to 2.3.12 to stop silently dropped Hilt code ([1c8ab63](https://github.com/shortcuts/locationjoystick/commit/1c8ab635327e8709c6ff920d4067b76000817e96))
+
 ## [1.0.1](https://github.com/shortcuts/locationjoystick/compare/v1.0.0...v1.0.1) (2026-11-05)
 
 
