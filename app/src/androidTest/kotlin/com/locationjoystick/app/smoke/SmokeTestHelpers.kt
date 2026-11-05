@@ -26,9 +26,14 @@ fun SmokeRule.waitForIdleScreen() {
 }
 
 fun SmokeRule.completeOnboarding() {
-    waitUntil(10_000) { onAllNodesWithText("Skip").fetchSemanticsNodes().isNotEmpty() }
-    onAllNodesWithText("Skip").filterToOne(hasAnyAncestor(isDialog())).performClick()
-    waitForIdle()
+    // Skip only shows while mock location is not yet granted; a device that already selected the app skips straight on.
+    waitUntil(10_000) {
+        onAllNodesWithText("Skip").fetchSemanticsNodes().isNotEmpty() || onAllNodesWithText("Continue").fetchSemanticsNodes().isNotEmpty()
+    }
+    if (onAllNodesWithText("Skip").fetchSemanticsNodes().isNotEmpty()) {
+        onAllNodesWithText("Skip").filterToOne(hasAnyAncestor(isDialog())).performClick()
+        waitForIdle()
+    }
     onNodeWithText("Continue").performClick()
     waitForIdle()
     onNodeWithText("Start using locationjoystick").performClick()
