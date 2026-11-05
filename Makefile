@@ -20,9 +20,11 @@ clean:
 
 build:
 	./gradlew assembleRelease
+	python3 scripts/check_release_hilt.py "$$(ls -t app/build/outputs/apk/release/*.apk | head -1)"
 
 bundle:
 	./gradlew bundleRelease
+	python3 scripts/check_release_hilt.py app/build/outputs/bundle/release/app-release.aab
 
 format:
 	./gradlew ktlintFormat
@@ -46,6 +48,7 @@ test:
 	./gradlew testRelease
 	python3 scripts/test_wiki_style.py
 	python3 scripts/test_wiki_nav.py
+	python3 scripts/test_check_release_hilt.py
 
 coverage:
 	./gradlew koverHtmlReport koverXmlReport

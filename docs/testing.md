@@ -4,6 +4,10 @@
 
 `make test` runs `testRelease`. Android modules run their release unit tests. JVM modules (`:core:model`, `:lint:checks`) get a `testRelease` alias from the JVM convention plugin, so their `test` task runs too. CI runs `make test`, so a failing JVM test fails CI.
 
+## Release artifact check
+
+`make build` and `make bundle` run `scripts/check_release_hilt.py` on the APK or AAB they produce. KSP can silently skip a module on CI. Release 1.0.0 lost `SettingsViewModel` this way: every Gradle task passed and the screen crashed for users (issue 117). Debug builds, unit tests and smoke tests do not run the R8 artifact, so only a check of the artifact catches this. If the check fails on CI, rerun the job. A failed job publishes no APK.
+
 ## Coverage
 
 Coverage via [kotlinx-kover](https://github.com/Kotlin/kotlinx-kover) (v0.9.9). All modules use convention plugins. Root aggregates into merged report.
