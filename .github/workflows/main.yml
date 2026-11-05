@@ -28,6 +28,7 @@ jobs:
             src:
               - '**/*.kt'
               - '**/*.gradle*'
+              - '**/*.toml'
               - '**/gradle-wrapper.properties'
               - '**/AndroidManifest.xml'
               - 'Makefile'

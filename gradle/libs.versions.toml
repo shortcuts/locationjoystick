@@ -2,7 +2,8 @@
 # Kotlin & Android
 kotlin = "2.4.21"
 agp = "9.5.0"
-ksp = "2.3.13"
+# Stay below 2.3.13: concurrent KSP runs silently drop generated code (google/ksp#3286). Move up to the release with the fix.
+ksp = "2.3.12"
 
 # AndroidX Core
 core-ktx = "1.19.1"
