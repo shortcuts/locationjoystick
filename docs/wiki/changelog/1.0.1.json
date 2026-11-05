@@ -1,0 +1,7 @@
+{
+  "version": "1.0.1",
+  "date": "2026-11-05",
+  "entries": [
+    { "category": "fix", "scope": "Settings", "summary": "Opening Settings no longer crashes the app." }
+  ]
+}
