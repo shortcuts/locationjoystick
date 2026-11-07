@@ -44,3 +44,4 @@ scripts/reconnect-matrix/
 **/annotated_trials/
 **/walk_*/
 **/varycap*/
+.radin/
