@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -43,6 +45,9 @@ class EphemeralReplayController
     ) {
         private val _pendingWaypoints = MutableStateFlow<List<LatLng>>(emptyList())
 
+        // Serializes taps: a second tap must read the list the first one wrote, not the list before it.
+        private val addLock = Mutex()
+
         /** Current ephemeral waypoint list, shared across all surfaces. Both [MapViewModel] and
          * [FloatingWidgetService] observe this instead of tracking the list locally. */
         val pendingWaypoints: StateFlow<List<LatLng>> = _pendingWaypoints.asStateFlow()
@@ -62,7 +67,6 @@ class EphemeralReplayController
          * - Otherwise: no-op (returns null).
          *
          * @param newPoint The tapped map position.
-         * @param currentWaypoints The caller's current ephemeral waypoint list (may be empty).
          * @param walkTarget The active walk target, if any.
          * @param followRoads If true, use OSRM road-following for new segments: the
          *   walkTarget→newPoint leg on the initial transition, and each appended segment
@@ -74,93 +78,96 @@ class EphemeralReplayController
          */
         suspend fun addWaypoint(
             newPoint: LatLng,
-            currentWaypoints: List<LatLng>,
             walkTarget: LatLng?,
             followRoads: Boolean = false,
             context: Context,
             launchIntent: (Intent) -> Unit,
-        ): List<LatLng>? {
-            val result =
-                if (currentWaypoints.isEmpty() && walkTarget != null) {
-                    // First "Add next point" — transition from WalkCoordinator to RouteReplayEngine
-                    val startPos = locationRepository.currentPosition.value ?: newPoint
-                    // Walk-via-roads stores its polyline; read it before cancel() clears it.
-                    val storedRoute = locationRepository.routeWaypoints.value?.takeIf { it.isNotEmpty() }
-                    val firstLeg = storedRoute?.let { remainingRoute(it, startPos) }
-                    val legEnd = firstLeg?.last() ?: walkTarget
-                    // When road-following, any first leg not already stored (startPos→walkTarget)
-                    // and legEnd→newPoint must be OSRM-resolved so the whole chain stays road-following.
-                    val initial =
-                        if (followRoads) {
-                            locationRepository.setRoadRouteFetchInFlight(true)
-                            try {
-                                val (toTarget, toNewPoint) =
-                                    coroutineScope {
-                                        val a =
-                                            async {
-                                                firstLeg
-                                                    ?: osrmClient.resolveRoute(
+        ): List<LatLng>? =
+            addLock.withLock {
+                val currentWaypoints = _pendingWaypoints.value
+                val result =
+                    if (currentWaypoints.isEmpty() && walkTarget != null) {
+                        // First "Add next point" — transition from WalkCoordinator to RouteReplayEngine
+                        // Walk-via-roads stores its polyline and index; read them before cancel() clears them.
+                        val storedRoute = locationRepository.routeWaypoints.value?.takeIf { it.isNotEmpty() }
+                        val fromSegment = (walkCoordinator.walkWaypointIndex() - 1).coerceAtLeast(0)
+                        // Cancel first: the walk keeps moving during the lookups below, which would leave startPos behind it.
+                        walkCoordinator.cancel()
+                        val startPos = locationRepository.currentPosition.value ?: newPoint
+                        val firstLeg = storedRoute?.let { remainingRoute(it, startPos, fromSegment) }
+                        val legEnd = firstLeg?.last() ?: walkTarget
+                        // When road-following, any first leg not already stored (startPos→walkTarget)
+                        // and legEnd→newPoint must be OSRM-resolved so the whole chain stays road-following.
+                        val initial =
+                            if (followRoads) {
+                                locationRepository.setRoadRouteFetchInFlight(true)
+                                try {
+                                    val (toTarget, toNewPoint) =
+                                        coroutineScope {
+                                            val a =
+                                                async {
+                                                    firstLeg
+                                                        ?: osrmClient.resolveRoute(
+                                                            OsrmClient.PROFILE_FOOT,
+                                                            startPos,
+                                                            walkTarget,
+                                                            followRoads = true,
+                                                            onFallback = { reportFallback(context, it) },
+                                                        )
+                                                }
+                                            val b =
+                                                async {
+                                                    osrmClient.resolveRoute(
                                                         OsrmClient.PROFILE_FOOT,
-                                                        startPos,
-                                                        walkTarget,
+                                                        legEnd,
+                                                        newPoint,
                                                         followRoads = true,
                                                         onFallback = { reportFallback(context, it) },
                                                     )
-                                            }
-                                        val b =
-                                            async {
-                                                osrmClient.resolveRoute(
-                                                    OsrmClient.PROFILE_FOOT,
-                                                    legEnd,
-                                                    newPoint,
-                                                    followRoads = true,
-                                                    onFallback = { reportFallback(context, it) },
-                                                )
-                                            }
-                                        a.await() to b.await()
-                                    }
-                                toTarget + toNewPoint.drop(1) // legEnd is last of toTarget, first of toNewPoint
-                            } finally {
-                                locationRepository.setRoadRouteFetchInFlight(false)
+                                                }
+                                            a.await() to b.await()
+                                        }
+                                    toTarget + toNewPoint.drop(1) // legEnd is last of toTarget, first of toNewPoint
+                                } finally {
+                                    locationRepository.setRoadRouteFetchInFlight(false)
+                                }
+                            } else {
+                                (firstLeg?.dropLast(1) ?: listOf(startPos)) +
+                                    osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, legEnd, newPoint, followRoads = false)
                             }
-                        } else {
-                            (firstLeg?.dropLast(1) ?: listOf(startPos)) +
-                                osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, legEnd, newPoint, followRoads = false)
-                        }
-                    walkCoordinator.cancel()
-                    val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
-                    launchIntent(MockLocationIntentBuilder.startEphemeralReplay(context, initial, speedMs))
-                    initial
-                } else if (currentWaypoints.isNotEmpty() ||
-                    locationRepository.currentMode.value == MockMode.ROUTE_REPLAY
-                ) {
-                    val appendSegment =
-                        if (followRoads && currentWaypoints.isNotEmpty()) {
-                            locationRepository.setRoadRouteFetchInFlight(true)
-                            try {
-                                val from = currentWaypoints.last()
-                                osrmClient
-                                    .resolveRoute(
-                                        OsrmClient.PROFILE_FOOT,
-                                        from,
-                                        newPoint,
-                                        followRoads = true,
-                                        onFallback = { reportFallback(context, it) },
-                                    ).drop(1) // first point is `from`, already in the route
-                            } finally {
-                                locationRepository.setRoadRouteFetchInFlight(false)
+                        val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
+                        launchIntent(MockLocationIntentBuilder.startEphemeralReplay(context, initial, speedMs))
+                        initial
+                    } else if (currentWaypoints.isNotEmpty() ||
+                        locationRepository.currentMode.value == MockMode.ROUTE_REPLAY
+                    ) {
+                        val appendSegment =
+                            if (followRoads && currentWaypoints.isNotEmpty()) {
+                                locationRepository.setRoadRouteFetchInFlight(true)
+                                try {
+                                    val from = currentWaypoints.last()
+                                    osrmClient
+                                        .resolveRoute(
+                                            OsrmClient.PROFILE_FOOT,
+                                            from,
+                                            newPoint,
+                                            followRoads = true,
+                                            onFallback = { reportFallback(context, it) },
+                                        ).drop(1) // first point is `from`, already in the route
+                                } finally {
+                                    locationRepository.setRoadRouteFetchInFlight(false)
+                                }
+                            } else {
+                                listOf(newPoint)
                             }
-                        } else {
-                            listOf(newPoint)
-                        }
-                    appendSegment.forEach { launchIntent(MockLocationIntentBuilder.appendWaypoint(context, it)) }
-                    currentWaypoints + appendSegment
-                } else {
-                    null // no active walk, no-op
-                }
-            if (result != null) _pendingWaypoints.value = result
-            return result
-        }
+                        appendSegment.forEach { launchIntent(MockLocationIntentBuilder.appendWaypoint(context, it)) }
+                        currentWaypoints + appendSegment
+                    } else {
+                        null // no active walk, no-op
+                    }
+                if (result != null) _pendingWaypoints.value = result
+                result
+            }
 
         private fun reportFallback(
             context: Context,

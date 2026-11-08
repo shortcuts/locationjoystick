@@ -48,6 +48,11 @@ class WalkCoordinator
         // road-walk start whose routing result lands just after a teleport (issue #99).
         private var generation = 0L
 
+        @Volatile private var waypointIndex = 0
+
+        /** Index, in the list given to [startWalkAlongRoute], of the waypoint the walk is heading to. */
+        fun walkWaypointIndex(): Int = waypointIndex
+
         /**
          * Token for a later [startWalk]/[startWalkAlongRoute] call via `expectedGeneration`.
          * Any intervening start or [cancel] (e.g. a teleport) invalidates it.
@@ -90,6 +95,7 @@ class WalkCoordinator
                 }
                 activeWalkJob?.cancel()
                 val walkGeneration = ++generation
+                waypointIndex = 0
                 val finalTarget = waypoints.last()
                 locationRepository.setWalkTarget(finalTarget)
                 locationRepository.setMockMode(MockMode.WALK_TO)
@@ -119,6 +125,7 @@ class WalkCoordinator
                                     locationRepository.emitCompletion(CompletionKind.WALK)
                                 }
                             },
+                            onWaypointIndex = { if (isCurrent(walkGeneration)) waypointIndex = it },
                             onFinished = {
                                 synchronized(lock) {
                                     if (generation == walkGeneration) {

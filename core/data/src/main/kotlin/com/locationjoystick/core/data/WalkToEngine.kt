@@ -53,18 +53,22 @@ class WalkToEngine
          * @param onFinished Optional owner-managed cleanup on completion or cancellation.
          *   When supplied, replaces the default target cleanup; the owner must clear only
          *   its own session, atomically with any replacement start.
+         * @param onWaypointIndex Optional; called with the index of the waypoint the walk is
+         *   heading to, as it starts toward each one.
          */
         fun CoroutineScope.launchWalkAlongRoute(
             waypoints: List<LatLng>,
             onPositionUpdate: suspend (LatLng, Float, Float) -> Unit,
             onArrival: suspend () -> Unit,
             onFinished: (() -> Unit)? = null,
+            onWaypointIndex: ((Int) -> Unit)? = null,
         ): Job {
             require(waypoints.isNotEmpty()) { "Waypoints must not be empty" }
             val finalTarget = waypoints.last()
             return launch {
                 try {
-                    for (waypoint in waypoints) {
+                    for ((index, waypoint) in waypoints.withIndex()) {
+                        onWaypointIndex?.invoke(index)
                         while (true) {
                             if (locationRepository.walkTarget.value == null) return@launch
                             if (locationRepository.isWalkPaused.value) {

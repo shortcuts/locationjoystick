@@ -455,7 +455,7 @@ class MapViewModelTest {
             val resultWaypoints = listOf(currentPos, walkTarget, newPoint)
 
             every { locationRepository.currentPosition } returns MutableStateFlow(currentPos)
-            coEvery { ephemeralReplayController.addWaypoint(any(), any(), any(), any(), any(), any()) } answers {
+            coEvery { ephemeralReplayController.addWaypoint(any(), any(), any(), any(), any()) } answers {
                 pendingWaypointsFlow.value = resultWaypoints
                 resultWaypoints
             }
@@ -486,7 +486,7 @@ class MapViewModelTest {
 
             every { locationRepository.currentPosition } returns MutableStateFlow(currentPos)
             var callCount = 0
-            coEvery { ephemeralReplayController.addWaypoint(any(), any(), any(), any(), any(), any()) } answers {
+            coEvery { ephemeralReplayController.addWaypoint(any(), any(), any(), any(), any()) } answers {
                 callCount++
                 val result = if (callCount == 1) list3 else list4
                 pendingWaypointsFlow.value = result
@@ -590,7 +590,7 @@ class MapViewModelTest {
             val resultWaypoints = listOf(currentPos, walkTarget, extra)
 
             every { locationRepository.currentPosition } returns MutableStateFlow(currentPos)
-            coEvery { ephemeralReplayController.addWaypoint(any(), any(), any(), any(), any(), any()) } answers {
+            coEvery { ephemeralReplayController.addWaypoint(any(), any(), any(), any(), any()) } answers {
                 pendingWaypointsFlow.value = resultWaypoints
                 resultWaypoints
             }
@@ -645,7 +645,7 @@ class MapViewModelTest {
             val waypoints = listOf(currentPos, walkTarget, extra)
 
             every { locationRepository.currentPosition } returns MutableStateFlow(currentPos)
-            coEvery { ephemeralReplayController.addWaypoint(any(), any(), any(), any(), any(), any()) } answers {
+            coEvery { ephemeralReplayController.addWaypoint(any(), any(), any(), any(), any()) } answers {
                 pendingWaypointsFlow.value = waypoints
                 waypoints
             }
