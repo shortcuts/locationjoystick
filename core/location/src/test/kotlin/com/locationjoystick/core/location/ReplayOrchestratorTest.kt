@@ -57,7 +57,8 @@ class ReplayOrchestratorTest {
     private val osrmClient: OsrmClient = mockk(relaxed = true)
     private val routingErrorReporter: RoutingErrorReporter = mockk(relaxed = true)
 
-    private val stateChanges = mutableListOf<MockLocationState>()
+    private val events = mutableListOf<SpoofingEvent>()
+    private var acceptEvents = true
     private val speedChanges = mutableListOf<Float>()
     private var startUpdateLoopCalled = false
     private var teleportCount = 0
@@ -67,7 +68,8 @@ class ReplayOrchestratorTest {
 
     @Before
     fun setup() {
-        stateChanges.clear()
+        events.clear()
+        acceptEvents = true
         speedChanges.clear()
         startUpdateLoopCalled = false
         teleportCount = 0
@@ -84,7 +86,10 @@ class ReplayOrchestratorTest {
                 osrmClient = osrmClient,
                 routingErrorReporter = routingErrorReporter,
                 scope = kotlinx.coroutines.CoroutineScope(dispatcher),
-                onStateChange = { stateChanges.add(it) },
+                onSpoofingEvent = {
+                    events.add(it)
+                    acceptEvents
+                },
                 onPositionChange = { _, _ -> },
                 onSpeedChange = { speedChanges.add(it) },
                 pushLocationUpdate = { },
@@ -100,7 +105,30 @@ class ReplayOrchestratorTest {
         orchestrator.handlePause()
 
         verify { routeReplayEngine.pause() }
-        assertEquals(MockLocationState.PAUSED, stateChanges.last())
+        assertEquals(SpoofingEvent.PAUSE, events.last())
+        assertEquals(MockLocationState.PAUSED, locationRepository.mockLocationState.value)
+    }
+
+    @Test
+    fun handlePause_whenServiceRejectsPause_keepsRepositoryState() {
+        locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+        locationRepository.startSpoofing()
+        acceptEvents = false
+
+        orchestrator.handlePause()
+
+        assertEquals(MockLocationState.RUNNING, locationRepository.mockLocationState.value)
+    }
+
+    @Test
+    fun handleResume_whenServiceRejectsStart_keepsRepositoryState() {
+        locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
+        locationRepository.pauseSpoofing()
+        acceptEvents = false
+
+        orchestrator.handleResume(1.4)
+
+        assertEquals(SpoofingEvent.START, events.last())
         assertEquals(MockLocationState.PAUSED, locationRepository.mockLocationState.value)
     }
 
@@ -113,7 +141,7 @@ class ReplayOrchestratorTest {
         orchestrator.handlePause()
 
         verify(exactly = 0) { routeReplayEngine.pause() }
-        assertTrue(stateChanges.isEmpty())
+        assertTrue(events.isEmpty())
         assertEquals(MockMode.WALK_TO, locationRepository.currentMode.value)
         assertEquals(MockLocationState.RUNNING, locationRepository.mockLocationState.value)
         assertFalse(locationRepository.isWalkPaused.value)
@@ -321,7 +349,7 @@ class ReplayOrchestratorTest {
         orchestrator.handleResume(1.4)
 
         verify { routeReplayEngine.resume(any(), any(), any()) }
-        assertTrue(stateChanges.contains(MockLocationState.RUNNING))
+        assertTrue(events.contains(SpoofingEvent.START))
     }
 
     @Test
@@ -549,11 +577,11 @@ class ReplayOrchestratorTest {
         val onCompleteSlot = slot<() -> Unit>()
         orchestrator.handleResume(1.4)
         verify { routeReplayEngine.resume(any(), capture(onCompleteSlot), any()) }
-        stateChanges.clear()
+        events.clear()
 
         onCompleteSlot.captured.invoke()
 
-        assertFalse(stateChanges.contains(MockLocationState.IDLE))
+        assertFalse(events.contains(SpoofingEvent.STOP))
     }
 
     @Test
@@ -704,7 +732,7 @@ class ReplayOrchestratorTest {
                     osrmClient = osrmClient,
                     routingErrorReporter = routingErrorReporter,
                     scope = kotlinx.coroutines.CoroutineScope(dispatcher),
-                    onStateChange = { },
+                    onSpoofingEvent = { true },
                     onPositionChange = { _, _ -> },
                     onSpeedChange = { },
                     pushLocationUpdate = { throw RuntimeException("boom") },
@@ -1453,7 +1481,7 @@ class ReplayOrchestratorTest {
                     osrmClient = osrmClient,
                     routingErrorReporter = routingErrorReporter,
                     scope = kotlinx.coroutines.CoroutineScope(dispatcher),
-                    onStateChange = { },
+                    onSpoofingEvent = { true },
                     onPositionChange = { _, _ -> },
                     onSpeedChange = { },
                     pushLocationUpdate = { pushCount++ },

@@ -181,6 +181,7 @@ class MockLocationService : Service() {
     @Volatile private var updateJob: Job? = null
 
     private val _state = MutableStateFlow(MockLocationState.IDLE)
+    private val stateMachine = SpoofingStateMachine(_state)
     val state: StateFlow<MockLocationState> = _state.asStateFlow()
 
     private val positionRef = AtomicReference(LatLng(0.0, 0.0))
@@ -273,7 +274,7 @@ class MockLocationService : Service() {
                 osrmClient = osrmClient,
                 routingErrorReporter = routingErrorReporter,
                 scope = serviceScope,
-                onStateChange = { _state.value = it },
+                onSpoofingEvent = stateMachine::send,
                 onPositionChange = { lat, lon ->
                     writeCurrentPosition(lat, lon)
                 },
@@ -289,7 +290,7 @@ class MockLocationService : Service() {
         testProvider = TestProviderController(locationManager, onError = ::reportError)
         errorHandler =
             SpoofingErrorHandler(
-                setState = { _state.value = it },
+                send = stateMachine::send,
                 locationRepository = locationRepository,
                 wakeLock = wakeLock,
                 walkCoordinator = walkCoordinator,
@@ -726,7 +727,7 @@ class MockLocationService : Service() {
         // Reset ERROR state so a retry attempt can proceed cleanly.
         if (_state.value == MockLocationState.ERROR) {
             Log.i(TAG, "Clearing ERROR state before retry")
-            _state.value = MockLocationState.IDLE
+            stateMachine.send(SpoofingEvent.CLEAR_ERROR)
         }
 
         writeCurrentPosition(lat, lon, syncRepository = true)
@@ -761,14 +762,14 @@ class MockLocationService : Service() {
         // testProvider.setup() + startUpdateLoop(). Do NOT call them here to avoid
         // a double-invocation race.
         wakeLock.acquire()
-        _state.value = MockLocationState.RUNNING
+        stateMachine.send(SpoofingEvent.START)
         locationRepository.startSpoofing()
         Log.i(TAG, "Spoofing started at ($lat, $lon)")
     }
 
     // The crash handler can fire before onCreate builds the handler.
     private fun reportError() {
-        if (::errorHandler.isInitialized) errorHandler.setError() else _state.value = MockLocationState.ERROR
+        if (::errorHandler.isInitialized) errorHandler.setError() else stateMachine.send(SpoofingEvent.FAIL)
     }
 
     fun updatePosition(
@@ -898,7 +899,7 @@ class MockLocationService : Service() {
         serviceScope.launch { settingsRepository.setLastLocation(pos) }
         testProvider.remove()
         wakeLock.release()
-        _state.value = MockLocationState.IDLE
+        stateMachine.send(SpoofingEvent.STOP)
         locationRepository.setMockMode(MockMode.TELEPORT)
         locationRepository.stopSpoofing()
         locationRepository.setActiveRouteId(null)
@@ -916,7 +917,7 @@ class MockLocationService : Service() {
     private fun pauseFollowerForInactiveLeader() {
         wakeLock.release()
         locationRepository.stopSpoofing()
-        _state.value = MockLocationState.IDLE
+        stateMachine.send(SpoofingEvent.STOP)
         Log.i(TAG, "Leader stopped spoofing — pausing follower mirror")
     }
 

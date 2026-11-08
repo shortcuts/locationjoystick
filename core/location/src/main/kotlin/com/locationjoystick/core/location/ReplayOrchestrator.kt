@@ -52,7 +52,7 @@ private const val TAG = "ReplayOrchestrator"
  * straight walk.
  *
  * Communicates back to the service via lambdas:
- * - [onStateChange]: writes into the service's `_state` MutableStateFlow
+ * - [onSpoofingEvent]: sends a transition to the service's [SpoofingStateMachine]
  * - [onPositionChange]: updates `currentLat` / `currentLon` @Volatile fields
  * - [onSpeedChange]: updates `currentSpeedMs` @Volatile field
  * - [pushLocationUpdate]: pushes a GPS tick via the test provider
@@ -69,7 +69,7 @@ internal class ReplayOrchestrator(
     private val osrmClient: OsrmClient,
     private val routingErrorReporter: RoutingErrorReporter,
     private val scope: CoroutineScope,
-    private val onStateChange: (MockLocationState) -> Unit,
+    private val onSpoofingEvent: (SpoofingEvent) -> Boolean,
     private val onPositionChange: (lat: Double, lon: Double) -> Unit,
     private val onSpeedChange: (speedMs: Float) -> Unit,
     private val pushLocationUpdate: () -> Unit,
@@ -258,8 +258,7 @@ internal class ReplayOrchestrator(
             state?.paused?.value = true
             if (state == null || state.engineStarted) activeReplayer.pause()
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-            onStateChange(MockLocationState.PAUSED)
-            locationRepository.pauseSpoofing()
+            if (onSpoofingEvent(SpoofingEvent.PAUSE)) locationRepository.pauseSpoofing()
             publishProgress()
             Log.i(TAG, "Replay paused")
         }
@@ -270,8 +269,7 @@ internal class ReplayOrchestrator(
             val state = lifecycle.current
             val isStarting = lifecycle.isStarting()
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
-            onStateChange(MockLocationState.RUNNING)
-            locationRepository.startSpoofing()
+            if (onSpoofingEvent(SpoofingEvent.START)) locationRepository.startSpoofing()
             state?.paused?.value = false
             // Planning and walk-to-start already have a suspended job. Resuming an empty
             // replay engine here would signal completion and discard that pending route.
@@ -439,11 +437,9 @@ internal class ReplayOrchestrator(
         // A pause requested while OSRM or the route lookup was pending must survive setup.
         lifecycle.locked {
             if (state.paused.value) {
-                onStateChange(MockLocationState.PAUSED)
-                locationRepository.pauseSpoofing()
+                if (onSpoofingEvent(SpoofingEvent.PAUSE)) locationRepository.pauseSpoofing()
             } else {
-                onStateChange(MockLocationState.RUNNING)
-                locationRepository.startSpoofing()
+                if (onSpoofingEvent(SpoofingEvent.START)) locationRepository.startSpoofing()
             }
         }
 
