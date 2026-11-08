@@ -12,6 +12,8 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.map.maplibre.MapTileHttp
 import com.locationjoystick.core.model.GroupRole
+import com.locationjoystick.core.model.followerModeEnabled
+import com.locationjoystick.core.model.role
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

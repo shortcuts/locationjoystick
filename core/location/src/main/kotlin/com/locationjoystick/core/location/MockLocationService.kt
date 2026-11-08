@@ -28,11 +28,15 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.data.WalkToEngine
 import com.locationjoystick.core.model.GroupRole
+import com.locationjoystick.core.model.GroupState
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SyncPositionUpdate
+import com.locationjoystick.core.model.followerModeEnabled
+import com.locationjoystick.core.model.groupId
+import com.locationjoystick.core.model.role
 import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.RouteReplayEngine
 import com.locationjoystick.core.routing.RoutingErrorReporter
@@ -1027,8 +1031,8 @@ class MockLocationService : Service() {
         serviceScope.launch {
             groupRepository.groupState.collect { state ->
                 isGroupLeader = state.role == GroupRole.LEADER
-                leaderSharingEnabled = isGroupLeader && state.sharingEnabled
-                followLeaderTeleports = state.followLeaderTeleports
+                leaderSharingEnabled = (state as? GroupState.Leader)?.sharingEnabled == true
+                followLeaderTeleports = (state as? GroupState.Follower)?.followLeaderTeleports ?: true
             }
         }
         serviceScope.launch { settingsRepository.getHideTeleportFeatures().collect { hideTeleportFeatures = it } }

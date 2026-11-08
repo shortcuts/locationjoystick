@@ -2,7 +2,6 @@ package com.locationjoystick.core.location
 
 import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.GroupRepository
-import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -52,7 +51,7 @@ class GroupModeControllerTest {
 
     @Test
     fun `rediscovery after leaving the follower mode does not re-enter it`() {
-        val controller = newController(GroupState(role = GroupRole.NONE))
+        val controller = newController(GroupState.None)
 
         controller.rediscoverFollowerGroup("AAA111")
         controller.stopFollowerRestoration()
@@ -64,7 +63,7 @@ class GroupModeControllerTest {
 
     @Test
     fun `joining B during rediscovery of A keeps B`() {
-        val controller = newController(GroupState(role = GroupRole.FOLLOWER, groupId = "BBB222"))
+        val controller = newController(GroupState.Follower(groupId = "BBB222", host = "10.0.0.9", port = 8080))
 
         controller.rediscoverFollowerGroup("AAA111")
         gate.complete(null)
@@ -76,7 +75,7 @@ class GroupModeControllerTest {
 
     @Test
     fun `exhausted rediscovery for the current group leaves it and reports loss`() {
-        val controller = newController(GroupState(role = GroupRole.FOLLOWER, groupId = "AAA111"))
+        val controller = newController(GroupState.Follower(groupId = "AAA111", host = "10.0.0.9", port = 8080))
         // A real leaveGroup suspends, so a cancelled caller aborts it before emitGroupLost.
         coEvery { groupRepository.leaveGroup() } coAnswers { yield() }
 
@@ -90,7 +89,7 @@ class GroupModeControllerTest {
 
     @Test
     fun `exit leader stops the server and reports it`() {
-        val controller = newController(GroupState(role = GroupRole.LEADER, groupId = "AAA111"))
+        val controller = newController(GroupState.Leader(groupId = "AAA111", host = "10.0.0.9", port = 8080))
 
         controller.exitLeaderMode()
 

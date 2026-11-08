@@ -2,15 +2,43 @@ package com.locationjoystick.core.model
 
 enum class GroupRole { NONE, LEADER, FOLLOWER }
 
-data class GroupState(
-    val role: GroupRole = GroupRole.NONE,
-    val groupId: String? = null,
-    val leaderHost: String? = null,
-    val leaderPort: Int? = null,
-    val followerModeEnabled: Boolean = false,
-    val sharingEnabled: Boolean = false,
-    val followLeaderTeleports: Boolean = true,
-)
+sealed interface GroupState {
+    data object None : GroupState
+
+    data class Leader(
+        val groupId: String,
+        val host: String,
+        val port: Int,
+        val sharingEnabled: Boolean = false,
+    ) : GroupState
+
+    data class Follower(
+        val groupId: String,
+        val host: String,
+        val port: Int,
+        val followerModeEnabled: Boolean = false,
+        val followLeaderTeleports: Boolean = true,
+    ) : GroupState
+}
+
+val GroupState.role: GroupRole
+    get() =
+        when (this) {
+            GroupState.None -> GroupRole.NONE
+            is GroupState.Leader -> GroupRole.LEADER
+            is GroupState.Follower -> GroupRole.FOLLOWER
+        }
+
+val GroupState.groupId: String?
+    get() =
+        when (this) {
+            GroupState.None -> null
+            is GroupState.Leader -> this.groupId
+            is GroupState.Follower -> this.groupId
+        }
+
+val GroupState.followerModeEnabled: Boolean
+    get() = this is GroupState.Follower && this.followerModeEnabled
 
 data class SyncPositionUpdate(
     val timestamp: Long,

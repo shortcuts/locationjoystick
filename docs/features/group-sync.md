@@ -32,7 +32,7 @@ The sync server closes any connection from a peer that is not on the local netwo
 
 ## State
 
-Group state is one value: role, group code, leader address, and the flags for sharing and follow. Transitions go through the group repository. A leader that joins another group leaves its own group first.
+Group state is one sealed value. A role carries only the data valid in it, so a partial record decodes as no group. Transitions go through the group repository. A leader that joins another group leaves its own group first.
 
 All changes reach the spoofing service as intents. The service owns the server and the discovery; the UI does not start them directly.
 

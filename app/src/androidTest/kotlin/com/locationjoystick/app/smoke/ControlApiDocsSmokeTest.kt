@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.platform.app.InstrumentationRegistry
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.location.LeaderSyncServer
+import com.locationjoystick.core.model.GroupState
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -73,8 +74,8 @@ class ControlApiDocsSmokeTest : BaseSmokeTest() {
     @Test
     fun leader_exposes_documented_api() {
         composeRule.onNodeWithText("Create group: I'm the leader").performClick()
-        composeRule.waitUntil(10_000) { runBlocking { groupRepository.groupState.first().leaderPort } != null }
-        val port = runBlocking { groupRepository.groupState.first().leaderPort!! }
+        composeRule.waitUntil(10_000) { runBlocking { (groupRepository.groupState.first() as? GroupState.Leader)?.port } != null }
+        val port = runBlocking { (groupRepository.groupState.first() as GroupState.Leader).port }
 
         // Documented: "If the Control API is off, all /api/v1/ paths return 404".
         assertEquals(404, request(port, "/status", "GET", null).responseCode)

@@ -1,8 +1,10 @@
 package com.locationjoystick.core.data
 
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import app.cash.turbine.test
 import com.locationjoystick.core.model.GroupInvite
-import com.locationjoystick.core.model.GroupRole
+import com.locationjoystick.core.model.GroupState
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.testing.FakePreferencesDataStore
 import kotlinx.coroutines.flow.first
@@ -25,63 +27,50 @@ class GroupRepositoryTest {
     }
 
     @Test
-    fun `initial state has role NONE and nulls`() =
+    fun `initial state is None`() =
         runTest {
             repository.groupState.test {
-                val state = awaitItem()
-                assertEquals(GroupRole.NONE, state.role)
-                assertNull(state.groupId)
-                assertNull(state.leaderHost)
-                assertNull(state.leaderPort)
-                assertFalse(state.followerModeEnabled)
-                assertFalse(state.sharingEnabled)
+                assertEquals(GroupState.None, awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `createGroup emits LEADER state with correct fields`() =
+    fun `createGroup emits Leader state with correct fields`() =
         runTest {
             repository.createGroup(host = "192.168.1.1", port = 5000, groupId = "abc")
             repository.groupState.test {
-                val state = awaitItem()
-                assertEquals(GroupRole.LEADER, state.role)
+                val state = awaitItem() as GroupState.Leader
                 assertEquals("abc", state.groupId)
-                assertEquals("192.168.1.1", state.leaderHost)
-                assertEquals(5000, state.leaderPort)
+                assertEquals("192.168.1.1", state.host)
+                assertEquals(5000, state.port)
                 assertTrue(state.sharingEnabled)
-                assertFalse(state.followerModeEnabled)
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `joinGroup emits FOLLOWER state with invite fields`() =
+    fun `joinGroup emits Follower state with invite fields`() =
         runTest {
             val invite = GroupInvite(host = "10.0.0.5", port = 4001, groupId = "xyz")
             repository.joinGroup(invite)
             repository.groupState.test {
-                val state = awaitItem()
-                assertEquals(GroupRole.FOLLOWER, state.role)
+                val state = awaitItem() as GroupState.Follower
                 assertEquals("xyz", state.groupId)
-                assertEquals("10.0.0.5", state.leaderHost)
-                assertEquals(4001, state.leaderPort)
+                assertEquals("10.0.0.5", state.host)
+                assertEquals(4001, state.port)
                 assertTrue(state.followerModeEnabled)
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `leaveGroup clears all keys — role becomes NONE`() =
+    fun `leaveGroup clears all keys — state becomes None`() =
         runTest {
             repository.createGroup(host = "192.168.1.1", port = 5000, groupId = "abc")
             repository.leaveGroup()
             repository.groupState.test {
-                val state = awaitItem()
-                assertEquals(GroupRole.NONE, state.role)
-                assertNull(state.groupId)
-                assertNull(state.leaderHost)
-                assertNull(state.leaderPort)
+                assertEquals(GroupState.None, awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -89,14 +78,46 @@ class GroupRepositoryTest {
     @Test
     fun `followLeaderTeleports defaults true, persists false, and resets after leaving`() =
         runTest {
-            assertTrue(repository.groupState.first().followLeaderTeleports)
             repository.joinGroup(GroupInvite("h", 1, "id"))
-            assertTrue(repository.groupState.first().followLeaderTeleports)
+            assertTrue((repository.groupState.first() as GroupState.Follower).followLeaderTeleports)
             repository.setFollowLeaderTeleports(false)
-            assertFalse(repository.groupState.first().followLeaderTeleports)
+            assertFalse((repository.groupState.first() as GroupState.Follower).followLeaderTeleports)
             repository.leaveGroup()
             repository.joinGroup(GroupInvite("h", 1, "id"))
-            assertTrue(repository.groupState.first().followLeaderTeleports)
+            assertTrue((repository.groupState.first() as GroupState.Follower).followLeaderTeleports)
+        }
+
+    @Test
+    fun `leader role with no host decodes to None`() =
+        runTest {
+            repository.createGroup(host = "192.168.1.1", port = 5000, groupId = "abc")
+            fakeDataStore.updateData { it.toMutablePreferences().apply { remove(stringPreferencesKey("group_leader_host")) } }
+            repository.groupState.test {
+                assertEquals(GroupState.None, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `follower role with no port decodes to None`() =
+        runTest {
+            repository.joinGroup(GroupInvite(host = "10.0.0.5", port = 4001, groupId = "xyz"))
+            fakeDataStore.updateData { it.toMutablePreferences().apply { remove(intPreferencesKey("group_leader_port")) } }
+            repository.groupState.test {
+                assertEquals(GroupState.None, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `none role with stale host decodes to None`() =
+        runTest {
+            repository.createGroup(host = "192.168.1.1", port = 5000, groupId = "abc")
+            fakeDataStore.writeRaw("group_role", "NONE")
+            repository.groupState.test {
+                assertEquals(GroupState.None, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     @Test
@@ -129,7 +150,7 @@ class GroupRepositoryTest {
             repository.joinGroup(GroupInvite("h", 1, "id"))
             repository.setFollowerModeEnabled(false)
             repository.groupState.test {
-                val state = awaitItem()
+                val state = awaitItem() as GroupState.Follower
                 assertFalse(state.followerModeEnabled)
                 cancelAndIgnoreRemainingEvents()
             }
@@ -141,7 +162,7 @@ class GroupRepositoryTest {
             repository.createGroup("h", 1, "id")
             repository.setSharingEnabled(false)
             repository.groupState.test {
-                val state = awaitItem()
+                val state = awaitItem() as GroupState.Leader
                 assertFalse(state.sharingEnabled)
                 cancelAndIgnoreRemainingEvents()
             }
@@ -185,8 +206,7 @@ class GroupRepositoryTest {
             // Write a garbage role directly via the fake store
             fakeDataStore.writeRaw("group_role", "INVALID_ROLE")
             repository.groupState.test {
-                val state = awaitItem()
-                assertEquals(GroupRole.NONE, state.role)
+                assertEquals(GroupState.None, awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }

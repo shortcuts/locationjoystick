@@ -16,6 +16,7 @@ import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.role
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -101,7 +102,7 @@ class GroupSyncViewModelTest {
         lastTeleportTimeFlow = MutableStateFlow(0L)
         every { settingsRepository.getLastTeleportTime() } returns lastTeleportTimeFlow
 
-        groupStateFlow = MutableStateFlow(GroupState())
+        groupStateFlow = MutableStateFlow(GroupState.None)
         pendingInviteFlow = MutableSharedFlow(replay = 1)
         teleportUnavailableFlow = MutableSharedFlow(replay = 1)
         noLanAddressFlow = MutableSharedFlow(replay = 1)
@@ -163,7 +164,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `groupState mirrors repository state`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.LEADER, groupId = "abc")
+            groupStateFlow.value = GroupState.Leader(groupId = "abc", host = "h", port = 7)
 
             viewModel.groupState.test {
                 assertEquals(GroupRole.LEADER, awaitItem().role)
@@ -205,7 +206,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `watchNearbyLeaders does not probe when the role is not NONE`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.FOLLOWER, groupId = "abc")
+            groupStateFlow.value = GroupState.Follower(groupId = "abc", host = "h", port = 7)
 
             viewModel.watchNearbyLeaders()
 
@@ -305,7 +306,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `handlePendingInvite exits leader role before joining`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.LEADER, groupId = "old")
+            groupStateFlow.value = GroupState.Leader(groupId = "old", host = "h", port = 7)
 
             viewModel.joinViaScannedUrl("locationjoystick://group?host=1.2.3.4&port=9000&id=ZZZZZZ")
 
@@ -326,7 +327,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `setFollowerModeEnabled is a no-op when role is not FOLLOWER`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.NONE)
+            groupStateFlow.value = GroupState.None
 
             viewModel.setFollowerModeEnabled(true)
 
@@ -338,7 +339,7 @@ class GroupSyncViewModelTest {
     fun `setFollowerModeEnabled true persists the flag and starts the service`() =
         runTest {
             groupStateFlow.value =
-                GroupState(role = GroupRole.FOLLOWER, groupId = "g", leaderHost = "h", leaderPort = 7)
+                GroupState.Follower(groupId = "g", host = "h", port = 7)
             coEvery { groupNsdManager.discoverByCode("g") } returns ("h" to 7)
 
             viewModel.setFollowerModeEnabled(true)
@@ -351,7 +352,7 @@ class GroupSyncViewModelTest {
     fun `setFollowerModeEnabled true re-resolves stale host and port via NSD`() =
         runTest {
             groupStateFlow.value =
-                GroupState(role = GroupRole.FOLLOWER, groupId = "g", leaderHost = "stale-host", leaderPort = 1)
+                GroupState.Follower(groupId = "g", host = "stale-host", port = 1)
             coEvery { groupNsdManager.discoverByCode("g") } returns ("10.0.0.9" to 5555)
 
             viewModel.setFollowerModeEnabled(true)
@@ -365,7 +366,7 @@ class GroupSyncViewModelTest {
     fun `setFollowerModeEnabled true reverts the flag when NSD re-resolution fails`() =
         runTest {
             groupStateFlow.value =
-                GroupState(role = GroupRole.FOLLOWER, groupId = "g", leaderHost = "h", leaderPort = 7)
+                GroupState.Follower(groupId = "g", host = "h", port = 7)
             coEvery { groupNsdManager.discoverByCode("g") } returns null
 
             viewModel.setFollowerModeEnabled(true)
@@ -379,7 +380,7 @@ class GroupSyncViewModelTest {
     fun `setFollowerModeEnabled false persists the flag and starts the service`() =
         runTest {
             groupStateFlow.value =
-                GroupState(role = GroupRole.FOLLOWER, groupId = "g", leaderHost = "h", leaderPort = 7)
+                GroupState.Follower(groupId = "g", host = "h", port = 7)
 
             viewModel.setFollowerModeEnabled(false)
 
@@ -398,7 +399,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `leaveGroup as LEADER exits leader and clears state`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.LEADER, groupId = "g")
+            groupStateFlow.value = GroupState.Leader(groupId = "g", host = "h", port = 7)
 
             viewModel.leaveGroup()
 
@@ -409,7 +410,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `leaveGroup as FOLLOWER with follower mode on exits follower`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.FOLLOWER, followerModeEnabled = true)
+            groupStateFlow.value = GroupState.Follower(groupId = "g", host = "h", port = 7, followerModeEnabled = true)
 
             viewModel.leaveGroup()
 
@@ -420,7 +421,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `leaveGroup as FOLLOWER with follower mode off skips service intent`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.FOLLOWER, followerModeEnabled = false)
+            groupStateFlow.value = GroupState.Follower(groupId = "g", host = "h", port = 7, followerModeEnabled = false)
 
             viewModel.leaveGroup()
 
@@ -431,7 +432,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `leaveGroup as NONE skips service intent but still clears repository`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.NONE)
+            groupStateFlow.value = GroupState.None
 
             viewModel.leaveGroup()
 
@@ -470,16 +471,16 @@ class GroupSyncViewModelTest {
     fun `apiKey is null for NONE and FOLLOWER, stored key for LEADER`() =
         runTest {
             assertNull(viewModel.apiKey.value)
-            groupStateFlow.value = GroupState(role = GroupRole.FOLLOWER)
+            groupStateFlow.value = GroupState.Follower(groupId = "g", host = "h", port = 7)
             assertNull(viewModel.apiKey.value)
-            groupStateFlow.value = GroupState(role = GroupRole.LEADER)
+            groupStateFlow.value = GroupState.Leader(groupId = "g", host = "h", port = 7)
             assertEquals("key1", viewModel.apiKey.value)
         }
 
     @Test
     fun `setApiEnabled as leader enables with stored key and disables`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.LEADER)
+            groupStateFlow.value = GroupState.Leader(groupId = "g", host = "h", port = 7)
             viewModel.setApiEnabled(true)
             verify { leaderSyncServer.enableApi("key1") }
             viewModel.setApiEnabled(false)
@@ -489,7 +490,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `setApiEnabled as follower does nothing`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.FOLLOWER)
+            groupStateFlow.value = GroupState.Follower(groupId = "g", host = "h", port = 7)
             viewModel.setApiEnabled(true)
             viewModel.setApiEnabled(false)
             verify(exactly = 0) { leaderSyncServer.enableApi(any()) }
@@ -499,7 +500,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `regenerateApiKey updates key and rotates live API only when enabled`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.LEADER)
+            groupStateFlow.value = GroupState.Leader(groupId = "g", host = "h", port = 7)
             viewModel.regenerateApiKey()
             assertEquals("key2", viewModel.apiKey.value)
             verify(exactly = 0) { leaderSyncServer.enableApi(any()) }
@@ -512,7 +513,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `followerCount follows leaderSyncServer when role is LEADER`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.LEADER)
+            groupStateFlow.value = GroupState.Leader(groupId = "g", host = "h", port = 7)
 
             viewModel.followerCount.test {
                 assertEquals(0, awaitItem())
@@ -524,7 +525,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `followerCount follows followerSyncClient when role is FOLLOWER`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.FOLLOWER)
+            groupStateFlow.value = GroupState.Follower(groupId = "g", host = "h", port = 7)
 
             viewModel.followerCount.test {
                 assertEquals(0, awaitItem())
@@ -536,7 +537,7 @@ class GroupSyncViewModelTest {
     @Test
     fun `followerCount is zero when role is NONE`() =
         runTest {
-            groupStateFlow.value = GroupState(role = GroupRole.NONE)
+            groupStateFlow.value = GroupState.None
 
             viewModel.followerCount.test {
                 assertEquals(0, awaitItem())
@@ -567,14 +568,7 @@ class GroupSyncViewModelTest {
             }
         }
 
-    private fun followerEnabledState() =
-        GroupState(
-            role = GroupRole.FOLLOWER,
-            groupId = "g",
-            leaderHost = "h",
-            leaderPort = 7,
-            followerModeEnabled = true,
-        )
+    private fun followerEnabledState() = GroupState.Follower(groupId = "g", host = "h", port = 7, followerModeEnabled = true)
 
     @Test
     fun `joining a group with follow on starts following`() =
@@ -595,7 +589,7 @@ class GroupSyncViewModelTest {
             coEvery { groupNsdManager.discoverByCode("g") } returns ("h" to 7)
 
             groupStateFlow.value = followerEnabledState()
-            groupStateFlow.value = GroupState()
+            groupStateFlow.value = GroupState.None
             groupStateFlow.value = followerEnabledState()
 
             verify(exactly = 2) { context.startService(any()) }
