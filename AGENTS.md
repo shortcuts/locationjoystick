@@ -212,6 +212,50 @@ Before changing maps, read docs/features/map-tiles.md. Initialize MapLibre throu
 
 → See docs/code-style.md
 
+### Explicit state machines
+
+Model a lifecycle as one state value, never as several flags. Flags that change together allow combinations that must never happen, such as "paused but not running" or a stale `resumeFrom` after a stop. Each writer must then reset every flag by hand, and one forgotten reset is a bug.
+
+Treat these as an implicit state machine and refactor them:
+
+- Two or more booleans, nullable fields or `Job?` handles that a lifecycle sets and clears together.
+- A comment such as "true while X and not Y", or a guard that checks several flags at once.
+- Raw `state.value = X` writes from several places with no check of the current state.
+
+The pattern:
+
+- One `sealed interface` (or an `enum` when no state carries data). Each state carries only the data valid in it.
+- One owner holds one `MutableStateFlow` or `@Volatile var` of that type.
+- Every change goes through one transition function with an exhaustive `when`. That function ignores and logs an illegal transition.
+- Derived booleans are extension properties on the state, never stored fields.
+- One unit test per legal transition and one per rejected transition.
+
+Settings and options (`isLooping`, `hideTeleportFeatures`) are configuration, not state. Leave them as fields. `WalkMode` (`:core:location`) is the in-repo model to copy, with its derived properties in `MapSharedState.kt`.
+
+```kotlin
+// Bad: three fields, and "paused with no job" is a legal value.
+private var activeJob: Job? = null
+private var isPaused = false
+private var resumeFrom: LatLng? = null
+
+// Good: each state holds only what is valid in it.
+sealed interface RoamingState {
+    data object Idle : RoamingState
+    data class Running(val job: Job) : RoamingState
+    data class Paused(val job: Job, val resumeFrom: LatLng?) : RoamingState
+}
+
+private val state = MutableStateFlow<RoamingState>(RoamingState.Idle)
+
+fun pause() = transition { s -> if (s is RoamingState.Running) RoamingState.Paused(s.job, null) else null }
+
+private inline fun transition(next: (RoamingState) -> RoamingState?) {
+    state.update { current -> next(current) ?: current.also { Log.w(TAG, "ignored transition from $it") } }
+}
+
+val RoamingState.isPaused: Boolean get() = this is RoamingState.Paused
+```
+
 ---
 
 ## Testing Strategy
