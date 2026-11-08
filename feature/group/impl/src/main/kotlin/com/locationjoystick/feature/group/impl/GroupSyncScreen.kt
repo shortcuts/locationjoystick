@@ -73,6 +73,7 @@ import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.role
 import com.locationjoystick.feature.group.impl.R
 import kotlinx.coroutines.launch
 
@@ -205,8 +206,8 @@ internal fun GroupSyncScreen(
         ) {
             Spacer(modifier = Modifier.height(LjSpacing.lg))
 
-            when (groupState.role) {
-                GroupRole.NONE -> {
+            when (val state = groupState) {
+                GroupState.None -> {
                     NoGroupContent(
                         isDiscovering = isDiscovering,
                         onCreateGroup = onCreateGroup,
@@ -217,9 +218,9 @@ internal fun GroupSyncScreen(
                     )
                 }
 
-                GroupRole.LEADER -> {
+                is GroupState.Leader -> {
                     LeaderContent(
-                        groupState = groupState,
+                        groupState = state,
                         qrBitmap = qrBitmap,
                         followerCount = followerCount,
                         onSetSharingEnabled = onSetSharingEnabled,
@@ -232,9 +233,9 @@ internal fun GroupSyncScreen(
                     )
                 }
 
-                GroupRole.FOLLOWER -> {
+                is GroupState.Follower -> {
                     FollowerContent(
-                        groupState = groupState,
+                        groupState = state,
                         followerCount = followerCount,
                         onSetFollowerModeEnabled = onSetFollowerModeEnabled,
                         onSetFollowLeaderTeleports = onSetFollowLeaderTeleports,
@@ -423,7 +424,7 @@ private fun EnterCodeDialog(
 
 @Composable
 private fun LeaderContent(
-    groupState: GroupState,
+    groupState: GroupState.Leader,
     qrBitmap: Bitmap?,
     followerCount: Int,
     onSetSharingEnabled: (Boolean) -> Unit,
@@ -444,7 +445,7 @@ private fun LeaderContent(
             style = MaterialTheme.typography.titleMedium,
         )
 
-        val code = groupState.groupId ?: stringResource(R.string.group_sync_unknown)
+        val code = groupState.groupId
         LjCard(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             modifier = Modifier.fillMaxWidth(),
@@ -520,8 +521,8 @@ private fun LeaderContent(
         )
 
         ApiAccessSection(
-            host = groupState.leaderHost,
-            port = groupState.leaderPort,
+            host = groupState.host,
+            port = groupState.port,
             apiEnabled = apiEnabled,
             apiKey = apiKey,
             onSetApiEnabled = onSetApiEnabled,
@@ -546,7 +547,7 @@ private fun LeaderContent(
 
 @Composable
 private fun FollowerContent(
-    groupState: GroupState,
+    groupState: GroupState.Follower,
     followerCount: Int,
     onSetFollowerModeEnabled: (Boolean) -> Unit,
     onSetFollowLeaderTeleports: (Boolean) -> Unit,
@@ -571,7 +572,7 @@ private fun FollowerContent(
             text =
                 stringResource(
                     R.string.group_sync_connected_to_group,
-                    groupState.groupId ?: stringResource(R.string.group_sync_unknown),
+                    groupState.groupId,
                 ),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

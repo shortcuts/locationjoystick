@@ -12,7 +12,6 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.data.WalkToEngine
-import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
@@ -266,7 +265,7 @@ class MapControllerWalkCancellationTest {
             every { MockLocationIntentBuilder.resumeFollower(any()) } returns mockk(relaxed = true)
             val harness = buildHarness(backgroundScope, mockk(relaxed = true))
             every { harness.groupRepository.groupState } returns
-                flowOf(GroupState(role = GroupRole.FOLLOWER, groupId = "AB3X9K"))
+                flowOf(GroupState.Follower(groupId = "AB3X9K", host = "10.0.0.9", port = 8080))
             val repo = harness.locationRepository
             repo.setMockMode(MockMode.FOLLOWER)
             repo.setPositionInternal(LatLng(48.8566, 2.3522))
@@ -293,7 +292,7 @@ class MapControllerWalkCancellationTest {
             every { MockLocationIntentBuilder.resumeFollower(any()) } returns mockk(relaxed = true)
             val harness = buildHarness(backgroundScope, mockk(relaxed = true))
             every { harness.groupRepository.groupState } returns
-                flowOf(GroupState(role = GroupRole.FOLLOWER, groupId = "AB3X9K", followerModeEnabled = true))
+                flowOf(GroupState.Follower(groupId = "AB3X9K", host = "10.0.0.9", port = 8080, followerModeEnabled = true))
             val repo = harness.locationRepository
             repo.setMockMode(MockMode.FOLLOWER)
             repo.startSpoofing()

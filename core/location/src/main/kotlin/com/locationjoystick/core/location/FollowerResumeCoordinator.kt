@@ -7,6 +7,8 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.followerModeEnabled
+import com.locationjoystick.core.model.role
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job

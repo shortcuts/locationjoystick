@@ -6,6 +6,8 @@ import com.locationjoystick.core.common.util.NetworkUtils
 import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.model.GroupRole
+import com.locationjoystick.core.model.groupId
+import com.locationjoystick.core.model.role
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable

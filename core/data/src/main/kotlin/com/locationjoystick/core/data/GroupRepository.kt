@@ -43,25 +43,38 @@ class GroupRepository
             val API_KEY = stringPreferencesKey(AppConstants.DataStoreConstants.KEY_API_KEY)
         }
 
-        val groupState: Flow<GroupState> =
-            dataStore.data.map { prefs ->
-                val roleStr = prefs[Keys.GROUP_ROLE] ?: GroupRole.NONE.name
-                val role =
-                    try {
-                        GroupRole.valueOf(roleStr)
-                    } catch (_: IllegalArgumentException) {
-                        GroupRole.NONE
-                    }
-                GroupState(
-                    role = role,
-                    groupId = prefs[Keys.GROUP_ID],
-                    leaderHost = prefs[Keys.GROUP_LEADER_HOST],
-                    leaderPort = prefs[Keys.GROUP_LEADER_PORT],
-                    followerModeEnabled = prefs[Keys.GROUP_FOLLOWER_MODE_ENABLED] ?: false,
-                    sharingEnabled = prefs[Keys.GROUP_SHARING_ENABLED] ?: false,
-                    followLeaderTeleports = prefs[Keys.GROUP_FOLLOW_LEADER_TELEPORTS] ?: true,
-                )
+        val groupState: Flow<GroupState> = dataStore.data.map { it.toGroupState() }
+
+        private fun Preferences.toGroupState(): GroupState {
+            val role =
+                try {
+                    GroupRole.valueOf(this[Keys.GROUP_ROLE] ?: GroupRole.NONE.name)
+                } catch (_: IllegalArgumentException) {
+                    GroupRole.NONE
+                }
+            val groupId = this[Keys.GROUP_ID]
+            val host = this[Keys.GROUP_LEADER_HOST]
+            val port = this[Keys.GROUP_LEADER_PORT]
+            if (groupId == null || host == null || port == null) return GroupState.None
+            return when (role) {
+                GroupRole.NONE -> GroupState.None
+                GroupRole.LEADER ->
+                    GroupState.Leader(
+                        groupId = groupId,
+                        host = host,
+                        port = port,
+                        sharingEnabled = this[Keys.GROUP_SHARING_ENABLED] ?: false,
+                    )
+                GroupRole.FOLLOWER ->
+                    GroupState.Follower(
+                        groupId = groupId,
+                        host = host,
+                        port = port,
+                        followerModeEnabled = this[Keys.GROUP_FOLLOWER_MODE_ENABLED] ?: false,
+                        followLeaderTeleports = this[Keys.GROUP_FOLLOW_LEADER_TELEPORTS] ?: true,
+                    )
             }
+        }
 
         suspend fun createGroup(
             host: String,

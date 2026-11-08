@@ -25,6 +25,9 @@ import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.followerModeEnabled
+import com.locationjoystick.core.model.groupId
+import com.locationjoystick.core.model.role
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,7 +59,7 @@ class GroupSyncViewModel
         private val settingsRepository: SettingsRepository,
         private val locationRepository: LocationRepository,
     ) : ViewModel() {
-        private val _groupState = MutableStateFlow(GroupState())
+        private val _groupState = MutableStateFlow<GroupState>(GroupState.None)
         val groupState: StateFlow<GroupState> = _groupState.asStateFlow()
 
         private val _qrBitmap = MutableStateFlow<Bitmap?>(null)
@@ -132,19 +135,18 @@ class GroupSyncViewModel
                         followerRestoreSent = false
                         followerExistenceChecked = false
                     }
-                    val host = state.leaderHost
-                    val port = state.leaderPort
-                    val id = state.groupId
+                    val leader = state as? GroupState.Leader
+                    val follower = state as? GroupState.Follower
                     // On the first emission where we're a leader, check whether the server is
                     // actually running. After a device reboot the service is dead even though
                     // DataStore still says LEADER — the persisted host:port are stale. Restart
                     // the service so it picks a fresh port and writes it back to the repository,
                     // then generate the QR from that updated state instead of the stale one.
-                    if (state.role == GroupRole.LEADER && id != null && !leaderRestoreSent) {
+                    if (leader != null && !leaderRestoreSent) {
                         leaderRestoreSent = true
                         if (!leaderSyncServer.isRunning) {
                             sendServiceAction(AppConstants.ServiceConstants.ACTION_START_LEADER) { intent ->
-                                intent.putExtra(AppConstants.ServiceConstants.EXTRA_LEADER_GROUP_ID, id)
+                                intent.putExtra(AppConstants.ServiceConstants.EXTRA_LEADER_GROUP_ID, leader.groupId)
                             }
                             return@collect
                         }
@@ -156,15 +158,10 @@ class GroupSyncViewModel
                     // NSD runs again with more time elapsed and the leader is reachable.
                     // Check group existence immediately on entering the screen instead of waiting
                     // for the next poll tick, so a stale/gone group is surfaced right away.
-                    if (state.role == GroupRole.FOLLOWER &&
-                        !followerExistenceChecked &&
-                        host != null &&
-                        port != null &&
-                        id != null
-                    ) {
+                    if (follower != null && !followerExistenceChecked) {
                         followerExistenceChecked = true
-                        if (!followerSyncClient.checkGroupExists(host, port, id)) {
-                            Log.w(TAG, "Group $id no longer exists on entry check — leaving group")
+                        if (!followerSyncClient.checkGroupExists(follower.host, follower.port, follower.groupId)) {
+                            Log.w(TAG, "Group ${follower.groupId} no longer exists on entry check — leaving group")
                             leaveGroup()
                             return@collect
                         }
@@ -176,13 +173,8 @@ class GroupSyncViewModel
                             return@collect
                         }
                     }
-                    if (state.role == GroupRole.LEADER &&
-                        _qrBitmap.value == null &&
-                        host != null &&
-                        port != null &&
-                        id != null
-                    ) {
-                        generateQrCode(host, port, id)
+                    if (leader != null && _qrBitmap.value == null) {
+                        generateQrCode(leader.host, leader.port, leader.groupId)
                     }
                 }
             }
@@ -382,12 +374,8 @@ class GroupSyncViewModel
         }
 
         fun regenerateQr() {
-            val state = _groupState.value
-            if (state.role != GroupRole.LEADER) return
-            val host = state.leaderHost ?: return
-            val port = state.leaderPort ?: return
-            val id = state.groupId ?: return
-            generateQrCode(host, port, id)
+            val leader = (_groupState.value as? GroupState.Leader) ?: return
+            generateQrCode(leader.host, leader.port, leader.groupId)
         }
 
         private fun generateQrCode(
