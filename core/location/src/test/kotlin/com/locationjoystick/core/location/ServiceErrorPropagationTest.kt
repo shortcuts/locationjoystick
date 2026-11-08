@@ -28,7 +28,10 @@ class ServiceErrorPropagationTest {
     private val roaming = mockk<RoamingRepository>(relaxed = true)
     private val handler =
         SpoofingErrorHandler(
-            setState = { state = it },
+            send = {
+                if (it == SpoofingEvent.FAIL) state = MockLocationState.ERROR
+                true
+            },
             locationRepository = locationRepository,
             wakeLock = holder,
             walkCoordinator = walk,

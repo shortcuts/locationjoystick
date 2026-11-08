@@ -162,6 +162,7 @@ Any UI or UX change must respect docs/design-system.md. Run /maintain-design to 
 | `GroupModeController` | `:core:location` | Class (not service) | Owns leader advertising and the follower restoration and rediscovery jobs. Reports back through lambdas. |
 | `TestProviderController` | `:core:location` | Class (not service) | Owns the GPS test provider registration. Reports a refused provider or revoked mock app through `onError`. |
 | `SpoofingErrorHandler` | `:core:location` | Class (not service) | Moves the service to ERROR, releases the wake lock and stops walk, replay and roaming. |
+| `SpoofingStateMachine` | `:core:location` | Class (not service) | Owns the legal spoofing-state transitions. Collaborators send events, never states. |
 | `ReplayStartLifecycle` | `:core:location` | Class (not service) | Owns route-start sessions and the lifecycle lock, so pause, resume and abort live in one place. |
 | `AltitudeAnchorCoordinator` | `:core:location` | Class (not service) | Owns altitude convergence state. Same pattern as `FollowerCatchUpCoordinator`. |
 | `PositionJitterCoordinator` | `:core:location` | Class (not service) | Owns the jitter offset. Its motion model is a constraint: it must not teleport between draws. See [features/mock-location.md](docs/features/mock-location.md). |
