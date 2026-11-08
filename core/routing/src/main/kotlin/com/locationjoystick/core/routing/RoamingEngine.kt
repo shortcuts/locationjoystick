@@ -8,6 +8,7 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.model.RoamingKind
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -15,6 +16,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -36,22 +40,31 @@ class RoamingEngine
     ) : AutoCloseable {
         private val engineScope = CoroutineScope(SupervisorJob() + dispatcher)
 
-        @Volatile private var activeJob: Job? = null
-
-        @Volatile private var isPaused = false
-
-        @Volatile private var resumeFrom: LatLng? = null
+        private val state = MutableStateFlow<RoamingState>(RoamingState.Idle)
 
         /** Live movement speed, read each tick by [walkRouteSegment] so profile changes apply immediately. */
         @Volatile private var currentSpeedMs: Double = 0.0
 
-        fun pauseRoaming() {
-            isPaused = true
-        }
+        fun pauseRoaming() =
+            transition { s ->
+                when (s) {
+                    RoamingState.Idle -> null
+                    is RoamingState.Running -> RoamingState.Paused(s.job, null)
+                    is RoamingState.Paused -> RoamingState.Paused(s.job, null)
+                }
+            }
 
-        fun resumeRoaming(from: LatLng? = null) {
-            resumeFrom = from
-            isPaused = false
+        fun resumeRoaming(from: LatLng? = null) =
+            transition { s ->
+                when (s) {
+                    RoamingState.Idle -> null
+                    is RoamingState.Running -> if (from == null) s else RoamingState.Paused(s.job, from)
+                    is RoamingState.Paused -> if (from == null) RoamingState.Running(s.job) else RoamingState.Paused(s.job, from)
+                }
+            }
+
+        private fun transition(next: (RoamingState) -> RoamingState?) {
+            state.update { current -> next(current) ?: current.also { Log.w(TAG, "ignored transition from $it") } }
         }
 
         /**
@@ -192,17 +205,12 @@ class RoamingEngine
             onComplete: () -> Unit = {},
             onPositionUpdate: (LatLng) -> Unit,
         ): Job {
-            val previous = activeJob
-            activeJob = null
+            val previous = state.value.jobOrNull
             previous?.cancel()
-            // Reset for this request before launching: a joystick pause after startRoaming
-            // returns must survive scheduling and the previous job's asynchronous cleanup.
-            isPaused = false
-            resumeFrom = null
             currentSpeedMs = speedMs
 
             val job =
-                engineScope.launch {
+                engineScope.launch(start = CoroutineStart.LAZY) {
                     previous?.join()
 
                     val route = config.plannedWaypoints?.takeIf { it.size >= 2 } ?: planRoute(config)
@@ -232,7 +240,8 @@ class RoamingEngine
                     onRouteUpdate(emptyList())
                     onComplete()
                 }
-            activeJob = job
+            transition { RoamingState.Running(job) }
+            job.start()
             return job
         }
 
@@ -249,11 +258,7 @@ class RoamingEngine
             // Targeting index 0 snaps instantly and wastes a tick.
             var waypointIndex = 1
             while (currentCoroutineContext().isActive) {
-                while (isPaused && currentCoroutineContext().isActive) {
-                    delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
-                }
-                if (!currentCoroutineContext().isActive) break
-                currentPosition = resumeFrom.also { resumeFrom = null } ?: currentPosition
+                currentPosition = awaitRunning() ?: currentPosition
                 val result =
                     routeInterpolator.interpolateAlongRoute(
                         waypoints = route,
@@ -272,22 +277,68 @@ class RoamingEngine
             return currentPosition
         }
 
+        /** Suspends while paused. Returns the resume point, or null when the resume gave none. */
+        private suspend fun awaitRunning(): LatLng? {
+            while (true) {
+                state.first { it is RoamingState.Running || it is RoamingState.Paused && it.resumeFrom != null }
+                val resumeFrom = takeResumePoint()
+                if (resumeFrom != null || state.value is RoamingState.Running) return resumeFrom
+            }
+        }
+
+        private fun takeResumePoint(): LatLng? {
+            var taken: LatLng? = null
+            transition { s ->
+                when (s) {
+                    RoamingState.Idle -> null
+                    is RoamingState.Running -> s
+                    is RoamingState.Paused ->
+                        if (s.resumeFrom == null) {
+                            s
+                        } else {
+                            taken = s.resumeFrom
+                            RoamingState.Running(s.job)
+                        }
+                }
+            }
+            return taken
+        }
+
         suspend fun stopRoaming() {
-            isPaused = false
-            resumeFrom = null
-            val job = activeJob
-            activeJob = null
+            val job = state.value.jobOrNull
+            transition { RoamingState.Idle }
             job?.cancelAndJoin()
         }
 
         fun stop() {
-            val job = activeJob
-            activeJob = null
+            val job = state.value.jobOrNull
+            transition { RoamingState.Idle }
             job?.cancel()
         }
 
         override fun close() {
-            activeJob?.cancel()
+            state.value.jobOrNull?.cancel()
             engineScope.cancel()
         }
     }
+
+private sealed interface RoamingState {
+    data object Idle : RoamingState
+
+    data class Running(
+        val job: Job,
+    ) : RoamingState
+
+    data class Paused(
+        val job: Job,
+        val resumeFrom: LatLng?,
+    ) : RoamingState
+}
+
+private val RoamingState.jobOrNull: Job?
+    get() =
+        when (this) {
+            RoamingState.Idle -> null
+            is RoamingState.Running -> job
+            is RoamingState.Paused -> job
+        }
