@@ -597,7 +597,6 @@ class MapController
             appScope.launch {
                 ephemeralReplayController.addWaypoint(
                     newPoint = position,
-                    currentWaypoints = ephemeralReplayController.pendingWaypoints.value,
                     walkTarget = current.walkTarget,
                     followRoads = followRoads,
                     context = context,

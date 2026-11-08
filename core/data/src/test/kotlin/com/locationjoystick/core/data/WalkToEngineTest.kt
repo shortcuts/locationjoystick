@@ -196,6 +196,28 @@ class WalkToEngineTest {
         }
 
     @Test
+    fun `launchWalkAlongRoute reports the index of each waypoint it heads to`() =
+        runTest {
+            val start = LatLng(48.8566, 2.3522)
+            val end = LatLng(48.8566, 2.3522 + 0.00001)
+            locationRepository.setPositionInternal(start)
+            locationRepository.setWalkTarget(end)
+            val indexes = mutableListOf<Int>()
+
+            with(engine) {
+                backgroundScope.launchWalkAlongRoute(
+                    waypoints = listOf(start, end),
+                    onPositionUpdate = { _, _, _ -> },
+                    onArrival = {},
+                    onWaypointIndex = { indexes.add(it) },
+                )
+            }
+            advanceTimeBy(AppConstants.LocationConstants.UPDATE_INTERVAL_MS + 1)
+
+            assertEquals(listOf(0, 1), indexes)
+        }
+
+    @Test
     fun `launchWalkAlongRoute empty waypoints throws`() =
         runTest {
             var threw = false

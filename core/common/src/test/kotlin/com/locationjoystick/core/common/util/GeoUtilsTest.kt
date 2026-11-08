@@ -463,4 +463,12 @@ class GeoUtilsTest {
         assertEquals(listOf(a), remainingRoute(emptyList(), a))
         assertEquals(listOf(b, c), remainingRoute(listOf(c), b))
     }
+
+    @Test
+    fun `remainingRoute searches forward from fromSegment on an overlapping route`() {
+        val route = listOf(a, b, a, b)
+        val from = LatLng(0.005, 0.0)
+        assertEquals(listOf(from, b, a, b), remainingRoute(route, from))
+        assertEquals(listOf(from, b), remainingRoute(route, from, fromSegment = 2))
+    }
 }

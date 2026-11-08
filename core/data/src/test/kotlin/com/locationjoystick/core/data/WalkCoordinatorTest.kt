@@ -192,6 +192,22 @@ class WalkCoordinatorTest {
         }
 
     @Test
+    fun `walkWaypointIndex follows the walk and resets on a new start`() =
+        runTest {
+            val wp1 = LatLng(48.8566, 2.3522)
+            val wp2 = LatLng(48.8566, 2.3522 + 0.00001)
+            val far = LatLng(48.9000, 2.3522)
+            locationRepository.setPositionInternal(wp1)
+
+            walkCoordinator.startWalkAlongRoute(listOf(wp1, wp2, far), backgroundScope)
+            advanceTimeBy(AppConstants.LocationConstants.UPDATE_INTERVAL_MS * 3)
+            assertEquals(2, walkCoordinator.walkWaypointIndex())
+
+            walkCoordinator.startWalkAlongRoute(listOf(far), backgroundScope)
+            assertEquals(0, walkCoordinator.walkWaypointIndex())
+        }
+
+    @Test
     fun `startWalkAlongRoute empty list throws`() =
         runTest {
             var threw = false
