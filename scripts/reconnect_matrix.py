@@ -222,15 +222,13 @@ def _flat_regions(region):
     return out
 
 
-def _state(u, low, d):
-    """ON, OFF or None from the mean colors of the top half, bottom half and dot."""
+def _state(low, d):
+    """ON, OFF or None from the mean colors of the bottom half and the dot."""
     dot_green = d[1] - max(d[0], d[2])
-    if dot_green >= 0.4 * d[1] and u[0] - max(u[1], u[2]) >= 0.4 * u[0]:
+    if dot_green > 0 and dot_green >= 0.4 * d[1]:
         return "ON"
-    rose_top = u[0] - u[1] >= 0.15 * u[0] and u[0] > u[2]
-    blue_bottom = low[2] - low[0] >= 0.3 * low[2] and low[2] >= low[1]
     dark_dot = dot_green < 0.1 * d[1] + 5 and sum(d) <= 0.7 * sum(low)
-    return "OFF" if rose_top and blue_bottom and dark_dot else None
+    return "OFF" if dark_dot else None
 
 
 def locate_control(png_bytes):
@@ -276,7 +274,7 @@ def locate_control(png_bytes):
                     continue
                 if abs((f[1] + f[3]) // 2 - split) > 0.2 * w:
                     continue
-                state = _state(u[4], low[4], f[4])
+                state = _state(low[4], f[4])
                 centre = (x0 + (f[0] + f[2]) // 2, (f[1] + f[3]) // 2)
                 if state == "ON":
                     return "ON", centre

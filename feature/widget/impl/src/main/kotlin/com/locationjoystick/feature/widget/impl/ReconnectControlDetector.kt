@@ -21,8 +21,8 @@ data class ReconnectControl(
  * Pure over ARGB pixels (no Bitmap) so it tests on the JVM. No fixed colors and no text, so it holds
  * in every UI language, theme and brightness. It finds the ball by shape (an upper half and a lower
  * half stacked into a circle, with a dot across the split line) among the window's flat-color
- * regions, then classifies from the colors it measures there: ON is a green dot under a red top, OFF
- * is a dark dot with a rose top over a blue bottom. An OFF ball inside the game's own search ring (a
+ * regions, then classifies from the dot's color alone: ON is a green dot, OFF is a dark non-green
+ * dot. An OFF ball inside the game's own search ring (a
  * near-white arc that spins around it) reads SEARCHING instead: the game is already connecting. Returns null for anything it cannot positively
  * read; null never means "tap".
  */
@@ -81,7 +81,7 @@ object ReconnectControlDetector {
                 if (!stacked(u, l)) continue
                 val split = (u.bottom + l.top) / 2
                 val dot = flats.firstOrNull { isDot(it, l, split) } ?: continue
-                when (stateOf(u, l, dot)) {
+                when (stateOf(l, dot)) {
                     ReconnectState.ON -> return ReconnectControl(ReconnectState.ON, dot.centerX, dot.centerY)
                     ReconnectState.SEARCHING -> Unit
                     ReconnectState.OFF ->
@@ -160,20 +160,17 @@ object ReconnectControlDetector {
     }
 
     /**
-     * Relative channel dominance, so brightness and tint do not matter. ON: green dot under a red top.
-     * OFF: dark dot, rose top (red over green and blue), blue bottom (blue over red and green).
+     * Reads the center dot alone, relative to the ball, so brightness, tint and the half colors do not matter.
+     * ON: green dot. OFF: non-green dot darker than the lower half.
      */
     private fun stateOf(
-        u: Flat,
         l: Flat,
         d: Flat,
     ): ReconnectState? {
         val dotGreen = d.g - maxOf(d.r, d.b)
-        if (dotGreen >= 0.4f * d.g && u.r - maxOf(u.g, u.b) >= 0.4f * u.r) return ReconnectState.ON
-        val roseTop = u.r - u.g >= 0.15f * u.r && u.r > u.b
-        val blueBottom = l.b - l.r >= 0.3f * l.b && l.b >= l.g
+        if (dotGreen > 0 && dotGreen >= 0.4f * d.g) return ReconnectState.ON
         val darkDot = dotGreen < 0.1f * d.g + 5 && d.r + d.g + d.b <= 0.7f * (l.r + l.g + l.b)
-        return if (roseTop && blueBottom && darkDot) ReconnectState.OFF else null
+        return if (darkDot) ReconnectState.OFF else null
     }
 
     /** A flat region: bounding box and mean color. */

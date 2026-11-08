@@ -188,9 +188,64 @@ class ReconnectControlDetectorTest {
     }
 
     @Test
-    fun grayscaleBall_returnsNull() {
+    fun grayscaleBall_readsOff() {
         val gray = mapped("reconnect/hud_on_night.png") { r, g, b -> ((r + g + b) / 3).let { Triple(it, it, it) } }
-        assertNull(gray.detect())
+        assertEquals(ReconnectState.OFF, checkNotNull(gray.detect()).state)
+    }
+
+    private fun isDotColor(
+        dot: Int,
+        r: Int,
+        g: Int,
+        b: Int,
+    ) = abs(r - ((dot shr 16) and 0xFF)) <= 30 && abs(g - ((dot shr 8) and 0xFF)) <= 30 && abs(b - (dot and 0xFF)) <= 30
+
+    /** Recolours the ball's halves (a 40 px box around the control), keeping pixels near the dot color. */
+    private fun halvesRecolored(
+        path: String,
+        f: (Int, Int, Int) -> Triple<Int, Int, Int>,
+    ): Shot {
+        val s = load(path)
+        val dot = s.pixels[240 * s.width + 791]
+        val px =
+            IntArray(s.pixels.size) {
+                val p = s.pixels[it]
+                val (r, g, b) = Triple((p shr 16) and 0xFF, (p shr 8) and 0xFF, p and 0xFF)
+                val inBall = abs(it % s.width - 791) <= 40 && abs(it / s.width - 240) <= 40
+                if (!inBall || isDotColor(dot, r, g, b)) {
+                    p
+                } else {
+                    val (nr, ng, nb) = f(r, g, b)
+                    (0xFF shl 24) or (nr shl 16) or (ng shl 8) or nb
+                }
+            }
+        return Shot(px, s.width, s.height)
+    }
+
+    @Test
+    fun otherAccessoryColours_stillReadBothStates() {
+        val rotate = { r: Int, g: Int, b: Int -> Triple(b, r, g) }
+        assertRead(halvesRecolored("reconnect/hud_on_night.png", rotate).detect(), ReconnectState.ON)
+        assertRead(halvesRecolored("reconnect/hud_off_night.png", rotate).detect(), ReconnectState.OFF)
+    }
+
+    @Test
+    fun nonGreenBrightDot_returnsNull() {
+        val s = load("reconnect/hud_off_night.png")
+        val dot = s.pixels[240 * s.width + 791]
+        val white =
+            mapped("reconnect/hud_off_night.png") { r, g, b ->
+                if (isDotColor(dot, r, g, b) && abs(r - 47) <= 30) Triple(250, 250, 250) else Triple(r, g, b)
+            }
+        assertNull(white.detect())
+    }
+
+    @Test
+    fun blackDot_readsOff() {
+        val s = load("reconnect/hud_on_night.png")
+        val dot = s.pixels[240 * s.width + 791]
+        val black = mapped("reconnect/hud_on_night.png") { r, g, b -> if (isDotColor(dot, r, g, b)) Triple(0, 0, 0) else Triple(r, g, b) }
+        assertEquals(ReconnectState.OFF, checkNotNull(black.detect()).state)
     }
 
     @Test
