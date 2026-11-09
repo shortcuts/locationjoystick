@@ -7,6 +7,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,10 +34,7 @@ class WidgetPanelSemanticsTest {
                 routeControls =
                     RouteControlsState(
                         expanded = false,
-                        isActive = true,
-                        isPaused = routePaused,
-                        isPausable = true,
-                        isReplay = false,
+                        movement = MovementState.Active(MockMode.WALK_TO, paused = routePaused),
                         hideTeleportFeatures = false,
                         showRouteJumpButtons = false,
                         onIconClick = {},
@@ -44,7 +43,7 @@ class WidgetPanelSemanticsTest {
                         onJumpNext = {},
                         onJumpPrevious = {},
                     ),
-                roamingControls = RoamingControlsState(false, false, false, {}, {}, {}),
+                roamingControls = RoamingControlsState(false, MovementState.Manual(MockMode.TELEPORT), {}, {}, {}),
                 isPanelExpanded = true,
                 hasPendingCompletion = hasPendingCompletion,
                 masterToggle = MasterToggleState(true, false, {}, {}, {}, {}, {}),

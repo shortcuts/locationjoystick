@@ -23,6 +23,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.ephemeralWaypoints
+import com.locationjoystick.core.location.mockMode
 import com.locationjoystick.core.location.walkStart
 import com.locationjoystick.core.location.walkTarget
 import com.locationjoystick.core.model.FavoriteLocation
@@ -470,9 +471,8 @@ internal class WidgetPanelPresenter(
                 walkTarget = shared.walkTarget,
                 walkStart = shared.walkStart,
                 routeWaypoints = shared.routeTrace,
-                mockMode = shared.mockMode,
+                movement = shared.movement,
                 mockLocationState = shared.mockLocationState,
-                isRoamingPaused = shared.isRoamingPaused,
                 favorites = shared.favorites,
                 roamingDefaults = shared.roamingDefaults,
                 speedUnit = shared.speedUnit,

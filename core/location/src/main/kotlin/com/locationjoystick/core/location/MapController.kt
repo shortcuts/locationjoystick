@@ -18,10 +18,13 @@ import com.locationjoystick.core.data.WalkCoordinator
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.RouteStartConfig
+import com.locationjoystick.core.model.isActive
+import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.core.model.isRoutePlaying
 import com.locationjoystick.core.model.sortedBySavedItemMode
 import com.locationjoystick.core.model.speedProfileIdForKind
@@ -56,8 +59,7 @@ private const val TAG = "MapController"
 private data class LocationStateSnapshot(
     val position: LatLng?,
     val state: MockLocationState,
-    val walkPaused: Boolean,
-    val mode: MockMode,
+    val movement: MovementState,
     val routeProgress: RouteProgress?,
 )
 
@@ -117,7 +119,6 @@ class MapController
             observeFavorites()
             observeRouteWaypoints()
             observeEphemeralWaypoints()
-            observeRoaming()
             observeRoadRouteFetchInFlight()
             observeSpeedUnit()
             observeJitterRadiusOverlay()
@@ -137,18 +138,16 @@ class MapController
                 combine(
                     locationRepository.currentPosition,
                     locationRepository.mockLocationState,
-                    locationRepository.isWalkPaused,
-                    locationRepository.currentMode,
+                    locationRepository.movement,
                     locationRepository.routeProgress,
-                ) { position, state, walkPaused, mode, progress ->
-                    LocationStateSnapshot(position, state, walkPaused, mode, progress)
+                ) { position, state, movement, progress ->
+                    LocationStateSnapshot(position, state, movement, progress)
                 }.collect { snap ->
                     _sharedState.update {
                         it.copy(
                             currentPosition = snap.position,
                             mockLocationState = snap.state,
-                            isWalkPaused = snap.walkPaused,
-                            mockMode = snap.mode,
+                            movement = snap.movement,
                             routeProgress = snap.routeProgress,
                         )
                     }
@@ -218,15 +217,6 @@ class MapController
                 locationRepository.isRoadRouteFetchInFlight.collect { inFlight ->
                     _sharedState.update { it.copy(isRoadRouteFetchInFlight = inFlight) }
                 }
-            }
-        }
-
-        private fun observeRoaming() {
-            appScope.launch {
-                combine(roamingRepository.isRoaming, roamingRepository.isRoamingPaused) { r, p -> r to p }
-                    .collect { (roaming, paused) ->
-                        _sharedState.update { it.copy(isRoaming = roaming, isRoamingPaused = paused) }
-                    }
             }
         }
 
@@ -438,7 +428,7 @@ class MapController
         fun walkTo(position: LatLng) {
             cancelAnyActiveMovement()
             val generation = walkCoordinator.currentGeneration()
-            if (roamingRepository.isRoaming.value) {
+            if (locationRepository.currentMovement().isActive(MockMode.ROAMING)) {
                 appScope.launch {
                     roamingRepository.stopRoaming()
                     startStraightWalk(position, generation)
@@ -487,7 +477,7 @@ class MapController
             val generation = walkCoordinator.currentGeneration()
             pendingRoadWalkJob =
                 appScope.launch {
-                    if (roamingRepository.isRoaming.value) roamingRepository.stopRoaming()
+                    if (locationRepository.currentMovement().isActive(MockMode.ROAMING)) roamingRepository.stopRoaming()
                     val current = locationRepository.currentPosition.value
                     if (current == null) {
                         Log.w(TAG, "walkViaRoads: no current position, straight walk")
@@ -536,13 +526,9 @@ class MapController
                 }
         }
 
-        fun pauseWalk() {
-            locationRepository.setWalkPaused(true)
-        }
+        fun pauseWalk() = walkCoordinator.pause()
 
-        fun resumeWalk() {
-            locationRepository.setWalkPaused(false)
-        }
+        fun resumeWalk() = walkCoordinator.resume()
 
         fun stopWalk() {
             pendingRoadWalkJob?.cancel()
@@ -552,7 +538,7 @@ class MapController
                 context.startService(MockLocationIntentBuilder.cancelRouteReplay(context))
             }
             ephemeralReplayController.clearPendingWaypoints()
-            _sharedState.update { it.copy(walkMode = WalkMode.Idle, isWalkPaused = false, routeTrace = null) }
+            _sharedState.update { it.copy(walkMode = WalkMode.Idle, routeTrace = null) }
         }
 
         /**
@@ -574,10 +560,10 @@ class MapController
                     }
                 }
                 mode == MockMode.WALK_TO || pendingRoadWalkJob?.isActive == true -> {
-                    if (!locationRepository.isWalkPaused.value) pauseWalk()
+                    if (!locationRepository.currentMovement().isPaused(MockMode.WALK_TO)) pauseWalk()
                 }
-                roamingRepository.isRoaming.value -> {
-                    if (!roamingRepository.isRoamingPaused.value) roamingRepository.pauseRoaming()
+                locationRepository.currentMovement().isActive(MockMode.ROAMING) -> {
+                    if (!locationRepository.currentMovement().isPaused(MockMode.ROAMING)) roamingRepository.pauseRoaming()
                 }
                 mode == MockMode.ROUTE_REPLAY || locationRepository.isRoadRouteFetchInFlight.value -> {
                     if (locationRepository.mockLocationState.value != MockLocationState.PAUSED) {

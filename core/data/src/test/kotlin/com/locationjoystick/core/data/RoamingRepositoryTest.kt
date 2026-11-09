@@ -4,7 +4,10 @@ import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.RoamingConfig
+import com.locationjoystick.core.model.isActive
+import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.core.routing.RoamingEngine
 import com.locationjoystick.core.routing.RouteReplayEngine
 import io.mockk.coEvery
@@ -37,33 +40,33 @@ class RoamingRepositoryTest {
         repository = RoamingRepository(fakeRoamingEngine, fakeLocationRepository, fakeRouteReplayEngine)
     }
 
-    // isRoaming
+    // movement
 
     @Test
-    fun `isRoaming emits false initially`() =
+    fun `roaming movement is inactive initially`() =
         runTest {
-            assertFalse(repository.isRoaming.first())
+            assertFalse(fakeLocationRepository.currentMovement().isActive(MockMode.ROAMING))
         }
 
     @Test
-    fun `isRoaming emits true after startRoaming`() =
+    fun `roaming movement is active after startRoaming`() =
         runTest {
             val config = createDefaultConfig()
             repository.startRoaming(config, speedMs = 1.4)
 
-            assertTrue(repository.isRoaming.first())
+            assertTrue(fakeLocationRepository.currentMovement().isActive(MockMode.ROAMING))
 
             repository.stopRoaming()
         }
 
     @Test
-    fun `isRoaming emits false after stopRoaming`() =
+    fun `stopRoaming returns movement to Manual TELEPORT`() =
         runTest {
             val config = createDefaultConfig()
             repository.startRoaming(config, speedMs = 1.4)
             repository.stopRoaming()
 
-            assertFalse(repository.isRoaming.first())
+            assertEquals(MovementState.Manual(MockMode.TELEPORT), fakeLocationRepository.currentMovement())
         }
 
     @Test
@@ -76,7 +79,7 @@ class RoamingRepositoryTest {
             val started = repository.startRoaming(config, speedMs = 1.4)
 
             assertFalse(started)
-            assertFalse(repository.isRoaming.first())
+            assertFalse(fakeLocationRepository.currentMovement().isActive(MockMode.ROAMING))
             assertEquals(MockMode.ROUTE_REPLAY, fakeLocationRepository.currentMode.first())
             verify(exactly = 0) { fakeRoamingEngine.startRoaming(any(), any(), any(), any(), any()) }
             coVerify(exactly = 0) { fakeRouteReplayEngine.stop() }
@@ -267,7 +270,7 @@ class RoamingRepositoryTest {
     // onComplete callback
 
     @Test
-    fun `roaming completion sets isRoaming to false and MockMode to TELEPORT`() =
+    fun `roaming completion leaves roaming and sets MockMode to TELEPORT`() =
         runTest {
             val config = createDefaultConfig()
 
@@ -281,12 +284,12 @@ class RoamingRepositoryTest {
 
             repository.startRoaming(config, speedMs = 1.4)
 
-            assertTrue(repository.isRoaming.first())
+            assertTrue(fakeLocationRepository.currentMovement().isActive(MockMode.ROAMING))
             assertEquals(MockMode.ROAMING, fakeLocationRepository.currentMode.first())
 
             capturedOnComplete?.invoke()
 
-            assertFalse(repository.isRoaming.first())
+            assertFalse(fakeLocationRepository.currentMovement().isActive(MockMode.ROAMING))
             assertEquals(MockMode.TELEPORT, fakeLocationRepository.currentMode.first())
         }
 
@@ -308,8 +311,8 @@ class RoamingRepositoryTest {
             // Simulate natural completion (remainingMeters <= 0 path)
             capturedOnComplete?.invoke()
 
-            assertFalse(repository.isRoaming.first())
-            assertFalse(repository.isRoamingPaused.first())
+            assertFalse(fakeLocationRepository.currentMovement().isActive(MockMode.ROAMING))
+            assertFalse(fakeLocationRepository.currentMovement().isPaused(MockMode.ROAMING))
             assertEquals(MockMode.TELEPORT, fakeLocationRepository.currentMode.first())
         }
 
@@ -339,28 +342,30 @@ class RoamingRepositoryTest {
         runTest {
             repository.startRoaming(createDefaultConfig(), speedMs = 1.4)
             repository.pauseRoaming()
-            assertTrue(repository.isRoamingPaused.value)
+            assertTrue(fakeLocationRepository.currentMovement().isPaused(MockMode.ROAMING))
 
             repository.startRoaming(createDefaultConfig(), speedMs = 1.4)
 
-            assertTrue(repository.isRoaming.value)
-            assertFalse(repository.isRoamingPaused.value)
+            assertTrue(fakeLocationRepository.currentMovement().isActive(MockMode.ROAMING))
+            assertFalse(fakeLocationRepository.currentMovement().isPaused(MockMode.ROAMING))
             assertEquals(MockMode.ROAMING, fakeLocationRepository.currentMode.value)
         }
 
     @Test
-    fun `pauseRoaming sets isRoamingPaused to true`() =
+    fun `pauseRoaming pauses the roaming movement state`() =
         runTest {
+            repository.startRoaming(createDefaultConfig(), speedMs = 1.4)
             repository.pauseRoaming()
-            assertTrue(repository.isRoamingPaused.first())
+            assertTrue(fakeLocationRepository.currentMovement().isPaused(MockMode.ROAMING))
         }
 
     @Test
-    fun `resumeRoaming sets isRoamingPaused to false after pause`() =
+    fun `resumeRoaming resumes the roaming movement state`() =
         runTest {
+            repository.startRoaming(createDefaultConfig(), speedMs = 1.4)
             repository.pauseRoaming()
             repository.resumeRoaming()
-            assertFalse(repository.isRoamingPaused.first())
+            assertFalse(fakeLocationRepository.currentMovement().isPaused(MockMode.ROAMING))
         }
 
     @Test
@@ -380,7 +385,7 @@ class RoamingRepositoryTest {
     // resetOnServiceDestroy
 
     @Test
-    fun `resetOnServiceDestroy resets isRoaming and isRoamingPaused`() =
+    fun `resetOnServiceDestroy clears roaming movement`() =
         runTest {
             val config = createDefaultConfig()
             repository.startRoaming(config, speedMs = 1.4)
@@ -388,8 +393,8 @@ class RoamingRepositoryTest {
 
             repository.resetOnServiceDestroy()
 
-            assertFalse(repository.isRoaming.first())
-            assertFalse(repository.isRoamingPaused.first())
+            assertFalse(fakeLocationRepository.currentMovement().isActive(MockMode.ROAMING))
+            assertFalse(fakeLocationRepository.currentMovement().isPaused(MockMode.ROAMING))
         }
 
     @Test

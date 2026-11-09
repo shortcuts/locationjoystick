@@ -57,8 +57,12 @@ import com.locationjoystick.core.designsystem.activityState
 import com.locationjoystick.core.designsystem.component.RouteProgressBadge
 import com.locationjoystick.core.designsystem.component.routeProgressStopContentDescription
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.ReconnectStatus
 import com.locationjoystick.core.model.RouteProgress
+import com.locationjoystick.core.model.isActive
+import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.feature.widget.impl.R
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -136,10 +140,7 @@ private fun WidgetIconButton(
 
 internal data class RouteControlsState(
     val expanded: Boolean,
-    val isActive: Boolean,
-    val isPaused: Boolean,
-    val isPausable: Boolean,
-    val isReplay: Boolean,
+    val movement: MovementState,
     val hideTeleportFeatures: Boolean,
     val showRouteJumpButtons: Boolean,
     val onIconClick: () -> Unit,
@@ -151,12 +152,16 @@ internal data class RouteControlsState(
 
 internal data class RoamingControlsState(
     val expanded: Boolean,
-    val isActive: Boolean,
-    val isPaused: Boolean,
+    val movement: MovementState,
     val onIconClick: () -> Unit,
     val onPauseResume: () -> Unit,
     val onStop: () -> Unit,
 )
+
+private val RouteControlsState.isActive: Boolean get() = routeControlsActive(movement.mode)
+private val RouteControlsState.isReplay: Boolean get() = movement.mode == MockMode.ROUTE_REPLAY
+private val RoamingControlsState.isActive: Boolean get() = movement.isActive(MockMode.ROAMING)
+private val RoamingControlsState.isPaused: Boolean get() = movement.isPaused
 
 internal data class MasterToggleState(
     val spoofingActive: Boolean,
@@ -332,7 +337,7 @@ internal fun WidgetPanel(
             val controlsEnabled = masterToggle.spoofingActive
             features.forEach { feature ->
                 if (feature == AppFeature.ROUTES) {
-                    val routeState = activityState(routeControls.isActive, routeControls.isPaused)
+                    val routeState = activityState(routeControls.isActive, routeControls.movement.isPaused)
                     val routeIconTint = activityTint(routeState)
                     Box {
                         WidgetIconButton(
@@ -345,14 +350,14 @@ internal fun WidgetPanel(
                         )
                         WidgetSidePopup(visible = routeControls.isActive && routeControls.expanded) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (routeControls.isPausable) {
-                                    val pauseResumeIcon = if (routeControls.isPaused) LjIcons.PlayArrow else LjIcons.Pause
-                                    val pauseResumeTint = if (routeControls.isPaused) LjSuccess else WidgetInactiveTint
+                                if (routeControls.isActive) {
+                                    val pauseResumeIcon = if (routeControls.movement.isPaused) LjIcons.PlayArrow else LjIcons.Pause
+                                    val pauseResumeTint = if (routeControls.movement.isPaused) LjSuccess else WidgetInactiveTint
                                     WidgetIconButton(
                                         icon = pauseResumeIcon,
                                         contentDescription =
                                             stringResource(
-                                                if (routeControls.isPaused) {
+                                                if (routeControls.movement.isPaused) {
                                                     R.string.widget_panel_resume_cd
                                                 } else {
                                                     R.string.widget_panel_pause_cd

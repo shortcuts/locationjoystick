@@ -3,6 +3,7 @@ package com.locationjoystick.core.location
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 
 /** Decision for the IDLE/ERROR branch of [MockLocationService.observeLocationState]. */
 internal enum class IdleOrErrorLoopAction {
@@ -95,16 +96,10 @@ internal fun computeRunningLoopAction(
  * running roam owns the tick instead. A paused route or paused roam yields so the
  * joystick can steer without stealing [MockMode].
  */
-internal fun shouldApplyUpdatePositionWithVector(
-    mode: MockMode,
-    mockLocationState: MockLocationState,
-    isRoamingPaused: Boolean = false,
-): Boolean =
-    when (mode) {
-        MockMode.JOYSTICK, MockMode.WALK_TO -> true
-        MockMode.ROUTE_REPLAY -> mockLocationState == MockLocationState.PAUSED
-        MockMode.ROAMING -> isRoamingPaused
-        else -> false
+internal fun shouldApplyUpdatePositionWithVector(movement: MovementState): Boolean =
+    when (movement) {
+        is MovementState.Manual -> movement.mode == MockMode.JOYSTICK
+        is MovementState.Active -> movement.mode == MockMode.WALK_TO || movement.paused
     }
 
 /**

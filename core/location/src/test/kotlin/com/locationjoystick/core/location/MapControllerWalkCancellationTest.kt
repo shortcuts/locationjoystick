@@ -20,6 +20,7 @@ import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.RoutingErrorReporter
 import io.mockk.coEvery
@@ -32,7 +33,6 @@ import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -333,7 +333,7 @@ class MapControllerWalkCancellationTest {
 
             assertEquals(LatLng(48.9000, 2.3522), harness.locationRepository.walkTarget.value)
             assertEquals(MockMode.WALK_TO, harness.locationRepository.currentMode.value)
-            assertTrue(harness.locationRepository.isWalkPaused.value)
+            assertTrue(harness.locationRepository.currentMovement().isPaused(MockMode.WALK_TO))
             advanceTimeBy(2_000)
             runCurrent()
             assertEquals(manualPosition, harness.locationRepository.currentPosition.value)
@@ -359,7 +359,7 @@ class MapControllerWalkCancellationTest {
                 harness.mapController.pauseAutomatedMovement()
                 assertEquals(generation, harness.walkCoordinator.currentGeneration())
                 assertEquals(target, repo.walkTarget.value)
-                assertTrue(repo.isWalkPaused.value)
+                assertTrue(repo.currentMovement().isPaused(MockMode.WALK_TO))
                 assertEquals(MockMode.WALK_TO, repo.currentMode.value)
 
                 val manualPosition = LatLng(48.8600 + index * 0.001, 2.3500)
@@ -372,7 +372,7 @@ class MapControllerWalkCancellationTest {
                 runCurrent()
                 assertNotEquals(manualPosition, repo.currentPosition.value)
                 assertEquals(target, repo.walkTarget.value)
-                assertFalse(repo.isWalkPaused.value)
+                assertFalse(repo.currentMovement().isPaused(MockMode.WALK_TO))
             }
             coVerify(exactly = 0) { harness.teleportUseCase.stopAutomatedMovement() }
         }
@@ -392,13 +392,13 @@ class MapControllerWalkCancellationTest {
                 repo.setPositionInternal(manualPosition)
                 advanceTimeBy(1_000)
                 runCurrent()
-                assertTrue(repo.isWalkPaused.value)
+                assertTrue(repo.currentMovement().isPaused(MockMode.WALK_TO))
                 assertEquals(manualPosition, repo.currentPosition.value)
 
                 val target = targets[(index / 2) % targets.size]
                 harness.mapController.walkTo(target)
                 runCurrent()
-                assertFalse(repo.isWalkPaused.value)
+                assertFalse(repo.currentMovement().isPaused(MockMode.WALK_TO))
                 assertEquals(target, repo.walkTarget.value)
                 assertEquals(MockMode.WALK_TO, repo.currentMode.value)
                 advanceTimeBy(1_000)
@@ -485,13 +485,10 @@ class MapControllerWalkCancellationTest {
         val groupRepository: GroupRepository,
         val context: Context,
         val roamingRepository: RoamingRepository,
-        val isRoaming: MutableStateFlow<Boolean>,
     ) {
         fun setRoamingActive() {
             locationRepository.setMockMode(MockMode.ROAMING)
-            isRoaming.value = true
             coEvery { roamingRepository.stopRoaming() } answers {
-                isRoaming.value = false
                 locationRepository.setMockMode(MockMode.TELEPORT)
             }
         }
@@ -527,13 +524,8 @@ class MapControllerWalkCancellationTest {
             )
 
         val context = mockk<Context>(relaxed = true)
-        val isRoaming = MutableStateFlow(false)
-        val isRoamingPaused = MutableStateFlow(false)
         val roamingRepository =
-            mockk<RoamingRepository>(relaxed = true) {
-                every { this@mockk.isRoaming } returns isRoaming
-                every { this@mockk.isRoamingPaused } returns isRoamingPaused
-            }
+            mockk<RoamingRepository>(relaxed = true)
         val routeRepository = mockk<RouteRepository>(relaxed = true) { every { getRoutes() } returns emptyFlow() }
         val favoriteRepository =
             mockk<FavoriteRepository>(relaxed = true) { every { getFavorites() } returns flowOf(emptyList()) }
@@ -574,7 +566,6 @@ class MapControllerWalkCancellationTest {
             groupRepository,
             context,
             roamingRepository,
-            isRoaming,
         )
     }
 }

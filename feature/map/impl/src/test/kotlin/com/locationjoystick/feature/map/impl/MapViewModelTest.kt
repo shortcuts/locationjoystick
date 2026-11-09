@@ -21,6 +21,7 @@ import com.locationjoystick.core.model.FavoriteLocation
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.RouteStartConfig
@@ -77,7 +78,7 @@ class MapViewModelTest {
     private lateinit var viewModel: MapViewModel
 
     private val walkTargetFlow = MutableStateFlow<LatLng?>(null)
-    private val isWalkPausedFlow = MutableStateFlow(false)
+    private val movementFlow = MutableStateFlow<MovementState>(MovementState.Manual(MockMode.JOYSTICK))
     private val reportedSpeedMpsFlow = MutableStateFlow<Float?>(null)
     private val pendingWaypointsFlow = MutableStateFlow<List<LatLng>>(emptyList())
 
@@ -108,7 +109,8 @@ class MapViewModelTest {
 
         every { locationRepository.currentPosition } returns MutableStateFlow(null)
         every { locationRepository.mockLocationState } returns MutableStateFlow(MockLocationState.IDLE)
-        every { locationRepository.isWalkPaused } returns isWalkPausedFlow
+        every { locationRepository.movement } returns movementFlow
+        every { locationRepository.currentMovement() } answers { movementFlow.value }
         every { locationRepository.reportedSpeedMps } returns reportedSpeedMpsFlow
         every { locationRepository.walkTarget } returns walkTargetFlow
         every { locationRepository.currentMode } returns MutableStateFlow(MockMode.JOYSTICK)
@@ -118,8 +120,6 @@ class MapViewModelTest {
         every { ephemeralReplayController.pendingWaypoints } returns pendingWaypointsFlow
         every { routeRepository.getRoutes() } returns flowOf(emptyList<Route>())
         every { favoriteRepository.getFavorites() } returns flowOf(emptyList<FavoriteLocation>())
-        every { roamingRepository.isRoaming } returns MutableStateFlow(false)
-        every { roamingRepository.isRoamingPaused } returns MutableStateFlow(false)
         every { settingsRepository.getActiveSpeedProfile() } returns
             flowOf(SpeedProfile(id = "walk", name = "Walk", speedMetersPerSecond = 1.39))
         every { settingsRepository.getRememberLastLocation() } returns flowOf(false)
@@ -366,17 +366,17 @@ class MapViewModelTest {
     // Walk lifecycle tests
 
     @Test
-    fun `pauseWalk_setsWalkPausedTrue`() =
+    fun `pauseWalk_pausesWalkCoordinator`() =
         runTest {
             viewModel.onAction(MapAction.PauseWalk)
-            verify { locationRepository.setWalkPaused(true) }
+            verify { walkCoordinator.pause() }
         }
 
     @Test
-    fun `resumeWalk_setsWalkPausedFalse`() =
+    fun `resumeWalk_resumesWalkCoordinator`() =
         runTest {
             viewModel.onAction(MapAction.ResumeWalk)
-            verify { locationRepository.setWalkPaused(false) }
+            verify { walkCoordinator.resume() }
         }
 
     @Test
@@ -422,7 +422,7 @@ class MapViewModelTest {
             assertEquals(target, viewModel.uiState.value.walkTarget)
 
             // Pause externally (widget)
-            isWalkPausedFlow.value = true
+            movementFlow.value = MovementState.Active(MockMode.WALK_TO, paused = true)
             testDispatcher.scheduler.advanceTimeBy(100)
 
             // Walk must still be active — not terminated

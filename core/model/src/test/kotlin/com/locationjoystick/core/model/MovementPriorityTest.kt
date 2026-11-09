@@ -18,49 +18,27 @@ class MovementPriorityTest {
     }
 
     @Test
-    fun `joystick is ignored while a route is playing`() {
-        assertTrue(shouldIgnoreJoystickInput(MockMode.ROUTE_REPLAY, MockLocationState.RUNNING))
+    fun `joystick is ignored while an active mode runs`() {
+        listOf(MockMode.ROUTE_REPLAY, MockMode.ROAMING, MockMode.WALK_TO).forEach {
+            assertTrue(shouldIgnoreJoystickInput(MovementState.Active(it, paused = false)))
+        }
     }
 
     @Test
-    fun `joystick works while a route is paused`() {
-        assertFalse(shouldIgnoreJoystickInput(MockMode.ROUTE_REPLAY, MockLocationState.PAUSED))
-    }
-
-    @Test
-    fun `joystick is ignored while roaming is running`() {
-        assertTrue(shouldIgnoreJoystickInput(MockMode.ROAMING, MockLocationState.RUNNING))
-        assertTrue(shouldIgnoreJoystickInput(MockMode.ROAMING, MockLocationState.PAUSED))
-    }
-
-    @Test
-    fun `joystick works while roaming is paused`() {
-        assertFalse(
-            shouldIgnoreJoystickInput(
-                MockMode.ROAMING,
-                MockLocationState.RUNNING,
-                isRoamingPaused = true,
-            ),
-        )
+    fun `joystick works while an active mode is paused`() {
+        listOf(MockMode.ROUTE_REPLAY, MockMode.ROAMING, MockMode.WALK_TO).forEach {
+            assertFalse(shouldIgnoreJoystickInput(MovementState.Active(it, paused = true)))
+        }
     }
 
     @Test
     fun `joystick works when neither route nor roam owns the session`() {
-        assertFalse(shouldIgnoreJoystickInput(MockMode.TELEPORT, MockLocationState.RUNNING))
-        assertFalse(shouldIgnoreJoystickInput(MockMode.JOYSTICK, MockLocationState.RUNNING))
+        assertFalse(shouldIgnoreJoystickInput(MovementState.Manual(MockMode.TELEPORT)))
+        assertFalse(shouldIgnoreJoystickInput(MovementState.Manual(MockMode.JOYSTICK)))
     }
 
     @Test
-    fun `walk-to and follower still own the tick over joystick`() {
-        assertTrue(shouldIgnoreJoystickInput(MockMode.WALK_TO, MockLocationState.RUNNING))
-        assertTrue(shouldIgnoreJoystickInput(MockMode.FOLLOWER, MockLocationState.RUNNING))
-        assertTrue(shouldIgnoreJoystickInput(MockMode.WALK_TO, MockLocationState.PAUSED))
-    }
-
-    @Test
-    fun `paused walk yields to joystick without changing its mode`() {
-        assertFalse(shouldIgnoreJoystickInput(MockMode.WALK_TO, MockLocationState.RUNNING, isWalkPaused = true))
-        assertTrue(shouldIgnoreJoystickInput(MockMode.WALK_TO, MockLocationState.RUNNING, isWalkPaused = false))
-        assertTrue(shouldIgnoreJoystickInput(MockMode.FOLLOWER, MockLocationState.RUNNING, isWalkPaused = true))
+    fun `follower owns the tick over joystick`() {
+        assertTrue(shouldIgnoreJoystickInput(MovementState.Manual(MockMode.FOLLOWER)))
     }
 }

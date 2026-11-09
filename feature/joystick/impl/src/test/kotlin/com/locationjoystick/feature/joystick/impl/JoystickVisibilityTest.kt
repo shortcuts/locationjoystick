@@ -4,12 +4,10 @@ import android.app.Activity
 import android.view.WindowManager
 import android.widget.FrameLayout
 import com.locationjoystick.core.data.LocationRepository
-import com.locationjoystick.core.data.RoamingRepository
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -38,10 +36,6 @@ class JoystickVisibilityTest {
         // Attach a context without running Hilt or starting the GPS service.
         service = Robolectric.buildService(JoystickOverlayService::class.java).get()
         service.locationRepository = LocationRepository()
-        service.roamingRepository =
-            mockk<RoamingRepository> {
-                every { isRoamingPaused } returns MutableStateFlow(false)
-            }
         view = service.createOverlayView() as JoystickView
         val windowManager =
             mockk<WindowManager> {

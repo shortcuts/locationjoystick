@@ -10,9 +10,6 @@ import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.model.canStartRoaming
 import com.locationjoystick.core.routing.RoamingEngine
 import com.locationjoystick.core.routing.RouteReplayEngine
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,22 +23,16 @@ class RoamingRepository
         private val locationRepository: LocationRepository,
         private val routeReplayEngine: RouteReplayEngine,
     ) {
-        private val _isRoaming = MutableStateFlow(false)
-        val isRoaming: StateFlow<Boolean> = _isRoaming.asStateFlow()
-
-        private val _isRoamingPaused = MutableStateFlow(false)
-        val isRoamingPaused: StateFlow<Boolean> = _isRoamingPaused.asStateFlow()
-
         private val bearingTracker = BearingTracker()
 
         fun pauseRoaming() {
             roamingEngine.pauseRoaming()
-            _isRoamingPaused.value = true
+            locationRepository.pauseMovement()
         }
 
         fun resumeRoaming() {
             roamingEngine.resumeRoaming(locationRepository.currentPosition.value)
-            _isRoamingPaused.value = false
+            locationRepository.resumeMovement()
         }
 
         /** Propagates a live speed-profile change into the active roaming walk. */
@@ -51,8 +42,6 @@ class RoamingRepository
         }
 
         private fun resetRoamingState() {
-            _isRoaming.value = false
-            _isRoamingPaused.value = false
             locationRepository.setMockMode(MockMode.TELEPORT)
             locationRepository.setRouteWaypoints(null)
             locationRepository.setSpeedInternal(0f)
@@ -87,8 +76,6 @@ class RoamingRepository
                 TAG,
                 "Starting roaming: radius=${config.radiusMeters}m, distance=${config.distanceMeters}m, profile=${config.speedProfileId}",
             )
-            _isRoamingPaused.value = false
-            _isRoaming.value = true
             locationRepository.setMockMode(MockMode.ROAMING)
             locationRepository.setSpeedInternal(speedMs.toFloat())
             roamingEngine.startRoaming(

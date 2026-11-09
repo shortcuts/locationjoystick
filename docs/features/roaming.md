@@ -53,7 +53,7 @@ Roaming legs are short enough that they never need the split. They use their own
 
 ## State
 
-- The roaming repository holds the running and paused state.
+- `LocationRepository.movement` holds the running and paused state. The roaming repository only starts, pauses and stops the engine.
 - The roaming engine owns the session. Starting a new session waits for the old one to stop, so two sessions never move the position at once.
 - A natural finish resets the mode and clears the route. A stop by the user does not show a completion badge ([widget.md](widget.md)).
 - The travel direction is reported as the bearing between consecutive ticks, the same as route replay. Speed is reported too, so mock fixes carry real motion.

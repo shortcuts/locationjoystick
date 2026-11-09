@@ -1,11 +1,7 @@
 package com.locationjoystick.core.location
 
 import com.locationjoystick.core.data.LocationRepository
-import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.model.MockMode
-import io.mockk.every
-import io.mockk.mockk
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -17,13 +13,9 @@ import org.junit.Test
  * and must apply while a route or roam session is paused so the joystick can steer.
  */
 class UpdatePositionWithVectorGuardTest {
-    private fun newService(isRoamingPaused: Boolean = false): MockLocationService =
+    private fun newService(): MockLocationService =
         MockLocationService().apply {
             locationRepository = LocationRepository()
-            roamingRepository =
-                mockk<RoamingRepository> {
-                    every { this@mockk.isRoamingPaused } returns MutableStateFlow(isRoamingPaused)
-                }
         }
 
     @Test
@@ -87,8 +79,9 @@ class UpdatePositionWithVectorGuardTest {
 
     @Test
     fun `updatePositionWithVector applies during paused ROAMING`() {
-        val service = newService(isRoamingPaused = true)
+        val service = newService()
         service.locationRepository.setMockMode(MockMode.ROAMING)
+        service.locationRepository.pauseMovement()
 
         service.updatePositionWithVector(1.0, 2.0, speedMs = 3.5f, bearing = 90f)
 

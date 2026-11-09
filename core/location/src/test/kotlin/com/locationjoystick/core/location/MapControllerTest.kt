@@ -103,13 +103,8 @@ class MapControllerTest {
                 )
 
             val context = mockk<Context>(relaxed = true)
-            val isRoaming = MutableStateFlow(false)
-            val isRoamingPaused = MutableStateFlow(false)
             val roamingRepository =
-                mockk<RoamingRepository>(relaxed = true) {
-                    every { this@mockk.isRoaming } returns isRoaming
-                    every { this@mockk.isRoamingPaused } returns isRoamingPaused
-                }
+                mockk<RoamingRepository>(relaxed = true)
             val routeRepository = mockk<RouteRepository>(relaxed = true) { every { getRoutes() } returns emptyFlow() }
             val favoriteRepository =
                 mockk<FavoriteRepository>(relaxed = true) { every { getFavorites() } returns flowOf(emptyList()) }
@@ -212,13 +207,8 @@ class MapControllerTest {
                 )
 
             val context = mockk<Context>(relaxed = true)
-            val isRoaming = MutableStateFlow(false)
-            val isRoamingPaused = MutableStateFlow(false)
             val roamingRepository =
-                mockk<RoamingRepository>(relaxed = true) {
-                    every { this@mockk.isRoaming } returns isRoaming
-                    every { this@mockk.isRoamingPaused } returns isRoamingPaused
-                }
+                mockk<RoamingRepository>(relaxed = true)
             val routeRepository = mockk<RouteRepository>(relaxed = true) { every { getRoutes() } returns emptyFlow() }
             val favoriteRepository =
                 mockk<FavoriteRepository>(relaxed = true) { every { getFavorites() } returns flowOf(emptyList()) }
@@ -315,13 +305,8 @@ class MapControllerTest {
                 )
 
             val context = mockk<Context>(relaxed = true)
-            val isRoaming = MutableStateFlow(false)
-            val isRoamingPaused = MutableStateFlow(false)
             val roamingRepository =
-                mockk<RoamingRepository>(relaxed = true) {
-                    every { this@mockk.isRoaming } returns isRoaming
-                    every { this@mockk.isRoamingPaused } returns isRoamingPaused
-                }
+                mockk<RoamingRepository>(relaxed = true)
             val routeRepository = mockk<RouteRepository>(relaxed = true) { every { getRoutes() } returns emptyFlow() }
             val favoriteRepository =
                 mockk<FavoriteRepository>(relaxed = true) { every { getFavorites() } returns flowOf(emptyList()) }
@@ -414,13 +399,8 @@ class MapControllerTest {
                 )
 
             val context = mockk<Context>(relaxed = true)
-            val isRoaming = MutableStateFlow(false)
-            val isRoamingPaused = MutableStateFlow(false)
             val roamingRepository =
-                mockk<RoamingRepository>(relaxed = true) {
-                    every { this@mockk.isRoaming } returns isRoaming
-                    every { this@mockk.isRoamingPaused } returns isRoamingPaused
-                }
+                mockk<RoamingRepository>(relaxed = true)
             val routeRepository = mockk<RouteRepository>(relaxed = true) { every { getRoutes() } returns emptyFlow() }
             val favoriteRepository =
                 mockk<FavoriteRepository>(relaxed = true) { every { getFavorites() } returns flowOf(emptyList()) }
@@ -672,10 +652,7 @@ class MapControllerTest {
         val routingErrorReporter = RoutingErrorReporter(mockk<Context>(relaxed = true))
         val context = mockk<Context>(relaxed = true)
         val roamingRepository =
-            mockk<RoamingRepository>(relaxed = true) {
-                every { isRoaming } returns MutableStateFlow(false)
-                every { isRoamingPaused } returns MutableStateFlow(false)
-            }
+            mockk<RoamingRepository>(relaxed = true)
         return MapController(
             context = context,
             locationRepository = locationRepository,

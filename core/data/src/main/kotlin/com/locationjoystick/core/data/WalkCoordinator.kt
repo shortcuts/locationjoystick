@@ -4,6 +4,8 @@ import android.util.Log
 import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.isActive
+import com.locationjoystick.core.model.isPaused
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import javax.inject.Inject
@@ -49,6 +51,27 @@ class WalkCoordinator
         private var generation = 0L
 
         @Volatile private var waypointIndex = 0
+
+        // A pause can arrive while a road route is still being fetched, before any walk exists.
+        private var pauseOnStart = false
+
+        /** Pauses the walk, or holds the next walk paused when none has started yet. */
+        fun pause() {
+            synchronized(lock) {
+                if (locationRepository.currentMovement().isActive(MockMode.WALK_TO)) {
+                    locationRepository.pauseMovement()
+                } else {
+                    pauseOnStart = true
+                }
+            }
+        }
+
+        fun resume() {
+            synchronized(lock) {
+                if (locationRepository.currentMovement().isPaused(MockMode.WALK_TO)) locationRepository.resumeMovement()
+                pauseOnStart = false
+            }
+        }
 
         /** Index, in the list given to [startWalkAlongRoute], of the waypoint the walk is heading to. */
         fun walkWaypointIndex(): Int = waypointIndex
@@ -99,6 +122,8 @@ class WalkCoordinator
                 val finalTarget = waypoints.last()
                 locationRepository.setWalkTarget(finalTarget)
                 locationRepository.setMockMode(MockMode.WALK_TO)
+                if (pauseOnStart) locationRepository.pauseMovement()
+                pauseOnStart = false
 
                 var lastBearing = 0f
                 with(walkToEngine) {
@@ -143,6 +168,7 @@ class WalkCoordinator
         fun cancel() {
             synchronized(lock) {
                 generation++
+                pauseOnStart = false
                 activeWalkJob?.cancel()
                 activeWalkJob = null
                 locationRepository.setWalkTarget(null)

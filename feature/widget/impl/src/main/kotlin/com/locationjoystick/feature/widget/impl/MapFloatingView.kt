@@ -76,6 +76,7 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingConfig
 import com.locationjoystick.core.model.RoamingDefaults
@@ -83,6 +84,7 @@ import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.core.model.isRoutePlaying
 import com.locationjoystick.feature.widget.impl.R
 import kotlinx.coroutines.flow.Flow
@@ -105,9 +107,8 @@ internal fun MapFloatingView(
     walkTarget: LatLng?,
     walkStart: LatLng?,
     routeWaypoints: List<LatLng>?,
-    mockMode: MockMode,
+    movement: MovementState,
     mockLocationState: MockLocationState,
-    isRoamingPaused: Boolean,
     favorites: List<FavoriteLocation>,
     roamingDefaults: RoamingDefaults,
     speedUnit: SpeedUnit,
@@ -167,6 +168,8 @@ internal fun MapFloatingView(
     val saveFavoriteAt = onSaveFavorite
     val savePastedRoute = onSavePastedRoute
     val startPastedRoute = onStartPastedRoute
+    val mockMode = movement.mode
+    val isRoamingPaused = movement.isPaused(MockMode.ROAMING)
     val isRoaming = mockMode == MockMode.ROAMING
     val isRouteReplay = mockMode == MockMode.ROUTE_REPLAY
     val routePlaying = isRoutePlaying(mockMode, mockLocationState)

@@ -171,7 +171,6 @@ Any UI or UX change must respect docs/design-system.md. Run /maintain-design to 
 | `EphemeralReplayController` | `:core:location` | Class (`@Singleton`) | Owns the walk-to-ephemeral-replay transition. Shared by the map and the widget so the state machine lives once. |
 | `BackupRepository` | `:core:data` | Repository (`@Singleton`) | Applies an import in one transaction. Throws so the caller can report failure. |
 | `WalkCoordinator` | `:core:data` | Class (`@Singleton`) | Facade over the walk engine. Cancels an in-flight walk before a new one starts. |
-| `ActivityStateRepository` | `:core:data` | Repository (`@Singleton`) | Single source of truth for pause state across movement modes. Prefer it over combining the individual flows. |
 | `TeleportUseCase` | `:core:data` | Class (`@Singleton`) | Single entry point for teleports, so every path shares persistence and cooldown. |
 | `CaptureCoordinatesRepository` | `:core:data` | Repository (`@Singleton`) | Owns Capture mode state. Jumps go through `TeleportUseCase`. |
 | `RealLocationRepository` | `:core:data` | Repository (`@Singleton`) | Reads a real GPS fix without touching the mock-position cache or cooldown. |

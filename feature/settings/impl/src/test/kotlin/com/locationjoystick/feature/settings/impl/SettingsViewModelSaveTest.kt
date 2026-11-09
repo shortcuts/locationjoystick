@@ -28,8 +28,10 @@ import com.locationjoystick.core.model.RealPositionSnapshot
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.Route
+import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.SpoofHistoryEntry
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import com.locationjoystick.core.testing.FakePreferencesDataStore
 import com.locationjoystick.core.testing.FakeRouteDao
@@ -758,6 +760,20 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override suspend fun setRememberLastLocation(enabled: Boolean) = edit { copy(rememberLastLocation = enabled) }
 
     override fun getLastLocation(): Flow<LatLng?> = flowOf(null)
+
+    override fun getRouteStartConfig(): Flow<RouteStartConfig?> = flowOf(null)
+
+    override suspend fun setRouteStartConfig(config: RouteStartConfig) = Unit
+
+    override fun getSpoofHistory(): Flow<List<SpoofHistoryEntry>> = flowOf(emptyList())
+
+    override suspend fun addSpoofHistory(
+        lat: Double,
+        lon: Double,
+        atMs: Long,
+    ) = Unit
+
+    override suspend fun clearSpoofHistory() = Unit
 
     override suspend fun setLastLocation(location: LatLng) = Unit
 

@@ -3,19 +3,18 @@ package com.locationjoystick.feature.joystick.impl
 import android.os.SystemClock
 import android.view.MotionEvent
 import com.locationjoystick.core.data.LocationRepository
-import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.isPaused
 import io.mockk.clearMocks
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -37,7 +36,6 @@ class JoystickLockBehaviorTest {
     private lateinit var locationRepository: LocationRepository
     private lateinit var mapController: MapController
     private lateinit var mockLocationService: MockLocationService
-    private val roamingPaused = MutableStateFlow(false)
 
     @Before
     fun setUp() {
@@ -49,11 +47,6 @@ class JoystickLockBehaviorTest {
         service = Robolectric.buildService(JoystickOverlayService::class.java).get()
         service.locationRepository = locationRepository
         service.mapController = mapController
-        service.roamingRepository =
-            mockk<RoamingRepository> {
-                every { isRoaming } returns MutableStateFlow(false)
-                every { isRoamingPaused } returns roamingPaused
-            }
         ReflectionHelpers.setField(service, "mockLocationService", mockLocationService)
         view = service.createOverlayView() as JoystickView
         ReflectionHelpers.setField(service, "overlayView", view)
@@ -172,14 +165,14 @@ class JoystickLockBehaviorTest {
     fun `new stick input requests walk pause and release keeps the target paused`() {
         val target = LatLng(1.0, 2.0)
         locationRepository.setWalkTarget(target)
-        every { mapController.pauseAutomatedMovement() } answers { locationRepository.setWalkPaused(true) }
+        every { mapController.pauseAutomatedMovement() } answers { locationRepository.pauseMovement() }
 
         touch(MotionEvent.ACTION_DOWN, 270f, 150f)
         touch(MotionEvent.ACTION_UP, 270f, 150f)
 
         assertEquals(target, locationRepository.walkTarget.value)
         assertEquals(MockMode.WALK_TO, locationRepository.currentMode.value)
-        assertTrue(locationRepository.isWalkPaused.value)
+        assertTrue(locationRepository.currentMovement().isPaused(MockMode.WALK_TO))
         verify(exactly = 1) { mapController.pauseAutomatedMovement() }
         confirmVerified(mapController)
         verify(exactly = 1) { mockLocationService.clearMotionVector() }
@@ -209,13 +202,13 @@ class JoystickLockBehaviorTest {
     @Test
     fun `new stick input requests roam pause and release keeps it paused`() {
         locationRepository.setMockMode(MockMode.ROAMING)
-        every { mapController.pauseAutomatedMovement() } answers { roamingPaused.value = true }
+        every { mapController.pauseAutomatedMovement() } answers { locationRepository.pauseMovement() }
 
         touch(MotionEvent.ACTION_DOWN, 270f, 150f)
         touch(MotionEvent.ACTION_UP, 270f, 150f)
 
         assertEquals(MockMode.ROAMING, locationRepository.currentMode.value)
-        assertTrue(roamingPaused.value)
+        assertTrue(locationRepository.currentMovement().isPaused(MockMode.ROAMING))
         verify(exactly = 1) { mapController.pauseAutomatedMovement() }
         confirmVerified(mapController)
         verify(exactly = 1) { mockLocationService.clearMotionVector() }

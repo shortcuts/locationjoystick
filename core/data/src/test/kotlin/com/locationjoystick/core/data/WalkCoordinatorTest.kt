@@ -4,6 +4,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.SpeedProfile
 import io.mockk.every
 import io.mockk.mockk
@@ -391,5 +392,53 @@ class WalkCoordinatorTest {
 
             assertEquals(ticksBeforeCancel, ticks)
             assertEquals(teleport, locationRepository.currentPosition.value)
+        }
+
+    @Test
+    fun `pause before start holds the walk paused after start`() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+
+            walkCoordinator.pause()
+            walkCoordinator.startWalk(LatLng(48.9000, 2.3522), backgroundScope)
+
+            assertEquals(MovementState.Active(MockMode.WALK_TO, true), locationRepository.currentMovement())
+        }
+
+    @Test
+    fun `cancel clears pause-on-start`() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+
+            walkCoordinator.pause()
+            walkCoordinator.cancel()
+            walkCoordinator.startWalk(LatLng(48.9000, 2.3522), backgroundScope)
+
+            assertEquals(MovementState.Active(MockMode.WALK_TO, false), locationRepository.currentMovement())
+        }
+
+    @Test
+    fun `resume clears pause-on-start`() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+
+            walkCoordinator.pause()
+            walkCoordinator.resume()
+            walkCoordinator.startWalk(LatLng(48.9000, 2.3522), backgroundScope)
+
+            assertEquals(MovementState.Active(MockMode.WALK_TO, false), locationRepository.currentMovement())
+        }
+
+    @Test
+    fun `pause and resume toggle a running walk`() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(48.8566, 2.3522))
+            walkCoordinator.startWalk(LatLng(48.9000, 2.3522), backgroundScope)
+
+            walkCoordinator.pause()
+            assertEquals(MovementState.Active(MockMode.WALK_TO, true), locationRepository.currentMovement())
+
+            walkCoordinator.resume()
+            assertEquals(MovementState.Active(MockMode.WALK_TO, false), locationRepository.currentMovement())
         }
 }

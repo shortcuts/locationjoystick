@@ -17,6 +17,7 @@ import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RouteProgress
+import com.locationjoystick.core.model.enterMode
 import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.RoutingErrorReporter
 import io.mockk.every
@@ -25,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -55,7 +57,8 @@ class WidgetPanelPresenterTest {
             mockk<LocationRepository>(relaxed = true) {
                 every { currentPosition } returns MutableStateFlow(null)
                 every { mockLocationState } returns MutableStateFlow(MockLocationState.IDLE)
-                every { isWalkPaused } returns MutableStateFlow(false)
+                every { movement } returns currentModeFlow.map { enterMode(it) }
+                every { currentMovement() } answers { enterMode(currentModeFlow.value) }
                 every { currentMode } returns currentModeFlow
                 every { routeWaypoints } returns MutableStateFlow(null)
                 every { isRoadRouteFetchInFlight } returns MutableStateFlow(false)
@@ -78,11 +81,7 @@ class WidgetPanelPresenterTest {
                 every { getLastLocation() } returns flowOf(null)
                 every { getLastTeleportTime() } returns flowOf(0L)
             }
-        val roamingRepository =
-            mockk<RoamingRepository>(relaxed = true) {
-                every { isRoaming } returns MutableStateFlow(false)
-                every { isRoamingPaused } returns MutableStateFlow(false)
-            }
+        val roamingRepository = mockk<RoamingRepository>(relaxed = true)
         val ephemeralReplayController =
             mockk<EphemeralReplayController>(relaxed = true) {
                 every { pendingWaypoints } returns MutableStateFlow(emptyList())

@@ -12,7 +12,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -44,10 +43,6 @@ class TeleportUseCaseTest {
             walkCoordinator,
             serviceStarter,
         )
-
-    init {
-        every { roamingRepository.isRoaming } returns MutableStateFlow(false)
-    }
 
     @Test
     fun `cooldownFor emits Ready when no teleport has occurred`() =
@@ -143,7 +138,6 @@ class TeleportUseCaseTest {
     @Test
     fun `execute stops a route session before jumping`() =
         runTest {
-            every { roamingRepository.isRoaming } returns MutableStateFlow(false)
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
             locationRepository.setActiveRouteId("route-1")
             val target = LatLng(10.0, 20.0)
@@ -162,7 +156,6 @@ class TeleportUseCaseTest {
     @Test
     fun `execute stops roaming before jumping`() =
         runTest {
-            every { roamingRepository.isRoaming } returns MutableStateFlow(true)
             locationRepository.setMockMode(MockMode.ROAMING)
             val target = LatLng(10.0, 20.0)
 
@@ -177,7 +170,6 @@ class TeleportUseCaseTest {
     @Test
     fun `execute skip movement reset when resetMovement is false`() =
         runTest {
-            every { roamingRepository.isRoaming } returns MutableStateFlow(true)
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
             locationRepository.setActiveRouteId("route-1")
 
@@ -220,7 +212,6 @@ class TeleportUseCaseTest {
     @Test
     fun `execute aborts in-flight replay even when mode is not ROUTE_REPLAY`() =
         runTest {
-            every { roamingRepository.isRoaming } returns MutableStateFlow(false)
             locationRepository.setMockMode(MockMode.TELEPORT)
             startedIntents.clear()
 
@@ -234,7 +225,6 @@ class TeleportUseCaseTest {
     @Test
     fun `execute skip movement reset does not send STOP`() =
         runTest {
-            every { roamingRepository.isRoaming } returns MutableStateFlow(false)
             locationRepository.setMockMode(MockMode.TELEPORT)
             startedIntents.clear()
 

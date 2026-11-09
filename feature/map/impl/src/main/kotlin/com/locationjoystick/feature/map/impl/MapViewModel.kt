@@ -168,7 +168,7 @@ class MapViewModel
                         _uiState.update { current ->
                             current.copy(
                                 mockLocationState = shared.mockLocationState,
-                                isWalkPaused = shared.isWalkPaused,
+                                movement = shared.movement,
                                 isRouteReplay = shared.isRouteReplay,
                                 routes = shared.routes,
                                 favorites = shared.favorites,
@@ -176,8 +176,6 @@ class MapViewModel
                                 homeFavoriteId = shared.homeFavoriteId,
                                 routeTrace = shared.routeTrace,
                                 walkMode = shared.walkMode,
-                                isRoaming = shared.isRoaming,
-                                isRoamingPaused = shared.isRoamingPaused,
                                 speedUnit = shared.speedUnit,
                                 jitterRadiusMeters = shared.jitterRadiusMeters,
                                 debugStatsEnabled = shared.debugStatsEnabled,

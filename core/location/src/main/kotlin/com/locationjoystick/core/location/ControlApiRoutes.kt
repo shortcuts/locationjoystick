@@ -8,7 +8,6 @@ import com.locationjoystick.core.common.util.clampTeleportBetweenDelaySeconds
 import com.locationjoystick.core.common.util.normalizePlantingRadii
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.LocationRepository
-import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.LatLng
@@ -16,6 +15,8 @@ import com.locationjoystick.core.model.MockMode
 import com.locationjoystick.core.model.RoamingKind
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.canStartRoaming
+import com.locationjoystick.core.model.isActive
+import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.core.model.shouldIgnoreJoystickInput
 import com.locationjoystick.core.model.shouldPreserveEngineMode
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -44,7 +45,6 @@ class ControlApiRoutes
         private val server: LeaderSyncServer,
         private val mapController: MapController,
         private val locationRepository: LocationRepository,
-        private val roamingRepository: RoamingRepository,
         private val settingsRepository: SettingsRepository,
         private val routeRepository: RouteRepository,
         @param:ApplicationScope private val appScope: CoroutineScope,
@@ -147,12 +147,12 @@ class ControlApiRoutes
                         "walk",
                         JSONObject()
                             .put("target", walkTarget?.let(::latLngJson) ?: JSONObject.NULL)
-                            .put("paused", locationRepository.isWalkPaused.value),
+                            .put("paused", locationRepository.currentMovement().isPaused(MockMode.WALK_TO)),
                     ).put(
                         "roaming",
                         JSONObject()
-                            .put("active", roamingRepository.isRoaming.value)
-                            .put("paused", roamingRepository.isRoamingPaused.value),
+                            .put("active", locationRepository.currentMovement().isActive(MockMode.ROAMING))
+                            .put("paused", locationRepository.currentMovement().isPaused(MockMode.ROAMING)),
                     ).put("speedProfileId", runBlocking { settingsRepository.getActiveSpeedProfile().first() }.id)
             return ApiResponse(200, json.toString())
         }
@@ -286,16 +286,9 @@ class ControlApiRoutes
             speedMs: Double,
         ) {
             val current = locationRepository.currentPosition.value ?: return
-            val mode = locationRepository.currentMode.value
-            if (shouldIgnoreJoystickInput(
-                    mode,
-                    locationRepository.mockLocationState.value,
-                    roamingRepository.isRoamingPaused.value,
-                    locationRepository.isWalkPaused.value,
-                )
-            ) {
-                return
-            }
+            val movement = locationRepository.currentMovement()
+            val mode = movement.mode
+            if (shouldIgnoreJoystickInput(movement)) return
             if (!shouldPreserveEngineMode(mode)) locationRepository.setMockMode(MockMode.JOYSTICK)
             val (lat, lon) =
                 advancePosition(
@@ -311,15 +304,9 @@ class ControlApiRoutes
         }
 
         private fun releaseJoystick() {
-            val mode = locationRepository.currentMode.value
-            if (!shouldPreserveEngineMode(mode)) locationRepository.setMockMode(MockMode.TELEPORT)
-            val engineOwnsMovement =
-                shouldIgnoreJoystickInput(
-                    mode,
-                    locationRepository.mockLocationState.value,
-                    roamingRepository.isRoamingPaused.value,
-                    locationRepository.isWalkPaused.value,
-                )
+            val movement = locationRepository.currentMovement()
+            if (!shouldPreserveEngineMode(movement.mode)) locationRepository.setMockMode(MockMode.TELEPORT)
+            val engineOwnsMovement = shouldIgnoreJoystickInput(movement)
             if (!engineOwnsMovement) context.startService(MockLocationIntentBuilder.clearMotionVector(context))
         }
 

@@ -6,6 +6,8 @@ import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.common.util.calculateBearing
 import com.locationjoystick.core.common.util.haversineDistance
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.isPaused
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -71,7 +73,7 @@ class WalkToEngine
                         onWaypointIndex?.invoke(index)
                         while (true) {
                             if (locationRepository.walkTarget.value == null) return@launch
-                            if (locationRepository.isWalkPaused.value) {
+                            if (locationRepository.currentMovement().isPaused(MockMode.WALK_TO)) {
                                 delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
                                 continue
                             }
@@ -118,7 +120,7 @@ class WalkToEngine
          *
          * After each tick it continues from [LocationRepository.currentPosition], so joystick
          * steering during a pause is not undone. Unlike [launchWalkAlongRoute], this has no dependency on
-         * [LocationRepository.walkTarget] / [LocationRepository.isWalkPaused] — for callers
+         * [LocationRepository.walkTarget] / [LocationRepository.movement] — for callers
          * (e.g. route replay's walk-to-start-of-route phase) that own their own start/stop
          * lifecycle and just need a one-shot walk with no pause support.
          */

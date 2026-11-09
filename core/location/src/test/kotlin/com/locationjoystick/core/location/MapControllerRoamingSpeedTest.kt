@@ -41,8 +41,6 @@ class MapControllerRoamingSpeedTest {
             val settingsRepository = settingsMock()
             coEvery { settingsRepository.activateSessionSpeed("bike") } returns 5.0
             coEvery { roamingRepository.startRoaming(any(), 5.0) } returns true
-            every { roamingRepository.isRoaming } returns MutableStateFlow(false)
-            every { roamingRepository.isRoamingPaused } returns MutableStateFlow(false)
 
             val controller = controller(settingsRepository, roamingRepository, backgroundScope)
             controller.startRoaming(
@@ -65,8 +63,6 @@ class MapControllerRoamingSpeedTest {
             val settingsRepository = settingsMock()
             coEvery { settingsRepository.activateSessionSpeed("walk") } returns 1.4
             coEvery { roamingRepository.startRoaming(any(), 1.4) } returns true
-            every { roamingRepository.isRoaming } returns MutableStateFlow(false)
-            every { roamingRepository.isRoamingPaused } returns MutableStateFlow(false)
 
             val controller = controller(settingsRepository, roamingRepository, backgroundScope)
             controller.startRoaming(

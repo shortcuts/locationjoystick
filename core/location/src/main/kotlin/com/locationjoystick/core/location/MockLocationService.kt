@@ -808,10 +808,7 @@ class MockLocationService : Service() {
         speedMs: Float,
         bearing: Float,
     ) {
-        val mode = locationRepository.currentMode.value
-        val mockState = locationRepository.mockLocationState.value
-        val isRoamingPaused = mode == MockMode.ROAMING && roamingRepository.isRoamingPaused.value
-        if (!shouldApplyUpdatePositionWithVector(mode, mockState, isRoamingPaused)) return
+        if (!shouldApplyUpdatePositionWithVector(locationRepository.currentMovement())) return
         writeCurrentPosition(lat, lon)
         currentSpeedMs = speedMs
         currentBearing = bearing
@@ -895,7 +892,7 @@ class MockLocationService : Service() {
         // RUNNING observer can't start a new loop between our cancel and the null write.
         updateJob?.cancel()
         serviceScope.launch { updateJobMutex.withLock { updateJob = null } }
-        if (roamingRepository.isRoaming.value) {
+        if (locationRepository.currentMode.value == MockMode.ROAMING) {
             serviceScope.launch { roamingRepository.stopRoaming() }
         }
         // Always persist location; the rememberLastLocation setting only controls whether to restore it.

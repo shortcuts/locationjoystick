@@ -3,7 +3,6 @@ package com.locationjoystick.core.location
 import android.content.Context
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.data.LocationRepository
-import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.LatLng
@@ -22,7 +21,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.json.JSONObject
 import org.junit.After
@@ -38,7 +36,6 @@ class ControlApiRoutesTest {
     private val server = LeaderSyncServer()
     private val mapController: MapController = mockk(relaxed = true)
     private val locationRepository = LocationRepository()
-    private val roamingRepository: RoamingRepository = mockk(relaxed = true)
     private val settingsRepository: SettingsRepository = mockk(relaxed = true)
     private val routeRepository: RouteRepository = mockk(relaxed = true)
     private val context: Context = mockk(relaxed = true)
@@ -47,8 +44,6 @@ class ControlApiRoutesTest {
 
     @Before
     fun setup() {
-        every { roamingRepository.isRoaming } returns MutableStateFlow(false)
-        every { roamingRepository.isRoamingPaused } returns MutableStateFlow(false)
         every { mapController.cooldownForPosition(any()) } returns flowOf(CooldownState.Ready)
         val walk = SpeedProfile("walk", "Walk", 10.0)
         every { settingsRepository.getSpeedProfiles() } returns flowOf(listOf(walk, SpeedProfile("bike", "Bike", 20.0)))
@@ -56,7 +51,7 @@ class ControlApiRoutesTest {
         every { settingsRepository.getRoamingDefaults() } returns flowOf(RoamingDefaults())
         every { routeRepository.getRouteWithWaypoints("r1") } returns flowOf(Route(id = "r1", name = "R", waypoints = emptyList()))
         every { routeRepository.getRouteWithWaypoints("nope") } returns flowOf(null)
-        ControlApiRoutes(context, server, mapController, locationRepository, roamingRepository, settingsRepository, routeRepository, scope)
+        ControlApiRoutes(context, server, mapController, locationRepository, settingsRepository, routeRepository, scope)
             .install()
         port = server.start("gid")
         server.enableApi("k")

@@ -92,7 +92,7 @@ class TeleportUseCase
          */
         suspend fun stopAutomatedMovement() {
             walkCoordinator.cancel()
-            if (locationRepository.currentMode.value == MockMode.ROAMING || roamingRepository.isRoaming.value) {
+            if (locationRepository.currentMode.value == MockMode.ROAMING) {
                 roamingRepository.stopRoaming()
             }
             // Always abort replay, even when mode is not yet ROUTE_REPLAY: Follow-roads

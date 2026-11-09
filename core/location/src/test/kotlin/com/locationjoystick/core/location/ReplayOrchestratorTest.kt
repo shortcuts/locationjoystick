@@ -19,6 +19,7 @@ import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.Waypoint
+import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.core.routing.OsrmClient
 import com.locationjoystick.core.routing.RouteReplayEngine
 import com.locationjoystick.core.routing.RoutingErrorReporter
@@ -144,7 +145,7 @@ class ReplayOrchestratorTest {
         assertTrue(events.isEmpty())
         assertEquals(MockMode.WALK_TO, locationRepository.currentMode.value)
         assertEquals(MockLocationState.RUNNING, locationRepository.mockLocationState.value)
-        assertFalse(locationRepository.isWalkPaused.value)
+        assertFalse(locationRepository.currentMovement().isPaused)
     }
 
     @Test

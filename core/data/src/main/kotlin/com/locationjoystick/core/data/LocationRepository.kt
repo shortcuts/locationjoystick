@@ -6,8 +6,14 @@ import com.locationjoystick.core.model.CompletionKind
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.RouteProgress
+import com.locationjoystick.core.model.enterMode
+import com.locationjoystick.core.model.isActive
+import com.locationjoystick.core.model.pausedOrNull
+import com.locationjoystick.core.model.resumedOrNull
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -15,7 +21,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -41,12 +49,10 @@ data class DebugStats(
  * This repository acts as the shared state bus between the service and all feature modules.
  * MockLocationService reads from and writes to this repository; feature ViewModels observe it.
  *
- * ## Unified activity state
- * Use [isActivityActive] to know whether any movement mode is currently running
- * (route replay, roaming, or walk-to). This is the single source of truth — do NOT
- * re-derive this by combining [activeRouteId], [walkTarget], and roaming flags individually.
- *
- * Use [isActivityPausable] to know whether the current active mode supports pause/resume.
+ * ## Movement state
+ * Read [movement] to know the current mode and whether it is paused. It is the single source of
+ * truth — do NOT re-derive it from [activeRouteId], [walkTarget], or roaming flags. Replay pause
+ * stays in [mockLocationState] because it is also the spoofing lifecycle; [movement] folds it in.
  */
 @Singleton
 class LocationRepository
@@ -121,10 +127,6 @@ class LocationRepository
         private val _walkTarget = MutableStateFlow<LatLng?>(null)
         val walkTarget: StateFlow<LatLng?> = _walkTarget.asStateFlow()
 
-        /** Whether walk-to movement is currently paused (walkTarget set but ticks suspended). */
-        private val _isWalkPaused = MutableStateFlow(false)
-        val isWalkPaused: StateFlow<Boolean> = _isWalkPaused.asStateFlow()
-
         /** Waypoints of the currently replaying route, null when no route is active. */
         private val _routeWaypoints = MutableStateFlow<List<LatLng>?>(null)
         val routeWaypoints: StateFlow<List<LatLng>?> = _routeWaypoints.asStateFlow()
@@ -143,8 +145,22 @@ class LocationRepository
             _isRoadRouteFetchInFlight.value = inFlight
         }
 
-        private val _currentMode = MutableStateFlow(MockMode.TELEPORT)
-        val currentMode: StateFlow<MockMode> = _currentMode.asStateFlow()
+        private val _movement = MutableStateFlow<MovementState>(MovementState.Manual(MockMode.TELEPORT))
+
+        val currentMode: StateFlow<MockMode> = _movement.mapState { it.mode }
+
+        /** Mode and pause state, with replay pause read from [mockLocationState]. */
+        val movement: Flow<MovementState> = combine(_movement, _mockLocationState) { m, state -> m.withReplayPause(state) }
+
+        /** Synchronous snapshot of [movement]. */
+        fun currentMovement(): MovementState = _movement.value.withReplayPause(_mockLocationState.value)
+
+        private fun MovementState.withReplayPause(state: MockLocationState): MovementState =
+            if (isActive(MockMode.ROUTE_REPLAY)) MovementState.Active(MockMode.ROUTE_REPLAY, state == MockLocationState.PAUSED) else this
+
+        private inline fun transition(next: (MovementState) -> MovementState?) {
+            _movement.update { current -> next(current) ?: current.also { Log.w(TAG, "ignored transition from $it") } }
+        }
 
         private val _completionEvents = MutableSharedFlow<CompletionKind>(extraBufferCapacity = 1)
         val completionEvents: SharedFlow<CompletionKind> = _completionEvents.asSharedFlow()
@@ -152,36 +168,6 @@ class LocationRepository
         fun emitCompletion(kind: CompletionKind) {
             _completionEvents.tryEmit(kind)
         }
-
-        /**
-         * True whenever any active movement mode is running:
-         * [MockMode.ROUTE_REPLAY], [MockMode.ROAMING], or [MockMode.WALK_TO].
-         */
-        val isActivityActive: Flow<Boolean> =
-            _currentMode.map { mode ->
-                mode == MockMode.ROUTE_REPLAY || mode == MockMode.ROAMING || mode == MockMode.WALK_TO
-            }
-
-        /**
-         * True when the current active mode supports pause/resume.
-         * All active movement modes (route replay, roaming, walk-to) support pause/resume,
-         * so this is always equivalent to [isActivityActive].
-         */
-        val isActivityPausable: Flow<Boolean> = isActivityActive
-
-        /**
-         * True when the current movement mode is paused.
-         * Handles walk-to and route-replay pause state only. For the fully unified view
-         * (including roaming), use [ActivityStateRepository.isActivityPaused].
-         */
-        val isCurrentActivityPaused: Flow<Boolean> =
-            combine(_currentMode, _mockLocationState, _isWalkPaused) { mode, state, walkPaused ->
-                when (mode) {
-                    MockMode.WALK_TO -> walkPaused
-                    MockMode.ROUTE_REPLAY -> state == MockLocationState.PAUSED
-                    else -> false
-                }
-            }
 
         fun updatePosition(
             lat: Double,
@@ -239,24 +225,25 @@ class LocationRepository
 
         fun setWalkTarget(target: LatLng?) {
             _walkTarget.value = target
-            if (target == null) {
-                _isWalkPaused.value = false
-                // Only reset mode if we are currently in WALK_TO to avoid clobbering
-                // a mode set by another subsystem (e.g. ROUTE_REPLAY stopping after walk).
-                if (_currentMode.value == MockMode.WALK_TO) {
-                    _currentMode.value = MockMode.TELEPORT
-                }
-            } else {
-                _currentMode.value = MockMode.WALK_TO
+            if (target != null) {
+                setMockMode(MockMode.WALK_TO)
+            } else if (_movement.value.mode == MockMode.WALK_TO) {
+                // Only reset a walk, so a mode set by another subsystem survives (e.g. replay after a walk).
+                setMockMode(MockMode.TELEPORT)
             }
         }
 
-        fun setWalkPaused(paused: Boolean) {
-            _isWalkPaused.value = paused
+        fun setMockMode(mode: MockMode) {
+            transition { enterMode(mode) }
         }
 
-        fun setMockMode(mode: MockMode) {
-            _currentMode.value = mode
+        /** Pauses a walk or roam. Ignored in any other state. */
+        fun pauseMovement() {
+            transition { it.pausedOrNull() }
+        }
+
+        fun resumeMovement() {
+            transition { it.resumedOrNull() }
         }
 
         fun setRouteWaypoints(waypoints: List<LatLng>?) {
@@ -270,5 +257,18 @@ class LocationRepository
 
         fun setRouteProgress(progress: RouteProgress?) {
             _routeProgress.value = progress
+        }
+    }
+
+/** A [StateFlow] view whose value and emissions follow [transform] of this flow. */
+private fun <T, R> StateFlow<T>.mapState(transform: (T) -> R): StateFlow<R> =
+    object : StateFlow<R> {
+        private val source = this@mapState
+        override val value: R get() = transform(source.value)
+        override val replayCache: List<R> get() = listOf(value)
+
+        override suspend fun collect(collector: FlowCollector<R>): Nothing {
+            source.map(transform).distinctUntilChanged().collect(collector)
+            error("StateFlow collection never completes")
         }
     }

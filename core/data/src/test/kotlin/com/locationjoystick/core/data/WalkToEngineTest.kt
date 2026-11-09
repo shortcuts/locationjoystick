@@ -144,7 +144,7 @@ class WalkToEngineTest {
             val target = LatLng(48.9000, 2.3522)
             locationRepository.setPositionInternal(current)
             locationRepository.setWalkTarget(target)
-            locationRepository.setWalkPaused(true)
+            locationRepository.pauseMovement()
 
             var callCount = 0
 

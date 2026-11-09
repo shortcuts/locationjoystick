@@ -5,8 +5,11 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
+import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.RouteProgress
+import com.locationjoystick.core.model.isPaused
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -334,37 +337,75 @@ class LocationRepositoryTest {
         runTest {
             val target = LatLng(48.8566, 2.3522)
             repository.setWalkTarget(target)
-            repository.setWalkPaused(true)
+            repository.pauseMovement()
 
-            repository.walkTarget.test {
-                assertEquals(target, awaitItem())
+            repository.setWalkTarget(null)
 
-                repository.setWalkTarget(null)
-
-                assertNull(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-
-            repository.isWalkPaused.test {
-                // After setWalkTarget(null), pause should be reset to false
-                assertEquals(false, awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
+            assertNull(repository.walkTarget.value)
+            assertEquals(MovementState.Manual(MockMode.TELEPORT), repository.currentMovement())
         }
 
-    // setWalkPaused
+    // movement transitions
 
     @Test
-    fun `setWalkPaused emits pause state`() =
+    fun `pauseMovement pauses walk and roam`() {
+        listOf(MockMode.WALK_TO, MockMode.ROAMING).forEach {
+            repository.setMockMode(it)
+            repository.pauseMovement()
+            assertEquals(MovementState.Active(it, true), repository.currentMovement())
+        }
+    }
+
+    @Test
+    fun `resumeMovement resumes a paused walk and roam`() {
+        listOf(MockMode.WALK_TO, MockMode.ROAMING).forEach {
+            repository.setMockMode(it)
+            repository.pauseMovement()
+            repository.resumeMovement()
+            assertEquals(MovementState.Active(it, false), repository.currentMovement())
+        }
+    }
+
+    @Test
+    fun `pauseMovement is rejected in manual modes and leaves state unchanged`() {
+        listOf(MockMode.TELEPORT, MockMode.JOYSTICK, MockMode.FOLLOWER).forEach {
+            repository.setMockMode(it)
+            repository.pauseMovement()
+            assertEquals(MovementState.Manual(it), repository.currentMovement())
+        }
+    }
+
+    @Test
+    fun `pauseMovement is rejected for route replay`() {
+        repository.setMockMode(MockMode.ROUTE_REPLAY)
+        repository.pauseMovement()
+        assertEquals(MovementState.Active(MockMode.ROUTE_REPLAY, false), repository.currentMovement())
+    }
+
+    @Test
+    fun `resumeMovement is rejected when not paused`() {
+        repository.setMockMode(MockMode.WALK_TO)
+        repository.resumeMovement()
+        assertEquals(MovementState.Active(MockMode.WALK_TO, false), repository.currentMovement())
+    }
+
+    @Test
+    fun `setMockMode resets pause`() {
+        repository.setMockMode(MockMode.ROAMING)
+        repository.pauseMovement()
+        repository.setMockMode(MockMode.ROAMING)
+        assertEquals(MovementState.Active(MockMode.ROAMING, false), repository.currentMovement())
+    }
+
+    @Test
+    fun `route replay pause follows mockLocationState`() =
         runTest {
-            repository.isWalkPaused.test {
-                assertEquals(false, awaitItem())
+            repository.pauseSpoofing()
+            repository.setMockMode(MockMode.ROUTE_REPLAY)
+            assertEquals(MovementState.Active(MockMode.ROUTE_REPLAY, true), repository.movement.first())
 
-                repository.setWalkPaused(true)
-
-                assertEquals(true, awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
+            repository.startSpoofing()
+            assertEquals(MovementState.Active(MockMode.ROUTE_REPLAY, false), repository.movement.first())
         }
 
     // setMockMode
@@ -551,111 +592,6 @@ class LocationRepositoryTest {
             }
         }
 
-    // ---- isActivityActive / isActivityPausable ----
-
-    @Test
-    fun `isActivityActive is false for TELEPORT mode (initial state)`() =
-        runTest {
-            repository.isActivityActive.test {
-                assertFalse(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `isActivityActive becomes true when mode is ROUTE_REPLAY`() =
-        runTest {
-            repository.isActivityActive.test {
-                assertFalse(awaitItem()) // initial TELEPORT
-                repository.setMockMode(MockMode.ROUTE_REPLAY)
-                assertTrue(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `isActivityActive becomes true when mode is ROAMING`() =
-        runTest {
-            repository.isActivityActive.test {
-                assertFalse(awaitItem())
-                repository.setMockMode(MockMode.ROAMING)
-                assertTrue(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `isActivityActive becomes true when mode is WALK_TO`() =
-        runTest {
-            repository.isActivityActive.test {
-                assertFalse(awaitItem())
-                repository.setWalkTarget(LatLng(1.0, 2.0))
-                assertTrue(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `isActivityActive becomes false when walk target is cleared`() =
-        runTest {
-            repository.setWalkTarget(LatLng(1.0, 2.0))
-            repository.isActivityActive.test {
-                assertTrue(awaitItem()) // WALK_TO active
-                repository.setWalkTarget(null)
-                assertFalse(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `isActivityActive is false for JOYSTICK mode`() =
-        runTest {
-            repository.setMockMode(MockMode.JOYSTICK)
-            repository.isActivityActive.test {
-                assertFalse(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `isActivityPausable is false for TELEPORT mode`() =
-        runTest {
-            repository.isActivityPausable.test {
-                assertFalse(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `isActivityPausable is true for ROUTE_REPLAY`() =
-        runTest {
-            repository.setMockMode(MockMode.ROUTE_REPLAY)
-            repository.isActivityPausable.test {
-                assertTrue(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `isActivityPausable is true for WALK_TO`() =
-        runTest {
-            repository.setWalkTarget(LatLng(1.0, 2.0))
-            repository.isActivityPausable.test {
-                assertTrue(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `isActivityPausable is true for ROAMING`() =
-        runTest {
-            repository.setMockMode(MockMode.ROAMING)
-            repository.isActivityPausable.test {
-                assertTrue(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
     @Test
     fun `setWalkTarget non-null sets mode to WALK_TO`() =
         runTest {
@@ -667,10 +603,10 @@ class LocationRepositoryTest {
     fun `setWalkTarget null resets mode to TELEPORT and clears pause`() =
         runTest {
             repository.setWalkTarget(LatLng(1.0, 2.0))
-            repository.setWalkPaused(true)
+            repository.pauseMovement()
             repository.setWalkTarget(null)
             assertEquals(MockMode.TELEPORT, repository.currentMode.value)
-            assertFalse(repository.isWalkPaused.value)
+            assertFalse(repository.currentMovement().isPaused)
         }
 
     @Test

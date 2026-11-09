@@ -13,7 +13,6 @@ import android.view.WindowManager
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.advancePosition
 import com.locationjoystick.core.data.LocationRepository
-import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.MockLocationService
@@ -35,8 +34,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -82,9 +81,6 @@ class JoystickOverlayService : OverlayService() {
 
     @Inject
     lateinit var settingsRepository: SettingsRepository
-
-    @Inject
-    lateinit var roamingRepository: RoamingRepository
 
     @Inject
     lateinit var mapController: MapController
@@ -147,14 +143,9 @@ class JoystickOverlayService : OverlayService() {
             }
         }
         serviceScope.launch {
-            combine(
-                locationRepository.currentMode,
-                locationRepository.mockLocationState,
-                roamingRepository.isRoamingPaused,
-                locationRepository.isWalkPaused,
-            ) { mode, state, roamPaused, walkPaused ->
-                shouldIgnoreJoystickInput(mode, state, roamPaused, walkPaused)
-            }.distinctUntilChanged()
+            locationRepository.movement
+                .map(::shouldIgnoreJoystickInput)
+                .distinctUntilChanged()
                 .collect { ignored ->
                     withContext(Dispatchers.Main) {
                         (overlayView as? JoystickView)?.inputIgnored = ignored
@@ -204,17 +195,11 @@ class JoystickOverlayService : OverlayService() {
         movementJob = null
         // A new automatic movement may have started before the finger is released or unlocked.
         // Its mode and motion vector belong to that engine, not to the old joystick gesture.
-        val mode = locationRepository.currentMode.value
-        if (!shouldPreserveEngineMode(mode)) {
+        val movement = locationRepository.currentMovement()
+        if (!shouldPreserveEngineMode(movement.mode)) {
             locationRepository.setMockMode(MockMode.TELEPORT)
         }
-        val engineOwnsMovement =
-            shouldIgnoreJoystickInput(
-                mode,
-                locationRepository.mockLocationState.value,
-                roamingRepository.isRoamingPaused.value,
-                locationRepository.isWalkPaused.value,
-            )
+        val engineOwnsMovement = shouldIgnoreJoystickInput(movement)
         if (!engineOwnsMovement) {
             mockLocationService?.clearMotionVector()
         }
@@ -253,13 +238,7 @@ class JoystickOverlayService : OverlayService() {
         )
 
         view.isLocked = _isLocked.value
-        view.inputIgnored =
-            shouldIgnoreJoystickInput(
-                locationRepository.currentMode.value,
-                locationRepository.mockLocationState.value,
-                roamingRepository.isRoamingPaused.value,
-                locationRepository.isWalkPaused.value,
-            )
+        view.inputIgnored = shouldIgnoreJoystickInput(locationRepository.currentMovement())
 
         view.onInputChanged = { input ->
             lastInput = input
@@ -343,20 +322,11 @@ class JoystickOverlayService : OverlayService() {
     private suspend fun applyJoystickInput(input: JoystickInput) {
         val currentPos = locationRepository.currentPosition.value ?: return
         val speedMs = _cachedProfile.value?.speedMetersPerSecond ?: return
-        val mode = locationRepository.currentMode.value
-        val mockState = locationRepository.mockLocationState.value
+        val movement = locationRepository.currentMovement()
+        val mode = movement.mode
         // Don't let a stray drag tick steal mode from an engine (route replay, roaming, walk-to,
         // follower sync) that's independently advancing position this same tick.
-        if (
-            shouldIgnoreJoystickInput(
-                mode,
-                mockState,
-                roamingRepository.isRoamingPaused.value,
-                locationRepository.isWalkPaused.value,
-            )
-        ) {
-            return
-        }
+        if (shouldIgnoreJoystickInput(movement)) return
         if (!shouldPreserveEngineMode(mode)) {
             locationRepository.setMockMode(MockMode.JOYSTICK)
         }
