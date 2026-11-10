@@ -17,9 +17,9 @@ class ReplayStartLifecycleTest {
     fun `begin supersedes and wakes the previous session`() {
         val l = ReplayStartLifecycle()
         val first = l.begin()
-        first.paused.value = true
+        l.setPaused(first, true)
         val second = l.begin()
-        assertFalse(first.paused.value)
+        assertFalse(first.paused)
         assertFalse(l.isCurrent(first.generation))
         assertTrue(l.isCurrent(second.generation))
     }
@@ -28,10 +28,10 @@ class ReplayStartLifecycleTest {
     fun `abort clears current and unpauses`() {
         val l = ReplayStartLifecycle()
         val s = l.begin()
-        s.paused.value = true
+        l.setPaused(s, true)
         l.abort()
         assertNull(l.current)
-        assertFalse(s.paused.value)
+        assertFalse(s.paused)
         assertFalse(l.isCurrent(s.generation))
     }
 
@@ -40,12 +40,12 @@ class ReplayStartLifecycleTest {
         runTest {
             val l = ReplayStartLifecycle()
             val s = l.begin()
-            s.paused.value = true
+            l.setPaused(s, true)
             var runs = 0
             launch { l.runWhenResumed(s) { runs++ } }
             advanceUntilIdle()
             assertEquals(0, runs)
-            s.paused.value = false
+            l.setPaused(s, false)
             advanceUntilIdle()
             assertEquals(1, runs)
         }
@@ -55,7 +55,7 @@ class ReplayStartLifecycleTest {
         runTest {
             val l = ReplayStartLifecycle()
             val s = l.begin()
-            s.paused.value = true
+            l.setPaused(s, true)
             var thrown: Throwable? = null
             launch {
                 try {
@@ -77,7 +77,44 @@ class ReplayStartLifecycleTest {
         val s = l.begin()
         assertTrue(l.isStarting(true))
         assertFalse(l.isStarting(false))
-        s.engineStarted = true
+        l.markEngineStarted(s)
         assertFalse(l.isStarting(true))
+    }
+
+    @Test
+    fun `engine start keeps the pause flag`() {
+        val l = ReplayStartLifecycle()
+        val s = l.begin()
+        l.setPaused(s, true)
+        l.markEngineStarted(s)
+        assertEquals(ReplayStartLifecycle.Phase.EngineRunning(paused = true), s.phase.value)
+    }
+
+    @Test
+    fun `engine stop returns to starting and keeps the pause flag`() {
+        val l = ReplayStartLifecycle()
+        val s = l.begin()
+        l.markEngineStarted(s)
+        l.setPaused(s, true)
+        l.markEngineStopped(s)
+        assertEquals(ReplayStartLifecycle.Phase.Starting(paused = true), s.phase.value)
+    }
+
+    @Test
+    fun `engine start from engine running is rejected`() {
+        val l = ReplayStartLifecycle()
+        val s = l.begin()
+        l.markEngineStarted(s)
+        l.setPaused(s, true)
+        l.markEngineStarted(s)
+        assertEquals(ReplayStartLifecycle.Phase.EngineRunning(paused = true), s.phase.value)
+    }
+
+    @Test
+    fun `engine stop from starting is rejected`() {
+        val l = ReplayStartLifecycle()
+        val s = l.begin()
+        l.markEngineStopped(s)
+        assertEquals(ReplayStartLifecycle.Phase.Starting(paused = false), s.phase.value)
     }
 }

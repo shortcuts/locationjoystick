@@ -1,27 +1,44 @@
 package com.locationjoystick.core.location
 
+import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.coroutineContext
 
+private const val TAG = "ReplayStartLifecycle"
+
 /**
- * Owns the start generation counter, the per-start pause/engine-started state and the lock that
+ * Owns the start generation counter, the per-start phase and the lock that
  * keeps them atomic with [ReplayOrchestrator]'s mode changes — extracted from the orchestrator,
  * mirroring [FollowerCatchUpCoordinator]: state ownership lives in one small class. Engine and
  * repository side effects stay in the orchestrator.
  */
 internal class ReplayStartLifecycle {
+    /** Where a start is. Planning and the approach walk are both [Starting]; the engine takes over in [EngineRunning]. */
+    sealed interface Phase {
+        val paused: Boolean
+
+        data class Starting(
+            override val paused: Boolean = false,
+        ) : Phase
+
+        data class EngineRunning(
+            override val paused: Boolean = false,
+        ) : Phase
+    }
+
     /** Pause survives planning and the approach walk without cancelling their saved progress. */
     class Session(
         val generation: Int,
     ) {
-        val paused = MutableStateFlow(false)
-
-        // Written under the lifecycle lock, read without it.
-        @Volatile var engineStarted = false
+        // Written only through the lifecycle's transition functions, under its lock.
+        internal val phase = MutableStateFlow<Phase>(Phase.Starting())
+        val paused: Boolean get() = phase.value.paused
+        val engineStarted: Boolean get() = phase.value is Phase.EngineRunning
     }
 
     private val generation = AtomicInteger(0)
@@ -38,7 +55,7 @@ internal class ReplayStartLifecycle {
             val previous = current
             Session(generation.incrementAndGet()).also {
                 current = it
-                previous?.paused?.value = false
+                previous?.let { setPaused(it, false) }
             }
         }
 
@@ -48,9 +65,46 @@ internal class ReplayStartLifecycle {
             generation.incrementAndGet()
             val previous = current
             current = null
-            previous?.paused?.value = false
+            previous?.let { setPaused(it, false) }
         }
     }
+
+    fun setPaused(
+        session: Session,
+        paused: Boolean,
+    ) = locked {
+        session.phase.update {
+            when (it) {
+                is Phase.Starting -> it.copy(paused = paused)
+                is Phase.EngineRunning -> it.copy(paused = paused)
+            }
+        }
+    }
+
+    fun markEngineStarted(session: Session) =
+        locked {
+            session.phase.update {
+                if (it is Phase.Starting) {
+                    Phase.EngineRunning(it.paused)
+                } else {
+                    Log.w(TAG, "ignored engine start from $it")
+                    it
+                }
+            }
+        }
+
+    /** The return walk after a route leaves the engine phase and runs under [Phase.Starting] again. */
+    fun markEngineStopped(session: Session) =
+        locked {
+            session.phase.update {
+                if (it is Phase.EngineRunning) {
+                    Phase.Starting(it.paused)
+                } else {
+                    Log.w(TAG, "ignored engine stop from $it")
+                    it
+                }
+            }
+        }
 
     fun clear() = locked { current = null }
 
@@ -60,7 +114,7 @@ internal class ReplayStartLifecycle {
     fun isStarting(engineJobActive: Boolean = true): Boolean = current?.let { !it.engineStarted && engineJobActive } ?: false
 
     suspend fun awaitResume(session: Session) {
-        session.paused.first { !it }
+        session.phase.first { !it.paused }
         coroutineContext.ensureActive()
         if (!isCurrent(session.generation)) throw CancellationException("Replay replaced")
     }
@@ -73,7 +127,7 @@ internal class ReplayStartLifecycle {
             awaitResume(session)
             val started =
                 locked {
-                    if (session !== current || session.paused.value) {
+                    if (session !== current || session.paused) {
                         false
                     } else {
                         action()

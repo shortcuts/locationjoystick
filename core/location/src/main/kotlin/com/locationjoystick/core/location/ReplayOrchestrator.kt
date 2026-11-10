@@ -203,7 +203,7 @@ internal class ReplayOrchestrator(
             locationRepository.setRouteWaypoints(null)
             locationRepository.setActiveRouteId(null)
             if (returnPosition != null) {
-                lifecycle.locked { state.engineStarted = false }
+                lifecycle.markEngineStopped(state)
                 walkToPosition(returnPosition, speedMs, state = state)
             }
             finishReplay()
@@ -255,7 +255,7 @@ internal class ReplayOrchestrator(
             val state = lifecycle.current
             val isStarting = lifecycle.isStarting(activeReplayJob?.isActive == true)
             if (mode == MockMode.WALK_TO || (mode != MockMode.ROUTE_REPLAY && !isStarting)) return
-            state?.paused?.value = true
+            state?.let { lifecycle.setPaused(it, true) }
             if (state == null || state.engineStarted) activeReplayer.pause()
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
             if (onSpoofingEvent(SpoofingEvent.PAUSE)) locationRepository.pauseSpoofing()
@@ -270,7 +270,7 @@ internal class ReplayOrchestrator(
             val isStarting = lifecycle.isStarting()
             locationRepository.setMockMode(MockMode.ROUTE_REPLAY)
             if (onSpoofingEvent(SpoofingEvent.START)) locationRepository.startSpoofing()
-            state?.paused?.value = false
+            state?.let { lifecycle.setPaused(it, false) }
             // Planning and walk-to-start already have a suspended job. Resuming an empty
             // replay engine here would signal completion and discard that pending route.
             if (isStarting) return
@@ -301,7 +301,7 @@ internal class ReplayOrchestrator(
     private fun tickReplayPosition(pos: LatLng) {
         lifecycle.locked {
             // A tick already in flight when pause lands must not overwrite manual steering.
-            if (lifecycle.current?.paused?.value == true ||
+            if (lifecycle.current?.paused == true ||
                 locationRepository.mockLocationState.value == MockLocationState.PAUSED
             ) {
                 return
@@ -436,7 +436,7 @@ internal class ReplayOrchestrator(
         persistMetadata?.invoke()
         // A pause requested while OSRM or the route lookup was pending must survive setup.
         lifecycle.locked {
-            if (state.paused.value) {
+            if (state.paused) {
                 if (onSpoofingEvent(SpoofingEvent.PAUSE)) locationRepository.pauseSpoofing()
             } else {
                 if (onSpoofingEvent(SpoofingEvent.START)) locationRepository.startSpoofing()
@@ -502,7 +502,7 @@ internal class ReplayOrchestrator(
             startEngine = startEngine@{
                 if (!isStartStillCurrent(state.generation)) return@startEngine
                 lifecycle.runWhenResumed(state) {
-                    state.engineStarted = true
+                    lifecycle.markEngineStarted(state)
                     routeReplayEngine.start(
                         waypoints = waypoints,
                         speedMs = speedMs,
@@ -550,7 +550,7 @@ internal class ReplayOrchestrator(
             walkToStart = null,
             startEngine = {
                 lifecycle.runWhenResumed(state) {
-                    state.engineStarted = true
+                    lifecycle.markEngineStarted(state)
                     teleportRouteEngine.start(
                         waypoints = waypoints,
                         isLooping = isLooping,
@@ -640,7 +640,7 @@ internal class ReplayOrchestrator(
         val startPos = locationRepository.currentPosition.value ?: return
         val onPosition: suspend (LatLng) -> Unit = { position ->
             // The tick was computed before the pause; drop it so the next one starts from the steered position.
-            if (state.paused.value) {
+            if (state.paused) {
                 lifecycle.awaitResume(state)
             } else {
                 lifecycle.runWhenResumed(state) { tickReplayPosition(position) }

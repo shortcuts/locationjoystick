@@ -47,30 +47,17 @@ class RouteReplayEngine
         RouteReplayer {
         private val jobController = ReplayJobController(TAG)
 
-        /** Position to resume from after pause. Set by [pause]. */
-        @Volatile private var resumePosition: LatLng? = null
-
-        /** Waypoint index to resume from after pause. */
-        @Volatile private var resumeWaypointIndex: Int = 1
-
         /**
-         * Saved waypoints for resume. AtomicReference ensures that appendWaypoint's
-         * read-modify-write is atomic — @Volatile alone would not prevent a torn update
-         * when the main thread and the replay coroutine access this concurrently.
+         * One atomic reference so appendWaypoint's read-modify-write cannot tear against the
+         * replay coroutine on another thread — @Volatile alone would not prevent that.
          */
-        private val savedWaypointsRef = AtomicReference<List<LatLng>>(emptyList())
-
-        /** Saved speed for resume. */
-        private var savedSpeedMs: Double = 0.0
+        private val state = AtomicReference<ReplayState>(ReplayState.Idle)
 
         /** Whether looping is enabled. */
         @Volatile private var isLooping: Boolean = false
 
         /** Whether the end of a loop turns around instead of restarting at the first waypoint. */
         @Volatile private var bounceAtEnds: Boolean = false
-
-        /** True while the saved waypoints are the reverse of the route as started. */
-        @Volatile private var legReversed: Boolean = false
 
         /**
          * Indices into the (possibly road-expanded) waypoint list that correspond to the
@@ -90,13 +77,9 @@ class RouteReplayEngine
         @Volatile private var teleportBetweenDelaySeconds: Int =
             AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS
 
-        /**
-         * Linger at the current stop before the next automatic hop. Set on hop-mode [start]
-         * so playback waits at the first stop, and after a user Next/Previous jump so the
-         * automatic hop does not fire immediately — Next would skip two stops (20/31 → 22/31)
-         * and Previous would hop back to the stop the user just left (looks like a no-op).
-         */
-        @Volatile private var lingerBeforeNextHop: Boolean = false
+        private fun transition(next: (ReplayState) -> ReplayState?) {
+            state.updateAndGet { current -> next(current) ?: current.also { Log.w(TAG, "ignored transition from $it") } }
+        }
 
         /**
          * Starts a new route replay from the first waypoint.
@@ -126,17 +109,21 @@ class RouteReplayEngine
             teleportBetweenDelaySeconds: Int = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
             bounceAtEnds: Boolean = false,
         ) {
-            savedWaypointsRef.set(waypoints)
-            savedSpeedMs = speedMs
             this.isLooping = isLooping
             this.bounceAtEnds = isLooping && bounceAtEnds
-            legReversed = false
             this.boundaryIndices = boundaryIndices ?: waypoints.indices.toList()
             this.teleportBetweenWaypoints = teleportBetweenWaypoints
             this.teleportBetweenDelaySeconds = teleportBetweenDelaySeconds
-            lingerBeforeNextHop = teleportBetweenWaypoints
-            resumePosition = waypoints.firstOrNull()
-            resumeWaypointIndex = 1
+            state.set(
+                ReplayState.Playing(
+                    ReplaySnapshot(
+                        position = waypoints.firstOrNull(),
+                        waypoints = waypoints,
+                        speedMs = speedMs,
+                        lingerBeforeNextHop = teleportBetweenWaypoints,
+                    ),
+                ),
+            )
             launchReplay(onPositionUpdate, onComplete)
             Log.i(
                 TAG,
@@ -159,9 +146,9 @@ class RouteReplayEngine
             onComplete: () -> Unit,
             resumeFrom: LatLng?,
         ) {
-            resumeFrom?.let { resumePosition = it }
+            transition { it.resumed(resumeFrom) }
             launchReplay(onPositionUpdate, onComplete)
-            Log.i(TAG, "Replay resumed at index $resumeWaypointIndex")
+            Log.i(TAG, "Replay resumed at index ${state.get().snapshot.waypointIndex}")
         }
 
         /**
@@ -170,7 +157,8 @@ class RouteReplayEngine
          */
         override fun pause() {
             jobController.cancel()
-            Log.i(TAG, "Replay paused at index $resumeWaypointIndex")
+            transition { it.paused() }
+            Log.i(TAG, "Replay paused at index ${state.get().snapshot.waypointIndex}")
         }
 
         /**
@@ -179,12 +167,8 @@ class RouteReplayEngine
          */
         override suspend fun stop() {
             jobController.cancelAndJoinActive()
-            savedWaypointsRef.set(emptyList())
-            resumePosition = null
-            resumeWaypointIndex = 1
-            lingerBeforeNextHop = false
+            state.set(ReplayState.Idle)
             bounceAtEnds = false
-            legReversed = false
             boundaryIndices = emptyList()
             teleportBetweenWaypoints = false
             teleportBetweenDelaySeconds = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS
@@ -197,16 +181,18 @@ class RouteReplayEngine
          * @param speedMs New movement speed in meters per second
          */
         override fun updateSpeed(speedMs: Double): Float {
-            savedSpeedMs = speedMs
+            state.updateAndGet { it.edited { snapshot -> snapshot.copy(speedMs = speedMs) } ?: it }
             return speedMs.toFloat()
         }
 
         /** Named-stop progress for the active replay, or null when no replay is loaded. */
-        fun currentProgress(): RouteProgress? =
-            computeRouteProgress(resumeWaypointIndex, boundaryIndices)?.let {
+        fun currentProgress(): RouteProgress? {
+            val snapshot = state.get().snapshot
+            return computeRouteProgress(snapshot.waypointIndex, boundaryIndices)?.let {
                 // The return leg counts down from the last stop, so the chip keeps the route's own numbers.
-                if (legReversed) RouteProgress(it.total + 1 - it.current, it.total) else it
+                if (snapshot.legReversed) RouteProgress(it.total + 1 - it.current, it.total) else it
             }
+        }
 
         /**
          * Whether the active replay hops between stops instead of interpolating (planting's
@@ -220,8 +206,8 @@ class RouteReplayEngine
          * @param pos Position to append
          */
         fun appendWaypoint(pos: LatLng) {
-            savedWaypointsRef.getAndUpdate { it + pos }
-            Log.i(TAG, "Waypoint appended; total=${savedWaypointsRef.get().size}")
+            transition { it.edited { snapshot -> snapshot.copy(waypoints = snapshot.waypoints + pos) } }
+            Log.i(TAG, "Waypoint appended; total=${state.get().snapshot.waypoints.size}")
         }
 
         /**
@@ -229,10 +215,7 @@ class RouteReplayEngine
          * If the replay was actively running (not paused), resumes interpolation toward the
          * following waypoint from the new position; if paused, only the resume state updates.
          *
-         * Mirrors [pause]'s tolerance for a benign race with the in-flight tick: writing
-         * [resumePosition]/[resumeWaypointIndex] here while the coroutine's last tick is still
-         * settling can be overwritten, in which case the jump is silently retried by the user's
-         * next tap. Not worth a Mutex for a discrete, user-triggered, non-hot-path action.
+         * Pauses first, so a tick still settling cannot overwrite the jump target.
          *
          * @return The waypoint jumped to, or null if no replay is active.
          */
@@ -241,15 +224,23 @@ class RouteReplayEngine
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
         ): LatLng? {
-            val waypoints = savedWaypointsRef.get()
+            val waypoints = state.get().snapshot.waypoints
             if (waypoints.isEmpty()) return null
             val clamped = target.coerceIn(0, waypoints.size - 1)
-            val wasRunning = jobController.isRunning
+            val wasRunning = state.get().isPlaying
             jobController.cancel()
-            resumePosition = waypoints[clamped]
-            resumeWaypointIndex = clamped + 1
-            lingerBeforeNextHop = teleportBetweenWaypoints
+            state.updateAndGet { it.paused() ?: it }
+            state.updateAndGet {
+                it.edited { snapshot ->
+                    snapshot.copy(
+                        position = waypoints[clamped],
+                        waypointIndex = clamped + 1,
+                        lingerBeforeNextHop = teleportBetweenWaypoints,
+                    )
+                } ?: it
+            }
             if (wasRunning) {
+                state.updateAndGet { it.resumed(null) ?: it }
                 launchReplay(onPositionUpdate, onComplete)
             }
             Log.i(TAG, "Jumped to waypoint $clamped")
@@ -258,26 +249,33 @@ class RouteReplayEngine
 
         /** Reverses the saved route in place so the interpolator keeps walking forward from the current end. */
         private fun turnAround() {
-            val reversed = savedWaypointsRef.updateAndGet { it.reversed() }
-            boundaryIndices = boundaryIndices.map { reversed.size - 1 - it }.reversed()
-            legReversed = !legReversed
-            resumeWaypointIndex = 1
+            val size =
+                state
+                    .get()
+                    .snapshot.waypoints.size
+            state.updateAndGet {
+                it.edited { snapshot ->
+                    snapshot.copy(waypoints = snapshot.waypoints.reversed(), legReversed = !snapshot.legReversed, waypointIndex = 1)
+                } ?: it
+            }
+            boundaryIndices = boundaryIndices.map { size - 1 - it }.reversed()
         }
 
         /** Jumps to the waypoint currently being walked toward (index unchanged if already at the last one). */
         override fun jumpToNextWaypoint(
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
-        ): LatLng? = jumpToWaypoint(nextBoundaryAtOrAfter(boundaryIndices, resumeWaypointIndex), onPositionUpdate, onComplete)
+        ): LatLng? =
+            jumpToWaypoint(nextBoundaryAtOrAfter(boundaryIndices, state.get().snapshot.waypointIndex), onPositionUpdate, onComplete)
 
         /** Jumps to the waypoint before the one last departed from (index unchanged if already at the first one). */
         override fun jumpToPreviousWaypoint(
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
         ): LatLng? {
-            // resumeWaypointIndex targets the waypoint ahead; step back once to the one just
+            // The saved index targets the waypoint ahead; step back once to the one just
             // departed, then once more to the one before that.
-            val lastDeparted = previousBoundaryBefore(boundaryIndices, resumeWaypointIndex)
+            val lastDeparted = previousBoundaryBefore(boundaryIndices, state.get().snapshot.waypointIndex)
             return jumpToWaypoint(previousBoundaryBefore(boundaryIndices, lastDeparted), onPositionUpdate, onComplete)
         }
 
@@ -303,21 +301,23 @@ class RouteReplayEngine
             onPositionUpdate: (LatLng) -> Unit,
             onComplete: () -> Unit,
         ) {
-            val snapshot = savedWaypointsRef.get()
-            if (snapshot.size < 2) {
+            val saved = state.get().snapshot
+            if (saved.waypoints.size < 2) {
                 jobController.cancel()
+                state.updateAndGet { it.paused() ?: it }
                 onComplete()
                 return
             }
-            var position = resumePosition ?: snapshot.first()
-            var index = resumeWaypointIndex
+            var position = saved.position ?: saved.waypoints.first()
+            var index = saved.waypointIndex
 
             jobController.launch {
                 while (isActive) {
-                    val waypoints = savedWaypointsRef.get()
+                    val current = state.get().snapshot
+                    val waypoints = current.waypoints
                     val boundaries = boundaryIndices
-                    if (lingerBeforeNextHop) {
-                        lingerBeforeNextHop = false
+                    if (current.lingerBeforeNextHop) {
+                        state.updateAndGet { it.edited { snapshot -> snapshot.copy(lingerBeforeNextHop = false) } ?: it }
                         lingerAfterHop(position, onPositionUpdate)
                         if (!isActive) return@launch
                         continue
@@ -327,8 +327,7 @@ class RouteReplayEngine
                     ) {
                         position = waypoints[index]
                         index += 1
-                        resumePosition = position
-                        resumeWaypointIndex = index
+                        saveProgress(position, index)
                         try {
                             onPositionUpdate(position)
                         } catch (e: Exception) {
@@ -342,8 +341,7 @@ class RouteReplayEngine
                             } else if (isLooping) {
                                 position = waypoints.first()
                                 index = 1
-                                resumePosition = position
-                                resumeWaypointIndex = index
+                                saveProgress(position, index)
                                 try {
                                     onPositionUpdate(position)
                                 } catch (e: Exception) {
@@ -351,6 +349,7 @@ class RouteReplayEngine
                                 }
                                 lingerAfterHop(position, onPositionUpdate)
                             } else {
+                                state.updateAndGet { it.paused() ?: it }
                                 if (isActive) {
                                     try {
                                         onComplete()
@@ -369,7 +368,7 @@ class RouteReplayEngine
                                 waypoints = waypoints,
                                 currentPosition = position,
                                 currentWaypointIndex = index.coerceAtMost(waypoints.size - 1),
-                                speedMs = savedSpeedMs,
+                                speedMs = current.speedMs,
                                 deltaTimeMs = AppConstants.LocationConstants.UPDATE_INTERVAL_MS,
                             ),
                             waypoints,
@@ -378,8 +377,7 @@ class RouteReplayEngine
                         )
                     position = result.position
                     index = result.nextWaypointIndex
-                    resumePosition = position
-                    resumeWaypointIndex = index
+                    saveProgress(position, index)
                     try {
                         onPositionUpdate(position)
                     } catch (e: Exception) {
@@ -391,9 +389,9 @@ class RouteReplayEngine
                             index = 1
                         } else if (isLooping) {
                             index = 0
-                            resumePosition = position
-                            resumeWaypointIndex = index
+                            saveProgress(position, index)
                         } else {
+                            state.updateAndGet { it.paused() ?: it }
                             if (isActive) {
                                 try {
                                     onComplete()
@@ -407,6 +405,13 @@ class RouteReplayEngine
                     delay(AppConstants.LocationConstants.UPDATE_INTERVAL_MS)
                 }
             }
+        }
+
+        private fun saveProgress(
+            position: LatLng,
+            index: Int,
+        ) {
+            state.updateAndGet { it.progressed(position, index) ?: it }
         }
 
         /**
