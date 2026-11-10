@@ -137,6 +137,8 @@ CPU per tick (Pixel 5, 1080x2340, Pokémon GO in front, thread CPU time from `De
 | Before: whole frame to gray, then crops | included below | 113 ms gray, 70 ms crops | 188 ms |
 | After: `GrayFrame.read` per crop rectangle | 22 ms | 101 ms | 123 ms |
 
+Phase-correlation cost alone (Pixel 5, thread CPU, median of 30 runs of 6 spectra and 5 correlations on 128x128 noise crops, 2026-11-10): 75.7 ms before, 63.0 ms after three changes with the same output (`sqrt` instead of `hypot`, cached square-rooted Hann windows, cached `Dft` tables per thread). The `tick cpu` log line no longer exists, so the whole tick was not re-measured on a device; the 123 ms row above is the older total.
+
 The screenshot is a hardware bitmap with no pixel access, so one software copy stays. Only the five crop rectangles (about 13% of the pixels) become gray now; no full-frame gray buffer exists. The remaining cost is mostly the phase-correlation transform per crop, not the gray conversion, so "a few milliseconds" is not met yet.
 
 ### Open work

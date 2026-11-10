@@ -1,8 +1,8 @@
 package com.locationjoystick.core.model
 
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.PI
 import kotlin.math.cos
-import kotlin.math.hypot
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -52,12 +52,12 @@ object PhaseCorrelation {
         require(a.size == width * height) { "buffer size must be width * height" }
         val pw = optimalSize(width)
         val ph = optimalSize(height)
-        val wx = hann(width)
-        val wy = hann(height)
+        val wx = sqrtHann(width)
+        val wy = sqrtHann(height)
         val re = DoubleArray(pw * ph)
         val im = DoubleArray(pw * ph)
         for (y in 0 until height) {
-            for (x in 0 until width) re[y * pw + x] = a[y * width + x] * sqrt(wx[x] * wy[y])
+            for (x in 0 until width) re[y * pw + x] = a[y * width + x] * wx[x] * wy[y]
         }
         fft2(re, im, pw, ph, false, height)
         return Spectrum(re, im, pw, ph)
@@ -78,7 +78,7 @@ object PhaseCorrelation {
         for (i in ar.indices) {
             val re = a.re[i] * br[i] + a.im[i] * bi[i]
             val im = a.im[i] * br[i] - a.re[i] * bi[i]
-            val m = hypot(re, im) + EPS
+            val m = sqrt(re * re + im * im) + EPS
             ar[i] = re / m
             ai[i] = im / m
         }
@@ -138,6 +138,16 @@ object PhaseCorrelation {
      */
     private fun hann(n: Int) = DoubleArray(n) { 0.5 * (1 - cos(2 * PI * it / (n - 1))) }
 
+    // Read-only after creation, so sharing across threads is safe. sqrt(wx * wy) = sqrt(wx) * sqrt(wy).
+    private val sqrtHannCache = ConcurrentHashMap<Int, DoubleArray>()
+
+    private fun sqrtHann(n: Int): DoubleArray = sqrtHannCache.getOrPut(n) { hann(n).also { for (i in it.indices) it[i] = sqrt(it[i]) } }
+
+    // Dft keeps scratch buffers, so each thread gets its own cache.
+    private val dftCache = ThreadLocal.withInitial { HashMap<Int, Dft>() }
+
+    private fun dft(n: Int): Dft = dftCache.get().getOrPut(n) { Dft(n) }
+
     private fun fft2(
         re: DoubleArray,
         im: DoubleArray,
@@ -146,7 +156,7 @@ object PhaseCorrelation {
         inverse: Boolean,
         liveRows: Int,
     ) {
-        val rowTw = Dft(w)
+        val rowTw = dft(w)
         val tr = DoubleArray(maxOf(w, h))
         val ti = DoubleArray(maxOf(w, h))
         // rows at and past liveRows are all zero on a forward pass, and so are their transforms
@@ -157,7 +167,7 @@ object PhaseCorrelation {
             System.arraycopy(tr, 0, re, y * w, w)
             System.arraycopy(ti, 0, im, y * w, w)
         }
-        val colTw = if (h == w) rowTw else Dft(h)
+        val colTw = dft(h)
         for (x in 0 until w) {
             for (y in 0 until h) {
                 tr[y] = re[y * w + x]
