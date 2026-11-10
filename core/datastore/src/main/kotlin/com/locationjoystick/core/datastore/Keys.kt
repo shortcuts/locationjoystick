@@ -61,6 +61,7 @@ internal object Keys {
     val HIDE_FOREGROUND_NOTIFICATION = booleanPreferencesKey("hide_foreground_notification")
     val SHOW_ROUTE_JUMP_BUTTONS = booleanPreferencesKey("show_route_jump_buttons")
     val LAST_KNOWN_POSITION_ENABLED = booleanPreferencesKey("last_known_position_enabled")
+    val AGPS_RESET_ON_START_ENABLED = booleanPreferencesKey("agps_reset_on_start_enabled")
     val REAL_SNAPSHOT_LATITUDE = doublePreferencesKey("real_snapshot_latitude")
     val REAL_SNAPSHOT_LONGITUDE = doublePreferencesKey("real_snapshot_longitude")
     val REAL_SNAPSHOT_TAKEN_AT_MS = longPreferencesKey("real_snapshot_taken_at_ms")

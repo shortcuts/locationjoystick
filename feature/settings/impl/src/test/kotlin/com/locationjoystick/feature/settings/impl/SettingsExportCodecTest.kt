@@ -417,6 +417,26 @@ class SettingsExportCodecTest {
     }
 
     @Test
+    fun `round-trip preserves agpsResetOnStartEnabled`() {
+        val data =
+            minimalExportData().copy(
+                settings = minimalExportData().settings.copy(agpsResetOnStartEnabled = true),
+            )
+
+        val parsed = SettingsExportCodec.parseExportData(SettingsExportCodec.serializeExportData(data))
+
+        assertEquals(true, parsed.settings.agpsResetOnStartEnabled)
+    }
+
+    @Test
+    fun `parse defaults missing agpsResetOnStartEnabled to false`() {
+        @Suppress("ktlint:standard:max-line-length") // JSON string literal cannot be split without changing its value
+        val json = """{"schemaVersion":1,"exportedAt":0,"settings":{"speedUnit":"KMH","enabledWidgetFeatures":[]},"speedProfiles":[],"routes":[],"favoriteLocations":[],"jitterIdleRadius":0.0,"jitterMovingRadius":1.0,"jitterIntervalSeconds":3}"""
+
+        assertEquals(false, SettingsExportCodec.parseExportData(json).settings.agpsResetOnStartEnabled)
+    }
+
+    @Test
     fun `parse defaults missing lastKnownPositionEnabled to false`() {
         @Suppress("ktlint:standard:max-line-length") // JSON string literal cannot be split without changing its value
         val json = """{"schemaVersion":1,"exportedAt":0,"settings":{"speedUnit":"KMH","enabledWidgetFeatures":[]},"speedProfiles":[],"routes":[],"favoriteLocations":[],"jitterIdleRadius":0.0,"jitterMovingRadius":1.0,"jitterIntervalSeconds":3}"""

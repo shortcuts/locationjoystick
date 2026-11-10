@@ -377,6 +377,10 @@ fun SettingsRoute(
                     viewModel.setLastKnownPositionEnabled(action.enabled)
                 }
 
+                is SettingsAction.SetAgpsResetOnStartEnabled -> {
+                    viewModel.setAgpsResetOnStartEnabled(action.enabled)
+                }
+
                 is SettingsAction.SetRealismRealElevationEnabled -> {
                     viewModel.setRealismRealElevationEnabled(action.enabled)
                 }

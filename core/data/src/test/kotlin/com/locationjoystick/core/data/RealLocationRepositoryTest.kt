@@ -76,4 +76,19 @@ class RealLocationRepositoryTest {
 
         assertNull(repository().lastKnownRealPosition())
     }
+
+    @Test
+    fun `resetAidingData sends delete_aiding_data to the gps provider and returns its result`() {
+        every { lm.sendExtraCommand(LocationManager.GPS_PROVIDER, "delete_aiding_data", null) } returns true
+
+        assertEquals(true, repository().resetAidingData())
+        verify(exactly = 1) { lm.sendExtraCommand("gps", "delete_aiding_data", null) }
+    }
+
+    @Test
+    fun `resetAidingData returns false when the command throws`() {
+        every { lm.sendExtraCommand(any(), any(), any()) } throws SecurityException("denied")
+
+        assertEquals(false, repository().resetAidingData())
+    }
 }

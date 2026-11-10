@@ -913,6 +913,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setLastKnownPositionEnabled(enabled: Boolean) = edit { copy(lastKnownPositionEnabled = enabled) }
 
+    override fun getAgpsResetOnStartEnabled(): Flow<Boolean> = flowOf(false)
+
+    override suspend fun setAgpsResetOnStartEnabled(enabled: Boolean) = edit { copy(agpsResetOnStartEnabled = enabled) }
+
     override fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?> = flowOf(null)
 
     override suspend fun setRealPositionSnapshot(snapshot: RealPositionSnapshot) = Unit

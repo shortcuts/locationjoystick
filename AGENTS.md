@@ -175,6 +175,7 @@ Any UI or UX change must respect docs/design-system.md. Run /maintain-design to 
 | `CaptureCoordinatesRepository` | `:core:data` | Repository (`@Singleton`) | Owns Capture mode state. Jumps go through `TeleportUseCase`. |
 | `RealLocationRepository` | `:core:data` | Repository (`@Singleton`) | Reads a real GPS fix without touching the mock-position cache or cooldown. |
 | `RealPositionSnapshotter` | `:core:data` | Class (`@Singleton`) | Retakes the real last known position at each fresh spoofing start, for the favorites card. Never runs while the provider is registered. |
+| `AgpsResetter` | `:core:data` | Class (`@Singleton`) | Resets the real GPS provider's A-GPS data at each fresh spoofing start when the setting is on. Must run before the mock provider registers. See [features/mock-location.md](docs/features/mock-location.md). |
 | `LaunchAfterLinkUseCase` | `:core:data` | Class (`@Singleton`) | Opens the user's chosen app after a handled map link. |
 | `GpxOpenRepository` | `:core:data` | Repository (`@Singleton`) | Holds externally opened GPX files until the map consumes them. |
 | `HotLocationsRepository` | `:core:data` | Repository (`@Singleton`) | Hot-location list from a cached wiki JSON with a bundled seed. Sibling of `UpdateCheckRepository`. |

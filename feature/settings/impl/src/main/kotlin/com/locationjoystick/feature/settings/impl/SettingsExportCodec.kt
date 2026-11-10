@@ -95,6 +95,7 @@ internal object SettingsExportCodec {
         settingsObj.put("hideForegroundNotification", data.settings.hideForegroundNotification)
         settingsObj.put("showRouteJumpButtons", data.settings.showRouteJumpButtons)
         settingsObj.put("lastKnownPositionEnabled", data.settings.lastKnownPositionEnabled)
+        settingsObj.put("agpsResetOnStartEnabled", data.settings.agpsResetOnStartEnabled)
         settingsObj.put("bypassMockLocationCheck", data.settings.bypassMockLocationCheck)
         settingsObj.put("realElevationEnabled", data.settings.realElevationEnabled)
         settingsObj.put("altitudeJitterRadiusMeters", data.settings.altitudeJitterRadiusMeters)
@@ -282,6 +283,11 @@ internal object SettingsExportCodec {
                 "lastKnownPositionEnabled",
                 AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT,
             )
+        val agpsResetOnStartEnabled =
+            settingsObj.optBoolean(
+                "agpsResetOnStartEnabled",
+                AppConstants.ProfileConstants.AGPS_RESET_ON_START_ENABLED_DEFAULT,
+            )
         val bypassMockLocationCheck = settingsObj.optBoolean("bypassMockLocationCheck", false)
         val realElevationEnabled =
             settingsObj.optBoolean("realElevationEnabled", AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT)
@@ -366,6 +372,7 @@ internal object SettingsExportCodec {
                 hideForegroundNotification = hideForegroundNotification,
                 showRouteJumpButtons = showRouteJumpButtons,
                 lastKnownPositionEnabled = lastKnownPositionEnabled,
+                agpsResetOnStartEnabled = agpsResetOnStartEnabled,
                 bypassMockLocationCheck = bypassMockLocationCheck,
                 roamingDefaults = roamingDefaults,
                 realElevationEnabled = realElevationEnabled,

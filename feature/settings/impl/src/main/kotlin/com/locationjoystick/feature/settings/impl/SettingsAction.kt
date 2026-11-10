@@ -152,6 +152,10 @@ internal sealed class SettingsAction {
         val enabled: Boolean,
     ) : SettingsAction()
 
+    data class SetAgpsResetOnStartEnabled(
+        val enabled: Boolean,
+    ) : SettingsAction()
+
     data class SetRealismRealElevationEnabled(
         val enabled: Boolean,
     ) : SettingsAction()

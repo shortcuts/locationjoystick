@@ -391,6 +391,7 @@ data class SettingsSnapshot(
     val hideForegroundNotification: Boolean = false,
     val showRouteJumpButtons: Boolean = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
     val lastKnownPositionEnabled: Boolean = AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT,
+    val agpsResetOnStartEnabled: Boolean = AppConstants.ProfileConstants.AGPS_RESET_ON_START_ENABLED_DEFAULT,
     val bypassMockLocationCheck: Boolean = false,
     val realismRealElevationEnabled: Boolean = AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
     val altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
@@ -968,6 +969,7 @@ class AppPreferencesDataSource
                 prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] = snapshot.hideForegroundNotification
                 prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] = snapshot.showRouteJumpButtons
                 prefs[Keys.LAST_KNOWN_POSITION_ENABLED] = snapshot.lastKnownPositionEnabled
+                prefs[Keys.AGPS_RESET_ON_START_ENABLED] = snapshot.agpsResetOnStartEnabled
                 prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] = snapshot.bypassMockLocationCheck
                 prefs[Keys.REALISM_REAL_ELEVATION_ENABLED] = snapshot.realismRealElevationEnabled
                 prefs[Keys.ALTITUDE_JITTER_RADIUS_METERS] =
@@ -1065,6 +1067,9 @@ class AppPreferencesDataSource
                         lastKnownPositionEnabled =
                             prefs[Keys.LAST_KNOWN_POSITION_ENABLED]
                                 ?: AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT,
+                        agpsResetOnStartEnabled =
+                            prefs[Keys.AGPS_RESET_ON_START_ENABLED]
+                                ?: AppConstants.ProfileConstants.AGPS_RESET_ON_START_ENABLED_DEFAULT,
                         bypassMockLocationCheck = prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] ?: false,
                         realismRealElevationEnabled =
                             prefs[Keys.REALISM_REAL_ELEVATION_ENABLED]

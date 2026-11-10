@@ -24,6 +24,7 @@ data class AppSettings(
     val hideForegroundNotification: Boolean = false,
     val showRouteJumpButtons: Boolean = false,
     val lastKnownPositionEnabled: Boolean = false,
+    val agpsResetOnStartEnabled: Boolean = false,
     val bypassMockLocationCheck: Boolean = false,
     val realElevationEnabled: Boolean = true,
     val altitudeJitterRadiusMeters: Double = 0.25,

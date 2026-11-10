@@ -76,6 +76,18 @@ class RealLocationRepository
                 ?.let { LatLng(it.latitude, it.longitude) }
         }
 
+        /**
+         * Asks the real GPS provider to drop its cached A-GPS data. Must run before the mock provider registers:
+         * once a test provider holds `gps`, the command reaches it instead of the real provider.
+         */
+        fun resetAidingData(): Boolean =
+            try {
+                locationManager?.sendExtraCommand(LocationManager.GPS_PROVIDER, DELETE_AIDING_DATA, null) ?: false
+            } catch (e: Exception) {
+                Log.e(TAG, "delete_aiding_data failed", e)
+                false
+            }
+
         @Suppress("DEPRECATION", "MissingPermission")
         private suspend fun awaitLegacyCurrentGps(): Location? =
             suspendCancellableCoroutine { continuation ->
@@ -123,6 +135,7 @@ class RealLocationRepository
 
         private companion object {
             const val TAG = "RealLocationRepository"
+            const val DELETE_AIDING_DATA = "delete_aiding_data"
             const val CURRENT_LOCATION_TIMEOUT_MS = 10_000L
         }
     }

@@ -8,6 +8,7 @@
 | `ACCESS_COARSE_LOCATION` | Dangerous | Fallback if fine denied | Yes |
 | `SYSTEM_ALERT_WINDOW` | Special (AppOps) | Joystick + widget overlays | Yes |
 | `FOREGROUND_SERVICE` | Normal | Run `MockLocationService` | Yes |
+| `ACCESS_LOCATION_EXTRA_COMMANDS` | Normal | A-GPS reset on spoofing start | Yes |
 | `FOREGROUND_SERVICE_LOCATION` | Normal (API 34+) | `foregroundServiceType="location"` | Yes (API 34+) |
 | `BIND_ACCESSIBILITY_SERVICE` | Special (user enables in Android Accessibility settings, after the in-app disclosure) | Screenshots for the Tap to Walk automatic fit and, with `canPerformGestures`, the Reconnect accessory tap | Yes (service declaration) |
 | `POST_NOTIFICATIONS` | Dangerous (API 33+) | Foreground notification | Yes |

@@ -264,4 +264,11 @@ internal fun GpsRealismSection(
         title = stringResource(R.string.settings_gps_section_simulate_signal_dropouts),
         description = stringResource(R.string.settings_gps_section_simulate_signal_dropouts_desc),
     )
+    LjSelectionRow(
+        mode = LjSelectionMode.Multi,
+        checked = uiState.agpsResetOnStartEnabled,
+        onCheckedChange = { onAction(SettingsAction.SetAgpsResetOnStartEnabled(it)) },
+        title = stringResource(R.string.settings_gps_section_reset_agps_data),
+        description = stringResource(R.string.settings_gps_section_reset_agps_data_desc),
+    )
 }

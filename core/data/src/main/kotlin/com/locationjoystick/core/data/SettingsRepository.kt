@@ -364,6 +364,10 @@ class SettingsRepository
 
         suspend fun setLastKnownPositionEnabled(enabled: Boolean) = dataSource.setLastKnownPositionEnabled(enabled)
 
+        fun getAgpsResetOnStartEnabled(): Flow<Boolean> = dataSource.getAgpsResetOnStartEnabled()
+
+        suspend fun setAgpsResetOnStartEnabled(enabled: Boolean) = dataSource.setAgpsResetOnStartEnabled(enabled)
+
         fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?> = dataSource.getRealPositionSnapshot()
 
         suspend fun setRealPositionSnapshot(snapshot: RealPositionSnapshot) = dataSource.setRealPositionSnapshot(snapshot)

@@ -59,6 +59,15 @@ Realism is a set of independent switches. Each one makes the fake fix look more 
 
 Pausing a route, a walk or the spoofing must keep pushing a fix. Apps that see no fix for a while fall back to the real GPS, which exposes the real position. So every pause keeps the last position alive on the provider.
 
+## A-GPS reset
+
+An off-by-default Settings switch makes each fresh spoofing start send `delete_aiding_data` to the real GPS provider. The aim is less cached real-location data for apps to fall back on.
+
+- **Before the mock provider registers.** Once a test provider holds `gps`, the command reaches the mock provider instead of the real one. `AgpsResetter` runs right after `RealPositionSnapshotter`, which also needs the real provider. The reset comes second because it may clear the last fix the snapshot reads.
+- **Once per start.** Pause and resume keep the provider registered, so they skip it.
+- **Measured.** On a Pixel 5 running Android 14 (API 34), `sendExtraCommand` returned `true` with no `SecurityException` for a normal app holding `ACCESS_LOCATION_EXTRA_COMMANDS`.
+- **Limit.** The return value shows the provider accepted the command. It does not prove an effect on other apps, and some phones ignore it.
+
 ## Real elevation
 
 Altitude is anchored to the real ground elevation at the spoofed position, from a free elevation service, instead of a flat default. A flat default looks wrong when the user is on a hill.

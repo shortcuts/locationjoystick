@@ -16,6 +16,12 @@ interface RealPositionPreferences {
     /** Sets whether the last known real position is pinned to the favorites list. */
     suspend fun setLastKnownPositionEnabled(enabled: Boolean)
 
+    /** Gets whether the real GPS provider's cached A-GPS data is reset at each fresh spoofing start. */
+    fun getAgpsResetOnStartEnabled(): Flow<Boolean>
+
+    /** Sets whether the real GPS provider's cached A-GPS data is reset at each fresh spoofing start. */
+    suspend fun setAgpsResetOnStartEnabled(enabled: Boolean)
+
     /** Gets the real position saved at the last fresh spoofing start, or null if none. */
     fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?>
 
@@ -30,6 +36,11 @@ internal class RealPositionStore(
         dataStore.pref(Keys.LAST_KNOWN_POSITION_ENABLED, AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT)
 
     override suspend fun setLastKnownPositionEnabled(enabled: Boolean) = dataStore.setPref(Keys.LAST_KNOWN_POSITION_ENABLED, enabled)
+
+    override fun getAgpsResetOnStartEnabled(): Flow<Boolean> =
+        dataStore.pref(Keys.AGPS_RESET_ON_START_ENABLED, AppConstants.ProfileConstants.AGPS_RESET_ON_START_ENABLED_DEFAULT)
+
+    override suspend fun setAgpsResetOnStartEnabled(enabled: Boolean) = dataStore.setPref(Keys.AGPS_RESET_ON_START_ENABLED, enabled)
 
     override fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?> =
         dataStore.safeData("real position snapshot").map { prefs ->

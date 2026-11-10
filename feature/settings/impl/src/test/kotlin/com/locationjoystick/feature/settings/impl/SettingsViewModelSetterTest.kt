@@ -241,6 +241,14 @@ class SettingsViewModelSetterTest {
         }
 
     @Test
+    fun `setAgpsResetOnStartEnabled`() =
+        runTest(testDispatcher) {
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
+            viewModel.setAgpsResetOnStartEnabled(true)
+            assertTrue(viewModel.loaded.agpsResetOnStartEnabled)
+        }
+
+    @Test
     fun `jitter speed variation setters`() =
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }

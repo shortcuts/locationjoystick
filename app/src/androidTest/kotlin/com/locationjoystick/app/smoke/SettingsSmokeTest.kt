@@ -95,6 +95,13 @@ class SettingsSmokeTest : BaseSmokeTest() {
     }
 
     @Test
+    fun settings_shows_agps_reset() {
+        composeRule.onNodeWithText("Randomness & realism").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Reset A-GPS data on start").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
     fun settings_shows_map_section() {
         composeRule.onNodeWithText("Randomness & realism").performClick()
         composeRule.waitForIdle()

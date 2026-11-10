@@ -17,6 +17,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.constants.AppConstants.ServiceConstants
 import com.locationjoystick.core.common.util.LocaleContextWrapper
 import com.locationjoystick.core.common.util.NsdCodeManager
+import com.locationjoystick.core.data.AgpsResetter
 import com.locationjoystick.core.data.DebugStats
 import com.locationjoystick.core.data.ElevationRepository
 import com.locationjoystick.core.data.GroupRepository
@@ -123,6 +124,8 @@ class MockLocationService : Service() {
     @Inject lateinit var settingsRepository: SettingsRepository
 
     @Inject lateinit var realPositionSnapshotter: RealPositionSnapshotter
+
+    @Inject lateinit var agpsResetter: AgpsResetter
 
     @Inject lateinit var routeReplayEngine: RouteReplayEngine
 
@@ -335,13 +338,19 @@ class MockLocationService : Service() {
                                 RunningLoopAction.STOP_IDLE_LOOP_FOR_REPLAY -> {
                                     updateJob?.cancel()
                                     updateJob = null
-                                    if (!testProvider.isAdded) realPositionSnapshotter.capture()
+                                    if (!testProvider.isAdded) {
+                                        realPositionSnapshotter.capture()
+                                        agpsResetter.resetIfEnabled()
+                                    }
                                     testProvider.setup()
                                     Log.i(TAG, "State changed to RUNNING (route replay) - stopped idle loop")
                                 }
 
                                 RunningLoopAction.START_IDLE_LOOP -> {
-                                    if (!testProvider.isAdded) realPositionSnapshotter.capture()
+                                    if (!testProvider.isAdded) {
+                                        realPositionSnapshotter.capture()
+                                        agpsResetter.resetIfEnabled()
+                                    }
                                     testProvider.setup()
                                     startUpdateLoop()
                                     Log.i(TAG, "State changed to RUNNING - started update loop")

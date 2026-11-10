@@ -195,6 +195,15 @@ class AppPreferencesDataSourceTest {
         }
 
     @Test
+    fun `agpsResetOnStartEnabled defaults to false and round-trips true`() =
+        runTest {
+            assertFalse(dataSource.getAgpsResetOnStartEnabled().first())
+            dataSource.setAgpsResetOnStartEnabled(true)
+            assertTrue(dataSource.getAgpsResetOnStartEnabled().first())
+            assertTrue(dataSource.getSettingsSnapshot().first().agpsResetOnStartEnabled)
+        }
+
+    @Test
     fun `lastKnownPositionEnabled defaults to false and round-trips true`() =
         runTest {
             assertFalse(dataSource.getLastKnownPositionEnabled().first())

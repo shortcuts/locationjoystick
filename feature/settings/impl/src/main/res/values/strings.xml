@@ -77,6 +77,8 @@
     <string name="settings_gps_section_realistic_satellite_count_desc">"Reports 7 to 14 visible satellites and 6 to 12 in use, instead of zero. Some apps treat zero satellites as a sign of spoofing."</string>
     <string name="settings_gps_section_simulate_signal_dropouts">"Simulate signal dropouts"</string>
     <string name="settings_gps_section_simulate_signal_dropouts_desc">"Freezes the fake location signal for a moment about every 10 seconds, like a real GPS losing signal. Off by default because most apps show the freeze. Does not run during route replay."</string>
+    <string name="settings_gps_section_reset_agps_data">"Reset A-GPS data on start"</string>
+    <string name="settings_gps_section_reset_agps_data_desc">"Clears the phone's cached satellite assist data each time spoofing starts. Apps then have less old real-location data to fall back on. Some phones ignore this."</string>
     <string name="settings_gps_location_memory">"Location memory"</string>
     <string name="settings_gps_controls_whether_the_app_remembers_where">"Controls whether the app remembers where you left off when reopened."</string>
     <string name="settings_gps_speed_profiles">"Speed profiles"</string>

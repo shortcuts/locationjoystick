@@ -31,6 +31,7 @@ object AppConstants {
         const val DEFAULT_SPEED_UNIT = "KMH"
         const val SHOW_ROUTE_JUMP_BUTTONS_DEFAULT = false
         const val LAST_KNOWN_POSITION_ENABLED_DEFAULT = false
+        const val AGPS_RESET_ON_START_ENABLED_DEFAULT = false
         const val SPOOF_HISTORY_MAX_COUNT = 50
         val DEFAULT_ENABLED_SPEED_PROFILE_IDS = setOf(PROFILE_ID_WALK, PROFILE_ID_RUN, PROFILE_ID_BIKE)
     }

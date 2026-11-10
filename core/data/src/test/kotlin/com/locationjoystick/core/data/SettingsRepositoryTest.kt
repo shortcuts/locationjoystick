@@ -1046,6 +1046,19 @@ class SettingsRepositoryTest {
         }
 
     @Test
+    fun `getAgpsResetOnStartEnabled returns false by default`() =
+        runTest {
+            assertFalse(repository.getAgpsResetOnStartEnabled().first())
+        }
+
+    @Test
+    fun `setAgpsResetOnStartEnabled persists true`() =
+        runTest {
+            repository.setAgpsResetOnStartEnabled(true)
+            assertTrue(repository.getAgpsResetOnStartEnabled().first())
+        }
+
+    @Test
     fun `spoof history forwards add and clear to the data source`() =
         runTest {
             repository.addSpoofHistory(1.0, 2.0, 5L)
@@ -1701,6 +1714,15 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         lastKnownPositionEnabledFlow.value = enabled
     }
 
+    private val agpsResetOnStartEnabledFlow =
+        MutableStateFlow(AppConstants.ProfileConstants.AGPS_RESET_ON_START_ENABLED_DEFAULT)
+
+    override fun getAgpsResetOnStartEnabled(): Flow<Boolean> = agpsResetOnStartEnabledFlow
+
+    override suspend fun setAgpsResetOnStartEnabled(enabled: Boolean) {
+        agpsResetOnStartEnabledFlow.value = enabled
+    }
+
     private val realPositionSnapshotFlow = MutableStateFlow<RealPositionSnapshot?>(null)
 
     override fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?> = realPositionSnapshotFlow
@@ -1921,6 +1943,7 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
         hideForegroundNotificationFlow.value = false
         showRouteJumpButtonsFlow.value = false
         lastKnownPositionEnabledFlow.value = false
+        agpsResetOnStartEnabledFlow.value = false
         realPositionSnapshotFlow.value = null
         bypassMockLocationCheckFlow.value = false
         onboardingCompleteFlow.value = onboardingComplete

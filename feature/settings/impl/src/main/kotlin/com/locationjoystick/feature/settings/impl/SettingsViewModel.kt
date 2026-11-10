@@ -307,6 +307,7 @@ class SettingsViewModel
                         hideForegroundNotification = snapshot.hideForegroundNotification,
                         showRouteJumpButtons = snapshot.showRouteJumpButtons,
                         lastKnownPositionEnabled = snapshot.lastKnownPositionEnabled,
+                        agpsResetOnStartEnabled = snapshot.agpsResetOnStartEnabled,
                         realismRealElevationEnabled = snapshot.realismRealElevationEnabled,
                         hasAltitudeOverride = baseAltitudeOverride != null,
                         altitudeJitterRadiusMeters = snapshot.altitudeJitterRadiusMeters,
@@ -565,6 +566,10 @@ class SettingsViewModel
 
         fun setLastKnownPositionEnabled(enabled: Boolean) {
             save { settingsRepository.setLastKnownPositionEnabled(enabled) }
+        }
+
+        fun setAgpsResetOnStartEnabled(enabled: Boolean) {
+            save { settingsRepository.setAgpsResetOnStartEnabled(enabled) }
         }
 
         fun setRealismRealElevationEnabled(enabled: Boolean) {
@@ -941,6 +946,7 @@ class SettingsViewModel
                     hideForegroundNotification = data.settings.hideForegroundNotification,
                     showRouteJumpButtons = data.settings.showRouteJumpButtons,
                     lastKnownPositionEnabled = data.settings.lastKnownPositionEnabled,
+                    agpsResetOnStartEnabled = data.settings.agpsResetOnStartEnabled,
                     bypassMockLocationCheck = data.settings.bypassMockLocationCheck,
                     realismRealElevationEnabled = data.settings.realElevationEnabled,
                     altitudeJitterRadiusMeters = data.settings.altitudeJitterRadiusMeters,
