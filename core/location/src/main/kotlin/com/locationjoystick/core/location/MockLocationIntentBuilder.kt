@@ -100,11 +100,13 @@ object MockLocationIntentBuilder {
     fun appendWaypoint(
         context: Context,
         waypoint: LatLng,
+        isStop: Boolean = true,
     ): Intent =
         Intent(context, MockLocationService::class.java).apply {
             action = MockLocationService.ACTION_ROUTE_APPEND_WAYPOINT
             putExtra(MockLocationService.EXTRA_WAYPOINT_LAT, waypoint.latitude)
             putExtra(MockLocationService.EXTRA_WAYPOINT_LON, waypoint.longitude)
+            putExtra(MockLocationService.EXTRA_WAYPOINT_IS_STOP, isStop)
         }
 
     fun pauseRouteReplay(context: Context): Intent =
@@ -140,6 +142,7 @@ object MockLocationIntentBuilder {
         context: Context,
         waypoints: List<LatLng>,
         speedMs: Double,
+        stopIndices: List<Int>,
     ): Intent {
         require(waypoints.size >= 2) { "Ephemeral replay requires at least 2 waypoints" }
         return Intent(context, MockLocationService::class.java).apply {
@@ -147,6 +150,7 @@ object MockLocationIntentBuilder {
             putExtra(MockLocationService.EXTRA_IS_EPHEMERAL, true)
             putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
             putExtra(ServiceConstants.EXTRA_EPHEMERAL_WAYPOINTS, waypoints.encodeToString())
+            putExtra(MockLocationService.EXTRA_EPHEMERAL_STOP_INDICES, stopIndices.toIntArray())
         }
     }
 

@@ -358,6 +358,10 @@ object AppConstants {
 
         /** Compact encoding of ephemeral waypoints: "lat,lon;lat,lon;...". Replaces the old parallel DoubleArray extras. */
         const val EXTRA_EPHEMERAL_WAYPOINTS = "extra_ephemeral_waypoints"
+
+        /** Indices into [EXTRA_EPHEMERAL_WAYPOINTS] that are points the user tapped. */
+        const val EXTRA_EPHEMERAL_STOP_INDICES = "extra_ephemeral_stop_indices"
+        const val EXTRA_WAYPOINT_IS_STOP = "extra_waypoint_is_stop"
         const val EXTRA_NAVIGATE_TO_MAP = "navigate_to_map"
         const val EXTRA_NAVIGATE_TO_FAVORITES = "navigate_to_favorites"
         const val EXTRA_NAVIGATE_TO_ROUTES = "navigate_to_routes"

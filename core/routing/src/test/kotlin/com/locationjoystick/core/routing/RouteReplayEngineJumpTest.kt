@@ -178,6 +178,32 @@ class RouteReplayEngineJumpTest {
     }
 
     @Test
+    fun `appendWaypoint extends the total only for a stop`() {
+        engine.start(
+            waypoints = listOf(a, b, c, d),
+            speedMs = 1.4,
+            onPositionUpdate = {},
+            onComplete = {},
+            boundaryIndices = listOf(1, 3),
+        )
+        Thread.sleep(SETTLE_MS)
+        engine.pause()
+
+        engine.appendWaypoint(LatLng(0.004, 0.0), isStop = false)
+        assertEquals(2, engine.currentProgress()!!.total)
+        engine.appendWaypoint(LatLng(0.005, 0.0), isStop = true)
+        assertEquals(3, engine.currentProgress()!!.total)
+
+        kotlinx.coroutines.runBlocking { engine.stop() }
+    }
+
+    @Test
+    fun `appendWaypoint while idle adds no stop`() {
+        engine.appendWaypoint(LatLng(0.004, 0.0))
+        assertEquals(null, engine.currentProgress())
+    }
+
+    @Test
     fun `currentProgress uses named-stop boundaries on a road-expanded path`() {
         val expanded =
             listOf(

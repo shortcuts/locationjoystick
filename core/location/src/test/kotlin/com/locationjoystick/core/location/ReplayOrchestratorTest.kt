@@ -1554,6 +1554,42 @@ class ReplayOrchestratorTest {
         }
 
     @Test
+    fun handleStart_teleportRoute_publishesProgressFromTheTeleportEngine() =
+        runTest {
+            coEvery { routeRepository.getRouteWithWaypoints("teleport-1") } returns flowOf(teleportRoute())
+            every { teleportRouteEngine.currentProgress() } returns RouteProgress(1, 2)
+
+            orchestrator.handleStart("teleport-1", 1.4, hopConfig)
+
+            assertEquals(RouteProgress(1, 2), locationRepository.routeProgress.value)
+        }
+
+    @Test
+    fun handleEphemeralStart_passesStopIndicesAsBoundaries() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val boundaries = slot<List<Int>>()
+            every {
+                routeReplayEngine.start(any(), any(), any(), any(), any(), capture(boundaries), any(), any())
+            } returns Unit
+
+            orchestrator.handleEphemeralStart(listOf(LatLng(1.0, 1.0), LatLng(2.0, 2.0), LatLng(3.0, 3.0)), 1.4, listOf(1, 2))
+
+            assertEquals(listOf(1, 2), boundaries.captured)
+        }
+
+    @Test
+    fun handleAppendWaypoint_extendsTheEngineAndRepublishesProgress() {
+        val pos = LatLng(3.0, 3.0)
+        every { routeReplayEngine.currentProgress() } returns RouteProgress(1, 3)
+
+        orchestrator.handleAppendWaypoint(pos, isStop = true)
+
+        verify { routeReplayEngine.appendWaypoint(pos, true) }
+        assertEquals(RouteProgress(1, 3), locationRepository.routeProgress.value)
+    }
+
+    @Test
     fun handleStart_teleportRouteBackward_reversesWaypointsAndWaitSecondsTogether() =
         runTest {
             coEvery { routeRepository.getRouteWithWaypoints("teleport-1") } returns flowOf(teleportRoute())

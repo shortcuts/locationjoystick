@@ -213,6 +213,7 @@ internal class ReplayOrchestrator(
     fun handleEphemeralStart(
         waypoints: List<LatLng>,
         speedMs: Double,
+        stopIndices: List<Int>? = null,
     ) {
         val previous = activeReplayJob
         val state = lifecycle.begin()
@@ -229,9 +230,18 @@ internal class ReplayOrchestrator(
                     waypoints = waypoints,
                     speedMs = speedMs,
                     isLooping = false,
+                    boundaryIndices = stopIndices,
                     persistMetadata = null,
                 )
             }
+    }
+
+    fun handleAppendWaypoint(
+        pos: LatLng,
+        isStop: Boolean,
+    ) {
+        routeReplayEngine.appendWaypoint(pos, isStop)
+        publishProgress()
     }
 
     private suspend fun isStartStillCurrent(generation: Int): Boolean {
@@ -450,7 +460,7 @@ internal class ReplayOrchestrator(
     }
 
     private fun publishProgress() {
-        locationRepository.setRouteProgress(routeReplayEngine.currentProgress())
+        locationRepository.setRouteProgress(activeReplayer.currentProgress())
     }
 
     /**
@@ -558,6 +568,7 @@ internal class ReplayOrchestrator(
                         onPositionUpdate = ::tickReplayPosition,
                         onComplete = { scope.launch { onComplete() } },
                     )
+                    publishProgress()
                 }
             },
         )

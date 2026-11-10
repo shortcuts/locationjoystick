@@ -1,6 +1,7 @@
 package com.locationjoystick.core.routing
 
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.Waypoint
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -221,5 +222,20 @@ class TeleportRouteEngineTest {
             onComplete = { completed = true },
         )
         assertTrue(completed)
+    }
+
+    @Test
+    fun `currentProgress is null idle, 1 of N after start and 2 of N after a jump`() {
+        assertEquals(null, engine.currentProgress())
+        engine.start(
+            waypoints = listOf(wp(pointA, 60), wp(pointB, 60), wp(pointC, 60)),
+            onPositionUpdate = {},
+            onComplete = {},
+        )
+        assertEquals(RouteProgress(1, 3), engine.currentProgress())
+        engine.pause()
+        engine.jumpToNextWaypoint(onPositionUpdate = {}, onComplete = {})
+        assertEquals(RouteProgress(2, 3), engine.currentProgress())
+        runBlocking { engine.stop() }
     }
 }

@@ -3,6 +3,7 @@ package com.locationjoystick.core.routing
 import android.util.Log
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.Waypoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -77,6 +78,11 @@ class TeleportRouteEngine
         // Nothing moves at a "speed" in a teleport route; report 0 so speed-cycle UI doesn't
         // show a stale value.
         override fun updateSpeed(speedMs: Double): Float = 0f
+
+        override fun currentProgress(): RouteProgress? {
+            val size = savedWaypointsRef.get().size
+            return if (size == 0) null else RouteProgress(resumeIndex + 1, size)
+        }
 
         override suspend fun stop() {
             jobController.cancelAndJoinActive()

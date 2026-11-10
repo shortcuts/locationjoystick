@@ -40,6 +40,8 @@ class EphemeralReplayControllerTest {
     private val gate = CompletableDeferred<Unit>()
     private val routeFroms = mutableListOf<LatLng>()
     private val replays = mutableListOf<List<LatLng>>()
+    private val stopIndices = mutableListOf<List<Int>>()
+    private val appendStops = mutableListOf<Pair<LatLng, Boolean>>()
     private lateinit var locationRepository: LocationRepository
     private lateinit var walkCoordinator: WalkCoordinator
     private lateinit var controller: EphemeralReplayController
@@ -47,11 +49,15 @@ class EphemeralReplayControllerTest {
     @Before
     fun setUp() {
         mockkObject(MockLocationIntentBuilder)
-        every { MockLocationIntentBuilder.startEphemeralReplay(any(), any(), any()) } answers {
+        every { MockLocationIntentBuilder.startEphemeralReplay(any(), any(), any(), any()) } answers {
             replays.add(secondArg())
+            stopIndices.add(arg(3))
             mockk(relaxed = true)
         }
-        every { MockLocationIntentBuilder.appendWaypoint(any(), any()) } returns mockk(relaxed = true)
+        every { MockLocationIntentBuilder.appendWaypoint(any(), any(), any()) } answers {
+            appendStops.add(secondArg<LatLng>() to thirdArg())
+            mockk(relaxed = true)
+        }
         coEvery { osrm.resolveRoute(any(), any(), any(), any(), any()) } coAnswers {
             routeFroms.add(secondArg())
             gate.await()
@@ -123,5 +129,51 @@ class EphemeralReplayControllerTest {
 
             val position = locationRepository.currentPosition.value!!
             assertEquals(listOf(position, b, far), replays.single())
+        }
+
+    @Test
+    fun `first chain start marks only the walk target and the added point as stops`() =
+        runTest {
+            gate.complete(Unit)
+            locationRepository.setPositionInternal(a)
+            walkCoordinator.startWalk(far, backgroundScope)
+
+            controller.addWaypoint(b, far, false, context) {}
+
+            assertEquals(listOf(listOf(1, 2)), stopIndices)
+        }
+
+    @Test
+    fun `road chain start marks stops by tapped point, not by road vertex`() =
+        runTest {
+            val mid = LatLng(48.9500, 2.3522)
+            coEvery { osrm.resolveRoute(any(), any(), any(), any(), any()) } coAnswers {
+                listOf(secondArg(), mid, thirdArg())
+            }
+            locationRepository.setPositionInternal(a)
+            walkCoordinator.startWalk(far, backgroundScope)
+
+            controller.addWaypoint(b, far, true, context) {}
+
+            // [start, mid, far, mid, b]: far at 2, b at 4
+            assertEquals(5, replays.single().size)
+            assertEquals(listOf(listOf(2, 4)), stopIndices)
+        }
+
+    @Test
+    fun `road append flags only the last vertex of the segment as a stop`() =
+        runTest {
+            val mid = LatLng(48.9500, 2.3522)
+            coEvery { osrm.resolveRoute(any(), any(), any(), any(), any()) } coAnswers {
+                listOf(secondArg(), mid, thirdArg())
+            }
+            locationRepository.setPositionInternal(a)
+            walkCoordinator.startWalk(far, backgroundScope)
+            controller.addWaypoint(b, far, true, context) {}
+            val next = LatLng(48.7, 2.3)
+
+            controller.addWaypoint(next, far, true, context) {}
+
+            assertEquals(listOf(mid to false, next to true), appendStops)
         }
 }

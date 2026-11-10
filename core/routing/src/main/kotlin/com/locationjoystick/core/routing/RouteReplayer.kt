@@ -1,6 +1,7 @@
 package com.locationjoystick.core.routing
 
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.RouteProgress
 
 /**
  * Common shape of [RouteReplayEngine] and [TeleportRouteEngine], so callers driving an active
@@ -24,6 +25,9 @@ interface RouteReplayer {
     )
 
     suspend fun stop()
+
+    /** Stop progress for the active replay, or null when none is loaded. */
+    fun currentProgress(): RouteProgress?
 
     fun jumpToNextWaypoint(
         onPositionUpdate: (LatLng) -> Unit,

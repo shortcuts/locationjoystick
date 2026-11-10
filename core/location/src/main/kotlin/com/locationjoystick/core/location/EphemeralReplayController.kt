@@ -98,6 +98,7 @@ class EphemeralReplayController
                         val legEnd = firstLeg?.last() ?: walkTarget
                         // When road-following, any first leg not already stored (startPos→walkTarget)
                         // and legEnd→newPoint must be OSRM-resolved so the whole chain stays road-following.
+                        var targetIndex = 0
                         val initial =
                             if (followRoads) {
                                 locationRepository.beginRoadRouteFetch(newPoint)
@@ -127,16 +128,29 @@ class EphemeralReplayController
                                                 }
                                             a.await() to b.await()
                                         }
+                                    targetIndex = toTarget.size - 1
                                     toTarget + toNewPoint.drop(1) // legEnd is last of toTarget, first of toNewPoint
                                 } finally {
                                     locationRepository.endRoadRouteFetch()
                                 }
                             } else {
-                                (firstLeg?.dropLast(1) ?: listOf(startPos)) +
+                                val prefix = firstLeg?.dropLast(1) ?: listOf(startPos)
+                                targetIndex = prefix.size
+                                prefix +
                                     osrmClient.resolveRoute(OsrmClient.PROFILE_FOOT, legEnd, newPoint, followRoads = false)
                             }
                         val speedMs = settingsRepository.getActiveSpeedProfile().first().speedMetersPerSecond
-                        launchIntent(MockLocationIntentBuilder.startEphemeralReplay(context, initial, speedMs))
+                        launchIntent(
+                            MockLocationIntentBuilder.startEphemeralReplay(
+                                context,
+                                initial,
+                                speedMs,
+                                listOf(
+                                    targetIndex,
+                                    initial.size - 1,
+                                ),
+                            ),
+                        )
                         initial
                     } else if (currentWaypoints.isNotEmpty() ||
                         locationRepository.currentMode.value == MockMode.ROUTE_REPLAY
@@ -160,7 +174,9 @@ class EphemeralReplayController
                             } else {
                                 listOf(newPoint)
                             }
-                        appendSegment.forEach { launchIntent(MockLocationIntentBuilder.appendWaypoint(context, it)) }
+                        appendSegment.forEachIndexed { i, point ->
+                            launchIntent(MockLocationIntentBuilder.appendWaypoint(context, point, isStop = i == appendSegment.lastIndex))
+                        }
                         currentWaypoints + appendSegment
                     } else {
                         null // no active walk, no-op

@@ -186,7 +186,7 @@ class RouteReplayEngine
         }
 
         /** Named-stop progress for the active replay, or null when no replay is loaded. */
-        fun currentProgress(): RouteProgress? {
+        override fun currentProgress(): RouteProgress? {
             val snapshot = state.get().snapshot
             return computeRouteProgress(snapshot.waypointIndex, boundaryIndices)?.let {
                 // The return leg counts down from the last stop, so the chip keeps the route's own numbers.
@@ -204,9 +204,20 @@ class RouteReplayEngine
         /**
          * Appends a waypoint to the current replay (used for recording).
          * @param pos Position to append
+         * @param isStop Whether [pos] counts as a stop in [currentProgress]
          */
-        fun appendWaypoint(pos: LatLng) {
+        fun appendWaypoint(
+            pos: LatLng,
+            isStop: Boolean = true,
+        ) {
             transition { it.edited { snapshot -> snapshot.copy(waypoints = snapshot.waypoints + pos) } }
+            if (isStop && state.get() != ReplayState.Idle) {
+                boundaryIndices = boundaryIndices + (
+                    state
+                        .get()
+                        .snapshot.waypoints.size - 1
+                )
+            }
             Log.i(TAG, "Waypoint appended; total=${state.get().snapshot.waypoints.size}")
         }
 

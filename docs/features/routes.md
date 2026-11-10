@@ -90,7 +90,7 @@ Replay of the temporary route is a route replay, not the walk-and-add-point ephe
 
 ### Progress
 
-While replay is active, a `current / total` chip shows the last named stop reached. Only named stops count. Road vertices and planting vertices do not, so the number matches what the user sees on the route. On the return leg of a loop the chip counts down from the last stop, so it keeps the route's own stop numbers.
+While replay is active, a `current / total` chip shows the last named stop reached. Only named stops count. Road vertices and planting vertices do not, so the number matches what the user sees on the route. A teleport route counts every waypoint. A chain of added points (Add next point) counts only the tapped points: the walk target and each added point. An append raises the total at once. On the return leg of a loop the chip counts down from the last stop, so it keeps the route's own stop numbers.
 
 ### Speed profile per route
 

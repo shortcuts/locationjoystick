@@ -63,8 +63,8 @@ class MapControllerWalkCancellationTest {
     @Before
     fun setUp() {
         mockkObject(MockLocationIntentBuilder)
-        every { MockLocationIntentBuilder.startEphemeralReplay(any(), any(), any()) } returns mockk(relaxed = true)
-        every { MockLocationIntentBuilder.appendWaypoint(any(), any()) } returns mockk(relaxed = true)
+        every { MockLocationIntentBuilder.startEphemeralReplay(any(), any(), any(), any()) } returns mockk(relaxed = true)
+        every { MockLocationIntentBuilder.appendWaypoint(any(), any(), any()) } returns mockk(relaxed = true)
         every { MockLocationIntentBuilder.cancelRouteReplay(any()) } returns mockk(relaxed = true)
         every { MockLocationIntentBuilder.updatePosition(any(), any(), any(), any(), any()) } returns mockk(relaxed = true)
         every { MockLocationIntentBuilder.pauseRouteReplay(any()) } returns mockk(relaxed = true)

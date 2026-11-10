@@ -97,6 +97,8 @@ class MockLocationService : Service() {
         const val EXTRA_WAYPOINT_LAT = AppConstants.ServiceConstants.EXTRA_WAYPOINT_LAT
         const val EXTRA_WAYPOINT_LON = AppConstants.ServiceConstants.EXTRA_WAYPOINT_LON
         const val EXTRA_IS_EPHEMERAL = AppConstants.ServiceConstants.EXTRA_IS_EPHEMERAL
+        const val EXTRA_EPHEMERAL_STOP_INDICES = AppConstants.ServiceConstants.EXTRA_EPHEMERAL_STOP_INDICES
+        const val EXTRA_WAYPOINT_IS_STOP = AppConstants.ServiceConstants.EXTRA_WAYPOINT_IS_STOP
         const val EXTRA_IS_LOOPING = AppConstants.ServiceConstants.EXTRA_IS_LOOPING
         const val EXTRA_RETURN_LAT = AppConstants.ServiceConstants.EXTRA_RETURN_LAT
         const val EXTRA_RETURN_LON = AppConstants.ServiceConstants.EXTRA_RETURN_LON
@@ -645,7 +647,11 @@ class MockLocationService : Service() {
                                 LatLng(lat, lon)
                             }?.takeIf { it.size >= 2 }
                             ?: return START_STICKY
-                    handleEphemeralReplayStart(waypoints, speedMs)
+                    handleEphemeralReplayStart(
+                        waypoints,
+                        speedMs,
+                        intent.getIntArrayExtra(EXTRA_EPHEMERAL_STOP_INDICES)?.toList(),
+                    )
                 } else {
                     val routeId = intent.getStringExtra(EXTRA_ROUTE_ID) ?: return START_STICKY
                     handleReplayStart(routeId, speedMs, intent.toRouteStartConfig(), intent.returnPositionOrNull())
@@ -690,7 +696,7 @@ class MockLocationService : Service() {
             ACTION_ROUTE_APPEND_WAYPOINT -> {
                 val lat = intent.getDoubleExtra(EXTRA_WAYPOINT_LAT, 0.0)
                 val lon = intent.getDoubleExtra(EXTRA_WAYPOINT_LON, 0.0)
-                routeReplayEngine.appendWaypoint(LatLng(lat, lon))
+                replayOrchestrator.handleAppendWaypoint(LatLng(lat, lon), intent.getBooleanExtra(EXTRA_WAYPOINT_IS_STOP, true))
             }
         }
 
@@ -1053,7 +1059,8 @@ class MockLocationService : Service() {
     private fun handleEphemeralReplayStart(
         waypoints: List<LatLng>,
         speedMs: Double,
-    ) = replayOrchestrator.handleEphemeralStart(waypoints, speedMs)
+        stopIndices: List<Int>?,
+    ) = replayOrchestrator.handleEphemeralStart(waypoints, speedMs, stopIndices)
 
     private fun handleReplayPause() = replayOrchestrator.handlePause()
 
