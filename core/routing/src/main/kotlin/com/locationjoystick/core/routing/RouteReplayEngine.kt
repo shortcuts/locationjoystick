@@ -387,7 +387,8 @@ class RouteReplayEngine
                             boundaries,
                         )
                     position = result.position
-                    index = result.nextWaypointIndex
+                    // Past the last waypoint, so the final tick publishes the last stop as reached.
+                    index = if (result.reachedEnd) waypoints.size else result.nextWaypointIndex
                     saveProgress(position, index)
                     try {
                         onPositionUpdate(position)

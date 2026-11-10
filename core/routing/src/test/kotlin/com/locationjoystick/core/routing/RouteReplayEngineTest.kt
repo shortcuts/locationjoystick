@@ -338,6 +338,23 @@ class RouteReplayEngineTest {
     }
 
     @Test
+    fun `progress reaches the last stop on the tick that arrives there`() {
+        val a = LatLng(0.0, 0.0)
+        val b = LatLng(0.0001, 0.0)
+        val c = LatLng(0.0002, 0.0)
+        val labels = java.util.Collections.synchronizedList(mutableListOf<String?>())
+        val done = CountDownLatch(1)
+        engine.start(
+            waypoints = listOf(a, b, c),
+            speedMs = 15.0,
+            onPositionUpdate = { labels.add(engine.currentProgress()?.label) },
+            onComplete = { done.countDown() },
+        )
+        assertTrue("replay never completed", done.await(5, TimeUnit.SECONDS))
+        assertEquals("3/3", labels.last())
+    }
+
+    @Test
     fun `teleport between waypoints lingers at start before first hop`() {
         val start = LatLng(0.0, 0.0)
         val mid = LatLng(1.0, 0.0)

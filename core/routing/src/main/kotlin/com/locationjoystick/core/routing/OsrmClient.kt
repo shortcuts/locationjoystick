@@ -281,7 +281,8 @@ class OsrmClient
         @Inject
         constructor() : this(listOf(FossgisBackend, DemoBackend))
 
-        internal constructor(baseUrl: String) : this(
+        /** One backend at [baseUrl] for every profile. Tests point it at a local server. */
+        constructor(baseUrl: String) : this(
             listOf(OsrmBackend(singleGraph = false) { baseUrl.trimEnd('/') }),
         )
 

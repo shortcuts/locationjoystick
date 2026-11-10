@@ -37,7 +37,12 @@ End-to-end navigation suite. Requires a connected device or emulator. Runs again
 make smoke-test
 ```
 
-One smoke test class per screen, each checking that the screen loads, its main actions are present, and its navigation returns the user to where they came from. The test files are the reference for the exact assertions. The Control API smoke test is the exception to "UI only": it checks that the leader exposes exactly the endpoints documented in the wiki, so the public contract and the code cannot drift apart unnoticed. It never asserts endpoint behaviour.
+One smoke test class per screen, each checking that the screen loads, its main actions are present, and its navigation returns the user to where they came from. The test files are the reference for the exact assertions. Two classes go beyond the UI:
+
+- The Control API smoke test checks that the leader exposes exactly the endpoints documented in the wiki, so the public contract and the code cannot drift apart unnoticed. It never asserts endpoint behaviour.
+- `MovementSmokeTest` drives each movement mode (walk, walk via roads, add next point, named route, teleport route, roaming, joystick) through the injected map controller, with the Drive profile at the 15 m/s cap so a test ends in seconds. Each test asserts arrival, no backtrack (the distance to the next stop never grows by more than two steps) and the published stop counter.
+
+`MovementSmokeTest` never calls a live OSRM server. A Hilt test module replaces only the road lookup with an `OsrmClient` that points at a local server (`FakeRoad`), which answers with scripted road shapes, including a road that overlaps itself to reproduce the loop. A live server would make the road tests slow, flaky and rate-limited. The joystick test goes through the Control API, because the overlay service cannot be driven in-process.
 
 Helpers are in the smoke test helper file.
 
