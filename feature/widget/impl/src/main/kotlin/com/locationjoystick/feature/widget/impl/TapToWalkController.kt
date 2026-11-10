@@ -20,7 +20,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -42,8 +44,9 @@ internal class TapToWalkController(
         private const val TAG = "TapToWalkController"
     }
 
-    private val isActiveFlow = MutableStateFlow(false)
-    val isActive: StateFlow<Boolean> = isActiveFlow
+    private val state = MutableStateFlow<TapToWalkState>(TapToWalkState.Hidden)
+    val isActive: StateFlow<Boolean> =
+        state.map { it.isActive }.stateIn(scope, SharingStarted.Eagerly, false)
 
     val visible: StateFlow<Boolean> =
         combine(settingsRepository.getTapToWalkOverlayEnabled(), settingsRepository.getGuidedPath()) { enabled, path ->
@@ -62,18 +65,13 @@ internal class TapToWalkController(
                 AppConstants.AccessibilityConstants.DISCLOSURE_UNANSWERED,
             )
 
-    private var overlay: TapToWalkOverlay? = null
-
-    /** The tap being walked and its target, so a newer map can re-aim it from the position it was made at. */
-    private var aimedTap: Pair<GroundTap, LatLng>? = null
-
     init {
         scope.launch { groundCalibration.collect { reaimOnNewMap() } }
         scope.launch { visible.collect { if (!it) dismiss() } }
     }
 
     fun onClicked() {
-        when (tapToWalkClick(overlay?.isShowing() == true, needsAccessibilityDisclosure())) {
+        when (tapToWalkClick(state.value.overlay?.isShowing() == true, needsAccessibilityDisclosure())) {
             TapToWalkClick.DISMISS_OVERLAY -> dismiss()
             TapToWalkClick.SHOW_DISCLOSURE -> onShowDisclosure()
             TapToWalkClick.OPEN_OVERLAY -> openTapToWalkOverlay()
@@ -81,8 +79,12 @@ internal class TapToWalkController(
     }
 
     fun dismiss() {
-        overlay?.dismiss()
-        overlay = null
+        state.value.overlay?.dismiss()
+        transition(TapToWalkEvent.OverlayClosed)
+    }
+
+    private fun transition(event: TapToWalkEvent) {
+        state.update { current -> current.next(event) ?: current.also { Log.w(TAG, "ignored $event from $it") } }
     }
 
     private fun openTapToWalkOverlay() {
@@ -94,10 +96,9 @@ internal class TapToWalkController(
                 savedStateRegistryOwner = savedStateRegistryOwner,
                 onGroundTap = ::walkGroundTap,
                 getPosition = { mapController.sharedState.value.currentPosition },
-                onDismissed = { isActiveFlow.value = false },
+                onDismissed = { transition(TapToWalkEvent.OverlayClosed) },
             )
-        overlay = view
-        isActiveFlow.value = true
+        transition(TapToWalkEvent.OverlayOpened(view))
         view.show()
     }
 
@@ -107,7 +108,7 @@ internal class TapToWalkController(
             Toast.makeText(context, R.string.tap_to_walk_past_horizon, Toast.LENGTH_LONG).show()
             return
         }
-        aimedTap = tap to target
+        transition(TapToWalkEvent.Aimed(tap, target))
         mapController.walkTo(target)
     }
 
@@ -125,15 +126,16 @@ internal class TapToWalkController(
      * tap from its tap-time position. A walk that already ended or was replaced is left alone.
      */
     private fun reaimOnNewMap() {
-        val (tap, target) = aimedTap ?: return
+        val walking = state.value as? TapToWalkState.Walking ?: return
+        val (tap, target) = walking.tap to walking.target
         val walkTarget = locationRepository.walkTarget.value
         if (walkTarget != target) {
-            aimedTap = null
+            transition(TapToWalkEvent.WalkEnded)
             return
         }
         val next = TapToWalkOverlay.reaimedTarget(tap, target, walkTarget, groundMapNow()) ?: return
         Log.d(TAG, "tap re-aimed under the new map")
-        aimedTap = tap to next
+        transition(TapToWalkEvent.Aimed(tap, next))
         mapController.walkTo(next)
     }
 
