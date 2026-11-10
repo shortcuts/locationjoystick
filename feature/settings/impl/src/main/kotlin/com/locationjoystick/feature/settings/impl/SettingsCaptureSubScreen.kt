@@ -17,7 +17,7 @@ import com.locationjoystick.feature.settings.impl.R
 
 @Composable
 internal fun SettingsCaptureSubScreen(
-    uiState: SettingsUiState,
+    screenState: SettingsScreenState,
     onNavigateBack: () -> Unit,
     isSpoofing: Boolean,
     onToggleSpoofing: () -> Unit,
@@ -38,17 +38,21 @@ internal fun SettingsCaptureSubScreen(
         snackbarHost = snackbarHost,
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else {
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(settingsScrollPadding()),
-                ) {
-                    CaptureSection(uiState, onAction, launchableApps)
+            when (screenState) {
+                SettingsScreenState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                is SettingsScreenState.Loaded -> {
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(settingsScrollPadding()),
+                    ) {
+                        CaptureSection(screenState.state, onAction, launchableApps)
+                    }
                 }
             }
         }

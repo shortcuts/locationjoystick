@@ -20,7 +20,7 @@ class GpsRealismSectionResetButtonTest {
     private fun setSection(hasAltitudeOverride: Boolean) {
         composeRule.setContent {
             GpsRealismSection(
-                uiState = SettingsUiState(isLoading = false, hasAltitudeOverride = hasAltitudeOverride),
+                uiState = SettingsUiState(hasAltitudeOverride = hasAltitudeOverride),
                 isMph = false,
                 onAction = {},
             )

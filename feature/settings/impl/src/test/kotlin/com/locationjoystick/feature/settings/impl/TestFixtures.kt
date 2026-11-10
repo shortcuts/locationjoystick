@@ -25,3 +25,6 @@ internal fun minimalExportData(): ExportData =
         jitterMovingRadius = 1.0,
         jitterMaxStepMeters = 1.0,
     )
+
+internal val SettingsViewModel.loaded: SettingsUiState
+    get() = (screenState.value as SettingsScreenState.Loaded).state

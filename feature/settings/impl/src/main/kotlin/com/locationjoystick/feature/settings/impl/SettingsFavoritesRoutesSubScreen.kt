@@ -26,7 +26,7 @@ import com.locationjoystick.feature.settings.impl.R
 
 @Composable
 internal fun SettingsFavoritesRoutesSubScreen(
-    uiState: SettingsUiState,
+    screenState: SettingsScreenState,
     hotLocationTree: HotItemTree,
     hotRouteTree: HotItemTree,
     onNavigateBack: () -> Unit,
@@ -48,12 +48,13 @@ internal fun SettingsFavoritesRoutesSubScreen(
         snackbarHost = snackbarHost,
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            when {
-                uiState.isLoading -> {
+            when (screenState) {
+                SettingsScreenState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
 
-                else -> {
+                is SettingsScreenState.Loaded -> {
+                    val uiState = screenState.state
                     val isMph = uiState.speedUnit == SpeedUnit.MPH
                     Column(
                         modifier =

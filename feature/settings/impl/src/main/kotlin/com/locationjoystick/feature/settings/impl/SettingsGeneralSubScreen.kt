@@ -48,7 +48,7 @@ import com.locationjoystick.feature.settings.impl.R
 
 @Composable
 internal fun SettingsGeneralSubScreen(
-    uiState: SettingsUiState,
+    screenState: SettingsScreenState,
     languageTag: String? = null,
     onNavigateBack: () -> Unit,
     isSpoofing: Boolean,
@@ -69,12 +69,13 @@ internal fun SettingsGeneralSubScreen(
         snackbarHost = snackbarHost,
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            when {
-                uiState.isLoading -> {
+            when (screenState) {
+                SettingsScreenState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
 
-                else -> {
+                is SettingsScreenState.Loaded -> {
+                    val uiState = screenState.state
                     Column(
                         modifier =
                             Modifier

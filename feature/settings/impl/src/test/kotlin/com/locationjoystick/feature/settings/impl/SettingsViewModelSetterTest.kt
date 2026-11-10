@@ -100,14 +100,28 @@ class SettingsViewModelSetterTest {
     // -------------------------------------------------------------------------
 
     @Test
+    fun `screen state starts Loading then becomes Loaded and never reverts`() =
+        runTest(testDispatcher) {
+            assertEquals(SettingsScreenState.Loading, viewModel.screenState.value)
+            val seen = mutableListOf<SettingsScreenState>()
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect { seen += it } }
+            advanceUntilIdle()
+            viewModel.setSpeed("run", 3.6)
+            advanceUntilIdle()
+            val firstLoaded = seen.indexOfFirst { it is SettingsScreenState.Loaded }
+            assertTrue(firstLoaded >= 0)
+            assertTrue(seen.drop(firstLoaded).all { it is SettingsScreenState.Loaded })
+        }
+
+    @Test
     fun `setSpeed stores speed in ms`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setSpeed("run", 3.6) // 3.6 km/h = 1.0 m/s
             advanceUntilIdle()
             assertEquals(
                 1.0,
-                viewModel.uiState.value.speeds
+                viewModel.loaded.speeds
                     .getValue("run"),
                 0.01,
             )
@@ -116,12 +130,12 @@ class SettingsViewModelSetterTest {
     @Test
     fun `setSpeed for a second profile stores speed in ms`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setSpeed("bike", 18.0) // 18 km/h = 5.0 m/s
             advanceUntilIdle()
             assertEquals(
                 5.0,
-                viewModel.uiState.value.speeds
+                viewModel.loaded.speeds
                     .getValue("bike"),
                 0.01,
             )
@@ -130,7 +144,7 @@ class SettingsViewModelSetterTest {
     @Test
     fun `setGuidedPath writes immediately and does not`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setGuidedPath(GuidedPath.POKEMON_GO)
             assertEquals("POKEMON_GO", fakeDataSource.lastSetGuidedPath)
         }
@@ -138,106 +152,106 @@ class SettingsViewModelSetterTest {
     @Test
     fun `setSpeedUnit`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setSpeedUnit(SpeedUnit.MPH)
-            assertEquals(SpeedUnit.MPH, viewModel.uiState.value.speedUnit)
+            assertEquals(SpeedUnit.MPH, viewModel.loaded.speedUnit)
         }
 
     @Test
     fun `setWidgetFeatures`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             val features = setOf(AppFeature.JOYSTICK_TOGGLE, AppFeature.SPEED_CYCLE)
             viewModel.setWidgetFeatures(features)
-            assertEquals(features, viewModel.uiState.value.enabledWidgetFeatures)
+            assertEquals(features, viewModel.loaded.enabledWidgetFeatures)
         }
 
     @Test
     fun `setRememberLastLocation`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setRememberLastLocation(true)
-            assertTrue(viewModel.uiState.value.rememberLastLocation)
+            assertTrue(viewModel.loaded.rememberLastLocation)
         }
 
     @Test
     fun `setMapFollowsLocation`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setMapFollowsLocation(false)
-            assertFalse(viewModel.uiState.value.mapFollowsLocation)
+            assertFalse(viewModel.loaded.mapFollowsLocation)
         }
 
     @Test
     fun `jitter setters`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setJitterIdleRadius(3.0)
-            assertEquals(3.0, viewModel.uiState.value.jitterIdleRadiusMeters, 0.001)
+            assertEquals(3.0, viewModel.loaded.jitterIdleRadiusMeters, 0.001)
 
             viewModel.setJitterMovingRadius(5.0)
-            assertEquals(5.0, viewModel.uiState.value.jitterMovingRadiusMeters, 0.001)
+            assertEquals(5.0, viewModel.loaded.jitterMovingRadiusMeters, 0.001)
 
             viewModel.setJitterMaxStepMeters(2.5)
-            assertEquals(2.5, viewModel.uiState.value.jitterMaxStepMeters, 0.001)
+            assertEquals(2.5, viewModel.loaded.jitterMaxStepMeters, 0.001)
         }
 
     @Test
     fun `realism setters`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setRealismBearingHoldIdle(false)
-            assertFalse(viewModel.uiState.value.realismBearingHoldIdle)
+            assertFalse(viewModel.loaded.realismBearingHoldIdle)
 
             viewModel.setRealismAltitudeEnabled(false)
-            assertFalse(viewModel.uiState.value.realismAltitudeEnabled)
+            assertFalse(viewModel.loaded.realismAltitudeEnabled)
 
             viewModel.setRealismWarmupEnabled(true)
-            assertTrue(viewModel.uiState.value.realismWarmupEnabled)
+            assertTrue(viewModel.loaded.realismWarmupEnabled)
 
             viewModel.setRealismSatelliteExtrasEnabled(false)
-            assertFalse(viewModel.uiState.value.realismSatelliteExtrasEnabled)
+            assertFalse(viewModel.loaded.realismSatelliteExtrasEnabled)
 
             viewModel.setRealismSuspendedMockingEnabled(true)
-            assertTrue(viewModel.uiState.value.realismSuspendedMockingEnabled)
+            assertTrue(viewModel.loaded.realismSuspendedMockingEnabled)
         }
 
     @Test
     fun `setHideTeleportFeatures`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setHideTeleportFeatures(true)
-            assertTrue(viewModel.uiState.value.hideTeleportFeatures)
+            assertTrue(viewModel.loaded.hideTeleportFeatures)
         }
 
     @Test
     fun `setShowRouteJumpButtons`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setShowRouteJumpButtons(true)
-            assertTrue(viewModel.uiState.value.showRouteJumpButtons)
+            assertTrue(viewModel.loaded.showRouteJumpButtons)
         }
 
     @Test
     fun `setLastKnownPositionEnabled`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setLastKnownPositionEnabled(true)
-            assertTrue(viewModel.uiState.value.lastKnownPositionEnabled)
+            assertTrue(viewModel.loaded.lastKnownPositionEnabled)
         }
 
     @Test
     fun `jitter speed variation setters`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setJitterSpeedIdleVariationPct(15)
-            assertEquals(15, viewModel.uiState.value.jitterSpeedIdleVariationPct)
+            assertEquals(15, viewModel.loaded.jitterSpeedIdleVariationPct)
 
             viewModel.setJitterSpeedMovingVariationPct(25)
-            assertEquals(25, viewModel.uiState.value.jitterSpeedMovingVariationPct)
+            assertEquals(25, viewModel.loaded.jitterSpeedMovingVariationPct)
 
             viewModel.setJitterSpeedIdleWobbleProbabilityPct(30)
-            assertEquals(30, viewModel.uiState.value.jitterSpeedIdleWobbleProbabilityPct)
+            assertEquals(30, viewModel.loaded.jitterSpeedIdleWobbleProbabilityPct)
         }
 
     // -------------------------------------------------------------------------
@@ -247,33 +261,33 @@ class SettingsViewModelSetterTest {
     @Test
     fun `setHotLocationsEnabled true with empty selection auto-selects all`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setHotLocationsEnabled(true)
-            assertTrue(viewModel.uiState.value.hotLocationsEnabled)
+            assertTrue(viewModel.loaded.hotLocationsEnabled)
             // All hot location IDs should be selected when enabling with empty selection
             val expectedIds =
                 hotLocationsRepository.locations.value
                     .map { FavoriteRepository.idForLocation(it.name, it.city) }
                     .toSet()
             assertTrue(expectedIds.isNotEmpty())
-            assertEquals(expectedIds, viewModel.uiState.value.selectedHotLocationIds)
+            assertEquals(expectedIds, viewModel.loaded.selectedHotLocationIds)
         }
 
     @Test
     fun `setHotLocationsEnabled false marks disabled`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setHotLocationsEnabled(false)
-            assertFalse(viewModel.uiState.value.hotLocationsEnabled)
+            assertFalse(viewModel.loaded.hotLocationsEnabled)
         }
 
     @Test
     fun `setSelectedHotLocationIds stores ids`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             val ids = setOf("hot_paris", "hot_tokyo")
             viewModel.setSelectedHotLocationIds(ids)
-            assertEquals(ids, viewModel.uiState.value.selectedHotLocationIds)
+            assertEquals(ids, viewModel.loaded.selectedHotLocationIds)
         }
 
     // -------------------------------------------------------------------------
@@ -283,15 +297,15 @@ class SettingsViewModelSetterTest {
     @Test
     fun `setFloatingMapQuickWalk updates state`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setFloatingMapQuickWalk(true)
-            assertTrue(viewModel.uiState.value.floatingMapQuickWalk)
+            assertTrue(viewModel.loaded.floatingMapQuickWalk)
         }
 
     @Test
     fun `setTapToWalkOverlayEnabled saves at once`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setTapToWalkOverlayEnabled(true)
             assertEquals(true, fakeDataSource.tapToWalkEnabledWrite)
         }
@@ -304,41 +318,41 @@ class SettingsViewModelSetterTest {
     @Test
     fun `setCaptureModeEnabled writes through the shared capture repository`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setCaptureModeEnabled(true)
-            assertTrue(viewModel.uiState.value.captureModeEnabled)
+            assertTrue(viewModel.loaded.captureModeEnabled)
             assertTrue(captureRepository.captureModeEnabled.first())
         }
 
     @Test
     fun `setCaptureEnabled and setJumpEnabled write through the shared capture repository`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setCaptureEnabled(true)
             viewModel.setJumpEnabled(true)
-            assertTrue(viewModel.uiState.value.captureEnabled)
-            assertTrue(viewModel.uiState.value.jumpEnabled)
+            assertTrue(viewModel.loaded.captureEnabled)
+            assertTrue(viewModel.loaded.jumpEnabled)
         }
 
     @Test
     fun `setCapturePreviousBrowserPackage persists the pass-through browser choice`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setCapturePreviousBrowserPackage("com.example.browser")
-            assertEquals("com.example.browser", viewModel.uiState.value.capturePreviousBrowserPackage)
+            assertEquals("com.example.browser", viewModel.loaded.capturePreviousBrowserPackage)
         }
 
     @Test
     fun `restoreCaptureDefaultBrowser turns capture off and sets captureSetupReset`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setCaptureModeEnabled(true)
             viewModel.setCaptureEnabled(true)
             viewModel.setJumpEnabled(true)
 
             viewModel.restoreCaptureDefaultBrowser()
 
-            val state = viewModel.uiState.value
+            val state = viewModel.loaded
             assertFalse(state.captureModeEnabled)
             assertFalse(state.captureEnabled)
             assertFalse(state.jumpEnabled)
@@ -348,26 +362,26 @@ class SettingsViewModelSetterTest {
     @Test
     fun `captureSetupReset clears when app is no longer default browser or setup is tapped`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.restoreCaptureDefaultBrowser()
             viewModel.onCaptureDefaultBrowserChecked(true)
-            assertTrue(viewModel.uiState.value.captureSetupReset)
+            assertTrue(viewModel.loaded.captureSetupReset)
 
             viewModel.onCaptureDefaultBrowserChecked(false)
-            assertFalse(viewModel.uiState.value.captureSetupReset)
+            assertFalse(viewModel.loaded.captureSetupReset)
 
             viewModel.restoreCaptureDefaultBrowser()
             viewModel.clearCaptureSetupReset()
-            assertFalse(viewModel.uiState.value.captureSetupReset)
+            assertFalse(viewModel.loaded.captureSetupReset)
         }
 
     @Test
     fun `setLaunchAfterLinkPackage persists`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setLaunchAfterLinkPackage("com.example.game")
-            assertEquals("com.example.game", viewModel.uiState.value.launchAfterLinkPackage)
+            assertEquals("com.example.game", viewModel.loaded.launchAfterLinkPackage)
             viewModel.setLaunchAfterLinkPackage(null)
-            assertNull(viewModel.uiState.value.launchAfterLinkPackage)
+            assertNull(viewModel.loaded.launchAfterLinkPackage)
         }
 }

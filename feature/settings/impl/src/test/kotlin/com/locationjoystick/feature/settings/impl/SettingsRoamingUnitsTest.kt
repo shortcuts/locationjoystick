@@ -21,7 +21,7 @@ class SettingsRoamingUnitsTest {
     private fun setScreen(speedUnit: SpeedUnit) {
         composeRule.setContent {
             SettingsRoamingSubScreen(
-                uiState = SettingsUiState(isLoading = false, speedUnit = speedUnit),
+                screenState = SettingsScreenState.Loaded(SettingsUiState(speedUnit = speedUnit)),
                 roamingDefaults = RoamingDefaults(),
                 onNavigateBack = {},
                 isSpoofing = false,

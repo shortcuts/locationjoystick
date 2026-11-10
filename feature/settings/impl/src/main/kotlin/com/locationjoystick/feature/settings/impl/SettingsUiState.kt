@@ -10,8 +10,15 @@ import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.ThemeMode
 
+sealed interface SettingsScreenState {
+    data object Loading : SettingsScreenState
+
+    data class Loaded(
+        val state: SettingsUiState,
+    ) : SettingsScreenState
+}
+
 data class SettingsUiState(
-    val isLoading: Boolean = true,
     val speeds: Map<String, Double> = SpeedProfile.defaultProfiles().associate { it.id to it.speedMetersPerSecond },
     val speedUnit: SpeedUnit = SpeedUnit.KMH,
     val featureOrder: List<AppFeature> = AppFeature.DEFAULT_ORDER,

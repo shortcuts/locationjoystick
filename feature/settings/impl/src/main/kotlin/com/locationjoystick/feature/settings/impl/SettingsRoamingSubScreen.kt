@@ -41,7 +41,7 @@ import java.util.Locale
 
 @Composable
 internal fun SettingsRoamingSubScreen(
-    uiState: SettingsUiState,
+    screenState: SettingsScreenState,
     roamingDefaults: RoamingDefaults,
     onNavigateBack: () -> Unit,
     isSpoofing: Boolean,
@@ -62,12 +62,13 @@ internal fun SettingsRoamingSubScreen(
         snackbarHost = snackbarHost,
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            when {
-                uiState.isLoading -> {
+            when (screenState) {
+                SettingsScreenState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
 
-                else -> {
+                is SettingsScreenState.Loaded -> {
+                    val uiState = screenState.state
                     val isMph = uiState.speedUnit == SpeedUnit.MPH
                     Column(
                         modifier =

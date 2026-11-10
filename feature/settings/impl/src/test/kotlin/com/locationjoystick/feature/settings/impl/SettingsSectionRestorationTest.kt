@@ -27,7 +27,7 @@ class SettingsSectionRestorationTest {
     fun `open section survives activity recreation`() {
         val restoration = StateRestorationTester(composeRule)
         restoration.setContent {
-            SettingsScreen(uiState = SettingsUiState(isLoading = false), onAction = {})
+            SettingsScreen(screenState = SettingsScreenState.Loaded(SettingsUiState()), onAction = {})
         }
         val captureCard = string(R.string.settings_hub_capture)
         composeRule.onAllNodesWithText(string(R.string.settings_hub_roaming))[0].performScrollTo().performClick()

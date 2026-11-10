@@ -83,7 +83,7 @@ class SpeedProfileInputTest {
     @Test
     fun `setWalkSpeed 50 kmh saves correct ms value`() =
         runTest(testDispatcher) {
-            viewModel.uiState.test {
+            viewModel.screenState.test {
                 awaitItem() // consume initial loading state
                 viewModel.userFeedback.test {
                     viewModel.setSpeed("walk", 50.0) // 50 km/h — was rejected by old 0.1..15.0 range
@@ -100,7 +100,7 @@ class SpeedProfileInputTest {
     @Test
     fun `setBikeSpeed 100 kmh saves correct ms value`() =
         runTest(testDispatcher) {
-            viewModel.uiState.test {
+            viewModel.screenState.test {
                 awaitItem() // consume initial loading state
                 viewModel.userFeedback.test {
                     viewModel.setSpeed("bike", 100.0) // 100 km/h ≈ 27.8 m/s
@@ -117,7 +117,7 @@ class SpeedProfileInputTest {
     @Test
     fun `setRunSpeed 20 kmh saves correct ms value`() =
         runTest(testDispatcher) {
-            viewModel.uiState.test {
+            viewModel.screenState.test {
                 awaitItem() // consume initial loading state
                 viewModel.userFeedback.test {
                     viewModel.setSpeed("run", 20.0) // 20 km/h — also above old 15.0 cap
@@ -138,7 +138,7 @@ class SpeedProfileInputTest {
     @Test
     fun `speed above anti-cheat threshold is stored above threshold`() =
         runTest(testDispatcher) {
-            viewModel.uiState.test {
+            viewModel.screenState.test {
                 awaitItem() // consume initial loading state
                 viewModel.userFeedback.test {
                     // 40 km/h = 11.1 m/s > ANTI_CHEAT_WARNING_THRESHOLD_MS (8.0 m/s)
@@ -156,7 +156,7 @@ class SpeedProfileInputTest {
     @Test
     fun `speed below anti-cheat threshold is stored below threshold`() =
         runTest(testDispatcher) {
-            viewModel.uiState.test {
+            viewModel.screenState.test {
                 awaitItem() // consume initial loading state
                 viewModel.userFeedback.test {
                     // 10 km/h = 2.78 m/s < ANTI_CHEAT_WARNING_THRESHOLD_MS (8.0 m/s)
@@ -174,7 +174,7 @@ class SpeedProfileInputTest {
     @Test
     fun `speed exactly at anti-cheat threshold boundary is not above threshold`() =
         runTest(testDispatcher) {
-            viewModel.uiState.test {
+            viewModel.screenState.test {
                 awaitItem() // consume initial loading state
                 viewModel.userFeedback.test {
                     // Threshold is 8.0 m/s = 28.8 km/h — strict > so boundary value must NOT trigger

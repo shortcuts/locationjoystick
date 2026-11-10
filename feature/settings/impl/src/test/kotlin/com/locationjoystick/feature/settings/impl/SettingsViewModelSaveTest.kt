@@ -131,7 +131,7 @@ class SettingsViewModelSaveTest {
     @Test
     fun `setSpeed writes once after the quiet period and not before`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setSpeed("walk", 2.0)
 
             advanceTimeBy(100)
@@ -144,7 +144,7 @@ class SettingsViewModelSaveTest {
     @Test
     fun `a second setSpeed inside the quiet period supersedes the first`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setSpeed("walk", 1.0)
             advanceTimeBy(100)
             viewModel.setSpeed("walk", 15.0)
@@ -219,11 +219,11 @@ class SettingsViewModelSaveTest {
     @Test
     fun `the mock location check bypass shows in ui state`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
 
             fakeSettingsRepo.setBypassMockLocationCheck(true)
 
-            assertTrue(viewModel.uiState.value.bypassMockLocationCheck)
+            assertTrue(viewModel.loaded.bypassMockLocationCheck)
         }
 
     @Test
@@ -397,7 +397,7 @@ class SettingsViewModelSaveTest {
     @Test
     fun `setHotLocationsEnabled true upserts hot favorites`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.userFeedback.test {
                 viewModel.setHotLocationsEnabled(true)
                 expectNoEvents()
@@ -411,7 +411,7 @@ class SettingsViewModelSaveTest {
     @Test
     fun `turning hot locations off clears Home when it was a hot favorite`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.userFeedback.test {
                 viewModel.setHotLocationsEnabled(true)
                 fakeSettingsRepo.setHomeFavoriteId(
@@ -431,7 +431,7 @@ class SettingsViewModelSaveTest {
     @Test
     fun `setHotLocationsEnabled false removes hot favorites`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.userFeedback.test {
                 viewModel.setHotLocationsEnabled(true)
                 val afterUpsert = fakeFavoriteRepo.getFavorites().first()
@@ -492,7 +492,7 @@ class SettingsViewModelSaveTest {
     @Test
     fun `prepareQrExport exports the written value and the active speed profile`() =
         runTest(testDispatcher) {
-            backgroundScope.launch(testDispatcher) { viewModel.uiState.collect {} }
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setMapFollowsLocation(false)
             mockkObject(NetworkUtils)
             try {

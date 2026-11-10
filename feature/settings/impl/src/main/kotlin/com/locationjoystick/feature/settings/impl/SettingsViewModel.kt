@@ -251,7 +251,7 @@ class SettingsViewModel
                     initialValue = RoamingDefaults(),
                 )
 
-        val uiState: StateFlow<SettingsUiState> =
+        val screenState: StateFlow<SettingsScreenState> =
             combine(
                 snapshotFlow,
                 combine(
@@ -272,74 +272,78 @@ class SettingsViewModel
                 themeMode,
                 baseAltitudeOverride,
                 ->
-                SettingsUiState(
-                    isLoading = false,
-                    speeds = snapshotSpeeds(snapshot),
-                    speedUnit = snapshot.speedUnit,
-                    featureOrder = snapshot.featureOrder,
-                    enabledWidgetFeatures = snapshot.enabledWidgetFeatures,
-                    enabledSpeedProfileIds = snapshot.enabledSpeedProfileIds,
-                    enabledMapFeatures = snapshot.enabledMapFeatures,
-                    rememberLastLocation = snapshot.rememberLastLocation,
-                    mapFollowsLocation = snapshot.mapFollowsLocation,
-                    mapTileSource = snapshot.mapTileSource,
-                    guidedPath = snapshot.guidedPath,
-                    disabledGeocodingProviders = snapshot.disabledGeocodingProviders,
-                    jitterIdleRadiusMeters = snapshot.jitterIdleRadius,
-                    jitterMovingRadiusMeters = snapshot.jitterMovingRadius,
-                    jitterMaxStepMeters = snapshot.jitterMaxStepMeters,
-                    realismBearingHoldIdle = snapshot.realismBearingHoldIdle,
-                    realismAltitudeEnabled = snapshot.realismAltitudeEnabled,
-                    realismWarmupEnabled = snapshot.realismWarmupEnabled,
-                    realismSatelliteExtrasEnabled = snapshot.realismSatelliteExtrasEnabled,
-                    realismSuspendedMockingEnabled = snapshot.realismSuspendedMockingEnabled,
-                    jitterSpeedIdleVariationPct = snapshot.jitterSpeedIdleVariationPct,
-                    jitterSpeedMovingVariationPct = snapshot.jitterSpeedMovingVariationPct,
-                    jitterSpeedIdleWobbleProbabilityPct = snapshot.jitterSpeedIdleWobbleProbabilityPct,
-                    hotLocationsEnabled = snapshot.hotLocationsEnabled,
-                    selectedHotLocationIds = snapshot.selectedHotLocationIds,
-                    hotRoutesEnabled = snapshot.hotRoutesEnabled,
-                    selectedHotRouteIds = snapshot.selectedHotRouteIds,
-                    floatingMapQuickWalk = snapshot.floatingMapQuickWalk,
-                    tapToWalkOverlayEnabled = live.tapToWalk,
-                    hideTeleportFeatures = snapshot.hideTeleportFeatures,
-                    hideWidgetOverlay = snapshot.hideWidgetOverlay,
-                    hideForegroundNotification = snapshot.hideForegroundNotification,
-                    showRouteJumpButtons = snapshot.showRouteJumpButtons,
-                    lastKnownPositionEnabled = snapshot.lastKnownPositionEnabled,
-                    realismRealElevationEnabled = snapshot.realismRealElevationEnabled,
-                    hasAltitudeOverride = baseAltitudeOverride != null,
-                    altitudeJitterRadiusMeters = snapshot.altitudeJitterRadiusMeters,
-                    plantingRadiusMeters = snapshot.plantingRadiusMeters,
-                    altitudeOverrideButtonEnabled = snapshot.altitudeOverrideButtonEnabled,
-                    debugStatsEnabled = snapshot.debugStatsEnabled,
-                    captureModeEnabled = capture.modeEnabled,
-                    captureEnabled = capture.captureEnabled,
-                    jumpEnabled = capture.jumpEnabled,
-                    capturePreviousBrowserPackage = capture.previousBrowserPackage,
-                    captureSetupReset = capture.setupReset,
-                    launchAfterLinkPackage = capture.launchAfterLinkPackage,
-                    launchAfterLinkChosen = capture.launchAfterLinkChosen,
-                    isScreenServiceGranted = isServiceGranted,
-                    accessibilityDisclosureAccepted =
-                        live.disclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
-                    reconnectTapEnabled = live.reconnectTap,
-                    keepWidgetOnIdle = live.keepWidgetOnIdle,
-                    bypassMockLocationCheck = snapshot.bypassMockLocationCheck,
-                    activeSpeedProfileId = live.activeSpeedProfileId,
-                    themeMode = themeMode,
+                SettingsScreenState.Loaded(
+                    SettingsUiState(
+                        speeds = snapshotSpeeds(snapshot),
+                        speedUnit = snapshot.speedUnit,
+                        featureOrder = snapshot.featureOrder,
+                        enabledWidgetFeatures = snapshot.enabledWidgetFeatures,
+                        enabledSpeedProfileIds = snapshot.enabledSpeedProfileIds,
+                        enabledMapFeatures = snapshot.enabledMapFeatures,
+                        rememberLastLocation = snapshot.rememberLastLocation,
+                        mapFollowsLocation = snapshot.mapFollowsLocation,
+                        mapTileSource = snapshot.mapTileSource,
+                        guidedPath = snapshot.guidedPath,
+                        disabledGeocodingProviders = snapshot.disabledGeocodingProviders,
+                        jitterIdleRadiusMeters = snapshot.jitterIdleRadius,
+                        jitterMovingRadiusMeters = snapshot.jitterMovingRadius,
+                        jitterMaxStepMeters = snapshot.jitterMaxStepMeters,
+                        realismBearingHoldIdle = snapshot.realismBearingHoldIdle,
+                        realismAltitudeEnabled = snapshot.realismAltitudeEnabled,
+                        realismWarmupEnabled = snapshot.realismWarmupEnabled,
+                        realismSatelliteExtrasEnabled = snapshot.realismSatelliteExtrasEnabled,
+                        realismSuspendedMockingEnabled = snapshot.realismSuspendedMockingEnabled,
+                        jitterSpeedIdleVariationPct = snapshot.jitterSpeedIdleVariationPct,
+                        jitterSpeedMovingVariationPct = snapshot.jitterSpeedMovingVariationPct,
+                        jitterSpeedIdleWobbleProbabilityPct = snapshot.jitterSpeedIdleWobbleProbabilityPct,
+                        hotLocationsEnabled = snapshot.hotLocationsEnabled,
+                        selectedHotLocationIds = snapshot.selectedHotLocationIds,
+                        hotRoutesEnabled = snapshot.hotRoutesEnabled,
+                        selectedHotRouteIds = snapshot.selectedHotRouteIds,
+                        floatingMapQuickWalk = snapshot.floatingMapQuickWalk,
+                        tapToWalkOverlayEnabled = live.tapToWalk,
+                        hideTeleportFeatures = snapshot.hideTeleportFeatures,
+                        hideWidgetOverlay = snapshot.hideWidgetOverlay,
+                        hideForegroundNotification = snapshot.hideForegroundNotification,
+                        showRouteJumpButtons = snapshot.showRouteJumpButtons,
+                        lastKnownPositionEnabled = snapshot.lastKnownPositionEnabled,
+                        realismRealElevationEnabled = snapshot.realismRealElevationEnabled,
+                        hasAltitudeOverride = baseAltitudeOverride != null,
+                        altitudeJitterRadiusMeters = snapshot.altitudeJitterRadiusMeters,
+                        plantingRadiusMeters = snapshot.plantingRadiusMeters,
+                        altitudeOverrideButtonEnabled = snapshot.altitudeOverrideButtonEnabled,
+                        debugStatsEnabled = snapshot.debugStatsEnabled,
+                        captureModeEnabled = capture.modeEnabled,
+                        captureEnabled = capture.captureEnabled,
+                        jumpEnabled = capture.jumpEnabled,
+                        capturePreviousBrowserPackage = capture.previousBrowserPackage,
+                        captureSetupReset = capture.setupReset,
+                        launchAfterLinkPackage = capture.launchAfterLinkPackage,
+                        launchAfterLinkChosen = capture.launchAfterLinkChosen,
+                        isScreenServiceGranted = isServiceGranted,
+                        accessibilityDisclosureAccepted =
+                            live.disclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
+                        reconnectTapEnabled = live.reconnectTap,
+                        keepWidgetOnIdle = live.keepWidgetOnIdle,
+                        bypassMockLocationCheck = snapshot.bypassMockLocationCheck,
+                        activeSpeedProfileId = live.activeSpeedProfileId,
+                        themeMode = themeMode,
+                    ),
                 )
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = SettingsUiState(isLoading = true),
+                initialValue = SettingsScreenState.Loading,
             )
+
+        private val current: SettingsUiState
+            get() = (screenState.value as? SettingsScreenState.Loaded)?.state ?: SettingsUiState()
 
         fun setSpeed(
             id: String,
             displaySpeed: Double,
         ) {
-            val speedMs = convertDisplayToMs(displaySpeed, uiState.value.speedUnit)
+            val speedMs = convertDisplayToMs(displaySpeed, current.speedUnit)
             val version = (speedWriteVersion[id] ?: 0) + 1
             speedWriteVersion[id] = version
             // Each keystroke calls this; writing "1" while the user types "15" would set the live pace to 1 km/h.
@@ -615,7 +619,7 @@ class SettingsViewModel
 
         /** A reset only holds while this app still owns the browser role; once it does not, setup is due anyway. */
         fun onCaptureDefaultBrowserChecked(isDefault: Boolean) {
-            if (!isDefault && uiState.value.captureSetupReset) clearCaptureSetupReset()
+            if (!isDefault && current.captureSetupReset) clearCaptureSetupReset()
         }
 
         fun setLaunchAfterLinkPackage(packageName: String?) {
@@ -721,7 +725,7 @@ class SettingsViewModel
             )
 
         private suspend fun buildCurrentExportData(): ExportData {
-            val state = uiState.value
+            val state = current
             val speedProfiles =
                 SpeedProfile.defaultProfiles().map { it.copy(speedMetersPerSecond = state.speeds.getValue(it.id)) }
             return ExportData(

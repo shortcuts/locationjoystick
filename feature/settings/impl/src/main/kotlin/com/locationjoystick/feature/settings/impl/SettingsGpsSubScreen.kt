@@ -46,7 +46,7 @@ import java.util.Locale
 
 @Composable
 internal fun SettingsGpsSubScreen(
-    uiState: SettingsUiState,
+    screenState: SettingsScreenState,
     onNavigateBack: () -> Unit,
     isSpoofing: Boolean,
     onToggleSpoofing: () -> Unit,
@@ -57,21 +57,21 @@ internal fun SettingsGpsSubScreen(
 ) {
     SettingsGpsScaffold(
         title = stringResource(R.string.settings_gps_movement_and_gps),
-        uiState = uiState,
+        screenState = screenState,
         onNavigateBack = onNavigateBack,
         isSpoofing = isSpoofing,
         onToggleSpoofing = onToggleSpoofing,
         locationLabel = locationLabel,
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
-    ) {
+    ) { uiState ->
         SpeedProfilesSection(uiState, onAction)
     }
 }
 
 @Composable
 internal fun SettingsRealismSubScreen(
-    uiState: SettingsUiState,
+    screenState: SettingsScreenState,
     onNavigateBack: () -> Unit,
     isSpoofing: Boolean,
     onToggleSpoofing: () -> Unit,
@@ -82,14 +82,14 @@ internal fun SettingsRealismSubScreen(
 ) {
     SettingsGpsScaffold(
         title = stringResource(R.string.settings_hub_realism),
-        uiState = uiState,
+        screenState = screenState,
         onNavigateBack = onNavigateBack,
         isSpoofing = isSpoofing,
         onToggleSpoofing = onToggleSpoofing,
         locationLabel = locationLabel,
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
-    ) {
+    ) { uiState ->
         val isMph = uiState.speedUnit == SpeedUnit.MPH
         GpsJitterSection(uiState, isMph, onAction)
         SettingsSectionDivider()
@@ -116,14 +116,14 @@ internal fun SettingsRealismSubScreen(
 @Composable
 private fun SettingsGpsScaffold(
     title: String,
-    uiState: SettingsUiState,
+    screenState: SettingsScreenState,
     onNavigateBack: () -> Unit,
     isSpoofing: Boolean,
     onToggleSpoofing: () -> Unit,
     locationLabel: String?,
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable ColumnScope.(SettingsUiState) -> Unit,
 ) {
     LjScaffold(
         title = title,
@@ -136,17 +136,21 @@ private fun SettingsGpsScaffold(
         snackbarHost = snackbarHost,
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else {
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(settingsScrollPadding()),
-                    content = content,
-                )
+            when (screenState) {
+                SettingsScreenState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                is SettingsScreenState.Loaded -> {
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(settingsScrollPadding()),
+                        content = { content(screenState.state) },
+                    )
+                }
             }
         }
     }

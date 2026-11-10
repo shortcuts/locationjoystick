@@ -19,7 +19,7 @@ class SettingsGpsSplitTest {
     val composeRule = createComposeRule()
 
     private fun openFromHub(card: String) {
-        composeRule.setContent { SettingsScreen(uiState = SettingsUiState(isLoading = false), onAction = {}) }
+        composeRule.setContent { SettingsScreen(screenState = SettingsScreenState.Loaded(SettingsUiState()), onAction = {}) }
         composeRule.onNodeWithText(card).performClick()
     }
 

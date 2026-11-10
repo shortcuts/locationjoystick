@@ -44,6 +44,7 @@ import com.locationjoystick.core.designsystem.component.LjOverflowMenuSectionLab
 import com.locationjoystick.core.designsystem.component.LjScaffold
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.location.rememberSpoofToggleState
+import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.feature.settings.impl.R
 
@@ -75,7 +76,7 @@ fun SettingsRoute(
     bottomBar: @Composable () -> Unit = {},
     openCaptureSetup: Boolean = false,
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val screenState by viewModel.screenState.collectAsStateWithLifecycle()
     val roamingDefaults by viewModel.roamingDefaults.collectAsStateWithLifecycle()
     val isRooted by viewModel.isRooted.collectAsStateWithLifecycle()
     val languageTag by viewModel.languageTag.collectAsStateWithLifecycle()
@@ -232,7 +233,7 @@ fun SettingsRoute(
     }
 
     SettingsScreen(
-        uiState = uiState,
+        screenState = screenState,
         roamingDefaults = roamingDefaults,
         isRooted = isRooted,
         languageTag = languageTag,
@@ -500,7 +501,7 @@ fun SettingsRoute(
 @Composable
 private fun SettingsScreenPreview() {
     SettingsScreen(
-        uiState = SettingsUiState(),
+        screenState = SettingsScreenState.Loaded(SettingsUiState()),
         onOpenDrawer = {},
         onAction = {},
     )
@@ -508,7 +509,7 @@ private fun SettingsScreenPreview() {
 
 @Composable
 internal fun SettingsScreen(
-    uiState: SettingsUiState,
+    screenState: SettingsScreenState,
     roamingDefaults: RoamingDefaults = RoamingDefaults(),
     isRooted: Boolean = false,
     languageTag: String? = null,
@@ -539,7 +540,7 @@ internal fun SettingsScreen(
     when (currentSection) {
         null -> {
             SettingsHubScreen(
-                uiState = uiState,
+                guidedPath = (screenState as? SettingsScreenState.Loaded)?.state?.guidedPath ?: GuidedPath.DEFAULT,
                 onOpenDrawer = onOpenDrawer,
                 onNavigate = { currentSection = it },
                 isSpoofing = isSpoofing,
@@ -553,7 +554,7 @@ internal fun SettingsScreen(
 
         SettingsSection.GPS -> {
             SettingsGpsSubScreen(
-                uiState = uiState,
+                screenState = screenState,
                 onNavigateBack = back,
                 isSpoofing = isSpoofing,
                 onToggleSpoofing = onToggleSpoofing,
@@ -566,7 +567,7 @@ internal fun SettingsScreen(
 
         SettingsSection.REALISM -> {
             SettingsRealismSubScreen(
-                uiState = uiState,
+                screenState = screenState,
                 onNavigateBack = back,
                 isSpoofing = isSpoofing,
                 onToggleSpoofing = onToggleSpoofing,
@@ -579,7 +580,7 @@ internal fun SettingsScreen(
 
         SettingsSection.MENUS -> {
             SettingsMenusSubScreen(
-                uiState = uiState,
+                screenState = screenState,
                 isRooted = isRooted,
                 onNavigateBack = back,
                 isSpoofing = isSpoofing,
@@ -593,7 +594,7 @@ internal fun SettingsScreen(
 
         SettingsSection.SCREEN_HELPERS -> {
             SettingsScreenHelpersSubScreen(
-                uiState = uiState,
+                screenState = screenState,
                 onNavigateBack = back,
                 isSpoofing = isSpoofing,
                 onToggleSpoofing = onToggleSpoofing,
@@ -607,7 +608,7 @@ internal fun SettingsScreen(
 
         SettingsSection.GENERAL -> {
             SettingsGeneralSubScreen(
-                uiState = uiState,
+                screenState = screenState,
                 languageTag = languageTag,
                 onNavigateBack = back,
                 isSpoofing = isSpoofing,
@@ -621,7 +622,7 @@ internal fun SettingsScreen(
 
         SettingsSection.FAVORITES_ROUTES -> {
             SettingsFavoritesRoutesSubScreen(
-                uiState = uiState,
+                screenState = screenState,
                 hotLocationTree = hotLocationTree,
                 hotRouteTree = hotRouteTree,
                 onNavigateBack = back,
@@ -636,7 +637,7 @@ internal fun SettingsScreen(
 
         SettingsSection.ROAMING -> {
             SettingsRoamingSubScreen(
-                uiState = uiState,
+                screenState = screenState,
                 roamingDefaults = roamingDefaults,
                 onNavigateBack = back,
                 isSpoofing = isSpoofing,
@@ -650,7 +651,7 @@ internal fun SettingsScreen(
 
         SettingsSection.CAPTURE -> {
             SettingsCaptureSubScreen(
-                uiState = uiState,
+                screenState = screenState,
                 onNavigateBack = back,
                 isSpoofing = isSpoofing,
                 onToggleSpoofing = onToggleSpoofing,
@@ -666,7 +667,7 @@ internal fun SettingsScreen(
 
 @Composable
 private fun SettingsHubScreen(
-    uiState: SettingsUiState,
+    guidedPath: GuidedPath,
     onOpenDrawer: () -> Unit,
     onNavigate: (SettingsSection) -> Unit,
     isSpoofing: Boolean,
@@ -785,7 +786,7 @@ private fun SettingsHubScreen(
                             title = stringResource(R.string.settings_hub_screen_helpers),
                             description = stringResource(R.string.settings_hub_screen_helpers_desc),
                             onClick = { onNavigate(SettingsSection.SCREEN_HELPERS) },
-                        ).takeIf { showsScreenHelpersCard(uiState.guidedPath) },
+                        ).takeIf { showsScreenHelpersCard(guidedPath) },
                     ) +
                     listOf(
                         DestinationCardSpec(

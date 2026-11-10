@@ -67,7 +67,7 @@ import com.locationjoystick.core.designsystem.R as DesignR
 
 @Composable
 internal fun SettingsMenusSubScreen(
-    uiState: SettingsUiState,
+    screenState: SettingsScreenState,
     isRooted: Boolean,
     onNavigateBack: () -> Unit,
     isSpoofing: Boolean,
@@ -79,14 +79,14 @@ internal fun SettingsMenusSubScreen(
 ) {
     SettingsScrollScaffold(
         title = stringResource(R.string.settings_menus_menus),
-        uiState = uiState,
+        screenState = screenState,
         onNavigateBack = onNavigateBack,
         isSpoofing = isSpoofing,
         onToggleSpoofing = onToggleSpoofing,
         locationLabel = locationLabel,
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
-    ) {
+    ) { uiState ->
         AppFeaturesSection(uiState, isRooted, onAction)
         SettingsSectionDivider()
         SpeedCycleSection(uiState, onAction)
@@ -95,7 +95,7 @@ internal fun SettingsMenusSubScreen(
 
 @Composable
 internal fun SettingsScreenHelpersSubScreen(
-    uiState: SettingsUiState,
+    screenState: SettingsScreenState,
     onNavigateBack: () -> Unit,
     isSpoofing: Boolean,
     onToggleSpoofing: () -> Unit,
@@ -117,14 +117,14 @@ internal fun SettingsScreenHelpersSubScreen(
 
     SettingsScrollScaffold(
         title = stringResource(R.string.settings_hub_screen_helpers),
-        uiState = uiState,
+        screenState = screenState,
         onNavigateBack = onNavigateBack,
         isSpoofing = isSpoofing,
         onToggleSpoofing = onToggleSpoofing,
         locationLabel = locationLabel,
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
-    ) {
+    ) { uiState ->
         if (uiState.guidedPath.showsTapToWalk) {
             TapToWalkSection(uiState, onAction)
         }
@@ -143,14 +143,14 @@ internal fun SettingsScreenHelpersSubScreen(
 @Composable
 private fun SettingsScrollScaffold(
     title: String,
-    uiState: SettingsUiState,
+    screenState: SettingsScreenState,
     onNavigateBack: () -> Unit,
     isSpoofing: Boolean,
     onToggleSpoofing: () -> Unit,
     locationLabel: String?,
     bottomBar: @Composable () -> Unit,
     snackbarHost: @Composable () -> Unit,
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable ColumnScope.(SettingsUiState) -> Unit,
 ) {
     LjScaffold(
         title = title,
@@ -163,17 +163,21 @@ private fun SettingsScrollScaffold(
         snackbarHost = snackbarHost,
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else {
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(settingsScrollPadding()),
-                    content = content,
-                )
+            when (screenState) {
+                SettingsScreenState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                is SettingsScreenState.Loaded -> {
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(settingsScrollPadding()),
+                        content = { content(screenState.state) },
+                    )
+                }
             }
         }
     }
