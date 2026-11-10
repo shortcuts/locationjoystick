@@ -14,6 +14,8 @@
     ] },
     { group: 'Features', items: [
       { href: 'map.html', label: 'Map' },
+      { href: 'roaming.html', label: 'Roaming' },
+      { href: 'planting.html', label: 'Planting' },
       { href: 'overlays.html', label: 'Overlays' },
       { href: 'reconnect-accessory.html', label: 'Reconnect accessory' },
       { href: 'routes.html', label: 'Routes' },

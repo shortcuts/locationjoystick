@@ -5,7 +5,7 @@ Automatic wandering, started from the roaming sheet on the map, the floating wid
 There are two modes. The roaming sheet shows one mode's settings at a time, with a toggle to switch. Settings shows both modes' defaults at once, because it pre-configures what either mode starts with.
 
 - **Walk around the block:** a random walk inside a radius, for a set distance. It can run in a straight line or follow roads. This was the original roaming mode.
-- **Planting:** a spiral out from the current point to an outer radius and back. One loop is one full expand and contract. The user can repeat it a set number of times, run it forever, or expand once and stop. It is straight-line only. It is unrelated to planting circles around route stops ([routes.md](routes.md)).
+- **Planting:** a spiral out from the current point to an outer radius and back. One loop is one full expand and contract. The user can repeat it a set number of times, run it forever, or expand once and stop. It is straight-line only. It is unrelated to planting circles around route stops ([routes.md](routes.md)). See [planting.md](planting.md).
 
 Defaults for both modes persist and are exported with the rest of the settings. The exact fields and their ranges are in the roaming configuration code. The code is the source of truth for them.
 

@@ -117,6 +117,7 @@ Working memory for long-running features: a feature doc that has a "Status" line
 | Floating Widget | docs/features/widget.md |
 | Click-to-Move / Teleport | docs/features/click-to-move.md |
 | Roaming Mode | docs/features/roaming.md |
+| Planting | docs/features/planting.md |
 | Export / Import | docs/features/export-import.md |
 | QR Share / Transfer | docs/features/qr-transfer.md |
 | Location Links (Automatic & Capture) | docs/features/location-links.md |
@@ -306,6 +307,7 @@ make wiki-serve   # http://localhost:8080
 | `docs/wiki/game-setup.html` | Game setup: the three paths, what each hides, how to switch |
 | `docs/wiki/settings.html` | Settings + language |
 | `docs/wiki/backup-transfer.html` | Export/import + QR transfer |
+| `docs/wiki/roaming.html`, `docs/wiki/planting.html` | Roaming sheet and walk around the block; Planting spiral and route circles |
 | `docs/wiki/overlays.html` | Joystick + widget overlays + Tap to Walk |
 | `docs/wiki/reconnect-accessory.html` | Reconnect accessory: the reconnect tap and its settings |
 | `docs/wiki/troubleshooting.html` | Troubleshooting (permissions, mock location, map, crash report) |
