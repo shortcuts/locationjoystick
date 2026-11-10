@@ -1,5 +1,6 @@
 package com.locationjoystick.feature.map.impl
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.locationjoystick.core.common.util.orderedCapturedPoints
@@ -20,7 +21,40 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
+private fun SaveResult.settle(event: SaveEvent): SaveResult = after(event) ?: this
+
 enum class CapturePointOrder { ORIGINAL, PROXIMITY }
+
+sealed interface SaveResult {
+    data object NotSaved : SaveResult
+
+    data object Saved : SaveResult
+
+    data class Failed(
+        @StringRes val error: Int,
+    ) : SaveResult
+}
+
+sealed interface SaveEvent {
+    data object Edited : SaveEvent
+
+    data object Succeeded : SaveEvent
+
+    data class Rejected(
+        @StringRes val error: Int,
+    ) : SaveEvent
+}
+
+/** Returns the next result, or null when [event] is illegal in this state. */
+fun SaveResult.after(event: SaveEvent): SaveResult? =
+    when (event) {
+        SaveEvent.Edited -> if (this == SaveResult.NotSaved) null else SaveResult.NotSaved
+        SaveEvent.Succeeded -> SaveResult.Saved
+        is SaveEvent.Rejected -> SaveResult.Failed(event.error)
+    }
+
+val SaveResult.isSaved: Boolean get() = this is SaveResult.Saved
+val SaveResult.errorRes: Int? get() = (this as? SaveResult.Failed)?.error
 
 data class CaptureCoordinatesUiState(
     val captureModeEnabled: Boolean = false,
@@ -30,8 +64,7 @@ data class CaptureCoordinatesUiState(
     val points: List<LatLng> = emptyList(),
     val pointOrder: CapturePointOrder = CapturePointOrder.PROXIMITY,
     val routeName: String = "",
-    val saved: Boolean = false,
-    val saveError: Int? = null,
+    val saveResult: SaveResult = SaveResult.NotSaved,
 ) {
     val canSave: Boolean
         get() = points.size >= 2 && routeName.trim().isNotEmpty()
@@ -101,11 +134,11 @@ class CaptureCoordinatesViewModel
         }
 
         fun onRouteNameChange(name: String) {
-            _uiState.update { it.copy(routeName = name, saved = false, saveError = null) }
+            _uiState.update { it.copy(routeName = name, saveResult = it.saveResult.settle(SaveEvent.Edited)) }
         }
 
         fun onPointOrderChange(order: CapturePointOrder) {
-            _uiState.update { it.copy(pointOrder = order, saved = false, saveError = null) }
+            _uiState.update { it.copy(pointOrder = order, saveResult = it.saveResult.settle(SaveEvent.Edited)) }
         }
 
         fun clearPoints() {
@@ -120,7 +153,7 @@ class CaptureCoordinatesViewModel
             val state = _uiState.value
             val name = state.routeName.trim()
             if (name.isEmpty() || state.points.size < 2) {
-                _uiState.update { it.copy(saveError = R.string.capture_invalid_route) }
+                _uiState.update { it.copy(saveResult = it.saveResult.settle(SaveEvent.Rejected(R.string.capture_invalid_route))) }
                 return
             }
             viewModelScope.launch {
@@ -143,7 +176,7 @@ class CaptureCoordinatesViewModel
                         updatedAt = now,
                     )
                 routeRepository.insertRoute(route)
-                _uiState.update { it.copy(saved = true, saveError = null) }
+                _uiState.update { it.copy(saveResult = it.saveResult.settle(SaveEvent.Succeeded)) }
             }
         }
     }

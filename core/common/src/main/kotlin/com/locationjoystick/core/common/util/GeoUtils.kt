@@ -176,7 +176,8 @@ fun remainingRoute(
 ): List<LatLng> {
     if (route.isEmpty()) return listOf(from)
     if (route.size == 1) return listOf(from, route[0])
-    val i = (fromSegment.coerceIn(0, route.size - 2) until route.size - 1).minBy { perpendicularDistanceMeters(from, route[it], route[it + 1]) }
+    val candidates = fromSegment.coerceIn(0, route.size - 2) until route.size - 1
+    val i = candidates.minBy { perpendicularDistanceMeters(from, route[it], route[it + 1]) }
     return listOf(from) + route.drop(i + 1)
 }
 

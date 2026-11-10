@@ -155,8 +155,8 @@ internal fun CaptureCoordinatesScreen(
             routeSave =
                 CaptureRouteSaveState(
                     routeName = uiState.routeName,
-                    saved = uiState.saved,
-                    saveError = uiState.saveError?.let { stringResource(it) },
+                    saved = uiState.saveResult.isSaved,
+                    saveError = uiState.saveResult.errorRes?.let { stringResource(it) },
                     canSave = uiState.canSave,
                     onRouteNameChange = onRouteNameChange,
                     onSaveRoute = onSaveRoute,

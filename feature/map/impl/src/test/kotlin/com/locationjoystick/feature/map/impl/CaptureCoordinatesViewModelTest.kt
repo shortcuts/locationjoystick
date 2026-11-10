@@ -95,7 +95,7 @@ class CaptureCoordinatesViewModelTest {
             assertEquals(2, slot.captured.waypoints.size)
             assertEquals(mushroom, slot.captured.waypoints[0].position)
             assertEquals(flower, slot.captured.waypoints[1].position)
-            assertTrue(viewModel.uiState.value.saved)
+            assertEquals(SaveResult.Saved, viewModel.uiState.value.saveResult)
         }
 
     @Test
@@ -147,7 +147,7 @@ class CaptureCoordinatesViewModelTest {
         runTest {
             viewModel.onRouteNameChange("Nope")
             viewModel.saveRoute()
-            assertEquals(R.string.capture_invalid_route, viewModel.uiState.value.saveError)
+            assertEquals(SaveResult.Failed(R.string.capture_invalid_route), viewModel.uiState.value.saveResult)
             coVerify(exactly = 0) { routeRepository.insertRoute(any()) }
         }
 
