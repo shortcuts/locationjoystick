@@ -34,6 +34,7 @@ import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.TapToWalkMove
 import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.feature.settings.impl.R
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -232,12 +233,17 @@ class SettingsViewModel
             }
         }
 
+        private data class TapToWalkLive(
+            val enabled: Boolean,
+            val moves: Set<TapToWalkMove>,
+        )
+
         private data class LiveSettings(
             val disclosureChoice: String,
             val reconnectTap: Boolean,
             val keepWidgetOnIdle: Boolean,
             val activeSpeedProfileId: String,
-            val tapToWalk: Boolean,
+            val tapToWalk: TapToWalkLive,
         )
 
         private val snapshotFlow = settingsRepository.getSettingsSnapshot()
@@ -259,7 +265,7 @@ class SettingsViewModel
                     settingsRepository.getReconnectTapEnabled(),
                     settingsRepository.getKeepWidgetOnIdle(),
                     settingsRepository.getActiveSpeedProfile().map { it.id },
-                    settingsRepository.getTapToWalkOverlayEnabled(),
+                    combine(settingsRepository.getTapToWalkOverlayEnabled(), settingsRepository.getTapToWalkMoves(), ::TapToWalkLive),
                     ::LiveSettings,
                 ),
                 combine(screenServiceGranted, captureSnapshot) { granted, capture -> Pair(granted, capture) },
@@ -301,7 +307,8 @@ class SettingsViewModel
                         hotRoutesEnabled = snapshot.hotRoutesEnabled,
                         selectedHotRouteIds = snapshot.selectedHotRouteIds,
                         floatingMapQuickWalk = snapshot.floatingMapQuickWalk,
-                        tapToWalkOverlayEnabled = live.tapToWalk,
+                        tapToWalkOverlayEnabled = live.tapToWalk.enabled,
+                        tapToWalkMoves = live.tapToWalk.moves,
                         hideTeleportFeatures = snapshot.hideTeleportFeatures,
                         hideWidgetOverlay = snapshot.hideWidgetOverlay,
                         hideForegroundNotification = snapshot.hideForegroundNotification,
@@ -633,6 +640,10 @@ class SettingsViewModel
 
         fun setTapToWalkOverlayEnabled(enabled: Boolean) {
             save { settingsRepository.setTapToWalkOverlayEnabled(enabled) }
+        }
+
+        fun setTapToWalkMoves(moves: Set<TapToWalkMove>) {
+            save { settingsRepository.setTapToWalkMoves(moves) }
         }
 
         fun setAccessibilityDisclosureAccepted(accepted: Boolean) {
@@ -967,6 +978,7 @@ class SettingsViewModel
                 ),
             )
             settingsRepository.setTapToWalkOverlayEnabled(data.settings.tapToWalkOverlayEnabled)
+            settingsRepository.setTapToWalkMoves(data.settings.tapToWalkMoves)
             settingsRepository.setActiveProfileId(data.settings.activeSpeedProfileId)
             settingsRepository.setReconnectTapEnabled(data.settings.reconnectTapEnabled)
             settingsRepository.setKeepWidgetOnIdle(data.settings.keepWidgetOnIdle)

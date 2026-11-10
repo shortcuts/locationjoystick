@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -18,6 +19,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +37,7 @@ import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjOnScrim
 import com.locationjoystick.core.designsystem.LjSpacing
@@ -42,8 +48,10 @@ import com.locationjoystick.core.model.GroundMap
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.StoredGroundCalibration
+import com.locationjoystick.core.model.TapToWalkMove
 import com.locationjoystick.core.model.distanceTo
 import com.locationjoystick.feature.widget.impl.R
+import kotlinx.coroutines.flow.Flow
 import kotlin.math.atan2
 import kotlin.math.hypot
 
@@ -53,7 +61,9 @@ internal class TapToWalkOverlay(
     private val lifecycleOwner: LifecycleOwner,
     private val savedStateRegistryOwner: SavedStateRegistryOwner,
     /** A tap in full-display pixels with the position read at tap time; the caller resolves it against the ground map. */
-    private val onGroundTap: (GroundTap) -> Unit,
+    private val onGroundTap: (GroundTap) -> TapDecision,
+    private val onMove: (GroundTap, TapToWalkMove) -> Unit,
+    private val cooldownForPosition: (LatLng) -> Flow<CooldownState>,
     private val getPosition: () -> LatLng?,
     private val onDismissed: () -> Unit,
 ) {
@@ -71,19 +81,29 @@ internal class TapToWalkOverlay(
                 setViewTreeSavedStateRegistryOwner(savedStateRegistryOwner)
                 setContent {
                     LjTheme(guidedPath = GuidedPath.DEFAULT) {
+                        var chooser by remember { mutableStateOf<PendingChoice?>(null) }
                         TapToWalkOverlayContent(
                             hint = hint,
+                            chooser = chooser,
+                            cooldownForPosition = cooldownForPosition,
                             onTap = { x, y ->
                                 val pos = getPosition()
                                 if (pos != null && isSupported()) {
                                     // The map is fitted on full-display frames; system bars may inset the overlay window.
                                     val origin = IntArray(2).also { overlayView?.getLocationOnScreen(it) }
-                                    onGroundTap(GroundTap(pos, (origin[0] + x).toDouble(), (origin[1] + y).toDouble()))
-                                } else if (pos != null) {
-                                    Toast.makeText(context, R.string.tap_to_walk_overlay_unavailable_hint, Toast.LENGTH_LONG).show()
+                                    val tap = GroundTap(pos, (origin[0] + x).toDouble(), (origin[1] + y).toDouble())
+                                    when (val decision = onGroundTap(tap)) {
+                                        TapDecision.Done -> dismiss()
+                                        is TapDecision.Choose -> chooser = PendingChoice(tap, decision)
+                                    }
+                                } else {
+                                    if (pos != null) {
+                                        Toast.makeText(context, R.string.tap_to_walk_overlay_unavailable_hint, Toast.LENGTH_LONG).show()
+                                    }
+                                    dismiss()
                                 }
-                                dismiss()
                             },
+                            onMove = onMove,
                             onDismiss = { dismiss() },
                         )
                     }
@@ -178,7 +198,10 @@ internal class TapToWalkOverlay(
 @Composable
 private fun TapToWalkOverlayContent(
     @StringRes hint: Int,
+    chooser: PendingChoice?,
+    cooldownForPosition: (LatLng) -> Flow<CooldownState>,
     onTap: (x: Float, y: Float) -> Unit,
+    onMove: (GroundTap, TapToWalkMove) -> Unit,
     onDismiss: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -188,10 +211,13 @@ private fun TapToWalkOverlayContent(
                 Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.05f))
-                    .pointerInput(Unit) {
-                        detectTapGestures(onTap = { offset ->
-                            onTap(offset.x, offset.y)
-                        })
+                    .pointerInput(chooser == null) {
+                        // While the chooser is open a stray tap must not start a move.
+                        if (chooser == null) {
+                            detectTapGestures(onTap = { offset ->
+                                onTap(offset.x, offset.y)
+                            })
+                        }
                     },
         )
         // Hint label
@@ -207,26 +233,74 @@ private fun TapToWalkOverlayContent(
                     .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f), MaterialTheme.shapes.small)
                     .padding(horizontal = LjSpacing.md, vertical = LjSpacing.sm),
         )
-        // Cancel button — drawn on top; consumes taps in its bounds before background does
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier =
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(LjSpacing.lg)
-                    .size(48.dp)
-                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f), MaterialTheme.shapes.medium)
-                    .clip(MaterialTheme.shapes.medium)
-                    .clickable(role = Role.Button, onClick = onDismiss),
-        ) {
-            Icon(
-                imageVector = LjIcons.Close,
-                contentDescription = stringResource(R.string.tap_to_walk_overlay_cancel_tap_to_walk_cd),
-                tint = LjOnScrim,
-            )
+        if (chooser != null) {
+            TapMoveChooser(chooser, cooldownForPosition, onMove, onDismiss)
+        } else {
+            CancelButton(onDismiss)
         }
     }
 }
+
+@Composable
+private fun BoxScope.TapMoveChooser(
+    chooser: PendingChoice,
+    cooldownForPosition: (LatLng) -> Flow<CooldownState>,
+    onMove: (GroundTap, TapToWalkMove) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val target = chooser.decision.target
+    val moves = chooser.decision.moves
+    TapActionPanel(
+        tap = target,
+        isRouteReplay = false,
+        isEphemeralReplay = false,
+        isWalkActive = false,
+        walkStart = null,
+        walkTarget = null,
+        routeWaypoints = null,
+        cooldownForPosition = cooldownForPosition,
+        onTeleport = { onMove(chooser.tap, TapToWalkMove.TELEPORT) },
+        onWalkTo = { onMove(chooser.tap, TapToWalkMove.WALK) },
+        onWalkViaRoads = { onMove(chooser.tap, TapToWalkMove.VIA_ROADS) },
+        onStopRouteAndTeleport = {},
+        onStopRouteAndWalkTo = {},
+        onFinishRouteAndWalkTo = {},
+        onAddEphemeralWaypoint = { _, _ -> },
+        onDismiss = onDismiss,
+        onShareOpened = onDismiss,
+        hideTeleportFeatures = TapToWalkMove.TELEPORT !in moves,
+        showWalk = TapToWalkMove.WALK in moves,
+        showWalkViaRoads = TapToWalkMove.VIA_ROADS in moves,
+    )
+}
+
+@Composable
+private fun BoxScope.CancelButton(onDismiss: () -> Unit) {
+    // Drawn on top; consumes taps in its bounds before the background does.
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier =
+            Modifier
+                .align(Alignment.BottomEnd)
+                .padding(LjSpacing.lg)
+                .size(48.dp)
+                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f), MaterialTheme.shapes.medium)
+                .clip(MaterialTheme.shapes.medium)
+                .clickable(role = Role.Button, onClick = onDismiss),
+    ) {
+        Icon(
+            imageVector = LjIcons.Close,
+            contentDescription = stringResource(R.string.tap_to_walk_overlay_cancel_tap_to_walk_cd),
+            tint = LjOnScrim,
+        )
+    }
+}
+
+/** A tap waiting for the user's choice of move; the overlay stays up meanwhile. */
+private data class PendingChoice(
+    val tap: GroundTap,
+    val decision: TapDecision.Choose,
+)
 
 /** A Tap to Walk tap: the position at tap time and the full-display pixel, kept so the tap can be re-aimed under a newer map. */
 internal data class GroundTap(

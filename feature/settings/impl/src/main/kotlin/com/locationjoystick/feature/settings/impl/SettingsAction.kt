@@ -6,6 +6,7 @@ import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.TapToWalkMove
 import com.locationjoystick.core.model.ThemeMode
 
 internal sealed class SettingsAction {
@@ -208,6 +209,10 @@ internal sealed class SettingsAction {
 
     data class SetTapToWalkOverlayEnabled(
         val enabled: Boolean,
+    ) : SettingsAction()
+
+    data class SetTapToWalkMoves(
+        val moves: Set<TapToWalkMove>,
     ) : SettingsAction()
 
     data class SetAccessibilityDisclosureAccepted(

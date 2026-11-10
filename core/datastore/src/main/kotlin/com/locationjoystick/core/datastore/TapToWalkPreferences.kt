@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.StoredGroundCalibration
+import com.locationjoystick.core.model.TapToWalkMove
 import kotlinx.coroutines.flow.Flow
 
 interface TapToWalkPreferences {
@@ -12,6 +13,12 @@ interface TapToWalkPreferences {
     fun getTapToWalkOverlayEnabled(): Flow<Boolean>
 
     suspend fun setTapToWalkOverlayEnabled(enabled: Boolean)
+
+    /** The moves a tap offers. Never empty: absent, empty or unknown values read as [TapToWalkMove.DEFAULT]. */
+    fun getTapToWalkMoves(): Flow<Set<TapToWalkMove>>
+
+    /** Stores [moves]; an empty set stores the default. */
+    suspend fun setTapToWalkMoves(moves: Set<TapToWalkMove>)
 
     fun getAccessibilityDisclosureChoice(): Flow<String>
 
@@ -33,6 +40,17 @@ internal class TapToWalkStore(
     override fun getTapToWalkOverlayEnabled(): Flow<Boolean> = dataStore.pref(Keys.TAP_TO_WALK_OVERLAY_ENABLED, false)
 
     override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) = dataStore.setPref(Keys.TAP_TO_WALK_OVERLAY_ENABLED, enabled)
+
+    override fun getTapToWalkMoves(): Flow<Set<TapToWalkMove>> =
+        dataStore.pref(Keys.TAP_TO_WALK_MOVES, emptySet()) { names ->
+            TapToWalkMove.entries
+                .filter { it.name in names }
+                .toSet()
+                .ifEmpty { TapToWalkMove.DEFAULT }
+        }
+
+    override suspend fun setTapToWalkMoves(moves: Set<TapToWalkMove>) =
+        dataStore.setPref(Keys.TAP_TO_WALK_MOVES, moves.ifEmpty { TapToWalkMove.DEFAULT }.map { it.name }.toSet())
 
     override fun getAccessibilityDisclosureChoice(): Flow<String> =
         dataStore.pref(Keys.ACCESSIBILITY_DISCLOSURE_CHOICE, AppConstants.AccessibilityConstants.DISCLOSURE_UNANSWERED)

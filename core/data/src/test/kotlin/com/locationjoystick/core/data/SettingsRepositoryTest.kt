@@ -19,6 +19,7 @@ import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.SpoofHistoryEntry
 import com.locationjoystick.core.model.StoredGroundCalibration
+import com.locationjoystick.core.model.TapToWalkMove
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -1257,6 +1258,14 @@ class SettingsRepositoryTest {
         }
 
     @Test
+    fun `tap to walk moves round trip through the data source`() =
+        runTest {
+            repository.setTapToWalkMoves(setOf(TapToWalkMove.VIA_ROADS))
+
+            assertEquals(setOf(TapToWalkMove.VIA_ROADS), repository.getTapToWalkMoves().first())
+        }
+
+    @Test
     fun `effective flows follow their inputs and the sdk floor`() =
         runTest {
             fakeDataSource.accessibilityDisclosureChoiceFlow.value = AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED
@@ -1842,6 +1851,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) {
         tapToWalkOverlayEnabledFlow.value = enabled
+    }
+
+    val tapToWalkMovesFlow = MutableStateFlow(TapToWalkMove.DEFAULT)
+
+    override fun getTapToWalkMoves(): Flow<Set<TapToWalkMove>> = tapToWalkMovesFlow
+
+    override suspend fun setTapToWalkMoves(moves: Set<TapToWalkMove>) {
+        tapToWalkMovesFlow.value = moves
     }
 
     val groundCalibrationFlow = MutableStateFlow<StoredGroundCalibration?>(null)

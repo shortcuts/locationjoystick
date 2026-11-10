@@ -22,4 +22,5 @@ When nothing is spoofing yet, a tap on the map or a favorite still teleports. Th
 ## What is not hidden
 
 - The map hint text changes to describe only walking, because the tap gesture it described is disabled. This is a copy change, not a removed feature.
+- Tap to Walk's Teleport checkbox is hidden and treated as off. The stored choice is kept, so turning Hide teleport off restores it ([tap-to-walk.md](tap-to-walk.md)).
 - Copy that describes favorites still says "teleport or walk". Walking still works, so the copy stays accurate.

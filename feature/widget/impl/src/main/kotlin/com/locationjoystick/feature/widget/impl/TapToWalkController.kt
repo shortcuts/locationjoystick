@@ -11,10 +11,13 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.MapController
+import com.locationjoystick.core.location.walkTarget
 import com.locationjoystick.core.model.GroundMap
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.ScreenFeatureGates
 import com.locationjoystick.core.model.StoredGroundCalibration
+import com.locationjoystick.core.model.TapToWalkMove
+import com.locationjoystick.core.model.effectiveTapToWalkMoves
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -52,6 +55,9 @@ internal class TapToWalkController(
         combine(settingsRepository.getTapToWalkOverlayEnabled(), settingsRepository.getGuidedPath()) { enabled, path ->
             ScreenFeatureGates.tapToWalkShown(enabled, path)
         }.stateIn(scope, SharingStarted.Eagerly, false)
+    private val effectiveMoves: StateFlow<List<TapToWalkMove>> =
+        combine(settingsRepository.getTapToWalkMoves(), settingsRepository.getHideTeleportFeatures(), ::effectiveTapToWalkMoves)
+            .stateIn(scope, SharingStarted.Eagerly, TapToWalkMove.DEFAULT.toList())
     private val groundCalibration: StateFlow<StoredGroundCalibration?> =
         settingsRepository
             .getGroundCalibration()
@@ -94,7 +100,9 @@ internal class TapToWalkController(
                 windowManager = windowManager,
                 lifecycleOwner = lifecycleOwner,
                 savedStateRegistryOwner = savedStateRegistryOwner,
-                onGroundTap = ::walkGroundTap,
+                onGroundTap = ::onGroundTap,
+                onMove = ::moveTo,
+                cooldownForPosition = mapController::cooldownForPosition,
                 getPosition = { mapController.sharedState.value.currentPosition },
                 onDismissed = { transition(TapToWalkEvent.OverlayClosed) },
             )
@@ -102,15 +110,33 @@ internal class TapToWalkController(
         view.show()
     }
 
-    internal fun walkGroundTap(tap: GroundTap) {
-        val target = resolveGroundTap(tap)
-        if (target == null) {
-            Toast.makeText(context, R.string.tap_to_walk_past_horizon, Toast.LENGTH_LONG).show()
-            return
-        }
-        transition(TapToWalkEvent.Aimed(tap, target))
-        mapController.walkTo(target)
+    /** One effective move runs at once; two or more return [TapDecision.Choose] and start nothing. */
+    internal fun onGroundTap(tap: GroundTap): TapDecision {
+        val target = resolveOrWarn(tap) ?: return TapDecision.Done
+        val moves = effectiveMoves.value
+        if (moves.size > 1) return TapDecision.Choose(target, moves)
+        moveTo(tap, moves.single())
+        return TapDecision.Done
     }
+
+    /** Resolves the tap again so a map stored while the chooser was open applies. */
+    internal fun moveTo(
+        tap: GroundTap,
+        move: TapToWalkMove,
+    ) {
+        val target = resolveOrWarn(tap) ?: return
+        when (move) {
+            TapToWalkMove.WALK -> mapController.walkTo(target)
+            TapToWalkMove.VIA_ROADS -> mapController.walkViaRoads(target)
+            TapToWalkMove.TELEPORT -> mapController.teleportTo(target)
+        }
+        if (move != TapToWalkMove.TELEPORT) transition(TapToWalkEvent.Aimed(tap, target, move))
+    }
+
+    private fun resolveOrWarn(tap: GroundTap): LatLng? =
+        resolveGroundTap(tap).also {
+            if (it == null) Toast.makeText(context, R.string.tap_to_walk_past_horizon, Toast.LENGTH_LONG).show()
+        }
 
     private fun groundMapNow(): GroundMap? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
@@ -128,15 +154,17 @@ internal class TapToWalkController(
     private fun reaimOnNewMap() {
         val walking = state.value as? TapToWalkState.Walking ?: return
         val (tap, target) = walking.tap to walking.target
-        val walkTarget = locationRepository.walkTarget.value
+        // A road walk's route end can be snapped off the tap by the router, so compare the tap target the walk mode keeps.
+        val walkTarget =
+            if (walking.move == TapToWalkMove.VIA_ROADS) mapController.sharedState.value.walkTarget else locationRepository.walkTarget.value
         if (walkTarget != target) {
             transition(TapToWalkEvent.WalkEnded)
             return
         }
         val next = TapToWalkOverlay.reaimedTarget(tap, target, walkTarget, groundMapNow()) ?: return
         Log.d(TAG, "tap re-aimed under the new map")
-        transition(TapToWalkEvent.Aimed(tap, next))
-        mapController.walkTo(next)
+        transition(TapToWalkEvent.Aimed(tap, next, walking.move))
+        if (walking.move == TapToWalkMove.VIA_ROADS) mapController.walkViaRoads(next) else mapController.walkTo(next)
     }
 
     /**
@@ -147,4 +175,14 @@ internal class TapToWalkController(
     private fun needsAccessibilityDisclosure(): Boolean =
         ScreenAccessibilityService.isSupported() &&
             accessibilityDisclosureChoice.value != AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED
+}
+
+/** What a ground tap does: it ran at once, or the user picks one of [moves] first. */
+internal sealed interface TapDecision {
+    data object Done : TapDecision
+
+    data class Choose(
+        val target: LatLng,
+        val moves: List<TapToWalkMove>,
+    ) : TapDecision
 }

@@ -16,6 +16,7 @@ import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.TapToWalkMove
 import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.core.model.Waypoint
 import com.locationjoystick.core.model.isValid
@@ -107,6 +108,7 @@ internal object SettingsExportCodec {
         settingsObj.put("rememberLastLocation", data.settings.rememberLastLocation)
         settingsObj.put("floatingMapQuickWalk", data.settings.floatingMapQuickWalk)
         settingsObj.put("tapToWalkOverlayEnabled", data.settings.tapToWalkOverlayEnabled)
+        settingsObj.put("tapToWalkMoves", JSONArray(data.settings.tapToWalkMoves.map { it.name }))
         settingsObj.put("reconnectTapEnabled", data.settings.reconnectTapEnabled)
         settingsObj.put("keepWidgetOnIdle", data.settings.keepWidgetOnIdle)
         settingsObj.put("themeMode", data.settings.themeMode.name)
@@ -231,6 +233,12 @@ internal object SettingsExportCodec {
                     for (i in 0 until arr.length()) parseAppFeature(arr.getString(i))?.let { add(it) }
                 }
             } ?: AppFeature.DEFAULT_MAP_ENABLED
+        val tapToWalkMoves =
+            settingsObj
+                .optJSONArray("tapToWalkMoves")
+                ?.let { arr -> TapToWalkMove.entries.filter { m -> (0 until arr.length()).any { arr.optString(it) == m.name } }.toSet() }
+                ?.ifEmpty { null }
+                ?: TapToWalkMove.DEFAULT
         val featureOrder =
             settingsObj
                 .optJSONArray("featureOrder")
@@ -385,6 +393,7 @@ internal object SettingsExportCodec {
                 rememberLastLocation = settingsObj.optBoolean("rememberLastLocation", defaults.rememberLastLocation),
                 floatingMapQuickWalk = settingsObj.optBoolean("floatingMapQuickWalk", defaults.floatingMapQuickWalk),
                 tapToWalkOverlayEnabled = settingsObj.optBoolean("tapToWalkOverlayEnabled", defaults.tapToWalkOverlayEnabled),
+                tapToWalkMoves = tapToWalkMoves,
                 reconnectTapEnabled = settingsObj.optBoolean("reconnectTapEnabled", defaults.reconnectTapEnabled),
                 keepWidgetOnIdle = settingsObj.optBoolean("keepWidgetOnIdle", defaults.keepWidgetOnIdle),
                 themeMode = runCatching { ThemeMode.valueOf(settingsObj.optString("themeMode")) }.getOrDefault(defaults.themeMode),

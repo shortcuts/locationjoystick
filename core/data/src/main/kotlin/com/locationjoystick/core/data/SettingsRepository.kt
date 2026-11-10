@@ -22,6 +22,7 @@ import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.SpoofHistoryEntry
 import com.locationjoystick.core.model.StoredGroundCalibration
+import com.locationjoystick.core.model.TapToWalkMove
 import com.locationjoystick.core.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -424,6 +425,10 @@ class SettingsRepository
         fun getTapToWalkOverlayEnabled(): Flow<Boolean> = dataSource.getTapToWalkOverlayEnabled()
 
         suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) = dataSource.setTapToWalkOverlayEnabled(enabled)
+
+        fun getTapToWalkMoves(): Flow<Set<TapToWalkMove>> = dataSource.getTapToWalkMoves()
+
+        suspend fun setTapToWalkMoves(moves: Set<TapToWalkMove>) = dataSource.setTapToWalkMoves(moves)
 
         /** Latest automatic fit result; per-device and never exported. */
         fun getGroundCalibration(): Flow<StoredGroundCalibration?> = dataSource.getGroundCalibration()

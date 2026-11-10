@@ -11,6 +11,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.TapToWalkMove
 import com.locationjoystick.core.testing.FakeFavoriteDao
 import com.locationjoystick.core.testing.FakePreferencesDataStore
 import com.locationjoystick.core.testing.FakeRouteDao
@@ -316,6 +317,14 @@ class SettingsViewModelSetterTest {
             backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setTapToWalkOverlayEnabled(true)
             assertEquals(true, fakeDataSource.tapToWalkEnabledWrite)
+        }
+
+    @Test
+    fun `setTapToWalkMoves saves at once`() =
+        runTest(testDispatcher) {
+            backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
+            viewModel.setTapToWalkMoves(setOf(TapToWalkMove.VIA_ROADS, TapToWalkMove.TELEPORT))
+            assertEquals(setOf(TapToWalkMove.VIA_ROADS, TapToWalkMove.TELEPORT), fakeDataSource.tapToWalkMovesWrite)
         }
 
     // -------------------------------------------------------------------------

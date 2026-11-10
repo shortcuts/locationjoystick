@@ -6,8 +6,10 @@ import android.view.WindowManager
 import androidx.lifecycle.LifecycleOwner
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.test.core.app.ApplicationProvider
+import com.locationjoystick.core.data.CooldownState
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,7 +27,9 @@ class TapToWalkOverlayTest {
             windowManager = windowManager,
             lifecycleOwner = mockk<LifecycleOwner>(relaxed = true),
             savedStateRegistryOwner = mockk<SavedStateRegistryOwner>(relaxed = true),
-            onGroundTap = {},
+            onGroundTap = { TapDecision.Done },
+            onMove = { _, _ -> },
+            cooldownForPosition = { flowOf(CooldownState.Ready) },
             getPosition = { null },
             onDismissed = {},
         )

@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.widget.impl
 
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.TapToWalkMove
 
 /** Walking keeps its tap after the overlay closes, so a newer ground map can still re-aim the walk. */
 internal sealed interface TapToWalkState {
@@ -14,6 +15,7 @@ internal sealed interface TapToWalkState {
         val overlay: TapToWalkOverlay?,
         val tap: GroundTap,
         val target: LatLng,
+        val move: TapToWalkMove = TapToWalkMove.WALK,
     ) : TapToWalkState
 }
 
@@ -27,6 +29,7 @@ internal sealed interface TapToWalkEvent {
     data class Aimed(
         val tap: GroundTap,
         val target: LatLng,
+        val move: TapToWalkMove = TapToWalkMove.WALK,
     ) : TapToWalkEvent
 
     data object WalkEnded : TapToWalkEvent
@@ -59,9 +62,9 @@ internal fun TapToWalkState.next(event: TapToWalkEvent): TapToWalkState? =
             }
         is TapToWalkEvent.Aimed ->
             when (this) {
-                TapToWalkState.Hidden -> TapToWalkState.Walking(null, event.tap, event.target)
-                is TapToWalkState.Shown -> TapToWalkState.Walking(overlay, event.tap, event.target)
-                is TapToWalkState.Walking -> copy(tap = event.tap, target = event.target)
+                TapToWalkState.Hidden -> TapToWalkState.Walking(null, event.tap, event.target, event.move)
+                is TapToWalkState.Shown -> TapToWalkState.Walking(overlay, event.tap, event.target, event.move)
+                is TapToWalkState.Walking -> copy(tap = event.tap, target = event.target, move = event.move)
             }
         TapToWalkEvent.WalkEnded ->
             when (this) {

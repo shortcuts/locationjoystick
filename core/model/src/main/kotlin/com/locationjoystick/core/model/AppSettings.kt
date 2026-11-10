@@ -34,6 +34,7 @@ data class AppSettings(
     val rememberLastLocation: Boolean = true,
     val floatingMapQuickWalk: Boolean = false,
     val tapToWalkOverlayEnabled: Boolean = false,
+    val tapToWalkMoves: Set<TapToWalkMove> = TapToWalkMove.DEFAULT,
     val reconnectTapEnabled: Boolean = false,
     val keepWidgetOnIdle: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.DARK,

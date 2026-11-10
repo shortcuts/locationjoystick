@@ -1,6 +1,7 @@
 package com.locationjoystick.feature.settings.impl
 
 import com.locationjoystick.core.model.GuidedPath
+import com.locationjoystick.core.model.TapToWalkMove
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -43,6 +44,16 @@ class SettingsDisclosureGatesTest {
         assertTrue(showsServiceOffHint(featureOn = true, serviceGranted = false))
         assertFalse(showsServiceOffHint(featureOn = true, serviceGranted = true))
         assertFalse(showsServiceOffHint(featureOn = false, serviceGranted = false))
+    }
+
+    @Test
+    fun onlyTheSoleCheckedVisibleMoveRowIsDisabled() {
+        val walk = setOf(TapToWalkMove.WALK)
+        assertFalse(tapToWalkRowEnabled(TapToWalkMove.WALK, walk, hideTeleport = false))
+        assertTrue(tapToWalkRowEnabled(TapToWalkMove.VIA_ROADS, walk, hideTeleport = false))
+        assertTrue(tapToWalkRowEnabled(TapToWalkMove.WALK, setOf(TapToWalkMove.WALK, TapToWalkMove.TELEPORT), hideTeleport = false))
+        assertFalse(tapToWalkRowEnabled(TapToWalkMove.WALK, setOf(TapToWalkMove.WALK, TapToWalkMove.TELEPORT), hideTeleport = true))
+        assertTrue(tapToWalkRowEnabled(TapToWalkMove.WALK, setOf(TapToWalkMove.TELEPORT), hideTeleport = true))
     }
 
     @Test

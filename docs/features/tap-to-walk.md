@@ -1,6 +1,6 @@
 # Tap to Walk
 
-Two shortcuts for triggering walk-to without a confirmation sheet, useful when you want to act quickly inside another app. Tier 1 is a quick-walk option on the floating map. Tier 2 is a screen-wide tap interceptor. Tier 2 is the one that needs the accessibility service.
+Two shortcuts for triggering walk-to without a confirmation sheet, useful when you want to act quickly inside another app. Tier 1 is a quick-walk option on the floating map. Tier 2 is a screen-wide tap interceptor that walks, walks via roads or teleports, as the user chose. Tier 2 is the one that needs the accessibility service.
 
 Key files: the widget module's map view, tap overlay, `TapToWalkController` and widget service, and `:core:location/ScreenCaptureSource.kt`. Settings keys and their defaults live in the settings code, not here.
 
@@ -19,6 +19,19 @@ When the option is on, a tap on the floating map walks directly instead of openi
 The overlay is a full-screen window that takes every touch. It must not set the flag that lets touches pass through to the window below; that flag breaks interception.
 
 Position is read once, at tap time. The tap pixel is in full-display device pixels, computed from the overlay's on-screen location plus the in-window tap. Never use the overlay window size: system bars inset it, and the calibration is fitted on full-display screenshots.
+
+### Move options
+
+A tap does not always walk. Settings holds a set of allowed moves: walk, walk via roads and teleport. At least one stays checked, so a tap never has nothing to do.
+
+- One effective move: the tap runs it at once, as before.
+- Two or more: the tap opens the floating map's action panel inside the overlay window, with only the checked moves plus "Do nothing". The panel is reused so the cooldown badge, share action and wording stay in one place. The overlay stays up until the user picks, and a tap outside the panel does nothing, so a stray tap cannot start a move.
+- Hide teleport removes Teleport from the settings and from the panel but keeps the stored choice ([hide-teleport.md](hide-teleport.md)). If Teleport was the only stored move, a tap falls back to walk.
+- The target is resolved again when the user picks. A ground map stored while the panel was open then applies.
+- Teleport goes through `TeleportUseCase` via the map controller, so it keeps persistence and the cooldown.
+- A newer ground map re-aims a walk and re-routes a road walk. A teleport never re-aims: it is instant.
+
+Known limit: a road walk gets its target only after the router answers. A map that arrives before the answer does not re-aim it.
 
 ### Pixel to GPS
 

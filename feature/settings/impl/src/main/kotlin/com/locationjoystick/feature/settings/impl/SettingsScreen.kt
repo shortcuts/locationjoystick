@@ -437,6 +437,10 @@ fun SettingsRoute(
                     viewModel.setLaunchAfterLinkPackage(action.packageName)
                 }
 
+                is SettingsAction.SetTapToWalkMoves -> {
+                    viewModel.setTapToWalkMoves(action.moves)
+                }
+
                 is SettingsAction.SetTapToWalkOverlayEnabled -> {
                     viewModel.setTapToWalkOverlayEnabled(action.enabled)
                 }

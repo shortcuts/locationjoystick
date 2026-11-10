@@ -107,6 +107,10 @@
     <string name="settings_menus_reconnect_accessory_automatically">"自動重新連接配件"</string>
     <string name="settings_menus_tap_to_walk">"點擊行走"</string>
     <string name="settings_menus_walk_to_a_location_by_tapping">"點擊某個位置即可走向該處 — 無需確認。"</string>
+    <string name="settings_menus_tap_to_walk_move_walk">"行走"</string>
+    <string name="settings_menus_tap_to_walk_move_via_roads">"沿道路行走"</string>
+    <string name="settings_menus_tap_to_walk_move_teleport">"傳送"</string>
+    <string name="settings_menus_tap_to_walk_moves_hint">"勾選多項時，點擊後會詢問使用哪種移動方式。"</string>
     <string name="settings_menus_menus">"選單"</string>
     <string name="settings_general_general">"一般"</string>
     <string name="settings_menus_enable_tap_to_walk">"啟用點擊行走"</string>

@@ -15,6 +15,7 @@ import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpoofHistoryEntry
 import com.locationjoystick.core.model.StoredGroundCalibration
+import com.locationjoystick.core.model.TapToWalkMove
 import com.locationjoystick.core.testing.FakePreferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -99,6 +100,31 @@ class AppPreferencesDataSourceTest {
             dataSource.setTapToWalkOverlayEnabled(true)
             dataSource.applySnapshot(staleSnapshot)
             assertTrue(dataSource.getTapToWalkOverlayEnabled().first())
+        }
+
+    @Test
+    fun `tap to walk moves default to walk and round trip`() =
+        runTest {
+            assertEquals(setOf(TapToWalkMove.WALK), dataSource.getTapToWalkMoves().first())
+            dataSource.setTapToWalkMoves(setOf(TapToWalkMove.VIA_ROADS, TapToWalkMove.TELEPORT))
+            assertEquals(setOf(TapToWalkMove.VIA_ROADS, TapToWalkMove.TELEPORT), dataSource.getTapToWalkMoves().first())
+        }
+
+    @Test
+    fun `empty tap to walk moves store the default`() =
+        runTest {
+            dataSource.setTapToWalkMoves(setOf(TapToWalkMove.TELEPORT))
+            dataSource.setTapToWalkMoves(emptySet())
+            assertEquals(setOf(TapToWalkMove.WALK), dataSource.getTapToWalkMoves().first())
+        }
+
+    @Test
+    fun `applySnapshot keeps tap to walk moves`() =
+        runTest {
+            val staleSnapshot = dataSource.getSettingsSnapshot().first()
+            dataSource.setTapToWalkMoves(setOf(TapToWalkMove.TELEPORT))
+            dataSource.applySnapshot(staleSnapshot)
+            assertEquals(setOf(TapToWalkMove.TELEPORT), dataSource.getTapToWalkMoves().first())
         }
 
     @Test

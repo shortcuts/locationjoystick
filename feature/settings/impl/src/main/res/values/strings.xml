@@ -123,6 +123,10 @@
     <string name="settings_menus_reconnect_accessory_automatically">"Reconnect accessory automatically"</string>
     <string name="settings_menus_tap_to_walk">"Tap to Walk"</string>
     <string name="settings_menus_walk_to_a_location_by_tapping">"Walk to a location by tapping it, with no confirmation."</string>
+    <string name="settings_menus_tap_to_walk_move_walk">"Walk"</string>
+    <string name="settings_menus_tap_to_walk_move_via_roads">"Walk via roads"</string>
+    <string name="settings_menus_tap_to_walk_move_teleport">"Teleport"</string>
+    <string name="settings_menus_tap_to_walk_moves_hint">"With more than one checked, a tap asks which move to use."</string>
     <string name="settings_menus_menus">"Menus"</string>
     <string name="settings_general_general">"General"</string>
     <string name="settings_menus_enable_tap_to_walk">"Enable Tap to Walk"</string>

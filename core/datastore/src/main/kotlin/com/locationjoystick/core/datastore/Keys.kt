@@ -92,6 +92,7 @@ internal object Keys {
     val FLOATING_MAP_WIDTH = intPreferencesKey("floating_map_width")
     val FLOATING_MAP_HEIGHT = intPreferencesKey("floating_map_height")
     val TAP_TO_WALK_OVERLAY_ENABLED = booleanPreferencesKey("tap_to_walk_overlay_enabled")
+    val TAP_TO_WALK_MOVES = stringSetPreferencesKey("tap_to_walk_moves")
     val ACCESSIBILITY_DISCLOSURE_CHOICE = stringPreferencesKey("accessibility_disclosure_choice")
     val TAP_TO_WALK_GROUND_CALIBRATION = stringPreferencesKey("tap_to_walk_ground_calibration")
     val RECONNECT_TAP_ENABLED = booleanPreferencesKey("reconnect_tap_enabled")

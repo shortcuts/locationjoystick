@@ -8,6 +8,7 @@ import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.SpeedProfile
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.TapToWalkMove
 import com.locationjoystick.core.model.ThemeMode
 
 sealed interface SettingsScreenState {
@@ -47,6 +48,7 @@ data class SettingsUiState(
     val enabledMapFeatures: Set<AppFeature> = AppFeature.DEFAULT_MAP_ENABLED,
     val floatingMapQuickWalk: Boolean = false,
     val tapToWalkOverlayEnabled: Boolean = false,
+    val tapToWalkMoves: Set<TapToWalkMove> = TapToWalkMove.DEFAULT,
     val isScreenServiceGranted: Boolean = false,
     val accessibilityDisclosureAccepted: Boolean = false,
     val reconnectTapEnabled: Boolean = false,
@@ -107,6 +109,7 @@ internal fun SettingsUiState.toAppSettings(): AppSettings =
         rememberLastLocation = rememberLastLocation,
         floatingMapQuickWalk = floatingMapQuickWalk,
         tapToWalkOverlayEnabled = tapToWalkOverlayEnabled,
+        tapToWalkMoves = tapToWalkMoves,
         reconnectTapEnabled = reconnectTapEnabled,
         keepWidgetOnIdle = keepWidgetOnIdle,
         themeMode = themeMode,

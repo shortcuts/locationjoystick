@@ -10,6 +10,7 @@ import com.locationjoystick.core.model.Route
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpeedProfile
+import com.locationjoystick.core.model.TapToWalkMove
 import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.core.model.Waypoint
 import org.json.JSONObject
@@ -104,6 +105,26 @@ class SettingsExportCodecTest {
         assertEquals(true, settings.reconnectTapEnabled)
         assertEquals(true, settings.keepWidgetOnIdle)
         assertEquals(ThemeMode.LIGHT, settings.themeMode)
+    }
+
+    @Test
+    fun `tap to walk moves round-trip, default when absent, unknown names dropped`() {
+        val original =
+            minimalExportData().copy(
+                settings = AppSettings(tapToWalkMoves = setOf(TapToWalkMove.VIA_ROADS, TapToWalkMove.TELEPORT)),
+            )
+
+        val restored = SettingsExportCodec.parseExportData(SettingsExportCodec.serializeExportData(original)).settings
+
+        assertEquals(setOf(TapToWalkMove.VIA_ROADS, TapToWalkMove.TELEPORT), restored.tapToWalkMoves)
+        assertEquals(
+            setOf(TapToWalkMove.WALK),
+            SettingsExportCodec.parseExportData("""{"schemaVersion":2,"settings":{}}""").settings.tapToWalkMoves,
+        )
+        val unknown = """{"schemaVersion":2,"settings":{"tapToWalkMoves":["FLY","TELEPORT"]}}"""
+        assertEquals(setOf(TapToWalkMove.TELEPORT), SettingsExportCodec.parseExportData(unknown).settings.tapToWalkMoves)
+        val onlyUnknown = """{"schemaVersion":2,"settings":{"tapToWalkMoves":["FLY"]}}"""
+        assertEquals(setOf(TapToWalkMove.WALK), SettingsExportCodec.parseExportData(onlyUnknown).settings.tapToWalkMoves)
     }
 
     @Test

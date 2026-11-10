@@ -743,6 +743,8 @@ internal fun BoxScope.TapActionPanel(
     onDismiss: () -> Unit,
     onShareOpened: () -> Unit,
     hideTeleportFeatures: Boolean = false,
+    showWalk: Boolean = true,
+    showWalkViaRoads: Boolean = true,
 ) {
     val context = LocalContext.current
     Column(
@@ -823,21 +825,25 @@ internal fun BoxScope.TapActionPanel(
                 ) { Text(stringResource(R.string.map_floating_teleport_here)) }
                 Spacer(Modifier.height(LjSpacing.sm))
             }
-            LjOutlinedButton(
-                onClick = {
-                    onWalkTo(tap)
-                    onDismiss()
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text(stringResource(R.string.map_floating_walk_here)) }
-            Spacer(Modifier.height(LjSpacing.sm))
-            LjOutlinedButton(
-                onClick = {
-                    onWalkViaRoads(tap)
-                    onDismiss()
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text(stringResource(R.string.map_floating_walk_here_via_roads)) }
+            if (showWalk) {
+                LjOutlinedButton(
+                    onClick = {
+                        onWalkTo(tap)
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(R.string.map_floating_walk_here)) }
+                if (showWalkViaRoads) Spacer(Modifier.height(LjSpacing.sm))
+            }
+            if (showWalkViaRoads) {
+                LjOutlinedButton(
+                    onClick = {
+                        onWalkViaRoads(tap)
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(R.string.map_floating_walk_here_via_roads)) }
+            }
             if (isWalkActive) {
                 Spacer(Modifier.height(LjSpacing.sm))
                 LjOutlinedButton(

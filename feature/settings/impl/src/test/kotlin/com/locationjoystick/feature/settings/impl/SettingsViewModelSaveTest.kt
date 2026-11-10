@@ -992,6 +992,15 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
         tapToWalkEnabledWrite = enabled
     }
 
+    override fun getTapToWalkMoves(): Flow<Set<com.locationjoystick.core.model.TapToWalkMove>> =
+        flowOf(com.locationjoystick.core.model.TapToWalkMove.DEFAULT)
+
+    var tapToWalkMovesWrite: Set<com.locationjoystick.core.model.TapToWalkMove>? = null
+
+    override suspend fun setTapToWalkMoves(moves: Set<com.locationjoystick.core.model.TapToWalkMove>) {
+        tapToWalkMovesWrite = moves
+    }
+
     override fun getAccessibilityDisclosureChoice(): Flow<String> = flowOf("")
 
     override fun getGroundCalibration(): Flow<com.locationjoystick.core.model.StoredGroundCalibration?> = flowOf(null)

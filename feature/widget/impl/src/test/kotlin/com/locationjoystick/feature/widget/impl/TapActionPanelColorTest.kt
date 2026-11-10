@@ -65,4 +65,39 @@ class TapActionPanelColorTest {
                 .layoutInput.style.color,
         )
     }
+
+    @Test
+    fun chooserShowsOnlyTheOfferedMoves() {
+        composeRule.setContent {
+            MaterialTheme {
+                Box {
+                    TapActionPanel(
+                        tap = LatLng(0.0, 0.0),
+                        isRouteReplay = false,
+                        isEphemeralReplay = false,
+                        isWalkActive = false,
+                        walkStart = null,
+                        walkTarget = null,
+                        routeWaypoints = null,
+                        cooldownForPosition = null,
+                        onTeleport = {},
+                        onWalkTo = {},
+                        onWalkViaRoads = {},
+                        onStopRouteAndTeleport = {},
+                        onStopRouteAndWalkTo = {},
+                        onFinishRouteAndWalkTo = {},
+                        onAddEphemeralWaypoint = { _, _ -> },
+                        onDismiss = {},
+                        onShareOpened = {},
+                        hideTeleportFeatures = true,
+                        showWalk = false,
+                    )
+                }
+            }
+        }
+        composeRule.onNodeWithText("Walk here via roads").assertExists()
+        composeRule.onNodeWithText("Do nothing").assertExists()
+        composeRule.onNodeWithText("Walk here").assertDoesNotExist()
+        composeRule.onNodeWithText("Teleport here").assertDoesNotExist()
+    }
 }

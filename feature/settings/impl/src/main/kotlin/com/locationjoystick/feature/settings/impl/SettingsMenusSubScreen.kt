@@ -61,6 +61,8 @@ import com.locationjoystick.core.model.FeatureSurface
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.ScreenFeatureGates
 import com.locationjoystick.core.model.SpeedProfile
+import com.locationjoystick.core.model.TapToWalkMove
+import com.locationjoystick.core.model.withMove
 import com.locationjoystick.feature.settings.impl.R
 import kotlin.math.roundToInt
 import com.locationjoystick.core.designsystem.R as DesignR
@@ -216,6 +218,8 @@ private fun TapToWalkSection(
         },
     )
     if (enabled) {
+        Spacer(Modifier.height(LjSpacing.sm))
+        TapToWalkMoveRows(uiState, onAction)
         // takeScreenshot(int, Executor, TakeScreenshotCallback) requires API 30 — no fallback exists.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (showsServiceOffHint(enabled, uiState.isScreenServiceGranted)) {
@@ -251,6 +255,33 @@ private fun TapToWalkSection(
             onDecline = { showEnableDisclosure = false },
         )
     }
+}
+
+@Composable
+private fun TapToWalkMoveRows(
+    uiState: SettingsUiState,
+    onAction: (SettingsAction) -> Unit,
+) {
+    val labels =
+        mapOf(
+            TapToWalkMove.WALK to stringResource(R.string.settings_menus_tap_to_walk_move_walk),
+            TapToWalkMove.VIA_ROADS to stringResource(R.string.settings_menus_tap_to_walk_move_via_roads),
+            TapToWalkMove.TELEPORT to stringResource(R.string.settings_menus_tap_to_walk_move_teleport),
+        )
+    TapToWalkMove.entries.filter { it != TapToWalkMove.TELEPORT || !uiState.hideTeleportFeatures }.forEach { move ->
+        LjSelectionRow(
+            mode = LjSelectionMode.Multi,
+            title = labels.getValue(move),
+            checked = move in uiState.tapToWalkMoves,
+            enabled = tapToWalkRowEnabled(move, uiState.tapToWalkMoves, uiState.hideTeleportFeatures),
+            onCheckedChange = { on -> onAction(SettingsAction.SetTapToWalkMoves(uiState.tapToWalkMoves.withMove(move, on))) },
+        )
+    }
+    Text(
+        stringResource(R.string.settings_menus_tap_to_walk_moves_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable
@@ -330,6 +361,16 @@ internal fun showsReconnectConsentPrompt(
     reconnectOn: Boolean,
     accepted: Boolean,
 ): Boolean = reconnectOn && !accepted
+
+/** False only for the one checked row the user can see: the last visible checked box cannot be unchecked. */
+internal fun tapToWalkRowEnabled(
+    move: TapToWalkMove,
+    stored: Set<TapToWalkMove>,
+    hideTeleport: Boolean,
+): Boolean {
+    val visibleChecked = stored.filter { it != TapToWalkMove.TELEPORT || !hideTeleport }
+    return !(visibleChecked.size == 1 && visibleChecked.single() == move)
+}
 
 internal fun showsServiceOffHint(
     featureOn: Boolean,
