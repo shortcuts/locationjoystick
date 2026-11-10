@@ -53,13 +53,12 @@ The search region is the top-right of the screen, where the target app puts the 
 The policy exists to avoid a tap that turns a connected companion off.
 
 - Tap only when the control reads off, confirmed by two screenshots a short time apart.
-- After a tap, wait, then read the control several times. Stop as soon as it reads on. Tap again only when every read is still off.
-- Take a fresh read right before each tap. A companion that connects during the pause must not be tapped away.
-- A read that returns nothing is unknown, never "connected". Before the first tap it ends the run as `NOT_FOUND`. After a tap it keeps the poll going and never retaps, because the control may already read on. `FAILED` needs a delivered tap and no on read.
-- A null read in the confirm phase (before any tap) waits once, then repeats both confirm reads. A popup that slides over the ball, or fades in, can hide the control for a moment. Only a second null ends the run as `NOT_FOUND`.
+- Make one tap per check. After it, wait one fixed `POST_TAP_WAIT_MS` for the game to load, then take `POST_TAP_READS` reads. An on read ends the run as `RECONNECTED`. Otherwise the run ends as `FAILED`: no second tap in the same run.
+- Take a fresh read right before the tap. A companion that connects during the pause must not be tapped away.
+- A read that returns nothing is unknown, never "connected". Before the tap it ends the run as `NOT_FOUND`. After the tap it counts as not on, so the run ends as `FAILED`. `FAILED` needs a delivered tap and no on read.
+- A null read in the confirm phase (before any tap) waits `UNSURE_RETRY_DELAY_MS`, then repeats both confirm reads. A popup that slides over the ball, or fades in, can hide the control for a moment. Only a second null ends the run as `NOT_FOUND`.
 - A tap the system cancels or rejects (for example a finger on the screen) does not count. A run with no delivered tap ends as `GATE_CLOSED`, so it stays neutral.
-- A small maximum number of taps per run. Abort and report after that.
-- The pause before each tap doubles with every tap in the run, so a fault that lasts a few seconds (such as the game's search spinner) has time to clear. A random jitter stays on top of each pause. The tap position and gesture duration are randomised within bounds, so taps do not repeat the same timing. Tune them only against reliability evidence.
+- A random jitter pause precedes the tap. The tap position and gesture duration are randomised within bounds, so taps do not repeat the same timing. Tune them only against reliability evidence.
 
 ## Reliability proof
 
@@ -67,11 +66,11 @@ The policy exists to avoid a tap that turns a connected companion off.
 
 Current build, 2026-11-02, Pixel 5 with the original Pokemon GO Plus, debug build:
 
-- Block a, tap disconnect: 19/20. The fail was a connect that showed ON 16 s after the tap, after the post-tap read window had closed.
+- Block a, tap disconnect: 19/20. The fail was a connect that showed ON 16 s after the tap, after the post-tap read window had closed. Under the current policy (2026-11 retune: one 10 s wait, 2 reads) such a connect also ends `FAILED`; the next check reads on and resets the budget. Not re-run on a device.
 - Already on: 12/12 checks with zero taps.
 - Block c, screen off: 10/10 reconnected, but with zero taps. The game reconnects by itself when it resumes, so this block does not test the tap.
 - A typical connect reads ON 8 to 9 s after the tap.
-- A retap while the game still connects did not cancel the connect (6/6). A slow connect therefore costs a longer read window, not a lost link.
+- A retap while the game still connects did not cancel the connect (6/6).
 - While the game searches, it draws a ring around the ball. Taps during that search right after a disconnect often did nothing, so the runner now waits the ring out (`readSettled`, `SEARCH_MAX_WAIT_MS`) and never taps or counts it. This is safe because a tap during our own ring did not cancel the connect (6/6), so the wait only costs time. Past the cap a read counts as unknown.
 - After Recents and then Back, the gate stayed closed in some attempts (it never received a new window event from the game) until the game was relaunched. The gate-closed notice in "Failure notification" covers this case.
 
@@ -81,18 +80,22 @@ The earlier failures were diagnosed as a timing fault, not a detection fault. Th
 
 The proof is run by the reconnect matrix script in `scripts/`. Its raw rows are not committed. Each row stores the tap-to-link and tap-to-services seconds, read from the phone's Bluetooth history, because the per-cycle `logcat -c` erases the log.
 
-## Backoff
+## Tap budget
 
-A `FAILED` run means the tap did not bring the companion back, so it is probably away. `ReconnectBackoff` waits `FAILED_RUN_BACKOFF_START_MS` after the first `FAILED` run, then doubles the wait after each further `FAILED`, up to `MAX_CHECK_INTERVAL_MS`. Retrying at the base rate would repeat taps and screenshots that cannot succeed. The loop never stops retrying while the setting is on.
+The game opens a prompt after too many consecutive failed connects, and the user must not see it. Each tap is a connect attempt, so the app spends at most `MAX_FAILED_TAPS_PER_OUTAGE` failed taps per outage, then stops tapping.
 
-- `RECONNECTED` and `NOT_OFF` reset the wait to base: the companion is connected, or the control is not off.
-- `NOT_FOUND` and `GATE_CLOSED` keep the wait, the same neutral rule as the streaks.
-- A loop restart (setting toggled) keeps the wait too. The state lives in the service, in memory only.
-- Debug builds never back off, because the reliability matrix needs a steady short cycle.
+- `ReconnectFailureStreak` is the budget. Each `FAILED` run spends one tap; `exhausted` turns true at the limit.
+- Once exhausted, a check still reads the control but returns `PAUSED` instead of tapping when it reads off. Reads are the only way to see on again.
+- `RECONNECTED` and `NOT_OFF` reset the budget: the companion is connected. Turning the setting off and on resets it too.
+- `NOT_FOUND`, `GATE_CLOSED` and `PAUSED` keep the budget.
+- Debug builds ignore the budget, because the reliability matrix needs hundreds of unattended cycles at a steady short interval.
+- The check interval is a flat `CHECK_INTERVAL_MS`. The old doubling backoff is gone: two taps per outage leave nothing for it to protect.
+- A late connect (over about 12 s after the tap) ends `FAILED` and counts. The next check reads on and resets the budget.
+- Prompt threshold: not measured. No run drove consecutive failed taps against the game's prompt, so the budget of 2 follows the product decision, not a measurement.
 
 ## Failure notification
 
-The check runs in the background, so the user cannot see it fail. `ReconnectFailureStreak` counts consecutive `FAILED` runs and tells the service to post one notification per streak. `NOT_OFF` means the control read on, so it re-arms the streak like `RECONNECTED`: a user who reconnects by hand must not carry old failures into the next outage. `NOT_FOUND` and `GATE_CLOSED` stay neutral for the failure streak. `ReconnectGateClosedStreak` covers a closed gate: after `ReconnectTapConstants.GATE_CLOSED_NOTIFY_MS` of consecutive `GATE_CLOSED` results with the screen on, the service posts one notice on the same channel. Its text names both causes (the game not in front, or Tap to Walk on) because the gate cannot tell them apart from the user using another app. A closed result with the screen off, or any other result, ends the streak; any result other than `GATE_CLOSED` clears the notice, but a screen-off closed result leaves it up. All streaks reset when the loop turns off. The service cancels the failed notice on `RECONNECTED` or `NOT_OFF`, and the not-found notice whenever the control is found again. Turning the loop off or unbinding cancels all three, so no stale notice outlives its cause. The streak is in memory only; a process restart at worst delays one notification. `ReconnectNotFoundStreak` covers the case NOT_OFF hides: the game is in front (the gate) yet the first read finds no control for `NOT_FOUND_NOTIFY_THRESHOLD` checks in a row, which means the HUD moved or the colours changed and reconnect has silently stopped. It posts one notification per streak on the same channel; any other result, including a closed gate, re-arms it. Also in memory only. The notification has its own channel because the foreground-service channels are silent or hidden.
+The check runs in the background, so the user cannot see it fail. `ReconnectFailureStreak` counts consecutive `FAILED` runs and tells the service to post one notification per streak. `FAILURE_NOTIFY_THRESHOLD` equals the tap budget, so the notice appears when reconnect stops tapping. `NOT_OFF` means the control read on, so it re-arms the streak like `RECONNECTED`: a user who reconnects by hand must not carry old failures into the next outage. `NOT_FOUND`, `GATE_CLOSED` and `PAUSED` stay neutral for the failure streak. `ReconnectGateClosedStreak` covers a closed gate: after `ReconnectTapConstants.GATE_CLOSED_NOTIFY_MS` of consecutive `GATE_CLOSED` results with the screen on, the service posts one notice on the same channel. Its text names both causes (the game not in front, or Tap to Walk on) because the gate cannot tell them apart from the user using another app. A closed result with the screen off, or any other result, ends the streak; any result other than `GATE_CLOSED` clears the notice, but a screen-off closed result leaves it up. All streaks reset when the loop turns off. The service cancels the failed notice on `RECONNECTED` or `NOT_OFF`, and the not-found notice whenever the control is found again. Turning the loop off or unbinding cancels all three, so no stale notice outlives its cause. The streak is in memory only; a process restart at worst delays one notification. `ReconnectNotFoundStreak` covers the case NOT_OFF hides: the game is in front (the gate) yet the first read finds no control for `NOT_FOUND_NOTIFY_THRESHOLD` checks in a row, which means the HUD moved or the colours changed and reconnect has silently stopped. It posts one notification per streak on the same channel; any other result, including a closed gate, re-arms it. Also in memory only. The notification has its own channel because the foreground-service channels are silent or hidden.
 
 ## Status line
 

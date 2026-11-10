@@ -622,41 +622,38 @@ object AppConstants {
         const val SEARCH_X_MIN_PCT = 0.55f
         const val SEARCH_Y_MAX_PCT = 0.35f
 
-        // User decision: a fixed 1 minute periodic check, no manual trigger. First check runs one
-        // interval after the loop (re)starts so enabling the setting never taps immediately.
-        const val CHECK_INTERVAL_MS = 60_000L
-
-        // Wait after the first FAILED run. Each further FAILED run doubles it up to MAX_CHECK_INTERVAL_MS.
-        const val FAILED_RUN_BACKOFF_START_MS = 30_000L
-        const val MAX_CHECK_INTERVAL_MS = 5 * 60_000L
+        // A fixed periodic check, no manual trigger. First check runs one interval after the loop
+        // (re)starts so enabling the setting never taps immediately.
+        const val CHECK_INTERVAL_MS = 15_000L
 
         // Debug builds only: the reliability matrix (scripts/reconnect_matrix.py) needs hundreds of
         // cycles, so the wait per cycle is short.
         const val DEBUG_CHECK_INTERVAL_MS = 10_000L
 
-        // Policy: two OFF reads this far apart, then up to MAX_TAPS taps, each after a pause that doubles per tap.
-        // After a tap: settle, then up to SETTLE_POLL_READS reads; retap only when all are OFF.
+        // Policy: two OFF reads this far apart, then one tap after a short pause. After the tap: one fixed wait, then POST_TAP_READS reads.
         const val CONFIRM_DELAY_MS = 400L
 
         // A null confirm read may be a popup sliding over the ball: give it time to leave before re-reading.
-        const val UNSURE_RETRY_DELAY_MS = 20_000L
+        const val UNSURE_RETRY_DELAY_MS = 10_000L
 
-        // The game's own search ring lasts 4 to 5 s after a disconnect and 7 to 8 s after a tap; a connect once read ON 16 s after a tap.
+        // The game's own search ring lasts 4 to 5 s after a disconnect and 7 to 8 s after a tap.
         const val SEARCH_POLL_INTERVAL_MS = 1_000L
-        const val SEARCH_MAX_WAIT_MS = 20_000L
+        const val SEARCH_MAX_WAIT_MS = 10_000L
         const val PRE_TAP_DELAY_MIN_MS = 700L
         const val PRE_TAP_DELAY_MAX_MS = 2200L
-        const val SETTLE_DELAY_MS = 4000L
-        const val SETTLE_POLL_READS = 8
+        const val POST_TAP_WAIT_MS = 10_000L
+        const val POST_TAP_READS = 2
         const val SETTLE_POLL_INTERVAL_MS = 2000L
-        const val MAX_TAPS = 3
 
-        // Consecutive FAILED runs before the user is told; fixed, no setting.
-        const val FAILURE_NOTIFY_THRESHOLD = 3
+        // Failed taps per outage before reconnect stops tapping: the game opens a prompt after too many consecutive failures.
+        const val MAX_FAILED_TAPS_PER_OUTAGE = 2
+
+        // The user is told when the tap budget is spent; fixed, no setting.
+        const val FAILURE_NOTIFY_THRESHOLD = MAX_FAILED_TAPS_PER_OUTAGE
 
         // Consecutive in-game checks that find no control before the user is told: 30 minutes at
         // CHECK_INTERVAL_MS, long enough to rule out a loading screen or a menu hiding the HUD.
-        const val NOT_FOUND_NOTIFY_THRESHOLD = 30
+        const val NOT_FOUND_NOTIFY_THRESHOLD = 120
 
         // A closed gate lasts until the game relaunches, so the user hears about it after this long.
         const val GATE_CLOSED_NOTIFY_MS = 15 * 60_000L

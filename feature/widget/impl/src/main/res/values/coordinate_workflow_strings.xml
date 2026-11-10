@@ -50,4 +50,5 @@
     <string name="widget_panel_content_reconnect_status_failed">"Failed"</string>
     <string name="widget_panel_content_reconnect_status_gate_closed">"Paused: game not in front or Tap to Walk on"</string>
     <string name="widget_panel_content_reconnect_status_not_found">"Control not found"</string>
+    <string name="widget_panel_content_reconnect_status_paused">"Paused: too many failed taps"</string>
 </resources>

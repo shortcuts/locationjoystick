@@ -18,6 +18,8 @@ internal class ReconnectNotifier(
     private val notFoundStreak = ReconnectNotFoundStreak()
     private val gateClosedStreak = ReconnectGateClosedStreak()
 
+    val tapBudgetSpent: Boolean get() = failureStreak.exhausted
+
     // Ids we posted and have not cancelled, so the per-check cancels skip the system call when nothing is up.
     private val posted = mutableSetOf<Int>()
 
@@ -38,7 +40,7 @@ internal class ReconnectNotifier(
         // A notice is stale once the accessory is back (ON read) or the control is seen again.
         val accessoryBack = result == ReconnectRunResult.RECONNECTED || result == ReconnectRunResult.NOT_OFF
         if (accessoryBack) cancel(ID_FAILED)
-        if (accessoryBack || result == ReconnectRunResult.FAILED) cancel(ID_NOT_FOUND)
+        if (accessoryBack || result == ReconnectRunResult.FAILED || result == ReconnectRunResult.PAUSED) cancel(ID_NOT_FOUND)
         if (result != ReconnectRunResult.GATE_CLOSED) cancel(ID_GATE_CLOSED)
         if (failureStreak.record(result)) {
             post(R.string.reconnect_failed_title, R.string.reconnect_failed_text, ID_FAILED)

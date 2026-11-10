@@ -6,6 +6,7 @@ import com.locationjoystick.core.model.ReconnectRunResult.FAILED
 import com.locationjoystick.core.model.ReconnectRunResult.GATE_CLOSED
 import com.locationjoystick.core.model.ReconnectRunResult.NOT_FOUND
 import com.locationjoystick.core.model.ReconnectRunResult.NOT_OFF
+import com.locationjoystick.core.model.ReconnectRunResult.PAUSED
 import com.locationjoystick.core.model.ReconnectRunResult.RECONNECTED
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -17,15 +18,15 @@ class ReconnectFailureStreakTest {
     }
 
     @Test
-    fun `notifies on third failure only`() {
-        assertEquals(listOf(false, false, true, false, false), run(FAILED, FAILED, FAILED, FAILED, FAILED))
+    fun `notifies on second failure only`() {
+        assertEquals(listOf(false, true, false, false), run(FAILED, FAILED, FAILED, FAILED))
     }
 
     @Test
     fun `not off re-arms`() {
         assertEquals(
-            listOf(false, false, true, false, false, false, true),
-            run(FAILED, FAILED, FAILED, NOT_OFF, FAILED, FAILED, FAILED),
+            listOf(false, true, false, false, true),
+            run(FAILED, FAILED, NOT_OFF, FAILED, FAILED),
         )
     }
 
@@ -34,7 +35,7 @@ class ReconnectFailureStreakTest {
         val failures = ReconnectFailureStreak()
         repeat(3) { failures.record(FAILED) }
         failures.reset()
-        assertEquals(listOf(false, false, true), List(3) { failures.record(FAILED) })
+        assertEquals(listOf(false, true, false), List(3) { failures.record(FAILED) })
         val n = AppConstants.ReconnectTapConstants.NOT_FOUND_NOTIFY_THRESHOLD
         val misses = ReconnectNotFoundStreak()
         repeat(n) { misses.record(NOT_FOUND) }
@@ -43,26 +44,48 @@ class ReconnectFailureStreakTest {
     }
 
     @Test
-    fun `gate closed neither counts nor resets`() {
-        assertEquals(listOf(false, false, false, true), run(FAILED, GATE_CLOSED, FAILED, FAILED))
+    fun `gate closed and paused neither count nor reset`() {
+        assertEquals(listOf(false, false, true), run(FAILED, GATE_CLOSED, FAILED))
+        assertEquals(listOf(false, true, false, false), run(FAILED, FAILED, PAUSED, FAILED))
     }
 
     @Test
     fun `reconnect re-arms`() {
         assertEquals(
-            listOf(false, false, true, false, false, false, true),
-            run(FAILED, FAILED, FAILED, RECONNECTED, FAILED, FAILED, FAILED),
+            listOf(false, true, false, false, true),
+            run(FAILED, FAILED, RECONNECTED, FAILED, FAILED),
         )
     }
 
     @Test
     fun `reconnect before threshold resets count`() {
-        assertEquals(listOf(false, false, false, false, false), run(FAILED, FAILED, RECONNECTED, FAILED, FAILED))
+        assertEquals(listOf(false, false, false, false), run(FAILED, RECONNECTED, FAILED, RECONNECTED))
+    }
+
+    @Test
+    fun `exhausted flips on the second failure and clears on not off, reconnect and reset`() {
+        val streak = ReconnectFailureStreak()
+        streak.record(FAILED)
+        assertEquals(false, streak.exhausted)
+        streak.record(FAILED)
+        assertEquals(true, streak.exhausted)
+        streak.record(PAUSED)
+        streak.record(NOT_FOUND)
+        streak.record(GATE_CLOSED)
+        assertEquals(true, streak.exhausted)
+        streak.record(NOT_OFF)
+        assertEquals(false, streak.exhausted)
+        repeat(2) { streak.record(FAILED) }
+        streak.record(RECONNECTED)
+        assertEquals(false, streak.exhausted)
+        repeat(2) { streak.record(FAILED) }
+        streak.reset()
+        assertEquals(false, streak.exhausted)
     }
 
     @Test
     fun `not found never counts toward failures`() {
-        assertEquals(List(5) { false }, run(FAILED, FAILED, NOT_FOUND, NOT_FOUND, NOT_FOUND))
+        assertEquals(List(4) { false }, run(FAILED, NOT_FOUND, NOT_FOUND, NOT_FOUND))
     }
 
     @Test

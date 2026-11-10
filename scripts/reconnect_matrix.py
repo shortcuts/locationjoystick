@@ -9,7 +9,7 @@ Saved screenshots drop the bottom 5% so the in-game username never lands on disk
 Subcommands:
     run [--serial S] [--mac-suffix D3:24] [--device-slug pixel7] --block a|b|c|d|e --cycles 20
         Operator disconnects the companion and presses Enter; the harness waits for the app's
-        check (one per loop, 10 s debug / 60 s release), then confirms the link with dumpsys. One row per cycle.
+        check (one per loop, 10 s debug / 15 s release), then confirms the link with dumpsys. One row per cycle.
     already-on [--serial S] [--mac-suffix D3:24] [--device-slug pixel7] --checks 12
         Companion connected; every check must read ON, tap nothing and return NOT_OFF.
     auto [--serial S] [--mac-suffix D3:24] [--device-slug pixel7] --block a|b|c|d|e --cycles 100
@@ -57,7 +57,7 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "scripts" / "reconnect-matrix"
 ROWS = OUT / "cycles.jsonl"
 TAG = "ScreenAccessibilitySvc"
-LOOP_INTERVAL_S = 60  # AppConstants.ReconnectTapConstants.CHECK_INTERVAL_MS (release); debug is 10 s
+LOOP_INTERVAL_S = 15  # AppConstants.ReconnectTapConstants.CHECK_INTERVAL_MS (release); debug is 10 s
 CYCLE_TIMEOUT_S = 150  # one loop interval + up to 3 taps with settles
 
 ACL_RE = re.compile(r"aclStateChangeCallback: State:(Connected|Disconnected)")

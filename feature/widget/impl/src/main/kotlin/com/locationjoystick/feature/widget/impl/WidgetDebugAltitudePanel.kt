@@ -96,6 +96,7 @@ internal fun reconnectStatusLabelRes(result: ReconnectRunResult): Int =
         ReconnectRunResult.FAILED -> R.string.widget_panel_content_reconnect_status_failed
         ReconnectRunResult.GATE_CLOSED -> R.string.widget_panel_content_reconnect_status_gate_closed
         ReconnectRunResult.NOT_FOUND -> R.string.widget_panel_content_reconnect_status_not_found
+        ReconnectRunResult.PAUSED -> R.string.widget_panel_content_reconnect_status_paused
     }
 
 @Composable

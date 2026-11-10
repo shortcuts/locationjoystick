@@ -45,20 +45,11 @@ class ScreenAccessibilityService :
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    // Debug builds never back off: the reliability matrix needs a steady short cycle.
-    private val backoff =
+    private val checkIntervalMs =
         if (BuildConfig.DEBUG) {
-            ReconnectBackoff(
-                AppConstants.ReconnectTapConstants.DEBUG_CHECK_INTERVAL_MS,
-                AppConstants.ReconnectTapConstants.DEBUG_CHECK_INTERVAL_MS,
-                AppConstants.ReconnectTapConstants.DEBUG_CHECK_INTERVAL_MS,
-            )
+            AppConstants.ReconnectTapConstants.DEBUG_CHECK_INTERVAL_MS
         } else {
-            ReconnectBackoff(
-                AppConstants.ReconnectTapConstants.CHECK_INTERVAL_MS,
-                AppConstants.ReconnectTapConstants.FAILED_RUN_BACKOFF_START_MS,
-                AppConstants.ReconnectTapConstants.MAX_CHECK_INTERVAL_MS,
-            )
+            AppConstants.ReconnectTapConstants.CHECK_INTERVAL_MS
         }
 
     // Package of the last window-state-changed event. Only the package name is read, never the view tree.
@@ -93,7 +84,7 @@ class ScreenAccessibilityService :
                         notifier.reset()
                     }
                     while (active) {
-                        delay(backoff.delayMs)
+                        delay(checkIntervalMs)
                         guardedReconnectCheck(
                             onError = { Log.e(TAG, "Reconnect check failed; next interval retries", it) },
                         ) { runReconnectCheck() }
@@ -116,6 +107,8 @@ class ScreenAccessibilityService :
     private suspend fun runReconnectCheck() {
         val result =
             runReconnectTap(
+                // Debug builds ignore the budget: the reliability matrix needs hundreds of unattended cycles.
+                allowTap = BuildConfig.DEBUG || !notifier.tapBudgetSpent,
                 screenWidth = resources.displayMetrics.widthPixels,
                 screenHeight = resources.displayMetrics.heightPixels,
                 gate = {
@@ -137,7 +130,6 @@ class ScreenAccessibilityService :
             )
         Log.d(TAG, "Reconnect check: $result")
         screenCaptureSource.reportReconnect(ReconnectStatus(result, System.currentTimeMillis()))
-        backoff.record(result)
         notifier.onResult(result, getSystemService(PowerManager::class.java).isInteractive)
     }
 

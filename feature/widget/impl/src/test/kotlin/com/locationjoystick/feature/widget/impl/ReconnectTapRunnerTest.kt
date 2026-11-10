@@ -77,7 +77,7 @@ class ReconnectTapRunnerTest {
         }
 
     @Test
-    fun `undelivered taps are neutral`() =
+    fun `an undelivered tap is neutral and is not repeated`() =
         runTest {
             var taps = 0
             val result =
@@ -86,16 +86,7 @@ class ReconnectTapRunnerTest {
                     false
                 })
             assertEquals(ReconnectRunResult.GATE_CLOSED, result)
-            assertEquals(3, taps)
-        }
-
-    @Test
-    fun `one undelivered then delivered tap fails normally`() =
-        runTest {
-            var taps = 0
-            val result = runReconnectTap(1080, 2400, reads(off), { _, _, _ -> ++taps > 1 })
-            assertEquals(ReconnectRunResult.FAILED, result)
-            assertEquals(3, taps)
+            assertEquals(1, taps)
         }
 
     @Test
@@ -112,7 +103,7 @@ class ReconnectTapRunnerTest {
         }
 
     @Test
-    fun `no control twice waits 20s then is not found and never taps`() =
+    fun `no control twice waits 10s then is not found and never taps`() =
         runTest {
             val taps = Taps()
             val result =
@@ -122,7 +113,7 @@ class ReconnectTapRunnerTest {
                 })
             assertEquals(ReconnectRunResult.NOT_FOUND, result)
             assertEquals(0, taps.count)
-            assertEquals(20_000L, currentTime)
+            assertEquals(ReconnectTapConstants.UNSURE_RETRY_DELAY_MS, currentTime)
         }
 
     @Test
@@ -136,7 +127,7 @@ class ReconnectTapRunnerTest {
                 })
             assertEquals(ReconnectRunResult.RECONNECTED, result)
             assertEquals(1, taps.count)
-            assertTrue("elapsed $currentTime", currentTime >= 20_000L)
+            assertTrue("elapsed $currentTime", currentTime >= ReconnectTapConstants.UNSURE_RETRY_DELAY_MS)
         }
 
     @Test
@@ -162,7 +153,7 @@ class ReconnectTapRunnerTest {
         }
 
     @Test
-    fun `gate closing during the 20s wait ends gate closed`() =
+    fun `gate closing during the retry wait ends gate closed`() =
         runTest {
             var gateCalls = 0
             val result =
@@ -213,7 +204,7 @@ class ReconnectTapRunnerTest {
         }
 
     @Test
-    fun `search ring that outlasts the cap after a tap fails without a retap`() =
+    fun `search ring that outlasts the cap after a tap fails with one tap`() =
         runTest {
             val taps = Taps()
             val result = runReconnectTap(1080, 2400, reads(off, off, off, search), { _, _, _ -> taps.count++ >= 0 })
@@ -222,24 +213,30 @@ class ReconnectTapRunnerTest {
         }
 
     @Test
-    fun `off forever fails after exactly three taps`() =
+    fun `off forever fails after exactly one tap and a 10 s wait plus 2 reads`() =
         runTest {
             val taps = Taps()
+            var reads = 0
             val result =
-                runReconnectTap(1080, 2400, reads(off), { _, _, _ ->
+                runReconnectTap(1080, 2400, {
+                    reads++
+                    off
+                }, { _, _, _ ->
                     taps.count++
                     taps.times += currentTime
                     true
                 })
             assertEquals(ReconnectRunResult.FAILED, result)
-            assertEquals(3, taps.count)
-            // Gap between taps: settle 4s + 7 poll gaps of 2s + pre-tap delay 1.4..2.9s for the second tap.
-            val gap = taps.times[1] - taps.times[0]
-            assertTrue("gap $gap", gap in 19_400..20_900)
+            assertEquals(1, taps.count)
+            assertEquals(5, reads)
+            assertEquals(
+                ReconnectTapConstants.POST_TAP_WAIT_MS + ReconnectTapConstants.SETTLE_POLL_INTERVAL_MS,
+                currentTime - taps.times[0],
+            )
         }
 
     @Test
-    fun `pre-tap pause doubles with each tap and keeps its jitter`() =
+    fun `pre-tap pause keeps its jitter`() =
         runTest {
             val taps = Taps()
             runReconnectTap(1080, 2400, reads(off), { _, _, _ ->
@@ -247,23 +244,17 @@ class ReconnectTapRunnerTest {
                 taps.times += currentTime
                 true
             }, random = Random(7))
-            assertEquals(3, taps.times.size)
-            // The first confirm read sits 400 ms in, so the first tap lands after 400 ms plus its pause.
-            val pause1 = taps.times[0] - 400
-            // Between taps: settle 4s + 7 poll gaps of 2s, then the next pre-tap pause.
-            val pause2 = taps.times[1] - taps.times[0] - 18_000
-            val pause3 = taps.times[2] - taps.times[1] - 18_000
-            assertTrue("pause1 $pause1", pause1 in 700..2_200)
-            assertTrue("pause2 $pause2", pause2 in 1_400..2_900)
-            assertTrue("pause3 $pause3", pause3 in 2_800..4_300)
+            // The first confirm read sits 400 ms in, so the tap lands after 400 ms plus its pause.
+            val pause = taps.times[0] - ReconnectTapConstants.CONFIRM_DELAY_MS
+            assertTrue("pause $pause", pause in 700..2_200)
         }
 
     @Test
-    fun `connect that finishes late reconnects with one tap`() =
+    fun `second post-tap read on reconnects with one tap`() =
         runTest {
             val taps = Taps()
             val result =
-                runReconnectTap(1080, 2400, reads(off, off, off, off, off, on), { _, _, _ ->
+                runReconnectTap(1080, 2400, reads(off, off, off, off, on), { _, _, _ ->
                     taps.count++
                     true
                 })
@@ -272,7 +263,7 @@ class ReconnectTapRunnerTest {
         }
 
     @Test
-    fun `connect that reads on 16 s after the tap reconnects with one tap`() =
+    fun `connect that reads on 16 s after the tap fails without a second tap`() =
         runTest {
             val taps = Taps()
             val result =
@@ -283,22 +274,33 @@ class ReconnectTapRunnerTest {
                     taps.times += currentTime
                     true
                 })
-            assertEquals(ReconnectRunResult.RECONNECTED, result)
+            assertEquals(ReconnectRunResult.FAILED, result)
             assertEquals(1, taps.count)
         }
 
     @Test
-    fun `retap only after every poll read is off`() =
+    fun `tap not allowed and control off is paused without a tap`() =
         runTest {
             val taps = Taps()
-            // 2 confirm + pre-tap + 8 poll reads all OFF, pre-tap of tap 2 OFF, second tap, then ON.
-            val result =
-                runReconnectTap(1080, 2400, reads(*Array(12) { off }, on), { _, _, _ ->
-                    taps.count++
-                    true
-                })
-            assertEquals(ReconnectRunResult.RECONNECTED, result)
-            assertEquals(2, taps.count)
+            val result = runReconnectTap(1080, 2400, reads(off), { _, _, _ -> taps.count++ >= 0 }, allowTap = false)
+            assertEquals(ReconnectRunResult.PAUSED, result)
+            assertEquals(0, taps.count)
+        }
+
+    @Test
+    fun `tap not allowed and control on is not off`() =
+        runTest {
+            val taps = Taps()
+            val result = runReconnectTap(1080, 2400, reads(on), { _, _, _ -> taps.count++ >= 0 }, allowTap = false)
+            assertEquals(ReconnectRunResult.NOT_OFF, result)
+            assertEquals(0, taps.count)
+        }
+
+    @Test
+    fun `tap not allowed and no control is not found`() =
+        runTest {
+            val result = runReconnectTap(1080, 2400, reads(null), { _, _, _ -> true }, allowTap = false)
+            assertEquals(ReconnectRunResult.NOT_FOUND, result)
         }
 
     @Test
@@ -321,17 +323,6 @@ class ReconnectTapRunnerTest {
             val result = runReconnectTap(1080, 2400, reads(off, off, on), { _, _, _ -> taps.count++ >= 0 })
             assertEquals(ReconnectRunResult.RECONNECTED, result)
             assertEquals(0, taps.count)
-        }
-
-    @Test
-    fun `control turning on during the pre-tap pause of a retap never taps`() =
-        runTest {
-            val taps = Taps()
-            // 2 confirm + pre-tap + 8 polls OFF, then ON at the retap's pre-tap read.
-            val result =
-                runReconnectTap(1080, 2400, reads(*Array(11) { off }, on), { _, _, _ -> taps.count++ >= 0 })
-            assertEquals(ReconnectRunResult.RECONNECTED, result)
-            assertEquals(1, taps.count)
         }
 
     @Test
