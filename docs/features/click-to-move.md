@@ -37,6 +37,9 @@ While a walk is active, the user can add the next point, either straight or via 
 The ephemeral replay controller owns this transition. The map and the widget both use it, so the logic lives once.
 
 - The first tap cancels the walk and starts an ephemeral replay from the current position, through the rest of the walk, to the new point. The rest of a road walk keeps its road shape and is not fetched again. Only the new leg is routed, and only if that tap asked for roads.
+- The first tap freezes the walk before it reads the position. The road lookups take seconds, and a walker that keeps moving leaves the replay's start behind it, so the position jumps back.
+- The rest of a road walk searches forward from the walk's progress. Out-and-back streets overlap, and a search over the whole shape can restart from an earlier pass.
+- Taps run one at a time. A second tap must read the list the first one wrote, or its leg starts from the wrong point.
 - Later taps append to the live route, each with its own road choice.
 - With no active walk, the tap does nothing.
 

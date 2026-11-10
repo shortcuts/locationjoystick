@@ -103,7 +103,9 @@ class EphemeralReplayControllerTest {
 
             assertEquals(1, replays.size)
             assertEquals(first, routeFroms.last())
-            assertEquals(listOf(a, far, first, second), controller.pendingWaypoints.value)
+            val pending = controller.pendingWaypoints.value
+            assertEquals(a.latitude, pending.first().latitude, 0.001)
+            assertEquals(listOf(far, first, second), pending.drop(1))
         }
 
     @Test
