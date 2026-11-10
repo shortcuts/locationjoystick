@@ -2,6 +2,7 @@
   "version": "1.0.2",
   "date": "2026-11-05",
   "entries": [
-    { "category": "fix", "scope": "General", "summary": "Fixed a build problem that could leave parts of the app missing and cause crashes." }
+    { "category": "fix", "scope": "General", "summary": "Fixed a build problem that could leave parts of the app missing and cause crashes." },
+    { "category": "fix", "scope": "Map", "summary": "Adding a next point while walking no longer sends you back or loops." }
   ]
 }
