@@ -775,8 +775,7 @@ class MockLocationService : Service() {
         // testProvider.setup() + startUpdateLoop(). Do NOT call them here to avoid
         // a double-invocation race.
         wakeLock.acquire()
-        stateMachine.send(SpoofingEvent.START)
-        locationRepository.startSpoofing()
+        if (stateMachine.send(SpoofingEvent.START)) locationRepository.startSpoofing()
         Log.i(TAG, "Spoofing started at ($lat, $lon)")
     }
 
