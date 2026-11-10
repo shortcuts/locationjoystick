@@ -21,6 +21,7 @@ import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.ExportData
 import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.model.FloatingMapRect
 import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
@@ -978,6 +979,10 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     override fun getFloatingMapQuickWalk(): Flow<Boolean> = flowOf(false)
 
     override suspend fun setFloatingMapQuickWalk(enabled: Boolean) = edit { copy(floatingMapQuickWalk = enabled) }
+
+    override fun getFloatingMapRect(): Flow<FloatingMapRect?> = flowOf(null)
+
+    override suspend fun setFloatingMapRect(rect: FloatingMapRect?) = Unit
 
     override fun getTapToWalkOverlayEnabled(): Flow<Boolean> = flowOf(false)
 

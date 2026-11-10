@@ -313,6 +313,7 @@ class FloatingWidgetService :
 
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
+        panelPresenter.onScreenSizeChanged()
         val params = currentParams ?: return
         dragOffsetX = params.x.toFloat()
         dragOffsetY = params.y.toFloat()

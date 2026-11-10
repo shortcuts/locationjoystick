@@ -27,6 +27,7 @@ import com.locationjoystick.core.location.mockMode
 import com.locationjoystick.core.location.walkStart
 import com.locationjoystick.core.location.walkTarget
 import com.locationjoystick.core.model.FavoriteLocation
+import com.locationjoystick.core.model.FloatingMapRect
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
@@ -44,6 +45,7 @@ import com.locationjoystick.feature.widget.impl.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -122,8 +124,15 @@ internal class WidgetPanelPresenter(
     }
 
     private var panelComposeView: ComposeView? = null
-    private var compactMapX = 0
-    private var compactMapY = 0
+    private var compactMapRect = FloatingMapRect(0, 0, 0, 0)
+
+    private class ResizeGrab(
+        val start: FloatingMapRect,
+        val dx: Float,
+        val dy: Float,
+    )
+
+    private var resizeGrab: ResizeGrab? = null
 
     /**
      * Expanded state of the floating map's route controls (pause/resume + stop).
@@ -171,25 +180,8 @@ internal class WidgetPanelPresenter(
             }
 
     private fun floatingMapLayoutParams(expanded: Boolean): AndroidWindowManager.LayoutParams {
-        val metrics = context.resources.displayMetrics
-        val width =
-            if (expanded) {
-                AndroidWindowManager.LayoutParams.MATCH_PARENT
-            } else {
-                compactFloatingMapWidth(
-                    metrics.widthPixels,
-                    metrics.density,
-                )
-            }
-        val height =
-            if (expanded) {
-                AndroidWindowManager.LayoutParams.MATCH_PARENT
-            } else {
-                compactFloatingMapHeight(
-                    metrics.heightPixels,
-                    metrics.density,
-                )
-            }
+        val width = if (expanded) AndroidWindowManager.LayoutParams.MATCH_PARENT else compactMapRect.width
+        val height = if (expanded) AndroidWindowManager.LayoutParams.MATCH_PARENT else compactMapRect.height
         return AndroidWindowManager
             .LayoutParams(
                 width,
@@ -199,8 +191,8 @@ internal class WidgetPanelPresenter(
                 android.graphics.PixelFormat.TRANSLUCENT,
             ).also {
                 it.gravity = android.view.Gravity.TOP or android.view.Gravity.START
-                it.x = if (expanded) 0 else compactMapX
-                it.y = if (expanded) 0 else compactMapY
+                it.x = if (expanded) 0 else compactMapRect.x
+                it.y = if (expanded) 0 else compactMapRect.y
                 @Suppress("DEPRECATION")
                 it.softInputMode = android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
             }
@@ -214,10 +206,13 @@ internal class WidgetPanelPresenter(
         val view = panelComposeView ?: return
         val metrics = context.resources.displayMetrics
         if (!expanded) {
-            val width = compactFloatingMapWidth(metrics.widthPixels, metrics.density)
-            val height = compactFloatingMapHeight(metrics.heightPixels, metrics.density)
-            compactMapX = (compactMapX + dragX).coerceIn(0, (metrics.widthPixels - width).coerceAtLeast(0))
-            compactMapY = (compactMapY + dragY).coerceIn(0, (metrics.heightPixels - height).coerceAtLeast(0))
+            compactMapRect =
+                clampFloatingMapRect(
+                    compactMapRect.copy(x = compactMapRect.x + dragX, y = compactMapRect.y + dragY),
+                    metrics.widthPixels,
+                    metrics.heightPixels,
+                    metrics.density,
+                )
         }
         try {
             windowManager.updateViewLayout(view, floatingMapLayoutParams(expanded))
@@ -435,9 +430,70 @@ internal class WidgetPanelPresenter(
         }
     }
 
+    private fun persistCompactMapRect() {
+        val rect = compactMapRect
+        serviceScope.launch { settingsRepository.setFloatingMapRect(rect) }
+    }
+
+    private fun resetCompactMapRect() {
+        val metrics = context.resources.displayMetrics
+        compactMapRect = defaultFloatingMapRect(metrics.widthPixels, metrics.heightPixels, metrics.density)
+        serviceScope.launch { settingsRepository.setFloatingMapRect(null) }
+    }
+
+    private fun beginResize(
+        rawX: Float,
+        rawY: Float,
+    ) {
+        val start = compactMapRect
+        resizeGrab = ResizeGrab(start, (start.x + start.width) - rawX, start.y - rawY)
+    }
+
+    private fun resizeTo(
+        rawX: Float,
+        rawY: Float,
+    ) {
+        val grab = resizeGrab ?: return
+        val metrics = context.resources.displayMetrics
+        compactMapRect =
+            resizeFloatingMapRect(
+                grab.start,
+                rawX,
+                rawY,
+                grab.dx,
+                grab.dy,
+                metrics.widthPixels,
+                metrics.heightPixels,
+                metrics.density,
+            )
+        updateFloatingMapLayout(expanded = false)
+    }
+
+    private fun endResize() {
+        if (resizeGrab == null) return
+        resizeGrab = null
+        persistCompactMapRect()
+    }
+
+    /** Keeps the compact map on screen after a rotation; the stored value stays as the user left it. */
+    fun onScreenSizeChanged() {
+        val params = panelComposeView?.layoutParams as? AndroidWindowManager.LayoutParams ?: return
+        val isCompactMap = compactMapRect.width > 0 && params.width == compactMapRect.width
+        if (isCompactMap) updateFloatingMapLayout(expanded = false)
+    }
+
     fun showMapFloatingView() {
-        compactMapX = (12 * context.resources.displayMetrics.density).toInt()
-        compactMapY = (48 * context.resources.displayMetrics.density).toInt()
+        serviceScope.launch {
+            val metrics = context.resources.displayMetrics
+            compactMapRect =
+                settingsRepository.getFloatingMapRect().first()?.let {
+                    clampFloatingMapRect(it, metrics.widthPixels, metrics.heightPixels, metrics.density)
+                } ?: defaultFloatingMapRect(metrics.widthPixels, metrics.heightPixels, metrics.density)
+            showMapPanel()
+        }
+    }
+
+    private fun showMapPanel() {
         showPanel(params = floatingMapLayoutParams(expanded = false), logTag = "map") {
             var mapExpanded by remember { mutableStateOf(false) }
             val shared by mapController.sharedState.collectAsStateWithLifecycle()
@@ -463,9 +519,14 @@ internal class WidgetPanelPresenter(
                 compact = !mapExpanded,
                 onToggleExpanded = {
                     mapExpanded = !mapExpanded
+                    if (!mapExpanded) resetCompactMapRect()
                     updateFloatingMapLayout(expanded = mapExpanded)
                 },
                 onMoveCompact = { x, y -> updateFloatingMapLayout(expanded = false, dragX = x, dragY = y) },
+                onMoveCompactEnd = ::persistCompactMapRect,
+                onResizeStart = ::beginResize,
+                onResize = ::resizeTo,
+                onResizeEnd = ::endResize,
                 currentPosition = shared.currentPosition,
                 initialPosition = initialPosition,
                 walkTarget = shared.walkTarget,

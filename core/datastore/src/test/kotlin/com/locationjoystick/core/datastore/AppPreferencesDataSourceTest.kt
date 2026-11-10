@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.FloatingMapRect
 import com.locationjoystick.core.model.GroundCalibration
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
@@ -168,6 +169,16 @@ class AppPreferencesDataSourceTest {
             assertFalse(dataSource.getFloatingMapQuickWalk().first())
             dataSource.setFloatingMapQuickWalk(true)
             assertTrue(dataSource.getFloatingMapQuickWalk().first())
+        }
+
+    @Test
+    fun `floatingMapRect is null until set, round-trips, and clears with null`() =
+        runTest {
+            assertNull(dataSource.getFloatingMapRect().first())
+            dataSource.setFloatingMapRect(FloatingMapRect(x = 10, y = 20, width = 300, height = 400))
+            assertEquals(FloatingMapRect(10, 20, 300, 400), dataSource.getFloatingMapRect().first())
+            dataSource.setFloatingMapRect(null)
+            assertNull(dataSource.getFloatingMapRect().first())
         }
 
     @Test

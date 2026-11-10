@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.clampPlantingRadius
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.FloatingMapRect
 import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
@@ -343,6 +344,12 @@ interface PreferencesDataSource :
 
     /** Sets whether the floating map skips the confirmation panel and walks immediately on tap. */
     suspend fun setFloatingMapQuickWalk(enabled: Boolean)
+
+    /** Gets the last compact floating map position and size, or null when none is stored. */
+    fun getFloatingMapRect(): Flow<FloatingMapRect?>
+
+    /** Stores the compact floating map position and size; null clears it. */
+    suspend fun setFloatingMapRect(rect: FloatingMapRect?)
 
     /** Returns all settings needed by the settings UI in a single DataStore scan. */
     fun getSettingsSnapshot(): Flow<SettingsSnapshot>
@@ -935,6 +942,39 @@ class AppPreferencesDataSource
         override fun getFloatingMapQuickWalk(): Flow<Boolean> = pref(Keys.FLOATING_MAP_QUICK_WALK, false)
 
         override suspend fun setFloatingMapQuickWalk(enabled: Boolean) = setPref(Keys.FLOATING_MAP_QUICK_WALK, enabled)
+
+        override fun getFloatingMapRect(): Flow<FloatingMapRect?> =
+            dataStore.data
+                .catch { e ->
+                    if (e is IOException) {
+                        Log.e(TAG, "Error reading floating map rect preference", e)
+                        emit(emptyPreferences())
+                    } else {
+                        throw e
+                    }
+                }.map { prefs ->
+                    val x = prefs[Keys.FLOATING_MAP_X]
+                    val y = prefs[Keys.FLOATING_MAP_Y]
+                    val width = prefs[Keys.FLOATING_MAP_WIDTH]
+                    val height = prefs[Keys.FLOATING_MAP_HEIGHT]
+                    if (x != null && y != null && width != null && height != null) FloatingMapRect(x, y, width, height) else null
+                }
+
+        override suspend fun setFloatingMapRect(rect: FloatingMapRect?) {
+            dataStore.edit { prefs ->
+                if (rect == null) {
+                    prefs.remove(Keys.FLOATING_MAP_X)
+                    prefs.remove(Keys.FLOATING_MAP_Y)
+                    prefs.remove(Keys.FLOATING_MAP_WIDTH)
+                    prefs.remove(Keys.FLOATING_MAP_HEIGHT)
+                } else {
+                    prefs[Keys.FLOATING_MAP_X] = rect.x
+                    prefs[Keys.FLOATING_MAP_Y] = rect.y
+                    prefs[Keys.FLOATING_MAP_WIDTH] = rect.width
+                    prefs[Keys.FLOATING_MAP_HEIGHT] = rect.height
+                }
+            }
+        }
 
         override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
             dataStore.edit { prefs ->

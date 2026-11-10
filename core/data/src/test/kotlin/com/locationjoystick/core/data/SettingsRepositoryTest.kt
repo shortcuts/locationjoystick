@@ -8,6 +8,7 @@ import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.datastore.toAppFeature
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.FloatingMapRect
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
@@ -1825,6 +1826,14 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
 
     override suspend fun setFloatingMapQuickWalk(enabled: Boolean) {
         floatingMapQuickWalkFlow.value = enabled
+    }
+
+    val floatingMapRectFlow = MutableStateFlow<FloatingMapRect?>(null)
+
+    override fun getFloatingMapRect(): Flow<FloatingMapRect?> = floatingMapRectFlow
+
+    override suspend fun setFloatingMapRect(rect: FloatingMapRect?) {
+        floatingMapRectFlow.value = rect
     }
 
     val tapToWalkOverlayEnabledFlow = MutableStateFlow(false)

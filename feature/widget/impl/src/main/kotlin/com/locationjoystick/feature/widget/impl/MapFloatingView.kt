@@ -10,10 +10,14 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +36,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -102,6 +110,10 @@ internal fun MapFloatingView(
     compact: Boolean,
     onToggleExpanded: () -> Unit,
     onMoveCompact: (Int, Int) -> Unit,
+    onMoveCompactEnd: () -> Unit,
+    onResizeStart: (Float, Float) -> Unit,
+    onResize: (Float, Float) -> Unit,
+    onResizeEnd: () -> Unit,
     currentPosition: LatLng?,
     initialPosition: LatLng?,
     walkTarget: LatLng?,
@@ -413,7 +425,7 @@ internal fun MapFloatingView(
                         .background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                         .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
+                            detectDragGestures(onDragEnd = onMoveCompactEnd) { change, dragAmount ->
                                 change.consume()
                                 onMoveCompact(dragAmount.x.roundToInt(), dragAmount.y.roundToInt())
                             }
@@ -436,7 +448,25 @@ internal fun MapFloatingView(
                     .background(MaterialTheme.colorScheme.background, MaterialTheme.shapes.medium)
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium),
         ) {
-            IconButton(onClick = onToggleExpanded) {
+            Box(
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .semantics(mergeDescendants = true) {
+                            role = Role.Button
+                            onClick {
+                                onToggleExpanded()
+                                true
+                            }
+                        }.floatingMapResizeGesture(
+                            resizable = compact,
+                            onTap = onToggleExpanded,
+                            onResizeStart = onResizeStart,
+                            onResize = onResize,
+                            onResizeEnd = onResizeEnd,
+                        ),
+                contentAlignment = Alignment.Center,
+            ) {
                 Icon(
                     if (compact) LjIcons.Fullscreen else LjIcons.FullscreenExit,
                     contentDescription =
@@ -455,13 +485,16 @@ internal fun MapFloatingView(
             }
         }
 
-        // FAB column — bottom-right, mirrors main map layout
+        // FAB column — bottom-right, mirrors main map layout; scrolls below the fixed top controls
         Column(
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
+                    .fillMaxHeight()
+                    .padding(top = 48.dp + LjSpacing.sm * 2)
+                    .verticalScroll(rememberScrollState())
                     .padding(end = LjSpacing.sm, bottom = LjSpacing.sm),
-            verticalArrangement = Arrangement.spacedBy(LjSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(LjSpacing.sm, Alignment.Bottom),
             horizontalAlignment = Alignment.End,
         ) {
             LjMapIconButton(

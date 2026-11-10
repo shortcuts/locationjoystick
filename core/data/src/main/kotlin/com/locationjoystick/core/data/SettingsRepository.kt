@@ -8,6 +8,7 @@ import com.locationjoystick.core.datastore.toActiveSpeedProfile
 import com.locationjoystick.core.datastore.toAppFeature
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FeatureSurface
+import com.locationjoystick.core.model.FloatingMapRect
 import com.locationjoystick.core.model.GeocodingProviderId
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
@@ -415,6 +416,10 @@ class SettingsRepository
         fun getFloatingMapQuickWalk(): Flow<Boolean> = dataSource.getFloatingMapQuickWalk()
 
         suspend fun setFloatingMapQuickWalk(enabled: Boolean) = dataSource.setFloatingMapQuickWalk(enabled)
+
+        fun getFloatingMapRect(): Flow<FloatingMapRect?> = dataSource.getFloatingMapRect()
+
+        suspend fun setFloatingMapRect(rect: FloatingMapRect?) = dataSource.setFloatingMapRect(rect)
 
         fun getTapToWalkOverlayEnabled(): Flow<Boolean> = dataSource.getTapToWalkOverlayEnabled()
 

@@ -76,6 +76,9 @@ The floating map is a map view inside an overlay window ([map.md](map.md), [map-
 - It renders in texture mode. The default surface view punches a transparent hole, so the map shows no streets over the game.
 - It opens compact, so taps outside its window reach the game. Expand switches the same window to a larger layout without recreating the map.
 - North lock starts on: bearing is held at zero and rotation gestures are disabled, while panning still works. Unlocking restores the normal gestures and does not force a saved bearing.
+- A long press on the expand button, then a drag, resizes the compact window. The window's left and bottom edges stay fixed and the top-right corner follows the finger. The gesture reads raw screen coordinates (`floatingMapResizeGesture`): the button sits on the moving corner, so local deltas would under-count. A plain tap still toggles expanded.
+- Size and position persist in DataStore (`FloatingMapRect`) and are clamped on every read and after rotation. Leaving fullscreen resets the window to the app default and clears the stored value. The rect is device-specific pixels, so it is not part of export or import.
+- The icon column scrolls when the window is too short. The move, expand and close controls sit outside the scroll area so they stay reachable at the minimum size.
 - Its centre button follows the spoofed position while spoofing. When idle, it falls back to the last point the map camera was moved to.
 
 ### Route controls on the floating map
