@@ -15,6 +15,7 @@ import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
 import com.locationjoystick.core.data.WalkCoordinator
+import com.locationjoystick.core.data.isWalkFetching
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MockLocationState
 import com.locationjoystick.core.model.MockMode
@@ -36,6 +37,7 @@ import com.locationjoystick.core.routing.classifyOsrmFailure
 import com.locationjoystick.core.routing.osrmFailureMessage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -50,6 +52,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -106,7 +109,6 @@ class MapController
 
         val routingErrors: SharedFlow<String> = routingErrorReporter.errors
 
-        private var pendingRoadWalkJob: Job? = null
         private var restoreJob: Job? = null
 
         /** Deduplicates requests to turn Follow leader off while the setting is being persisted. */
@@ -415,8 +417,7 @@ class MapController
         }
 
         private fun cancelAnyActiveMovement() {
-            pendingRoadWalkJob?.cancel()
-            pendingRoadWalkJob = null
+            locationRepository.cancelWalkRoadRouteFetch()
             walkCoordinator.cancel()
             if (_sharedState.value.ephemeralWaypoints.isNotEmpty()) {
                 context.startService(MockLocationIntentBuilder.cancelRouteReplay(context))
@@ -471,12 +472,12 @@ class MapController
         fun walkViaRoads(position: LatLng) {
             cancelAnyActiveMovement()
             // Teleports from other screens (Favorites, Routes, Capture jump) cancel through
-            // WalkCoordinator, not pendingRoadWalkJob, so the late OSRM result is gated on this
+            // WalkCoordinator, not the fetch job, so the late OSRM result is gated on this
             // token instead — otherwise it would start walking from the teleport spot back
             // toward the old target (issue #99).
             val generation = walkCoordinator.currentGeneration()
-            pendingRoadWalkJob =
-                appScope.launch {
+            val job =
+                appScope.launch(start = CoroutineStart.LAZY) {
                     if (locationRepository.currentMovement().isActive(MockMode.ROAMING)) roamingRepository.stopRoaming()
                     val current = locationRepository.currentPosition.value
                     if (current == null) {
@@ -484,13 +485,8 @@ class MapController
                         startStraightWalk(position, generation)
                         return@launch
                     }
-                    val routeResult =
-                        try {
-                            locationRepository.setRoadRouteFetchInFlight(true)
-                            osrmClient.getRoute(OsrmClient.PROFILE_FOOT, listOf(current, position))
-                        } finally {
-                            locationRepository.setRoadRouteFetchInFlight(false)
-                        }
+                    val routeResult = osrmClient.getRoute(OsrmClient.PROFILE_FOOT, listOf(current, position))
+                    locationRepository.endRoadRouteFetch(coroutineContext.job)
                     ensureActive()
                     val waypoints = routeResult.getOrNull()
                     if (waypoints.isNullOrEmpty()) {
@@ -524,6 +520,9 @@ class MapController
                         _sharedState.update { if (it.walkMode == walking) it.copy(walkMode = WalkMode.Idle) else it }
                     }
                 }
+            locationRepository.beginRoadRouteFetch(position, job)
+            job.invokeOnCompletion { locationRepository.endRoadRouteFetch(job) }
+            job.start()
         }
 
         fun pauseWalk() = walkCoordinator.pause()
@@ -531,8 +530,7 @@ class MapController
         fun resumeWalk() = walkCoordinator.resume()
 
         fun stopWalk() {
-            pendingRoadWalkJob?.cancel()
-            pendingRoadWalkJob = null
+            locationRepository.cancelWalkRoadRouteFetch()
             walkCoordinator.cancel()
             if (_sharedState.value.ephemeralWaypoints.isNotEmpty()) {
                 context.startService(MockLocationIntentBuilder.cancelRouteReplay(context))
@@ -559,7 +557,7 @@ class MapController
                             }
                     }
                 }
-                mode == MockMode.WALK_TO || pendingRoadWalkJob?.isActive == true -> {
+                mode == MockMode.WALK_TO || locationRepository.roadRouteFetch.value.isWalkFetching -> {
                     if (!locationRepository.currentMovement().isPaused(MockMode.WALK_TO)) pauseWalk()
                 }
                 locationRepository.currentMovement().isActive(MockMode.ROAMING) -> {
@@ -678,8 +676,7 @@ class MapController
                 val mode = locationRepository.currentMode.value
                 val state = locationRepository.mockLocationState.value
                 if (isRoutePlaying(mode, state)) return@launch
-                pendingRoadWalkJob?.cancel()
-                pendingRoadWalkJob = null
+                locationRepository.cancelWalkRoadRouteFetch()
                 walkCoordinator.cancel()
                 val wasReplay = mode == MockMode.ROUTE_REPLAY
                 val speedMs = settingsRepository.activateSessionSpeed(draft.speedProfileIdForKind())

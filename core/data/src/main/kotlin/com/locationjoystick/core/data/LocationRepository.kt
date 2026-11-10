@@ -12,6 +12,7 @@ import com.locationjoystick.core.model.enterMode
 import com.locationjoystick.core.model.isActive
 import com.locationjoystick.core.model.pausedOrNull
 import com.locationjoystick.core.model.resumedOrNull
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,6 +29,18 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "LocationRepository"
+
+/** The OSRM road fetch for one movement action. A walk fetch carries its job so a stop can cancel it. */
+sealed interface RoadRouteFetch {
+    data object Idle : RoadRouteFetch
+
+    data class Fetching(
+        val target: LatLng,
+        val walkJob: Job? = null,
+    ) : RoadRouteFetch
+}
+
+val RoadRouteFetch.isWalkFetching: Boolean get() = this is RoadRouteFetch.Fetching && walkJob != null
 
 /** Live per-tick snapshot for the debug overlay. [tickIntervalMs] is wall-clock time since the previous tick. */
 data class DebugStats(
@@ -131,18 +144,41 @@ class LocationRepository
         private val _routeWaypoints = MutableStateFlow<List<LatLng>?>(null)
         val routeWaypoints: StateFlow<List<LatLng>?> = _routeWaypoints.asStateFlow()
 
-        private val _isRoadRouteFetchInFlight = MutableStateFlow(false)
+        private val _roadRouteFetch = MutableStateFlow<RoadRouteFetch>(RoadRouteFetch.Idle)
 
         /**
          * True while an OSRM road-following fetch is in flight for a movement action initiated from
-         * the UI (walk-via-roads, add-next-point-via-roads, and — once wired by its own backlog task —
-         * route replay's Follow-roads start). Lets any surface show a loading/disabled state instead of
-         * going silent for up to [AppConstants.OsrmConstants.TOTAL_TIME_BUDGET_MS].
+         * the UI. Lets any surface show a loading/disabled state instead of going silent for up to
+         * [AppConstants.OsrmConstants.TOTAL_TIME_BUDGET_MS].
          */
-        val isRoadRouteFetchInFlight: StateFlow<Boolean> = _isRoadRouteFetchInFlight.asStateFlow()
+        val isRoadRouteFetchInFlight: StateFlow<Boolean> = _roadRouteFetch.mapState { it is RoadRouteFetch.Fetching }
 
-        fun setRoadRouteFetchInFlight(inFlight: Boolean) {
-            _isRoadRouteFetchInFlight.value = inFlight
+        val roadRouteFetch: StateFlow<RoadRouteFetch> = _roadRouteFetch.asStateFlow()
+
+        /** Starts a fetch toward [target]. A [walkJob] makes it cancellable through [cancelWalkRoadRouteFetch]. */
+        fun beginRoadRouteFetch(
+            target: LatLng,
+            walkJob: Job? = null,
+        ) {
+            _roadRouteFetch.value = RoadRouteFetch.Fetching(target, walkJob)
+        }
+
+        /** Releases the fetch started with the same [walkJob]. Any other owner's fetch stays, so this is safe to call twice. */
+        fun endRoadRouteFetch(walkJob: Job? = null) {
+            _roadRouteFetch.update { if (it is RoadRouteFetch.Fetching && it.walkJob == walkJob) RoadRouteFetch.Idle else it }
+        }
+
+        /** Cancels the in-flight walk fetch. Ignored when idle or when the fetch belongs to a replay. */
+        fun cancelWalkRoadRouteFetch() {
+            _roadRouteFetch.update { current ->
+                if (current is RoadRouteFetch.Fetching && current.walkJob != null) {
+                    current.walkJob.cancel()
+                    RoadRouteFetch.Idle
+                } else {
+                    Log.w(TAG, "ignored walk fetch cancel from $current")
+                    current
+                }
+            }
         }
 
         private val _movement = MutableStateFlow<MovementState>(MovementState.Manual(MockMode.TELEPORT))

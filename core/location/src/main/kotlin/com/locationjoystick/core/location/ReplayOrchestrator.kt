@@ -145,7 +145,7 @@ internal class ReplayOrchestrator(
                 activeReplayer = routeReplayEngine
                 val latLngs = orderedWaypoints.map { it.position }
                 try {
-                    if (config.followRoadsToStart) locationRepository.setRoadRouteFetchInFlight(true)
+                    if (config.followRoadsToStart) locationRepository.beginRoadRouteFetch(latLngs.last())
                     val (replayWaypoints, boundaryIndices) =
                         when {
                             isPlanting ->
@@ -176,7 +176,7 @@ internal class ReplayOrchestrator(
                         onComplete = buildStartOnComplete(state, returnPosition, speedMs),
                     )
                 } finally {
-                    if (config.followRoadsToStart) locationRepository.setRoadRouteFetchInFlight(false)
+                    if (config.followRoadsToStart) locationRepository.endRoadRouteFetch()
                 }
             }
     }
@@ -660,7 +660,7 @@ internal class ReplayOrchestrator(
             )
         // Clear now — the walk itself can run far longer than the OSRM time budget and must not
         // keep the UI showing a loading state.
-        locationRepository.setRoadRouteFetchInFlight(false)
+        locationRepository.endRoadRouteFetch()
         for (i in 0 until legs.size - 1) {
             lifecycle.awaitResume(state)
             walkToEngine.walkToOnce(locationRepository.currentPosition.value ?: legs[i], legs[i + 1], speedMs, onPosition)

@@ -100,7 +100,7 @@ class EphemeralReplayController
                         // and legEnd→newPoint must be OSRM-resolved so the whole chain stays road-following.
                         val initial =
                             if (followRoads) {
-                                locationRepository.setRoadRouteFetchInFlight(true)
+                                locationRepository.beginRoadRouteFetch(newPoint)
                                 try {
                                     val (toTarget, toNewPoint) =
                                         coroutineScope {
@@ -129,7 +129,7 @@ class EphemeralReplayController
                                         }
                                     toTarget + toNewPoint.drop(1) // legEnd is last of toTarget, first of toNewPoint
                                 } finally {
-                                    locationRepository.setRoadRouteFetchInFlight(false)
+                                    locationRepository.endRoadRouteFetch()
                                 }
                             } else {
                                 (firstLeg?.dropLast(1) ?: listOf(startPos)) +
@@ -143,7 +143,7 @@ class EphemeralReplayController
                     ) {
                         val appendSegment =
                             if (followRoads && currentWaypoints.isNotEmpty()) {
-                                locationRepository.setRoadRouteFetchInFlight(true)
+                                locationRepository.beginRoadRouteFetch(newPoint)
                                 try {
                                     val from = currentWaypoints.last()
                                     osrmClient
@@ -155,7 +155,7 @@ class EphemeralReplayController
                                             onFallback = { reportFallback(context, it) },
                                         ).drop(1) // first point is `from`, already in the route
                                 } finally {
-                                    locationRepository.setRoadRouteFetchInFlight(false)
+                                    locationRepository.endRoadRouteFetch()
                                 }
                             } else {
                                 listOf(newPoint)

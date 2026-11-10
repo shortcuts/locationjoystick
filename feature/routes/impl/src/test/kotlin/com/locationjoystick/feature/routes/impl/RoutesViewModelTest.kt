@@ -122,7 +122,7 @@ class RoutesViewModelUiStateTest {
         runTest {
             viewModel.uiState.test {
                 assertFalse(awaitItem().isRoadRouteFetchInFlight)
-                locationRepository.setRoadRouteFetchInFlight(true)
+                locationRepository.beginRoadRouteFetch(LatLng(0.0, 0.0))
                 assertTrue(awaitItem().isRoadRouteFetchInFlight)
                 cancelAndIgnoreRemainingEvents()
             }

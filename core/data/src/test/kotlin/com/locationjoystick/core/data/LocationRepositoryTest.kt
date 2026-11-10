@@ -9,6 +9,7 @@ import com.locationjoystick.core.model.MovementState
 import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.isPaused
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -618,4 +619,44 @@ class LocationRepositoryTest {
             repository.setWalkTarget(null)
             assertEquals(MockMode.ROUTE_REPLAY, repository.currentMode.value)
         }
+
+    private val fetchTarget = LatLng(1.0, 2.0)
+
+    @Test
+    fun `beginRoadRouteFetch moves idle to fetching and end returns to idle`() {
+        assertEquals(RoadRouteFetch.Idle, repository.roadRouteFetch.value)
+        repository.beginRoadRouteFetch(fetchTarget)
+        assertEquals(RoadRouteFetch.Fetching(fetchTarget), repository.roadRouteFetch.value)
+        assertTrue(repository.isRoadRouteFetchInFlight.value)
+        repository.endRoadRouteFetch()
+        assertEquals(RoadRouteFetch.Idle, repository.roadRouteFetch.value)
+        assertFalse(repository.isRoadRouteFetchInFlight.value)
+    }
+
+    @Test
+    fun `cancelWalkRoadRouteFetch cancels the walk job and goes idle`() {
+        val job = Job()
+        repository.beginRoadRouteFetch(fetchTarget, job)
+        assertTrue(repository.roadRouteFetch.value.isWalkFetching)
+        repository.cancelWalkRoadRouteFetch()
+        assertTrue(job.isCancelled)
+        assertEquals(RoadRouteFetch.Idle, repository.roadRouteFetch.value)
+    }
+
+    @Test
+    fun `cancelWalkRoadRouteFetch is rejected for a replay fetch`() {
+        repository.beginRoadRouteFetch(fetchTarget)
+        repository.cancelWalkRoadRouteFetch()
+        assertEquals(RoadRouteFetch.Fetching(fetchTarget), repository.roadRouteFetch.value)
+    }
+
+    @Test
+    fun `endRoadRouteFetch keeps a fetch owned by another job`() {
+        val job = Job()
+        repository.beginRoadRouteFetch(fetchTarget, job)
+        repository.endRoadRouteFetch()
+        assertEquals(RoadRouteFetch.Fetching(fetchTarget, job), repository.roadRouteFetch.value)
+        repository.endRoadRouteFetch(job)
+        assertEquals(RoadRouteFetch.Idle, repository.roadRouteFetch.value)
+    }
 }
