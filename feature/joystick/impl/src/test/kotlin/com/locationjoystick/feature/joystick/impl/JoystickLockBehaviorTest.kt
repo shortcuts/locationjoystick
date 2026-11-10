@@ -14,7 +14,6 @@ import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Job
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -62,7 +61,7 @@ class JoystickLockBehaviorTest {
     fun `centering a locked stick stops steps and pulling outward keeps lock enabled`() {
         service.setIsLocked(true)
         touch(MotionEvent.ACTION_DOWN, 270f, 150f)
-        val movementJob = ReflectionHelpers.getField<Job>(service, "movementJob")
+        val movementJob = service.inputState.job!!
         assertTrue(movementJob.isActive)
 
         // Within the dead zone, but not exactly at the center.
@@ -71,17 +70,17 @@ class JoystickLockBehaviorTest {
         assertTrue(service.isLocked.value)
         assertTrue(view.isLocked)
         assertTrue(movementJob.isActive)
-        assertEquals(0f, ReflectionHelpers.getField<JoystickInput>(service, "lastInput").force)
+        assertEquals(0f, service.inputState.input!!.force)
 
         touch(MotionEvent.ACTION_MOVE, 150f, 150f)
         touch(MotionEvent.ACTION_UP, 150f, 150f)
         assertTrue(service.isLocked.value)
-        assertEquals(0f, ReflectionHelpers.getField<JoystickInput>(service, "lastInput").force)
+        assertEquals(0f, service.inputState.input!!.force)
 
         touch(MotionEvent.ACTION_DOWN, 270f, 150f)
         touch(MotionEvent.ACTION_UP, 270f, 150f)
         assertTrue(service.isLocked.value)
-        assertTrue(ReflectionHelpers.getField<JoystickInput>(service, "lastInput").force > 0f)
+        assertTrue(service.inputState.input!!.force > 0f)
         verify(exactly = 0) { mockLocationService.clearMotionVector() }
     }
 
@@ -94,22 +93,22 @@ class JoystickLockBehaviorTest {
 
         assertTrue(service.isLocked.value)
         assertTrue(view.isLocked)
-        assertEquals(0f, ReflectionHelpers.getField<JoystickInput>(service, "lastInput").force)
+        assertNull(service.inputState.input)
     }
 
     @Test
     fun `releasing a locked stick outside the dead zone retains its direction`() {
         service.setIsLocked(true)
         touch(MotionEvent.ACTION_DOWN, 270f, 150f)
-        val input = ReflectionHelpers.getField<JoystickInput>(service, "lastInput")
+        val input = service.inputState.input!!
 
         touch(MotionEvent.ACTION_UP, 270f, 150f)
 
         assertTrue(service.isLocked.value)
         assertTrue(view.isLocked)
         assertTrue(input.force > 0f)
-        assertEquals(input, ReflectionHelpers.getField<JoystickInput>(service, "lastInput"))
-        assertTrue(ReflectionHelpers.getField<Job>(service, "movementJob").isActive)
+        assertEquals(input, service.inputState.input!!)
+        assertTrue(service.inputState.job!!.isActive)
         verify(exactly = 0) { mockLocationService.clearMotionVector() }
     }
 
@@ -135,7 +134,7 @@ class JoystickLockBehaviorTest {
         touch(MotionEvent.ACTION_UP, 270f, 150f)
 
         assertFalse(service.isLocked.value)
-        assertNull(ReflectionHelpers.getField<JoystickInput?>(service, "lastInput"))
+        assertNull(service.inputState.input)
     }
 
     @Test

@@ -100,15 +100,12 @@ class JoystickOverlayService : OverlayService() {
     private val _isVisible = MutableStateFlow(false)
     val isVisible: StateFlow<Boolean> = _isVisible.asStateFlow()
 
-    /** Latest joystick direction+force from touch; read by the movement tick loop. */
-    private var lastInput: JoystickInput? = null
+    private val state = MutableStateFlow<JoystickInputState>(JoystickInputState.Idle)
+    internal val inputState: JoystickInputState get() = state.value
 
     /** Cached active speed profile; updated reactively so ticks never hit DataStore. */
     private val _cachedProfile = MutableStateFlow<SpeedProfile?>(null)
     val cachedProfile: StateFlow<SpeedProfile?> = _cachedProfile.asStateFlow()
-
-    /** Single movement job used for both touch-active and locked-release motion. */
-    private var movementJob: Job? = null
 
     inner class LocalBinder : Binder() {
         fun getService(): JoystickOverlayService = this@JoystickOverlayService
@@ -172,8 +169,8 @@ class JoystickOverlayService : OverlayService() {
     override fun onBind(intent: Intent?): IBinder? = binder
 
     override fun onDestroy() {
-        movementJob?.cancel()
-        movementJob = null
+        state.value.job?.cancel()
+        state.value = JoystickInputState.Idle
         serviceScope.cancel()
         overlayHelper.cleanupOverlayBindings(this)
         super.onDestroy()
@@ -183,16 +180,26 @@ class JoystickOverlayService : OverlayService() {
         get() = overlayView?.isAttachedToWindow == true
 
     fun setIsLocked(value: Boolean) {
-        _isLocked.value = value
-        (overlayView as? JoystickView)?.isLocked = value
-        if (!value) stopJoystickMovement()
+        transition { if (value) it.locked() else JoystickInputState.Idle }
+        if (!value) resetEngineAfterStick()
         Log.d(TAG, "Joystick locked: $value")
     }
 
-    private fun stopJoystickMovement() {
-        lastInput = null
-        movementJob?.cancel()
-        movementJob = null
+    @Synchronized
+    private fun transition(next: (JoystickInputState) -> JoystickInputState?) {
+        val current = state.value
+        val new =
+            next(current) ?: run {
+                Log.w(TAG, "ignored transition from $current")
+                return
+            }
+        state.value = new
+        _isLocked.value = new.isLocked
+        if (current.job !== new.job) current.job?.cancel()
+        if (current.isLocked != new.isLocked) (overlayView as? JoystickView)?.isLocked = new.isLocked
+    }
+
+    private fun resetEngineAfterStick() {
         // A new automatic movement may have started before the finger is released or unlocked.
         // Its mode and motion vector belong to that engine, not to the old joystick gesture.
         val movement = locationRepository.currentMovement()
@@ -237,29 +244,27 @@ class JoystickOverlayService : OverlayService() {
             },
         )
 
-        view.isLocked = _isLocked.value
+        view.isLocked = state.value.isLocked
         view.inputIgnored = shouldIgnoreJoystickInput(locationRepository.currentMovement())
 
         view.onInputChanged = { input ->
-            lastInput = input
             // Positive force comes from live touches; centered input stops steps without
             // changing the lock state or taking over an automatic movement.
-            if (input.force > 0f) {
-                // Synchronous and idempotent: a later map action cannot be cancelled by an old touch.
-                mapController.pauseAutomatedMovement()
-                if (movementJob == null || !movementJob!!.isActive) startMovement()
-            }
+            // Synchronous and idempotent: a later map action cannot be cancelled by an old touch.
+            if (input.force > 0f) mapController.pauseAutomatedMovement()
+            transition { it.withInput(input, ::startMovement) }
         }
 
-        view.shouldResetOnRelease = { !view.isLocked }
+        view.shouldResetOnRelease = { !state.value.isLocked }
 
         view.onReleased = {
-            if (view.isLocked) {
+            if (state.value.isLocked) {
                 // Locked mode: job keeps running with lastInput direction (no zero-force emitted
                 // by JoystickView when shouldResetOnRelease returns false).
                 Log.d(TAG, "Joystick released (locked) — continuing movement")
             } else {
-                stopJoystickMovement()
+                transition { it.released() }
+                resetEngineAfterStick()
                 Log.d(TAG, "Joystick released — movement stopped")
             }
         }
@@ -305,19 +310,16 @@ class JoystickOverlayService : OverlayService() {
             }
     }
 
-    private fun startMovement() {
-        movementJob?.cancel()
-        movementJob =
-            serviceScope.launch {
-                while (isActive) {
-                    delay(AppConstants.JoystickConstants.STEP_MS)
-                    val input = lastInput ?: continue
-                    if (input.force > 0f) {
-                        applyJoystickInput(input)
-                    }
+    private fun startMovement(): Job =
+        serviceScope.launch {
+            while (isActive) {
+                delay(AppConstants.JoystickConstants.STEP_MS)
+                val input = state.value.input ?: continue
+                if (input.force > 0f) {
+                    applyJoystickInput(input)
                 }
             }
-    }
+        }
 
     private suspend fun applyJoystickInput(input: JoystickInput) {
         val currentPos = locationRepository.currentPosition.value ?: return

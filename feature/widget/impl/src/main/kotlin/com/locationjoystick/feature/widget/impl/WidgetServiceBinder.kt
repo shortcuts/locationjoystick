@@ -14,6 +14,30 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
+internal sealed interface JoystickBinding {
+    data object Unbound : JoystickBinding
+
+    data object Binding : JoystickBinding
+
+    data class Bound(
+        val service: JoystickOverlayService,
+        val collectors: Job,
+    ) : JoystickBinding
+}
+
+/** Null when unbound: a late connection after unbind must not revive the service. */
+internal fun JoystickBinding.connected(
+    service: JoystickOverlayService,
+    startCollectors: () -> Job,
+): JoystickBinding? =
+    when (this) {
+        JoystickBinding.Unbound -> null
+        JoystickBinding.Binding, is JoystickBinding.Bound -> JoystickBinding.Bound(service, startCollectors())
+    }
+
+/** Null when a bind is already pending or live. */
+internal fun JoystickBinding.bindRequested(): JoystickBinding? = if (this == JoystickBinding.Unbound) JoystickBinding.Binding else null
+
 /**
  * Owns the [ServiceConnection]s and bound-service references used by [FloatingWidgetService].
  *
@@ -39,14 +63,15 @@ internal class WidgetServiceBinder(
         private const val TAG = "FloatingWidgetService"
     }
 
-    var mockLocationService: MockLocationService? = null
-        private set
+    @Volatile
+    private var mockLocation: MockLocationService? = null
 
-    var joystickService: JoystickOverlayService? = null
-        private set
+    @Volatile
+    private var joystick: JoystickBinding = JoystickBinding.Unbound
 
-    private var joystickBound = false
-    private var joystickCollectors: Job? = null
+    val mockLocationService: MockLocationService? get() = mockLocation
+
+    val joystickService: JoystickOverlayService? get() = (joystick as? JoystickBinding.Bound)?.service
 
     private val mockLocationServiceConnection =
         object : ServiceConnection {
@@ -54,12 +79,12 @@ internal class WidgetServiceBinder(
                 name: ComponentName,
                 binder: IBinder,
             ) {
-                mockLocationService = (binder as MockLocationService.LocalBinder).getService()
+                mockLocation = (binder as MockLocationService.LocalBinder).getService()
                 Log.d(TAG, "Bound to MockLocationService")
             }
 
             override fun onServiceDisconnected(name: ComponentName) {
-                mockLocationService = null
+                mockLocation = null
                 Log.d(TAG, "Unbound from MockLocationService")
             }
         }
@@ -71,22 +96,27 @@ internal class WidgetServiceBinder(
                 binder: IBinder,
             ) {
                 val svc = (binder as JoystickOverlayService.LocalBinder).getService()
-                joystickService = svc
-                joystickCollectors?.cancel()
-                joystickCollectors =
-                    serviceScope.launch {
-                        launch { svc.isVisible.collect { joystickVisibleFlow.value = it } }
-                        launch { svc.isLocked.collect { joystickLockedFlow.value = it } }
+                synchronized(this@WidgetServiceBinder) {
+                    val current = joystick
+                    val next =
+                        current.connected(svc) {
+                            serviceScope.launch {
+                                launch { svc.isVisible.collect { joystickVisibleFlow.value = it } }
+                                launch { svc.isLocked.collect { joystickLockedFlow.value = it } }
+                            }
+                        }
+                    if (next == null) {
+                        Log.w(TAG, "ignored joystick connection while $current")
+                        return
                     }
+                    (current as? JoystickBinding.Bound)?.collectors?.cancel()
+                    joystick = next
+                }
                 Log.d(TAG, "Bound to JoystickOverlayService")
             }
 
             override fun onServiceDisconnected(name: ComponentName) {
-                joystickCollectors?.cancel()
-                joystickService = null
-                joystickBound = false
-                joystickVisibleFlow.value = false
-                joystickLockedFlow.value = false
+                resetJoystick()
                 Log.d(TAG, "Unbound from JoystickOverlayService")
             }
         }
@@ -96,21 +126,27 @@ internal class WidgetServiceBinder(
     }
 
     fun bindJoystick() {
-        if (joystickBound) return
+        synchronized(this) {
+            joystick = joystick.bindRequested() ?: return
+        }
         val joystickIntent = Intent(context, JoystickOverlayService::class.java)
-        joystickBound = context.bindService(joystickIntent, joystickConnection, Context.BIND_AUTO_CREATE)
+        if (!context.bindService(joystickIntent, joystickConnection, Context.BIND_AUTO_CREATE)) resetJoystick()
     }
 
     fun unbindJoystick() {
-        if (!joystickBound) return
+        if (joystick == JoystickBinding.Unbound) return
         try {
             context.unbindService(joystickConnection)
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Joystick service was not bound when attempting to unbind", e)
         }
-        joystickCollectors?.cancel()
-        joystickBound = false
-        joystickService = null
+        resetJoystick()
+    }
+
+    @Synchronized
+    private fun resetJoystick() {
+        (joystick as? JoystickBinding.Bound)?.collectors?.cancel()
+        joystick = JoystickBinding.Unbound
         joystickVisibleFlow.value = false
         joystickLockedFlow.value = false
     }
