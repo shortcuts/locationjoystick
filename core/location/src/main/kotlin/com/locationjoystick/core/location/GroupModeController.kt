@@ -9,6 +9,7 @@ import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.groupId
 import com.locationjoystick.core.model.role
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
@@ -21,6 +22,31 @@ import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 private const val TAG = "MockLocationService"
+
+/** Advertising (leader) and the follower jobs exclude each other, so one value holds whichever is active. */
+internal sealed interface GroupModeState {
+    data object Idle : GroupModeState
+
+    data class Advertising(
+        val groupId: String,
+    ) : GroupModeState
+
+    data class RestoringFollower(
+        val job: Job,
+    ) : GroupModeState
+
+    data class Rediscovering(
+        val job: Job,
+    ) : GroupModeState
+}
+
+private val GroupModeState.job: Job?
+    get() =
+        when (this) {
+            is GroupModeState.RestoringFollower -> job
+            is GroupModeState.Rediscovering -> job
+            else -> null
+        }
 
 /**
  * Owns leader advertising and the follower restoration and rediscovery jobs. Communicates back to
@@ -38,11 +64,24 @@ internal class GroupModeController(
     private val onLeaderExited: () -> Unit,
 ) {
     private val leaderModeMutex = Mutex()
-    private var advertisedGroupId: String? = null
 
-    /** Async job for follower restoration with NSD discovery retries on device boot. */
-    private var followerRestorationJob: Job? = null
-    private var followerRediscoveryJob: Job? = null
+    @Volatile
+    internal var state: GroupModeState = GroupModeState.Idle
+        private set
+
+    /** Applies [next]; a null result rejects the transition. Cancels the job of a state that is left. */
+    @Synchronized
+    private fun transition(next: (GroupModeState) -> GroupModeState?): Boolean {
+        val current = state
+        val new = next(current)
+        if (new == null) {
+            Log.w(TAG, "ignored group mode transition from $current")
+            return false
+        }
+        state = new
+        current.job?.takeIf { it !== new.job }?.cancel()
+        return true
+    }
 
     fun enterLeaderMode(groupId: String) {
         stopFollowerRestoration()
@@ -59,7 +98,7 @@ internal class GroupModeController(
                         if (!leaderSyncServer.isRunning) {
                             val newPort = leaderSyncServer.start(groupId)
                             groupNsdManager.startAdvertising(code = groupId, port = newPort)
-                            advertisedGroupId = groupId
+                            transition { GroupModeState.Advertising(groupId) }
                             newPort
                         } else {
                             leaderSyncServer.currentPort
@@ -85,13 +124,14 @@ internal class GroupModeController(
     }
 
     fun stopAdvertising() {
-        advertisedGroupId?.let(groupNsdManager::stopAdvertising)
-        advertisedGroupId = null
+        val advertising = state as? GroupModeState.Advertising ?: return
+        transition { GroupModeState.Idle }
+        groupNsdManager.stopAdvertising(advertising.groupId)
     }
 
     fun rediscoverFollowerGroup(groupId: String) {
-        followerRediscoveryJob =
-            scope.launch {
+        val job =
+            scope.launch(start = CoroutineStart.LAZY) {
                 var resolved: Pair<String, Int>? = null
                 for (attempt in 0..AppConstants.SyncConstants.NSD_REDISCOVERY_RETRY_COUNT) {
                     resolved = groupNsdManager.discoverByCode(groupId)
@@ -115,6 +155,7 @@ internal class GroupModeController(
                     }
                 }
             }
+        startJob(job, GroupModeState::Rediscovering)
     }
 
     /**
@@ -124,9 +165,8 @@ internal class GroupModeController(
      * Automatically stops on success, exhaustion, or [stopFollowerRestoration].
      */
     fun startFollowerRestoration(groupId: String) {
-        stopFollowerRestoration()
-        followerRestorationJob =
-            scope.launch {
+        val job =
+            scope.launch(start = CoroutineStart.LAZY) {
                 val maxAttempts = AppConstants.FollowerRestorationConstants.MAX_RETRY_ATTEMPTS
                 var delayMs = AppConstants.FollowerRestorationConstants.INITIAL_RETRY_DELAY_MS
                 val maxDelayMs = AppConstants.FollowerRestorationConstants.MAX_RETRY_DELAY_MS
@@ -154,13 +194,18 @@ internal class GroupModeController(
                 }
                 Log.w(TAG, "Follower restoration exhausted after $maxAttempts attempts for group $groupId — staying idle")
             }
+        startJob(job, GroupModeState::RestoringFollower)
+    }
+
+    private fun startJob(
+        job: Job,
+        wrap: (Job) -> GroupModeState,
+    ) {
+        if (transition { if (it is GroupModeState.Advertising) null else wrap(job) }) job.start() else job.cancel()
     }
 
     /** Cancels any in-flight follower restoration or rediscovery job. */
     fun stopFollowerRestoration() {
-        followerRestorationJob?.cancel()
-        followerRestorationJob = null
-        followerRediscoveryJob?.cancel()
-        followerRediscoveryJob = null
+        transition { if (it.job != null) GroupModeState.Idle else it }
     }
 }

@@ -1,5 +1,6 @@
 package com.locationjoystick.core.location
 
+import com.locationjoystick.core.common.util.NetworkUtils
 import com.locationjoystick.core.common.util.NsdCodeManager
 import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.model.GroupState
@@ -7,6 +8,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -95,5 +98,65 @@ class GroupModeControllerTest {
 
         verify { leaderServer.stop() }
         assertEquals(1, leaderExits)
+    }
+
+    @Test
+    fun `restoration then rediscovery replaces and cancels the first job`() {
+        val controller = newController(GroupState.None)
+
+        controller.startFollowerRestoration("AAA111")
+        val first = (controller.state as GroupModeState.RestoringFollower).job
+        controller.rediscoverFollowerGroup("AAA111")
+
+        assert(controller.state is GroupModeState.Rediscovering)
+        assert(first.isCancelled)
+        controller.stopFollowerRestoration()
+        assertEquals(GroupModeState.Idle, controller.state)
+        gate.complete(null)
+        settle()
+    }
+
+    @Test
+    fun `entering leader mode advertises and stopAdvertising returns to Idle`() {
+        val controller = newController(GroupState.None)
+        every { leaderServer.isRunning } returns false
+        every { leaderServer.start("L1") } returns 1234
+        mockkObject(NetworkUtils)
+        every { NetworkUtils.getLocalIpAddress() } returns "10.0.0.1"
+
+        controller.enterLeaderMode("L1")
+        settle()
+        assertEquals(GroupModeState.Advertising("L1"), controller.state)
+
+        controller.stopAdvertising()
+        assertEquals(GroupModeState.Idle, controller.state)
+        verify { nsd.stopAdvertising("L1") }
+        unmockkObject(NetworkUtils)
+    }
+
+    @Test
+    fun `follower jobs are rejected while advertising and stop leaves advertising alone`() {
+        val controller = newController(GroupState.None)
+        every { leaderServer.isRunning } returns false
+        every { leaderServer.start("L1") } returns 1234
+        mockkObject(NetworkUtils)
+        every { NetworkUtils.getLocalIpAddress() } returns "10.0.0.1"
+        controller.enterLeaderMode("L1")
+        settle()
+
+        controller.startFollowerRestoration("AAA111")
+        controller.rediscoverFollowerGroup("AAA111")
+        controller.stopFollowerRestoration()
+
+        assertEquals(GroupModeState.Advertising("L1"), controller.state)
+        unmockkObject(NetworkUtils)
+    }
+
+    @Test
+    fun `stopAdvertising while idle does nothing`() {
+        val controller = newController(GroupState.None)
+        controller.stopAdvertising()
+        assertEquals(GroupModeState.Idle, controller.state)
+        verify(exactly = 0) { nsd.stopAdvertising(any()) }
     }
 }

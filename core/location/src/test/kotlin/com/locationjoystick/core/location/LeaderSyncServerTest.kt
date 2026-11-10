@@ -191,7 +191,34 @@ class LeaderSyncServerTest {
     @Test
     fun `enableApi when not started stays disabled`() {
         server.enableApi("k")
-        assertTrue(!server.apiEnabled.value)
+        assertTrue(!server.state.value.apiEnabled)
+    }
+
+    @Test
+    fun `state is Stopped, Running after start, Stopped after stop`() {
+        assertEquals(LeaderServerState.Stopped, server.state.value)
+        server.start("gid")
+        assertTrue(server.state.value is LeaderServerState.Running)
+        server.stop()
+        assertEquals(LeaderServerState.Stopped, server.state.value)
+    }
+
+    @Test
+    fun `enableApi and disableApi toggle the key on a running server`() {
+        server.start("gid")
+        server.enableApi("k")
+        assertEquals("k", (server.state.value as LeaderServerState.Running).apiKey)
+        assertTrue(server.state.value.apiEnabled)
+        server.disableApi()
+        assertTrue(!server.state.value.apiEnabled)
+    }
+
+    @Test
+    fun `stop clears the api key`() {
+        server.start("gid")
+        server.enableApi("k")
+        server.stop()
+        assertTrue(!server.state.value.apiEnabled)
     }
 
     @Test

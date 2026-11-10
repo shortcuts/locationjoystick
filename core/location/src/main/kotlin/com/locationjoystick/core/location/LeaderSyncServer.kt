@@ -6,6 +6,7 @@ import com.locationjoystick.core.model.SyncPositionUpdate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import java.io.PrintWriter
 import java.net.Socket
 import java.net.URLDecoder
@@ -46,6 +47,18 @@ private val REASONS =
         500 to "Internal Server Error",
     )
 
+/** The API key lives only in [Running], so "API enabled without a running server" cannot exist. */
+sealed interface LeaderServerState {
+    data object Stopped : LeaderServerState
+
+    data class Running(
+        val executor: ScheduledExecutorService,
+        val apiKey: String? = null,
+    ) : LeaderServerState
+}
+
+val LeaderServerState.apiEnabled: Boolean get() = this is LeaderServerState.Running && apiKey != null
+
 @Singleton
 class LeaderSyncServer
     @Inject
@@ -56,15 +69,19 @@ class LeaderSyncServer
         private val activeFollowers = ConcurrentHashMap<String, Long>()
         private val _followerCount = MutableStateFlow(0)
         val followerCount: StateFlow<Int> = _followerCount.asStateFlow()
-        private var cleanupExecutor: ScheduledExecutorService? = null
 
         // Path -> method -> handler. Exact match first, then a one-segment `{id}` pattern (e.g. /api/v1/favorites/{id}).
         // ponytail: handlers are non-suspend, run on the connection thread; bridge coroutines with runBlocking.
         private val routes = ConcurrentHashMap<String, MutableMap<String, (ApiRequest) -> ApiResponse>>()
 
-        @Volatile private var apiKey: String? = null
-        private val _apiEnabled = MutableStateFlow(false)
-        val apiEnabled: StateFlow<Boolean> = _apiEnabled.asStateFlow()
+        private val _state = MutableStateFlow<LeaderServerState>(LeaderServerState.Stopped)
+        val state: StateFlow<LeaderServerState> = _state.asStateFlow()
+
+        /** Applies [next] to the state and returns the previous one. A null result rejects the transition. */
+        private fun transition(next: (LeaderServerState) -> LeaderServerState?): LeaderServerState =
+            _state.getAndUpdate { current ->
+                next(current) ?: current.also { Log.w(TAG, "ignored transition from $it") }
+            }
 
         init {
             registerApiRoute("GET", "/api/v1/status") {
@@ -85,14 +102,11 @@ class LeaderSyncServer
 
         /** Enables the API with [key] (call again to rotate). No-op unless the server is running. */
         fun enableApi(key: String) {
-            if (!isRunning) return
-            apiKey = key
-            _apiEnabled.value = true
+            transition { if (it is LeaderServerState.Running) it.copy(apiKey = key) else null }
         }
 
         fun disableApi() {
-            apiKey = null
-            _apiEnabled.value = false
+            transition { if (it is LeaderServerState.Running) it.copy(apiKey = null) else it }
         }
 
         @Synchronized
@@ -100,7 +114,7 @@ class LeaderSyncServer
             if (isRunning) return currentPort
             val port = startServer(groupId)
             val cleanupEx = Executors.newSingleThreadScheduledExecutor()
-            cleanupExecutor = cleanupEx
+            transition { if (it is LeaderServerState.Stopped) LeaderServerState.Running(cleanupEx) else null }
             cleanupEx.scheduleWithFixedDelay(
                 ::pruneStaleFollowers,
                 AppConstants.SyncConstants.POSITION_STALE_THRESHOLD_MS,
@@ -113,11 +127,10 @@ class LeaderSyncServer
         @Synchronized
         fun stop() {
             stopServer()
-            disableApi()
+            val previous = transition { LeaderServerState.Stopped }
+            (previous as? LeaderServerState.Running)?.executor?.shutdown()
             latestUpdate.set(null)
             seq.set(0L)
-            cleanupExecutor?.shutdown()
-            cleanupExecutor = null
             activeFollowers.clear()
             _followerCount.value = 0
         }
@@ -166,7 +179,7 @@ class LeaderSyncServer
         }
 
         private fun routeApi(request: ApiRequest): ApiResponse {
-            val key = apiKey
+            val key = (_state.value as? LeaderServerState.Running)?.apiKey
             if (key == null) return apiError(404, "not_found", "Not found")
             val expected = "Bearer $key".toByteArray(Charsets.UTF_8)
             val given = (request.headers["authorization"] ?: "").toByteArray(Charsets.UTF_8)

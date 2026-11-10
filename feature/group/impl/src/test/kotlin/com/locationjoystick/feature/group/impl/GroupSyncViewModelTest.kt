@@ -11,6 +11,7 @@ import com.locationjoystick.core.data.GroupRepository
 import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.FollowerSyncClient
+import com.locationjoystick.core.location.LeaderServerState
 import com.locationjoystick.core.location.LeaderSyncServer
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
@@ -63,7 +64,7 @@ class GroupSyncViewModelTest {
     private lateinit var followerFollowerCount: MutableStateFlow<Int>
     private lateinit var leaderPositionFlow: MutableStateFlow<LatLng?>
     private lateinit var currentPositionFlow: MutableStateFlow<LatLng?>
-    private lateinit var apiEnabledFlow: MutableStateFlow<Boolean>
+    private lateinit var apiEnabledFlow: MutableStateFlow<LeaderServerState>
     private lateinit var lastTeleportTimeFlow: MutableStateFlow<Long>
 
     private lateinit var viewModel: GroupSyncViewModel
@@ -111,8 +112,8 @@ class GroupSyncViewModelTest {
         leaderPositionFlow = MutableStateFlow(null)
         currentPositionFlow = MutableStateFlow(null)
 
-        apiEnabledFlow = MutableStateFlow(false)
-        every { leaderSyncServer.apiEnabled } returns apiEnabledFlow
+        apiEnabledFlow = MutableStateFlow(LeaderServerState.Stopped)
+        every { leaderSyncServer.state } returns apiEnabledFlow
         coEvery { groupRepository.getOrCreateApiKey() } returns "key1"
         coEvery { groupRepository.regenerateApiKey() } returns "key2"
         every { groupRepository.groupState } returns groupStateFlow
@@ -505,7 +506,7 @@ class GroupSyncViewModelTest {
             assertEquals("key2", viewModel.apiKey.value)
             verify(exactly = 0) { leaderSyncServer.enableApi(any()) }
 
-            apiEnabledFlow.value = true
+            apiEnabledFlow.value = LeaderServerState.Running(mockk(), apiKey = "key1")
             viewModel.regenerateApiKey()
             verify { leaderSyncServer.enableApi("key2") }
         }

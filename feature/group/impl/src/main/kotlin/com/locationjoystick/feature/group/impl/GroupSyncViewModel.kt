@@ -21,6 +21,7 @@ import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.location.FollowerSyncClient
 import com.locationjoystick.core.location.LeaderSyncServer
 import com.locationjoystick.core.location.MockLocationService
+import com.locationjoystick.core.location.apiEnabled
 import com.locationjoystick.core.model.GroupInvite
 import com.locationjoystick.core.model.GroupRole
 import com.locationjoystick.core.model.GroupState
@@ -39,7 +40,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -74,10 +77,19 @@ class GroupSyncViewModel
         private val _nearbyLeaders = MutableStateFlow<List<GroupInvite>>(emptyList())
         val nearbyLeaders: StateFlow<List<GroupInvite>> = _nearbyLeaders.asStateFlow()
 
-        val apiEnabled: StateFlow<Boolean> = leaderSyncServer.apiEnabled
+        val apiEnabled: StateFlow<Boolean> =
+            leaderSyncServer.state
+                .map { it.apiEnabled }
+                .stateIn(viewModelScope, SharingStarted.Eagerly, leaderSyncServer.state.value.apiEnabled)
 
-        private val _apiKey = MutableStateFlow<String?>(null)
-        val apiKey: StateFlow<String?> = _apiKey.asStateFlow()
+        private val restoreState = MutableStateFlow<RestoreState>(RestoreState.Idle)
+
+        val apiKey: StateFlow<String?> =
+            restoreState
+                .map { it.apiKey }
+                .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+        private fun restore(event: RestoreEvent) = restoreState.update { it.reduce(event) }
 
         val hideTeleportFeatures: StateFlow<Boolean> =
             settingsRepository
@@ -120,20 +132,11 @@ class GroupSyncViewModel
 
         init {
             viewModelScope.launch {
-                var leaderRestoreSent = false
-                var followerRestoreSent = false
-                var followerExistenceChecked = false
                 groupRepository.groupState.collect { state ->
                     _groupState.value = state
-                    if (state.role != GroupRole.LEADER) {
-                        _apiKey.value = null
-                    } else if (_apiKey.value == null) {
-                        _apiKey.value = groupRepository.getOrCreateApiKey()
-                    }
-                    if (state.role != GroupRole.FOLLOWER) {
-                        // Leaving the group must re-arm the one-shot follower checks below so a rejoin starts following.
-                        followerRestoreSent = false
-                        followerExistenceChecked = false
+                    restore(RestoreEvent.RoleChanged(state.role))
+                    if (state.role == GroupRole.LEADER && restoreState.value.apiKey == null) {
+                        restore(RestoreEvent.ApiKeyLoaded(groupRepository.getOrCreateApiKey()))
                     }
                     val leader = state as? GroupState.Leader
                     val follower = state as? GroupState.Follower
@@ -142,8 +145,8 @@ class GroupSyncViewModel
                     // DataStore still says LEADER — the persisted host:port are stale. Restart
                     // the service so it picks a fresh port and writes it back to the repository,
                     // then generate the QR from that updated state instead of the stale one.
-                    if (leader != null && !leaderRestoreSent) {
-                        leaderRestoreSent = true
+                    if (leader != null && restoreState.value is RestoreState.LeaderPending) {
+                        restore(RestoreEvent.LeaderChecked)
                         if (!leaderSyncServer.isRunning) {
                             sendServiceAction(AppConstants.ServiceConstants.ACTION_START_LEADER) { intent ->
                                 intent.putExtra(AppConstants.ServiceConstants.EXTRA_LEADER_GROUP_ID, leader.groupId)
@@ -158,16 +161,19 @@ class GroupSyncViewModel
                     // NSD runs again with more time elapsed and the leader is reachable.
                     // Check group existence immediately on entering the screen instead of waiting
                     // for the next poll tick, so a stale/gone group is surfaced right away.
-                    if (follower != null && !followerExistenceChecked) {
-                        followerExistenceChecked = true
+                    if (follower != null && restoreState.value == RestoreState.FollowerPending) {
+                        restore(RestoreEvent.ExistenceChecked)
                         if (!followerSyncClient.checkGroupExists(follower.host, follower.port, follower.groupId)) {
                             Log.w(TAG, "Group ${follower.groupId} no longer exists on entry check — leaving group")
                             leaveGroup()
                             return@collect
                         }
                     }
-                    if (state.role == GroupRole.FOLLOWER && state.followerModeEnabled && !followerRestoreSent) {
-                        followerRestoreSent = true
+                    if (state.role == GroupRole.FOLLOWER &&
+                        state.followerModeEnabled &&
+                        restoreState.value == RestoreState.FollowerExistenceChecked
+                    ) {
+                        restore(RestoreEvent.FollowerRestoreChecked)
                         if (!followerSyncClient.isPolling) {
                             setFollowerModeEnabled(true)
                             return@collect
@@ -330,7 +336,7 @@ class GroupSyncViewModel
             viewModelScope.launch {
                 if (enabled) {
                     val key = groupRepository.getOrCreateApiKey()
-                    _apiKey.value = key
+                    restore(RestoreEvent.ApiKeyLoaded(key))
                     leaderSyncServer.enableApi(key)
                 } else {
                     leaderSyncServer.disableApi()
@@ -342,9 +348,9 @@ class GroupSyncViewModel
             if (_groupState.value.role != GroupRole.LEADER) return
             viewModelScope.launch {
                 val key = groupRepository.regenerateApiKey()
-                _apiKey.value = key
+                restore(RestoreEvent.ApiKeyLoaded(key))
                 // enableApi on a running API rotates the key.
-                if (leaderSyncServer.apiEnabled.value) leaderSyncServer.enableApi(key)
+                if (leaderSyncServer.state.value.apiEnabled) leaderSyncServer.enableApi(key)
             }
         }
 
