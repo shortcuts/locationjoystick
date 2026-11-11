@@ -113,7 +113,7 @@ Slow Walk and Bike/Drive. Slow Walk (0.3 m/s) moves 0.9 m per 3 s tick, so `MIN_
 
 Gate cost: about 5 min per row on Run, about 12 min on Walk (reference legs, the app leg and the teleport back after each tap all run at walking speed; see docs/testing.md). Not run: rows 2, 5, 6 and 8 to 20, and the fresh, twist and zoom rows. If tap to walk work reopens, start there.
 
-Always run `./gradlew installDebug` before the gate when app code changed since the phone's install, then start spoofing and turn on the Control API (the port changes on each toggle). A stale APK once scored 0 taps.
+Always run `./gradlew installGithubDebug` before the gate when app code changed since the phone's install, then start spoofing and turn on the Control API (the port changes on each toggle). A stale APK once scored 0 taps.
 
 Forward ratio. The near-feet refit of the 12 stored references gives forward / lateral 0.47 to 0.67 (10 of 12 within 0.53 to 0.59), against `FORWARD_RATIO` 0.40. Most taps land beside the player, so this costs little today. It matters once taps spread up the screen. Raising it is the first candidate if the scale error needs work.
 

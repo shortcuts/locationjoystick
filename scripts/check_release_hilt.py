@@ -17,7 +17,7 @@ from os import environ
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-DEFAULT_MAPPING = REPO / "app/build/outputs/mapping/release/mapping.txt"
+DEFAULT_MAPPING = REPO / "app/build/outputs/mapping/githubRelease/mapping.txt"
 DEX_ENTRY = re.compile(r"(^|/)classes\d*\.dex$")
 # Lazy span: other annotations or modifiers can sit between @HiltViewModel and "class".
 VIEW_MODEL = re.compile(r"^\s*@HiltViewModel\b.*?\bclass\s+(\w+)", re.MULTILINE | re.DOTALL)

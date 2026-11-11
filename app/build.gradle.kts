@@ -14,6 +14,12 @@ android {
         applicationId = "com.locationjoystick.app"
         testInstrumentationRunner = "com.locationjoystick.app.HiltTestRunner"
     }
+    flavorDimensions += "distribution"
+    productFlavors {
+        // Flavors differ only by app/src/github; Play must never gain it.
+        create("github") { dimension = "distribution" }
+        create("play") { dimension = "distribution" }
+    }
     androidResources {
         generateLocaleConfig = true
     }
@@ -36,6 +42,10 @@ val copyApiDocs by tasks.registering(Copy::class) {
     into(layout.buildDirectory.dir("generated/docsAssets"))
 }
 tasks.matching { it.name.endsWith("AndroidTestAssets") }.configureEach { dependsOn(copyApiDocs) }
+
+// AGP names these per flavor; the unqualified names stay the contract for make and CI.
+tasks.register("testRelease") { dependsOn("testGithubReleaseUnitTest", "testPlayReleaseUnitTest") }
+tasks.register("lintRelease") { dependsOn("lintGithubRelease", "lintPlayRelease") }
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))

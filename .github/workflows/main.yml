@@ -123,7 +123,7 @@ jobs:
         if: ${{ needs.release-please.outputs.release_created == 'true' }}
         run: |
           TAG=${{ needs.release-please.outputs.tag_name }}
-          mv app/build/outputs/apk/release/app-release.apk locationjoystick-${TAG}.apk
+          mv app/build/outputs/apk/github/release/app-github-release.apk locationjoystick-${TAG}.apk
 
       - name: Upload APK to GitHub Release
         if: ${{ needs.release-please.outputs.release_created == 'true' }}

@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.net.toUri
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.LjIcons
@@ -46,6 +47,7 @@ import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.location.rememberSpoofToggleState
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.RoamingDefaults
+import com.locationjoystick.feature.settings.api.SettingsExtension
 import com.locationjoystick.feature.settings.impl.R
 
 private enum class SettingsSection { GPS, REALISM, MENUS, SCREEN_HELPERS, GENERAL, FAVORITES_ROUTES, ROAMING, CAPTURE }
@@ -75,6 +77,7 @@ fun SettingsRoute(
     onNavigateUp: () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     openCaptureSetup: Boolean = false,
+    extensionsViewModel: SettingsExtensionsViewModel = hiltViewModel(),
 ) {
     val screenState by viewModel.screenState.collectAsStateWithLifecycle()
     val roamingDefaults by viewModel.roamingDefaults.collectAsStateWithLifecycle()
@@ -247,6 +250,7 @@ fun SettingsRoute(
         launchableApps = viewModel.launchableApps.collectAsStateWithLifecycle().value,
         onNavigateUp = onNavigateUp,
         openCaptureSetup = openCaptureSetup,
+        extensions = extensionsViewModel.extensions.toList(),
         onAction = { action ->
             when (action) {
                 is SettingsAction.SetSpeed -> {
@@ -534,8 +538,11 @@ internal fun SettingsScreen(
     bottomBar: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
     openCaptureSetup: Boolean = false,
+    extensions: List<SettingsExtension> = emptyList(),
 ) {
     var currentSection by rememberSaveable { mutableStateOf(if (openCaptureSetup) SettingsSection.CAPTURE else null) }
+    var openExtensionId by rememberSaveable { mutableStateOf<String?>(null) }
+    val openExtension = extensions.firstOrNull { it.id == openExtensionId }
     // Opened from the Capture screen: Back returns there, not to the settings hub.
     val atRoot = currentSection == null || (openCaptureSetup && currentSection == SettingsSection.CAPTURE)
 
@@ -545,12 +552,20 @@ internal fun SettingsScreen(
 
     BackHandler(onBack = back)
 
+    if (openExtension != null) {
+        BackHandler { openExtensionId = null }
+        openExtension.Screen(onBack = { openExtensionId = null })
+        return
+    }
+
     when (currentSection) {
         null -> {
             SettingsHubScreen(
                 guidedPath = (screenState as? SettingsScreenState.Loaded)?.state?.guidedPath ?: GuidedPath.DEFAULT,
                 onOpenDrawer = onOpenDrawer,
                 onNavigate = { currentSection = it },
+                extensions = extensions,
+                onOpenExtension = { openExtensionId = it },
                 isSpoofing = isSpoofing,
                 onToggleSpoofing = onToggleSpoofing,
                 locationLabel = locationLabel,
@@ -678,6 +693,8 @@ private fun SettingsHubScreen(
     guidedPath: GuidedPath,
     onOpenDrawer: () -> Unit,
     onNavigate: (SettingsSection) -> Unit,
+    extensions: List<SettingsExtension>,
+    onOpenExtension: (String) -> Unit,
     isSpoofing: Boolean,
     onToggleSpoofing: () -> Unit,
     locationLabel: String? = null,
@@ -815,7 +832,15 @@ private fun SettingsHubScreen(
                             description = stringResource(R.string.settings_hub_capture_desc),
                             onClick = { onNavigate(SettingsSection.CAPTURE) },
                         ),
-                    ),
+                    ) +
+                    extensions.map { extension ->
+                        DestinationCardSpec(
+                            icon = extension.icon,
+                            title = extension.title(),
+                            description = extension.description(),
+                            onClick = { onOpenExtension(extension.id) },
+                        )
+                    },
         )
     }
 }

@@ -19,12 +19,13 @@ clean:
 	find . -name ".gradle" -type d -not -path "*/.git/*" | xargs rm -rf
 
 build:
-	./gradlew assembleRelease
-	python3 scripts/check_release_hilt.py "$$(ls -t app/build/outputs/apk/release/*.apk | head -1)"
+	./gradlew :app:assembleGithubRelease
+	python3 scripts/check_release_hilt.py "$$(ls -t app/build/outputs/apk/github/release/*.apk | head -1)" app/build/outputs/mapping/githubRelease/mapping.txt
 
 bundle:
-	./gradlew bundleRelease
-	python3 scripts/check_release_hilt.py app/build/outputs/bundle/release/app-release.aab
+	./gradlew :app:bundlePlayRelease
+	python3 scripts/check_release_hilt.py app/build/outputs/bundle/playRelease/app-play-release.aab app/build/outputs/mapping/playRelease/mapping.txt
+	python3 scripts/check_play_strip.py app/build/outputs/bundle/playRelease/app-play-release.aab app/build/outputs/mapping/playRelease/mapping.txt
 
 format:
 	./gradlew ktlintFormat
@@ -33,10 +34,10 @@ lint:
 	./gradlew lintRelease
 
 install-on-phone:
-	./gradlew installDebug
+	./gradlew :app:installGithubDebug
 
 reinstall-on-phone:
-	adb uninstall com.locationjoystick.app || true && ./gradlew installDebug
+	adb uninstall com.locationjoystick.app || true && ./gradlew :app:installGithubDebug
 
 start-on-phone:
 	adb shell am start -n com.locationjoystick.app/com.locationjoystick.app.MainActivity
@@ -49,6 +50,7 @@ test:
 	python3 scripts/test_wiki_style.py
 	python3 scripts/test_wiki_nav.py
 	python3 scripts/test_check_release_hilt.py
+	python3 scripts/test_check_play_strip.py
 	python3 scripts/test_release_smoke.py
 
 coverage:
@@ -76,16 +78,16 @@ wiki-serve:
 SMOKE_TEST_CLASS = $(subst /,.,$(patsubst app/src/androidTest/kotlin/%,%,$(patsubst %.kt,%,$(TEST_FILE))))
 
 smoke-test:
-	./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.package=com.locationjoystick.app.smoke
+	./gradlew :app:connectedGithubDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.package=com.locationjoystick.app.smoke
 
 smoke-test-one:
-	./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=$(SMOKE_TEST_CLASS)
+	./gradlew :app:connectedGithubDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=$(SMOKE_TEST_CLASS)
 
 # Uninstalls the app first, which deletes its data (docs/testing.md).
 release-smoke:
-	./gradlew :app:packageReleaseUniversalApk
-	python3 scripts/check_release_hilt.py "$$(ls -t app/build/outputs/apk_from_bundle/release/*.apk | head -1)"
-	python3 scripts/release_smoke.py "$$(ls -t app/build/outputs/apk_from_bundle/release/*.apk | head -1)"
+	./gradlew :app:packagePlayReleaseUniversalApk
+	python3 scripts/check_release_hilt.py "$$(ls -t app/build/outputs/apk_from_bundle/playRelease/*.apk | head -1)" app/build/outputs/mapping/playRelease/mapping.txt
+	python3 scripts/release_smoke.py "$$(ls -t app/build/outputs/apk_from_bundle/playRelease/*.apk | head -1)"
 
 # Bluetooth reconnect tap matrix (docs/features/bluetooth-reconnect-tap.md).
 # make reconnect-auto CYCLES=10   (SERIAL, DEVICE, MAC, BLOCK optional: script picks)
@@ -110,7 +112,7 @@ MATRIX_ARGS = --serial $(MATRIX_SERIAL) --mac-suffix $(MAC_SUFFIX) --device-slug
 
 reconnect-matrix:
 	ANDROID_SERIAL=$(MATRIX_SERIAL) KEYSTORE_PATH=$$HOME/.android/debug.keystore STORE_PASSWORD=android \
-		KEY_ALIAS=androiddebugkey KEY_PASSWORD=android ./gradlew installRelease
+		KEY_ALIAS=androiddebugkey KEY_PASSWORD=android ./gradlew :app:installGithubRelease
 	@if adb -s $(MATRIX_SERIAL) shell dumpsys package com.locationjoystick.app | grep -q 'flags=\[.*DEBUGGABLE'; then \
 		echo "ERROR: installed build is debuggable (10 s loop), not release cadence"; exit 1; fi
 	-$(RECONNECT) already-on $(MATRIX_ARGS) --checks 12

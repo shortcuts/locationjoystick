@@ -55,7 +55,7 @@ jobs:
         run: make build
 
       - name: Rename APK
-        run: mv app/build/outputs/apk/release/app-release.apk locationjoystick-v${{ steps.version.outputs.alpha_version }}.apk
+        run: mv app/build/outputs/apk/github/release/app-github-release.apk locationjoystick-v${{ steps.version.outputs.alpha_version }}.apk
 
       - name: Upload APK to GitHub Release
         uses: softprops/action-gh-release@v2

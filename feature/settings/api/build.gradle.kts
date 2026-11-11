@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.locationjoystick.android.library)
+    alias(libs.plugins.locationjoystick.android.library.compose)
 }
 
 android {

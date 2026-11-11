@@ -2,13 +2,13 @@
 
 ## What `make test` runs
 
-`make test` runs `testRelease`. Android modules run their release unit tests. JVM modules (`:core:model`, `:lint:checks`) get a `testRelease` alias from the JVM convention plugin, so their `test` task runs too. CI runs `make test`, so a failing JVM test fails CI.
+`make test` runs `testRelease`. Android modules run their release unit tests, and `:app` runs them for both flavors. `make lint` likewise lints both flavors. JVM modules (`:core:model`, `:lint:checks`) get a `testRelease` alias from the JVM convention plugin, so their `test` task runs too. CI runs `make test`, so a failing JVM test fails CI.
 
 ## Release artifact check
 
-`make build` and `make bundle` run `scripts/check_release_hilt.py` on the APK or AAB they produce. KSP can silently skip a module on CI. Release 1.0.0 lost `SettingsViewModel` this way: every Gradle task passed and the screen crashed for users (issue 117). Debug builds, unit tests and smoke tests do not run the R8 artifact, so only a check of the artifact catches this. If the check fails on CI, rerun the job. A failed job publishes no APK.
+`make build` builds the `github` APK and `make bundle` builds the `play` AAB. Both run `scripts/check_release_hilt.py` on what they produce. `make bundle` also runs `scripts/check_play_strip.py`, which fails when the AAB contains `REQUEST_INSTALL_PACKAGES` or APK-signing libraries (see "Build flavors" in architecture.md). Smoke tests run on the `github` debug build only: the flavors differ by nothing visible today. KSP can silently skip a module on CI. Release 1.0.0 lost `SettingsViewModel` this way: every Gradle task passed and the screen crashed for users (issue 117). Debug builds, unit tests and smoke tests do not run the R8 artifact, so only a check of the artifact catches this. If the check fails on CI, rerun the job. A failed job publishes no APK.
 
-`make release-smoke` goes further on an attached device. It builds the universal APK from the bundle, runs that check, installs the APK and opens every Home card, then reads the crash buffer. It drives the app from outside because the instrumented suite cannot run on the artifact: `HiltTestRunner` swaps in `HiltTestApplication`, and the Compose rules need test code inside the app. To check a published build, run `python3 scripts/release_smoke.py <apk>`. Both uninstall the app first, which deletes its data, so use test phones only. Afterwards run `make reinstall-on-phone` to return to a debug build.
+`make release-smoke` goes further on an attached device. It builds the universal APK from the Play bundle, runs that check, installs the APK and opens every Home card, then reads the crash buffer. It drives the app from outside because the instrumented suite cannot run on the artifact: `HiltTestRunner` swaps in `HiltTestApplication`, and the Compose rules need test code inside the app. To check a published build, run `python3 scripts/release_smoke.py <apk>`. Both uninstall the app first, which deletes its data, so use test phones only. Afterwards run `make reinstall-on-phone` to return to a debug build.
 
 ## Coverage
 
@@ -83,7 +83,7 @@ adb shell settings get secure enabled_accessibility_services   # must list the s
 
 Re-run the grant after any `am force-stop com.locationjoystick.app`. The helper appends to the existing list, so other enabled services stay on.
 
-The same grant lets an agent run the Reconnect accessory check on a device without asking. The service reads the foreground app only from window events, so after the grant background the game and launch it again, or every run ends `GATE_CLOSED`. `adb shell cmd bluetooth_manager disable` makes the companion unreachable and forces `FAILED` runs; `enable` brings it back. Watch `adb logcat -d | grep "Reconnect check"` and `adb shell dumpsys notification --noredact | grep com.locationjoystick.app` (id 1003 is the failure notice). `installDebug` replaces the app, so re-check the grant afterwards.
+The same grant lets an agent run the Reconnect accessory check on a device without asking. The service reads the foreground app only from window events, so after the grant background the game and launch it again, or every run ends `GATE_CLOSED`. `adb shell cmd bluetooth_manager disable` makes the companion unreachable and forces `FAILED` runs; `enable` brings it back. Watch `adb logcat -d | grep "Reconnect check"` and `adb shell dumpsys notification --noredact | grep com.locationjoystick.app` (id 1003 is the failure notice). `installGithubDebug` replaces the app, so re-check the grant afterwards.
 
 The reconnect matrix harness needs numpy and Pillow for `auto` and `corpus`. Run it with `uv run --with numpy --with pillow python -I scripts/reconnect_matrix.py <subcommand>`; the `make reconnect-*` targets already do. It crops the bottom 5% of every saved screenshot, because the game shows the player's username there. A cycle where the game reconnects by itself (0 taps) passes without testing the tap, so `summary` counts those cycles in their own column.
 
@@ -95,7 +95,7 @@ Check: `./scripts/screenshot-gallery.sh --auto --steps 21` exits 0 and writes `d
 
 Proves that Resume walks back from the steered position instead of snapping. Positions come from `adb shell dumpsys location | grep -m1 "last mock location"`; `adb logcat` shows no per-tick position and may miss the "Replay paused" line.
 
-1. Wake and swipe up to unlock. Run `adb shell appops set com.locationjoystick.app android:mock_location allow`, then `installDebug` and start spoofing from the Home "Start" action.
+1. Wake and swipe up to unlock. Run `adb shell appops set com.locationjoystick.app android:mock_location allow`, then `installGithubDebug` and start spoofing from the Home "Start" action.
 2. Start a route from Routes (play, then Start). The widget launcher is the compass bubble at the screen edge. A tap expands its panel; the joystick toggle is the second icon. Dragging the bubble moves the whole overlay, so never start a drag on it.
 3. With the stick visible, hold a swipe from the stick centre, for example `adb shell input swipe X Y X Y-90 45000`. A 45 s hold moves the position about 12 m at walking speed: speed, not distance, limits the test. The route row then shows play instead of pause.
 4. Record the position, tap the route row's play (or, for roaming, the compass in the panel and then the green play in its sub-menu), and sample the position every second.

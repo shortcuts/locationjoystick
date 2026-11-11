@@ -40,6 +40,16 @@ core/model       — Pure Kotlin data classes, no Android deps
 | `:feature:settings:api` / `:impl` | Speed profiles, widget config, export/import, QR transfer |
 | `:feature:widget:impl` | Floating widget overlay + panel |
 
+## Build flavors
+
+Only `:app` has product flavors: `github` (the release APK) and `play` (the AAB for Play). Both keep the application ID `com.locationjoystick.app`, so device scripts address one package. Library modules stay flavorless, because only `:app` can carry dependencies that Play must not ship.
+
+Code in `app/src/github` ships in the APK only. Play policy restricts `REQUEST_INSTALL_PACKAGES` and rejects apps that repackage themselves, so that code must stay out of the AAB. A runtime flag or `BuildConfig` check is rejected: it would compile the code into Play.
+
+`SettingsExtension` in `:feature:settings:api` is the seam. `:feature:settings:impl` declares an empty Hilt multibinding of it. The `github` source set binds an implementation into that set, and the Settings hub then shows one extra card. `play` binds none, so no card renders and Settings never references GitHub-only code.
+
+`make bundle` runs `scripts/check_play_strip.py`. It fails when the AAB declares `REQUEST_INSTALL_PACKAGES` or contains `com.reandroid` or `com.android.apksig` classes. See [testing.md](testing.md).
+
 ## MVVM + Repository Pattern
 
 VMs expose `StateFlow`/`SharedFlow`. UI collects via `collectAsStateWithLifecycle()`. Repos = single truth — VMs never touch DAOs/DataStore directly.

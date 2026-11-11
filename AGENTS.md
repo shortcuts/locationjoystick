@@ -14,7 +14,7 @@ Android-only mock GPS app. Background operation, minimal battery.
 | Language | Kotlin |
 | UI | Jetpack Compose |
 | Min SDK | API 28 |
-| Distribution | GitHub Releases APK + Play Store (AAB, live: https://play.google.com/store/apps/details?id=com.locationjoystick.app) |
+| Distribution | GitHub Releases APK (`github` flavor) + Play Store (AAB, `play` flavor, live: https://play.google.com/store/apps/details?id=com.locationjoystick.app) |
 | Storage | Room + DataStore |
 | Backend | None |
 | Open source | Yes |
@@ -205,6 +205,8 @@ Any UI or UX change must respect docs/design-system.md. Run /maintain-design to 
 ## Technical Constraints
 
 → See docs/technical-constraints.md
+
+GitHub-only code goes in `app/src/github` and nowhere else. The Play AAB must never gain it, and `make bundle` fails when it does. See "Build flavors" in docs/architecture.md.
 
 Before changing maps, read docs/features/map-tiles.md. Initialize MapLibre through `MapTileHttp.install`, construct maps through `createMapView`/`rememberMapView`, retain tile-client concurrency and R8 rules, and use `rememberMapView(overlay = true)` for overlay maps.
 

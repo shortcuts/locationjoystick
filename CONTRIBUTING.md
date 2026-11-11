@@ -7,11 +7,11 @@ Prerequisites: Android Studio, or JDK 17 with the Android SDK command-line tools
 ```bash
 git clone https://github.com/shortcuts/locationjoystick.git
 cd locationjoystick
-./gradlew assembleDebug
-adb install app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleGithubDebug
+adb install app/build/outputs/apk/github/debug/app-github-debug.apk
 ```
 
-Release build: `./gradlew assembleRelease`. AAB for Play Store: `make bundle`.
+The app has two flavors, `github` and `play`. They differ only by code in `app/src/github`. Release APK for GitHub: `make build`. AAB for Play Store: `make bundle`.
 
 [release-please](https://github.com/googleapis/release-please) automates releases. When you merge to `main`, it opens or updates a release PR from the Conventional Commits. When you merge that PR, it tags the version, and CI builds, signs, and uploads the APK to GitHub Releases.
 
