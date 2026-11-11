@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.model.GuidedPath
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -73,7 +74,8 @@ class OnboardingPathsSmokeTest : BaseSmokeTest() {
             val shown = card != "Screen helpers" || expected.showsTapToWalk || expected.showsReconnectAccessory
             assertEquals("$card card shown on $expected", shown, nodes.fetchSemanticsNodes().isNotEmpty())
             if (!shown) return@forEach
-            nodes.onFirst().performClick()
+            // Cards below the fold ignore a click, and the back press would then leave Settings.
+            nodes.onFirst().performScrollTo().performClick()
             composeRule.waitForIdle()
             composeRule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
             composeRule.waitForIdle()
