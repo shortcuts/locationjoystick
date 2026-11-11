@@ -20,6 +20,7 @@ Rules that must hold:
 
 - A user-initiated teleport stops any walk, roam or route first. Otherwise the engine would overwrite the new position on its next tick.
 - The stop covers a route that is still planning its road path. The mode has not yet changed to route replay while the routing service is answering, so the stop must not depend on the mode. The pending start is cancelled before the teleport applies.
+- Every teleport button shows the cooldown preview first: the map and widget tap sheets, favorites, the route start sheet, and the paste form (single point). One shared badge, `TeleportCooldownBadge`, collects `TeleportUseCase.cooldownFor`. Callers pass it as a `Pair` flow because `:core:designsystem` does not depend on `:core:data`. The route start target follows Reverse. Hide teleport hides the badge with the button.
 - Teleports from favorites, the map, pasted coordinates and captured links all share this path.
 - Starting a route in teleport-between-waypoints mode teleports to the first stop without stopping the replay that follows. Otherwise Start would cancel itself.
 - Route-replay hops (teleport routes, next and previous stop, teleport between waypoints, resume hop) also restart the cooldown clock. The replay tick treats any step longer than one tick of walking plus the snap threshold as a teleport, because these hops bypass the shared teleport path.

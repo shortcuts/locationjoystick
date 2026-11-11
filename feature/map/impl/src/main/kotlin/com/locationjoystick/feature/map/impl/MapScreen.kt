@@ -62,6 +62,7 @@ import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.feature.map.api.MAP_ROUTE
 import com.locationjoystick.feature.map.impl.R
+import kotlinx.coroutines.flow.Flow
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.maps.MapLibreMap
@@ -155,6 +156,7 @@ fun MapRoute(
         onAction = viewModel::onAction,
         onSearchCommitted = viewModel::addRecentSearch,
         onTeleportPastedCoordinates = viewModel::teleportFromPastedCoordinates,
+        cooldownFor = viewModel::cooldownFor,
         onWalkPastedCoordinates = { viewModel.walkFromPastedCoordinates(it, viaRoads = false) },
         onWalkViaRoadsPastedCoordinates = { viewModel.walkFromPastedCoordinates(it, viaRoads = true) },
         onSavePastedFavorite = viewModel::savePastedFavorite,
@@ -174,6 +176,7 @@ internal fun MapScreen(
     recentSearches: List<RecentSearch> = emptyList(),
     onSearchCommitted: ((String, Double, Double) -> Unit)? = null,
     onTeleportPastedCoordinates: (LatLng) -> Unit = {},
+    cooldownFor: ((LatLng) -> Flow<Pair<Long, Double>?>)? = null,
     onWalkPastedCoordinates: (LatLng) -> Unit = {},
     onWalkViaRoadsPastedCoordinates: (LatLng) -> Unit = {},
     onSavePastedFavorite: (String, LatLng) -> Unit = { _, _ -> },
@@ -501,6 +504,7 @@ internal fun MapScreen(
         RoutesPickerSheet(
             uiState = uiState,
             onAction = onAction,
+            cooldownFor = cooldownFor,
         )
     }
 
@@ -529,6 +533,7 @@ internal fun MapScreen(
                     },
                 initialText = uiState.pasteInitialText,
                 initialRouteName = uiState.pasteInitialRouteName,
+                cooldownFor = cooldownFor,
             )
         }
     }

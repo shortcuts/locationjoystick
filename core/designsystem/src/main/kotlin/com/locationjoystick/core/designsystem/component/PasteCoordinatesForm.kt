@@ -52,6 +52,7 @@ import com.locationjoystick.core.designsystem.R
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RouteStartConfig
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 private enum class PasteNamePrompt { Favorite, Route }
@@ -80,6 +81,7 @@ fun PasteCoordinatesForm(
     initialText: String = "",
     initialRouteName: String = "",
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+    cooldownFor: ((LatLng) -> Flow<Pair<Long, Double>?>)? = null,
 ) {
     var fieldValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(initialText))
@@ -277,6 +279,7 @@ fun PasteCoordinatesForm(
             ) {
                 val actionPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp)
                 if (!isRouteInput) {
+                    if (!hideTeleportFeatures) TeleportCooldownBadge(startPoint, cooldownFor)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(LjSpacing.sm),

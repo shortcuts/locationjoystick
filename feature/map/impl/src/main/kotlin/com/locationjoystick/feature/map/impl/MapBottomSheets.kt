@@ -55,12 +55,14 @@ import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.RouteType
 import com.locationjoystick.core.model.startWaypoint
 import com.locationjoystick.feature.map.impl.R
+import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun RoutesPickerSheet(
     uiState: MapUiState,
     onAction: (MapAction) -> Unit,
+    cooldownFor: ((LatLng) -> Flow<Pair<Long, Double>?>)? = null,
 ) {
     var selectedRouteId by remember { mutableStateOf<String?>(null) }
 
@@ -122,6 +124,8 @@ internal fun RoutesPickerSheet(
                     isRoadRoute = route?.routeType == RouteType.GUIDED,
                     isRoadRouteFetchInFlight = uiState.isRoadRouteFetchInFlight,
                     remembered = uiState.lastRouteStartConfig,
+                    startWaypointFor = { reverse -> route?.startWaypoint(reverse)?.position },
+                    cooldownFor = cooldownFor,
                 )
             }
         } else {
@@ -207,6 +211,7 @@ internal fun PasteCoordinatesSheet(
     title: String? = null,
     initialText: String = "",
     initialRouteName: String = "",
+    cooldownFor: ((LatLng) -> Flow<Pair<Long, Double>?>)? = null,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     LjModalBottomSheet(
@@ -228,6 +233,7 @@ internal fun PasteCoordinatesSheet(
             title = title,
             initialText = initialText,
             initialRouteName = initialRouteName,
+            cooldownFor = cooldownFor,
         )
     }
 }

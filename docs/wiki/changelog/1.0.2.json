@@ -5,6 +5,7 @@
     { "category": "fix", "scope": "General", "summary": "Fixed a build problem that could leave parts of the app missing and cause crashes." },
     { "category": "fix", "scope": "Map", "summary": "Adding a next point while walking no longer sends you back or loops." },
     { "category": "fix", "scope": "Map", "summary": "The stop counter for a chain of added points now counts the points you tapped, not every turn of the road. It also grows when you add a point." },
-    { "category": "feat", "scope": "Routes", "summary": "Teleport routes now show the stop counter too." }
+    { "category": "feat", "scope": "Routes", "summary": "Teleport routes now show the stop counter too." },
+    { "category": "feat", "scope": "Map", "summary": "The suggested teleport wait now also shows on the route start sheet and the paste coordinates box, in the app and in the floating widget." }
   ]
 }

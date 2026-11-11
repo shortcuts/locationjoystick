@@ -346,6 +346,7 @@ internal class WidgetPanelPresenter(
                     hidePanelView()
                 },
                 hideTeleport = hideTeleportFeatures,
+                cooldownFor = mapController::cooldownForPosition.asAdvisory(),
             )
         }
     }
@@ -424,6 +425,7 @@ internal class WidgetPanelPresenter(
                 },
                 onShareOpened = { hidePanelView() },
                 hideTeleport = hideTeleportFeatures,
+                cooldownFor = mapController::cooldownForPosition.asAdvisory(),
                 sortMode = sortMode,
                 onSortModeSelected = { mode -> serviceScope.launch { settingsRepository.setRoutesSortMode(mode) } },
             )

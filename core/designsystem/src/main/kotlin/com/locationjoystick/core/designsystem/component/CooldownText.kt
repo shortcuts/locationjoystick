@@ -1,10 +1,15 @@
 package com.locationjoystick.core.designsystem.component
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.designsystem.R
+import com.locationjoystick.core.model.LatLng
+import kotlinx.coroutines.flow.Flow
 
 /** Resolves a string resource id plus format args to text. */
 typealias StringLookup = (Int, Array<Any>) -> String
@@ -52,6 +57,18 @@ fun cooldownBadgeText(
             getString(R.string.cooldown_badge_distance_away, arrayOf(formatDistance(distanceToTargetMeters, getString)))
         else -> getString(R.string.cooldown_badge_no_wait, emptyArray())
     }
+
+/** Live cooldown badge for a teleport to [target]; draws nothing without a target or a [cooldownFor] source. */
+@Composable
+fun TeleportCooldownBadge(
+    target: LatLng?,
+    cooldownFor: ((LatLng) -> Flow<Pair<Long, Double>?>)?,
+    modifier: Modifier = Modifier,
+) {
+    if (target == null || cooldownFor == null) return
+    val cooling by remember(target) { cooldownFor(target) }.collectAsStateWithLifecycle(initialValue = null)
+    CooldownAdvisoryBadge(cooldownBadgeText(cooling, null, rememberCooldownStringLookup()), modifier)
+}
 
 private fun formatDistance(
     meters: Double,

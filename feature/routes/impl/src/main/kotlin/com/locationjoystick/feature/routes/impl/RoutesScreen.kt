@@ -81,6 +81,7 @@ import com.locationjoystick.core.model.isHot
 import com.locationjoystick.core.model.matchesSearch
 import com.locationjoystick.core.model.startWaypoint
 import com.locationjoystick.feature.routes.impl.R
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 @Composable
@@ -123,6 +124,7 @@ fun RoutesRoute(
         onExportRoute = { route -> viewModel.exportRouteAsGpx(context, route) },
         onStartReplay = viewModel::startReplay,
         onTeleportToRouteStart = viewModel::teleportTo,
+        cooldownFor = viewModel::cooldownFor,
         onPauseReplay = viewModel::pauseReplay,
         onResumeReplay = viewModel::resumeReplay,
         onStopReplay = viewModel::stopReplay,
@@ -177,6 +179,7 @@ internal fun RoutesScreen(
     isSpoofing: Boolean = false,
     onToggleSpoofing: () -> Unit = {},
     locationLabel: String? = null,
+    cooldownFor: ((com.locationjoystick.core.model.LatLng) -> Flow<Pair<Long, Double>?>)? = null,
     onSortModeSelected: (com.locationjoystick.core.model.SavedItemSortMode) -> Unit = {},
     onMoveToGroup: (String, String?) -> Unit = { _, _ -> },
     onRenameGroup: (String, String?) -> Unit = { _, _ -> },
@@ -291,6 +294,7 @@ internal fun RoutesScreen(
                                         onMoveToGroup = if (route.isHot()) null else ({ groupDialogs.moving = route }),
                                         onStartReplay = onStartReplay,
                                         onTeleportToRouteStart = onTeleportToRouteStart,
+                                        cooldownFor = cooldownFor,
                                         onPauseReplay = onPauseReplay,
                                         onResumeReplay = onResumeReplay,
                                         onStopReplay = onStopReplay,
@@ -412,6 +416,7 @@ private fun RouteCard(
     hideTeleportFeatures: Boolean = false,
     isRoadRouteFetchInFlight: Boolean = false,
     lastRouteStartConfig: RouteStartConfig? = null,
+    cooldownFor: ((com.locationjoystick.core.model.LatLng) -> Flow<Pair<Long, Double>?>)? = null,
     onMoveToGroup: (() -> Unit)? = null,
 ) {
     val isActiveRoute = playbackState.activeRouteId == route.id
@@ -567,6 +572,8 @@ private fun RouteCard(
                     onTeleport = { reverse ->
                         route.startWaypoint(reverse)?.let { onTeleportToRouteStart(it.position) }
                     },
+                    startWaypointFor = { reverse -> route.startWaypoint(reverse)?.position },
+                    cooldownFor = cooldownFor,
                     onStart = {
                         loop,
                         reverse,

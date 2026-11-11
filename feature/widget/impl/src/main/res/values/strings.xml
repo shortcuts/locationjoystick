@@ -6,7 +6,6 @@
     <string name="map_floating_stop_route_and_walk_here">"Stop route and walk here"</string>
     <string name="map_floating_finish_route_and_walk_here">"Finish route and walk here"</string>
     <string name="map_floating_move_to_this_location">"Move to this location?"</string>
-    <string name="map_floating_no_wait_needed">"No wait needed"</string>
     <string name="map_floating_teleport_here">"Teleport here"</string>
     <string name="map_floating_walk_here">"Walk here"</string>
     <string name="map_floating_walk_here_via_roads">"Walk here via roads"</string>

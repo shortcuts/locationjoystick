@@ -16,6 +16,7 @@ import com.locationjoystick.core.data.LocationRepository
 import com.locationjoystick.core.data.RouteRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
+import com.locationjoystick.core.data.advisoryPair
 import com.locationjoystick.core.location.MockLocationService
 import com.locationjoystick.core.location.StartRouteReplayUseCase
 import com.locationjoystick.core.model.LatLng
@@ -29,12 +30,14 @@ import com.locationjoystick.core.model.sortedBySavedItemMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -159,6 +162,8 @@ class RoutesViewModel
         fun teleportTo(position: LatLng) {
             viewModelScope.launch { teleportUseCase.execute(position) }
         }
+
+        fun cooldownFor(position: LatLng): Flow<Pair<Long, Double>?> = teleportUseCase.cooldownFor(position).map { it.advisoryPair() }
 
         fun pauseReplay() {
             val intent =

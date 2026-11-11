@@ -18,3 +18,6 @@ sealed class CooldownState {
         val distanceMeters: Double,
     ) : CooldownState()
 }
+
+/** Remaining seconds to distance in meters while cooling, null when ready; the form `:core:designsystem` badges take. */
+fun CooldownState.advisoryPair(): Pair<Long, Double>? = (this as? CooldownState.Cooling)?.let { it.remainingSeconds to it.distanceMeters }

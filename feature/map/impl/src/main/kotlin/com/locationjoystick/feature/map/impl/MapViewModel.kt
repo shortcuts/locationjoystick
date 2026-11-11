@@ -12,6 +12,7 @@ import com.locationjoystick.core.data.LaunchAfterLinkUseCase
 import com.locationjoystick.core.data.RoamingRepository
 import com.locationjoystick.core.data.SettingsRepository
 import com.locationjoystick.core.data.TeleportUseCase
+import com.locationjoystick.core.data.advisoryPair
 import com.locationjoystick.core.location.MapController
 import com.locationjoystick.core.location.isRouteReplay
 import com.locationjoystick.core.location.isSpoofing
@@ -25,6 +26,7 @@ import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.toConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -638,6 +640,8 @@ class MapViewModel
             pinCoordinateTarget(point)
             return true
         }
+
+        fun cooldownFor(position: LatLng): Flow<Pair<Long, Double>?> = teleportUseCase.cooldownFor(position).map { it.advisoryPair() }
 
         fun teleportFromPastedCoordinates(point: LatLng) {
             onAction(MapAction.ConfirmTeleport(point))

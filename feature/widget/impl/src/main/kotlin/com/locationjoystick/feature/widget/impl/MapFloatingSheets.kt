@@ -34,6 +34,7 @@ import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SpeedUnit
 import com.locationjoystick.core.model.toConfig
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 @Composable
@@ -111,6 +112,7 @@ internal fun BoxScope.OverlayPasteCoordinatesSheet(
     onSaveRoute: (name: String, points: List<LatLng>) -> Unit,
     onStartRoute: (points: List<LatLng>, config: RouteStartConfig) -> Unit,
     hideTeleportFeatures: Boolean = false,
+    cooldownFor: ((LatLng) -> Flow<Pair<Long, Double>?>)? = null,
 ) {
     Box(modifier = Modifier.fillMaxSize().clickable { onDismiss() })
     Box(
@@ -134,6 +136,7 @@ internal fun BoxScope.OverlayPasteCoordinatesSheet(
                     onSaveRoute = onSaveRoute,
                     onStartRoute = onStartRoute,
                     hideTeleportFeatures = hideTeleportFeatures,
+                    cooldownFor = cooldownFor,
                 )
             }
         }

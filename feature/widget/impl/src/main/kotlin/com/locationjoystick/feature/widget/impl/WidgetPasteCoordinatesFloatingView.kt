@@ -10,6 +10,7 @@ import com.locationjoystick.core.designsystem.component.PasteCoordinatesForm
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.feature.widget.impl.R
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 internal fun PasteCoordinatesFloatingView(
@@ -21,6 +22,7 @@ internal fun PasteCoordinatesFloatingView(
     onSaveRoute: (name: String, points: List<LatLng>) -> Unit,
     onStartRoute: (points: List<LatLng>, config: RouteStartConfig) -> Unit,
     hideTeleport: Boolean = false,
+    cooldownFor: ((LatLng) -> Flow<Pair<Long, Double>?>)? = null,
     minimized: Boolean = false,
     onToggleMinimize: () -> Unit = {},
 ) {
@@ -44,6 +46,7 @@ internal fun PasteCoordinatesFloatingView(
             hideTeleportFeatures = hideTeleport,
             showTitle = false,
             contentPadding = PaddingValues(0.dp),
+            cooldownFor = cooldownFor,
         )
     }
 }

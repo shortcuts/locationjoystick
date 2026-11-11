@@ -29,6 +29,7 @@ import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.startWaypoint
 import com.locationjoystick.feature.widget.impl.R
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 internal fun RoutesFloatingView(
@@ -49,6 +50,7 @@ internal fun RoutesFloatingView(
     onDelete: (com.locationjoystick.core.model.Route) -> Unit,
     onShareOpened: () -> Unit = onDismiss,
     hideTeleport: Boolean = false,
+    cooldownFor: ((LatLng) -> Flow<Pair<Long, Double>?>)? = null,
     sortMode: SavedItemSortMode = SavedItemSortMode.NEWEST_FIRST,
     onSortModeSelected: (SavedItemSortMode) -> Unit = {},
 ) {
@@ -177,6 +179,8 @@ internal fun RoutesFloatingView(
                     isTeleportRoute = isTeleportRoute,
                     plantingLocked = isPlanted,
                     followRoadsLocked = isPlanted && isRoadRoute,
+                    teleportTarget = route?.startWaypoint(reverse)?.position,
+                    cooldownFor = cooldownFor,
                 )
             }
         } else {

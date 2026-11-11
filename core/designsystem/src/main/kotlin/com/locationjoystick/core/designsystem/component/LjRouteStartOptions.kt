@@ -33,6 +33,8 @@ import com.locationjoystick.core.designsystem.LjTheme
 import com.locationjoystick.core.designsystem.LocalGuidedPath
 import com.locationjoystick.core.designsystem.R
 import com.locationjoystick.core.model.GuidedPath
+import com.locationjoystick.core.model.LatLng
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun LjRouteStartCheckboxes(
@@ -165,6 +167,8 @@ fun LjRouteStartOptions(
     optionsSummary: String? = null,
     optionsExpanded: Boolean = true,
     onOptionsExpandedChange: ((Boolean) -> Unit)? = null,
+    teleportTarget: LatLng? = null,
+    cooldownFor: ((LatLng) -> Flow<Pair<Long, Double>?>)? = null,
 ) {
     Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
         if (onOptionsExpandedChange != null) {
@@ -207,6 +211,7 @@ fun LjRouteStartOptions(
         }
         if (!hideTeleport) {
             Spacer(Modifier.height(LjSpacing.sm))
+            TeleportCooldownBadge(teleportTarget, cooldownFor, Modifier.padding(bottom = LjSpacing.xs))
             LjOutlinedButton(onClick = onTeleport, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.route_start_options_teleport), color = textColor)
             }

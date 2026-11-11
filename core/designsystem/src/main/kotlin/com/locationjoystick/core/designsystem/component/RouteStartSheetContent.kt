@@ -11,7 +11,9 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.parseTeleportBetweenDelaySeconds
 import com.locationjoystick.core.designsystem.LocalGuidedPath
 import com.locationjoystick.core.designsystem.R
+import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.RouteStartConfig
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Shared route options, including planting and optional hops between stops.
@@ -41,6 +43,9 @@ fun RouteStartSheetContent(
     isRoadRoute: Boolean = false,
     /** Options of the last Start; null keeps the stock defaults. */
     remembered: RouteStartConfig? = null,
+    /** Where Teleport to start lands for the chosen direction; feeds the cooldown badge. */
+    startWaypointFor: (reverse: Boolean) -> LatLng? = { null },
+    cooldownFor: ((LatLng) -> Flow<Pair<Long, Double>?>)? = null,
 ) {
     var loop by remember(key) { mutableStateOf(remembered?.isLooping ?: true) }
     var reverse by remember(key) { mutableStateOf(remembered?.isReverse ?: false) }
@@ -118,5 +123,7 @@ fun RouteStartSheetContent(
         optionsSummary = summary,
         optionsExpanded = optionsExpanded,
         onOptionsExpandedChange = { optionsExpanded = it },
+        teleportTarget = startWaypointFor(reverse),
+        cooldownFor = cooldownFor,
     )
 }

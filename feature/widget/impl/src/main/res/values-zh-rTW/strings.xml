@@ -6,7 +6,6 @@
     <string name="map_floating_stop_route_and_walk_here">"停止路線並走向此處"</string>
     <string name="map_floating_finish_route_and_walk_here">"結束路線並走向此處"</string>
     <string name="map_floating_move_to_this_location">"要移動到該位置嗎？"</string>
-    <string name="map_floating_no_wait_needed">"無需等待"</string>
     <string name="map_floating_teleport_here">"瞬移到這裡"</string>
     <string name="map_floating_walk_here">"走向這裡"</string>
     <string name="map_floating_walk_here_via_roads">"沿道路走向這裡"</string>

@@ -42,16 +42,15 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.copyCoordinatesToClipboard
 import com.locationjoystick.core.common.util.shareLocationLink
 import com.locationjoystick.core.data.CooldownState
+import com.locationjoystick.core.data.advisoryPair
 import com.locationjoystick.core.designsystem.ActivityState
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.activityState
-import com.locationjoystick.core.designsystem.component.CooldownAdvisoryBadge
 import com.locationjoystick.core.designsystem.component.LjButton
 import com.locationjoystick.core.designsystem.component.LjMapIconButton
 import com.locationjoystick.core.designsystem.component.LjOutlinedButton
@@ -59,8 +58,7 @@ import com.locationjoystick.core.designsystem.component.LjShareLocationAction
 import com.locationjoystick.core.designsystem.component.LjTextButton
 import com.locationjoystick.core.designsystem.component.NominatimSearchBar
 import com.locationjoystick.core.designsystem.component.RouteProgressBadgeInMapFabSlot
-import com.locationjoystick.core.designsystem.component.cooldownAdvisoryLabel
-import com.locationjoystick.core.designsystem.component.rememberCooldownStringLookup
+import com.locationjoystick.core.designsystem.component.TeleportCooldownBadge
 import com.locationjoystick.core.designsystem.component.routeProgressStopContentDescription
 import com.locationjoystick.core.designsystem.containerColor
 import com.locationjoystick.core.designsystem.contentColor
@@ -96,7 +94,7 @@ import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.core.model.isRoutePlaying
 import com.locationjoystick.feature.widget.impl.R
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.maps.MapLibreMap
@@ -645,6 +643,7 @@ internal fun MapFloatingView(
                 onSaveRoute = { name, points -> savePastedRoute?.invoke(name, points) },
                 onStartRoute = { points, config -> startPastedRoute?.invoke(points, config) },
                 hideTeleportFeatures = hideTeleportFeatures,
+                cooldownFor = cooldownForPosition.asAdvisory(),
             )
         }
 
@@ -805,15 +804,8 @@ internal fun BoxScope.TapActionPanel(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.map_floating_finish_route_and_walk_here)) }
         } else {
-            val cooldownState by remember(tap) {
-                cooldownForPosition?.invoke(tap) ?: flowOf(CooldownState.Ready)
-            }.collectAsStateWithLifecycle(initialValue = CooldownState.Ready)
             Spacer(Modifier.height(LjSpacing.sm))
-            CooldownAdvisoryBadge(
-                (cooldownState as? CooldownState.Cooling)
-                    ?.let { cooldownAdvisoryLabel(it.remainingSeconds, it.distanceMeters, rememberCooldownStringLookup()) }
-                    ?: stringResource(R.string.map_floating_no_wait_needed),
-            )
+            TeleportCooldownBadge(tap, cooldownForPosition.asAdvisory())
             Spacer(Modifier.height(LjSpacing.md))
             if (!hideTeleportFeatures) {
                 LjButton(
@@ -870,3 +862,6 @@ internal fun BoxScope.TapActionPanel(
         ) { Text(stringResource(R.string.map_floating_do_nothing)) }
     }
 }
+
+internal fun ((LatLng) -> Flow<CooldownState>)?.asAdvisory(): ((LatLng) -> Flow<Pair<Long, Double>?>)? =
+    this?.let { source -> { pos -> source(pos).map { it.advisoryPair() } } }
