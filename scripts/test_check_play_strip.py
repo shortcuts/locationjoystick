@@ -36,6 +36,11 @@ def test_install_packages_permission_fails():
     assert len(leaks(aab(entries), CLEAN_MAPPING)) == 1
 
 
+def test_delete_packages_permission_fails():
+    entries = clean() | {MANIFEST: CLEAN_MANIFEST + b"android.permission.REQUEST_DELETE_PACKAGES"}
+    assert len(leaks(aab(entries), CLEAN_MAPPING)) == 1
+
+
 def test_mapping_with_reandroid_or_apksig_fails():
     assert len(leaks(aab(clean()), "com.reandroid.arsc.Foo -> a.b:\n")) == 1
     assert len(leaks(aab(clean()), CLEAN_MAPPING + "com.android.apksig.Signer -> a.c:\n")) == 1

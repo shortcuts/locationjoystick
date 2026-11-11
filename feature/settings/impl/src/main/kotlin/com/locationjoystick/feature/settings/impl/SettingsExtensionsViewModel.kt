@@ -9,5 +9,7 @@ import javax.inject.Inject
 class SettingsExtensionsViewModel
     @Inject
     constructor(
-        val extensions: Set<@JvmSuppressWildcards SettingsExtension>,
-    ) : ViewModel()
+        allExtensions: Set<@JvmSuppressWildcards SettingsExtension>,
+    ) : ViewModel() {
+        val extensions = allExtensions.filter { it.isAvailable }
+    }

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fail a Play AAB that carries GitHub-only code.
 
-Play restricts REQUEST_INSTALL_PACKAGES and rejects apps that repackage themselves, so the
+Play restricts REQUEST_INSTALL_PACKAGES (and REQUEST_DELETE_PACKAGES goes with it) and rejects apps that repackage themselves, so the
 APK-signing libraries and that permission must live in app/src/github only. R8 renames the
 dex classes of a release build, so the mapping file is read as well as the dex bytes.
 
@@ -16,7 +16,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 DEFAULT_MAPPING = REPO / "app/build/outputs/mapping/playRelease/mapping.txt"
 MANIFEST = "base/manifest/AndroidManifest.xml"
-PERMISSION = b"android.permission.REQUEST_INSTALL_PACKAGES"
+PERMISSIONS = (b"android.permission.REQUEST_INSTALL_PACKAGES", b"android.permission.REQUEST_DELETE_PACKAGES")
 MAPPED_LIBRARY = re.compile(r"^com\.(reandroid|android\.apksig)\.", re.MULTILINE)
 DEX_ENTRY = re.compile(r"(^|/)classes\d*\.dex$")
 DEX_LIBRARIES = (b"com/reandroid", b"com/android/apksig")
@@ -27,8 +27,9 @@ def leaks(archive, mapping):
     names = archive.namelist()
     if MANIFEST not in names:
         found.append(f"{MANIFEST} is missing")
-    elif PERMISSION in archive.read(MANIFEST):
-        found.append(f"{MANIFEST} declares {PERMISSION.decode()}")
+    else:
+        manifest = archive.read(MANIFEST)
+        found += [f"{MANIFEST} declares {permission.decode()}" for permission in PERMISSIONS if permission in manifest]
     if MAPPED_LIBRARY.search(mapping):
         found.append("mapping.txt keeps a com.reandroid or com.android.apksig class")
     found += [f"entry {name}" for name in names if "reandroid" in name or "apksig" in name]

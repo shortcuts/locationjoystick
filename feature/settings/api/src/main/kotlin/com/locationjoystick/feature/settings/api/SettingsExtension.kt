@@ -8,6 +8,9 @@ interface SettingsExtension {
     val id: String
     val icon: ImageVector
 
+    /** False hides the card, for a feature that must not show in some installs. */
+    val isAvailable: Boolean get() = true
+
     @Composable
     fun title(): String
 
