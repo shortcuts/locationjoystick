@@ -48,6 +48,8 @@ Code in `app/src/github` ships in the APK only. Play policy restricts `REQUEST_I
 
 `SettingsExtension` in `:feature:settings:api` is the seam. `:feature:settings:impl` declares an empty Hilt multibinding of it. The `github` source set binds an implementation into that set, and the Settings hub then shows one extra card. `play` binds none, so no card renders and Settings never references GitHub-only code.
 
+The clone builder (`CloneBuilder`, in the `github` set) rewrites the installed APK into a renamed, re-signed copy for Privacy Mode. ARSCLib, apksig and Bouncy Castle are `github`-only dependencies for that reason.
+
 `make bundle` runs `scripts/check_play_strip.py`. It fails when the AAB declares `REQUEST_INSTALL_PACKAGES` or contains `com.reandroid` or `com.android.apksig` classes. See [testing.md](testing.md).
 
 ## MVVM + Repository Pattern

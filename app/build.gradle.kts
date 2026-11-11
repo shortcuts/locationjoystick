@@ -20,6 +20,7 @@ android {
         create("github") { dimension = "distribution" }
         create("play") { dimension = "distribution" }
     }
+    packaging.resources.pickFirsts += "META-INF/LICENSE.md" // bcpkix, bcutil and bcprov each ship one
     androidResources {
         generateLocaleConfig = true
     }
@@ -85,6 +86,10 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    "githubImplementation"(libs.reandroid.arsclib)
+    "githubImplementation"(libs.apksig)
+    "githubImplementation"(libs.bouncycastle.bcpkix)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.compose.ui.tooling.preview)

@@ -142,6 +142,9 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+reandroid-arsclib = { group = "io.github.reandroid", name = "ARSCLib", version = "1.4.0" }
+apksig = { group = "com.android.tools.build", name = "apksig", version.ref = "agp" }
+bouncycastle-bcpkix = { group = "org.bouncycastle", name = "bcpkix-jdk18on", version = "1.87" }
 orgjson = { group = "org.json", name = "json", version.ref = "orgjson" }
 
 # Lint checks (custom rules module)
