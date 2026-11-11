@@ -191,6 +191,33 @@ class MapControllerWalkCancellationTest {
             assertFalse(harness.mapController.sharedState.value.walkMode is WalkMode.Walking)
         }
 
+    // A tap to walk re-aim restarts the road walk; the map must not keep drawing the old target while the new route loads.
+    @Test
+    fun `re-aimed road walk does not draw the old target while the new route loads`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val first = CompletableDeferred<Result<List<LatLng>>>()
+            val second = CompletableDeferred<Result<List<LatLng>>>()
+            val osrmClient =
+                mockk<OsrmClient>(relaxed = true).also {
+                    coEvery { it.getRoute(any(), any()) } coAnswers { if (!first.isCompleted) first.await() else second.await() }
+                }
+            val harness = buildHarness(backgroundScope, osrmClient)
+            val start = LatLng(48.8566, 2.3522)
+            val targetA = LatLng(48.9000, 2.3522)
+            val targetB = LatLng(48.8600, 2.3600)
+            harness.locationRepository.setPositionInternal(start)
+            harness.mapController.walkViaRoads(targetA)
+            first.complete(Result.success(listOf(start, targetA)))
+
+            harness.mapController.walkViaRoads(targetB)
+
+            assertNull(harness.locationRepository.walkTarget.value)
+            assertNull("Drawn target must not be the replaced one", harness.mapController.sharedState.value.walkTarget)
+            second.complete(Result.success(listOf(start, targetB)))
+            assertEquals(targetB, harness.locationRepository.walkTarget.value)
+            assertEquals(targetB, harness.mapController.sharedState.value.walkTarget)
+        }
+
     @Test
     fun `walkTo during roaming stops roaming before the walk starts`() =
         runTest(UnconfinedTestDispatcher()) {

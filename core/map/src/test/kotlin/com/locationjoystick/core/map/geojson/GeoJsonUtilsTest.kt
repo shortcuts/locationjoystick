@@ -200,6 +200,17 @@ class GeoJsonUtilsTest {
     }
 
     @Test
+    fun `buildRouteTraceGeoJson of a two-point walk past the midpoint still draws the rest to the target`() {
+        val start = LatLng(48.0, 2.0)
+        val target = LatLng(48.1, 2.0)
+        val (traced, remaining) = buildRouteTraceGeoJson(listOf(start, target), LatLng(48.07, 2.0))
+
+        assertFalse("traced must stop at the current position", traced.contains("""[2.0,48.1]"""))
+        assertTrue("remaining must reach the target", remaining.contains("""[2.0,48.1]"""))
+        assertEquals(1, countFeatures(remaining))
+    }
+
+    @Test
     fun `buildRouteTraceGeoJson uses haversine distance to find closest waypoint`() {
         // Waypoints span a longitude line; closest by great-circle distance is index 2.
         val waypoints =

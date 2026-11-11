@@ -43,8 +43,10 @@ fun buildRouteTraceGeoJson(
         }
     }
 
-    val tracedPoints = (0..closestIdx).map { waypoints[it] } + currentPosition
-    val remainingPoints = listOf(currentPosition) + waypoints.drop(closestIdx + 1)
+    // A two-point walk is one segment: the nearest-vertex split would trace to the target and drop the remaining line.
+    val splitIdx = if (waypoints.size == 2) 0 else closestIdx
+    val tracedPoints = (0..splitIdx).map { waypoints[it] } + currentPosition
+    val remainingPoints = listOf(currentPosition) + waypoints.drop(splitIdx + 1)
 
     return buildLineGeoJson(tracedPoints) to buildLineGeoJson(remainingPoints)
 }
