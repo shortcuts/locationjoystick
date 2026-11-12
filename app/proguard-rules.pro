@@ -198,3 +198,10 @@
 -dontwarn java.lang.invoke.**
 -dontwarn sun.misc.Unsafe
 -dontwarn sun.nio.ch.**
+
+# -----------------------------------------------------------------------------
+# Privacy Mode clone builder (github flavor). ARSCLib and BouncyCastle reach classes by reflection and provider lookup.
+# -----------------------------------------------------------------------------
+-keep class com.reandroid.** { *; }
+-keep class com.android.apksig.** { *; }
+-keep class org.bouncycastle.** { *; }

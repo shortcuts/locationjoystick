@@ -12,11 +12,12 @@ The export holds routes, favorites, speed profiles, the widget and map feature c
 
 Rules for what is and is not exported:
 
-- **Per-device, never exported:** the accessibility disclosure answers, the tap-to-walk ground map, the control-API key, the last remembered location, the spoof history, the real-position snapshot (it belongs to the phone's physical place), the capture on/off state and its list, the launch-after-link app, and update and what's-new bookkeeping.
+- **Per-device, never exported:** the accessibility disclosure answers, the tap-to-walk ground map, the control-API key, the last remembered location, the spoof history, the real-position snapshot (it belongs to the phone's physical place), the capture on/off state and its list, the launch-after-link app, update and what's-new bookkeeping, and the Privacy Mode clone key, package ID, name and hue, with its switch and disclosure flags.
   - The ground map is per device because it depends on that phone's screen and camera. A map from another phone would give wrong taps.
   - Consent answers are per device because a restored backup must not carry consent to a new phone.
   - An import can restore Reconnect on without consent, so the switch stays on but inactive. The import message points to Settings, and the Reconnect section opens the disclosure when it sees that state. Declining there turns the switch off.
   - The API key is a secret.
+  - The clone key stays out because a key in a backup would widen a file users share. A new phone gets a fresh clone through Remove, then Start. See [privacy-mode.md](privacy-mode.md).
 - **Feature choices are exported.** A restored backup brings its own button set, and the import marks the defaults as seen so the upgrade merge does not undo the choice.
 
 ## Compatibility rules

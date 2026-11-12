@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="privacy_title">隐私模式</string>
+    <string name="privacy_description">以你选择的名称安装本应用的副本</string>
+    <string name="privacy_switch_description">其他应用将看到你的副本，而不是 locationjoystick</string>
+    <string name="privacy_name_label">副本名称</string>
+    <string name="privacy_start">开始</string>
+    <string name="privacy_update">更新</string>
+    <string name="privacy_remove">移除</string>
+    <string name="privacy_understand">我明白</string>
+    <string name="privacy_cancel">取消</string>
+    <string name="privacy_open_settings">允许安装</string>
+    <string name="privacy_needs_permission">请允许本应用安装应用，然后再次点按“开始”。</string>
+    <string name="privacy_building">正在生成副本，请稍候。</string>
+    <string name="privacy_installing">请在系统界面确认安装。</string>
+    <string name="privacy_installed">副本已安装。它是独立的应用，有自己的收藏和路线。请用“备份与传输”迁移。请在开发者选项中将副本选为模拟位置应用。导出数据后，你可以卸载本应用。</string>
+    <string name="privacy_failed">无法安装副本：%1$s</string>
+    <string name="privacy_disclosure">隐私模式只会对其他应用隐藏本应用的名称。副本是独立的应用，有自己的数据。你必须自行在开发者选项中将副本选为模拟位置应用。读取模拟位置设置的应用仍然能看到它。</string>
+</resources>

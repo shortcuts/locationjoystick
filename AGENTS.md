@@ -127,6 +127,7 @@ Working memory for long-running features: a feature doc that has a "Status" line
 | Group Sync | docs/features/group-sync.md |
 | Tap to Walk | docs/features/tap-to-walk.md |
 | Reconnect Accessory (Bluetooth reconnect tap) | docs/features/bluetooth-reconnect-tap.md |
+| Privacy Mode (GitHub APK only) | docs/features/privacy-mode.md |
 | Theme | docs/features/theme.md |
 | Hide Teleport Features | docs/features/hide-teleport.md |
 | What's New Popup | docs/features/whats-new.md |
@@ -191,6 +192,8 @@ Any UI or UX change must respect docs/design-system.md. Run /maintain-design to 
 | `AutoFitCoordinator` | `:core:location` | Class (`@Singleton`) | Measures the tap to walk ground map from the walks the app already makes. Keeps crops in memory only. See [features/tap-to-walk.md](docs/features/tap-to-walk.md). |
 | `ScreenCaptureSource` | `:core:location` | Class (`@Singleton`) | Bridges the screen accessibility service to consumers. Capture is gated on the in-app disclosure. Also carries the in-memory reconnect status for Settings. |
 | `ScreenshotReader` | `:feature:widget:impl` | Class | Owns the paced screenshot, the software copy of the hardware bitmap and the recycling for the screen accessibility service. Callers never hold a bitmap. |
+| `CloneBuilder` | `:app` (`github`) | Class (`@Singleton`) | Rewrites the installed APK into a clone under another package ID, name and icon hue. Keeps one stored signing key. See [features/privacy-mode.md](docs/features/privacy-mode.md). |
+| `CloneInstaller` | `:app` (`github`) | Class (`@Singleton`) | Hands the clone APK to the system installer and reports the result. The UI, not the receiver, starts the confirm screen. |
 | `ReconnectNotifier` | `:feature:widget:impl` | Class | Maps each reconnect result to a post or cancel of the failure, not-found and gate-closed notices. Owns their streaks and channel. |
 | `TapToWalkController` | `:feature:widget:impl` | Class (not service) | Owns the tap to walk overlay, the tap being walked and its re-aim. The service only wires it. |
 

@@ -20,6 +20,8 @@
 | `WAKE_LOCK` | Normal | Partial wake lock while a mock location session runs, so updates continue with the screen off | Yes |
 | `CAMERA` | Dangerous (optional) | QR scanners for Group Sync and QR transfer. The app works without it | Yes (`android:required="false"`) |
 | `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Normal | Declared, but no app code requests the battery-optimization exemption. Candidate for removal | Yes |
+| `REQUEST_INSTALL_PACKAGES` | Normal | Privacy Mode installs its clone through the system installer | `github` flavor only |
+| `REQUEST_DELETE_PACKAGES` | Normal | Privacy Mode asks the system to uninstall its clone (`ACTION_UNINSTALL_PACKAGE` needs it from API 28) | `github` flavor only |
 
 ## Notes
 
@@ -28,3 +30,4 @@
 - `ACCESS_MOCK_LOCATION` dev-options only. `tools:ignore="MockLocation"` intentional — app IS mock loc provider.
 - `BIND_ACCESSIBILITY_SERVICE`: the in-app disclosure gates it, not just the system grant. One disclosure covers the screenshots and the tap. The Reconnect switch is a separate opt-in. See docs/features/tap-to-walk.md and docs/features/bluetooth-reconnect-tap.md.
 - `POST_NOTIFICATIONS`: asked once on a fresh launch, not on recreation such as rotation. Denied, the foreground notification may not show, and reconnect notices do not show either.
+- `REQUEST_INSTALL_PACKAGES` and `REQUEST_DELETE_PACKAGES` live in `app/src/github/AndroidManifest.xml`. Play must never declare them; `scripts/check_play_strip.py` fails the bundle when it does. See docs/features/privacy-mode.md.

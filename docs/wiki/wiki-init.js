@@ -18,6 +18,7 @@
       { href: 'planting.html', label: 'Planting' },
       { href: 'overlays.html', label: 'Overlays' },
       { href: 'reconnect-accessory.html', label: 'Reconnect accessory' },
+      { href: 'privacy-mode.html', label: 'Privacy Mode' },
       { href: 'routes.html', label: 'Routes' },
       { href: 'favorites.html', label: 'Favorites' },
       { href: 'location-links.html', label: 'Location Links' },

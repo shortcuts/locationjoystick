@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="privacy_title">Privacy Mode</string>
+    <string name="privacy_description">Install a copy of the app under a name you choose</string>
+    <string name="privacy_switch_description">Other apps then see your copy, not locationjoystick</string>
+    <string name="privacy_name_label">Clone name</string>
+    <string name="privacy_start">Start</string>
+    <string name="privacy_update">Update</string>
+    <string name="privacy_remove">Remove</string>
+    <string name="privacy_understand">I understand</string>
+    <string name="privacy_cancel">Cancel</string>
+    <string name="privacy_open_settings">Allow installs</string>
+    <string name="privacy_needs_permission">Allow this app to install apps, then tap Start again.</string>
+    <string name="privacy_building">Building your copy. This takes a moment.</string>
+    <string name="privacy_installing">Confirm the install in the system screen.</string>
+    <string name="privacy_installed">Your copy is installed. It is a separate app with its own favorites and routes. Move them with Backup &amp; Transfer. In Developer options, pick the copy as the mock location app. You can uninstall this app after you export your data.</string>
+    <string name="privacy_failed">Could not install your copy: %1$s</string>
+    <string name="privacy_disclosure">Privacy Mode only hides the name of this app from other apps. The copy is a separate app with its own data. You must pick the copy as the mock location app in Developer options yourself. Apps that read the mock location setting can still see it.</string>
+</resources>

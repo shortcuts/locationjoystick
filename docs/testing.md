@@ -42,6 +42,8 @@ One smoke test class per screen, each checking that the screen loads, its main a
 - The Control API smoke test checks that the leader exposes exactly the endpoints documented in the wiki, so the public contract and the code cannot drift apart unnoticed. It never asserts endpoint behaviour.
 - `MovementSmokeTest` drives each movement mode (walk, walk via roads, add next point, named route, teleport route, roaming, joystick) through the injected map controller, with the Drive profile at the 15 m/s cap so a test ends in seconds. Each test asserts arrival, no backtrack (the distance to the next stop never grows by more than two steps) and the published stop counter.
 
+`PrivacyModeSmokeTest` runs on the `github` debug build only: the Privacy Mode card does not exist in `play`.
+
 `MovementSmokeTest` never calls a live OSRM server. A Hilt test module replaces only the road lookup with an `OsrmClient` that points at a local server (`FakeRoad`), which answers with scripted road shapes, including a road that overlaps itself to reproduce the loop. A live server would make the road tests slow, flaky and rate-limited. The joystick test goes through the Control API, because the overlay service cannot be driven in-process.
 
 Helpers are in the smoke test helper file.
