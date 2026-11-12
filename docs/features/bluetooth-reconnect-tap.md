@@ -91,7 +91,25 @@ The game opens a prompt after too many consecutive failed connects, and the user
 - Debug builds ignore the budget, because the reliability matrix needs hundreds of unattended cycles at a steady short interval.
 - The check interval is a flat `CHECK_INTERVAL_MS`. The old doubling backoff is gone: two taps per outage leave nothing for it to protect.
 - A late connect (over about 12 s after the tap) ends `FAILED` and counts. The next check reads on and resets the budget.
-- Prompt threshold: not measured. No run drove consecutive failed taps against the game's prompt, so the budget of 2 follows the product decision, not a measurement.
+- Prompt threshold: still not measured. The 2026-11-12 battery session had no bonded Plus accessory on the test phone, so no run could drive failed taps against the game's prompt. The budget of 2 follows the product decision, so `MAX_FAILED_TAPS_PER_OUTAGE` stays at 2 until a run with a Plus shows the prompt at 2 failed taps or fewer.
+
+## Battery and CPU cost
+
+Measured 2026-11-12 on a Pixel 5 (2156 mAh), `githubRelease` build (15 s interval), Pokémon GO in front, 11 min (664 s) per run, no accessory bonded. Method and walking rows: [tap-to-walk.md](tap-to-walk.md), "Battery and CPU cost of auto-fit". Each row is one run.
+
+| Run | App CPU | UID estimate |
+|---|---|---|
+| Standing still, both features off | 3.0 s | 0.86 mAh |
+| Standing still, Reconnect on (Tap to Walk on) | 11.9 s | 1.41 mAh |
+| Walking, Tap to Walk on, Reconnect off | 47.7 s | 2.99 mAh |
+| Walking, both on | 53.7 s | 3.11 mAh |
+
+- A check runs every 25 s, not 15 s: with no control found, the first read is repeated after `UNSURE_RETRY_DELAY_MS`. The run logged 26 checks.
+- Reconnect costs about 9 s of CPU per 11 min, about 0.34 s per check, and 0.55 mAh per 11 min: about 3 mAh per hour, 0.14% of the battery per hour.
+- While walking, Reconnect adds about 6 s and 0.12 mAh on top of auto-fit. The run is within the noise of one sample.
+- The test phone had no accessory, so every check ended `NOT_FOUND`. A found control adds a second read, and an outage adds taps; neither was measured.
+
+Verdict: neither feature hurts battery or performance enough to act. Any optimization needs its own backlog entry.
 
 ## Failure notification
 

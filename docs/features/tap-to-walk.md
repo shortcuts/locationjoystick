@@ -154,6 +154,20 @@ Phase-correlation cost alone (Pixel 5, thread CPU, median of 30 runs of 6 spectr
 
 The screenshot is a hardware bitmap with no pixel access, so one software copy stays. Only the five crop rectangles (about 13% of the pixels) become gray now; no full-frame gray buffer exists. The remaining cost is mostly the phase-correlation transform per crop, not the gray conversion, so "a few milliseconds" is not met yet.
 
+### Battery and CPU cost of auto-fit
+
+Measured 2026-11-12 on a Pixel 5 (2156 mAh, 1080x2340), `githubRelease` build, Pokémon GO in front, Walk-to at 2 km/h, each run 11 min (664 s). Before each run: `dumpsys battery unplug` and `dumpsys batterystats --reset`. The app's process CPU comes from `/proc/<pid>/stat`; the estimate comes from the app's UID line in `dumpsys batterystats`. The estimate is the power-profile model, not a fuel-gauge reading, and each row is one run.
+
+| Run | App CPU | UID estimate | Of it, `system_services` |
+|---|---|---|---|
+| Walk, both features off | 14.1 s | 1.23 mAh | 0.93 |
+| Walk, Tap to Walk on, Reconnect off | 47.7 s | 2.99 mAh | 1.22 |
+| Walk, both on | 53.7 s | 3.11 mAh | 1.10 |
+
+Auto-fit adds about 34 s of CPU and 1.8 mAh per 11 min of walking: about 10 mAh per hour, 0.45% of the battery per hour. That is about 150 ms of process CPU per 3 s tick (221 ticks), against 123 ms thread CPU in the older table; the process figure also counts garbage collection and the screenshot callback. Auto-fit costs nothing while the player stands still: it takes no screenshot (see the idle rows in [bluetooth-reconnect-tap.md](bluetooth-reconnect-tap.md)). The `tick cpu` log line no longer exists, so the per-tick figure is derived from the CPU delta, not logged.
+
+Verdict: the cost is small next to the game's own drain, and only runs while the player walks with the game in front. No optimization task follows from these numbers.
+
 ### Open work
 
 None scheduled. Ideas that were not needed to finish: tune `FORWARD_RATIO` from the measured fits, real-game crop fixtures for a regression test, a second screen size, pruning the bench of the deleted motion fit, reading only the crop rows from the screenshot, and measuring the camera-change thresholds.
