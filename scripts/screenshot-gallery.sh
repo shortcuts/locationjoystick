@@ -919,6 +919,15 @@ DEVICE_MODEL=$($ADB shell getprop ro.product.model | tr -d '\r')
 SCREEN_SIZE=$($ADB shell wm size | awk '{print $NF}')
 log "Device: $DEVICE_MODEL ($SCREEN_SIZE)"
 
+# A locked screen yields a keyguard UI dump, so no later step finds app text.
+if $ADB shell dumpsys window | grep -q "isKeyguardShowing=true\|mDreamingLockscreen=true"; then
+  log "Screen locked — waking and swiping to unlock..."
+  $ADB shell input keyevent KEYCODE_WAKEUP
+  sleep 1
+  $ADB shell input swipe $(( ${SCREEN_SIZE%x*} / 2 )) $(( ${SCREEN_SIZE#*x} * 95 / 100 )) $(( ${SCREEN_SIZE%x*} / 2 )) $(( ${SCREEN_SIZE#*x} / 20 )) 400
+  sleep 2
+fi
+
 demo_mode_enter
 trap demo_mode_exit EXIT
 
