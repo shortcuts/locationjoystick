@@ -1,7 +1,0 @@
-{
-  "version": "1.0.3",
-  "date": "2026-11-12",
-  "entries": [
-    { "category": "fix", "scope": "Routes", "summary": "A looping route now starts over at the first stop instead of walking back. To walk back and forth, tick Walk back and forth under Loop." }
-  ]
-}

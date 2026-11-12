@@ -1,6 +1,5 @@
 package com.locationjoystick.core.data
 
-import com.locationjoystick.core.common.constants.AppConstants
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -32,15 +31,21 @@ class WhatsNewEntriesParseTest {
     }
 
     @Test
-    fun `wiki file for the current version has entries`() {
-        val version = AppConstants.AppInfo.VERSION_NAME.substringBefore("-")
-        val file =
-            listOf(
-                File("docs/wiki/changelog/$version.json"),
-                File("../../docs/wiki/changelog/$version.json"),
-            ).firstOrNull { it.isFile }
-        assertTrue("missing docs/wiki/changelog/$version.json", file != null)
-        val highlights = parseWhatsNewEntries(file!!.readText())
-        assertTrue(!highlights.isNullOrEmpty())
+    fun `newest wiki changelog file has entries`() {
+        val dir =
+            listOf(File("docs/wiki/changelog"), File("../../docs/wiki/changelog")).firstOrNull { it.isDirectory }
+        assertTrue("missing docs/wiki/changelog", dir != null)
+        // Newest, not VERSION_NAME: a tagged version's JSON is frozen, so the next release's file lands before the bump.
+        val newest =
+            dir!!
+                .listFiles { f -> f.extension == "json" }!!
+                .maxWith(compareBy({ v(it, 0) }, { v(it, 1) }, { v(it, 2) }))
+        val highlights = parseWhatsNewEntries(newest.readText())
+        assertTrue("no entries in ${newest.name}", !highlights.isNullOrEmpty())
     }
+
+    private fun v(
+        file: File,
+        index: Int,
+    ) = file.nameWithoutExtension.split(".")[index].toInt()
 }
