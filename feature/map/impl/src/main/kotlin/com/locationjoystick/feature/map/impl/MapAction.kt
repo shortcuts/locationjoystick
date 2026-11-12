@@ -166,6 +166,7 @@ sealed interface MapAction {
         val isPlanting: Boolean = false,
         val teleportBetweenWaypoints: Boolean = false,
         val teleportBetweenDelaySeconds: Int = AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS,
+        val loopWalksBack: Boolean = false,
     ) : MapAction
 
     data object PauseRouteReplay : MapAction

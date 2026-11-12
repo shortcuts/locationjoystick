@@ -71,6 +71,7 @@ object MockLocationIntentBuilder {
             putExtra(MockLocationService.EXTRA_IS_BACKWARD, config.isReverse)
             putExtra(MockLocationService.EXTRA_SPEED_MS, speedMs)
             putExtra(MockLocationService.EXTRA_IS_LOOPING, config.isLooping)
+            putExtra(MockLocationService.EXTRA_LOOP_WALKS_BACK, config.loopWalksBack)
             putExtra(MockLocationService.EXTRA_FOLLOW_ROADS_TO_START, config.followRoadsToStart)
             putExtra(MockLocationService.EXTRA_TELEPORT_TO_START, config.teleportToStart)
             putExtra(MockLocationService.EXTRA_IS_PLANTING, config.isPlanting)
@@ -164,6 +165,7 @@ internal fun Intent.toRouteStartConfig(): RouteStartConfig {
     val teleportToStart = getBooleanExtra(MockLocationService.EXTRA_TELEPORT_TO_START, d.teleportToStart)
     return RouteStartConfig(
         isLooping = getBooleanExtra(MockLocationService.EXTRA_IS_LOOPING, d.isLooping),
+        loopWalksBack = getBooleanExtra(MockLocationService.EXTRA_LOOP_WALKS_BACK, d.loopWalksBack),
         isReverse = getBooleanExtra(MockLocationService.EXTRA_IS_BACKWARD, d.isReverse),
         followRoadsToStart = getBooleanExtra(MockLocationService.EXTRA_FOLLOW_ROADS_TO_START, d.followRoadsToStart),
         teleportToStart = teleportToStart,

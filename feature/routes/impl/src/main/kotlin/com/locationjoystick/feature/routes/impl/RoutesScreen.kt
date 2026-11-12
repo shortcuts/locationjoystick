@@ -582,6 +582,7 @@ private fun RouteCard(
                         planting,
                         teleportBetweenWaypoints,
                         delaySeconds,
+                        loopWalksBack,
                         ->
                         onStartReplay(
                             route,
@@ -593,6 +594,7 @@ private fun RouteCard(
                                 isPlanting = planting,
                                 teleportBetweenWaypoints = teleportBetweenWaypoints,
                                 teleportBetweenDelaySeconds = delaySeconds,
+                                loopWalksBack = loopWalksBack,
                             ),
                         )
                         if (!followRoads) showStartDialog = false

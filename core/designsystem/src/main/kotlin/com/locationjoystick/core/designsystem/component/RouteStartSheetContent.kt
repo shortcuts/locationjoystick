@@ -32,6 +32,7 @@ fun RouteStartSheetContent(
         planting: Boolean,
         teleportBetweenWaypoints: Boolean,
         teleportBetweenDelaySeconds: Int,
+        loopWalksBack: Boolean,
     ) -> Unit,
     onCancel: () -> Unit,
     hideTeleport: Boolean = false,
@@ -54,6 +55,7 @@ fun RouteStartSheetContent(
         mutableStateOf((isPlantedRoute && isRoadRoute) || (remembered?.followRoadsToStart == true && !isTeleportRoute))
     }
     var planting by remember(key) { mutableStateOf(isPlantedRoute) }
+    var walkBack by remember(key) { mutableStateOf(remembered?.loopWalksBack == true) }
     var teleportBetweenWaypoints by remember(key) {
         mutableStateOf(remembered?.teleportBetweenWaypoints == true && !isTeleportRoute)
     }
@@ -68,6 +70,7 @@ fun RouteStartSheetContent(
     val summary =
         listOfNotNull(
             stringResource(R.string.route_start_options_loop).takeIf { loop || planting },
+            stringResource(R.string.route_start_options_walk_back).takeIf { walkBack && loop && !planting && !isTeleportRoute },
             stringResource(R.string.lj_route_start_options_planting).takeIf { showsPlanting && planting },
             stringResource(R.string.route_start_options_reverse).takeIf { reverse },
             stringResource(R.string.lj_route_start_options_return_to_location).takeIf { returnToLocation && !loop && !planting },
@@ -96,6 +99,8 @@ fun RouteStartSheetContent(
             planting = it
             if (it) returnToLocation = false
         },
+        walkBack = walkBack,
+        onWalkBackChange = { walkBack = it },
         teleportBetweenWaypoints = teleportBetweenWaypoints && !hideTeleport,
         onTeleportBetweenWaypointsChange = { teleportBetweenWaypoints = it },
         teleportBetweenDelaySecondsText = teleportBetweenDelaySecondsText,
@@ -113,6 +118,7 @@ fun RouteStartSheetContent(
                 planting && !isTeleportRoute,
                 teleportBetweenWaypoints && !hideTeleport && !isTeleportRoute,
                 parseTeleportBetweenDelaySeconds(teleportBetweenDelaySecondsText),
+                loop && !planting && walkBack && !isTeleportRoute,
             )
         },
         hideTeleport = hideTeleport,

@@ -169,7 +169,7 @@ internal class ReplayOrchestrator(
                         waypoints = replayWaypoints,
                         speedMs = speedMs,
                         isLooping = isLooping,
-                        bounceAtEnds = !isPlanting && config.isLooping,
+                        bounceAtEnds = !isPlanting && config.isLooping && config.loopWalksBack,
                         followRoadsToStart = config.followRoadsToStart,
                         boundaryIndices = boundaryIndices,
                         persistMetadata = buildPersistMetadata(routeId, config.isReverse, replayWaypoints),

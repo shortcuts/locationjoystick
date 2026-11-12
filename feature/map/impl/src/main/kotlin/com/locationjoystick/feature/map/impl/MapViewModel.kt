@@ -418,6 +418,7 @@ class MapViewModel
                             isPlanting = action.isPlanting,
                             teleportBetweenWaypoints = action.teleportBetweenWaypoints,
                             teleportBetweenDelaySeconds = action.teleportBetweenDelaySeconds,
+                            loopWalksBack = action.loopWalksBack,
                         )
                     viewModelScope.launch { settingsRepository.setRouteStartConfig(config) }
                     mapController.startRouteReplay(action.routeId, config)

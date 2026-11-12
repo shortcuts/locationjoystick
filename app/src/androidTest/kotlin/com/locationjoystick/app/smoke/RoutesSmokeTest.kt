@@ -81,6 +81,7 @@ class RoutesSmokeTest : BaseSmokeTest() {
         composeRule.waitForIdle()
         composeRule.onAllNodesWithText("Loop").assertCountEquals(2)
         composeRule.onNodeWithText("Planting").assertIsDisplayed()
+        composeRule.onNodeWithText("Walk back and forth").assertIsDisplayed()
         composeRule.onNodeWithText("Reverse").assertIsDisplayed()
         composeRule.onNodeWithText("Return to location").assertIsDisplayed()
         composeRule.onNodeWithText("Follow roads").assertIsDisplayed()

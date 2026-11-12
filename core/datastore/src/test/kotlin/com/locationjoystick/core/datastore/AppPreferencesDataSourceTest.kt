@@ -311,6 +311,7 @@ class AppPreferencesDataSourceTest {
                     isReverse = true,
                     followRoadsToStart = true,
                     isPlanting = true,
+                    loopWalksBack = true,
                     teleportToStart = true,
                     teleportBetweenWaypoints = true,
                     teleportBetweenDelaySeconds = 15,
@@ -321,6 +322,10 @@ class AppPreferencesDataSourceTest {
             assertNull(dataSource.getRouteStartConfig().first())
             fakeDataStore.edit { it[stringPreferencesKey("route_start_config")] = "1|0|0|0|0|abc" }
             assertNull(dataSource.getRouteStartConfig().first())
+            fakeDataStore.edit { it[stringPreferencesKey("route_start_config")] = "1|0|0|0|0|8|2" }
+            assertNull(dataSource.getRouteStartConfig().first())
+            fakeDataStore.edit { it[stringPreferencesKey("route_start_config")] = "1|0|0|0|0|8" }
+            assertEquals(RouteStartConfig(isLooping = true), dataSource.getRouteStartConfig().first())
         }
 
     @Test

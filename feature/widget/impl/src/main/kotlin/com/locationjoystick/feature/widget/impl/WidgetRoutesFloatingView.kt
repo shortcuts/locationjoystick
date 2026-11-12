@@ -44,6 +44,7 @@ internal fun RoutesFloatingView(
         isPlanting: Boolean,
         teleportBetweenWaypoints: Boolean,
         teleportBetweenDelaySeconds: Int,
+        loopWalksBack: Boolean,
     ) -> Unit,
     onTeleport: (LatLng) -> Unit,
     onRename: (com.locationjoystick.core.model.Route, String) -> Unit,
@@ -97,6 +98,7 @@ internal fun RoutesFloatingView(
             val isRoadRoute = route?.routeType == com.locationjoystick.core.model.RouteType.GUIDED
             var followRoads by remember(routeId) { mutableStateOf(isPlanted && isRoadRoute) }
             var planting by remember(routeId) { mutableStateOf(isPlanted) }
+            var walkBack by remember(routeId) { mutableStateOf(false) }
             var teleportBetweenWaypoints by remember(routeId) { mutableStateOf(false) }
             var teleportBetweenDelaySecondsText by remember(routeId) {
                 mutableStateOf(AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS.toString())
@@ -150,6 +152,8 @@ internal fun RoutesFloatingView(
                         planting = it
                         if (it) returnToLocation = false
                     },
+                    walkBack = walkBack,
+                    onWalkBackChange = { walkBack = it },
                     teleportBetweenWaypoints = teleportBetweenWaypoints && !hideTeleport && !isTeleportRoute,
                     onTeleportBetweenWaypointsChange = { teleportBetweenWaypoints = it },
                     teleportBetweenDelaySecondsText = teleportBetweenDelaySecondsText,
@@ -171,6 +175,7 @@ internal fun RoutesFloatingView(
                             planting && !isTeleportRoute,
                             teleportBetweenWaypoints && !hideTeleport && !isTeleportRoute,
                             parseTeleportBetweenDelaySeconds(teleportBetweenDelaySecondsText),
+                            loop && !planting && walkBack && !isTeleportRoute,
                         )
                         selectedRouteId = null
                         onDismiss()

@@ -12,6 +12,7 @@ data class RouteStartConfig(
     val teleportToStart: Boolean = false,
     val followRoadsToStart: Boolean = false,
     val isPlanting: Boolean = false,
+    val loopWalksBack: Boolean = false,
     val teleportBetweenWaypoints: Boolean = false,
     // Cannot use AppConstants — core:model is a pure JVM module with no core:common dependency.
     // Keep in sync with AppConstants.RouteConstants.TELEPORT_BETWEEN_DEFAULT_DELAY_SECONDS.

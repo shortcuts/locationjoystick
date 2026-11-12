@@ -402,6 +402,7 @@ internal class WidgetPanelPresenter(
                     isPlanting,
                     teleportBetweenWaypoints,
                     teleportBetweenDelaySeconds,
+                    loopWalksBack,
                     ->
                     callbacks.startRouteReplayWithMode(
                         routeId,
@@ -413,6 +414,7 @@ internal class WidgetPanelPresenter(
                             isPlanting = isPlanting,
                             teleportBetweenWaypoints = teleportBetweenWaypoints,
                             teleportBetweenDelaySeconds = teleportBetweenDelaySeconds,
+                            loopWalksBack = loopWalksBack,
                         ),
                     )
                 },

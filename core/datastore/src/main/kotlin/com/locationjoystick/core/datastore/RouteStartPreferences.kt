@@ -25,13 +25,15 @@ internal class RouteStartStore(
     private fun encode(config: RouteStartConfig): String =
         with(config) {
             listOf(isLooping, isReverse, isReturnToLocation, followRoadsToStart, teleportBetweenWaypoints)
-                .joinToString("|") { if (it) "1" else "0" } + "|$teleportBetweenDelaySeconds"
+                .joinToString("|") { if (it) "1" else "0" } + "|$teleportBetweenDelaySeconds|${if (loopWalksBack) "1" else "0"}"
         }
 
     private fun decode(value: String): RouteStartConfig? {
         val parts = value.split("|")
         val delay = parts.getOrNull(5)?.toIntOrNull()
-        if (parts.size != 6 || delay == null || parts.take(5).any { it != "0" && it != "1" }) return null
+        val walkBack = parts.getOrNull(6)
+        if (parts.size !in 6..7 || delay == null || parts.take(5).any { it != "0" && it != "1" }) return null
+        if (walkBack != null && walkBack != "0" && walkBack != "1") return null
         val (loop, reverse, returnToLocation, roads, teleportBetween) = parts.take(5).map { it == "1" }
         return RouteStartConfig(
             isLooping = loop,
@@ -40,6 +42,7 @@ internal class RouteStartStore(
             followRoadsToStart = roads,
             teleportBetweenWaypoints = teleportBetween,
             teleportBetweenDelaySeconds = delay,
+            loopWalksBack = walkBack == "1",
         )
     }
 }

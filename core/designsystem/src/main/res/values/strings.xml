@@ -19,6 +19,7 @@
     <string name="route_start_options_toggle">"Options"</string>
     <string name="route_start_options_loop">"Loop"</string>
     <string name="route_start_options_reverse">"Reverse"</string>
+    <string name="route_start_options_walk_back">"Walk back and forth"</string>
     <string name="route_start_options_return_to_location">"Return to location"</string>
     <string name="route_start_options_follow_roads">"Follow roads"</string>
     <string name="route_start_options_teleport">"Teleport"</string>

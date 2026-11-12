@@ -153,6 +153,8 @@ class ControlApiRoutesTest {
     fun `route start maps the body and bypasses hide teleport, unknown route is 404`() {
         assertEquals(200, call("route/start", body = """{"routeId":"r1","loop":true,"teleportBetweenWaypoints":true}""").first)
         verify { mapController.startRouteReplay("r1", RouteStartConfig(isLooping = true, teleportBetweenWaypoints = true), true) }
+        assertEquals(200, call("route/start", body = """{"routeId":"r1","loop":true,"loopWalksBack":true}""").first)
+        verify { mapController.startRouteReplay("r1", RouteStartConfig(isLooping = true, loopWalksBack = true), true) }
         assertEquals(200, call("route/start", body = """{"routeId":"r1","teleportBetweenDelaySeconds":9999}""").first)
         verify { mapController.startRouteReplay("r1", RouteStartConfig(teleportBetweenDelaySeconds = 600), true) }
         assertEquals(200, call("route/start", body = """{"routeId":"r1","teleportBetweenDelaySeconds":-5}""").first)
@@ -160,7 +162,7 @@ class ControlApiRoutesTest {
         val (code, body) = call("route/start", body = """{"routeId":"nope"}""")
         assertEquals(404, code)
         assertTrue(body.contains("route_not_found"))
-        verify(exactly = 3) { mapController.startRouteReplay(any(), any(), any()) }
+        verify(exactly = 4) { mapController.startRouteReplay(any(), any(), any()) }
     }
 
     @Test

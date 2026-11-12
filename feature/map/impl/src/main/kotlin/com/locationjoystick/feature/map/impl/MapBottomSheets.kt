@@ -99,6 +99,7 @@ internal fun RoutesPickerSheet(
                         planting,
                         teleportBetweenWaypoints,
                         delaySeconds,
+                        loopWalksBack,
                         ->
                         onAction(
                             MapAction.StartRouteReplay(
@@ -110,6 +111,7 @@ internal fun RoutesPickerSheet(
                                 planting,
                                 teleportBetweenWaypoints,
                                 delaySeconds,
+                                loopWalksBack,
                             ),
                         )
                         if (!followRoads) selectedRouteId = null

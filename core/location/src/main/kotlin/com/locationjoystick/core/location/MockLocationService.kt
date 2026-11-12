@@ -100,6 +100,7 @@ class MockLocationService : Service() {
         const val EXTRA_EPHEMERAL_STOP_INDICES = AppConstants.ServiceConstants.EXTRA_EPHEMERAL_STOP_INDICES
         const val EXTRA_WAYPOINT_IS_STOP = AppConstants.ServiceConstants.EXTRA_WAYPOINT_IS_STOP
         const val EXTRA_IS_LOOPING = AppConstants.ServiceConstants.EXTRA_IS_LOOPING
+        const val EXTRA_LOOP_WALKS_BACK = AppConstants.ServiceConstants.EXTRA_LOOP_WALKS_BACK
         const val EXTRA_RETURN_LAT = AppConstants.ServiceConstants.EXTRA_RETURN_LAT
         const val EXTRA_RETURN_LON = AppConstants.ServiceConstants.EXTRA_RETURN_LON
         const val EXTRA_FOLLOW_ROADS_TO_START = AppConstants.ServiceConstants.EXTRA_FOLLOW_ROADS_TO_START

@@ -19,6 +19,7 @@
     <string name="route_start_options_toggle">"选项"</string>
     <string name="route_start_options_loop">"循环"</string>
     <string name="route_start_options_reverse">"反向"</string>
+    <string name="route_start_options_walk_back">"往返行走"</string>
     <string name="route_start_options_return_to_location">"返回原位置"</string>
     <string name="route_start_options_follow_roads">"沿道路"</string>
     <string name="route_start_options_teleport">"瞬移"</string>

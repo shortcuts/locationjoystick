@@ -167,6 +167,7 @@ class ControlApiRoutes
             val config =
                 RouteStartConfig(
                     isLooping = json.optBoolean("loop", d.isLooping),
+                    loopWalksBack = json.optBoolean("loopWalksBack", d.loopWalksBack),
                     isReverse = json.optBoolean("reverse", d.isReverse),
                     isReturnToLocation = json.optBoolean("returnToLocation", d.isReturnToLocation),
                     followRoadsToStart = json.optBoolean("followRoadsToStart", d.followRoadsToStart),

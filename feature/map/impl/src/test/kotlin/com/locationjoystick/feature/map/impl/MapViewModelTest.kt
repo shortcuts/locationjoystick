@@ -897,13 +897,20 @@ class MapViewModelTest {
                     isReturnToLocation = false,
                     followRoadsToStart = true,
                     teleportBetweenDelaySeconds = 12,
+                    loopWalksBack = true,
                 ),
             )
             testDispatcher.scheduler.advanceUntilIdle()
 
             coVerify {
                 settingsRepository.setRouteStartConfig(
-                    RouteStartConfig(isLooping = true, isReverse = true, followRoadsToStart = true, teleportBetweenDelaySeconds = 12),
+                    RouteStartConfig(
+                        isLooping = true,
+                        isReverse = true,
+                        followRoadsToStart = true,
+                        teleportBetweenDelaySeconds = 12,
+                        loopWalksBack = true,
+                    ),
                 )
             }
         }

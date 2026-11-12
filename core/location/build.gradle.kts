@@ -34,4 +34,5 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.orgjson)
+    testImplementation(libs.robolectric)
 }

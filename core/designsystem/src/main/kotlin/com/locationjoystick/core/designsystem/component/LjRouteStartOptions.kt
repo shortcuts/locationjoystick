@@ -48,6 +48,8 @@ fun LjRouteStartCheckboxes(
     onFollowRoadsChange: (Boolean) -> Unit,
     planting: Boolean,
     onPlantingChange: (Boolean) -> Unit,
+    walkBack: Boolean = false,
+    onWalkBackChange: ((Boolean) -> Unit)? = null,
     teleportBetweenWaypoints: Boolean = false,
     onTeleportBetweenWaypointsChange: (Boolean) -> Unit = {},
     teleportBetweenDelaySecondsText: String =
@@ -72,6 +74,17 @@ fun LjRouteStartCheckboxes(
                 onCheckedChange = onLoopChange,
                 textColor = textColor,
             )
+            if (onWalkBackChange != null && loop && !planting && !isTeleportRoute) {
+                LjSelectionRow(
+                    mode = LjSelectionMode.Multi,
+                    title = stringResource(R.string.route_start_options_walk_back),
+                    checked = walkBack,
+                    enabled = enabled,
+                    onCheckedChange = onWalkBackChange,
+                    textColor = textColor,
+                    modifier = Modifier.padding(start = LjSpacing.lg),
+                )
+            }
             if (LocalGuidedPath.current.showsPlanting) {
                 LjSelectionRow(
                     mode = LjSelectionMode.Multi,
@@ -150,6 +163,8 @@ fun LjRouteStartOptions(
     onFollowRoadsChange: (Boolean) -> Unit,
     planting: Boolean,
     onPlantingChange: (Boolean) -> Unit,
+    walkBack: Boolean = false,
+    onWalkBackChange: ((Boolean) -> Unit)? = null,
     teleportBetweenWaypoints: Boolean = false,
     onTeleportBetweenWaypointsChange: (Boolean) -> Unit = {},
     teleportBetweenDelaySecondsText: String =
@@ -201,6 +216,8 @@ fun LjRouteStartOptions(
                 followRoadsLocked = followRoadsLocked,
                 planting = planting,
                 onPlantingChange = onPlantingChange,
+                walkBack = walkBack,
+                onWalkBackChange = onWalkBackChange,
                 teleportBetweenWaypoints = teleportBetweenWaypoints,
                 onTeleportBetweenWaypointsChange = onTeleportBetweenWaypointsChange,
                 teleportBetweenDelaySecondsText = teleportBetweenDelaySecondsText,
