@@ -156,7 +156,8 @@ internal class ReplayOrchestrator(
                                     route.plantingRadiusMeters ?: plantingRadiusMeters(),
                                 )
                             config.teleportBetweenWaypoints -> latLngs to null
-                            config.followRoadsToStart -> expandWaypointsForFollowRoads(latLngs)
+                            config.followRoadsToStart ->
+                                expandWaypointsForFollowRoads(latLngs, closeLoop = config.isLooping && !config.loopWalksBack)
                             else -> latLngs to null
                         }
 
@@ -583,14 +584,20 @@ internal class ReplayOrchestrator(
      * waypoint list known upfront, while `RoamingEngine`'s generates waypoints dynamically
      * within a distance budget (see that method's own doc comment).
      *
+     * @param closeLoop appends the road leg from the last stop back to the first, so a restarting
+     *   loop never cuts a straight line. The leg adds no boundary index.
      * @return the expanded waypoint list plus the indices within it that are the route's
      *   real, named stops ("boundary indices"), so jump-to-waypoint keeps targeting real stops.
      */
-    private suspend fun expandWaypointsForFollowRoads(waypoints: List<LatLng>): Pair<List<LatLng>, List<Int>> {
+    private suspend fun expandWaypointsForFollowRoads(
+        waypoints: List<LatLng>,
+        closeLoop: Boolean = false,
+    ): Pair<List<LatLng>, List<Int>> {
         val expanded = mutableListOf(waypoints.first())
         val boundaryIndices = mutableListOf(0)
         var fallbackCount = 0
-        for (i in 0 until waypoints.size - 1) {
+        val legs = waypoints.size - 1
+        for (i in 0 until legs) {
             val leg =
                 osrmClient.resolveRoute(
                     OsrmClient.PROFILE_FOOT,
@@ -602,7 +609,18 @@ internal class ReplayOrchestrator(
             expanded.addAll(leg.drop(1))
             boundaryIndices.add(expanded.size - 1)
         }
-        routingErrorReporter.reportRoadFollowingFallbacks(fallbackCount, waypoints.size - 1)
+        if (closeLoop) {
+            val closing =
+                osrmClient.resolveRoute(
+                    OsrmClient.PROFILE_FOOT,
+                    waypoints.last(),
+                    waypoints.first(),
+                    followRoads = true,
+                    onFallback = { fallbackCount++ },
+                )
+            expanded.addAll(closing.drop(1))
+        }
+        routingErrorReporter.reportRoadFollowingFallbacks(fallbackCount, if (closeLoop) legs + 1 else legs)
         return expanded to boundaryIndices
     }
 

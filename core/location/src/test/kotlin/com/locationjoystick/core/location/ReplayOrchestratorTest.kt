@@ -956,6 +956,102 @@ class ReplayOrchestratorTest {
             }
         }
 
+    private fun twoStopRoute(
+        w1: LatLng,
+        w2: LatLng,
+    ) = com.locationjoystick.core.model.Route(
+        id = "route-1",
+        name = "R",
+        waypoints =
+            listOf(
+                com.locationjoystick.core.model
+                    .Waypoint("w1", w1, 0),
+                com.locationjoystick.core.model
+                    .Waypoint("w2", w2, 1),
+            ),
+    )
+
+    @Test
+    fun handleStart_restartLoopFollowRoads_appendsRoadClosingLeg() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val w1 = LatLng(2.0, 2.0)
+            val w2 = LatLng(3.0, 3.0)
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns
+                kotlinx.coroutines.flow.flowOf(twoStopRoute(w1, w2))
+            coEvery { osrmClient.resolveRoute(any(), LatLng(0.0, 0.0), w1, true, any()) } returns listOf(LatLng(0.0, 0.0), w1)
+            coEvery { osrmClient.resolveRoute(any(), w1, w2, true, any()) } returns listOf(w1, LatLng(2.5, 2.5), w2)
+            coEvery { osrmClient.resolveRoute(any(), w2, w1, true, any()) } returns listOf(w2, LatLng(2.5, 3.0), w1)
+
+            orchestrator.handleStart("route-1", 1.4, RouteStartConfig(followRoadsToStart = true, isLooping = true))
+
+            verify {
+                routeReplayEngine.start(
+                    waypoints = listOf(w1, LatLng(2.5, 2.5), w2, LatLng(2.5, 3.0), w1),
+                    speedMs = 1.4,
+                    isLooping = true,
+                    onPositionUpdate = any(),
+                    onComplete = any(),
+                    boundaryIndices = listOf(0, 2),
+                )
+            }
+        }
+
+    @Test
+    fun handleStart_restartLoopWithoutFollowRoads_keepsStraightClosingLeg() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val w1 = LatLng(2.0, 2.0)
+            val w2 = LatLng(3.0, 3.0)
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns
+                kotlinx.coroutines.flow.flowOf(twoStopRoute(w1, w2))
+
+            orchestrator.handleStart("route-1", 1.4, RouteStartConfig(isLooping = true))
+
+            coVerify(exactly = 0) { osrmClient.resolveRoute(any(), any(), any(), any(), any()) }
+            verify {
+                routeReplayEngine.start(
+                    waypoints = listOf(w1, w2),
+                    speedMs = 1.4,
+                    isLooping = true,
+                    onPositionUpdate = any(),
+                    onComplete = any(),
+                    boundaryIndices = null,
+                )
+            }
+        }
+
+    @Test
+    fun handleStart_walkBackLoopFollowRoads_addsNoClosingLeg() =
+        runTest {
+            locationRepository.setPositionInternal(LatLng(0.0, 0.0))
+            val w1 = LatLng(2.0, 2.0)
+            val w2 = LatLng(3.0, 3.0)
+            coEvery { routeRepository.getRouteWithWaypoints("route-1") } returns
+                kotlinx.coroutines.flow.flowOf(twoStopRoute(w1, w2))
+            coEvery { osrmClient.resolveRoute(any(), LatLng(0.0, 0.0), w1, true, any()) } returns listOf(LatLng(0.0, 0.0), w1)
+            coEvery { osrmClient.resolveRoute(any(), w1, w2, true, any()) } returns listOf(w1, LatLng(2.5, 2.5), w2)
+
+            orchestrator.handleStart(
+                "route-1",
+                1.4,
+                RouteStartConfig(followRoadsToStart = true, isLooping = true, loopWalksBack = true),
+            )
+
+            coVerify(exactly = 0) { osrmClient.resolveRoute(any(), w2, w1, any(), any()) }
+            verify {
+                routeReplayEngine.start(
+                    waypoints = listOf(w1, LatLng(2.5, 2.5), w2),
+                    speedMs = 1.4,
+                    isLooping = true,
+                    onPositionUpdate = any(),
+                    onComplete = any(),
+                    boundaryIndices = listOf(0, 2),
+                    bounceAtEnds = true,
+                )
+            }
+        }
+
     // Pins down that the *expanded* road-following path (not just the engine's
     // waypoints arg, verified above) also feeds LocationRepository.routeWaypoints —
     // the field the map's polyline actually reads (see docs/features/map.md).
