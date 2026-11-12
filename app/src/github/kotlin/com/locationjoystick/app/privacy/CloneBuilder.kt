@@ -1,6 +1,7 @@
 package com.locationjoystick.app.privacy
 
 import android.content.Context
+import com.android.apksig.apk.ApkFormatException
 import com.locationjoystick.core.common.di.IoDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
@@ -41,6 +42,10 @@ class CloneBuilder
                     CloneBuildResult.Failed(e.message ?: "io error")
                 } catch (e: GeneralSecurityException) {
                     CloneBuildResult.Failed(e.message ?: "signing error")
+                } catch (e: ApkFormatException) {
+                    CloneBuildResult.Failed(e.message ?: "apk format error")
+                } catch (e: RuntimeException) {
+                    CloneBuildResult.Failed(e.message ?: "build error")
                 } catch (e: OutOfMemoryError) {
                     CloneBuildResult.Failed(e.message ?: "out of memory")
                 }

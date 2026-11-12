@@ -90,7 +90,16 @@ class PrivacyModeViewModel
         fun start(name: String) {
             val updated = _state.value.record != null
             val canInstall = installer.canInstall()
-            val moved = transition { op -> if (op.isBusy) null else if (canInstall) CloneOp.Building else CloneOp.NeedsInstallPermission }
+            val moved =
+                transition { op ->
+                    if (op.isBusy) {
+                        null
+                    } else if (canInstall) {
+                        CloneOp.Building
+                    } else {
+                        CloneOp.NeedsInstallPermission
+                    }
+                }
             if (!moved || !canInstall) return
             viewModelScope.launch {
                 when (val result = builder.build(name)) {
