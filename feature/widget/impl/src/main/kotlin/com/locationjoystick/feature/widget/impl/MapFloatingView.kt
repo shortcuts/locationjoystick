@@ -90,6 +90,8 @@ import com.locationjoystick.core.model.RouteProgress
 import com.locationjoystick.core.model.RouteStartConfig
 import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpeedUnit
+import com.locationjoystick.core.model.TapToWalkMove
+import com.locationjoystick.core.model.effectiveTapToWalkMoves
 import com.locationjoystick.core.model.isPaused
 import com.locationjoystick.core.model.isRoutePlaying
 import com.locationjoystick.feature.widget.impl.R
@@ -723,6 +725,32 @@ internal fun MapFloatingView(
 }
 
 @Composable
+internal fun MoveButtons(
+    moves: Collection<TapToWalkMove>,
+    onMove: (TapToWalkMove) -> Unit,
+) {
+    val ordered = listOf(TapToWalkMove.TELEPORT, TapToWalkMove.WALK, TapToWalkMove.VIA_ROADS).filter { it in moves }
+    Column {
+        ordered.forEachIndexed { i, move ->
+            if (i > 0) Spacer(Modifier.height(LjSpacing.sm))
+            val label =
+                stringResource(
+                    when (move) {
+                        TapToWalkMove.TELEPORT -> R.string.map_floating_teleport_here
+                        TapToWalkMove.WALK -> R.string.map_floating_walk_here
+                        TapToWalkMove.VIA_ROADS -> R.string.map_floating_walk_here_via_roads
+                    },
+                )
+            if (move == TapToWalkMove.TELEPORT) {
+                LjButton(onClick = { onMove(move) }, modifier = Modifier.fillMaxWidth()) { Text(label) }
+            } else {
+                LjOutlinedButton(onClick = { onMove(move) }, modifier = Modifier.fillMaxWidth()) { Text(label) }
+            }
+        }
+    }
+}
+
+@Composable
 internal fun BoxScope.TapActionPanel(
     tap: LatLng,
     isRouteReplay: Boolean,
@@ -742,8 +770,6 @@ internal fun BoxScope.TapActionPanel(
     onDismiss: () -> Unit,
     onShareOpened: () -> Unit,
     hideTeleportFeatures: Boolean = false,
-    showWalk: Boolean = true,
-    showWalkViaRoads: Boolean = true,
 ) {
     val context = LocalContext.current
     Column(
@@ -807,34 +833,13 @@ internal fun BoxScope.TapActionPanel(
             Spacer(Modifier.height(LjSpacing.sm))
             TeleportCooldownBadge(tap, cooldownForPosition.asAdvisory())
             Spacer(Modifier.height(LjSpacing.md))
-            if (!hideTeleportFeatures) {
-                LjButton(
-                    onClick = {
-                        onTeleport(tap)
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(stringResource(R.string.map_floating_teleport_here)) }
-                Spacer(Modifier.height(LjSpacing.sm))
-            }
-            if (showWalk) {
-                LjOutlinedButton(
-                    onClick = {
-                        onWalkTo(tap)
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(stringResource(R.string.map_floating_walk_here)) }
-                if (showWalkViaRoads) Spacer(Modifier.height(LjSpacing.sm))
-            }
-            if (showWalkViaRoads) {
-                LjOutlinedButton(
-                    onClick = {
-                        onWalkViaRoads(tap)
-                        onDismiss()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(stringResource(R.string.map_floating_walk_here_via_roads)) }
+            MoveButtons(effectiveTapToWalkMoves(TapToWalkMove.entries.toSet(), hideTeleportFeatures)) { move ->
+                when (move) {
+                    TapToWalkMove.TELEPORT -> onTeleport(tap)
+                    TapToWalkMove.WALK -> onWalkTo(tap)
+                    TapToWalkMove.VIA_ROADS -> onWalkViaRoads(tap)
+                }
+                onDismiss()
             }
             if (isWalkActive) {
                 Spacer(Modifier.height(LjSpacing.sm))

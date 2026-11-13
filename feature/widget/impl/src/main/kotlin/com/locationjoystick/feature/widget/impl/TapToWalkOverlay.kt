@@ -12,7 +12,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -28,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -37,11 +43,16 @@ import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.locationjoystick.core.common.constants.AppConstants
+import com.locationjoystick.core.common.util.copyCoordinatesToClipboard
+import com.locationjoystick.core.common.util.shareLocationLink
 import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.designsystem.LjIcons
 import com.locationjoystick.core.designsystem.LjOnScrim
 import com.locationjoystick.core.designsystem.LjSpacing
 import com.locationjoystick.core.designsystem.LjTheme
+import com.locationjoystick.core.designsystem.component.LjShareLocationAction
+import com.locationjoystick.core.designsystem.component.LjTextButton
+import com.locationjoystick.core.designsystem.component.TeleportCooldownBadge
 import com.locationjoystick.core.model.CalibrationWalkMath
 import com.locationjoystick.core.model.GroundFlowFit
 import com.locationjoystick.core.model.GroundMap
@@ -249,29 +260,40 @@ private fun BoxScope.TapMoveChooser(
     onDismiss: () -> Unit,
 ) {
     val target = chooser.decision.target
-    val moves = chooser.decision.moves
-    TapActionPanel(
-        tap = target,
-        isRouteReplay = false,
-        isEphemeralReplay = false,
-        isWalkActive = false,
-        walkStart = null,
-        walkTarget = null,
-        routeWaypoints = null,
-        cooldownForPosition = cooldownForPosition,
-        onTeleport = { onMove(chooser.tap, TapToWalkMove.TELEPORT) },
-        onWalkTo = { onMove(chooser.tap, TapToWalkMove.WALK) },
-        onWalkViaRoads = { onMove(chooser.tap, TapToWalkMove.VIA_ROADS) },
-        onStopRouteAndTeleport = {},
-        onStopRouteAndWalkTo = {},
-        onFinishRouteAndWalkTo = {},
-        onAddEphemeralWaypoint = { _, _ -> },
-        onDismiss = onDismiss,
-        onShareOpened = onDismiss,
-        hideTeleportFeatures = TapToWalkMove.TELEPORT !in moves,
-        showWalk = TapToWalkMove.WALK in moves,
-        showWalkViaRoads = TapToWalkMove.VIA_ROADS in moves,
-    )
+    val context = LocalContext.current
+    Column(
+        modifier =
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .clickable {}
+                .padding(LjSpacing.md),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.map_floating_move_to_this_location),
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            LjShareLocationAction(
+                onCopyCoordinates = { copyCoordinatesToClipboard(context, target) },
+                onShareLink = {
+                    shareLocationLink(context, target)
+                    onDismiss()
+                },
+            )
+        }
+        Spacer(Modifier.height(LjSpacing.sm))
+        TeleportCooldownBadge(target, cooldownForPosition.asAdvisory())
+        Spacer(Modifier.height(LjSpacing.md))
+        MoveButtons(chooser.decision.moves) { onMove(chooser.tap, it) }
+        Spacer(Modifier.height(LjSpacing.xs))
+        LjTextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.map_floating_do_nothing))
+        }
+    }
 }
 
 @Composable

@@ -9,7 +9,9 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import com.locationjoystick.core.model.LatLng
+import com.locationjoystick.core.model.TapToWalkMove
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -68,36 +70,29 @@ class TapActionPanelColorTest {
 
     @Test
     fun chooserShowsOnlyTheOfferedMoves() {
-        composeRule.setContent {
-            MaterialTheme {
-                Box {
-                    TapActionPanel(
-                        tap = LatLng(0.0, 0.0),
-                        isRouteReplay = false,
-                        isEphemeralReplay = false,
-                        isWalkActive = false,
-                        walkStart = null,
-                        walkTarget = null,
-                        routeWaypoints = null,
-                        cooldownForPosition = null,
-                        onTeleport = {},
-                        onWalkTo = {},
-                        onWalkViaRoads = {},
-                        onStopRouteAndTeleport = {},
-                        onStopRouteAndWalkTo = {},
-                        onFinishRouteAndWalkTo = {},
-                        onAddEphemeralWaypoint = { _, _ -> },
-                        onDismiss = {},
-                        onShareOpened = {},
-                        hideTeleportFeatures = true,
-                        showWalk = false,
-                    )
-                }
-            }
-        }
+        composeRule.setContent { MaterialTheme { MoveButtons(listOf(TapToWalkMove.VIA_ROADS)) {} } }
         composeRule.onNodeWithText("Walk here via roads").assertExists()
-        composeRule.onNodeWithText("Do nothing").assertExists()
         composeRule.onNodeWithText("Walk here").assertDoesNotExist()
         composeRule.onNodeWithText("Teleport here").assertDoesNotExist()
+    }
+
+    @Test
+    fun moveButtonsDrawTeleportFirst() {
+        composeRule.setContent {
+            MaterialTheme {
+                MoveButtons(listOf(TapToWalkMove.WALK, TapToWalkMove.VIA_ROADS, TapToWalkMove.TELEPORT)) {}
+            }
+        }
+        val teleportTop =
+            composeRule
+                .onNodeWithText("Teleport here")
+                .fetchSemanticsNode()
+                .boundsInRoot.top
+        val walkTop =
+            composeRule
+                .onNodeWithText("Walk here")
+                .fetchSemanticsNode()
+                .boundsInRoot.top
+        assertTrue(teleportTop < walkTop)
     }
 }
