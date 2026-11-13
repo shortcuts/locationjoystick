@@ -327,6 +327,15 @@ class MockLocationService : Service() {
         observeGroupState()
     }
 
+    private suspend fun setUpTestProvider() {
+        // The real provider must stay reachable, so snapshot then A-GPS reset run before setup().
+        if (!testProvider.isAdded) {
+            realPositionSnapshotter.capture()
+            agpsResetter.resetIfEnabled()
+        }
+        testProvider.setup()
+    }
+
     private fun observeLocationState() {
         serviceScope.launch {
             _state.collect { state ->
@@ -341,20 +350,12 @@ class MockLocationService : Service() {
                                 RunningLoopAction.STOP_IDLE_LOOP_FOR_REPLAY -> {
                                     updateJob?.cancel()
                                     updateJob = null
-                                    if (!testProvider.isAdded) {
-                                        realPositionSnapshotter.capture()
-                                        agpsResetter.resetIfEnabled()
-                                    }
-                                    testProvider.setup()
+                                    setUpTestProvider()
                                     Log.i(TAG, "State changed to RUNNING (route replay) - stopped idle loop")
                                 }
 
                                 RunningLoopAction.START_IDLE_LOOP -> {
-                                    if (!testProvider.isAdded) {
-                                        realPositionSnapshotter.capture()
-                                        agpsResetter.resetIfEnabled()
-                                    }
-                                    testProvider.setup()
+                                    setUpTestProvider()
                                     startUpdateLoop()
                                     Log.i(TAG, "State changed to RUNNING - started update loop")
                                 }
