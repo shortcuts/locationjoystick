@@ -253,7 +253,7 @@ private fun TapToWalkOverlayContent(
 }
 
 @Composable
-private fun BoxScope.TapMoveChooser(
+internal fun BoxScope.TapMoveChooser(
     chooser: PendingChoice,
     cooldownForPosition: (LatLng) -> Flow<CooldownState>,
     onMove: (GroundTap, TapToWalkMove) -> Unit,
@@ -288,7 +288,10 @@ private fun BoxScope.TapMoveChooser(
         Spacer(Modifier.height(LjSpacing.sm))
         TeleportCooldownBadge(target, cooldownForPosition.asAdvisory())
         Spacer(Modifier.height(LjSpacing.md))
-        MoveButtons(chooser.decision.moves) { onMove(chooser.tap, it) }
+        MoveButtons(chooser.decision.moves) {
+            onMove(chooser.tap, it)
+            onDismiss()
+        }
         Spacer(Modifier.height(LjSpacing.xs))
         LjTextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.map_floating_do_nothing))
@@ -319,7 +322,7 @@ private fun BoxScope.CancelButton(onDismiss: () -> Unit) {
 }
 
 /** A tap waiting for the user's choice of move; the overlay stays up meanwhile. */
-private data class PendingChoice(
+internal data class PendingChoice(
     val tap: GroundTap,
     val decision: TapDecision.Choose,
 )

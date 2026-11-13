@@ -8,8 +8,11 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import com.locationjoystick.core.data.CooldownState
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.TapToWalkMove
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -94,5 +97,27 @@ class TapActionPanelColorTest {
                 .fetchSemanticsNode()
                 .boundsInRoot.top
         assertTrue(teleportTop < walkTop)
+    }
+
+    @Test
+    fun chosenMoveDismissesTheChooser() {
+        val moves = mutableListOf<TapToWalkMove>()
+        var dismissed = 0
+        val tap = GroundTap(LatLng(0.0, 0.0), 0.0, 0.0)
+        composeRule.setContent {
+            MaterialTheme {
+                Box {
+                    TapMoveChooser(
+                        chooser = PendingChoice(tap, TapDecision.Choose(LatLng(1.0, 1.0), listOf(TapToWalkMove.WALK))),
+                        cooldownForPosition = { flowOf(CooldownState.Ready) },
+                        onMove = { _, move -> moves += move },
+                        onDismiss = { dismissed++ },
+                    )
+                }
+            }
+        }
+        composeRule.onNodeWithText("Walk here").performClick()
+        assertEquals(listOf(TapToWalkMove.WALK), moves)
+        assertEquals(1, dismissed)
     }
 }
