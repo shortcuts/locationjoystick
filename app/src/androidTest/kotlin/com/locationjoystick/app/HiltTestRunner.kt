@@ -20,11 +20,8 @@ class HiltTestRunner : AndroidJUnitRunner() {
         uiAutomation.executeShellCommand("wm dismiss-keyguard").close()
         waitForIdleSync()
 
-        // Reset DataStore so settings start fresh.
-        uiAutomation
-            .executeShellCommand(
-                "rm -rf /data/data/${targetContext.packageName}/files/datastore/",
-            ).close()
+        // Reset DataStore so settings start fresh. In-process because the shell user cannot delete app-private files.
+        java.io.File(targetContext.filesDir, "datastore").deleteRecursively()
 
         // Grant all permissions so LjNavHost's start-destination check passes and the app
         // starts directly on IdleScreen instead of OnboardingScreen.
