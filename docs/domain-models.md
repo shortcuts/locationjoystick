@@ -14,6 +14,7 @@ The models live in `:core:model`, which is pure Kotlin: no Android, no Room. The
 - `MovementState` holds the movement mode and its pause for walk and roam, so "paused with no active mode" cannot exist. Route replay pause stays in `MockLocationState.PAUSED`, because that value is also the spoofing lifecycle. `LocationRepository.movement` folds it in, so readers use one flow.
 - The Room schema went from 6 to 8 in two steps. Schema 7 adds `routes.category`. Schema 8 adds `routes.plantingRadiusMeters`. Both columns are nullable, so existing rows read as null and need no backfill. Migrations live in `LjDatabase`.
 - A route pins its own planting radius in `routes.plantingRadiusMeters`. `null` means no pin: replay falls back to the default radius in settings. The column exists so a pinned route keeps its radius when the default changes.
+- `AppSettings` is the one settings model. `SettingsSnapshot` embeds it, and `SettingsUiState` holds it. A new boolean setting goes in `AppSettings`, the datastore mapping in `SettingsSnapshotPreferences.kt` and `SettingsExportCodec`, so the view model and the UI state need no copy. The snapshot also reads the live fields (`tapToWalkOverlayEnabled`, `tapToWalkMoves`, `reconnectTapEnabled`, `keepWidgetOnIdle`, `themeMode`, `activeSpeedProfileId`) but `applySnapshot` never writes them: each has an immediate setter, and a stale snapshot would overwrite a newer value.
 
 ## Mapping
 

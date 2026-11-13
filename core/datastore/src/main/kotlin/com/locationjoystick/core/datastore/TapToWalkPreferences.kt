@@ -7,6 +7,7 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.TapToWalkMove
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 interface TapToWalkPreferences {
     /** Gets whether the screen tap-to-walk overlay is enabled. */
@@ -34,6 +35,12 @@ interface TapToWalkPreferences {
     suspend fun setAccessibilityDisclosureChoice(choice: String)
 }
 
+internal fun Preferences.toTapToWalkMoves(): Set<TapToWalkMove> =
+    TapToWalkMove.entries
+        .filter { it.name in this[Keys.TAP_TO_WALK_MOVES].orEmpty() }
+        .toSet()
+        .ifEmpty { TapToWalkMove.DEFAULT }
+
 internal class TapToWalkStore(
     private val dataStore: DataStore<Preferences>,
 ) : TapToWalkPreferences {
@@ -41,13 +48,7 @@ internal class TapToWalkStore(
 
     override suspend fun setTapToWalkOverlayEnabled(enabled: Boolean) = dataStore.setPref(Keys.TAP_TO_WALK_OVERLAY_ENABLED, enabled)
 
-    override fun getTapToWalkMoves(): Flow<Set<TapToWalkMove>> =
-        dataStore.pref(Keys.TAP_TO_WALK_MOVES, emptySet()) { names ->
-            TapToWalkMove.entries
-                .filter { it.name in names }
-                .toSet()
-                .ifEmpty { TapToWalkMove.DEFAULT }
-        }
+    override fun getTapToWalkMoves(): Flow<Set<TapToWalkMove>> = dataStore.safeData("tap to walk moves").map { it.toTapToWalkMoves() }
 
     override suspend fun setTapToWalkMoves(moves: Set<TapToWalkMove>) =
         dataStore.setPref(Keys.TAP_TO_WALK_MOVES, moves.ifEmpty { TapToWalkMove.DEFAULT }.map { it.name }.toSet())

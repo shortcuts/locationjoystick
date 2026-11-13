@@ -127,12 +127,12 @@ internal fun SettingsScreenHelpersSubScreen(
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
     ) { uiState ->
-        if (uiState.guidedPath.showsTapToWalk) {
+        if (uiState.settings.guidedPath.showsTapToWalk) {
             TapToWalkSection(uiState, onAction)
         }
         // Same API 30 floor as the screenshot the check depends on.
-        if (uiState.guidedPath.showsReconnectAccessory && Build.VERSION.SDK_INT >= ScreenFeatureGates.MIN_SDK) {
-            if (uiState.guidedPath.showsTapToWalk) SettingsSectionDivider()
+        if (uiState.settings.guidedPath.showsReconnectAccessory && Build.VERSION.SDK_INT >= ScreenFeatureGates.MIN_SDK) {
+            if (uiState.settings.guidedPath.showsTapToWalk) SettingsSectionDivider()
             ReconnectTapSection(uiState, onAction)
         }
         if (showsScreenAccessBlock(Build.VERSION.SDK_INT, tapToWalkOn(uiState), reconnectOn(uiState))) {
@@ -192,7 +192,7 @@ private fun TapToWalkSection(
 ) {
     val context = LocalContext.current
     var showEnableDisclosure by rememberSaveable { mutableStateOf(false) }
-    val enabled = uiState.tapToWalkOverlayEnabled
+    val enabled = uiState.settings.tapToWalkOverlayEnabled
     val needsAccessibilityDisclosure =
         showsFullAccessibilityDisclosure(Build.VERSION.SDK_INT, uiState.accessibilityDisclosureAccepted)
 
@@ -268,13 +268,13 @@ private fun TapToWalkMoveRows(
             TapToWalkMove.VIA_ROADS to stringResource(R.string.settings_menus_tap_to_walk_move_via_roads),
             TapToWalkMove.TELEPORT to stringResource(R.string.settings_menus_tap_to_walk_move_teleport),
         )
-    TapToWalkMove.entries.filter { it != TapToWalkMove.TELEPORT || !uiState.hideTeleportFeatures }.forEach { move ->
+    TapToWalkMove.entries.filter { it != TapToWalkMove.TELEPORT || !uiState.settings.hideTeleportFeatures }.forEach { move ->
         LjSelectionRow(
             mode = LjSelectionMode.Multi,
             title = labels.getValue(move),
-            checked = move in uiState.tapToWalkMoves,
-            enabled = tapToWalkRowEnabled(move, uiState.tapToWalkMoves, uiState.hideTeleportFeatures),
-            onCheckedChange = { on -> onAction(SettingsAction.SetTapToWalkMoves(uiState.tapToWalkMoves.withMove(move, on))) },
+            checked = move in uiState.settings.tapToWalkMoves,
+            enabled = tapToWalkRowEnabled(move, uiState.settings.tapToWalkMoves, uiState.settings.hideTeleportFeatures),
+            onCheckedChange = { on -> onAction(SettingsAction.SetTapToWalkMoves(uiState.settings.tapToWalkMoves.withMove(move, on))) },
         )
     }
     Text(
@@ -303,7 +303,7 @@ private fun ReconnectTapSection(
     LjSelectionRow(
         mode = LjSelectionMode.Toggle,
         title = stringResource(R.string.settings_menus_reconnect_accessory_automatically),
-        checked = uiState.reconnectTapEnabled,
+        checked = uiState.settings.reconnectTapEnabled,
         onCheckedChange = { on ->
             if (on && !uiState.accessibilityDisclosureAccepted) {
                 showDisclosure = true
@@ -312,11 +312,11 @@ private fun ReconnectTapSection(
             }
         },
     )
-    if (showsServiceOffHint(uiState.reconnectTapEnabled, uiState.isScreenServiceGranted)) {
+    if (showsServiceOffHint(uiState.settings.reconnectTapEnabled, uiState.isScreenServiceGranted)) {
         Spacer(Modifier.height(LjSpacing.smMd))
         ServiceOffHint(uiState, onAction)
     }
-    if (showDisclosure || showsReconnectConsentPrompt(uiState.reconnectTapEnabled, uiState.accessibilityDisclosureAccepted)) {
+    if (showDisclosure || showsReconnectConsentPrompt(uiState.settings.reconnectTapEnabled, uiState.accessibilityDisclosureAccepted)) {
         AccessibilityDisclosureDialog(
             title = stringResource(R.string.settings_menus_reconnect_accessory),
             onAccept = {
@@ -327,7 +327,7 @@ private fun ReconnectTapSection(
             },
             onDecline = {
                 showDisclosure = false
-                if (uiState.reconnectTapEnabled) onAction(SettingsAction.SetReconnectTapEnabled(false))
+                if (uiState.settings.reconnectTapEnabled) onAction(SettingsAction.SetReconnectTapEnabled(false))
             },
         )
     }
@@ -378,9 +378,10 @@ internal fun showsServiceOffHint(
 ): Boolean = featureOn && !serviceGranted
 
 // A switch on a section the guided path hides does not count: the user cannot see it.
-private fun tapToWalkOn(ui: SettingsUiState) = ScreenFeatureGates.tapToWalkShown(ui.tapToWalkOverlayEnabled, ui.guidedPath)
+private fun tapToWalkOn(ui: SettingsUiState) =
+    ScreenFeatureGates.tapToWalkShown(ui.settings.tapToWalkOverlayEnabled, ui.settings.guidedPath)
 
-private fun reconnectOn(ui: SettingsUiState) = ScreenFeatureGates.reconnectShown(ui.reconnectTapEnabled, ui.guidedPath)
+private fun reconnectOn(ui: SettingsUiState) = ScreenFeatureGates.reconnectShown(ui.settings.reconnectTapEnabled, ui.settings.guidedPath)
 
 private fun openAccessibilitySettings(context: android.content.Context) {
     context.startActivity(
@@ -607,7 +608,7 @@ private fun AppFeaturesSection(
         )
     }
 
-    val order = uiState.featureOrder
+    val order = uiState.settings.featureOrder
     val rowHeightPx = with(LocalDensity.current) { (FEATURE_ROW_HEIGHT + FEATURE_ROW_SPACING).toPx() }
     var draggingIndex by remember { mutableStateOf<Int?>(null) }
     var dragDeltaY by remember { mutableFloatStateOf(0f) }
@@ -669,7 +670,7 @@ private fun AppFeaturesSection(
     Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.showRouteJumpButtons,
+        checked = uiState.settings.showRouteJumpButtons,
         onCheckedChange = { onAction(SettingsAction.SetShowRouteJumpButtons(it)) },
         title = stringResource(R.string.settings_menus_show_route_jump_buttons),
         description = stringResource(R.string.settings_menus_show_route_jump_buttons_desc),
@@ -677,7 +678,7 @@ private fun AppFeaturesSection(
     Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.altitudeOverrideButtonEnabled,
+        checked = uiState.settings.altitudeOverrideButtonEnabled,
         onCheckedChange = { onAction(SettingsAction.SetAltitudeOverrideButtonEnabled(it)) },
         title = stringResource(R.string.settings_menus_show_altitude_override_button),
         description = stringResource(R.string.settings_menus_show_altitude_override_button_desc),
@@ -702,13 +703,13 @@ private fun SpeedCycleSection(
 
     Column {
         SpeedProfile.defaultProfiles().forEach { profile ->
-            val checked = profile.id in uiState.enabledSpeedProfileIds
+            val checked = profile.id in uiState.settings.enabledSpeedProfileIds
             LjSelectionRow(
                 mode = LjSelectionMode.Multi,
                 checked = checked,
                 title = speedProfileLabel(profile.id),
                 onCheckedChange = { isChecked ->
-                    val updated = uiState.enabledSpeedProfileIds.toMutableSet()
+                    val updated = uiState.settings.enabledSpeedProfileIds.toMutableSet()
                     if (isChecked) updated.add(profile.id) else updated.remove(profile.id)
                     onAction(SettingsAction.SetEnabledSpeedProfileIds(updated))
                 },
@@ -762,11 +763,11 @@ private fun FeatureRow(
         if (FeatureSurface.WIDGET in feature.surfaces) {
             val widgetCd = stringResource(R.string.settings_menus_feature_on_widget_cd, meta.label)
             Checkbox(
-                checked = feature in uiState.enabledWidgetFeatures,
+                checked = feature in uiState.settings.enabledWidgetFeatures,
                 enabled = rowEnabled,
                 modifier = Modifier.width(56.dp).semantics { contentDescription = widgetCd },
                 onCheckedChange = { checked ->
-                    val updated = uiState.enabledWidgetFeatures.toMutableSet()
+                    val updated = uiState.settings.enabledWidgetFeatures.toMutableSet()
                     if (checked) {
                         updated.add(feature)
                     } else {
@@ -786,10 +787,10 @@ private fun FeatureRow(
         if (FeatureSurface.MAP in feature.surfaces) {
             val mapCd = stringResource(R.string.settings_menus_feature_on_map_cd, meta.label)
             Checkbox(
-                checked = feature in uiState.enabledMapFeatures,
+                checked = feature in uiState.settings.enabledMapFeatures,
                 modifier = Modifier.width(56.dp).semantics { contentDescription = mapCd },
                 onCheckedChange = { checked ->
-                    val updated = uiState.enabledMapFeatures.toMutableSet()
+                    val updated = uiState.settings.enabledMapFeatures.toMutableSet()
                     if (checked) updated.add(feature) else updated.remove(feature)
                     onAction(SettingsAction.SetMapFeatures(updated))
                 },

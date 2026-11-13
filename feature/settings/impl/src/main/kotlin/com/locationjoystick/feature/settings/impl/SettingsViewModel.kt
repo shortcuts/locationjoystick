@@ -233,20 +233,17 @@ class SettingsViewModel
             }
         }
 
-        private data class TapToWalkLive(
-            val enabled: Boolean,
-            val moves: Set<TapToWalkMove>,
-        )
-
-        private data class LiveSettings(
-            val disclosureChoice: String,
-            val reconnectTap: Boolean,
-            val keepWidgetOnIdle: Boolean,
-            val activeSpeedProfileId: String,
-            val tapToWalk: TapToWalkLive,
-        )
-
         private val snapshotFlow = settingsRepository.getSettingsSnapshot()
+
+        private val exportDataApplier =
+            ExportDataApplier(
+                settingsRepository,
+                backupRepository,
+                favoriteRepository,
+                routeRepository,
+                hotLocationsRepository,
+                hotRoutesRepository,
+            )
 
         val roamingDefaults: StateFlow<RoamingDefaults> =
             settingsRepository
@@ -260,45 +257,17 @@ class SettingsViewModel
         val screenState: StateFlow<SettingsScreenState> =
             combine(
                 snapshotFlow,
-                combine(
-                    settingsRepository.getAccessibilityDisclosureChoice(),
-                    settingsRepository.getReconnectTapEnabled(),
-                    settingsRepository.getKeepWidgetOnIdle(),
-                    settingsRepository.getActiveSpeedProfile().map { it.id },
-                    combine(settingsRepository.getTapToWalkOverlayEnabled(), settingsRepository.getTapToWalkMoves(), ::TapToWalkLive),
-                    ::LiveSettings,
-                ),
+                settingsRepository.getAccessibilityDisclosureChoice(),
                 combine(screenServiceGranted, captureSnapshot) { granted, capture -> Pair(granted, capture) },
-                settingsRepository.getThemeMode(),
                 settingsRepository.getBaseAltitudeOverride(),
-            ) {
-                snapshot,
-                live,
-                (isServiceGranted, capture),
-                themeMode,
-                baseAltitudeOverride,
-                ->
+            ) { snapshot, disclosureChoice, (isServiceGranted, capture), baseAltitudeOverride ->
                 SettingsScreenState.Loaded(
                     SettingsUiState(
+                        settings = snapshot.settings,
                         speeds = snapshotSpeeds(snapshot),
-                        speedUnit = snapshot.speedUnit,
-                        featureOrder = snapshot.featureOrder,
-                        enabledWidgetFeatures = snapshot.enabledWidgetFeatures,
-                        enabledSpeedProfileIds = snapshot.enabledSpeedProfileIds,
-                        enabledMapFeatures = snapshot.enabledMapFeatures,
-                        rememberLastLocation = snapshot.rememberLastLocation,
-                        mapFollowsLocation = snapshot.mapFollowsLocation,
-                        mapTileSource = snapshot.mapTileSource,
-                        guidedPath = snapshot.guidedPath,
-                        disabledGeocodingProviders = snapshot.disabledGeocodingProviders,
                         jitterIdleRadiusMeters = snapshot.jitterIdleRadius,
                         jitterMovingRadiusMeters = snapshot.jitterMovingRadius,
                         jitterMaxStepMeters = snapshot.jitterMaxStepMeters,
-                        realismBearingHoldIdle = snapshot.realismBearingHoldIdle,
-                        realismAltitudeEnabled = snapshot.realismAltitudeEnabled,
-                        realismWarmupEnabled = snapshot.realismWarmupEnabled,
-                        realismSatelliteExtrasEnabled = snapshot.realismSatelliteExtrasEnabled,
-                        realismSuspendedMockingEnabled = snapshot.realismSuspendedMockingEnabled,
                         jitterSpeedIdleVariationPct = snapshot.jitterSpeedIdleVariationPct,
                         jitterSpeedMovingVariationPct = snapshot.jitterSpeedMovingVariationPct,
                         jitterSpeedIdleWobbleProbabilityPct = snapshot.jitterSpeedIdleWobbleProbabilityPct,
@@ -306,21 +275,7 @@ class SettingsViewModel
                         selectedHotLocationIds = snapshot.selectedHotLocationIds,
                         hotRoutesEnabled = snapshot.hotRoutesEnabled,
                         selectedHotRouteIds = snapshot.selectedHotRouteIds,
-                        floatingMapQuickWalk = snapshot.floatingMapQuickWalk,
-                        tapToWalkOverlayEnabled = live.tapToWalk.enabled,
-                        tapToWalkMoves = live.tapToWalk.moves,
-                        hideTeleportFeatures = snapshot.hideTeleportFeatures,
-                        hideWidgetOverlay = snapshot.hideWidgetOverlay,
-                        hideForegroundNotification = snapshot.hideForegroundNotification,
-                        showRouteJumpButtons = snapshot.showRouteJumpButtons,
-                        lastKnownPositionEnabled = snapshot.lastKnownPositionEnabled,
-                        agpsResetOnStartEnabled = snapshot.agpsResetOnStartEnabled,
-                        realismRealElevationEnabled = snapshot.realismRealElevationEnabled,
                         hasAltitudeOverride = baseAltitudeOverride != null,
-                        altitudeJitterRadiusMeters = snapshot.altitudeJitterRadiusMeters,
-                        plantingRadiusMeters = snapshot.plantingRadiusMeters,
-                        altitudeOverrideButtonEnabled = snapshot.altitudeOverrideButtonEnabled,
-                        debugStatsEnabled = snapshot.debugStatsEnabled,
                         captureModeEnabled = capture.modeEnabled,
                         captureEnabled = capture.captureEnabled,
                         jumpEnabled = capture.jumpEnabled,
@@ -329,13 +284,7 @@ class SettingsViewModel
                         launchAfterLinkPackage = capture.launchAfterLinkPackage,
                         launchAfterLinkChosen = capture.launchAfterLinkChosen,
                         isScreenServiceGranted = isServiceGranted,
-                        accessibilityDisclosureAccepted =
-                            live.disclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
-                        reconnectTapEnabled = live.reconnectTap,
-                        keepWidgetOnIdle = live.keepWidgetOnIdle,
-                        bypassMockLocationCheck = snapshot.bypassMockLocationCheck,
-                        activeSpeedProfileId = live.activeSpeedProfileId,
-                        themeMode = themeMode,
+                        accessibilityDisclosureAccepted = disclosureChoice == AppConstants.AccessibilityConstants.DISCLOSURE_ACCEPTED,
                     ),
                 )
             }.stateIn(
@@ -351,7 +300,7 @@ class SettingsViewModel
             id: String,
             displaySpeed: Double,
         ) {
-            val speedMs = convertDisplayToMs(displaySpeed, current.speedUnit)
+            val speedMs = convertDisplayToMs(displaySpeed, current.settings.speedUnit)
             val version = (speedWriteVersion[id] ?: 0) + 1
             speedWriteVersion[id] = version
             // Each keystroke calls this; writing "1" while the user types "15" would set the live pace to 1 km/h.
@@ -498,7 +447,7 @@ class SettingsViewModel
             } else {
                 favoriteRepository.removeHotLocations()
             }
-            clearHomeIfMissing()
+            exportDataApplier.clearHomeIfMissing()
         }
 
         val hotLocationTree: StateFlow<HotItemTree> =
@@ -747,7 +696,7 @@ class SettingsViewModel
             return ExportData(
                 schemaVersion = AppConstants.ExportConstants.SCHEMA_VERSION,
                 exportedAt = System.currentTimeMillis(),
-                settings = state.toAppSettings(),
+                settings = state.settings,
                 speedProfiles = speedProfiles,
                 routes = routeRepository.getRoutes().first(),
                 favoriteLocations = favoriteRepository.getFavorites().first(),
@@ -796,7 +745,7 @@ class SettingsViewModel
                         emitFeedback(R.string.settings_viewmodel_failed_to_import_empty_file, isError = true)
                         return@launch
                     }
-                    applyExportData(SettingsExportCodec.parseExportData(json), replace)
+                    exportDataApplier.apply(SettingsExportCodec.parseExportData(json), replace)
                     emitImportComplete()
                 } catch (e: Exception) {
                     Log.e(TAG, "Import failed", e)
@@ -899,7 +848,7 @@ class SettingsViewModel
         ) {
             viewModelScope.launch {
                 try {
-                    applyExportData(exportData, replace)
+                    exportDataApplier.apply(exportData, replace)
                     emitImportComplete()
                 } catch (e: Exception) {
                     Log.e(TAG, "Import from ExportData failed", e)
@@ -919,108 +868,6 @@ class SettingsViewModel
                     R.string.settings_viewmodel_import_complete
                 }
             emitFeedback(message)
-        }
-
-        private suspend fun applyExportData(
-            data: ExportData,
-            replace: Boolean,
-        ) {
-            backupRepository.apply(data.favoriteLocations, data.routes, clearFavorites = replace, clearRoutes = replace)
-            // Preserve fields not present in ExportData by reading current persisted values.
-            val currentSnapshot = settingsRepository.getSettingsSnapshot().first()
-            val profileById = data.speedProfiles.associateBy { it.id }
-            settingsRepository.applySnapshot(
-                currentSnapshot.copy(
-                    slowWalkSpeedMs = profileById["slow_walk"]?.speedMetersPerSecond ?: currentSnapshot.slowWalkSpeedMs,
-                    walkSpeedMs = profileById["walk"]?.speedMetersPerSecond ?: currentSnapshot.walkSpeedMs,
-                    runSpeedMs = profileById["run"]?.speedMetersPerSecond ?: currentSnapshot.runSpeedMs,
-                    bikeSpeedMs = profileById["bike"]?.speedMetersPerSecond ?: currentSnapshot.bikeSpeedMs,
-                    driveSpeedMs = profileById["drive"]?.speedMetersPerSecond ?: currentSnapshot.driveSpeedMs,
-                    speedUnit = data.settings.speedUnit,
-                    mapTileSource = data.settings.mapTileSource,
-                    guidedPath = data.settings.guidedPath,
-                    disabledGeocodingProviders = data.settings.disabledGeocodingProviders,
-                    featureOrder = data.settings.featureOrder,
-                    enabledWidgetFeatures = data.settings.enabledWidgetFeatures,
-                    enabledMapFeatures = data.settings.enabledMapFeatures,
-                    enabledSpeedProfileIds = data.settings.enabledSpeedProfileIds,
-                    jitterIdleRadius = data.jitterIdleRadius,
-                    jitterMovingRadius = data.jitterMovingRadius,
-                    jitterMaxStepMeters = data.jitterMaxStepMeters,
-                    realismBearingHoldIdle = data.settings.bearingHoldOnIdle,
-                    realismAltitudeEnabled = data.settings.altitudeEnabled,
-                    realismWarmupEnabled = data.settings.warmupEnabled,
-                    realismSatelliteExtrasEnabled = data.settings.satelliteExtrasEnabled,
-                    realismSuspendedMockingEnabled = data.settings.suspendedMockingEnabled,
-                    hideTeleportFeatures = data.settings.hideTeleportFeatures,
-                    hideWidgetOverlay = data.settings.hideWidgetOverlay,
-                    hideForegroundNotification = data.settings.hideForegroundNotification,
-                    showRouteJumpButtons = data.settings.showRouteJumpButtons,
-                    lastKnownPositionEnabled = data.settings.lastKnownPositionEnabled,
-                    agpsResetOnStartEnabled = data.settings.agpsResetOnStartEnabled,
-                    bypassMockLocationCheck = data.settings.bypassMockLocationCheck,
-                    realismRealElevationEnabled = data.settings.realElevationEnabled,
-                    altitudeJitterRadiusMeters = data.settings.altitudeJitterRadiusMeters,
-                    plantingRadiusMeters = data.settings.plantingRadiusMeters,
-                    altitudeOverrideButtonEnabled = data.settings.altitudeOverrideButtonEnabled,
-                    debugStatsEnabled = data.settings.debugStatsEnabled,
-                    jitterSpeedIdleVariationPct = data.jitterSpeedIdleVariationPct,
-                    jitterSpeedMovingVariationPct = data.jitterSpeedMovingVariationPct,
-                    jitterSpeedIdleWobbleProbabilityPct = data.jitterSpeedIdleWobbleProbabilityPct,
-                    hotLocationsEnabled = data.hotLocationsEnabled,
-                    selectedHotLocationIds = data.selectedHotLocationIds,
-                    hotRoutesEnabled = data.hotRoutesEnabled,
-                    selectedHotRouteIds = data.selectedHotRouteIds,
-                    roamingDefaults = data.settings.roamingDefaults,
-                    rememberLastLocation = data.settings.rememberLastLocation,
-                    mapFollowsLocation = data.settings.mapFollowsLocation,
-                    floatingMapQuickWalk = data.settings.floatingMapQuickWalk,
-                ),
-            )
-            settingsRepository.setTapToWalkOverlayEnabled(data.settings.tapToWalkOverlayEnabled)
-            settingsRepository.setTapToWalkMoves(data.settings.tapToWalkMoves)
-            settingsRepository.setActiveProfileId(data.settings.activeSpeedProfileId)
-            settingsRepository.setReconnectTapEnabled(data.settings.reconnectTapEnabled)
-            settingsRepository.setKeepWidgetOnIdle(data.settings.keepWidgetOnIdle)
-            settingsRepository.setThemeMode(data.settings.themeMode)
-            if (data.hotLocationsEnabled) {
-                favoriteRepository.upsertHotLocations(hotLocationsRepository.locations.value, data.selectedHotLocationIds)
-            } else {
-                favoriteRepository.removeHotLocations()
-            }
-            if (data.hotRoutesEnabled) {
-                routeRepository.upsertHotRoutes(hotRoutesRepository.routes.value, data.selectedHotRouteIds)
-            } else {
-                routeRepository.removeHotRoutes()
-            }
-            if (replace) {
-                settingsRepository.setRoutesSortNewestFirst(data.routesSortNewestFirst)
-                settingsRepository.setFavoritesSortNewestFirst(data.favoritesSortNewestFirst)
-                settingsRepository.setRoutesSortMode(data.routesSortMode)
-                settingsRepository.setFavoritesSortMode(data.favoritesSortMode)
-                // After the sort modes: choosing a mode clears the manual order.
-                if (data.favoritesManualOrder.isNotEmpty()) settingsRepository.setFavoritesManualOrder(data.favoritesManualOrder)
-                if (data.routesManualOrder.isNotEmpty()) settingsRepository.setRoutesManualOrder(data.routesManualOrder)
-            } else {
-                val favoritesOrder = settingsRepository.getFavoritesManualOrder().first()
-                if (favoritesOrder.isNotEmpty()) {
-                    val imported = data.favoritesManualOrder + data.favoriteLocations.map { it.id }
-                    settingsRepository.setFavoritesManualOrder((favoritesOrder + imported).distinct())
-                }
-                val routesOrder = settingsRepository.getRoutesManualOrder().first()
-                if (routesOrder.isNotEmpty()) {
-                    val imported = data.routesManualOrder + data.routes.map { it.id }
-                    settingsRepository.setRoutesManualOrder((routesOrder + imported).distinct())
-                }
-            }
-            if (replace || data.homeFavoriteId != null) settingsRepository.setHomeFavoriteId(data.homeFavoriteId)
-            clearHomeIfMissing()
-        }
-
-        /** Home is a favorite id; clear it when that favorite no longer exists (e.g. hot locations turned off). */
-        private suspend fun clearHomeIfMissing() {
-            val id = settingsRepository.getHomeFavoriteId().first() ?: return
-            if (favoriteRepository.getFavorites().first().none { it.id == id }) settingsRepository.setHomeFavoriteId(null)
         }
 
         fun importFromGpsJoystick(

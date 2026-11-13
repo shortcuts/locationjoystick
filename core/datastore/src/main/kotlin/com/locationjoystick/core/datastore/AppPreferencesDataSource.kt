@@ -9,15 +9,11 @@ import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.common.util.clampPlantingRadius
 import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.FloatingMapRect
-import com.locationjoystick.core.model.GeocodingProviderId
-import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
 import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.RecentSearch
 import com.locationjoystick.core.model.RoamingDefaults
-import com.locationjoystick.core.model.RoamingKind
 import com.locationjoystick.core.model.SpeedProfile
-import com.locationjoystick.core.model.SpeedUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -41,7 +37,8 @@ interface PreferencesDataSource :
     SavedItemOrderPreferences,
     SpoofHistoryPreferences,
     TapToWalkPreferences,
-    ReconnectPreferences {
+    ReconnectPreferences,
+    SettingsSnapshotPreferences {
     /** Gets the current speed profiles (slow walk/walk/run/bike/drive speeds and active profile ID). */
     fun getSpeedProfiles(): Flow<SpeedProfilePreferences>
 
@@ -351,62 +348,9 @@ interface PreferencesDataSource :
     /** Stores the compact floating map position and size; null clears it. */
     suspend fun setFloatingMapRect(rect: FloatingMapRect?)
 
-    /** Returns all settings needed by the settings UI in a single DataStore scan. */
-    fun getSettingsSnapshot(): Flow<SettingsSnapshot>
-
-    /** Bulk import write: writes all settings from [snapshot] atomically in a single DataStore transaction. */
-    suspend fun applySnapshot(snapshot: SettingsSnapshot)
-
     /** Clears every preference except [Keys.ONBOARDING_COMPLETE], so the user isn't forced to re-onboard. */
     suspend fun clearAllExceptOnboarding()
 }
-
-data class SettingsSnapshot(
-    val slowWalkSpeedMs: Double,
-    val walkSpeedMs: Double,
-    val runSpeedMs: Double,
-    val bikeSpeedMs: Double,
-    val driveSpeedMs: Double,
-    val speedUnit: SpeedUnit,
-    val featureOrder: List<AppFeature>,
-    val enabledWidgetFeatures: Set<AppFeature>,
-    val enabledMapFeatures: Set<AppFeature>,
-    val rememberLastLocation: Boolean,
-    val mapFollowsLocation: Boolean,
-    val mapTileSource: MapTileSource = MapTileSource.DEFAULT,
-    val guidedPath: GuidedPath = GuidedPath.DEFAULT,
-    val disabledGeocodingProviders: Set<GeocodingProviderId> = emptySet(),
-    val jitterIdleRadius: Double,
-    val jitterMovingRadius: Double,
-    val jitterMaxStepMeters: Double,
-    val realismBearingHoldIdle: Boolean,
-    val realismAltitudeEnabled: Boolean,
-    val realismWarmupEnabled: Boolean,
-    val realismSatelliteExtrasEnabled: Boolean,
-    val realismSuspendedMockingEnabled: Boolean,
-    val jitterSpeedIdleVariationPct: Int,
-    val jitterSpeedMovingVariationPct: Int,
-    val hotLocationsEnabled: Boolean,
-    val selectedHotLocationIds: Set<String>,
-    val hotRoutesEnabled: Boolean,
-    val selectedHotRouteIds: Set<String>,
-    val roamingDefaults: RoamingDefaults,
-    val floatingMapQuickWalk: Boolean = false,
-    val enabledSpeedProfileIds: Set<String> = AppConstants.ProfileConstants.DEFAULT_ENABLED_SPEED_PROFILE_IDS,
-    val hideTeleportFeatures: Boolean = false,
-    val hideWidgetOverlay: Boolean = false,
-    val hideForegroundNotification: Boolean = false,
-    val showRouteJumpButtons: Boolean = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
-    val lastKnownPositionEnabled: Boolean = AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT,
-    val agpsResetOnStartEnabled: Boolean = AppConstants.ProfileConstants.AGPS_RESET_ON_START_ENABLED_DEFAULT,
-    val bypassMockLocationCheck: Boolean = false,
-    val realismRealElevationEnabled: Boolean = AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
-    val altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
-    val plantingRadiusMeters: Double = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS,
-    val altitudeOverrideButtonEnabled: Boolean = false,
-    val debugStatsEnabled: Boolean = false,
-    val jitterSpeedIdleWobbleProbabilityPct: Int = AppConstants.JitterConstants.SPEED_IDLE_WOBBLE_PROBABILITY_PCT_DEFAULT,
-)
 
 fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
     val speedMs =
@@ -430,84 +374,6 @@ fun SpeedProfilePreferences.toActiveSpeedProfile(): SpeedProfile {
     )
 }
 
-inline fun <reified T : Enum<T>> String.toEnumFeature(): T? =
-    enumValues<T>().firstOrNull {
-        it.name.lowercase() == this
-    }
-
-/**
- * Old `WidgetFeature` names that were renamed when [AppFeature] merged it with the old
- * `MapFabFeature`. Keeps existing users' widget toggle choices intact across the upgrade.
- */
-private val legacyAppFeatureAliases =
-    mapOf(
-        "routes_floating" to AppFeature.ROUTES,
-        "favorites_floating" to AppFeature.FAVORITES,
-    )
-
-fun String.toAppFeature(): AppFeature? = legacyAppFeatureAliases[this] ?: toEnumFeature<AppFeature>()
-
-fun List<AppFeature>.withMissingEntriesAppended(): List<AppFeature> = this + (AppFeature.entries - this.toSet())
-
-fun parseFeatureOrder(raw: String?): List<AppFeature> {
-    if (raw.isNullOrBlank()) return AppFeature.DEFAULT_ORDER
-    return raw.split(",").mapNotNull { it.toAppFeature() }.withMissingEntriesAppended()
-}
-
-/**
- * Map FAB names that were in [AppFeature.DEFAULT_MAP_ENABLED] before
- * [AppFeature.PASTE_COORDINATES]. Used when `map_fab_seen_defaults` is absent so an
- * in-place upgrade gets new default-on FABs without re-enabling buttons the user
- * already turned off.
- */
-val LEGACY_MAP_FAB_SEEN_DEFAULTS: Set<String> = setOf("favorites", "routes", "roaming", "search")
-
-/**
- * Widget items in [AppFeature.DEFAULT_WIDGET_ENABLED] before [AppFeature.PASTE_COORDINATES]
- * and before [AppFeature.ROAMING] was eligible on the widget (it was map-only until 0.20.5).
- * Used when `widget_seen_defaults` is absent so an in-place upgrade gets those default-on
- * buttons without re-enabling buttons the user already turned off.
- */
-val LEGACY_WIDGET_SEEN_DEFAULTS: Set<String> =
-    setOf("map_floating", "joystick_toggle", "joystick_lock", "routes", "favorites", "speed_cycle")
-
-/**
- * Widget defaults after paste landed and before roaming was added to the widget.
- * An install that saved Settings in that window has this in `widget_seen_defaults`;
- * roaming is still unseen, so [mergeNewDefaultWidgetFeatures] turns it on once.
- * If `widget_seen_defaults` already contains `roaming`, the user ran a build where
- * the widget button was a default and then turned it off — leave it off.
- */
-val WIDGET_PRE_ROAMING_SEEN_DEFAULTS: Set<String> = LEGACY_WIDGET_SEEN_DEFAULTS + "paste_coordinates"
-
-/**
- * Union any [currentDefaults] that were introduced after [seenDefaults] into [stored].
- * A null [seenDefaults] means this install has never recorded the default set (pre-migration
- * DataStore), so [legacySeenDefaults] stands in.
- */
-fun mergeNewDefaultFeatures(
-    stored: Set<String>,
-    seenDefaults: Set<String>?,
-    currentDefaults: Set<String>,
-    legacySeenDefaults: Set<String>,
-): Set<String> = stored + (currentDefaults - (seenDefaults ?: legacySeenDefaults))
-
-fun mergeNewDefaultMapFeatures(
-    stored: Set<String>,
-    seenDefaults: Set<String>?,
-    currentDefaults: Set<String> = AppFeature.DEFAULT_MAP_ENABLED.map { it.name.lowercase() }.toSet(),
-    legacySeenDefaults: Set<String> = LEGACY_MAP_FAB_SEEN_DEFAULTS,
-): Set<String> = mergeNewDefaultFeatures(stored, seenDefaults, currentDefaults, legacySeenDefaults)
-
-fun mergeNewDefaultWidgetFeatures(
-    stored: Set<String>,
-    seenDefaults: Set<String>?,
-    currentDefaults: Set<String> = AppFeature.DEFAULT_WIDGET_ENABLED.map { it.name.lowercase() }.toSet(),
-    legacySeenDefaults: Set<String> = LEGACY_WIDGET_SEEN_DEFAULTS,
-): Set<String> = mergeNewDefaultFeatures(stored, seenDefaults, currentDefaults, legacySeenDefaults)
-
-fun List<AppFeature>.serializeFeatureOrder(): String = joinToString(",") { it.name.lowercase() }
-
 @Singleton
 class AppPreferencesDataSource
     @Inject
@@ -520,7 +386,8 @@ class AppPreferencesDataSource
         SavedItemOrderPreferences by SavedItemOrderStore(dataStore),
         SpoofHistoryPreferences by SpoofHistoryStore(dataStore),
         TapToWalkPreferences by TapToWalkStore(dataStore),
-        ReconnectPreferences by ReconnectStore(dataStore) {
+        ReconnectPreferences by ReconnectStore(dataStore),
+        SettingsSnapshotPreferences by SettingsSnapshotStore(dataStore) {
         override fun getSpeedProfiles(): Flow<SpeedProfilePreferences> =
             dataStore.safeData("speed profile preferences").map { prefs ->
                 SpeedProfilePreferences(
@@ -564,11 +431,6 @@ class AppPreferencesDataSource
             }
         }
 
-        private fun resolveWidgetItems(prefs: Preferences): Set<String> {
-            val stored = prefs[Keys.WIDGET_ITEMS] ?: DEFAULT_WIDGET_ITEMS
-            return mergeNewDefaultWidgetFeatures(stored, prefs[Keys.WIDGET_SEEN_DEFAULTS])
-        }
-
         override fun getMapItems(): Flow<Set<String>> =
             dataStore.data
                 .catch { e ->
@@ -585,11 +447,6 @@ class AppPreferencesDataSource
                 prefs[Keys.MAP_FAB_ITEMS] = items
                 prefs[Keys.MAP_FAB_SEEN_DEFAULTS] = DEFAULT_MAP_FAB_ITEMS
             }
-        }
-
-        private fun resolveMapFabItems(prefs: Preferences): Set<String> {
-            val stored = prefs[Keys.MAP_FAB_ITEMS] ?: DEFAULT_MAP_FAB_ITEMS
-            return mergeNewDefaultMapFeatures(stored, prefs[Keys.MAP_FAB_SEEN_DEFAULTS])
         }
 
         override fun getFeatureOrder(): Flow<List<AppFeature>> =
@@ -976,71 +833,6 @@ class AppPreferencesDataSource
             }
         }
 
-        override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
-            dataStore.edit { prefs ->
-                prefs[Keys.SLOW_WALK_SPEED_MS] = snapshot.slowWalkSpeedMs.coerceAtLeast(MIN_SPEED_MS)
-                prefs[Keys.WALK_SPEED_MS] = snapshot.walkSpeedMs.coerceAtLeast(MIN_SPEED_MS)
-                prefs[Keys.RUN_SPEED_MS] = snapshot.runSpeedMs.coerceAtLeast(MIN_SPEED_MS)
-                prefs[Keys.BIKE_SPEED_MS] = snapshot.bikeSpeedMs.coerceAtLeast(MIN_SPEED_MS)
-                prefs[Keys.DRIVE_SPEED_MS] = snapshot.driveSpeedMs.coerceAtLeast(MIN_SPEED_MS)
-                prefs[Keys.SPEED_UNIT] = snapshot.speedUnit.name
-                prefs[Keys.WIDGET_ITEMS] = snapshot.enabledWidgetFeatures.map { it.name.lowercase() }.toSet()
-                prefs[Keys.WIDGET_SEEN_DEFAULTS] = DEFAULT_WIDGET_ITEMS
-                prefs[Keys.MAP_FAB_ITEMS] = snapshot.enabledMapFeatures.map { it.name.lowercase() }.toSet()
-                prefs[Keys.MAP_FAB_SEEN_DEFAULTS] = DEFAULT_MAP_FAB_ITEMS
-                prefs[Keys.FEATURE_ORDER] = snapshot.featureOrder.serializeFeatureOrder()
-                prefs[Keys.ENABLED_SPEED_PROFILE_IDS] = snapshot.enabledSpeedProfileIds
-                prefs[Keys.REMEMBER_LAST_LOCATION] = snapshot.rememberLastLocation
-                prefs[Keys.MAP_FOLLOWS_LOCATION] = snapshot.mapFollowsLocation
-                prefs[Keys.MAP_TILE_SOURCE] = snapshot.mapTileSource.name
-                prefs[Keys.GUIDED_PATH] = snapshot.guidedPath.name
-                prefs[Keys.DISABLED_GEOCODING_PROVIDERS] = snapshot.disabledGeocodingProviders.map { it.name }.toSet()
-                prefs[Keys.JITTER_IDLE_RADIUS_METERS] = snapshot.jitterIdleRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
-                prefs[Keys.JITTER_MOVING_RADIUS_METERS] = snapshot.jitterMovingRadius.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
-                prefs[Keys.JITTER_MAX_STEP_METERS] =
-                    snapshot.jitterMaxStepMeters.coerceIn(MIN_JITTER_STEP_METERS, MAX_JITTER_STEP_METERS)
-                prefs[Keys.REALISM_BEARING_HOLD_IDLE] = snapshot.realismBearingHoldIdle
-                prefs[Keys.REALISM_ALTITUDE_ENABLED] = snapshot.realismAltitudeEnabled
-                prefs[Keys.REALISM_WARMUP_ENABLED] = snapshot.realismWarmupEnabled
-                prefs[Keys.REALISM_SATELLITE_EXTRAS_ENABLED] = snapshot.realismSatelliteExtrasEnabled
-                prefs[Keys.REALISM_SUSPENDED_MOCKING_ENABLED] = snapshot.realismSuspendedMockingEnabled
-                prefs[Keys.HIDE_TELEPORT_FEATURES] = snapshot.hideTeleportFeatures
-                prefs[Keys.HIDE_WIDGET_OVERLAY] = snapshot.hideWidgetOverlay
-                prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] = snapshot.hideForegroundNotification
-                prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS] = snapshot.showRouteJumpButtons
-                prefs[Keys.LAST_KNOWN_POSITION_ENABLED] = snapshot.lastKnownPositionEnabled
-                prefs[Keys.AGPS_RESET_ON_START_ENABLED] = snapshot.agpsResetOnStartEnabled
-                prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] = snapshot.bypassMockLocationCheck
-                prefs[Keys.REALISM_REAL_ELEVATION_ENABLED] = snapshot.realismRealElevationEnabled
-                prefs[Keys.ALTITUDE_JITTER_RADIUS_METERS] =
-                    snapshot.altitudeJitterRadiusMeters.coerceIn(0.0, MAX_JITTER_RADIUS_METERS)
-                prefs[Keys.PLANTING_RADIUS_METERS] = clampPlantingRadius(snapshot.plantingRadiusMeters)
-                prefs[Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED] = snapshot.altitudeOverrideButtonEnabled
-                prefs[Keys.DEBUG_STATS_ENABLED] = snapshot.debugStatsEnabled
-                prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT] =
-                    snapshot.jitterSpeedIdleVariationPct.coerceIn(
-                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
-                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
-                    )
-                prefs[Keys.JITTER_SPEED_MOVING_VARIATION_PCT] =
-                    snapshot.jitterSpeedMovingVariationPct.coerceIn(
-                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
-                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
-                    )
-                prefs[Keys.JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT] =
-                    snapshot.jitterSpeedIdleWobbleProbabilityPct.coerceIn(
-                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MIN,
-                        AppConstants.JitterConstants.SPEED_VARIATION_PCT_MAX,
-                    )
-                prefs[Keys.HOT_LOCATIONS_ENABLED] = snapshot.hotLocationsEnabled
-                prefs[Keys.HOT_LOCATION_SELECTED_IDS] = snapshot.selectedHotLocationIds
-                prefs[Keys.HOT_ROUTES_ENABLED] = snapshot.hotRoutesEnabled
-                prefs[Keys.HOT_ROUTE_SELECTED_IDS] = snapshot.selectedHotRouteIds
-                prefs[Keys.FLOATING_MAP_QUICK_WALK] = snapshot.floatingMapQuickWalk
-                prefs.writeRoamingDefaults(snapshot.roamingDefaults)
-            }
-        }
-
         override suspend fun clearAllExceptOnboarding() {
             dataStore.edit { prefs ->
                 val onboardingComplete = prefs[Keys.ONBOARDING_COMPLETE]
@@ -1049,132 +841,6 @@ class AppPreferencesDataSource
                     prefs[Keys.ONBOARDING_COMPLETE] = onboardingComplete
                 }
             }
-        }
-
-        override fun getSettingsSnapshot(): Flow<SettingsSnapshot> =
-            dataStore.data
-                .catch { e ->
-                    if (e is IOException) {
-                        Log.e(TAG, "Error reading settings snapshot", e)
-                        emit(emptyPreferences())
-                    } else {
-                        throw e
-                    }
-                }.map { prefs ->
-                    val speedUnitStr = prefs[Keys.SPEED_UNIT] ?: AppConstants.ProfileConstants.DEFAULT_SPEED_UNIT
-                    val speedUnit =
-                        try {
-                            SpeedUnit.valueOf(speedUnitStr)
-                        } catch (_: IllegalArgumentException) {
-                            SpeedUnit.KMH
-                        }
-                    val widgetItems = resolveWidgetItems(prefs)
-                    val mapItems = resolveMapFabItems(prefs)
-                    SettingsSnapshot(
-                        slowWalkSpeedMs = prefs[Keys.SLOW_WALK_SPEED_MS] ?: DEFAULT_SLOW_WALK_SPEED_MS,
-                        walkSpeedMs = prefs[Keys.WALK_SPEED_MS] ?: DEFAULT_WALK_SPEED_MS,
-                        runSpeedMs = prefs[Keys.RUN_SPEED_MS] ?: DEFAULT_RUN_SPEED_MS,
-                        bikeSpeedMs = prefs[Keys.BIKE_SPEED_MS] ?: DEFAULT_BIKE_SPEED_MS,
-                        driveSpeedMs = prefs[Keys.DRIVE_SPEED_MS] ?: DEFAULT_DRIVE_SPEED_MS,
-                        speedUnit = speedUnit,
-                        featureOrder = parseFeatureOrder(prefs[Keys.FEATURE_ORDER]),
-                        enabledWidgetFeatures = widgetItems.mapNotNull { it.toAppFeature() }.toSet(),
-                        enabledMapFeatures = mapItems.mapNotNull { it.toAppFeature() }.toSet(),
-                        enabledSpeedProfileIds =
-                            prefs[Keys.ENABLED_SPEED_PROFILE_IDS] ?: DEFAULT_ENABLED_SPEED_PROFILE_IDS,
-                        rememberLastLocation =
-                            prefs[Keys.REMEMBER_LAST_LOCATION]
-                                ?: AppConstants.DataStoreConstants.DEFAULT_REMEMBER_LAST_LOCATION,
-                        mapFollowsLocation = prefs[Keys.MAP_FOLLOWS_LOCATION] ?: true,
-                        mapTileSource = MapTileSource.fromName(prefs[Keys.MAP_TILE_SOURCE]),
-                        guidedPath = GuidedPath.fromName(prefs[Keys.GUIDED_PATH]),
-                        disabledGeocodingProviders =
-                            prefs[Keys.DISABLED_GEOCODING_PROVIDERS].orEmpty().mapNotNull(GeocodingProviderId::fromName).toSet(),
-                        jitterIdleRadius = prefs[Keys.JITTER_IDLE_RADIUS_METERS] ?: DEFAULT_JITTER_IDLE_RADIUS_METERS,
-                        jitterMovingRadius = prefs[Keys.JITTER_MOVING_RADIUS_METERS] ?: DEFAULT_JITTER_MOVING_RADIUS_METERS,
-                        jitterMaxStepMeters = prefs[Keys.JITTER_MAX_STEP_METERS] ?: DEFAULT_JITTER_MAX_STEP_METERS,
-                        realismBearingHoldIdle = prefs[Keys.REALISM_BEARING_HOLD_IDLE] ?: true,
-                        realismAltitudeEnabled = prefs[Keys.REALISM_ALTITUDE_ENABLED] ?: true,
-                        realismWarmupEnabled = prefs[Keys.REALISM_WARMUP_ENABLED] ?: false,
-                        realismSatelliteExtrasEnabled = prefs[Keys.REALISM_SATELLITE_EXTRAS_ENABLED] ?: true,
-                        realismSuspendedMockingEnabled = prefs[Keys.REALISM_SUSPENDED_MOCKING_ENABLED] ?: false,
-                        hideTeleportFeatures = prefs[Keys.HIDE_TELEPORT_FEATURES] ?: false,
-                        hideWidgetOverlay = prefs[Keys.HIDE_WIDGET_OVERLAY] ?: false,
-                        hideForegroundNotification = prefs[Keys.HIDE_FOREGROUND_NOTIFICATION] ?: false,
-                        showRouteJumpButtons =
-                            prefs[Keys.SHOW_ROUTE_JUMP_BUTTONS]
-                                ?: AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
-                        lastKnownPositionEnabled =
-                            prefs[Keys.LAST_KNOWN_POSITION_ENABLED]
-                                ?: AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT,
-                        agpsResetOnStartEnabled =
-                            prefs[Keys.AGPS_RESET_ON_START_ENABLED]
-                                ?: AppConstants.ProfileConstants.AGPS_RESET_ON_START_ENABLED_DEFAULT,
-                        bypassMockLocationCheck = prefs[Keys.BYPASS_MOCK_LOCATION_CHECK] ?: false,
-                        realismRealElevationEnabled =
-                            prefs[Keys.REALISM_REAL_ELEVATION_ENABLED]
-                                ?: AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
-                        altitudeJitterRadiusMeters =
-                            prefs[Keys.ALTITUDE_JITTER_RADIUS_METERS] ?: DEFAULT_ALTITUDE_JITTER_RADIUS_METERS,
-                        plantingRadiusMeters = prefs[Keys.PLANTING_RADIUS_METERS] ?: DEFAULT_PLANTING_RADIUS_METERS,
-                        altitudeOverrideButtonEnabled = prefs[Keys.ALTITUDE_OVERRIDE_BUTTON_ENABLED] ?: false,
-                        debugStatsEnabled = prefs[Keys.DEBUG_STATS_ENABLED] ?: false,
-                        jitterSpeedIdleVariationPct =
-                            prefs[Keys.JITTER_SPEED_IDLE_VARIATION_PCT]
-                                ?: DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,
-                        jitterSpeedMovingVariationPct =
-                            prefs[Keys.JITTER_SPEED_MOVING_VARIATION_PCT]
-                                ?: DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT,
-                        jitterSpeedIdleWobbleProbabilityPct =
-                            prefs[Keys.JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT]
-                                ?: DEFAULT_JITTER_SPEED_IDLE_WOBBLE_PROBABILITY_PCT,
-                        hotLocationsEnabled = prefs[Keys.HOT_LOCATIONS_ENABLED] ?: false,
-                        selectedHotLocationIds = prefs[Keys.HOT_LOCATION_SELECTED_IDS] ?: emptySet(),
-                        hotRoutesEnabled = prefs[Keys.HOT_ROUTES_ENABLED] ?: false,
-                        selectedHotRouteIds = prefs[Keys.HOT_ROUTE_SELECTED_IDS] ?: emptySet(),
-                        roamingDefaults = prefs.toRoamingDefaults(),
-                        floatingMapQuickWalk = prefs[Keys.FLOATING_MAP_QUICK_WALK] ?: false,
-                    )
-                }
-
-        private fun Preferences.toRoamingDefaults(): RoamingDefaults =
-            RoamingDefaults(
-                radiusMeters = this[Keys.ROAMING_RADIUS_METERS] ?: DEFAULT_ROAMING_RADIUS_METERS,
-                distanceMeters = this[Keys.ROAMING_DISTANCE_METERS] ?: DEFAULT_ROAMING_DISTANCE_METERS,
-                speedProfileId = this[Keys.ROAMING_SPEED_PROFILE_ID] ?: DEFAULT_ROAMING_SPEED_PROFILE_ID,
-                followRoads = this[Keys.ROAMING_ROAD_FOLLOWING] ?: DEFAULT_ROAMING_FOLLOW_ROADS,
-                returnToInitialLocation = this[Keys.ROAMING_RETURN_TO_START] ?: DEFAULT_ROAMING_RETURN_TO_START,
-                kind = RoamingKind.parse(this[Keys.ROAMING_KIND] ?: DEFAULT_ROAMING_KIND),
-                plantingStartRadiusMeters =
-                    this[Keys.ROAMING_PLANTING_START_RADIUS_METERS] ?: DEFAULT_ROAMING_PLANTING_START_RADIUS_METERS,
-                plantingEndRadiusMeters =
-                    this[Keys.ROAMING_PLANTING_END_RADIUS_METERS] ?: DEFAULT_ROAMING_PLANTING_END_RADIUS_METERS,
-                plantingInfiniteLoops =
-                    this[Keys.ROAMING_PLANTING_INFINITE_LOOPS] ?: DEFAULT_ROAMING_PLANTING_INFINITE_LOOPS,
-                plantingLoopCount =
-                    this[Keys.ROAMING_PLANTING_LOOP_COUNT] ?: DEFAULT_ROAMING_PLANTING_LOOP_COUNT,
-                plantingSpacingMeters =
-                    this[Keys.ROAMING_PLANTING_SPACING_METERS] ?: DEFAULT_ROAMING_PLANTING_SPACING_METERS,
-                plantingExpandOnly =
-                    this[Keys.ROAMING_PLANTING_EXPAND_ONLY] ?: DEFAULT_ROAMING_PLANTING_EXPAND_ONLY,
-                plantingSpeedProfileId =
-                    this[Keys.ROAMING_PLANTING_SPEED_PROFILE_ID] ?: DEFAULT_ROAMING_PLANTING_SPEED_PROFILE_ID,
-            )
-
-        private fun androidx.datastore.preferences.core.MutablePreferences.writeRoamingDefaults(defaults: RoamingDefaults) {
-            this[Keys.ROAMING_RADIUS_METERS] = defaults.radiusMeters
-            this[Keys.ROAMING_DISTANCE_METERS] = defaults.distanceMeters
-            this[Keys.ROAMING_SPEED_PROFILE_ID] = defaults.speedProfileId
-            this[Keys.ROAMING_ROAD_FOLLOWING] = defaults.followRoads
-            this[Keys.ROAMING_RETURN_TO_START] = defaults.returnToInitialLocation
-            this[Keys.ROAMING_KIND] = defaults.kind.name
-            this[Keys.ROAMING_PLANTING_START_RADIUS_METERS] = defaults.plantingStartRadiusMeters
-            this[Keys.ROAMING_PLANTING_END_RADIUS_METERS] = defaults.plantingEndRadiusMeters
-            this[Keys.ROAMING_PLANTING_INFINITE_LOOPS] = defaults.plantingInfiniteLoops
-            this[Keys.ROAMING_PLANTING_LOOP_COUNT] = defaults.plantingLoopCount
-            this[Keys.ROAMING_PLANTING_SPACING_METERS] = defaults.plantingSpacingMeters
-            this[Keys.ROAMING_PLANTING_EXPAND_ONLY] = defaults.plantingExpandOnly
-            this[Keys.ROAMING_PLANTING_SPEED_PROFILE_ID] = defaults.plantingSpeedProfileId
         }
 
         companion object {

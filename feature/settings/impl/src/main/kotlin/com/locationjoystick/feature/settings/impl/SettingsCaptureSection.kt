@@ -77,7 +77,7 @@ internal fun CaptureSection(
 ) {
     var showLaunchSheet by rememberSaveable { mutableStateOf(false) }
     val launchApp =
-        effectiveLaunchPackage(uiState.launchAfterLinkPackage, uiState.launchAfterLinkChosen, uiState.guidedPath) { pkg ->
+        effectiveLaunchPackage(uiState.launchAfterLinkPackage, uiState.launchAfterLinkChosen, uiState.settings.guidedPath) { pkg ->
             launchableApps.any { it.packageName == pkg }
         }?.let { pkg -> launchableApps.find { it.packageName == pkg } }
     val context = LocalContext.current

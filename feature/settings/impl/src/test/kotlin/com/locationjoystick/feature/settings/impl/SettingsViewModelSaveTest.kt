@@ -125,7 +125,7 @@ class SettingsViewModelSaveTest {
         runTest(testDispatcher) {
             viewModel.setMapFollowsLocation(false)
 
-            assertFalse(fakeDataSource.written.mapFollowsLocation)
+            assertFalse(fakeDataSource.written.settings.mapFollowsLocation)
             assertEquals(0, fakeDataSource.applySnapshotCallCount)
         }
 
@@ -191,7 +191,7 @@ class SettingsViewModelSaveTest {
             viewModel.setDisabledGeocodingProviders(setOf(GeocodingProviderId.NOMINATIM))
             viewModel.setDisabledGeocodingProviders(GeocodingProviderId.entries.toSet())
 
-            assertEquals(setOf(GeocodingProviderId.NOMINATIM), fakeDataSource.written.disabledGeocodingProviders)
+            assertEquals(setOf(GeocodingProviderId.NOMINATIM), fakeDataSource.written.settings.disabledGeocodingProviders)
         }
 
     @Test
@@ -202,10 +202,10 @@ class SettingsViewModelSaveTest {
             viewModel.setAltitudeJitterRadius(2.5)
             viewModel.setAltitudeOverrideButtonEnabled(true)
 
-            assertEquals(60.0, fakeDataSource.written.plantingRadiusMeters, 0.001)
-            assertFalse(fakeDataSource.written.realismRealElevationEnabled)
-            assertEquals(2.5, fakeDataSource.written.altitudeJitterRadiusMeters, 0.001)
-            assertTrue(fakeDataSource.written.altitudeOverrideButtonEnabled)
+            assertEquals(60.0, fakeDataSource.written.settings.plantingRadiusMeters, 0.001)
+            assertFalse(fakeDataSource.written.settings.realElevationEnabled)
+            assertEquals(2.5, fakeDataSource.written.settings.altitudeJitterRadiusMeters, 0.001)
+            assertTrue(fakeDataSource.written.settings.altitudeOverrideButtonEnabled)
             assertEquals(0, fakeDataSource.applySnapshotCallCount)
         }
 
@@ -214,7 +214,7 @@ class SettingsViewModelSaveTest {
         runTest(testDispatcher) {
             viewModel.setFloatingMapQuickWalk(true)
 
-            assertTrue(fakeDataSource.written.floatingMapQuickWalk)
+            assertTrue(fakeDataSource.written.settings.floatingMapQuickWalk)
         }
 
     @Test
@@ -224,7 +224,7 @@ class SettingsViewModelSaveTest {
 
             fakeSettingsRepo.setBypassMockLocationCheck(true)
 
-            assertTrue(viewModel.loaded.bypassMockLocationCheck)
+            assertTrue(viewModel.loaded.settings.bypassMockLocationCheck)
         }
 
     @Test
@@ -348,14 +348,14 @@ class SettingsViewModelSaveTest {
             assertEquals(1.1, snapshot.walkSpeedMs, 0.001)
             assertEquals(3.3, snapshot.runSpeedMs, 0.001)
             assertEquals(7.7, snapshot.bikeSpeedMs, 0.001)
-            assertEquals(SpeedUnit.MPH, snapshot.speedUnit)
-            assertEquals(setOf(AppFeature.JOYSTICK_TOGGLE), snapshot.enabledWidgetFeatures)
-            assertFalse(snapshot.realismBearingHoldIdle)
-            assertFalse(snapshot.realismAltitudeEnabled)
-            assertTrue(snapshot.realismWarmupEnabled)
-            assertFalse(snapshot.realismSatelliteExtrasEnabled)
-            assertTrue(snapshot.realismSuspendedMockingEnabled)
-            assertTrue(snapshot.hideTeleportFeatures)
+            assertEquals(SpeedUnit.MPH, snapshot.settings.speedUnit)
+            assertEquals(setOf(AppFeature.JOYSTICK_TOGGLE), snapshot.settings.enabledWidgetFeatures)
+            assertFalse(snapshot.settings.bearingHoldOnIdle)
+            assertFalse(snapshot.settings.altitudeEnabled)
+            assertTrue(snapshot.settings.warmupEnabled)
+            assertFalse(snapshot.settings.satelliteExtrasEnabled)
+            assertTrue(snapshot.settings.suspendedMockingEnabled)
+            assertTrue(snapshot.settings.hideTeleportFeatures)
             assertEquals(2.5, snapshot.jitterIdleRadius, 0.001)
             assertEquals(4.0, snapshot.jitterMovingRadius, 0.001)
             assertEquals(2.0, snapshot.jitterMaxStepMeters, 0.001)
@@ -363,9 +363,9 @@ class SettingsViewModelSaveTest {
             assertEquals(20, snapshot.jitterSpeedMovingVariationPct)
             assertEquals(40, snapshot.jitterSpeedIdleWobbleProbabilityPct)
             assertFalse(snapshot.hotLocationsEnabled)
-            assertEquals(750.0, snapshot.roamingDefaults.radiusMeters, 0.001)
-            assertEquals(3000.0, snapshot.roamingDefaults.distanceMeters, 0.001)
-            assertEquals("run", snapshot.roamingDefaults.speedProfileId)
+            assertEquals(750.0, snapshot.settings.roamingDefaults.radiusMeters, 0.001)
+            assertEquals(3000.0, snapshot.settings.roamingDefaults.distanceMeters, 0.001)
+            assertEquals("run", snapshot.settings.roamingDefaults.speedProfileId)
         }
 
     @Test
@@ -389,10 +389,10 @@ class SettingsViewModelSaveTest {
             }
 
             val snapshot = fakeDataSource.lastAppliedSnapshot!!
-            assertTrue(snapshot.rememberLastLocation)
-            assertFalse(snapshot.mapFollowsLocation)
+            assertTrue(snapshot.settings.rememberLastLocation)
+            assertFalse(snapshot.settings.mapFollowsLocation)
             assertEquals(true, fakeDataSource.tapToWalkEnabledWrite)
-            assertTrue(snapshot.floatingMapQuickWalk)
+            assertTrue(snapshot.settings.floatingMapQuickWalk)
         }
 
     @Test
@@ -585,38 +585,35 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
     private val changes = MutableStateFlow(0)
     private var edited =
         SettingsSnapshot(
+            settings =
+                AppSettings(
+                    featureOrder = emptyList(),
+                    enabledWidgetFeatures = emptySet(),
+                    enabledMapFeatures = emptySet(),
+                    rememberLastLocation = false,
+                ),
             slowWalkSpeedMs = 0.0,
             walkSpeedMs = 0.0,
             runSpeedMs = 0.0,
             bikeSpeedMs = 0.0,
             driveSpeedMs = 0.0,
-            speedUnit = SpeedUnit.KMH,
-            featureOrder = emptyList(),
-            enabledWidgetFeatures = emptySet(),
-            enabledMapFeatures = emptySet(),
-            rememberLastLocation = false,
-            mapFollowsLocation = true,
             jitterIdleRadius = AppPreferencesDataSource.DEFAULT_JITTER_IDLE_RADIUS_METERS,
             jitterMovingRadius = AppPreferencesDataSource.DEFAULT_JITTER_MOVING_RADIUS_METERS,
             jitterMaxStepMeters = AppPreferencesDataSource.DEFAULT_JITTER_MAX_STEP_METERS,
-            realismBearingHoldIdle = true,
-            realismAltitudeEnabled = true,
-            realismWarmupEnabled = false,
-            realismSatelliteExtrasEnabled = true,
-            realismSuspendedMockingEnabled = false,
             jitterSpeedIdleVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,
             jitterSpeedMovingVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT,
             hotLocationsEnabled = false,
             selectedHotLocationIds = emptySet(),
             hotRoutesEnabled = false,
             selectedHotRouteIds = emptySet(),
-            roamingDefaults = RoamingDefaults(),
         )
 
     /** Every value the view model has written, as the settings screen would read it back. */
     val written: SettingsSnapshot get() = buildSnapshot()
 
     private fun edit(change: SettingsSnapshot.() -> SettingsSnapshot) = write { edited = edited.change() }
+
+    private fun editSettings(change: AppSettings.() -> AppSettings) = edit { copy(settings = settings.change()) }
 
     private val speedProfilesFlow =
         MutableStateFlow(
@@ -652,12 +649,15 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
             runSpeedMs = speedProfilesFlow.value.runSpeedMs,
             bikeSpeedMs = speedProfilesFlow.value.bikeSpeedMs,
             driveSpeedMs = speedProfilesFlow.value.driveSpeedMs,
-            featureOrder = featureOrderFlow.value,
-            enabledWidgetFeatures = widgetItemsFlow.value.mapNotNull { it.toAppFeature() }.toSet(),
-            enabledMapFeatures = mapItemsFlow.value.mapNotNull { it.toAppFeature() }.toSet(),
-            bypassMockLocationCheck = bypassMockLocationCheckFlow.value,
-            roamingDefaults = roamingDefaultsFlow.value,
-            enabledSpeedProfileIds = enabledSpeedProfileIdsFlow.value,
+            settings =
+                edited.settings.copy(
+                    featureOrder = featureOrderFlow.value,
+                    enabledWidgetFeatures = widgetItemsFlow.value.mapNotNull { it.toAppFeature() }.toSet(),
+                    enabledMapFeatures = mapItemsFlow.value.mapNotNull { it.toAppFeature() }.toSet(),
+                    bypassMockLocationCheck = bypassMockLocationCheckFlow.value,
+                    roamingDefaults = roamingDefaultsFlow.value,
+                    enabledSpeedProfileIds = enabledSpeedProfileIdsFlow.value,
+                ),
         )
 
     override suspend fun applySnapshot(snapshot: SettingsSnapshot) {
@@ -673,11 +673,17 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
                 bikeSpeedMs = snapshot.bikeSpeedMs,
                 driveSpeedMs = snapshot.driveSpeedMs,
             )
-        widgetItemsFlow.value = snapshot.enabledWidgetFeatures.map { it.name.lowercase() }.toSet()
-        mapItemsFlow.value = snapshot.enabledMapFeatures.map { it.name.lowercase() }.toSet()
-        featureOrderFlow.value = snapshot.featureOrder
-        roamingDefaultsFlow.value = snapshot.roamingDefaults
-        enabledSpeedProfileIdsFlow.value = snapshot.enabledSpeedProfileIds
+        widgetItemsFlow.value =
+            snapshot.settings.enabledWidgetFeatures
+                .map { it.name.lowercase() }
+                .toSet()
+        mapItemsFlow.value =
+            snapshot.settings.enabledMapFeatures
+                .map { it.name.lowercase() }
+                .toSet()
+        featureOrderFlow.value = snapshot.settings.featureOrder
+        roamingDefaultsFlow.value = snapshot.settings.roamingDefaults
+        enabledSpeedProfileIdsFlow.value = snapshot.settings.enabledSpeedProfileIds
         changes.value++
     }
 
@@ -746,7 +752,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getSpeedUnit(): Flow<String> = flowOf("KMH")
 
-    override suspend fun setSpeedUnit(unit: String) = edit { copy(speedUnit = SpeedUnit.valueOf(unit)) }
+    override suspend fun setSpeedUnit(unit: String) = editSettings { copy(speedUnit = SpeedUnit.valueOf(unit)) }
 
     override fun getThemeMode(): Flow<String> = flowOf("DARK")
 
@@ -758,7 +764,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getRememberLastLocation(): Flow<Boolean> = flowOf(false)
 
-    override suspend fun setRememberLastLocation(enabled: Boolean) = edit { copy(rememberLastLocation = enabled) }
+    override suspend fun setRememberLastLocation(enabled: Boolean) = editSettings { copy(rememberLastLocation = enabled) }
 
     override fun getLastLocation(): Flow<LatLng?> = flowOf(null)
 
@@ -820,12 +826,12 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getMapFollowsLocation(): Flow<Boolean> = flowOf(true)
 
-    override suspend fun setMapFollowsLocation(enabled: Boolean) = edit { copy(mapFollowsLocation = enabled) }
+    override suspend fun setMapFollowsLocation(enabled: Boolean) = editSettings { copy(mapFollowsLocation = enabled) }
 
     override fun getDisabledGeocodingProviders(): Flow<Set<String>> = flowOf(emptySet())
 
     override suspend fun setDisabledGeocodingProviders(names: Set<String>) =
-        edit {
+        editSettings {
             copy(disabledGeocodingProviders = names.map { GeocodingProviderId.valueOf(it) }.toSet())
         }
 
@@ -851,15 +857,15 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getRealismSuspendedMockingEnabled(): Flow<Boolean> = flowOf(false)
 
-    override suspend fun setRealismBearingHoldIdle(enabled: Boolean) = edit { copy(realismBearingHoldIdle = enabled) }
+    override suspend fun setRealismBearingHoldIdle(enabled: Boolean) = editSettings { copy(bearingHoldOnIdle = enabled) }
 
-    override suspend fun setRealismAltitudeEnabled(enabled: Boolean) = edit { copy(realismAltitudeEnabled = enabled) }
+    override suspend fun setRealismAltitudeEnabled(enabled: Boolean) = editSettings { copy(altitudeEnabled = enabled) }
 
-    override suspend fun setRealismWarmupEnabled(enabled: Boolean) = edit { copy(realismWarmupEnabled = enabled) }
+    override suspend fun setRealismWarmupEnabled(enabled: Boolean) = editSettings { copy(warmupEnabled = enabled) }
 
-    override suspend fun setRealismSatelliteExtrasEnabled(enabled: Boolean) = edit { copy(realismSatelliteExtrasEnabled = enabled) }
+    override suspend fun setRealismSatelliteExtrasEnabled(enabled: Boolean) = editSettings { copy(satelliteExtrasEnabled = enabled) }
 
-    override suspend fun setRealismSuspendedMockingEnabled(enabled: Boolean) = edit { copy(realismSuspendedMockingEnabled = enabled) }
+    override suspend fun setRealismSuspendedMockingEnabled(enabled: Boolean) = editSettings { copy(suspendedMockingEnabled = enabled) }
 
     override fun getRecentSearches(): Flow<List<RecentSearch>> = flowOf(emptyList())
 
@@ -896,7 +902,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getHideTeleportFeatures(): Flow<Boolean> = flowOf(false)
 
-    override suspend fun setHideTeleportFeatures(enabled: Boolean) = edit { copy(hideTeleportFeatures = enabled) }
+    override suspend fun setHideTeleportFeatures(enabled: Boolean) = editSettings { copy(hideTeleportFeatures = enabled) }
 
     override fun getHideWidgetOverlay(): Flow<Boolean> = flowOf(false)
 
@@ -912,11 +918,11 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getLastKnownPositionEnabled(): Flow<Boolean> = flowOf(false)
 
-    override suspend fun setLastKnownPositionEnabled(enabled: Boolean) = edit { copy(lastKnownPositionEnabled = enabled) }
+    override suspend fun setLastKnownPositionEnabled(enabled: Boolean) = editSettings { copy(lastKnownPositionEnabled = enabled) }
 
     override fun getAgpsResetOnStartEnabled(): Flow<Boolean> = flowOf(false)
 
-    override suspend fun setAgpsResetOnStartEnabled(enabled: Boolean) = edit { copy(agpsResetOnStartEnabled = enabled) }
+    override suspend fun setAgpsResetOnStartEnabled(enabled: Boolean) = editSettings { copy(agpsResetOnStartEnabled = enabled) }
 
     override fun getRealPositionSnapshot(): Flow<RealPositionSnapshot?> = flowOf(null)
 
@@ -924,7 +930,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getShowRouteJumpButtons(): Flow<Boolean> = flowOf(false)
 
-    override suspend fun setShowRouteJumpButtons(enabled: Boolean) = edit { copy(showRouteJumpButtons = enabled) }
+    override suspend fun setShowRouteJumpButtons(enabled: Boolean) = editSettings { copy(showRouteJumpButtons = enabled) }
 
     override fun getBypassMockLocationCheck(): Flow<Boolean> = bypassMockLocationCheckFlow
 
@@ -934,7 +940,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getRealismRealElevationEnabled(): Flow<Boolean> = flowOf(true)
 
-    override suspend fun setRealismRealElevationEnabled(enabled: Boolean) = edit { copy(realismRealElevationEnabled = enabled) }
+    override suspend fun setRealismRealElevationEnabled(enabled: Boolean) = editSettings { copy(realElevationEnabled = enabled) }
 
     private val baseAltitudeOverrideFlow = MutableStateFlow<Double?>(null)
 
@@ -950,7 +956,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getAltitudeOverrideButtonEnabled(): Flow<Boolean> = flowOf(false)
 
-    override suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) = edit { copy(altitudeOverrideButtonEnabled = enabled) }
+    override suspend fun setAltitudeOverrideButtonEnabled(enabled: Boolean) = editSettings { copy(altitudeOverrideButtonEnabled = enabled) }
 
     override fun getDebugStatsEnabled(): Flow<Boolean> = flowOf(false)
 
@@ -958,11 +964,11 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getAltitudeJitterRadius(): Flow<Double> = flowOf(AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS)
 
-    override suspend fun setAltitudeJitterRadius(meters: Double) = edit { copy(altitudeJitterRadiusMeters = meters) }
+    override suspend fun setAltitudeJitterRadius(meters: Double) = editSettings { copy(altitudeJitterRadiusMeters = meters) }
 
     override fun getPlantingRadius(): Flow<Double> = flowOf(AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS)
 
-    override suspend fun setPlantingRadius(meters: Double) = edit { copy(plantingRadiusMeters = meters) }
+    override suspend fun setPlantingRadius(meters: Double) = editSettings { copy(plantingRadiusMeters = meters) }
 
     override fun getSelectedHotLocationIds(): Flow<Set<String>> = flowOf(emptySet())
 
@@ -978,7 +984,7 @@ internal class SaveTestPreferencesDataSource : PreferencesDataSource {
 
     override fun getFloatingMapQuickWalk(): Flow<Boolean> = flowOf(false)
 
-    override suspend fun setFloatingMapQuickWalk(enabled: Boolean) = edit { copy(floatingMapQuickWalk = enabled) }
+    override suspend fun setFloatingMapQuickWalk(enabled: Boolean) = editSettings { copy(floatingMapQuickWalk = enabled) }
 
     override fun getFloatingMapRect(): Flow<FloatingMapRect?> = flowOf(null)
 

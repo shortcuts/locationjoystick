@@ -90,7 +90,7 @@ internal fun SettingsRealismSubScreen(
         bottomBar = bottomBar,
         snackbarHost = snackbarHost,
     ) { uiState ->
-        val isMph = uiState.speedUnit == SpeedUnit.MPH
+        val isMph = uiState.settings.speedUnit == SpeedUnit.MPH
         GpsJitterSection(uiState, isMph, onAction)
         SettingsSectionDivider()
         GpsRealismSection(uiState, isMph, onAction)
@@ -105,7 +105,7 @@ internal fun SettingsRealismSubScreen(
         Spacer(modifier = Modifier.height(LjSpacing.sm))
         LjSelectionRow(
             mode = LjSelectionMode.Multi,
-            checked = uiState.rememberLastLocation,
+            checked = uiState.settings.rememberLastLocation,
             onCheckedChange = { onAction(SettingsAction.SetRememberLastLocation(it)) },
             title = stringResource(R.string.settings_gps_remember_last_location),
             description = stringResource(R.string.settings_gps_remember_last_location_desc),
@@ -181,7 +181,7 @@ private fun SpeedProfilesSection(
                     SpeedUnit.KMH to stringResource(R.string.settings_gps_unit_kmh),
                     SpeedUnit.MPH to stringResource(R.string.settings_gps_unit_mph),
                 ),
-            selected = uiState.speedUnit,
+            selected = uiState.settings.speedUnit,
             onSelect = { onAction(SettingsAction.SetSpeedUnit(it)) },
             modifier = Modifier.weight(0.7f),
         )
@@ -193,20 +193,20 @@ private fun SpeedProfilesSection(
     profiles.forEachIndexed { index, profile ->
         val speedMs = uiState.speeds.getValue(profile.id)
         val unit =
-            if (uiState.speedUnit == SpeedUnit.KMH) {
+            if (uiState.settings.speedUnit == SpeedUnit.KMH) {
                 stringResource(R.string.settings_gps_unit_kmh)
             } else {
                 stringResource(R.string.settings_gps_unit_mph)
             }
         SpeedProfileInput(
             label = speedProfileLabel(profile.id),
-            displaySpeed = convertMsToDisplay(speedMs, uiState.speedUnit),
+            displaySpeed = convertMsToDisplay(speedMs, uiState.settings.speedUnit),
             onSpeedChange = { onAction(SettingsAction.SetSpeed(profile.id, it)) },
             unit = unit,
         )
         if (speedMs > AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS) {
             AntiCheatWarning(
-                convertMsToDisplay(AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS, uiState.speedUnit),
+                convertMsToDisplay(AppConstants.ProfileConstants.ANTI_CHEAT_WARNING_THRESHOLD_MS, uiState.settings.speedUnit),
                 unit,
             )
         }

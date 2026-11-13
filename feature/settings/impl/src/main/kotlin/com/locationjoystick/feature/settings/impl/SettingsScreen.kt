@@ -561,7 +561,7 @@ internal fun SettingsScreen(
     when (currentSection) {
         null -> {
             SettingsHubScreen(
-                guidedPath = (screenState as? SettingsScreenState.Loaded)?.state?.guidedPath ?: GuidedPath.DEFAULT,
+                guidedPath = (screenState as? SettingsScreenState.Loaded)?.state?.settings?.guidedPath ?: GuidedPath.DEFAULT,
                 onOpenDrawer = onOpenDrawer,
                 onNavigate = { currentSection = it },
                 extensions = extensions,

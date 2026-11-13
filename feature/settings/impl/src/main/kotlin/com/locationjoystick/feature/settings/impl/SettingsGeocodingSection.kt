@@ -26,9 +26,9 @@ internal fun GeocodingSection(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(Modifier.height(LjSpacing.sm))
-    val enabledCount = GeocodingProviderId.entries.count { it !in uiState.disabledGeocodingProviders }
+    val enabledCount = GeocodingProviderId.entries.count { it !in uiState.settings.disabledGeocodingProviders }
     GeocodingProviderId.entries.forEach { id ->
-        val checked = id !in uiState.disabledGeocodingProviders
+        val checked = id !in uiState.settings.disabledGeocodingProviders
         LjSelectionRow(
             mode = LjSelectionMode.Multi,
             checked = checked,
@@ -41,7 +41,7 @@ internal fun GeocodingSection(
                 ),
             enabled = !(checked && enabledCount == 1),
             onCheckedChange = { isChecked ->
-                val disabled = uiState.disabledGeocodingProviders
+                val disabled = uiState.settings.disabledGeocodingProviders
                 onAction(SettingsAction.SetDisabledGeocodingProviders(if (isChecked) disabled - id else disabled + id))
             },
         )

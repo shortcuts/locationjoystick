@@ -8,6 +8,7 @@ import com.locationjoystick.core.datastore.SettingsSnapshot
 import com.locationjoystick.core.datastore.SpeedProfilePreferences
 import com.locationjoystick.core.datastore.toAppFeature
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.FloatingMapRect
 import com.locationjoystick.core.model.GuidedPath
 import com.locationjoystick.core.model.LatLng
@@ -1904,32 +1905,28 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
     override fun getSettingsSnapshot(): Flow<SettingsSnapshot> =
         flowOf(
             SettingsSnapshot(
+                settings =
+                    AppSettings(
+                        featureOrder = featureOrderFlow.value,
+                        enabledWidgetFeatures = AppPreferencesDataSource.DEFAULT_WIDGET_ITEMS.mapNotNull { it.toAppFeature() }.toSet(),
+                        enabledMapFeatures = AppPreferencesDataSource.DEFAULT_MAP_FAB_ITEMS.mapNotNull { it.toAppFeature() }.toSet(),
+                        rememberLastLocation = false,
+                        roamingDefaults = roamingDefaultsFlow.value,
+                    ),
                 slowWalkSpeedMs = AppPreferencesDataSource.DEFAULT_SLOW_WALK_SPEED_MS,
                 walkSpeedMs = AppPreferencesDataSource.DEFAULT_WALK_SPEED_MS,
                 runSpeedMs = AppPreferencesDataSource.DEFAULT_RUN_SPEED_MS,
                 bikeSpeedMs = AppPreferencesDataSource.DEFAULT_BIKE_SPEED_MS,
                 driveSpeedMs = AppPreferencesDataSource.DEFAULT_DRIVE_SPEED_MS,
-                speedUnit = SpeedUnit.KMH,
-                featureOrder = featureOrderFlow.value,
-                enabledWidgetFeatures = AppPreferencesDataSource.DEFAULT_WIDGET_ITEMS.mapNotNull { it.toAppFeature() }.toSet(),
-                enabledMapFeatures = AppPreferencesDataSource.DEFAULT_MAP_FAB_ITEMS.mapNotNull { it.toAppFeature() }.toSet(),
-                rememberLastLocation = false,
-                mapFollowsLocation = true,
                 jitterIdleRadius = AppPreferencesDataSource.DEFAULT_JITTER_IDLE_RADIUS_METERS,
                 jitterMovingRadius = AppPreferencesDataSource.DEFAULT_JITTER_MOVING_RADIUS_METERS,
                 jitterMaxStepMeters = AppPreferencesDataSource.DEFAULT_JITTER_MAX_STEP_METERS,
-                realismBearingHoldIdle = true,
-                realismAltitudeEnabled = true,
-                realismWarmupEnabled = false,
-                realismSatelliteExtrasEnabled = true,
-                realismSuspendedMockingEnabled = false,
                 jitterSpeedIdleVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_IDLE_VARIATION_PCT,
                 jitterSpeedMovingVariationPct = AppPreferencesDataSource.DEFAULT_JITTER_SPEED_MOVING_VARIATION_PCT,
                 hotLocationsEnabled = false,
                 selectedHotLocationIds = emptySet(),
                 hotRoutesEnabled = false,
                 selectedHotRouteIds = emptySet(),
-                roamingDefaults = roamingDefaultsFlow.value,
             ),
         )
 
@@ -1942,9 +1939,15 @@ class FakeAppPreferencesDataSource : PreferencesDataSource {
                 bikeSpeedMs = snapshot.bikeSpeedMs,
                 driveSpeedMs = snapshot.driveSpeedMs,
             )
-        widgetItemsFlow.value = snapshot.enabledWidgetFeatures.map { it.name.lowercase() }.toSet()
-        mapItemsFlow.value = snapshot.enabledMapFeatures.map { it.name.lowercase() }.toSet()
-        featureOrderFlow.value = snapshot.featureOrder
+        widgetItemsFlow.value =
+            snapshot.settings.enabledWidgetFeatures
+                .map { it.name.lowercase() }
+                .toSet()
+        mapItemsFlow.value =
+            snapshot.settings.enabledMapFeatures
+                .map { it.name.lowercase() }
+                .toSet()
+        featureOrderFlow.value = snapshot.settings.featureOrder
     }
 
     var clearAllExceptOnboardingCallCount = 0

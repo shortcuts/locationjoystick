@@ -155,7 +155,7 @@ class SettingsViewModelSetterTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setSpeedUnit(SpeedUnit.MPH)
-            assertEquals(SpeedUnit.MPH, viewModel.loaded.speedUnit)
+            assertEquals(SpeedUnit.MPH, viewModel.loaded.settings.speedUnit)
         }
 
     @Test
@@ -164,7 +164,7 @@ class SettingsViewModelSetterTest {
             backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             val features = setOf(AppFeature.JOYSTICK_TOGGLE, AppFeature.SPEED_CYCLE)
             viewModel.setWidgetFeatures(features)
-            assertEquals(features, viewModel.loaded.enabledWidgetFeatures)
+            assertEquals(features, viewModel.loaded.settings.enabledWidgetFeatures)
         }
 
     @Test
@@ -172,7 +172,7 @@ class SettingsViewModelSetterTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setRememberLastLocation(true)
-            assertTrue(viewModel.loaded.rememberLastLocation)
+            assertTrue(viewModel.loaded.settings.rememberLastLocation)
         }
 
     @Test
@@ -180,7 +180,7 @@ class SettingsViewModelSetterTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setMapFollowsLocation(false)
-            assertFalse(viewModel.loaded.mapFollowsLocation)
+            assertFalse(viewModel.loaded.settings.mapFollowsLocation)
         }
 
     @Test
@@ -202,19 +202,19 @@ class SettingsViewModelSetterTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setRealismBearingHoldIdle(false)
-            assertFalse(viewModel.loaded.realismBearingHoldIdle)
+            assertFalse(viewModel.loaded.settings.bearingHoldOnIdle)
 
             viewModel.setRealismAltitudeEnabled(false)
-            assertFalse(viewModel.loaded.realismAltitudeEnabled)
+            assertFalse(viewModel.loaded.settings.altitudeEnabled)
 
             viewModel.setRealismWarmupEnabled(true)
-            assertTrue(viewModel.loaded.realismWarmupEnabled)
+            assertTrue(viewModel.loaded.settings.warmupEnabled)
 
             viewModel.setRealismSatelliteExtrasEnabled(false)
-            assertFalse(viewModel.loaded.realismSatelliteExtrasEnabled)
+            assertFalse(viewModel.loaded.settings.satelliteExtrasEnabled)
 
             viewModel.setRealismSuspendedMockingEnabled(true)
-            assertTrue(viewModel.loaded.realismSuspendedMockingEnabled)
+            assertTrue(viewModel.loaded.settings.suspendedMockingEnabled)
         }
 
     @Test
@@ -222,7 +222,7 @@ class SettingsViewModelSetterTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setHideTeleportFeatures(true)
-            assertTrue(viewModel.loaded.hideTeleportFeatures)
+            assertTrue(viewModel.loaded.settings.hideTeleportFeatures)
         }
 
     @Test
@@ -230,7 +230,7 @@ class SettingsViewModelSetterTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setShowRouteJumpButtons(true)
-            assertTrue(viewModel.loaded.showRouteJumpButtons)
+            assertTrue(viewModel.loaded.settings.showRouteJumpButtons)
         }
 
     @Test
@@ -238,7 +238,7 @@ class SettingsViewModelSetterTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setLastKnownPositionEnabled(true)
-            assertTrue(viewModel.loaded.lastKnownPositionEnabled)
+            assertTrue(viewModel.loaded.settings.lastKnownPositionEnabled)
         }
 
     @Test
@@ -246,7 +246,7 @@ class SettingsViewModelSetterTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setAgpsResetOnStartEnabled(true)
-            assertTrue(viewModel.loaded.agpsResetOnStartEnabled)
+            assertTrue(viewModel.loaded.settings.agpsResetOnStartEnabled)
         }
 
     @Test
@@ -308,7 +308,7 @@ class SettingsViewModelSetterTest {
         runTest(testDispatcher) {
             backgroundScope.launch(testDispatcher) { viewModel.screenState.collect {} }
             viewModel.setFloatingMapQuickWalk(true)
-            assertTrue(viewModel.loaded.floatingMapQuickWalk)
+            assertTrue(viewModel.loaded.settings.floatingMapQuickWalk)
         }
 
     @Test

@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.locationjoystick.core.common.constants.AppConstants
 import com.locationjoystick.core.model.AppFeature
+import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.FloatingMapRect
 import com.locationjoystick.core.model.GroundCalibration
 import com.locationjoystick.core.model.GuidedPath
@@ -16,6 +17,7 @@ import com.locationjoystick.core.model.SavedItemSortMode
 import com.locationjoystick.core.model.SpoofHistoryEntry
 import com.locationjoystick.core.model.StoredGroundCalibration
 import com.locationjoystick.core.model.TapToWalkMove
+import com.locationjoystick.core.model.ThemeMode
 import com.locationjoystick.core.testing.FakePreferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -128,6 +130,43 @@ class AppPreferencesDataSourceTest {
         }
 
     @Test
+    fun `applySnapshot writes settings and the snapshot reads them back`() =
+        runTest {
+            val written =
+                AppSettings(
+                    agpsResetOnStartEnabled = true,
+                    hideTeleportFeatures = true,
+                    warmupEnabled = true,
+                    bearingHoldOnIdle = false,
+                    altitudeJitterRadiusMeters = 2.0,
+                    plantingRadiusMeters = 60.0,
+                    enabledSpeedProfileIds = setOf("walk"),
+                    featureOrder = AppFeature.DEFAULT_ORDER.reversed(),
+                )
+            val base = dataSource.getSettingsSnapshot().first()
+            dataSource.applySnapshot(base.copy(settings = written))
+            assertEquals(written, dataSource.getSettingsSnapshot().first().settings)
+        }
+
+    @Test
+    fun `snapshot reads the live fields set through their setters`() =
+        runTest {
+            dataSource.setTapToWalkOverlayEnabled(true)
+            dataSource.setTapToWalkMoves(setOf(TapToWalkMove.TELEPORT))
+            dataSource.setReconnectTapEnabled(true)
+            dataSource.setKeepWidgetOnIdle(true)
+            dataSource.setThemeMode("LIGHT")
+            dataSource.setActiveProfileId("bike")
+            val settings = dataSource.getSettingsSnapshot().first().settings
+            assertTrue(settings.tapToWalkOverlayEnabled)
+            assertEquals(setOf(TapToWalkMove.TELEPORT), settings.tapToWalkMoves)
+            assertTrue(settings.reconnectTapEnabled)
+            assertTrue(settings.keepWidgetOnIdle)
+            assertEquals(ThemeMode.LIGHT, settings.themeMode)
+            assertEquals("bike", settings.activeSpeedProfileId)
+        }
+
+    @Test
     fun `plantingRadius defaults to 35 and clamps to 5-200`() =
         runTest {
             assertEquals(35.0, dataSource.getPlantingRadius().first(), 0.0)
@@ -237,7 +276,12 @@ class AppPreferencesDataSourceTest {
             assertFalse(dataSource.getAgpsResetOnStartEnabled().first())
             dataSource.setAgpsResetOnStartEnabled(true)
             assertTrue(dataSource.getAgpsResetOnStartEnabled().first())
-            assertTrue(dataSource.getSettingsSnapshot().first().agpsResetOnStartEnabled)
+            assertTrue(
+                dataSource
+                    .getSettingsSnapshot()
+                    .first()
+                    .settings.agpsResetOnStartEnabled,
+            )
         }
 
     @Test

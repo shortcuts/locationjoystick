@@ -27,7 +27,7 @@ data class AppSettings(
     val agpsResetOnStartEnabled: Boolean = false,
     val bypassMockLocationCheck: Boolean = false,
     val realElevationEnabled: Boolean = true,
-    val altitudeJitterRadiusMeters: Double = 0.25,
+    val altitudeJitterRadiusMeters: Double = 1.5,
     val plantingRadiusMeters: Double = 35.0,
     val altitudeOverrideButtonEnabled: Boolean = false,
     val debugStatsEnabled: Boolean = false,

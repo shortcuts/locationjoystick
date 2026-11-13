@@ -138,7 +138,7 @@ private fun GuidedPathSection(
                 style = LjSelectionStyle.Card,
                 title = stringResource(path.titleRes()),
                 description = stringResource(path.descriptionRes()),
-                checked = path == uiState.guidedPath,
+                checked = path == uiState.settings.guidedPath,
                 onCheckedChange = { onAction(SettingsAction.SetGuidedPath(path)) },
             )
         }
@@ -187,7 +187,7 @@ private fun MapSourceSection(
             modifier = Modifier.fillMaxWidth().onSizeChanged { sourcePickerWidth = it.width },
         ) {
             Text(
-                mapTileSourceLabel(uiState.mapTileSource),
+                mapTileSourceLabel(uiState.settings.mapTileSource),
                 modifier = Modifier.weight(1f),
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -205,7 +205,7 @@ private fun MapSourceSection(
             modifier = Modifier.width(with(density) { sourcePickerWidth.toDp() }),
         ) {
             MapTileSource.entries.forEach { source ->
-                val isSelected = source == uiState.mapTileSource
+                val isSelected = source == uiState.settings.mapTileSource
                 DropdownMenuItem(
                     text = { Text(mapTileSourceLabel(source)) },
                     trailingIcon = {
@@ -227,7 +227,7 @@ private fun MapSourceSection(
         }
     }
     val sourceNote =
-        when (uiState.mapTileSource) {
+        when (uiState.settings.mapTileSource) {
             MapTileSource.AMAP -> R.string.settings_menus_map_source_amap_note
             MapTileSource.SATELLITE -> R.string.settings_menus_map_source_satellite_note
             MapTileSource.OSM -> null
@@ -282,7 +282,7 @@ private fun ThemeSection(
     LjSelectionRow(
         mode = LjSelectionMode.Toggle,
         title = stringResource(R.string.settings_menus_light_mode),
-        checked = uiState.themeMode == ThemeMode.LIGHT,
+        checked = uiState.settings.themeMode == ThemeMode.LIGHT,
         onCheckedChange = { light ->
             onAction(SettingsAction.SetThemeMode(if (light) ThemeMode.LIGHT else ThemeMode.DARK))
         },
@@ -298,7 +298,7 @@ private fun TeleportWalkingSection(
     Spacer(Modifier.height(LjSpacing.xs))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.hideTeleportFeatures,
+        checked = uiState.settings.hideTeleportFeatures,
         onCheckedChange = { onAction(SettingsAction.SetHideTeleportFeatures(it)) },
         title = stringResource(R.string.settings_menus_hide_teleport_features),
         description = stringResource(R.string.settings_menus_hide_teleport_features_desc),
@@ -306,7 +306,7 @@ private fun TeleportWalkingSection(
     Spacer(Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.floatingMapQuickWalk,
+        checked = uiState.settings.floatingMapQuickWalk,
         onCheckedChange = { onAction(SettingsAction.SetFloatingMapQuickWalk(it)) },
         title = stringResource(R.string.settings_menus_floating_map_quick_walk),
         description = stringResource(R.string.settings_menus_floating_map_quick_walk_desc),
@@ -322,7 +322,7 @@ private fun HideAppSection(
     Spacer(Modifier.height(LjSpacing.xs))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.hideWidgetOverlay,
+        checked = uiState.settings.hideWidgetOverlay,
         onCheckedChange = { onAction(SettingsAction.SetHideWidgetOverlay(it)) },
         title = stringResource(R.string.settings_menus_hide_floating_widget),
         description = stringResource(R.string.settings_menus_hide_floating_widget_desc),
@@ -330,7 +330,7 @@ private fun HideAppSection(
     Spacer(Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.hideForegroundNotification,
+        checked = uiState.settings.hideForegroundNotification,
         onCheckedChange = { onAction(SettingsAction.SetHideForegroundNotification(it)) },
         title = stringResource(R.string.settings_menus_hide_notification_icon),
         description = stringResource(R.string.settings_menus_hide_notification_icon_desc),
@@ -346,7 +346,7 @@ private fun DebugSection(
     Spacer(Modifier.height(LjSpacing.xs))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.debugStatsEnabled,
+        checked = uiState.settings.debugStatsEnabled,
         onCheckedChange = { onAction(SettingsAction.SetDebugStatsEnabled(it)) },
         title = stringResource(R.string.settings_menus_debug_stats),
         description = stringResource(R.string.settings_menus_debug_stats_desc),

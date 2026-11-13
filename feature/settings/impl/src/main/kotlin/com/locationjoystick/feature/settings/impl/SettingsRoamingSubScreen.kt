@@ -69,7 +69,7 @@ internal fun SettingsRoamingSubScreen(
 
                 is SettingsScreenState.Loaded -> {
                     val uiState = screenState.state
-                    val isMph = uiState.speedUnit == SpeedUnit.MPH
+                    val isMph = uiState.settings.speedUnit == SpeedUnit.MPH
                     Column(
                         modifier =
                             Modifier
@@ -80,7 +80,7 @@ internal fun SettingsRoamingSubScreen(
                         RoamingSection(
                             roamingDefaults,
                             isMph,
-                            uiState.plantingRadiusMeters,
+                            uiState.settings.plantingRadiusMeters,
                             onAction,
                         )
                         SettingsSectionDivider()

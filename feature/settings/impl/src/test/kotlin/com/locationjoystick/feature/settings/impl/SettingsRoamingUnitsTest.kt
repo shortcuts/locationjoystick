@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
+import com.locationjoystick.core.model.AppSettings
 import com.locationjoystick.core.model.RoamingDefaults
 import com.locationjoystick.core.model.SpeedUnit
 import org.junit.Rule
@@ -21,7 +22,7 @@ class SettingsRoamingUnitsTest {
     private fun setScreen(speedUnit: SpeedUnit) {
         composeRule.setContent {
             SettingsRoamingSubScreen(
-                screenState = SettingsScreenState.Loaded(SettingsUiState(speedUnit = speedUnit)),
+                screenState = SettingsScreenState.Loaded(SettingsUiState(settings = AppSettings(speedUnit = speedUnit))),
                 roamingDefaults = RoamingDefaults(),
                 onNavigateBack = {},
                 isSpoofing = false,

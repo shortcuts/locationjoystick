@@ -194,21 +194,21 @@ internal fun GpsRealismSection(
     Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.realismBearingHoldIdle,
+        checked = uiState.settings.bearingHoldOnIdle,
         onCheckedChange = { onAction(SettingsAction.SetRealismBearingHoldIdle(it)) },
         title = stringResource(R.string.settings_gps_section_hold_bearing_when_stationary),
         description = stringResource(R.string.settings_gps_section_hold_bearing_when_stationary_desc),
     )
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.realismAltitudeEnabled,
+        checked = uiState.settings.altitudeEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismAltitudeEnabled(it)) },
         title = stringResource(R.string.settings_gps_section_vary_altitude),
         description = stringResource(R.string.settings_gps_section_vary_altitude_desc),
     )
-    if (uiState.realismAltitudeEnabled) {
+    if (uiState.settings.altitudeEnabled) {
         JitterInput(
-            value = if (isMph) uiState.altitudeJitterRadiusMeters * 3.28084 else uiState.altitudeJitterRadiusMeters,
+            value = if (isMph) uiState.settings.altitudeJitterRadiusMeters * 3.28084 else uiState.settings.altitudeJitterRadiusMeters,
             onValueChange = { onAction(SettingsAction.SetAltitudeJitterRadius(if (isMph) it / 3.28084 else it)) },
             label =
                 if (isMph) {
@@ -222,7 +222,7 @@ internal fun GpsRealismSection(
     }
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.realismRealElevationEnabled,
+        checked = uiState.settings.realElevationEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismRealElevationEnabled(it)) },
         title = stringResource(R.string.settings_gps_section_use_real_world_elevation),
         description = stringResource(R.string.settings_gps_section_use_real_world_elevation_desc),
@@ -245,28 +245,28 @@ internal fun GpsRealismSection(
     Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.realismWarmupEnabled,
+        checked = uiState.settings.warmupEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismWarmupEnabled(it)) },
         title = stringResource(R.string.settings_gps_section_gps_warm_up_simulation),
         description = stringResource(R.string.settings_gps_section_gps_warm_up_simulation_desc),
     )
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.realismSatelliteExtrasEnabled,
+        checked = uiState.settings.satelliteExtrasEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismSatelliteExtrasEnabled(it)) },
         title = stringResource(R.string.settings_gps_section_realistic_satellite_count),
         description = stringResource(R.string.settings_gps_section_realistic_satellite_count_desc),
     )
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.realismSuspendedMockingEnabled,
+        checked = uiState.settings.suspendedMockingEnabled,
         onCheckedChange = { onAction(SettingsAction.SetRealismSuspendedMockingEnabled(it)) },
         title = stringResource(R.string.settings_gps_section_simulate_signal_dropouts),
         description = stringResource(R.string.settings_gps_section_simulate_signal_dropouts_desc),
     )
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.agpsResetOnStartEnabled,
+        checked = uiState.settings.agpsResetOnStartEnabled,
         onCheckedChange = { onAction(SettingsAction.SetAgpsResetOnStartEnabled(it)) },
         title = stringResource(R.string.settings_gps_section_reset_agps_data),
         description = stringResource(R.string.settings_gps_section_reset_agps_data_desc),

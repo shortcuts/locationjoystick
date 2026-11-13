@@ -55,7 +55,7 @@ internal fun SettingsFavoritesRoutesSubScreen(
 
                 is SettingsScreenState.Loaded -> {
                     val uiState = screenState.state
-                    val isMph = uiState.speedUnit == SpeedUnit.MPH
+                    val isMph = uiState.settings.speedUnit == SpeedUnit.MPH
                     Column(
                         modifier =
                             Modifier
@@ -90,7 +90,7 @@ private fun FavoritesSection(
     Spacer(modifier = Modifier.height(LjSpacing.sm))
     LjSelectionRow(
         mode = LjSelectionMode.Multi,
-        checked = uiState.lastKnownPositionEnabled,
+        checked = uiState.settings.lastKnownPositionEnabled,
         onCheckedChange = { onAction(SettingsAction.SetLastKnownPositionEnabled(it)) },
         title = stringResource(R.string.settings_favorites_routes_show_last_known_position),
         description = stringResource(R.string.settings_favorites_routes_show_last_known_position_desc),

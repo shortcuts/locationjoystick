@@ -1,15 +1,8 @@
 package com.locationjoystick.feature.settings.impl
 
 import com.locationjoystick.core.common.constants.AppConstants
-import com.locationjoystick.core.model.AppFeature
 import com.locationjoystick.core.model.AppSettings
-import com.locationjoystick.core.model.GeocodingProviderId
-import com.locationjoystick.core.model.GuidedPath
-import com.locationjoystick.core.model.MapTileSource
 import com.locationjoystick.core.model.SpeedProfile
-import com.locationjoystick.core.model.SpeedUnit
-import com.locationjoystick.core.model.TapToWalkMove
-import com.locationjoystick.core.model.ThemeMode
 
 sealed interface SettingsScreenState {
     data object Loading : SettingsScreenState
@@ -19,25 +12,13 @@ sealed interface SettingsScreenState {
     ) : SettingsScreenState
 }
 
+/** [settings] holds every persisted setting; the other fields are what [AppSettings] lacks. */
 data class SettingsUiState(
+    val settings: AppSettings = AppSettings(),
     val speeds: Map<String, Double> = SpeedProfile.defaultProfiles().associate { it.id to it.speedMetersPerSecond },
-    val speedUnit: SpeedUnit = SpeedUnit.KMH,
-    val featureOrder: List<AppFeature> = AppFeature.DEFAULT_ORDER,
-    val enabledWidgetFeatures: Set<AppFeature> = AppFeature.DEFAULT_WIDGET_ENABLED,
-    val enabledSpeedProfileIds: Set<String> = AppConstants.ProfileConstants.DEFAULT_ENABLED_SPEED_PROFILE_IDS,
-    val rememberLastLocation: Boolean = true,
-    val mapFollowsLocation: Boolean = true,
-    val mapTileSource: MapTileSource = MapTileSource.DEFAULT,
-    val guidedPath: GuidedPath = GuidedPath.DEFAULT,
-    val disabledGeocodingProviders: Set<GeocodingProviderId> = emptySet(),
     val jitterIdleRadiusMeters: Double = AppConstants.JitterConstants.DEFAULT_IDLE_RADIUS_METERS,
     val jitterMovingRadiusMeters: Double = 1.0,
     val jitterMaxStepMeters: Double = AppConstants.JitterConstants.DEFAULT_STEP_METERS_PER_TICK,
-    val realismBearingHoldIdle: Boolean = AppConstants.RealismConstants.BEARING_HOLD_ON_IDLE_DEFAULT,
-    val realismAltitudeEnabled: Boolean = AppConstants.RealismConstants.ALTITUDE_ENABLED_DEFAULT,
-    val realismWarmupEnabled: Boolean = AppConstants.RealismConstants.WARMUP_ENABLED_DEFAULT,
-    val realismSatelliteExtrasEnabled: Boolean = AppConstants.RealismConstants.SATELLITE_EXTRAS_ENABLED_DEFAULT,
-    val realismSuspendedMockingEnabled: Boolean = AppConstants.RealismConstants.SUSPENDED_MOCKING_ENABLED_DEFAULT,
     val jitterSpeedIdleVariationPct: Int = AppConstants.JitterConstants.SPEED_IDLE_VARIATION_PCT_DEFAULT,
     val jitterSpeedIdleWobbleProbabilityPct: Int = AppConstants.JitterConstants.SPEED_IDLE_WOBBLE_PROBABILITY_PCT_DEFAULT,
     val jitterSpeedMovingVariationPct: Int = AppConstants.JitterConstants.SPEED_MOVING_VARIATION_PCT_DEFAULT,
@@ -45,26 +26,9 @@ data class SettingsUiState(
     val selectedHotLocationIds: Set<String> = emptySet(),
     val hotRoutesEnabled: Boolean = false,
     val selectedHotRouteIds: Set<String> = emptySet(),
-    val enabledMapFeatures: Set<AppFeature> = AppFeature.DEFAULT_MAP_ENABLED,
-    val floatingMapQuickWalk: Boolean = false,
-    val tapToWalkOverlayEnabled: Boolean = false,
-    val tapToWalkMoves: Set<TapToWalkMove> = TapToWalkMove.DEFAULT,
     val isScreenServiceGranted: Boolean = false,
     val accessibilityDisclosureAccepted: Boolean = false,
-    val reconnectTapEnabled: Boolean = false,
-    val themeMode: ThemeMode = ThemeMode.DARK,
-    val hideTeleportFeatures: Boolean = false,
-    val hideWidgetOverlay: Boolean = false,
-    val hideForegroundNotification: Boolean = false,
-    val showRouteJumpButtons: Boolean = AppConstants.ProfileConstants.SHOW_ROUTE_JUMP_BUTTONS_DEFAULT,
-    val lastKnownPositionEnabled: Boolean = AppConstants.ProfileConstants.LAST_KNOWN_POSITION_ENABLED_DEFAULT,
-    val agpsResetOnStartEnabled: Boolean = AppConstants.ProfileConstants.AGPS_RESET_ON_START_ENABLED_DEFAULT,
-    val realismRealElevationEnabled: Boolean = AppConstants.RealismConstants.REAL_ELEVATION_ENABLED_DEFAULT,
     val hasAltitudeOverride: Boolean = false,
-    val altitudeJitterRadiusMeters: Double = AppConstants.RealismConstants.ALTITUDE_SIGMA_METERS,
-    val plantingRadiusMeters: Double = AppConstants.RouteConstants.PLANTING_DEFAULT_RADIUS_METERS,
-    val altitudeOverrideButtonEnabled: Boolean = false,
-    val debugStatsEnabled: Boolean = false,
     val captureModeEnabled: Boolean = false,
     val captureEnabled: Boolean = false,
     val jumpEnabled: Boolean = false,
@@ -72,45 +36,4 @@ data class SettingsUiState(
     val captureSetupReset: Boolean = false,
     val launchAfterLinkPackage: String? = null,
     val launchAfterLinkChosen: Boolean = false,
-    val activeSpeedProfileId: String = AppConstants.ProfileConstants.DEFAULT_ACTIVE_PROFILE_ID,
-    val keepWidgetOnIdle: Boolean = false,
-    val bypassMockLocationCheck: Boolean = false,
 )
-
-internal fun SettingsUiState.toAppSettings(): AppSettings =
-    AppSettings(
-        speedUnit = speedUnit,
-        mapTileSource = mapTileSource,
-        guidedPath = guidedPath,
-        disabledGeocodingProviders = disabledGeocodingProviders,
-        featureOrder = featureOrder,
-        enabledWidgetFeatures = enabledWidgetFeatures,
-        enabledMapFeatures = enabledMapFeatures,
-        enabledSpeedProfileIds = enabledSpeedProfileIds,
-        bearingHoldOnIdle = realismBearingHoldIdle,
-        altitudeEnabled = realismAltitudeEnabled,
-        warmupEnabled = realismWarmupEnabled,
-        satelliteExtrasEnabled = realismSatelliteExtrasEnabled,
-        suspendedMockingEnabled = realismSuspendedMockingEnabled,
-        hideTeleportFeatures = hideTeleportFeatures,
-        hideWidgetOverlay = hideWidgetOverlay,
-        hideForegroundNotification = hideForegroundNotification,
-        showRouteJumpButtons = showRouteJumpButtons,
-        lastKnownPositionEnabled = lastKnownPositionEnabled,
-        agpsResetOnStartEnabled = agpsResetOnStartEnabled,
-        bypassMockLocationCheck = bypassMockLocationCheck,
-        realElevationEnabled = realismRealElevationEnabled,
-        altitudeJitterRadiusMeters = altitudeJitterRadiusMeters,
-        plantingRadiusMeters = plantingRadiusMeters,
-        altitudeOverrideButtonEnabled = altitudeOverrideButtonEnabled,
-        debugStatsEnabled = debugStatsEnabled,
-        activeSpeedProfileId = activeSpeedProfileId,
-        mapFollowsLocation = mapFollowsLocation,
-        rememberLastLocation = rememberLastLocation,
-        floatingMapQuickWalk = floatingMapQuickWalk,
-        tapToWalkOverlayEnabled = tapToWalkOverlayEnabled,
-        tapToWalkMoves = tapToWalkMoves,
-        reconnectTapEnabled = reconnectTapEnabled,
-        keepWidgetOnIdle = keepWidgetOnIdle,
-        themeMode = themeMode,
-    )
